@@ -1,0 +1,615 @@
+Secfilter Module
+
+Jose Luis Verdeguer
+
+   Zoon Suite
+   <verdeguer@zoonsuite.com>
+
+   Copyright © 2018
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. table_name (string)
+              3.3. action_col (string)
+              3.4. type_col (string)
+              3.5. data_col (string)
+              3.6. dst_exact_match (integer)
+
+        4. Functions
+
+              4.1. secf_check_ip ()
+              4.2. secf_check_ua ()
+              4.3. secf_check_country (string)
+              4.4. secf_check_from_hdr ()
+              4.5. secf_check_to_hdr ()
+              4.6. secf_check_contact_hdr ()
+              4.7. secf_check_dst (string)
+              4.8. secf_check_sqli_hdr (string)
+              4.9. secf_check_sqli_all ()
+
+        5. RPC commands
+
+              5.1. secfilter.reload
+              5.2. secfilter.print
+              5.3. secfilter.add_dst
+              5.4. secfilter.add_bl
+              5.5. secfilter.add_wl
+
+        6. Installation
+
+              6.1. Database setup
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set table_name parameter
+   1.3. Set action_col parameter
+   1.4. Set type_col parameter
+   1.5. Set data_col parameter
+   1.6. Set dst_exact_match parameter
+   1.7. secf_check_ip usage
+   1.8. secf_check_ua usage
+   1.9. secf_check_country usage
+   1.10. secf_check_from_hdr usage
+   1.11. secf_check_to_hdr usage
+   1.12. secf_check_contact_hdr usage
+   1.13. secf_check_dst usage
+   1.14. secf_check_sqli_hdr usage
+   1.15. secf_check_sqli_all usage
+   1.16. secfilter.reload usage
+   1.17. secfilter.print usage
+   1.18. secfilter.add_dst usage
+   1.19. secfilter.add_bl usage
+   1.20. secfilter.add_wl usage
+   1.21. Example database content - secfilter table
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. table_name (string)
+        3.3. action_col (string)
+        3.4. type_col (string)
+        3.5. data_col (string)
+        3.6. dst_exact_match (integer)
+
+   4. Functions
+
+        4.1. secf_check_ip ()
+        4.2. secf_check_ua ()
+        4.3. secf_check_country (string)
+        4.4. secf_check_from_hdr ()
+        4.5. secf_check_to_hdr ()
+        4.6. secf_check_contact_hdr ()
+        4.7. secf_check_dst (string)
+        4.8. secf_check_sqli_hdr (string)
+        4.9. secf_check_sqli_all ()
+
+   5. RPC commands
+
+        5.1. secfilter.reload
+        5.2. secfilter.print
+        5.3. secfilter.add_dst
+        5.4. secfilter.add_bl
+        5.5. secfilter.add_wl
+
+   6. Installation
+
+        6.1. Database setup
+
+1. Overview
+
+   This module has been designed to offer an additional layer of security
+   over our communications. To achieve this, the following features are
+   available:
+
+   - Blacklist to block user agents, IP addresses, countries, domains and
+   users.
+
+   - Whitelist to allow user agents, IP addresses, countries, domains and
+   users.
+
+   - Blacklist of destinations where the called number is not allowed.
+
+   - SQL injection attacks prevention.
+
+   When a function is called, it will be searched in the whitelist. If the
+   value is not found, then the blacklist will be searched.
+
+   All data will be loaded into memory when the module is started. There
+   is an RPC reload command to update all the data from database. It is
+   also possible to add new data to the blacklist or whitelist using other
+   RPC commands.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * database -- Any db_* database module
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. db_url (string)
+   3.2. table_name (string)
+   3.3. action_col (string)
+   3.4. type_col (string)
+   3.5. data_col (string)
+   3.6. dst_exact_match (integer)
+
+3.1. db_url (string)
+
+   Database URL.
+
+   Default value is ""
+
+   Example 1.1. Set db_url parameter
+                ...
+                modparam("secfilter", "db_url", "mysql://user:pass@localhost/kam
+ailio")
+                ...
+
+3.2. table_name (string)
+
+   Name of the table used to store the blacklisted and whitelisted values.
+
+   Default value is secfilter
+
+   Example 1.2. Set table_name parameter
+                ...
+                modparam("secfilter", "table_name", "secfilter")
+                ...
+
+3.3. action_col (string)
+
+   Name of database column containing the type of list. The possible
+   values are:
+
+     * 0 = blacklisted data
+     * 1 = whitelisted data
+     * 2 = blacklisted destination number
+
+   Default value is action
+
+   Example 1.3. Set action_col parameter
+                ...
+                modparam("secfilter", "action_col", "action")
+                ...
+
+3.4. type_col (string)
+
+   Name of database column containing the type of values. The possible
+   values are:
+
+     * 0 = user-agent (if action=0 or action=1)
+     * 0 = destination number (if action=2)
+     * 1 = country
+     * 2 = domain
+     * 3 = IP address
+     * 4 = user
+
+   Default value is type
+
+   Example 1.4. Set type_col parameter
+                ...
+                modparam("secfilter", "type_col", "type")
+                ...
+
+3.5. data_col (string)
+
+   Name of database column containing blacklisted and whitelisted values.
+
+   Default value is data
+
+   Example 1.5. Set data_col parameter
+                ...
+                modparam("secfilter", "data_col", "data")
+                ...
+
+3.6. dst_exact_match (integer)
+
+   This value is used in the destinations blacklist and corresponds to the
+   numbers that we want to prevent calling. If the value is 1, the call
+   will appear as blacklisted if the destination is exactly the same. If
+   the value is 0, every destination whose number begins with a number
+   appearing on the destination blacklist will be rejected.
+
+   Default value is 1
+
+   Example 1.6. Set dst_exact_match parameter
+                ...
+                modparam("secfilter", "dst_exact_match", 1)
+                ...
+
+4. Functions
+
+   4.1. secf_check_ip ()
+   4.2. secf_check_ua ()
+   4.3. secf_check_country (string)
+   4.4. secf_check_from_hdr ()
+   4.5. secf_check_to_hdr ()
+   4.6. secf_check_contact_hdr ()
+   4.7. secf_check_dst (string)
+   4.8. secf_check_sqli_hdr (string)
+   4.9. secf_check_sqli_all ()
+
+4.1.  secf_check_ip ()
+
+   It checks if the source IP address is blacklisted. The search is
+   aproximate and data stored in the database will be compared as a
+   prefix. For example, if we have blacklisted IP address 192.168.1. all
+   messages from IPs like 192.168.1.% will be rejected.
+
+   Return values are:
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -2 = the value is blacklisted
+
+   Example 1.7. secf_check_ip usage
+                ...
+        secf_check_ip();
+        if ($? == -2) {
+                xlog("L_ALERT", "$rm from $si blocked because IP address is blac
+klisted");
+                exit;
+        }
+                ...
+
+4.2.  secf_check_ua ()
+
+   It checks if the user-agent is blacklisted. The search is approximate
+   and the comparison will be made using the values of the database as a
+   prefix. If we add to the user-agent blacklist the word sipcli, every
+   message whose user-agent is named, for example, sipcli/1.6 or
+   sipcli/1.8 will be blocked. It is very useful to block different
+   versions of the same program.
+
+   Return values are:
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -1 = error
+     * -2 = the value is blacklisted
+
+   Example 1.8. secf_check_ua usage
+                ...
+        secf_check_ua();
+        if ($? == -2) {
+                xlog("L_ALERT", "$rm from $si blocked because UserAgent '$ua' is
+ blacklisted");
+                exit;
+        }
+                ...
+
+4.3.  secf_check_country (string)
+
+   Similar to secf_check_ua. It checks if the country (IP address) is
+   blacklisted. Geoip module must be loaded to get the country code.
+
+   Return values are:
+     * 2 = the value is whitelisted
+     * 1 = the value is not found
+     * -1 = error
+     * -2 = the value is blacklisted
+
+   Example 1.9. secf_check_country usage
+                ...
+        if (geoip_match("$si", "src")) {
+                secf_check_country($gip(src=>cc));
+                if ($avp(secfilter) == -2) {
+                        xlog("L_ALERT", "$rm from $si blocked because Country '$
+gip(src=>cc)' is blacklisted");
+                        exit;
+                }
+        }
+                ...
+
+4.4.  secf_check_from_hdr ()
+
+   It checks if any value of from header is blacklisted. It checks if from
+   name or from user are in the users blacklist or whitelist. It also
+   checks if the from domain is in the domains blacklist or whitelist. The
+   blacklisted value will be used as a prefix and if we block, for
+   example, the user sipvicious, all users whose name starts with this
+   word will be considered as blacklisted.
+
+   Return values are:
+     * 4 = from name is whitelisted
+     * 3 = from domain is whitelisted
+     * 2 = from user is whitelisted
+     * 1 = from header not found
+     * -1 = error
+     * -2 = from user is blacklisted
+     * -3 = from domain is blacklisted
+     * -4 = from name is blacklisted
+
+   Example 1.10. secf_check_from_hdr usage
+                ...
+        secf_check_from_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because From user '$
+fU' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because From domain
+'$fd' is blacklisted");
+                        exit;
+                case -4:
+                        xlog("L_ALERT", "$rm to $si blocked because From name '$
+fn' is blacklisted");
+                        exit;
+        };
+                ...
+
+4.5.  secf_check_to_hdr ()
+
+   Do the same as secf_check_from_hdr function but with the to header.
+
+   Return values are:
+     * 4 = to name is whitelisted
+     * 3 = to domain is whitelisted
+     * 2 = to user is whitelisted
+     * 1 = to header not found
+     * -1 = error
+     * -2 = to user is blacklisted
+     * -3 = to domain is blacklisted
+     * -4 = to name is blacklisted
+
+   Example 1.11. secf_check_to_hdr usage
+                ...
+        secf_check_to_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because To user '$tU
+' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because To domain '$
+td' is blacklisted");
+                        exit;
+                case -4:
+                        xlog("L_ALERT", "$rm to $si blocked because To name '$tn
+' is blacklisted");
+                        exit;
+        };
+                ...
+
+4.6.  secf_check_contact_hdr ()
+
+   Do the same as secf_check_from_hdr function but with the contact
+   header.
+
+   Return values are:
+     * 3 = contact domain is whitelisted
+     * 2 = contact user is whitelisted
+     * 1 = contact header not found
+     * -1 = error
+     * -2 = contact user is blacklisted
+     * -3 = contact domain is blacklisted
+
+   Example 1.12. secf_check_contact_hdr usage
+                ...
+        secf_check_contact_hdr();
+        switch ($?) {
+                case -2:
+                        xlog("L_ALERT", "$rm to $si blocked because Contact user
+ '$ct' is blacklisted");
+                        exit;
+                case -3:
+                        xlog("L_ALERT", "$rm to $si blocked because Contact doma
+in '$ct' is blacklisted");
+                        exit;
+        };
+                ...
+
+4.7.  secf_check_dst (string)
+
+   It checks if the destination number is blacklisted. It must be user for
+   INVITE messages. If the value of dst_exact_match is 1, the call will
+   appear as blacklisted if the destination is exactly the same. If the
+   value is 0, every destination whose number begins with a number
+   appearing on the destination blacklist will be rejected.
+
+   Return values are:
+     * 2 (if the value is whitelisted)
+     * 1 (if the value not found)
+     * -2 (if the value is blacklisted)
+
+   Example 1.13. secf_check_dst usage
+                ...
+                if (is_method("INVITE")) {
+                        secf_check_dst($rU);
+                        if ($? == -2) {
+                                xlog("L_ALERT", "$rm from $si blocked because de
+stination $rU is blacklisted");
+                                send_reply("403", "Forbidden");
+                                exit;
+                        }
+                }
+                ...
+
+4.8.  secf_check_sqli_hdr (string)
+
+   Search for illegal characters in the given value.
+
+   Example 1.14. secf_check_sqli_hdr usage
+                ...
+        secf_check_sqli_hdr($ua);
+        if ($? == -1) {
+                xlog("L_ALERT", "$rm from $si blocked because possible SQLi foun
+d in the user-agent header ($ua)");
+                exit;
+        }
+
+                ...
+
+4.9.  secf_check_sqli_all ()
+
+   Search for illegal characters in several headers (user-agent, from, to
+   and contact). If illegal characters are found the message will be
+   dropped.
+
+   Example 1.15. secf_check_sqli_all usage
+                ...
+                secf_check_sqli_all();
+                ...
+
+5. RPC commands
+
+   5.1. secfilter.reload
+   5.2. secfilter.print
+   5.3. secfilter.add_dst
+   5.4. secfilter.add_bl
+   5.5. secfilter.add_wl
+
+5.1.  secfilter.reload
+
+   Reload all blacklisted and whitelisted values from database.
+
+   Example 1.16. secfilter.reload usage
+                ...
+                kamcmd secfilter.reload
+                ...
+
+5.2.  secfilter.print
+
+   Print blacklisted and whitelisted values. Without parameters it will
+   print all values. If you enter a type it will print this type values
+   only.
+
+   Possible values are:
+     * (none) (show all data)
+     * ua (show blacklisted and whitelisted user-agents)
+     * country (show blacklisted and whitelisted countries)
+     * domain (show blacklisted and whitelisted domains)
+     * user (show blacklisted and whitelisted users)
+     * ip (show blacklisted and whitelisted IP addresses)
+     * dst (show blacklisted destinations)
+
+   Example 1.17. secfilter.print usage
+                ...
+                kamcmd secfilter.print
+                kamcmd secfilter.print ua
+                kamcmd secfilter.print country
+                kamcmd secfilter.print dst
+                ...
+
+5.3.  secfilter.add_dst
+
+   Insert values into destination blacklist. These values will be checked
+   with the function secf_check_dst to verify if the destination number
+   can be called.
+
+   Parameters:
+     * number (number to add to the destination blacklist)
+
+   Example 1.18. secfilter.add_dst usage
+                ...
+                kamcmd secfilter.add_dst 555123123
+                ...
+
+5.4.  secfilter.add_bl
+
+   Insert values into blacklist.
+
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to add to the blacklist)
+
+   Example 1.19. secfilter.add_bl usage
+                ...
+                kamcmd secfilter.add_bl ua friendly-scanner
+                kamcmd secfilter.add_bl user sipvicious
+                ...
+
+5.5.  secfilter.add_wl
+
+   Insert values into whitelist.
+
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to add to the whitelist)
+
+   Example 1.20. secfilter.add_wl usage
+                ...
+                kamcmd secfilter.add_wl country es
+                kamcmd secfilter.add_wl user trusted_user
+                ...
+
+6. Installation
+
+   6.1. Database setup
+
+6.1. Database setup
+
+   Before running Kamailio with the secfilter module, it is necessary to
+   setup the database table where the module will read the blacklist data
+   from. In order to do that, if the table was not created by the
+   installation script or you choose to install everything by yourself you
+   can use the secfilter-create.sql SQL script in the database directories
+   in the kamailio/scripts folder as a template. Database and table name
+   can be set with module parameters so they can be changed, but the name
+   of the columns must match the ones in the SQL script. You can also find
+   the complete database documentation on the project webpage,
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+   Example 1.21. Example database content - secfilter table
+                ...
+                +----+-----------+-----------+------------------+
+                | id | action    | type      | data             |
+                +----+-----------+-----------+------------------+
+                |  1 | 0         | 2         | 1.1.1.1          |
+                |  2 | 0         | 0         | friendly-scanner |
+                |  3 | 0         | 0         | pplsip           |
+                |  4 | 0         | 0         | sipcli           |
+                |  5 | 0         | 4         | sipvicious       |
+                |  6 | 0         | 1         | ps               |
+                |  7 | 0         | 3         | 5.56.57.58       |
+                |  8 | 1         | 0         | asterisk pbx     |
+                |  9 | 1         | 2         | sip.mydomain.com |
+                | 10 | 2         | 0         | 555123123        |
+                | 11 | 2         | 0         | 555998776        |
+                +----+-----------+-----------+------------------+
+                ...
+
+   Action values are:
+     * 0 (blacklist)
+     * 1 (whitelist)
+     * 2 (destination)
+
+   Type values are:
+     * 0 (user-agent)
+     * 1 (country)
+     * 2 (domain)
+     * 3 (IP address)
+     * 4 (user)

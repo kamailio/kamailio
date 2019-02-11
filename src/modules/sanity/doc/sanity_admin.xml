@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+	<title>Admin Guide</title>
+    <section id="sanity.overview">
+	<title>Overview</title>
+	<para>
+		This module aims to implement several sanity checks on incoming
+		requests which are suggested or even required by a RFC, but are
+		not available yet in the core of &kamailio;.
+	</para>
+	<para>
+		These checks are not required by &kamailio; itself for its functionality.
+		But on the other side it does not make much sense if a broken
+		request traverses through a SIP network if it is rejected sooner
+		or later by a SIP device any way. As every sanity check cost extra
+		performance because of additional parsing and evaluation it
+		is with this module now up to the &kamailio; administrator what checks
+		should be done on which request.
+	</para>
+	<para>
+		The following checks are available:
+		<itemizedlist>
+		<listitem>
+			<para>
+			ruri sip version - (1) - checks if the SIP version in the request
+			URI is supported, currently only 2.0.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			ruri scheme - (2) - checks if the URI scheme of the request URI is
+			supported (sip[s]|tel[s]) by &kamailio;
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			required headers - (4) -checks if the minimum set of required headers
+			to, from, cseq, callid and via is present in the request.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			via sip version - (8) - disabled.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			via protocol - (16) - disabled.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			Cseq method - (32) - checks if the method from the Cseq header is equal
+			to the request method.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			Cseq value - (64) - checks if the number in the Cseq header is a valid
+			unsigned integer.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			content length - (128) - checks if the size of the body matches with the
+			value from the content length header.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			expires value - (256) - checks if the value of the expires header is a
+			valid unsigned integer.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			proxy require - (512) - checks if all items of the proxy require header
+			are present in the list of the extensions from the module
+			parameter proxy_require.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			parse uri's - (1024) - checks if the specified URIs are present and
+			parseable by the &kamailio; parsers
+			</para>
+		</listitem>
+		<listitem>
+		        <para>
+			digest credentials (2048) - Check all instances of digest credentials in a
+			message. The test checks whether there are all required
+			digest parameters and that they have meaningful values.
+			<emphasis>NOTE:</emphasis> the message will be considered invalid
+			if the authorization scheme differs from "digest",
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			duplicated To/From tags (4096) - checks for the presence of duplicated
+			tags in To/From headers.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			authorization header (8192) - checks if the Authorization is valid
+			if the scheme is "digest" (see "digest credentials" above), always
+			returns success for other schemes.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			first via header (16384) - checks if the first Via header is
+			available, can be parsed and has an address value.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+    </section>
+
+    <section id="sanity.dep">
+	<title>Dependencies</title>
+	<para>
+	    The following modules must be loaded before this module:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>sl</emphasis> - Stateless replies.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+
+<section id="sanity.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="sanity.p.default_checks">
+	<title><varname>default_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which of the checks from the sanity
+		module are executed if no parameter was given to the <function>sanity_check</function>
+		function call. By default all implemented checks are included
+		in the execution of the <function>sanity_check</function> function. The integer value
+		is the sum of the check numbers which should be executed by default.
+	</para>
+	<para>
+	    Default value is <quote>3047</quote>. This resolves to the following list of
+		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
+		cseq_method (32), cseq_value (64), content_length (128), 
+		expires_value (256), proxy_require (512), digest credentials (2048).
+	</para>
+	<example>
+	    <title>Set <varname>default_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "default_checks", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="sanity.p.uri_checks">
+	<title><varname>uri_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which URIs are going to be checked
+		if the 'parse uri' will be executed.
+	</para>
+	<para>
+		Default value is 7. This resolves to the following list of
+		parsed URIs: Request URI (1), From URI (2) and To URI (4).
+	</para>
+	<example>
+	    <title>Set <varname>uri_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "uri_checks", 3)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="sanity.p.proxy_require">
+	<title><varname>proxy_require</varname> (string)</title>
+	<para>
+		This parameter sets the list of supported SIP extensions for this &kamailio;.
+		The value is expected as a comma separated list of extensions.
+		This list is separated into single tokens. Each token from
+		a proxy require header will be compared with the tokens from this
+		list.
+	</para>
+	<example>
+	    <title>Set <varname>proxy_require</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "proxy_require", "foo, bar")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="sanity.p.autodrop">
+	<title><varname>autodrop</varname> (integer)</title>
+	<para>
+		This parameter controls whether the module drops 
+		the SIP message automatically if the sanity checks fail. Default value
+		is 1 (auto drop). If set to 0, sanity_check() function will return
+		-1 (false) to configuration file, allowing to write log messages for
+		example - be sure you <quote>exit</quote> execution of config without
+		sending a SIP reply because it is sent by module itself.
+	</para>
+	<example>
+	    <title>Set <varname>autodrop</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "autodrop", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="sanity.p.noreply">
+	<title><varname>noreply</varname> (int)</title>
+	<para>
+		If set to 1, then the module does not send a SIP reply internally in
+		case there is an error detected when performing the sanity checks.
+		There is the option to send the reply from config file with functions
+		from sl or tm module as well as sanity_reply() from this module.
+	</para>
+	<para>
+		Default value: 0.
+	</para>
+	<example>
+	    <title>Set <varname>noreply</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "noreply", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+</section>
+
+   <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+    <title>Functions</title>
+    <section id="sanity.f.sanity_check">
+	    <title>
+		<function>sanity_check([msg_checks [, uri_checks]])</function>
+	    </title>
+	<para>
+		This function makes a row of sanity checks over the given SIP request. The
+		behavior of the function is also controlled by <varname>autodrop</varname> parameter.
+		If autodrop=0, the function returns false (-1) if one of the checks failed.
+		When autodrop=1, the function stops the execution of configuration file.
+		In both cases, if one of the checks fails the module sends a precise error
+		reply via SL <function>send_reply()</function>. Thus there is no need to reply with a generic 
+		error message.
+	</para>
+	<para>
+		The parameters can be static integers or variables holding integer values.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+if (!sanity_check()) {
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes an integer argument which overwrites
+		the global module parameter <varname>default_checks</varname>. 
+		This makes it possible to run certain tests from script regions.
+		The integer value is again the sum
+		of the checks (like for the module parameter) which should be executed
+		at this function call.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage with parameter</title>
+	    <programlisting>
+<![CDATA[
+...
+if (method=="REGISTER" && !sanity_check("256")) {
+	/* the register contains an invalid expires value and is replied with a 400 */
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes a second integer argument which
+		overwrites the global module parameter uri_checks and thus determines
+		which URIs will be checked if the parse uri test will be executed.
+	</para>
+	<example>
+		<title><function>sanity_check</function> usage with two parameters</title>
+		<programlisting>
+<![CDATA[
+...
+if (method=="INVITE" && !sanity_check("1024", "6")) {
+	/* the INVITE contains an invalid From or To header and is replied with a 400 */
+	exit;
+}
+...
+]]>
+		</programlisting>
+	</example>
+	</section>
+	<section id="sanity.f.sanity_reply">
+	    <title>
+		<function>sanity_reply()</function>
+	    </title>
+	<para>
+	Send a SIP reply using the code and reason text set internally by the module
+	when detecting errors while performing the sanity checks. It is done only
+	when parameter noreply is set to 1.
+	</para>
+	<example>
+		<title><function>sanity_reply</function> usage</title>
+		<programlisting>
+...
+if(!sanity_check("1024", "6")) {
+   xdbg("sanity checks failed\n");
+   sanity_reply();
+   exit;
+}
+...
+		</programlisting>
+	</example>
+	</section>
+</section>
+</chapter>

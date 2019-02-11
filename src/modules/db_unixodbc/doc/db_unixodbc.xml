@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>unixodbc Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Marco</firstname>
+		<surname>Lorrai</surname>
+		<affiliation><orgname>abbeynet.it</orgname></affiliation>
+		<address>
+			<email>marco.lorrai@abbeynet.it</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Marco</firstname>
+		<surname>Lorrai</surname>
+		<address>
+			<email>marco.lorrai@abbeynet.it</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2005</year>
+		<year>2006</year>
+		<holder>Marco Lorrai</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="db_unixodbc_admin.xml"/>
+	<xi:include href="db_unixodbc_devel.xml"/>
+	
+	
+</book>

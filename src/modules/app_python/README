@@ -1,0 +1,193 @@
+app_python Module
+
+Maxim Sobolev
+
+Edited by
+
+Maxim Sobolev
+
+   Copyright © 2010 Maxim Sobolev
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. load (string)
+              3.2. script_name (string)
+              3.3. mod_init_function (string)
+              3.4. child_init_method (string)
+
+        4. Functions
+
+              4.1. python_exec(method [, args])
+
+        5. RPC Commands
+
+              5.1. app_python.reload
+              5.2. app_python.api_list
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. Set mod_init_function parameter
+   1.3. Set child_init_method parameter
+   1.4. python_exec usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. load (string)
+        3.2. script_name (string)
+        3.3. mod_init_function (string)
+        3.4. child_init_method (string)
+
+   4. Functions
+
+        4.1. python_exec(method [, args])
+
+   5. RPC Commands
+
+        5.1. app_python.reload
+        5.2. app_python.api_list
+
+1. Overview
+
+   This module allows executing Python scripts from config file, exporting
+   functions to access the SIP message from Python.
+
+   For some basic examples of Python scripts that can be used with this
+   module, look at the files inside source tree located at
+   'modules/app_python/python_examples/'.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * python-dev - Python devel library.
+
+3. Parameters
+
+   3.1. load (string)
+   3.2. script_name (string)
+   3.3. mod_init_function (string)
+   3.4. child_init_method (string)
+
+3.1. load (string)
+
+   The path to the file with Python code to be executed from configuration
+   file.
+
+   Default value is “/usr/local/etc/kamailio/handler.py”.
+
+   Example 1.1. Set load parameter
+...
+modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
+...
+
+3.2. script_name (string)
+
+   This is same as "load" parameter, kept for backward compatibility with
+   the older versions of the module.
+
+3.3. mod_init_function (string)
+
+   The Python function to be executed by this module when it is
+   initialized by Kamailio.
+
+   Default value is “mod_init”.
+
+   Example 1.2. Set mod_init_function parameter
+...
+modparam("app_python", "mod_init_function", "my_mod_init")
+...
+
+3.4. child_init_method (string)
+
+   The Python function to be executed by this module when a new worker
+   process (child) is initialized by Kamailio.
+
+   Default value is “child_init”.
+
+   Example 1.3. Set child_init_method parameter
+...
+modparam("app_python", "child_init_method", "my_child_init")
+...
+
+4. Functions
+
+   4.1. python_exec(method [, args])
+
+4.1.  python_exec(method [, args])
+
+   Execute the Python function with the name given by the parameter
+   'method'. Optionally can be provided a second string with parameters to
+   be passed to the Python function.
+
+   Both parameters can contain pseudo-variables.
+
+   Example 1.4. python_exec usage
+...
+python_exec("my_python_function");
+python_exec("my_python_function", "my_params");
+python_exec("my_python_function", "$rU");
+...
+
+5. RPC Commands
+
+   5.1. app_python.reload
+   5.2. app_python.api_list
+
+5.1.  app_python.reload
+
+   Marks the need to reload the Python script. The actual reload is done
+   by each worker when the next Python method is invoked.
+
+   Name: app_python.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python.reload
+...
+
+5.2.  app_python.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: app_python.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python.api_list
+...

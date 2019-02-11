@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- I-CSCF Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module provides all functionality to build an IMS ICSCF.</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>TM - Transaction Manager</para>
+        </listitem>
+
+        <listitem>
+          <para>SL - Stateless Reply</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP - C Diameter Peer</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP_AVP - CDP AVP Applications</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the Kamailio internal IMS library.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>route_lir_user_unknown</varname> (string)</title>
+
+      <para>This is the route which is executed if HSS returns "user unknown"
+      in LIR</para>
+
+      <para><emphasis> Default value is ''. </emphasis></para>
+
+      <example>
+        <title><varname>route_lir_user_unknown</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf","route_lir_user_unknown", "lir_term_user_unknown")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>route_uar_user_unknown</varname> (string)</title>
+
+      <para>This is the route which is executed if HSS returns "user unknown"
+      in UAR.</para>
+
+      <para><emphasis> Default value is ''. </emphasis></para>
+
+      <example>
+        <title><varname>route_uar_user_unknown</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf","route_uar_user_unknown", "uar_term_user_unknown")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>scscf_entry_expiry</varname> (integer)</title>
+
+      <para>This is the time in s after which S-CSCF entries in the I-CSCF's
+      SCSCF list will expire.</para>
+
+      <para><emphasis> Default value is 300. </emphasis></para>
+
+      <example>
+        <title><varname>scscf_entry_expiry</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf","scscf_entry_expiry", 300)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_forced_peer</varname> (string)</title>
+
+      <para>FQDN of Diameter Peer (HSS) to use for communication (UAR, LIR).
+      If you use this, the routing defined in your diameter xml configuration
+      file (CDP) will be ignored and as a result you will lose the benefits of
+      load balancing and failover. </para>
+
+      <para><emphasis> Default value is "". </emphasis></para>
+
+      <example>
+        <title><varname>cxdx_forced_peer</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
+...
+    </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_dest_realm</varname> (string)</title>
+
+      <para>Destination realm to be used in Diameter messags to HSS</para>
+
+      <para><emphasis> Default value is "ims.smilecoms.com".</emphasis></para>
+
+      <example>
+        <title><varname>cxdx_dest_realm</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "cxdx_dest_realm", "ims.smilecoms.com")
+...
+    </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>use_preferred_scscf_uri</varname> (int)</title>
+
+      <para>Whether or not this ICSCF has a preferred S-CSCF to use when the
+      HSS returns a list of SCSCFs.  0 means this I-CSCF has no preferred
+      SCSCF.  1 means it has a preferred S-CSCF.</para>
+
+      <para><emphasis> Default value is 0.</emphasis></para>
+
+      <example>
+        <title><varname>use_preferred_scscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "use_preferred_scscf_uri", 1)
+...
+    </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>preferred_scscf_uri</varname> (string)</title>
+
+      <para>If use_preferred_scscf_uri is set then this is the URI of the preferred
+	  SCSCF.</para>
+
+      <para><emphasis> Default value is "".</emphasis></para>
+
+      <example>
+        <title><varname>preferred_scscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
+...
+    </programlisting>
+      </example>
+    </section>
+    
+    
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function
+      moreinfo="none">I_scscf_select(initial)</function></title>
+
+      <para>This function is used to retrieve the next unused SCSCF from
+      the list for this request (based on callid).</para>
+
+      <para>A positive return code (1) means an SCSCF was found and is armed
+      for routing.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>initial</emphasis> - Signal whether or not this is
+          an original or subsequent.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE |
+      FAILURE_ROUTE.</para>
+
+      <example>
+        <title><function moreinfo="none">I_scscf_select</function>
+        usage</title>
+
+        <programlisting format="linespecific">...
+if (I_scscf_select("0")) {
+     #there is an S-CSCF list - no need to do a UAR
+     t_on_reply("register_reply");
+     t_on_failure("register_failure");
+     t_relay();
+}
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">I_scscf_drop()</function></title>
+
+      <para>Drop the list of SCSCFs for this request (based on callid).</para>
+
+      <para>This function can be used from REQUEST_ROUTE | FAILURE_ROUTE |
+      REPLY_ROUTE</para>
+
+      <example>
+        <title><function moreinfo="none">I_scscf_drop</function> usage</title>
+
+        <programlisting format="linespecific">...
+I_scscf_drop();
+...
+</programlisting>
+      </example>
+
+      <para>.</para>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">I_perform_user_authorization_request(route_block,
+      capabalities)</function></title>
+
+      <para>Perform a UAR on Diameter CXDX interface. This function will build
+      a list of SCSCFs to be used and populate the SCSCF list for the request.
+      On a successful return of this message you can get the next available
+      SCSCF by using the I_scscf_select function in 4.1.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Route block to resume after async UAR Diameter reply.</para>
+        </listitem>
+
+        <listitem>
+          <para>capabilities - whether to request capabilities or not "1" -
+          with capabilities, "0" - no capabilities.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <para>p.s. this is executed asynchronously. See example on how to
+      retrieve return value</para>
+
+      <example>
+        <title>I_perform_user_authorization_request usage</title>
+
+        <programlisting format="linespecific">
+...
+I_perform_user_authorization_request("REG_UAR_REPLY","0"); #0=REG/DEREG; 1=REG+Capabilities
+exit;
+...
+route[REG_UAR_REPLY]
+{
+    #this is async so to know status we have to check the reply avp
+    switch ($avp(s:uaa_return_code)){
+            case 1: #success
+                    if (I_scscf_select("0")){
+                            t_on_failure("register_failure");
+                            t_on_reply("register_reply");
+                            #now relay to appropriate SCSCF
+                            if (!t_relay()) {
+                                    t_reply("500", "Error forwarding to SCSCF");
+                            }
+                    } else {#select failed
+                            I_scscf_drop();
+                            t_reply("500", "Server error on SCSCF Select (UAR)");
+                    }       
+                    break;          
+            case -1: #failure
+                    xlog("L_ERR", "UAR failure - error response sent from module\n");
+                    break;
+            case -2: #error
+                    xlog("L_ERR", "UAR error - sending error response now\n");
+                    t_reply("500", "UAR failed");
+                    break;
+            default:
+                    xlog("L_ERR", "Unknown return code from UAR, value is [$avp(s:uaa_return_code)]\n");
+                    t_reply("500", "Unknown response code from UAR");
+                    break;
+    }
+}
+...          
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">I_perform_location_information_request(route_block)</function></title>
+
+      <para>Perform a LIR on Diameter CXDX interface.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Route block to resume after async LIR Diameter reply.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <para>p.s. this is executed asynchronously. See example on how to
+      retrieve return value</para>
+
+      <example>
+        <title>I_perform_location_information_request</title>
+
+        <programlisting format="linespecific">
+...
+I_perform_location_information_request("SESSION_LIR_REPLY","0");
+exit;
+...
+route[SESSION_LIR_REPLY]
+{
+    if ($avp(lia_return_code) == 1) {
+            if (I_scscf_select("0")) {
+                    append_branch();
+                    t_on_reply("initial_request_reply");
+                    t_on_failure("initial_request_failure");
+                    if (!t_relay()) {
+                            t_reply("500","Error forwarding towards S-CSCF");
+                            break;
+                    }
+                    break;
+            } else {
+                    xlog("L_DBG", "dropping scscf list on initial request\n");
+                    I_scscf_drop();
+                    t_reply("500", "Server error on LIR select S-CSCF");
+                    break;
+            }
+    } else {
+            t_reply("500", "Server error on LIR");
+            break;
+    }
+    break;
+}
+...          
+        </programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>Statistics</title>
+
+    <section>
+      <title>Average UAR Response Time (uar_avg_response_time)</title>
+
+      <para>The average response time in milliseconds for UAR-UAA
+      transaction.</para>
+    </section>
+
+    <section>
+      <title>UAR Timeouts (uar_timeouts)</title>
+
+      <para>The number of UAR timeouts.</para>
+    </section>
+
+    <section>
+      <title>Average LIR Response Time (lir_avg_response_time)</title>
+
+      <para>The average response time in milliseconds for LIR-LIA
+      transaction.</para>
+    </section>
+
+    <section>
+      <title>LIR Timeouts (lir_timeouts)</title>
+
+      <para>The number of LIR timeouts.</para>
+    </section>
+  </section>
+</chapter>

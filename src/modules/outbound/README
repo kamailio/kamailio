@@ -1,0 +1,508 @@
+Outbound Module
+
+Peter Dunkley
+
+   Crocodile RCS Ltd
+
+   Copyright © 2012-2013 Crocodile RCS Ltd
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+
+              1.1. Edge Proxy Keep-Alives (STUN)
+              1.2. Flow Timer
+
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. force_outbound_flag (integer)
+              3.2. force_no_outbound_flag (integer)
+
+   List of Examples
+
+   1.1. Edge Proxy Configuration
+   1.2. Registrar Configuration
+   1.3. Set force_outbound_flag parameter
+   1.4. Set force_no_outbound_flag parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Edge Proxy Keep-Alives (STUN)
+        1.2. Flow Timer
+
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. force_outbound_flag (integer)
+        3.2. force_no_outbound_flag (integer)
+
+1. Overview
+
+   1.1. Edge Proxy Keep-Alives (STUN)
+   1.2. Flow Timer
+
+   This module provides C-API functions to enable Kamailio to be used as
+   an outbound Edge Proxy (see RFC5626 section 5).
+
+   The path and rr modules will bind to this module if it is loaded before
+   they are.
+
+1.1. Edge Proxy Keep-Alives (STUN)
+
+   Outbound Edge Proxies MUST support STUN NAT keep-alives on their SIP
+   UDP ports. Kamailio supports this though the “stun” module.
+
+1.2. Flow Timer
+
+   The maximum interval at which a User Agent must send a keep-alive may
+   be specified by the Registrar using the Flow-Timer: header in 2xx
+   responses to REGISTERs.
+
+   When using TCP or TLS as the SIP transport care should be taken to set
+   the “tcp_connection_lifetime” on the Edge Proxy to a value slightly
+   larger than the interval the Registrar is using for flow timer. Setting
+   “tcp_connection_lifetime” to less than the interval could cause
+   connections to be lost, and setting it to a value much larger than the
+   interval will keep connections open far longer than is required (which
+   is wasteful).
+
+   Application-layer keep-alives are optional when the underlying
+   transport already has a keep-alive mechanism. The WebSocket transport
+   has a transport-layer keep-alive. When using the WebSocket transport
+   the “keepalive_timeout” should be set to a value a little greater than
+   the Registrar flow timer interval and a little less than the
+   “tcp_connection_lifetime”.
+
+   Example 1.1. Edge Proxy Configuration
+#!KAMAILIO
+#
+# Edge proxy configuration
+#
+
+#!subst "/REGISTRAR_IP/192.168.122.3/"
+#!subst "/REGISTRAR_PORT/5060/"
+#!substdef "/FLOW_TIMER/20/"
+
+####### Global Parameters #########
+
+debug=2
+log_stderror=no
+log_facility=LOG_LOCAL0
+fork=yes
+children=4
+alias="example.com"
+mpath="/usr/lib64/kamailio/modules"
+tcp_connection_lifetime=30 # FLOW_TIMER + 10
+force_rport=yes
+
+
+####### Modules Section ########
+
+loadmodule "tm.so"
+loadmodule "sl.so"
+loadmodule "outbound.so"
+loadmodule "rr.so"
+loadmodule "path.so"
+loadmodule "pv.so"
+loadmodule "maxfwd.so"
+loadmodule "xlog.so"
+loadmodule "sanity.so"
+loadmodule "ctl.so"
+loadmodule "textops.so"
+loadmodule "siputils.so"
+loadmodule "stun.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# ----- tm params -----
+modparam("tm", "failure_reply_mode", 3)
+
+# ----- rr params -----
+modparam("rr", "append_fromtag", 0)
+
+
+####### Routing Logic ########
+
+request_route {
+        route(REQINIT);
+
+        if (is_method("CANCEL")) {
+                if (t_check_trans()) {
+                        route(RELAY);
+                }
+                exit;
+        }
+
+        route(WITHINDLG);
+
+        t_check_trans();
+
+        if (is_method("REGISTER")) {
+                remove_hf("Route");
+                add_path();
+                $du = "sip:REGISTRAR_IP:REGISTRAR_PORT";
+        } else {
+                if (is_method("INVITE|SUBSCRIBE"))
+                        record_route();
+
+                if (@via[2] == "") {
+                        # From client so route to registrar...
+
+                        if ($rU == $null) {
+                                sl_send_reply("484", "Address Incomplete");
+                                exit;
+                        }
+                        remove_hf("Route");
+                        $du = "sip:REGISTRAR_IP:REGISTRAR_PORT";
+                } else {
+                        # From registrar so route using "Route:" headers...
+
+                        if (!loose_route()) {
+                                switch($rc) {
+                                case -2:
+                                        sl_send_reply("403", "Forbidden");
+                                        exit;
+                                default:
+                                        xlog("L_ERR", "in request_route\n");
+                                        sl_reply_error();
+                                        exit;
+                                }
+                        }
+
+                        t_on_failure("FAIL_OUTBOUND");
+                }
+        }
+
+        route(RELAY);
+}
+
+route[RELAY] {
+        if (!t_relay()) {
+                sl_reply_error();
+        }
+        exit;
+}
+
+route[REQINIT] {
+        if (!mf_process_maxfwd_header("10")) {
+                sl_send_reply("483","Too Many Hops");
+                exit;
+        }
+
+        if(!sanity_check("1511", "7"))
+        {
+                xlog("Malformed SIP message from $si:$sp\n");
+                exit;
+        }
+}
+
+route[WITHINDLG] {
+        if (has_totag()) {
+                if (!loose_route()) {
+                        switch($rc) {
+                        case -2:
+                                sl_send_reply("403", "Forbidden");
+                                exit;
+                        default:
+                                if (is_method("ACK")) {
+                                        if ( t_check_trans() ) {
+                                                route(RELAY);
+                                                exit;
+                                        } else {
+                                                exit;
+                                        }
+                                }
+                                sl_send_reply("404","Not Found");
+                        }
+                } else {
+                        if (is_method("NOTIFY")) {
+                                record_route();
+                        }
+                        route(RELAY);
+                }
+                exit;
+        }
+}
+
+onreply_route {
+        if (!t_check_trans()) {
+                drop;
+        }
+
+        if ($rm == "REGISTER" && $rs >= 200 && $rs <= 299) {
+                remove_hf("Flow-Timer");
+                if ($(hdr(Require)[*])=~"outbound")
+                        insert_hf("Flow-Timer: FLOW_TIMER\r\n", "Call-ID");
+        }
+}
+
+failure_route[FAIL_OUTBOUND] {
+        if (t_branch_timeout() || !t_branch_replied()) {
+                send_reply("430", "Flow Failed");
+        }
+}
+
+   Example 1.2. Registrar Configuration
+MAILIO
+#
+# Registrar configuration
+#
+
+
+####### Global Parameters #########
+
+debug=2
+log_stderror=no
+log_facility=LOG_LOCAL0
+fork=yes
+children=4
+alias="example.com"
+mpath="/usr/lib64/kamailio/modules"
+
+
+####### Modules Section ########
+
+loadmodule "tm.so"
+loadmodule "tmx.so"
+loadmodule "sl.so"
+loadmodule "rr.so"
+loadmodule "pv.so"
+loadmodule "maxfwd.so"
+loadmodule "xlog.so"
+loadmodule "sanity.so"
+loadmodule "ctl.so"
+loadmodule "textops.so"
+loadmodule "siputils.so"
+loadmodule "usrloc.so"
+loadmodule "registrar.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+
+# ----- tm params -----
+modparam("tm", "failure_reply_mode", 3)
+modparam("tm", "restart_fr_on_each_reply", 0)
+modparam("tm", "contact_flows_avp", "tm_contact_flows")
+modparam("tm", "contacts_avp", "tm_contacts")
+
+# ----- rr params -----
+modparam("rr", "append_fromtag", 0)
+
+# ----- registrar params -----
+modparam("registrar", "use_path", 1)
+modparam("registrar", "gruu_enabled", 1)
+modparam("registrar", "outbound_mode", 1)
+
+
+####### Routing Logic ########
+
+request_route {
+        route(REQINIT);
+
+        if (is_method("CANCEL")) {
+                if (t_check_trans()) {
+                        route(RELAY);
+                }
+                exit;
+        }
+
+        route(WITHINDLG);
+
+        t_check_trans();
+
+        remove_hf("Route");
+        if (is_method("INVITE|SUBSCRIBE"))
+                record_route();
+
+        route(REGISTRAR);
+
+        if ($rU==$null) {
+                xlog("L_INFO", "Address Incomplete\n");
+                send_reply("484","Address Incomplete");
+                exit;
+        }
+
+        route(LOCATION);
+}
+
+
+route[RELAY] {
+        if (!t_relay()) {
+                xlog("L_ERR", "t_relay() failed\n");
+                sl_reply_error();
+        }
+        exit;
+}
+
+route[REQINIT] {
+        if (!mf_process_maxfwd_header("10")) {
+                xlog("L_INFO", "Too Many Hops\n");
+                send_reply("483","Too Many Hops");
+                exit;
+        }
+
+        if(!sanity_check("1511", "7"))
+        {
+                xlog("Malformed SIP message from $si:$sp\n");
+                exit;
+        }
+}
+
+route[WITHINDLG] {
+        if (has_totag()) {
+                if (loose_route()) {
+                        if (is_method("NOTIFY")) {
+                                record_route();
+                        }
+                        route(RELAY);
+                } else {
+                        if (is_method("ACK")) {
+                                if (t_check_trans()) {
+                                        route(RELAY);
+                                        exit;
+                                } else {
+                                        exit;
+                                }
+                        }
+                        xlog("L_INFO", "Not Found");
+                        send_reply("404","Not Found");
+                }
+                exit;
+        }
+}
+
+route[REGISTRAR] {
+        if (is_method("REGISTER"))
+        {
+                if (!save("location")) {
+                        xlog("L_ERR", "Unable to save location\n");
+                        sl_reply_error();
+                }
+                exit;
+        }
+}
+
+route[LOCATION] {
+        if (!lookup("location")) {
+                $var(rc) = $rc;
+                t_newtran();
+                switch ($var(rc)) {
+                        case -1:
+                        case -3:
+                                send_reply("404", "Not Found");
+                                exit;
+                        case -2:
+                                send_reply("405", "Method Not Allowed");
+                                exit;
+                }
+        }
+
+        if (!t_load_contacts() || !t_next_contacts()) {
+                xlog("L_ERR", "t_(load|next)_contacts() failed\n");
+                sl_reply_error();
+                exit;
+        }
+
+        t_on_failure("FAIL_TRANSACTION");
+        t_on_branch_failure("FAIL-BRANCH");
+        route(RELAY);
+        exit;
+}
+
+onreply_route {
+        if (!t_check_trans()) {
+                drop;
+        }
+}
+
+failure_route[FAIL_TRANSACTION] {
+        if (!t_check_status("6[0-9][0-9]")) {
+                if (t_next_contacts()) {
+                        t_relay();
+                        exit;
+                }
+        }
+
+        if (t_check_status("430")) {
+                t_reply("480", "Temporarily Unavailable");
+                exit;
+        }
+}
+
+event_route[tm:branch-failure:FAIL-BRANCH] {
+        if (t_check_status("403|430")
+                        || (t_branch_timeout() && !t_branch_replied())) {
+                unregister("location", "$tu", "$T_reply_ruid");
+
+                if (t_next_contact_flow()) {
+                        t_on_branch_failure("FAIL-BRANCH");
+                        t_relay();
+                }
+        }
+}
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None
+
+   The following modules are required to make proper use of this module:
+     * stun.
+
+2.2. External Libraries or Applications
+
+   The following libraries must be installed before running Kamailio with
+   this module loaded:
+     * OpenSSL.
+
+3. Parameters
+
+   3.1. force_outbound_flag (integer)
+   3.2. force_no_outbound_flag (integer)
+
+3.1. force_outbound_flag (integer)
+
+   A flag which, if set for a request, will force path and rr to add flow
+   tokens to Path: and Record-Route: headers regardless of the request
+   contents.
+
+   Default value is -1.
+
+   Example 1.3. Set force_outbound_flag parameter
+...
+modparam("outbound", "force_outbound_flag", 1)
+...
+
+3.2. force_no_outbound_flag (integer)
+
+   A flag which, if set for a request, will force path and rr not to add
+   flow tokens to Path: and Record-Route: headers regardless of the
+   request contents.
+
+   Default value is -1.
+
+   Example 1.4. Set force_no_outbound_flag parameter
+...
+modparam("outbound", "force_no_outbound_flag", 2)
+...

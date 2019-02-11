@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Admin Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The sca module implements Shared Call Appearances. It handles
+		SUBSCRIBE messages for call-info and line-seize events, and
+		sends call-info NOTIFYs to line subscribers to implement line
+		bridging. The module implements SCA as defined in Broadworks
+		SIP Access Side Extensions Interface Specifications, Release
+		13.0, version 1, sections 2, 3 and 4.
+	</para>
+	<para>
+		SCA group members receive call state notifications when other
+		group members participate in calls. An SCA caller can place a
+		call on hold, and the call may be retrieved from hold by
+		another member of the group.
+	</para>
+	<para>
+		Subscribers to SCA call-info events SUBSCRIBE to their
+		address-of-record (AoR), asking the application server to
+		send call-info NOTIFYs with line state information as lines
+		in the subscriber group are used.
+	</para>
+	<para>
+		For example, when an SCA subscriber takes the phone off hook,
+		it sends a line-seize SUBSCRIBE to the application server.
+		The application server acknowledges the request, and sends to
+		the subscriber a line-seize NOTIFY with the appearance index
+		of the line claimed for the subscriber. The application also
+		sends call-info NOTIFYs to the other SCA subscribers to the
+		AoR, letting them know that an appearance within the group has
+		gone off hook. Subscribers update their display appropriately.
+	</para>
+	<para>
+		Subscribers to an SCA address-of-record will receive call-info
+		NOTIFYs when a member of the group seizes a line (seized);
+		receives a 180 ringing response from the remote party (ringing);
+		receives a 183 progressing response from the remote party
+		(progressing); when the remote party answers the call (active);
+		when either party in the call places the call on hold (held);
+		and when an SCA line goes back on hook (idle).
+	</para>
+	<para>
+		The call-info subscriber information is stored in memory and
+		is periodically written to the database. Call state information
+		is stored in memory. A future release may periodically write
+		call state to the database, as well. The database is purely
+		for restoring subscriptions after a restart of the application
+		server. Subscriber information is also flushed to the database
+		when the service is stopped.
+	</para>
+	<para>
+		At the time of this writing, Polycom and Cisco handsets are
+		known to implement the call-info and line-seize event packages
+		defined in the document, which may be found freely on the web.
+	</para>
+	<para>
+		To date, this module has only been tested with Polycom
+		Soundpoint 550s and 650s running Polycom SIP 3.3.4.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+			<listitem>
+			<para>
+			<emphasis>a database module</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			<emphasis>sl</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			<emphasis>tm</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="sca.p.hash_table_size">
+		<title><varname>hash_table_size</varname> (integer)</title>
+		<para>
+		Size, as a power of two, of the shared memory hash table
+		containing the call-info subscriptions and the appearance
+		state. A larger power of two means better performance
+		(fewer collisions, making for fewer subscriber URI comparisons)
+		at the expense of increased shared memory use.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 9 (2 ^ 9 == 512).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_table_size</varname>:</title>
+		<programlisting format="linespecific">
+...
+# create shared memory hash table with 2^8 (256) slots
+modparam( "sca", "hash_table_size", 8 )
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="sca.p.call_info_max_expires">
+		<title><varname>call_info_max_expires</varname> (integer)</title>
+		<para>
+		The maximum allowed call-info subscription time in seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3600 (1 hour).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>call_info_max_expires</varname>:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "call_info_max_expires", 1800 )
+...
+		</programlisting>
+		</example>
+	</section>
+
+		<section id="sca.p.line_seize_max_expires">
+			<title><varname>line_seize_max_expires</varname> (integer)</title>
+			<para>
+		The maximum allowed line-seize subscription time in seconds.
+			</para>
+			<para>
+				<emphasis>
+			Default value is 15 (15 seconds).
+				</emphasis>
+			</para>
+		<para>
+		A maximum line-seize subscription time of 15 seconds is
+		recommended in the SIP Access Side Extensions document.
+		This interval is purposely short to prevent a client from
+		seizing an appearance without making a call for extended
+		periods of time.
+		</para>
+			<example>
+				<title>Set <varname>line_seize_max_expires</varname>:</title>
+				<programlisting format="linespecific">
+...
+modparam( "sca", "line_seize_max_expires", 30 )
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="sca.p.purge_expired_interval">
+			<title><varname>purge_expired_interval</varname> (integer)</title>
+			<para>
+		The period of time in seconds between purges of expired
+		call-info and line-seize subscriptions.
+			</para>
+			<para>
+				<emphasis>
+			Default value is 120 (2 minutes).
+				</emphasis>
+			</para>
+		<para>
+		On finding an expired subscription, the module removes the
+		subscription from the shared memory hash table, and sends a
+		NOTIFY with Subscription-State "terminated;expired" header
+		value to the subscriber. It also NOTIFYs other members of
+		the group, in the event that the expired subscription was
+		a line-seize.
+		</para>
+			<example>
+				<title>Set <varname>purge_expired_interval</varname>:</title>
+				<programlisting format="linespecific">
+...
+modparam( "sca", "purge_expired_interval", 60 )
+...
+				</programlisting>
+			</example>
+		</section>
+
+	<section id="sca.p.db_url">
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		URL of database to which subscribers will be written.
+		</para>
+		<para>
+		<emphasis>Default value is &defaultdb;</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "db_url", "&defaultdb;" )
+...
+		</programlisting>
+		</example>
+	</section>
+
+		<section id="sca.p.subs_table">
+			<title><varname>subs_table</varname> (str)</title>
+			<para>
+		Name of the database table where call-info subscriptions
+		are written.
+			</para>
+			<para>
+				<emphasis>
+			Default value is <quote>sca_subscriptions</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>subs_table</varname> parameter:</title>
+				<programlisting format="linespecific">
+...
+modparam( "sca", "subs_table", "call_info_subscriptions" )
+...
+				</programlisting>
+			</example>
+		</section>
+
+	<section id="sca.p.db_update_interval">
+		<title><varname>db_update_interval</varname> (integer)</title>
+		<para>
+		Period in seconds between writes of call-info subscriber
+		information to the database.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 300 (5 minutes).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_update_interval</varname>:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "db_update_interval", 120 )
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="sca.p.onhold_bflag">
+		<title><varname>onhold_bflag</varname> (integer)</title>
+		<para>
+		When bflag is set the media will be treated as on-hold and sdp
+		parse will be skipped. If the bflag is not set the
+		sdp will be parsed to detect on-hold.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>onhold_bflag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "onhold_bflag", 15)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sca.p.server_address">
+		<title><varname>server_address</varname> (string)</title>
+		<para>
+		The server address which will become the value of Contact header filed
+		for reply messages.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "server_address", "sip:10.10.10.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="sca.f.sca_handle_subscribe">
+		<title>
+		<function moreinfo="none">sca_handle_subscribe()</function>
+		</title>
+		<para>
+		The function handling call-info and line-seize SUBSCRIBE
+		requests. It stores or updates the subscriptions in shared
+		memory, and sends NOTIFYs to the subscriber and other
+		members of the group as needed.
+		</para>
+		<para>
+		For example, a line-seize SUBSCRIBE will cause the module to
+		reserve an appearance index for the subscriber; send a
+		line-seize NOTIFY to the subscriber indicating which appearance
+		index it must use; and send call-info NOTIFYs to other
+		subscribers to the address-of-record letting them know the
+		appearance is off hook.
+		</para>
+		<para>
+		This function can be used from the REQUEST_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+			<emphasis>1 - successful</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+			<para>
+			<emphasis>-1 - failed, error logged</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<example>
+		<title><function>sca_handle_subscribe</function> usage:</title>
+		<programlisting format="linespecific">
+...
+if ( is_method( "SUBSCRIBE" )) {
+	if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
+	sca_handle_subscribe();
+	exit;
+	}
+}
+...
+		</programlisting>
+		</example>
+	</section>
+
+		<section id="sca.f.sca_call_info_update">
+			<title>
+				<function moreinfo="none">sca_call_info_update([mask, to, from])</function>
+			</title>
+			<para>
+				<itemizedlist>
+					<listitem>
+						<para><emphasis>mask</emphasis> - integer (optional)</para>
+						<para>controls what to check as shared line (BOTH, CALLER, CALLEE)</para>
+						<itemizedlist>
+							<listitem><para>0 - SCA_CALL_INFO_SHARED_NONE (default) check both</para></listitem>
+							<listitem><para>1 - SCA_CALL_INFO_SHARED_CALLER</para></listitem>
+							<listitem><para>2 - SCA_CALL_INFO_SHARED_CALLEE</para></listitem>
+						</itemizedlist>
+					</listitem>
+					<listitem>
+						<para><emphasis>to</emphasis> - string (optional)</para>
+						<para>string to use as To and skip parsing To header from the message. The parameter allows pseudo-variables usage</para>
+					</listitem>
+					<listitem>
+						<para><emphasis>from</emphasis> - string (optional)</para>
+						<para>string to use as From and skip parsing From header from the message. The parameter allows pseudo-variables usage</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		<para>
+		The sca_call_info_update function updates call state for
+		SCA appearances. If a request or response packet contains
+		a Call-Info header, the function extracts call state from
+		the header and sends NOTIFYs to subscribers if needed. If
+		no Call-Info header is included in the packet, the module
+		looks up the To and From URIs to see if either are SCA
+		addresses-of-record. If either the To or From URI are SCA
+		AoRs, the function looks up the appearance by dialog and
+		updates call state as needed, sending NOTIFYs to members of
+		the group if the call state has changed.
+			</para>
+		<para>
+		The sca_call_info_update function updates call state for
+		INVITE, CANCEL, BYE, PRACK and REFER requests and responses.
+		</para>
+			<para>
+				This function can be used from the REQUEST_ROUTE, REPLY_ROUTE,
+		and FAILURE_ROUTE.
+			</para>
+			<para>
+				<emphasis>Return code:</emphasis>
+				<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>1 - successful</emphasis>
+					</para>
+					</listitem>
+
+					<listitem>
+					<para>
+						<emphasis>-1 - failed, error logged</emphasis>
+					</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<example>
+				<title><function>sca_call_info_update</function> usage:</title>
+				<programlisting format="linespecific">
+...
+route
+{
+...
+	sca_call_info_update(0, "$var(to)", "$var(from)@$var(domain)");
+...
+}
+
+onreply_route[REPLY_ROUTE]
+{
+...
+	if ( status =~ "[456][0-9][0-9]" ) {
+	# don't update SCA state here, since there may be
+	# failure route processing (e.g., call forwarding).
+	# update state in failure route instead.
+	break;
+	}
+
+	sca_call_info_update();
+...
+}
+
+failure_route[FAILURE_ROUTE]
+{
+...
+	sca_call_info_update();
+...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+	<title>Exported RPC Commands</title>
+
+	<section id="sca.r.all_subscriptions">
+		<title><varname>sca.all_subscriptions</varname></title>
+		<para>
+		List all current call-info and line-seize subscriptions.
+		</para>
+		<para>
+		Name: <emphasis>sca.all_subscriptions</emphasis>
+		</para>
+		<para>
+		Parameters: <emphasis>none</emphasis>
+		</para>
+		<para>
+		Example:
+		</para>
+		<programlisting format="linespecific">
+		&sercmd; sca.all_subscriptions
+		</programlisting>
+	</section>
+
+	<section id="sca.r.all_appearances">
+			<title><varname>sca.all_appearances</varname></title>
+			<para>
+		List all SCA appearances with non-idle state.
+			</para>
+			<para>
+				Name: <emphasis>sca.all_appearances</emphasis>
+			</para>
+			<para>
+				Parameters: <emphasis>none</emphasis>
+			</para>
+			<para>
+				Example:
+			</para>
+			<programlisting format="linespecific">
+			&sercmd; sca.all_appearances
+			</programlisting>
+		</section>
+
+		<section id="sca.r.seize_appearance">
+			<title><varname>sca.seize_appearance</varname></title>
+			<para>
+		Seize an appearance index for a specific contact within an
+		SCA group, and notify other members of the group that the
+		appearance is off hook. Useful for testing SCA signaling.
+			</para>
+			<para>
+				Name: <emphasis>sca.seize_appearance</emphasis>
+			</para>
+			<para>
+				Parameters: <emphasis>2</emphasis>
+			</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>SCA Contact URI</emphasis>
+		</para>
+		</listitem>
+		</itemizedlist>
+			<para>
+				Example:
+			</para>
+			<programlisting format="linespecific">
+		# seize next available appearance of sip:215@voice.example.com
+		# for contact sip:215@10.0.1.2
+			&sercmd; sca.seize_appearance sip:215@voice.example.com sip:215@10.0.1.2
+			</programlisting>
+		</section>
+
+		<section id="sca.r.update_appearance">
+			<title><varname>sca.update_appearance</varname></title>
+			<para>
+		Update the state of an in-use appearance index, and notify
+		other members of the group. Useful for testing SCA signaling.
+			</para>
+			<para>
+				Name: <emphasis>sca.update_appearance</emphasis>
+			</para>
+			<para>
+				Parameters: <emphasis>3 or 4</emphasis>
+			</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Index of In-Use Appearance</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Appearance State</emphasis>
+			(seized, ringing, progressing, active, held, held-private)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Appearance Display Info</emphasis> (Optional)
+		</para>
+		</listitem>
+		</itemizedlist>
+			<para>
+				Example:
+			</para>
+			<programlisting format="linespecific">
+		# update in-use appearance index 3 of sip:215@voice.example.com
+		# state held.
+			&sercmd; sca.update_appearance sip:215@voice.example.com 3 held
+			</programlisting>
+		</section>
+
+		<section id="sca.r.release_appearance">
+			<title><varname>sca.release_appearance</varname></title>
+			<para>
+		Set a non-idle appearance index to idle and NOTIFY
+		members of the group.
+			</para>
+			<para>
+				Name: <emphasis>sca.release_appearance</emphasis>
+			</para>
+			<para>
+				Parameters: <emphasis>2</emphasis>
+			</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Appearance Index</emphasis>
+		</para>
+		</listitem>
+		</itemizedlist>
+			<para>
+				Example:
+			</para>
+			<programlisting format="linespecific">
+		# release appearance of sip:215@voice.example.com with
+		# appearance index 3
+			&sercmd; sca.release_appearance sip:215@voice.example.com 3
+			</programlisting>
+		</section>
+	</section>
+
+	<section>
+	<title>Sample &kamailioconfig; with SCA</title>
+	<para>
+		The following is a basic &kamailioconfig; providing Shared Call
+		Appearances to local subscribers. It has been tested with
+		Polycom handsets.
+	</para>
+	<example>
+		<title>&kamailioconfig;</title>
+		<programlisting format="linespecific">
+##
+<xi:include href="sca.cfg" parse="text" />
+		</programlisting>
+	</example>
+	</section>
+
+</chapter>

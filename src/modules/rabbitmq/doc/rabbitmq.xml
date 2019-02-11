@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>RABBITMQ Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+            <author>
+                <firstname>Carsten</firstname>
+                <surname>Bock</surname>
+                <affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+                <address>
+                <email>carsten@ng-voice.com</email>
+                </address>
+            </author>
+	    <editor>
+		<firstname>Stefan-Cristian</firstname>
+		<surname>Mititelu</surname>
+		<email>stefan.mititelu@onem.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2016</year>
+	    <holder>ONEm Communications Ltd.</holder>
+	</copyright>
+   </bookinfo>
+    <toc></toc>
+    
+    <xi:include href="rabbitmq_admin.xml"/>
+
+</book>

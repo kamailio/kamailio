@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>textops Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+			<email>pelinescu-onciul@fokus.fraunhofer.de</email>
+		</author>
+		<editor>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+			<email>pelinescu-onciul@fokus.fraunhofer.de</email>
+		</editor>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+			<email>miconda@gmail.com</email>
+		</editor>
+		<editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+			<email>jh@tutpro.com</email>
+		</editor>
+		<editor>
+		<firstname>Ovidiu</firstname>
+		<surname>Sas</surname>
+			<email>osas@voipembedded.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="textops_admin.xml"/>
+	<xi:include href="textops_devel.xml"/>
+	
+	
+</book>

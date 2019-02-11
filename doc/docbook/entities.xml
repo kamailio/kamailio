@@ -1,0 +1,105 @@
+<!-- Entities often used in the documentation -->
+
+<!ENTITY fhg "FhG FOKUS">
+<!ENTITY iptel "<ulink url='http://iptel.org'>iptel.org</ulink>">
+
+<!-- Kamailio specific attributes -->
+
+<!ENTITY kamailio "Kamailio">
+<!ENTITY kamailiobinary "kamailio">
+<!ENTITY kamailioname "Kamailio SIP Server Platform">
+<!ENTITY kamailioconfig "kamailio.cfg">
+<!ENTITY kamailioconfdir "/usr/local/etc/kamailio">
+
+<!ENTITY kamwiki "https://www.kamailio.org/wiki/">
+<!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
+<!ENTITY kamcmd "kamcmd">
+
+<!ENTITY kamailiohome "https://www.kamailio.org/">
+<!ENTITY kamailiobugs "https://github.com/kamailio/kamailio/issues">
+<!ENTITY kamailiohelp "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY kamailiousers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY kamailiodev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
+<!ENTITY kamailiodbdocs "https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html">
+
+<!ENTITY kamailiohomelink "<ulink url='&kamailiohome;'>&kamailiohome;</ulink>">
+<!ENTITY kamailiobugslink "<ulink url='&kamailiobugs;'>&kamailiobugs;</ulink>">
+<!ENTITY kamailiohelplink "<ulink url='&kamailiohelp;'>&kamailiohelp;</ulink>">
+<!ENTITY kamailiouserslink "<ulink url='&kamailiousers;'>&kamailiousers;</ulink>">
+<!ENTITY kamailiodevlink "<ulink url='&kamailiodev;'>&kamailiodev;</ulink>">
+<!ENTITY kamailiodbdocslink "<ulink url='&kamailiodbdocs;'>&kamailiodbdocs;</ulink>">
+
+<!ENTITY kamailiousersmail "<email>sr-users@lists.kamailio.org</email>">
+<!ENTITY kamailiodevmail "<email>sr-dev@lists.kamailio.org</email>">
+
+<!ENTITY ctltool "kamctl">
+<!ENTITY ctltoolrc "kamctlrc">
+
+<!ENTITY adminguide "Admin Guide">
+<!ENTITY develguide "Developer Guide">
+<!ENTITY faqguide "Frequently Asked Questions">
+
+<!-- SER Specific Attributes -->
+
+<!ENTITY siprouter "SIP Router">
+<!ENTITY siproutername "SIP Router Project">
+<!ENTITY siprouterconfig "sip-router.cfg">
+
+<!ENTITY ser "SER">
+<!ENTITY sername "SIP Express Router">
+<!ENTITY sercmd "kamcmd">
+<!ENTITY ctlsocket "kamailio_ctl">
+
+<!ENTITY serhome "https://www.kamailio.org">
+<!ENTITY serbugs "https://github.com/kamailio/kamailio/issues">
+<!ENTITY serusers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
+<!ENTITY serdev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
+
+<!ENTITY serhomelink "<ulink url='&serhome;'>&serhome;</ulink>">
+<!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs;</ulink>">
+<!ENTITY serhelplink "<ulink url='&serhelp;'>&serhelp;</ulink>">
+<!ENTITY seruserslink "<ulink url='&serusers;'>&serusers;</ulink>">
+<!ENTITY serdevlink "<ulink url='&serdev;'>&serdev;</ulink>">
+
+<!ENTITY serusersmail "<email>sr-users@lists.kamailio.org</email>">
+<!ENTITY serdevmail "<email>sr-dev@lists.kamailio.org</email>">
+
+<!ENTITY defaultdb "mysql://kamailio:kamailiorw@localhost/kamailio">
+<!ENTITY defaultrodb "mysql://kamailioro:kamailioro@localhost/kamailio">
+<!ENTITY exampledb "dbdriver://username:password@dbhost/dbname">
+<!ENTITY exampleotherdb "postgres://proxy:frog23@db.sip-router.org/sipdb">
+
+<!-- Often used acronyms -->
+
+<!ENTITY sip "<acronym>SIP</acronym>">
+<!ENTITY sdp "<acronym>SDP</acronym>">
+<!ENTITY rtp "<acronym>RTP</acronym>">
+<!ENTITY pstn "<acronym>PSTN</acronym>">
+<!ENTITY http "<acronym>HTTP</acronym>">
+<!ENTITY uri "<acronym>URI</acronym>">
+<!ENTITY url "<acronym>URL</acronym>">
+<!ENTITY uac "<acronym>UAC</acronym>">
+<!ENTITY uas "<acronym>UAS</acronym>">
+<!ENTITY ua "<acronym>UA</acronym>">
+<!ENTITY nat "<acronym>NAT</acronym>">
+<!ENTITY ip "<acronym>IP</acronym>">
+<!ENTITY udp "<acronym>UDP</acronym>">
+<!ENTITY ietf "<ulink url='https://www.ietf.org'>IETF</ulink>">
+<!ENTITY im "<acronym>IM</acronym>">
+<!ENTITY smtp "<acronym>SMTP</acronym>">
+<!ENTITY tls "<acronym>TLS</acronym>">
+<!ENTITY xmpp "<acronym>XMPP</acronym>">
+<!ENTITY gnu "<ulink url='https://www.gnu.org'>GNU</ulink>">
+<!ENTITY gpl "<ulink url='https://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
+<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
+
+<!-- Often used RFCs -->
+
+<!ENTITY rfc3261 "<ulink url='https://www.ietf.org/rfc/rfc3261.txt'>RFC3261</ulink>">
+<!ENTITY rfc822 "<ulink url='https://www.ietf.org/rfc/rfc822.txt'>RFC822</ulink>">
+<!ENTITY rfc2543 "<ulink url='https://www.ietf.org/rfc/rfc2543.txt'>RFC2543</ulink>">
+<!ENTITY rfc5626 "<ulink url='https://www.ietf.org/rfc/rfc5626.txt'>RFC5626</ulink>">
+
+<!-- Often used 3rd party libraries  -->
+<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
+<!ENTITY libcurl "<ulink url='https://curl.haxx.se'>libcurl</ulink>">

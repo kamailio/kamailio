@@ -1,0 +1,1009 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module provides an interactive config file debugger. It can print
+		a trace of config script execution for a SIP message to log and set
+		breakpoints on every script action, allowing step-by-step execution of
+		the routing and response scripts. Moreover, this module allows setting
+		static and dynamic module specific debug settings.
+	</para>
+	<para>
+		Debugging can be done from local or remote host via RPC interface (e.g.,
+		XMLRPC, &sercmd;, siremis).
+	</para>
+	<para>
+		The framework to set breakpoints on specific actions and config lines
+		is not exported to RPC. Each action can be accompanied by an
+		breakpoint or you can use dbg_breakpoint() function to set a breakpoint
+		at certain line. Global breakpoints can be enabled/disabled at runtime.
+		The script running trace can also be enabled/disabled at runtime.
+	</para>
+	<para>
+		When the SIP router process is stopped at a breakpoint, you can
+		investigate the values of any pseudo-variables. Note that some of
+		pseudo-variables may produce memory leaks; a fix is planned in the
+		future (here fall pseudo-variables with dynamic name such as htable,
+		sqlops). References to SIP message, avps, headers, script and shared
+		variables are safe.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	    <para>
+		NOTE: Due to the debugger module child_init() function, one should load the module first in the module sequence in order to initialize _dbg_pid_list.
+		Otherwise, another module (i.e. p_usrloc) forking a process with rank != PROC_INIT will fail.
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="dbg.p.cfgtrace">
+	    <title><varname>cfgtrace</varname> (int)</title>
+	    <para>
+			Control whether the config script trace is enabled or disabled
+			at startup. You can change the value at runtime without
+			restart, globally or per process.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtrace</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "cfgtrace", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.breakpoint">
+	    <title><varname>breakpoint</varname> (int)</title>
+	    <para>
+			Control whether every line (global) breakpoint is enabled
+			or disabled at startup.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>breakpoint</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "breakpoint", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.log_level">
+	    <title><varname>log_level</varname> (int)</title>
+	    <para>
+			What log level is to be used to print module-specific messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>-1</quote> (L_ERR).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_level", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.log_level_name">
+	    <title><varname>log_level_name</varname> (str)</title>
+	    <para>
+			What log level name is to be used to print cfg trace messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote> (use default log names).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_level_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_level_name", "exec")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.log_facility">
+	    <title><varname>log_facility</varname> (str)</title>
+	    <para>
+			Which log facility is to be used to print module-specific messages.
+			By using this setting, you can configure syslog to send debug
+			messages to a separate log channel, like a specific kamailio-debug log file.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote> (default from core).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_facility</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_facility", "LOG_DAEMON")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.log_prefix">
+	    <title><varname>log_prefix</varname> (str)</title>
+	    <para>
+			String to print before any module-specific messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>*** cfgtrace:</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_prefix", "from-debugger-with-love:")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.step_usleep">
+	    <title><varname>step_usleep</varname> (int)</title>
+	    <para>
+			Microseconds to sleep before checking for new commands when
+			waiting at a breakpoint.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>100000</quote> (that is 0.1 sec).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>step_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "step_usleep", 500000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.step_loops">
+	    <title><varname>step_loops</varname> (int)</title>
+	    <para>
+			How many sleeps of 'step_usleep' the RPC process performs when
+			waiting for a reply from a worker process before responding to RPC.
+			This avoids blocking RPC process forever in case the worker
+			process 'forgets' to write back a reply.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>200</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>step_loops</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "step_loops", 100)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_hash_size">
+	    <title><varname>mod_hash_size</varname> (int)</title>
+	    <para>
+		Used to compute power of two as size of internal hash table to store levels
+		per module (e.g., if its set to 4, internal hash table has 16 slots). One
+		must set it's value grater than 0 such that memory to be allocated
+		to save the module specific debug levels or facility configured by 
+		<varname>mod_level</varname> or <varname>mod_facility</varname>.
+		This parameter is accessible readonly via the Kamailio config framework.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> - feature disabled.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_hash_size", 5)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_level_mode">
+	    <title><varname>mod_level_mode</varname> (int)</title>
+	    <para>
+			Enable or disable per module log level (0 - disabled, 1 - enabled).
+			This parameter is tunable via the Kamailio config framework. To use
+			per module log level you also have to set <varname>mod_hash_size</varname>.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_level_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_level_mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_level">
+	    <title><varname>mod_level</varname> (str)</title>
+	    <para>
+		Specify module log level - the value must be in the format:
+		modulename=level. The parameter can be set many times. For core
+		log level, use module name 'core'. You also must enable
+		<varname>mod_level_mode</varname> and <varname>mod_hash_size</varname>.
+	    </para>
+	    <example>
+		<title>Set <varname>mod_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_level", "core=3")
+modparam("debugger", "mod_level", "tm=3")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_facility_mode">
+	    <title><varname>mod_facility_mode</varname> (int)</title>
+	    <para>
+			Enable or disable per module log facility (0 - disabled, 1 - enabled).
+			This parameter is tunable via the Kamailio config framework. To use
+			per module log facility you also have to set <varname>mod_hash_size</varname>.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_facility_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_facility_mode", 1)
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_facility">
+	    <title><varname>mod_facility</varname> (str)</title>
+	    <para>
+		Specify module log facility - the value must be in the format:
+		modulename=facility. The parameter can be set many times. For core
+		log facility, use module name 'core'. You also must enable
+		<varname>mod_facility_mode</varname> and <varname>mod_hash_size</varname>.
+	    </para>
+        <para>
+        NOTE: See the <emphasis>syslog()</emphasis> library call for facility names (http://linux.die.net/man/3/syslog).
+        The most used facilities are LOG_LOCAL[0-7].
+        </para>
+
+	    <example>
+		<title>Set <varname>mod_facility</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_facility", "core=LOG_LOCAL0")
+modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.log_assign">
+	    <title><varname>log_assign</varname> (int)</title>
+	    <para>
+		Enable or disable log assign actions on config (0 - disabled, 1 - enabled).
+	    </para>
+		<para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_assign</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_assign", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.cfgpkgcheck">
+	    <title><varname>cfgpkgcheck</varname> (int)</title>
+	    <para>
+			If set, before each config action is done pkg memory check,
+			useful to detect buffer overflows.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgpkgcheck</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "cfgpkgcheck", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.reset_msgid">
+	    <title><varname>reset_msgid</varname> (int)</title>
+	    <para>
+		Used to enable or disable the ability to reset the msgid ($mi)
+		through the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> - feature disabled.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reset_msgid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "reset_msgid", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.cfgtest">
+	    <title><varname>cfgtest</varname> (int)</title>
+	    <para>
+			Control whether the cfgt module is enabled or disabled
+			at startup. Module cfgt needs to be loaded before.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtest</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+loadmodule "cfgt.so"
+modparam("debugger", "cfgtest", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section id="dbg.f.db_breakpoint">
+	    <title>
+		<function moreinfo="none">dbg_breakpoint(mode)</function>
+	    </title>
+	    <para>
+			Anchor a breakpoint at the current line of the config (the one
+			on which this function is called). The 'mode' specifies whether 
+			the breakpoint is enabled (1) or disabled (0) at startup.
+	    </para>
+		<para>
+			Note that this version of the module does not export this anchors to RPC for
+			interactive debugging (temporarily disabled).
+	    </para>
+		<example>
+		<title><function>dbg_breakpoint</function> usage</title>
+		<programlisting format="linespecific">
+...
+if($si=="10.0.0.10")
+	dbg_breakpoint("1");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.f.dbg_pv_dump">
+	    <title>
+		<function moreinfo="none">dbg_pv_dump([mask] [, level])</function>
+	    </title>
+	    <para>
+			Prints the content of pv_cache on json format.
+			Defaults are mask=31 and level = "L_DBG"
+	    </para>
+		<para>
+		</para>
+		<itemizedlist>
+			<para><emphasis>mask</emphasis> - Controls the content to dump:
+			</para>
+			<itemizedlist>
+			<listitem><para>
+			  1 - dump null values
+			</para></listitem>
+			<listitem><para>
+			  2 - dump avp vars
+			</para></listitem>
+			<listitem><para>
+			  4 - dump script vars
+			</para></listitem>
+			<listitem><para>
+			  8 - dump xavp vars
+			</para></listitem>
+			<listitem><para>
+			  16 - dump DP_OTHER vars
+			</para></listitem>
+			</itemizedlist>
+			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+			</para>
+			<itemizedlist>
+			<listitem><para>
+				L_ALERT - log level -5
+			</para></listitem>
+			<listitem><para>
+				L_BUG - log level -4
+			</para></listitem>
+			<listitem><para>
+				L_CRIT - log level -3
+			</para></listitem>
+			<listitem><para>
+				L_ERR - log level -1
+			</para></listitem>
+			<listitem><para>
+				L_WARN - log level 0
+			</para></listitem>
+			<listitem><para>
+				L_NOTICE - log level 1
+			</para></listitem>
+			<listitem><para>
+				L_INFO - log level 2
+			</para></listitem>
+			<listitem><para>
+				L_DBG - log level 3
+				</para></listitem>
+			</itemizedlist>
+		</itemizedlist>
+		<example>
+		<title><function>dbg_pv_dump</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(temp) = 1;
+$avp(s:more_avp) = 2;
+$avp(s:more_avp) = 3;
+$xavp(x=>more) = "bye";
+$xavp(x[0]=>more) = "hi";
+$xavp(x[0]=>other) = 1;
+$xavp(x[0]=>other) = 2;
+$xavp(x=>different) = "foo";
+$var(empty) = $null;
+
+dbg_pv_dump(30, "L_DBG");
+...
+</programlisting>
+		<para>Output</para>
+		<programlisting format="linespecific">
+...
+ 4(30943) DEBUG: debugger [debugger_api.c:1613]: dbg_dump_json(): {"$sp":37597,"$var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xavp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_idx":0,"$var(empty)":0}
+ ...
+</programlisting>
+	    </example>
+	</section>
+
+ 	<section id="dbg.f.dbg_sip_msg">
+	    <title>
+		<function moreinfo="none">dbg_sip_msg([log_level], [facility])</function>
+	    </title>
+	    <para>
+            Prints how the sip message <emphasis>would look</emphasis> like if it <emphasis>would be sent</emphasis> out
+            at that point in the config(i.e. if the current lump lists would
+            have been applied at that point in the config).
+
+            It also prints a diff list for both header and body of sip msg
+            which contain the lump lists content. The lumps deleted are printed
+            with "-" sign whereas the lumps added have no sign. The config line
+            where the function has been called is also printed.
+	    </para>
+	    <para>
+            NOTE that dbg_sip_msg function does not modify the initially received SIP message.
+            Just displays how it WOULD look like if it were to send it at that point.
+	    </para>
+		<para>
+			NOTE that the lump lists are usually applied only once, just before sending, to spare message reparse processing.
+            All the changes present in lump list are applied on the <emphasis>initially received</emphasis> SIP message.
+            One can force the lump application using msg_apply_changes() function from textopsx module.
+	    </para>
+		<para>
+	    </para>
+		<example>
+		<title><function>dbg_sip_msg</function> usage</title>
+		<programlisting format="linespecific">
+...
+    dbg_sip_msg();
+    dbg_sip_msg("L_ERR");
+    dbg_sip_msg("L_ERR", "LOG_LOCAL0");
+...
+        </programlisting>
+
+		<para>Output when dbg_sip_msg("L_ERR") is called after <emphasis>append_hf("P-Hint: My hint\r\n"); remove_hf("Contact");</emphasis></para>
+		<programlisting format="linespecific">
+ERROR: debugger [debugger_mod.c:467]: w_dbg_sip_msg(): CONFIG LINE 338
+------------------------- START OF SIP message debug --------------------------
+OPTIONS sip:nobody@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.1.1:56872;branch=z9hG4bK.6d7c487a;rport;alias
+From: sip:sipsak@127.0.1.1:56872;tag=188b7433
+To: sip:nobody@127.0.0.1
+Call-ID: 411792435@127.0.1.1
+CSeq: 1 OPTIONS
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.6
+Accept: text/plain
+P-Hint: My hintt
+
+------------------------------ SIP header diffs -------------------------------
+- Contact: sip:sipsak@127.0.1.1:56872
+P-Hint: My hint
+------------------------------- SIP body diffs --------------------------------
+-------------------------- END OF SIP message debug ---------------------------
+        </programlisting>
+	    </example>
+    </section>
+
+    </section>
+
+
+	<section>
+		<title>RPC Commands</title>
+
+	<section id="dbg.r.ls">
+		<title>
+		<function moreinfo="none">dbg.ls</function>
+		</title>
+		<para>
+			List &kamailio; processes with info related to interactive
+			debugging.
+		</para>
+		<para>
+		Name: <emphasis>dbg.list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_pid_ : pid for which to list the details.  If 'pid' is
+			omitted then will print for all processes.</para></listitem>
+		</itemizedlist>
+		<para>
+		Examples of use with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.ls
+		dbg.ls 1234
+		</programlisting>
+    </section>
+
+	<section id="dbg.r.trace">
+		<title>
+		<function moreinfo="none">dbg.trace</function>
+		</title>
+		<para>
+			Control config script running trace.
+		</para>
+		<para>
+		Name: <emphasis>dbg.trace</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_cmd_ : command can be 'on' or 'off' to
+				enable or disable tracing for one or all processes.</para>
+		</listitem>
+			<listitem><para>_pid_ : pid for which to list the details. If 'pid' is
+				omitted, then details for all processes will be printed.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Examples for using with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.trace on
+		dbg.trace off
+		dbg.trace on 1234
+		</programlisting>
+    </section>
+
+	<section id="dbg.r.bp">
+		<title>
+		<function moreinfo="none">dbg.bp</function>
+		</title>
+		<para>
+			Control breakpoints and config execution.
+		</para>
+		<para>
+		Name: <emphasis>dbg.bp</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_cmd_ : command, see next section for
+			the list of available values.</para>
+		</listitem>
+		<listitem><para>_pid_ : process id for which to apply the command.
+				If 'pid' is omitted, then the inner command will be applied 
+				to all processes.</para>
+		</listitem>
+		<listitem><para>_params_ : extra params specific for each command.</para>
+		</listitem>
+		</itemizedlist>
+		<para>Commands:</para>
+		<itemizedlist>
+		<listitem>
+			<para>on - turn on breakpoints. Pid parameter is optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>off - turn off breakpoints. Pid parameter is optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>keep - keep breakpoints only for pid given as parameter
+			</para>
+		</listitem>
+		<listitem>
+			<para>release - disable breakpoints for processes that are
+			not waiting at a breakpoint. Pid parameter is optional.</para>
+		</listitem>
+		<listitem>
+			<para>next - run the action under breakpoint and stop at next one
+			(step by step execution). Pid parameter is mandatory.
+			</para>
+		</listitem>
+		<listitem>
+			<para>move - run the action under breakpoint and remove the rest
+			of breakpoints (continue execution without stopping again at next
+			actions). Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>show - print details about the current breakpoint for pid.
+			Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>eval - evaluate a pseudo-variable and print the result in RPC
+			Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>log - evaluate a pseudo-variable and print the result in SIP
+			router logs. Pid parameter is mandatory.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Examples for using with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.bp off
+		dbg.bp on
+		dbg.bp release
+		dbg.bp on 1234
+		dbg.bp eval 1234 $fu
+		dbg.bp move 1234
+		</programlisting>
+    </section>
+
+    <section id="dbg.r.mod_level">
+		<title>
+		<function moreinfo="none">dbg.mod_level</function>
+		</title>
+		<para>
+			Specify module log level.
+		</para>
+		<para>
+		Name: <emphasis>dbg.mod_level</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_module_ : For core log
+				level, use module name 'core'</para></listitem>
+			<listitem><para>_level_ : integer</para></listitem>
+		</itemizedlist>
+		<para>
+		Examples of use with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.mod_level core 3
+		dbg.mod_level tm 3
+		</programlisting>
+    </section>
+
+	<section id="dbg.r.reset_msgid">
+		<title>
+		<function moreinfo="none">dbg.reset_msgid</function>
+		</title>
+		<para>
+			Resets the message sequence ($mi). Internally there is no real change.
+			This can be useful for unit test cases in order to be able to replicate
+			exactly the same kamailio output.
+
+			You need to set the debugger parameter reset_msgid to 1 to activate this
+			functionality.
+		</para>
+		<para>
+		Name: <emphasis>dbg.reset_msgid</emphasis>
+		</para>
+		<para>
+		Examples of use with &sercmd;:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.reset_msgid
+		</programlisting>
+    </section>
+
+	<section id="dbg.r.set_mod_level">
+		<title>
+			<function moreinfo="none">dbg.set_mod_level</function>
+		</title>
+		<para>
+			Set the module log level.
+			If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_level core 1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.set_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.set_mod_facility</function>
+		</title>
+		<para>
+			Set the module log facility.
+			If module does not exist in kamailio, the entry in the facility hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_facility core LOG_LOCAL1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_level">
+		<title>
+			<function moreinfo="none">dbg.get_mod_level</function>
+		</title>
+		<para>
+			Get the module log level.
+			If mod_name does not exist in the level hashtable, returns the config file value.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_level core
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.get_mod_facility</function>
+		</title>
+		<para>
+			Get the module log facility.
+			If mod_name does not exist in the facility hashtable, returns the config file value.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_facility core
+		</programlisting>
+	</section>
+
+    </section>
+
+
+	<section>
+		<title>Usage</title>
+		<para>
+		A common usage is to investigate the execution path for a specific
+		SIP message. Just enable cfg running trace, send the message and
+		watch the logs.
+		</para>
+		<para>
+		Another typical usage is to do interactive debugging and run
+		each line of the route blocks of the configuration file step-by-step for a
+		particular SIP message.
+		</para>
+		<para>
+		You need to connect using &sercmd; (or other RPC client) to &kamailio;.
+		Then you can enable cfg breakpoints and send the SIP message. One
+		process will be in waiting state ('state' field different than 0 when
+		you do dbg.ls). Calling dbg.release will set the other &kamailio;
+		processes in no-breakpoint mode so they can process other SIP messages
+		without need to interact with them.
+		</para>
+		<para>
+		A process blocked at a breakpoint is waiting for a command. Use
+		'dbg.bp next pid' to execute the current action and stop at the next
+		one. 'dbg.bp eval pid PV' can be used to retrieve the value of PV. Once
+		you are done and want to continue the execution of the config without
+		interaction use 'dbg.bp move pid'.
+		</para>
+		<para>
+		Example of a session:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd;> dbg.ls
+{
+	entry: 0
+	pid: 6393
+	set: 3
+	state: 0
+	in.pid: 0
+	in.cmd: 0
+}
+{
+	entry: 1
+	pid: 6394
+	set: 3
+	state: 0
+	in.pid: 0
+	in.cmd: 0
+}
+...
+{
+	entry: 9
+	pid: 6402
+	set: 3
+	state: 1
+	in.pid: 0
+	in.cmd: 0
+}
+
+&sercmd;> dbg.bp show 6402
+at bkp [/etc/kamailio/debugger.cfg:369] a=6 n=route
+
+&sercmd;> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:369] a=6 n=route
+
+&sercmd;> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:462] a=17 n=if
+
+&sercmd;> dbg.bp eval 6402 $fu
+$fu : t=str v=sip:test@kamailio.org
+
+&sercmd;> dbg.bp move 6402
+200 ok
+...
+</programlisting>
+		<para>
+		Running the config trace looks like:
+		</para>
+<programlisting  format="linespecific">
+...
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=368 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=456 a=26 n=mf_process_maxfwd_header
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=466 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=27 n=sanity_check
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=371 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=659 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=374 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=501 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=470 a=25 n=has_totag
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=379 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=25 n=t_check_trans
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=389 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=643 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=393 a=26 n=remove_hf
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=394 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=682 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=409 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=575 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=550 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=551 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=412 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=518 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=505 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=507 a=42 n=isflagset
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=26 n=save
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=3 n=exit
+...
+</programlisting>
+		<para>
+			The above example is for a registration with default config for
+			version 3.1.0, without authentication. Listed fields are:
+			'c' - config file; 'l' - line; 'a' - internal action id;
+			'n' - name of executed action. 'ERROR' prefix is printed
+			because these messages were sent to the L_ERR log level.
+		</para>
+    </section>
+
+</chapter>
+

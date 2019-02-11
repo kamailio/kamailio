@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="htable" xmlns:db="http://docbook.org/ns/docbook">
+    <name>htable</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table us used by the htable module to load values in the
+			hash table at start up. More information about the htable module
+			can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;htable.html">&KAMAILIO_MOD_DOC;htable.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="key_name">
+        <name>key_name</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Name of the hash key</description>
+    </column>
+
+    <column id="key_type">
+        <name>key_type</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Type of the key (0 - single value; 1 - array)</description>
+    </column>
+
+    <column id="value_type">
+        <name>value_type</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Type of the value (0 - string value; 1 - integer value)</description>
+    </column>
+
+    <column id="attribute">
+        <name>key_value</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>The value of the key</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+		<default>0</default>
+        <description>The epoch at which the key expires</description>
+    </column>
+</table>

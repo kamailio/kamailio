@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiameterPeer 
+	FQDN="hss-dev.mnc260.mcc310.3gppnetwork.org"
+	Realm="ims.mnc260.mcc310.3gppnetwork.org"
+	Vendor_Id="10415"
+	Product_Name="CDiameterPeer"
+	AcceptUnknownPeers="1"
+	DropUnknownOnDisconnect="1"
+	Tc="30"
+	Workers="4"
+	QueueLength="8"
+	TransactionTimeout="5"
+	SessionsHashSize="128"
+	DefaultAuthSessionTimeout="3600"
+	MaxAuthSessionTimeout="3600"
+>
+	
+<Peer FQDN="icscf-1.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3869"/>
+<Peer FQDN="icscf-2.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3869"/>
+<!-- <Peer FQDN="scscf.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3870"/> -->
+		
+	<Acceptor port="3868" bind="138.68.93.183"/>
+
+	<Auth id="16777216" vendor="10415"/><!-- 3GPP Cx -->
+	<Auth id="16777216" vendor="4491"/><!-- CableLabs Cx -->
+	<Auth id="16777216" vendor="13019"/><!-- ETSI/TISPAN Cx -->
+	<Auth id="16777216" vendor="0"/><!-- ETSI/TISPAN Cx -->
+	<Auth id="16777217" vendor="10415"/><!-- 3GPP Sh -->
+	<Auth id="16777221" vendor="10415"/>
+
+</DiameterPeer>

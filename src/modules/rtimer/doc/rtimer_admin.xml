@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module executes route blocks on a timer base. It can create new
+		timer processes and execute many route blocks on same timer.
+	</para>
+	<para>
+		A static faked SIP message is given as parameter to called functions,
+		so all functions available for REQUEST_ROUTE can be used.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>timer</varname> (str)</title>
+		<para>
+		The definition of a timer. The value of the parameter must have the
+		following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"name=_string_;mode=_number_;interval=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more timers in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>name</emphasis> - name of the timer.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>mode</emphasis> - if set to 0, the timer will use the main
+			(shared) timer. Any number > 0 will create the specified amount of
+			new timer processes (which will only be handling this timer).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>interval</emphasis> - timer interval in seconds or
+			micro-seconds (the value must be ended in 'u'). For micro-seconds
+			intervals, mode is set always to 1.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# time interval set to 10 seconds
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+# time interval set to 100 mili-seconds
+modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>exec</varname> (str)</title>
+		<para>
+		Specify route to be executed on timer. The value of the parameter
+		must have the following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"timer=_string_;route=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more routes
+			executed on same timer.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>timer</emphasis> - name of the timer.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		<emphasis>route</emphasis> - the name of the route block to be executed,
+		or the name of the function from kemi script. The kemi function
+		receives a string parameter with the value being the name of the
+		module.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>exec</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=ONTIMER")
+
+route[ONTIMER] {
+    xlog("timer routine: time is $TF\n");
+    # delete from my sql cache table entries older than 2H
+    sql_query("delete from kamailio_cache where last_updated&lt;$TS-3600");
+}
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Use <varname>exec</varname> parameter with a Kemi engine</title>
+		<programlisting format="linespecific">
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=ksr_rtimer")
+...
+-- rtimer event callback function implemented in Lua
+function ksr_rtimer(evname)
+	KSR.info("===== rtimer module triggered event\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+
+	</section>
+	</section>
+
+</chapter>
+

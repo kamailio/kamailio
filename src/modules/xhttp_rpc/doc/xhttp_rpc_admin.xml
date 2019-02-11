@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides an HTTP transport layer implementation for
+		the RPC management interface in a human-readable format.
+	</para>
+	<para>
+		The xHTTP_RPC module uses the xHTTP module to handle HTTP requests.
+		Read the documentation of the xHTTP module for more details.
+	</para>
+	</section>
+
+	<section>
+	<title>Limitations</title>
+	<itemizedlist>
+	<listitem>
+	<para>
+		This module does not implement asynchronous RPC commands.
+		It is unlikely that asynchronous RPC commands will be executed
+		from an RPC web interface.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		This module does not accept parameters embedded in a structure
+		(see RPC documentation for more info about how parameters can be
+		passed to RPC).
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		At startup, all RPC commands are sorted and grouped based on
+		their format. The expected format is [group].[subcommand].
+		The initial xhttp_rpc webpage displays all the retrieved groups.
+		All RPC commands are available as sub-menus of each [group].
+		If an RPC command is not in the expected format, it will be
+		dropped from the initial xhttp_rpc home page menu.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - xHTTP.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>xhttp_rpc_root</varname> (str)</title>
+		<para>
+			Specifies the root path for RPC http requests.
+			The link to the RPC web interface must be constructed
+			using the following pattern:
+			http://[server_IP]:[tcp_port]/[xhttp_rpc_root] 
+		</para>
+		<para>
+		<emphasis>
+			Default value is "rpc".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xhttp_rpc_root</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xhttp_rpc_buf_size</varname> (str)</title>
+		<para>
+			Specifies the maximum length of the buffer (in bytes) used
+			to write the RPC reply information in order to
+			build the HTML response.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (auto set to 1/3 of the size of the configured pkg mem).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xhttp_rpc_buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "xhttp_rpc_buf_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">dispatch_xhttp_rpc()</function>
+	    </title>
+	    <para>
+		Handle the HTTP request and generate a response.
+	    </para>
+		<example>
+		<title><function>dispatch_xhttp_rpc</function> usage</title>
+		<programlisting format="linespecific">
+...
+tcp_accept_no_cl=yes
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so"
+loadmodule "xhttp_rpc.so"
+...
+modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
+...
+event_route[xhttp:request] {
+	$var(xhttp_rpc_root) = $(hu{s.substr,0,9});
+	if ($var(xhttp_rpc_root) == "/http_rpc")
+		dispatch_xhttp_rpc();
+	else
+		xhttp_reply("200", "OK", "text/html",
+        		"&lt;html&gt;&lt;body&gt;Wrong URL $hu&lt;/body&gt;&lt;/html&gt;");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Usage</title>
+	    <para>
+		The module is not intended to be used in a "scripted" mode with
+		command line tools.
+		It only provides a simple web interface with all the available
+		RPC commands. Point a web browser to http://serverip:port/http_rpc
+		and browse through the available rpc commands.
+		</para>
+		<para>
+		If you don't configure a dedicated port for HTTP, then you have
+		to use same port as for SIP TCP. If you load and configure TLS
+		module, then you can browse using HTTPS to the SIP TLS port.
+		</para>
+	</section>
+</chapter>
+

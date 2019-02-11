@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides basic HTTP/1.0 server functionality inside
+		&kamailio;. SIP and HTTP are very similar protocols, so, practically, the
+		SIP parser can easily handle HTTP requests just by adding a fake
+		Via header.
+	</para>
+	<para>
+		The <module>xmlrpc</module> module uses the same concept.
+		The xHTTP module offers a generic way of handling the <acronym>HTTP</acronym>
+		protocol, by calling <emphasis>event_route[xhttp:request]</emphasis>
+		in your config. You can check the HTTP URL via the config variable
+		<acronym>$hu</acronym>. Note that use of <acronym>$ru</acronym> will
+		raise errors since the structure of an HTTP URL is not compatible with
+		that of a SIP URI.
+	</para>
+	</section>
+
+	<section>
+	<title>Note on Latency</title>
+	<para>
+		Because HTTP requests in <emphasis>xhttp</emphasis> are handled
+		by the same, finite number of SIP worker processes that operate on
+		SIP messages, the same general principles regarding script execution
+		speed and throughput should be observed by the writer in
+		<emphasis>event_route[xhttp:request]</emphasis> as in any other
+		part of the route script.
+	</para>
+	<para>
+		For example, if you initiate a database query in the HTTP request route
+		that takes a long time to return rows, the SIP worker process in which
+		the request is handled will be blocked for that time and unable to
+		process other SIP messages.  In most typical installations, there are
+		only a few of these worker processes running.
+	</para>
+	<para>
+		Therefore, it is highly inadvisable to execute particularly slow things in the
+		<emphasis>event_route[xhttp:request]</emphasis>, because the request is not
+		handled in an asynchronous manner or otherwise peripherally to general
+		SIP processing.  SIP worker threads will block, pending the outcome of the
+		event route just like any other config script route.
+	</para>
+	<para>
+		This is no more or less true for <emphasis>xhttp</emphasis> than it is for
+		any other block of script in any other scenario, and does not warrant any
+		extraordinary concern.  It nevertheless bears mention here because some
+		processes with embedded HTTP servers have the request processing take place
+		"outside" of the main synchronous event sequence, whether by creating
+		separate threads or by some other asynchronous handling.  That is not the
+		case with <emphasis>xhttp</emphasis>.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - stateless reply.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>&kamailio; Core Settings</title>
+		<para>
+		SIP requires a Content-Length header for TCP transport. But most HTTP clients do not
+		set the content length for normal GET requests. Therefore, the core must be configured
+		to allow incoming requests without content length header:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tcp_accept_no_cl=yes</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="xhttp.p.url_skip">
+		<title><varname>url_skip</varname> (str)</title>
+		<para>
+			Regular expression to match the HTTP URL. If there is a match,
+			the event route is not executed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is null (don't skip).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_skip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "url_skip", "^/RPC2")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xhttp.p.url_match">
+		<title><varname>url_match</varname> (str)</title>
+		<para>
+			Regular expression to match the HTTP URL. If there is no match,
+			the event route is not executed. This check is done after
+			url_skip, so if both url_skip and url_match would match then
+			the event route is not executed (url_skip has higher priority).
+		</para>
+		<para>
+		<emphasis>
+			Default value is null (match everything).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "url_match", "^/sip/")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xhttp.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[xhttp:request] block.
+		</para>
+		<para>
+			The function has one string parameter with the value "xhttp:request".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "event_callback", "ksr_xhttp_event")
+...
+-- event callback function implemented in Lua
+function ksr_xhttp_event(evname)
+	KSR.info("===== xhttp module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="xhttp.f.xhttp_reply">
+	    <title>
+		<function moreinfo="none">xhttp_reply(code, reason, ctype, body)</function>
+	    </title>
+	    <para>
+		Send back a reply with content-type and body.
+	    </para>
+		<example>
+		<title><function>xhttp_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK - [$si:$sp]&lt;/body&gt;&lt;/html&gt;");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+    <section>
+    <title>Event Routes</title>
+    <section id="xhttp.evr.request">
+        <title>
+        <function moreinfo="none">xhttp:request</function>
+        </title>
+        <para>
+			The event route is executed when a new HTTP request is received.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK - [$si:$sp]&lt;/body&gt;&lt;/html&gt;");
+}
+...
+        </programlisting>
+	</section>
+	</section>
+</chapter>
+

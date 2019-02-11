@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+		%docentities;
+	]
+>
+
+<section id="cnts.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+	<title>Parameters</title>
+
+	<section id="counters.p.scrip_counter">
+		<title><varname>script_counter</varname></title>
+		<para>
+			Define a new counter that can be used from the script.
+			The declaration might include a group in front of the counter
+			name, separated with '.'. It might also include a counter
+			description string (help message), separated from the name
+			with a ' ' or  ':'.
+			If the group is missing, the group defined in the
+			<varname>script_cnt_grp_name</varname> module parameter will
+			be used (the default is "script").
+			If the description is missing, the default is
+			"custom script counter".
+			The format of the declaration is: [group.]name[( |:)description].
+		</para>
+		<example>
+			<title>
+				Create a new <varname>script_counter</varname>
+			</title>
+			<programlisting>
+modparam("counters", "script_counter", "foo")  # script.foo
+modparam("counters", "script_counter", "test.bar")  # test.bar
+modparam("counters", "script_counter", "baz example counter")  # script.baz
+modparam("counters", "script_counter", "test.x:another example") # test.x
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="counters.p.scrip_cnt_grp_name">
+		<title><varname>script_cnt_grp_name</varname></title>
+		<para>
+			Group name that will be used for the counters defined
+			via the <varname>script_counter</varname> module parameter which
+			do not have a specified group.
+		</para>
+		<para>
+			Default: "script".
+		</para>
+		<example>
+			<title>
+				Set <varname>script_cnt_grp_name</varname> in the config file
+			</title>
+			<programlisting>
+modparam("counters", "script_cnt_grp_name", "my_counters")
+			</programlisting>
+		</example>
+	</section>
+
+</section>

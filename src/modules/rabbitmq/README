@@ -1,0 +1,203 @@
+RABBITMQ Module
+
+Carsten Bock
+
+   ng-voice GmbH
+
+Edited by
+
+Stefan-Cristian Mititelu
+
+   <stefan.mititelu@onem.com>
+
+   Copyright © 2016 ONEm Communications Ltd.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio modules
+              2.2. External libraries or applications
+
+        3. Parameters
+
+              3.1. url (string)
+              3.2. timeout_sec (int)
+              3.3. timeout_usec (int)
+              3.4. direct_reply_to (int)
+
+        4. Functions
+
+              4.1. rabbitmq_publish(exchange, routing_key, content_type,
+                      messagebody)
+
+              4.2. rabbitmq_publish_consume(exchange, routing_key,
+                      content_type, messagebody, reply)
+
+   List of Examples
+
+   1.1. Set the “url” parameter
+   1.2. Set the “timeout_sec” parameter
+   1.3. Set the “timeout_usec” parameter
+   1.4. Set the “direct_reply_to” parameter
+   1.5. rabbitmq_publish usage
+   1.6. rabbitmq_publish_consume usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio modules
+        2.2. External libraries or applications
+
+   3. Parameters
+
+        3.1. url (string)
+        3.2. timeout_sec (int)
+        3.3. timeout_usec (int)
+        3.4. direct_reply_to (int)
+
+   4. Functions
+
+        4.1. rabbitmq_publish(exchange, routing_key, content_type,
+                messagebody)
+
+        4.2. rabbitmq_publish_consume(exchange, routing_key, content_type,
+                messagebody, reply)
+
+1. Overview
+
+   This module offers amqp communication using librabbitmq. This module
+   was created using rabbitmq-c C client
+   (https://github.com/alanxz/rabbitmq-c). An new amqp connection is setup
+   on a per-children basis, when Kamailio starts. If connection is lost,
+   the process tries to re-establish it when a new amqp action is
+   required.
+
+   Currently librabbitmq offers no async API, but sync API, with a
+   timeout. See below link for updates on this issue:
+     * https://github.com/alanxz/rabbitmq-c/issues/370.
+
+2. Dependencies
+
+   2.1. Kamailio modules
+   2.2. External libraries or applications
+
+2.1. Kamailio modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External libraries or applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module:
+     * librabbitmq-dev - (https://github.com/alanxz/rabbitmq-c).
+
+3. Parameters
+
+   3.1. url (string)
+   3.2. timeout_sec (int)
+   3.3. timeout_usec (int)
+   3.4. direct_reply_to (int)
+
+3.1. url (string)
+
+   The amqp connection url.
+
+   Default value is “amqp://guest:guest@localhost:5672/%2F”.
+
+   Example 1.1. Set the “url” parameter
+...
+modparam("rabbitmq", "url", "amqp://kamailio:kamailio@localhost:5672/%2Fkamailio
+")
+...
+
+3.2. timeout_sec (int)
+
+   The timeout in seconds. The timeout_sec + timeout_usec combination
+   gives the time to wait for an amqp reply, when
+   rabbitmq_publish_consume() is used.
+
+   Default value is “1”.
+
+   Example 1.2. Set the “timeout_sec” parameter
+...
+modparam("rabbitmq", "timeout_sec", 1)
+...
+
+3.3. timeout_usec (int)
+
+   The timeout in micro seconds. The timeout_sec + timeout_usec
+   combination gives the time to wait for an amqp reply, when
+   rabbitmq_publish_consume() is used.
+
+   Default value is “0”.
+
+   Example 1.3. Set the “timeout_usec” parameter
+...
+modparam("rabbitmq", "timeout_usec", 0)
+...
+
+3.4. direct_reply_to (int)
+
+   Setting this parameter to 1, enables rabbitmq direct reply-to feature.
+   More info about this, can be found at
+   https://www.rabbitmq.com/direct-reply-to.html.
+
+   Default value is “0”.
+
+   Example 1.4. Set the “direct_reply_to” parameter
+...
+modparam("rabbitmq", "direct_reply_to", 1)
+...
+
+4. Functions
+
+   4.1. rabbitmq_publish(exchange, routing_key, content_type, messagebody)
+
+   4.2. rabbitmq_publish_consume(exchange, routing_key, content_type,
+          messagebody, reply)
+
+4.1.  rabbitmq_publish(exchange, routing_key, content_type, messagebody)
+
+   The function publishes messagebody without waiting for a reply.
+
+   Meaning of the parameters is as follows:
+     * exchange - the amqp exchange.
+     * routing_key - the amqp routing_key.
+     * content_type - the content_type of the messagebody.
+     * messagebody - the messagebody to be published.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. rabbitmq_publish usage
+rabbitmq_publish("exchange", "routing_key", "application/json", "$avp(json_reque
+st)");
+
+4.2.  rabbitmq_publish_consume(exchange, routing_key, content_type,
+messagebody, reply)
+
+   The function publishes messagebody and waits timeoute_sec +
+   timeout_usec for a reply. If the reply comes, one can read it in the
+   reply avp.
+
+   Meaning of the parameters is as follows:
+     * exchange - the amqp exchange.
+     * routing_key - the amqp routing_key.
+     * content_type - the content_type of the messagebody.
+     * messagebody - the messagebody to be published.
+     * reply - the consumed reply.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.6. rabbitmq_publish_consume usage
+rabbitmq_publish_consume("exchange", "routing_key", "application/json", "$avp(js
+on_request)", "$avp(json_reply)");

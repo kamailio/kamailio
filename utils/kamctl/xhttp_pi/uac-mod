@@ -13,6 +13,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -31,6 +32,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -52,6 +54,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>

@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 #
 # control tool for maintaining Kamailio
 #
 #===================================================================
 
 ### version for this script
-VERSION='5.0.0'
+VERSION='5.3.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -170,27 +170,17 @@ require_kamcmd() {
 }
 
 CTLENGINELOADED=0
+CTLENGINETYPE=0
+
 if [ -z "$CTLENGINE" ] ; then
-	CTLENGINE="FIFO"
+	CTLENGINE="RPCFIFO"
 fi
 case $CTLENGINE in
-	FIFO|fifo)
-		if [ -f "$MYLIBDIR/kamctl.fifo" ]; then
-			. "$MYLIBDIR/kamctl.fifo"
+	RPCFIFO|rpcfifo)
+		if [ -f "$MYLIBDIR/kamctl.rpcfifo" ]; then
+			. "$MYLIBDIR/kamctl.rpcfifo"
 			CTLENGINELOADED=1
-		fi
-		;;
-	UNIXSOCK|unixsock)
-		if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
-			. "$MYLIBDIR/kamctl.unixsock"
-			CTLENGINELOADED=1
-		fi
-		;;
-	SER_MI|ser_mi|SERCMD_MI|sercmd_mi|SERCMDMI|sercmdmi)
-		require_kamcmd
-		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
-			. "$MYLIBDIR/kamctl.ser_mi"
-			CTLENGINELOADED=1
+			CTLENGINETYPE=1
 		fi
 		;;
 esac
@@ -231,14 +221,14 @@ done
 }
 
 require_dbengine() {
-	if [ $DBENGINELOADED -eq 0 ] ; then 
+	if [ $DBENGINELOADED -eq 0 ] ; then
 		merr "This command requires a database engine - none was loaded"
 		exit -1
 	fi
 }
 
 require_ctlengine() {
-	if [ $CTLENGINELOADED -eq 0 ] ; then 
+	if [ $CTLENGINELOADED -eq 0 ] ; then
 		merr "This command requires a control engine - none was loaded"
 		exit -1
 	fi
@@ -255,6 +245,22 @@ require_ctlengine() {
 ### helper functions (require db and/or ctl)
 #
 
+##
+# wrapper to run RPC command based on configured engine
+# - first parameter is the RPC command
+# - the rest are the parameters for the RPC command
+ctl_cmd_run () {
+	VCMDRPC="$1"
+	shift
+
+	if [ $CTLENGINETYPE -eq 1 ] ; then
+		$CTLCMD $VCMDRPC $@
+	else
+		merr "ctl engine not configured"
+		exit 1
+	fi
+}
+
 lower() {
 	echo $1 | tr [A-Z] [a-z]
 }
@@ -263,7 +269,7 @@ lower() {
 # output: false if exists, true otherwise
 is_user() {
 	set_user $1
-	
+
 	QUERY="select count(*) from $SUB_TABLE where \
 $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 
@@ -283,7 +289,7 @@ is_value_in_db() {
 	TABLE=$1
 	COL=$2
 	VALUE=$3
-	
+
 	QUERY="select count(*) from $TABLE where $COL='$VALUE';"
 	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
 	mdbg "is_value_in_db: counter=$CNT"
@@ -303,14 +309,16 @@ acl() {
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
-				is_user $2 
-				if [ $? -ne 0 ] ; then
-					mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
-					read answer
-					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-						minfo "Proceeding with non-local user"
-					else
-						exit 1
+				if [ $VERIFY_USER -eq 1 ] ; then
+					is_user $2
+					if [ $? -ne 0 ] ; then
+						mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
+						read answer
+						if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+							minfo "Proceeding with non-local user"
+						else
+							exit 1
+						fi
 					fi
 				fi
 				set_user $2
@@ -330,14 +338,16 @@ acl() {
 				usage
 				exit 1
 			fi
-			is_user $2 
-			if [ $? -ne 0 ] ; then
-				mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
-				read answer
-				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-					minfo "Proceeding with non-local user"
-				else
-					exit 1
+			if [ $VERIFY_USER -eq 1 ] ; then
+				is_user $2
+				if [ $? -ne 0 ] ; then
+					mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
+					read answer
+					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+						minfo "Proceeding with non-local user"
+					else
+						exit 1
+					fi
 				fi
 			fi
 			set_user $2
@@ -385,7 +395,7 @@ $ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,$ACL_DOMAIN_COLUMN ) values \
 				merr "acl - wrong number of parameters"
 				usage_acl
 				exit 1
-			fi	
+			fi
 
 			set_user $2
 
@@ -413,7 +423,7 @@ $CLAUSE;"
 #
 check_ul_alias() {
 	require_ctlengine
-	RES=`$CTLCMD ul_show_contact "$ALS_TABLE" "$1@$2"`
+	RES=`ctl_cmd_run ul.lookup "$ALS_TABLE" "$1@$2"`
 	RET="$?"
 	ALIAS_UL_EXISTS=0
 	if [ $RET -ne 0 ] ; then
@@ -490,7 +500,7 @@ alias_db() {
 
 	shift
 
-	case $1 in 
+	case $1 in
 		list)
 			if [ $# -eq 2 ] ; then
 				# print aliases for user
@@ -499,9 +509,9 @@ alias_db() {
 					merr "alias_db - <$2> is not a valid AoR (user@domain)"
 					exit 1
 				fi
-				
+
 				set_user $2
-				
+
 				CLAUSE="WHERE $DA_USER_COLUMN='$OSERUSER' AND \
 $DA_DOMAIN_COLUMN='$OSERDOMAIN'"
 				mecho "Dumping aliases for user=<$2>"
@@ -546,22 +556,22 @@ $DA_USER_COLUMN, $DA_DOMAIN_COLUMN FROM $DA_TABLE;"
 				usage_alias_db
 				exit 1
 			fi
-			
+
 			check_aor "$2"
 			if [ "$?" -ne "0" ] ; then
 				merr "alias_db - $2 is not a valid AoR (user@domain)"
 				exit 1
 			fi
-			
+
 			set_user $2
-			
+
 			CLAUSE="WHERE $DA_ALIAS_USER_COLUMN='$OSERUSER' AND \
 $DA_ALIAS_DOMAIN_COLUMN='$OSERDOMAIN'"
 			QUERY="SELECT CONCAT($DA_USER_COLUMN,'@',$DA_DOMAIN_COLUMN) \
 AS 'SIP-ID' FROM $DA_TABLE $CLAUSE ; "
 			$DBROCMD "$QUERY"
 			#TMP_UUID=`sql_ro_query "$QUERY" | $AWK 'BEGIN {line=0;}
-			#								/^\+/ { next } 
+			#								/^\+/ { next }
 			#								{ line++;
 			#								  if(line==2) print $1 "@" $2;}'`
 			#
@@ -593,12 +603,12 @@ AS 'SIP-ID' FROM $DA_TABLE $CLAUSE ; "
 				err "alias_db - $2 is not a valid AoR (user@domain)"
 				exit 1
 			fi
-			
+
 			set_user $1
 			TMP_OSERUSER=$OSERUSER
 			TMP_OSERDOMAIN=$OSERDOMAIN
 			set_user $2
-			
+
 			if is_value_in_db $DA_TABLE $DA_ALIAS_USER_COLUMN $TMP_OSERUSER; then
 				minfo "$TMP_OSERUSER alias already in $DA_TABLE table"
 				exit 0
@@ -612,7 +622,7 @@ $DA_ALIAS_USER_COLUMN,$DA_ALIAS_DOMAIN_COLUMN) VALUES ('$OSERUSER',\
 				merr "alias_db - SQL Error"
 				exit 1
 			fi
-			
+
 			exit $?
 			;;
 		rm)
@@ -621,9 +631,9 @@ $DA_ALIAS_USER_COLUMN,$DA_ALIAS_DOMAIN_COLUMN) VALUES ('$OSERUSER',\
 				usage_alias_db
 				exit 1
 			fi
-			
+
 			shift
-			
+
 			check_aor "$1"
 			if [ "$?" -ne "0" ] ; then
 				merr "alias_db - $1 is not a valid URI"
@@ -639,14 +649,14 @@ $DA_ALIAS_DOMAIN_COLUMN='$OSERDOMAIN'"
 				merr "alias_db - SQL Error"
 				exit 1
 			fi
-			
+
 			exit $?
 			;;
-			
+
 		help)
 			usage_alias_db "alone"
 			;;
-			
+
 		*)
 			usage_alias_db
 			exit 1
@@ -681,15 +691,15 @@ avpops() {
 		exit 1
 	fi
 
-	case $1 in 
+	case $1 in
 		list)
 			shift
 			CLAUSE=""
-			while [ "$#" != "0" ] 
+			while [ "$#" != "0" ]
 			do
 				TMP_ARG=$1
 				shift
-				case $TMP_ARG in 
+				case $TMP_ARG in
 					-T)
 						if [ -z "$1" ] ; then
 							merr "avp list - table name parameter missing"
@@ -718,7 +728,7 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 							else
 								CLAUSE="$CLAUSE AND $AVP_UUID_COLUMN='$1'"
 							fi
-						fi				
+						fi
 					;;
 					-a)
 						if [ -z "$1" ] ; then
@@ -760,7 +770,7 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 				esac
 				shift
 			done
-			
+
 			QUERY="SELECT $AVP_UUID_COLUMN,$AVP_USER_COLUMN,\
 $AVP_DOMAIN_COLUMN,$AVP_ATTRIBUTE_COLUMN,$AVP_TYPE_COLUMN,$AVP_VALUE_COLUMN \
 FROM $AVP_TABLE $CLAUSE;"
@@ -781,10 +791,10 @@ FROM $AVP_TABLE $CLAUSE;"
 			#			}
 			#			line++;
 			#		}'
-			
+
 			exit $?
 			;;
-			
+
 		add)
 			shift
 			if [ $# -ne 4 ] ; then
@@ -800,10 +810,10 @@ FROM $AVP_TABLE $CLAUSE;"
 					shift
 				else
 					mecho "avp add - unknown parameter '$1'"
-					exit 1					
+					exit 1
 				fi
 			fi
-						
+
 			is_aor "$1"
 			if [ "$?" -eq "0" ] ; then
 				set_user $1
@@ -824,18 +834,18 @@ VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',$DBFNOW);"
 				echo
 				mecho "avp add - attribute added"
 			fi
-			
+
 			exit $?
 			;;
 
 		rm)
 			shift
 			CLAUSE=""
-			while [ "$#" != "0" ] 
+			while [ "$#" != "0" ]
 			do
 				TMP_ARG=$1
 				shift
-				case $TMP_ARG in 
+				case $TMP_ARG in
 					-T)
 						if [ -z "$1" ] ; then
 							merr "avp rm - table name parameter missing"
@@ -864,7 +874,7 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 							else
 								CLAUSE="$CLAUSE AND $AVP_UUID_COLUMN='$1'"
 							fi
-						fi				
+						fi
 					;;
 					-a)
 						if [ -z "$1" ] ; then
@@ -916,14 +926,14 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 				echo
 				mecho "avp rm - AVP(s) deleted"
 			fi
-			
+
 			exit $?
 			;;
-			
+
 		help)
 			usage_avp
 			;;
-			
+
 		*)
 			merr "avp - unknown command"
 			usage
@@ -939,9 +949,14 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 cisco_restart() {
 	require_ctlengine
 	myhost=`get_my_host`
-	CMD="t_uac_dlg NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
-	RET=`$CTLCMD $CMD | head -1`
-	print_status $RET
+	CMDPARAMS="tm.t_uac_start NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
+
+	if [ $CTLENGINETYPE -eq 1 ] ; then
+		ctl_cmd_run $CMDPARAMS
+	else
+		RET=`ctl_cmd_run $CMDPARAMS | head -1`
+		print_status $RET
+	fi
 }
 
 #
@@ -1037,6 +1052,32 @@ db_ops() {
 			fi
 			$DBCMDCONNECT
 			;;
+		version)
+			shift
+			if [ $# -ne 3 ] ; then
+				merr "missing parameters"
+				exit 1
+			fi
+			case $1 in
+				add)
+					QUERY="INSERT INTO version (table_name, table_version) VALUES ('$2', $3);"
+					$DBCMD "$QUERY"
+				;;
+				set)
+					QUERY="DELETE FROM version WHERE table_name='$2';"
+					$DBCMD "$QUERY"
+					QUERY="INSERT INTO version (table_name, table_version) VALUES ('$2', $3);"
+					$DBCMD "$QUERY"
+				;;
+				update)
+					QUERY="UPDATE version SET table_version=$3 WHERE table_name='$2';"
+					$DBCMD "$QUERY"
+				;;
+				*)
+					usage_db_ops
+					exit 1
+			esac
+			;;
 		*)
 			usage_db_ops
 			exit 1
@@ -1051,11 +1092,11 @@ domain() {
 	case $1 in
 		reload)
 			require_ctlengine
-			$CTLCMD domain_reload
+			ctl_cmd_run domain.reload
 			;;
 		show)
 			require_ctlengine
-			$CTLCMD domain_dump
+			ctl_cmd_run domain.dump
 			;;
 		showdb)
 			require_dbengine
@@ -1129,17 +1170,17 @@ uid_domain() {
 				merr "too few parameters"
 				exit 1
 			fi
-			
+
 			DOMAIN=$1
 			DID=$2
 			FLAGS=$3
-	
+
 			if [ -z "$2" ] ; then
 				DID=$DOMAIN
-			fi 
+			fi
 			if [ -z "$3" ] ; then
 				FLAGS=$(( $SRDB_LOAD_SER | $SRDB_CANON | $SRDB_FOR_SERWEB ))
-			fi 
+			fi
 
 			if is_value_in_db $UID_DOMAIN_TABLE $UID_DO_DOMAIN_COLUMN $DOMAIN; then
 				minfo "$1 already in $UID_DOMAIN_TABLE table"
@@ -1182,11 +1223,11 @@ permissions_trusted() {
 	case $1 in
 		reload)
 			require_ctlengine
-			$CTLCMD trusted_reload
+			ctl_cmd_run permissions.trustedReload
 			;;
 		dump)
 			require_ctlengine
-			$CTLCMD trusted_dump
+			ctl_cmd_run permissions.trustedDump
 			;;
 		show)
 			require_dbengine
@@ -1257,12 +1298,12 @@ permissions_address() {
 	case $1 in
 		reload)
 			require_ctlengine
-			$CTLCMD address_reload
+			ctl_cmd_run permissions.addressReload
 			;;
 		dump)
 			require_ctlengine
-			$CTLCMD address_dump
-			$CTLCMD subnet_dump
+			ctl_cmd_run permissions.addressDump
+			ctl_cmd_run permissions.subnetDump
 			;;
 		show)
 			require_dbengine
@@ -1323,6 +1364,64 @@ permissions_address() {
 
 #
 ##### ------------------------------------------------ #####
+### mtree management
+#
+mtree_management() {
+	case $1 in
+		reload)
+			require_ctlengine
+			ctl_cmd_run mtree.reload $2
+			;;
+		dump)
+			require_ctlengine
+			ctl_cmd_run mtree.list $2
+			;;
+		showdb)
+			require_dbengine
+			QUERY="select * FROM $2 ; "
+			$DBROCMD "$QUERY"
+			;;
+		add)
+			require_dbengine
+			if [ $# -lt 4 ] ; then
+				usage_mtree
+				exit 1
+			fi
+
+			QUERY="INSERT INTO $2 \
+				(tprefix, tvalue) \
+				VALUES ($3, '$4');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "mtree - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 mtree reload' to synchronize cache and database"
+			;;
+		rm)
+			require_dbengine
+			shift
+			if [ $# -ne 3 ] ; then
+				usage_address
+				exit 1
+			fi
+			QUERY="DELETE FROM $2 where tprefix='$3';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "mtree - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 mtree reload' to synchronize cache and database"
+			;;
+		*)
+			usage_mtree
+			exit 1
+	esac
+}
+
+
+#
+##### ------------------------------------------------ #####
 ### LCR management
 #
 lcr() {
@@ -1346,17 +1445,17 @@ lcr() {
 		reload)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.reload
+			ctl_cmd_run lcr.reload
 			;;
 		dump_gws)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.dump_gws
+			ctl_cmd_run lcr.dump_gws
 			;;
 		dump_routes)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.dump_lcrs
+			ctl_cmd_run lcr.dump_lcrs
 			;;
 		eval_weights)
 			shift
@@ -1416,11 +1515,11 @@ cr() {
 			$DBROCMD "$QUERY"
 			;;
 		reload)
-			$CTLCMD cr_reload_routes
+			ctl_cmd_run cr.reload_routes
 			;;
 
 		dump)
-			$CTLCMD cr_dump_routes
+			ctl_cmd_run cr.dump_routes
 			;;
 
 		addcn)
@@ -1451,7 +1550,7 @@ cr() {
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "cr - SQL Error"
-				exit 1 
+				exit 1
 			fi
 			minfo "execute '$0 cr reload' to synchronize cache and database"
 			;;
@@ -1484,7 +1583,7 @@ cr() {
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "cr - SQL Error"
-				exit 1 
+				exit 1
 			fi
 			minfo "execute '$0 cr reload' to synchronize cache and database"
 			;;
@@ -1656,12 +1755,12 @@ dispatcher() {
 			;;
 		reload)
 			require_ctlengine
-			$CTLCMD ds_reload
+			ctl_cmd_run dispatcher.reload
 			;;
 
 		dump)
 			require_ctlengine
-			$CTLCMD ds_list
+			ctl_cmd_run dispatcher.list
 			;;
 
 		*)
@@ -1673,6 +1772,35 @@ dispatcher() {
 
 #
 ##### ------------------------------------------------ #####
+### Server management
+#
+ksr_srv() {
+	case $1 in
+		sockets)
+			require_ctlengine
+			mecho "list listen sockets"
+			ctl_cmd_run corex.list_sockets
+			;;
+		aliases)
+			require_ctlengine
+			mecho "list server aliases"
+			ctl_cmd_run corex.list_aliases
+			;;
+		rpclist)
+			require_ctlengine
+			mecho "list server rpc commands"
+			ctl_cmd_run system.listMethods
+			;;
+		*)
+			usage_ksr_srv
+			exit 1
+
+	esac
+}
+
+
+#
+##### ------------------------------------------------ #####
 ### DIALOG management
 #
 dialog() {
@@ -1680,7 +1808,7 @@ dialog() {
 		show|list)
 			require_ctlengine
 			mecho "dialog memory records"
-			$CTLCMD dlg_list
+			ctl_cmd_run dlg.list
 			;;
 		showdb)
 			require_dbengine
@@ -1772,7 +1900,6 @@ dialplan() {
 			fi
 
 			minfo "do not forget to do dialplan reload"
-			# $CTLCMD dp_reload
 			;;
 
 		rm)
@@ -1785,7 +1912,6 @@ dialplan() {
 			fi
 
 			minfo "do not forget to do dialplan reload"
-			# $CTLCMD dp_reload
 			;;
 
 		rmdpid)
@@ -1807,7 +1933,6 @@ dialplan() {
 			fi
 
 			minfo "do not forget to do dialplan reload"
-			# $CTLCMD dp_reload
 			;;
 
 		rmrule)
@@ -1830,11 +1955,10 @@ dialplan() {
 			fi
 
 			minfo "do not forget to do dialplan reload"
-			# $CTLCMD dp_reload
 			;;
 
 		reload)
-			$CTLCMD dp_reload
+			ctl_cmd_run dialplan.reload
 			;;
 
 		*)
@@ -1857,7 +1981,7 @@ kamailio_start() {
 		minfo "PID file exists ($PID_FILE)! Kamailio already running?"
 		exit 1
 	fi
-	
+
 	if [ ! -x "$OSERBIN" ] ; then
 		echo
 		merr "Kamailio binaries not found at $OSERBIN"
@@ -1903,9 +2027,13 @@ kamailio_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	CMD="t_uac_dlg OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
-	RET=`$CTLCMD $CMD | head -1`
-	print_status $RET
+	CMDPARAMS="tm.t_uac_start OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
+	if [ $CTLENGINETYPE -eq 1 ] ; then
+		ctl_cmd_run $CMDPARAMS
+	else
+		RET=`ctl_cmd_run $CMDPARAMS | head -1`
+		print_status $RET
+	fi
 }
 
 #
@@ -1923,7 +2051,7 @@ rpid() {
 		show)
 			if [ $# -eq 2 ] ; then
 				set_user $2
-				is_user $2 
+				is_user $2
 				if [ $? -ne 0 ] ; then
 					merr "rpid - invalid user '$2'"
 					exit 1;
@@ -1940,21 +2068,21 @@ $CLAUSE ; "
 			;;
 
 		add|rm)
-		    MODE=$1;
+			MODE=$1;
 
 			if [ "$MODE" = "add" ] ; then
-			    ARG_NUM=3;
+				ARG_NUM=3;
 			else
-			    ARG_NUM=2;
+				ARG_NUM=2;
 			fi
-			
+
 			if [ $# -lt $ARG_NUM ] ; then
 				usage_rpid
 				exit 1
 			fi
 
 			set_user $2
-			is_user $2 
+			is_user $2
 			if [ $? -ne 0 ] ; then
 				merr "rpid - invalid user '$2'"
 				exit 1
@@ -1962,9 +2090,9 @@ $CLAUSE ; "
 			shift 2
 
 			if [ "$MODE" = "add" ] ; then
-			        RPID_VAL="'$1'";
+				RPID_VAL="'$1'";
 			else
-			        RPID_VAL=NULL;
+				RPID_VAL=NULL;
 			fi
 
 			QUERY="UPDATE $SUB_TABLE SET $RPID_COLUMN=$RPID_VAL \
@@ -2001,7 +2129,7 @@ speeddial() {
 	require_dbengine
 	shift
 
-	case $1 in 
+	case $1 in
 		list)
 			if [ $# -eq 2 ] ; then
 				# print speed-dials for user
@@ -2010,9 +2138,9 @@ speeddial() {
 					merr "speeddial - <$2> is not a valid AoR (user@domain)"
 					exit 1
 				fi
-				
+
 				set_user $2
-				
+
 				CLAUSE="WHERE $SD_USER_COLUMN='$OSERUSER' AND \
 $SD_DOMAIN_COLUMN='$OSERDOMAIN'"
 				mecho "Dumping speed-dials for user=<$2>"
@@ -2075,15 +2203,15 @@ $SD_DESC_COLUMN FROM $SD_TABLE;"
 				usage_speeddial
 				exit 1
 			fi
-			
+
 			check_aor "$2"
 			if [ "$?" -ne "0" ] ; then
 				merr "speeddial - $2 is not a valid AoR (user@domain)"
 				exit 1
 			fi
-			
+
 			set_user $2
-			
+
 			CLAUSE="WHERE $SD_SD_USER_COLUMN='$OSERUSER' AND \
 $SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
 			QUERY="SELECT CONCAT($SD_USER_COLUMN,'@',$SD_DOMAIN_COLUMN) \
@@ -2091,8 +2219,8 @@ AS 'Owner', $SD_NEW_URI_COLUMN AS 'New URI', $SD_DESC_COLUMN FROM \
 $SD_TABLE $CLAUSE ; "
 			mecho "Details for speeddial <$2>"
 			$DBROCMD "$QUERY"
-			# | $AWK 'BEGIN {line=0;} /^\+/ { next } 
-			# { 
+			# | $AWK 'BEGIN {line=0;} /^\+/ { next }
+			# {
 			#	  if(line==0) print "##  SIP-ID    \tNew-URI   \tDescritpion\n";
 			#	  else {
 			#		  ORS_BAK=ORS;usage_kamailio_monitor() {
@@ -2127,18 +2255,18 @@ $SD_TABLE $CLAUSE ; "
 				merr "speeddial - $2 is not a valid AoR (user@domain)"
 				exit 1
 			fi
-			
+
 			check_sipaor "$3"
 			if [ "$?" -ne "0" ] ; then
 				merr "speeddial - $3 is not a valid SIP AoR (sip:user@domain)"
 				exit 1
 			fi
-			
+
 			set_user $1
 			TMP_OSERUSER=$OSERUSER
 			TMP_OSERDOMAIN=$OSERDOMAIN
 			set_user $2
-			
+
 			QUERY="INSERT INTO $SD_TABLE ($SD_USER_COLUMN,$SD_DOMAIN_COLUMN,\
 $SD_SD_USER_COLUMN,$SD_SD_DOMAIN_COLUMN,$SD_NEW_URI_COLUMN,$SD_DESC_COLUMN) \
 VALUES ('$TMP_OSERUSER','$TMP_OSERDOMAIN','$OSERUSER','$OSERDOMAIN','$3','$4');"
@@ -2157,15 +2285,15 @@ VALUES ('$TMP_OSERUSER','$TMP_OSERDOMAIN','$OSERUSER','$OSERDOMAIN','$3','$4');"
 				usage_speeddial
 				exit 1
 			fi
-			
+
 			shift
-			
+
 			check_aor "$1"
 			if [ "$?" -ne "0" ] ; then
 				merr "speeddial - $1 is not a valid AoR (user@domain)"
 				exit 1
 			fi
-			
+
 			check_aor "$2"
 			if [ "$?" -ne "0" ] ; then
 				merr "speeddial - $2 is not a valid AoR (user@domain)"
@@ -2186,16 +2314,16 @@ $SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
 				merr "speeddial - SQL Error"
 				exit 1
 			fi
-			
+
 			mecho "ok - spedd dial deleted"
 			echo
 
 			;;
-			
+
 		help)
 			usage_speeddial
 			;;
-			
+
 		*)
 			merr "speeddial - unknown command"
 			usage_speeddial
@@ -2216,7 +2344,7 @@ subscriber() {
 	fi
 
 	require_dbengine
-	
+
 	case $1 in
 		add)
 			if [ $# -ne 3 ] ; then
@@ -2314,9 +2442,9 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 			fi
 
 			require_ctlengine
-			shift 
+			shift
 
-			is_user $1 
+			is_user $1
 			if [ $? -ne 0 ] ; then
 				merr "non-existent user '$1'"
 				exit 1
@@ -2426,18 +2554,18 @@ usrloc() {
 	fi
 	shift
 
-	case $1 in 
+	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
 				if [ "$2" = "--brief" ] ; then
-					$CTLCMD ul_dump brief
+					ctl_cmd_run ul.dump brief
 				else
 					set_user $2
-					$CTLCMD ul_show_contact \
+					ctl_cmd_run ul.lookup \
 						$USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
 				fi
 			elif [ $# -eq 1 ] ; then
-				$CTLCMD ul_dump
+				ctl_cmd_run ul.dump
 			else
 				merr "wrong number of params"
 				usage_usrloc
@@ -2468,7 +2596,7 @@ usrloc() {
 			fi
 			shift
 			check_uri "$2"
-				
+
 			if [ "$?" -ne "0" ] ; then
 				merr "$2 is not a valid URI"
 				exit 1
@@ -2476,7 +2604,7 @@ usrloc() {
 
 			set_user $1
 			if [ "$CHECK_SUB" -ne 0 ] ; then
-				is_user $1 
+				is_user $1
 				if [ $? -eq 0 ] ; then
 					merr "overlap of alias with an existing subscriber name"
 					exit 1;
@@ -2497,7 +2625,7 @@ usrloc() {
 				DEFAULT_Q="1.0"
 			fi
 
-			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
+			ctl_cmd_run ul.add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
 "$UL_EXPIRES" "$DEFAULT_Q" "$UL_PATH" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
@@ -2505,7 +2633,7 @@ usrloc() {
 			if [ $# -eq 2 ] ; then
 				shift
 				set_user $1
-				$CTLCMD ul_rm $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
+				ctl_cmd_run ul.rm $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
 
 			elif [ $# -eq 3 ] ; then
 				shift
@@ -2516,7 +2644,7 @@ usrloc() {
 					exit 1
 				fi
 
-				$CTLCMD ul_rm_contact $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN" "$2"
+				ctl_cmd_run ul.rm_contact $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN" "$2"
 
 			else
 				merr "wrong number of params"
@@ -2572,7 +2700,7 @@ tls_ca() {
 			merr "Failed to create root directory $CA_PATH"
 			exit 1
 		fi
-		rm -fr $CA_PATH/*
+		rm -fr "${CA_PATH:?}"/*
 		mkdir $CA_PATH/private
 		mkdir $CA_PATH/certs
 		touch $CA_PATH/index.txt
@@ -2643,7 +2771,7 @@ tls_ca() {
 			merr "Failed to create user directory $USER_DIR "
 			exit 1
 		fi
-		rm -fr $USER_DIR/*
+		rm -fr "${USER_DIR:?}"/*
 
 		mecho "Creating user certificate request"
 		openssl req  -config $USER_CFG -out $USER_DIR/$USER-cert_req.pem \
@@ -2763,13 +2891,13 @@ case $1 in
 	alias_db|aliasdb)
 		alias_db "$@"
 		;;
-		
+
 	avp)
 		avpops "$@"
 		;;
 
 	cisco_restart)
-		if [ "$#" -ne 2 ] ; then	
+		if [ "$#" -ne 2 ] ; then
 			usage_cisco_restart
 			exit 1
 		fi
@@ -2806,10 +2934,21 @@ case $1 in
 		permissions_address "$@"
 		;;
 
-	fifo|mi|unixsock|ser_mi|sercmd_mi|sercmdmi|kamcmd_mi|kamcmdmi)
+	mtree)
+		shift
+		mtree_management "$@"
+		;;
+
+	rpc)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
+		;;
+
+	rpcprint)
+		require_ctlengine
+		shift
+		$CTLCMDPRINT "$@"
 		;;
 
 	ser|sercmd|kamcmd)
@@ -2850,7 +2989,8 @@ case $1 in
 
 	online)
 		require_ctlengine
-		$CTLCMD ul_dump | $EGREP -i aor | awk '{print $2}' | sort | sort -mu
+		ctl_cmd_run ul.dump brief | $EGREP -i aor | $EGREP -v AoRs \
+			| awk '{print $2}' | sed 's/"//g' | sort | sort -mu
 		exit $?
 		;;
 
@@ -2867,21 +3007,31 @@ case $1 in
 
 	ps)
 		require_ctlengine
-		$CTLCMD ps
+		ctl_cmd_run core.psx
+		;;
+
+	psa)
+		require_ctlengine
+		ctl_cmd_run core.psa
 		;;
 
 	uptime)
 		require_ctlengine
-		$CTLCMD uptime
+		ctl_cmd_run core.uptime
 		;;
 
 	stats)
 		require_ctlengine
 		if [ "$#" -eq 1 ] ; then
-			$CTLCMD get_statistics all
+			ctl_cmd_run stats.get_statistics all
 		else
-			$CTLCMD get_statistics "${2}:"
+			ctl_cmd_run stats.get_statistics "${2}:"
 		fi
+		;;
+
+	srv)
+		shift
+		ksr_srv "$@"
 		;;
 
 	restart)
@@ -2889,7 +3039,7 @@ case $1 in
 		sleep 2
 		kamailio_start
 		;;
-	
+
 	rpid)
 		rpid "$@"
 		;;
@@ -2919,7 +3069,7 @@ case $1 in
 	version)
 		echo  "$0 $VERSION"
 		;;
-		
+
 	*)
 		extcmd "$@"
 

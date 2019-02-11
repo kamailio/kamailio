@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides time recurrence matching functions. The format
+		of recurrence definitions is based on Internet Calendaring and 
+		Scheduling Core Object Specification (Calendar COS - RFC 2445).
+		It also provides a port of the Perl Time::Period module for generic
+		time period matching.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>separator</varname> (str)</title>
+		<para>
+			Separator character used to delimit attributes in time
+			reccurrence definitions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '|'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>separator</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tmrec", "separator", ";")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="tmrec.f.tmrec_match">
+	    <title>
+		<function moreinfo="none">tmrec_match(timerec [, timestamp])</function>
+	    </title>
+	    <para>
+			Match a time recurrence rule against the timestamp (UNIX epoch
+			format). If the timestamp parameter is missing, the current UNIX
+			epoch time is used.
+		</para>
+		<para>
+			The parameters can include pseudo-variables.
+		</para>
+		<para>
+			The timerec paramter is a list of attributes defined by RFC2445,
+			delimited by the 'separator' (module parameter) character. The format
+			of timerec parameter, using '|' as the separator, is (all in one line
+			without white spaces):
+		</para>
+
+		<programlisting format="linespecific">
+...
+[startdate]|[duration]|[frequency]|[until]|[interval]|[byday]
+  |[bymonthday]|[byyearday]|[byweekno]|[bymonth]
+...
+</programlisting>
+
+		<para>
+		When an attribute is not specified, the corresponding place must be left
+		empty, provided that one or more additional attributes follow.
+		</para>
+		<para>
+		Description of time recurrence attributes:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>startdate</emphasis> - date for the start of the first 
+			period.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>duration</emphasis> - the duration of the time period.
+			For a recurring interval, the <quote>duration</quote> parameter MUST
+			be small enough such that subsequent intervals do not overlap. 
+			For non-recurring intervals, durations of any positive length are 
+			permitted. Zero-length duration means <quote>forever</quote>. 
+			Negative-length durations are not allowed.
+			</para>
+			<para>
+			See RFC 2445 for the format of duration. In short for common cases
+			when the duration doesn't exceed a data, it must start with PT
+			followed by the value for hours, minutes or seconds - e.g., a
+			duration of 8 hours must be written as PT8H.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>frequency</emphasis> - can be one of the following values: 
+			<quote>daily</quote> -
+			specify repeating periods based on an interval of a day or more;
+			<quote>weekly</quote> - specify repeating periods based on an 
+			interval of a week or more; <quote>monthly</quote> - specify 
+			repeating periods based on an interval of a month or more; 
+			<quote>yearly</quote> - specify repeating periods based
+			on an interval of a year or more. These values are case-insensitive.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>until</emphasis> - defines an iCalendar COS DATE or DATE-TIME
+			value which bounds the recurrence rule in an inclusive manner. If the
+			value specified by <quote>until</quote> is synchronized with the 
+			specified recurrence, this date or date-time becomes the last instance 
+			of the recurrence. If it is not present, the recurrence is considered 
+			to repeat forever.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>interval</emphasis> - a positive integer 
+			representing how often the recurrence rule repeats. The default value
+			is <quote>1</quote>, meaning every day for a <quote>daily</quote> rule,
+			every week for a <quote>weekly</quote>
+			rule, every month for a <quote>monthly</quote> rule and every year for
+			a <quote>yearly</quote> rule.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>byday</emphasis> - a comma-separated list short codes of days 
+			of the week. The days are specified as: <quote>MO</quote> for Monday;
+			<quote>TU</quote> for Tuesday; <quote>WE</quote> for Wednesday; 
+			<quote>TH</quote> for Thursday; <quote>FR</quote> for 
+			Friday; <quote>SA</quote> for Saturday; <quote>SU</quote> 
+			for Sunday. These values are case insensitive.
+			</para>
+			<para>
+			Each <quote>byday</quote> value can also be prefixed by a positive 
+			(+n) or negative (-n) integer. If present, this indicates the n-th 
+			occurrence of the specific day within the <quote>monthly</quote> or 
+			<quote>yearly</quote> recurrence. For example, within a 
+			<quote>monthly</quote> rule, +1MO (or simply 1MO) represents the first 
+			Monday within the month, whereas -1MO represents the last Monday of
+			the month. If an integer modifier is not present, it means all days
+			of this type within the specified frequency. For example, within a 
+			<quote>monthly</quote> rule, MO represents all Mondays within the month.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>bymonthday</emphasis> - a comma-separated
+			list of days of the month. Valid values are 1 to 31 or -31 to -1. For 
+			example, -10 represents the tenth to the last day of the month.
+			</para>
+		</listitem>
+
+		<listitem>
+			<para>
+			<emphasis>byyearday</emphasis> - a comma-separated list of 
+			days of the year. Valid values are 1 to 366 or -366 to -1. For example,
+			-1 represents the last day of the year (December 31st) and -306 
+			represents the 306th day before the last day of the year (March 1st).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>byweekno</emphasis> - a comma-separated list of 
+			ordinals specifying weeks of the year. Valid values are 1 to 53 or 
+			-53 to -1.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>bymonth</emphasis> - parameter specifies a comma-separated
+			list of months of the year. Valid values are 1 to 12.
+		</para>
+		</listitem>
+		</itemizedlist>
+		
+		<para>
+		A recurrence is specified by including the <quote>frequency</quote> 
+		parameter, which indicates the type of the recurrence rule. Parameters 
+		other than <quote>startdate</quote>
+		and <quote>duration</quote> SHOULD NOT be specified unless 
+		<quote>frequency</quote> is set.
+		</para>
+		<para>
+		If invalid byxxx parameter values are found (ie, bymonthday=<quote>30</quote> in February), 
+		they are simply ignored. 
+		</para>
+		<para>
+		Byxxx parameters modify the recurrence rule matching. The Byxxx rule, as
+		an attribute for a period of time which is greater than or equal to the 
+		frequency, generally reduces or limits the number of occurrences for the 
+		recurrence definition. For example, frequency=<quote>daily</quote> 
+		bymonth=<quote>3</quote> reduces the number of
+		recurrence instances from all days (if the <quote>bymonth</quote> 
+		parameter is not present) to all days in March. Byxxx parameters for 
+		a period of time less than the frequency generally increases or expands 
+		the number of occurrences of the recurrence. For example, 
+		frequency=<quote>yearly</quote> bymonth=<quote>8,9</quote>
+		increases the number of days within the yearly recurrence set from 1 
+		(if <quote>bymonth</quote> parameter is not present) to 2.
+		</para>
+		<para>
+		If multiple Byxxx parameters are specified, then after evaluating the
+		specified <quote>frequency</quote> and <quote>interval</quote> parameters,
+		the Byxxx parameters are 
+		applied to the current set of evaluated occurrences in the following
+		order: <quote>bymonth</quote>, <quote>byweekno</quote>, 
+		<quote>byyearday</quote>, <quote>bymonthday</quote>, 
+		<quote>byday</quote>; then <quote>until</quote> is  evaluated.
+		</para>
+		<para>
+		Next is an example of evaluating multiple Byxxx parameters.
+		</para>
+		<para>
+		startdate=<quote>20100101T093000</quote> duration=<quote>PT10H30M</quote>
+		frequency=<quote>yearly</quote> interval=<quote>4</quote> 
+		bymonth=<quote>3</quote> byday=<quote>SU</quote>
+		</para>
+		<para>
+		First, the interval=<quote>4</quote> would be applied to 
+		frequency=<quote>yearly</quote> to match on <quote>every 4th year</quote>
+		. Then, bymonth=<quote>1</quote> would be applied to match on 
+		<quote>every March, every 4th year</quote>. Then,
+		byday=<quote>SU</quote> would be applied to match on <quote>every 
+		Sunday in March, every 4th year, from 9:30 to 20:00 </quote>. The start
+		and end hours:minutes have been retrieved from the
+		<quote>startdate</quote> and <quote>duration</quote> parameters.
+		</para>
+
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>tmrec_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if(tmrec_match("20120101T000000|PT24H|weekly|||SA,SU")
+        xdbg("it is weekend!\n");
+    if(tmrec_match("20120101T083000|PT10H|weekly|||MO,TU,WE,TH,FR")
+        xdbg("it is with working hours\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="tmrec.f.is_leap_year">
+	    <title>
+		<function moreinfo="none">is_leap_year([year])</function>
+	    </title>
+	    <para>
+			Return true if the value from parameter is a leap year. If the
+			parameter is missing, then the year from the current time is taken.
+		</para>
+		<para>
+		The parameter can be pseudo-variable.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_leap_year</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_leap_year("2010"))
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="tmrec.f.time_period_match">
+	    <title>
+		<function moreinfo="none">time_period_match(period [, timestamp])</function>
+	    </title>
+	    <para>
+			Matches the point in time specified by the timestamp parameter, or
+			the current time if the parameter is missing, against the given
+			period specification. Returns 1 if it matches, -1 if it doesn't,
+			and a value &lt;= -2 if there was an error.
+		</para>
+		<para>
+			The time period specification follows the Perl Time::Period module.
+			It is a string and consists of zero or more sub-period specifications,
+			separated by commas. The period matches if at least one of the
+			sub-periods matches, or if no sub-periods were given at all (an
+			empty string).
+		</para>
+		<para>
+			Each sub-period is a list of one or more scale definitions,
+			optionally separated by space characters. The sub-period matches if
+			all of the given scales within that sub-period match. For each scale
+			given, a single value or a range of values (which is two values
+			separated by a hyphen) can be specified. Multiple
+			values or multiple ranges (or a combination thereof) within a single
+			scale is also possible. If a certain scale is specified more than once,
+			the previous values or ranges for that scale are extended by the newly
+			given ones. If a particular scale is not mentioned at all within a
+			sub-period, then no matching is performed for that scale.
+		</para>
+		<para>
+			The following scales are supported and understood. Each scale also has
+			a respective short code, either one can be used. A single scale
+			definition consists of the scale name, followed by an opening brace,
+			followed by the list of values, followed by a closing brace.
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>year</emphasis> or <emphasis>yr</emphasis>
+					- Either given as a full 4-digit number &gt;= 1970, or
+					as a 2-digit number, in which case it will be understood
+					to be within the current century.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>month</emphasis> or <emphasis>mo</emphasis>
+					- Month of the year, either a number between 1 and 12,
+					or at least the first 3 letters of a spelled out month
+					name, e.g. <quote>jan</quote>, <quote>janua</quote>
+					or <quote>january</quote> will all work.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>week</emphasis> or <emphasis>wk</emphasis>
+					- Week of the month, a number between 1 and 6. The
+					first day of the week is Sunday.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>yday</emphasis> or <emphasis>yd</emphasis>
+					- Day of the year, a number between 1 and 366.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>mday</emphasis> or <emphasis>md</emphasis>
+					- Day of the month, a number between 1 and 31.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>wday</emphasis> or <emphasis>wd</emphasis>
+					- Day of the week, either a number between 1 and 7, or
+					at least the first 2 letters of a spelled out weekday
+					name (analogous to the <quote>month</quote> scale).
+					Sunday is the first day of the week.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>hour</emphasis> or <emphasis>hr</emphasis>
+					- A number between 0 and 23. Unlike the Perl Time::Period
+					module, <quote>am</quote> or <quote>pm</quote>
+					specifications are not supported.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>minute</emphasis> or <emphasis>min</emphasis>
+					- A number between 0 and 59.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>second</emphasis> or <emphasis>sec</emphasis>
+					- A number between 0 and 60 (to allow for leap seconds).
+				</para></listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			The parameters can include pseudo-variables. Whitespace (more
+			precisely, the space character only) can occur anywhere, but is
+			optional. Ranges in all scales (with the exception of the
+			<quote>year</quote> scale) are allowed to wrap-around, e.g. a weekday
+			scale of <quote>{fri-tue}</quote> is equivalent to
+			<quote>{fri-sat,sun-tue}</quote>.
+		</para>
+		<example>
+		<title><function>time_period_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(time_period_match("wd{2-6} hr{8-16}, wd{1-5} hr{17} min{0-29}"))
+	xdbg("Monday to Friday, 8:00 to 17:30\n");
+
+if(time_period_match("weekday { sat sun }, weekday {mo-fr} hr {17-8},wd{mo-wed}hr{15 16 9}"))
+	xdbg("We're closed - open only Monday to Wednesday 10:00-15:00, Thursday and Friday 9:00-17:00");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+

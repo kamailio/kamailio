@@ -1,0 +1,297 @@
+ALIAS_DB Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Elena-Ramona Modroiu
+
+   <ramona@asipto.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2005 Voice Sistem SRL
+
+   Copyright © 2008 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_url (str)
+              3.2. user_column (str)
+              3.3. domain_column (str)
+              3.4. alias_user_column (str)
+              3.5. alias_domain_column (str)
+              3.6. use_domain (int)
+              3.7. domain_prefix (str)
+              3.8. append_branches (int)
+
+        4. Functions
+
+              4.1. alias_db_lookup(table_name [,flags])
+              4.2. alias_db_find( table_name , input, output [,flags] )
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set user_column parameter
+   1.3. Set domain_column parameter
+   1.4. Set alias_user_column parameter
+   1.5. Set alias_domain_column parameter
+   1.6. Set use_domain parameter
+   1.7. Set domain_prefix parameter
+   1.8. Set append_branches parameter
+   1.9. alias_db_lookup() usage
+   1.10. alias_db_find() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_url (str)
+        3.2. user_column (str)
+        3.3. domain_column (str)
+        3.4. alias_user_column (str)
+        3.5. alias_domain_column (str)
+        3.6. use_domain (int)
+        3.7. domain_prefix (str)
+        3.8. append_branches (int)
+
+   4. Functions
+
+        4.1. alias_db_lookup(table_name [,flags])
+        4.2. alias_db_find( table_name , input, output [,flags] )
+
+1. Overview
+
+   The ALIAS_DB module can be used as an alternative for user aliases via
+   usrloc. The main feature is that it does not store all adjacent data as
+   for user location and always uses the database for search (no memory
+   caching). A common use case is to provide additional user aliases, i.e.
+   to supplement the registration in the location database. Users are this
+   way on a proxy reachable with several request URIs.
+
+   As the module use no memory caching the lookup is a bit slower but the
+   data provisioning is easier. With very fast databases like MySQL the
+   speed penalty can be lowered. Also, the search can be performed on
+   different tables in the same script.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * database module (mysql, dbtext, ...).
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. db_url (str)
+   3.2. user_column (str)
+   3.3. domain_column (str)
+   3.4. alias_user_column (str)
+   3.5. alias_domain_column (str)
+   3.6. use_domain (int)
+   3.7. domain_prefix (str)
+   3.8. append_branches (int)
+
+3.1. db_url (str)
+
+   Database URL.
+
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
+
+   Example 1.1. Set db_url parameter
+...
+modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.2. user_column (str)
+
+   Name of the column storing username.
+
+   Default value is “username”.
+
+   Example 1.2. Set user_column parameter
+...
+modparam("alias_db", "user_column", "susername")
+...
+
+3.3. domain_column (str)
+
+   Name of the column storing user's domain.
+
+   Default value is “domain”.
+
+   Example 1.3. Set domain_column parameter
+...
+modparam("alias_db", "domain_column", "sdomain")
+...
+
+3.4. alias_user_column (str)
+
+   Name of the column storing alias username.
+
+   Default value is “alias_username”.
+
+   Example 1.4. Set alias_user_column parameter
+...
+modparam("alias_db", "alias_user_column", "auser")
+...
+
+3.5. alias_domain_column (str)
+
+   Name of the column storing alias domain.
+
+   Default value is “alias_domain”.
+
+   Example 1.5. Set alias_domain_column parameter
+...
+modparam("alias_db", "alias_domain_column", "adomain")
+...
+
+3.6. use_domain (int)
+
+   Specifies whether to use or not the domain from R-URI when searching
+   for alias. If set to 0, the domain from R-URI is not used, if set to 1
+   the domain from R-URI is used.
+
+   Default value is “0”.
+
+   Example 1.6. Set use_domain parameter
+...
+modparam("alias_db", "use_domain", 1)
+...
+
+3.7. domain_prefix (str)
+
+   Specifies the prefix to be stripped from the domain in R-URI before
+   doing the search.
+
+   Default value is “NULL”.
+
+   Example 1.7. Set domain_prefix parameter
+...
+modparam("alias_db", "domain_prefix", "sip.")
+...
+
+3.8. append_branches (int)
+
+   If the alias resolves to many SIP IDs, the first is replacing the
+   R-URI, the rest are added as branches.
+
+   Default value is “0” (0 - don't add branches; 1 - add branches).
+
+   Example 1.8. Set append_branches parameter
+...
+modparam("alias_db", "append_branches", 1)
+...
+
+4. Functions
+
+   4.1. alias_db_lookup(table_name [,flags])
+   4.2. alias_db_find( table_name , input, output [,flags] )
+
+4.1.  alias_db_lookup(table_name [,flags])
+
+   The function takes the R-URI and search to see whether it is an alias
+   or not. If it is an alias for a local user, the R-URI is replaced with
+   user's SIP uri.
+
+   The function returns TRUE if R-URI is alias and it was replaced by
+   user's SIP uri.
+
+   Meaning of the parameters is as follows:
+     * table_name - the name of the table where to search for alias. It
+       can include pseudo-variables.
+     * flags (optional) - set of flags (char based flags) to control the
+       alias lookup process:
+          + d - do not use domain URI part in the alias lookup query (use
+            only a username-based lookup). By default, both username and
+            domain are used.
+          + r - do reverse alias lookup - lookup for the alias mapped to
+            the current URI (URI 2 alias translation); normally, the
+            function looks up for the URI mapped to the alias (alias 2 URI
+            translation).
+          + u - use domain URI part in the alias lookup query. Default
+            depends on the module parameter use_domain.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.9. alias_db_lookup() usage
+...
+alias_db_lookup("dbaliases", "rd");
+alias_db_lookup("dba_$(rU{s.substr,0,1})");
+...
+
+4.2.  alias_db_find( table_name , input, output [,flags] )
+
+   The function is very similar to alias_db_lookup(), but instead of using
+   fixed input (RURI) and output (RURI) is able to get the input SIP URI
+   from a pseudo-variable and place the result back also in a
+   pseudo-variable.
+
+   The function is useful as the alias lookup does not affect the request
+   itself (no RURI changes), can be used in a reply context (as it does
+   not work with RURI only) and can be used for others URI than the RURI
+   (To URI, From URI, custom URI).
+
+   The function returns TRUE if any alias mapping was found and returned.
+
+   Meaning of the parameters is as follows:
+     * table_name - any PV (string or PV or mix) the name of the table
+       where to search for alias.
+     * input - any PV (string or PV or mix) carrying the SIP URI that
+       needs to be looked up.
+     * output - PV (AVP or script VAR) where to place the SIP URI
+       resulting from the alias lookup.
+     * flags (optional) - set of flags (char based flags) to control the
+       alias lookup process:
+          + d - do not use domain URI part in the alias lookup query (use
+            only a username-based lookup). Default depends on the module
+            parameter use_domain.
+          + r - do reverse alias lookup - lookup for the alias mapped to
+            the current URI (URI 2 alias translation); normally, the
+            function looks up for the URI mapped to the alias (alias 2 URI
+            translation).
+          + u - use domain URI part in the alias lookup query. Default
+            depends on the module parameter use_domain.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   LOCAL_ROUTE, STARTUP_ROUTE, FAILURE_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.10. alias_db_find() usage
+...
+# do reverse alias lookup and find the alias for the FROM URI
+alias_db_find("dbaliases" , "$fu", "$avp(from_alias)", "r");
+...

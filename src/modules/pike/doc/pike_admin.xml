@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The pike module keeps trace of all (or selected ones) incoming request's IP
+		source and blocks the ones that exceed the limit.
+		It works simultaneously for IPv4 and IPv6 addresses.
+	</para>
+	<para>
+		The module does not implement any actions on blocking - it just simply
+		reports that there is high traffic from an IP; what to do, is
+		the administrator decision (via scripting).
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="pike.p.sampling_time_unit">
+		<title><varname>sampling_time_unit</varname> (integer)</title>
+		<para>
+		Time period in seconds used for sampling (or the sampling accuracy).
+		The smaller the better, but slower. If you want to detect peeks, use
+		a small one. To limit the access (like total number of requests on a
+		long period of time) to a proxy resource (a gateway for example), use
+		a bigger value of this parameter.
+		</para>
+		<para>
+		IMPORTANT: a too small value may lead to performance penalties due
+		to timer process overloading.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>2</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sampling_time_unit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "sampling_time_unit", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pike.p.reqs_density_per_unit">
+		<title><varname>reqs_density_per_unit</varname> (integer)</title>
+		<para>
+		How many requests should be allowed per <varname>sampling_time_unit</varname>
+		before blocking all the incoming request from that IP. Practically, the
+		blocking limit is between ( let's have x=reqs_density_per_unit) x
+		and 3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reqs_density_per_unit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "reqs_density_per_unit", 30)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pike.p.remove_latency">
+		<title><varname>remove_latency</varname> (integer)</title>
+		<para>
+		Specifies for how long the IP address will be kept in memory after the last
+		request from that IP address. It's a sort of timeout value, in seconds.
+		Note that it is not the duration to keep the IP in state 'blocked'. An
+		IP is unblocked next occurrence of 'sampling_time_unit' that does not
+		exceed 'reqs_density_per_unit'. Keeping an IP in memory results in
+		faster reaching of blocked state -- see the notes about the limits of
+		getting to state 'blocked'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 120.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>remove_latency</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "remove_latency", 130)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pike.p.pike_log_level">
+		<title><varname>pike_log_level</varname> (integer)</title>
+		<para>
+		Syslog log level to be used by module to auto report the blocking (only first
+		time) and unblocking of IPs detected as source of floods.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (L_WARN).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pike_log_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "pike_log_level", -1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Functions</title>
+	<section id="pike.f.pike_check_req">
+		<title>
+		<function moreinfo="none">pike_check_req()</function>
+		</title>
+		<para>
+		Process the source IP of the current request and return false if
+		the IP was exceeding the blocking limit.
+		</para>
+		<para>
+		Return codes:
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>1 (true)</emphasis> - IP is not to be blocked or
+				internal error occurred.
+			</para>
+			<warning>
+			IMPORTANT: in case of internal error, the function returns true to
+			avoid reporting the current processed IP as blocked.
+			</warning>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>-1 (false)</emphasis> - IP is source of
+				flooding, previously detected
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>-2 (false)</emphasis> - IP is detected as a new
+				source of flooding - first time detection
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>pike_check_req</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!pike_check_req()) { exit; };
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="pike.rpc.top">
+		<title>
+		<function moreinfo="none">pike.top</function>
+		</title>
+		<para>
+		Lists nodes in the pike tree.
+		</para>
+		<para>
+		Name: <emphasis>pike.top</emphasis>
+		</para>
+		<para>Parameters: <emphasis>filter</emphasis> (optional) - it can be
+		"ALL", "HOT" or "WARM". If missing, the "HOT" nodes are listed.</para>
+ 		<para>
+		RPC Command Example:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; pike.top
+...
+		</programlisting>
+	</section>
+	</section>
+
+
+</chapter>
+

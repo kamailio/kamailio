@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+		<para>SIP session timers are used to make sure that
+		a session (dialog) is still alive, even though there
+		may have been a long time since the last in-dialog message.
+		If the other end is not responding, the dialog will
+		be hung up automatically. SIP session timers need to
+		be supported by all end points for it to work. It's a
+		SIP extension, standardized by the IETF.</para>
+
+		<para>The sst module provides a way to update the
+		dialog expiry timer based on the SIP INVITE/200 OK
+		Session-Expires header value. You can use the sst
+		module in an &kamailio; proxy to allow freeing of local
+		resources of dead calls.</para>
+
+		<para>You can also use the sst module to validate the
+		MIN_SE header value and reply to any request with a
+		"422 - Session Timer Too Small" if the value is too
+		small for your &kamailio; configuration.</para>
+
+	</section>
+
+	<section>
+	<title>How it works</title>
+
+	<para>The sst module uses the <quote>dialog module</quote> to be notified of
+	any new or updated dialogs. It will then look for and extract
+	the session-expire: header value (if there is one) and
+	override the dialog expire timer value for the current context
+	dialog by setting the avp value.</para>
+
+	<para>You flag any call setup INVITE that you want to cause a
+	timed session to be established. This will cause &kamailio; to
+	request the use of session timers if the UAC does not request
+	it.</para>
+
+	<para>All of this happens with a properly configured dialog
+	and sst module and setting the dialog flag and the sst flag at
+	the time any INVITE sip message is seen. There is no
+	&kamailioconfig; script function call required to set the dialog
+	expire timeout value. See the <quote>dialog module</quote> users guide for
+	more information.</para>
+
+	<para>The <quote>sstCheckMin()</quote> script function can be used to verify
+	that the Session-expires / MIN-SE header field values are not too
+	small for your server. If the SST min_se parameter value is
+	smaller than the messages Session-Expires / MIN-SE values, the
+	test will return true. You can also configure the function to
+	send the 422 error response for you.</para>
+
+	<para>The following was taken from the RFC as a call flow
+	example:</para>
+
+	<example>
+	<title>Session timer call flow</title>
+	<programlisting format="linespecific">
++-------+    +-------+       +-------+
+| UAC-1 |    | PROXY |       | UAC-2 |
++-------+    +-------+       +-------+
+    |(1) INVITE  |               |
+    |SE: 50      |               |
+    |-----------&gt;|               |
+    |            |(2)sstCheckMin |
+    |            |-----+         |
+    |            |     |         |
+    |            |&lt;----+         |
+    |(3) 422     |               |
+    |MSE:1800    |               |
+    |&lt;-----------|               |
+    |            |               |
+    |(4)ACK      |               |
+    |-----------&gt;|               |
+    |            |               |
+    |(5) INVITE  |               |
+    |SE: 1800    |               |
+    |MSE: 1800   |               |
+    |-----------&gt;|               |
+    |            |(6)sstCheckMin |
+    |            |-----+         |
+    |            |     |         |
+    |            |&lt;----+         |
+    |            |(7)setflag     |
+    |            |Dialog flag    |
+    |            |Set expire     |
+    |            |-----+         |
+    |            |     |         |
+    |            |&lt;----+         |
+    |            |               |
+    |            |(8)INVITE      |
+    |            |SE: 1800       |
+    |            |MSE: 1800      |
+    |            |--------------&gt;|
+    |            |               |
+ ...
+     			</programlisting>
+		</example>
+
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+
+		<para>The following modules must be loaded
+		before this module:
+		<itemizedlist>
+		<listitem>
+		<para>
+		<emphasis>dialog</emphasis> or <emphasis>dialog-ng</emphasis>
+		- dialog module and its dependencies. (tm)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sl</emphasis> - stateless module.
+		</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	<section>
+	<title>External Libraries or Applications</title>
+	<para>
+	The following libraries or applications must be installed before running
+	&kamailio; with this module loaded:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>None</emphasis>.
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="sst.p.enable_stats">
+		<title><varname>enable_stats</varname> (integer)</title>
+
+		<para>If the statistics support should be enabled or
+		not. Via statistic variables, the module provide
+		information about the dialog processing. Set it to zero to
+		disable or to non-zero to enable it.</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote> (enabled).
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Set <varname>enable_stats</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sst", "enable_stats", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sst.p.min_se">
+		<title><varname>min_se</varname> (integer)</title>
+
+		<para>The value is used to set the proxies MIN-SE
+		value and is used in the 422 error reply as the proxies
+		MIN-SE: header value if the <quote>sstCheckMin()</quote> flag is set
+		to true and the check fails.</para>
+
+		<para>If not set and <quote>sstCheckMin()</quote> is called with the
+		send-reply flag set to true, the default 1800 seconds
+		will be used as the compare and the MIN-SE: header
+		value if the 422 reply is sent.</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>1800</quote> seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>min_se</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sst", "min_se", 2400)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sst.p.timeout_avp">
+		<title><varname>timeout_avp</varname> (string)</title>
+
+		<para>This parameter MUST be set to the same value as the
+		dialog module parameter of the same name. If this parameter is
+		NOT set, the sst module will not do anything!</para>
+
+		<para>This is how the sst module knows which avp in the
+		dialog module it has to change with the new expire value.</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>NULL!</quote> it is not set by default.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "timeout_avp", "$avp(i:10)")
+# Set the sst modules timeout_avp to be the same value
+modparam("sst", "timeout_avp", "$avp(i:10)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sst.p.reject_to_small">
+		<title><varname>reject_to_small</varname> (integer)</title>
+
+		<para>In the initial INVITE if the UAC has requested a
+		Session-Expire: and it's value is smaller than our
+		local policies Min-SE (see min_se above), then the
+		proxy has the right to reject the call by replying to
+		the message with a <quote>422 Session Timer Too Small</quote> and
+		state our local Min-SE: value. The INVITE is NOT
+		forwarded on through the proxy.</para>
+
+		<para>If this flag is true, the SST module to
+		reject the INVITE with a 422 response. If false, the
+		INVITE is forwarded through the PROXY without any
+		modifications.</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote> (true/on).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reject_to_small</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sst", "reject_to_small", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sst.p.sst_flag">
+		<title><varname>sst_flag</varname> (integer)</title>
+
+		<para>Keeping with &kamailio;, the module will not do
+		anything to any message unless instructed to do so via
+		the &kamailioconfig; script. You must set the sst_flag
+		value in the setflag() call of the INVITE you want the
+		sst module to process. But before you can do that, you
+		need to tell the sst module which flag value you are
+		assigning to sst.</para>
+
+		<para>In most cases whenever you set the dialog flag
+		you will want to set the sst flag. If the dialog flag
+		is not set and the sst flag is set, it will not have
+		any effect.</para>
+
+		<para><emphasis>This parameter must be set or the module will
+		not load.</emphasis></para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>Not set!</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sst_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_flag", 5)
+modparam("sst", "sst_flag", 6)
+...
+route {
+  ...
+  if (method=="INVITE") {
+    setflag(5); # set the dialog flag
+    setflag(6); # Set the sst flag
+  }
+  ...
+}
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="sst.f.sstCheckMin">
+		<title>
+		<function moreinfo="none">sstCheckMin(send_reply_flag)</function>
+		</title>
+
+		<para>Check the current Session-Expires / MIN-SE values
+		against the sst_min_se parameter value. If the
+		Session-Expires or MIN_SE header value is less than the
+		modules minimum value, this function will return
+		true. </para>
+
+		<para>If the function is called with the
+		send_reply_flag set to true (1) and the requested
+		Session-Expires / MIN-SE values are too small, a 422
+		reply will be sent for you. The 422 will carry a
+		MIN-SE: header with the sst min_se parameter value
+		set.</para>
+
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>min_allowed</emphasis> - The value
+			to compare the MIN_SE header value to.</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>sstCheckMin</function> usage</title>
+		<programlisting format="linespecific">
+
+...
+modparam("dialog", "timeout_avp", "$avp(i:4242)")
+modparam("dialog", "dlg_flag", 5)
+...
+modparam("sst", "sst_flag", 6)
+modparam("sst", "timeout_avp", "$avp(i:4242)")
+modparam("sst", "min_se", 2400) # Must be >= 90
+...
+
+route {
+  if (method=="INVITE") {
+	if (sstCheckMin("1")) {
+		xlog("L_ERR", "422 Session Timer Too Small reply sent.\n");
+		exit;
+	}
+	# track the session timers via the dialog module
+	setflag(5);
+	setflag(6);
+  }
+}
+
+... or ...
+
+route {
+  if (method=="INVITE") {
+	if (sstCheckMin("0")) {
+		xlog("L_ERR", "Session Timer Too Small, dropping request\n");
+		exit;
+	}
+	# track the session timers via the dialog module
+	setflag(5);
+	setflag(6);
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Statistics</title>
+	<section>
+		<title><varname>expired_sst</varname></title>
+		<para>
+		Number of dialogs which got expired session timer.
+		</para>
+	</section>
+	</section>
+
+    <section>
+	<title>Installation and Running</title>
+	<para>Just load the module and remember to set the timeout_avp value.</para>
+	</section>
+</chapter>
+

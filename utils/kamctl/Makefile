@@ -1,4 +1,4 @@
-COREPATH=../..
+COREPATH=../../src
 include $(COREPATH)/Makefile.defs
 include $(COREPATH)/config.mak
 
@@ -36,7 +36,7 @@ install-bin: $(bin_prefix)/$(bin_dir)
 		rm -fr $(kamctltmpdir)/kamctl
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" \
 			< kamctl.base > $(kamctltmpdir)/kamctl.base
-		mkdir -p $(modules_prefix)/$(lib_dir)/kamctl 
+		mkdir -p $(modules_prefix)/$(lib_dir)/kamctl
 		$(INSTALL_TOUCH) \
 			$(modules_prefix)/$(lib_dir)/kamctl
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.base \
@@ -48,25 +48,15 @@ install-bin: $(bin_prefix)/$(bin_dir)
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ctlbase
 		rm -fr $(kamctltmpdir)/kamctl.ctlbase
 		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.fifo > $(kamctltmpdir)/kamctl.fifo
-		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.fifo \
-			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.fifo
-		rm -fr $(kamctltmpdir)/kamctl.fifo
+			< kamctl.rpcfifo > $(kamctltmpdir)/kamctl.rpcfifo
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.rpcfifo \
+			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.rpcfifo
+		rm -fr $(kamctltmpdir)/kamctl.rpcfifo
 		sed -e "s#/usr/local#$(bin_target)#g" \
 			< kamctl.ser > $(kamctltmpdir)/kamctl.ser
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ser \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser
 		rm -fr $(kamctltmpdir)/kamctl.ser
-		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.ser_mi > $(kamctltmpdir)/kamctl.ser_mi
-		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ser_mi \
-			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser_mi
-		rm -fr $(kamctltmpdir)/kamctl.ser_mi
-		sed -e "s#/usr/local#$(bin_target)#g" \
-			< kamctl.unixsock > $(kamctltmpdir)/kamctl.unixsock
-		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.unixsock \
-			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.unixsock
-		rm -fr $(kamctltmpdir)/kamctl.unixsock
 		sed -e "s#/usr/local#$(bin_target)#g" \
 			< kamctl.sqlbase > $(kamctltmpdir)/kamctl.sqlbase
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.sqlbase \
@@ -274,7 +264,18 @@ install-modules: $(bin_prefix)/$(bin_dir)
 				fi ;\
 			done ; \
 		fi
-
+		# install Redis stuff
+		if [ "$(REDISON)" = "yes" ]; then \
+			mkdir -p $(data_prefix)/$(data_dir)/db_redis/kamailio ; \
+			for FILE in $(wildcard db_redis/kamailio/*) ; do \
+				if [ -f $$FILE ] ; then \
+					$(INSTALL_TOUCH) $$FILE \
+						$(data_prefix)/$(data_dir)/db_redis/kamailio/`basename "$$FILE"` ; \
+					$(INSTALL_CFG) $$FILE \
+						$(data_prefix)/$(data_dir)/db_redis/kamailio/`basename "$$FILE"` ; \
+				fi ;\
+			done ; \
+		fi
 
 $(cfg_prefix)/$(cfg_dir):
 		mkdir -p $(cfg_prefix)/$(cfg_dir)

@@ -1,0 +1,774 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="xmlrpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The XMLRPC Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2005</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+	</bookinfo>
+
+
+	<section id="xmlrpc.design">
+	<title>Design Goals</title>
+	<para>
+
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>Implemented as a module.</para>
+	    </listitem>
+	    <listitem>
+		<para>API independent of transport protocols.</para>
+	    </listitem>
+	    <listitem>
+		<para>Reuse transports available in &kamailio;.</para>
+	    </listitem>
+	    <listitem>
+		<para>The possibility to encrypt all communication.</para>
+	    </listitem>
+	    <listitem>
+		<para>The possibility to authenticate clients.</para>
+	    </listitem>
+	    <listitem>
+		<para>Easy integration with existing languages and
+		    implementations.</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Easy and straightforward implementation of management
+		    functions in &kamailio; modules.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	</section>
+
+	<section id="xmlrpc.overview">
+	<title>Overview of Operation</title>
+	<para>
+		This module implements the XML-RPC transport and encoding interface
+		for &kamailio; RPCs.
+	</para>
+	<para>
+	    The XML-RPC protocol encodes the name of the method
+	    to be called along with its parameter in an XML document which is
+	    then conveyed using HTTP (Hyper Text Transfer Protocol) to the
+	    server. The server will extract the name of the function to be
+	    called along with its parameters from the XML document, execute the
+	    function, and encode any data returned by the function into another
+	    XML document which is then returned to the client in the body of a
+	    200 OK reply to the HTTP request.
+	</para>
+	<para>
+	    XML-RPC is similar to more popular <ulink
+		url="http://www.w3.org/TR/soap/">SOAP</ulink> (Simple Object
+		Access Protocol), which is an XML-based messaging framework
+		used in Web Services developed within the <ulink
+		url="http://www.w3c.org">World Wide Web
+		Consortium</ulink>. Both protocols are using HTTP as the
+		transport protocol for XML documents, but XML-RPC is much
+		simpler and easier to implement than SOAP.
+	</para>
+	<para>
+	    Here is an example of single XML-RPC function call to determine
+	    current time:
+	</para>
+	<programlisting>
+<![CDATA[
+POST /RPC2 HTTP/1.0
+User-Agent: Radio UserLand/7.1b7 (WinNT)
+Host: time.xmlrpc.com
+Content-Type: text/xml
+Content-length: 131
+
+<?xml version="1.0"?>
+<methodCall>
+<methodName>currentTime.getCurrentTime</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	</programlisting>
+	<para>
+	    And the response returned by the server:
+	</para>
+	<programlisting>
+<![CDATA[
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 183
+Content-Type: text/xml
+Date: Wed, 03 Oct 2001 15:53:38 GMT
+Server: UserLand Frontier/7.0.1-WinNT
+
+<?xml version="1.0"?>
+<methodResponse>
+<params>
+<param>
+<value><dateTime.iso8601>20011003T08:53:38</dateTime.iso8601>
+</value>
+</param>
+</params>
+</methodResponse>
+]]>
+	</programlisting>
+	<para>
+	    XML-RPC specification spells HTTP as the official transport
+	    protocol for XML-RPC documents. &kamailio; does not directly support
+	    HTTP, it is a SIP server so SIP is the only protocol supported by
+	    &kamailio;. Because we would like to reuse all transport protocols
+	    available in &kamailio;, such as TCP and TLS, it would be natural to use
+	    modified version of XML-RPC which would run on top of SIP instead
+	    of HTTP. XML-RPC documents would be then encoded in the bodies of
+	    SIP requests and replies would be sent by the server in the bodies of
+	    SIP replies. This way we could reuse all transport protocols
+	    (including UDP) and message parsers available in &kamailio;.
+	</para>
+	<para>
+	    Although this approach seems to be the logical choice, there is one
+	    big drawback. No existing XML-RPC implementations support SIP as the
+	    transport protocol, and there are many existing implementations
+	    available for vast majority of existing languages. See the <ulink
+	    url="http://www.xmlrpc.com/directory/1568/implementations">XML-RPC
+	    implementation page</ulink> for more details. Extending existing
+	    implementations with SIP support would not be easy.
+	</para>
+	<para>
+	    Because  extending available XML-RPC implementation would be too
+	    expensive, we could also do it the other way around, keep existing
+	    XML-RPC implementations and extend &kamailio; to support HTTP. Extending
+	    &kamailio; with HTTP support is easier than it might seem at a first
+	    glance, due to the similarity between SIP requests and HTTP
+	    requests.
+	</para>
+	<para>
+	    &kamailio; already supports TCP, so existing HTTP implementations can send
+	    HTTP requests to it. HTTP requests are missing certain mandatory
+	    SIP header fields, such as Via, From, and CSeq. The contents of the
+	    header fields is mainly used for transaction matching. A SIP server
+	    could perform two basic operations when processing an HTTP
+	    request:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			Terminate the request, execute the function and send a
+			reply back.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Forward the request to another SIP server.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<para>
+	    Nothing special is needed on the SIP server terminating the
+	    request, except that it has to know where it should send the
+	    reply. Parsing of HTTP header field bodies would fail because we do
+	    not have parsers for them in &kamailio;, but that does not matter anyway
+	    because all the information is encoded in the body of the
+	    request. HTTP requests contain no Via header fields. Via header
+	    fields are used by SIP implementations to determine the destination
+	    (IP, transport protocol, and port number) for replies. When
+	    processing HTTP requests the SIP server needs to create a fake Via
+	    header field based on the source IP address and port number of the
+	    TCP connection. The SIP server will use this information when
+	    sending a reply back.
+	</para>
+	<para>
+	    Forwarding of HTTP requests by SIP proxies is a little bit more
+	    complicated and there are several limitations. First of all, we can
+	    only use stateless forwarding, no transactional forwarding, because
+	    HTTP requests do not contain all the header fields needed for
+	    transaction matching. Any attempt to call t_relay on an HTTP
+	    requests would fail. HTTP requests always use TCP and thus we could
+	    use stateless forwarding on the SIP server, provided that the
+	    request will be also forwarded over TCP. Stateless forwarding does
+	    not require the mandatory header fields (which are missing here)
+	    and it would work. In addition to that, the SIP server would also
+	    append fake Via header field to the request and change the contents
+	    of the Request-URI. The Request-URI of HTTP requests sent by XML-RPC
+	    implementations typically contain something like "/RPC2" and the
+	    first SIP server processing the request should rewrite the value
+	    with a valid SIP URI.
+	</para>
+	<para>
+	    <xref linkend="fig.rpc_example"/> shows a scenario which involves
+	    two SIP servers, one performs HTTP request "normalization" and
+	    forwarding, and the other terminates the request, executes
+	    corresponding function, and generates a reply.
+	</para>
+	<mediaobject id="fig.rpc_example" xreflabel="Figure RPC Example">
+	    <imageobject>
+		<imagedata align="center" fileref="xmlrpc_example.png" format="PNG"/>
+	    </imageobject>
+	    <textobject>
+		<para>Example RPC Scenario</para>
+	    </textobject>
+	    <caption>
+		Example RPC Scenario
+	    </caption>
+	</mediaobject>
+	<para>
+	    <emphasis>Step 1.</emphasis> An HTTP user agent sends an ordinary
+	    HTTP request to a SIP server. The user agent can either establish a
+	    connection directly to port 5060 or the SIP server can be
+	    configured to listen on port 80. The request contains standard HTTP
+	    headers and an XML-RPC document in the body:
+	    <programlisting>
+<![CDATA[
+POST / HTTP/1.0.
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 111
+
+<?xml version='1.0'?>
+<methodCall>
+<methodName>]]><emphasis>usrloc.statistics</emphasis><![CDATA[</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	    </programlisting>
+	    This particular request calls method "statistics" from from usrloc
+	    module of &kamailio;. The method has no parameters.
+	</para>
+	<para>
+	    The outbound SIP server receives the HTTP request and performs a
+	    set of actions called "SIP-normalization". This includes creation
+	    of fake Via header field based on the source IP and port of the TCP
+	    connection, looking up of the target SIP server that should
+	    terminate and process the request, and rewriting of the Request-URI
+	    with the SIP URI of the target SIP server. Modified HTTP request
+	    will be then forwarded statelessly to the target SIP server.
+	    <programlisting>
+POST <emphasis>sip:proxy01.sip-server.net</emphasis> HTTP/1.0
+<emphasis>Via: SIP/2.0/TCP 127.0.0.1:3571</emphasis>
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 111
+<![CDATA[
+<?xml version='1.0'?>
+<methodCall>
+<methodName>usrloc.statistics</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	    </programlisting>
+	</para>
+	<para>
+	    <emphasis>Step 2.</emphasis> "normalized" HTTP request is
+	    statelessly forwarded to the target SIP server over TCP.
+	</para>
+	<para>
+	    <emphasis>Step 3.</emphasis> The target SIP server receives the
+	    HTTP request and executes function called
+	    <function>dispatch_rpc</function> from xmlrpc &kamailio; module. This
+	    function will parse the XML-RPC document in the body of the request
+	    and lookup the function to be called among all RPC functions
+	    exported by the &kamailio; core and modules. Function
+	    <function>dispatch_rpc</function> will be called from the
+	    configuration file just like any other function:
+	    <programlisting>
+if (method == "POST" || method == "GET") {
+    <emphasis>dispatch_rpc();</emphasis>
+    break;
+};
+	    </programlisting>
+	    This particular configuration snippet executes the function
+	    whenever &kamailio; receives GET or POST requests. These two method names
+	    indicate HTTP.
+	</para>
+	<para>
+	    <emphasis>Step 4.</emphasis> The function
+	    <function>dispatch_rpc</function> scans through the list of all
+	    exported RPC functions searching for the
+	    <function>statistics</function> function of the usrloc module. The
+		<ulink url='http://rpm.kamailio.org/docbook/sip-router/branch/master/rpc/kamailio_rpc.html'>
+		&kamailio; RPC Module API</ulink>
+		describes in detail how modules export RPC functions.
+	</para>
+	<para>
+	    <emphasis>Step 5.</emphasis> As the RPC function from usrloc module
+	    is running and gathering statistics, it calls functions of RPC
+	    interface to prepare the result for the caller.
+	</para>
+	<para>
+	    <emphasis>Step 6.</emphasis> Once the RPC function finishes, xmlrpc
+	    module will build the XML-RPC document from the data received from
+	    usrloc module and generate a reply which will be sent to the caller.
+	</para>
+	<para>
+	    <emphasis>Steps 7. and 8.</emphasis> HTTP reply is sent back to the
+	    caller and the remote procedure call finishes.
+	    <programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:3571
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 651
+Warning: 392 127.0.0.1:5060 "Noisy feedback tells:  pid=9975 req_src_ip=127.0.0
+1 req_src_port=3571 in_uri=/ out_uri=sip:proxy01.sip-server.net via_cnt==1"
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+<param><value><array><data>
+<value><struct>
+<member><name>domain</name>
+<value><string>aliases</string></value></member>
+<member><name>users</name>
+<value><i4>0</i4></value></member>
+<member><name>expired</name>
+<value><i4>0</i4></value></member>
+</struct></value>
+<value><struct>
+<member><name>domain</name>
+<value><string>location</string></value></member>
+<member><name>users</name>
+<value><i4>0</i4></value></member>
+<member><name>expired</name>
+<value><i4>0</i4></value></member>
+</struct></value>
+</data></array></value></param>
+</params>
+</methodResponse>
+]]>
+	    </programlisting>
+	</para>
+	<note>
+	    <para>
+		The scenario described on <xref linkend="fig.rpc_example"/>
+		involves two SIP servers. This is just to demonstrate that in
+		setups containing more SIP servers it is possible to forward
+		HTTP requests from one SIP server to another and use standard
+		SIP routing mechanisms to decide which SIP server should
+		process the request. There is no need to have multiple SIP
+		servers in simple setups, because one SIP server can both add
+		fake Via header field and process the RPC at the same
+		time. Modified configuration file snipped could then look like
+		this:
+		<programlisting>
+if (method == "POST" || method == "GET") {
+    <emphasis>dispatch_rpc();</emphasis> # Process the request
+    break;
+};
+		</programlisting>
+	    </para>
+	</note>
+    </section>
+
+
+
+	<section id="xmlrpc.implementation">
+	<title>XML-RPC Implementation</title>
+	<para>
+	    The purpose of the functions of this module is to convert XML-RPC
+	    document carried in the body of HTTP requests into data returned by
+	    the RPC interface and back. The module also contains functions
+	    necessary to "normalize" HTTP requests. The module uses <ulink
+		url="http://xmlrpc-c.sourceforge.net">xmlrpc-c</ulink>
+	    library to perform XML-RPC related functions.
+	</para>
+	<para>
+	    The module always returns 200 OK HTTP reply, it will never return
+	    any other HTTP reply. Failures are expressed in XML-RPC documents
+	    in the body of the reply. There is basic method introspection
+	    support in the module. Currently the module can list all functions
+	    exported by the server and for each function it can return the
+	    documentation string describing the function.
+	</para>
+	<section id="xmlrpc.implementation.requests">
+	    <title>Requests</title>
+	    <para>
+		Requests processed by the module are standard XML-RPC requests
+		encoded in bodies of HTTP requests.
+		<programlisting>
+<![CDATA[
+POST / HTTP/1.0
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 112
+
+<?xml version='1.0'?>
+<methodCall>
+]]><emphasis><![CDATA[<methodName>system.listMethods</methodName>]]></emphasis><![CDATA[
+<params>
+</params>
+</methodCall>
+]]>
+		</programlisting>
+		The name of the method to be called in this example is
+		"listMethods". This is one of the introspection methods. &kamailio;
+		will call <function>dispatch_rpc</function> function of xmlrpc
+		module to handle the request. The function will parse the
+		XML-RPC document, lookup <function>listMethods</function>
+		function in the list of all export RPC functions, prepare the
+		context for the function and execute it.
+	    </para>
+	</section>
+	<section id="xmlrpc.implementation.replies">
+	    <title>Replies</title>
+	    <para>
+		The module will always generate 200 OK. Other response codes
+		and classes are reserved for &kamailio;. The status code of the
+		XML-RPC reply, response code, and additional data will be
+		encoded in the body of the reply. Failure replies do not
+		contain any data, just the response code and reason phrase:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:2464
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 301
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+]]><emphasis><![CDATA[
+<fault>
+<value><struct>
+<member><name>faultCode</name>
+<value><i4>501</i4></value></member>
+<member><name>faultString</name>
+<value><string>Method Not Implemented</string></value></member>
+</struct></value>
+</fault>
+]]></emphasis><![CDATA[
+</methodResponse>
+]]>
+		</programlisting>
+		This particular reply indicates that there is no such RPC
+		method available on the server.
+	    </para>
+	    <para>
+		Success replies always contain at least one return value. In
+		our case the simplest success replies contain single boolean
+		with value 1:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:4626
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 150
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+]]><emphasis><![CDATA[<param><value><boolean>1</boolean></value></param>]]></emphasis><![CDATA[
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+		This is exactly how the reply looks like when an RPC function
+		does not add any data to the reply set.
+	    </para>
+	    <para>
+		If an RPC function adds just a single item (it calls
+		<function>add</function> once
+		with just one character in the formatting string) then the data
+		will be converted to XML-RPC representation according to the
+		rules described in
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/rpc/ser_rpc.html#rpc.data_types'>
+		&kamailio; RPC Type Conversion</ulink> and
+		the reply will contain just the single value:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:3793
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 216
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+]]><emphasis><![CDATA[<param><value><string>Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))</string></value></param>]]></emphasis><![CDATA[
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+	    </para>
+	    <para>
+		If an RPC function adds more than one data items to the result
+		set then the module will return an array containing all the
+		data items:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:2932
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 276
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+<param><value>]]><emphasis><![CDATA[<array><data>
+<value><string>./ser</string></value>
+<value><string>-f</string></value>
+<value><string>ser.cfg</string></value>
+</data></array>]]></emphasis><![CDATA[</value></param>
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+		This is probably the most common scenario.
+	    </para>
+	</section>
+	<section id="xmlrpc.implementation.type_conversion">
+	    <title>Type Conversion</title>
+	    <para>
+		The data types of the RPC API are converted to the data types
+		of XML-RPC and vice versa. <xref
+		linkend="tab.type_conversion"/> shows for each RPC API data
+		type corresponding XML-RPC data type.
+		<table id="tab.type_conversion">
+		    <title>Data Type Conversion</title>
+		    <tgroup cols="3">
+			<tbody>
+			    <row>
+				<entry>RPC API</entry>
+				<entry>XML-RPC</entry>
+				<entry>RPC Example</entry>
+				<entry>XML-RPC Example</entry>
+			    </row>
+			    <row>
+				<entry>Integer</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<i4></i4>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("d", 42)</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<i4>42</i4>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>Float</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<double></double>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("f", -12.214)</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<double>-12.214</double>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>String</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<string></string>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("s","Don't panic")</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<string>Don't panic</string>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>Struct</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<struct></struct>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->struct_add(handle,"sd","param1",42,"param2",-12.214)</entry>
+				<entry>
+				    <programlisting>
+<![CDATA[
+<struct>
+  <member>
+    <name>param1</name>
+    <value>
+      <i4>42</i4>
+    </value>
+  </member>
+  <member>
+    <name>param2</name>
+    <value>
+      <double>-12.214</i4>
+    </value>
+  </member>
+</struct>
+]]>
+				    </programlisting>
+				</entry>
+			    </row>
+			</tbody>
+		    </tgroup>
+		</table>
+	    </para>
+	</section>
+	<section id="xmlrpc.implementation.limitations">
+	    <title>Limitations</title>
+	    <para>
+		&kamailio; xmlrpc modules does not implement all data types allowed in
+		XML-RPC. As well it does not implement arrays and nested
+		structures. This simplification is a feature, not bug. In our
+		case the XML-RPC interface will be used mainly for management
+		purposes and we do not need all the bells and whistles of
+		XML-RPC. Parsing and interpreting nested structures is
+		complex and we try to avoid it.
+	    </para>
+	</section>
+	<section id="xmlrpc.interoperability_problems">
+	    <title>Interoperability Problems</title>
+	    <para>
+		Due to a bug in Python xmlrpclib there is an interoperability
+		problem with basic clients using it: by default an xmlrpclib client
+		expects the server to immediately close the connection after answering
+		and if the server does not close the connections the xmlrpclib client
+		will wait forever.
+		</para>
+		<para>
+		There are 2 ways to work around this problem: write a "fixed"
+		Transport class and initialize xmlpclib using it (recommended) or
+		make ser close the tcp connection after each request.
+		</para>
+		<para>
+		The <ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.py'>
+		examples/xmlrpc_test.py
+		</ulink> provides a very simple example of using xmlrpclib with a
+		Transport class that works.
+		</para>
+		<para>
+		For the second solution (force closing tcp connections after answering)
+		the XMLRPC route should have a <function>set_reply_close()</function>
+		command before <function>dispatch_rpc()</function>.
+		<function>set_reply_no_connect()</function> is also recommended
+		(avoid trying to open tcp connection to xmlrpc clients that closed it).
+		Alternatively ending the XMLRPC route with return -1, exit -1 or
+		drop -1 can also be used, but note that this will not work for
+		async rpcs (it will close the connection immediately and not on the
+		async response).
+		<example>
+		<programlisting>
+<![CDATA[
+route[XMLRPC]{
+	# close connection only for xmlrpclib user agents
+	if search("^User-Agent:.*xmlrpclib"))
+		set_reply_close();
+	set_reply_no_connect(); # optional
+	dispatch_rpc();
+}
+]]>
+		</programlisting>
+		</example>
+		</para>
+	    <para>
+		Another common problem is CRLF handling. According to the xml spec
+		CR ('\r') must be escaped (to &amp;#xD;) or they will be "normalized"
+		when parsing the xml document. However some xmlrpc clients do not
+		follow this rule (e.g. clients based on the python or php xmlrpclib)
+		and send CRLF unescaped. A possible workaround is to enable
+		automatic LFLF to CRLF conversion (using the
+		<varname>double_lf_to_crlf</varname> modules parameter) and replace
+		CRLF with LFLF in the client queries.
+		</para>
+	</section>
+    </section>
+
+	<section id="xmlrpc.client_examples">
+	<title>Client Examples</title>
+	<!-- TODO:
+	    implement clients in various languages
+	- pros, cons
+	- How failures
+	    are mapped to XMLRPC
+	- How success replies are mapped
+	- How data
+	    types of the API are mapped to XMLRPC elements
+	- 200 OK with no
+	    data transformed to one value - True
+	-->
+	<para>
+	<itemizedlist>
+		<listitem><para>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.pl'>
+			<emphasis>examples/xmlrpc_test.pl</emphasis>
+			</ulink> (basic perl application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test.py'>
+			<emphasis>examples/xmlrpc_test.py</emphasis>
+			</ulink> (basic python application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='https://github.com/kamailio/kamailio/blob/master/modules/xmlrpc/examples/xmlrpc_test2.py'>
+			<emphasis>examples/xmlrpc_test2.py</emphasis>
+			</ulink> (basic python application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=ser;a=tree;f=ser_ctl'>
+			<emphasis>ser_ctl</emphasis>
+			</ulink>
+			(complex python application that
+			uses the <emphasis>XML-RPC</emphasis> interface implemented by the
+			<emphasis>xmlrpc</emphasis> module).
+		</para></listitem>
+		<listitem><para>
+			<ulink uri='http://www.iptel.org/serweb'>
+			<emphasis>serweb</emphasis>
+			</ulink>
+			(php application that can use
+			the <emphasis>XML-RPC</emphasis> interface to call ser
+			functions).
+		</para></listitem>
+	</itemizedlist>
+	</para>
+    </section>
+
+	<xi:include href="xmlrpc_admin.xml"/>
+
+</book>

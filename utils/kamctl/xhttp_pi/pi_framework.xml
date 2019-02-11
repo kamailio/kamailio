@@ -82,10 +82,8 @@
 		<column><field>username</field><type>DB1_STR</type></column>
 		<column><field>domain</field><type>DB1_STR</type></column>
 		<column><field>password</field><type>DB1_STR</type></column>
-		<column><field>email_address</field><type>DB1_STR</type></column>
 		<column><field>ha1</field><type>DB1_STR</type></column>
 		<column><field>ha1b</field><type>DB1_STR</type></column>
-		<column><field>rpid</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of usr_preferences table-->
 	<db_table id="usr_preferences">
@@ -382,6 +380,7 @@
 		<column><field>prefix</field><type>DB1_STR</type></column>
 		<column><field>from_uri</field><type>DB1_STR</type></column>
 		<column><field>request_uri</field><type>DB1_STR</type></column>
+		<column><field>mt_tvalue</field><type>DB1_STR</type></column>
 		<column><field>stopper</field><type>DB1_INT</type></column>
 		<column><field>enabled</field><type>DB1_INT</type></column>
 	</db_table>
@@ -506,6 +505,7 @@
 		<column><field>body</field><type>DB1_BLOB</type></column>
 		<column><field>sender</field><type>DB1_STR</type></column>
 		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of active_watchers table-->
 	<db_table id="active_watchers">
@@ -675,6 +675,7 @@
 	<db_table id="rtpengine">
 		<table_name>rtpengine</table_name>
 		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>setid</field><type>DB1_INT</type></column>
 		<column><field>url</field><type>DB1_STR</type></column>
 		<column><field>weight</field><type>DB1_INT</type></column>
@@ -709,6 +710,7 @@
 		<column><field>record_route</field><type>DB1_BLOB</type></column>
 		<column><field>notify_cseq</field><type>DB1_INT</type></column>
 		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
+		<column><field>server_id</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of sip_trace table-->
 	<db_table id="sip_trace">
@@ -821,6 +823,7 @@
 		<column><field>realm</field><type>DB1_STR</type></column>
 		<column><field>auth_username</field><type>DB1_STR</type></column>
 		<column><field>auth_password</field><type>DB1_STR</type></column>
+		<column><field>auth_ha1</field><type>DB1_STR</type></column>
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
@@ -1216,10 +1219,8 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -1229,10 +1230,8 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -1245,10 +1244,8 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
-				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -2464,6 +2461,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2476,6 +2474,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2491,6 +2490,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -2963,6 +2963,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -2978,6 +2979,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -2996,6 +2998,7 @@
 				<col><field>body</field></col>
 				<col><field>sender</field></col>
 				<col><field>priority</field></col>
+				<col><field>ruid</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -3616,6 +3619,7 @@
 			<db_table_id>rtpengine</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>setid</field></col>
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
@@ -3633,6 +3637,27 @@
 				<col><field>disabled</field></col>
 				<col><field>stamp</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- rtpproxy provisionning -->
@@ -3701,6 +3726,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3719,6 +3745,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3740,6 +3767,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -4113,6 +4141,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -4131,6 +4160,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -4152,6 +4182,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>

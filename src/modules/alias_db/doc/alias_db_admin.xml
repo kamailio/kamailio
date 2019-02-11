@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	The ALIAS_DB module can be used as an alternative for user aliases
+	via usrloc. The main feature is that it does not store all adjacent
+	data as for user location and always uses the database for search (no
+	memory caching). A common use case is to provide additional user
+	aliases, i.e. to supplement the registration in the location database.
+	Users are this way on a proxy reachable with several request URIs.
+	</para>
+	<para>
+	As the module use no memory caching the lookup is a bit slower but the
+	data provisioning is easier. With very fast databases like MySQL the speed
+	penalty can be lowered. Also, the search can be performed on different
+	tables in the same script.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database module</emphasis> (mysql, dbtext, ...).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="alias_db.p.db_url">
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database URL.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>&defaultrodb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.user_column">
+		<title><varname>user_column</varname> (str)</title>
+		<para>
+		Name of the column storing username.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "user_column", "susername")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.domain_column">
+		<title><varname>domain_column</varname> (str)</title>
+		<para>
+		Name of the column storing user's domain.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "domain_column", "sdomain")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.alias_user_column">
+		<title><varname>alias_user_column</varname> (str)</title>
+		<para>
+		Name of the column storing alias username.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>alias_username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>alias_user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "alias_user_column", "auser")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.alias_domain_column">
+		<title><varname>alias_domain_column</varname> (str)</title>
+		<para>
+		Name of the column storing alias domain.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>alias_domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>alias_domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "alias_domain_column", "adomain")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.use_domain">
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
+		Specifies whether to use or not the domain from R-URI when searching
+		for alias. If set to 0, the domain from R-URI is not used, if set to
+		1 the domain from R-URI is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.domain_prefix">
+		<title><varname>domain_prefix</varname> (str)</title>
+		<para>
+		Specifies the prefix to be stripped from the domain in R-URI before
+		doing the search.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "domain_prefix", "sip.")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="alias_db.p.append_branches">
+		<title><varname>append_branches</varname> (int)</title>
+		<para>
+			If the alias resolves to many SIP IDs, the first is replacing
+			the R-URI, the rest are added as branches.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (0 - don't add branches;
+			1 - add branches).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_branches</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "append_branches", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="alias_db.f.alias_db_lookup">
+		<title>
+		<function moreinfo="none">alias_db_lookup(table_name [,flags])</function>
+		</title>
+		<para>
+		The function takes the R-URI and search to see whether it is an alias
+		or not. If it is an alias for a local user, the R-URI is replaced with
+		user's SIP uri.
+		</para>
+		<para>
+		The function returns TRUE if R-URI is alias and it was replaced by
+		user's SIP uri.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>table_name</emphasis> - the name of the table
+				where to search for alias. It can include pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> (optional) - set of flags
+			(char based flags) to control the alias lookup process:
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>d</emphasis> - do not use domain URI part in
+				the alias lookup query (use only a username-based lookup). By
+				default, both username and domain are used.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>r</emphasis> - do reverse alias lookup - lookup
+				for the alias mapped to the current URI (URI 2 alias
+				translation); normally, the function looks up for the URI
+				mapped to the alias (alias 2 URI translation).
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>u</emphasis> - use domain URI part in the alias
+				lookup query. Default depends on the module parameter use_domain.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>alias_db_lookup()</function> usage</title>
+		<programlisting format="linespecific">
+...
+alias_db_lookup("dbaliases", "rd");
+alias_db_lookup("dba_$(rU{s.substr,0,1})");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="alias_db.p.alias_db_find">
+		<title>
+		<function moreinfo="none">alias_db_find( table_name , input, output [,flags] )</function>
+		</title>
+		<para>
+		The function is very similar to <function>alias_db_lookup()</function>,
+		but instead of using fixed input (RURI) and output (RURI) is able to
+		get the input SIP URI from a pseudo-variable and place the result back
+		also in a pseudo-variable.
+		</para>
+		<para>
+		The function is useful as the alias lookup does not affect the request
+		itself (no RURI changes), can be used in a reply context (as it does
+		not work with RURI only) and can be used for others URI than the RURI
+		(To URI, From URI, custom URI).
+		</para>
+		<para>
+		The function returns TRUE if any alias mapping was found and returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>table_name</emphasis> - any PV (string or PV or mix)
+				the name of the table where to search for alias.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>input</emphasis> - any PV (string or PV or mix)
+			carrying the SIP URI that needs to be looked up.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>output</emphasis> - PV (AVP or script VAR)
+			where to place the SIP URI resulting from the alias lookup.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> (optional) - set of flags
+			(char based flags) to control the alias lookup process:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>d</emphasis> - do not use domain URI part in
+				the alias lookup query (use only a username-based lookup).
+				Default depends on the module parameter use_domain.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>r</emphasis> - do reverse alias lookup - lookup
+				for the alias mapped to the current URI (URI 2 alias
+				translation); normally, the function looks up for the URI
+				mapped to the alias (alias 2 URI translation).
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>u</emphasis> - use domain URI part in the alias
+				lookup query. Default depends on the module parameter use_domain.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			LOCAL_ROUTE, STARTUP_ROUTE, FAILURE_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>alias_db_find()</function> usage</title>
+		<programlisting format="linespecific">
+...
+# do reverse alias lookup and find the alias for the FROM URI
+alias_db_find("dbaliases" , "$fu", "$avp(from_alias)", "r");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

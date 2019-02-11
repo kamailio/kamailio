@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+		  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+		  <!ENTITY % entities SYSTEM "entities.xml">
+		  %entities;
+
+		  ]>
+
+<table>
+  <name>aliases</name>
+  <version>6</version>
+  <description>
+	This table is used to implement group aliases. Group aliases are SIP URIs
+	that resolve to multiple destination SIP URIs. The proxy server then can
+	determine whether it should use serial or parallel forking.
+  </description>
+  
+  <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+  </column>
+
+  <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+  </column>
+
+  <column id="contact">
+	<name>contact</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+  </column>
+
+  <column id="server_id">
+	<name>server_id</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	  The ID of the SIP server instance responsible for the contact.
+	</description>
+  </column>
+
+  <column>
+	<name>received</name>
+	<type>string</type>
+    <null/>
+	<default><null/></default>
+	<size>&uri_len;</size>
+  </column>
+
+  <column>
+	<name>expires</name>
+	<type>datetime</type>
+	<default>1970-01-01 00:00:00</default>
+  </column>
+
+  <column>
+	<name>q</name>
+	<type>float</type>
+	<default>1.0</default>
+  </column>
+
+  <column>
+	<name>callid</name>
+	<type>string</type>
+	<default>default_callid</default>
+	<size>&uri_len;</size>
+  </column>
+
+  <column>
+	<name>cseq</name>
+	<type>unsigned int</type>
+	<default>42</default>
+  </column>
+
+  <column>
+	<name>last_modified</name>
+	<type>datetime</type>
+	<default>1970-01-01 00:00:00</default>
+  </column>
+
+  <column>
+	<name>replicate</name>
+	<type>unsigned int</type>
+	<default>0</default>
+  </column>
+
+  <column>
+	<name>state</name>
+	<type>unsigned int</type>
+	<default>0</default>
+  </column>
+
+  <column>
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+  </column>
+
+  <column>
+	<name>user_agent</name>
+	<type>string</type>
+	<default></default>
+	<size>64</size>
+  </column>
+
+  <index>
+	<name>main_key</name>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+	<colref linkend="contact"/>
+  </index>
+
+  <index>
+	<name>aliases_contact</name>
+	<colref linkend="contact"/>
+  </index>
+</table>

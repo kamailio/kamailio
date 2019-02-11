@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	This is a module for fast number portability handling. The client is this module
+	and the server exists in the /utils/pdbt directory.
+	The PDB module and server supports load-balancing and aggressive timeouts.
+	Normally it does not need more than a few ms to query the remote server and return
+	the reply to the configuration script.
+	</para>
+	<para>
+	The pdb module allows &kamailio; to send queries to a list of servers
+  	and store the answer in an AVP. The idea is to ask all servers in
+  	parallel and use the first answer, that comes back. A timeout for the
+	query can be defined in milliseconds. The querying can be activated and
+  	deactivated using FIFO commands.
+	</para>
+	<para>
+    More about the new communication protocol between this module and pdb_server
+    can be found in utils/pdbt/docs/network_protocol.txt. The current version is 1.
+	</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>none</emphasis></para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>The PDB server</emphasis></para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+
+	<section>
+	<title>Parameters</title>
+    <section>
+	    <title><varname>timeout</varname> (integer)</title>
+	    <para>
+			This is the timeout in milliseconds for the pdb_query function.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>50</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>timeout</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("pdb", "timeout", 10)
+...
+		    </programlisting>
+	    </example>
+    </section>
+    <section>
+	    <title><varname>server</varname> (string)</title>
+	    <para>
+			This is the list of servers to be used by the pdb_query function.
+      Queries will be sent in parallel to all servers configured in this list.
+			This parameter is mandatory.
+	    </para>
+	    <example>
+		    <title>Set <varname>server</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
+...
+		    </programlisting>
+	    </example>
+    </section>
+	</section>
+	<section>
+		<title>Functions</title>
+		<section>
+	    <title>
+				<function moreinfo="none">pdb_query (string query, string dstavp)</function>
+	    </title>
+	    <para>
+				Sends the query string to all configured servers and stores the answer in
+				dstavp. If it takes more than the configured timeout, false is returned.
+
+				Pseudo-variables or AVPs can be used for the query string.
+
+				The answer must consist of the null terminated query string followed by
+				a two byte integer value in network byte order. The integer value will
+				be stored in the given AVP.
+	    </para>
+			<example>
+				<title><function>pdb_query</function> usage</title>
+				<programlisting format="linespecific">
+...
+# query external service for routing information
+if (!pdb_query("$rU", "$avp(i:82)"))
+  $avp(i:82) = 0; # default routing
+}
+cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+		<title>RPC Commands</title>
+		<section id="pdb.r.status">
+	    <title>pdb.status</title>
+	    <para>
+				Prints the status of the module.
+				This can either be "active" or "deactivated".
+	    </para>
+			<example>
+				<title><function>pdb.status</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; pdb.status
+...
+				</programlisting>
+	    </example>
+		</section>
+		<section id="pdb.r.activate">
+	    <title>pdb.activate</title>
+	    <para>
+				Activates the module. This is the default after loading the module.
+	    </para>
+			<example>
+				<title><function>pdb.activate</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; pdb.activate
+...
+				</programlisting>
+	    </example>
+		</section>
+		<section id="pdb.r.deactivate">
+	    <title>
+				<function moreinfo="none">pdb.deactivate</function>
+	    </title>
+	    <para>
+				Deactivates the module. No more queries are performed until it is
+				activated again. As long as the module is deactivated, the
+				pdb_query function will return -1.
+	    </para>
+			<example>
+				<title><function>pdb.deactivate</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; pdb.deactivate
+...
+				</programlisting>
+	    </example>
+		</section>
+	</section>
+</chapter>

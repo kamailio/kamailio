@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+	<section>
+	This module provides a set of API functions that other modules can use in order to
+	integrate with HTTP services.
+	</section>
+	<section>
+	<title>Available Functions</title>
+		<section>
+			<title>
+			<function moreinfo="none">int http_connect(msg, connection, url, result, content_type, post)</function>
+			</title>
+			<para>
+			Sends HTTP GET or POST request to a given connection. If content_type and post
+			are NULL GET will be used. If post is not null the data will be POSTed using
+			the specified content_type.
+			</para>
+			<para>
+			Returns the status code of the HTTP response (if &gt;= 100), or a curl error code (if &lt; 100)
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg *msg</emphasis></para>
+				<para>
+				The current sip message structure.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *connection</emphasis></para>
+				<para>
+				The name of a preset http_con connection to use for this query.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *url</emphasis></para>
+				<para>
+				A string that will be appended to the base URL specified in the connection.
+				This parameter can be NULL, which means nothing will be appended to the base URL.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *result</emphasis></para>
+				<para>
+				A pointer to a string that will contain the response body.
+				On success, the data is allocated in pkg memory by the http_client module
+				and must be freed by the caller.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *content_type</emphasis></para>
+				<para>
+				A null-terminated string specifying the content type to place in a Content-Type header.
+				Use NULL when a message body is not required.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *post</emphasis></para>
+				<para>
+				A string containing the message body to send.
+				Use NULL when a message body is not required.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">int http_connection_exists(str *connection)</function>
+			</title>
+			<para>
+			Check if a connection definition exists. Connections are defined as modparam's
+			in the http_client modules.
+			</para>
+			<para>
+			Returns 1 if the connection exists, 0 if a connection with the given name can't
+			be found.
+			</para>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">int http_query(msg, url, dest, post)</function>
+			</title>
+			<para>
+			Sends a HTTP GET or POST request to a given connection. If post data 
+			is defined, POST will be used, otherwise GET. The default settings
+			defined as module params of the http_client module will be used for
+			the connection.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg *msg</emphasis></para>
+				<para>
+				The current SIP message structure.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *url</emphasis></para>
+				<para>
+				A string that will be used as the URL specified in the connection.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *dest</emphasis></para>
+				<para>
+				A pointer to a string that will contain the first line of the response body.
+				On success, the data is allocated in pkg memory by the http_client module
+				and must be freed by the caller.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *post</emphasis></para>
+				<para>
+				If not null, the data will be posted to the URL.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">http_get_content_type(str connection)</function>
+			</title>
+			<para>
+			Get the content-type of the last result for this connection. This will
+			be something like "text/html" for html or "application/json" for JSON data.
+			</para>
+			<para>
+			Result will be a pointer to a char string (char *). This is per process,
+			so the connection will have to be done in the same process. Returns a NULL
+			pointer if the connection does not exist or there's no previous connection
+			data delivered.
+			</para>
+		</section>
+
+
+	</section>
+
+</chapter>
+

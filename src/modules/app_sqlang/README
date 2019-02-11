@@ -1,0 +1,259 @@
+app_sqlang Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. load (str)
+
+        4. Functions
+
+              4.1. sqlang_dofile(path)
+              4.2. sqlang_dostring(script)
+              4.3. sqlang_run(function [, params])
+              4.4. sqlang_runstring(script)
+
+        5. RPC Commands
+
+              5.1. app_swlang.reload
+              5.2. app_sqlang.api_list
+
+        6. Example of usage
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. sqlang_dofile usage
+   1.3. sqlang_dostring usage
+   1.4. sqlang_run usage
+   1.5. sqlang_runstring usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. load (str)
+
+   4. Functions
+
+        4.1. sqlang_dofile(path)
+        4.2. sqlang_dostring(script)
+        4.3. sqlang_run(function [, params])
+        4.4. sqlang_runstring(script)
+
+   5. RPC Commands
+
+        5.1. app_swlang.reload
+        5.2. app_sqlang.api_list
+
+   6. Example of usage
+
+1. Overview
+
+   This module allows executing Squirrel Language (SQLang) scripts from
+   config file. It exports all KEMI functions to SQLang in order to access
+   the current processed SIP message. These functions are within SQLang
+   object 'KSR' (a table object).
+
+   It includes the Squirrel Language engine
+   (http://www.squirrel-lang.org). Exported API from SIP router to SQLang
+   is documented in the dokuwiki.
+
+   The module has two SQLang contexts:
+     * first is used for functions sqlang_dofile() and sqlang_dostring().
+     * second is used for function sqlan_run() and parameter 'load'.
+       Therefore sqlang_run() cannot execute functions from scripts loaded
+       via sqlang_dofile() in config. This is kind of caching mode,
+       avoiding reading file every time, but you must be sure you do not
+       have something that is executed by default and requires access to
+       SIP message. This environment is also used by KEMI framework for
+       the config SIP routing functions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. load (str)
+
+3.1. load (str)
+
+   Set the path to the SQLang file to be loaded at startup. Then you can
+   use sqlang_run(function, params) to execute a function from the script
+   at runtime. If you use it for KEMI configuration, then it has to
+   include the requited functions.
+
+   Default value is “null”.
+
+   Example 1.1. Set load parameter
+...
+modparam("app_sqlang", "load", "/usr/local/etc/kamailio/sqlang/myscript.sq")
+...
+
+4. Functions
+
+   4.1. sqlang_dofile(path)
+   4.2. sqlang_dostring(script)
+   4.3. sqlang_run(function [, params])
+   4.4. sqlang_runstring(script)
+
+4.1.  sqlang_dofile(path)
+
+   Note: not implemented yet.
+
+   Execute the SQLang script stored in 'path'. The parameter can be a
+   string with pseudo-variables evaluated at runtime.
+
+   Example 1.2. sqlang_dofile usage
+...
+sqlang_dofile("/usr/local/etc/kamailio/sqlang/myscript.sq");
+...
+
+4.2.  sqlang_dostring(script)
+
+   Note: not implemented yet.
+
+   Execute the Squirrel script stored in parameter. The parameter can be a
+   string with pseudo-variables.
+
+   Example 1.3. sqlang_dostring usage
+...
+if(!sqlang_dostring('KSR.dbg("test message\n")'))
+{
+    xdbg("SCRIPT: failed to execute squirrel script!\n");
+}
+...
+
+4.3.  sqlang_run(function [, params])
+
+   Execute the Squirrel function 'func' giving params as parameters. There
+   can be up to 3 string parameters. The function must exist in the script
+   loaded at startup via parameter 'load'. Parameters can be strings with
+   pseudo-variables that are evaluated at runtime.
+
+   Example 1.4. sqlang_run usage
+...
+if(!sqlang_run("sqlang_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute squirrel function!\n");
+}
+...
+sqlang_run("sqlang_funcx", "$rU", "2");
+...
+
+4.4.  sqlang_runstring(script)
+
+   Note: not implemented yet.
+
+   Execute the SQLang script stored in parameter. The parameter can be a
+   string with pseudo-variables. The script is executed in JS context
+   specific to loaded JS files at startup.
+
+   Example 1.5. sqlang_runstring usage
+...
+if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
+{
+    xdbg("failed to execute squirrel script!\n");
+}
+...
+
+5. RPC Commands
+
+   5.1. app_swlang.reload
+   5.2. app_sqlang.api_list
+
+5.1.  app_swlang.reload
+
+   Marks the need to reload the SQLang script pointed by 'load'
+   parameter.The actual reload is done by every working process when the
+   next call to sqlang_run() function or KEMI config is executed.
+
+   Name: app_sqlang.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_sqlang.reload
+...
+
+5.2.  app_sqlang.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: app_sqlang.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_sqlang.api_list
+...
+
+6. Example of usage
+
+   Create your SQLang script and stored on file system, say:
+   '/usr/local/etc/kamailio/sqlang/myscript.sq'.
+...
+function sr_append_fu_to_reply()
+{
+        KSR.hdr.append_to_reply("P-From: " + KSR.pv.get("$fu") + "\r\n");
+}
+...
+
+   Load the script via parameter 'load' and execute function via
+   sqlang_run(...).
+...
+modparam("app_sqlang", "load", "/usr/local/etc/kamailio/sqlang/myscript.sq")
+...
+request_route {
+    ...
+    if(!sqlang_run("sr_append_fu_to_reply"))
+    {
+        xdbg("SCRIPT: failed to execute squirrel function!\n");
+    }
+    ...
+}
+...

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a generic database clustering system. It can be
+		used as a middle layer between modules and database connectors.
+	</para>
+	<para>
+		Via clustering, database operations can be executed across multiple
+		servers, based on policies such as parallel write, serial or round
+		robin write and read.
+	</para>
+	<para>
+		The following database commands are considered to be write operations:
+		INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE. The
+		read operations are done for database commands: QUERY and RAW-QUERY.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>db connector</emphasis> - database connectors.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="db_cluster.p.connection">
+		<title><varname>connection</varname> (str)</title>
+		<para>
+			Specify the connection to a real database system. The format is
+			'conid=>DBURL' - providing a connection id and the database
+			URL used by the database driver used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connection</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "connection",
+             "con1=>&defaultdb;1")
+modparam("db_cluster", "connection",
+             "con2=>&defaultdb;2")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_cluster.p.cluster">
+		<title><varname>cluster</varname> (str)</title>
+		<para>
+			Specify the cluster definition. The format is
+			'clsid=>conid1=def1;conid2=def2' - providing a cluster id and the list of
+			database connections to be used. For each connection you have to provide
+			a usage definition. The usage definition is a 4-char long string,
+			specifying priority and command mode for read and write operations to be
+			performed on that connection.
+		</para>
+		<para>
+			The priority is a digit between 0 and 9, where a higher value means higher priority.
+			Priority 0 means that the connection is not going to be used in that cluster.
+		</para>
+		<para>
+			Command mode is a character among s, r and p. s is for doing serial
+			operations (try first and if fails, try next); r is for doing round
+			robin operations; p - is for doing parallel operations (this is valid
+			only for write operations).
+		</para>
+		<para>
+		<para>
+			The first two characters is priority and mode for read, followed by
+			two characters for priority and mode for write operations. "p" is 
+			only used for write operations.
+		</para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cluster</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "cluster", "cls1=>con1=9s8p;con2=9s8p")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_cluster.p.inactive_interval">
+		<title><varname>inactive_interval</varname> (int)</title>
+		<para>
+			How long (seconds) a connection is considered inactive after a DB
+			operations failed on it.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 300 (5 min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>inactive_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "inactive_interval", 180)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_cluster.p.max_query_length">
+		<title><varname>max_query_length</varname> (int)</title>
+		<para>
+		How long (seconds) a failed db operation needs to last before
+		deactivating the connection for inactive_interval seconds. This
+		prevents disabling of connections that reply fast with error
+		codes, thus being active (e.g., due to primary key insert errors).
+		In such cases, the database server is active.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_query_length</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "max_query_length", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+		<title>Usage</title>
+		<para>
+			Practically, all the modules that want to use a cluster, have to set
+			their db_url parameter to "cluster://clusterid".
+		</para>
+		<para>
+			Following rules apply when doing DB commands: the connections with highest
+			priority are chosen first and the operations are performed according
+			to the command mode. Note that for same priority, only one command mode
+			is used (the one from the first connection with that priority found
+			in the definition of the cluster). If the DB command is not successful,
+			next set of connections based on priority is selected and the command is
+			tried again. When the command is successful, no other try is made.
+		</para>
+		<para>
+			For parallel operations, a command is considered successful if it
+			succeeded on one connection from a group with same priority.
+		</para>
+		<para>
+			Next example shows how to set a cluster with two connections to MySQL
+			to be used for parallel writing from acc and round-robin reading by
+			sqlops.
+		</para>
+		<example>
+		<title>Sample of usage</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "connection",
+             "c1=&gt;&defaultdb;1")
+modparam("db_cluster", "connection",
+             "c2=&gt;&defaultdb;2")
+modparam("db_cluster", "cluster", "k1=&gt;c1=9r9p;c2=9r9p")
+
+modparam("acc", "db_url", "cluster://k1")
+
+modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

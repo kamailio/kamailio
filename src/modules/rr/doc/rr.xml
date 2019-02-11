@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>rr Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice.com</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>Voice Sistem SRL</holder>
+	</copyright>
+	<copyright>
+		<year>2011</year>
+		<holder>Carsten Bock, carsten@ng-voice.com</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="rr_admin.xml"/>
+	<xi:include href="rr_devel.xml"/>
+	
+	
+</book>

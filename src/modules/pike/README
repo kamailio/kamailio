@@ -1,0 +1,283 @@
+pike Module
+
+Bogdan-Andrei Iancu
+
+   Voice Sistem SRL
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. sampling_time_unit (integer)
+              3.2. reqs_density_per_unit (integer)
+              3.3. remove_latency (integer)
+              3.4. pike_log_level (integer)
+
+        4. Functions
+
+              4.1. pike_check_req()
+
+        5. RPC Commands
+
+              5.1. pike.top
+
+   2. RPC calls
+
+        1. pike.top
+
+   3. Developer Guide
+
+   List of Examples
+
+   1.1. Set sampling_time_unit parameter
+   1.2. Set reqs_density_per_unit parameter
+   1.3. Set remove_latency parameter
+   1.4. Set pike_log_level parameter
+   1.5. pike_check_req usage
+   3.1. Tree of IP addresses
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. sampling_time_unit (integer)
+        3.2. reqs_density_per_unit (integer)
+        3.3. remove_latency (integer)
+        3.4. pike_log_level (integer)
+
+   4. Functions
+
+        4.1. pike_check_req()
+
+   5. RPC Commands
+
+        5.1. pike.top
+
+1. Overview
+
+   The pike module keeps trace of all (or selected ones) incoming
+   request's IP source and blocks the ones that exceed the limit. It works
+   simultaneously for IPv4 and IPv6 addresses.
+
+   The module does not implement any actions on blocking - it just simply
+   reports that there is high traffic from an IP; what to do, is the
+   administrator decision (via scripting).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. sampling_time_unit (integer)
+   3.2. reqs_density_per_unit (integer)
+   3.3. remove_latency (integer)
+   3.4. pike_log_level (integer)
+
+3.1. sampling_time_unit (integer)
+
+   Time period in seconds used for sampling (or the sampling accuracy).
+   The smaller the better, but slower. If you want to detect peeks, use a
+   small one. To limit the access (like total number of requests on a long
+   period of time) to a proxy resource (a gateway for example), use a
+   bigger value of this parameter.
+
+   IMPORTANT: a too small value may lead to performance penalties due to
+   timer process overloading.
+
+   Default value is “2”.
+
+   Example 1.1. Set sampling_time_unit parameter
+...
+modparam("pike", "sampling_time_unit", 10)
+...
+
+3.2. reqs_density_per_unit (integer)
+
+   How many requests should be allowed per sampling_time_unit before
+   blocking all the incoming request from that IP. Practically, the
+   blocking limit is between ( let's have x=reqs_density_per_unit) x and
+   3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
+
+   Default value is 30.
+
+   Example 1.2. Set reqs_density_per_unit parameter
+...
+modparam("pike", "reqs_density_per_unit", 30)
+...
+
+3.3. remove_latency (integer)
+
+   Specifies for how long the IP address will be kept in memory after the
+   last request from that IP address. It's a sort of timeout value, in
+   seconds. Note that it is not the duration to keep the IP in state
+   'blocked'. An IP is unblocked next occurrence of 'sampling_time_unit'
+   that does not exceed 'reqs_density_per_unit'. Keeping an IP in memory
+   results in faster reaching of blocked state -- see the notes about the
+   limits of getting to state 'blocked'.
+
+   Default value is 120.
+
+   Example 1.3. Set remove_latency parameter
+...
+modparam("pike", "remove_latency", 130)
+...
+
+3.4. pike_log_level (integer)
+
+   Syslog log level to be used by module to auto report the blocking (only
+   first time) and unblocking of IPs detected as source of floods.
+
+   Default value is 1 (L_WARN).
+
+   Example 1.4. Set pike_log_level parameter
+...
+modparam("pike", "pike_log_level", -1)
+...
+
+4. Functions
+
+   4.1. pike_check_req()
+
+4.1.  pike_check_req()
+
+   Process the source IP of the current request and return false if the IP
+   was exceeding the blocking limit.
+
+   Return codes:
+     * 1 (true) - IP is not to be blocked or internal error occurred.
+
+Warning
+       IMPORTANT: in case of internal error, the function returns true to
+       avoid reporting the current processed IP as blocked.
+     * -1 (false) - IP is source of flooding, previously detected
+     * -2 (false) - IP is detected as a new source of flooding - first
+       time detection
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. pike_check_req usage
+...
+if (!pike_check_req()) { exit; };
+...
+
+5. RPC Commands
+
+   5.1. pike.top
+
+5.1.  pike.top
+
+   Lists nodes in the pike tree.
+
+   Name: pike.top
+
+   Parameters: filter (optional) - it can be "ALL", "HOT" or "WARM". If
+   missing, the "HOT" nodes are listed.
+
+   RPC Command Example:
+...
+kamcmd pike.top
+...
+
+Chapter 2. RPC calls
+
+   Table of Contents
+
+   1. pike.top
+
+1.  pike.top
+
+   Pike.top behaves like a 'top' command and shows source IP addresses of
+   incoming requestes to pike_check_req() function.
+
+   The IP list is sorted by sum of leaf hits (prev and curr) descending
+   and in second level by hits.
+
+   Some IPs could be marked as HOT depending on theirs request rates.
+
+   pike.top command takes one string parameter which specifies what kind
+   of nodes you are interested in. Possible values are HOT or ALL. If no
+   argument is given, it behaves as HOT was used.
+
+   Marking nodes HOT is done on server side, client only presents given
+   data and make some postprocessing like sorting.
+
+   Output of this command is a simple dump of ip_tree nodes marked as
+   ip-leafs.
+
+Chapter 3. Developer Guide
+
+   One single tree (for both IPv4 and IPv6) is used. Each node contains a
+   byte, the IP addresses stretching from root to the leafs.
+
+   Example 3.1. Tree of IP addresses
+           / 193 - 175 - 132 - 164
+tree root /                  \ 142
+          \ 195 - 37 - 78 - 163
+           \ 79 - 134
+
+   To detect the whole address, step by step, from the root to the leafs,
+   the nodes corresponding to each byte of the ip address are expanded. In
+   order to be expended a node has to be hit for a given number of times
+   (possible by different addresses; in the previous example, the node
+   “37” was expended by the 195.37.78.163 and 195.37.79.134 hits).
+
+   For 193.175.132.164 with x= reqs_density_per_unit:
+     * After first req hits -> the “193” node is built.
+     * After x more hits, the “175” node is build; the hits of “193” node
+       are split between itself and its child--both of them gone have x/2.
+     * And so on for node “132” and “164”.
+     * Once “164” build the entire address can be found in the tree. “164”
+       becomes a leaf. After it will be hit as a leaf for x times, it will
+       become “RED” (further request from this address will be blocked).
+
+   So, to build and block this address were needed 3*x hits. Now, if reqs
+   start coming from 193.175.132.142, the first 3 bytes are already in the
+   tree (they are shared with the previous address), so I will need only x
+   hits (to build node “142” and to make it “RED”) to make this address
+   also to be blocked. This is the reason for the variable number of hits
+   necessary to block an IP.
+
+   The maximum number of hits to turn an address red are (n is the
+   address's number of bytes):
+
+   1 (first byte) + x (second byte) + (x / 2) * (n - 2) (for the rest of
+   the bytes) + (n - 1) (to turn the node to red).
+
+   So, for IPv4 (n = 4) will be 3x and for IPv6 (n = 16) will be 9x. The
+   minimum number of hits to turn an address red is x.

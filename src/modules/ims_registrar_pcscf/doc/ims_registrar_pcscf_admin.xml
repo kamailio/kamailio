@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Auth_db Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module contains all methods related for usage of Kamailio as a
+	Proxy-CSCF.</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Usrloc PCSCF</para>
+        </listitem>
+
+        <listitem>
+          <para>PUA - if reginfo is used.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the internal IMS library.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>pcscf_uri</varname> (string)</title>
+
+      <para>URI of this Proxy-CSCF.</para>
+
+      <example>
+        <title><varname>pcscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "pcscf_uri", "pcscf.mnc001.mcc001.3gppnetwork.org")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>pending_reg_expires</varname> (int)</title>
+
+      <para>How long (in seconds), until pending (uncomplete) Registrations expire</para>
+
+      <para><emphasis> Default value is 30. </emphasis></para>
+
+      <example>
+        <title><varname>pending_reg_expires</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "pending_reg_expires", 15)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>received_avp</varname> (string)</title>
+
+      <para>AVP, holding the received information (optional)</para>
+
+      <example>
+        <title><varname>received_avp</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "received_avp", "$avp(i:42)")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>is_registered_fallback2ip</varname> (int)</title>
+
+      <para>Defines, whether a contact should be searched by it's contact only
+	or alternatively by the received IP-Address.</para>
+
+      <para>The option may have the following values:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>0</emphasis> Search by Contact-Header only</para>
+        </listitem>
+        <listitem>
+          <para><emphasis>1</emphasis> Search by Contact-Header, if this fails,
+		search by Received Information (IP, Port, Proto)</para>
+        </listitem>
+        <listitem>
+          <para><emphasis>2</emphasis> Search by Received Information
+		(IP, Port, Proto), if this fails, Search by Contact Header</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This Parameter is primarily used by the "is_registered" function.</para>
+
+      <para><emphasis> Default value is 0 (Contact only). </emphasis></para>
+
+      <example>
+        <title><varname>is_registered_fallback2ip</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "is_registered_fallback2ip", 2)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>publish_reginfo</varname> (int)</title>
+
+      <para>If set to "1", the module will send PUBLISH regarding changes of
+	the registration (e.g. due to Rx-Information) towards the network
+	core.</para>
+
+      <para><emphasis>Default value is 0 (Do not send PUBLISH).</emphasis></para>
+
+      <example>
+        <title><varname>publish_reginfo</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "publish_reginfo", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>subscribe_to_reginfo</varname> (int)</title>
+
+      <para>If set to "1", the module will send a SUBSCRIBE for the registration
+	status towards the network core.</para>
+
+      <para><emphasis>Default value is 0 (Do not send SUBSCRIBE).</emphasis></para>
+
+      <example>
+        <title><varname>subscribe_to_reginfo</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "subscribe_to_reginfo", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>subscription_expires</varname> (int)</title>
+
+      <para>How long should the subscription of reg-info towards the
+	packet-core be valid?</para>
+
+      <para><emphasis>Default value is 3600.</emphasis></para>
+
+      <example>
+        <title><varname>subscription_expires</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "subscription_expires", 7200)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ignore_contact_rxport_check</varname> (int)</title>
+
+      <para>Validate, if the port, from which the request was received, is the 
+	same as used during registration.</para>
+
+      <para>This Parameter is primarily used by the "is_registered" function.</para>
+
+      <para><emphasis>Default value is 0 (do not ignore Ports).</emphasis></para>
+
+      <example>
+        <title><varname>ignore_contact_rxport_check</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "ignore_contact_rxport_check", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ignore_reg_state</varname> (int)</title>
+
+      <para>Validate, if the found contact is really and completely registered.</para>
+
+      <para>This Parameter is primarily used by the "is_registered" function.</para>
+
+      <para><emphasis>Default value is 0 (do not ignore registration state).</emphasis></para>
+
+      <example>
+        <title><varname>ignore_reg_state</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "ignore_reg_state", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>force_icscf_uri</varname> (string)</title>
+
+      <para>Instead of doing a DNS-Lookup on the domain, always send the requests
+	to a specific I-CSCF.</para>
+
+      <para><emphasis>Default value is not set, do the DNS-Lookup.</emphasis></para>
+
+      <example>
+        <title><varname>force_icscf_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "force_icscf_uri", "sip:icscf.mnc001.mcc001.3gppnetwork.org")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>reginfo_queue_size_threshold</varname> (int)</title>
+
+      <para>As reginfo operations are processed asynchronously, this parameter
+	defines at what length of the queue, the length should be logged (in
+	order to determine overload)</para>
+
+      <para><emphasis>Default value is 0 (do not log queue length).</emphasis></para>
+
+      <example>
+        <title><varname>reginfo_queue_size_threshold</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
+...
+        </programlisting>
+      </example>
+    </section>
+
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function moreinfo="none">pcscf_save(domain)</function></title>
+
+		<para>
+		The function processes a reply to a <emphasis>REGISTER</emphasis>
+		message. It can add, remove or modify location records (in
+		usrloc) depending on Contact and Expires HFs in the REGISTER
+		message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
+			stores the contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+      <example>
+        <title>pcscf_save</title>
+
+        <programlisting format="linespecific">
+...
+pcscf_save("location");
+...
+</programlisting>
+      </example>
+    </section>
+
+   <section>
+      <title><function moreinfo="none">pcscf_save_pending(domain)</function></title>
+      <para>Same as pcscf_save(), but it will store the registration in a
+	"Pending" state.</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
+			stores the contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+  </section>
+
+   <section>
+      <title><function moreinfo="none">pcscf_follows_service_routes(domain)</function></title>
+      <para>Returns true, if the request is following the "learned"
+	service-routes during registration.</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
+			stores the contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+  </section>
+
+   <section>
+      <title><function moreinfo="none">pcscf_force_service_routes(domain)</function></title>
+      <para>Remove existing route-headers and force the Service-Routes, that were
+	learned during registration.</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
+			stores the contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+  </section>
+
+   <section>
+      <title><function moreinfo="none">pcscf_is_registered(domain)</function></title>
+      <para>Returns true, if the request is coming from a "registered" endpoint.</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within the registrar. 
+			If a database is used then this must be name of the table which 
+			stores the contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+  </section>
+
+<!--
+
+	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,REQUEST_ROUTE },
+	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,      assert_identity_fixup,  0,ONREPLY_ROUTE },
+	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,REQUEST_ROUTE},
+        {"lookup_transport",		(cmd_function)w_lookup_transport,       1,      domain_fixup,           0,REQUEST_ROUTE|FAILURE_ROUTE},
+        {"lookup_transport",		(cmd_function)w_lookup_transport,       2,      domain_uri_fixup,       0,REQUEST_ROUTE|FAILURE_ROUTE},
+        {"pcscf_unregister",		(cmd_function)w_unregister,		4,      domain_uri_fixup,       0,ANY_ROUTE},
+
+-->
+  </section>
+</chapter>

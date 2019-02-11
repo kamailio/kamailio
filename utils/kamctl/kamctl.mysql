@@ -33,18 +33,30 @@ fi
 mysql_query() {
 	# if password not yet queried, query it now
 	prompt_pw "MySQL password for user '$DBRWUSER@$DBHOST'"
-	$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" -e "$1 ;" $DBNAME
+	if [ -z "$DBPORT" ] ; then
+		$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" -e "$1 ;" $DBNAME
+	else
+		$MYSQL $2 -h $DBHOST -P $DBPORT -u $DBRWUSER "-p$DBRWPW" -e "$1 ;" $DBNAME
+	fi
 }
 
 # input: sql query, optional mysql command-line params
 mysql_ro_query() {
-	$MYSQL $2 -h $DBHOST -u $DBROUSER "-p$DBROPW" -e "$1 ;" $DBNAME
+	if [ -z "$DBPORT" ] ; then
+		$MYSQL $2 -h $DBHOST -u $DBROUSER "-p$DBROPW" -e "$1 ;" $DBNAME
+	else
+		$MYSQL $2 -h $DBHOST -P $DBPORT -u $DBROUSER "-p$DBROPW" -e "$1 ;" $DBNAME
+	fi
 }
 
 mysql_connect() {
 	# if password not yet queried, query it now
 	prompt_pw "MySQL password for user '$DBRWUSER@$DBHOST'"
-	$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" $DBNAME
+	if [ -z "$DBPORT" ] ; then
+		$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" $DBNAME
+	else
+		$MYSQL $2 -h $DBHOST -P $DBPORT -u $DBRWUSER "-p$DBRWPW" $DBNAME
+	fi
 }
 
 DBCMD=mysql_query

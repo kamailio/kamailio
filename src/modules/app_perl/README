@@ -1,0 +1,1694 @@
+perl Module
+
+Bastian Friedrich
+
+   Collax GmbH
+
+Edited by
+
+Bastian Friedrich
+
+   Copyright © 2007 Collax GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Installing the module
+        3. Using the module
+        4. Dependencies
+
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
+
+        5. Parameters
+
+              5.1. filename (string)
+              5.2. modpath (string)
+              5.3. reset_cycles (int)
+              5.4. perl_destroy_func (string)
+
+        6. Functions
+
+              6.1. perl_exec_simple(func, [param])
+              6.2. perl_exec(func, [param])
+
+        7. RPC Commands
+
+              7.1. app_perl.set_reset_cycles
+              7.2. app_perl.get_reset_cycles
+
+   2. Kamailio Perl API
+
+        1. Kamailio
+
+              1.1. log(level,message)
+
+        2. Kamailio::Message
+
+              2.1. getType()
+              2.2. getStatus()
+              2.3. getReason()
+              2.4. getVersion()
+              2.5. getRURI()
+              2.6. getMethod()
+              2.7. getFullHeader()
+              2.8. getBody()
+              2.9. getMessage()
+              2.10. getHeader(name)
+              2.11. getHeaderNames()
+              2.12. moduleFunction(func,string1,string2)
+              2.13. log(level,message) (deprecated type)
+              2.14. rewrite_ruri(newruri)
+              2.15. setFlag(flag)
+              2.16. resetFlag(flag)
+              2.17. isFlagSet(flag)
+              2.18. pseudoVar(string)
+              2.19. append_branch(branch,qval)
+              2.20. getParsedRURI()
+
+        3. Kamailio::URI
+
+              3.1. user()
+              3.2. host()
+              3.3. passwd()
+              3.4. port()
+              3.5. params()
+              3.6. headers()
+              3.7. transport()
+              3.8. ttl()
+              3.9. user_param()
+              3.10. maddr()
+              3.11. method()
+              3.12. lr()
+              3.13. r2()
+              3.14. transport_val()
+              3.15. ttl_val()
+              3.16. user_param_val()
+              3.17. maddr_val()
+              3.18. method_val()
+              3.19. lr_val()
+              3.20. r2_val()
+
+        4. Kamailio::AVP
+
+              4.1. add(name,val)
+              4.2. get(name)
+              4.3. destroy(name)
+
+        5. Kamailio::Utils::PhoneNumbers
+
+              5.1.
+                      new(publicAccessPrefix,internationalPrefix,longDistanceP
+                      refix,countryCode,areaCode,pbxCode)
+
+              5.2. canonicalForm( number [, context] )
+              5.3. dialNumber( number [, context] )
+
+        6. Kamailio::LDAPUtils::LDAPConf
+
+              6.1. Constructor new()
+              6.2. Method base()
+              6.3. Method host()
+              6.4. Method port()
+              6.5. Method uri()
+              6.6. Method rootbindpw()
+              6.7. Method rootbinddn()
+              6.8. Method binddn()
+              6.9. Method bindpw()
+
+        7. Kamailio::LDAPUtils::LDAPConnection
+
+              7.1. Constructor new( [config, [authenticated]] )
+              7.2. Function/Method search( conf, filter, base,
+                      [requested_attributes ...])
+
+                    7.2.1. Arguments:
+                    7.2.2. Result:
+
+        8. Kamailio::VDB
+        9. Kamailio::Constants
+        10. Kamailio::VDB::Adapter::Speeddial
+        11. Kamailio::VDB::Adapter::Alias
+
+              11.1. query(conds,retkeys,order)
+
+        12. Kamailio::VDB::Adapter::AccountingSIPtrace
+        13. Kamailio::VDB::Adapter::Describe
+        14. Kamailio::VDB::Adapter::Auth
+        15. Kamailio::VDB::ReqCond
+
+              15.1. new(key,op,type,name)
+              15.2. op()
+
+        16. Kamailio::VDB::Pair
+
+              16.1. new(key,type,name)
+              16.2. key()
+
+        17. Kamailio::VDB::VTab
+
+              17.1. new()
+              17.2. call(op,[args])
+
+        18. Kamailio::VDB::Value
+
+              18.1. stringification
+              18.2. new(type,data)
+              18.3. type()
+              18.4. data()
+
+        19. Kamailio::VDB::Column
+
+              19.1. Stringification
+              19.2. new(type,name)
+              19.3. type( )
+              19.4. name()
+              19.5. Kamailio::VDB::Result
+              19.6. new(coldefs,[row, row, ...])
+              19.7. coldefs()
+              19.8. rows()
+
+   3. Perl samples
+
+        1. Sample directory
+
+              1.1. Script descriptions
+
+                    1.1.1. branches.pl
+                    1.1.2. firstline.pl
+                    1.1.3. flags.pl
+                    1.1.4. functions.pl
+                    1.1.5. headers.pl
+                    1.1.6. logging.pl
+                    1.1.7. messagedump.pl
+                    1.1.8. persistence.pl
+                    1.1.9. phonenumbers.pl
+                    1.1.10. pseudovars.pl
+
+   4. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set filename parameter
+   1.2. Set modpath parameter
+   1.3. Set reset_cycles parameter
+   1.4. Set perl_destroy_func parameter
+   1.5. perl_exec_simple() usage
+   1.6. perl_exec() usage
+   1.7. app_perl.set_reset_cycles usage
+   1.8. app_perl.get_reset_cycles usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Installing the module
+   3. Using the module
+   4. Dependencies
+
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
+
+   5. Parameters
+
+        5.1. filename (string)
+        5.2. modpath (string)
+        5.3. reset_cycles (int)
+        5.4. perl_destroy_func (string)
+
+   6. Functions
+
+        6.1. perl_exec_simple(func, [param])
+        6.2. perl_exec(func, [param])
+
+   7. RPC Commands
+
+        7.1. app_perl.set_reset_cycles
+        7.2. app_perl.get_reset_cycles
+
+1. Overview
+
+   The time needed when writing a new Kamailio module unfortunately is
+   quite high, while the options provided by the configuration file are
+   limited to the features implemented in the modules.
+
+   With this Perl module, you can easily implement your own Kamailio
+   extensions in Perl. This allows for simple access to the full world of
+   CPAN modules. SIP URI rewriting could be implemented based on regular
+   expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley
+   DB files, is now extremely simple.
+
+2. Installing the module
+
+   This Perl module is loaded in kamailio.cfg (just like all the other
+   modules) with loadmodule("/path/to/perl.so");.
+
+   For the Perl module to compile, you need a reasonably recent version of
+   perl (tested with 5.8.8) linked dynamically. It is strongly advised to
+   use a threaded version. The default binary packages from your favorite
+   Linux distribution should work fine.
+
+   Cross compilation is supported by the Makefile. You need to set the
+   environment variables PERLLDOPTS, PERLCCOPTS and TYPEMAP to values
+   similar to the output of
+PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
+PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/ty
+pemap"
+
+   The exact position of your (precompiled!) perl libraries depends on the
+   setup of your environment.
+
+3. Using the module
+
+   The Perl module has two interfaces: The perl side, and the Kamailio
+   side. Once a Perl function is defined and loaded via the module
+   parameters (see below), it may be called in Kamailio's configuration at
+   an arbitrary point. E.g., you could write a function "ldap_alias" in
+   Perl, and then execute
+...
+if (perl_exec("ldap_alias")) {
+        ...
+}
+...
+
+   just as you would have done with the current alias_db module.
+
+   The functions you can use are listed in the "Exported Functions"
+   section below.
+
+   On the Perl side, there are a number of functions that let you read and
+   modify the current SIP message, such as the RURI or the message flags.
+   An introduction to the Perl interface and the full reference
+   documentation can be found below.
+
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * The "sl" module is needed for sending replies upon fatal errors.
+       All other modules can be accessed from the Perl module, though.
+
+4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * Perl 5.8.x or later
+
+   Additionally, a number of perl modules should be installed. The
+   Kamailio::LDAPUtils package relies on Net::LDAP to be installed. One of
+   the sample scripts needs IPC::Shareable
+
+   This module has been developed and tested with Perl 5.8.8, but should
+   work with any 5.8.x release. Compilation is possible with 5.6.x, but
+   its behavior is unsupported. Earlier versions do not work.
+
+   On current Debian systems, at least the following packages should be
+   installed:
+     * perl
+     * perl-base
+     * perl-modules
+     * libperl5.8
+     * libperl-dev
+     * libnet-ldap-perl
+     * libipc-shareable-perl
+
+   It was reported that other Debian-style distributions (such as Ubuntu)
+   need the same packages.
+
+   On SuSE systems, at least the following packages should be installed:
+     * perl
+     * perl-ldap
+     * IPC::Shareable perl module from CPAN
+
+   Although SuSE delivers a lot of perl modules, others may have to be
+   fetched from CPAN. Consider using the program “cpan2rpm” - which, in
+   turn, is available on CPAN. It creates RPM files from CPAN.
+
+5. Parameters
+
+   5.1. filename (string)
+   5.2. modpath (string)
+   5.3. reset_cycles (int)
+   5.4. perl_destroy_func (string)
+
+5.1. filename (string)
+
+   This is the file name of your script. This may be set once only, but it
+   may include an arbitrary number of functions and “use” as many Perl
+   module as necessary.
+
+   Must not be empty!
+
+   Example 1.1. Set filename parameter
+...
+modparam("app_perl", "filename", "/home/test/kamailio/myperl.pl")
+...
+
+5.2. modpath (string)
+
+   The path to the Perl modules included (Kamailio.pm et.al). It is not
+   absolutely crucial to set this path, as you may install the Modules in
+   Perl's standard path, or update the “%INC” variable from within your
+   script. Using this module parameter is the standard behavior, though.
+   Multiple paths may be specified by separating them with a “:”
+   character. The maximum is 10 paths.
+
+   Example 1.2. Set modpath parameter
+...
+modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
+...
+
+5.3. reset_cycles (int)
+
+   The number of execution cycles after which the embedded perl
+   interpreter is reset. Sometimes is hard to track the scope of variables
+   in all used perl modules and that can result in leaks of system memory.
+   Resetting the interpreter cleans the memory space.
+
+   When the interpreter is reset, the perl script is loaded again. Note
+   that not all Kamailio processes will reset the interpreter at the same
+   time. Each will do it when it has executed the script for the number of
+   reset_cycles. Also, be aware that the reset of the interpreter is
+   taking a bit of time (in the order of tens of mili-seconds).
+
+   Default value is 0 - never reset the interpreter.
+
+   Example 1.3. Set reset_cycles parameter
+...
+modparam("app_perl", "reset_cycles", 100000)
+...
+
+5.4. perl_destroy_func (string)
+
+   The name of Perl function to be executed before the interpreter is
+   re-initialized (reset -- see reset_cycles parameter) at runtime. This
+   could be useful to clean global variables or file descriptors from the
+   Perl script.
+
+   Example 1.4. Set perl_destroy_func parameter
+...
+modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
+...
+
+6. Functions
+
+   6.1. perl_exec_simple(func, [param])
+   6.2. perl_exec(func, [param])
+
+6.1.  perl_exec_simple(func, [param])
+
+   Calls a perl function without passing it the current SIP message. May
+   be used for very simple simple requests that do not have to fiddle with
+   the message themselves, but rather return information values about the
+   environment.
+
+   The first parameter is the function to be called. An arbitrary string
+   may optionally be passed as a parameter.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE and BRANCH_ROUTE.
+
+   Example 1.5. perl_exec_simple() usage
+...
+if (method=="INVITE") {
+        perl_exec_simple("dosomething", "on invite messages");
+};
+...
+
+6.2.  perl_exec(func, [param])
+
+   Calls a perl function with passing it the current SIP message. The SIP
+   message is reflected by a Perl module that gives you access to the
+   information in the current SIP message (Kamailio::Message).
+
+   The first parameter is the function to be called. An arbitrary string
+   may be passed as a parameter.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE and BRANCH_ROUTE.
+
+   Example 1.6. perl_exec() usage
+...
+if (perl_exec("ldapalias")) {
+        ...
+};
+...
+
+7. RPC Commands
+
+   7.1. app_perl.set_reset_cycles
+   7.2. app_perl.get_reset_cycles
+
+7.1.  app_perl.set_reset_cycles
+
+   Set the value of the reset_cycle. The command has one integer
+   parameter.
+
+   Example 1.7. app_perl.set_reset_cycles usage
+...
+kamcmd app_perl.set_reset_cycles 20000
+...
+
+7.2.  app_perl.get_reset_cycles
+
+   Return the value of the reset_cycle.
+
+   Example 1.8. app_perl.get_reset_cycles usage
+...
+kamcmd app_perl.get_reset_cycles
+...
+
+Chapter 2. Kamailio Perl API
+
+   Table of Contents
+
+   1. Kamailio
+
+        1.1. log(level,message)
+
+   2. Kamailio::Message
+
+        2.1. getType()
+        2.2. getStatus()
+        2.3. getReason()
+        2.4. getVersion()
+        2.5. getRURI()
+        2.6. getMethod()
+        2.7. getFullHeader()
+        2.8. getBody()
+        2.9. getMessage()
+        2.10. getHeader(name)
+        2.11. getHeaderNames()
+        2.12. moduleFunction(func,string1,string2)
+        2.13. log(level,message) (deprecated type)
+        2.14. rewrite_ruri(newruri)
+        2.15. setFlag(flag)
+        2.16. resetFlag(flag)
+        2.17. isFlagSet(flag)
+        2.18. pseudoVar(string)
+        2.19. append_branch(branch,qval)
+        2.20. getParsedRURI()
+
+   3. Kamailio::URI
+
+        3.1. user()
+        3.2. host()
+        3.3. passwd()
+        3.4. port()
+        3.5. params()
+        3.6. headers()
+        3.7. transport()
+        3.8. ttl()
+        3.9. user_param()
+        3.10. maddr()
+        3.11. method()
+        3.12. lr()
+        3.13. r2()
+        3.14. transport_val()
+        3.15. ttl_val()
+        3.16. user_param_val()
+        3.17. maddr_val()
+        3.18. method_val()
+        3.19. lr_val()
+        3.20. r2_val()
+
+   4. Kamailio::AVP
+
+        4.1. add(name,val)
+        4.2. get(name)
+        4.3. destroy(name)
+
+   5. Kamailio::Utils::PhoneNumbers
+
+        5.1.
+                new(publicAccessPrefix,internationalPrefix,longDistancePrefix,
+                countryCode,areaCode,pbxCode)
+
+        5.2. canonicalForm( number [, context] )
+        5.3. dialNumber( number [, context] )
+
+   6. Kamailio::LDAPUtils::LDAPConf
+
+        6.1. Constructor new()
+        6.2. Method base()
+        6.3. Method host()
+        6.4. Method port()
+        6.5. Method uri()
+        6.6. Method rootbindpw()
+        6.7. Method rootbinddn()
+        6.8. Method binddn()
+        6.9. Method bindpw()
+
+   7. Kamailio::LDAPUtils::LDAPConnection
+
+        7.1. Constructor new( [config, [authenticated]] )
+        7.2. Function/Method search( conf, filter, base,
+                [requested_attributes ...])
+
+              7.2.1. Arguments:
+              7.2.2. Result:
+
+   8. Kamailio::VDB
+   9. Kamailio::Constants
+   10. Kamailio::VDB::Adapter::Speeddial
+   11. Kamailio::VDB::Adapter::Alias
+
+        11.1. query(conds,retkeys,order)
+
+   12. Kamailio::VDB::Adapter::AccountingSIPtrace
+   13. Kamailio::VDB::Adapter::Describe
+   14. Kamailio::VDB::Adapter::Auth
+   15. Kamailio::VDB::ReqCond
+
+        15.1. new(key,op,type,name)
+        15.2. op()
+
+   16. Kamailio::VDB::Pair
+
+        16.1. new(key,type,name)
+        16.2. key()
+
+   17. Kamailio::VDB::VTab
+
+        17.1. new()
+        17.2. call(op,[args])
+
+   18. Kamailio::VDB::Value
+
+        18.1. stringification
+        18.2. new(type,data)
+        18.3. type()
+        18.4. data()
+
+   19. Kamailio::VDB::Column
+
+        19.1. Stringification
+        19.2. new(type,name)
+        19.3. type( )
+        19.4. name()
+        19.5. Kamailio::VDB::Result
+        19.6. new(coldefs,[row, row, ...])
+        19.7. coldefs()
+        19.8. rows()
+
+1. Kamailio
+
+   1.1. log(level,message)
+
+   This module provides access to a limited number of Kamailio core
+   functions. As the most interesting functions deal with SIP messages,
+   they are located in the Kamailio::Message class below.
+
+1.1. log(level,message)
+
+   Logs the message with Kamailio's logging facility. The logging level is
+   one of the following:
+* L_ALERT
+* L_CRIT
+* L_ERR
+* L_WARN
+* L_NOTICE
+* L_INFO
+* L_DBG
+
+   Please note that this method is NOT automatically exported, as it
+   collides with the perl function log (which calculates the logarithm).
+   Either explicitly import the function (via use Kamailio qw ( log );),
+   or call it with its full name:
+Kamailio::log(L_INFO, "foobar");
+
+2. Kamailio::Message
+
+   2.1. getType()
+   2.2. getStatus()
+   2.3. getReason()
+   2.4. getVersion()
+   2.5. getRURI()
+   2.6. getMethod()
+   2.7. getFullHeader()
+   2.8. getBody()
+   2.9. getMessage()
+   2.10. getHeader(name)
+   2.11. getHeaderNames()
+   2.12. moduleFunction(func,string1,string2)
+   2.13. log(level,message) (deprecated type)
+   2.14. rewrite_ruri(newruri)
+   2.15. setFlag(flag)
+   2.16. resetFlag(flag)
+   2.17. isFlagSet(flag)
+   2.18. pseudoVar(string)
+   2.19. append_branch(branch,qval)
+   2.20. getParsedRURI()
+
+   This package provides access functions for an Kamailio sip_msg
+   structure and its sub-components. Through its means it is possible to
+   fully configure alternative routing decisions.
+
+2.1. getType()
+
+   Returns one of the constants SIP_REQUEST, SIP_REPLY, SIP_INVALID
+   stating the type of the current message.
+
+2.2. getStatus()
+
+   Returns the status code of the current Reply message. This function is
+   invalid in Request context!
+
+2.3. getReason()
+
+   Returns the reason of the current Reply message. This function is
+   invalid in Request context!
+
+2.4. getVersion()
+
+   Returns the version string of the current SIP message.
+
+2.5. getRURI()
+
+   This function returns the recipient URI of the present SIP message:
+
+   my $ruri = $m->getRURI();
+
+   getRURI returns a string. See “getParsedRURI()” below how to receive a
+   parsed structure.
+
+   This function is valid in request messages only.
+
+2.6. getMethod()
+
+   Returns the current method, such as INVITE, REGISTER, ACK and so on.
+
+   my $method = $m->getMethod();
+
+   This function is valid in request messages only.
+
+2.7. getFullHeader()
+
+   Returns the full message header as present in the current message. You
+   might use this header to further work with it with your favorite MIME
+   package.
+
+   my $hdr = $m->getFullHeader();
+
+2.8. getBody()
+
+   Returns the message body.
+
+2.9. getMessage()
+
+   Returns the whole message including headers and body.
+
+2.10. getHeader(name)
+
+   Returns the body of the first message header with this name.
+
+   print $m->getHeader("To");
+
+   "John" <sip:john@doe.example>
+
+2.11. getHeaderNames()
+
+   Returns an array of all header names. Duplicates possible!
+
+2.12. moduleFunction(func,string1,string2)
+
+   Search for an arbitrary function in module exports and call it with the
+   parameters self, string1, string2.
+
+   string1 and/or string2 may be omitted.
+
+   As this function provides access to the functions that are exported to
+   the Kamailio configuration file, it is autoloaded for unknown
+   functions. Instead of writing
+$m->moduleFunction("sl_send_reply", "500", "Internal Error");
+$m->moduleFunction("xlog", "L_INFO", "foo");
+
+   you may as well write
+$m->sl_send_reply("500", "Internal Error");
+$m->xlog("L_INFO", "foo");
+
+   WARNING
+
+   In Kamailio 1.2, only a limited subset of module functions is
+   available. This restriction will be removed in a later version.
+
+   Here is a list of functions that are expected to be working (not
+   claiming completeness):
+* alias_db_lookup
+* consume_credentials
+* is_rpid_user_e164
+* append_rpid_hf
+* bind_auth
+* avp_print
+* cpl_process_register
+* cpl_process_register_norpl
+* load_dlg
+* ds_next_dst
+* ds_next_domain
+* ds_mark_dst
+* ds_mark_dst
+* is_from_local
+* is_uri_host_local
+* dp_can_connect
+* dp_apply_policy
+* enum_query (without parameters)
+* enum_fquery (without parameters)
+* is_from_user_enum (without parameters)
+* i_enum_query (without parameters)
+* imc_manager
+* jab_* (all functions from the jabber module)
+* load_gws (without parameters)
+* next_gw
+* from_gw (without parameters)
+* to_gw (without parameters)
+* load_contacts
+* next_contacts
+* sdp_mangle_ip
+* sdp_mangle_port
+* encode_contact
+* decode_contact
+* decode_contact_header
+* fix_contact
+* use_media_proxy
+* end_media_session
+* m_store
+* m_dump
+* fix_nated_contact
+* unforce_rtp_proxy
+* force_rtp_proxy
+* fix_nated_register
+* add_rcv_param
+* options_reply
+* checkospheader
+* validateospheader
+* requestosprouting
+* checkosproute
+* prepareosproute
+* prepareallosproutes
+* checkcallingtranslation
+* reportospusage
+* mangle_pidf
+* mangle_message_cpim
+* add_path (without parameters)
+* add_path_received (without parameters)
+* prefix2domain
+* allow_routing (without parameters)
+* allow_trusted
+* pike_check_req
+* handle_publish
+* handle_subscribe
+* stored_pres_info
+* bind_pua
+* send_publish
+* send_subscribe
+* pua_set_publish
+* loose_route
+* record_route
+* load_rr
+* sip_trace
+* sl_reply_error
+* sms_send_msg
+* sd_lookup
+* sstCheckMin
+* append_time
+* has_body (without parameters)
+* is_peer_verified
+* t_newtran
+* t_release
+* t_relay (without parameters)
+* t_flush_flags
+* t_check_trans
+* t_was_cancelled
+* t_load_contacts
+* t_next_contacts
+* uac_restore_from
+* uac_auth
+* has_totag
+* tel2sip
+* check_to
+* check_from
+* radius_does_uri_exist
+* ul_* (All functions exported by the usrloc module for user access)
+* xmpp_send_message
+
+2.13. log(level,message) (deprecated type)
+
+   Logs the message with Kamailio's logging facility. The logging level is
+   one of the following:
+* L_ALERT
+* L_CRIT
+* L_ERR
+* L_WARN
+* L_NOTICE
+* L_INFO
+* L_DBG
+
+   The logging function should be accessed via the Kamailio module
+   variant. This one, located in Kamailio::Message, is deprecated.
+
+2.14. rewrite_ruri(newruri)
+
+   Sets a new destination (recipient) URI. Useful for rerouting the
+   current message/call.
+if ($m->getRURI() =~ m/\@somedomain.net/) {
+  $m->rewrite_ruri("sip:dispatcher\@organization.net");
+}
+
+2.15. setFlag(flag)
+
+   Sets a message flag. The constants as known from the C API may be used,
+   when Constants.pm is included.
+
+2.16. resetFlag(flag)
+
+   Resets a message flag.
+
+2.17. isFlagSet(flag)
+
+   Returns whether a message flag is set or not.
+
+2.18. pseudoVar(string)
+
+   Returns a new string where all pseudo variables are substituted by
+   their values. Can be used to receive the values of single variables,
+   too.
+
+   Please remember that you need to escape the '$' sign in perl strings!
+
+2.19. append_branch(branch,qval)
+
+   Append a branch to current message.
+
+2.20. getParsedRURI()
+
+   Returns the current destination URI as an Kamailio::URI object.
+
+3. Kamailio::URI
+
+   3.1. user()
+   3.2. host()
+   3.3. passwd()
+   3.4. port()
+   3.5. params()
+   3.6. headers()
+   3.7. transport()
+   3.8. ttl()
+   3.9. user_param()
+   3.10. maddr()
+   3.11. method()
+   3.12. lr()
+   3.13. r2()
+   3.14. transport_val()
+   3.15. ttl_val()
+   3.16. user_param_val()
+   3.17. maddr_val()
+   3.18. method_val()
+   3.19. lr_val()
+   3.20. r2_val()
+
+   This package provides functions for access to sip_uri structures.
+
+3.1. user()
+
+   Returns the user part of this URI.
+
+3.2. host()
+
+   Returns the host part of this URI.
+
+3.3. passwd()
+
+   Returns the passwd part of this URI.
+
+3.4. port()
+
+   Returns the port part of this URI.
+
+3.5. params()
+
+   Returns the params part of this URI.
+
+3.6. headers()
+
+   Returns the headers part of this URI.
+
+3.7. transport()
+
+   Returns the transport part of this URI.
+
+3.8. ttl()
+
+   Returns the ttl part of this URI.
+
+3.9. user_param()
+
+   Returns the user_param part of this URI.
+
+3.10. maddr()
+
+   Returns the maddr part of this URI.
+
+3.11. method()
+
+   Returns the method part of this URI.
+
+3.12. lr()
+
+   Returns the lr part of this URI.
+
+3.13. r2()
+
+   Returns the r2 part of this URI.
+
+3.14. transport_val()
+
+   Returns the transport_val part of this URI.
+
+3.15. ttl_val()
+
+   Returns the ttl_val part of this URI.
+
+3.16. user_param_val()
+
+   Returns the user_param_val part of this URI.
+
+3.17. maddr_val()
+
+   Returns the maddr_val part of this URI.
+
+3.18. method_val()
+
+   Returns the method_val part of this URI.
+
+3.19. lr_val()
+
+   Returns the lr_val part of this URI.
+
+3.20. r2_val()
+
+   Returns the r2_val part of this URI.
+
+4. Kamailio::AVP
+
+   4.1. add(name,val)
+   4.2. get(name)
+   4.3. destroy(name)
+
+   This package provides access functions for Kamailio's AVPs. These
+   variables can be created, evaluated, modified and removed through this
+   package.
+
+   Please note that these functions do NOT support the notation used in
+   the configuration file, but directly work on strings or numbers. See
+   documentation of add method below.
+
+4.1. add(name,val)
+
+   Add an AVP.
+
+   Add an Kamailio AVP to its environment. name and val may both be
+   integers or strings; this function will try to guess what is correct.
+   Please note that
+Kamailio::AVP::add("10", "10")
+
+   is something different than
+Kamailio::AVP::add(10, 10)
+
+   due to this evaluation: The first will create _string_ AVPs with the
+   name 10, while the latter will create a numerical AVP.
+
+   You can modify/overwrite AVPs with this function.
+
+4.2. get(name)
+
+   get an Kamailio AVP:
+my $numavp = Kamailio::AVP::get(5);
+my $stravp = Kamailio::AVP::get("foo");
+
+4.3. destroy(name)
+
+   Destroy an AVP.
+Kamailio::AVP::destroy(5);
+Kamailio::AVP::destroy("foo");
+
+5. Kamailio::Utils::PhoneNumbers
+
+   5.1.
+          new(publicAccessPrefix,internationalPrefix,longDistancePrefix,count
+          ryCode,areaCode,pbxCode)
+
+   5.2. canonicalForm( number [, context] )
+   5.3. dialNumber( number [, context] )
+
+   Kamailio::Utils::PhoneNumbers - Functions for canonical forms of phone
+   numbers.
+use Kamailio::Utils::PhoneNumbers;
+
+my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
+     publicAccessPrefix => "0",
+     internationalPrefix => "+",
+     longDistancePrefix => "0",
+     areaCode => "761",
+     pbxCode => "456842",
+     countryCode => "49"
+   );
+
+$canonical = $phonenumbers->canonicalForm("07612034567");
+$number    = $phonenumbers->dialNumber("+497612034567");
+
+   A telephone number starting with a plus sign and containing all dial
+   prefixes is in canonical form. This is usually not the number to dial
+   at any location, so the dialing number depends on the context of the
+   user/system.
+
+   The idea to canonicalize numbers were taken from hylafax.
+
+   Example: +497614514829 is the canonical form of my phone number, 829 is
+   the number to dial at Pyramid, 4514829 is the dialing number from
+   Freiburg are and so on.
+
+   To canonicalize any number, we strip off any dial prefix we find and
+   then add the prefixes for the location. So, when the user enters the
+   number 04514829 in context pyramid, we remove the publicAccessPrefix
+   (at Pyramid this is 0) and the pbxPrefix (4514 here). The result is
+   829. Then we add all the general dial prefixes - 49 (country) 761
+   (area) 4514 (pbx) and 829, the number itself => +497614514829
+
+   To get the dialing number from a canonical phone number, we subtract
+   all general prefixes until we have something
+
+   As said before, the interpretation of a phone number depends on the
+   context of the location. For the functions in this package, the context
+   is created through the new operator.
+
+   The following fields should be set:
+'longDistancePrefix'
+'areaCode'
+'pbxCode'
+'internationalPrefix'
+'publicAccessPrefix'
+'countryCode'
+
+   This module exports the following functions when useed:
+
+5.1. new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countryCod
+e,areaCode,pbxCode)
+
+   The new operator returns an object of this type and sets its locational
+   context according to the passed parameters. See
+   Kamailio::Utils::PhoneNumbers above.
+
+5.2. canonicalForm( number [, context] )
+
+   Convert a phone number (given as first argument) into its canonical
+   form. When no context is passed in as the second argument, the default
+   context from the systems configuration file is used.
+
+5.3. dialNumber( number [, context] )
+
+   Convert a canonical phone number (given in the first argument) into a
+   number to to dial. WHen no context is given in the second argument, a
+   default context from the systems configuration is used.
+
+6. Kamailio::LDAPUtils::LDAPConf
+
+   6.1. Constructor new()
+   6.2. Method base()
+   6.3. Method host()
+   6.4. Method port()
+   6.5. Method uri()
+   6.6. Method rootbindpw()
+   6.7. Method rootbinddn()
+   6.8. Method binddn()
+   6.9. Method bindpw()
+
+   Kamailio::LDAPUtils::LDAPConf - Read openldap config from standard
+   config files.
+use Kamailio::LDAPUtils::LDAPConf;
+my $conf = new Kamailio::LDAPUtils::LDAPConf();
+
+   This module may be used to retrieve the global LDAP configuration as
+   used by other LDAP software, such as nsswitch.ldap and pam-ldap. The
+   configuration is usualy stored in /etc/openldap/ldap.conf
+
+   When used from an account with sufficient privileges (e.g. root), the
+   ldap manager password is also retrieved.
+
+6.1. Constructor new()
+
+   Returns a new, initialized Kamailio::LDAPUtils::LDAPConf object.
+
+6.2. Method base()
+
+   Returns the servers base-dn to use when doing queries.
+
+6.3. Method host()
+
+   Returns the ldap host to contact.
+
+6.4. Method port()
+
+   Returns the ldap servers port.
+
+6.5. Method uri()
+
+   Returns an uri to contact the ldap server. When there is no ldap_uri in
+   the configuration file, an ldap: uri is constructed from host and port.
+
+6.6. Method rootbindpw()
+
+   Returns the ldap "root" password.
+
+   Note that the rootbindpw is only available when the current account has
+   sufficient privileges to access /etc/openldap/ldap.secret.
+
+6.7. Method rootbinddn()
+
+   Returns the DN to use for "root"-access to the ldap server.
+
+6.8. Method binddn()
+
+   Returns the DN to use for authentication to the ldap server. When no
+   bind dn has been specified in the configuration file, returns the
+   rootbinddn.
+
+6.9. Method bindpw()
+
+   Returns the password to use for authentication to the ldap server. When
+   no bind password has been specified, returns the rootbindpw if any.
+
+7. Kamailio::LDAPUtils::LDAPConnection
+
+   7.1. Constructor new( [config, [authenticated]] )
+   7.2. Function/Method search( conf, filter, base, [requested_attributes
+          ...])
+
+        7.2.1. Arguments:
+        7.2.2. Result:
+
+   Kamailio::LDAPUtils::LDAPConnection - Perl module to perform simple
+   LDAP queries.
+
+   OO-Style interface:
+use Kamailio::LDAPUtils::LDAPConnection;
+my $ldap = new Kamailio::LDAPUtils::LDAPConnection;
+my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");
+
+   Procedural interface:
+use Kamailio::LDAPUtils::LDAPConnection;
+my @rows = $ldap->search(
+      new Kamailio::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=coreworks,
+ou=de");
+
+   This perl module offers a somewhat simplified interface to the
+   Net::LDAP functionality. It is intended for cases where just a few
+   attributes should be retrieved without the overhead of the full
+   featured Net::LDAP.
+
+7.1. Constructor new( [config, [authenticated]] )
+
+   Set up a new LDAP connection.
+
+   The first argument, when given, should be a hash reference pointing to
+   to the connection parameters, possibly an
+   Kamailio::LDAPUtils::LDAPConfig object. This argument may be undef in
+   which case a new (default) Kamailio::LDAPUtils::LDAPConfig object is
+   used.
+
+   When the optional second argument is a true value, the connection will
+   be authenticated. Otherwise an anonymous bind is done.
+
+   On success, a new LDAPConnection object is returned, otherwise the
+   result is undef.
+
+7.2. Function/Method search( conf, filter, base, [requested_attributes ...])
+
+   perform an ldap search, return the dn of the first matching directory
+   entry, unless a specific attribute has been requested, in which case
+   the values(s) for this attribute are returned.
+
+   When the first argument (conf) is a
+   Kamailio::LDAPUtils::LDAPConnection, it will be used to perform the
+   queries. You can pass the first argument implicitly by using the
+   "method" syntax.
+
+   Otherwise the conf argument should be a reference to a hash containing
+   the connection setup parameters as contained in a
+   Kamailio::LDAPUtils::LDAPConf object. In this mode, the
+   Kamailio::LDAPUtils::LDAPConnection from previous queries will be
+   reused.
+
+7.2.1. Arguments:
+
+   conf
+          configuration object, used to find host,port,suffix and
+          use_ldap_checks
+
+   filter
+          ldap search filter, eg '(mail=some@domain)'
+
+   base
+          search base for this query. If undef use default suffix, concat
+          base with default suffix if the last char is a ','
+
+   requested_attributes
+          retrieve the given attributes instead of the dn from the ldap
+          directory.
+
+7.2.2. Result:
+
+   Without any specific requested_attributes, return the dn of all
+   matching entries in the LDAP directory.
+
+   When some requested_attributes are given, return an array with those
+   attributes. When multiple entries match the query, the attribute lists
+   are concatenated.
+
+8. Kamailio::VDB
+
+   This package is an (abstract) base class for all virtual databases.
+   Derived packages can be configured to be used by Kamailio as a
+   database.
+
+   The base class itself should NOT be used in this context, as it does
+   not provide any functionality.
+
+9. Kamailio::Constants
+
+   This package provides a number of constants taken from enums and
+   defines of Kamailio header files. Unfortunately, there is no mechanism
+   for updating the constants automatically, so check the values if you
+   are in doubt.
+
+10. Kamailio::VDB::Adapter::Speeddial
+
+   This adapter can be used with the speeddial module.
+
+11. Kamailio::VDB::Adapter::Alias
+
+   11.1. query(conds,retkeys,order)
+
+   This package is intended for usage with the alias_db module. The query
+   VTab has to take two arguments and return an array of two arguments
+   (user name/domain).
+
+11.1. query(conds,retkeys,order)
+
+   Queries the vtab with the given arguments for request conditions, keys
+   to return and sort order column name.
+
+12. Kamailio::VDB::Adapter::AccountingSIPtrace
+
+   This package is an Adapter for the acc and siptrace modules, featuring
+   only an insert operation.
+
+13. Kamailio::VDB::Adapter::Describe
+
+   This package is intended for debug usage. It will print information
+   about requested functions and operations of a client module.
+
+   Use this module to request schema information when creating new
+   adapters.
+
+14. Kamailio::VDB::Adapter::Auth
+
+   This adapter is intended for usage with the auth_db module. The VTab
+   should take a username as an argument and return a (plain text!)
+   password.
+
+15. Kamailio::VDB::ReqCond
+
+   15.1. new(key,op,type,name)
+   15.2. op()
+
+   This package represents a request condition for database access,
+   consisting of a column name, an operator (=, <, >, ...), a data type
+   and a value.
+
+   This package inherits from Kamailio::VDB::Pair and thus includes its
+   methods.
+
+15.1. new(key,op,type,name)
+
+   Constructs a new Column object.
+
+15.2. op()
+
+   Returns or sets the current operator.
+
+16. Kamailio::VDB::Pair
+
+   16.1. new(key,type,name)
+   16.2. key()
+
+   This package represents database key/value pairs, consisting of a key,
+   a value type, and the value.
+
+   This package inherits from Kamailio::VDB::Value and thus has the same
+   methods.
+
+16.1. new(key,type,name)
+
+   Constructs a new Column object.
+
+16.2. key()
+
+   Returns or sets the current key.
+
+17. Kamailio::VDB::VTab
+
+   17.1. new()
+   17.2. call(op,[args])
+
+   This package handles virtual tables and is used by the Kamailio::VDB
+   class to store information about valid tables. The package is not
+   intended for end user access.
+
+17.1. new()
+
+Constructs a new VTab object
+
+17.2. call(op,[args])
+
+   Invokes an operation on the table (insert, update, ...) with the given
+   arguments.
+
+18. Kamailio::VDB::Value
+
+   18.1. stringification
+   18.2. new(type,data)
+   18.3. type()
+   18.4. data()
+
+   This package represents a database value. Additional to the data
+   itself, information about its type is stored.
+
+18.1. stringification
+
+   When accessing a Kamailio::VDB::Value object as a string, it simply
+   returns its data regardless of its type. =cut
+
+   use strict;
+
+   package Kamailio::VDB::Value;
+
+   use overload '""' => \&stringify;
+
+   sub stringify { shift->{data} }
+
+   use Kamailio; use Kamailio::Constants;
+
+   our @ISA = qw ( Kamailio::Utils::Debug );
+
+18.2. new(type,data)
+
+   Constructs a new Value object. Its data type and the data are passed as
+   parameters.
+
+18.3. type()
+
+   Returns or sets the current data type. Please consider using the
+   constants from Kamailio::Constants
+
+18.4. data()
+
+   Returns or sets the current data.
+
+19. Kamailio::VDB::Column
+
+   19.1. Stringification
+   19.2. new(type,name)
+   19.3. type( )
+   19.4. name()
+   19.5. Kamailio::VDB::Result
+   19.6. new(coldefs,[row, row, ...])
+   19.7. coldefs()
+   19.8. rows()
+
+   This package represents database column definition, consisting of a
+   column name and its data type.
+
+19.1. Stringification
+
+   When accessing a Kamailio::VDB::Column object as a string, it simply
+   returns its column name regardless of its type. =cut
+
+   package Kamailio::VDB::Column;
+
+   use overload '""' => \&stringify;
+
+   sub stringify { shift->{name} }
+
+   use Kamailio; use Kamailio::Constants;
+
+   our @ISA = qw ( Kamailio::Utils::Debug );
+
+19.2. new(type,name)
+
+   Constructs a new Column object. Its type and the name are passed as
+   parameters.
+
+19.3. type( )
+
+   Returns or sets the current type. Please consider using the constants
+   from Kamailio::Constants
+
+19.4. name()
+
+   Returns or sets the current column name.
+
+19.5. Kamailio::VDB::Result
+
+   This class represents a VDB result set. It contains a column
+   definition, plus an array of rows. Rows themselves are simply
+   references to arrays of scalars.
+
+19.6. new(coldefs,[row, row, ...])
+
+   The constructor creates a new Result object. Its first parameter is a
+   reference to an array of Kamailio::VDB::Column objects. Additional
+   parameters may be passed to provide initial rows, which are references
+   to arrays of scalars.
+
+19.7. coldefs()
+
+Returns or sets the column definition of the object.
+
+19.8. rows()
+
+Returns or sets the rows of the object.
+
+Chapter 3. Perl samples
+
+   Table of Contents
+
+   1. Sample directory
+
+        1.1. Script descriptions
+
+              1.1.1. branches.pl
+              1.1.2. firstline.pl
+              1.1.3. flags.pl
+              1.1.4. functions.pl
+              1.1.5. headers.pl
+              1.1.6. logging.pl
+              1.1.7. messagedump.pl
+              1.1.8. persistence.pl
+              1.1.9. phonenumbers.pl
+              1.1.10. pseudovars.pl
+
+1. Sample directory
+
+   1.1. Script descriptions
+
+        1.1.1. branches.pl
+        1.1.2. firstline.pl
+        1.1.3. flags.pl
+        1.1.4. functions.pl
+        1.1.5. headers.pl
+        1.1.6. logging.pl
+        1.1.7. messagedump.pl
+        1.1.8. persistence.pl
+        1.1.9. phonenumbers.pl
+        1.1.10. pseudovars.pl
+
+   There are a number of example scripts in the “samples/”. They are
+   documented well. Read them, it will explain a lot to you :)
+
+   If you want to use any of these scripts directly in your
+   implementation, you can use Perl's “require” mechanism to import them
+   (just remember that you need to use quotes when require'ing .pl files).
+
+1.1. Script descriptions
+
+   The included sample scripts are described below:
+
+1.1.1. branches.pl
+
+   The minimal function in branches.pl demonstrates that you can access
+   the "append_branch" function from within perl, just as you would have
+   done from your normal configuration file. You'll find documentation on
+   the concepts of branching in the Kamailio documentation.
+
+1.1.2. firstline.pl
+
+   Message's first_line structure may be evaluated. Message can be either
+   of SIP_REQUEST or SIP_REPLY. Depending on that, different information
+   can be received. This script demonstrates these functions.
+
+1.1.3. flags.pl
+
+   The perl module provides access to Kamailio's flagging mechanism. The
+   flag names available for Kamailio modules are made available through
+   the Kamailio::Constants package, so you can flag messages as "green",
+   "magenta" etc.
+
+   The first function, setflag, demonstrates how the "green" flag is set.
+   In the second function, readflag, the "green" and "magenta" flags are
+   evaluated.
+
+1.1.4. functions.pl
+
+   This sample script demonstrates different things related to calling
+   functions from within perl, and the different types of functions you
+   can offer for Kamailio access.
+
+   “exportedfuncs” simply demonstrates that you can use the moduleFunction
+   method to call functions offered by other modules. The results are
+   equivalent to calling these functions from your config file. In the
+   demonstrated case, telephone calls with a destination number beginning
+   with 555... are rejected with an internal server error. Other
+   destination addresses are passed to the alias_db module.
+
+   Please note that the moduleFunction method is not fully available in
+   Kamailio 1.2. See the method's documentation for details.
+
+   “paramfunc” shows that you can pass arbitrary strings to perl
+   functions. Do with them whatever you want :)
+
+   “autotest” demonstrates that unknown functions in Kamailio::Message
+   objects are automatically transformed into calls to module functions.
+
+   The “diefunc”s show that dying perl scripts - by "manual" dying, or
+   because of script errors - are handled by the Kamailio package. The
+   error message is logged through Kamailio's logging mechanism. Please
+   note that this only works correctly if you do NOT overwrite the default
+   die handler. Oh, yes, that works for warnings, too.
+
+1.1.5. headers.pl
+
+   Header extraction is among the most crucial functionalities while
+   processing SIP messages. This sample script demonstrates access to
+   header names and values within two sample functions.
+
+   “headernames” extracts all header names and logs their names.
+
+   “someheaders” logs the contents of the two headers, “To” and
+   “WWW-Contact”. As you can see, headers that occur more than once are
+   retrieved as an array, which may be accessed by Perl's array accessing
+   methods.
+
+1.1.6. logging.pl
+
+   For debugging purposes, you probably want to write messages to the
+   syslog. The “logdemo” shows three ways to access the Kamailio log
+   function: it is available through the Kamailio class as well as through
+   the Kamailio::Message class.
+
+   Remember that you can use exported functions from other modules. You
+   may thus as well use the “xlog” module and it's xlog function.
+
+   The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available through the
+   Kamailio::Constants package.
+
+1.1.7. messagedump.pl
+
+   This script demonstrates how to access the whole message header of the
+   current message. Please note that modifications on the message made by
+   earlier function calls in your configuration script may NOT be
+   reflected in this dump.
+
+1.1.8. persistence.pl
+
+   When processing SIP messages, you may want to use persistent data
+   across multiple calls to your Perl functions. Your first option is to
+   use global variables in your script. Unfortunately, these globals are
+   not visible from the multiple instances of Kamailio. You may want to
+   use a mechanism such as the IPC::Shareable shared memory access package
+   to correct this.
+
+1.1.9. phonenumbers.pl
+
+   The Kamailio::Utils::PhoneNumbers package provides two methods for the
+   transformation of local to canonical telephone numbers, and vice versa.
+   This script demonstrates it's use.
+
+1.1.10. pseudovars.pl
+
+   This script demonstrates the Perl module's “pseudoVar” method. It may
+   be used to retrieve the values of current pseudo variables.
+
+   You might notice that there is no particular function for setting
+   pseudo variables; you may use the exported functions from the avpops
+   module, though.
+
+Chapter 4. Frequently Asked Questions
+
+   4.1. Are there known bugs in the Perl module?
+   4.2. Where can I find more about Kamailio?
+   4.3. Where can I post a question about this module?
+   4.4. How can I report a bug?
+
+   4.1.
+
+       Are there known bugs in the Perl module?
+
+       The Perl module does have a few shortcomings that may be regarded as
+       bugs.
+         * Missing module functions. Not all functions of other modules are
+           available for Perl access. The reason for this is a design property
+           of Kamailio. Making available more functions is work in progress.
+         * Perl and threads. Perl itself is, when compiled with the correct
+           parameters, thread safe; unfortunately, not all Perl modules are.
+           The DBI modules, especially (but not restricted to) DBI::ODBC are
+           known NOT to be thread safe.
+           Using DBI::ODBC -- and possibly other non-thread-safe Perl
+           extensions -- may result in erroneous behavior of Kamailio,
+           including (but not restricted to) server crashes and wrong routing.
+
+   4.2.
+
+       Where can I find more about Kamailio?
+
+       Take a look at https://www.kamailio.org/.
+
+   4.3.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.kamailio.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.kamailio.org>.
+
+   4.4.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       https://github.com/kamailio/kamailio/issues.

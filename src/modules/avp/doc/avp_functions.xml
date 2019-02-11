@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="avp.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="avp.f.set_iattr">
+	<title><function>set_iattr(attribute,value)</function></title>
+	<para>
+	    Create an AVP of type integer.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>attribute</emphasis> - The name of the AVP to
+		    be created.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>value</emphasis> - Integer value of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<example>
+	    <title><function>set_iattr</function> usage</title>
+	    <programlisting>
+...
+set_iattr("fr_inv_timer", "60")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="avp.f.flags2attr">
+	<title><function>flags2attr("$avp")</function></title>
+	<para>
+	    Store the current state of &kamailio; flags into the specified AVP.
+	</para>
+	<example>
+	    <title><function>flags2attr</function> usage</title>
+	    <programlisting>
+...
+flags2attr("$msg_flags")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="avp.f.set_sattr">
+	<title><function>set_sattr(attribute,value)</function></title>
+	<para>
+	    Create an AVP of type string.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the
+		    AVP to be created.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>value</emphasis> - String value of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<example>
+	    <title><function>set_sattr</function> usage</title>
+	    <programlisting>
+...
+set_sattr("called_number", "1234")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp.f.print_aattr">
+	<title><function>print_attr($attribute)</function></title>
+	<para>
+	    Print the value of an AVP to syslog.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    <section id="avp.f.attr2uri">
+	<title><function>attr2uri($attribute[,uri-part])</function></title>
+	<para>
+		Rewrite the whole Request-URI of the message being processed with
+		the value of an AVP, or if an <varname>uri-part</varname> is specified,
+		rewrite only that specific part.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>$attribute</emphasis> - The name of the AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>uri-part</emphasis> - The name of the part of the uri
+			 that will be rewritten.  The supported values are: "prefix",
+			 "uri", "username", "user",  "usernamepassword", "userpass",
+			 "domain", "host", "domainport", "hostport", "port", "strip",
+			 "strip_tail". "prefix" will add the AVP as a prefix to the 
+			 username (equivalent to prefix("string")), "strip" and 
+			 "strip_tail" expect a number in the AVP and they will remove the
+			 specified number of characters from the beginning, respective the
+			  end of the username part of the uri. The rest of the uri-part
+			  values names are self-explaining.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+
+	<section id="avp.f.attr_exists">
+	<title><function>attr_exists(attribute)</function></title>
+	<para>
+	    Test for the existence of AVP with given name. The function returns
+	    1 if given AVP exists and -1 if not.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>attr_exists</function> usage</title>
+	    <programlisting>
+...
+if (attr_exists("saved_ruri")) {
+    attr2uri("saved_uri");
+} else {
+    rewriteuri("sip:a@iptel.org");
+};
+...
+		</programlisting>
+	</example>
+    </section>
+
+    
+    <section id="avp.f.attr_equals">
+	<title><function>attr_equals(attribute, value)</function></title>
+	<para>
+	    Test whether an AVP with given name and value exists. The function
+	    returns 1 if the AVP with given name and value exists and -1 if
+	    not. The value of the AVP is compared string-wise. The comparison
+	    is case sensitive.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>value</emphasis> - The AVP value to look for.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    <section id="avp.f.attr_equals_xl">
+	<title><function>attr_equals_xl(attribute, xl_format)</function></title>
+	<para>
+	    Test whether an AVP with given name and value exists. The function
+		returns 1 if the AVP with given name and value exists and -1 if
+	    not. The value of the AVP is compared string-wise to the result of
+		xprint formatting call. The comparison is case sensitive.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>xl_format</emphasis> - The xprint formatting string,
+		    result of which is looked for in AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
+	<example>
+	    <title><function>attr_equals_xl</function> usage</title>
+	    <programlisting>
+...
+if (attr_equals_xl("my_avp", "%ct")) {
+  # my_avp has value equal to current Contact header field
+} else {
+  # my_avp was different
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+	<section id="avp.f.dump_attrs">
+	<title><function>dump_attrs()</function></title>
+	<para>
+		Dumps all AVPs in user lists to the debug output (with level INFO).
+	</para>
+	<para>The function does not require any parameters.</para>
+    </section>
+    
+	<section id="avp.f.xlset_attr">
+	<title><function>xlset_attr($attribute, xl_format)</function></title>
+	<para>
+		Creates new AVP identified by <emphasis>attribute</emphasis> and assigns the result string of xprint formatting rules as its value.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>$attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>xl_format</emphasis> - String used for xprint formatting.
+		    For detailed info see documentation of xprint module.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
+    </section>
+
+	<section id="xlfix_attr">
+	<title><function>xlfix_attr($attribute)</function></title>
+	<para>
+		Fixes an xl formatted <emphasis>attribute</emphasis>  value to pure
+		string.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>$attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    
+	<section id="avp.f.insert_attr_hf_1">
+	<title><function>insert_attr_hf(name)</function></title>
+	<para>
+		Inserts new header into the request, which is being forwarded. The AVP name is the name of the header field.
+		If you need to insert header with name which differs from the AVP name use <function>insert_attr_hf(header_name, $avp_name)</function> instead.
+	</para>
+	<para>
+		Inserting means putting the header to the beginning of the request, before any others.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>name</emphasis>
+		- The name of the header field which is inserted into forwarded
+		request as well as name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.insert_attr_hf_2">
+	<title><function>insert_attr_hf(header_name, $avp_name)</function></title>
+	<para>
+		Inserts new header into the request, which is being forwarded.
+	</para>
+	<para>
+		Inserting means putting the header to the beginning of the request, before any others.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>header_name</emphasis>
+		- The name of the header field which is inserted into forwarded
+		request.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- The name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	<example>
+	    <title><function>insert_attr_hf</function> usage</title>
+	    <programlisting>
+...
+set_sattr("my_route","&lt;sip:user@host:port;lr&gt;");
+insert_attr_hf("Route", "$my_route");
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.append_attr_hf_1">
+	<title><function>append_attr_hf(name)</function></title>
+	<para>
+		Appends new header into the request, which is being forwarded. The AVP name is the name of the header field.
+		If you need to append header with name which differs from the AVP name use <function>append_attr_hf(header_name, $avp_name)</function> instead.
+	</para>
+	<para>
+		Appending means putting the header to the end of the request, after any others.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>name</emphasis>
+		- The name of the header field which is appended into forwarded
+		request as well as name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.append_attr_hf_2">
+	<title><function>append_attr_hf(header_name, $avp_name)</function></title>
+	<para>
+		Appends new header into the request, which is being forwarded.
+	</para>
+	<para>
+		Appending means putting the header to the end of the request, after any others.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>header_name</emphasis>
+		- The name of the header field which is appended into forwarded
+		request.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- The name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.replace_attr_hf_1">
+	<title><function>replace_attr_hf(name)</function></title>
+	<para>
+		Replaces header in the request, which is being forwarded. The AVP name is the same as the name of the header field.
+		If you need to replace header with name which differs from the AVP name use <function>replace_attr_hf(header_name, $avp_name)</function> instead.
+	</para>
+	<para>
+		Replacing means removing all the headers with specified name and appending new one at the end, with the value from AVP.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>name</emphasis>
+		- The name of the header field which is replaced in forwarded
+		request as well as name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.replace_attr_hf_2">
+	<title><function>replace_attr_hf(header_name, $avp_name)</function></title>
+	<para>
+		Replaces header in the request, which is being forwarded.
+	</para>
+	<para>
+		Replacing means removing all the headers with specified name and appending new one at the end, with the value from AVP.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>header_name</emphasis>
+		- The name of the header field which is replaced in forwarded
+		request.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- The name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.attr_to_reply_1">
+	<title><function>attr_to_reply(name)</function></title>
+	<para>
+		Appends new header into the reply at the request time processing. The AVP name is the name of the header field.
+		If you need to append header with name which differs from the AVP name use <function>attr_to_reply(header_name, $avp_name)</function> instead.
+	</para>
+	<para>
+		If you need to append headers during reply processing you can use insert_attr_hf and append_attr_hf. This function stores data and waits for the reply being created.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>name</emphasis>
+		- The name of the header field which is appended into 
+		reply as well as name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="avp.f.attr_to_reply_2">
+	<title><function>attr_to_reply(header_name, $avp_name)</function></title>
+	<para>
+		Appends new header into the reply at the request time processing. 
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>header_name</emphasis>
+		- The name of the header field which is appended into
+		reply.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- The name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	<example>
+	    <title><function>attr_to_reply</function> usage</title>
+	    <programlisting>
+...
+xlset_attr("$my_route","&lt;sip:%Hf:5080;lr&gt;";
+attr_to_reply("P-Hint-Route", "my_route");
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.attr_destination">
+	<title><function>attr_destination($avp_name)</function></title>
+	<para>
+		Sets the destination of the forwarded request to the value of AVP, 
+		which must be either a SIP URI or a string in nameaddr format
+		(e.g. "Foo Bar" &lt;sip:uri&gt;).
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- The name of AVP which's value is used for further request forwarding.
+		</para>
+        </listitem>
+    </itemizedlist>
+	<example>
+	    <title><function>attr_destination</function> usage</title>
+	    <programlisting>
+...
+xlset_attr("$my_route","&lt;sip:%&lt;next_host&gt;:%&lt;next_port&gt;;myparam=a123;lr&gt;");
+insert_attr_hf("Route", "$my_route");
+attr_destination("$my_route");
+t_relay();
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.xlset_destination">
+	<title><function>xlset_destination(xl_format)</function></title>
+	<para>
+		Sets the destination of the forwarded request to the value of result of xprint formatted string. Either SIP URI or nameaddr format is allowed.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>xl_format</emphasis>
+		- xprint module formatting string, the result is used for request forwarding.
+		</para>
+        </listitem>
+    </itemizedlist>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
+	<example>
+	    <title><function>xlset_destination</function> usage</title>
+	    <programlisting>
+...
+xlset_destination("%&lt;next_host&gt;:%&lt;next_port&gt;");
+t_relay();
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.subst_attr">
+	<title><function>subst_attr($avp_name, subst_re)</function></title>
+	<para>
+		The value of the AVP identified by <emphasis>$avp_name</emphasis>
+		name is matched and substitued according to the
+		<emphasis>subst_re</emphasis> sed like expression.
+		Result of the substitution is then stored in the original AVP.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- Name of the AVP which will be used for the substitution.
+		</para>
+        </listitem>
+		<listitem>
+		<para><emphasis>subst_re</emphasis>
+		- SED like match&amp;replace regullar expression.
+		</para>
+		</listitem>
+    </itemizedlist>
+	<example>
+	    <title><function>subst_attr</function> usage</title>
+	    <programlisting>
+...
+subst_attr("$uri","/tel:[0-9]*/sip:\1@foo.bar;user=phone/");
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.del_attr">
+	<title><function>del_attr($avp_name)</function></title>
+	<para>
+		The AVP identified by <emphasis>$avp_name</emphasis> name is deleted.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>$avp_name</emphasis>
+		- Name of the AVP which will be deleted.
+		</para>
+        </listitem>
+    </itemizedlist>
+	<example>
+	    <title><function>del_attr</function> usage</title>
+	    <programlisting>
+...
+failure_route[1] {
+	if (status=~4[0-9][0-9]) {
+		if (attr_exists("backup_gw") {
+			append_branch;
+			attr_destination("backup_gw");
+			del_attr("backup_gw");
+			t_relay();
+		}
+	}
+...
+	    </programlisting>
+	</example>
+	</section>
+	
+	<section id="avp.f.hdr_body2attrs">
+	<title><function>hdr_body2attrs(headername, prefix)</function></title>
+	<para>
+		Function parses a header body content scans for fld1=val1,fld2=val2,... and creates bunch of avps prefixfld1:= val1, prefixfld2:= val2, .... 
+		If possible stores values as integers.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>headername</emphasis>
+		- The header name, which will be scanned for the name=value pairs.
+		</para>
+		<para>If you want to create only AVPs with integer value use "/i" postfix to the header name.</para>
+		<para>If you want to create only AVPs with string  value use "/s" postfix to the header name.</para>
+        </listitem>
+		<listitem>
+		<para><emphasis>prefix</emphasis>
+		- The prefix, which is added before the name parsed from the header body.
+		</para>
+		</listitem>
+    </itemizedlist>
+	</section>
+
+	<section id="avp.f.hdr_body2attrs2">
+	<title><function>hdr_body2attrs2(headername, prefix)</function></title>
+	<para>
+		Function parses a header body content scans for fld1=val1,val2;fld2=val3,... and creates bunch of avps prefixfld1#1:= val1, prefixfld1#2:= val2, prefixfld2:=val3 .... 
+		If possible stores values as integers.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+		<para><emphasis>headername</emphasis>
+		- The header name, which will be scanned for the name=value pairs.
+		</para>
+		<para>If you want to create only AVPs with integer value use "/i" postfix to the header name.</para>
+		<para>If you want to create only AVPs with string  value use "/s" postfix to the header name.</para>
+        </listitem>
+		<listitem>
+		<para><emphasis>prefix</emphasis>
+		- The prefix, which is added before the name parsed from the header body.
+		</para>
+		</listitem>
+    </itemizedlist>
+	<example>
+	<title><function>hdr_body2attrs</function> and <function>hdr_body2attrs2</function> usage</title>
+	<programlisting>
+if (method=="BYE") {
+	# QoS reporting
+	if (search("^User-Agent: AVM FRITZ!Box Fon*")) {
+		hdr_body2attrs2("X-RTP-Stat/i", "QoS_");
+		xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP-Stat}\n");
+	} else if (search("^User-Agent: Sipura/*")) {
+		hdr_body2attrs("P-RTP-Stat/i", "QoS_");
+		xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP-Stat}\n");
+	}
+}
+# AVP QoS_xx now contain the values from appropriate header
+# e.g. QoS_JI is jitter
+	</programlisting>
+	</example>
+	</section>
+
+</section>

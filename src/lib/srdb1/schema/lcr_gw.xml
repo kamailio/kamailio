@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+
+<table id="lcr_gw" xmlns:db="http://docbook.org/ns/docbook">
+    <name>lcr_gw</name>
+    <version>3</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by lcr (Least Cost Routing) module
+			to store gateway attributes.
+            More information can be found at:.
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;lcr.html">&KAMAILIO_MOD_DOC;lcr.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="lcr_id">
+        <name>lcr_id</name>
+        <type>unsigned short</type>
+        <description>LCR instance identifier</description>
+    </column>
+
+    <column id="gw_name">
+        <name>gw_name</name>
+        <type>string</type>
+        <size>128</size>
+        <null/>
+        <description>Name of the gateway (for documentation only)</description>
+        <natural/>
+    </column>
+
+    <column id="ip_addr">
+        <name>ip_addr</name>
+        <type>string</type>
+        <size>&ip_add_len;</size>
+        <null/>
+        <description>IPv4 or IPv6 Address of the gateway</description>
+    </column>
+
+    <column id="hostname">
+        <name>hostname</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Hostname of the gateway</description>
+    </column>
+
+    <column id="port">
+        <name>port</name>
+        <type>unsigned short</type>
+        <null/>
+        <description>Port of the gateway</description>
+    </column>
+
+    <column id="params">
+        <name>params</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Gateway's URI parameters</description>
+    </column>
+
+    <column id="uri_scheme">
+        <name>uri_scheme</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>URI scheme of gateway</description>
+    </column>
+
+    <column id="transport">
+        <name>transport</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>Transport protocol to be used for the gateway</description>
+    </column>
+
+    <column id="strip">
+        <name>strip</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>The number of digits to strip from Request URI user part before inserting tag</description>
+    </column>
+
+    <column id="prefix">
+        <name>prefix</name>
+        <type>string</type>
+        <size>16</size>
+        <null/>
+        <default><null/></default>
+        <description>Prefix to be added to Request URI user part</description>
+    </column>
+
+    <column id="tag">
+        <name>tag</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <default><null/></default>
+        <description>Tag of gateway to be stored to tag_avp</description>
+    </column>
+
+    <column id="flags">
+        <name>flags</name>
+        <type>unsigned int</type>
+        <default>&DEFAULT_FLAGS;</default>
+        <description>Gateway specific flags</description>
+    </column>
+
+    <column id="defunct">
+        <name>defunct</name>
+        <type>unsigned int</type>
+        <null/>
+        <default><null/></default>
+        <description>If not null, contains unix timestamp telling when gw becomes operational</description>
+    </column>
+
+    <index>
+        <name>lcr_id_idx</name>
+        <colref linkend="lcr_id"/>
+    </index>
+
+</table>

@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module is a gateway between &kamailio; and a XMPP/Jabber server.
+		It enables the exchange of instant messages between
+		SIP clients and XMPP(jabber) clients.
+	</para>
+	<para>
+		The module can be used in two different modes:
+	</para>
+
+	<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode,
+				&kamailio; connects to an XMPP server using the standardized XMPP
+				component interface, extending your XMPP services. The connection
+				is done over TCP/IP with authorization.</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis role='bold'>XMPP Server</emphasis>. In this mode, the
+				&kamailio; XMPP module is a stand-alone XMPP server connector, with
+				no requirement for another XMPP server in the system. This server
+				uses XMPP S2S (Server to Server) connections to connect to other
+				XMPP servers or receive connections from other servers. NOTE: this
+				is limited implementation of a XMPP server, it does not support SRV
+				or TLS so far. Also, in this mode it cannot get XMPP clients
+				connected, only XMPP servers (in other words, you cannot use it to
+				replace an XMPP full server implementation). This mode is in beta
+				stage for the moment.
+			</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		In the component mode, you need a local XMPP server (recommended Jabberd2).
+		The XMPP module will connect by using TCP/IP connection to the local jabber
+		server. The documentation and the source for Jabberd server are located at
+		the following link:
+		<ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>
+	</para>
+	<para>
+		After you have a running XMPP server, what you need to do is set the following
+		parameters in the &kamailio; configuration file:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>
+				gateway_domain, xmpp_domain (which can be the same as gateway_domain)
+				and xmpp_host, which are explained in the Exported Parameters section;
+			</para>
+		</listitem>
+		<listitem>
+			<para>listen = your ip;</para>
+		</listitem> 
+		<listitem>
+			<para>alias=&kamailio; SIP domain and alias=gateway domain;</para>
+		</listitem>
+		<listitem>
+			<para>in the following section of the configuration file, change to your gateway domain:</para>
+		</listitem>	
+	</itemizedlist>
+	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
+	if ($rd =="sip-xmpp.kamailio.org") {
+		if (!t_newtran()) {
+			sl_reply_error();
+	...........]]>	</emphasis> </programlisting> 	
+	<itemizedlist>
+		<listitem>
+			<para>
+				You can also define a password for the XMPP Component connection
+				to the Jabber server, which must be the same as the xmpp_password parameter.
+			</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		A use case, for the component-mode, would look like this:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>&kamailio; is hosting the sip-server.kamailio.org SIP domain</para>
+		</listitem>
+		<listitem>
+			<para>The gateway SIP domain is sip-xmpp.kamailio.org</para>
+		</listitem>	
+		<listitem>
+			<para>The XMPP server is hosting the XMPP domain xmpp.kamailio.org</para>
+		</listitem>	
+		<listitem>
+			<para>The Component is hosting the XMPP domain xmpp-sip.kamailio.org</para>
+		</listitem>	
+	</itemizedlist>
+	<para>
+		In the XMPP stand-alone server mode, the XMPP module is a minimal XMPP/Jabber server.
+		In this mode, another Jabber server is not needed. The gateway will connect to other
+		XMPP servers based on the JID domain and by using the standardized XMPP S2S protocol.
+	</para>
+	<para>
+		If you want to change to server-mode, you have to change the "backend" parameter,
+		as shown in the Exported Parameters section, from "component" to "server".
+	</para>
+	<para>A use case, for the server-mode, would look like this: </para>
+	<itemizedlist>
+		<listitem>
+			<para>&kamailio; is hosting the SIP domain sip-server.kamailio.org </para>
+		</listitem>
+		<listitem>
+			<para>The gateway is hosting the SIP domain sip-xmpp.kamailio.org;</para>
+		</listitem>	
+		<listitem>
+			<para>The "XMPP server" is running on xmpp-sip.kamailio.org.</para>
+		</listitem>
+	</itemizedlist>	
+	<para>
+		Unless 'gwmap' parameter is set, in both modes (server or component), the
+		destination address must have the same pattern:
+	</para>
+	<para>
+		<quote>sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain</quote>
+	</para>
+	<para>
+		From a jabber client's point of view, the destination will look like:
+	</para>
+	<para>
+		<quote>sip_username<![CDATA[<]]>delim<![CDATA[>]]>sip_domain@xmpp_domain</quote>
+	</para>
+	<para>
+		'delim' is a character that can be set via 'domain_separator' parameter.
+	</para>
+	<para>
+		If 'gwmap' parameter is used, then the addresses are not encoding the domains
+		in the username part. They are going to be straight 'username@domain' always.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>requires 'tm' module</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>expat</emphasis> - used for parsing/building XML. Linux package: libexpat1-devel
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>backend(string)</varname></title>
+		<para>
+		The mode you are using the module; it can be either "component" or "server".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "component".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>backend</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "backend", "server")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>domain_separator</varname> (string)</title>
+		<para>
+			In the destination address we need an extra character as a domain separator, apart from @.
+			The address of the XMPP(jabber) client looks like this:
+				"sip:username<![CDATA[<]]>domain_separator<![CDATA[>]]>jabber_server@gateway_sip_domain".
+			The address of a SIP client has the following pattern :
+			"sip_username<![CDATA[<]]>domain_separator<![CDATA[>]]>sip_domain@gateway_xmpp_domain";
+			A common used character in XMPP transports is "%".
+
+		</para>
+		<para>
+		<emphasis>
+			Default value is "*".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_separator</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "domain_separator", "%")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>gateway_domain</varname> (string)</title>
+		<para>
+			The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA has to
+			use outbound proxy to SIP-to-XMPP gateway IP address. It has to be used
+			as domain in the the destination address of the messages sent by SIP users
+			to XMPP users:
+			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip-xmpp.example.org".
+		</emphasis>
+	</para>
+		<example>
+		<title>Set <varname>gateway_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "gateway_domain", "sip-xmpp.kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_domain</varname> (string)</title>
+		<para>
+			The XMPP domain of the component or the server, depending on the mode.
+			It can be the same as the gateway_domain. For a server DNS name, you have
+			to add _xmpp-server._tcp SRV records in your DNS zone to enable connections
+			from other XMPP servers.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip-xmpp.example.org".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_host</varname> (string)</title>
+		<para>
+			The IP address or the hostname for the local XMPP/Jabber server to
+			connect to when the backend is set to "component". For server mode,
+			this is the IP address the XMPP module binds to listen for
+			connections coming from other XMPP servers.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "xmpp.example.org".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_host", "xmpp.kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_port</varname> (integer)</title>
+		<para>
+			In component mode, this is the port the XMPP server component interface
+			listens to. In server mode, this is the port the module listens to.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "5347", if backend is set to "component" and "5269",
+			if backend is set to "server".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_port", 5269)
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>xmpp_password</varname> (string)</title>
+		<para>	The password of the local XMPP server.</para>
+		<para>
+			<emphasis>
+				This is the password for the component interface on the XMPP server,
+				when connecting as a component. Default password is "secret".
+				When connecting to jabberd2, 
+				you need to make sure this is the password configured in the file
+				"c2s.xml". This is how the default configuration for the jabberd2
+				looks like:
+			</emphasis>
+			<programlisting format="linespecific">
+		<![CDATA[	<router>
+	............... 
+	<!-- Username/password to authenticate as --&gt;
+    <user>jabberd</user>;          <!-- default: jabberd -->;
+    <pass>secret</pass>;           <!-- default: secret -->;	]]>
+			</programlisting>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_password</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_password", "secret")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (string)</title>
+		<para>
+		The SIP address used as next hop when sending the message. Very
+		useful when using &kamailio; with a domain name not in DNS, or
+		when using a separate &kamailio; instance for XMPP processing. If
+		not set, the message will be sent to the address in destination
+		URI.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>gwmap</varname> (string)</title>
+		<para>
+		Set the mappings between SIP and XMPP domains. This parameter can
+		be set many times, adding more SIP-XMPP domain mappings. Its value
+		has to be a list of tokens like 'sipdomain=xmppdomain', separated
+		by ';' (e.g., 'sipdomain1=xmppdomain1;sipdomain2=xmppdomain2'.
+		</para>
+		<para>
+		When this parameter is set, the URI encoding based on 'domain_separator'
+		is no longer enabled. The module will use only addresses in the format
+		'username@domain'. If the source or destination address does not match
+		a domain in gwmap, then the domain value is preserved when sending to
+		the other protocol.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>gwmap</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "gwmap", "sip.kamailio.org=xmpp.kamailio.org;abc.com=xyz.com")
+ modparam("xmpp", "gwmap", "kamailio.net")
+...
+</programlisting>
+		</example>
+		<para>
+		Based on the above parameter values, if there is a SIP message from
+		'sip:alice@sip.kamailio.org' going to 'sip:bob@abc.com', the XMPP
+		message to be sent is from 'alice@xmpp.kamailio.org' to
+		'bob@xyz.com'.
+		</para>
+	</section>
+
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">xmpp_send_message()</function>
+		</title>
+		<para>
+			Converts SIP messages to XMPP(jabber) messages, in order to be relayed
+			to a XMPP(jabber) client.
+		</para>
+		
+		<example>
+		<title><function>xmpp_send_message()</function> usage</title>
+		<programlisting format="linespecific">
+...
+xmpp_send_message();
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Configuration</title>
+		<para>
+		Next is presented a sample configuration file one can use to implement a
+		standalone SIP-to-XMPP gateway. You can run an instance of &kamailio; on a
+		separate machine or on different port with the following config, and have
+		the main SIP server configured to forward all SIP requests for XMPP world
+		to it.
+		</para>
+		<programlisting format="linespecific">
+....
+<xi:include href="openser-xmpp.cfg" parse="text"/>
+....
+</programlisting>
+
+	</section>
+</chapter>
+

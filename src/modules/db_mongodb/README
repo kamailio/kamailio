@@ -1,0 +1,113 @@
+DB_MONGODB Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Limitations
+        3. Remarks
+        4. Dependencies
+
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
+
+        5. Usage
+
+   List of Examples
+
+   1.1. Usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Limitations
+   3. Remarks
+   4. Dependencies
+
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
+
+   5. Usage
+
+1. Overview
+
+   This module provides DB APIv1 connector for MongoDB NoSQL server.
+
+   It can be used as a replacement for other database modules such as
+   db_mysql, db_postgres, a.s.o. Not all the specs of DB APIv1 are
+   implemented, thus the usage of this module might be restricted to
+   specific modules.
+
+   You can read more about MongoDB at: http://www.mongodb.org.
+
+2. Limitations
+
+   This module has implemented the equivalent operations for INSERT,
+   UPDATE, DELETE and SELECT. The match condition (WHERE clause) works
+   with the operators: equal, not equal, greater than, less than, equal or
+   greater than, equal or less than. Raw query is not implemented inside
+   this module, use ndb_mongodb for sending any kind of command to a
+   MongoDB server.
+
+3. Remarks
+
+   Using this module as a database driver may require additional settings
+   for various modules. For example, you have to set module parameter
+   'db_insert_null' to 1 for 'usrloc' module. If the module you are using
+   with 'db_mongodb' fails, check its README for notes about using it with
+   no-SQL databases.
+
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * mongo-c-driver - available at
+       https://github.com/mongodb/mongo-c-driver
+       Note: if you use tls module, use at least mongo-c-driver v1.3.5 and
+       compile the library by configuring it without automatic init and
+       cleanup (you have to run: './configure
+       --disable-automatic-init-and-cleanup') -- this option is planned to
+       be removed in future versions. An alternative for v1.3.5 could be
+       the patch from:
+       https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca4
+       8491682a5ffec4f83cde55
+
+5. Usage
+
+   Load the module and set the the DB URL for specific modules to:
+   mongodb://username:password@host:port/database. Username, password and
+   port are optional.
+
+   Example 1.1. Usage
+...
+loadmodule "db_mongodb.so"
+...
+#!define DBURL "mongodb://localhost/kamailio"
+modparam("acc", "db_url", DBURL)
+...

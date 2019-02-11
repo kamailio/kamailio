@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Flatstore Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2004</year>
+		<year>2005</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="db_flatstore_admin.xml"/>
+	<xi:include href="db_flatstore_devel.xml"/>
+</book>

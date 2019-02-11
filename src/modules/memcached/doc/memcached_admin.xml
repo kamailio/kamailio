@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module provides access to the distributed hash table <emphasis>memcached</emphasis>.
+		This hash table is stored in memory and can can be accessed via a pseudo-variable:
+		$mct(key). Entries are stored and retrieved from an external server application.
+	</para>
+	<para>
+		The <quote>key</quote> can be a static string and also any existing pseudo-variable. Further
+		interfaces to the functionality provided from memcached are also provided, like access to the
+		atomic increment and decrement operations.
+		<example>
+		<title>Storing and retrieving entries</title>
+			<programlisting format="linespecific">
+...
+$mct(test) = 1;
+xlog("stored value is $mct(test)");
+$mct(test) = $null; # delete it
+xlog("stored value is $mct(test)"); # will return &lt;null&gt; or empty string
+...
+			</programlisting>
+		</example>
+		<example>
+			<title>Using atomic operations</title>
+			<programlisting format="linespecific">
+...
+$mct(cnt) = 1;
+$mcinc(cnt) = 1; # increment by 1
+xlog("counter is now $mct(cnt)");
+$mcdec(cnt) = 1; # decrement by 1
+xlog("counter is now $mct(cnt)");
+...
+			</programlisting>
+		</example>
+                <example>
+                <title>Set custom expire time when adding an entry</title>
+                        <programlisting format="linespecific">
+...
+$mct(test=>10) = 1;
+xlog("stored value is $mct(test)");
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return &lt;null&gt;
+...
+                        </programlisting>
+                </example>
+		<example>
+		<title>Modifying expire time for existing entries</title>
+			<programlisting format="linespecific">
+...
+$mct(test) = 1;
+xlog("stored value is $mct(test)");
+$mctex(test) = 10; # set expire time to 10 seconds
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return &lt;null&gt;
+...
+			</programlisting>
+		</example>
+	</para>
+	<para>
+		This module is an addition to the existing <emphasis>htable</emphasis> functionality,
+		not a replacement. In smaller architectures or installations where only one instance
+		needs access to the hash table the htable module is easier to setup, as no dedicated
+		server needs to be provided. But when a distributed storage facility is necessary,
+		or one want to separate the storage from the SIP server, this module could be used.
+	</para>
+	</section>
+	<section>
+	<title>Implementation notes</title>
+		<para>
+			Important notes about made assumptions and adaptions that were necessary for the proper
+			integration of this library into &kamailio;.
+		</para>
+	<section>
+		<title>Data safety</title>
+		<para>
+			Don't store data in memcached that you don't also have somewhere else. This system was
+			designed as fast cache, and not for persistent storage. The memcached server can crash,
+			machines can reboot or are restarted. If the memcache storage pool gets fulls, it starts
+			to drop the least used items, even if they are not yet expired. So don't store any data in
+			it where it would be a problem when it disappear from one moment to the other.
+		</para>
+	</section>
+	<section>
+		<title>Size restrictions</title>
+		<para>
+			The maximum key length that is supported from memcached is 250 characters. In order
+			to support longer keys in the &kamailio; configuration script they are hashed with MD5.
+			This should normally be safe against collisions, as the value space is sufficiently large enough.
+		</para>
+		<para>
+			The maximum value size that is supported is 1MB. The reason for this is the internal memory
+			manager used from memcached. But normally this restriction should be not a problem in the
+			SIP environment where this module is used.
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>the <ulink url="http://libmemcached.org/">libmemcached</ulink> library</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>the <ulink url="http://danga.com/memcached/">memcached</ulink> server implementation</emphasis>.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="memcached.p.servers">
+		<title><varname>servers</varname> (str)</title>
+		<para>
+		The servers to connect to. At the moment only one server is supported.
+<!-- If more then one server is used they must be specified in the exact same order, otherwise
+     the hashing algorithm and the data access will not work. -->
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>localhost:11211</quote>.
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>servers</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "servers", "localhost:11211")
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="memcached.p.expire">
+		<title><varname>expire</varname> (integer)</title>
+		<para>
+			The default expire value of entries in memcached in seconds. The maximal
+			value is 2592000 (about 30 days). A value of zero means that no automatic expiration is done,
+			memcached will then delete the least used items when the cache gets full.
+		</para>
+		<para>
+			Please note that memcached implements lazy caching, that means items are only
+			deleted when they requested (they are of course not delivered to the client),
+			or on insertion of new entries when the cache is full. Items can also be deleted
+			before there expire time when the available space in memory is exhausted.
+		</para>
+		<para>
+			It is possible to override this default value when adding a key with the
+			<emphasis>mct</emphasis> pseudo-variable, or later on by setting a different
+			timeout for an existing key with the <emphasis>mctex</emphasis> pseudo-variable.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>10800</quote>s (3h).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("memcached", "expire", 10800)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="memcached.p.mode">
+		<title><varname>mode</varname> (integer)</title>
+		<para>
+			The used storage mode for the memcached module for write access
+			to the hash table. A value of <quote>0</quote> means to set
+			(overwrite) the old value, with a value of <quote>1</quote> the
+			module will not overwrite it. Here every entry to the hash table could
+			be written only once, subsequent inserts will fail.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (overwrite).
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("memcached", "mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="memcached.p.timeout">
+		<title><varname>timeout</varname> (integer)</title>
+		<para>
+			The timeout for the memcache servers access in milliseconds.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>5000</quote> (5s).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "timeout", 10000)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="memcached.p.memory">
+		<title><varname>memory</varname> (integer)</title>
+		<para>
+			The memory mode for the memcached client library. The library can
+			use the system memory manager or the internal memory manager from
+			&kamailio;. The system memory manager configuration is the default,
+			most implementations (like other projects) probably use this
+			approach as well. The internal memory configuration should be
+			faster and protects better against memory leaks that could bring
+			down your server, as the available memory pool is limited by the
+			&kamailio; configuration.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (use system memory manager).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>memory</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "memory", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="memcached.p.stringify">
+		<title><varname>stringify</varname> (integer)</title>
+		<para>
+			The string mode for the memcached module. By default the module
+			checks the flags for each returned value from the memcached library
+			to decide to evaluate it as string or numerical value. If you need
+			interoperability with existing applications that are not able to
+			set this flag, you can force the module to evaluate all values as
+			strings.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (don't force string values).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>stringify</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "stringify", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+		<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$mct(key)</emphasis>
+			</para></listitem>
+                        <listitem><para>
+                                <emphasis>$mct(key=>expiry)</emphasis>
+                        </para></listitem>
+			<listitem><para>
+				<emphasis>$mcinc(key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mcdec(key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mctex(key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+	</section>
+</chapter>
+

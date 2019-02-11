@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<chapterinfo>
+	</chapterinfo>
+	<title>Developer's Guide</title>
+	<para>
+	These are the primary functions that are used to perform the SQL queries.
+	</para>
+	<section>
+			<title>
+			<function moreinfo="none">load_ul_db_api(ul_db_api_t * api)</function>
+			</title>
+			<para>
+			Import the <acronym>dbd</acronym> API, setup the master database connection.
+			
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>api</emphasis> - Pointer to distributed database API structure 
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_insert_t) (str * table, str * first, str * second,
+				 db_key_t* _k, db_val_t* _v, int _n)</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and insert the given values into the
+			 chosen databases.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the inserted db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the inserted db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_update_t) (str * table, str * first, str * second,
+				db_key_t* _k, db_op_t * _op, db_val_t* _v, db_key_t* _uk,
+				db_val_t* _uv, int _n, int _un);</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and update the given values in the
+			 chosen databases.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the db keys that will be matched.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_op</emphasis> - Pointer to the db options for this operation.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the db values that will be matched.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_uk</emphasis> - Pointer to the updated db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_uv</emphasis> - Pointer to the updated db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_un</emphasis> - Number of key-value pairs in _uk and _uv parameters.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_insert_update_t) (str * table, str * first, str * second,
+				db_key_t* _k, db_val_t* _v, int _n)</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and insert on duplicate key update 
+			 the given values in the chosen databases. This is like an insert, but update 
+			 if the key already exist.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the inserted or updated db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the inserted or updated db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_replace_t) (str * table, str * first, str * second,
+				db_key_t* _k, db_val_t* _v, int _n)</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and replace the given values in the
+			 chosen databases.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the replaced db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the replaced db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_delete_t) (str * table, str * first, str * second,
+				 db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and delete the given values into the
+			 chosen databases.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the deleted db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_op</emphasis> - Pointer to the db options for this operation.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the deleted db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_query_t) (str * table, str * first, str * second, db_con_t *** _r_h,
+				db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c,
+				int _n, int _nc, db_key_t _o, db_res_t** _r);</function>
+			</title>
+			<para>
+			 Lookup the first and if needed the second key, and performs a query in one of the
+			 chosen databases. The returned handle _r_h must be used to free the result
+			 set after the usage of the returned database entries, otherwise a memory leak
+			 will occur.You must call ul_db_free_result before you can call ul_db_query again!
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>table</emphasis> - Pointer to the table name.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>first</emphasis> - Pointer to the first key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>second</emphasis> - Pointer to the second key.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_r_h</emphasis> - Pointer to the result handle, to free the result.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_op</emphasis> - Pointer to the db options for this operation.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_k</emphasis> - Pointer to the queried db keys.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_v</emphasis> - Pointer to the queried db values.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_c</emphasis> - Pointer to the db keys that should be returned.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_n</emphasis> - Number of key-value pairs in _k and _v parameters.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_nc</emphasis> - Number of key-value pairs in _c parameter.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_o</emphasis> - Order by options for the query.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>_nc</emphasis> - Pointer to the result set.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+	<section>
+			<title>
+			<function moreinfo="none">int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);</function>
+			</title>
+			<para>
+			 Frees the given result set, .
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>dbh</emphasis> - Pointer to the result handle.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>res</emphasis> - Pointer to the result.
+				</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+</chapter>
+

@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+
+<!-- misc_radius Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	The <emphasis>misc_radius</emphasis> module implements various
+	RADIUS related functions.
+	Functions exist for loading caller's or callee's
+	attributes into AVPs, checking if user belongs to a group, and
+	checking if a specific URI belongs to a user.  It thus replaces old
+	avp_radius, group_radius, and uri_radius modules.
+	</para>
+	<para>
+	All functions of this module load AVPs from SIP-AVP reply items
+	received from RADIUS upon a successful request. Value of the
+	SIP-AVP reply item must be a string of form:
+	<itemizedlist>
+		<listitem><para><emphasis>
+		value = SIP_AVP_NAME SIP_AVP_VALUE
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
+		</emphasis></para></listitem>
+	</itemizedlist>
+	</para>
+	<example>
+	<title><quote>SIP-AVP</quote> RADIUS AVP examples</title>
+		<programlisting format="linespecific">
+....
+"email:joe@yahoo.com"
+    -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    -> ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    -> STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    -> ID AVP (14) with INTEGER VALUE (28)
+....
+</programlisting>
+	</example>
+	<para>
+	Unlike in old avp_radius module, functions
+	radius_load_calle[re]_avps() do not prefix string names of AVPs
+	by string
+	<quote>caller_</quote> or <quote>callee_</quote> depending if
+	caller's or callee's attributes were loaded.  If you need these
+	prefixes, make your RADIUS server to prepend them into attribute
+	names when it constructs reply items.
+	</para>
+	<para>
+	A new feature of misc_radius module is that it is now possible
+	to include user defined extra RADIUS attributes in all requests
+	send by functions of this module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+		<section>
+		<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher,
+				<emphasis>freeradius-client</emphasis> <ulink
+				url='https://github.com/FreeRADIUS/freeradius-client/'>
+				https://github.com/FreeRADIUS/freeradius-client/</ulink> or
+				<emphasis>radcli</emphasis> <ulink
+					url='http://radcli.github.io/radcli/'>
+				http://radcli.github.io/radcli/</ulink>.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				<emphasis>freeradius-client</emphasis> library can be used after
+				setting FREERADIUS variable in source code with
+				<emphasis>'export FREERADIUS=1'</emphasis> before compile.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				<emphasis>radcli</emphasis> library can be used after
+				setting RADCLI variable in source code with
+				<emphasis>'export RADCLI=1'</emphasis> before compile.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="mrad.p.config">
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		This is the location of the configuration file of radius client
+		libraries.
+		</para>
+		<para>
+		Default value is
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
+		</para>
+		<example>
+		<title><varname>radius_config</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "radius_config", "/etc/radiusclient.conf")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.caller_srv_type">
+		<title><varname>caller_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type radius attribute to be
+		used, when caller's attributes are loaded.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>SIP-Caller-AVPs</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>caller_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "caller_service_type", 18)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.callee_srv_type">
+		<title><varname>callee_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type radius attribute to be
+		used, when callee's attributes are loaded.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>SIP-Callee-AVPs</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>callee_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "callee_service_type", 19)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.group_srv_type">
+		<title><varname>group_service_type</varname> (integer)</title>
+		<para>
+		This is the value of Service-Type RADIUS attribute to be
+		used, when radius_is_user_in() function is called.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>Group-Check</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>group_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "group_service_type", 20)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.uri_srv_type">
+		<title><varname>uri_service_type</varname> (integer)</title>
+		<para>
+		This is the value of Service-Type RADIUS attribute to be
+		used, when radius_does_uri[_user]_exist() function is
+		called.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>Call-Check</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>uri_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "uri_service_type", 21)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.caller_extra">
+		<title><varname>caller_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS
+	        attribute name=pseudo variable pairs.  When
+		radius_load_caller_avps() is called, the listed extra
+		attributes are included RADIUS request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>caller_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "caller_extra", "Calling-Station-Id=$fu")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.callee_extra">
+		<title><varname>callee_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS
+	        attribute name=pseudo variable pairs.  When
+		radius_load_callee_avps() is called, the listed extra
+		attributes are included RADIUS request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>callee_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$rd")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.group_extra">
+		<title><varname>group_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS
+	        attribute name=pseudo variable pairs.  When
+		radius_is_user_in() is called, the listed extra
+		attributes are included RADIUS request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>group_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "group_extra", "My-Special=$avp(i:100)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.uri_extra">
+		<title><varname>uri_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS
+	        attribute name=pseudo variable pairs.  When
+		radius_does_uri[_user]_exist() function is called, the
+		listed extra
+		attributes are included in RADIUS request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>uri_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "uri_extra", "Called-Station-Id=$tu")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="mrad.p.use_sip_uri_host">
+		<title><varname>use_sip_uri_host</varname> (integer)</title>
+		<para>
+		If zero, radius_does_uri_exist() function sends to
+		RADIUS server userpart@hostpart in UserName attribute. If
+		non-zero, radius_does_uri_exist() function sends to
+		RADIUS server userpart in UserName attribute and hostpart in
+		SIP-URI-Host attribute.
+		</para>
+		<para>
+		Default value is 0 (only use UserName attribute).
+		</para>
+		<example>
+		<title><varname>use_sip_uri_host</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "use_sip_uri_host", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mrad.p.common_response">
+		<title><varname>common_response</varname> (integer)</title>
+		<para>
+		Set it to 1 if you need common radius response attributes to
+		be added as AVPs in <function moreinfo="none">radius_load_caller_avps</function>
+        and <function moreinfo="none">radius_load_callee_avps</function>
+        with name as radius attribute name and value as radius attribute value.
+		</para>
+		<para>
+		Default value is <quote>0</quote>.
+		</para>
+		<example>
+		<title><varname>common_response</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("misc_radius", "common_response", 1)
+...
+radius_load_caller_avps($fU);
+...
+</programlisting>
+    </example>
+	<example>
+		<title>radius response with <varname>common_response</varname> value 1</title>
+		<programlisting format="linespecific">
+...
+    Sending Access-Accept of id 60 to 192.168.25.32 port 59736
+    Session-Timeout = 4261674
+    next-hop-ip = "SIP/00111222333444@cisco-out"
+    SIP-AVP = "email:sr-users@lists.kamailio.org session-timeout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+    session-protocol = "SIP"
+...
+
+$avp(Session-Timeout) has integer value 4261674
+$avp(next-hop-ip) has string value "SIP/005555777888@cisco-out"
+$avp(session-protocol) has string value "SIP"
+$avp(SIP-AVP) has string value  "email:sr-users@lists.kamailio.org session-timeout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+
+...
+    When receiving negative response, check appropriate avp's:
+    $avp(Reply-Message) = "Not enough money on deposit '-89.83'. Rejected"
+    $avp(Filter-Id) = "neg_deposit"
+...
+</programlisting>
+    </example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+
+	<section id="mrad.f.load_caller_avps">
+		<title><function
+	moreinfo="none">radius_load_caller_avps(caller)</function></title>
+		<para>
+		The functions loads caller's attributes from radius and
+		stores them into AVPs.  Parameter <quote>caller</quote>
+		is a string that may contain pseudo variables.
+		It indicates the user, whose attributes are loaded.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_load_caller_avps()</function> usage</title>
+		<programlisting format="linespecific">
+...
+radius_load_caller_avps("$fU@$fd");	# take caller from From URI
+...
+radius_load_caller_avps("$au@$ar");	# take caller from Authorization
+...					# or Proxy-Authorization header
+</programlisting>
+		</example>
+	</section>
+
+	<section id="mrad.f.load_callee_avps">
+		<title><function
+	moreinfo="none">radius_load_callee_avps(callee)</function></title>
+		<para>
+		The functions loads callee's attributes from radius and
+		stores them into AVPs.  Parameter <quote>callee</quote>
+		is a string that may contain pseudo variables.
+		It indicates the user, whose attributes are loaded.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_load_callee_avps()</function> usage</title>
+		<programlisting format="linespecific">
+...
+radius_load_callee_avps("$rU@$rd");	# take callee from Request-URI
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="mrad.f.is_user_in">
+		<title><function
+	moreinfo="none">radius_is_user_in(user, group)</function></title>
+		<para>
+		The functions checks from RADIUS, if user given in first
+		argument belongs to group given in second argument.  Both
+		arguments are strings, but user string may also contain
+		pseudo variables.  In case of positive result, loads
+		AVPs from SIP-AVP reply items, if any.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE,
+		FAILURE_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_is_user_in()</function> usage</title>
+		<programlisting format="linespecific">
+...
+radius_is_user_in("$rU@$rd", "1");	# take user from Request-URI
+...
+radius_is_user_in("$au@$ar", "group_x");# take user from credentials
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="mrad.f.does_uri_exist">
+		<title><function
+		moreinfo="none">radius_does_uri_exist([uri])</function></title>
+		<para>
+		Checks from RADIUS if userpart@hostpart of Request-URI
+		or of an URI stored in optional pseudo variable argument
+		belongs to a local
+		user.  In case of positive result, loads AVPs from
+		SIP-AVP reply items, if any.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and
+		LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_does_uri_exist()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (radius_does_uri_exist()) ...	# check Request-URI
+...
+if (radius_does_uri_exist("$avp(i:99)")) ...	# check URI in $avp(i:99)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="mrad.f.does_uri_user_exist">
+		<title><function
+	moreinfo="none">radius_does_uri_user_exist([user])</function></title>
+		<para>
+		Similar to radius_does_uri_exist, but check is done
+		based only on Request-URI userpart or userpart stored in
+		optional pseudo variable argument. Userpart should thus
+		be unique among all user URIs, such as an E.164 number.
+		In case of positive result, loads AVPs from
+		SIP-AVP reply items, if any.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and
+		LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_does_uri_user_exist()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (radius_does_uri_user_exist()) ...	# check Request-URI userpart
+...
+if (radius_does_uri_exist("$fU")) ...	# check From URI userpart
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+</chapter>

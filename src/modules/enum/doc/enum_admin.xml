@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Enum Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section id="sec-overview">
+	<title>Overview</title>
+	<para>
+		Enum module implements [i_]enum_query functions that make an enum query
+		based on the user part of the current Request-URI. These functions
+		assume that the Request URI user part consists of an international phone number
+		of the form +decimal-digits, where the number of digits is at
+		least 2 and at most 20. Out of this number
+		<function moreinfo="none">enum_query</function> forms a domain name,
+		where the digits are in reverse order and separated by dots followed by
+		domain suffix that by default is <quote>e164.arpa.</quote>. For example, 
+		if the user part is +35831234567, the domain
+		name will be <quote>7.6.5.4.3.2.1.3.8.5.3.e164.arpa.</quote>.
+		<function moreinfo="none">i_enum_query</function> operates in a similar
+		fashion. The only difference is that it adds a label (default "i")
+		to branch off from the default, user-ENUM tree to an infrastructure ENUM tree.
+	</para>
+	<para>
+		After forming the domain name,
+		<function moreinfo="none">enum_query</function> queries
+		DNS for enum NAPTR records. From the possible responses
+		<function moreinfo="none">enum_query</function> chooses those records,
+		whose flags field has string value "u", and whose services field has
+		string value "e2u+[service:]sip" or
+		"e2u+type[:subtype][+type[:subtype]...]" (case is ignored in both
+		cases), and whose regexp field is of the form !pattern!replacement!.
+	</para>
+	<para>
+		Then <function moreinfo="none">enum_query</function> sorts the chosen
+		NAPTR records based on their &lt;order, preference&gt;.  After sorting,
+		<function moreinfo="none">enum_query</function> replaces the current
+		Request URI by applying the regular expression of the most preferred NAPTR record
+		to its user part and appends to the request new branches by applying regexp of
+		each remaining NAPTR record to the user part of the
+		current Request URI. If a new URI is a tel: URI,
+		<function moreinfo="none">enum_query</function> appends to it as tel:
+		URI parameters the value of tel_uri_params module parameter. Finally,
+		<function moreinfo="none">enum_query</function> associates a q value
+		with each new URI based on the &lt;order, preference&gt; of the
+		corresponding NAPTR record.
+	</para>
+	<para>
+		When using <function moreinfo="none">enum_query</function> without any
+		parameters, it searches for NAPTRs with service type "e2u+sip" in the
+		default enum tree. When using
+		<function moreinfo="none">enum_query</function> with a single parameter, 
+		this parameter will be used as enum tree. When using
+		<function moreinfo="none">enum_query</function>
+		with two parameters, the functionality depends on the first letter in
+		the second parameter. When the first letter is not a '+' sign, the
+		second parameter will be used to search for NAPTRs with service type
+		"e2u+parameter:sip". When the second parameter starts with a '+' sign,
+		the ENUM lookup also supports compound NAPTRs
+		(e.g. "e2u+voice:sip+video:sip") and searching for multiple service
+		types within one lookup. Multiple service types must be separated
+		by a '+' sign.
+	</para>
+	<para>
+		Most of the time you want to route based on the RURI.  On rare occasions
+		you may wish to route based on something else. The function
+		<function moreinfo="none">enum_pv_query</function> mimics the behavior
+		of the <function moreinfo="none">enum_query</function> function except the
+		E.164 number in its pseudo variable argument is used for the enum lookup instead of the user
+		part of the RURI.
+	</para>
+	<para>
+		Enum query returns 1 if the current Request URI was replaced
+		and -1 if not.
+	</para>
+	<para>
+		Enum module also implements <function>is_from_user_enum</function> function.
+		This function does an enum lookup on the from user and
+		returns true if found, false otherwise.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<para>
+		The module depends on the following modules (in other words the
+		listed modules must be loaded before this module):
+		<itemizedlist>
+		<listitem>
+			<para>No dependencies.</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="enum.p.domain_suffix">
+		<title><varname>domain_suffix</varname> (string)</title>
+		<para>
+		The domain suffix to be added to the domain name obtained from
+		the digits of an <acronym>E164</acronym> number. Can be overridden
+		by a parameter to enum_query.
+		</para>
+		<para>
+		Default value is <quote>e164.arpa.</quote>
+		</para>
+		<example>
+		<title>Setting domain_suffix module parameter</title>
+		<programlisting format="linespecific">
+modparam("enum", "domain_suffix", "e1234.arpa.")
+</programlisting>
+		</example>
+	</section>
+
+	<section id="enum.p.tel_uri_params">
+		<title><varname>tel_uri_params</varname> (string)</title>
+		<para>
+		A string whose contents is appended to each new tel URI in the
+		request as tel URI parameters.
+		</para>
+		<note>
+		<para>
+			Currently &siprouter; does not support tel URIs. This means that at present
+			tel_uri_params is appended as URI parameters to every URI.
+		</para>
+		</note>
+		<para>
+		Default value is <quote></quote>
+		</para>
+		<example>
+		<title>Setting tel_uri_params module parameter</title>
+		<programlisting format="linespecific">
+modparam("enum", "tel_uri_params", ";npdi")
+</programlisting>
+		</example>
+	</section>
+	<section id="enum.p.i_enum_suffix">
+                <title><varname>i_enum_suffix</varname> (string)</title>
+                <para>
+                The domain suffix to be used for i_enum_query() lookups.
+                Can be overridden by a parameter to i_enum_query.
+                </para>
+                <para>
+                Default value is <quote>e164.arpa.</quote>
+                </para>
+                <example>
+                <title>Setting i_enum_suffix module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "i_enum_suffix", "e1234.arpa.")
+</programlisting>
+                </example>
+        </section>
+	<section id="enum.p.branchlabel">
+                <title><varname>branchlabel</varname> (string)</title>
+                <para>
+                This parameter determines which label i_enum_query() will use
+                to branch off to the infrastructure ENUM tree.
+                </para>
+                <para>
+                Default value is <quote>"i"</quote>
+                </para>
+                <example>
+                <title>Setting branchlabel module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "branchlabel", "i")
+</programlisting>
+                </example>
+        </section>
+	<section id="enum.p.bl_algorithm">
+                <title><varname>bl_algorithm</varname> (string)</title>
+                <para>
+                This parameter determines which algorithm the
+		<function>i_enum_query()</function> function will use
+                to select the position in the DNS tree where the infrastructure tree
+                branches off the user ENUM tree.
+                </para>
+                <para>
+                If set to "cc", i_enum_query() will always insert the
+                label at the country-code level.
+                Examples: i.1.e164.arpa, i.3.4.e164.arpa, i.2.5.3.e164.arpa
+                </para>
+                <para>
+                If set to "txt", i_enum_query() will look for a TXT record at
+                [branchlabel].[reverse-country-code].[i_enum_suffix] to indicate after how many digits the
+                label should in inserted.
+                <example>
+                <title>Zone file example</title>
+                <programlisting format="linespecific">
+i.1.e164.arpa.                     IN TXT   "4"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "NAPTR content for  +1 234 5678 999"
+</programlisting>
+                </example>
+                </para>
+                <para>
+                If set to "ebl", i_enum_query() will look for an EBL (ENUM Branch Label) record at
+				[branchlabel].[reverse-country-code].[i_enum_suffix].
+				See http://www.ietf.org/internet-drafts/draft-lendl-enum-branch-location-record-00.txt
+				for a description of that record and the
+                meaning of the fields. The RR type for the EBL has not been allocated yet.
+                This version of the code uses 65300. See resolve.h.
+                <example>
+                <title>Zone file example</title>
+                <programlisting format="linespecific">
+i.1.e164.arpa.     TYPE65300  \# 14 (
+                              04    ; position
+                              01 69 ; separator
+                              04 65 31 36 34 04 61 72 70 61 00 ; e164.arpa
+;                               )
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "NAPTR content for  +1 234 5678 999"
+</programlisting>
+                </example>
+                </para>
+
+                <para>
+                Default value is <quote>cc</quote>
+                </para>
+                <example>
+                <title>Setting the bl_algorithm module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "bl_algorithm", "txt")
+</programlisting>
+                </example>
+        </section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="enum.f.enum_query">
+		<title>
+		<function moreinfo="none">enum_query(["suffix" [,"service"]])</function>
+		</title>
+		<para>
+		The function performs an enum query and rewrites the Request-URI with
+		the result of the query. See <xref linkend="sec-overview"/> for more
+		information.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>suffix</emphasis> - Suffix
+	string to be appended to the domain name. String may contain
+	pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>service</emphasis> - Service
+	string to be used in the service field. String may contain
+	pseudo variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Parameters can include pseudo-variables.
+        </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">enum_query</function> usage</title>
+		<programlisting format="linespecific">
+...
+# search for "e2u+sip" in freenum.org
+enum_query("freenum.org.");
+...
+# search for "e2u+sip" in default tree (configured as parameter)
+enum_query();
+...
+# search for "e2u+voice:sip" in e164.arpa
+enum_query("e164.arpa.","voice");
+...
+# search for service type "sip" or "voice:sip" or "video:sip"
+# note the '+' sign in front of the second parameter
+enum_query("e164.arpa.","+sip+voice:sip+video:sip");
+...
+# quering for service sip and voice:sip
+enum_query("e164.arpa.");
+enum_query("e164.arpa.","voice");
+# or use instead
+enum_query("e164.arpa.","+sip+voice:sip");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="enum.f.enum_pv_query">
+		<title>
+		<function moreinfo="none">enum_pv_query("pvar" [,"suffix" [,"service"]])</function>
+		</title>
+		<para>
+		The function performs an enum query on E.164 number stored
+		in its first argument and rewrites the Request-URI with
+		the result of the query. See <xref linkend="sec-overview"/> for more
+		information.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pvar</emphasis> - Pseudo
+		variable that holds an E.164 number on which enum
+		query is performed.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>suffix</emphasis> - Suffix to be appended to the
+			domain name.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>service</emphasis> - Service string to be used in
+			the service field.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Parameters can include pseudo-variables.
+        </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">enum_pv_query</function> usage</title>
+		<programlisting format="linespecific">
+...
+# search for "e2u+sip" in freenum.org
+enum_pv_query("$avp(i:100)", "freenum.org.");
+...
+# search for "e2u+sip" in default tree (configured as parameter)
+enum_pv_query("$fU");
+...
+# search for "e2u+voice:sip" in e164.arpa
+enum_pv_query("$avp(i:100)","e164.arpa.","voice");
+...
+# search for service type "sip" or "voice:sip" or "video:sip"
+# note the '+' sign in front of the second parameter
+enum_pv_query("$fU","e164.arpa.","+sip+voice:sip+video:sip");
+...
+# quering for service sip and voice:sip
+enum_pv_query("$avp(i:100)","e164.arpa.");
+enum_pv_query("$avp(i:100)","e164.arpa.","voice");
+# or use instead
+enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="enum.f.i_enum_query">
+        <title>
+        <function moreinfo="none">i_enum_query(["suffix" [,"service"]])</function>
+        </title>
+        <para>
+        The function performs an enum query and rewrites the Request-URI with
+        the result of the query. This the Infrastructure-ENUM version of enum_query().
+        The only difference to enum_query() is in the calculation of the
+        FQDN where NAPTR records are looked for.
+		</para>
+		<para>
+		Parameters can include pseudo-variables.
+        </para>
+        <para>
+        See ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberler-carrier-enum-01.txt
+        for the rationale behind this function.
+        </para>
+     </section>
+
+	<section id="enum.f.is_from_user_enum">
+		<title><function moreinfo="none">is_from_user_enum()</function></title>
+		<para>
+		Checks if the user part of from <abbrev>URI</abbrev>
+		is found in an enum lookup.
+		Returns 1 if yes and -1 if not.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">is_from_user_enum</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_from_user_enum()) {
+	....
+};
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

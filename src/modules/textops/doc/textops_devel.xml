@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+		<section>
+		<title>Functions</title>
+		<section>
+			<title>
+			<function moreinfo="none">load_textops(*import_structure)</function>
+			</title>
+			<para>
+			For programmatic use only--import the  <acronym>Textops</acronym> API.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>import_structure</emphasis> - Pointer to 
+				the import structure - see <quote>struct textops_binds</quote> in 
+				modules/textops/api.h
+				</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		</section>
+</chapter>

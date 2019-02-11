@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="aliases" xmlns:db="http://docbook.org/ns/docbook">
+    <name>aliases</name>
+    <version>8</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table for the registrar module is similar to the "location"
+			table, (the aliases index makes lookup of missed calls much
+			faster). Thus, the function lookup("alias") can be used to map
+			aliases to AORs.
+			Many people use the 'dbaliases' table with the 'alias_db' module.
+			More information is available at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;registrar.html">&KAMAILIO_MOD_DOC;registrar.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Record internal unique id</description>
+        <natural/>
+    </column>
+
+	<column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number </description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column id="contact">
+        <name>contact</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default/>
+        <description>Contact header field value provides a URI whose meaning depends on the type of request or response it is in.</description>
+    </column>
+
+    <column>
+        <name>received</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Received IP:PORT in the format SIP:IP:PORT</description>
+    </column>
+
+    <column>
+        <name>path</name>
+        <type>string</type>
+        <size>&long_hf_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Path Header(s) per RFC 3327</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>datetime</type>
+        <default>&DEFAULT_ALIASES_EXPIRES;</default>
+        <default db="oracle">to_date('&DEFAULT_ALIASES_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this entry expires.</description>
+    </column>
+
+    <column>
+        <name>q</name>
+        <type>float</type>
+        <size>10,2</size>
+        <default>&DEFAULT_Q;</default>
+        <description>Value used for preferential routing.</description>
+    </column>
+
+    <column>
+        <name>callid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default>&DEFAULT_CALLID;</default>
+        <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client.</description>
+    </column>
+
+    <column>
+        <name>cseq</name>
+        <type>int</type>
+        <size>&cseq_len;</size>
+        <default>&DEFAULT_CSEQ;</default>
+        <description>CSeq header field contains a single decimal sequence number and the request method.</description>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this entry was last modified.</description>
+    </column>
+
+    <column>
+        <name>flags</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <default>0</default>
+        <description>Internal flags</description>
+    </column>
+
+    <column>
+        <name>cflags</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <default>0</default>
+        <description>Branch and contact flags</description>
+    </column>
+
+    <column>
+        <name>user_agent</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default/>
+        <description>User-Agent header field contains information about the UAC originating the request.</description>
+    </column>
+
+    <column>
+        <name>socket</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Socket used to connect to Kamailio. For example: UDP:IP:PORT</description>
+    </column>
+
+    <column>
+        <name>methods</name>
+        <type>int</type>
+        <size>11</size>
+        <null/>
+        <default><null/></default>
+        <description>Flags that indicate the SIP Methods this contact will accept.</description>
+    </column>
+
+	<column id="instance">
+        <name>instance</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>The value of SIP instance parameter for GRUU.</description>
+    </column>
+
+    <column>
+        <name>reg_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of reg-id contact parameter</description>
+    </column>
+
+    <column>
+        <name>server_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of server_id from configuration file</description>
+    </column>
+
+    <column>
+        <name>connection_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of connection id for location record</description>
+    </column>
+
+    <column>
+        <name>keepalive</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to control sending keep alive requests</description>
+    </column>
+
+
+    <column>
+        <name>partition</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to of the partition for keep alive requests</description>
+    </column>
+
+
+    <index>
+        <name>account_contact_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="contact"/>
+    </index>
+    <index>
+        <name>ruid_idx</name>
+        <colref linkend="ruid"/>
+        <unique/>
+    </index>
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
+    </index>
+
+</table>

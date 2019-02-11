@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="rls_presentity" xmlns:db="http://docbook.org/ns/docbook">
+    <name>rls_presentity</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			Table for the RLS module:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;rls.html">&KAMAILIO_MOD_DOC;rls.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="rlsubs_did">
+        <name>rlsubs_did</name>
+        <type>string</type>
+        <size>255</size>
+        <description>Resource list subscribe dialog id</description>
+        <natural/>
+    </column>
+
+    <column id="resource_uri">
+        <name>resource_uri</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>List Uri</description>
+    </column>
+
+    <column>
+        <name>content_type</name>
+        <type>string</type>
+        <size>255</size>
+        <description>Content type</description>
+    </column>
+
+    <column>
+        <name>presence_state</name>
+        <type>binary</type>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Expires</description>
+    </column>
+
+    <column id="updated">
+        <name>updated</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Update flag</description>
+    </column>
+
+    <column>
+        <name>auth_state</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Watcher authorization state</description>
+    </column>
+
+    <column>
+        <name>reason</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>reason for watcher authorization state</description>
+    </column>
+
+    <index>
+        <name>rls_presentity_idx</name>
+        <colref linkend="rlsubs_did"/>
+        <colref linkend="resource_uri"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>rlsubs_idx</name>
+        <colref linkend="rlsubs_did"/>
+    </index>
+
+    <index>
+        <name>updated_idx</name>
+        <colref linkend="updated"/>
+        <description>If possible use a partial index WHERE (updated &lt;&gt;(-1))</description>
+    </index>
+
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
+    </index>
+</table>

@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=13.cfg
 
@@ -61,7 +61,7 @@ mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
 mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 
 ret=$?
 
@@ -105,7 +105,7 @@ Printing tree for domain 'domain1' (10)
 	fi ;
 fi ;
 
-$KILL
+kill_kamailio
 
 # cleanup database
 $MYSQL "delete from carrier_name where id = 1;"

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tm.api" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>TM Module API</title>
+    <para>
+	There are applications which would like to generate SIP transactions
+	without too big involvement in SIP stack, transaction management,
+	etc. An example of such an application is sending instant messages from
+	a website. To address needs of such apps, SIP-router accepts requests for
+	new transactions via the management interface. If you want to enable this
+	feature, start the management interface server by configuring the proper
+	modules.
+    </para>
+    <para>
+	An application can easily launch a new transaction by writing a
+	transaction request to this interface. The request must follow very
+	simple format, which for the basic FIFO interface is
+    </para>
+    <programlisting>
+ :t_uac_from:[&lt;file_name&gt;]\n
+ &lt;method&gt;\n
+ &lt;sender's uri&gt;\n
+ &lt;dst uri&gt;\n
+ &lt;CR_separated_headers&gt;\n
+ &lt;body&gt;\n
+ .\n
+ \n
+</programlisting>
+    <para>
+	(Filename is to where a report will be dumped. ser assumes /tmp as
+	file's directory.)
+    </para>
+    <para>
+	Note the request write must be atomic, otherwise it might get
+	intermixed with writes from other writers. You can easily use it via
+	Unix command-line tools, see the following example:
+    </para>
+    <screen>
+[jiri@bat jiri]$ cat &gt; /tmp/ser_fifo
+:t_uac_from:xxx
+MESSAGE
+sip:sender@iptel.org
+sip:mrx@iptel.org
+header:value
+foo:bar
+bznk:hjhjk
+p_header: p_value
+
+body body body
+yet body
+end of body
+.
+
+    </screen>
+    <para>
+	or cat test/transaction.fifo &gt; /tmp/ser_fifo
+    </para>
+
+    <section id="defines">
+	<title>Defines</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    ACK_TAG enables stricter matching of acknowledgments
+		    including to-tags. Without it, to-tags are ignored. It is
+		    disabled by default for two reasons:
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It eliminates an unlikely race condition in which
+			    transaction's to-tag is being rewritten by a 200 OK
+			    whereas an ACK is being looked up by to-tag.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It makes UACs happy who set wrong to-tags.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    It should not make a difference, as there may be only one
+		    negative reply sent upstream and 200/ACKs are not matched
+		    as they constitute another transaction. It will make no
+		    difference at all when the new magic cookie matching is
+		    enabled anyway.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    CANCEL_TAG similarly enables strict matching of CANCELs 
+		    including to-tags--act of mercy to UACs, who screw up
+		    the to-tags (however, it still depends on how forgiving
+		    the downstream UAS is). Like with ACK_TAG, all this
+		    complex transactions matching goes with <ulink
+			url="http://www.ietf.org/rfc/rfc3261.txt">RFC3261</ulink>'s
+		    magic cookie away anyway.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Functions</title>
+	<section>
+	    <title>
+		<function>register_tmcb(cb_type, cb_func)</function>
+	    </title>
+	    <para>
+		For programmatic use only--register a function to be called
+		back on an event. See t_hooks.h for more details.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>cb_type</emphasis> - Callback type.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>cb_func</emphasis> - Callback function.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	
+	<section id="load_tm">
+	    <title>
+		<function>load_tm(*import_structure)</function>
+	    </title>
+	    <para>
+		For programmatic use only--import exported <acronym>TM</acronym> functions.
+		See the acc module for an example of use.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>import_structure</emphasis> - Pointer to the import structure.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section id="t_suspend">
+	    <title>
+	    	<function>int t_suspend(struct sip_msg *msg,
+			unsigned int *hash_index, unsigned int *label)</function>
+	    </title>
+	    <para>
+	    	For programmatic use only.
+		This function together with t_continue() can be used to
+		implement asynchronous actions: t_suspend() saves the transaction,
+		returns its identifiers, and t_continue() continues the
+		SIP request/response processing. (The request/response processing does not continue
+		from the same point in the script, a separate route block defined
+		by the parameter of t_continue() is executed instead. The reply lock
+		is held during the route block execution.)
+		FR timer is ticking while the transaction is suspended, and the
+		transaction's failure route is executed if t_continue() is not
+		called in time.
+	    </para>
+	    <para>
+		Missing: message lumps are saved by t_suspend() and are not updated by
+		the subsequent t_relay(). This means that the modifications made
+		between them are lost.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>msg</emphasis> - SIP message pointer.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	    <para>
+		Usage: Allocate a memory block for storing the transaction identifiers
+		(hash_index and label), and for storing also any variable related to
+		the async query. Before calling t_suspend(), register for the following
+		callbacks, and pass the pointer to the allocated shared memory as
+		a parameter: TMCB_ON_FAILURE, TMCB_DESTROY, and TMCB_E2ECANCEL_IN
+		(in case of INVITE transaction). The async operation can be
+		cancelled, if it is still pending, when TMCB_ON_FAILURE or
+		TMCB_E2ECANCEL_IN is called. TMCB_DESTROY is suitable to free
+		the shared memory allocated for the async and SIP transaction identifiers.
+		Once the async query result is available call t_continue(), see below.
+		The SIP transaction must exist before calling t_suspend(), and the module
+		function calling t_suspend() should return 0 to make sure that the script
+		processing does not continue.
+	    </para>
+	</section>
+
+	<section id="t_continue">
+	    <title>
+		<function>int t_continue(unsigned int hash_index, unsigned int label,
+		                struct action *route)</function>
+	    </title>
+	    <para>
+		For programmatic use only.
+		This function is the pair of t_suspend(), and is supposed
+		to be called when the asynchronous query result is available.
+		The function executes a route block with the saved SIP message.
+		It is possible to add more branches to the transaction, or send
+		a reply from the route block.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>route</emphasis> - route block to execute.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+    
+	<section id="t_cancel_suspend">
+	    <title>
+	    	<function>int t_cancel_suspend(unsigned int hash_index, unsigned int label)</function>
+	    </title>
+	    <para>
+	    	For programmatic use only.
+		This function is for revoking t_suspend() from the
+		same process as it was executed before. t_cancel_suspend() can be
+		used when something fails after t_suspend() has already been executed
+		and it turns out that the transaction should not have been
+		suspended. The function cancels the FR timer of the transaction.
+	    </para>
+	    <para>
+		The message lumps are saved by t_suspend() which cannot be restored.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+    </section>
+</section>

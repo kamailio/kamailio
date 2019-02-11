@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a statistics collector engine. It can
+		track the values of various internal &kamailio; statistics
+		for a specific period of time, allowing to retrieve them
+		or a report over them via RPC commands.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded along this module:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>various</emphasis> - (optional, e.g., sl, tm, usrloc)
+			for getting access to the statistics exported by these modules.
+		</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="statsc.p.interval">
+		<title><varname>interval</varname> (int)</title>
+		<para>
+			Timer interval when to record the value for statistics.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 900 (15min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("statsc", "interval", 300)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="statsc.p.items">
+		<title><varname>items</varname> (int)</title>
+		<para>
+			How many items to store for each statistic.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 100.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>items</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("statsc", "items", 200)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="statsc.p.track">
+		<title><varname>track</varname> (str)</title>
+		<para>
+			Specify the statistics to track. The parameter can
+			be set many times and one value can specify many
+			statistics.
+		</para>
+		<para>
+			The format is "rname=sname", where the rname is the
+			name for report and sname is internal &kamailio; statistic
+			name.
+		</para>
+		<para>
+			Next statistics are tracked by default:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>shm.free</emphasis> - the internal statistic 'free_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>shm.used</emphasis> - the internal statistic 'used_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>shm.real_used</emphasis> - the internal statistic 'real_used_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>track</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("statsc", "track", "req.received=rcv_requests")
+modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="statsc.rpc.report">
+		<title>
+		<function moreinfo="none">statsc.report</function>
+		</title>
+		<para>
+		Get the report of recorded statistics.
+		</para>
+		<para>
+		Name: <emphasis>statsc.report</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_type_ : </para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>list</quote>: list recorded values</para></listitem>
+			         <listitem><para> <quote>diff</quote>: show diff between recorded values</para></listitem>
+				  </itemizedlist>
+			</listitem>
+
+			<listitem><para>_name_: (optional) name of the statistic to show the report for.
+			If missing or set to 'all', then the reports for all recorded statistics are done.</para></listitem>
+
+			<listitem><para>_limit_: (optional) how many items to be included in the report</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &kamcmd; statsc.report _type_ _name_ _limit_
+&kamcmd; statsc.report list
+&kamcmd; statsc.report list all 10
+&kamcmd; statsc.report diff
+...
+</programlisting>
+    </section>
+    </section>
+</chapter>

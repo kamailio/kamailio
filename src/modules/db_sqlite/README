@@ -1,0 +1,162 @@
+SQlite Module
+
+Timo Teräs
+
+Edited by
+
+Timo Teräs
+
+Edited by
+
+Julien Chavanton
+
+   flowroute.com
+   <jchavanton@gmail.com>
+
+   Copyright © 2011 Timo Teräs
+
+   Copyright © 2017
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_set_readonly (string)
+              3.2. db_set_journal_mode (string)
+
+        4. Functions
+        5. Usage
+
+   List of Examples
+
+   1.1. Set db_set_readonly parameter
+   1.2. Set db_set_journal_mode parameter
+   1.3. loading the module usage
+   1.4. db_url module parameter usage
+   1.5. DBURL define usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_set_readonly (string)
+        3.2. db_set_journal_mode (string)
+
+   4. Functions
+   5. Usage
+
+1. Overview
+
+   The module is an implementation of the internal DB API v1 connector for
+   SQlite 3 file.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * SQlite 3 library - e.g., libsqlite3-0
+     * SQlite 3 devel library - to compile the module e.g. libsqlite3-dev
+     * SQlite 3 utilities - for kamdbctl e.g. sqlite3
+
+3. Parameters
+
+   3.1. db_set_readonly (string)
+   3.2. db_set_journal_mode (string)
+
+3.1. db_set_readonly (string)
+
+   This will set the db connection to "SQLITE_OPEN_READONLY", useful if
+   another program is writing to the DB. The value is the full path to the
+   sqlite file used for example in any db_url or sqlops/sqlcon This
+   parameter may be set multiple times to set many DB connections to
+   readonly in the same configuration file.
+
+   By default all the db connections are using "SQLITE_OPEN_READWRITE |
+   SQLITE_OPEN_CREATE"
+
+   Example 1.1. Set db_set_readonly parameter
+...
+modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
+ the sqlops module
+...
+
+3.2. db_set_journal_mode (string)
+
+   This will set the db connection journal mode, for the given connection.
+   The value is the full path to the sqlite file used for example in any
+   db_url or sqlops/sqlcon Other journal mode are : DELETE | TRUNCATE |
+   PERSIST | MEMORY | WAL | OFF This parameter may be set multiple times
+   to set many DB connections to readonly in the same configuration file.
+
+   By default all the db connections are using sqlite default journaling
+   mode.
+
+   Example 1.2. Set db_set_journal_mode parameter
+...
+# In this example we are using Write-Ahead Logging in order to update the databa
+se from another process(external to Kamailio) without facing any locking.
+
+#!subst "!DB_FILE!/var/mydb.sqlite!"
+modparam("db_sqlite","db_set_readonly","DB_FILE")   # We are also opening the da
+tabase in readonly
+modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
+...
+
+4. Functions
+
+   NONE
+
+5. Usage
+
+   To use the module, first you have to load it in the Kamailio
+   configuration file.
+
+   Example 1.3. loading the module usage
+...
+loadmodule "db_sqlite.so"
+...
+
+   Then set the db_url (or similar) parameter of modules that have to use
+   the SQLite database to driver part 'sqlite://', followed by the path to
+   database file. For example:
+
+   Example 1.4. db_url module parameter usage
+...
+modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
+...
+
+   In the default config file, defined token DBURL can be updated like:
+
+   Example 1.5. DBURL define usage
+...
+#!define DBURL "sqlite:///etc/kamailio/kamailio.db"
+...

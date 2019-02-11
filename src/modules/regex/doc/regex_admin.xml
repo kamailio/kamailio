@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section id="regex.overview">
+
+		<title>Overview</title>
+
+		<para>
+			This module offers matching operations using regular expressions based on the
+			powerful <ulink url="http://www.pcre.org/">PCRE</ulink> library.
+		</para>
+
+		<para>
+			A text file containing regular expressions categorized in groups is compiled
+			when the module is loaded,  the resulting PCRE objects are stored in an array. A
+			function to match a string or pseudo-variable against any of these groups is
+			provided. The text file can be modified and reloaded at any time via a RPC command.
+			The module also offers a function to perform a PCRE matching operation against a
+			regular expression provided as function parameter.
+		</para>
+
+		<para>
+			For a detailed list of PCRE features read the
+			<ulink url="http://www.pcre.org/pcre.txt">man page</ulink> of the library.
+		</para>
+
+	</section>
+
+	<section>
+
+		<title>Dependencies</title>
+
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed before running
+				&kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>libpcre - the libraries of <ulink url="http://www.pcre.org/">PCRE</ulink></emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Parameters</title>
+
+		<section id="regex.p.file">
+			<title><varname>file</varname> (string)</title>
+			<para>
+				Text file containing the regular expression groups. It must be set in order
+				to enable the group matching function.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>file</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "file", "/etc/kamailio/regex_groups")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.max_groups">
+			<title><varname>max_groups</varname> (int)</title>
+			<para>
+				Max number of regular expression groups in the text file.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>20</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>max_groups</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "max_groups", 40)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.group_max_size">
+			<title><varname>group_max_size</varname> (int)</title>
+			<para>
+				Max content size of a group in the text file.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>8192</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>group_max_size</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "group_max_size", 16384)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.pcre_caseless">
+			<title><varname>pcre_caseless</varname> (int)</title>
+			<para>
+				If this options is set, matching is done caseless. It is equivalent to
+				Perl's /i option, and it can be changed within a pattern by a (?i) or
+				(?-i) option setting.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>pcre_caseless</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "pcre_caseless", 1)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.pcre_multiline">
+			<title><varname>pcre_multiline</varname> (int)</title>
+			<para>
+				By default, PCRE treats the subject string as consisting of a single line
+				of characters (even if it actually contains newlines). The "start of line"
+				metacharacter (^) matches only at the start of the string, while the "end
+				of line" metacharacter ($) matches only at the end of the string, or before
+				a terminating newline.
+			</para>
+			<para>
+				When this option is set, the "start of line" and "end of line" constructs
+				match immediately following or immediately before internal newlines in the
+				subject string, respectively, as well as at the very start and end. This is
+				equivalent to Perl's /m option, and it can be changed within a pattern by a
+				(?m) or (?-m) option setting. If there are no newlines in a subject string,
+				or no occurrences of ^ or $ in a pattern, setting this option has no effect.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>pcre_multiline</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "pcre_multiline", 1)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.pcre_dotall">
+			<title><varname>pcre_dotall</varname> (int)</title>
+			<para>
+				If this option is set, a dot metacharacter in the pattern matches all characters,
+				including those that indicate newline. Without it, a dot does not match when
+				the current position is at a newline. This option is equivalent to Perl's /s
+				option, and it can be changed within a pattern by a (?s) or (?-s) option setting.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>pcre_dotall</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "pcre_dotall", 1)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="regex.p.pcre_extended">
+			<title><varname>pcre_extended</varname> (int)</title>
+			<para>
+				If this option is set, whitespace data characters in the pattern are totally
+				ignored except when escaped or inside a character class. Whitespace does not
+				include the VT character (code 11). In addition, characters between an
+				unescaped # outside a character class and the next newline, inclusive, are
+				also ignored. This is equivalent to Perl's /x option, and it can be changed
+				within a pattern by a (?x) or (?-x) option setting.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>pcre_extended</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("regex", "pcre_extended", 1)
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Functions</title>
+
+		<section id="regex.f.pcre_match">
+			<title>
+				<function moreinfo="none">pcre_match (string, pcre_regex)</function>
+			</title>
+
+			<para>
+				Matches the given string parameter against the regular expression pcre_regex,
+				which is compiled in runtime into a PCRE object. Returns TRUE if it matches,
+				FALSE otherwise.
+			</para>
+
+			<para>Meaning of the parameters is as follows:</para>
+
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>string</emphasis> - String or pseudo-variable to compare.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>pcre_regex</emphasis> - Regular expression to be compiled
+						in a PCRE object. It can be a string or pseudo-variable.
+					</para>
+				</listitem>
+			</itemizedlist>
+
+			<para>
+				NOTE: To use the "end of line" symbol '$' in the pcre_regex parameter use '$$'.
+			</para>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE,
+				BRANCH_ROUTE and LOCAL_ROUTE.
+			</para>
+
+			<example>
+				<title>
+					<function>pcre_match</function> usage (forcing case insensitive)
+				</title>
+<programlisting format="linespecific">
+...
+if (pcre_match("$ua", "(?i)^twinkle")) {
+    xlog("L_INFO", "User-Agent matches\n");
+}
+...
+</programlisting>
+			</example>
+
+			<example>
+				<title>
+					<function>pcre_match</function> usage (using "end of line" symbol)
+				</title>
+<programlisting format="linespecific">
+...
+if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
+    xlog("L_INFO", "RURI username matches\n");
+}
+...
+</programlisting>
+			</example>
+
+		</section>
+
+		<section id="regex.f.pcre_match_group">
+			<title>
+				<function moreinfo="none">pcre_match_group (string [, group])</function>
+			</title>
+
+			<para>
+				Tries to match the given string against a specific group in the text
+				file (see <xref linkend="file-format-id"/>). Returns TRUE if it matches,
+				FALSE otherwise.
+			</para>
+
+			<para>Meaning of the parameters is as follows:</para>
+
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>string</emphasis> - String or pseudo-variable to compare.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>group</emphasis> - Number of group to use in the operation.
+						If not specified then 0 (the first group) is used. A pseudo-variable
+						containing an integer can also be used.
+					</para>
+				</listitem>
+			</itemizedlist>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE,
+				BRANCH_ROUTE and LOCAL_ROUTE.
+			</para>
+
+			<example>
+				<title>
+					<function>pcre_match_group</function> usage
+				</title>
+<programlisting format="linespecific">
+...
+if (pcre_match_group("$rU", "2")) {
+    xlog("L_INFO", "RURI username matches group 2\n");
+}
+...
+</programlisting>
+			</example>
+
+			<example>
+				<title>
+					<function>pcre_match_group</function> usage (using a pseudo-variable as group)
+				</title>
+				<programlisting format="linespecific">
+...
+$avp(i:10) = 5;  # Maybe got from a DB query.
+if (pcre_match_group("$ua", "$avp(i:10)")) {
+    xlog("L_INFO", "User-Agent matches group 5\n");
+}
+...
+				</programlisting>
+			</example>
+
+		</section>
+
+	</section>
+
+	<section>
+		<title>RPC Commands</title>
+
+		<section id="regex.r.regex_reload">
+			<title>
+				<function moreinfo="none">regex.reload</function>
+			</title>
+
+			<para>
+				Causes regex module to re-read the content of the text file
+				and re-compile the regular expressions. The number of groups
+				in the file can be modified safely.
+			</para>
+
+			<para>
+				Name: <emphasis>regex.reload</emphasis>
+			</para>
+
+			<para>Parameters: <emphasis>none</emphasis></para>
+
+			<para>
+				RPC Command Example:
+			</para>
+
+<programlisting  format="linespecific">
+...
+&kamcmd; regex.reload
+...
+</programlisting>
+
+		</section>
+
+	</section>
+
+	<section>
+		<title>Installation and Running</title>
+
+		<section id="file-format-id">
+			<title>File format</title>
+
+			<para>
+				The file contains regular expressions categorized in groups. Each
+				group starts with "[number]" line. Lines starting by space, tab,
+				CR, LF or # (comments) are ignored. Each regular expression must
+				take up just one line, this means that a regular expression can't
+				be split in various lines.
+			</para>
+
+			<para>
+				An example of the file format would be the following:
+			</para>
+
+			<example>
+				<title>regex file</title>
+<programlisting  format="linespecific">
+### List of User-Agents publishing presence status
+[0]
+
+# Softphones
+^Twinkle/1
+^X-Lite
+^eyeBeam
+^Bria
+^SIP Communicator
+^Linphone
+
+# Deskphones
+^Snom
+
+# Others
+^SIPp
+^PJSUA
+
+
+### Blacklisted source IP's
+[1]
+
+^190\.232\.250\.226$
+^122\.5\.27\.125$
+^86\.92\.112\.
+
+
+### Free PSTN destinations in Spain
+[2]
+
+^1\d{3}$
+^((\+|00)34)?900\d{6}$
+</programlisting>
+
+			</example>
+
+			<para>
+				The module compiles the text above to the following regular
+				expressions:
+			</para>
+
+<programlisting  format="linespecific">
+group 0: ((^Twinkle/1)|(^X-Lite)|(^eyeBeam)|(^Bria)|(^SIP Communicator)|
+          (^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
+group 1: ((^190\.232\.250\.226$)|(^122\.5\.27\.125$)|(^86\.92\.112\.))
+group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
+</programlisting>
+
+			<para>
+				The first group can be used to avoid auto-generated PUBLISH (pua_usrloc
+				module) for UA's already supporting presence:
+			</para>
+
+			<example>
+				<title>Using with pua_usrloc</title>
+<programlisting  format="linespecific">
+route[REGISTER] {
+    if (! pcre_match_group("$ua", "0")) {
+        xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n");
+        pua_set_publish();
+    }
+    save("location");
+    exit;
+}
+</programlisting>
+			</example>
+
+			<para>
+				NOTE: It's important to understand that the numbers in each group
+				header ([number]) must start by 0. If not, the real group number
+				will not match the number appearing in the file. For example, the
+				following text file:
+			</para>
+
+			<example>
+				<title>Incorrect groups file</title>
+<programlisting  format="linespecific">
+[1]
+^aaa
+^bbb
+
+[2]
+^ccc
+^ddd
+</programlisting>
+			</example>
+
+			<para>
+				will generate the following regular expressions:
+			</para>
+
+<programlisting  format="linespecific">
+group 0: ((^aaa)|(^bbb))
+group 1: ((^ccc)|(^ddd))
+</programlisting>
+
+			<para>
+				Note that the real index doesn't match the group number in the file. This
+				is, compiled group 0 always points to the first group in the file, regardless
+				of its number in the file. In fact, the group number appearing in the file is
+				used for nothing but for delimiting different groups.
+			</para>
+
+			<para>
+				NOTE: A line containing a regular expression cannot start by '[' since it
+				would be treated as a new group. The same for lines starting by space, tab,
+				or '#' (they would be ignored by the parser). As a workaround, using brackets
+				would work:
+			</para>
+
+<programlisting  format="linespecific">
+[0]
+([0-9]{9})
+( #abcde)
+( qwerty)
+</programlisting>
+
+		</section>
+
+	</section>
+
+</chapter>

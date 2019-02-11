@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dispatcher" xmlns:db="http://docbook.org/ns/docbook">
+    <name>dispatcher</name>
+    <version>4</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table is used by the dispatcher module. It contains the
+			list of destinations used for load balancing and dispatching. More
+			information about the dispatcher module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;dispatcher.html">&KAMAILIO_MOD_DOC;dispatcher.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="setid">
+        <name>setid</name>
+        <type>int</type>
+        <description>Destination set id</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <column id="dst">
+        <name>destination</name>
+        <type>string</type>
+        <size>192</size>
+        <description>Destination SIP address</description>
+        <default/>
+    </column>
+
+    <column id="flags">
+        <name>flags</name>
+        <type>int</type>
+        <description>Flags of destination SIP address</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <column id="priority">
+        <name>priority</name>
+        <type>int</type>
+        <description>Priority of destination SIP address</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <column>
+        <name>attrs</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>Attributes specific for this destination</description>
+    </column>
+
+    <column>
+        <name>description</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Description for this destination</description>
+    </column>
+
+</table>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="uid_domain" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+		<title>UID Domain Module</title>
+		<authorgroup>
+			<author>
+				<firstname>Juha</firstname>
+				<surname>Heinanen</surname>
+				<email>jh@tutpro.com</email>
+			</author>
+		</authorgroup>
+		<copyright>
+			<year>2002-2010</year>
+			<holder>Juha Heinanen</holder>
+		</copyright>
+	</bookinfo>
+	<toc></toc>
+	<chapter>
+		<title>Admin Guide</title>
+	<section id="uid_domain.overview">
+		<title>Overview</title>
+		<para>Domain modules, as the name suggests, implements support for
+		multiple independent virtual domains hosted on one SIP server. This is
+		often useful if you have multiple domain names and you want to make
+		them all work and appear as one. Alternatively you might find the
+		module useful if you want to run a shared SIP service for multiple
+		independent customers. The module stores all supported domains and
+		associated configuration in a database table. Most of the information
+		can be cached in memory for performance reasons.</para>
+
+		<section>
+			<title>Virtual Domains</title>
+			<para>The domain module adds support for so-called virtual
+			domains. A virtual domain is just a collection of domain names and
+			associated configuration information identified by a unique
+			identifier. We refer to the domain identifier as DID elsewhere in
+			the documentation. DID stands for "Domain IDentifier". In
+			traditional POST world the term DID has a different meaning
+			though. Please be aware that this is just pure coincidence.</para>
+			
+			<para>All domain names that belong to one virtual domain are
+			interchangeable. From SIP server's perspective there is no
+			difference between them. They can be used in SIP URIs
+			interchangeably and the behavior of the SIP server will not be
+			affected. This is called "domain name normalization" and it is one
+			of the steps performed early during SIP message processing.</para>
+
+			<para>The DID identifier can be anything. To the SIP server DIDs
+			are just opaque strings and what format you choose depends on your
+			requirements and the type of the setup. You can use numbers in
+			smaller setups if the size of the data is a concern. You can set
+			the DID to the canonical domain name of the domain. You can use
+			RFC 4122 style UUIDs if your setup is large and distributed. You
+			can use anything as long as it can be represented as string. The
+			only requirement is that the identifier of each virtual domain
+			must be unique.</para>
+		
+			<para>The following example illustrates how one virtual domain can
+			be represented. The iptel.org domain runs a public SIP
+			service. The users of the service can use SIP URIs of form
+			sip:username@iptel.org. The SIP service is distributed, there is a
+			number of SIP servers. The SIP servers are also available through
+			a number of other domain names, such as sip.iptel.org,
+			proxy.iptel.org and so on. We created one virtual domain in the
+			domain module and added all such domain names to the virtual
+			domain:</para>
+
+			<example>
+				<title>Virtual Domain iptel.org</title>
+				<programlisting>
+iptel
+  |
+  +---iptel.org
+  +---sip.iptel.org
+  +---proxy.iptel.org
+  +---213.192.59.75
+				</programlisting>
+			</example>
+			
+			<para>In the example above, we chose "iptel" as the unique
+			identifier for the virtual domain. This identifier is
+			permanent. It never changes. Over time we may change domain names
+			assigned to this virtual domain, but this identifier never
+			changes. The main reason why virtual domain identifiers must never
+			change is that because they are referenced from other tables, for
+			example the accounting table. The data in the accounting table is
+			long-lived, usually archived, and this ensures that the data will
+			still reference correct virtual domain, no matter what domain
+			names are assigned to it.</para>
+
+			<para>The virtual domain described above will be stored in the
+			domain table in the database:</para>
+			<example>
+				<title>Database Representation of Virtual Domain</title>
+				<programlisting>
++-------+-----------------+-------+
+| did   | domain          | flags |
++-------+-----------------+-------+
+| iptel | iptel.org       |    33 | 
+| iptel | sip.iptel.org   |    33 | 
+| iptel | proxy.iptel.org |    33 | 
+| iptel | 213.192.59.75   |    33 | 
++-------+-----------------+-------+
+				</programlisting>
+			</example>
+
+			<para>Because all domain names that belong to one particular
+			virtual domain are equal, it does not matter which domain name is
+			used in the host part of the SIP URI. Thus an imaginary user joe
+			with SIP URI sip:joe@iptel.org will also be reachable as
+			sip:joe@sip.iptel.org, sip:joe@proxy.iptel.org, and
+			sip:joe@213.192.59.75. If we add a new domain name to this virtual
+			domain then joe will also be able to use the new domain name in
+			his SIP URI, without the need to change anything.</para>
+		</section>
+		
+		<section>
+			<title>Domain-level Configuration Attributes</title>
+			<para>In addition to a number of domain names, each virtual domain
+			can also have extra configuration information associated with
+			it. The possibility to configure the SIP server sightly
+			differently in each virtual domain is, in fact, the main reason
+			why we introduced the concept of virtual domains. We wanted to
+			have one SIP server which will provide SIP service to multiple
+			different customers and each of the customers may have slightly
+			different configuration requirements. That's how domain-level
+			configuration attributes were born.</para>
+		
+			<para>Because the administrator of the SIP server seldom knows
+			configuration requirements in advance, we decided to implement a
+			generic solution and store all configuration options in named
+			attributes. Named attributes are just like variables, they have a
+			name and they have a value. Attributes are accessible from the
+			configuration script of the SIP server. Domain-level attributes
+			are attributes that are associated with a particular virtual
+			domain. They can be used to store additional configuration for the
+			entire virtual domain, that is all users that belong (or have SIP
+			URI) in that particular virtual domain. Domain-level attributes
+			can be overridden be user-level attributes with the same name
+			configured for a particular user. In other words a domain level
+			attribute will only be effective if no user-level attribute with
+			the same name exists.</para>
+			
+			<para>Domain-level attributes are stored in a separate table. The
+			name of the table is domain_attrs and it is defined as follows:
+			</para>
+
+			<example>
+				<title>Table domain_attrs</title>
+				<programlisting>
++-------+------------------+------+-----+---------+-------+
+| Field | Type             | Null | Key | Default | Extra |
++-------+------------------+------+-----+---------+-------+
+| did   | varchar(64)      | YES  | MUL | NULL    |       | 
+| name  | varchar(32)      | NO   |     | NULL    |       | 
+| type  | int(11)          | NO   |     | 0       |       | 
+| value | varchar(255)     | YES  |     | NULL    |       | 
+| flags | int(10) unsigned | NO   |     | 0       |       | 
++-------+------------------+------+-----+---------+-------+
+				</programlisting>
+			</example>
+
+			<para>Each attribute has name, type and value. A single attribute
+			can have multiple values and in that case it will occupy more rows
+			in the table. Each attribute is associated with a particular
+			virtual domain using the DID identifier. Domain-level attributes
+			can contain just about anything. It is a generic configuration
+			mechanism and it is up to you to define a list of attribute that
+			are meaningful in your setup and use those attributes in the
+			routing part of the configuration file.
+			</para>
+
+			<para>Attributes for a particular virtual-domain are made
+			available to script function by the lookup_domain function. This
+			is the function that is used to map domain names to DIDs. One of
+			the side-effects of the function is that it makes domain-level
+			attributes available to script function if a matching virtual
+			domain is found.
+			</para>
+
+			<para>When caching is enabled, all attributes from domain_attrs
+			table are cached in memory, just like virtual domain
+			themselves. If you disable caching then the domain module will
+			attempt to load attributes from the database each time you call
+			lookup_domain. Attributes cached in memory can be reloaded with
+			the domain.reload management function.</para>
+		</section>
+
+		<section>
+			<title>Caching</title>
+
+			<para>Domain module operates in caching or non-caching mode
+			depending on value of module parameter
+			<parameter>db_mode</parameter>. In caching mode domain module
+			reads the contents of domain table into cache memory when the
+			module is loaded.  After that domain table is re-read only when
+			module is given domain_reload fifo command.  Any changes in domain
+			table must thus be followed by domain_reload command in order to
+			reflect them in module behavior. In non-caching mode domain module
+			always queries domain table in the database.</para>
+
+			<para>Caching is implemented using a hash table. The size of the
+			hash table is given by HASH_SIZE constant defined in
+			domain_mod.h. Its "factory default" value is 128. Caching mode is
+			highly recommended if you want to use domain-level
+			attributes.</para>
+		</section>
+	</section>
+	
+	<section id="uid_domain.dep">
+		<title>Dependencies</title>
+		<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>database</emphasis> - Any database module</para>
+				</listitem>
+	    </itemizedlist>
+		</para>
+	</section>
+	
+	<section id="uid_domain.known_limitations">
+		<title>Known Limitations</title>
+		<para>
+			There is an unlikely race condition on domain list update.  If a process uses a table,
+			which is reloaded at the same time twice through <acronym>FIFO</acronym>, the second
+			reload will delete the original table still in use by the process.
+		</para>
+	</section>
+	
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+	<xi:include href="fifo.xml"/>
+	<xi:include href="domain_api.xml"/>
+	</chapter>
+</book>

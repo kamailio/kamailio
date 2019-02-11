@@ -1,0 +1,3 @@
+version=3
+opts=dversionmangle=s/\~svn([\d]+)//; \
+http://www.kamailio.org/pub/kamailio/([\d.]+)/src/kamailio-([\d.]+)_src\.tar\.gz

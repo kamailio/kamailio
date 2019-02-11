@@ -19,18 +19,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
+. include/common
 
 CFG=1.cfg
 
 # setup config
-echo -e "debug=2\nrequest_route {\n ; \n}" > $CFG
+printf "debug=2\nrequest_route {\n ; \n}" > $CFG
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 rm -f $CFG
 

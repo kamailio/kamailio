@@ -1,0 +1,202 @@
+DB_CLUSTER Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2012 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. connection (str)
+              3.2. cluster (str)
+              3.3. inactive_interval (int)
+              3.4. max_query_length (int)
+
+        4. Usage
+
+   List of Examples
+
+   1.1. Set connection parameter
+   1.2. Set cluster parameter
+   1.3. Set inactive_interval parameter
+   1.4. Set max_query_length parameter
+   1.5. Sample of usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. connection (str)
+        3.2. cluster (str)
+        3.3. inactive_interval (int)
+        3.4. max_query_length (int)
+
+   4. Usage
+
+1. Overview
+
+   This module provides a generic database clustering system. It can be
+   used as a middle layer between modules and database connectors.
+
+   Via clustering, database operations can be executed across multiple
+   servers, based on policies such as parallel write, serial or round
+   robin write and read.
+
+   The following database commands are considered to be write operations:
+   INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE. The
+   read operations are done for database commands: QUERY and RAW-QUERY.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * db connector - database connectors.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. connection (str)
+   3.2. cluster (str)
+   3.3. inactive_interval (int)
+   3.4. max_query_length (int)
+
+3.1. connection (str)
+
+   Specify the connection to a real database system. The format is
+   'conid=>DBURL' - providing a connection id and the database URL used by
+   the database driver used.
+
+   Default value is NULL.
+
+   Example 1.1. Set connection parameter
+...
+modparam("db_cluster", "connection",
+             "con1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
+modparam("db_cluster", "connection",
+             "con2=>mysql://kamailio:kamailiorw@localhost/kamailio2")
+...
+
+3.2. cluster (str)
+
+   Specify the cluster definition. The format is
+   'clsid=>conid1=def1;conid2=def2' - providing a cluster id and the list
+   of database connections to be used. For each connection you have to
+   provide a usage definition. The usage definition is a 4-char long
+   string, specifying priority and command mode for read and write
+   operations to be performed on that connection.
+
+   The priority is a digit between 0 and 9, where a higher value means
+   higher priority. Priority 0 means that the connection is not going to
+   be used in that cluster.
+
+   Command mode is a character among s, r and p. s is for doing serial
+   operations (try first and if fails, try next); r is for doing round
+   robin operations; p - is for doing parallel operations (this is valid
+   only for write operations).
+
+   The first two characters is priority and mode for read, followed by two
+   characters for priority and mode for write operations. "p" is only used
+   for write operations.
+
+   Default value is NULL.
+
+   Example 1.2. Set cluster parameter
+...
+modparam("db_cluster", "cluster", "cls1=>con1=9s8p;con2=9s8p")
+...
+
+3.3. inactive_interval (int)
+
+   How long (seconds) a connection is considered inactive after a DB
+   operations failed on it.
+
+   Default value is 300 (5 min).
+
+   Example 1.3. Set inactive_interval parameter
+...
+modparam("db_cluster", "inactive_interval", 180)
+...
+
+3.4. max_query_length (int)
+
+   How long (seconds) a failed db operation needs to last before
+   deactivating the connection for inactive_interval seconds. This
+   prevents disabling of connections that reply fast with error codes,
+   thus being active (e.g., due to primary key insert errors). In such
+   cases, the database server is active.
+
+   Default value is 0.
+
+   Example 1.4. Set max_query_length parameter
+...
+modparam("db_cluster", "max_query_length", 5)
+...
+
+4. Usage
+
+   Practically, all the modules that want to use a cluster, have to set
+   their db_url parameter to "cluster://clusterid".
+
+   Following rules apply when doing DB commands: the connections with
+   highest priority are chosen first and the operations are performed
+   according to the command mode. Note that for same priority, only one
+   command mode is used (the one from the first connection with that
+   priority found in the definition of the cluster). If the DB command is
+   not successful, next set of connections based on priority is selected
+   and the command is tried again. When the command is successful, no
+   other try is made.
+
+   For parallel operations, a command is considered successful if it
+   succeeded on one connection from a group with same priority.
+
+   Next example shows how to set a cluster with two connections to MySQL
+   to be used for parallel writing from acc and round-robin reading by
+   sqlops.
+
+   Example 1.5. Sample of usage
+...
+modparam("db_cluster", "connection",
+             "c1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
+modparam("db_cluster", "connection",
+             "c2=>mysql://kamailio:kamailiorw@localhost/kamailio2")
+modparam("db_cluster", "cluster", "k1=>c1=9r9p;c2=9r9p")
+
+modparam("acc", "db_url", "cluster://k1")
+
+modparam("sqlops", "sqlcon", "ca=>cluster://k1")
+...

@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="auth.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Parameters</title>
+    
+    <section id="auth.p.auth_checks_register">
+	<title><varname>auth_checks_register</varname> (flags)</title>
+	<para>
+		See description of parameter <varname>auth_checks_in_dlg</varname>.
+	</para>
+	</section>
+
+    <section id="auth.p.auth_checks_no_dlg">
+	<title><varname>auth_checks_no_dlg</varname> (flags)</title>
+	<para>
+		See description of parameter <varname>auth_checks_in_dlg</varname>.
+	</para>
+	</section>
+
+    <section id="auth.p.auth_checks_in_dlg">
+		<title><varname>auth_checks_in_dlg</varname> (flags)</title>
+	<para>
+		These three module parameters control which optional integrity
+        	checks will be performed on the SIP message carrying digest response
+        	during SIP MD5 digest authentication. <varname>auth_check_register</varname>
+        	controls integrity checks to be performed on REGISTER messages,
+        	<varname>auth_checks_no_dlg</varname> controls which optional
+        	integrity checks will be performed on SIP requests that have no To
+        	header field or no To tag (in other words the requests either
+        	establishing or outside dialogs).
+		<varname>auth_checks_in_dlg</varname> controls which
+        	integrity checks will be performed on SIP requests within dialogs,
+        	such as BYE or re-INVITE. The default value for all three parameters
+        	is 0 (old behaviour, no extra checks). The set of integrity checks
+        	that can be performed on REGISTERs is typically different from sets of
+        	integrity checks that can be performed for other SIP request types,
+        	hence we have three independent module parameters.
+	</para>
+	<para>
+		Without the extra checks the nonce will protect only against expired
+		values. Some reply attacks are still possible in the expire "window".
+		A possible workaround is to always force qop authentication and 
+		always check the uri from the authorization header, but this would
+		not work if an upstream proxy rewrites the uri
+		and it will also not work with a lot of UA implementations.
+	</para>
+	<para>
+		In this case the nonce value will be used only to hold
+		the expire time (see <varname>nonce_expire</varname>) and an MD5
+		over it and some secret (the MD5 is used to make sure that nobody
+		tampers with the nonce expire time).
+	</para>
+	<para>
+		When the extra checks are enabled, the nonce will include an extra
+		MD5 over the selected part/parts of the message (see below) and some 
+		other secret. This will be used to check if the selected part of 
+		the message is the same when an UA tries to reuse the nonce, thus 
+		protecting or severely limiting reply attacks.
+	</para>
+	<para>
+		The possible flag values for all three parameters are:
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> for checking if the message
+				URI changed (uses the whole URI)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2</emphasis> for checking the callid
+			</para></listitem>
+			<listitem><para>
+				<emphasis>4</emphasis> for checking the From tag
+			</para></listitem>
+			<listitem><para>
+				<emphasis>8</emphasis> for checking the source IP address
+				(see nonce.h).
+			</para></listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		As an example setting <varname>auth_checks_register</varname> to 3
+		would check if the callid or the request uri changed from the REGISTER
+		message for which the original nonce was generated (this would allow nonce reuse only
+		within the same UA and for the expire time).  Note that enabling
+		the extra checks will limit nonce caching by UAs, requiring extra
+		challenges and roundtrips, but will provide much better protection.
+	</para>
+	<warning><para>
+		Do not enable the from tag check (4) for REGISTERs
+		(<varname>auth_checks_register</varname>) and out-of-dialog messages
+		(<varname>auth_checks_no_dlg</varname>) unless you are sure that all
+		your user agents do not change the from tag when challenged. Some
+		user agents will also change the callid when the challenged request
+		is not in-dialog, so avoid enabling the callid check (2) for
+		messages that are not part of a dialog
+		(<varname>auth_checks_no_dlg</varname>).
+		In some rare case this will also have to be done for REGISTERs.
+	</para></warning>
+	<para>
+		When the <varname>secret</varname> parameter is set and the extra
+		checks are enabled, the first half of the <varname>secret</varname> 
+		will be used for the expire time MD5 and the other half for the extra
+		checks MD5, so make sure you have a long secret (32 chars or longer are
+		recommended).
+	</para>
+	<example>
+	    <title>Setting the <varname>auth_checks_register</varname> module 
+				parameter</title>
+	    <programlisting>
+...
+# For REGISTER requests we hash the Request-URI, Call-ID, and source IP of the
+# request into the nonce string. This ensures that the generated credentials
+# cannot be used with another registrar, user agent with another source IP
+# address or Call-ID. Note that user agents that change Call-ID with every
+# REGISTER message will not be able to register if you enable this.
+modparam("auth", "auth_checks_register", 11)
+
+# For dialog-establishing requests (such as the original INVITE, OPTIONS, etc)
+# we hash the Request-URI and source IP. Hashing Call-ID and From tags takes
+# some extra precaution, because these checks could render some UA unusable.
+modparam("auth", "auth_checks_no_dlg", 9)
+
+# For mid-dialog requests, such as re-INVITE, we can hash source IP and
+# Request-URI just like in the previous case. In addition to that we can hash
+# Call-ID and From tag because these are fixed within a dialog and are
+# guaranteed not to change. This settings effectively restrict the usage of
+# generated credentials to a single user agent within a single dialog.
+modparam("auth", "auth_checks_in_dlg", 15)
+
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.qop">
+	<title><varname>qop</varname> (string)</title>
+	<para>
+		If set, enable <emphasis>qop</emphasis> for challenges: each challenge
+		will include a <emphasis>qop</emphasis> parameter. This is the 
+		recommended way, but some older non rfc3261 compliant UAs might get
+		confused and might not authenticate properly if <varname>qop</varname>
+		is enabled.
+	</para>
+	<para>
+		Enabling <varname>qop</varname> together with
+		<varname>nonce_count</varname> will provide extra-security 
+		(protection against replay attacks) while still allowing 
+		credentials caching at the UA side and thus not compromising 
+		performance.
+	</para>
+	<para>
+		The possible values are: "auth", "auth-int" and "" (unset).
+	</para>
+	<para>
+		The default value is not-set ("").
+	</para>
+	<para>
+		See also:
+			<varname>nonce_count</varname>.
+	</para>
+	<example>
+	    <title>qop example</title>
+	    <programlisting>
+...
+modparam("auth", "qop", "auth")   # set qop=auth
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.nonce_count">
+	<title><varname>nonce_count</varname> (boolean)</title>
+	<para>
+		If enabled the received <emphasis>nc</emphasis> value is remembered 
+		and checked against the older value (for a successful authentication
+		the received <emphasis>nc</emphasis> must be greater then the 
+		previously received one, see rfc2617 for more details). This will 
+		provide protection against replay attacks while still allowing
+		credentials caching at the UA side.
+	</para>
+	<para>
+		It depends on <varname>qop</varname> being enabled (if 
+		<varname>qop</varname> is not enabled, the challenges won't include
+		<emphasis>qop</emphasis> and so the UA will probably not include the
+		<emphasis>qop</emphasis> or <emphasis>nc</emphasis> parameters in its
+		response).
+	</para>
+	<para>
+		If a response doesn't include <emphasis>qop</emphasis> or 
+		<emphasis>nc</emphasis> (for example obsolete UAs that don't support
+		them) the response will be checked according to the other enabled
+		nonce checks, in this order: one_time_nonce and auth_check_*.
+		If a response includes <emphasis>nc</emphasis> only the normal
+		<varname>nonce_expire</varname> checks and the 
+		<varname>nonce_count</varname> checks will be performed, all
+		the other checks will be ignored.
+	</para>
+	<para>
+		The <varname>nonce_count</varname> checks work by tracking a limited
+		number of nonces. The maximum number of tracked nonces is set using
+		the <varname>nc_array_size</varname> or 
+		<varname>nc_array_order</varname> parameters. If this number is 
+		exceeded, older entries will be overwritten. As long as the maximum
+		rate of challengeable messages per average response time is lower then
+		<varname>nc_array_size</varname>, the <varname>nonce_count</varname>
+		checks should work flawlessly. For optimum performance (maximum reuse
+		of cache credentials) <varname>nc_array_size</varname> divided by
+		<varname>nid_pool_no</varname> should be lower then the message rate
+		 multiplied by the desired <varname>nonce_expire</varname>.
+	</para>
+	<para>
+		The maximum accepted <emphasis>nc</emphasis> value is 255. If 
+		<emphasis>nc</emphasis> becomes greater then this, the nonce will be
+		considered stale and the UA will be re-challenged.
+	</para>
+	<para>
+		<emphasis>Note:</emphasis> <varname>nonce_count</varname> should be 
+		enabled only in stateful mode (a transaction should be created prior
+		to the authentication check to absorb possible retransmissions and all
+		the replies should be sent statefully, using 
+		<function>t_reply()</function>).
+		If <varname>nonce_count</varname> and the authentication checks are
+		used in the stateless mode then all retransmissions will be 
+		challenged.
+	</para>
+	<para>
+		The default value is 0 (off).
+	</para>
+	<para>
+		See also: 
+			<varname>qop</varname>,
+			<varname>nc_array_size</varname>,
+			<varname>nc_array_order</varname>,
+			<varname>nid_pool_no</varname>,
+			<varname>nonce_expire</varname>.
+			<varname>one_time_nonce</varname>.
+	</para>
+	<example>
+	    <title>nonce_count example</title>
+	    <programlisting>
+...
+modparam("auth", "nonce_count", 1) # enable nonce_count support
+modparam("auth", "qop", "auth")    # enable qop=auth
+
+....
+route{
+...
+	# go stateful and catch retransmissions
+	if (!t_newtran()) {
+	    xlog("L_NOTICE", "Failed to create new transaction\n");
+ 	    drop;
+	};
+	if (method=="REGISTER"){
+		if (!www_authenticate("test", "credentials")){
+			# reply must be sent with t_reply because the 
+			# transaction is already created at this point 
+			# (we are in "stateful" mode)
+			if ($? == -2){
+				t_reply("500", "Internal Server Error");
+			}else if ($? == -3){
+				t_reply("400", "Bad Request");
+			}else{
+				if ($digest_challenge) 
+					append_to_reply("%$digest_challenge");
+				t_reply("401", "Unauthorized");
+			}
+			drop;
+		}
+		if (!save_noreply("location")) {
+			t_reply("400", "Invalid REGISTER Request");
+			drop;
+		}
+		append_to_reply("%$contact");
+		t_reply("$code", "$reason"); # no %, avps are used directly 
+		drop;
+	}else{
+		if (!proxy_authenticate("my_realm", "credentials")){
+			if ($? == -2){
+				t_reply("500", "Internal Server Error");
+			}else if ($? == -3){
+				t_reply("400", "Bad Request");
+			}else{
+				if ($digest_challenge) 
+					append_to_reply("%$digest_challenge");
+				t_reply("401", "Unauthorized");
+			}
+			drop;
+		}
+	}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="auth.p.one_time_nonce">
+	<title><varname>one_time_nonce</varname> (boolean)</title>
+	<para>
+		If set to 1 nonce reuse is disabled: each nonce is allowed only once,
+		in the first response to a challenge. All the messages will be 
+		challenged, even retransmissions. Stateful mode should be used, to
+		catch retransmissions before the authentication checks (using
+		<function>t_newtran()</function> before the authentication checks
+		and sending all the replies with <function>t_reply()</function>).
+	</para>
+	<para>
+		<varname>one_time_nonce</varname> provides enhanced replay protections
+		at the cost of invalidating UA side credentials caching, challenging
+		every message (and thus generating extra messages and extra 
+		round-trips) and requiring stateful mode. In general 
+		<varname>qop</varname> and <varname>nonce_count</varname> should
+		be prefered (if possible) with fallback to 
+		<varname>auth_checks_*</varname>. Due to the disadvantages listed 
+		above, <varname>one_time_nonce</varname> should be used only if the 
+		extra checks provided by <varname>auth_checks_register</varname>,
+		<varname>auth_checks_no_dlg</varname> and
+		<varname>auth_checks_in_dlg</varname> are deemed insufficient for a
+		specific setup.
+	</para>
+	<para>
+		Compared to <varname>nonce_count</varname>, 
+		<varname>one_time_nonce</varname> provides the same protection, but at
+		a higher message cost. The only advantages are that it works with
+		user agents that do not support <emphasis>qop</emphasis> and 
+		<emphasis>nc</emphasis> and that it uses less memory for the same
+		supported number of maximum in-flight nonces (by a factor of 8).
+		<varname>one_time_nonce</varname> can be used as fallback from
+		<varname>nonce_count</varname>, when the UA doesn't support 
+		<emphasis>nc</emphasis> (it happens automatically when both of them
+		are enabled).
+	</para>
+	<para>
+		Like <varname>nonce_count</varname>, <varname>one_time_nonce</varname>
+		works by tracking a limited number of nonces. The maximum number of 
+		tracked nonces is set using the <varname>otn_in_flight_no</varname> or
+		<varname>otn_in_flight_order</varname> parameters. If this number is 
+		exceeded, older entries will be overwritten. As long as the maximum
+		rate of challengeable messages per average response time is lower then
+		<varname>otn_in_flight_no</varname>, the 
+		<varname>one_time_nonce</varname> checks should work flawlessly.
+	</para>
+	<para>
+		The default value is 0 (off).
+	</para>
+	<para>
+		See also:
+			<varname>otn_in_flight_no</varname>,
+			<varname>otn_in_flight_order</varname>,
+			<varname>nid_pool_no</varname> and
+			<varname>nonce_count</varname>.
+	</para>
+	<example>
+	    <title>one_time_nonce example</title>
+	    <programlisting>
+...
+modparam("auth", "one_time_nonce", 1)
+# Note: stateful mode should be used, see the nonce_count example
+...
+	    </programlisting>
+	</example>
+	</section>
+
+    <section id="auth.p.nid_pool_no">
+	<title><varname>nid_pool_no</varname> (integer)</title>
+	<para>
+		Controls the number of partitions for the 
+		<varname>nonce_count</varname> and <varname>one_time_nonce</varname>
+		arrays (it's common to both of them to reduce the nonce size).
+	</para>
+	<para>
+		Instead of using single arrays for keeping nonce state, these arrays
+		can be divided into more partitions. Each &kamailio; process is assigned to
+		one of these partitions, allowing for higher concurrency on multi-CPU
+		machines. Besides increasing performance, increasing 
+		<varname>nid_pool_no</varname> has also a negative effect: it could
+		decrease the maximum supported in-flight nonces in certain conditions.
+		In the worst case, when only one &kamailio; process receives most of the 
+		traffic (e.g. very busy tcp connection between two proxies), the 
+		in-flight nonces could be limited to the array size 
+		(<varname>nc_array_size</varname> for <varname>nonce_count</varname>
+		 or <varname>otn_in_flight_no</varname> for 
+		 <varname>one_time_nonce</varname>) divided by the partitions number
+		 (<varname>nid_pool_no</varname>). However for normal traffic, when
+		 the process receiving a message is either random or chosen in 
+		 a round-robin fashion the maximum in-flight nonces number will be 
+		 very little influenced by <varname>nid_pool_no</varname> (the 
+		 messages will be close to equally distributed to processes using
+		 different partitions).
+	</para>
+	<para>
+		<varname>nid_pool_no</varname> value should be one of: 1, 2, 4, 8, 16,
+		32 or 64 (the maximum value is 64 and all values should be of the 
+		form 2^k or else they will be rounded down to 2^k).
+	</para>
+	<para>
+	    The default value is 1.
+	</para>
+	<para>
+		See also:
+			<varname>nonce_count</varname>,
+			<varname>one_time_nonce</varname>,
+			<varname>nc_array_size</varname> and
+			<varname>otn_in_flight_no</varname>.
+	</para>
+	<example>
+	    <title>nid_pool_no example</title>
+	    <programlisting>
+...
+modparam("auth", "nid_pool_no", 4)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.nc_array_size">
+	<title><varname>nc_array_size</varname> (integer)</title>
+	<para>
+		Maximum number of in-flight nonces for <varname>nonce_count</varname>.
+		It represents the maximum nonces for which state will be kept. When
+		this number is exceeded, state for the older nonces will be 
+		discarded to make space for new ones (see 
+		<varname>nonce_count</varname> for more details).
+	</para>
+	<para>
+		The value should be of the form 2^k. If it's not it will be rounded
+		down to 2^k (for example a value of 1000000 will be rounded down to
+		2^19=524288). <varname>nc_array_order</varname> can be used to 
+		directly specify the power of 2 (e.g. 
+		<varname>nc_array_order</varname> set to 20 is equivalent to
+		<varname>nc_array_size</varname> set to 1048576).
+	</para>
+	<para>
+		The memory used to keep the nonce state will be 
+		<varname>nc_array_size</varname> in bytes.
+	</para>
+	<para>
+	    The default value is 1048576 (1M in-flight nonces, using 1Mb memory).
+	</para>
+	<para>
+		See also:
+			<varname>nonce_count</varname> and
+			<varname>nid_pool_no</varname>.
+	</para>
+	<example>
+	    <title>nc_array_size example</title>
+	    <programlisting>
+...
+modparam("auth", "nc_array_size", 4194304)   # 4Mb
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.nc_array_order">
+	<title><varname>nc_array_order</varname> (integer)</title>
+	<para>
+		Equivalent to <varname>nc_array_size</varname>, but instead of 
+		directly specifying the size, its value is the power at which 2 should
+		be raised (log2(<varname>nc_array_size</varname>)).
+	</para>
+	<para>
+		<varname>nc_array_size</varname> = 2^<varname>nc_array_order</varname>.
+		For more details see <varname>nc_array_size</varname>.
+	</para>
+	<para>
+	    The default value is 20 (1M in-flight nonces, using 1Mb memory).
+	</para>
+	<para>
+		See also:
+			<varname>nonce_count</varname>,
+			<varname>nc_array_size</varname> and
+			<varname>nid_pool_no</varname>.
+	</para>
+	<example>
+	    <title>nc_array_order example</title>
+	    <programlisting>
+...
+modparam("auth", "nc_array_order", 22)   # 4Mb
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.otn_in_flight_no">
+	<title><varname>otn_in_flight_no</varname> (integer)</title>
+	<para>
+		Maximum number of in-flight nonces for 
+		<varname>one_time_nonce</varname>. It represents the maximum number
+		of nonces remembered for the one-time-nonce check. When this 
+		number is exceeded, information about older nonces will be discarded
+		and overwritten with information about the new generated ones (see
+		<varname>one_time_nonce</varname> for more details).
+	</para>
+	<para>
+		The value should be of the form 2^k. If it's not it will be rounded
+		down to 2^k (for example a value of 1000000 will be rounded down to
+		2^19=524288). <varname>otn_in_flight_no</varname> can be used to 
+		directly specify the power of 2 (e.g. 
+		<varname>otn_in_flight_order</varname> set to 19 is equivalent to
+		<varname>otn_in_fligh_number</varname> set to 524288).
+	</para>
+	<para>
+		The memory used to keep the nonce information will be the
+		<varname>otn_in_flight_no</varname> divided by 8 (only 1 bit of state
+		is kept per nonce).
+	</para>
+	<para>
+		The default value is 1048576 (1M in-flight nonces, using 
+		128Kb memory).
+	</para>
+	<para>
+		See also:
+			<varname>one_time_nonce</varname> and
+			<varname>nid_pool_no</varname>.
+	</para>
+	<example>
+	    <title>otn_in_flight_no example</title>
+	    <programlisting>
+...
+modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.otn_in_flight_order">
+	<title><varname>otn_in_flight_order</varname> (integer)</title>
+	<para>
+		Equivalent to <varname>otn_in_flight_no</varname>, but instead of
+		directly specifying the size, its value is the power at which 2 should
+		be raised (log2(<varname>otn_in_flight_no</varname>)).
+	</para>
+	<para>
+		<varname>otn_in_flight_no</varname> = 
+		2^<varname>otn_in_flight_order</varname>.
+		For more details see <varname>otn_in_flight_order</varname>.
+	</para>
+	<para>
+		The default value is 20 (1M in-flight nonces, using 128Kb memory).
+	</para>
+	<para>
+		See also:
+			<varname>one_time_nonce</varname>,
+			<varname>otn_in_flight_no</varname> and
+			<varname>nid_pool_no</varname>.
+	</para>
+	<example>
+	    <title>otn_in_flight_order example</title>
+	    <programlisting>
+...
+modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.secret">
+	<title><varname>secret</varname> (string)</title>
+	<para>Secret phrase used to calculate the nonce value used to challenge
+	the client for authentication.</para>
+	<para>If you use multiple servers in your installation, and would like to
+	authenticate on the second server against the nonce generated at the
+	first one its necessary to explicitly set the secret to the same value
+	on all servers. However, as the use of a shared (and fixed) secret as
+	nonce is insecure, it is much better is to stay with the default. Any
+	clients should send the authenticated request to the server that 
+	issued the challenge.
+	</para>
+	<para>
+	    Default value is randomly generated string.
+	</para>
+	<example>
+	    <title>Setting secret module parameter</title>
+	    <programlisting>
+...
+modparam("auth", "secret", "johndoessecretphrase")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="auth.p.nonce_expire">
+	<title><varname>nonce_expire</varname> (integer)</title>
+	<para>
+	    Nonces have limited lifetime. After a given period of time nonces
+	    will be considered invalid. This is to protect replay
+	    attacks. Credentials containing a stale nonce will be not
+	    authorized, but the user agent will be challenged again. This time
+	    the challenge will contain <varname>stale</varname> parameter which
+	    will indicate to the client that it doesn't have to disturb user by
+	    asking for username and password, it can recalculate credentials
+	    using existing username and password.
+	</para>
+	<para>
+	    The value is in seconds and default value is 300 seconds.
+	</para>
+	<example>
+	    <title>nonce_expire example</title>
+	    <programlisting>
+...
+modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="auth.p.nonce_auth_max_drift">
+	<title><varname>nonce_auth_max_drift</varname> (integer)</title>
+	<para>
+		Maximum difference in seconds between a nonce creation time and the
+		current time, if the nonce creation time appears to be in the future.
+	</para>
+	<para>
+		In some cases, like shortly after a system time backward adjustment 
+		or when the current proxy is part of a cluster which is not
+		time-synchronized, it's possible to receive a nonce with creation time
+		in the future. In this case if the difference is greater then
+		<varname>nonce_auth_max_drift</varname> seconds, consider the nonce
+		stale and re-challenge (otherwise after a dramatic time change
+		backwards, it might happen that some previously generated nonces will
+		be valid for too much time).
+	</para>
+	<para>
+		The default value is 3 seconds
+	</para>
+	<para>
+		See also: <varname>nonce_expire</varname>.
+	</para>
+	<example>
+	    <title>nonce_auth_max_drift example</title>
+	    <programlisting>
+...
+modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="auth.p.force_stateless_reply">
+	<title><varname>force_stateless_reply</varname> (boolean)</title>
+	<para>
+		If set to 1, <function>www_challenge()</function> and
+		<function>proxy_challenge()</function>
+		functions send reply statelessly no matter if transaction
+                exists or not.  If set to 0 (default), reply is sent statefully
+		if transaction exists and statelessly otherwise.
+	</para>
+	<example>
+	    <title>force_stateless_reply example</title>
+	    <programlisting>
+...
+modparam("auth", "force_stateless_reply", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="auth.p.realm_prefix">
+		<title><varname>realm_prefix</varname> (string)</title>
+		<para>
+			Prefix to be automatically stripped from the realm. As an alternative to
+			SRV records (not all SIP clients support SRV lookup), a subdomain
+			of the master domain can be defined for SIP purposes (like 
+			sip.mydomain.net pointing to same IP address as the SRV
+			record for mydomain.net). By ignoring the realm_prefix 
+			<quote>sip.</quote>, at authentication, sip.example.com will be
+			equivalent to example.com .
+		</para>
+		<para>
+		Default value is empty string.
+		</para>
+		<example>
+		<title>realm_prefix parameter example</title>
+		<programlisting format="linespecific">
+modparam("auth", "realm_prefix", "sip.")
+</programlisting>
+		</example>
+	</section>
+
+	<section id="auth.p.use_domain">
+	<title><varname>use_domain</varname> (boolean)</title>
+	<para>
+		If set to 1, <function>pv_auth_check()</function> uses
+		domain parts of the URIs to check user identity.
+	</para>
+	<example>
+	    <title>force_stateless_reply example</title>
+	    <programlisting>
+...
+modparam("auth", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="auth.p.algorithm">
+		<title><varname>algorithm</varname> (string)</title>
+		<para>
+			Configure hash algorithm used for digest authentication.
+			Possible values are "MD5" or "SHA-256". If left empty MD5 is used.
+			If specified, the specified algorithm is used and is also put in
+			the 'algorithm' field of the challenge header.
+		</para>
+		<para>
+			Warning: SHA-256 hash values take twice the space of MD5 hash values.
+			So a buffer overflow might occur if this option is used in combination
+			with another auth_* module that does not allocate at least 65 bytes to
+			store hash values.
+			SHA-256 can safely be used with the module auth_db as it allocates 256 bytes
+			to store HA1 values.
+		</para>
+		<example>
+			<title>use SHA-256 example</title>
+			<programlisting>
+...
+modparam("auth", "algorithm", "SHA-256")
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="auth.p.add_authinfo_hdr">
+		<title><varname>add_authinfo_hdr</varname> (boolean)</title>
+		<para>
+			Should an Authentication-Info header be added on 200 OK responses?
+			The Authentication-Info header offers mutual authentication.
+			The server proves to the client that it knows the user's secret.
+		</para>
+		<para>
+			The header also includes the next nonce which may be used by the client
+			in a future request.
+			If one_time_nonce is enabled, a new nonce is calculated for the next nonce.
+			Otherwise the current nonce is used for the next nonce.
+		</para>
+		<para>
+			The default value is 0 (no).
+		</para>
+		<example>
+			<title>add Authentication-Info header example</title>
+			<programlisting>
+...
+modparam("auth", "add_authinfo_hdr", yes)
+...
+			</programlisting>
+		</example>
+	</section>
+
+</section>

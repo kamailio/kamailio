@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="tm" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>TM Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jiri@iptel.org</email>
+		</address>
+	    </author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+	        <email>jh@tutpro.com</email>
+		</author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+	        <email>miconda@gmail.com</email>
+		</author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2008</year>
+		<holder>Juha Heinanen</holder>
+	</copyright>
+	<copyright>
+		<year>2016</year>
+		<holder>Daniel-Constantin Mierla</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="tm.overview">
+	<title>Overview</title>
+	<para>
+	    The <acronym>TM</acronym> module enables stateful processing of SIP
+	    transactions.  Stateful logic is costly in terms of memory and
+	    <acronym>CPU</acronym>. The main use is services that
+	    inherently need state. For example, transaction-based accounting
+	    (module acc) needs to process transaction state as opposed to
+	    individual messages. Any kind of forking must be implemented
+	    transaction statefully. By using transaction states you trade
+	    <acronym>CPU</acronym> caused by retransmission processing for
+	    memory. That only makes sense if <acronym>CPU</acronym>
+	    consumption per request is huge. For example, if you want to avoid
+	    costly <acronym>DNS</acronym> resolution for every retransmission
+	    of a request to an unresolvable destination, use stateful
+	    mode. Then, only the initial message burdens server by
+	    <acronym>DNS</acronym> queries, subsequent retransmissions will be
+	    dropped and will not result in more processes blocked by
+	    <acronym>DNS</acronym> resolution. The price is more memory
+	    consumption and higher processing latency.
+	</para>
+	<para>
+	    From the admin's perspective, these are the major functions : t_relay,
+	    t_relay_to_udp and t_relay_to_tcp. All of them setup transaction
+	    state, absorb retransmissions from upstream, generate downstream
+	    retransmissions and correlate replies to requests. t_relay forwards
+	    to current URI (be it original request's URI or a URI changed by
+	    some of URI-modifying functions, such as sethost). t_relay_to_udp
+	    and t_relay_to_tcp forward to a specific address over UDP or TCP
+	    respectively.
+	</para>
+	<para>
+	    In general, if <acronym>TM</acronym> is used, it copies clones of
+	    received SIP messages in shared memory. That costs memory and
+	    also <acronym>CPU</acronym> time (memcpys, lookups, shmem locks,
+	    etc.)  Note that non-<acronym>TM</acronym> functions operate over
+	    the received message in private memory, that means that any core
+	    operations will have no effect on statefully processed messages
+	    after creating the transactional state. For example, calling
+	    record_route <emphasis>after</emphasis> t_relay is pretty useless,
+	    as the <acronym>RR</acronym> is added to privately held message
+	    whereas its <acronym>TM</acronym> clone is being forwarded.
+	</para>
+	<para>
+	    The <acronym>TM</acronym> module is quite big and uneasy to program
+	    --lots of mutexes, shared memory access, malloc and free, timers--you really
+	    need to be careful when you do anything. To simplify
+	    <acronym>TM</acronym> programming, there is the instrument of
+	    callbacks. The callback mechanisms allow programmers to register
+	    their functions to a specific event. See t_hooks.h for a list of
+	    possible events.
+	</para>
+	<para>
+	    Other things programmers may want to know is UAC--it is a very
+	    simplistic code which allows you to generate your own
+	    transactions. Particularly useful for things like NOTIFYs or
+	    <acronym>IM</acronym> gateways. The UAC takes care of all the
+	    transaction machinery: retransmissions, FR timeouts, forking, etc.
+	    See t_uac prototype in uac.h for more details. If you want to see the
+	    transaction result the code can register for a callback.
+	</para>
+	<note>
+		<para>Several Kamailio TM module functions are now
+		implemented in the TMX module. Check
+		it to see if what you are looking for is there.</para>
+	</note>
+    </section>
+
+	<section id="tm.serial_forking">
+	  <title>Serial Forking Based on Q Value</title>
+	  <para>
+		A single SIP INVITE request may be forked to multiple destinations. We
+		call the set of all such destinations a <quote>destination set</quote>.
+		Individual elements within the destination sets are called branches.
+		The script writer can add URIs to the destination set from the configuration
+		file, or they can be loaded from the user location database. Each
+		registered contact then becomes one branch in the destination set.
+	  </para>
+	  <para>
+		The default behavior of the <acronym>TM</acronym> module,
+		if it encounters a SIP message with multiple branches in the destination
+		set, is to forward the SIP message to all the branches in parallel.
+		That means it sends the message to all the branch destinations before it
+		waits for replies from any of them. This is the default behavior if you
+		call <function>t_relay()</function> and similar functions without
+		any other arguments.
+	  </para>
+	  <para>
+		Another approach of handling multiple branches in a destination set is
+		serial forking. When configured to do serial forking, the server takes
+		the first branch out of the destination set, forwards the message to
+		its destination and waits for a reply or timeout. Only after a reply
+		has been received or a timeout occurred, the server takes another
+		destination from the destination set and tries again, until it
+		receives a positive final reply or until all branches from the
+		destination set have been tried.
+	  </para>
+	  <para>
+		Yet another, more sophisticated, way of handling multiple branches is
+		combined serial/parallel forking, where individual branches within the
+		destination set are assigned priorities. The order in which individual
+		branches are tried is then determined by their relative priority
+		within the destination set. Branches can be tried sequentially in the
+		descending priority order and all branches that have the same priority
+		can be tried in parallel. Such combined serial/parallel forking can be
+		achieved in the <acronym>TM</acronym> module with the help of
+		functions <function>t_load_contacts()</function>
+		and <function>t_next_contacts()</function>.
+	  </para>
+	  <para>
+		Every branch in the destination set is assigned a priority number,
+		also known as the <quote>q value</quote>. The q value is a floating
+		point number in a range 0 to 1.0. The higher the q value number,
+		the more priority is given to the particular branch in the destination set.
+		Branches with q value 1.0 have maximum priority, such branches should be always
+		be tried first in serial forking. Branches with q value 0 have the lowest
+		priority and they should by tried after all other branches with higher
+		priority in the destination set.
+	  </para>
+	  <para>
+		As an example, consider the following simple configuration file. When
+		the server receives an INVITE, it creates four branches with
+		usernames A through D and then forwards the request
+		using <function>t_relay()</function>:
+	  </para>
+	  <programlisting format="linespecific">
+request_route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com");
+  append_branch("sip:c@example.com");
+  append_branch("sip:d@example.com");
+
+  t_relay();
+  break;
+}
+</programlisting>
+	  <para>
+		With this configuration the server forwards the request to all four
+		branches at once, performing parallel forking as described above. We did
+		not set the q value for individual branches in this example but we can
+		do that by slightly modifying the arguments given
+		to <function>append_branch()</function>:
+	  </para>
+	  <programlisting format="linespecific">
+request_route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_relay();
+  break;
+}
+</programlisting>
+	  <para>
+		Here we assigned q value 0.5 to branches B and C and q value 1.0 to
+		branch D. We did not specify any q value for branch A and in that case
+		it is assumed that its q value is the lowest from all branches within
+		the destination set. If you try to run this example again, you will
+		figure out that nothing changed, <function>t_relay()</function> still
+		forward the message to all branches in parallel.
+	  </para>
+	  <para>
+		We now want to implement the combined serial/parallel forking. Branch
+		D should be tried first, because its q value is 1.0. Branches B and C
+		should be tried in parallel, but only after D finishes. Branch A
+		should be tried after B and C finished, because its q value (the
+		default) is the lowest of all. To do that, we need to introduce two
+		new functions into our example and two tm module parameters:
+	  </para>
+	  <programlisting format="linespecific">
+modparam("tm", "contacts_avp", "tm_contacts");
+modparam("tm", "contact_flows_avp", "tm_contact_flows");
+
+request_route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_load_contacts();
+
+  t_next_contacts();
+  t_relay();
+  break;
+}
+</programlisting>
+	  <para>
+		First of all, the tm module parameters are mandatory if the two new
+		functions are used. Function <function>t_load_contacts()</function>
+		takes all branches from the destination set, sorts them according to
+		their q values and stores them in the AVP configured in the modparam.
+		The function also clears the destination set, which means that it
+		removes all branches configured before
+		with <function>seturi()</function>
+		and <function>append_branch()</function>.
+	  </para>
+	  <para>
+		Function <function>t_next_contacts()</function> takes the AVP created
+		by the previous function and extract the branches with highest q
+		values from it. In our example it is branch D. That branch is then put
+		back into the destination set and when the script finally
+		reaches <function>t_relay()</function>, the destination set only
+		contains branch D and the request will be forwarded there.
+	  </para>
+	  <para>
+		We achieved the first step of serial forking, but this is not
+		sufficient. Now we also need to forward to other branches with lower
+		priority values when branch D finishes. To do that, we need to extend
+		the configuration file again and introduce a failure_route section:
+		</para>
+	  <programlisting format="linespecific">
+modparam("tm", "contacts_avp", "tm_contacts");
+
+request_route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_load_contacts();
+
+  t_next_contacts();
+  t_on_failure("serial");
+  t_relay();
+  break;
+}
+
+failure_route["serial"]
+{
+  if (!t_next_contacts()) {
+    exit;
+  }
+
+  t_on_failure("serial");
+  t_relay();
+}
+</programlisting>
+	  <para>
+		The failure_route section will be executed when branch D finishes. It
+		executes <function>t_next_contacts()</function> again and this time
+		the function retrieves branches B and C from the AVP and adds them to
+		the destination set. Here we need to check the return value of the
+		function, because a negative value indicates that there were no more
+		branches, in that case the failure_route should just terminate and
+		forward the response from branch D upstream.
+	  </para>
+	  <para>
+		If <function>t_next_contact()</function> returns a positive value then
+		we have more new branches to try and we need to setup the
+		failure_route again and call <function>t_relay()</function>. In our
+		example the request will now be forwarded to branches B and C in
+		paralell, because they were both added to the destination set
+		by <function>t_next_contacts()</function> at the same time.
+	  </para>
+	  <para>
+		When branches B and C finish, the failure_route block is executed
+		again, this time <function>t_next_contacts()</function> puts the final
+		branch A into the destination set and <function>t_relay()</function>
+		forwards the request there.
+	  </para>
+	  <para>
+		And that's the whole example, we achieved combined serial/parallel
+		forking based on the q value of individual branches. In real-world
+		configuration files the script writer would need to check the return
+		value of all functions and <varname>restart_fr_on_each_reply</varname>.
+		The destination set would not be configured directly in the configuration file, but
+		can be retrieved from the user location database. In that
+		case registered contacts will be stored in the destination set as
+		branches and their q values (provided by UAs) will be used.
+	  </para>
+	</section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="rpc.xml"/>
+    <xi:include href="event_routes.xml"/>
+    <xi:include href="api.xml"/>
+
+    <section id="tm.known_issues">
+	<title>Known Issues</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    Possibly, performance could be improved by not parsing
+		    non-INVITEs, as they do not be replied with 100, and do not
+		    result in ACK/CANCELs, and other things which take
+		    parsing. However, we need to rethink whether we don't need
+		    parsed headers later for something else. Remember, when we
+		    now store a request in sh_mem, we can't apply any
+		    pkg_mem operations to it any more. (that might be
+		    redesigned too).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Another performance improvement may be achieved by not
+		    parsing CSeq in replies until reply branch matches branch
+		    of an INVITE/CANCEL in transaction table.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>t_replicate</function> should be done more
+		    cleanly--Vias, Routes, etc. should be removed from a
+		    message prior to replicating it (well, does not matter any
+		    longer so much as there is a new replication module).
+		</para>
+	    </listitem>
+
+	</itemizedlist>
+    </section>
+
+    </chapter>
+</book>

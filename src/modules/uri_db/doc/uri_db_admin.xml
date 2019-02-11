@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>Various checks related to &sip; &uri;.</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a &kamailio; database module </emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+
+	<section id="uri_db.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		&url; of the database to be used.
+		</para>
+		<para>
+		If the db_url string is empty, the default database URL
+		will be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>&defaultrodb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.db_table">
+		<title><varname>db_table</varname> (string)</title>
+		<para>
+		The DB table that should be used. Its possible to use the
+		<quote>subscriber</quote> and <quote>uri</quote> table. If the
+		<quote>uri</quote> table should be used, an additional parameter
+		<quote>use-uri-table</quote>) must be set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>subscriber</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uri_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "db_table", "uri")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.user_column">
+		<title><varname>user_column</varname> (string)</title>
+		<para>
+		Column holding usernames in the table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "user_column", "username")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.domain_column">
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
+		Column holding domain in the table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "domain_column", "domain")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.uriuser_column">
+		<title><varname>uriuser_column</varname> (string)</title>
+		<para>
+		Column holding &uri; username in the table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>uri_user</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uriuser_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "uriuser_column", "uri_user")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.use_uri_table">
+		<title><varname>use_uri_table</varname> (integer)</title>
+		<para>
+		Specify if the <quote>uri</quote> table should be used for checking
+		instead of <quote>subscriber</quote> table. A non-zero value means true.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0 (false)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_uri_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "use_uri_table", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.p.use_domain">
+		<title><varname>use_domain</varname> (integer)</title>
+		<para>
+		Specify if the domain part of the URI should be used to identify the
+		users (along with username). This is useful in multi domain setups, a 
+		non-zero value means true.
+		</para>
+		<para>This parameter is only evaluated for calls to <quote>does_uri_exist</quote>,
+		all other functions checks the digest username and realm against the 
+		given username, if the <quote>uri</quote> table is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0 (false)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_db", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="uri_db.f.check_to">
+		<title>
+		<function moreinfo="none">check_to()</function>
+		</title>
+		<para>
+		Check <quote>To</quote> username against &uri; table (if use_uri_table is set) or
+		digest credentials (no DB backend required).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>check_to</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (check_to()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.f.check_from">
+		<title>
+		<function moreinfo="none">check_from()</function>
+		</title>
+		<para>
+		Check <quote>From</quote> username against &uri; table (if use_uri_table is set) or
+		digest credentials (no DB backend required).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>check_from</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (check_from()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.f.check_uri">
+		<title>
+			<function moreinfo="none">check_uri(uri)</function>
+		</title>
+		<para>
+			Check the username from the given uri against &uri; table (if use_uri_table is set) or
+			digest credentials (no DB backend required).
+		</para>
+        <para>Description of parameters:</para>
+        <itemizedlist>
+            <listitem>
+                <para><emphasis>uri</emphasis> Has to be a valid SIP URI,
+                    used to extract the username from. The parameter can be
+                    a static or dynamic (with variables) string.
+                </para>
+            </listitem>
+        </itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+			<title><function>check_uri</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (check_uri("$var(uri)")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="uri_db.f.does_uri_exist">
+		<title>
+		<function moreinfo="none">does_uri_exist()</function>
+		</title>
+		<para>
+		Check if username in the request &uri; belongs to an existing user.
+		</para>
+		<para>
+		The checking is done against the &uri; table (if use_uri_table is set) 
+		or the subscriber table.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>does_uri_exist</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (does_uri_exist()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

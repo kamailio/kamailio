@@ -1,0 +1,768 @@
+cfgutils Module
+
+Henning Westerholt
+
+   1und1 Internet AG
+   <henning.westerholt@1und1.de>
+
+Carsten Bock
+
+   BASIS AudioNet GmbH
+
+Elena-Ramona Modroiu
+
+   rosdev.ro
+   <ramona@rosdev.ro>
+
+Jiri Kuthan
+
+   <jiri@iptel.org>
+
+Olle E. Johansson
+
+   <oej@edvina.net>
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014, 2013, 2007, 2008, 2004 Edvina AB, 1und1 Internet AG,
+   BASIS AudioNet GmbH, Elena-Ramona Modroiu, Juha Heinanen, FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+        3. Parameters
+
+              3.1. initial_probability (string)
+              3.2. hash_file (string)
+              3.3. initial_gflags (integer)
+              3.4. lock_set_size (integer)
+
+        4. Functions
+
+              4.1. rand_event()
+              4.2. rand_set_prob(probability)
+              4.3. rand_reset_prob()
+              4.4. rand_get_prob()
+              4.5. sleep(time)
+              4.6. usleep(time)
+              4.7. abort()
+              4.8. pkg_status()
+              4.9. pkg_summary()
+              4.10. shm_status()
+              4.11. shm_summary()
+              4.12. set_gflag(flag)
+              4.13. reset_gflag(flag)
+              4.14. is_gflag(flag)
+              4.15. lock(key)
+              4.16. trylock(key)
+              4.17. unlock(key)
+              4.18. check_route_exists(route)
+              4.19. route_if_exists(route)
+              4.20. core_hash(string1, string2, size)
+
+        5. RPC Commands
+
+              5.1. cfgutils.rand_set_prop
+              5.2. cfgutils.rand_reset_prob
+              5.3. cfgutils.rand_get_prob
+              5.4. cfgutils.check_config_hash
+              5.5. cfgutils.get_config_hash
+              5.6. cfgutils.set_gflag
+              5.7. cfgutils.reset_gflag
+              5.8. cfgutils.is_gflag
+              5.9. cfgutils.get_gflags
+
+        6. Exported pseudo-variables
+
+              6.1. $RANDOM
+
+   List of Examples
+
+   1.1. initial_probability parameter usage
+   1.2. hash_file parameter usage
+   1.3. initial parameter usage
+   1.4. lock_set_size parameter usage
+   1.5. rand_event() usage
+   1.6. rand_set_prob() usage
+   1.7. rand_reset_prob() usage
+   1.8. rand_get_prob() usage
+   1.9. sleep usage
+   1.10. usleep usage
+   1.11. abort usage
+   1.12. pkg_status usage
+   1.13. pkg_summary usage
+   1.14. shm_status usage
+   1.15. shm_summary usage
+   1.16. set_gflag() usage
+   1.17. reset_gflag() usage
+   1.18. is_gflag() usage
+   1.19. lock() usage
+   1.20. trylock() usage
+   1.21. unlock() usage
+   1.22. check_route_exists() usage
+   1.23. route_if_exists() usage
+   1.24. core_hash() usage
+   1.25. cfgutils.rand_set_prob usage
+   1.26. cfgutils.rand_reset_prob usage
+   1.27. cfgutils.rand_get_prob usage
+   1.28. cfgutils.check_config_hash usage
+   1.29. cfgutils.get_config_hash usage
+   1.30. cfgutils.set_gflag usage
+   1.31. cfgutils.reset_gflag usage
+   1.32. cfgutils.is_gflag usage
+   1.33. cfgutils.get_gflags usage
+   1.34. RANDOM pseudo-variable usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. initial_probability (string)
+        3.2. hash_file (string)
+        3.3. initial_gflags (integer)
+        3.4. lock_set_size (integer)
+
+   4. Functions
+
+        4.1. rand_event()
+        4.2. rand_set_prob(probability)
+        4.3. rand_reset_prob()
+        4.4. rand_get_prob()
+        4.5. sleep(time)
+        4.6. usleep(time)
+        4.7. abort()
+        4.8. pkg_status()
+        4.9. pkg_summary()
+        4.10. shm_status()
+        4.11. shm_summary()
+        4.12. set_gflag(flag)
+        4.13. reset_gflag(flag)
+        4.14. is_gflag(flag)
+        4.15. lock(key)
+        4.16. trylock(key)
+        4.17. unlock(key)
+        4.18. check_route_exists(route)
+        4.19. route_if_exists(route)
+        4.20. core_hash(string1, string2, size)
+
+   5. RPC Commands
+
+        5.1. cfgutils.rand_set_prop
+        5.2. cfgutils.rand_reset_prob
+        5.3. cfgutils.rand_get_prob
+        5.4. cfgutils.check_config_hash
+        5.5. cfgutils.get_config_hash
+        5.6. cfgutils.set_gflag
+        5.7. cfgutils.reset_gflag
+        5.8. cfgutils.is_gflag
+        5.9. cfgutils.get_gflags
+
+   6. Exported pseudo-variables
+
+        6.1. $RANDOM
+
+1. Overview
+
+   Useful extensions for the server configuration.
+
+   The cfgutils module can be used to introduce randomness to the
+   behaviour of the server. It provides setup functions and the
+   “rand_event” function. This function return either true or false,
+   depending on a random value and a specified probability. E.g. if you
+   set via fifo or script a probability value of 5%, then 5% of all calls
+   to rand_event will return true. The pseudovariable “$RANDOM” could be
+   used to introduce random values e.g. into a SIP reply.
+
+   The benefit of this module is the probability of the decision can be
+   manipulated by external applications such as web interface or command
+   line tools. The probability must be specified as percent value, ranging
+   from 0 to 100.
+
+   The module exports commands to FIFO server that can be used to change
+   the global settings via FIFO interface. The FIFO commands are:
+   “set_prob”, “reset_prob” and “get_prob”.
+
+   This module can be used for simple load-shedding, e.g. reply 5% of the
+   Invites with a 503 error and a adequate random Retry-After value.
+
+   The module provides as well functions to delay the execution of the
+   server. The functions “sleep” and “usleep” could be used to let the
+   server wait a specific time interval.
+
+   It can also hash the config file used from the server with a (weak)
+   cryptographic hash function on startup. This value is saved and can be
+   later compared to the actual hash, to detect modifications of this file
+   after the server start. This functions are available as the FIFO
+   commands “check_config_hash” and “get_config_hash”.
+
+   The gflags functionality (global flags) keeps a bitmap of flags in
+   shared memory and may be used to change behaviour of server based on
+   value of the flags. Example:
+        if (is_gflag("1")) {
+                t_relay("udp:10.0.0.1:5060");
+        } else {
+                t_relay("udp:10.0.0.2:5060");
+        }
+
+   The benefit of this is the value of the switch flags can be manipulated
+   by external applications such as web interface or command line tools.
+   The size of bitmap is 32.
+
+   The module exports external commands that can be used to change the
+   global flags via Management Interface and RPC. See relevant sections
+   below.
+
+2. Dependencies
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * none
+
+3. Parameters
+
+   3.1. initial_probability (string)
+   3.2. hash_file (string)
+   3.3. initial_gflags (integer)
+   3.4. lock_set_size (integer)
+
+3.1. initial_probability (string)
+
+   The initial value of the probability.
+
+   Default value is “10”.
+
+   Example 1.1. initial_probability parameter usage
+...
+modparam("cfgutils", "initial_probability", 15)
+...
+
+3.2. hash_file (string)
+
+   The config file name for that a hash value should be calculated on
+   startup.
+
+   There is no default value, is no parameter is given the hash
+   functionality is disabled.
+
+   Example 1.2. hash_file parameter usage
+...
+modparam("cfgutils", "hash_file", "/etc/kamailio/kamailio.cfg")
+...
+
+3.3. initial_gflags (integer)
+
+   The initial value of global flags bitmap.
+
+   Default value is “0”.
+
+   Example 1.3. initial parameter usage
+...
+modparam("cfgutils", "initial_gflags", 15)
+...
+
+3.4. lock_set_size (integer)
+
+   Size of lock set - the value is used as power of two to compute the
+   size of lock array.
+
+   Default value is “0” - no lock set created.
+
+   Example 1.4. lock_set_size parameter usage
+...
+modparam("cfgutils", "lock_set_size", 4)
+...
+
+4. Functions
+
+   4.1. rand_event()
+   4.2. rand_set_prob(probability)
+   4.3. rand_reset_prob()
+   4.4. rand_get_prob()
+   4.5. sleep(time)
+   4.6. usleep(time)
+   4.7. abort()
+   4.8. pkg_status()
+   4.9. pkg_summary()
+   4.10. shm_status()
+   4.11. shm_summary()
+   4.12. set_gflag(flag)
+   4.13. reset_gflag(flag)
+   4.14. is_gflag(flag)
+   4.15. lock(key)
+   4.16. trylock(key)
+   4.17. unlock(key)
+   4.18. check_route_exists(route)
+   4.19. route_if_exists(route)
+   4.20. core_hash(string1, string2, size)
+
+4.1. rand_event()
+
+   Return true or false, depending on a random value and a probability
+   value.
+
+   Example 1.5. rand_event() usage
+...
+if (rand_event()) {
+  append_to_reply("Retry-After: 120\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+...
+
+4.2. rand_set_prob(probability)
+
+   Set the “probability” of the decision.
+
+   “probability” can have a value from the range 0..100.
+
+   Example 1.6. rand_set_prob() usage
+...
+rand_set_prob("4");
+...
+
+4.3. rand_reset_prob()
+
+   Reset the probability back to the initial value.
+
+   Example 1.7. rand_reset_prob() usage
+...
+rand_reset_prob();
+...
+
+4.4. rand_get_prob()
+
+   Return the current probability setting, e.g. for logging purposes.
+
+   Example 1.8. rand_get_prob() usage
+...
+rand_get_prob();
+...
+
+4.5.  sleep(time)
+
+   Waits "time" seconds.
+
+   Meaning of the parameters is as follows:
+     * time - Time to wait in seconds. It can be an integer or a variable
+       holding an integer.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. sleep usage
+...
+sleep("1");
+...
+
+4.6.  usleep(time)
+
+   Waits "time" micro-seconds.
+
+   Meaning of the parameters is as follows:
+     * time - Time to wait in micro-seconds (1/1000000 of a second). It
+       can be an integer or a variable holding an integer.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. usleep usage
+...
+# wait 5 milliseconds
+usleep("5000");
+...
+
+4.7.  abort()
+
+   Debugging function that aborts the server. Depending on the
+   configuration of the server a core dump will be created.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.11. abort usage
+...
+abort();
+...
+
+4.8.  pkg_status()
+
+   Debugging function that dumps the status for the private (PKG) memory.
+   This information is logged to the default log facility, depending on
+   the general log level and the memlog setting. You need to compile the
+   server with activated memory debugging to get detailed informations.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.12. pkg_status usage
+...
+pkg_status();
+...
+
+4.9.  pkg_summary()
+
+   Debugging function that dumps the summary for the private (PKG) memory
+   usage. This information is logged to the default log facility,
+   depending on the general log level and the memlog setting. You need to
+   compile the server with activated memory debugging to get detailed
+   informations.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. pkg_summary usage
+...
+pkg_summary();
+...
+
+4.10.  shm_status()
+
+   Debugging function that dumps the status for the shared (SHM) memory.
+   This information is logged to the default log facility, depending on
+   the general log level and the memlog setting. You need to compile the
+   server with activated memory debugging to get detailed informations.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.14. shm_status usage
+...
+shm_status();
+...
+
+4.11.  shm_summary()
+
+   Debugging function that dumps the summary for the shared (SHM) memory
+   usage. This information is logged to the default log facility,
+   depending on the general log level and the memlog setting. You need to
+   compile the server with activated memory debugging to get detailed
+   informations.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. shm_summary usage
+...
+shm_summary();
+...
+
+4.12. set_gflag(flag)
+
+   Set the bit at the position “flag” in global flags.
+
+   “flag” can have a value in the range of 0..31.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.16. set_gflag() usage
+...
+set_gflag("4");
+...
+
+4.13. reset_gflag(flag)
+
+   Reset the bit at the position “flag” in global flags.
+
+   “flag” can have a value in the range of 0..31.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.17. reset_gflag() usage
+...
+reset_gflag("4");
+...
+
+4.14. is_gflag(flag)
+
+   Check if bit at the position “flag” in global flags is set.
+
+   “flag” can have a value in the range of 0..31.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.18. is_gflag() usage
+...
+if(is_gflag("4"))
+{
+        log("global flag 4 is set\n");
+} else {
+        log("global flag 4 is not set\n");
+};
+...
+
+4.15. lock(key)
+
+   Lock the key. Can be used to synchronize operations in config file, a
+   hash id is computed over the key and appropriate lock is set in the
+   lock array controlled by parameter "lock_set_size". Do not use lock()
+   after another lock() unless you are sure the keys hit different array
+   entries.
+
+   “key” can be static string or string with PVs.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.19. lock() usage
+...
+lock("$rU");
+...
+
+4.16. trylock(key)
+
+   Try to lock the key. If the lock can not be obtained (possibly already
+   locked), the function returns an error and script execution continues.
+
+   “key” can be static string or string with PVs.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.20. trylock() usage
+...
+if (trylock("$rU")) {
+        xlog("L_INFO", "Doing some cool stuff\n");
+        unlock("$rU");
+}
+...
+
+4.17. unlock(key)
+
+   Unlock the key.
+
+   “key” can be static string or string with PVs.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.21. unlock() usage
+...
+unlock("$rU");
+...
+
+4.18. check_route_exists(route)
+
+   Check if a route block exists. It returns true (1) on found and false
+   on not found or error.
+
+   Parameters:
+
+   “name” of a route block in the config file, like “route[FROGJUMP]”
+
+   This function can be used from any route. You can only check for
+   route[] blocks, not reply, event or other routes.
+
+   Example 1.22. check_route_exists() usage
+...
+if(check_route_exists("JUMP") {
+        $var(jumping_frogs) = 1;
+};
+...
+
+4.19. route_if_exists(route)
+
+   Execute a routing block only if it is defined. If it's not defined,
+   silently move to the next action in the configuration script.
+
+   It returns the code of last action in the route block, if that exists,
+   or false if the route doesn't exists or was an error executing it.
+
+   Parameters:
+
+   “name” of a route block in the config file, like “route[FROGJUMP]”
+
+   This function can be used from any route. You can only execute it for
+   route[] blocks, not reply, event or other routes.
+
+   Example 1.23. route_if_exists() usage
+...
+if(route_if_exists("JUMP")) {
+    exit;
+}
+...
+
+4.20. core_hash(string1, string2, size)
+
+   Exported function that enables the core_hash() function to be used from
+   the configuration file.
+
+   This is a quick and simple hash function and it is not
+   cryptographically secure. This function should not be used for any
+   security related purposes.
+
+   Parameters:
+     * “string1” first string to hash
+     * “string2” (optional) second string to hash (set to "" if not
+       needed)
+     * “size” size of the hash space (used as a power of 2)
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. core_hash() usage
+...
+core_hash("$ci", "", 4);
+...
+
+5. RPC Commands
+
+   5.1. cfgutils.rand_set_prop
+   5.2. cfgutils.rand_reset_prob
+   5.3. cfgutils.rand_get_prob
+   5.4. cfgutils.check_config_hash
+   5.5. cfgutils.get_config_hash
+   5.6. cfgutils.set_gflag
+   5.7. cfgutils.reset_gflag
+   5.8. cfgutils.is_gflag
+   5.9. cfgutils.get_gflags
+
+   Functions that check or change some global flags accepts one parameter
+   which is the flag bitmap/mask specifying the corresponding flags. It is
+   not possible to specify directly the flag position that should be
+   changed as in the functions available in the routing script.
+
+5.1. cfgutils.rand_set_prop
+
+   Set the probability value to the given parameter. The parameter should
+   be a percent value.
+
+   The parameter value must be a number from 0 to 100.
+
+   Example 1.25. cfgutils.rand_set_prob usage
+...
+$ kamcmd cfgutils.rand_set_prob 10
+...
+
+5.2. cfgutils.rand_reset_prob
+
+   Reset the probability value to the initial start value.
+
+   This command don't need a parameter.
+
+   Example 1.26.  cfgutils.rand_reset_prob usage
+...
+$ kamcmd cfgutils.rand_reset_prob
+...
+
+5.3. cfgutils.rand_get_prob
+
+   Return the actual probability setting.
+
+   The function return the actual probability value.
+
+   Example 1.27. cfgutils.rand_get_prob usage
+...
+$ kamcmd cfgutils.rand_get_prob
+...
+
+5.4. cfgutils.check_config_hash
+
+   Check if the actual config file hash is identical to the stored one.
+
+   The function returns 200 OK if the hash values are identical, 400 if
+   there are not identical, 404 if no file for hashing has been configured
+   and 500 on errors. Additional a short text message is printed.
+
+   Example 1.28. cfgutils.check_config_hash usage
+...
+$ kamcmd cfgutils.check_config_hash
+...
+
+5.5. cfgutils.get_config_hash
+
+   Return the stored config file hash.
+
+   The function returns 200 OK and the hash value on success or 404 if no
+   file for hashing has been configured.
+
+   Example 1.29. cfgutils.get_config_hash usage
+...
+$ kamcmd cfgutils.get_config_hash
+...
+
+5.6. cfgutils.set_gflag
+
+   Set the value of some flags (specified by bitmask) to 1.
+
+   The parameter value must be a bitmask in decimal or hexadecimal format.
+   The bitmask has a 32 bit size.
+
+   Example 1.30. cfgutils.set_gflag usage
+...
+$ kamcmd cfgutils.set_gflag 1
+...
+
+5.7. cfgutils.reset_gflag
+
+   Reset the value of some flags to 0.
+
+   The parameter value must be a bitmask in decimal or hexadecimal format.
+   The bitmask has a 32 bit size.
+
+   Example 1.31.  cfgutils.reset_gflag usage
+...
+$ kamcmd cfgutils.reset_gflag 1
+...
+
+5.8. cfgutils.is_gflag
+
+   Returns true if the all the flags from the bitmask are set.
+
+   The parameter value must be a bitmask in decimal or hexadecimal format.
+   The bitmask has a 32 bit size.
+
+   The function returns TRUE if all the flags from the set are set and
+   FALSE if at least one is not set.
+
+   Example 1.32. cfgutils.is_gflag usage
+...
+$ kamcmd cfgutils.set_gflag 1024
+$ kamcmd cfgutils.is_gflag 1024
+TRUE
+...
+
+5.9. cfgutils.get_gflags
+
+   Return the bitmap with all flags. The function gets no parameters and
+   returns the bitmap in hexadecimal and decimal format.
+
+   Example 1.33.  cfgutils.get_gflags usage
+...
+$ kamcmd cfgutils.get_gflags
+...
+
+6. Exported pseudo-variables
+
+   6.1. $RANDOM
+
+6.1. $RANDOM
+
+   Returns a random value from the [0 - 2^31) range.
+
+   Example 1.34. RANDOM pseudo-variable usage
+...
+if (rand_event()) {
+  $avp(i:10) = ($RANDOM / 16777216); # 2^24
+  if ($avp(i:10) < 10) {
+     $avp(i:10) = 10;
+  }
+  append_to_reply("Retry-After: $avp(i:10)\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows

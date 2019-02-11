@@ -1,0 +1,953 @@
+The CDP Module
+
+Dragos Vingarzan
+
+   Fraunhofer
+
+Edited by
+
+Jason Penton
+
+Edited by
+
+Richard Good
+
+Edited by
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2006 FhG Fokus
+
+   Copyright © 2012 Smile Communications
+
+   Copyright © 2017 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. How it works
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. config_file (string)
+              4.2. latency_threshold (int)
+              4.3. workerq_length_threshold_percentage (int)
+              4.4. debug_heavy (int)
+
+        5. Functions
+
+              5.1. cdp_check_peer(fqdn)
+              5.2. cdp_has_app([vendorid, ]application)
+
+        6. RPC Commands
+
+              6.1. cdp.disable_peer
+              6.2. cdp.enable_peer
+
+        7. Configuration Examples
+
+              7.1. DiameterPeer.xml example
+              7.2.
+
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. load_cdp(struct cdp_binds *cdpb)
+              1.2. AAACreateRequest(AAAApplicationId app_id,
+                      AAACommandCode command_code, AAAMsgFlag flags,
+                      AAASession *session)
+
+              1.3. AAACreateResponse(AAAMessage *request)
+              1.4. AAAReturnCode AAAFreeMessage(AAAMessage **msg)
+              1.5. AAAReturnCode AAASendMessage(AAAMessage *message,
+                      AAATransactionCallback_f *callback_f, void
+                      *callback_param)
+
+              1.6. AAAReturnCode AAASendMessageToPeer(AAAMessage *message,
+                      str *peer_id, AAATransactionCallback_f *callback_f,
+                      void *callback_param)
+
+              1.7. AAAMessage* AAASendRecvMessage(AAAMessage *message)
+              1.8. AAAMessage* AAASendRecvMessageToPeer(AAAMessage
+                      *message, str *peer_id)
+
+              1.9. AAASession* AAACreateSession(void *generic_data)
+              1.10. AAASession* AAAMakeSession(int app_id,int type,str
+                      session_id)
+
+              1.11. AAASession* AAAGetSession(str id)
+              1.12. AAADropSession(AAASession *s)
+              1.13. AAASessionLock(unsigned int hash)
+              1.14. AAASessionUnLock(unsigned int hash)
+              1.15. AAASession* AAACreateClientAuthSession(int
+                      is_statefull,AAASessionCallback_f *cb,void
+                      *generic_data)
+
+              1.16. AAASession* AAACreateServerAuthSession(AAMessage
+                      *msg,int is_statefull,AAASessionCallback_f *cb,void
+                      *generic_data)
+
+              1.17. AAASession* AAAGetAuthSession(str id)
+              1.18. AAADropAuthSession(AAASession *s)
+              1.19. AAATerminateAuthSession(AAASession *s)
+              1.20. AAATransaction* AAACreateTransaction(AAAApplicationId
+                      app_id,AAACommandCode cmd_code)
+
+              1.21. int AAADropTransaction(AAATransaction *trans)
+              1.22. AAA_AVP* AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag
+                      flags, AAAVendorId vendorId, char *data, size_t
+                      length, AVPDataStatus data_status)
+
+              1.23. AAAReturnCode AAAAddAVPToMessage(AAAMessage *msg,
+                      AAA_AVP *avp, AAA_AVP *position)
+
+              1.24. AAA_AVP* AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP
+                      *startAvp, AAA_AVPCode avpCode, AAAVendorId
+                      vendorId, AAASearchType searchType)
+
+              1.25. AAA_AVP * AAAGetNextAVP(AAA_AVP *avp)
+              1.26. AAAReturnCode AAAFreeAVP(AAA_AVP **avp)
+              1.27. str AAAGroupAVPS(AAA_AVP_LIST avps)
+              1.28. AAA_AVP_LIST AAAUnGroupAVPS(str buf)
+              1.29. AAA_AVP* AAAFindMatchingAVPList(AAA_AVP_LIST avpList,
+                      AAA_AVP *startAvp, AAA_AVPCode avpCode, AAAVendorId
+                      vendorId, AAASearchType searchType)
+
+              1.30. AAAFreeAVPList(AAA_AVP_LIST *avpList)
+              1.31. int AAAAddRequestHandler(AAARequestHandler_f *f,void
+                      *param)
+
+              1.32. int AAAAddResponseHandler(AAAResponseHandler_f *f,void
+                      *param)
+
+   3. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set config_file parameter
+   1.2. Set latency_threshold parameter
+   1.3. Set workerq_length_threshold_percentage parameter
+   1.4. Set debug_heavy parameter
+   1.5. cdp_check_peer usage
+   1.6. cdp_check_peer usage
+   1.7. cdp_check_peer usage
+   1.8. DiameterPeer.xml example
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. How it works
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. config_file (string)
+        4.2. latency_threshold (int)
+        4.3. workerq_length_threshold_percentage (int)
+        4.4. debug_heavy (int)
+
+   5. Functions
+
+        5.1. cdp_check_peer(fqdn)
+        5.2. cdp_has_app([vendorid, ]application)
+
+   6. RPC Commands
+
+        6.1. cdp.disable_peer
+        6.2. cdp.enable_peer
+
+   7. Configuration Examples
+
+        7.1. DiameterPeer.xml example
+        7.2.
+
+1. Overview
+
+   CDP (C Diameter Peer) allows Diameter communication to and from
+   Kamailio. Most of the code is inherited from DISC
+   http://developer.berlios.de/projects/disc/ and OpenIMS and modified for
+   use within Kamailio. A few improvements and new functionality has been
+   added along the way, for example, threshold reporting on Diameter calls
+   that are serviced above a certain threshold.
+
+2. How it works
+
+   CDP forks the following processes:
+     * 1 x Timer
+     * 1 x Acceptor
+     * k x Workers (k configurable through configuration)
+     * i x Receivers (one for each peer plus one for unknown peers)
+
+   CDP is really only an API and offers all of its methods to other
+   modules. No commands are made available to the main Kamailio
+   configuration file. The exported API can be seen in mod.c. The Full
+   Diameter API is in diameter.h and diameter_api.h. IMS-specific
+   constants can be found in diameter_ims.h. The protocol coding is
+   implemented in diameter_avp.c and diameter_msg.c. The diameter state
+   machine is implemented in peerstatemachine.c - there is one of these
+   for each peer which maintains all protocol/application state for each
+   peer. peermanager.c is responsible for peer administration. Diameter
+   transactions are implemented in transaction.c.
+
+   There are 2 configuration areas for CDP. Firstly it must be loaded and
+   configured in the Kamailio.cfg file (this is the normal task associated
+   with Kamailio modules). Then, an XML file is required to configure
+   various Diameter parameters and all related peers and the associated
+   routes.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+4. Parameters
+
+   4.1. config_file (string)
+   4.2. latency_threshold (int)
+   4.3. workerq_length_threshold_percentage (int)
+   4.4. debug_heavy (int)
+
+4.1. config_file (string)
+
+   This is the location of the XML configuration file.
+
+   Default value is “DiameterPeer.xml”.
+
+   Example 1.1. Set config_file parameter
+...
+modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
+...
+
+4.2. latency_threshold (int)
+
+   The time in ms above which a log error is written to log file for long
+   CDP transactions.
+
+   Default value is “500”.
+
+   Example 1.2. Set latency_threshold parameter
+...
+modparam("cdp", "latency_threshold", 1000)
+...
+
+4.3. workerq_length_threshold_percentage (int)
+
+   The threshold of the length of the worker queue as a percentage of the
+   maximum queue size - when exceeded a warning is written to the log
+   file. 0 means disabled
+
+   Default value is “0”.
+
+   Example 1.3. Set workerq_length_threshold_percentage parameter
+...
+modparam("cdp", "workerq_length_threshold_percentage", 25)
+...
+
+4.4. debug_heavy (int)
+
+   Flag to enable a more verbose log, which tells you more details about
+   peers. This is disabled by default because it brings to a log too much
+   verbose in DBG mode Can be enabled upon needs
+
+   Default value is “0”.
+
+   Example 1.4. Set debug_heavy parameter
+...
+modparam("cdp", "debug_heavy", 1)
+...
+
+5. Functions
+
+   5.1. cdp_check_peer(fqdn)
+   5.2. cdp_has_app([vendorid, ]application)
+
+5.1.  cdp_check_peer(fqdn)
+
+   The method checks, if a specific peer is connected and ready.
+
+   Meaning of the parameter is as follows:
+     * fqdn - the Fully qualified domain name of the peer, that should be
+       checked. The parameter may contain pseudovariables.
+
+   Example 1.5. cdp_check_peer usage
+...
+if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
+        send_reply("503", "HSS not ready");
+        exit;
+}
+...
+
+5.2.  cdp_has_app([vendorid, ]application)
+
+   The method checks, if any peer with this specific application has
+   connected.
+
+   Meaning of the parameters are as follows:
+     * vendorid - The Vendor ID of the App
+       application - The Application ID
+
+   Example 1.6. cdp_check_peer usage
+...
+if(!cdp_has_app("10415", "4")) {
+        send_reply("503", "Charging Server not ready");
+        exit;
+}
+...
+
+   Example 1.7. cdp_check_peer usage
+...
+if(!cdp_has_app("16777216")) {
+        send_reply("503", "Cx/Dx Interface not ready");
+        exit;
+}
+...
+
+6. RPC Commands
+
+   6.1. cdp.disable_peer
+   6.2. cdp.enable_peer
+
+   exported RPC commands.
+
+6.1. cdp.disable_peer
+
+   instantly disable a particular diameter peer.
+
+6.2. cdp.enable_peer
+
+   enabe/re-enable a diameter peer
+
+7. Configuration Examples
+
+   7.1. DiameterPeer.xml example
+   7.2.
+
+7.1. DiameterPeer.xml example
+
+   This is an example CDP configuration file. The location of this file is
+   configured as a CDP parameter (config_file) - See section 4.1 Above
+
+   Example 1.8. DiameterPeer.xml example
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ DiameterPeer Parameters
+  - FQDN - FQDN of this peer, as it should appear in the Origin-Host AVP
+  - Realm - Realm of this peer, as it should appear in the Origin-Realm AVP
+  - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
+  - Product_Name - Product Name to appear in the Capabilities Exchange
+  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peer
+s with FQDN
+    not configured below
+  - DropUnknownOnDisconnect - Whether to drop (1) or keep (0) and retry connecti
+ons (until restart)
+    unknown peers in the list of peers after a disconnection.
+  - Tc - Value for the RFC3588 Tc timer - default 30 seconds
+  - Workers - Number of incoming messages processing workers forked processes.
+  - Queue - Length of queue of tasks for the workers:
+     - too small and the incoming messages will be blocked too often;
+     - too large and the senders of incoming messages will have a longer feedbac
+k loop to notice that
+     this Diameter peer is overloaded in processing incoming requests;
+     - a good choice is to have it about 2 times the number of workers. This wil
+l mean that each worker
+     will have about 2 tasks in the queue to process before new incoming message
+s will start to block.
+  - ConnectTimeout - time in seconds to wait for an outbound TCP connection to b
+e established.
+  - TransactionTimeout - time in seconds after which the transaction timeout cal
+lback will be fired,
+    when using transactional processing.
+  - SessionsHashSize - size of the hash-table to use for the Diameter sessions.
+When searching for a
+    session, the time required for this operation will be that of sequential sea
+rching in a list of
+    NumberOfActiveSessions/SessionsHashSize. So higher the better, yet each hash
+slot will consume an
+    extra 2xsizeof(void*) bytes (typically 8 or 16 bytes extra).
+  - DefaultAuthSessionTimeout - default value to use when there is no Authorizat
+ion Session Timeout
+  AVP present.
+  - MaxAuthSessionTimeout - maximum Authorization Session Timeout as a cut-out m
+easure meant to
+  enforce session refreshes.
+
+ -->
+<DiameterPeer
+        FQDN="pcscf.ims.smilecoms.com"
+        Realm="ims.smilecoms.com"
+        Vendor_Id="10415"
+        Product_Name="CDiameterPeer"
+        AcceptUnknownPeers="0"
+        DropUnknownOnDisconnect="1"
+        Tc="30"
+        Workers="4"
+        QueueLength="32"
+        ConnectTimeout="5"
+        TransactionTimeout="5"
+        SessionsHashSize="128"
+        DefaultAuthSessionTimeout="60"
+        MaxAuthSessionTimeout="300"
+>
+
+        <!--
+                Definition of peers to connect to and accept connections from. F
+or each peer found in here
+                a dedicated receiver process will be forked. All other unknown p
+eers will share a single
+                receiver. NB: You must have a peer definition for each peer list
+ed in the realm routing section
+        -->
+        <Peer FQDN="pcrf1.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+        <Peer FQDN="pcrf2.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+        <Peer FQDN="pcrf3.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+        <Peer FQDN="pcrf4.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+        <Peer FQDN="pcrf5.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+        <Peer FQDN="pcrf6.ims.smilecoms.com" Realm="ims.smilecoms.com" port="386
+8"/>
+
+        <!--
+                Definition of incoming connection acceptors. If no bind is speci
+fied, the acceptor will bind
+                on all available interfaces.
+        -->
+        <Acceptor port="3868"  />
+        <Acceptor port="3869" bind="127.0.0.1" />
+        <Acceptor port="3870" bind="192.168.1.1" />
+
+        <!--
+                Definition of Auth (authorization) and Acct (accounting) support
+ed applications. This
+                information is sent as part of the Capabilities Exchange procedu
+res on connecting to
+                peers. If no common application is found, the peers will disconn
+ect. Messages will only
+                be sent to a peer if that peer actually has declared support for
+ the application id of
+                the message.
+        -->
+        <Acct id="16777216" vendor="10415" />
+        <Acct id="16777216" vendor="0" />
+        <Auth id="16777216" vendor="10415"/>
+        <Auth id="16777216" vendor="0" />
+
+        <!--
+                Supported Vendor IDs - list of values which will be sent in the
+CER/CEA in the
+                Supported-Vendor-ID AVPs
+        -->
+        <SupportedVendor vendor="10415" />
+
+        <!--
+                Realm routing definition.
+                Each Realm can have a different table of peers to route towards.
+ In case the Destination
+                Realm AVP contains a Realm not defined here, the DefaultRoute en
+tries will be used.
+
+                Note: In case a message already contains a Destination-Host AVP,
+ Realm Routing will not be
+                applied.
+                Note: Routing will only happen towards connected and application
+ id supporting peers.
+
+                The metric is used to order the list of preferred peers, while l
+ooking for a connected and
+                application id supporting peer. In the end, of course, just one
+peer will be selected.
+        -->
+        <Realm name="ims.smilecoms.com">
+                <Route FQDN="pcrf1.ims.smilecoms.com" metric="3"/>
+                <Route FQDN="pcrf2.ims.smilecoms.com" metric="5"/>
+        </Realm>
+
+        <Realm name="temp.ims.smilecoms.com">
+                <Route FQDN="pcrf3.ims.smilecoms.com" metric="7"/>
+                <Route FQDN="pcrf4.ims.smilecoms.com" metric="11"/>
+        </Realm>
+        <DefaultRoute FQDN="pcrf5.ims.smilecoms.com" metric="15"/>
+        <DefaultRoute FQDN="pcrf6.ims.smilecoms.com" metric="13"/>
+
+
+</DiameterPeer>
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. load_cdp(struct cdp_binds *cdpb)
+        1.2. AAACreateRequest(AAAApplicationId app_id, AAACommandCode
+                command_code, AAAMsgFlag flags, AAASession *session)
+
+        1.3. AAACreateResponse(AAAMessage *request)
+        1.4. AAAReturnCode AAAFreeMessage(AAAMessage **msg)
+        1.5. AAAReturnCode AAASendMessage(AAAMessage *message,
+                AAATransactionCallback_f *callback_f, void
+                *callback_param)
+
+        1.6. AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str
+                *peer_id, AAATransactionCallback_f *callback_f, void
+                *callback_param)
+
+        1.7. AAAMessage* AAASendRecvMessage(AAAMessage *message)
+        1.8. AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str
+                *peer_id)
+
+        1.9. AAASession* AAACreateSession(void *generic_data)
+        1.10. AAASession* AAAMakeSession(int app_id,int type,str
+                session_id)
+
+        1.11. AAASession* AAAGetSession(str id)
+        1.12. AAADropSession(AAASession *s)
+        1.13. AAASessionLock(unsigned int hash)
+        1.14. AAASessionUnLock(unsigned int hash)
+        1.15. AAASession* AAACreateClientAuthSession(int
+                is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+        1.16. AAASession* AAACreateServerAuthSession(AAMessage *msg,int
+                is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+        1.17. AAASession* AAAGetAuthSession(str id)
+        1.18. AAADropAuthSession(AAASession *s)
+        1.19. AAATerminateAuthSession(AAASession *s)
+        1.20. AAATransaction* AAACreateTransaction(AAAApplicationId
+                app_id,AAACommandCode cmd_code)
+
+        1.21. int AAADropTransaction(AAATransaction *trans)
+        1.22. AAA_AVP* AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags,
+                AAAVendorId vendorId, char *data, size_t length,
+                AVPDataStatus data_status)
+
+        1.23. AAAReturnCode AAAAddAVPToMessage(AAAMessage *msg, AAA_AVP
+                *avp, AAA_AVP *position)
+
+        1.24. AAA_AVP* AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP
+                *startAvp, AAA_AVPCode avpCode, AAAVendorId vendorId,
+                AAASearchType searchType)
+
+        1.25. AAA_AVP * AAAGetNextAVP(AAA_AVP *avp)
+        1.26. AAAReturnCode AAAFreeAVP(AAA_AVP **avp)
+        1.27. str AAAGroupAVPS(AAA_AVP_LIST avps)
+        1.28. AAA_AVP_LIST AAAUnGroupAVPS(str buf)
+        1.29. AAA_AVP* AAAFindMatchingAVPList(AAA_AVP_LIST avpList,
+                AAA_AVP *startAvp, AAA_AVPCode avpCode, AAAVendorId
+                vendorId, AAASearchType searchType)
+
+        1.30. AAAFreeAVPList(AAA_AVP_LIST *avpList)
+        1.31. int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
+        1.32. int AAAAddResponseHandler(AAAResponseHandler_f *f,void
+                *param)
+
+1. Available Functions
+
+   1.1. load_cdp(struct cdp_binds *cdpb)
+   1.2. AAACreateRequest(AAAApplicationId app_id, AAACommandCode
+          command_code, AAAMsgFlag flags, AAASession *session)
+
+   1.3. AAACreateResponse(AAAMessage *request)
+   1.4. AAAReturnCode AAAFreeMessage(AAAMessage **msg)
+   1.5. AAAReturnCode AAASendMessage(AAAMessage *message,
+          AAATransactionCallback_f *callback_f, void *callback_param)
+
+   1.6. AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str
+          *peer_id, AAATransactionCallback_f *callback_f, void
+          *callback_param)
+
+   1.7. AAAMessage* AAASendRecvMessage(AAAMessage *message)
+   1.8. AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str
+          *peer_id)
+
+   1.9. AAASession* AAACreateSession(void *generic_data)
+   1.10. AAASession* AAAMakeSession(int app_id,int type,str session_id)
+   1.11. AAASession* AAAGetSession(str id)
+   1.12. AAADropSession(AAASession *s)
+   1.13. AAASessionLock(unsigned int hash)
+   1.14. AAASessionUnLock(unsigned int hash)
+   1.15. AAASession* AAACreateClientAuthSession(int
+          is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+   1.16. AAASession* AAACreateServerAuthSession(AAMessage *msg,int
+          is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+   1.17. AAASession* AAAGetAuthSession(str id)
+   1.18. AAADropAuthSession(AAASession *s)
+   1.19. AAATerminateAuthSession(AAASession *s)
+   1.20. AAATransaction* AAACreateTransaction(AAAApplicationId
+          app_id,AAACommandCode cmd_code)
+
+   1.21. int AAADropTransaction(AAATransaction *trans)
+   1.22. AAA_AVP* AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags,
+          AAAVendorId vendorId, char *data, size_t length, AVPDataStatus
+          data_status)
+
+   1.23. AAAReturnCode AAAAddAVPToMessage(AAAMessage *msg, AAA_AVP *avp,
+          AAA_AVP *position)
+
+   1.24. AAA_AVP* AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP *startAvp,
+          AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType
+          searchType)
+
+   1.25. AAA_AVP * AAAGetNextAVP(AAA_AVP *avp)
+   1.26. AAAReturnCode AAAFreeAVP(AAA_AVP **avp)
+   1.27. str AAAGroupAVPS(AAA_AVP_LIST avps)
+   1.28. AAA_AVP_LIST AAAUnGroupAVPS(str buf)
+   1.29. AAA_AVP* AAAFindMatchingAVPList(AAA_AVP_LIST avpList, AAA_AVP
+          *startAvp, AAA_AVPCode avpCode, AAAVendorId vendorId,
+          AAASearchType searchType)
+
+   1.30. AAAFreeAVPList(AAA_AVP_LIST *avpList)
+   1.31. int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
+   1.32. int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
+
+1.1. load_cdp(struct cdp_binds *cdpb)
+
+   Find and load the CDiameterPeer function bindings
+
+   Meaning of the parameters is as follows:
+     * struct cdp_binds *cdpb - structure holding function pointers
+
+1.2. AAACreateRequest(AAAApplicationId app_id, AAACommandCode command_code,
+AAAMsgFlag flags, AAASession *session)
+
+   Create a Diameter request
+
+   Meaning of the parameters is as follows:
+     * AAAApplicationId app_id - structure holding function pointers
+     * AAACommandCode command_code - command code for the message
+     * AAAMsgFlag flags - flags to be set
+     * AAASession *session - session id to be set
+
+1.3. AAACreateResponse(AAAMessage *request)
+
+   Create a Diameter response to a give request
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *request - request that this response is for
+
+1.4. AAAReturnCode AAAFreeMessage(AAAMessage **msg)
+
+   Free up memory used by Diameter message
+
+   Meaning of the parameters is as follows:
+     * AAAMessage **msg - pointer to the pointer containing the message
+
+1.5. AAAReturnCode AAASendMessage(AAAMessage *message,
+AAATransactionCallback_f *callback_f, void *callback_param)
+
+   Send Diameter message asynchronously
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *message - request message to be sent
+     * AAATransactionCallback_f *callback_f - When the response is
+       received, the callback_f(callback_param,...) is called
+     * void *callback_param - generic param for callback
+
+1.6. AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str *peer_id,
+AAATransactionCallback_f *callback_f, void *callback_param)
+
+   Send Diameter message to specific peer asynchronously
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *message - request message to send
+     * str *peer_id - FQDN of peer to send to
+     * AAATransactionCallback_f *callback_f - When the response is
+       received, the callback_f(callback_param,...) is called
+     * void *callback_param - generic param for callback
+
+1.7. AAAMessage* AAASendRecvMessage(AAAMessage *message)
+
+   Send Diameter message synchronously. This blocks until a response is
+   received or a transactional time-out happens.
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *message - request message to be sent
+
+1.8. AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
+
+   Send Diameter message to specific peer synchronously. This blocks until
+   a response is received or a transactional time-out happens.
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *message - request message to send
+     * str *peer_id - FQDN of peer to send to.
+
+1.9. AAASession* AAACreateSession(void *generic_data)
+
+   Create a generic Diameter session
+
+   Meaning of the parameters is as follows:
+     * void *generic_data - data to be save to session, useful for
+       attaching app specific data to the session
+
+1.10. AAASession* AAAMakeSession(int app_id,int type,str session_id)
+
+   Create a Diameter session using already known params
+
+   Meaning of the parameters is as follows:
+     * int app_id - app id to use
+     * int type - type of session
+     * str session_id - session ID
+
+1.11. AAASession* AAAGetSession(str id)
+
+   Retrieve a Diameter session. Returns with a lock on AAASession->hash -
+   Unlock when done working with result
+
+   Meaning of the parameters is as follows:
+     * str id - Diameter session ID to search for
+
+1.12. AAADropSession(AAASession *s)
+
+   Drop a Diameter session - deallocating all memory
+
+   Meaning of the parameters is as follows:
+     * AAASession *s - session to drop
+
+1.13. AAASessionLock(unsigned int hash)
+
+   Lock a Diameter session (hash table row)
+
+   Meaning of the parameters is as follows:
+     * unsigned int hash - hash to lock
+
+1.14. AAASessionUnLock(unsigned int hash)
+
+   Unlock a Diameter session (hash table row)
+
+   Meaning of the parameters is as follows:
+     * unsigned int hash - hash to unlock
+
+1.15. AAASession* AAACreateClientAuthSession(int
+is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+   Creates an Authorisation session for the Client. It generate a new ID
+   and adds to the list of CDP sessions. Returns with a lock on
+   AAASession->hash
+
+   Meaning of the parameters is as follows:
+     * int is_statefull - is session stateful or not
+     * AAASessionCallback_f *cb - callback function on session state
+       change
+     * void *generic_data - generic callback data
+
+1.16. AAASession* AAACreateServerAuthSession(AAMessage *msg,int
+is_statefull,AAASessionCallback_f *cb,void *generic_data)
+
+   Create authorisation session for the Server. Generates a new ID and add
+   to CDP list of sessions. Returns with a lock on AAASession->hash.
+
+   Meaning of the parameters is as follows:
+     * AAMessage *msg - request message from which to create server
+       session
+     * int is_statefull - is session stateful or not
+     * AAASessionCallback_f *cb - callback function on session state
+       change
+     * void *generic_data - generic callback data
+
+1.17. AAASession* AAAGetAuthSession(str id)
+
+   Look for an authorisation session. Returns with lock on
+   AAASession->hash
+
+   Meaning of the parameters is as follows:
+     * str id - ID of Auth session to search for
+
+1.18. AAADropAuthSession(AAASession *s)
+
+   Deallocates the memory taken by a Authorisation session
+
+   Meaning of the parameters is as follows:
+     * AAASession *s - Session to drop and deallocate memory for
+
+1.19. AAATerminateAuthSession(AAASession *s)
+
+   Sends a service terminated event to the session
+
+   Meaning of the parameters is as follows:
+     * AAASession *s - authhorisation session to terminate
+
+1.20. AAATransaction* AAACreateTransaction(AAAApplicationId
+app_id,AAACommandCode cmd_code)
+
+   Create a AAATransaction for the given request
+
+   Meaning of the parameters is as follows:
+     * AAAApplicationId app_id - ID of the request's application
+     * AAACommandCode cmd_code - request's code
+
+1.21. int AAADropTransaction(AAATransaction *trans)
+
+   Deallocates the memory taken by AAA transaction
+
+   Meaning of the parameters is as follows:
+     * AAATransaction *trans - transaction to free
+
+1.22. AAA_AVP* AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags, AAAVendorId
+vendorId, char *data, size_t length, AVPDataStatus data_status)
+
+   Create new AVP and return pointer to it
+
+   Meaning of the parameters is as follows:
+     * AAA_AVPCode code - code for new AVP
+     * AAA_AVPFlag flags - flags to set
+     * AAAVendorId vendorId - vendor ID for AVP
+     * char *data - generic payload data
+     * size_t length - length of payload data
+     * AVPDataStatus data_status - what to do with the payload, duplicate,
+       free with message, etc
+
+1.23. AAAReturnCode AAAAddAVPToMessage(AAAMessage *msg, AAA_AVP *avp, AAA_AVP
+*position)
+
+   Find and load the CDiameterPeer function bindings
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *msg - the message to add to
+     * AAA_AVP *avp - the AVP to add
+     * AAA_AVP *position - AVP to add after. if NULL, we add at beginning
+
+1.24. AAA_AVP* AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP *startAvp,
+AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType)
+
+   Find and load the CDiameterPeer function bindings
+
+   Meaning of the parameters is as follows:
+     * AAAMessage *msg - the message to search in
+     * AAA_AVP *startAvp - at which AVP to start the search. usefull for
+       looking for more of the same name
+     * AAA_AVPCode avpCode - AVP code to match
+     * AAAVendorId vendorId - AVP vendor ID to match
+     * AAASearchType searchType - look forward or backward
+
+1.25. AAA_AVP * AAAGetNextAVP(AAA_AVP *avp)
+
+   Find and load the CDiameterPeer function bindings
+
+   Meaning of the parameters is as follows:
+     * AAA_AVP *avp - reference AVP
+
+1.26. AAAReturnCode AAAFreeAVP(AAA_AVP **avp)
+
+   Find and load the CDiameterPeer function bindings
+
+   Meaning of the parameters is as follows:
+     * AAA_AVP **avp - pointer memory to be freed
+
+1.27. str AAAGroupAVPS(AAA_AVP_LIST avps)
+
+   Groups a list of AVPS into a data buffer
+
+   Meaning of the parameters is as follows:
+     * AAA_AVP_LIST avps - list of AVPS to group
+
+1.28. AAA_AVP_LIST AAAUnGroupAVPS(str buf)
+
+   Ungroup a data buffer into a list of AVPs
+
+   Meaning of the parameters is as follows:
+     * str buf - payload to ungroup list from
+
+1.29. AAA_AVP* AAAFindMatchingAVPList(AAA_AVP_LIST avpList, AAA_AVP
+*startAvp, AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType
+searchType)
+
+   Find an AVP in an AVP list
+
+   Meaning of the parameters is as follows:
+     * AAA_AVP_LIST avpList - AVP list to search
+     * AAA_AVP *startAvp - where to start the search
+     * AAA_AVPCode avpCode - AVP code to match
+     * AAAVendorId vendorId - vendor ID to match
+     * AAASearchType searchType - forwards or backwards
+
+1.30. AAAFreeAVPList(AAA_AVP_LIST *avpList)
+
+   Free AVP list and all its members
+
+   Meaning of the parameters is as follows:
+     * AAA_AVP_LIST *avpList - list to be freed
+
+1.31. int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
+
+   add a #AAARequestHandler_f callback to request being received
+
+   Meaning of the parameters is as follows:
+     * AAARequestHandler_f *f - callback function to be called on incoming
+       requests
+     * void *param - generic data passed to callback function
+
+1.32. int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
+
+   add a #AAAResponseHandler_f callback to responses being received
+
+   Meaning of the parameters is as follows:
+     * AAAResponseHandler_f *f - callback function to be called on
+       incoming responses
+     * void *param - generic data to be passed to callback function
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about Kamailio?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1.
+
+       Where can I find more about Kamailio?
+
+       Take a look at https://www.kamailio.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.kamailio.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.kamailio.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       https://github.com/kamailio/kamailio/issues.

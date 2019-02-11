@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dbaliases" xmlns:db="http://docbook.org/ns/docbook">
+    <name>dbaliases</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table us used by the alias_db module as an
+			alternative for user aliases via userloc. More information
+			about the alias_db module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;alias_db.html">&KAMAILIO_MOD_DOC;alias_db.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="alias_username">
+        <name>alias_username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Alias username / phone number</description>
+        <natural/>
+    </column>
+
+    <column id="alias_domain">
+        <name>alias_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Alias domain name</description>
+        <natural/>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number</description>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+    </column>
+
+    <index>
+        <name>alias_user_idx</name>
+        <colref linkend="alias_username"/>
+    </index>
+
+    <index>
+        <name>alias_idx</name>
+        <colref linkend="alias_username"/>
+        <colref linkend="alias_domain"/>
+    </index>
+
+    <index>
+        <name>target_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+    </index>
+</table>

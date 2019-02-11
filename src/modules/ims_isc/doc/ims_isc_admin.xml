@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- I-CSCF Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module provides the functionality for an IMS S-CSCF to implement 
+    the ISC interface between S-CSCF and SIP Application Server.
+    </para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>TM - Transaction Manager</para>
+        </listitem>
+
+        <listitem>
+          <para>IMS Usrloc SCSCF</para>
+        </listitem>
+
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the Kamailio internal IMS library.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>my_uri</varname> (string)</title>
+
+      <para>This is the SIP URI of server on which the SCSCF is hosted.</para>
+
+      <para><emphasis> Default value is 'sip:scscf.ims.smilecoms.com:6060'.
+      </emphasis></para>
+
+      <example>
+        <title><varname>my_uri</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "my_uri", "sip:scscf.ims.smilecoms.com:6060")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>expires_grace</varname> (integer)</title>
+
+      <para>This is the expires value to add to the expires during 3rd party 
+      registration to prevent expiration in Application Server.</para>
+      
+      <para><emphasis> Default value is 120.</emphasis></para>
+
+      <example>
+        <title><varname>expires_grace</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "expires_grace", 120)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>isc_fr_timeout</varname> (integer)</title>
+
+      <para>This is the time in ms that we will wait for an AS response
+      before we consider it dead.  It has to be lower than the SIP transaction
+      timeout to prevent downstream timeouts.  But not too small as ASs tend
+      to take a long time to respond.</para>
+
+      <para><emphasis> Default value is 5000.</emphasis></para>
+
+      <example>
+        <title><varname>isc_fr_timeout</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "isc_fr_timeout", 5000)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>isc_fr_inv_timeout</varname> (integer)</title>
+
+      <para>This is the time in ms that we will wait for an AS INVITE response
+      before we consider it dead.  It has to be lower than the SIP transaction
+      timeout to prevent downstream timeouts.  But not too small as ASs tend
+      to take a long time to respond.</para>
+
+      <para><emphasis> Default value is 20000</emphasis></para>
+
+      <example>
+        <title><varname>isc_fr_inv_timeout</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "isc_fr_inv_timeout", 20000)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>add_p_served_user</varname> (integer)</title>
+
+      <para>This boolean indicates if a P-Served-User should be added on the ISC
+      interface, according to RFC 5502.</para>
+
+      <para><emphasis> Default value is 0 (false)</emphasis></para>
+
+      <example>
+        <title><varname>add_p_served_user</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_isc", "add_p_served_user", 1)
+# p-served user header will be enabled
+...
+        </programlisting>
+      </example>
+    </section>
+    </section>
+
+    <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function
+      moreinfo="none">isc_match_filter_reg(reg_state,domain)</function></title>
+
+      <para>This function checks if a REGISTER messages matches Initial Filter
+      Criteria - if so it inserts the necessary route headers and modifies
+      the destination URI to forward to the relevant Application Server.
+      </para>
+
+      <para>A positive return code (1) means that the REGISTER message has 
+      matched to Initial Filter Criteria and is armed for routing.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>reg_state</emphasis> if the user was previously 
+          registered 0 - for initial registration, 1 for re/de-registration. 
+          </para>
+        </listitem>
+        <listitem>
+          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store 
+          user information. </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function moreinfo="none">isc_match_filter_reg</function>
+        usage</title>
+
+        <programlisting format="linespecific">...
+isc_match_filter_reg("1","location");
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><function
+      moreinfo="none">isc_match_filter(direction,domain)</function></title>
+
+      <para>This function checks if a non-REGISTER messages matches Initial 
+      Filter Criteria - if so it inserts the necessary route headers and 
+      modifies the destination URI to forward to the relevant Application 
+      Server.
+      </para>
+
+      <para>A positive return code (1) means that the message has 
+      matched to Initial Filter Criteria and is armed for routing.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>direction</emphasis> the direction of this message - 
+          orig, term, etc.
+          </para>
+        </listitem>
+        <listitem>
+          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store 
+          user information. </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
+      </para>
+
+      <example>
+        <title><function moreinfo="none">isc_match_filter</function>
+        usage</title>
+
+        <programlisting format="linespecific">...
+isc_match_filter("orig","location");
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><function
+      moreinfo="none">isc_from_as(direction)</function></title>
+
+      <para>This function checks if this message has come from an Application
+      Server.
+      </para>
+
+      <para>A positive return code (1) means that the message has 
+      come from an Application Server.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>direction</emphasis> the direction of this message - 
+          orig, term, etc.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
+      </para>
+
+      <example>
+        <title><function moreinfo="none">isc_from_as</function>
+        usage</title>
+
+        <programlisting format="linespecific">...
+if (!isc_from_as("orig")) {
+    remove_hf("P-Asserted-Identity");
+}
+...
+        </programlisting>
+      </example>
+    </section>
+    </section>
+</chapter>

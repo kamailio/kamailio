@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="gflags.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>RPC Commands</title>
+
+    <para>
+	The state of the global flags can be read and modified over the RPC
+	interface. This module implements the following RPC interface commands:
+    </para>
+	<section id="uid_gflags.r.gflags.set">
+		<title>gflags.set</title>
+	    <para>
+		<emphasis>gflags.set</emphasis> - Set the value of a flag to
+		1. The function accepts one parameter which is the number of
+		the flag to be set.
+	    </para>
+	</section>
+	<section id="uid_gflags.r.gflags.reset">
+		<title>gflags.reset</title>
+	    <para>
+		<emphasis>gflags.reset</emphasis> - Reset the value of a flag to
+		0. The function accepts one parameter which is the number of
+		the flag to be reset.
+	    </para>
+	</section>
+	<section id="uid_gflags.r.gflags.is_set">
+		<title>gflags.is_set</title>
+	    <para>
+		<emphasis>gflags.is_set</emphasis> - Return the status of a
+		flag. The FIFO function would return TRUE if the flag is set
+		and FALSE if it is not set. The only parameter of this function
+		is the number of the flag.
+	    </para>
+	</section>
+	<section id="uid_gflags.r.gflags.flush">
+		<title>gflags.flush</title>
+	    <para>
+		<emphasis>gflags.flush</emphasis> - Flush the state of global flags
+		 into database.
+	    </para>
+	</section>
+	<section id="uid_gflags.r.gflags.dump">
+		<title>gflags.dump</title>
+	    <para>
+		<emphasis>gflags.dump</emphasis> - Return the status of all flags. The
+		value is TRUE if the flag is set and FALSE if the flag is not set. The
+		function has no parameters.
+	    </para>
+	</section>
+	<section id="uid_gflags.r.global.reload">
+		<title>global.reload</title>
+	    <para>
+		<emphasis>global.reload</emphasis> - Reload values from global_attrs
+		DB table. This function does not have any parameters. There is no return 
+		value on success.
+	    </para>
+	</section>
+</section>

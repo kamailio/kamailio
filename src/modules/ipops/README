@@ -1,0 +1,614 @@
+ipops Module
+
+Iñaki Baz Castillo
+
+   <ibc@aliax.net>
+
+Edited by
+
+Iñaki Baz Castillo
+
+   <ibc@aliax.net>
+
+   Copyright © 2011 Iñaki Baz Castillo
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. SIP Router Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+        4. Functions
+
+              4.1. is_ip (ip)
+              4.2. is_pure_ip (ip)
+              4.3. is_ipv4 (ip)
+              4.4. is_ipv6 (ip)
+              4.5. is_ipv6_reference (ip)
+              4.6. ip_type (ip)
+              4.7. detailed_ip_type (ip, result)
+              4.8. detailed_ipv4_type (ip, result)
+              4.9. detailed_ipv6_type (ip, result)
+              4.10. compare_ips (ip1, ip2)
+              4.11. compare_pure_ips (ip1, ip2)
+              4.12. is_ip_rfc1918 (ip)
+              4.13. is_in_subnet (ip, subnets_list)
+              4.14. dns_sys_match_ip(hostname, ipaddr)
+              4.15. dns_int_match_ip(hostname, ipaddr)
+              4.16. dns_query(hostname, pvid)
+              4.17. srv_query(srvcname, pvid)
+              4.18. naptr_query(domain, pvid)
+
+   List of Examples
+
+   1.1. is_ip usage
+   1.2. is_pure_ip usage
+   1.3. is_ipv4 usage
+   1.4. is_ipv6 usage
+   1.5. is_ipv6_reference usage
+   1.6. ip_type usage
+   1.7. detailed_ip_type usage
+   1.8. detailed_ipv4_type usage
+   1.9. detailed_ipv6_type usage
+   1.10. compare_ips usage
+   1.11. compare_pure_ips usage
+   1.12. is_ip_rfc1918 usage
+   1.13. is_in_subnet usage
+   1.14. dns_sys_match_ip usage
+   1.15. dns_int_match_ip usage
+   1.16. dns_query usage
+   1.17. srv_query usage
+   1.18. naptr_query usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. SIP Router Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+   4. Functions
+
+        4.1. is_ip (ip)
+        4.2. is_pure_ip (ip)
+        4.3. is_ipv4 (ip)
+        4.4. is_ipv6 (ip)
+        4.5. is_ipv6_reference (ip)
+        4.6. ip_type (ip)
+        4.7. detailed_ip_type (ip, result)
+        4.8. detailed_ipv4_type (ip, result)
+        4.9. detailed_ipv6_type (ip, result)
+        4.10. compare_ips (ip1, ip2)
+        4.11. compare_pure_ips (ip1, ip2)
+        4.12. is_ip_rfc1918 (ip)
+        4.13. is_in_subnet (ip, subnets_list)
+        4.14. dns_sys_match_ip(hostname, ipaddr)
+        4.15. dns_int_match_ip(hostname, ipaddr)
+        4.16. dns_query(hostname, pvid)
+        4.17. srv_query(srvcname, pvid)
+        4.18. naptr_query(domain, pvid)
+
+1. Overview
+
+   The IPops module offers operations for handling IP addresses, both IPv4
+   and IPv6.
+
+   IPv6 is defined in RFC 2460. The same IPv6 address can be represented
+   by different ASCII strings, so binary comparison is required. For
+   example, the following IPv6 addresses are equivalent:
+     * 2001:DB8:0000:0000:0008:0800:200C:417A
+     * 2001:DB8:0:0:8:800:200C:417A
+     * 2001:DB8::200C:417A
+
+   When using IPv6 in an URI (i.e. a SIP URI) the IP address must be
+   written in "IPv6 reference" format (which is the textual representation
+   of the IPv6 enclosed between [ ] symbols). An example is
+   “sip:alice@[2001:DB8:0:0:8:800:200C:417A]”. This allows separation of
+   address and port number with a :, like
+   “[2001:DB8:0:0:8:800:200C:417A]:5060”. This module also allows
+   comparing an IPv6 address with its IPv6 reference representation.
+
+2. Dependencies
+
+   2.1. SIP Router Modules
+   2.2. External Libraries or Applications
+
+2.1. SIP Router Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other SIP Router modules
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running SIP Router with this module loaded:
+     * No dependencies on external libraries
+
+3. Parameters
+
+4. Functions
+
+   4.1. is_ip (ip)
+   4.2. is_pure_ip (ip)
+   4.3. is_ipv4 (ip)
+   4.4. is_ipv6 (ip)
+   4.5. is_ipv6_reference (ip)
+   4.6. ip_type (ip)
+   4.7. detailed_ip_type (ip, result)
+   4.8. detailed_ipv4_type (ip, result)
+   4.9. detailed_ipv6_type (ip, result)
+   4.10. compare_ips (ip1, ip2)
+   4.11. compare_pure_ips (ip1, ip2)
+   4.12. is_ip_rfc1918 (ip)
+   4.13. is_in_subnet (ip, subnets_list)
+   4.14. dns_sys_match_ip(hostname, ipaddr)
+   4.15. dns_int_match_ip(hostname, ipaddr)
+   4.16. dns_query(hostname, pvid)
+   4.17. srv_query(srvcname, pvid)
+   4.18. naptr_query(domain, pvid)
+
+4.1.  is_ip (ip)
+
+   Returns TRUE if the argument is a valid IPv4, IPv6 or IPv6 reference.
+   FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP address to
+       evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.1.  is_ip usage
+...
+if (is_ip($rd)) {
+  xlog("L_INFO", "RURI domain is an IP address (not a host name/domain)\n");
+}
+...
+
+4.2.  is_pure_ip (ip)
+
+   Returns TRUE if the argument is a valid IPv4 or IPv6. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.2.  is_pure_ip usage
+...
+$var(ip) = "::1";
+if (is_pure_ip($var(ip))) {
+  xlog("L_INFO", "it's IPv4 or IPv6\n");
+}
+...
+
+4.3.  is_ipv4 (ip)
+
+   Returns TRUE if the argument is a valid IPv4. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.3.  is_ipv4 usage
+...
+if (is_ipv4("1.2.3.4")) {
+  xlog("L_INFO", "it's IPv4\n");
+}
+...
+
+4.4.  is_ipv6 (ip)
+
+   Returns TRUE if the argument is a valid IPv6. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.4.  is_ipv6 usage
+...
+if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
+  xlog("L_INFO", "it's IPv6\n");
+}
+...
+
+4.5.  is_ipv6_reference (ip)
+
+   Returns TRUE if the argument is a valid IPv6 reference. FALSE
+   otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.5.  is_ipv6_reference usage
+...
+if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
+  xlog("L_INFO", "it's IPv6 reference\n");
+}
+...
+
+4.6.  ip_type (ip)
+
+   Returns the type of the given IP.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   Return value:
+     * 1 - IPv4
+     * 2 - IPv6
+     * 3 - IPv6 reference
+     * -1 - invalid IP
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.6.  ip_type usage
+...
+ip_type($var(myip));
+switch($rc) {
+  case 1:
+    xlog("L_INFO", "it's IPv4\n");
+    break;
+  case 2:
+    xlog("L_INFO", "it's IPv6\n");
+    break;
+  case 3:
+    xlog("L_INFO", "it's IPv6 reference\n");
+    break;
+  case -1:
+    xlog("L_INFO", it's type invalid\n");
+    break;
+}
+...
+
+4.7.  detailed_ip_type (ip, result)
+
+   Returns the detailed type of the given IP () (see
+   http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.t
+   xt,
+   http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-sp
+   ecial-registry.txt, RFC 5735 and RFC 6598: PRIVATE, SHARED, LOOPBACK,
+   IPV4MAP, DISCARD etc).
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+     * result - String or pseudo-variable containing the detailed type of
+       the IP.
+          + IPv4 - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED,
+            TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
+          + IPv6 - UNSPECIFIED, LOOPBACK, IPV4MAP, RESERVED, DISCARD,
+            GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4,
+            UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST
+
+   Return value:
+     * 1 - successful operation
+     * negative value - error occurred
+
+   This function can be used from ALL ROUTES
+
+   Example 1.7.  detailed_ip_type usage
+...
+    detailed_ip_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+
+4.8.  detailed_ipv4_type (ip, result)
+
+   Returns the detailed type of the given IP () (see RFC 5735 and RFC
+   6598).
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+     * result - String or pseudo-variable containing the detailed type of
+       the IP.
+          + IPv4 - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL,
+            RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
+
+   Return value:
+     * 1 - successful operation
+     * negative value - error occurred
+
+   This function can be used from ALL ROUTES
+
+   Example 1.8.  detailed_ipv4_type usage
+...
+    detailed_ipv4_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+
+4.9.  detailed_ipv6_type (ip, result)
+
+   Returns the detailed type of the given IP () (see
+   http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.t
+   xt,
+   http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-sp
+   ecial-registry.txt).
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+     * result - String or pseudo-variable containing the detailed type of
+       the IP.
+          + IPv6 - UNSPECIFIED, LOOPBACK, IPV4MAP, RESERVED, DISCARD,
+            GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4,
+            UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST
+
+   Return value:
+     * 1 - successful operation
+     * negative value - error occurred
+
+   This function can be used from ALL ROUTES
+
+   Example 1.9.  detailed_ipv6_type usage
+...
+    detailed_ipv6_type("2001:8d8:7c0:402:217:72:194:30","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+
+    detailed_ipv6_type("[2001:8d8:7c0:402:217:72:194:30]","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+
+4.10.  compare_ips (ip1, ip2)
+
+   Returns TRUE if both IP addresses are the same. FALSE otherwise. This
+   function also allows comparing an IPv6 address against an IPv6
+   reference.
+
+   Parameters:
+     * ip1 - String or pseudo-variable containing the first IP to compare.
+     * ip2 - String or pseudo-variable containing the second IP to
+       compare.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.10.  compare_ips usage
+...
+if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
+7A]")) {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
+
+4.11.  compare_pure_ips (ip1, ip2)
+
+   Returns TRUE if both IP's are the same. FALSE otherwise. This function
+   does NOT allow comparing an IPv6 against an IPv6 reference.
+
+   Parameters:
+     * ip1 - String or pseudo-variable containing the first IP address to
+       compare.
+     * ip2 - String or pseudo-variable containing the second IP address to
+       compare.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.11.  compare_pure_ips usage
+...
+if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
+
+4.12.  is_ip_rfc1918 (ip)
+
+   Returns TRUE if the argument is a private IPv4 according to RFC 1918.
+   FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.12.  is_ip_rfc1918 usage
+...
+if (is_ip_rfc1918("10.0.123.123")) {
+  xlog("L_INFO", "it's a private IPv4\n");
+}
+...
+
+4.13.  is_in_subnet (ip, subnets_list)
+
+   Returns TRUE if the first argument is an IP address within the (CIDR
+   notation) subnets list in the second argument. FALSE otherwise.
+
+   Parameters:
+     * ip - string or pseudo-variable containing the ip to evaluate.
+     * subnet - string or pseudo-variable containing the (CIDR notation)
+       subnets list to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.13.  is_in_subnet usage
+...
+if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
+  xlog("L_INFO", "it's in the subnet\n");
+}
+...
+if (is_in_subnet("10.0.123.123", "10.0.0.0/16,192.168.0.0/24")) {
+  xlog("L_INFO", "it's in the subnets\n");
+}
+...
+
+4.14.  dns_sys_match_ip(hostname, ipaddr)
+
+   Returns TRUE if ipaddr is associated by DNS to hostname. FALSE
+   otherwise. It does not use the internal DNS resolver, but directly
+   getaddrinfo(...). All addresses returned for the hostname are checked.
+   Note that some hosts may return different lists of IP addresses for
+   each query, if the DNS server is configured in that way (e.g., for
+   providing load balancing through DNS).
+
+   Parameters:
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+     * ipaddr - string or pseudo-variable containing the ip address.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14.  dns_sys_match_ip usage
+...
+if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+
+4.15.  dns_int_match_ip(hostname, ipaddr)
+
+   Returns TRUE if ipaddr is associated by DNS to hostname. FALSE
+   otherwise. It uses internal DNS resolver. At this moment, the function
+   might not check all the IP addresses as returned by dns_sys_match_ip(),
+   because the internal resolver targets to discover the first address to
+   be used for relaying SIP traffic. Thus is better to use
+   dns_sys_match_ip() if the host you want to check has many IP addresses,
+   in different address families (IPv4/6).
+
+   Parameters:
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+     * ipaddr - string or pseudo-variable containing the ip address.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15.  dns_int_match_ip usage
+...
+if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+
+4.16.  dns_query(hostname, pvid)
+
+   Store the IP addresses and their type that correspond to hostname in a
+   config variable $dns(pvid=>key).
+
+   Parameters:
+     * hostname - string or pseudo-variable containing the hostname. The
+       resulting IP addresses from DNS query are compared with ipaddr.
+     * pvid - container id for script variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16.  dns_query usage
+...
+if(dns_query("test.com", "xyz"))
+{
+    xlog(" number of addresses: $dns(xyz=>count)\n");
+    xlog(" ipv4 address found: $dns(xyz=>ipv4)\n");
+    xlog(" ipv6 address found: $dns(xyz=>ipv6)\n");
+    $var(i) = 0;
+    while($var(i)<$dns(xyz=>count)) {
+        xlog(" #[$var(i)] type ($dns(xyz=>type[$var(i)]))"
+             " addr [$dns(xyz=>addr[$var(i)])]\n");
+        $var(i) = $var(i) + 1;
+    }
+}
+...
+
+4.17.  srv_query(srvcname, pvid)
+
+   Queries DNS SRV records to resolve a service/protocol name into a list
+   of priorities, weights, ports, and targets sorted by priority and
+   weight as outlined in RFC 2782.
+
+   Parameters:
+     * srvcname - string or pseudo-variable containing the
+       service/protocol. For example, "_sip._tcp.example.com".
+     * pvid - container id for script variable.
+
+   Output:
+
+   Returns a positive number indicating success or a negative number when
+   an error is encountered. It can be used from ANY_ROUTE.
+
+   The $srvquery pseudo-variable (PV) is loaded with the results of the
+   query. Multiple queries can be stored in the PV using the pvid key.
+   Each query contains zero-indexed arrays sorted by priority and weight
+   that contain:
+     * count - number of records found
+     * port [index] - port number
+     * priority [index] - priority number as defined by RFC 2782
+     * target [index] - target host name
+     * weight [index] - weight number as defined by RFC 2782
+
+   Example 1.17.  srv_query usage
+...
+if (srv_query ("_sip._udp.example.com", "udp") > 0) {
+  $var(cnt) = $srvquery(udp=>count);
+  $var(i) = 0;
+  while ($var(i) < $var(cnt)) {
+    xlog ("port[$var(i)] $srvquery(udp=>port[$var(i)])\n");
+    xlog ("priority[$var(i)] $srvquery(udp=>priority[$var(i)])\n");
+    xlog ("target[$var(i)] $srvquery(udp=>target[$var(i)])\n");
+    xlog ("weight[$var(i)] $srvquery(udp=>weight[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
+}
+...
+
+4.18.  naptr_query(domain, pvid)
+
+   Queries DNS NAPTR records to resolve a domain name into a list of
+   orders, preferences, flags, services, regex, replaces sorted by orders
+   and preferences as outlined in RFC 2915.
+
+   Parameters:
+     * domain - string or pseudo-variable containing the domain. For
+       example, "example.com".
+     * pvid - container id for script variable.
+
+   Output:
+
+   Returns a positive number indicating success or a negative number when
+   an error is encountered. It can be used from ANY_ROUTE.
+
+   The $naptrquery pseudo-variable (PV) is loaded with the results of the
+   query. Multiple queries can be stored in the PV using the pvid key.
+   Each query contains zero-indexed arrays sorted by order and preference
+   that contain:
+     * count - number of records found
+     * order [index] - order as defined by RFC 2915
+     * pref [index] - preference as defined by RFC 2915
+     * flags [index] - flags
+     * services [index] - services
+     * regex [index] - regular expression
+     * replace [index] - replace
+
+   Example 1.18.  naptr_query usage
+...
+if (naptr_query ("example.com", "res") > 0) {
+  $var(cnt) = $naptrquery(res=>count);
+  $var(i) = 0;
+  while ($var(i) < $var(cnt)) {
+    xlog ("order[$var(i)] $naptrquery(udp=>order[$var(i)])\n");
+    xlog ("pref[$var(i)] $naptrquery(udp=>pref[$var(i)])\n");
+    xlog ("flags[$var(i)] $naptrquery(udp=>flags[$var(i)])\n");
+    xlog ("services[$var(i)] $naptrquery(udp=>services[$var(i)])\n");
+    xlog ("regex[$var(i)] $naptrquery(udp=>regex[$var(i)])\n");
+    xlog ("replace[$var(i)] $naptrquery(udp=>replace[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
+}
+...

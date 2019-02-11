@@ -1,16 +1,15 @@
-# $Id$
 #
 #  kamunix Makefile
 #
 
-include ../../Makefile.defs
+include ../../src/Makefile.defs
 
 auto_gen=
 NAME=kamunix
 
-include ../../Makefile.sources
+include ../../src/Makefile.sources
 
-include ../../Makefile.rules
+include ../../src/Makefile.rules
 
 modules:
 

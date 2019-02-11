@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="uid_gflags.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="set_ugflag">
+	<title><function>set_gflag(flag_num)</function></title>
+	<para>
+	    Set the flag identified by flag_num to 1. The range of
+	    flag_num is 0 to 31.
+	</para>
+	<example>
+	    <title><function>set_ugflag</function> usage</title>
+	    <programlisting>
+...
+set_ugflag("2");
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="reset_ugflag">
+	<title><function>reset_ugflag(flag_num)</function></title>
+	<para>
+	    Set the flag identified by flag_num to 0. The range of
+	    flag_num is 0 to 31.
+	</para>
+	<example>
+	    <title><function>reset_ugflag</function> usage</title>
+	    <programlisting>
+...
+reset_ugflag("2");
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="is_ugflag">
+	<title><function moreinfo="none">is_ugflag(flag_num)</function></title>
+	<para>
+	    Returns 1 when flag identified by flag_num is set, 0
+	    otherwise. The range of flag_num parameter is 0 to 31.
+	</para>
+    </section>
+
+</section>

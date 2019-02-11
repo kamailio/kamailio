@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="secfilter" xmlns:db="http://docbook.org/ns/docbook">
+    <name>secfilter</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+   <description>
+                <db:para>
+                        This table is used by the secfilter module. It contains the sets of
+                        values used to block or allow messages. More information about the
+                        secfilter module can be found at:
+                        <itemizedlist>
+                        <listitem>
+                        <ulink url="&KAMAILIO_MOD_DOC;secfilter.html">&KAMAILIO_MOD_DOC;secfilter.html</ulink>.
+                        </listitem>
+                        </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="action">
+        <name>action</name>
+        <type>tinyint</type>
+        <default/>
+        <description>Action to do (0=blacklisted data, 1=whitelisted data, 2=blacklisted destination).</description>
+    </column>
+
+    <column id="type">
+        <name>type</name>
+        <type>tinyint</type>
+        <default/>
+        <description>Type of data (0=user-agent, 1=country, 2=domain, 3=IP address, 4=user).</description>
+    </column>
+
+    <column id="data">
+        <name>data</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Data value.</description>
+    </column>
+
+    <index>
+        <name>secfilter_idx</name>
+        <colref linkend="action"/>
+        <colref linkend="type"/>
+        <colref linkend="data"/>
+    </index>
+</table>

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module implements various utility functions that are not SIP
+	related.
+	</para>
+	<para>
+	The forward functionality allows &kamailio; to configure forwarding
+	at runtime with FIFO commands. The forwarding is executed in the pre
+	script call back and therefore handled before the routing script is
+	executed on the current message. The callback is not installed on
+	default, thus this functionality has no runtime overhead when its
+	deactivated.
+	</para>
+	<para>
+	Function xcap_auth_status can be used to check from presence
+	server database, if watcher is authorized to subscribe event
+	<quote>presence</quote> of presentity.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database module if
+	xcap_auth_status function is enabled</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be
+		installed before  
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+		<title>Parameters</title>
+		<section id="utils.p.forward_active">
+			<title><varname>forward_active</varname> (int)</title>
+			<para>
+				Defines if the forwarding callback should be installed.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>0</quote> - disabled.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>forward_active</varname> parameter</title>
+				<programlisting format="linespecific">
+					...
+					modparam("utils", "forward_active", 1)
+					...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.pres_db_url">
+			<title><varname>pres_db_url</varname> (string)</title>
+			<para>
+			Defines presence server database URL. If not
+			given, the xcap_auth_status function is disabled.
+			</para>
+			<para>
+			<emphasis>
+				There is no default value.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>pres_db_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.xcap_table">
+			<title><varname>xcap_table</varname> (string)</title>
+			<para>
+			Defines the name of the xcap table in the presence server database.
+			See the xcap_server module documentation for more information.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>xcap</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>xcap_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "xcap_table", "pres_xcap")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<section id="utils.f.xcap_auth_status">
+			<title>
+				<function moreinfo="none">xcap_auth_status(watcher_uri, presentity_uri)</function>
+			</title>
+			<para>
+			Function checks in the presence server database if
+			a watcher is authorized to subscribe to event
+			<quote>presence</quote> of presentity.  Sphere
+			checking is not included.
+			</para>
+			<para>
+			Both watcher_uri and presentity_uri are
+			pseudo variables. The function returns
+			ACTIVE_STATUS, if a subscription is 
+			allowed and PENDING_STATUS, TERMINATED_STATUS,
+			or WAITING_STATUS otherwise. See
+			presence/subscribe.h for the corresponding integer
+			codes. In case of error, function returns -1.
+	    	        </para>
+			<para>
+			Function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>xcap_auth_status()</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (method=="MESSAGE") {
+    xcap_auth_status("$fu", $ru");
+    if ($retcode == 1) {
+        t_relay();
+    } else {
+        send_reply("403", "Forbidden");
+    }
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	
+	<section>
+	    <title><acronym>MI</acronym> Commands</title>
+		
+	<section id="utils.m.forward_list">
+	    <title><function moreinfo="none">forward_list</function></title>
+	    <para>
+		List active forward rules.
+	    </para>
+		<para>
+		No parameters.
+		</para>
+	    <example>
+		<title><function>forward_list</function> usage</title>
+		<programlisting format="linespecific">
+...
+&ctltool; fifo forward_list
+id switch                         filter proxy
+ 0    off      REGISTER:INVITE:SUBSCRIBE host-a.domain-a:5060
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section id="utils.m.forward_switch">
+	    <title><function moreinfo="none">forward_switch</function></title>
+	    <para>
+		This command can be used to activate or deactivate forwarding rules.
+		The syntax of this configuration string is described in 1.6. (switch_setting_list).
+	    </para>
+	    <example>
+		<title><function>forward_switch</function> usage</title>
+		<programlisting format="linespecific">
+...
+&ctltool; fifo forward_switch 0=on
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section id="utils.m.forward_filter">
+	    <title><function moreinfo="none">forward_filter</function></title>
+	    <para>
+		Can be used to specify the filter for a certain id. Messages will only be
+		forwarded if one of the filters matches the message.
+		</para>
+		<para>
+		There are special filters and regular filters.
+		Special filters are:
+		<itemizedlist>
+		<listitem>REQUEST (matches on every request)</listitem>
+		<listitem>REPLY   (matches on every reply)</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		Regular filters are arbitrary strings not containing the
+	 	delimiter ':'. They are matched against the request method
+		names of the sip messages. The syntax of this configuration
+		string is described in 1.6. (filter_setting_list).
+	    </para>
+	    <example>
+		<title><function>forward_filter</function> usage</title>
+		<programlisting format="linespecific">
+...
+&ctltool; fifo forward_filter 0=REGISTER:INVITE
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section id="utils.m.forward_proxy">
+	    <title><function moreinfo="none">forward_proxy</function></title>
+	    <para>
+		This command can be used to configure forwarding rules. Specifies
+		the destination for a certain id. Messages will be forwarded to
+		this destination if the preconditions hold (matching id, filter, and
+		switch). The syntax of this configuration string is described in 1.6.
+		(proxy_setting_list).
+	    </para>
+	    <example>
+		<title><function>forward_proxy</function> usage</title>
+		<programlisting format="linespecific">
+...
+&ctltool; fifo forward_proxy 0=host-c.domain-c:5060
+...
+		</programlisting>
+	    </example>
+	</section>
+	</section>
+	
+	<section>
+		<title>Configuration syntax</title>
+		<para>This grammar specify the usable configuration syntax</para>
+		<itemizedlist>
+			<listitem>switch_setting_list ::= switch_setting { "," switch_setting }</listitem>
+			<listitem>filter_setting_list ::= switch_setting { "," switch_setting }</listitem>
+			<listitem>proxy_setting_list  ::= proxy_setting  { "," proxy_setting  }</listitem>
+			<listitem>switch_setting      ::= id "=" switch</listitem>
+			<listitem>filter_setting      ::= id "=" filter_list</listitem>
+			<listitem>proxy_setting       ::= id "=" proxy</listitem>
+			<listitem>switch              ::= ( "off" | "on" )</listitem>
+			<listitem>filter_list         ::= filter { ":" filter }</listitem>
+			<listitem>proxy               ::= host ":" port</listitem>
+			<listitem>filter              ::= ( special_filter | regular_filter )</listitem>
+			<listitem>special_filter      ::= ( "REQUEST" | "REPLY" )</listitem>
+			<listitem>regular_filter      ::= ? [^:]* ?</listitem>
+			<listitem>host                ::= char { char }</listitem>
+			<listitem>char                ::= ? A-Za-z0-9.-_ ?</listitem>
+			<listitem>id                  ::= number</listitem>
+			<listitem>port                ::= number</listitem>
+			<listitem>number              ::= digit {digit}</listitem>
+			<listitem>digit               ::= ? 0-9 ?</listitem>
+		</itemizedlist>
+	</section>
+</chapter>

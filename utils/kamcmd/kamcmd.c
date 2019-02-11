@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of kamailio, a free SIP server.
+ * This file is part of kamcmd, a free cli tool for Kamailio SIP server.
  *
  * kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,19 +18,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * send commands using binrpc
  *
- * History:
- * --------
- *  2006-02-14  created by andrei
- *  2009-06-29  command line completion for cfg groups and vars (andrei)
- *  2009-06-30  command line completion for mi cmds (andrei)
- *  2010-08-08  command line completion for counters/statistic (andrei)
  */
 
 
@@ -49,35 +41,35 @@
 #include <netdb.h> /* gethostbyname */
 #include <fcntl.h>
 #include <time.h> /* time */
+#include <sys/time.h>
 
 #ifdef USE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
 
 #define USE_CFG_VARS /* cfg group and vars completion */
-#define USE_MI  /* mi completion */
 #define USE_COUNTERS /* counters/statistics completion */
 #endif
 
 #include "parse_listen_id.h"
 #include "license.h"
 
-#include "../../modules/ctl/ctl_defaults.h" /* default socket & port */
-#include "../../modules/ctl/binrpc.h"
-#include "../../modules/ctl/binrpc.c" /* ugly hack */
+#include "../../src/modules/ctl/ctl_defaults.h" /* default socket & port */
+#include "../../src/modules/ctl/binrpc.h"
+#include "../../src/modules/ctl/binrpc.c" /* ugly hack */
 
 
 #ifndef NAME
-#define NAME    "sercmd"
+#define NAME    "kamcmd"
 #endif
 #ifndef VERSION
-#define VERSION "0.2"
+#define VERSION "1.5"
 #endif
 
 #define IOVEC_CNT 20
-#define MAX_LINE_SIZE 16384 /* for non readline mode */
-#define MAX_REPLY_SIZE 65536
-#define MAX_BODY_SIZE  65536
+#define MAX_LINE_SIZE 16*1024 /* for non readline mode */
+#define MAX_REPLY_SIZE 128*1024
+#define MAX_BODY_SIZE  128*1024
 #define MAX_BINRPC_ARGS 256
 
 
@@ -85,7 +77,6 @@
 #define UNIX_PATH_MAX 104
 #endif
 
-static char id[]="$Id$";
 static char version[]= NAME " " VERSION;
 #ifdef VERSION_NODATE
 static char compiled[] = "";
@@ -112,7 +103,7 @@ Options:\n\
     -h          This help message\n\
 address:\n\
     [proto:]name[:port]   where proto is one of tcp, udp, unixs or unixd\n\
-                          e.g.:  tcp:localhost:2048 , unixs:/tmp/ser_ctl\n\
+                          e.g.:  tcp:localhost:2048 , unixs:/tmp/kamailio_ctl\n\
 cmd:\n\
     method  [arg1 [arg2...]]\n\
 arg:\n\
@@ -153,14 +144,6 @@ struct cfg_var_grp* cfg_grp_lst; /** cfg groups list, allong with var names*/
 struct cfg_var_grp* crt_cfg_grp;
 #endif /* USE_CFG_VARS */
 
-#ifdef USE_MI
-struct binrpc_val* mi_which_array;
-int mi_which_no;
-
-str* mi_cmds;
-int mi_cmds_no;
-#endif /* USE_MI */
-
 #ifdef USE_COUNTERS
 struct binrpc_val* cnt_grps_array; /* response array */
 int cnt_grps_no; /* number of response records */
@@ -194,7 +177,7 @@ static inline char* int2str(unsigned int l, int* len)
 {
 	static char r[INT2STR_MAX_LEN];
 	int i;
-	
+
 	i=INT2STR_MAX_LEN-2;
 	r[INT2STR_MAX_LEN-1]=0; /* null terminate */
 	do{
@@ -214,11 +197,11 @@ static inline char* int2str(unsigned int l, int* len)
 static char* trim_ws(char* l)
 {
 	char* ret;
-	
+
 	for(;*l && ((*l==' ')||(*l=='\t')||(*l=='\n')||(*l=='\r')); l++);
 	ret=l;
 	if (*ret==0) return ret;
-	for(l=l+strlen(l)-1; (l>ret) && 
+	for(l=l+strlen(l)-1; (l>ret) &&
 			((*l==' ')||(*l=='\t')||(*l=='\n')||(*l=='\r')); l--);
 	*(l+1)=0;
 	return ret;
@@ -247,48 +230,49 @@ struct cmd_alias{
 };
 
 
-struct sercmd_builtin{
+struct kamcmd_builtin{
 	char* name;
 	int (*f)(int, struct binrpc_cmd*);
 	char* doc;
 };
 
 
-static int sercmd_help(int s, struct binrpc_cmd* cmd);
-static int sercmd_ver(int s, struct binrpc_cmd* cmd);
-static int sercmd_quit(int s, struct binrpc_cmd* cmd);
-static int sercmd_warranty(int s, struct binrpc_cmd* cmd);
+static int kamcmd_help(int s, struct binrpc_cmd* cmd);
+static int kamcmd_ver(int s, struct binrpc_cmd* cmd);
+static int kamcmd_quit(int s, struct binrpc_cmd* cmd);
+static int kamcmd_warranty(int s, struct binrpc_cmd* cmd);
 
 
 static struct cmd_alias cmd_aliases[]={
 	{	"ps",			"core.ps",				"%v\t%v\n"	},
+	{	"psx",			"core.psx",				0			},
 	{	"list",			"system.listMethods",	0			},
 	{	"ls",			"system.listMethods",	0			},
-	{	"server",		"core.version",			0			},
-	{	"serversion",	"core.version",			0			},
+	{	"ver",			"core.version",			0			},
+	{	"version",		"core.version",			0			},
 	{	"who",			"ctl.who",				"[%v] %v: %v %v -> %v %v\n"},
 	{	"listen",		"ctl.listen",			"[%v] %v: %v %v\n"},
 	{	"dns_mem_info",		"dns.mem_info",			"%v / %v\n"},
-	{	"dns_debug",	"dns.debug",			
+	{	"dns_debug",	"dns.debug",
 					"%v (%v): size=%v ref=%v expire=%vs last=%vs ago f=%v\n"},
-	{	"dns_debug_all",	"dns.debug_all",			
+	{	"dns_debug_all",	"dns.debug_all",
 			"%v (%v) [%v]: size=%v ref=%v expire=%vs last=%vs ago f=%v\n"
 			"\t\t%v:%v expire=%vs f=%v\n"},
 	{	"dst_blacklist_mem_info",	"dst_blacklist.mem_info",	"%v / %v\n"},
-	{	"dst_blacklist_debug",		"dst_blacklist.debug",	
+	{	"dst_blacklist_debug",		"dst_blacklist.debug",
 		"%v:%v:%v expire:%v flags: %v\n"},
 	{0,0,0}
 };
 
 
-static struct sercmd_builtin builtins[]={
-	{	"?",		sercmd_help, "help"},
-	{	"help",		sercmd_help, "displays help for a command"},
-	{	"version",	sercmd_ver,  "displays " NAME "version"},
-	{	"quit",		sercmd_quit, "exits " NAME },
-	{	"exit",		sercmd_quit, "exits " NAME },
-	{	"warranty",		sercmd_warranty, "displays " NAME "'s warranty info"},
-	{	"license",		sercmd_warranty, "displays " NAME "'s license"},
+static struct kamcmd_builtin builtins[]={
+	{	"?",		kamcmd_help, "help"},
+	{	"help",		kamcmd_help, "displays help for a command"},
+	{	"version",	kamcmd_ver,  "displays " NAME "version"},
+	{	"quit",		kamcmd_quit, "exits " NAME },
+	{	"exit",		kamcmd_quit, "exits " NAME },
+	{	"warranty",		kamcmd_warranty, "displays " NAME "'s warranty info"},
+	{	"license",		kamcmd_warranty, "displays " NAME "'s license"},
 	{0,0}
 };
 
@@ -303,9 +287,6 @@ enum complete_states {
 	COMPLETE_CFG_GRP,
 	COMPLETE_CFG_VAR,
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	COMPLETE_MI,
-#endif /* USE_Mi */
 #ifdef USE_COUNTERS
 	COMPLETE_CNT_GRP,
 	COMPLETE_CNT_VAR,
@@ -341,17 +322,6 @@ char* complete_params_cfg_var[]={
 };
 #endif /* USE_CFG_VARS */
 
-#ifdef USE_MI
-/* commands for which we complete the first param with an mi command*/
-char* complete_params_mi[]={
-	"mi",
-	"mi_fifo",
-	"mi_dg",
-	"mi_xmlrpc",
-	0
-};
-#endif /* USE_MI */
-
 #ifdef USE_COUNTERS
 /* commands for which we complete the first param with a counter group */
 char* complete_param1_counter_grp[] = {
@@ -384,7 +354,7 @@ static int parse_arg(struct binrpc_val* v, char* arg)
 	double f;
 	char* tmp;
 	int len;
-	
+
 	i=strtol(arg, &tmp, 10);
 	if ((tmp==0) || (*tmp)){
 		f=strtod(arg, &tmp);
@@ -416,7 +386,7 @@ static int parse_arg(struct binrpc_val* v, char* arg)
 static int parse_cmd(struct binrpc_cmd* cmd, char** argv, int count)
 {
 	int r;
-	
+
 	cmd->method=argv[0];
 	if ((count-1)>MAX_BINRPC_ARGS){
 		fprintf(stderr,  "ERROR: too many args %d, only %d allowed\n",
@@ -437,7 +407,7 @@ void print_binrpc_val(struct binrpc_val* v, int ident)
 	int r;
 
 	if ((v->type==BINRPC_T_STRUCT) && !v->u.end)
-		ident--; /* fix to have strut beg. idented differently */
+		ident--; /* fix to have struct beg. idented differently */
 	for (r=0; r<ident; r++) putchar('	');
 	if (v->name.s){
 		printf("%.*s: ", v->name.len, v->name.s);
@@ -475,7 +445,7 @@ int connect_unix_sock(char* name, int type)
 	int len;
 	int ret;
 	int retries;
-	
+
 	retries=0;
 	s=-1;
 	memset(&ifsun, 0, sizeof (struct sockaddr_un));
@@ -503,7 +473,7 @@ int connect_unix_sock(char* name, int type)
 				sock_dir="/tmp";
 retry:
 			ret=snprintf(mysun.sun_path, UNIX_PATH_MAX, "%s/" NAME "_%d",
-							sock_dir, rand()); 
+							sock_dir, rand());
 			if ((ret<0) ||(ret>=UNIX_PATH_MAX)){
 				fprintf(stderr, "ERROR: buffer overflow while trying to"
 							"generate unix datagram socket name");
@@ -550,7 +520,7 @@ int connect_tcpudp_socket(char* address, int port, int type)
 	struct sockaddr_in addr;
 	struct hostent* he;
 	int sock;
-	
+
 	sock=-1;
 	/* resolve destination */
 	he=gethostbyname(address);
@@ -562,7 +532,7 @@ int connect_tcpudp_socket(char* address, int port, int type)
 	addr.sin_family=he->h_addrtype;
 	addr.sin_port=htons(port);
 	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
-	
+
 	sock = socket(he->h_addrtype, type, 0);
 	if (sock==-1){
 		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
@@ -583,7 +553,7 @@ error:
 static void hexdump(unsigned char* buf, int len, int ascii)
 {
 	int r, i;
-	
+
 	/* dump it in hex */
 	for (r=0; r<len; r++){
 		if ((r) && ((r%16)==0)){
@@ -626,7 +596,7 @@ static int send_binrpc_cmd(int s, struct binrpc_cmd* cmd, int cookie)
 	struct binrpc_pkt body;
 	int ret;
 	int n;
-	
+
 	ret=binrpc_init_pkt(&body, msg_body, MAX_BODY_SIZE);
 	if (ret<0) goto binrpc_err;
 	ret=binrpc_addstr(&body, cmd->method, strlen(cmd->method));
@@ -662,7 +632,7 @@ write_again:
 			goto write_again;
 		goto error_send;
 	}
-	
+
 	return n;
 error_send:
 	return -1;
@@ -677,7 +647,7 @@ static int binrpc_errno=0;
  * returns < 0 on error, reply size on success + initializes in_pkt
  * if ret==-2 (parse error), sets binrpc_errno to the binrpc error
  * error returns: -1 - read error (check errno)
- *                -2 - binrpc parse error (chekc binrpc_errno) 
+ *                -2 - binrpc parse error (chekc binrpc_errno)
  *                -3 - cookie error (the cookied doesn't match)
  *                -4 - message too big */
 static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
@@ -689,8 +659,7 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 	unsigned char* msg_end;
 	int n;
 	int ret;
-	
-	
+
 	hdr_end=crt=reply_buf;
 	msg_end=reply_buf+max_reply_size;
 	binrpc_errno=0;
@@ -747,7 +716,7 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 			}
 		}
 	}while(crt<msg_end);
-	
+
 	*body=hdr_end;
 	return (int)(msg_end-reply_buf);
 error_read:
@@ -768,11 +737,11 @@ static char* str_escape(char* str)
 {
 	char* n;
 	char* ret;
-	
+
 	ret=n=malloc(strlen(str)+1);
 	if (n==0)
 		goto end;
-	
+
 	for(;*str;str++){
 		*n=*str;
 		if (*str=='\\'){
@@ -817,7 +786,7 @@ end:
  *          printf("%.*s", size, s);
  *          if (type==-1)
  *            continue;
- *          else 
+ *          else
  *             printf("now we should get & print an object of type %d\n", type)
  *        }
  */
@@ -851,10 +820,10 @@ static char* parse_fmt(char* fmt, int* type, int* size)
 
 
 
-static int print_body(struct binrpc_parse_ctx* in_pkt, 
+static int print_body(struct binrpc_parse_ctx* in_pkt,
 						unsigned char* body, int size, char* fmt)
 {
-	
+
 	unsigned char* p;
 	unsigned char* end;
 	struct binrpc_val val;
@@ -864,7 +833,7 @@ static int print_body(struct binrpc_parse_ctx* in_pkt,
 	char* s;
 	int f_size;
 	int fmt_has_values;
-	
+
 	p=body;
 	end=p+size;
 	rec=0;
@@ -873,7 +842,7 @@ static int print_body(struct binrpc_parse_ctx* in_pkt,
 	/* read body */
 	while(p<end){
 		if (f){
-			
+
 			do{
 				if (*f==0)
 					f=fmt; /* reset */
@@ -934,7 +903,7 @@ error:
 
 
 
-static int print_fault(struct binrpc_parse_ctx* in_pkt, 
+static int print_fault(struct binrpc_parse_ctx* in_pkt,
 						unsigned char* body, int size)
 {
 	printf("error: ");
@@ -950,7 +919,7 @@ static int run_binrpc_cmd(int s, struct binrpc_cmd * cmd, char* fmt)
 	unsigned char* msg_body;
 	struct binrpc_parse_ctx in_pkt;
 	int ret;
-	
+
 	cookie=gen_cookie();
 	if ((ret=send_binrpc_cmd(s, cmd, cookie))<0){
 		if (ret==-1) goto error_send;
@@ -991,11 +960,11 @@ static int run_binrpc_cmd(int s, struct binrpc_cmd * cmd, char* fmt)
 	/* normal exit */
 	return 0;
 binrpc_err:
-	fprintf(stderr, "ERROR while building the packet: %s\n", 
+	fprintf(stderr, "ERROR while building the packet: %s\n",
 				binrpc_error(ret));
 	goto error;
 error_parse:
-	fprintf(stderr, "ERROR while parsing the reply: %s\n", 
+	fprintf(stderr, "ERROR while parsing the reply: %s\n",
 				binrpc_error(binrpc_errno));
 	goto error;
 error_cookie:
@@ -1022,7 +991,7 @@ static int parse_line(struct binrpc_cmd* cmd, char* line)
 {
 	char* p;
 	int count;
-	
+
 	cmd->method=strtok(line, " \t");
 	if (cmd->method==0)
 		goto error_no_method;
@@ -1055,7 +1024,7 @@ error_arg:
 static void fix_cmd(struct binrpc_cmd* cmd, char** format)
 {
 	int r;
-	
+
 	for (r=0; cmd_aliases[r].name; r++){
 		if (strcmp(cmd_aliases[r].name, cmd->method)==0){
 			cmd->method=cmd_aliases[r].method;
@@ -1074,7 +1043,7 @@ static int run_builtins(int s, struct binrpc_cmd* cmd)
 {
 	int r;
 	int ret;
-	
+
 	for (r=0; builtins[r].name; r++){
 		if (strcmp(builtins[r].name, cmd->method)==0){
 			ret=builtins[r].f(s, cmd);
@@ -1093,7 +1062,7 @@ inline static int run_cmd(int s, struct binrpc_cmd* cmd, char* format)
 	char* fmt;
 
 	fmt=format;
-	
+
 	fix_cmd(cmd, &fmt);
 	if (!(ret=run_builtins(s, cmd))){
 		ret=run_binrpc_cmd(s, cmd, fmt);
@@ -1108,7 +1077,7 @@ inline static int run_line(int s, char* l, char* format)
 {
 	struct binrpc_cmd cmd;
 	int ret;
-	
+
 	if ((ret=parse_line(&cmd, l))==0){
 		return run_cmd(s, &cmd, format);
 	}
@@ -1134,7 +1103,7 @@ static void free_rpc_array(struct binrpc_val* a, int size)
 
 
 /* parse the body into a malloc allocated,  binrpc_val array */
-static struct binrpc_val* parse_reply_body(int* records, 
+static struct binrpc_val* parse_reply_body(int* records,
 											struct binrpc_parse_ctx* in_pkt,
 											unsigned char* body, int size)
 {
@@ -1155,7 +1124,7 @@ static struct binrpc_val* parse_reply_body(int* records,
 		goto error_mem;
 	p=body;
 	end=p+size;
-	
+
 	/* read body */
 	while(p<end){
 		val.type=BINRPC_T_ALL;
@@ -1217,7 +1186,7 @@ error:
 
 
 
-static int get_sercmd_list(int s)
+static int get_kamcmd_list(int s)
 {
 	struct binrpc_cmd cmd;
 	int cookie;
@@ -1225,10 +1194,10 @@ static int get_sercmd_list(int s)
 	unsigned char* msg_body;
 	struct binrpc_parse_ctx in_pkt;
 	int ret;
-	
+
 	cmd.method="system.listMethods";
 	cmd.argc=0;
-	
+
 	cookie=gen_cookie();
 	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
 		if (ret==-1) goto error_send;
@@ -1265,7 +1234,7 @@ error:
 
 
 
-#if defined(USE_CFG_VARS) || defined (USE_MI) || defined (USE_COUNTERS)
+#if defined(USE_CFG_VARS) || defined (USE_COUNTERS)
 /** check if cmd is a rpc command.
  * Quick check (using the internal rpc_array) if cmd is a valid rpc command.
  * @param cmd - null terminated ascii string
@@ -1275,7 +1244,7 @@ static int is_rpc_cmd(char* cmd)
 {
 	int r;
 	int cmd_len;
-	
+
 	cmd_len=strlen(cmd);
 	for (r=0; r<rpc_no; r++){
 		if ((rpc_array[r].type==BINRPC_T_STR) &&
@@ -1285,7 +1254,7 @@ static int is_rpc_cmd(char* cmd)
 	}
 	return 0;
 }
-#endif /* USE_CFG_VARS || USE_MI */
+#endif /* USE_CFG_VARS */
 
 
 
@@ -1306,11 +1275,11 @@ static int get_cfgvars_list(int s)
 	str var_name;
 	int r;
 	int ret;
-	
+
 	cmd.method="cfg.list";
 	cmd.argc=0;
 	if (!is_rpc_cmd(cmd.method)) goto error;
-	
+
 	cookie=gen_cookie();
 	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
 		if (ret==-1) goto error_send;
@@ -1425,7 +1394,7 @@ void free_cfg_grp_lst()
 {
 	struct cfg_var_grp* grp;
 	struct cfg_var_grp* last;
-	
+
 	grp=cfg_grp_lst;
 	while(grp){
 		last=grp;
@@ -1435,128 +1404,6 @@ void free_cfg_grp_lst()
 	cfg_grp_lst=0;
 }
 #endif /* USE_CFG_VARS */
-
-
-
-#ifdef USE_MI
-/* retrieve the mi list */
-static int get_mi_list(int s)
-{
-	struct binrpc_cmd cmd;
-	int cookie;
-	unsigned char reply_buf[MAX_REPLY_SIZE];
-	unsigned char* msg_body;
-	struct binrpc_parse_ctx in_pkt;
-	char* p;
-	char* end;
-	str mi_name;
-	int mi_which_results;
-	int r;
-	int ret;
-	
-	cmd.method="mi";
-	cmd.argv[0].type=BINRPC_T_STR;
-	cmd.argv[0].u.strval.s="which";
-	cmd.argv[0].u.strval.len=strlen(cmd.argv[0].u.strval.s);
-	cmd.argc=1;
-	if (!is_rpc_cmd(cmd.method)) goto error;
-	
-	cookie=gen_cookie();
-	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
-		if (ret==-1) goto error_send;
-		else goto binrpc_err;
-	}
-	/* read reply */
-	memset(&in_pkt, 0, sizeof(in_pkt));
-	if ((ret=get_reply(s, reply_buf, MAX_REPLY_SIZE, cookie, &in_pkt,
-					&msg_body))<0){
-		goto error;
-	}
-	switch(in_pkt.type){
-		case BINRPC_FAULT:
-			if (print_fault(&in_pkt, msg_body, in_pkt.tlen)<0){
-				goto error;
-			}
-			break;
-		case BINRPC_REPL:
-			mi_which_no=25; /* default rpc list */
-			if ((mi_which_array=parse_reply_body(&mi_which_no, &in_pkt,
-												msg_body, in_pkt.tlen))==0)
-				goto error;
-			break;
-		default:
-			fprintf(stderr, "ERROR: not a reply\n");
-			goto error;
-	}
-	
-	
-	/* get the mi commands number */
-	mi_which_results=0;
-	for (r=0; r<mi_which_no; r++){
-		if (mi_which_array[r].type!=BINRPC_T_STR)
-			continue;
-		/* we are interestend only in lines starting with ':', e.g.:
-		   :: version */
-		if ((mi_which_array[r].u.strval.len) &&
-			(mi_which_array[r].u.strval.s[0]==':'))
-			mi_which_results++;
-	}
-	/* no mi commands */
-	if (mi_which_results==0)
-		goto error;
-	/* alloc the mi_cmds array */
-	mi_cmds=malloc(mi_which_results*sizeof(*mi_cmds));
-	if (mi_cmds==0) goto error_mem;
-	memset(mi_cmds, 0, mi_which_results* sizeof(*mi_cmds));
-	/* get the mi names list */
-	for (r=0; r<mi_which_no; r++){
-		if (mi_which_array[r].type!=BINRPC_T_STR)
-			continue;
-		p=mi_which_array[r].u.strval.s;
-		end=p+mi_which_array[r].u.strval.len;
-		/* we are interestend only in lines starting with ':', e.g.:
-			:: version */
-		if ((p>=end) || (*p!=':'))
-			continue;
-		p++;
-		/* skip over to the next ':' */
-		for(;p<end && *p!=':'; p++);
-		if (p>=end) continue;
-		p++;
-		/* skip over spaces */
-		for(;p<end && (*p==' ' || *p=='\t'); p++);
-		if (p>=end || *p=='\n') continue;
-		if (mi_cmds_no >= mi_which_results){
-			fprintf(stderr, "BUG: wrong mi cmds no (%d >= %d)\n",
-							mi_cmds_no, mi_which_results);
-			goto error;
-		}
-		mi_name.s=p;
-		for(; p<end && *p!=' ' && *p!='\t' && *p!='\n'; p++);
-		mi_name.len=(int)(long)(p-mi_name.s);
-		mi_cmds[mi_cmds_no]=mi_name;
-		mi_cmds_no++;
-	}
-	
-	return 0;
-binrpc_err:
-error_send:
-error:
-error_mem:
-	return -1;
-}
-
-
-
-void free_mi_cmds()
-{
-	if (mi_cmds){
-		free(mi_cmds);
-		mi_cmds=0;
-		mi_cmds_no=0;
-	}
-}
-#endif /* USE_MI */
 
 
 
@@ -1575,11 +1422,11 @@ static int get_counters_list(int s)
 	str var_name;
 	int r;
 	int ret;
-	
+
 	cmd.method="cnt.grps_list";
 	cmd.argc=0;
 	if (!is_rpc_cmd(cmd.method)) goto error;
-	
+
 	cookie=gen_cookie();
 	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
 		if (ret==-1) goto error_send;
@@ -1697,7 +1544,7 @@ void free_cnt_grp_lst()
 {
 	struct cnt_var_grp* grp;
 	struct cnt_var_grp* last;
-	
+
 	grp=cnt_grp_lst;
 	while(grp){
 		last=grp;
@@ -1738,10 +1585,10 @@ static void print_formatting(char* prefix, char* format, char* suffix)
 
 
 
-static int sercmd_help(int s, struct binrpc_cmd* cmd)
+static int kamcmd_help(int s, struct binrpc_cmd* cmd)
 {
 	int r;
-	
+
 	if (cmd->argc && (cmd->argv[0].type==BINRPC_T_STR)){
 		/* if it has args, try command help */
 		for (r=0; cmd_aliases[r].name; r++){
@@ -1756,7 +1603,7 @@ static int sercmd_help(int s, struct binrpc_cmd* cmd)
 		}
 		for(r=0; builtins[r].name; r++){
 			 if (strcmp(cmd->argv[0].u.strval.s, builtins[r].name)==0){
-				 printf("builtin command: %s\n", 
+				 printf("builtin command: %s\n",
 						 builtins[r].doc?builtins[r].doc:"undocumented");
 				 return 0;
 			 }
@@ -1767,9 +1614,9 @@ static int sercmd_help(int s, struct binrpc_cmd* cmd)
 		}
 		return 0;
 	}
-		
+
 	if (rpc_no==0){
-		if (get_sercmd_list(s)<0)
+		if (get_kamcmd_list(s)<0)
 			goto error;
 	}
 	for (r=0; r<rpc_no; r++){
@@ -1790,10 +1637,9 @@ error:
 
 
 
-static int sercmd_ver(int s, struct binrpc_cmd* cmd)
+static int kamcmd_ver(int s, struct binrpc_cmd* cmd)
 {
 	printf("%s\n", version);
-	printf("%s\n", id);
 	printf("%s compiled on %s \n", __FILE__, compiled);
 #ifdef USE_READLINE
 	printf("interactive mode command completion support\n");
@@ -1803,7 +1649,7 @@ static int sercmd_ver(int s, struct binrpc_cmd* cmd)
 
 
 
-static int sercmd_quit(int s, struct binrpc_cmd* cmd)
+static int kamcmd_quit(int s, struct binrpc_cmd* cmd)
 {
 	quit=1;
 	return 0;
@@ -1811,7 +1657,7 @@ static int sercmd_quit(int s, struct binrpc_cmd* cmd)
 
 
 
-static int sercmd_warranty(int s, struct binrpc_cmd *cmd)
+static int kamcmd_warranty(int s, struct binrpc_cmd *cmd)
 {
 	printf("%s %s\n", NAME, VERSION);
 	printf("%s\n", COPYRIGHT);
@@ -1823,7 +1669,7 @@ static int sercmd_warranty(int s, struct binrpc_cmd *cmd)
 #ifdef USE_READLINE
 
 /* readline command generator */
-static char* sercmd_generator(const char* text, int state)
+static char* kamcmd_generator(const char* text, int state)
 {
 	static int idx;
 	static int list; /* aliases, builtins, rpc_array */
@@ -1923,29 +1769,6 @@ static char* sercmd_generator(const char* text, int state)
 			}
 			break;
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-		case COMPLETE_MI:
-			if (state==0){
-				/* init */
-				len=strlen(text);
-				idx=0;
-			}
-			while(idx < mi_cmds_no){
-				if (len<=mi_cmds[idx].len &&
-						memcmp(text, mi_cmds[idx].s, len)==0) {
-					/* zero-term copy of the var name */
-					name=malloc(mi_cmds[idx].len+1);
-					if (name){
-						memcpy(name, mi_cmds[idx].s, mi_cmds[idx].len);
-						name[mi_cmds[idx].len]=0;
-					}
-					idx++;
-					return name;
-				}
-				idx++;
-			}
-			break;
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 		case COMPLETE_CNT_GRP:
 			if (state==0){
@@ -1999,7 +1822,7 @@ static char* sercmd_generator(const char* text, int state)
 
 
 
-char** sercmd_completion(const char* text, int start, int end)
+char** kamcmd_completion(const char* text, int start, int end)
 {
 	int i, j;
 	int cmd_start, cmd_end, cmd_len;
@@ -2014,7 +1837,7 @@ char** sercmd_completion(const char* text, int start, int end)
 	static int cnt_grp_start;
 	int cnt_grp_len;
 #endif /* USE_COUNTERS */
-	
+
 	crt_param_no=0;
 	/* skip over whitespace at the beginning */
 	for (j=0; (j<start) && (rl_line_buffer[j]==' ' ||
@@ -2068,18 +1891,6 @@ char** sercmd_completion(const char* text, int start, int end)
 				}
 			}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-			/* try complete_parms_mi */
-			for(i=0; complete_params_mi[i]; i++){
-				if ((cmd_len==strlen(complete_params_mi[i])) &&
-						(strncmp(&rl_line_buffer[cmd_start],
-								 complete_params_mi[i],
-								 cmd_len)==0)){
-						attempted_completion_state=COMPLETE_MI;
-						goto end;
-				}
-			}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 			/* try  complete_param*_cfg_grp */
 			for(i=0; complete_param1_counter_grp[i]; i++){
@@ -2155,7 +1966,7 @@ char** sercmd_completion(const char* text, int start, int end)
 		attempted_completion_state=COMPLETE_NOTHING;
 	}
 end:
-	return 0; /* let readline call sercmd_generator */
+	return 0; /* let readline call kamcmd_generator */
 }
 
 #endif /* USE_READLINE */
@@ -2198,7 +2009,6 @@ int main(int argc, char** argv)
 		switch(c){
 			case 'V':
 				printf("version: %s\n", version);
-				printf("%s\n", id);
 				printf("%s compiled on %s \n", __FILE__,
 						compiled);
 				exit(0);
@@ -2234,12 +2044,12 @@ int main(int argc, char** argv)
 				if (isprint(optopt))
 					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
 				else
-					fprintf(stderr, 
+					fprintf(stderr,
 							"Unknown option character `\\x%x'.\n",
 							optopt);
 				goto error;
 			case ':':
-				fprintf(stderr, 
+				fprintf(stderr,
 						"Option `-%c' requires an argument.\n",
 						optopt);
 				goto error;
@@ -2250,10 +2060,10 @@ int main(int argc, char** argv)
 	if (sock_name==0){
 		sock_name=DEFAULT_CTL_SOCKET;
 	}
-	
+
 	/* init the random number generator */
 	srand(getpid()+time(0)); /* we don't need very strong random numbers */
-	
+
 	if (sock_name==0){
 		fprintf(stderr, "ERROR: no server socket address specified\n");
 		goto error;
@@ -2263,7 +2073,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "ERROR: error parsing server socket address %s\n", sock_name);
 		goto error;
 	}
-	
+
 	switch(sock_id->proto){
 		case UDP_SOCK:
 		case TCP_SOCK:
@@ -2294,25 +2104,22 @@ int main(int argc, char** argv)
 	}
 	free(sock_id); /* not needed anymore */
 	sock_id=0;
-	
+
 	if (optind>=argc){
 			/*fprintf(stderr, "ERROR: no command specified\n");
 			goto error; */
 	}else{
 		if (parse_cmd(&cmd, &argv[optind], argc-optind)<0)
 			goto error;
-		if (run_cmd(s, &cmd, format)<0) 
+		if (run_cmd(s, &cmd, format)<0)
 			goto error;
 		goto end;
 	}
 	/* interactive mode */
-	if (get_sercmd_list(s)==0){
+	if (get_kamcmd_list(s)==0){
 	#ifdef USE_CFG_VARS
 		get_cfgvars_list(s);
 	#endif /* USE_CFG_VARS */
-	#ifdef USE_MI
-		get_mi_list(s);
-	#endif /* USE_MI */
 	#ifdef USE_COUNTERS
 		get_counters_list(s);
 	#endif /* USE_COUNTERS */
@@ -2322,17 +2129,17 @@ int main(int argc, char** argv)
 	printf("%s\n", COPYRIGHT);
 	printf("%s\n", DISCLAIMER);
 #ifdef USE_READLINE
-	
+
 	/* initialize readline */
 	/* allow conditional parsing of the ~/.inputrc file*/
-	rl_readline_name=NAME; 
-	rl_completion_entry_function=sercmd_generator;
-	rl_attempted_completion_function=sercmd_completion;
-	
+	rl_readline_name=NAME;
+	rl_completion_entry_function=kamcmd_generator;
+	rl_attempted_completion_function=kamcmd_completion;
+
 	while(!quit){
 		line=readline(NAME "> ");
 		if (line==0) /* EOF */
-			break; 
+			break;
 		l=trim_ws(line); /* trim whitespace */
 		if (*l){
 			add_history(l);
@@ -2375,15 +2182,6 @@ end:
 		cfg_vars_no=0;
 	}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	if (mi_cmds)
-		free_mi_cmds();
-	if (mi_which_array){
-		free_rpc_array(mi_which_array, mi_which_no);
-		mi_which_array=0;
-		mi_which_no=0;
-	}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 	if (cnt_grp_lst)
 		free_cnt_grp_lst();
@@ -2411,15 +2209,6 @@ error:
 		cfg_vars_no=0;
 	}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	if (mi_cmds)
-		free_mi_cmds();
-	if (mi_which_array){
-		free_rpc_array(mi_which_array, mi_which_no);
-		mi_which_array=0;
-		mi_which_no=0;
-	}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 	if (cnt_grp_lst)
 		free_cnt_grp_lst();

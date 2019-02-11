@@ -1,0 +1,1507 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="operation" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Server Operation</title>
+    <section id="operationalpractices">
+	<title>Recommended Operational Practices</title>
+
+	<para>
+	    Operation of a SIP server is not always easy task.
+	    Server administrators are challenged by broken or
+	    misconfigured user agents, network and host failures,
+	    hostile attacks and other stress-makers. All such
+	    situations may lead to an operational failure. It is sometimes
+	    very difficult to figure out the root reason of
+	    a failure, particularly in a distributed environment
+	    with many SIP components involved.		
+	    In this section,
+	    we share some of our practices and refer to tools
+	    which have proven to
+	    make life of administrators easier
+	</para>
+
+	<qandaset>
+	    <qandaentry>
+		<question>
+		    <para>
+			Keeping track of messages is good
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			Frequently, operational errors are discovered or reported
+			with a delay.
+			Users frustrated by an error
+			frequently approach administrators
+			and scream "even though my SIP requests were absolutely ok
+			yesterday, they were mistakenly denied by your server".
+			If administrators do not record all SIP traffic at
+			their site, they will be no more able to identify
+			the problem reason.
+			We thus recommend that site
+			operators record all messages passing their site and keep them
+			stored for some period of time.
+			They may use utilities such as 
+			<application>ngrep 
+			</application> or 
+			<application>tcpdump
+			</application>.
+			There is also a utility <application>
+			    scripts/harv_ser.sh</application> in <application>
+			    ser</application> distribution for post-processing
+			of captured messages. It summarizes messages captured
+			by reply status and user-agent header field.
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Real-time Traffic Watching
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			Looking at SIP messages in real-time may help to gain
+			understanding of problems. Though there are commercial
+			tools available, using a simple, text-oriented tool
+			such as <application>ngrep</application> makes the job very well thanks to SIP's textual nature.
+		    </para>
+		    <example id="usingngrep">
+			<title>Using <application>ngrep</application>
+			</title>
+			<para>In this example, all messages at port 5060
+			    which include the string "bkraegelin" are captured
+			    and displayed</para>
+			<programlisting>
+[jiri@fox s]$ ngrep bkraegelin@ port 5060
+interface: eth0 (195.37.77.96/255.255.255.240)
+filter: ip and ( port 5060 )
+match: bkraegelin@
+#
+U +0.000000 153.96.14.162:50240 -> 195.37.77.101:5060
+ REGISTER sip:iptel.org SIP/2.0.
+ Via: SIP/2.0/UDP 153.96.14.162:5060.
+ From: sip:bkraegelin@iptel.org.
+ To: sip:bkraegelin@iptel.org.
+ Call-ID: 0009b7aa-1249b554-6407d246-72d2450a@153.96.14.162.
+ Date: Thu, 26 Sep 2002 22:03:55 GMT.
+ CSeq: 101 REGISTER.
+ Expires: 10.
+ Content-Length: 0.
+ .
+
+#
+U +0.000406 195.37.77.101:5060 -> 153.96.14.162:5060
+ SIP/2.0 401 Unauthorized.
+ Via: SIP/2.0/UDP 153.96.14.162:5060.
+ From: sip:bkraegelin@iptel.org.
+ To: sip:bkraegelin@iptel.org.
+ Call-ID: 0009b7aa-1249b554-6407d246-72d2450a@153.96.14.162.
+ CSeq: 101 REGISTER.
+ WWW-Authenticate: Digest realm="iptel.org", nonce="3d9385170000000043acbf6ba9c9741790e0c57adee73812", algorithm=MD5.
+ Server: Sip EXpress router(0.8.8 (i386/linux)).
+ Content-Length: 0.
+ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.14.162 in_uri=sip:iptel.org out_uri=sip:iptel.org via_cnt==1".
+			</programlisting>
+		    </example>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Tracing Errors in Server Chains
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			A request may pass any number of proxy servers on
+			its path to its destination. If an error occurs
+			in the chain, it is difficult for upstream troubleshooters
+			and/or users complaining to administrators to learn 
+			more about error circumstances. 
+			<application>ser
+			</application> does its best and displays extensive
+			diagnostics information in SIP replies. It allows 
+			troubleshooters and/or users who report to troubleshooters
+			to gain additional knowledge about request processing
+			status. 
+			This extended debugging information is part of the warning 
+			header field. See <xref linkend="usingngrep"/> for an illustration
+			    of a reply that includes such a warning header field. The header
+			    field contains the following pieces of information:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					Server's IP Address -- good to identify
+					from which server in a chain the reply
+					came.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Incoming and outgoing URIs -- good to
+					learn for which URI the reply was
+					generated, as it may be rewritten
+					many times in the path. Particularly
+					useful for debugging of numbering plans.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Number of Via header fields in replied
+					request -- that helps in assessment of
+					request path length. Upstream clients would
+					not know otherwise, how far away in terms
+					of SIP hops their requests were replied.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Server's process id. That is useful for
+					debugging to discover situations when
+					multiple servers listen at the same
+					address.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					IP address of previous SIP hop as seen by
+					the SIP server.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+		    </para>
+		    <para>
+			If server administrator is not comfortable with
+			disclosing all this information, he can turn them
+			off using the <varname>sip_warning</varname> configuration
+			option.
+		    </para>
+		    <para>
+			A nice utility for debugging server chains is
+			<application>sipsak</application>,
+			SIP Swiss Army Knife, traceroute-like tool for SIP
+			developed at iptel.org. It allows you to send
+			OPTIONS request with low, increasing Max-Forwards 
+			header-fields and follow how it propagates in
+			SIP network. See its webpage at
+			<ulink url="http://sipsak.berlios.de/">
+			    http://sipsak.berlios.de/
+			</ulink>.
+		    </para>
+		    <example>
+			<title>Use of SIPSak for Learning SIP Path</title>
+			<programlisting>
+[jiri@bat sipsak]$ ./sipsak -T -s sip:7271@iptel.org
+warning: IP extract from warning activated to be more informational
+0: 127.0.0.1 (0.456 ms) SIP/2.0 483 Too Many Hops
+1: ?? (31.657 ms) SIP/2.0 200 OK
+   without Contact header
+			</programlisting>
+			<para>
+			    Note that in this example, the second hop
+			    server does not issue any warning header fields
+			    in replies and it is thus impossible to display 
+			    its IP address in <application>
+				SIPsak</application>'s output.
+			</para>
+		    </example>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Watching Server Health
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			Watching Server's operation status in real-time may
+			also be a great aid for trouble-shooting. 
+			<application>ser</application> has an excellent 
+			facility, a FIFO server, which allows UNIX
+			tools to access server's internals. (It is 
+			similar to how Linux tool access Linux kernel
+			via the proc file system.) The FIFO server
+			accepts commands via a FIFO (named pipe) and
+			returns data asked for. Administrators do not
+			need to learn details of the FIFO communication
+			and can serve themselves using a front-end
+			utility <application>serctl</application>.
+			Of particular interest for 
+			monitoring server's operation are 
+			<application>serctl</application>
+			commands
+			<command>ps</command> and
+			<command>moni</command>.
+			The former displays running 
+			<application>ser</application>
+			processes, whereas the latter shows statistics.
+		    </para>
+		    <example>
+			<title>serctl ps command</title>
+			<para>
+			    This example shows 10 processes running at a host.
+			    The process 0, "attendant" watches child processes
+			    and terminates all of them if a failure occurs in
+			    any of them. Processes 1-4 listen at local
+			    interface and processes 5-8 listen at Ethernet
+			    interface at port number 5060. Process number
+			    9 runs FIFO server, and process number 10
+			    processes all server timeouts.
+			</para>
+			<programlisting>
+[jiri@fox jiri]$ serctl ps
+0	31590	attendant
+1	31592	receiver child=0 sock=0 @ 127.0.0.1::5060
+2	31595	receiver child=1 sock=0 @ 127.0.0.1::5060
+3	31596	receiver child=2 sock=0 @ 127.0.0.1::5060
+4	31597	receiver child=3 sock=0 @ 127.0.0.1::5060
+5	31604	receiver child=0 sock=1 @ 195.37.77.101::5060
+6	31605	receiver child=1 sock=1 @ 195.37.77.101::5060
+7	31606	receiver child=2 sock=1 @ 195.37.77.101::5060
+8	31610	receiver child=3 sock=1 @ 195.37.77.101::5060
+9	31611	fifo server
+10	31627	timer
+			</programlisting>
+		    </example>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Is Server Alive
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			It is essential for solid operation to know
+			continuously that server is alive. We've been
+			using two tools for this purpose. 
+			<application>sipsak</application>
+			does a great job of "pinging" a server, which
+			may be used for alerting on unresponsive servers.
+		    </para>
+		    <para>
+			<application>monit</application> is
+			a server watching utility which alerts when
+			a server dies.
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Dealing with DNS
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			SIP standard leverages DNS. Administrators of
+			<application>ser</application> should
+			be aware of impact of DNS on server's operation.
+			Server's attempt to resolve an unresolvable address
+			may block a server process in terms of seconds. To be
+			safer that the server doesn't stop responding
+			due to being blocked by DNS resolving, we recommend
+			the following practices:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    Start a sufficient number of children processes.
+				    If one is blocked, the other children will
+				    keep serving.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Use DNS caching. For example, in Linux,
+				    there is an <application>
+					nscd</application> daemon available for
+				    this purpose.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Process transactions statefully if memory
+				    allows. That helps to absorb retransmissions
+				    without having to resolve DNS for each of
+				    them.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry id="logging">
+		<question>
+		    <para>
+			Logging
+		    </para>
+		</question>
+		<answer>
+			<para>
+			    <application>ser</application> by default logs
+			    to <application>syslog</application> facility.
+			    It is very useful to watch log messages for
+			    abnormal behavior. Log messages, subject to
+			    <application>syslog</application> configuration
+			    may be stored at different files, or even at remote
+			    systems. A typical location of the log file is
+			    <filename>/var/log/messages</filename>.
+			</para>
+			<note>
+			    <para>
+				One can also use other <application>syslogd</application>
+				implementation. <application>metalog</application>
+				(<ulink url="http://metalog.sourceforge.net/">
+				    http://metalog.sourceforge.net/
+				</ulink>)
+				features regular expression matching that enables
+				to filter and group log messages.
+			    </para>
+			</note>
+			<para>
+			    For the purpose of debugging configuration scripts, one may
+			    want to redirect log messages to console not to pollute
+			    syslog files. To do so configure <application>ser</application>
+			    in the following way:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					Attach ser to console by setting <varname>fork=no</varname>.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Set explicitly at which address 
+					<application>ser</application>
+					should be listening, e.g., <varname>listen=192.168.2.16</varname>.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Redirect log messages to standard error by setting
+					<varname>log_stderror=yes</varname>
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Set appropriately high log level. (Be sure that you redirected logging
+					to standard output. Flooding system logs with many detailed messages
+					would make the logs difficult to read and use.) You can set the global
+					logging threshold value with the option <varname>debug=nr</varname>,
+					where the higher <varname>nr</varname> the more detailed output.
+					If you wish to set log level only for some script events, include
+					the desired log level as the first parameter of the
+					<command>log</command> action in your script.
+					The messages will be then printed if <command>log</command>'s
+					level is lower than the global threshold, i.e., the lower the more
+					noisy output you get.
+					<example>
+					    <title>Logging Script</title>
+					    <programlisting>
+<xi:include href="../../examples/logging.cfg" parse="text"/>
+					    </programlisting>
+					    <para>
+						The following SIP message causes then logging output as shown
+						below.
+					    </para>
+					    <programlisting>
+REGISTER sip:192.168.2.16 SIP/2.0
+Via: SIP/2.0/UDP 192.168.2.33:5060
+From: sip:113311@192.168.2.16
+To: sip:113311@192.168.2.16
+Call-ID: 00036bb9-0fd305e2-7daec266-212e5ec9@192.168.2.33
+Date: Thu, 27 Feb 2003 15:10:52 GMT
+CSeq: 101 REGISTER
+User-Agent: CSCO/4
+Contact: sip:113311@192.168.2.33:5060
+Content-Length: 0
+Expires: 600                                 
+					    </programlisting>
+					    <programlisting>
+[jiri@cat sip_router]$ ./ser -f examples/logging.cfg 
+Listening on 
+	192.168.2.16 [192.168.2.16]::5060
+	Aliases: cat.iptel.org:5060 cat:5060 
+WARNING: no fork mode 
+0(0) INFO: udp_init: SO_RCVBUF is initially 65535
+0(0) INFO: udp_init: SO_RCVBUF is finally 131070
+0(17379) REGISTER received
+0(17379) request for other domain received					
+					    </programlisting>
+					</example>
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			Labeling Outbound Requests
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			Without knowing, which pieces of script code a relayed
+			request visited, trouble-shooting would be difficult.
+			Scripts typically apply different processing to
+			different routes such as to IP phones and PSTN
+			gateways. We thus recommend to label outgoing
+			requests with a label describing the type of processing
+			applied to the request.
+		    </para>
+		    <para>
+			Attaching "routing-history" hints to relayed
+			requests is as easy as using the 
+			<command>append_hf</command>
+			action exported by textops module. The following
+			example shows how different labels are attached
+			to requests to which different routing logic
+			was applied.
+			<example>
+			    <title>"Routing-history" labels</title>
+			    <programlisting>
+# is the request for our domain?
+# if so, process it using UsrLoc and label it so.
+if (uri=~[@:\.]domain.foo") {
+    if (!lookup("location")) {
+        sl_send_reply("404", "Not Found");
+        break;
+    };
+    # user found -- forward to him and label the request
+    append_hf("P-hint: USRLOC\r\n");
+} else {
+    # it is an outbound request to some other domain --
+    # indicate it in the routing-history label
+    append_hf("P-hint: OUTBOUND\r\n");
+};
+t_relay();
+			    </programlisting>
+			    <para>
+				This is how such a labeled requests looks
+				like. The last header field includes
+				a label indicating the script processed
+				the request as outbound.
+			    </para>
+			    <programlisting>
+#
+U 2002/09/26 02:03:09.807288 195.37.77.101:5060 -> 203.122.14.122:5060
+ SUBSCRIBE sip:rajesh@203.122.14.122 SIP/2.0.
+ Max-Forwards: 10.
+ Via: SIP/2.0/UDP 195.37.77.101;branch=53.b44e9693.0.
+ Via: SIP/2.0/UDP 203.122.14.115:16819.
+ From: sip:rajeshacl@iptel.org;tag=5c7cecb3-cfa2-491d-a0eb-72195d4054c4.
+ To: sip:rajesh@203.122.14.122.
+ Call-ID: bd6c45b7-2777-4e7a-b1ae-11c9ac2c6a58@203.122.14.115.
+ CSeq: 2 SUBSCRIBE.
+ Contact: sip:203.122.14.115:16819.
+ User-Agent: Windows RTC/1.0.
+ Proxy-Authorization: Digest username="rajeshacl", realm="iptel.org", algorithm="MD5", uri="sip:rajesh@203.122.14.122", nonce="3d924fe900000000fd6227db9e565b73c465225d94b2a938", response="a855233f61d409a791f077cbe184d3e3".
+ Expires: 1800.
+ Content-Length: 0.
+ P-hint: OUTBOUND.
+			    </programlisting>
+			</example>
+		    </para>
+		</answer>
+	    </qandaentry>
+	</qandaset>
+    </section> <!-- operational practises -->
+    
+    <section>
+	<title>HOWTOs</title>
+	<para>
+	    This section is a "cookbook" for dealing with common tasks, such as
+	    user management or controlling access to PSTN gateways.
+	</para>
+	<section>
+	    <title>User Management</title>
+	    
+	    <para>
+		There are two tasks related to management of SIP users:
+		maintaining user accounts and maintaining user contacts.
+		Both these jobs can be done using the 
+		<application>serctl</application>
+		command-line tool. Also, the complimentary web
+		interface, <application>serweb</application>,
+		can be used for this purpose as well.
+	    </para>
+	    <para>
+		If user authentication is turned on, which is a highly
+		advisable practice, user account must be created before
+		a user can log in. To create a new user account, call the
+		<command>serctl add</command> utility
+		with username, password and email as parameters. It
+		is important that the environment <varname>SIP_DOMAIN</varname>
+		is set to your realm and matches realm values used in
+		your script. The realm value is used for calculation
+		of credentials stored in subscriber database, which are
+		bound permanently to this value.
+		<screen>
+[jiri@cat gen_ha1]$ export SIP_DOMAIN=foo.bar
+[jiri@cat gen_ha1]$ serctl add newuser secret newuser@foo.bar
+MySql Password: 
+new user added
+		</screen>
+	    </para>
+	    <para><application>serctl</application> can
+		also change user's password or remove existing accounts
+		from system permanently.
+		<screen>
+[jiri@cat gen_ha1]$ serctl passwd newuser newpassword
+MySql Password: 
+password change succeeded
+[jiri@cat gen_ha1]$ serctl rm newuser                
+MySql Password: 
+user removed
+		</screen>
+	    </para>
+	    <para>
+		User contacts are typically automatically uploaded by SIP phones
+		to server during registration process and administrators do not
+		need to worry about them. However, users
+		may wish to append permanent contacts to PSTN gateways
+		or to locations in other administrative domains. 
+		To manipulate the contacts in such cases, use
+		<application>serctl ul</application>
+		tool. Note that this is the only correct way
+		to update contacts -- direct changes to back-end
+		MySql database do not affect server's memory. Also note,
+		that if persistence is turned off (usrloc "db_mode"
+		parameter set to "0"), all contacts are gone on server
+		reboot. Make sure that persistence is enabled if you
+		add permanent contacts.
+	    </para>
+	    <para>
+		To add a new permanent contact for a user, call 
+		<application>serctl ul add &lt;username&gt;
+		    &lt;contact&gt;</application>. To delete 
+		all user's contacts, call 
+		<application>serctl ul rm &lt;username&gt;</application>.
+		<application>serctl ul show &lt;username&gt;</application>
+		prints all current user's contacts.
+		<screen>
+[jiri@cat gen_ha1]$ serctl ul add newuser sip:666@gateway.foo.bar
+sip:666@gateway.foo.bar
+200 Added to table
+('newuser','sip:666@gateway.foo.bar') to 'location'
+[jiri@cat gen_ha1]$ serctl ul show newuser
+&lt;sip:666@gateway.foo.bar&gt;;q=1.00;expires=1073741812
+[jiri@cat gen_ha1]$ serctl ul rm newuser  
+200 user (location, newuser) deleted
+[jiri@cat gen_ha1]$ serctl ul show newuser
+404 Username newuser in table location not found
+		</screen>
+	    </para>
+	</section> <!-- user management -->
+	<section>
+	    <title>User Aliases</title>
+
+	    <para>
+		Frequently, it is desirable for a user to have multiple
+		addresses in a domain. For example, a user with username "john.doe" wants to be
+		reachable at a shorter address "john" or at a numerical address
+		"12335", so that PSTN callers with digits-only key-pad can reach
+		him too.
+	    </para>
+	    <para>
+		With <application>ser</application>, you can maintain
+		a special user-location table and translate existing aliases to canonical
+		usernames using the <command>lookup</command>
+		action from usrloc module. The following script fragment demonstrates
+		use of <command>lookup</command> for this purpose.
+		<example>
+		    <title>Configuration of Use of Aliases</title>
+		    <programlisting>
+if (!uri==myself) { # request not for our domain...
+    route(1); # go somewhere else, where outbound requests are processed
+    break;
+};
+# the request is for our domain -- process registrations first
+if (method=="REGISTER") { route(3); break; };
+
+# look now, if there is an alias in the "aliases" table; don't care
+# about return value: whether there is some or not, move ahead then
+lookup("aliases");
+
+# there may be aliases which translate to other domain and for which
+# local processing is not appropriate; check again, if after the
+# alias translation, the request is still for us
+if (!uri==myself) { route(1); break; };
+
+# continue with processing for our domain...
+...
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		The table with aliases is updated using the
+		<application>serctl</application>
+		tool. <application>
+		    serctl alias add &lt;alias&gt; &lt;uri&gt;</application>
+		adds a new alias, 
+		<application>serctl alias show &lt;user&gt;</application>
+		prints an existing alias, and
+		<application>serctl alias rm &lt;user&gt;</application>
+		removes it.
+		<screen>
+[jiri@cat sip_router]$ serctl alias add 1234 sip:john.doe@foo.bar
+sip:john.doe@foo.bar
+200 Added to table
+('1234','sip:john.doe@foo.bar') to 'aliases'
+[jiri@cat sip_router]$ serctl alias add john sip:john.doe@foo.bar
+sip:john.doe@foo.bar
+200 Added to table
+('john','sip:john.doe@foo.bar') to 'aliases'
+[jiri@cat sip_router]$ serctl alias show john                    
+&lt;sip:john.doe@foo.bar&gt;;q=1.00;expires=1073741811
+[jiri@cat sip_router]$ serctl alias rm john  
+200 user (aliases, john) deleted				
+		</screen>
+	    </para>
+	    <para>
+		Note that persistence needs to be turned on in usrloc
+		module. All changes to aliases will be otherwise lost
+		on server reboot. To enable persistence, set the
+		db_mode usrloc parameter to a non-zero value.
+		<programlisting>
+# ....load module ...
+loadmodule "modules/usrloc/usrloc.so"
+# ... turn on persistence -- all changes to user tables are immediately
+# flushed to mysql
+modparam("usrloc", "db_mode",   1)
+# the SQL address:
+modparam("usrloc", "db_url","mysql://ser:secret@dbhost/ser")
+		</programlisting>
+	    </para>
+	</section> <!-- user aliases -->
+	<section id="acl">
+	    <title>Access Control (PSTN Gateway)</title>
+	    <para>
+		It is sometimes important to exercise some sort of
+		access control. A typical use case is when 
+		<application>ser</application> is used
+		to guard a PSTN gateway. If a gateway was not well guarded,
+		unauthorized users would be able to use it to terminate calls in PSTN,
+		and cause high charges to its operator.
+	    </para>
+	    <para>
+		There are few issues you need to understand when
+		configuring <application>ser</application>
+		for this purpose. First, if a gateway is built or configured to
+		accept calls from anywhere, callers may easily bypass your
+		access control server and communicate with the gateway
+		directly. You then need to enforce at transport layer
+		that signaling is only accepted if coming via
+		<application>ser</application> and
+		deny SIP packets coming from other hosts and port numbers.
+		Your network must be configured not to allow forged
+		IP addresses. Also, you need to turn on record-routing
+		to assure that all session requests will travel via 
+		<application>ser</application>.			    
+		Otherwise, caller's devices would send subsequent SIP requests 
+		directly to your gateway, which would fail because of transport 
+		filtering.
+	    </para>
+	    <para>
+		Authorization (i.e., the process of determining who may call where)
+		is facilitated in <application>ser</application>
+		using <emphasis>group membership</emphasis> concept. Scripts make 
+		decisions on whether a caller is authorized to make a call to
+		a specific destination based on user's membership in a group.
+		For example a policy may be set up to allow calls to international
+		destinations only to users, who are members of an "int" group.			    
+		Before user's group membership is checked, his identity
+		must be verified first. Without cryptographic verification of user's
+		identity, it would be impossible to assert that a caller really
+		is who he claims to be.
+	    </para>
+	    <para>
+		The following script demonstrates, how to configure <application>ser</application>
+		as an access control server for a PSTN gateway. The script verifies user
+		identity using digest authentication, checks user's privileges,
+		and forces all requests to visit the server.
+		<example>
+		    <title>Script for Gateway Access Control</title>
+		    <programlisting>
+<xi:include href="../../examples/pstn.cfg" parse="text"/>
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		Use the <application>serctl</application> tool to
+		maintain group membership. 
+		<application>serctl acl grant &lt;username&gt; &lt;group&gt;</application>
+		makes a user member of a group, 
+		<application>serctl acl show &lt;username&gt;</application> shows groups
+		of which a user is member, and
+		<application>serctl acl revoke &lt;username&gt; [&lt;group&gt;]</application>
+		revokes user's membership in one or all groups.
+		<screen>
+[jiri@cat sip_router]$ serctl acl grant john int
+MySql Password: 
++------+-----+---------------------+
+| user | grp | last_modified       |
++------+-----+---------------------+
+| john | int | 2002-12-08 02:09:20 |
++------+-----+---------------------+
+		</screen>
+	    </para>
+	</section> <!-- access control -->
+	<section>
+	    <title>Accounting</title>
+	    <para>
+		In some scenarios, like termination of calls in PSTN, SIP administrators
+		may wish to keep track of placed calls. <application>ser</application>
+		can be configured to report on completed transactions. Reports are sent
+		by default to <application>syslog</application> facility.
+		Support for RADIUS and mysql accounting exists as well.
+	    </para>
+	    <para>
+		Note that <application>ser</application> is no way 
+		call-stateful. It reports on completed transactions, i.e., after 
+		a successful call set up is reported, it drops any call-related 
+		state. When a call is terminated, transactional state for BYE request
+		is created and forgotten again after the transaction completes.
+		This is a feature and not a bug -- keeping only transactional
+		state allows for significantly higher scalability. It is then
+		up to the accounting application to correlate call initiation
+		and termination events.
+	    </para>
+	    <para>
+		To enable call accounting, tm and acc modules need to be loaded,
+		requests need to be processed statefully and labeled for
+		accounting. That means, if you want a transaction to be reported,
+		the initial request must have taken the path 
+		"<command>setflag(X)</command>, <command>t_relay</command>"
+		in <application>ser</application> script. X must have the
+		value configured in <varname>acc_flag</varname>
+		configuration option.
+	    </para>
+	    <para>
+		Also note, that by default only transactions that initiate
+		a SIP dialog (typically INVITE) visit a proxy server.
+		Subsequent transactions are exchanged directly between
+		end-devices, do not visit proxy server and cannot be
+		reported. To be able to report on subsequent transactions,
+		you need to force them visit proxy server by turning 
+		record-routing on. 
+	    </para>
+	    <para>
+		<example>
+		    <title>Configuration with Enabled Accounting</title>
+		    <programlisting>
+<xi:include href="../../examples/acc.cfg" parse="text"/>
+		    </programlisting>
+		</example>
+	    </para>
+	</section> <!-- accounting -->
+	<section>
+	    <title>Reliability</title>
+
+	    <para>
+		It is essential to guarantee continuous
+		service operation even under erroneous conditions, 
+		such as host or network failure. The major issue in such
+		situations is transfer of operation to a backup
+		infrastructure and making clients use it.
+	    </para>
+	    <para>
+		The SIP standard's use of DNS SRV records has been
+		explicitly constructed to handle with server failures.
+		There may be multiple servers responsible for a domain
+		and referred to by DNS. If it is impossible to communicate
+		with a primary server, a client can proceed to another one.
+		Backup servers may be located in a different geographic
+		area to minimize risk caused by areal operational
+		disasters: lack of power, flooding, earthquake, etc.
+		<note>
+		    <sidebar>
+			<para>Unless there are redundant DNS
+			    servers, fail-over capability cannot be guaranteed.
+			</para>
+		    </sidebar>
+		</note>
+		Unfortunately, at the moment of writing this documentation
+		(end of December 2002) only very few SIP products
+		actually implement the DNS fail-over mechanism. Unless
+		networks with SIP devices supporting this mechanism are
+		built, alternative mechanisms must be used to force 
+		clients to use backup servers. Such a mechanism is
+		disconnecting primary server and replacing it with
+		a backup server locally.
+		It unfortunately precludes geographic dispersion and
+		requires network multihoming to avoid dependency on
+		single IP access. Another method is to update DNS
+		when failure of the primary server is detected.
+		The primary drawback of this method is its latency:
+		it may take long time until all clients learn to use
+		the new server.
+	    </para>
+	    <para>
+		The easier part of the redundancy story is replication of 
+		<application>ser</application>
+		data. <application>ser</application>
+		relies on replication capabilities of its back-end database.
+		This works with one exception: user location database.
+		User location database is a frequently accessed table,
+		which is thus cached in server's memory to improve
+		performance. Back-end replication does not affect
+		in-memory tables, unless server reboots. To facilitate
+		replication of user location database, 
+		server's SIP replication feature must be enabled
+		in parallel with back-end replication.
+	    </para>
+	    <para>
+		The design idea of replication of user location database
+		is easy: Replicate any successful REGISTER requests to
+		a peer server. To assure that digest credentials can
+		be properly verified, both servers need to use the same
+		digest generation secret and maintain synchronized time.
+		A known limitation of this method is it does not replicate
+		user contacts entered in another way, for example using
+		web interface through FIFO server.
+		The following script example shows configuration of
+		a server that replicates all REGISTERs.
+		<example>
+		    <title>Script for Replication of User Contacts</title>
+		    <programlisting>
+<xi:include href="../../examples/replicate.cfg" parse="text"/>
+		    </programlisting>
+		</example>
+	    </para>
+	</section> <!-- reliability -->
+	<section>
+	    <title>Stateful versus Stateless Forwarding</title>
+	    <para>
+		<application>ser</application> allows both stateless
+		and stateful request processing. This memo explains what are pros and cons of
+		using each method. The rule of thumb is "stateless for scalability,
+		stateful for services". If you are unsure which you need, stateful
+		is a safer choice which supports more usage scenarios.
+	    </para>
+	    <para>
+		Stateless forwarding with the
+		<command>forward(uri:host, uri:port)</command> action
+		guarantees high scalability. It withstands high load and
+		does not run out of memory. A perfect use of stateless forwarding
+		is load distribution.
+	    </para>
+	    <para>
+		Stateful forwarding using the <command>t_relay()</command>
+		action is known to scale worse. It can quickly run out of memory and
+		consumes more CPU time. Nevertheless, there are scenarios which are
+		not implementable without stateful processing. In particular:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Accounting</emphasis> requires stateful processing
+			    to be able to collect transaction status and issue a single
+			    report when a transaction completes.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Forking</emphasis> only works with stateful forwarding.
+			    Stateless forwarding only forwards to the default URI out of the
+			    whole destination set.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>DNS resolution</emphasis>. DNS resolution may be
+			    better served with stateful processing. If a request is forwarded
+			    to a destination whose address takes long time to resolve,
+			    a server process is blocked and unresponsive. Subsequent 
+			    request retransmissions from client will cause other processes
+			    to block too if requests are processed statelessly. As a result,
+			    <application>ser</application> will quickly
+			    run out of available processes. With stateful forwarding,
+			    retransmissions are absorbed and do not cause blocking of
+			    another process.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Forwarding Services</emphasis>. All sort of services 
+			    with the "forward_on_event" logic, which rely on 
+			    <command>t_on_failure</command> tm
+			    action must be processed statefully.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				Fail-over.
+			    </emphasis>
+			    If you wish to try out another destination, after a primary destination
+			    failed you need to use stateful processing. With stateless processing
+			    you never know with what status a forwarded request completed downstream
+			    because you immediately release all processing information after the 
+			    request is sent out. 
+
+			    <note>
+				<para>
+				    Positive return value of stateless
+				    <command>forward</command> action only indicates that
+				    a request was successfully sent out, and does not gain any knowledge
+				    about whether it was successfully received or replied. Neither does
+				    the return value of
+				    the stateful <command>t_relay</command> action family
+				    gain you this knowledge. However, these actions store transactional
+				    context with which includes original request and allows you to
+				    take an action when a negative reply comes back or a timer strikes.
+				    See <xref linkend="replyprocessingsection"/> for an example script 
+					which launches another
+					branch if the first try fails.
+				</para>
+			    </note>
+
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section> <!-- stateful vs. stateless -->
+	<section>
+	    <title>Serving Multiple Domains</title>
+	    <para>
+		<application>ser</application> can be configured to
+		serve multiple domains. To do so, you need to take the following steps:
+		<orderedlist>
+		    <listitem id="createtable">
+			<para>
+			    Create separate subscriber and location database table
+			    for each domain served and name them uniquely.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Configure your script to distinguish between multiple
+			    served domains. Use regular expressions for domain
+			    matching as described in <xref linkend="redomainmatching"/>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Update table names in usrloc and auth actions to reflect
+			    names you created in <xref linkend="createtable"/>.
+			</para>
+		    </listitem>
+		    
+		</orderedlist>
+	    </para>
+	    <para>
+		The latest <application>SER</application> release includes automated
+		multidomain management which greatly automates maintenance of multiple	
+		domains. Ask our technical support for more help.
+	    </para>
+	</section> <!-- multiple domains -->
+	<section id="missedcalls">
+	    <title>Reporting Missed Calls</title>
+	    <para>
+		<application>ser</application> can report missed
+		calls via <application>syslog</application> facility
+		or to mysql. Mysql reporting can be utilized by 
+		<application>ser</application>'s 
+		complementary web-interface, <application>serweb</application>.
+		(See more in <xref linkend="serweb"/>).
+	    </para>
+	    <para>
+		Reporting on missed calls is enabled by acc module.
+		There are two cases, on which you want to report. The first
+		case is when a callee is off-line. The other case is when
+		a user is on-line, but call establishment fails. There
+		may be many failure reasons (call cancellation, inactive phone,
+		busy phone, server timer, etc.), all of them leading to
+		a negative (>=300) reply sent to caller. The acc module
+		can be configured to issue a missed-call report whenever
+		a transaction completes with a negative status. Two following
+		script fragment deals with both cases.
+	    </para>
+	    <para>
+		First, it reports
+		on calls missed due to off-line callee status
+		using the <command>acc_request</command>
+		action. The action is wrapped in transactional
+		processing (<command>t_newtran</command>)
+		to guarantee that reports are not
+		duplicated on receipt of retransmissions.
+	    </para>
+	    <para>
+		Secondly, transactions to on-line users are marked
+		to be reported on failure. That is what the 
+		<command>setflag(3)</command> action
+		is responsible for, along with the configuration option
+		"log_missed_flag". This option configures <application>ser</application>
+		to report on all transactions, which were marked
+		with flag 3.			   
+		<programlisting>
+loadmodule("modules/tm/tm.so");
+loadmodule("modules/acc/acc.so");
+....
+# if a call is labeled using setflag(3) and is missed, it will
+# be reported
+...
+modparam("acc", "log_missed_flag", 3 );
+if (!lookup("location")) {
+    # call invitations to off-line users are reported using the
+    # acc_request action; to avoid duplicate reports on request
+    # retransmissions, request is processed statefully (t_newtran,
+    # t_reply)
+    if ((method=="INVITE" || method=="ACK") &amp;&amp; t_newtran() ) {
+         t_reply("404", "Not Found");
+         acc_request("404 Not Found");
+         break;
+    };
+    # all other requests to off-line users are simply replied
+    # statelessly and no reports are issued
+    sl_send_reply("404", "Not Found");
+    break;
+} else {
+    # user on-line; report on failed transactions; mark the
+    # transaction for reporting using the same number as 
+    # configured above; if the call is really missed, a report
+    # will be issued
+    setflag(3);
+    # forward to user's current destination
+    t_relay();
+    break;
+};
+		</programlisting>
+		
+	    </para>
+	</section> <!-- missed calls -->
+	<section>
+	    <title>NAT Traversal</title>
+	    <para>
+		NATs are worst things that ever happened to SIP. These devices
+		are very popular because they help to conserve IP address space
+		and save money charged for IP addresses. Unfortunately, they
+		translate addresses in a way which is not compatible with SIP.
+		SIP advertises receiver addresses in its payload. The advertised
+		addresses are invalid out of NATed networks. As a result,
+		SIP communication does not work across NATs without extra
+		effort.
+	    </para>
+	    <para>
+		There are few methods that may be deployed to traverse NATs.
+		How proper their use is depends on the deployment scenario.
+		Unfortunately, all the methods have some limitations and
+		there is no straight-forward solution addressing all
+		scenarios. Note that none of these methods takes explicit
+		support in <application>ser</application>.
+	    </para>
+	    <para>
+		The first issue is whether SIP users are in control of 
+		their NATs. If not (NATs are either operated by ISP or
+		they are sealed to prevent users setting them up), the
+		only method is use of a STUN-enabled phone. STUN is 
+		a very simple protocol used to fool NAT in such a way,
+		they permit SIP sessions. Currently, we are aware of
+		one softphone (kphone) and one hardphone (snom) with
+		STUN support, other vendors are working on STUN support
+		too. Unfortunately, STUN gives no NAT traversal
+		guarantee -- there are types of NATs, so called
+		symmetric NATs, over which STUN fails to work.
+		<note>
+		    <para>
+			There is actually yet another method to address
+			SIP-unaware, user-uncontrolled NATs. It is based
+			on a proxy server, which relays all signaling and
+			media and mangles packets to make them more
+			NAT-friendly. The very serious problem with this
+			method is it does not scale.
+		    </para>
+		</note>
+	    </para>
+	    <para>
+		If users are in control of their own NAT, as typically residential
+		users are, they can still use STUN. However, they may use other
+		alternatives too. One of them is to replace their NAT with
+		a SIP-aware NAT. Such NATs have built-in SIP awareness,
+		that patches problems caused by address translations. Prices
+		of such devices are getting low and there are available
+		implementations (Intertex, Cisco/PIX). No special support
+		in phones is needed.
+	    </para>
+	    <para>
+		Other emerging option is UPnP. UPnP is a protocol that allows
+		phones to negotiate with NAT boxes. You need UPnP support in
+		both, NAT and phones. As UPnP NATs are quite affordable,
+		costs are not an obstacle. Currently, we are aware of one
+		SIP phone (SNOM) with UPnP support.
+	    </para>
+	    <para>
+		Geeks not wishing to upgrade their firewall to a SIP-aware or
+		UPnP-enabled one may try to configure static address translation.
+		That takes phones with configuration ability to use fixed port
+		numbers and advertise outside address in signaling. Cisco phones
+		have this capability, for example. The NAT devices need to
+		be configured to translate outside port ranges to the 
+		ranges configured in phones.		    
+	    </para>
+	</section> <!-- NAT traversal -->
+
+	<section>
+	    <title>Using Only Latest User's Contact for Forwarding
+	    </title>
+	    <para>
+		In some scenarios, it may be beneficial only to use only one
+		registered contact per user. If that is the case, setting
+		registrar module's parameter <varname>append_branches</varname>
+		to 1 will eliminate forking and forward all requests only
+		to a single contact. If there are multiple contacts, a contact
+		with highest priority is chosen. This can be changed to
+		the "freshest" contact by setting module parameter's
+		<varname>desc_time_order</varname> to 1.
+	    </para>
+
+	</section>
+
+	<section>
+	    <title>Authentication Policy: Prevention of Unauthorized Domain 
+		Name Use in From and More</title>
+	    <para>
+		Malicious users can claim a name of domain, to which they do 
+		not administratively belong, in From header field. This
+		behavior cannot be generally prevented. The reason is
+		that requests with such a faked header field do not need
+		to visit servers of the domain in question. However, if they
+		do so, it is desirable to assure that users claiming
+		membership in a domain are actually associated with it.
+		Otherwise the faked requests would be relayed and appear
+		as coming from the domain, which would increase
+		credibility of the faked address and decrease credibility of
+		the proxy server.
+	    </para>
+	    <para>
+		Preventing unauthorized domain name use in relayed requests 
+		is not difficult.
+		One needs to authenticate each request with name of the
+		served domain in From header field. To do so, one can
+		search for such a header field using <command>search</command>
+		action (textops module) and force authentication if the
+		search succeeds.
+		<note>
+		    <para>
+			A straight-forward solution might be to authenticate
+			ALL requests. However, that only works in closed
+			networks in which all users have an account in the
+			server domain. In open networks, it is desirable to permit
+			incoming calls from callers from other domains without
+			any authentication. For example, a company may wish
+			to accept calls from unknown callers who are
+			new prospective customers.
+			
+		    </para>
+		</note>
+		<programlisting>
+# does the user claim our domain "foo.bar" in From?
+if (search("^(f|From):.*foo.bar")) {
+    # if so, verify credential
+    if (!proxy_authorize("foo.bar", "subscriber")) { 
+         # don't proceed if credentials broken; challenge
+         proxy_challenge("foo.bar", "0");
+         break;
+    };
+};
+		</programlisting>
+	    </para>
+	    <para>
+		In general, the authentication policy may be very rich. You may not
+		forget each request deserves its own security and you need to 
+		decide whether it shall be authenticated or not. As mentioned
+		above, in closed networks, you may want to authenticate absolutely 
+		every request. That however prohibits traffic from users from
+		other domains. A pseudo-example of a reasonable policy is attached:
+		it looks whether a request is registration, it claims to originate
+		from our domain in From header field, or is a local request to
+		another domain.
+		<programlisting>
+# (example provided by Michael Graff on [serusers] mailing list
+if (to me):
+    if register
+     www_authorize or fail if not a valid register
+     done
+   if claiming to be "From" one of the domains I accept registrations for
+   proxy_authorize
+   done
+   if not to me (I'm relaying for a local phone to an external address)
+    proxy_authorize
+   done
+		</programlisting>
+	    </para>
+	    <para>
+		You also may want to apply additional restriction to how
+		digest username relates to usernames claimed in From and
+		To header fields. For example, the <command>check_to</command>
+		action enforces the digest id to be equal to username
+		in To header fields. That is good in preventing someone
+		with valid credentials to register as someone else
+		(e.g., sending a REGISTER with valid credentials of
+		"joe" and To belonging to "alice"). Similarly,
+		<command>check_from</command> is used
+		to enforce username in  from to equal to digest id.
+		<note>
+		    <para>
+			There may be a need for a more complex relationship
+			between From/To username and digest id. For example,
+			providers with an established user/password database
+			may wish to keep using it, whereas permitting users
+			to claim some telephone numbers in From. To address
+			such needs generally, there needs to be a 1:N mapping
+			between digest id and all usernames that are acceptable
+			for it. This is being addressed in a newly contributed
+			module "domain", which also addresses more generally
+			issues of domain matching for multidomain scenarios.
+		    </para>
+		</note>
+	    </para>
+	    <para>
+		Other operational aspect affecting the authentication policy
+		is guarding PSTN gateways (see <xref linkend="acl"/>). There
+		    may be destinations that are given away for free whereas
+		    other destinations may require access control using
+		    group membership, to which  authentication is a prerequisite.
+	    </para>
+
+	</section> <!-- authentication policy, faked froms -->
+	<section>
+	    <title>Connecting to PBX Voicemail Using a Cisco Gateway</title>
+	    <para>
+		In some networks, administrators may wish to utilize their
+		PBX voicemail systems behind PSTN gateways. There is a practical problem
+		in many network settings: it is not clear for whom a call to
+		voicemail is. If voicemail is identified by a single number,
+		which is then put in INVITE's URI, there is no easy way to
+		learn for whom a message should be recorded. PBX voicemails
+		utilize that PSTN protocols signal the number of originally
+		called party. If you wish to make the PBX voicemail work,
+		you need to convey the number in SIP and translate it in
+		PSTN gateways to its PSTN counterpart.
+	    </para>
+	    <para>
+		There may be many different ways to achieve this scenario. Here
+		we describe the proprietary mechanism Cisco gateways use and how to 
+		configure <application>ser</application> to
+		make the gateways happy. Cisco gateways expect the number
+		of originally called party to be located in proprietary
+		<varname>CC-Diversion</varname> header field. When a SIP 
+		INVITE sent via a PSTN gateway to PBX voicemail has number
+		of originally called party in the header field, the voicemail
+		system knows for whom the incoming message is. That is at least
+		true for AS5300/2600 with Cisco IOS 12.2.(2)XB connected to
+		Nortel pbxs via PRI. (On the other hand, 12.2.(7b) is known
+		not to work in this scenario.)
+	    </para>
+	    <para>
+		<application>ser</application> needs then to
+		be configured to append the <varname>CC-Diversion</varname>
+		header field name for INVITEs sent to PBX voicemail.
+		The following script shows that: when initial forwarding
+		fails (nobody replies, busy is received, etc.), a new branch
+		is initiated to the pbx's phone number. 
+		<command>append_urihf</command> is used to
+		append the <varname>CC-Diversion</varname> header field. It
+		takes two parameters: prefix, which includes header name,
+		and suffix which takes header field separator. 
+		<command>append_urihf</command> inserts
+		original URI between those two.
+		<example>
+		    <title>Forwarding to PBX/Voicemail via Cisco Gateways</title>
+		    <programlisting>
+<xi:include href="../../examples/ccdiversion.cfg" parse="text"/>
+		    </programlisting>
+		</example>
+		
+	    </para>
+	</section>
+    </section> <!-- howtos -->
+
+    <section>
+	<title>Troubleshooting</title>
+	<para>
+	    This section gathers practices how to deal with errors
+	    known to occur frequently. To understand how to watch
+	    SIP messages, server logs, and in general how to
+	    troubleshoot, read also <xref linkend="operationalpractices"/>. 
+	</para>
+	<qandaset>
+	    <qandaentry>
+		<question>
+		    <para>
+			SIP requests are replied by <application>ser</application> with
+			"483 Too Many Hops" or "513 Message Too Large"
+		    </para>
+		</question>
+
+		<answer>
+		    <para>
+			In both cases, the reason is probably an error in
+			request routing script which caused an infinite loop.
+			You can easily verify whether this happens by
+			watching SIP traffic on loopback interface. A typical
+			reason for misrouting is a failure to match local
+			domain correctly. If a server fails to recognize
+			a request for itself, it will try to forward it
+			to current URI in believe it would forward them
+			to a foreign domain. Alas, it forwards the request
+			to itself again. This continues to happen until
+			value of max_forwards header field reaches zero
+			or the request grows too big. Solutions is easy:
+			make sure that domain matching is correctly
+			configured. See <xref linkend="domainmatching"/>
+			    for more information how to get it right.
+		    </para>
+		</answer>		    
+	    </qandaentry>
+	    <qandaentry id="msmbug">
+		
+		<question>
+		    
+		    <para>
+			
+			Windows Messenger authentication fails.
+		    </para>
+		</question>
+		<answer>
+			<para>
+			    The most likely reason for this problem is a bug
+			    in Windows Messenger. WM only authenticates if
+			    server name in request URI equals authentication
+			    realm. After a challenge is sent by SIP server,
+			    WM does not resubmit the challenged request at all
+			    and pops up authentication window again.
+			    If you want to authenticate WM, you need to
+			    set up your realm value to equal server name.
+			    If your server has no name, IP address can be used
+			    as realm too. The realm value is configured in
+			    scripts as the first parameter of all
+			    <command>{www|proxy}_{authorize|challenge}</command>
+			    actions.
+			</para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry id="mhomed">
+		<question>
+		    <para>
+			On a multihomed host, forwarded messages carry other 
+			interface in Via than used for sending, or messages 
+			are not sent and an error log is issued "invalid 
+			sendtoparameters one possible reason is the server 
+			is bound to localhost".
+		    </para>
+		</question>
+		<answer>
+			<para>
+			    Set the configuration option <varname>mhomed</varname>
+			    to "1". <application>ser</application>
+			    will then attempt to calculate the correct interface.
+			    It's not done by default as it degrades performance
+			    on single-homed hosts or multi-homed hosts that are
+			    not set-up as routers.
+			</para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			I receive "ERROR: t_newtran: transaction already in process" in my logs.
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			That looks like an erroneous use of tm module in script.
+			tm can handle only one transaction per request. If you
+			attempt to instantiate a transaction multiple times,
+			<application>ser</application> will complain.
+			Anytime any of <command>t_newtran</command>,
+			<command>t_relay</command> or 
+			<command>t_relay_to_udp</command> actions is
+			encountered, tm attempts to instantiate a transaction.
+			Doing so twice fails. Make sure that any of this
+			commands is called only once during script execution.
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			I try to add an alias but 
+			<command>serctl</command>
+			complains that table does not exist.
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			You need to run <application>ser</application>
+			and use the command
+			<command>lookup("aliases")</command>
+			in its routing script. That's because the table 
+			of aliases is
+			stored in cache memory for high speed. The cache
+			memory is only set up when the 
+			<application>ser</application>
+			is running and configured to use it. If that is
+			not the case, 
+			<application>serctl</application>
+			is not able to manipulate the aliases table.
+		    </para>
+		</answer>
+	    </qandaentry>
+
+	    <qandaentry>
+		<question>
+		    <para>I started <application>ser</application> with
+			<varname>children=4</varname> but many more processes
+			were started. What is wrong?
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			That's ok. The <varname>children</varname> parameter defines
+			how many children should process each transport protocol in
+			parallel. Typically, the server listens to multiple protocols
+			and starts other supporting processes like timer or FIFO
+			server too. Call <application>serctl ps</application> to watch
+			running processes.
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <para>
+			I decided to use a compiled version of <application>ser</application>
+			but it does not start any more.
+		    </para>
+		</question>
+		<answer>
+		    <para>
+			You probably kept the same configuration file, which tries to load modules
+			from the binary distribution you used previously. Make sure that modules
+			paths are valid and point to where you compiled <application>ser</application>.
+			Also, watch logs for error messages "ERROR: load_module: could not open 
+			module".
+		    </para>
+		</answer>
+	    </qandaentry>
+	    
+	</qandaset>
+    </section> <!-- troubleshooting -->
+</section>

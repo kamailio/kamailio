@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows executing Python scripts from config file,
+		exporting functions to access the SIP message from Python.
+	</para>
+	<para>
+		For some basic examples of Python scripts that can be used with
+		this module, look at the files inside source tree located at
+		'modules/app_python/python_examples/'.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>python-dev</emphasis> - Python devel library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="app_python.p.load">
+	    <title><varname>load</varname> (string)</title>
+	    <para>
+			The path to the file with Python code to be executed
+			from configuration file.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/kamailio/handler.py</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "load", "/usr/local/etc/kamailio/myscript.py")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="app_python.p.script_name">
+	    <title><varname>script_name</varname> (string)</title>
+	    <para>
+			This is same as "load" parameter, kept for backward compatibility
+			with the older versions of the module.
+	    </para>
+	</section>
+
+	<section id="app_python.p.mod_init_function">
+	    <title><varname>mod_init_function</varname> (string)</title>
+	    <para>
+			The Python function to be executed by this module when
+			it is initialized by &kamailio;.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>mod_init</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_init_function</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "mod_init_function", "my_mod_init")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="app_python.p.child_init_method">
+	    <title><varname>child_init_method</varname> (string)</title>
+	    <para>
+			The Python function to be executed by this module when
+			a new worker process (child) is initialized by &kamailio;.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>child_init</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>child_init_method</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "child_init_method", "my_child_init")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section id="app_python.f.python_exec">
+	    <title>
+		<function moreinfo="none">python_exec(method [, args])</function>
+	    </title>
+	    <para>
+			Execute the Python function with the name given by the parameter 'method'.
+			Optionally can be provided a second string with parameters to be passed
+			to the Python function.
+	    </para>
+	    <para>
+			Both parameters can contain pseudo-variables.
+	    </para>
+		<example>
+		<title><function>python_exec</function> usage</title>
+		<programlisting format="linespecific">
+...
+python_exec("my_python_function");
+python_exec("my_python_function", "my_params");
+python_exec("my_python_function", "$rU");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+	<section>
+        <title>RPC Commands</title>
+        <section id="app_python.r.reload">
+            <title>
+            <function moreinfo="none">app_python.reload</function>
+            </title>
+            <para>
+            Marks the need to reload the Python script.
+            The actual reload is done by each worker when the next
+            Python method is invoked.
+            </para>
+            <para>
+            Name: <emphasis>app_python.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python.reload
+...
+            </programlisting>
+		</section>
+		<section id="app_python.r.api_list">
+            <title>
+            <function moreinfo="none">app_python.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>app_python.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python.api_list
+...
+            </programlisting>
+        </section>
+	</section>
+
+</chapter>
+

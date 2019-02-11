@@ -1,0 +1,49 @@
+.\"
+.TH kamailio.cfg 5 06.12.2016 kamailio "Kamailio SIP Server"
+.\" Process with
+.\" groff -man -Tascii kamailio.cfg.5
+.\"
+.SH NAME
+kamailio.cfg \- kamailio configuration file
+.SH SYNOPSIS
+.I /etc/kamailio/kamailio.cfg
+.SH DESCRIPTION
+.B kamailio
+reads the configuration data from
+.I /etc/kamailio/kamailio.cfg
+(or the file specified with
+.B \-f
+on the command line).
+The file contains global configuration parameters, module loading commands and the script that will be executed for each received request. Lines starting with
+.B #
+or enclosed in
+.B /* ... */
+are interpreted as comments.
+.PP
+This manual page is incomplete. For further information please see documentation on page
+.I  http://kamailio.org/wiki.
+
+.SH FILES
+.I /etc/kamailio/kamailio.cfg
+
+.SH AUTHORS
+
+see
+.B /usr/share/doc/kamailio/AUTHORS
+
+.SH SEE ALSO
+.BR kamailio(8)
+.PP
+Full documentation on kamailio, including configuration guidelines, FAQs and
+licensing conditions, is available at
+.I http://kamailio.org.
+.PP
+For reporting  bugs see
+.I
+https://github.com/kamailio/kamailio/issues
+.PP
+Mailing lists:
+.nf
+sr-users@lists.kamailio.org - Kamailio user community
+.nf
+sr-dev@lists.kamailio.org - Kamailio development, new features and unstable version

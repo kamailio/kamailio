@@ -1,0 +1,255 @@
+app_jsdt Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. load (str)
+
+        4. Functions
+
+              4.1. jsdt_dofile(path)
+              4.2. jsdt_dostring(script)
+              4.3. jsdt_run(function, params)
+              4.4. jsdt_runstring(script)
+
+        5. RPC Commands
+
+              5.1. app_jsdt.reload
+              5.2. app_jsdt.api_list
+
+        6. Example of usage
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. jsdt_dofile usage
+   1.3. jsdt_dostring usage
+   1.4. jsdt_run usage
+   1.5. jsdt_runstring usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. load (str)
+
+   4. Functions
+
+        4.1. jsdt_dofile(path)
+        4.2. jsdt_dostring(script)
+        4.3. jsdt_run(function, params)
+        4.4. jsdt_runstring(script)
+
+   5. RPC Commands
+
+        5.1. app_jsdt.reload
+        5.2. app_jsdt.api_list
+
+   6. Example of usage
+
+1. Overview
+
+   This module allows executing JavaScript scripts from the Kamailio
+   configuration file. It exports all KEMI functions to JavaScript in
+   order to access the currently processed SIP message. These functions
+   are named within the JavaScript object 'KSR'.
+
+   The module is based on the Duktape JavaScript engine
+   (http://www.duktape.org), which is a fast and easy to embed JavaScript
+   interpreter. The exported API from Kamailio to JavaScript is documented
+   in the wiki.
+
+   The module has two JavaScript contexts:
+     * first is used for functions jsdt_dofile() and jsdt_dostring().
+     * second is used for function jsdt_run() and parameter 'load'.
+       Therefore jsdt_run() cannot execute functions from scripts loaded
+       via jsdt_dofile() in config. This is kind of caching mode, avoiding
+       reading file every time, but you must be sure you do not have
+       someting that is executed by default and requires access to SIP
+       message. This environment is also used by KEMI framework for the
+       config SIP routing functions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libm - the math library (part of standard system libraries - it is
+       needed to complile embedded Duktape JS interpreter).
+
+3. Parameters
+
+   3.1. load (str)
+
+3.1. load (str)
+
+   Set the path to the JavaScript file to be loaded at startup. Then you
+   can use jsdt_run(function, params) to execute a function from the
+   script at runtime. If you use it for KEMI configuration, then it has to
+   include the requited functions.
+
+   Default value is “null”.
+
+   Example 1.1. Set load parameter
+...
+modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
+...
+
+4. Functions
+
+   4.1. jsdt_dofile(path)
+   4.2. jsdt_dostring(script)
+   4.3. jsdt_run(function, params)
+   4.4. jsdt_runstring(script)
+
+4.1.  jsdt_dofile(path)
+
+   Execute the JavaScript script stored in 'path'. The parameter can be a
+   string with pseudo-variables evaluated at runtime.
+
+   Example 1.2. jsdt_dofile usage
+...
+jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
+...
+
+4.2.  jsdt_dostring(script)
+
+   Execute the JavaScript script stored in parameter. The parameter can be
+   a string with pseudo-variables.
+
+   Example 1.3. jsdt_dostring usage
+...
+if(!jsdt_dostring('KSR.dbg("test message\n")'))
+{
+    xdbg("SCRIPT: failed to execute js script!\n");
+}
+...
+
+4.3.  jsdt_run(function, params)
+
+   Execute the JS function 'func' giving params as parameters. There can
+   be up to 3 string parameters. The function must exist in the script
+   loaded at startup via parameter 'load'. Parameters can be strings with
+   pseudo-variables that are evaluated at runtime.
+
+   Example 1.4. jsdt_run usage
+...
+if(!jsdt_run("js_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute js function!\n");
+}
+...
+jsdt_run("js_funcx", "$rU", "2");
+...
+
+4.4.  jsdt_runstring(script)
+
+   Execute the JS script stored in parameter. The parameter can be a
+   string with pseudo-variables. The script is executed in JS context
+   specific to loaded JS files at startup.
+
+   Example 1.5. jsdt_runstring usage
+...
+if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
+{
+    xdbg("failed to execute js script!\n");
+}
+...
+
+5. RPC Commands
+
+   5.1. app_jsdt.reload
+   5.2. app_jsdt.api_list
+
+5.1.  app_jsdt.reload
+
+   Marks the need to reload the js script. The actual reload is done by
+   every working process when the next call to jsdt_run() function or KEMI
+   config is executed.
+
+   Name: app_jsdt.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_jsdt.reload
+...
+
+5.2.  app_jsdt.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: app_jsdt.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_jsdt.api_list
+...
+
+6. Example of usage
+
+   Create your JS script and store it on the file system, say:
+   '/usr/local/etc/kamailio/js/myscript.js'.
+...
+function sr_append_fu_to_reply()
+{
+        KSR.hdr.append_to_reply("P-From: " + KSR.pv.get("$fu") + "\r\n");
+}
+...
+
+   Load the script via parameter 'load' and execute function via
+   jsdt_run(...).
+...
+modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
+...
+request_route {
+    ...
+    if(!jsdt_run("sr_append_fu_to_reply"))
+    {
+        xdbg("SCRIPT: failed to execute js function!\n");
+    }
+    ...
+}
+...

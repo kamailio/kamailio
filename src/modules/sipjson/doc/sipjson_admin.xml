@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module serializes SIP message attributes into a JSON document.
+	</para>
+	<para>
+		It can facilitate getting the SIP attributes in a structure inside one
+		of the embedded interpreters (e.g., KEMI interpreters, Lua can parse
+		JSON in an internal hash table).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="sipjson.f.sj_serialize">
+	    <title>
+		<function moreinfo="none">sj_serialize(opt, ovar)</function>
+	    </title>
+	    <para>
+			Do the serialization of SIP messagge attributes into a JSON document.
+		</para>
+		<para>
+			When there is a match, it uses the corresponding pseudo-variable name
+			for JSON attribute (e.g., 'ru' is the R-URI attribute name).
+		</para>
+		<para>
+			Meaning of the parameters:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				opt - list of optional groups of attributes to be serialized.
+				Each group of attributes has a corresponding character. These
+				are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+					0 - (zero) default attributes to be serialized. They are
+					added even if '0' is not provided as parameter, however,
+					because 'opt' parameter cannot be empty, '0' can be given
+					when only default attributes are wanted.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					B - (uppercase B) SIP message body
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					c - (lowercase c) CSeq attributes
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					t - (lowercase t) To header attributes
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				ovar - name of the output pseduo-variable
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sj_serialize</function> usage</title>
+		<programlisting format="linespecific">
+...
+sj_serialize("0B", "$var(json)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Output Samples</title>
+		<para>
+		The content of the output variable is a JSON. Next are some samples. Note
+		that the content might change with future development and this example
+		become outdated, simply print the document when you start testing your
+		config and match the name of the attribute with the name of pseudo-variables
+		to understand what values can be there. Unlike pseudo-variables, the
+		$null values might converted to empty strings.
+		</para>
+		<example>
+		<title><function>sj_serialize</function> output</title>
+		<programlisting format="linespecific">
+...
+# the content of $var(json) after sj_serialize("0B", "$var(json)")
+#  - the content is compacted, next it has been pretty-formatted for better viewing
+...
+{
+  "mt":2,
+  "rm":"OPTIONS",
+  "pr":"udp",
+  "si":"127.0.0.1",
+  "sp":36747,
+  "Ri":"127.0.0.1",
+  "Rp":5060,
+  "ru":"sip:alice@127.0.0.1",
+  "rU":"alice",
+  "rd":"127.0.0.1",
+  "rp":0,
+  "fU":"sipsak",
+  "fd":"172.17.0.2",
+  "ua":"sipsak 0.9.7pre",
+  "ci":"482215126@172.17.0.2",
+  "rb":""
+  ...
+}
+...
+# the sip message sent to &kamailio;:
+...
+OPTIONS sip:alice@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.0.1:65502;branch=z9hG4bK.79e78613;rport;alias
+From: sip:sipsak@172.17.0.2;tag=74806173
+To: sip:alice@127.0.0.1
+Call-ID: 482215126@172.17.0.2
+CSeq: 1 OPTIONS
+Contact: sip:sipsak@127.0.0.1:65502
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.7pre
+Accept: text/plain
+
+...
+</programlisting>
+	    </example>
+	</section>
+</chapter>
+

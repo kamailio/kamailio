@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module performs asynchronous HTTP queries.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis> - Transaction module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pv</emphasis> - Pseudo-Variables module
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+            <para>
+				<emphasis>libcurl</emphasis>
+				<emphasis>libev</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>workers</varname> (integer)</title>
+		<para>
+            Number of worker processes to be started to send HTTP requests
+            and asynchronously handle responses.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "workers", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>connection_timeout</varname> (integer)</title>
+        <para>
+            Defines in milliseconds how long &kamailio; waits for a response
+            from HTTP server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 500ms.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connection_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "connection_timeout", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+        <para>
+		    The size of the hash table internally used to keep the requests. A
+		    larger table is much faster but consumes more memory. The hash size
+		    must be a power of two, otherwise it will be rounded down to the nearest
+		    power of two.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2048.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "hash_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tls_version</varname> (integer)</title>
+        <para>
+		    For HTTPS connections, what's the preferred SSL version.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (default SSL version).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_version</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_version", 6)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tls_verify_host</varname> (integer)</title>
+        <para>
+		    For HTTPS connections, whether the client should verify the server host.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_verify_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_verify_host", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tls_verify_peer</varname> (integer)</title>
+        <para>
+		    For HTTPS connections, whether the client should verify the server identity.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_verify_peer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_verify_peer", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>curl_verbose</varname> (integer)</title>
+        <para>
+		    If defined to a non-zero value, extra information from cURL (request and response headers)
+		    will be included in the kamailio logs, with LM_INFO priority.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>curl_verbose</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "curl_verbose", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>memory_manager</varname> (string)</title>
+        <para>
+			Choose the memory manager used by curl:
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>shm</emphasis>: curl will use kamailio's SHM pool and memory manager
+				</para></listitem>
+				<listitem><para>
+					<emphasis>sys</emphasis>: curl will use the system memory and memory manager (malloc, free, ...)
+				</para></listitem>
+			</itemizedlist>
+			<para>
+				<emphasis>Note:</emphasis> 
+				if this module is used in conjunction with another module using libcurl (http_client, utils, xcap, xcap_client), 
+				it must be loaded as first one for this parameter to have effect, otherwise curl will likely use the system memory allocator by default.
+				On the other hand if the module is loaded before any other module using libcurl, all the modules will use the memory manager specified 
+				by this parameter.
+			</para>
+		</para>
+		<para>
+		<emphasis>
+			Default value "shm"
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>memory_manager</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "memory_manager", "sys")
+...
+</programlisting>
+              </example>
+      </section>
+	<section>
+		<title><varname>tls_client_cert</varname> (string)</title>
+        <para>
+		    For HTTPS connections, the file path of the TLS client certificate to be used.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (not used). Default type is PEM.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_client_cert</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_client_cert", "/etc/kamailio/ssl/clientcert.pem")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tls_client_key</varname> (string)</title>
+        <para>
+		    For HTTPS connections, the file path of the TLS client certificate key.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (not used).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_client_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_client_key", "/etc/kamailio/ssl/clientcert.key")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tls_ca_path</varname> (string)</title>
+        <para>
+		    The path of the directory holding the CA certificates.
+                    http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL..
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_ca_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tcp_keepalive</varname> (integer)</title>
+        <para>
+		    If defined to a non-zero value, TCP keepalive will be enabled on cURL connections.
+		</para>
+        <para>
+            <emphasis>
+            Requires libcurl >= 7.25.0
+            </emphasis>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_keepalive", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tcp_ka_idle</varname> (integer)</title>
+        <para>
+			TCP keep-alive idle time wait value (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (use cURL default value, 60s).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_ka_idle</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_ka_idle", 30)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tcp_ka_interval</varname> (integer)</title>
+        <para>
+			TCP keep-alive interval (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (use cURL default value, 60s).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_ka_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "tcp_ka_interval", 120)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="http_async_client.f.http_async_query">
+	    <title>
+		<function moreinfo="none">http_async_query(url, route_name)</function>
+	    </title>
+        <para>
+            Sends HTTP(S) request asynchronously to the URL given in <quote>url</quote> parameter, which is a string that may contain pseudo variables.
+        </para>
+        <para>
+			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
+			If a transaction exists before calling <emphasis>http_async_query()</emphasis>, it will be paused and resumed in this route, while the routing script execution will be stopped.
+			If executed in a transactionless context, or if <emphasis>$http_req(suspend)</emphasis> is used not to suspend the transaction, the routing script execution will 
+			continue and the query result will be available in <quote>route_name</quote>.
+        </para>
+        <para>
+            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context (or if $http_req(suspend) is used), -1 on error.
+        </para>
+        <para>
+		    This function can be used from ANY_ROUTE.
+        </para>
+        <para>
+            This method is executed asynchronously. The HTTP return code, body and error are returned in the module-specific $http_* PVs (see below).
+            See example on how to retrieve return values.
+        </para>
+		<example>
+		<title><function>http_async_query()</function> usage</title>
+		<programlisting format="linespecific">
+...
+# create a transaction to be paused, and resumed in route[HTTP_REPLY]
+t_newtran();
+# GET
+http_async_query("http://example.com/test.php?r_uri=$rU&amp;f_uri=$fU", "HTTP_REPLY");
+...
+# POST
+$http_req(body) = "{'r_uri':'" + $rU + "', 'f_uri':'" + $fU + "'}";
+http_async_query("http://example.com/test.php", "HTTP_REPLY");
+...
+route[HTTP_REPLY] {
+    if ($http_ok) {
+        xlog("L_INFO", "route[HTTP_REPLY]: status $http_rs\n");
+        xlog("L_INFO", "route[HTTP_REPLY]: body   $http_rb\n");
+    } else {
+        xlog("L_INFO", "route[HTTP_REPLY]: error  $http_err)\n");
+    }
+}
+...
+        </programlisting>
+	    </example>
+	</section>
+</section>
+<section>
+	<title>Pseudo Variables</title>
+	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrive the unique identifier for a query after sending it or in the HTTP callback route to retrive the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
+	<example>
+		<title><literal>$http_req_id</literal> variable usage</title>
+		<programlisting format="linespecific">
+...
+$http_req(suspend) = 0;  
+
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
+
+xlog("L_INFO", "Query id: $http_req_id");
+...
+route[HTTP_REPLY] {
+xlog("L_INFO", "received reply for query $http_req_id\n");
+}
+...
+		</programlisting>
+	</example>
+	<para>The <literal>$http_req(key)</literal> write-only variable can be used to set custom parameters before sending a HTTP query</para>
+	<para><literal>key</literal> can be one of:</para>
+	<itemizedlist>
+		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
+		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header. N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
+		<listitem><para><emphasis>method</emphasis>: sets the HTTP method: either "GET", "POST", "PUT" or "DELETE" (these are the supported methods). (Note: if the method is not set, curl will use GET, or POST if a body is specified)</para></listitem>
+		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout</para></listitem>
+		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use</para></listitem>
+		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use</para></listitem>
+		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use</para></listitem>
+		<listitem><para><emphasis>authmethod</emphasis>: 
+			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap
+                        and multiple methods can be used. Note that in this case, the CURL library will make an
+                        extra request to discover server-supported authentication methods. You may want to use
+                        a specific value.
+                        <para>
+                        Valid values are:
+                                <itemizedlist>
+                                <listitem><para>1 - BASIC authentication</para></listitem>
+                                <listitem><para>2 - HTTP Digest authentication</para></listitem>
+                                <listitem><para>4 - GSS-Negotiate authentication</para></listitem>
+                                <listitem><para>8 - NTLM authentication</para></listitem>
+                                <listitem><para>16 - HTTP Digest with IE flavour</para></listitem>
+                                </itemizedlist>
+                        Default value is 3 - BASIC and Digest authentication.
+                        </para>	
+		</para></listitem>
+		<listitem><para><emphasis>username</emphasis>: sets the username to use for authenticated requests</para></listitem>
+		<listitem><para><emphasis>password</emphasis>: sets the password to use for authenticated requests</para></listitem>
+		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query</para></listitem>
+		<listitem><para><emphasis>tcp_keepalive</emphasis>: enable TCP keepalive</para></listitem>
+		<listitem><para><emphasis>tcp_ka_idle</emphasis>: set TCP keepalive idle time wait</para></listitem>
+		<listitem><para><emphasis>tcp_ka_interval</emphasis>: set TCP keepalive interval</para></listitem>
+	</itemizedlist>
+	<example>
+		<title><literal>$http_req(key)</literal> variable usage</title>
+		<programlisting format="linespecific">
+...
+$http_req(all) = $null;                    # reset the parameters
+$http_req(timeout) = 100;                  # 100 ms
+$http_req(method) = "DELETE";
+$http_req(hdr) = "X-Sip-Call-Id: " + $ci;
+$http_req(hdr) = "X-Foo: bar";             # add a 2nd header
+$http_req(suspend) = 0;             # don't suspend the transaction, continue routing script's execution
+# the following request will use the above parameters
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
+...
+		</programlisting>
+	</example>
+	<para>The following read-only pseudo variables can only be used in the callback routes executed by http_async_query()</para>
+	<itemizedlist>
+		<listitem><para>
+			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $http_err for details)
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_err</emphasis>: cURL error string if an error occurred, $null otherwise
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rs</emphasis>: http status
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rr</emphasis>: http reason phrase
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(http_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details) 
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_mb</emphasis> and <emphasis>$http_ml</emphasis>: HTTP response buffer (including headers) and length 
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rb</emphasis> and <emphasis>$http_bs</emphasis>: HTTP response body and body length
+		</para></listitem>
+	</itemizedlist>
+</section>
+<section>
+	<title>Statistics</title>
+	<section>
+		<title><varname>requests</varname></title>
+		<para>
+		The number of http requests sent.
+		</para>
+	</section>
+	<section>
+		<title><varname>replies</varname></title>
+		<para>
+		The number of received http replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>errors</varname></title>
+		<para>
+		The number of errors.
+		</para>
+	</section>
+	<section>
+		<title><varname>timeouts</varname></title>
+		<para>
+		The number of timed out requests.
+		</para>
+	</section>
+
+</section>
+
+	<section id="http_async_client.s.remarks">
+		<title>Remarks</title>
+		<para>
+			Note: libcurl leak in CentOS 6 - this module uses libcurl library
+			and in case if you are using CentOS 6, be aware that standard
+			libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+			libcurl from city-fan repository. More details at:
+			<ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6">
+				https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6</ulink>
+		</para>
+	</section>
+
+</chapter>
+

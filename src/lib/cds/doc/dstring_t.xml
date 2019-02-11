@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="dstring_t">
+
+<refmeta><refentrytitle>dstring_t</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv><refname>dstring_t</refname>
+<refpurpose>data structure for dynamic string representation</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><synopsis>
+#include &lt;cds/dstring.h&gt;
+
+typedef struct _dstring_t {
+	dlink_t buffers;
+	int len;
+	int buff_size;
+} dstring_t;
+</synopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>This structure represents dynamic string. It allows concatenation of
+multiple strings without worry about memory allocations.</para>
+
+<para>Internally it uses list of data buffers which are allocated 
+if needed. The content of dynamic string may be copied out from internal buffers
+using simple function call (see <xref linkend="dstr_get_data"/>). Internal
+buffers are allocated in package memory (when compiled with SER)!
+</para>
+
+<para>This structure is used as base for simple object serialization (see <xref
+linkend="serialization"/>).
+</para>
+
+<refsect2><title>Members</title>
+<para><variablelist>
+<varlistentry>
+	<term><varname>buffers</varname></term>
+	<listitem><para>linked list of allocated data buffers</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>len</varname></term>
+	<listitem><para>whole string length</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>buff_size</varname></term>
+	<listitem><para>size of newly allocated buffers</para></listitem>
+</varlistentry>
+</variablelist></para>
+<para>Warning - structure internals may change! For manipulation use
+manipulation functions.</para>
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>Example</title>
+<programlisting>
+#include &lt;cds/dstring.h&gt;
+#include &lt;cds/sstr.h&gt;
+
+int main(int argc, char **argv)
+{
+	dstring_t str;
+	str_t s;
+
+	dstr_init(&amp;str, 256);
+	dstr_append_zt(&amp;str,"This is a ");
+	dstr_append_zt(&amp;str,"very long ");
+	dstr_append_zt(&amp;str,"string.");
+	if (dstr_get_str(&amp;str, &amp;s) == 0) {
+		printf("result: %.*s\n", FMT_STR(s));	
+		str_free_content(&amp;s);
+	}
+	dstr_destroy(&amp;str);
+
+	return 0;
+}	
+</programlisting>
+<para>This will result in</para>
+<para><computeroutput>result: This is a very long
+string.</computeroutput>
+</para>
+</refsect1>
+
+<refsect1><title>Todo</title>
+<para>Create a function like sprintf.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="dstr_init"/>,
+<xref linkend="dstr_get_data"/>,
+<xref linkend="dstr_append"/>,
+<xref linkend="str_t"/>
+</para>
+</refsect1>
+
+</refentry> 

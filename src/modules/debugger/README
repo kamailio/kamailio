@@ -1,0 +1,805 @@
+debugger Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. cfgtrace (int)
+              3.2. breakpoint (int)
+              3.3. log_level (int)
+              3.4. log_level_name (str)
+              3.5. log_facility (str)
+              3.6. log_prefix (str)
+              3.7. step_usleep (int)
+              3.8. step_loops (int)
+              3.9. mod_hash_size (int)
+              3.10. mod_level_mode (int)
+              3.11. mod_level (str)
+              3.12. mod_facility_mode (int)
+              3.13. mod_facility (str)
+              3.14. log_assign (int)
+              3.15. cfgpkgcheck (int)
+              3.16. reset_msgid (int)
+              3.17. cfgtest (int)
+
+        4. Functions
+
+              4.1. dbg_breakpoint(mode)
+              4.2. dbg_pv_dump([mask] [, level])
+              4.3. dbg_sip_msg([log_level], [facility])
+
+        5. RPC Commands
+
+              5.1. dbg.ls
+              5.2. dbg.trace
+              5.3. dbg.bp
+              5.4. dbg.mod_level
+              5.5. dbg.reset_msgid
+              5.6. dbg.set_mod_level
+              5.7. dbg.set_mod_facility
+              5.8. dbg.get_mod_level
+              5.9. dbg.get_mod_facility
+
+        6. Usage
+
+   List of Examples
+
+   1.1. Set cfgtrace parameter
+   1.2. Set breakpoint parameter
+   1.3. Set log_level parameter
+   1.4. Set log_level_name parameter
+   1.5. Set log_facility parameter
+   1.6. Set log_prefix parameter
+   1.7. Set step_usleep parameter
+   1.8. Set step_loops parameter
+   1.9. Set mod_hash_size parameter
+   1.10. Set mod_level_mode parameter
+   1.11. Set mod_level parameter
+   1.12. Set mod_facility_mode parameter
+   1.13. Set mod_facility parameter
+   1.14. Set log_assign parameter
+   1.15. Set cfgpkgcheck parameter
+   1.16. Set reset_msgid parameter
+   1.17. Set cfgtest parameter
+   1.18. dbg_breakpoint usage
+   1.19. dbg_pv_dump usage
+   1.20. dbg_sip_msg usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. cfgtrace (int)
+        3.2. breakpoint (int)
+        3.3. log_level (int)
+        3.4. log_level_name (str)
+        3.5. log_facility (str)
+        3.6. log_prefix (str)
+        3.7. step_usleep (int)
+        3.8. step_loops (int)
+        3.9. mod_hash_size (int)
+        3.10. mod_level_mode (int)
+        3.11. mod_level (str)
+        3.12. mod_facility_mode (int)
+        3.13. mod_facility (str)
+        3.14. log_assign (int)
+        3.15. cfgpkgcheck (int)
+        3.16. reset_msgid (int)
+        3.17. cfgtest (int)
+
+   4. Functions
+
+        4.1. dbg_breakpoint(mode)
+        4.2. dbg_pv_dump([mask] [, level])
+        4.3. dbg_sip_msg([log_level], [facility])
+
+   5. RPC Commands
+
+        5.1. dbg.ls
+        5.2. dbg.trace
+        5.3. dbg.bp
+        5.4. dbg.mod_level
+        5.5. dbg.reset_msgid
+        5.6. dbg.set_mod_level
+        5.7. dbg.set_mod_facility
+        5.8. dbg.get_mod_level
+        5.9. dbg.get_mod_facility
+
+   6. Usage
+
+1. Overview
+
+   This module provides an interactive config file debugger. It can print
+   a trace of config script execution for a SIP message to log and set
+   breakpoints on every script action, allowing step-by-step execution of
+   the routing and response scripts. Moreover, this module allows setting
+   static and dynamic module specific debug settings.
+
+   Debugging can be done from local or remote host via RPC interface
+   (e.g., XMLRPC, kamcmd, siremis).
+
+   The framework to set breakpoints on specific actions and config lines
+   is not exported to RPC. Each action can be accompanied by an breakpoint
+   or you can use dbg_breakpoint() function to set a breakpoint at certain
+   line. Global breakpoints can be enabled/disabled at runtime. The script
+   running trace can also be enabled/disabled at runtime.
+
+   When the SIP router process is stopped at a breakpoint, you can
+   investigate the values of any pseudo-variables. Note that some of
+   pseudo-variables may produce memory leaks; a fix is planned in the
+   future (here fall pseudo-variables with dynamic name such as htable,
+   sqlops). References to SIP message, avps, headers, script and shared
+   variables are safe.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+   NOTE: Due to the debugger module child_init() function, one should load
+   the module first in the module sequence in order to initialize
+   _dbg_pid_list. Otherwise, another module (i.e. p_usrloc) forking a
+   process with rank != PROC_INIT will fail.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. cfgtrace (int)
+   3.2. breakpoint (int)
+   3.3. log_level (int)
+   3.4. log_level_name (str)
+   3.5. log_facility (str)
+   3.6. log_prefix (str)
+   3.7. step_usleep (int)
+   3.8. step_loops (int)
+   3.9. mod_hash_size (int)
+   3.10. mod_level_mode (int)
+   3.11. mod_level (str)
+   3.12. mod_facility_mode (int)
+   3.13. mod_facility (str)
+   3.14. log_assign (int)
+   3.15. cfgpkgcheck (int)
+   3.16. reset_msgid (int)
+   3.17. cfgtest (int)
+
+3.1. cfgtrace (int)
+
+   Control whether the config script trace is enabled or disabled at
+   startup. You can change the value at runtime without restart, globally
+   or per process.
+
+   Default value is “0” (disabled).
+
+   Example 1.1. Set cfgtrace parameter
+...
+modparam("debugger", "cfgtrace", 1)
+...
+
+3.2. breakpoint (int)
+
+   Control whether every line (global) breakpoint is enabled or disabled
+   at startup.
+
+   Default value is “0” (disabled).
+
+   Example 1.2. Set breakpoint parameter
+...
+modparam("debugger", "breakpoint", 1)
+...
+
+3.3. log_level (int)
+
+   What log level is to be used to print module-specific messages.
+
+   Default value is “-1” (L_ERR).
+
+   Example 1.3. Set log_level parameter
+...
+modparam("debugger", "log_level", 1)
+...
+
+3.4. log_level_name (str)
+
+   What log level name is to be used to print cfg trace messages.
+
+   Default value is “NULL” (use default log names).
+
+   Example 1.4. Set log_level_name parameter
+...
+modparam("debugger", "log_level_name", "exec")
+...
+
+3.5. log_facility (str)
+
+   Which log facility is to be used to print module-specific messages. By
+   using this setting, you can configure syslog to send debug messages to
+   a separate log channel, like a specific kamailio-debug log file.
+
+   Default value is “NULL” (default from core).
+
+   Example 1.5. Set log_facility parameter
+...
+modparam("debugger", "log_facility", "LOG_DAEMON")
+...
+
+3.6. log_prefix (str)
+
+   String to print before any module-specific messages.
+
+   Default value is “*** cfgtrace:”.
+
+   Example 1.6. Set log_prefix parameter
+...
+modparam("debugger", "log_prefix", "from-debugger-with-love:")
+...
+
+3.7. step_usleep (int)
+
+   Microseconds to sleep before checking for new commands when waiting at
+   a breakpoint.
+
+   Default value is “100000” (that is 0.1 sec).
+
+   Example 1.7. Set step_usleep parameter
+...
+modparam("debugger", "step_usleep", 500000)
+...
+
+3.8. step_loops (int)
+
+   How many sleeps of 'step_usleep' the RPC process performs when waiting
+   for a reply from a worker process before responding to RPC. This avoids
+   blocking RPC process forever in case the worker process 'forgets' to
+   write back a reply.
+
+   Default value is “200”.
+
+   Example 1.8. Set step_loops parameter
+...
+modparam("debugger", "step_loops", 100)
+...
+
+3.9. mod_hash_size (int)
+
+   Used to compute power of two as size of internal hash table to store
+   levels per module (e.g., if its set to 4, internal hash table has 16
+   slots). One must set it's value grater than 0 such that memory to be
+   allocated to save the module specific debug levels or facility
+   configured by mod_level or mod_facility. This parameter is accessible
+   readonly via the Kamailio config framework.
+
+   Default value is “0” - feature disabled.
+
+   Example 1.9. Set mod_hash_size parameter
+...
+modparam("debugger", "mod_hash_size", 5)
+...
+
+3.10. mod_level_mode (int)
+
+   Enable or disable per module log level (0 - disabled, 1 - enabled).
+   This parameter is tunable via the Kamailio config framework. To use per
+   module log level you also have to set mod_hash_size.
+
+   Default value is “0”.
+
+   Example 1.10. Set mod_level_mode parameter
+...
+modparam("debugger", "mod_level_mode", 1)
+...
+
+3.11. mod_level (str)
+
+   Specify module log level - the value must be in the format:
+   modulename=level. The parameter can be set many times. For core log
+   level, use module name 'core'. You also must enable mod_level_mode and
+   mod_hash_size.
+
+   Example 1.11. Set mod_level parameter
+...
+modparam("debugger", "mod_level", "core=3")
+modparam("debugger", "mod_level", "tm=3")
+...
+
+3.12. mod_facility_mode (int)
+
+   Enable or disable per module log facility (0 - disabled, 1 - enabled).
+   This parameter is tunable via the Kamailio config framework. To use per
+   module log facility you also have to set mod_hash_size.
+
+   Default value is “0”.
+
+   Example 1.12. Set mod_facility_mode parameter
+...
+modparam("debugger", "mod_facility_mode", 1)
+...
+
+3.13. mod_facility (str)
+
+   Specify module log facility - the value must be in the format:
+   modulename=facility. The parameter can be set many times. For core log
+   facility, use module name 'core'. You also must enable
+   mod_facility_mode and mod_hash_size.
+
+   NOTE: See the syslog() library call for facility names
+   (http://linux.die.net/man/3/syslog). The most used facilities are
+   LOG_LOCAL[0-7].
+
+   Example 1.13. Set mod_facility parameter
+...
+modparam("debugger", "mod_facility", "core=LOG_LOCAL0")
+modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
+...
+
+3.14. log_assign (int)
+
+   Enable or disable log assign actions on config (0 - disabled, 1 -
+   enabled).
+
+   Default value is “0”.
+
+   Example 1.14. Set log_assign parameter
+...
+modparam("debugger", "log_assign", 1)
+...
+
+3.15. cfgpkgcheck (int)
+
+   If set, before each config action is done pkg memory check, useful to
+   detect buffer overflows.
+
+   Default value is “0” (disabled).
+
+   Example 1.15. Set cfgpkgcheck parameter
+...
+modparam("debugger", "cfgpkgcheck", 1)
+...
+
+3.16. reset_msgid (int)
+
+   Used to enable or disable the ability to reset the msgid ($mi) through
+   the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
+
+   Default value is “0” - feature disabled.
+
+   Example 1.16. Set reset_msgid parameter
+...
+modparam("debugger", "reset_msgid", 1)
+...
+
+3.17. cfgtest (int)
+
+   Control whether the cfgt module is enabled or disabled at startup.
+   Module cfgt needs to be loaded before.
+
+   Default value is “0” (disabled).
+
+   Example 1.17. Set cfgtest parameter
+...
+loadmodule "cfgt.so"
+modparam("debugger", "cfgtest", 1)
+...
+
+4. Functions
+
+   4.1. dbg_breakpoint(mode)
+   4.2. dbg_pv_dump([mask] [, level])
+   4.3. dbg_sip_msg([log_level], [facility])
+
+4.1.  dbg_breakpoint(mode)
+
+   Anchor a breakpoint at the current line of the config (the one on which
+   this function is called). The 'mode' specifies whether the breakpoint
+   is enabled (1) or disabled (0) at startup.
+
+   Note that this version of the module does not export this anchors to
+   RPC for interactive debugging (temporarily disabled).
+
+   Example 1.18. dbg_breakpoint usage
+...
+if($si=="10.0.0.10")
+        dbg_breakpoint("1");
+...
+
+4.2.  dbg_pv_dump([mask] [, level])
+
+   Prints the content of pv_cache on json format. Defaults are mask=31 and
+   level = "L_DBG"
+
+   mask - Controls the content to dump:
+     * 1 - dump null values
+     * 2 - dump avp vars
+     * 4 - dump script vars
+     * 8 - dump xavp vars
+     * 16 - dump DP_OTHER vars
+
+   level - The level that will be used in LOG function. It can be:
+     * L_ALERT - log level -5
+     * L_BUG - log level -4
+     * L_CRIT - log level -3
+     * L_ERR - log level -1
+     * L_WARN - log level 0
+     * L_NOTICE - log level 1
+     * L_INFO - log level 2
+     * L_DBG - log level 3
+
+   Example 1.19. dbg_pv_dump usage
+...
+$var(temp) = 1;
+$avp(s:more_avp) = 2;
+$avp(s:more_avp) = 3;
+$xavp(x=>more) = "bye";
+$xavp(x[0]=>more) = "hi";
+$xavp(x[0]=>other) = 1;
+$xavp(x[0]=>other) = 2;
+$xavp(x=>different) = "foo";
+$var(empty) = $null;
+
+dbg_pv_dump(30, "L_DBG");
+...
+
+   Output
+...
+ 4(30943) DEBUG: debugger [debugger_api.c:1613]: dbg_dump_json(): {"$sp":37597,"
+$var(rc)":0,"$var(temp)":1,"$avp(more_avp)":[3,2],"$si":"127.0.0.1","$rc":0,"$xa
+vp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_id
+x":0,"$var(empty)":0}
+ ...
+
+4.3.  dbg_sip_msg([log_level], [facility])
+
+   Prints how the sip message would look like if it would be sent out at
+   that point in the config(i.e. if the current lump lists would have been
+   applied at that point in the config). It also prints a diff list for
+   both header and body of sip msg which contain the lump lists content.
+   The lumps deleted are printed with "-" sign whereas the lumps added
+   have no sign. The config line where the function has been called is
+   also printed.
+
+   NOTE that dbg_sip_msg function does not modify the initially received
+   SIP message. Just displays how it WOULD look like if it were to send it
+   at that point.
+
+   NOTE that the lump lists are usually applied only once, just before
+   sending, to spare message reparse processing. All the changes present
+   in lump list are applied on the initially received SIP message. One can
+   force the lump application using msg_apply_changes() function from
+   textopsx module.
+
+   Example 1.20. dbg_sip_msg usage
+...
+    dbg_sip_msg();
+    dbg_sip_msg("L_ERR");
+    dbg_sip_msg("L_ERR", "LOG_LOCAL0");
+...
+
+   Output when dbg_sip_msg("L_ERR") is called after append_hf("P-Hint: My
+   hint\r\n"); remove_hf("Contact");
+ERROR: debugger [debugger_mod.c:467]: w_dbg_sip_msg(): CONFIG LINE 338
+------------------------- START OF SIP message debug --------------------------
+OPTIONS sip:nobody@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.1.1:56872;branch=z9hG4bK.6d7c487a;rport;alias
+From: sip:sipsak@127.0.1.1:56872;tag=188b7433
+To: sip:nobody@127.0.0.1
+Call-ID: 411792435@127.0.1.1
+CSeq: 1 OPTIONS
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.6
+Accept: text/plain
+P-Hint: My hintt
+
+------------------------------ SIP header diffs -------------------------------
+- Contact: sip:sipsak@127.0.1.1:56872
+P-Hint: My hint
+------------------------------- SIP body diffs --------------------------------
+-------------------------- END OF SIP message debug ---------------------------
+
+5. RPC Commands
+
+   5.1. dbg.ls
+   5.2. dbg.trace
+   5.3. dbg.bp
+   5.4. dbg.mod_level
+   5.5. dbg.reset_msgid
+   5.6. dbg.set_mod_level
+   5.7. dbg.set_mod_facility
+   5.8. dbg.get_mod_level
+   5.9. dbg.get_mod_facility
+
+5.1.  dbg.ls
+
+   List Kamailio processes with info related to interactive debugging.
+
+   Name: dbg.list
+
+   Parameters:
+     * _pid_ : pid for which to list the details. If 'pid' is omitted then
+       will print for all processes.
+
+   Examples of use with kamcmd:
+                dbg.ls
+                dbg.ls 1234
+
+5.2.  dbg.trace
+
+   Control config script running trace.
+
+   Name: dbg.trace
+
+   Parameters:
+     * _cmd_ : command can be 'on' or 'off' to enable or disable tracing
+       for one or all processes.
+     * _pid_ : pid for which to list the details. If 'pid' is omitted,
+       then details for all processes will be printed.
+
+   Examples for using with kamcmd:
+                dbg.trace on
+                dbg.trace off
+                dbg.trace on 1234
+
+5.3.  dbg.bp
+
+   Control breakpoints and config execution.
+
+   Name: dbg.bp
+
+   Parameters:
+     * _cmd_ : command, see next section for the list of available values.
+     * _pid_ : process id for which to apply the command. If 'pid' is
+       omitted, then the inner command will be applied to all processes.
+     * _params_ : extra params specific for each command.
+
+   Commands:
+     * on - turn on breakpoints. Pid parameter is optional.
+     * off - turn off breakpoints. Pid parameter is optional.
+     * keep - keep breakpoints only for pid given as parameter
+     * release - disable breakpoints for processes that are not waiting at
+       a breakpoint. Pid parameter is optional.
+     * next - run the action under breakpoint and stop at next one (step
+       by step execution). Pid parameter is mandatory.
+     * move - run the action under breakpoint and remove the rest of
+       breakpoints (continue execution without stopping again at next
+       actions). Pid parameter is mandatory.
+     * show - print details about the current breakpoint for pid. Pid
+       parameter is mandatory.
+     * eval - evaluate a pseudo-variable and print the result in RPC Pid
+       parameter is mandatory.
+     * log - evaluate a pseudo-variable and print the result in SIP router
+       logs. Pid parameter is mandatory.
+
+   Examples for using with kamcmd:
+                dbg.bp off
+                dbg.bp on
+                dbg.bp release
+                dbg.bp on 1234
+                dbg.bp eval 1234 $fu
+                dbg.bp move 1234
+
+5.4.  dbg.mod_level
+
+   Specify module log level.
+
+   Name: dbg.mod_level
+
+   Parameters:
+     * _module_ : For core log level, use module name 'core'
+     * _level_ : integer
+
+   Examples of use with kamcmd:
+                dbg.mod_level core 3
+                dbg.mod_level tm 3
+
+5.5.  dbg.reset_msgid
+
+   Resets the message sequence ($mi). Internally there is no real change.
+   This can be useful for unit test cases in order to be able to replicate
+   exactly the same kamailio output. You need to set the debugger
+   parameter reset_msgid to 1 to activate this functionality.
+
+   Name: dbg.reset_msgid
+
+   Examples of use with kamcmd:
+                dbg.reset_msgid
+
+5.6.  dbg.set_mod_level
+
+   Set the module log level. If module does not exist in kamailio, the
+   entry in the level hashtable is still added for the bogus module.
+
+   Name: dbg.set_mod_level
+
+   Examples of use with kamcmd:
+                        dbg.set_mod_level core 1
+
+5.7.  dbg.set_mod_facility
+
+   Set the module log facility. If module does not exist in kamailio, the
+   entry in the facility hashtable is still added for the bogus module.
+
+   Name: dbg.set_mod_facility
+
+   Examples of use with kamcmd:
+                        dbg.set_mod_facility core LOG_LOCAL1
+
+5.8.  dbg.get_mod_level
+
+   Get the module log level. If mod_name does not exist in the level
+   hashtable, returns the config file value.
+
+   Name: dbg.get_mod_level
+
+   Examples of use with kamcmd:
+                        dbg.get_mod_level core
+
+5.9.  dbg.get_mod_facility
+
+   Get the module log facility. If mod_name does not exist in the facility
+   hashtable, returns the config file value.
+
+   Name: dbg.get_mod_facility
+
+   Examples of use with kamcmd:
+                        dbg.get_mod_facility core
+
+6. Usage
+
+   A common usage is to investigate the execution path for a specific SIP
+   message. Just enable cfg running trace, send the message and watch the
+   logs.
+
+   Another typical usage is to do interactive debugging and run each line
+   of the route blocks of the configuration file step-by-step for a
+   particular SIP message.
+
+   You need to connect using kamcmd (or other RPC client) to Kamailio.
+   Then you can enable cfg breakpoints and send the SIP message. One
+   process will be in waiting state ('state' field different than 0 when
+   you do dbg.ls). Calling dbg.release will set the other Kamailio
+   processes in no-breakpoint mode so they can process other SIP messages
+   without need to interact with them.
+
+   A process blocked at a breakpoint is waiting for a command. Use 'dbg.bp
+   next pid' to execute the current action and stop at the next one.
+   'dbg.bp eval pid PV' can be used to retrieve the value of PV. Once you
+   are done and want to continue the execution of the config without
+   interaction use 'dbg.bp move pid'.
+
+   Example of a session:
+...
+kamcmd> dbg.ls
+{
+        entry: 0
+        pid: 6393
+        set: 3
+        state: 0
+        in.pid: 0
+        in.cmd: 0
+}
+{
+        entry: 1
+        pid: 6394
+        set: 3
+        state: 0
+        in.pid: 0
+        in.cmd: 0
+}
+...
+{
+        entry: 9
+        pid: 6402
+        set: 3
+        state: 1
+        in.pid: 0
+        in.cmd: 0
+}
+
+kamcmd> dbg.bp show 6402
+at bkp [/etc/kamailio/debugger.cfg:369] a=6 n=route
+
+kamcmd> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:369] a=6 n=route
+
+kamcmd> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:462] a=17 n=if
+
+kamcmd> dbg.bp eval 6402 $fu
+$fu : t=str v=sip:test@kamailio.org
+
+kamcmd> dbg.bp move 6402
+200 ok
+...
+
+   Running the config trace looks like:
+...
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=368 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=456 a=26 n=mf_pro
+cess_maxfwd_header
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=466 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=27 n=sanity
+_check
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=371 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=659 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=374 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=501 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=470 a=25 n=has_to
+tag
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=379 a=26 n=is_met
+hod
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=25 n=t_chec
+k_trans
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=389 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=643 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=393 a=26 n=remove
+_hf
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=394 a=26 n=is_met
+hod
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=26 n=is_met
+hod
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=682 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=409 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=575 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=550 a=26 n=is_met
+hod
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=551 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=412 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=518 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=505 a=26 n=is_met
+hod
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=507 a=42 n=isflag
+set
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=26 n=save
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=3 n=exit
+...
+
+   The above example is for a registration with default config for version
+   3.1.0, without authentication. Listed fields are: 'c' - config file;
+   'l' - line; 'a' - internal action id; 'n' - name of executed action.
+   'ERROR' prefix is printed because these messages were sent to the L_ERR
+   log level.

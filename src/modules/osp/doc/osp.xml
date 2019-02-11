@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+  <bookinfo>
+    <title>OSP Module for Secure, Multi-Lateral Peering</title>
+    <productname class="trade">&kamailioname;</productname>
+    <authorgroup>
+      <author>
+        <firstname>Ulrich</firstname>
+        <surname>Abend</surname>
+        <affiliation>
+          <orgname>&fhg;</orgname>
+          <address><email>ullstar@iptel.org</email></address>
+        </affiliation>
+      </author>
+      <editor>
+        <firstname>Di-Shi</firstname>
+        <surname>Sun</surname>
+        <affiliation>
+          <orgname>TransNexus, Inc.</orgname>
+          <address><email>support@transnexus.com</email></address>
+        </affiliation>
+      </editor>
+    </authorgroup>
+    <copyright>
+      <year>2003</year>
+      <holder>&fhg;</holder>
+    </copyright>
+  </bookinfo>
+  <toc></toc>
+
+  <xi:include href="osp_admin.xml"/>
+  <xi:include href="osp_devel.xml"/>
+  
+
+</book>

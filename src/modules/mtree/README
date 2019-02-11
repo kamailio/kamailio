@@ -1,0 +1,449 @@
+mtree Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Juha Heinanen
+
+   tutpro.com
+
+Edited by
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+
+   Copyright © 2011 Juha Heinanen
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. db_table (string)
+              3.3. mtree (string)
+              3.4. tname_column (string)
+              3.5. tprefix_column (string)
+              3.6. tvalue_column (string)
+              3.7. fetch_rows (integer)
+              3.8. char_list (string)
+              3.9. pv_value (string)
+              3.10. pv_values (string)
+              3.11. mt_tree_type (integer)
+              3.12. mt_ignore_duplicates (integer)
+              3.13. mt_allow_duplicates (integer)
+
+        4. Functions
+
+              4.1. mt_match(mtree, pv, mode)
+
+        5. RPC Commands
+
+              5.1. mtree.list
+              5.2. mtree.summary
+              5.3. mtree.reload
+              5.4. mtree.match
+
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. mt_load_api(api)
+              1.2. mt_match(msg, mtree, value, mode)
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set db_table parameter
+   1.3. Set mtree parameter
+   1.4. Set tname_column parameter
+   1.5. Set tprefix_column parameter
+   1.6. Set tvalue_column parameter
+   1.7. Set fetch_rows parameter
+   1.8. Set char_list parameter
+   1.9. Set pv_value parameter
+   1.10. Set pv_values parameter
+   1.11. Set mt_tree_type parameter
+   1.12. Set mt_ignore_duplicates parameter
+   1.13. Set mt_allow_duplicates parameter
+   1.14. mt_match usage
+   1.15. mtree.list rpc usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. db_table (string)
+        3.3. mtree (string)
+        3.4. tname_column (string)
+        3.5. tprefix_column (string)
+        3.6. tvalue_column (string)
+        3.7. fetch_rows (integer)
+        3.8. char_list (string)
+        3.9. pv_value (string)
+        3.10. pv_values (string)
+        3.11. mt_tree_type (integer)
+        3.12. mt_ignore_duplicates (integer)
+        3.13. mt_allow_duplicates (integer)
+
+   4. Functions
+
+        4.1. mt_match(mtree, pv, mode)
+
+   5. RPC Commands
+
+        5.1. mtree.list
+        5.2. mtree.summary
+        5.3. mtree.reload
+        5.4. mtree.match
+
+1. Overview
+
+   This module loads (prefix, value) records from database and indexes
+   them in a named memory tree. Name of the tree is specified for each
+   record or as module parameter.
+
+   It exports to configuration file functions to match against in-memory
+   trees and return the values (raw or precompiled) associated with
+   matched prefixes.
+
+   The maximum size of the prefix is limited internally to 63, database
+   table definition may enforce lower maximum size.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * A Kamailio database module (e.g., mysql).
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. db_url (string)
+   3.2. db_table (string)
+   3.3. mtree (string)
+   3.4. tname_column (string)
+   3.5. tprefix_column (string)
+   3.6. tvalue_column (string)
+   3.7. fetch_rows (integer)
+   3.8. char_list (string)
+   3.9. pv_value (string)
+   3.10. pv_values (string)
+   3.11. mt_tree_type (integer)
+   3.12. mt_ignore_duplicates (integer)
+   3.13. mt_allow_duplicates (integer)
+
+3.1. db_url (string)
+
+   URL of the database server to be used.
+
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
+
+   Example 1.1. Set db_url parameter
+...
+modparam("mtree", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.2. db_table (string)
+
+   Name of database table where data for many trees is stored. It is
+   ignored if a 'mtree' parameter is defined. The SQL scripts creates a
+   table named 'mtrees' that can be used for this parameter.
+
+   Default value is “” (no table name).
+
+   Example 1.2. Set db_table parameter
+...
+modparam("mtree", "db_table", "mtrees")
+...
+
+3.3. mtree (string)
+
+   Definition of memory tree with using a parameters format string. The
+   parameter names can be:
+     * name - the name of the tree to be used for referencing inside
+       configuration file.
+     * dbtable - the name of the database table from where to load the
+       records stored in the tree.
+     * cols - the column names of the database table. They must be
+       enclosed in quotes in order to form a valid SIP parameter value and
+       be separated by comma. The first column corresponds to tprefix.
+       When specified, there must be at least two columns. If this
+       attribute is not specified, then the global module parameters for
+       tprefix and tvalue are used. If more than one value columns are
+       specified, the tree will pack the column values in a comma
+       separated string, which will be associated with the prefix (string
+       transformation {s.select,...) can be used in configuration file to
+       extract a specific column value).
+     * type - the type of tree elements (0 = string, 2 = integer). It is
+       valid only when the (tprefix, tvalue) pairs are loaded (not for
+       multi-column values).
+     * multi - tells if dbtable can contain more than one tree (0 = one
+       tree, 1 = more than one tree identified by tname column). It is
+       valid only when the (tprefix, tvalue) pairs are loaded (not for
+       multi-column values).
+
+   This parameter can be set many times to add more trees in memory.
+
+   Default value is “none”.
+
+   Example 1.3. Set mtree parameter
+...
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
+modparam("mtree", "mtree",
+    "name=mytree1;dbtable=routes1;cols='key1,val1,val2,val3'")
+...
+
+3.4. tname_column (string)
+
+   Name of 'tname' column.
+
+   Default value is “tname”.
+
+   Example 1.4. Set tname_column parameter
+...
+modparam("mtree", "tname_column", "name")
+...
+
+3.5. tprefix_column (string)
+
+   Name of 'tprefix' column.
+
+   Default value is “tprefix”.
+
+   Example 1.5. Set tprefix_column parameter
+...
+modparam("mtree", "tprefix_column", "prefix")
+...
+
+3.6. tvalue_column (string)
+
+   Name of 'tvalue' column.
+
+   Default value is “tvalue”.
+
+   Example 1.6. Set tvalue_column parameter
+...
+modparam("mtree", "tvalue_column", "ipaddr")
+...
+
+3.7. fetch_rows (integer)
+
+   Number of rows to be loaded in one step from database.
+
+   Default value is 1000.
+
+   Example 1.7. Set fetch_rows parameter
+...
+modparam("mtree", "fetch_rows", 4000)
+...
+
+3.8. char_list (string)
+
+   The list with characters allowed in prefix.
+
+   Default value is “0123456789”.
+
+   Example 1.8. Set char_list parameter
+...
+modparam("mtree", "char_list", "0123456789*+")
+...
+
+3.9. pv_value (string)
+
+   The PV spec where to store the matched value. It can be any writable
+   PV.
+
+   Default value is “$avp(s:tvalue)”.
+
+   Example 1.9. Set pv_value parameter
+...
+modparam("mtree", "pv_value", "$var(mtval)")
+...
+
+3.10. pv_values (string)
+
+   The AVP where to store the matched values when mtree is of type 0 or 2
+   and mode of mt_match() call has value 2.
+
+   Default value is “$avp(s:tvalues)”.
+
+   Example 1.10. Set pv_values parameter
+...
+modparam("mtree", "pv_values", "$avp(mtvals)")
+...
+
+3.11. mt_tree_type (integer)
+
+   Default payload type for trees data stored in 'db_table'. Documented
+   values are 0 for string payloads and 2 for integer payloads.
+
+   Default value is 0.
+
+   Example 1.11. Set mt_tree_type parameter
+...
+modparam("mtree", "mt_tree_type", 2)
+...
+
+3.12. mt_ignore_duplicates (integer)
+
+   Ignore duplicated prefixes when loading data.
+
+   Default value is 0.
+
+   Example 1.12. Set mt_ignore_duplicates parameter
+...
+modparam("mtree", "mt_ignore_duplicates", 1)
+...
+
+3.13. mt_allow_duplicates (integer)
+
+   Allow duplicate prefixes when loading data.
+
+   Default value is 0.
+
+   Example 1.13. Set mt_allow_duplicates parameter
+...
+modparam("mtree", "mt_allow_duplicates", 1)
+...
+
+4. Functions
+
+   4.1. mt_match(mtree, pv, mode)
+
+4.1.  mt_match(mtree, pv, mode)
+
+   Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
+   of 'mode' is NOT 2, sets a value of the longest matching prefix to
+   pseudo variable specified by pv_value parameter. If 'mtree' type is 0
+   or 2 and value of 'mode' is 2, sets values of all matching prefixes to
+   avp specified by pv_values parameter so that a value of longest
+   matching prefix is in avp index 0. Parameter 'mode' can be an integer
+   constant or a pseudo variable with integer value.
+
+   Returns 1 if match succeeded and -1 otherwise.
+
+   Example 1.14. mt_match usage
+...
+mt_match("mytree", "$rU", "0");
+...
+
+5. RPC Commands
+
+   5.1. mtree.list
+   5.2. mtree.summary
+   5.3. mtree.reload
+   5.4. mtree.match
+
+5.1.  mtree.list
+
+   List content of one or all trees.
+
+   Name: mtree.list
+
+   Parameters:
+     * _mtree_ : name of tree to list (optional).
+
+   Example 1.15. mtree.list rpc usage
+...
+kamcmd mtree.list
+kamcmd mtree.list mytree
+...
+
+5.2.  mtree.summary
+
+   List usage summary for all trees or for the tree whose name is given as
+   parameter.
+
+   Parameters:
+     * _mtree_ - (optional) the name of the tree.
+
+5.3.  mtree.reload
+
+   Reload mtree from database to memory.
+
+   Parameters:
+     * _mtree_
+       - name of mtree or empty string meaning all mtrees
+
+5.4.  mtree.match
+
+   Match prefix value against mtree
+
+   Parameters:
+     * _mtree_
+       - name of mtree
+     * _prefix_
+       - match prefix
+     * _mode_
+       - matching mode
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. mt_load_api(api)
+        1.2. mt_match(msg, mtree, value, mode)
+
+1. Available Functions
+
+   1.1. mt_load_api(api)
+   1.2. mt_match(msg, mtree, value, mode)
+
+1.1.  mt_load_api(api)
+
+   The function imports all API functions that are exported by the mtree
+   module (see sections below).
+
+   Meaning of the parameters is as follows:
+     * mtree_api_t* api - mtree API
+
+1.2.  mt_match(msg, mtree, value, mode)
+
+   Match 'value' against 'mtree' using 'mode' (see mt_match function Admin
+   Guide documentation).
+
+   Meaning of the parameters is as follows:
+     * sip_msg_t *msg - SIP Request
+     * str *mtree - Name of mtree
+     * str *value - Value to match
+     * int mode - Match mode

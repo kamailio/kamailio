@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>Berkeley DB Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Will</firstname>
+		<surname>Quan</surname>
+		<affiliation><orgname>Cisco Systems</orgname></affiliation>
+		<address>
+		<email>wiquan@cisco.com</email>
+		<otheraddr>
+		<ulink url="http://www.cisco.com">http://www.cisco.com</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Will</firstname>
+		<surname>Quan</surname>
+		<address>
+		    <email>wiquan@cisco.com</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Cisco Systems</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+	<xi:include href="db_berkeley_admin.xml"/>
+</book>

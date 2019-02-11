@@ -1,0 +1,157 @@
+oracle Module
+
+Iouri Kharon
+
+   <yjh@styx.cabel.net>
+
+Yury Skandarov
+
+   <kandman@trunkmobile.com>
+
+Iakov Kharon
+
+   <jyh@trunkmobile.com>
+
+Edited by
+
+Iouri Kharon
+
+   <yjh@styx.cabel.net>
+
+   Copyright © 2007,2008 TRUNK MOBILE, INC.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. User's Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. timeout (fixedpoint)
+              3.2. reconnect (fixedpoint)
+
+        4. Functions
+        5. Installation
+        6. Utility openser_orasel
+
+   List of Examples
+
+   1.1. Set timeout parameter
+   1.2. Disable asynchronous mode
+   1.3. Set reconnect parameter
+
+Chapter 1. User's Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. timeout (fixedpoint)
+        3.2. reconnect (fixedpoint)
+
+   4. Functions
+   5. Installation
+   6. Utility openser_orasel
+
+1. Overview
+
+   This is a module which provides Oracle connectivity for Kamailio. It
+   implements the DB API defined in Kamailio. If you want to use the
+   nathelper module, or any other modules that calls the get_all_ucontacts
+   API export from usrloc, then you need to set the DORACLE_USRLOC define
+   in the Makefile.defs file before compilation.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * instantclient-sdk-10.2.0.3 - the development headers and libraries
+       of OCI.
+
+3. Parameters
+
+   3.1. timeout (fixedpoint)
+   3.2. reconnect (fixedpoint)
+
+3.1. timeout (fixedpoint)
+
+   Timeout value for any operation with BD.
+
+   Possible values is from 0.1 to 10.0 seconds.
+
+   Default value is 3.0 (3 second).
+
+   If value of timeout parameter set to 0, module use synchronous mode
+   (without timeout).
+
+   Example 1.1. Set timeout parameter
+...
+modparam("db_oracle", "timeout", 1.5)
+...
+
+   Example 1.2. Disable asynchronous mode
+...
+modparam("db_oracle", "timeout", 0)
+...
+
+3.2. reconnect (fixedpoint)
+
+   Timeout value for connect (create session) operation.
+
+   Possible values is from 0.1 to 10.0 seconds.
+
+   Default value is 0.2 (200 milliseconds).
+
+   Example 1.3. Set reconnect parameter
+...
+modparam("db_oracle", "reconnect", 0.5)
+...
+
+4. Functions
+
+   No function exported to be used from configuration file.
+
+5. Installation
+
+   Because it depends on an external library, the oracle module is not
+   compiled and installed by default. You can use one of the next options.
+     * - edit the "Makefile" and remove "db_oracle" from
+       "excluded_modules" list. Then follow the standard procedure to
+       install Kamailio: "make all; make install".
+     * - from command line use: 'make all include_modules="db_oracle";
+       make install include_modules="db_oracle"'.
+
+6. Utility openser_orasel
+
+   For working with kamctl script, should be able to print the 'query'
+   results to the terminal in a user-readable form. The standard
+   command-line Oracle client (sqlplus) is not quite suitable for this, as
+   it cannot align row width to real (received) data's (it always prints a
+   cell width as described in the db scheme). This problem has been solved
+   by inclusion the utility openser_oracle, which formats printing
+   approximately in the same way as the 'mysql' client utility. In
+   addition, this utility known about the "agreements and types" in DB
+   that are used in Kamailio for the work with Oracle and formats printing
+   taking these into account.

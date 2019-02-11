@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>registrar Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<email>jan@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+		</author>
+		<author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<affiliation><orgname>Edvina AB</orgname></affiliation>
+		<email>oej@edvina.net</email>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+		</editor>
+		<editor>
+		<firstname>Bogdan-Andre</firstname>
+		<surname>Iancu</surname>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="registrar_admin.xml"/>
+	<xi:include href="registrar_faq.xml"/>
+	
+</book>

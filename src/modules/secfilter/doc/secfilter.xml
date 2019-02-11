@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Secfilter Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jose Luis</firstname>
+		<surname>Verdeguer</surname>
+		<email>verdeguer@zoonsuite.com</email>
+		<affiliation><orgname>Zoon Suite</orgname></affiliation>
+		<address>
+			<email>verdeguer@zoonsuite.com</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2018</year>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="secfilter_admin.xml"/>
+	
+</book>

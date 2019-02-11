@@ -1,0 +1,496 @@
+NDB_REDIS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Vicente Hernando
+
+   <vhernando@systemonenoc.com>
+
+Morten Isaksen
+
+   <misak@uni-tel.dk>
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+   Copyright © 2011 asipto.com
+
+   Copyright © 2012 www.systemonenoc.com
+
+   Copyright © 2017 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. server (str)
+              3.2. init_without_redis (integer)
+              3.3. connect_timeout (int)
+              3.4. cmd_timeout (int)
+              3.5. cluster (integer)
+              3.6. allowed_timeouts (integer)
+              3.7. disable_time (integer)
+              3.8. flush_on_reconnect (integer)
+              3.9. allow_dynamic_nodes (integer)
+
+        4. Functions
+
+              4.1. redis_cmd(srvname, command, ..., replyid)
+              4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+              4.3. redis_execute(srvname)
+              4.4. redis_free(replyid)
+
+   List of Examples
+
+   1.1. Set server parameter
+   1.2. Set init_without_redis parameter
+   1.3. Set connect_timeout parameter
+   1.4. Set cmd_timeout parameter
+   1.5. Set cluster parameter
+   1.6. Set allowed_timeouts parameter
+   1.7. Set disable_time parameter
+   1.8. Set flush_on_reconnect parameter
+   1.9. Set allow_dynamic_nodes parameter
+   1.10. redis_cmd usage
+   1.11. redis_execute usage
+   1.12. redis_free usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. server (str)
+        3.2. init_without_redis (integer)
+        3.3. connect_timeout (int)
+        3.4. cmd_timeout (int)
+        3.5. cluster (integer)
+        3.6. allowed_timeouts (integer)
+        3.7. disable_time (integer)
+        3.8. flush_on_reconnect (integer)
+        3.9. allow_dynamic_nodes (integer)
+
+   4. Functions
+
+        4.1. redis_cmd(srvname, command, ..., replyid)
+        4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+        4.3. redis_execute(srvname)
+        4.4. redis_free(replyid)
+
+1. Overview
+
+   This module provides a connector to interact with REDIS NoSQL Database
+   from configuration file. You can read more about REDIS at
+   http://redis.io.
+
+   It can connect to many REDIS servers and store the results in different
+   containers.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * hiredis - available at https://github.com/antirez/hiredis .
+
+3. Parameters
+
+   3.1. server (str)
+   3.2. init_without_redis (integer)
+   3.3. connect_timeout (int)
+   3.4. cmd_timeout (int)
+   3.5. cluster (integer)
+   3.6. allowed_timeouts (integer)
+   3.7. disable_time (integer)
+   3.8. flush_on_reconnect (integer)
+   3.9. allow_dynamic_nodes (integer)
+
+3.1. server (str)
+
+   Specify the details to connect to REDIS server. It takes a list of
+   attribute=value separated by semicolon, the attributes can be name,
+   unix, addr, port, db and pass. Name is a generic identifier to be used
+   with module functions. unix is the path to the unix domain socket
+   provided by redis server. addr and port are the IP address and the port
+   to connect to REDIS server. pass is the server password. unix and
+   (addr, port) are mutually exclusive. If both appear in same server
+   settings unix domain socket is configured. db is the DB number to use
+   (defaults to 0 if not specified).
+
+   You can set this parameter many times, in case you want to connect to
+   many REDIS servers, just give different attributes and use the specific
+   server name when querying the REDIS instance.
+
+   Default value is NULL.
+
+   Example 1.1. Set server parameter
+...
+modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=my
+password")
+
+# Unix domain socket
+modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
+
+# sentinel (for a redis slave)
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
+ster=0;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+
+# sentinel (for a redis master)
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
+ster=1;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+
+...
+
+3.2. init_without_redis (integer)
+
+   If set to 1, the module will correctly initialize even if redis is not
+   available at start up.
+
+   Default value is “0”.
+
+   Example 1.2. Set init_without_redis parameter
+...
+modparam("ndb_redis", "init_without_redis", 1)
+...
+
+3.3. connect_timeout (int)
+
+   The timeout when connecting to the redis server
+
+   Default value is 1000 ms.
+
+   Example 1.3. Set connect_timeout parameter
+...
+modparam("ndb_redis", "connect_timeout", 500)
+...
+
+3.4. cmd_timeout (int)
+
+   The timeout for each query to the redis server. If the redis server
+   does not reply within the timeout value, the command will fail and
+   kamailio will continue executing the cfg file.
+
+   Default value is 1000 ms.
+
+   Example 1.4. Set cmd_timeout parameter
+...
+modparam("ndb_redis", "cmd_timeout", 500)
+...
+
+3.5. cluster (integer)
+
+   If set to 1, the module will connect to servers indicated in the
+   "MOVED" reply.
+
+   The module needs to know all existing REDIS-Nodes at startup. The nodes
+   are searched by the name "ip:port", e.g. if REDIS replies with "MOVED
+   127.0.0.1:4711", ndb_redis needs to know the databases
+   "127.0.0.1:4711".
+
+   Default value is “0” (disabled).
+
+   Example 1.5. Set cluster parameter
+...
+modparam("ndb_redis", "server", "name=127.0.0.1:26001;addr=127.0.0.1;port=26001"
+)
+modparam("ndb_redis", "server", "name=127.0.0.1:26004;addr=127.0.0.1;port=26004"
+)
+modparam("ndb_redis", "server", "name=127.0.0.1:26008;addr=127.0.0.1;port=26008"
+)
+...
+modparam("ndb_redis", "cluster", 1)
+...
+
+3.6. allowed_timeouts (integer)
+
+   If this is set to a non-negative value, it sets the number of
+   consecutive REDIS commands that can fail before temporarily disabling
+   the REDIS server. This is similar to rtpengine_disable_tout parameter
+   from the rtpengine module.
+
+   When communicating with a REDIS server, if redis_cmd or redis_execute
+   will fail for more than “allowed_timeouts” consecutive times, the
+   server will be temporary disabled for a number of seconds configured by
+   the “disable_time” parameter.
+
+   Disabling a server means that further redis_cmd and redis_execute
+   commands will not do anything and return a negative value “-2”.
+   Messages are also logged when disabling and re-enabling a server.
+
+   The number of consecutive fails are counted by each Kamailio process,
+   so when disabling a server this is done just for that process, not
+   globally.
+
+   Default value is “-1” (disabled).
+
+   Example 1.6. Set allowed_timeouts parameter
+...
+modparam("ndb_redis", "allowed_timeouts", 3)
+...
+
+3.7. disable_time (integer)
+
+   If allowed_timeouts is set to a non negative value this determines the
+   number of seconds the REDIS server will be disabled
+
+   Default value is “0”.
+
+   Example 1.7. Set disable_time parameter
+...
+modparam("ndb_redis", "allowed_timeouts", 0)
+modparam("ndb_redis", "disable_time", 30)
+...
+
+3.8. flush_on_reconnect (integer)
+
+   If this is set to a non zero value, a "FLUSHALL" command is issued
+   after reconnecting to a REDIS server, to clear the entire database.
+
+   When a command to a REDIS server fails, a reconnection to that server
+   is made, so with this parameter each failed command will result in a
+   flush of the database.
+
+   This is useful in scenarios when a REDIS server does not respond to
+   commands, but the commands might have been issued, and the responses
+   lost. If this leaves the data in the db in an uncertain state, a flush
+   might fix any issues that may occur.
+
+   Default value is “0” (disabled).
+
+   Example 1.8. Set flush_on_reconnect parameter
+...
+modparam("ndb_redis", "flush_on_reconnect", 1)
+...
+
+3.9. allow_dynamic_nodes (integer)
+
+   If set to 1, the module will connect to servers indicated in the
+   "MOVED" reply, even if they are not specified at startup.
+
+   When “cluster” is enabled the module supports redirections ("MOVED")
+   replies. Set “allow_dynamic_nodes” to 1 to avoid listing all the nodes
+   at startup. You can only list one node, e.g. by using a DNS name for
+   the cluster instead of an IP address. The module will add dynamically
+   the new nodes as the MOVED replies are received. Only works if
+   “cluster” is set to 1.
+
+   Default value is “0” (disabled).
+
+   Example 1.9. Set allow_dynamic_nodes parameter
+...
+modparam("ndb_redis", "server", "name=redis_cluster;addr=127.0.0.1;port=26008")
+...
+modparam("ndb_redis", "cluster", 1)
+modparam("ndb_redis", "allow_dynamic_nodes", 1)
+...
+
+4. Functions
+
+   4.1. redis_cmd(srvname, command, ..., replyid)
+   4.2. redis_pipe_cmd(srvname, command, ..., replyid)
+   4.3. redis_execute(srvname)
+   4.4. redis_free(replyid)
+
+4.1.  redis_cmd(srvname, command, ..., replyid)
+
+   Send a command to REDIS server identified by srvname. The reply will be
+   stored in a local container identified by replyid. All the parameters
+   can be strings with pseudo-variables that are evaluated at runtime.
+
+   Minimum required arguments are srvname, command and replyid. Command
+   argument can be separated into several ones using %s token. (See
+   examples) Total number of arguments cannot exceed six.
+
+   The reply can be accessed via pseudo-variable $redis(key). The key can
+   be: type - type of the reply (as in hiredis.h); value - the value
+   returned by REDIS server; info - in case of error from REDIS, it will
+   contain an info message.
+
+   If reply type is an array (as in hiredis.h), there are other keys
+   available:
+     * size - returns number of elements in the array.
+     * type[n] - returns the type of the nth element in the array. type -
+       returns array type.
+     * value[n] - returns value of the nth element. value - returns null
+       for an array. You need to get each element by index.
+
+   In case one of the members of the array is also an array (for example
+   calling SMEMBERS in a MULTI/EXEC transaction), the members of the array
+   can be accessed by adding any of the above keys, after a value[n] key.
+   The first value[n] references the element in the first array, while the
+   next key references an element of the referenced array.
+
+   The result type can be compared with $redisd(key) variable to test its
+   value. The key can be: rpl_str, rpl_arr, rpl_int, rpl_err, rpl_sts,
+   rpl_nil.
+
+   Example 1.10. redis_cmd usage
+...
+if(redis_cmd("srvN", "INCR cnt", "r")) {
+    # success - the incremented value is in $redis(r=>value)
+    xlog("===== $redis(r=>type) * $redis(r=>value)\n");
+}
+
+# set a value
+redis_cmd("srvN", "SET foo bar", "r");
+
+redis_cmd("srvN", "SET ruri $ru", "r");
+
+# get a value
+redis_cmd("srvN", "GET foo", "r");
+
+# same command separated into two arguments:
+redis_cmd("srvN", "GET %s", "foo", "r");
+
+# if we have a key with spaces within it:
+redis_cmd("srvN", "GET %s", "foo bar", "r");
+
+# several values substitution:
+redis_cmd("srvN", "HMGET %s %s %s", "key1", "field1", "field2", "r");
+
+
+# array example
+if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
+    xlog("array size: $redis(r=>size)\n");
+    xlog("first values: $redis(r=>value[0]) , $redis(r=>value[1])\n");
+}
+
+
+# array as element of an array example
+redis_cmd("srvN", "MULTI", "r1");
+redis_cmd("srvN", "SMEMBERS foo", "r2");
+if (redis_cmd("srvN", "EXEC", "r")) {
+    xlog("array size: $redis(r=>value[0]=>size)\n");
+    xlog("first member of the set:$redis(r=>value[0]=>value[0])\n");
+    xlog("type of the second member of the set:$redis(r=>value[0]=>type[1])\n");
+}
+...
+
+4.2.  redis_pipe_cmd(srvname, command, ..., replyid)
+
+   Add a command to be sent to REDIS server identified by srvname. All the
+   commands will be stored in a buffer until a call to redis_execute is
+   made. When calling redis_execute the stored commands are sent using the
+   pipelining functionality of redis. The replies will be stored in local
+   containers identified by the replyid of each added command. All the
+   parameters can be strings with pseudo-variables that are evaluated at
+   runtime.
+
+   This command is similar in syntax with redis_cmd, the only difference
+   is that it does not send the command but instead appends it to a
+   buffer.
+
+   See examples from redis_execute.
+
+   Note: Pipelining feature is incompatible with the clustering feature.
+   If cluster parameter is set to 1, this function will log an error and
+   do nothing.
+
+4.3.  redis_execute(srvname)
+
+   Sends commands to REDIS server identified by srvname. Commands are
+   added with redis_pipe_cmd function, and will be stored for an existing
+   REDIS server. When this function is called all the commands will be
+   sent in a single message to the REDIS server.
+
+   When using redis_cmd together with redis_pipe_cmd it is recommended
+   that a call to redis_execute is made before calling redis_cmd in case
+   there are pipelined commands, otherwise when calling redis_cmd, if
+   pipelined messages exist, a call to redis_execute is made automatically
+   and a warning message is logged.
+
+   Note: Pipelining feature is incompatible with the clustering feature.
+   If cluster parameter is set to 1, this function will log an error and
+   do nothing.
+
+   Example 1.11. redis_execute usage
+...
+After several redis command calls:
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvB", "SET ruri $ru", "r2");
+
+        redis_pipe_cmd("srvB", "GET foo", "r3");
+
+Send the data and retrieve the results:
+        redis_execute("srvA"); //send command to srvA and wait for reply. Store
+the reply in r1
+
+        redis_execute("srvB"); //send command to srvA and wait for reply. Store
+the replies in r2 (for SET ruri $ru) and r3 (for GET foo)
+
+Using both redis_cmd and redis_pipe_cmd:
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+        redis_execute("srvA"); //send commands to srvA and wait for reply. Store
+ replies in r1 and r2
+
+        redis_cmd("srvA", "GET foo", "r3"); //send command, wait for reply and s
+tore it in r3
+
+
+        redis_pipe_cmd("srvA", "SET foo bar", "r1");
+
+        redis_pipe_cmd("srvA", "SET ruri $ru", "r2");
+
+        redis_cmd("srvA", "GET foo", "r3"); //first call redis execute (replies
+are stored in r1 and r2), log warning and execute redis_cmd
+
+        redis_execute("srvA"); //this does nothing as there are no more pipeline
+d commands. The call is not necessary
+...
+
+4.4.  redis_free(replyid)
+
+   Frees data in a previous reply from memory. After this function call,
+   accessing to a freed replyid returns null value.
+
+   It is not necessary to free a reply to use it again in a new redis_cmd
+   function. When ndb_redis module closes, all pending replies are freed
+   automatically.
+
+   Example 1.12. redis_free usage
+...
+After a redis command call:
+        redis_cmd("srvN", "INCR cnt", "r");
+
+free reply data:
+        redis_free("r");
+...

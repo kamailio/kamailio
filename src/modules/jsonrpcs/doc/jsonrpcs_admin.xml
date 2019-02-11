@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a JSON-RPC v2 server, tailored for the needs of
+		&kamailio;. It implements the &kamailio; RPC interface over JSON-RPC.
+	</para>
+	<para>
+		The specification for JSON-RPC is available at:
+		<ulink url="http://www.jsonrpc.org/specification">http://www.jsonrpc.org/specification</ulink>.
+	</para>
+	<para>
+		The transports supported by the module are: FIFO file, datagram (UDP)
+		over unix socket files or network sockets, HTTP and HTTPS.
+	</para>
+	<para>
+		The JSONRPCS module requires the xHTTP module to handle HTTP/S requests.
+		Read the documentation of the xHTTP module for more details.
+	</para>
+	</section>
+
+	<section>
+	<title>Important Remarks</title>
+	<itemizedlist>
+	<listitem>
+	<para>
+		This module implements the support for asynchronous RPC commands only
+		for HTTP and HTTPS transports.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		This module does not accept parameters embedded in a structure
+		(see the RPC documentation for more info about how parameters can be
+		passed to RPC).
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		For the RPC interface implemented by &kamailio;, the order of parameters
+		is important. If the parameters are given with names, the names are
+		ignored.
+	</para>
+	</listitem>
+
+	</itemizedlist>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - xHTTP (optional, required when
+				http transport is wanted).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="jsonrpcs.p.pretty_format">
+		<title><varname>pretty_format</varname> (int)</title>
+		<para>
+			Pretty format for JSON-RPC response document if set to 1. To
+			disable, set to 0.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '1' (on).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pretty_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "pretty_format", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="jsonrpcs.p.transport">
+		<title><varname>transport</varname> (int)</title>
+		<para>
+			Control what transports are enabled. The value can be:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0</emphasis> - all transports that can be enabled.
+				For http, the xhttp module must be loaded. For FIFO, the
+				fifo_name parameter must be set. For DATAGRAM, the dgram_socket
+				parameter must be set.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1</emphasis> - only HTTP transport
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2</emphasis> - only FIFO transport
+			</para></listitem>
+			<listitem><para>
+				<emphasis>4</emphasis> - only DATAGRAM transport
+			</para></listitem>
+
+		</itemizedlist>
+
+		<para>
+			The value can be also a combination of specific transports. Make
+			the sum of the desired transports to enable them. For example,
+			enabling FIFO and DATAGRAM can be done setting transport=6.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '6' (fifo and datagram transport).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>transport</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "transport", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="jsonrpcs.p.fifo_name">
+		<title><varname>fifo_name</varname> (str)</title>
+		<para>
+		The name of the FIFO file to be created for listening and
+		reading external commands. If the given path is not absolute,
+		the fifo file is created relative to run_dir (global parameter).
+		</para>
+		<para>
+		<emphasis>
+			Default value is "&kamailiobinary;_rpc.fifo".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc.fifo")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.fifo_mode">
+		<title><varname>fifo_mode</varname> (int)</title>
+		<para>
+		Permission to be used for creating the listening FIFO file. It
+		follows the UNIX conventions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0660 (rw-rw----).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "fifo_mode", 0600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.fifo_group">
+		<title><varname>fifo_group</varname> (int or str)</title>
+		<para>
+		System Group to be used for creating the listening FIFO file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one (process group).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_group</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "fifo_group", 0)
+modparam("jsonrpcs", "fifo_group", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.fifo_user">
+		<title><varname>fifo_user</varname> (int or str)</title>
+		<para>
+		System User to be used for creating the listening FIFO file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one (process user).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_user</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "fifo_user", 0)
+modparam("jsonrpcs", "fifo_user", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.fifo_reply_dir">
+		<title><varname>fifo_reply_dir</varname> (str)</title>
+		<para>
+		Directory to be used for creating the reply FIFO files.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>/tmp/</quote>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_reply_dir</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_socket">
+		<title><varname>dgram_socket</varname> (str)</title>
+		<para>
+		The name of a Unix socket file or an IP address.
+		The Unix datagram or UDP socket will be created using this parameter
+		in order to read the external commands. Both IPv4 and IPv6 are
+		supported. If the given path for Unix socket is not absolute,
+		then it is created relative to run_dir (global parameter).
+		</para>
+		<para>
+		<emphasis>
+			Default value is "&kamailiobinary;_rpc.sock".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_socket", "/tmp/kamailio_rpc.sock")
+...
+modparam("jsonrpcs", "dgram_socket", "udp:1.2.3.4:8090")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_workers">
+		<title><varname>dgram_workers</varname> (str)</title>
+		<para>
+		The number of worker processes to be created. Each worker process
+		will be a datagram server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_workers", 4)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_mode">
+		<title><varname>dgram_mode</varname> (int)</title>
+		<para>
+		Permission to be used for creating the listening UNIX datagram socket.
+		Not necessary for a UDP socket.
+		It follows the UNIX conventions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0660 (rw-rw----).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_mode", 0600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_group">
+		<title><varname>dgram_group</varname> (int)
+		<varname>dgram_group</varname> (str)</title>
+		<para>
+		Group to be used for creating the listening UNIX socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_group</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_group", 0)
+modparam("jsonrpcs", "dgram_group", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_user">
+		<title><varname>dgram_user</varname> (int)
+		<varname>dgram_group</varname> (str)</title>
+		<para>
+		User to be used for creating the listening UNIX socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_user</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_user", 0)
+modparam("jsonrpcs", "dgram_user", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.dgram_timeout">
+		<title><varname>dgram_timeout</varname> (int)</title>
+		<para>
+		The reply will expire after trying to sent it for socket_timeout
+		milliseconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2000.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "dgram_timeout", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+ 	<section id="jsonrpcs.f.jsonrpc_dispatch">
+	    <title>
+		<function moreinfo="none">jsonrpc_dispatch()</function>
+	    </title>
+	    <para>
+		Handle the JSONRPC request and generate a response.
+	    </para>
+		<example>
+		<title><function>jsonrpc_dispatch</function> usage</title>
+		<programlisting format="linespecific">
+...
+#!KAMAILIO
+
+memdbg=5
+memlog=5
+
+debug=3
+log_stderror=yes
+
+fork=yes
+children=2
+
+tcp_accept_no_cl=yes
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xhttp.so"
+loadmodule "jsonrpcs.so"
+
+modparam("jsonrpcs", "transport", 1)
+
+request_route {
+	send_reply("404", "not found");
+	exit;
+}
+
+event_route[xhttp:request] {
+    if(src_ip!=127.0.0.1) {
+        xhttp_reply("403", "Forbidden", "text/html",
+            "&lt;html&gt;&lt;body&gt;Not allowed from $si&lt;/body&gt;&lt;/html&gt;");
+        exit;
+	}
+	if ($hu =~ "^/RPC") {
+		jsonrpc_dispatch();
+	} else {
+        xhttp_reply("200", "OK", "text/html",
+            "&lt;html&gt;&lt;body&gt;Wrong URL $hu&lt;/body&gt;&lt;/html&gt;");
+    }
+    return;
+}
+...
+</programlisting>
+	    </example>
+	</section>
+ 	<section id="jsonrpcs.f.jsonrpc_exec">
+	    <title>
+		<function moreinfo="none">jsonrpc_exec(cmd)</function>
+	    </title>
+	    <para>
+			Execute a JSON-RPC command given as a parameter.
+		</para>
+		<para>
+			The parameter has to be a valid full JSON-RPC document. It can
+			be a dynamic string with variables. The result of the command
+			can be accessed via $jsonrpl(key) pseudo variables.
+	    </para>
+		<example>
+		<title><function>jsonrpc_exec</function> usage</title>
+		<programlisting format="linespecific">
+...
+jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>JSONRPC Commands</title>
+	<para>
+	Here are some examples of RPC commands with the equivalent of running them
+	with &kamcmd; and the corresponding JSON document for them. It is important
+	to be aware that the name of the parameters doesn't matter, only the order
+	of the values must be the one expected by &kamailio; RPC command.
+	</para>
+	<example>
+	<title>JSONRPC Commands - Examples</title>
+	<programlisting format="linespecific">
+...
+# kamcmd core.psx
+
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "id": 1
+}
+...
+## - prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
+# kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": ["ip", 2, "sip:127.0.0.1:5080"],
+  "id": 1
+}
+
+## - or:
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": {
+    "state": "ip",
+    "grpup": 2,
+    "address": "sip:127.0.0.1:5080"
+  },
+  "id": 1
+}
+...
+</programlisting>
+	    </example>
+
+	</section>
+
+	<section>
+	<title>JSONRPC Transports</title>
+	<para>
+	JSONRPC specifications do not enforce a specific transport to carry the
+	JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
+	supported by &kamailio;. In addition, &kamailio; supports receiving JSON
+	documents via a local FIFO file.
+	</para>
+ 	<section>
+	    <title>JSONRPC Over HTTP</title>
+	    <para>
+			It requires that XHTTP module is loaded. HTTPS can be used if
+			you enable TLS for &kamailio;. The JSONRPC requests have to be
+			sent to the TCP or TLS ports of &kamailio;.
+		</para>
+		<para>
+			The 'transport' parameter has to be 0 or 1.
+		</para>
+		<para>
+			The format of the JSON document must follow the JSONRPC
+			specifications.
+		</para>
+	</section>
+ 	<section>
+	    <title>JSONRPC Over FIFO</title>
+	    <para>
+			This module can retrieve JSONRPC requests via a local FIFO file. To
+			enable this feature, 'fifo_name' parameter must be set and
+			'transport' parameter has to be 0 or 2.
+		</para>
+		<para>
+			The format of the JSON document must follow the JSONRPC
+			specifications plus an additional field named 'reply_name'. The
+			value for this field must be the name of the FIFO file were to
+			write the JSONRPC response. The reply FIFO file is created in the
+			folder specified by 'fifo_reply_dir'. Next is an example showing
+			a JSONRPC command to be sent via FIFO transport.
+		</para>
+		<example>
+		<title>JSONRPC Over Fifo Command</title>
+		<programlisting format="linespecific">
+...
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "reply_name": "kamailio_jsonrpc_reply_fifo",
+  "id": 1
+}
+...
+</programlisting>
+	    </example>
+		<para>
+			Next is an example of how to test it from a terminal, assuming that
+			the parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
+		</para>
+		<example>
+		<title>JSONRPC Over Fifo Command From Termina</title>
+		<programlisting format="linespecific">
+...
+mkfifo /tmp/kamailio_jsonrpc_reply_fifo
+cat /tmp/kamailio_jsonrpc_reply_fifo &amp;
+echo '{"jsonrpc": "2.0", "method": "core.psx", \
+          "reply_name": "kamailio_jsonrpc_reply_fifo", "id": 1}' \
+     > /tmp/kamailio_jsonrpc_fifo
+rm /tmp/kamailio_jsonrpc_reply_fifo
+</programlisting>
+	    </example>
+
+	</section>
+ 	<section>
+	    <title>JSONRPC Over DATAGRAM</title>
+		<para>
+			This module can retrieve JSONRPC requests via a UNIX socket file
+			or UDP IPv4/IPv6 socket. To enable this feature, 'dgram_socket'
+			parameter must be set and 'transport' parameter has to be 0 or 4.
+		</para>
+		<para>
+			The 'transport' parameter has to be 0 or 4.
+		</para>
+		<para>
+			The format of the JSON document must follow the JSONRPC
+			specifications.
+		</para>
+	</section>
+
+	</section>
+
+</chapter>
+

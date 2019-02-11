@@ -19,13 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
-function cleanup() {
+cleanup() {
 	killall -9 sipp > /dev/null 2>&1
-	$KILL > /dev/null 2>&1
+	kill_kamailio	
 
 	$MYSQL "delete from location where (user_agent = \"kamailio_test\");"
 	$MYSQL "delete from userblacklist where username='49721123456786';"
@@ -77,7 +77,7 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-$BIN -w . -f $CFG > /dev/null 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null 2>&1
 sleep 1
 
 sipp -sn uas -bg -i 127.0.0.1 -p 5060 #&> /dev/null

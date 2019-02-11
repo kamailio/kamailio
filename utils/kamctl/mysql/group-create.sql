@@ -3,7 +3,7 @@ CREATE TABLE `grp` (
     `username` VARCHAR(64) DEFAULT '' NOT NULL,
     `domain` VARCHAR(64) DEFAULT '' NOT NULL,
     `grp` VARCHAR(64) DEFAULT '' NOT NULL,
-    `last_modified` DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL,
+    `last_modified` DATETIME DEFAULT '2000-01-01 00:00:01' NOT NULL,
     CONSTRAINT account_group_idx UNIQUE (`username`, `domain`, `grp`)
 );
 

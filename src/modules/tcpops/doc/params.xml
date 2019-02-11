@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="print.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+		<section>
+		<title><varname>closed_event</varname> (int)</title>
+		<para>
+			If set to 0 (globally disabled), the "tcp:closed" event route will never be called on TCP
+			disconnections.
+		</para>
+		<para>
+			If set to 1 (globally enabled), the "tcp:closed" event route will always be called on TCP
+			disconnections.
+		</para>
+		<para>
+			If set to 2 ("manual" mode), the "tcp:closed" event route will only be called on TCP
+			connections for which <literal>tcp_enable_closed_event()</literal> has
+			been applied, when a disconnection occurs.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (globally enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>closed_event</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tcpops", "closed_event", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
+</section>

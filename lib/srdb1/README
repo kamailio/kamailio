@@ -1,5 +1,0 @@
-This directory contains the generic database support interface - db1. The interface 
-should be used by all modules willing to communicate with a database. Kamailio
-can then switch from one database to another simply by loading a different 
-database support module. Directory example contains a very simple example 
-how to use the interface. Directory doc contains the API documentation.

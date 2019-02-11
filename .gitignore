@@ -12,16 +12,20 @@ modules.lst
 # ignore binary files and objects
 /ser
 /kamailio
+/src/kamailio
 *.so
 *.so.*
 *.o
+*.a
 # archives
 *.tar.gz
+*.tar.xz
 *.deb
 *.rpm
 # tags
 tags
 TAGS
+.tags*
 # vi swaps
 .*.swp
 .*.swo
@@ -31,7 +35,7 @@ utils/gen_ha1/gen_ha1
 utils/kamcmd/kamcmd
 utils/sercmd/sercmd
 utils/sercmd/kamcmd
-utils/protoshoot/protoshoot
+misc/tools/protoshoot/protoshoot
 # Emacs backup files
 *~
 # Emacs file locks
@@ -41,5 +45,8 @@ utils/protoshoot/protoshoot
 # MacOSX auto-generated files
 libiname.lst
 *.dylib
+.DS_Store
 # man pages
 *.7
+# vscode tmp files
+.vscode

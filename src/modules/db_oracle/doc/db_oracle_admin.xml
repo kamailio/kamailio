@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>User's Guide</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This is a module which provides Oracle connectivity for &kamailio;.
+		It implements the DB API defined in &kamailio;. If you want to use
+		the nathelper module, or any other modules that calls the
+		get_all_ucontacts API export from usrloc, then you need to set
+		the <emphasis>DORACLE_USRLOC</emphasis> define in the Makefile.defs
+		file before compilation.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>instantclient-sdk-10.2.0.3</emphasis> - the development headers and libraries of OCI.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>timeout</varname> (fixedpoint)</title>
+		<para>
+		Timeout value for any operation with BD.
+		</para>
+		<para>
+		Possible values is from 0.1 to 10.0 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3.0 (3 second).
+		</emphasis>
+		</para>
+		<para>
+		If value of timeout parameter set to 0, module use synchronous
+		mode (without timeout).
+		</para>
+		<example>
+		<title>Set <varname>timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_oracle", "timeout", 1.5)
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Disable asynchronous mode</title>
+		<programlisting format="linespecific">
+...
+modparam("db_oracle", "timeout", 0)
+...
+</programlisting>
+		</example>
+	</section>
+		<section>
+		<title><varname>reconnect</varname> (fixedpoint)</title>
+		<para>
+		Timeout value for connect (create session) operation.
+		</para>
+		<para>
+		Possible values is from 0.1 to 10.0 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.2 (200 milliseconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reconnect</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_oracle", "reconnect", 0.5)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+		<para>
+		No function exported to be used from configuration file.
+		</para>
+	</section>
+	<section>
+	<title>Installation</title>
+		<para>
+		Because it depends on an external library, the oracle module is not
+		compiled and installed by default. You can use one of the next options.
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			- edit the "Makefile" and remove "db_oracle" from "excluded_modules"
+			list. Then follow the standard procedure to install &kamailio;:
+			"make all; make install".
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			- from command line use: 'make all include_modules="db_oracle";
+			make install include_modules="db_oracle"'.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	<section>
+	<title>Utility openser_orasel</title>
+		<para>
+		For working with &ctltool; script, should be able to print the 'query' 
+		results to the terminal in a user-readable form. The standard command-line 
+		Oracle client (sqlplus) is not quite suitable for this, as it cannot align 
+		row width to real (received) data's (it always prints a cell width as 
+		described in the db scheme). This problem has been solved by inclusion the 
+		utility openser_oracle, which formats printing approximately in the same 
+		way as the 'mysql' client utility. In addition, this utility known about 
+		the "agreements and types" in DB that are used in &kamailio; for the work 
+		with Oracle and formats printing taking these into account.
+		</para>
+	</section>
+</chapter>
+

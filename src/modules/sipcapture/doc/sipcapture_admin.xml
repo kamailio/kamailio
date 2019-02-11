@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The sipcapture module stores incoming/outgoing SIP messages in database.
+	</para>
+	<para>
+		Kamailio can capture SIP messages in three modes
+		<itemizedlist>
+		<listitem>
+		<para>
+		IPIP encapsulation. (ETHHDR+IPHDR+IPHDR+UDPHDR).
+		</para>
+		</listitem>
+	        <listitem>
+                <para>
+                Monitoring/mirroring port.
+                </para>
+                </listitem>
+		<listitem>
+		<para>
+		Homer encapsulation protocol mode (HEP v1, v2, v3).
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+
+	<para>
+	The capturing can be turned on/off using rpc commands. Example:
+	</para>
+	<para>
+	&ctltool; rpc sipcapture.status on
+	</para>
+	<para>
+	&ctltool; rpc sipcapture.status off
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database module</emphasis> - mysql, postgres,
+				dbtext, unixodbc...
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="sipcapture.p.db_url">
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database URL.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.table_name">
+		<title><varname>table_name</varname> (str)</title>
+		<para>
+		Name of the table's name used to store the SIP messages. Can contain multiple tables, separated by "|".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip_capture". Only for Homer 3. For Homer 5, please use an argument for the sip_capture function.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sip_capture</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "table_name", "homer_capture")
+...
+modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.mt_mode">
+		<title><varname>mt_mode</varname> (str)</title>
+		<para>
+		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|". 
+		</para>
+		<para>
+		<emphasis>
+			Default value is "rand".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mt_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "mt_mode", "hash")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.hash_source">
+		<title><varname>hash_source</varname> (str)</title>
+		<para>
+		The field of the SIP message used for hashing, when mt_mode is set to "hash". The value can be "call_id", "to_user" or "from_user".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "call_id".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mt_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "hash_source", "to_user")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.db_insert_mode">
+                <title><varname>db_insert_mode</varname> (integer)</title>
+                <para>
+                If set to 1, use INSERT DELAYED to store sip message into capture table
+                when the DB driver has support for it. If no INSERT DELAYED support
+                is offered by DB driver, then standard INSERT is used.
+                </para>
+                <para>
+                If set to 2, use ASYNC INSERT to store sip message into capture table
+                when the DB driver has support for it. If no ASYNC INSERT support is
+                offered by DB driver, then standard INSERT is used.
+                </para>
+                <para>
+                Default value is 0 (no INSERT DELAYED).
+                </para>
+                <example>
+                <title>db_insert_mode example</title>
+                <programlisting format="linespecific">
+modparam("sipcapture", "db_insert_mode", 1)
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.capture_on">
+		<title><varname>capture_on</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable capture globally (on(1)/off(0))
+		</para>
+		<para>
+		<emphasis>
+			Default value is "0".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>capture_on</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "capture_on", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sipcapture.p.capture_mode">
+                <title><varname>capture_mode</varname> (str)</title>
+                <para>
+				This parameter can be used for defining a capture mode which can be used in
+				the sip_capture calls as a parameter. A capture mode has a name and some parameters.
+				It must be defined in the format: name=>param1=val1;param2=val2;...
+				The parameters are db_url, table_name, mt_mode and hash_source (optional).
+				Multiple capture modes can be defined by using this parameter multiple times.
+				After this, the capture modes can be used like:
+				sip_capture ("", "CAPTURE_MODE");
+				</para>
+                <example>
+                <title>capture_mode example</title>
+                <programlisting format="linespecific">
+modparam("sipcapture", "capture_mode", "mode1=>db_url=mysql://user:passwd@host/dbname1;table_name=homer_capture1|homer_capture2;mt_mode=hash;hash_source=call_id;")
+modparam("sipcapture", "capture_mode", "mode2=>db_url=mysql://user:passwd@host/dbname2;table_name=homer_capture3|homer_capture4;mt_mode=rand;")
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.hep_capture_on">
+                <title><varname>hep_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable capture of HEP (on(1)/off(0))
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>hep_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "hep_capture_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_ipip_capture_on">
+                <title><varname>raw_ipip_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable IPIP capturing (on(1)/off(0))
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_ipip_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_ipip_capture_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_moni_capture_on">
+                <title><varname>raw_moni_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
+		Only one mode on raw socket can be enabled! Monitoring port capturing currently 
+		supported only on Linux.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_moni_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_moni_capture_on", 1)
+...
+		</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_socket_listen">
+                <title><varname>raw_socket_listen</varname> (string)</title>
+                <para>
+                Parameter indicate an listen IP address of RAW socket for IPIP capturing. 
+                You can also define a port/portrange for IPIP/Mirroring mode, to capture 
+                SIP messages in specific ports:
+		<para>
+		"10.0.0.1:5060" - the source/destination port of the SIP message must be equal 5060
+		</para>
+		<para>
+		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be 
+		equal or be between 5060 and 5090.
+		</para>
+		<para>
+		The port/portrange must be defined if you are planning to
+		use mirroring capture! In this case, the part with IP address will be
+                ignored, but to make parser happy, use i.e. 10.0.0.0
+		</para>
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060-5090")
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_interface">
+                <title><varname>raw_interface</varname> (string)</title>
+		<para>
+		Name of the interface to bind on the raw socket.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_interface</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_interface", "eth0")
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_sock_children">
+                <title><varname>raw_sock_children</varname> (integer)</title>
+                <para>
+		Parameter define how many children that must be created to listen the raw socket.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "1".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_sock_children</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_sock_children", 6)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.promiscuous_on">
+                <title><varname>promiscuous_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable promiscuous mode on the raw socket.
+		Linux only.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>promiscous_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "promiscuous_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="sipcapture.p.raw_moni_bpf_on">
+                <title><varname>raw_moni_bpf_on</varname> (integer)</title>
+                <para>
+                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
+                The structure is defined in linux/filter.h. The default LSF accept a port/portrange
+                from the raw_socket_listen param. Currently LSF supported only on Linux.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_moni_bpf_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_moni_bpf_on", 1)
+...
+</programlisting>
+                </example>
+        </section>        
+	<section id="sipcapture.p.capture_node">
+		<title><varname>capture_node</varname> (str)</title>
+		<para>
+		Name of the capture node.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "homer01".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>capture_node</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "capture_node", "homer03")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.insert_retries">
+		<title><varname>insert_retries</varname> (integer)</title>
+		<para>
+		The number of times Kamailio should retry to write to the Homer database in case
+		the first attempt failed. The retry is also limited timewise by the
+		insert_retry_timeout parameter. Values allowed range from 0 to 500.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no retries).
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>insert_retries</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "insert_retries", 5)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.insert_retry_timeout">
+		<title><varname>insert_retry_timeout</varname> (integer)</title>
+		<para>
+		The time limit in seconds Kamailio retries to write to the Homer database in case
+		the first attempt failed. This parameter is only used together with the insert_retries
+		parameter. Values allowed range from 0 to 300.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 60 seconds.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>insert_retry_timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "insert_retry_timeout", 10)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.callid_aleg_header">
+		<title><varname>callid_aleg_header</varname> (str)</title>
+		<para>
+		Header name used to correlate A-leg with B-leg. It can take a list of headers,
+		separated by semicolon, e.g. "X-CID0;X-CID1". First match wins.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "X-CID".
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>callid_aleg_header</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.p.topoh_unmask">
+		<title><varname>topoh_unmask</varname> (int)</title>
+		<para>
+		If set to 1, call-id will be unmasked using topoh module api (topoh
+		module must be loaded in this case).
+		</para>
+		<para>
+			Default value is <emphasis>0</emphasis>.
+		</para>
+		<example>
+			<title>Set <varname>topoh_unmask</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "topoh_unmask", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="sipcapture.p.nonsip_hook">
+		<title><varname>nonsip_hook</varname> (int)</title>
+		<para>
+		If set to 1, event route <emphasis>sipcapture:siprequest</emphasis> is
+		run when HEP message is received.
+		</para>
+		<para>
+			Default value is <emphasis>0</emphasis>.
+		</para>
+		<example>
+			<title>Set <varname>nonsip_hook</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "nonsip_hook", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="sipcapture.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values can be: 'sipcapture:request'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "event_callback", "ksr_sipcapture_event")
+...
+-- event callback function implemented in Lua
+function ksr_sipcapture_event(evname)
+	KSR.info("===== sipcapture module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+
+</section>
+
+<section>
+	<title>Functions</title>
+	<section id="sipcapture.f.sip_capture">
+		<title>
+		<function moreinfo="none">sip_capture([table], [cmode])</function>
+		</title>
+		<para>
+		Store the current processed HEP/IPIP SIP message in database. It is stored in the
+		form prior applying changes made to it.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored. Homer 5 use now tables with datestamp. 
+		To generate an automatic table's name please use strftime parameters. I.e. $var(table) = "sip_capture_call_%Y%m%d" and set the variable
+		as an argument of the sip_capture function.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>cmode</emphasis> - The reference to the capture_mode
+		parameter.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
+		<example>
+		<title><function>sip_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+sip_capture();
+...
+sip_capture("sip_capture_call_20160124");
+...
+sip_capture("", "cmode");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.f.report_capture">
+		<title>
+		<function moreinfo="none">report_capture([table], [cid], [data])</function>
+		</title>
+		<para>
+		Store the current processed HEP REPORT message in database. 
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>table</emphasis> - The table where REPORT message will be stored.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>cid</emphasis> - The correlation id.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>data</emphasis> - The custom report data in JSON format.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
+		<example>
+		<title><function>report_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+report_capture();
+...
+report_capture("report_data", "$ci");
+...
+report_capture("report_data", "$ci", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.f.float2int">
+		<title>
+		<function moreinfo="none">float2int(fval, ival)</function>
+		</title>
+		<para>
+		Return the value of atof(fval) * atoi(ival). On case the result is 0,
+		then -1 is returned.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>report_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(res) = float2int("10.5", "1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.f.sip_capture_forward">
+		<title>
+		<function moreinfo="none">sip_capture_forward(uri)</function>
+		</title>
+		<para>
+		Forward the HEP packet to an address specified by the parameter uri
+		(it has to be a sip uri format). The function should be used inside
+		event_route[sipcapture:request]. After using this function, add a
+		return 0 in order to stop processing further the packet in the local
+		&kamailio; instance.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sip_capture_forward()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    event_route[sipcapture:request] {
+        ...
+        if(src_ip==1.2.3.4) {
+            sip_capture_forward("sip:2.3.4.5:5090");
+            return 0;
+        }
+        ...
+    }
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+    <section>
+	<title>Event Routes</title>
+	<section id="sipcapture.ev.request">
+		<title>event_route[sipcapture:request]</title>
+		<para>
+			Event route block to be executed when HEP packet is received. It
+			requires module parameter 'nonsip_hook' to be set to 1.
+		</para>
+		<example>
+		<title>event_route[sipcapture:request] usage</title>
+		<programlisting format="linespecific">
+...
+# new event sipcapture socket
+modparam("sipcapture", "nonsip_hook", 1)
+...
+
+event_route[sipcapture:request] {
+
+	xlog("HEP Request!\n");
+	xlog("received sipcapture request from $si:$sp\n");
+	xlog("HEP VERSION $hep(version) request from $si:$sp\n");
+	xlog("HEP CHUNK Source IP $hep(0x002) request from $si:$sp\n");
+
+	# is it SIP ?
+	if($hep(0x00b) == 1) {
+
+		# do parsing internal
+		return 1;
+	} else {
+		# if report lets proceed here with payload
+		xlog("HEP CHUNK PAYLOAD $hep(0x00f) request from $si:$sp\n");
+		return 0;
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+    <section>
+	<title>RPC Commands</title>
+	<section id="sipcapture.r.sipcapture.status">
+		<title>
+		<function moreinfo="none">sipcapture.status param</function>
+		</title>
+		<para>
+
+		</para>
+		<para>
+		Name: <emphasis>sipcapture.status</emphasis>
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>on or off: turns on/off SIP message capturing.
+			Possible values are:</para>
+			<itemizedlist>
+				<listitem><para>on</para></listitem>
+				<listitem><para>off</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para><quote>check</quote> does not change
+			sipcapture status, just reports the current status.</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; sipcapture.status on
+&kamcmd; sipcapture.status off
+&kamcmd; sipcapture.status check
+...
+		</programlisting>
+
+	</section>
+	</section><!-- RPC commands -->
+
+	<section>
+		<title>Database setup</title>
+		<para>
+		Before running &kamailio; with the sipcapture module, you have to setup the database 
+		tables where the module will store the data. For that, if the table were not 
+		created by the installation script or you choose to install everything by 
+		yourself you can use the homer_databases.sql, <acronym>SQL</acronym> script 
+		in the sql folder of sipcapture module as template. You can also find the 
+		complete database documentation on the project webpage, &kamailiodbdocslink;.
+		</para>
+	</section>
+	<section>
+        <title>Limitations</title>
+	<itemizedlist>
+		<listitem>
+		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
+		   Don't activate both at the same time. Obsolete. Please use HEP mirroring now.
+		</listitem>
+		<listitem>
+		2. Mirroring port capturing works only on Linux.
+		</listitem>
+        </itemizedlist>
+        </section>
+</chapter>
+

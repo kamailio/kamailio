@@ -1,0 +1,211 @@
+Statsd Module
+
+Eloy Coto Pereiro
+
+   <eloy.coto@gmail.com>
+
+Edited by
+
+Eloy Coto Pereiro
+
+   <eloy.coto@gmail.com>
+
+   Copyright © 2014 Eloy Coto
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+
+              2.1. ip(string)
+              2.2. port(string)
+
+        3. Functions
+
+              3.1. statsd_set(key, value)
+              3.2. statsd_gauge(key, value)
+              3.3. statsd_start(key)
+              3.4. statsd_stop(key)
+              3.5. statsd_incr(key)
+              3.6. statsd_decr(key)
+
+   List of Examples
+
+   1.1. Set ip parameter
+   1.2. Set port parameter
+   1.3. statsd_set usage
+   1.4. statsd_set usage
+   1.5. statsd_start usage
+   1.6. statsd_stop usage
+   1.7. statsd_incr usage
+   1.8. statsd_decr usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. ip(string)
+        2.2. port(string)
+
+   3. Functions
+
+        3.1. statsd_set(key, value)
+        3.2. statsd_gauge(key, value)
+        3.3. statsd_start(key)
+        3.4. statsd_stop(key)
+        3.5. statsd_incr(key)
+        3.6. statsd_decr(key)
+
+1. Overview
+
+   The module provides the ability to send commands to statsd (you can use
+   InfluxDB too) with different types of information. It provides native
+   integration with statsd (https://github.com/etsy/statsd/) and graphite
+   (http://graphite.wikidot.com/).
+
+   The module does not have any special dependency, it does a direct
+   socket connection to Graphite.
+
+2. Parameters
+
+   2.1. ip(string)
+   2.2. port(string)
+
+2.1. ip(string)
+
+   Statsd server IP address.
+
+   Defaults to 127.0.0.1
+
+   Example 1.1. Set ip parameter
+...
+modparam("statsd", "ip", "127.0.0.1")
+...
+
+2.2. port(string)
+
+   Statsd server port number
+
+   Defaults to 8125
+
+   Example 1.2. Set port parameter
+...
+modparam("statsd", "port", "8125")
+...
+
+3. Functions
+
+   3.1. statsd_set(key, value)
+   3.2. statsd_gauge(key, value)
+   3.3. statsd_start(key)
+   3.4. statsd_stop(key)
+   3.5. statsd_incr(key)
+   3.6. statsd_decr(key)
+
+3.1.  statsd_set(key, value)
+
+   Sets count the number of unique values passed to a key.
+
+   If this method is called multiple times with the same userid in the
+   same sample period, that userid will only be counted once.
+
+   This function can be used in ALL ROUTES.
+
+   Example 1.3. statsd_set usage
+...
+failure_route[tryagain] {
+...
+    statsd_set("customerFailure", 1);
+...
+}
+...
+
+3.2.  statsd_gauge(key, value)
+
+   Gauges are a constant data type. They are not subject to averaging and
+   they don't change unless you change them. That is, once you set a gauge
+   value, it will be a flat line on the graph until you change it again.
+
+   Gauges are useful for things that are already averaged, or don't need
+   to reset periodically
+
+   This function can be used in ALL ROUTES.
+
+   The statsd server collects gauges under the stats.gauges prefix.
+
+   Example 1.4. statsd_set usage
+...
+route [gauge_method]{
+    statsd_gauge("method"+$rm, "+1");
+    statsd_gauge("customer_credit"+$var(customer),"$var(customer_credit)");
+}
+...
+
+3.3.  statsd_start(key)
+
+   statsd_start set an avp with the key name, and when statsd_stop(key) is
+   used, the module will send statsd the difference in milliseconds. this
+   is useful to know the time of a SQL query, or how much time your
+   replies take.
+
+   This function can be used in all routes.
+
+   The statsd server collects all timers under the stats.timers prefix and
+   will calculate the lower bound, mean, 90th percentile, upper bound, and
+   count of each timer for each period (by the time it can be seen in
+   graphite, that's usually per minute).
+
+   Example 1.5. statsd_start usage
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query");
+...
+
+3.4.  statsd_stop(key)
+
+   statsd_stop(key) get the avp string with the key and calculate the
+   difference from the start time. When finished the milliseconds used
+   will be sent to statsd.
+
+   This function can be used in all routes.
+
+   Example 1.6. statsd_stop usage
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query");
+...
+
+3.5.  statsd_incr(key)
+
+   Increment a statsd counter
+
+   This function can be used in all routes.
+
+   Example 1.7. statsd_incr usage
+...
+if(geoip_match("$si", "src")){
+    statsd_incr("country."+$(gip(src=>cc)));
+}
+...
+
+3.6.  statsd_decr(key)
+
+   Decrement a counter
+
+   This function can be used in all routes.
+
+   Example 1.8. statsd_decr usage
+...
+if (t_check_status("408")) {
+    statsd_decr("kamailio.successfulCalls");
+    statsd_incr("kamailio.reply.timeout");
+}
+...

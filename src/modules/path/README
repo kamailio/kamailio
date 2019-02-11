@@ -1,0 +1,344 @@
+path Module
+
+Andreas Granig
+
+   Inode GmbH
+
+Edited by
+
+Andreas Granig
+
+Edited by
+
+Richard Fuchs
+
+   Copyright © 2006 Inode GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+
+              1.1. Path Insertion For Registrations
+              1.2. Outbound routing to NAT'ed UACs
+
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. use_received (int)
+              3.2. received_format (int)
+              3.3. enable_r2 (int)
+
+        4. Functions
+
+              4.1. add_path()
+              4.2. add_path(user)
+              4.3. add_path(user, parameters)
+              4.4. add_path_received()
+              4.5. add_path_received(user)
+              4.6. add_path_received(user, parameters)
+
+   List of Examples
+
+   1.1. Add Supported header
+   1.2. Set use_received parameter
+   1.3. Set received_format parameter
+   1.4. Set enable_r2 parameter
+   1.5. add_path usage
+   1.6. add_path(user) usage
+   1.7. add_path(user, parameters) usage
+   1.8. add_path_received() usage
+   1.9. add_path_received(user) usage
+   1.10. add_path_received(user, parameters) usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Path Insertion For Registrations
+        1.2. Outbound routing to NAT'ed UACs
+
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. use_received (int)
+        3.2. received_format (int)
+        3.3. enable_r2 (int)
+
+   4. Functions
+
+        4.1. add_path()
+        4.2. add_path(user)
+        4.3. add_path(user, parameters)
+        4.4. add_path_received()
+        4.5. add_path_received(user)
+        4.6. add_path_received(user, parameters)
+
+1. Overview
+
+   1.1. Path Insertion For Registrations
+   1.2. Outbound routing to NAT'ed UACs
+
+   This module is designed to be used at intermediate sip proxies like
+   loadbalancers in front of registrars and proxies. It provides functions
+   for inserting a Path header including a parameter for passing forward
+   the received-URI of a registration to the next hop. It also provides a
+   mechanism for evaluating this parameter in subsequent requests and to
+   set the destination URI according to it.
+
+1.1. Path Insertion For Registrations
+
+   For registrations in a scenario like “[UAC] -> [P1] -> [REG]”, the
+   "path" module can be used at the intermediate proxy P1 to insert a Path
+   header into the message before forwarding it to the registrar REG. Two
+   functions can be used to achieve this:
+     * add_path(...) adds a Path header in the form of “Path:
+       <sip:1.2.3.4;lr>” to the message using the address of the outgoing
+       interface. A port is only added if it's not the default port 5060.
+       If a username is passed to the function, it is also included in the
+       Path URI, like “Path: <sip:username@1.2.3.4;lr>”.
+     * add_path_received(...) also add a Path header in the same form as
+       above, but also adds a parameter indicating the received-URI of the
+       message, like “Path: <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”.
+       This is especially useful if the proxy does NAT detection and wants
+       to pass the NAT'ed address to the registrar.
+       If the function is called with a username, it's included in the
+       Path URI too.
+
+   Note that some SIP registrars may check if header Supported includes
+   'path'. It can be added in Kamailio.cfg using append_hf() from textops
+   module.
+
+   Example 1.1. Add Supported header
+...
+append_hf("Supported: path\r\n");
+...
+
+1.2. Outbound routing to NAT'ed UACs
+
+   If the NAT'ed address of an UAC is passed to the registrar, the
+   registrar routes back subsequent requests using the Path header of the
+   registration as Route header of the current request. If the
+   intermediate proxy had inserted a Path header including the “received”
+   parameter during the registration, this parameter will show up in the
+   Route header of the new request as well, allowing the intermediate
+   proxy to route to this address instead of the one propagated in the
+   Route URI for tunneling through NAT. This behaviour can be activated by
+   setting the module parameter “use_received”.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * The "rr" module is needed for outbound routing according to the
+       “received” parameter.
+     * The "outbound" module is needed for outbound routing as per RFC
+       5626.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. use_received (int)
+   3.2. received_format (int)
+   3.3. enable_r2 (int)
+
+3.1. use_received (int)
+
+   If set to 1, the “received” parameter of the first Route URI is
+   evaluated and used as destination-URI if present.
+
+   Default value is 0.
+
+   Example 1.2. Set use_received parameter
+...
+modparam("path", "use_received", 1)
+...
+
+3.2. received_format (int)
+
+   If set to 0, the “received” parameter value will be in the escaped SIP
+   URI format.
+
+   If set to 1, the “received” parameter value will be in the same format
+   as the “alias” parameter added by set_contact_alias() from “nathelper”
+   module (i.e., “ip~port~protid”). This is a solution with some SIP
+   applications that incorrectly match the transport from received
+   parameter instead of the one from the SIP URI.
+
+   Default value is 0.
+
+   Example 1.3. Set received_format parameter
+...
+modparam("path", "received_format", 1)
+...
+
+3.3. enable_r2 (int)
+
+   If set to 1, the module will add two Path headers, similar to the
+   double Record-Route done by rr module. One Path headers corresponds to
+   incoming network socket and the other to outgoing network socket. The
+   URIs in the Path headers will have the 'r2=on' parameter as well.
+
+   Note: if enabled, the module adds the two Path headers even when the
+   incoming socket is the same as outgoing socket. Improvements to skip
+   the second Path header in this case may be introduced in the future,
+   meanwhile, if you need to enable this parameter but also deal with same
+   socket routing, use 'insert_hf("Path: <$Ru>\r\n")'.
+
+   Default value is 0.
+
+   Example 1.4. Set enable_r2 parameter
+...
+modparam("path", "enable_r2", 1)
+...
+
+4. Functions
+
+   4.1. add_path()
+   4.2. add_path(user)
+   4.3. add_path(user, parameters)
+   4.4. add_path_received()
+   4.5. add_path_received(user)
+   4.6. add_path_received(user, parameters)
+
+4.1.  add_path()
+
+   This function is used to insert a Path header in the form “Path:
+   <sip:1.2.3.4;lr>”, where “1.2.3.4” is the address of the outgoing
+   interface.
+
+   If the “outbound” module was loaded before this module, and outbound is
+   required for this request, the header will be in the form “Path:
+   <sip:flowtoken@1.2.3.4;lr;ob>”, where “flowtoken” is the RFC 5626
+   flow-token that can be used to identify the source and local address
+   and transport the request was received on, and where “1.2.3.4” is the
+   address of the outgoing interface.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. add_path usage
+...
+if (!add_path()) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.2.  add_path(user)
+
+   This function adds a Path header in the form “Path:
+   <sip:user@1.2.3.4;lr>”.
+
+   Meaning of the parameters is as follows:
+     * user - The username to be inserted as user part. SPVE is supported.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.6. add_path(user) usage
+...
+if (!add_path("loadbalancer")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.3.  add_path(user, parameters)
+
+   This function adds a Path header in the form “Path:
+   <sip:user@1.2.3.4;lr>” and appends the given parameters as additional
+   URI parameters.
+
+   Meaning of the parameters is as follows:
+     * user - The username to be inserted as user part. SPVE is supported.
+     * parameters - Additional URI parameters to be appended to the URI.
+       The semicolon separator is added automatically. The script writer
+       is responsible for proper URI escaping. SPVE is supported.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.7. add_path(user, parameters) usage
+...
+if (!add_path("loadbalancer", "ob")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.4.  add_path_received()
+
+   This function adds a Path header in the form “Path:
+   <sip:1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting its own outgoing
+   address as domain-part, and the address the request has been received
+   from as received-parameter.
+
+   If the “outbound” module was loaded before this module, and outbound is
+   required for this request, the header will be in the form “Path:
+   <sip:flowtoken@1.2.3.4;lr;received=sip:2.3.4.5:1234;ob>”, where
+   “flowtoken” is the RFC 5626 flow-token that can be used to identify the
+   source and local address and transport the request was received on, and
+   where “1.2.3.4” is the address of the outgoing interface.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.8. add_path_received() usage
+...
+if (!add_path_received()) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.5.  add_path_received(user)
+
+   This function adds a Path header in the form “Path:
+   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting 'user' as
+   username part of address, its own outgoing address as domain-part, and
+   the address the request has been received from as received-parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.9. add_path_received(user) usage
+...
+if (!add_path_received("inbound")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+
+4.6.  add_path_received(user, parameters)
+
+   This function adds a Path header in the form “Path:
+   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>”, setting 'user' as
+   username part of address, its own outgoing address as domain-part, and
+   the address the request has been received from as received-parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. add_path_received(user, parameters) usage
+...
+if (!add_path_received("inbound", "ob")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...

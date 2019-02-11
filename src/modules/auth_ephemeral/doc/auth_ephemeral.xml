@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Auth_ephemeral Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Peter</firstname>
+		<surname>Dunkley</surname>
+		<affiliation><orgname>Crocodile RCS Ltd</orgname></affiliation>
+		<email>peter.dunkley@crocodile-rcs.com</email>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<email>carsten@ng-voice.com</email>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2013</year>
+		<holder>Crocodile RCS Ltd</holder>
+	</copyright>
+	<copyright>
+		<year>2017</year>
+		<holder>ng-voice GmbH</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="auth_ephemeral_admin.xml"/>
+</book>

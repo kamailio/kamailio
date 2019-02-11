@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+		<title>Overview</title>
+		<para>
+		The time needed when writing a new &kamailio; module unfortunately is quite high, while the
+		options provided by the configuration file are limited to the features implemented in the
+		modules.
+		</para>
+		<para>
+		With this Perl module, you can easily implement your own &kamailio; extensions in Perl. This allows
+		for simple access to the full world of CPAN modules. SIP URI rewriting could be implemented
+		based on regular expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley DB files,
+		is now extremely simple.
+		</para>
+	</section>
+	<section>
+		<title>Installing the module</title>
+		<para>
+		This Perl module is loaded in &kamailioconfig; (just like all the other modules) with
+		loadmodule("/path/to/perl.so");.
+		</para>
+
+		<para>
+		For the Perl module to compile, you need a reasonably recent version of perl (tested
+		with 5.8.8) linked dynamically. It is strongly advised to use a threaded version.
+		The default binary packages from your favorite Linux distribution should work fine.
+		</para>
+
+		<para>
+		Cross compilation is supported by the Makefile. You need to set the environment variables
+		PERLLDOPTS, PERLCCOPTS and TYPEMAP to values similar to the output of
+		</para>
+		<programlisting format="linespecific">
+PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
+PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/typemap"
+</programlisting>
+		<para>
+		The exact position of your (precompiled!) perl libraries depends on the setup of your
+		environment.
+		</para>
+	</section>
+
+	<section>
+		<title>Using the module</title>
+		<para>
+		The Perl module has two interfaces: The perl side, and the &kamailio; side. Once a Perl
+		function is defined and loaded via the module parameters (see below), it may be
+		called in &kamailio;'s configuration at an arbitrary point. E.g., you could write
+		a function "ldap_alias" in Perl, and then execute <programlisting format="linespecific">
+...
+if (perl_exec("ldap_alias")) {
+	...
+}	
+...
+</programlisting>
+		just as you would have done with the current alias_db module.
+		</para>
+
+		<para>
+		The functions you can use are listed in the "Exported Functions" section below.
+		</para>
+		<para>
+		On the Perl side, there are a number of functions that let you read and modify the
+		current SIP message, such as the RURI or the message flags. An introduction
+		to the Perl interface and the full reference documentation can be found below.
+		</para>
+	</section>
+			
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				The "sl" module is needed for sending replies upon fatal errors. All other modules
+				can be accessed from the Perl module, though.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>Perl 5.8.x or later</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+		Additionally, a number of perl modules should be installed. The &kamailio;::LDAPUtils package
+		relies on Net::LDAP to be installed. One of the sample scripts needs IPC::Shareable
+		</para>
+		<para>
+		This module has been developed and tested with Perl 5.8.8, but should work with any
+		5.8.x release. Compilation is possible with 5.6.x, but its behavior is unsupported.
+		Earlier versions do not work.
+		</para>
+		<para>
+		On current Debian systems, at least the following packages should be installed:
+		</para>
+		<itemizedlist>
+			<listitem><para>perl</para></listitem>
+			<listitem><para>perl-base</para></listitem>
+			<listitem><para>perl-modules</para></listitem>
+			<listitem><para>libperl5.8</para></listitem>
+			<listitem><para>libperl-dev</para></listitem>
+			<listitem><para>libnet-ldap-perl</para></listitem>
+			<listitem><para>libipc-shareable-perl</para></listitem>
+		</itemizedlist>
+		<para>
+		It was reported that other Debian-style distributions (such as Ubuntu) need the
+		same packages.
+		</para>
+		<para>
+		On SuSE systems, at least the following packages should be installed:
+		</para>
+		<itemizedlist>
+			<listitem><para>perl</para></listitem>
+			<listitem><para>perl-ldap</para></listitem>
+			<listitem><para>IPC::Shareable perl module from CPAN</para></listitem>
+		</itemizedlist>
+		<para>
+		Although SuSE delivers a lot of perl modules, others may have to be fetched
+		from CPAN. Consider using the program <quote>cpan2rpm</quote> - which, in turn,
+		is available on CPAN. It creates RPM files from CPAN.
+		</para>
+	</section>
+	</section>
+
+	<section>
+		<title>Parameters</title>
+		<section id="app_perl.p.filename">
+			<title><varname>filename</varname> (string)</title>
+			<para>
+			This is the file name of your script. This may be set once only, but it may include an arbitrary
+			number of functions and <quote>use</quote> as many Perl module as necessary.
+			</para>
+			<para>
+			<emphasis>
+				Must not be empty!
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>filename</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "filename", "/home/test/kamailio/myperl.pl")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="app_perl.p.modpath">
+			<title><varname>modpath</varname> (string)</title>
+			<para>
+			The path to the Perl modules included (Kamailio.pm et.al). It is not absolutely
+			crucial to set this path,
+			as you <emphasis>may</emphasis> install the Modules in Perl's standard path, or update
+			the <quote>%INC</quote> variable from within your script. Using this module parameter
+			is the standard behavior, though. Multiple paths may be specified by separating them with
+			a <quote>:</quote> character. The maximum is 10 paths.
+			</para>
+			<example>
+			<title>Set <varname>modpath</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="app_perl.p.reset_cycles">
+			<title><varname>reset_cycles</varname> (int)</title>
+			<para>
+			The number of execution cycles after which the embedded perl interpreter
+			is reset. Sometimes is hard to track the scope of variables in all used
+			perl modules and that can result in leaks of system memory. Resetting the
+			interpreter cleans the memory space.
+			</para>
+			<para>
+			When the interpreter is reset, the perl script is loaded again. Note that
+			not all &kamailio; processes will reset the interpreter at the same time.
+			Each will do it when it has executed the script for the number of
+			reset_cycles. Also, be aware that the reset of the interpreter is taking
+			a bit of time (in the order of tens of mili-seconds).
+			</para>
+			<para>
+			Default value is <emphasis>0</emphasis> - never reset the interpreter.
+			</para>
+			<example>
+			<title>Set <varname>reset_cycles</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "reset_cycles", 100000)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="app_perl.p.perl_destroy_func">
+			<title><varname>perl_destroy_func</varname> (string)</title>
+			<para>
+			The name of Perl function to be executed before the interpreter is
+			re-initialized (reset -- see reset_cycles parameter) at runtime.
+			This could be useful to clean global variables or file descriptors
+			from the Perl script.
+			</para>
+			<example>
+			<title>Set <varname>perl_destroy_func</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<section id="app_perl.f.perl_exec_simple">
+			<title>
+			<function moreinfo="none">perl_exec_simple(func, [param])</function>
+			</title>
+			<para>
+			Calls a perl function <emphasis>without</emphasis> passing it the current SIP message.
+			May be used for very simple simple requests that do not have to fiddle with the message
+			themselves, but rather return information values about the environment.
+			</para>
+			<para>
+			The first parameter is the function to be called.
+			An arbitrary string may optionally be passed as a parameter.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE and BRANCH_ROUTE.
+			</para>
+			<example>
+			<title><function>perl_exec_simple()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (method=="INVITE") {
+	perl_exec_simple("dosomething", "on invite messages");
+};
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="app_perl.f.perl_exec">
+			<title>
+			<function moreinfo="none">perl_exec(func, [param])</function>
+			</title>
+			<para>
+			Calls a perl function <emphasis>with</emphasis> passing it the current SIP message.
+			The SIP message is reflected by a Perl module that gives you access to the information
+			in the current SIP message (Kamailio::Message).
+			</para>
+			<para>
+			The first parameter is the function to be called.
+			An arbitrary string may be passed as a parameter.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE and BRANCH_ROUTE.
+			</para>
+			<example>
+			<title><function>perl_exec()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (perl_exec("ldapalias")) {
+	...
+};
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>RPC Commands</title>
+		<section id="app_perl.r.set_reset_cycles">
+			<title>
+			<function moreinfo="none">app_perl.set_reset_cycles</function>
+			</title>
+			<para>
+				Set the value of the reset_cycle. The command has one integer
+				parameter.
+			</para>
+			<example>
+			<title><function>app_perl.set_reset_cycles</function> usage</title>
+			<programlisting format="linespecific">
+...
+kamcmd app_perl.set_reset_cycles 20000
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="app_perl.r.get_reset_cycles">
+			<title>
+			<function moreinfo="none">app_perl.get_reset_cycles</function>
+			</title>
+			<para>
+				Return the value of the reset_cycle.
+			</para>
+			<example>
+			<title><function>app_perl.get_reset_cycles</function> usage</title>
+			<programlisting format="linespecific">
+...
+kamcmd app_perl.get_reset_cycles
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>
+

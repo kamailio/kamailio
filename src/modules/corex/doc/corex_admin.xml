@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides reimplementation of a few very old functions that
+		used to be in the core and supported only static string or integer parameters.
+		The new versions bring support for dynamic parameters (allowing
+		variables inside the parameters).
+	</para>
+	<para>
+		There are also brand new features, related to core internals, but
+		controlled from configuration file or via control interfaces.
+	</para>
+	<para>
+		Contributions to this module must be done under the BSD license, to
+		follow the requirements of the core contributions.
+	</para>
+	<para>
+		This module now also provides access to network input / output data through
+		event_route[network:msg]. The raw data received from a remote host or about to
+		be sent to a remote host is available in variable $mb. The script writer may
+		manipulate this data and save the final result in an AVP defined by msg_avp
+		module parameter. The content of this AVP will then be processed by SIP worker
+		as normal, i.e. a received message will be parsed and sent to appropriate
+		route block while a sent message is forwarded to remote host.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+    <section>
+	<title>Parameters</title>
+	<section id="corex.p.alias_subdomains">
+	    <title><varname>alias_subdomains</varname> (string)</title>
+	    <para>
+		Register a domain and all its sub-domains to match the <quote>myself</quote>
+		condition. It can be set many times. Its full format is:
+		'proto:domain:port', allowing to set restrictions on protocol
+		and port as well. Protocol and port are optional.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>alias_subdomains</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "alias_subdomains", "kamailio.org")
+modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
+...
+</programlisting>
+	    </example>
+	</section>
+    <section id="corex.p.network_io_intercept">
+        <title><varname>network_io_intercept</varname> (int)</title>
+        <para>
+            If set to non-zero then raw data received from a remote host or about to
+			be sent to a remote host is made available in event_route[network:msg].
+			The script writer may modify this and save to msg_avp, which will then
+			be processed by SIP worker as normal.
+        </para>
+        <para>
+        <emphasis>
+            Default value is 0, i.e. do not allow access to network io data.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>network_io_intercept</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "network_io_intercept", 1)
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="corex.p.min_msg_len">
+        <title><varname>min_msg_len</varname> (int)</title>
+        <para>
+            Minimum content length of the packet to execute the event_route[network:msg].
+			This only works if network_io_intercept parameter is set to non-zero.
+        </para>
+        <para>
+        <emphasis>
+            Default value is 0.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>min_msg_len</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "min_msg_len", 32)
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="corex.p.msg_avp">
+        <title><varname>msg_avp</varname> (string)</title>
+        <para>
+            AVP name to store modified content to be set in the packet. If not set in
+            event_route[network:msg], then all changes are lost and original contents
+            are used. This only works if network_io_intercept parameter is to set non-zero.
+        </para>
+        <para>
+        <emphasis>
+            Default value is empty.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>msg_avp</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+</programlisting>
+        </example>
+    </section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="corex.f.append_branch">
+	    <title>
+		<function moreinfo="none">append_branch([ uri, [ q ] ])</function>
+	    </title>
+	    <para>
+			Append a new branch to the destination set, useful to build the
+			set of destination addresses for parallel forking or redirect replies.
+		</para>
+		<para>
+			Both parameters are optional, If no uri parameter is provided,
+			then the address from request URI (r-uri) is used to build the
+			new branch.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri</emphasis> - SIP address of the branch to be
+				used as R-URI in the outgoing request.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - the Q value to set the priority
+				of the branch based on Contact address specifications
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>append_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+    append_branch();
+    append_branch("$avp(uri)", "0.5");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="corex.f.send_udp">
+		<title>
+			<function moreinfo="none">send_udp([ host [ :port ] ])</function>
+		</title>
+		<para>
+			Send the original SIP message to a specific destination in stateless
+			mode. No changes are applied to received message, no Via header is
+			added. Host can be an IP address or hostname. Port is optional and
+			defaults to 5060. Used protocol: UDP.
+		</para>
+		<para>
+			The parameter is optional and defaults to the destination URI from
+			the SIP message if left out. Otherwise it's a string parameter
+			(supporting pseudo-variables) in format
+			"<emphasis>hostname</emphasis>" or
+			"<emphasis>hostname</emphasis>:<emphasis>port</emphasis>",
+			where <emphasis>hostname</emphasis>" can also be a numeric IP
+			address.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>send_udp</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send_udp();
+	send_udp("10.20.15.10");
+	send_udp("sip.example.com:5070");
+	send_udp("$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.send_tcp">
+		<title>
+			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
+		</title>
+		<para>
+			This function is identical to <emphasis>send_udp()</emphasis>
+			described above, except that it sends the SIP message using the
+			TCP protocol instead of UDP.
+		</para>
+		<example>
+		<title><function>send_tcp</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send_tcp();
+	send_tcp("10.20.15.10");
+	send_tcp("sip.example.com:5070");
+	send_tcp("$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.send_data">
+		<title>
+			<function moreinfo="none">send_data(uri, data)</function>
+		</title>
+		<para>
+			Send the data to address specified by uri. Both parameters can
+			contain pseudo-variables. The uri parameter has to be a valid
+			SIP URI. The data parameter can by any arbitrary content.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>send_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.sendx">
+		<title>
+			<function moreinfo="none">sendx(uri, sock, data)</function>
+		</title>
+		<para>
+			Send the data to address specified by uri using a specific local
+			socket. All parameters can contain pseudo-variables. The uri
+			parameter has to be a valid SIP URI. The sock parameter has to be
+			a valid socket specifier (like values assigned to $fs). The data
+			parameter can by any arbitrary content.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sendx</function> usage</title>
+		<programlisting format="linespecific">
+...
+sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $Ts");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.is_incoming">
+		<title>
+			<function moreinfo="none">is_incoming()</function>
+		</title>
+        <para>
+            Returns true if contents of message buffer $mb are the data received from
+            remote host, otherwise false indicating that the contents of $mb are data
+            that is about to be sent out to remote host. This only works if
+			network_io_intercept parameter is set to non-zero.
+        </para>
+        <para>
+        This function can be used from event_route[network:msg].
+        </para>
+        <example>
+        <title><function>is_incoming</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[network:msg] {
+    if (is_incoming()) {
+        xlog("L_INFO", "Received message '$mb' \n");
+        $avp(msg) = $mb;
+    } else {
+        xlog("L_INFO", "Sending message '$mb' \n");
+        $avp(msg) = $mb;
+    };
+}
+...
+</programlisting>
+        </example>
+    </section>
+
+	<section id="corex.f.msg_iflag_set">
+		<title>
+			<function moreinfo="none">msg_iflag_set(flagname)</function>
+		</title>
+		<para>
+			Set internal SIP message flag. The parameter flagname can be:
+			USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+		</para>
+		<para>
+			This functions should not be used in configuration file for
+			(re)setting the internal flags, those are done by various
+			functions internally, however, in very particular cases they
+			might be useful (e.g., changing From/To via textops functions).
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+    msg_iflag_set("UAC_AUTH");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.msg_iflag_reset">
+		<title>
+			<function moreinfo="none">msg_iflag_reset(flagname)</function>
+		</title>
+		<para>
+			Reset the internal flag given as parameter.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_reset</function> usage</title>
+		<programlisting format="linespecific">
+...
+    msg_iflag_reset("UAC_AUTH");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.msg_iflag_is_set">
+		<title>
+			<function moreinfo="none">msg_iflag_is_set(flagname)</function>
+		</title>
+		<para>
+			Test if the internal flag given as parameter is set.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_iflag_is_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if(msg_iflag_is_set("UAC_AUTH")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.file_read">
+		<title>
+			<function moreinfo="none">file_read(fpath, var)</function>
+		</title>
+		<para>
+			Read content of a text file into a variable.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>file_read</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(file_read("/tmp/data.txt", "$var(data)")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="corex.f.file_write">
+		<title>
+			<function moreinfo="none">file_write(fpath, content)</function>
+		</title>
+		<para>
+			Write content of parameter to a text file.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>file_write</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
+		<section id="corex.f.setxflag">
+		<title><function moreinfo="none">setxflag(flag)</function></title>
+		<para>
+			Set the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be set. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+setxflag("1");
+...
+$var(flag) = 11;
+setxflag("$var(flag)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.isxflagset">
+		<title><function moreinfo="none">isxflagset(flag)</function></title>
+		<para>
+			Return true of the extended message (transaction) flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be tested. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>isxflagset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(isxflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.resetxflag">
+		<title><function moreinfo="none">resetxflag(flag)</function></title>
+		<para>
+			Reset the extended message (transaction) flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be reset. Can be integer or pseudo-variable with integer value
+				(range 0-63).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>resetxflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetxflag("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_send_socket">
+		<title><function moreinfo="none">set_send_socket(saddr)</function></title>
+		<para>
+			Set the socket for sending out.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the address of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_send_socket</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_send_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_recv_socket">
+		<title><function moreinfo="none">set_recv_socket(saddr)</function></title>
+		<para>
+			Switch local socket used for receiving the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the address of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_recv_socket</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_recv_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_source_address">
+		<title><function moreinfo="none">set_source_address(saddr)</function></title>
+		<para>
+			Set the source address for the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>saddr</emphasis> - the source address in socket format.
+				Can be a static string or contain pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_source_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_source_address("udp:127.0.0.1:5080");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_add_srvid">
+		<title><function moreinfo="none">via_add_srvid(flags)</function></title>
+		<para>
+			Control if srvid parameter is added or not to local Via. If yes,
+			the value is server_id, added only if it is different than 0.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add srvid parameter; 0 - do not
+				add srvid parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_srvid</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_srv("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_add_xavp_params">
+		<title><function moreinfo="none">via_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_params global parameter are added or not to local Via.
+
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_add_xavp_params("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.via_use_xavp_fields">
+		<title><function moreinfo="none">via_use_xavp_fields(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_fields global parameter are used or not to build local Via.
+
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - use xavp fields; 0 - do not
+				use xavp fields.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_use_xavp_fields</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_use_xavp_fields("1");
+...
+</programlisting>
+		</example>
+		</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="corex.rpc.debug">
+		<title>
+		<function moreinfo="none">corex.debug</function>
+		</title>
+		<para>
+			Set or get the global log level (the value for global parameter
+			'debug'). To set the debug, provide an integer parameter. If
+			no parameter is provided, then the current value is returned.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcmd; corex.debug
+		&kamcmd; corex.debug 2
+		</programlisting>
+	</section>
+	<section id="corex.rpc.list_sockets">
+		<title>
+		<function moreinfo="none">corex.list_sockets</function>
+		</title>
+		<para>
+			Print the list of sockets the application is listening on.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.list_sockets
+		</programlisting>
+    </section>
+	<section id="corex.rpc.list_aliases">
+		<title>
+		<function moreinfo="none">corex.list_aliases</function>
+		</title>
+		<para>
+			Print the list of hostname aliases used to match the myself
+			condition.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.list_aliases
+		</programlisting>
+    </section>
+	<section id="corex.rpc.shm_status">
+		<title>
+		<function moreinfo="none">corex.shm_status</function>
+		</title>
+		<para>
+			Trigger shm status dump to syslog.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.shm_status
+		</programlisting>
+	</section>
+	<section id="corex.rpc.shm_summary">
+		<title>
+		<function moreinfo="none">corex.shm_summary</function>
+		</title>
+		<para>
+			Trigger shm summary dump to syslog.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.shm_summary
+		</programlisting>
+    </section>
+	<section id="corex.rpc.pkg_summary">
+		<title>
+		<function moreinfo="none">corex.pkg_summary</function>
+		</title>
+		<para>
+			Trigger pkg summary dump to syslog for a specific pid or
+			process index. It has two parameters: first to specify what
+			matching type is desired (can be 'pid' or 'idx'); second to
+			specify the value for desired match.
+		</para>
+		<para>
+			The dump is happening when the selected process is doing a
+			runtime handling (e.g., processing a sip message).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.pkg_summary pid 2345
+		&sercmd; corex.pkg_summary idx 1
+		</programlisting>
+    </section>
+    </section>
+
+    <section>
+    <title>Event Routes</title>
+    <section id="async.evr.network_io">
+        <title>
+        <function moreinfo="none">event_route[network:msg]</function>
+        </title>
+        <para>
+            Event route block to be executed when new data is received from network
+            or the data that is about to be sent to a remote host by a SIP worker
+            process.
+        </para>
+        <para>
+            The kamailio script writer can check which type of data triggered this
+            event route using is_incoming method.
+        </para>
+        <para>
+            After executing of this event route, if msg_avp was defined and set then
+            its value is used for further processing, otherwise, original value of
+            $mb is used. If message was received from remote host, then it is parsed
+            and proceeds to appropriate route. Otherwise if message set to send out,
+            then is sent to remote host per configured SIP timers in config script.
+        </para>
+        <para>
+            Please note this event route is meant to <emphasis>prepare</emphasis>
+            the message for on-wire communication, e.g. to do custom encryption or
+            decryption, compression/decompression etc. of the message sent to or 
+			received from remote host. Therefore, except text operations,
+			no module functions or pseudo variables are available in this event route.
+        </para>
+    </section>
+    </section>
+
+    <section>
+    <title>Examples of Usage</title>
+        <para>
+			To use network event_route[network:msg] the remote SIP UA must also implement and 
+			understand the encoding / decoding done in this event route. It is up to  &kamailio;
+			config script writer to define and implement how encoding and decoding is done. 
+			Any language module such as app_perl or app_lua can be called in
+			in event_route[network:msg] to implement desired logic.
+        </para>
+        <para>
+			The most simple use case is to compress the SIP packet on-wire. As SIP is a
+			text based protocol, so it is highly compressable. Using this module, one can
+			compress entire SIP message, including headers and message body before sending
+			it to remote host using any compression algorithm of choice, thus saving
+			significant bandwidth on mobile data networks.
+        </para>
+        <para>
+			A useful case is to use this function between SIP edge proxy and SIP application
+			server. The SIP messages received from end-user at SIP edge proxy may be decrypted
+			and sent to SIP application server at remote location unencrypted, where they are
+			processed as normal. One the way back, the messages received from SIP application
+			server at edge proxy can be encrypted before being sent to actual destination.
+			The edge proxy can check whether received message came from end-user or SIP 
+			application server by using simple regular expressions.
+        </para>
+        <para>
+			Another use case is to implement a virtual HTTP tunnel for SIP messages. The SIP
+			client app can convert SIP message to binary e.g. by doing XOR, Base64 etc., then
+			prepend some fake HTTP headers to make it look like an HTTP request before sending
+			it to kamailio over SIP TCP socket. At kamailio, the fake headers are removed and data
+			is decoded back to normal SIP and processed per config script logic. For the data that
+			is to be sent to SIP client app, one can prepend fake HTTP reply headers to encoded
+			data before sending it to client app.
+        </para>
+        <para>
+			More advance use cases may involve custom encryption algorithms such as
+			ITV encryption algorithm,
+			<ulink url="https://github.com/mshary/itv"></ulink>
+        </para>
+        <para>
+			For example, the client app running on Android or iPhone, may send device UUID along
+			with ITV key, encrypted using RSA or AES256 with pre-shared secret, as first packet,
+			which is set as cookie by server in e.g. memcache. This cookie is referred by client
+			app in each next packet, so server can retrieve encryption key from cache and use that
+			for decryption. Same can be done for server at client app side, so messages encrypted
+			by server can be decrypted at client app.
+        </para>
+        <para>
+			Next is a basic usage example where encoding and decoding is done using PERL,
+        </para>
+        <example>
+        <title><function>event_route[network:msg]</function> use cases</title>
+        <programlisting format="linespecific">
+...
+loadmodule "app_perl.so"
+loadmodule "corex.so"
+...
+# ----- app_perl params -----
+modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
+modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
+
+# ----- corex params -----
+modparam("corex", "network_io_intercept", 32)
+modparam("corex", "min_msg_len", 32)
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+event_route[network:msg] {
+	if (is_incoming()) {
+		if (perl_exec_simple("do_uncompress", "" + $mb + "")) {
+			xlog("L_INFO", "Received message '$avp(msg)' \n");
+		} else {
+			xlog("L_INFO", "Received message '$mb' \n");
+			$avp(msg) = $mb;
+		};
+	} else {
+		xlog("L_INFO", "Sending message '$mb' \n");
+		if (!perl_exec_simple("do_compress", "" + $mb + "")) {
+			$avp(msg) = $mb;
+		};
+	};
+}
+...
+</programlisting>
+        </example>
+        <example>
+        <title>Sample PERL code for do_compress and do_uncompress</title>
+        <programlisting format="linespecific">
+...
+use strict;
+use warnings;
+use IO::Compress::Gzip qw(gzip $GzipError) ;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+
+sub do_compress() {
+	my $input = shift;
+	my $output;
+
+	gzip \$input => \$output
+		or eval {
+			Kamailio::log(L_WARN, "GZIP failed: $GzipError\n");
+			$output = $input;
+		};
+
+	Kamailio::AVP::add("msg", $output);
+}
+
+sub do_uncompress() {
+	my $input = shift;
+	my $output;
+
+	gunzip \$input => \$output
+		or eval {
+			Kamailio::log(L_WARN, "GUNZIP failed: $GzipError\n");
+			$output = $input;
+		};
+
+	Kamailio::AVP::add("msg", $output);
+}
+...
+</programlisting>
+        </example>
+    </section>
+</chapter>
+

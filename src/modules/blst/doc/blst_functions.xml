@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="blst.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="blst_add">
+	<title>
+	    <function>blst_add([timeout])</function>
+	</title>
+	<para>
+		Adds the source of the current message to the blacklist for
+		<varname>timeout</varname> seconds. If timeout is missing or 0
+		 it uses the default blacklist timeout 
+		 (<varname>dst_blacklist_expire</varname>).
+	</para>
+	<example>
+	    <title><function>blst_add</function> usage</title>
+	    <programlisting>
+...
+if (src_ip==10.0.0.0/9)
+    blst_add(30); # 30 s
+else
+    blst_add();  # use default blacklist timeout
+...
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="blst_add_retry_after">
+	<title>
+	    <function>blst_add_retry_after(min, max)</function>
+	</title>
+	<para>
+		Adds the source of the current message to the blacklist for
+		the time interval specified in the <emphasis>Retry-After</emphasis> 
+		header.
+		If the <emphasis>Retry-After</emphasis> header is missing, it will 
+		fail (returns false).
+		If the <emphasis>Retry-After</emphasis> value is less than 
+		<varname>min</varname>, then <varname>min</varname> seconds will be 
+		used instead.
+		If the <emphasis>Retry-After</emphasis> value is greater than
+		<varname>max</varname>, then <varname>max</varname> seconds will be 
+		used instead.
+	</para>
+	<example>
+	    <title><function>blst_add_retry_after</function> usage</title>
+	    <programlisting>
+...
+# on_reply route
+if (msg_status==503){ # blacklist 503 source for Retry-After seconds
+    if (! blst_add_retry_after(30, 3600))
+        blst_add(60); # if no retry_after header add it for 60s
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_del">
+	<title>
+	    <function>blst_del()</function>
+	</title>
+	<para>
+		Removes the source of the current message from the blacklist.
+		If the address is not present in the blacklist at the time of the call
+		it returns false.
+	</para>
+	<example>
+	    <title><function>blst_del</function> usage</title>
+	    <programlisting>
+...
+    blst_del();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_is_blacklisted">
+	<title>
+	    <function>blst_is_blacklisted()</function>
+	</title>
+	<para>
+		Returns true if the source of the current message is blacklisted.
+	</para>
+	<example>
+	    <title><function>blst_is_blacklisted</function> usage</title>
+	    <programlisting>
+...
+    if (blst_is_blacklisted()){
+        log("message from a blacklisted source");
+        drop;
+   }
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="blst_set_ignore">
+	<title>
+		<function>blst_set_ignore([flags])</function>
+	</title>
+	<para>
+		Set errors that will not be taken into account when deciding
+		whether to blacklist a destination for the current message
+		or a local reply to the current message.
+	</para>
+	<para>
+		<function>blst_set_ignore(..)</function> works for forwarding the
+		current message and <function>blst_rpl_set_ignore(...)</function>
+		works for local replies to the current message.
+	</para>
+	<para>
+		The variants of these functions with no parameters will ignore 
+		everything (equivalent to passing 0xff).
+	</para>
+	<para>
+		The flags are stored internally as a bitmask, and are applied by
+		bitwise ANDing them together.  The following flags are available:
+		<itemizedlist>
+			<listitem>
+				<emphasis>0x02</emphasis> - generic send error (send denied/
+				 failed).
+			</listitem>
+			<listitem>
+				<emphasis>0x04</emphasis> - connect failed (TCP, TLS or SCTP).
+			</listitem>
+			<listitem>
+				<emphasis>0x08</emphasis> - ICMP error (not currently used).
+			</listitem>
+			<listitem>
+				<emphasis>0x10</emphasis> - SIP transaction timeout.
+			</listitem>
+			<listitem>
+				<emphasis>0x20</emphasis> - 503 reply (stateful mode only).
+				For more details see <emphasis>tm</emphasis>
+				<varname>blst_503</varname>.
+			</listitem>
+		</itemizedlist>
+	</para>
+	<note>
+		TCP and TLS send and connect errors are handled per connection and
+		not per message. The connection blacklist ignore flags are inherited
+		from the message that caused the connection establishment.
+	</note>
+	<example>
+		<title><function>blst_set_ignore</function> usage</title>
+		<programlisting>
+...
+    blst_set_ignore(6); # ignore send and connect errors
+...
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="blst_rpl_set_ignore">
+	<title>
+		<function>blst_rpl_set_ignore([flags])</function>
+	</title>
+	<para>
+		See function <function>blst_set_ignore([flags])</function>.
+	</para>
+	</section>
+
+	<section id="blst_clear_ignore">
+	<title>
+		<function>blst_clear_ignore([flags])</function>
+	</title>
+	<para>
+		Clears blacklist ignore flags previously set by the corresponding
+		<function>blst_set_ignore(...)</function> or
+		<function>blst_rpl_set_ignore(...)</function> functions.
+	</para>
+	<para>
+		See also <function>blst_set_ignore</function>.
+	</para>
+	<example>
+		<title><function>blst_clear_ignore</function> usage</title>
+	    <programlisting>
+...
+    blst_clear_ignore(4); # ignore connect errors
+...
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="blst_rpl_clear_ignore">
+	<title>
+		<function>blst_rpl_clear_ignore([flags])</function>
+	</title>
+	<para>
+		See function <function>blst_clear_ignore([flags])</function>.
+	</para>
+	</section>
+
+</section>

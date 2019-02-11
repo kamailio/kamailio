@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="domain" xmlns:db="http://docbook.org/ns/docbook">
+    <name>domain</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used by the domain module to determine if a host part
+			of a URI is "local" or not. More information about the domain
+			module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;domain.html">&KAMAILIO_MOD_DOC;domain.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="dom">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain name</description>
+    </column>
+
+    <column id="did">
+        <name>did</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain id.  Value of did column may be NULL, which
+	means that it has the same value as domain column.</description>
+        <default><null/></default>
+        <null/>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this record was last modified.</description>
+    </column>
+
+    <index>
+        <name>domain_idx</name>
+        <colref linkend="dom"/>
+        <unique/>
+    </index>
+</table>

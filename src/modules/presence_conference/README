@@ -1,0 +1,106 @@
+presence_conference Module
+
+Marius-Ovidiu Bucur
+
+Edited by
+
+Marius-Ovidiu Bucur
+
+   Copyright © 2010 Marius-Ovidiu Bucur
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. use_partial_states (int)
+
+        4. MI Commands
+
+              4.1. conference_reset
+
+   List of Examples
+
+   1.1. Set use_partial_states parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. use_partial_states (int)
+
+   4. MI Commands
+
+        4.1. conference_reset
+
+1. Overview
+
+   This module is a mixer for presence notifications published by an audio
+   conference mixer as per RFC 4353: A Framework for Conferencing with SIP
+   and RFC 4575: A SIP Event Package for Conference State. In other words
+   it is presence handling of conference events - conference-info+xml
+   documents.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * presence.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libxml2 - xml handling library.
+
+3. Parameters
+
+   3.1. use_partial_states (int)
+
+3.1. use_partial_states (int)
+
+   Control usage of partial state notifications.
+
+   Default value is “0”.
+
+   Example 1.1. Set use_partial_states parameter
+...
+modparam("presence_conference", "use_partial_states", 0)
+...
+
+4. MI Commands
+
+   4.1. conference_reset
+
+4.1.  conference_reset
+
+   Reset internal data.
+
+   Name: conference_reset
+
+   Parameters:
+     * none
+
+   MI FIFO Command Format:
+                :conference_reset:_reply_fifo_file_
+                _empty_line_

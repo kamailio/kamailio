@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="free_message"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>free_message</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>free_message</refname> <!-- function name -->
+<refpurpose>free message</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void <function>free_message</function></funcdef>
+  <paramdef>mq_message_t *<parameter>msg</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Frees message. If data is allocated explicitly it frees it using
+<function>cds_free</function>,
+if they are allocated implicitly, it is freed together with message. Thus simple
+data structures are deallocated automatically in both cases. There might be a
+problem with more complicated structures with internal pointers to other
+structures - for these you can set destroy function using
+<function>set_data_destroy_function</function>.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="create_message"/>, <xref linkend="create_message_ex"/>, <xref
+linkend="init_message_ex"/>, <xref linkend="set_data_destroy_function"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

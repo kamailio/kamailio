@@ -1,0 +1,153 @@
+# Kamailio build system
+#
+# utils Makefile
+#(to be included from each util/ subdirectory)
+#
+
+#
+# Variables that should be defined in the util Makefiles, prior to including
+# this makefile:
+#
+# NAME - util binary name, with no path (MUST).
+#
+# COREPATH - path to the main/core directory (OPTIONAL, default ../..)
+#
+# DEFS - local extra defines (OPTIONAL)
+#
+# LIBS - local extra libs (OPTIONAL)
+#
+# SER_LIBS - ser/sr libs that should be compiled, linked against and installed
+#           along the binary. The format is: <path>/<shortname>, e.g.
+#           SER_LIBS=../../lib/srdb2/srdb2 for libsrdb2 with the sources
+#            in ../../lib/srdb2. (OPTIONAL)
+#
+
+UTIL_NAME=$(NAME)
+
+# default path to the core makefiles
+COREPATH ?=../../src
+
+ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
+ $(COREPATH)/Makefile.utils $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
+
+#override modules value, an util cannot have submodules
+override modules=
+override static_modules=
+override static_modules_path=
+
+# temporary def (visible only in the util makefile, not exported)
+DEFS += -DMOD_NAME="utils/$(UTIL_NAME)"
+
+ifneq ($(makefile_defs_included),1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the module dir!
+
+else
+# called by the main Makefile
+
+ALLDEP+=$(COREPATH)/Makefile
+
+endif
+
+include $(COREPATH)/Makefile.sources
+
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
+# set CFLAGS & LDFLAGS
+CFLAGS:=$(UTILS_CFLAGS)
+LDFLAGS:=$(UTILS_LDFLAGS)
+
+err_fail?=1
+
+include $(COREPATH)/Makefile.dirs
+include $(COREPATH)/Makefile.targets
+include $(COREPATH)/Makefile.rules
+include $(COREPATH)/Makefile.shared
+
+# default: if not overwritten by the main Makefile, install in bin_dir
+util_dst=$(bin_prefix)/$(bin_dir)
+
+$(util_dst):
+		mkdir -p $(util_dst)
+
+modules:
+
+.PHONY: install
+.PHONY: install-libs
+install: $(NAME) $(util_dst) install-libs install-util-man
+	$(INSTALL_TOUCH) $(util_dst)/$(NAME)
+	$(INSTALL_BIN)  $(NAME)  $(util_dst)
+
+ifneq (,$(SER_LIBS))
+install-libs:
+	@for lib in $(dir $(SER_LIBS)); do \
+		$(call try_err, $(MAKE) -C "$${lib}" install-if-newer ) ;\
+	done; true
+
+else
+install-libs:
+
+endif # $(SER_LIBS)
+
+.PHONY: install-if-newer
+install-if-newer: $(util_dst)/$(NAME)
+
+$(util_dst)/$(NAME): $(NAME)
+	@$(MAKE) install
+
+# README build rules
+ifneq (,$(wildcard doc/Makefile))
+#doc/Makefile present => we can generate README
+
+README: doc/*.xml
+	$(MAKE) -C doc $(UTIL_NAME).txt
+	mv doc/$(UTIL_NAME).txt $@
+
+else
+# do nothing
+
+README:
+endif
+
+#man page build rules
+ifneq (,$(wildcard $(UTIL_NAME).xml))
+ifneq ($(DOCBOOKMAN),)
+$(UTIL_NAME).7: $(UTIL_NAME).xml
+	$(DOCBOOKMAN) -s ../../doc/stylesheets/serdoc2man.xsl $<
+
+man: $(UTIL_NAME).7
+else
+man:
+	@echo "info - no docbook to man tool to convert $(UTIL_NAME).xml"
+endif
+else
+man:
+endif
+
+$(man_prefix)/$(man_dir)/man8:
+	mkdir -p $(man_prefix)/$(man_dir)/man8
+
+.PHONY: install-util-man
+#src-name man page install rules
+ifneq (,$(wildcard $(UTIL_SRC_NAME).8))
+install-util-man: $(man_prefix)/$(man_dir)/man8
+	sed -e "s#$(UTIL_SRC_NAME)#$(UTIL_NAME)#g" \
+			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
+			< $(UTIL_SRC_NAME).8 > $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+	chmod 644  $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+
+else
+
+install-util-man:
+
+endif
+
+endif # ifeq($(makefile_defs),1)
+
+include $(COREPATH)/Makefile.cfg

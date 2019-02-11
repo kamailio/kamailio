@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding='utf-8'?>
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <!-- Section Overview -->
+    <section>
+		<title>Overview</title>
+		<para>
+			This module allows execution of Java compiled classes from the &kamailio;
+			config file, exporting functions to access the SIP message from Java
+			using the Java Native Interface (JNI).
+		</para>
+    </section>
+	<!-- end op section Overview -->
+	
+	<!-- Section Dependencies -->
+    <section>
+		<title>Dependencies</title>
+    	<!-- Section Modules -->
+		<section>
+		    <title>&kamailio; Modules</title>
+		    <para>
+			The following modules must be loaded before this module:
+		    	<itemizedlist>
+			    <listitem>
+				<para>
+				    <emphasis>none</emphasis>.
+				</para>
+			    </listitem>
+		    	</itemizedlist>
+		    </para>
+		</section>
+    	<!-- End of section Modules -->
+    	
+    	<!-- Section External Libraries or Applications -->
+		<section>
+		    <title>External Libraries or Applications</title>
+		    <para>
+<!--
+			The following libraries or applications must be installed before running
+			&kamailio; with this module loaded:
+-->			
+		    	<itemizedlist>
+		    		<para><emphasis>The following packages are runtime libraries, required to launch</emphasis></para>
+		    		<listitem override="disc"><para><emphasis>java-common</emphasis> Base of all Java packages.</para></listitem>
+		    		<listitem override="disc"><para><emphasis>default-jre</emphasis> Standard Java or Java compatible Runtime.</para></listitem>
+		    		<listitem override="disc"><para><emphasis>gcj-jre</emphasis> Java runtime environment using GIJ/classpath.</para></listitem>
+		    		<listitem override="disc"><para><emphasis>libgcj12 (>=12)</emphasis> Java runtime library for use with gcj.</para></listitem>
+		    	</itemizedlist>
+		    	<itemizedlist>
+		    		<para><emphasis>The following packages are optional, required for development</emphasis></para>
+		    		<listitem override="box"><para><emphasis>ant</emphasis> Java based build tool like make.</para></listitem>
+		    		<listitem override="box"><para><emphasis>ant-contrib</emphasis> Collection of tasks, types and other tools for Apache Ant.</para></listitem>
+		    		<listitem override="box"><para><emphasis>ant-gcj</emphasis> Java based build tool like make (GCJ).</para></listitem>
+		    		<listitem override="box"><para><emphasis>default-jdk</emphasis> Standard Java or Java compatible Development Kit</para></listitem>
+		    		<listitem override="box"><para><emphasis>gcj-jdk</emphasis> gcj and classpath development tools for Java(TM)</para></listitem>
+		    		<listitem override="box"><para><emphasis>libgcj13-dev (>=12)</emphasis> Java development headers for use with gcj</para></listitem>
+		    		<listitem override="box"><para><emphasis>jdk</emphasis> JDK Development Kit (either oracle jdk or openjdk)</para></listitem>
+		    	</itemizedlist>
+		    </para>
+			<para>
+				The following libraries or applications must be compiled before
+				running &kamailio; with this module loaded:
+				<itemizedlist>
+					<para><emphasis>The following packages are runtime libraries, required to launch</emphasis></para>
+					<listitem override="circle"><para><emphasis>&lt;class_name&gt;</emphasis>.class</para></listitem>
+					<listitem override="circle"><para><emphasis>&kamailiobinary;</emphasis>.jar</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+    	<!-- end of section External Libraries or Applications -->
+    </section>
+	<!-- end of section Dependencies -->
+	
+	<!-- Section Java Runtime -->
+	<section>
+		<title>Java runtime</title>
+		<section>
+			<title>JRE or JDK is required to use this module</title>
+			<para>Java runtime library (JRE and JDK for building app_java) is required to use this module.</para>
+		</section>
+	</section>
+	<!-- end of section Java Runtime -->
+	
+	<!-- Section Parameters -->
+	<section>
+		<title>Parameters</title>
+
+		<!-- class_name -->
+		<section id="app_java.p.class_name">
+			<title><varname>class_name</varname> (string)</title>
+		    <para>
+		    	The class name should have the same compiled file name.
+		    	If the value is <emphasis>"&kamailio;"</emphasis>, then the compiled file should be named as <emphasis>"&kamailio;.class"</emphasis>.
+		    </para>
+		    <para>
+				<emphasis>
+					Default value is <quote>&kamailio;</quote>.
+				</emphasis>
+		    </para>
+		    <example>
+		    	<title>Set <varname>class_name</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("app_java", "class_name", "&kamailio;")
+...
+</programlisting>
+		    </example>
+		</section>
+
+		<!-- child_init_method -->
+		<section id="app_java.p.child_init_method">
+			<title><varname>child_init_method</varname> (string)</title>
+			<para>
+				TBD.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>child_init</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>child_init_method</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("app_java", "child_init_method", "my_mod_init")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<!-- java_options -->
+		<section id="app_java.p.java_option">
+			<title><varname>java_options</varname> (string)</title>
+			<para>
+				Java options for Java Virtual Machine.
+				For more info read <ulink url="http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html"><citetitle>java docs</citetitle></ulink>
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>-Djava.compiler=NONE</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>java_options</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("app_java", "java_options", "-Djava.compiler=NONE")
+...
+</programlisting>
+			</example>
+			<example>
+				<title>Set <varname>java_options</varname> parameter (live configuration)</title>
+				<programlisting format="linespecific">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Djava.compiler=NONE 
+    -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:
+    /opt/kamailio/java/kamailio.jar")
+...
+</programlisting>
+			</example>
+			<example>
+				<title>Set <varname>java_options</varname> parameter (verbose configuration)</title>
+				<programlisting format="linespecific">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-verbose:gc,class,jni 
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</programlisting>
+			</example>
+			<example>
+				<title>Set <varname>java_options</varname> parameter (debug configuration)</title>
+				<programlisting format="linespecific">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni 
+    -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:
+    /opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<!-- force_cmd_exec -->
+		<section id="app_java.p.force_cmd_exec">
+			<title><varname>force_cmd_exec</varname> (int)</title>
+			<para>
+				This parameter forces execution a &kamailiobinary; command with java native method <quote>KamExec</quote>.
+				# Note: this is an untested yet feature, may cause (but may not) a memory leaks if used from embedded languages.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>0 (off)</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>force_cmd_exec</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("app_java", "force_cmd_exec", 1)
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+	<!-- End of section Parameters -->
+	
+	<!-- Section Functions -->
+    <section>
+		<title>Functions</title>
+    	
+    	<!-- Section Common requirements -->
+    	<section>
+    		<title>
+    			Common requirements
+    		</title>
+    		<para>Each function has a required parameter <quote>method_signature</quote>. For more info
+				see <ulink url="http://www.rgagnon.com/javadetails/java-0286.html"
+						><citetitle>Determine the signature of a method</citetitle></ulink>.
+				Signature represents the variable type. The mapping between the Java type and C type
+				is
+				<programlisting format="linespecific">
+		Type     Chararacter 
+		boolean      Z 
+		byte         B 
+		char         C 
+		double       D 
+		float        F 
+		int          I 
+		long         J 
+		object       L 
+		short        S 
+		void         V 
+		Note that to specify an object, the "L" is followed by the 
+		object's class name and ends with a semi-colon, ';' .
+    			</programlisting>
+			</para>
+    		<para> app_java supports the following signatures:
+				<programlisting format="linespecific">
+		Primitives: Z,B,C,D,F,I,J,L,S,V
+		Objects: 
+			Ljava/lang/Boolean;
+			Ljava/lang/Byte;
+			Ljava/lang/Character;
+			Ljava/lang/Double;
+			Ljava/lang/Float;
+			Ljava/lang/Integer;
+			Ljava/lang/Long;
+			Ljava/lang/Short;
+			Ljava/lang/String;
+			NULL parameter: V
+
+	Each parameter passed to function will be cast according to given signature.
+	
+	Parameters are optional, omitting a parameter meant the passed value is NULL.
+	Parameters count should be exactly the same as signature count.
+	Note 1: Arrays representation (symbol '[') is not supported yet.
+	Note 2: You shall use a correct signature, e.g. the following examples of
+	combinations are invalid:
+    	java_method_exec("ExampleMethod", "ZI", "False");
+        java_method_exec("ExampleMethod", "LI", "something", "5");
+</programlisting>
+			</para>
+
+ 
+    	</section>
+    	<!-- End of section Common Requirements -->
+  
+    	<!-- Section java_method_exec -->
+	<section id="app_java.f.java_method_exec">
+    		<title>java_method_exec(method, method_signature, [param1[, param2[, ...]]])</title>
+    		<para>Executes a java class method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<itemizedlist>
+	    		<listitem>
+			    	<example>
+						<title>Signature: "V"</title>
+			    		<para>&kamailio; prototype</para>
+			    		<programlisting format="linespecific">java_method_exec("ExampleMethod", "V");</programlisting>
+			    		<para>Java prototype</para>
+			    		<programlisting format="linespecific">public int ExampleMethod();</programlisting>
+			    		<para>Example of usage:</para>
+			    		<programlisting format="linespecific">
+# &kamailio;
+java_method_exec("ExampleMethod", "V");
+
+# Java
+public int ExampleMethod()
+{
+    ... do something;
+    return 1;
+}
+</programlisting>
+			    	</example>
+	    		</listitem>
+    			
+	    		<listitem>
+	    			<example>
+	    				<title>Signature: "Ljava/lang/String;I"</title>
+	    				<para>&kamailio; prototype</para>
+		    			<programlisting format="linespecific">java_method_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</programlisting>
+	    				<para>Java prototype</para>
+	    				<programlisting format="linespecific">public int ExampleMethod(String param1, int param2);</programlisting>
+	    				<para>In the above scenario parameter 2 ("5") will be cast to integer representation.</para>
+	    				<para>Example of usage:</para>
+	    				<programlisting format="linespecific">
+# &kamailio;
+java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
+{
+    ... do something with buffer;
+    return 1;
+}
+</programlisting>
+	    			</example>
+	    		</listitem>
+
+    			<listitem>
+    				<example>
+    					<title>Signature: "ZB"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_method_exec("ExampleMethod", "ZB", "true", "0x05");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public int ExampleMethod(boolean param1, byte param2);</programlisting>
+    					<para>In the above scenario parameter 1 ("true") will be cast to boolean representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_method_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public int ExampleMethod(boolean flagSet, byte bFlag);
+{
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+
+    		</itemizedlist>
+    	</section>
+    	<!-- end of section java_method_exec -->
+
+    	<!-- Section java_staticmethod_method_exec -->
+	<section id="app_java.f.java_staticmethod_exec">
+    		<title>java_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</title>
+    		<para>Executes a Java static method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<itemizedlist>
+    			<listitem>
+    				<example>
+    					<title>Signature: "V"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_staticmethod_exec("ExampleMethod", "V");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static int ExampleMethod();</programlisting>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_staticmethod_exec("ExampleMethod", "V");
+
+# Java
+public static int ExampleMethod()
+{
+    ... do something;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "Ljava/lang/String;I"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static int ExampleMethod(String param1, int param2);</programlisting>
+    					<para>In the above scenario parameter 2 ("5") will be cast to integer representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public static int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
+{
+    ... do something with buffer;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "ZB"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static int ExampleMethod(boolean param1, byte param2);</programlisting>
+    					<para>In the above scenario parameter 1 ("true") will be cast to boolean representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public static int ExampleMethod(boolean flagSet, byte bFlag);
+{
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    		</itemizedlist>
+    	</section>
+    	<!-- end of section java_staticmethod_exec -->
+    	
+    	<!-- Section java_s_method_exec -->
+	<section id="app_java.f.java_s_method_exec">
+    		<title>java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])</title>
+    		<para>Executes a Java class synchronized method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<para>For more info see <ulink url="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html"><citetitle>Synchronized Methods</citetitle></ulink></para>
+    		<itemizedlist>
+    			<listitem>
+    				<example>
+    					<title>Signature: "V"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_method_exec("ExampleMethod", "V");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public synchronized int ExampleMethod();</programlisting>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_method_exec("ExampleMethod", "V");
+
+# Java
+public synchronized int ExampleMethod()
+{
+    ... do something;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "Ljava/lang/String;I"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public synchronized int ExampleMethod(String param1, int param2);</programlisting>
+    					<para>In the above scenario parameter 2 ("5") will be cast to integer representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
+{
+    ... do something with buffer;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "ZB"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public synchronized int ExampleMethod(boolean param1, byte param2);</programlisting>
+    					<para>In the above scenario parameter 1 ("true") will be cast to boolean representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public synchronized int ExampleMethod(boolean flagSet, byte bFlag);
+{
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    		</itemizedlist>
+    	</section>
+    	<!-- end of section java_s_method_exec -->
+    	
+    	<!-- Section java_s_staticmethod_exec -->
+	<section id="app_java.f.java_s_staticmethod_exec">
+    		<title>java_s_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</title>
+    		<para>Executes a java synchronized static method <emphasis>method</emphasis>. Parameter <emphasis>method_signature</emphasis> is required.</para>
+    		<para>For more info see <ulink url="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html"><citetitle>Synchronized Methods</citetitle></ulink></para>
+    		<itemizedlist>
+    			<listitem>
+    				<example>
+    					<title>Signature: "V"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_staticmethod_exec("ExampleMethod", "V");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static synchronized int ExampleMethod();</programlisting>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_staticmethod_exec("ExampleMethod", "V");
+
+# Java
+public static synchronized int ExampleMethod()
+{
+    ... do something;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "Ljava/lang/String;I"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static synchronized int ExampleMethod(String param1, int param2);</programlisting>
+    					<para>In the above scenario parameter 2 ("5") will be cast to integer representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength)
+{
+    ... do something with buffer;
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    			<listitem>
+    				<example>
+    					<title>Signature: "ZB"</title>
+    					<para>&kamailio; prototype</para>
+    					<programlisting format="linespecific">java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");</programlisting>
+    					<para>Java prototype</para>
+    					<programlisting format="linespecific">public static synchronized int ExampleMethod(boolean param1, byte param2);</programlisting>
+    					<para>In the above scenario parameter 1 ("true") will be cast to boolean representation.</para>
+    					<para>Example of usage:</para>
+    					<programlisting format="linespecific">
+# &kamailio;
+java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public static synchronized int ExampleMethod(boolean flagSet, byte bFlag);
+{
+    if (flagSet)
+    {
+        ... do something with flags;
+    }
+
+    return 1;
+}
+</programlisting>
+    				</example>
+    			</listitem>
+    			
+    		</itemizedlist>
+    	</section>
+    	<!-- end of section java_s_method_exec -->
+
+    </section>
+	<!-- End of section Functions -->
+	
+	<!-- Section Java API-->
+    <section>
+		<title>Java Module API</title>
+    	<para></para>
+    	
+    	<!-- Section Minimal program skeleton -->
+    	<section>
+    		<title>Minimal program skeleton</title>
+    		<para></para>
+    		<example>
+    			<title>Minimal program skeleton</title>
+    			<para></para>
+    			<programlisting format="linespecific">
+import org.siprouter.*;
+import org.siprouter.NativeInterface.*;
+
+public class Kamailio extends NativeMethods
+{
+    /* Here you should specify a full path to app_java.so */
+    static
+    {
+        System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+    }
+
+    /* Constructor. Do not remove !!! */
+    public Kamailio()
+    {
+    }
+
+    /*
+        This method should be executed for each children process, immediately after forking.
+	Required. Do not remove !!!
+    */
+    public int child_init(int rank)
+    {
+	return 1;
+    }
+}
+</programlisting>
+    		</example>
+    	</section>
+    	<!-- End of section Minimal program skeleton -->
+    	
+    </section>
+	<!-- End of section Java API -->
+	
+</chapter>
+

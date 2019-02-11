@@ -1,0 +1,291 @@
+Memcached Module
+
+Henning Westerholt
+
+   Copyright © 2009 Henning Westerholt
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Implementation notes
+
+              2.1. Data safety
+              2.2. Size restrictions
+
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. servers (str)
+              4.2. expire (integer)
+              4.3. mode (integer)
+              4.4. timeout (integer)
+              4.5. memory (integer)
+              4.6. stringify (integer)
+
+        5.
+
+              5.1. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Storing and retrieving entries
+   1.2. Using atomic operations
+   1.3. Set custom expire time when adding an entry
+   1.4. Modifying expire time for existing entries
+   1.5. Set servers parameter
+   1.6. Set expire parameter
+   1.7. Set mode parameter
+   1.8. Set timeout parameter
+   1.9. Set memory parameter
+   1.10. Set stringify parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Implementation notes
+
+        2.1. Data safety
+        2.2. Size restrictions
+
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. servers (str)
+        4.2. expire (integer)
+        4.3. mode (integer)
+        4.4. timeout (integer)
+        4.5. memory (integer)
+        4.6. stringify (integer)
+
+   5.
+
+        5.1. Exported pseudo-variables
+
+1. Overview
+
+   The module provides access to the distributed hash table memcached.
+   This hash table is stored in memory and can can be accessed via a
+   pseudo-variable: $mct(key). Entries are stored and retrieved from an
+   external server application.
+
+   The “key” can be a static string and also any existing pseudo-variable.
+   Further interfaces to the functionality provided from memcached are
+   also provided, like access to the atomic increment and decrement
+   operations.
+
+   Example 1.1. Storing and retrieving entries
+...
+$mct(test) = 1;
+xlog("stored value is $mct(test)");
+$mct(test) = $null; # delete it
+xlog("stored value is $mct(test)"); # will return <null> or empty string
+...
+
+   Example 1.2. Using atomic operations
+...
+$mct(cnt) = 1;
+$mcinc(cnt) = 1; # increment by 1
+xlog("counter is now $mct(cnt)");
+$mcdec(cnt) = 1; # decrement by 1
+xlog("counter is now $mct(cnt)");
+...
+
+   Example 1.3. Set custom expire time when adding an entry
+...
+$mct(test=>10) = 1;
+xlog("stored value is $mct(test)");
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return <null>
+...
+
+   Example 1.4. Modifying expire time for existing entries
+...
+$mct(test) = 1;
+xlog("stored value is $mct(test)");
+$mctex(test) = 10; # set expire time to 10 seconds
+# sleep 10 seconds
+xlog("stored value is $mct(test)"); # will return <null>
+...
+
+   This module is an addition to the existing htable functionality, not a
+   replacement. In smaller architectures or installations where only one
+   instance needs access to the hash table the htable module is easier to
+   setup, as no dedicated server needs to be provided. But when a
+   distributed storage facility is necessary, or one want to separate the
+   storage from the SIP server, this module could be used.
+
+2. Implementation notes
+
+   2.1. Data safety
+   2.2. Size restrictions
+
+   Important notes about made assumptions and adaptions that were
+   necessary for the proper integration of this library into Kamailio.
+
+2.1. Data safety
+
+   Don't store data in memcached that you don't also have somewhere else.
+   This system was designed as fast cache, and not for persistent storage.
+   The memcached server can crash, machines can reboot or are restarted.
+   If the memcache storage pool gets fulls, it starts to drop the least
+   used items, even if they are not yet expired. So don't store any data
+   in it where it would be a problem when it disappear from one moment to
+   the other.
+
+2.2. Size restrictions
+
+   The maximum key length that is supported from memcached is 250
+   characters. In order to support longer keys in the Kamailio
+   configuration script they are hashed with MD5. This should normally be
+   safe against collisions, as the value space is sufficiently large
+   enough.
+
+   The maximum value size that is supported is 1MB. The reason for this is
+   the internal memory manager used from memcached. But normally this
+   restriction should be not a problem in the SIP environment where this
+   module is used.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * the libmemcached library.
+     * the memcached server implementation.
+
+4. Parameters
+
+   4.1. servers (str)
+   4.2. expire (integer)
+   4.3. mode (integer)
+   4.4. timeout (integer)
+   4.5. memory (integer)
+   4.6. stringify (integer)
+
+4.1. servers (str)
+
+   The servers to connect to. At the moment only one server is supported.
+
+   Default value is “localhost:11211”.
+
+   Example 1.5. Set servers parameter
+...
+modparam("memcached", "servers", "localhost:11211")
+...
+
+4.2. expire (integer)
+
+   The default expire value of entries in memcached in seconds. The
+   maximal value is 2592000 (about 30 days). A value of zero means that no
+   automatic expiration is done, memcached will then delete the least used
+   items when the cache gets full.
+
+   Please note that memcached implements lazy caching, that means items
+   are only deleted when they requested (they are of course not delivered
+   to the client), or on insertion of new entries when the cache is full.
+   Items can also be deleted before there expire time when the available
+   space in memory is exhausted.
+
+   It is possible to override this default value when adding a key with
+   the mct pseudo-variable, or later on by setting a different timeout for
+   an existing key with the mctex pseudo-variable.
+
+   Default value is “10800”s (3h).
+
+   Example 1.6. Set expire parameter
+...
+modparam("memcached", "expire", 10800)
+...
+
+4.3. mode (integer)
+
+   The used storage mode for the memcached module for write access to the
+   hash table. A value of “0” means to set (overwrite) the old value, with
+   a value of “1” the module will not overwrite it. Here every entry to
+   the hash table could be written only once, subsequent inserts will
+   fail.
+
+   Default value is “0” (overwrite).
+
+   Example 1.7. Set mode parameter
+...
+modparam("memcached", "mode", 0)
+...
+
+4.4. timeout (integer)
+
+   The timeout for the memcache servers access in milliseconds.
+
+   Default value is “5000” (5s).
+
+   Example 1.8. Set timeout parameter
+...
+modparam("memcached", "timeout", 10000)
+...
+
+4.5. memory (integer)
+
+   The memory mode for the memcached client library. The library can use
+   the system memory manager or the internal memory manager from Kamailio.
+   The system memory manager configuration is the default, most
+   implementations (like other projects) probably use this approach as
+   well. The internal memory configuration should be faster and protects
+   better against memory leaks that could bring down your server, as the
+   available memory pool is limited by the Kamailio configuration.
+
+   Default value is “0” (use system memory manager).
+
+   Example 1.9. Set memory parameter
+...
+modparam("memcached", "memory", 1)
+...
+
+4.6. stringify (integer)
+
+   The string mode for the memcached module. By default the module checks
+   the flags for each returned value from the memcached library to decide
+   to evaluate it as string or numerical value. If you need
+   interoperability with existing applications that are not able to set
+   this flag, you can force the module to evaluate all values as strings.
+
+   Default value is “0” (don't force string values).
+
+   Example 1.10. Set stringify parameter
+...
+modparam("memcached", "stringify", 1)
+...
+
+   5.1. Exported pseudo-variables
+
+5.1. Exported pseudo-variables
+
+     * $mct(key)
+     * $mct(key=>expiry)
+     * $mcinc(key)
+     * $mcdec(key)
+     * $mctex(key)
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.

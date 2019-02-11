@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module loads (prefix, value) records from database and indexes
+		them in a named memory tree. Name of the tree is specified for each
+		record or as module parameter.
+	</para>
+	<para>
+		It exports to configuration file functions to match against in-memory
+		trees and return the values (raw or precompiled) associated with
+		matched prefixes.
+	</para>
+	<para>
+		The maximum size of the prefix is limited internally to 63, database
+		table definition may enforce lower maximum size.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>A &kamailio; database module (e.g., mysql)</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		URL of the database server to be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "db_url", "&exampledb;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		Name of database table where data for many trees is stored. It is ignored
+		if a 'mtree' parameter is defined. The SQL scripts creates a table named
+		'mtrees' that can be used for this parameter.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote></quote> (no table name).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "db_table", "mtrees")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mtree</varname> (string)</title>
+	    <para>
+			Definition of memory tree with using a parameters format string.
+			The parameter names can be:
+		<itemizedlist>
+		<listitem>
+			<para>
+				name - the name of the tree to be used for referencing
+				inside configuration file.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				dbtable - the name of the database table from where to
+				load the records stored in the tree.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				cols - the column names of the database table. They must
+				be enclosed in quotes in order to form a valid SIP parameter
+				value and be separated by comma. The first column corresponds
+				to tprefix. When specified, there must be at least two columns.
+				If this attribute is not specified, then the global module
+				parameters for tprefix and tvalue are used. If more than one
+				value columns are specified, the tree will pack the column
+				values in a comma separated string, which will be associated
+				with the prefix (string transformation {s.select,...) can be
+				used in configuration file to extract a specific column value).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				type - the  type of tree elements (0 = string, 2 = integer).
+				It is valid only when the (tprefix, tvalue) pairs are loaded
+				(not for multi-column values).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				multi - tells if dbtable can contain more than one tree
+				(0 = one tree, 1 = more than one tree identified by tname
+				column). It is valid only when the (tprefix, tvalue) pairs
+				are loaded (not for multi-column values).
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	    <para>
+	    This parameter can be set many times to add more trees in
+	    memory.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>none</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mtree</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
+modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
+modparam("mtree", "mtree",
+    "name=mytree1;dbtable=routes1;cols='key1,val1,val2,val3'")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>tname_column</varname> (string)</title>
+	    <para>
+		Name of 'tname' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tname</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>tname_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tname_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>tprefix_column</varname> (string)</title>
+	    <para>
+		Name of 'tprefix' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tprefix</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>tprefix_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tprefix_column", "prefix")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>tvalue_column</varname> (string)</title>
+	    <para>
+		Name of 'tvalue' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tvalue</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>tvalue_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tvalue_column", "ipaddr")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1000.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "fetch_rows", 4000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>char_list</varname> (string)</title>
+	    <para>
+		The list with characters allowed in prefix.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0123456789</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>char_list</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "char_list", "0123456789*+")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>pv_value</varname> (string)</title>
+	    <para>
+		The PV spec where to store the matched value. It can be any
+		writable PV.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(s:tvalue)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_value", "$var(mtval)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>pv_values</varname> (string)</title>
+	    <para>
+		The AVP where to store the matched values when mtree is of type
+		0 or 2 and mode of mt_match() call has value 2.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(s:tvalues)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_values</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_values", "$avp(mtvals)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mt_tree_type</varname> (integer)</title>
+	    <para>
+		Default payload type for trees data stored in 'db_table'. Documented
+		values are 0 for string payloads and 2 for integer payloads.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mt_tree_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mt_tree_type", 2)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mt_ignore_duplicates</varname> (integer)</title>
+	    <para>
+		Ignore duplicated prefixes when loading data.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mt_ignore_duplicates</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mt_ignore_duplicates", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mt_allow_duplicates</varname> (integer)</title>
+	    <para>
+		Allow duplicate prefixes when loading data.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mt_allow_duplicates</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mt_allow_duplicates", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">mt_match(mtree, pv, mode)</function>
+	    </title>
+	    <para>
+		Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
+		of 'mode' is NOT 2, sets a value of the longest matching prefix to
+		pseudo variable specified by pv_value parameter. If 'mtree' type is 
+		0 or 2 and value of 'mode' is 2, sets values of all matching prefixes
+		to avp specified by pv_values parameter so that a value of longest
+		matching prefix is in avp index 0.  Parameter 'mode' can be an integer
+		constant or a pseudo variable with integer value.
+	    </para>
+	    <para>
+	      Returns 1 if match succeeded and -1 otherwise.
+	    </para>
+		<example>
+		<title><function>mt_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+mt_match("mytree", "$rU", "0");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="mtree.rpc.list">
+		<title>
+		<function moreinfo="none">mtree.list</function>
+		</title>
+		<para>
+		List content of one or all trees.
+		</para>
+		<para>
+		Name: <emphasis>mtree.list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ : name of tree to list (optional). </para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mtree.list</function> rpc usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mtree.list
+&kamcmd; mtree.list mytree
+...
+</programlisting>
+	    </example>
+    </section>
+	<section id="mtree.rpc.summary">
+		<title>
+		<function moreinfo="none">mtree.summary</function>
+		</title>
+		<para>
+			List usage summary for all trees or for the tree whose name is
+			given as parameter.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ - (optional) the name of the tree.</para></listitem>
+		</itemizedlist>
+    </section>
+	<section id="mtree.rpc.reload">
+		<title>
+		<function moreinfo="none">mtree.reload</function>
+		</title>
+		<para>
+		Reload mtree from database to memory.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>
+		</itemizedlist>
+    </section>
+    <section id="mtree.rpc.match">
+		<title>
+		<function moreinfo="none">mtree.match</function>
+		</title>
+		<para>
+		Match prefix value against mtree
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_</para> - name of mtree</listitem>
+			<listitem><para>_prefix_</para> - match prefix</listitem>
+			<listitem><para>_mode_</para> - matching mode</listitem>
+		</itemizedlist>
+    </section>
+    </section><!-- RPC commands -->
+
+</chapter>
+

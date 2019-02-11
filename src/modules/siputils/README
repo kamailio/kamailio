@@ -1,0 +1,1002 @@
+siputils
+
+Hardy Kahl
+
+   1&1 Internet AG
+
+Henning Westerholt
+
+   1&1 Internet AG
+
+Nils Ohlmeier
+
+   FhG Fokus
+
+Jan Janak
+
+   FhG FOKUS
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Gabriel Vasile
+
+   FhG FOKUS
+
+Juha Heinanen
+
+   TutPro Inc.
+
+Edited by
+
+Jan Janak
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+Edited by
+
+Gabriel Vasile
+
+   Copyright © 2008, 2005, 2003 1&1 Internet AG, FhG Fokus, Voice Sistem
+   SRL
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. ring_timeout (int)
+              3.2. options_accept (string)
+              3.3. options_accept_encoding (string)
+              3.4. contact_flds_separator (string)
+              3.5. options_accept_language (string)
+              3.6. options_support (string)
+              3.7. rpid_prefix (string)
+              3.8. rpid_suffix (string)
+              3.9. rpid_avp (string)
+
+        4. Functions
+
+              4.1. ring_insert_callid()
+              4.2. options_reply()
+              4.3. is_user(username)
+              4.4. has_totag()
+              4.5. uri_param(param)
+              4.6. uri_param(param,value)
+              4.7. add_uri_param(param)
+              4.8. get_uri_param(name, var)
+              4.9. tel2sip(uri, hostpart, result)
+              4.10. is_e164(pseudo-variable)
+              4.11. is_uri_user_e164(pseudo-variable)
+              4.12. is_uri(pseudo-variable)
+              4.13. is_tel_number(tval)
+              4.14. is_numeric(tval)
+              4.15. is_alphanum(tval)
+              4.16. is_alphanumex(tval, eset)
+              4.17. encode_contact(encoding_prefix,hostpart)
+              4.18. decode_contact()
+              4.19. decode_contact_header()
+              4.20. cmp_uri(str1, str2)
+              4.21. cmp_aor(str1, str2)
+              4.22. append_rpid_hf()
+              4.23. append_rpid_hf(prefix, suffix)
+              4.24. is_rpid_user_e164()
+              4.25. set_uri_user(uri, user)
+              4.26. set_uri_host(uri, host)
+              4.27. is_request()
+              4.28. is_reply()
+              4.29. is_gruu([uri])
+              4.30. is_supported(option)
+              4.31. is_first_hop()
+              4.32. sip_p_charging_vector(flags)
+
+        5. Exported pseudo-variables
+
+              5.1. $pcv(all)
+              5.2. $pcv(value)
+              5.3. $pcv(genaddr)
+              5.4. $pcv(orig)
+              5.5. $pcv(term)
+
+   List of Examples
+
+   1.1. Set ring_timeout parameter
+   1.2. Set options_accept parameter
+   1.3. Set options_accept_encoding parameter
+   1.4. Set contact_flds_separator parameter
+   1.5. Set options_accept_language parameter
+   1.6. Set options_support parameter
+   1.7. rpid_prefix parameter example
+   1.8. rpid_suffix parameter example
+   1.9. rpid_avp parameter example
+   1.10. ring_insert_callid() usage
+   1.11. options_reply usage
+   1.12. is_user usage
+   1.13. has_totag usage
+   1.14. uri_param usage
+   1.15. uri_param usage
+   1.16. add_uri_param usage
+   1.17. add_uri_param usage
+   1.18. tel2sip usage
+   1.19. is_e164 usage
+   1.20. is_uri_user_e164 usage
+   1.21. is_uri usage
+   1.22. is_tel_number usage
+   1.23. is_numeric usage
+   1.24. is_alphanum usage
+   1.25. is_alphanumex usage
+   1.26. encode_contact usage
+   1.27. decode_contact usage
+   1.28. decode_contact_header usage
+   1.29. cmp_uri usage
+   1.30. cmp_aor usage
+   1.31. append_rpid_hf usage
+   1.32. append_rpid_hf(prefix, suffix) usage
+   1.33. is_rpid_user_e164 usage
+   1.34. set_uri_user usage
+   1.35. set_uri_host usage
+   1.36. is_request usage
+   1.37. is_reply usage
+   1.38. is_gruu() usage
+   1.39. is_supported() usage
+   1.40. is_first_hop() usage
+   1.41. sip_p_charging_vector() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. ring_timeout (int)
+        3.2. options_accept (string)
+        3.3. options_accept_encoding (string)
+        3.4. contact_flds_separator (string)
+        3.5. options_accept_language (string)
+        3.6. options_support (string)
+        3.7. rpid_prefix (string)
+        3.8. rpid_suffix (string)
+        3.9. rpid_avp (string)
+
+   4. Functions
+
+        4.1. ring_insert_callid()
+        4.2. options_reply()
+        4.3. is_user(username)
+        4.4. has_totag()
+        4.5. uri_param(param)
+        4.6. uri_param(param,value)
+        4.7. add_uri_param(param)
+        4.8. get_uri_param(name, var)
+        4.9. tel2sip(uri, hostpart, result)
+        4.10. is_e164(pseudo-variable)
+        4.11. is_uri_user_e164(pseudo-variable)
+        4.12. is_uri(pseudo-variable)
+        4.13. is_tel_number(tval)
+        4.14. is_numeric(tval)
+        4.15. is_alphanum(tval)
+        4.16. is_alphanumex(tval, eset)
+        4.17. encode_contact(encoding_prefix,hostpart)
+        4.18. decode_contact()
+        4.19. decode_contact_header()
+        4.20. cmp_uri(str1, str2)
+        4.21. cmp_aor(str1, str2)
+        4.22. append_rpid_hf()
+        4.23. append_rpid_hf(prefix, suffix)
+        4.24. is_rpid_user_e164()
+        4.25. set_uri_user(uri, user)
+        4.26. set_uri_host(uri, host)
+        4.27. is_request()
+        4.28. is_reply()
+        4.29. is_gruu([uri])
+        4.30. is_supported(option)
+        4.31. is_first_hop()
+        4.32. sip_p_charging_vector(flags)
+
+   5. Exported pseudo-variables
+
+        5.1. $pcv(all)
+        5.2. $pcv(value)
+        5.3. $pcv(genaddr)
+        5.4. $pcv(orig)
+        5.5. $pcv(term)
+
+1. Overview
+
+   This module implement various functions and checks related to SIP
+   message handling and URI handling.
+
+   It offers some functions related to handle ringing. In a parallel
+   forking scenario you get several 183s with SDP. You don't want that
+   your customers hear more than one ringtone or answer machine in
+   parallel on the phone. So its necessary to drop the 183 in this cases
+   and send a 180 instead.
+
+   This module also provides a function to answer OPTIONS requests which
+   are directed to the server itself. This means an OPTIONS request which
+   has the address of the server in the request URI, and no username in
+   the URI. The request will be answered with a 200 OK with the
+   capabilities of the server.
+
+   To answer OPTIONS request directed to your server is the easiest way
+   for is-alive-tests on the SIP (application) layer from remote (similar
+   to ICMP echo requests, also known as “ping”, on the network layer).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl -- Stateless replies.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. ring_timeout (int)
+   3.2. options_accept (string)
+   3.3. options_accept_encoding (string)
+   3.4. contact_flds_separator (string)
+   3.5. options_accept_language (string)
+   3.6. options_support (string)
+   3.7. rpid_prefix (string)
+   3.8. rpid_suffix (string)
+   3.9. rpid_avp (string)
+
+3.1. ring_timeout (int)
+
+   Timeout value in seconds, define how long the call-id is stored in the
+   internal list kept for replacing 183 messages with 180. A reasonable
+   value is “30”.
+
+   Default value is “0”. This means functionality is disabled.
+
+   Example 1.1. Set ring_timeout parameter
+...
+modparam("siputils", "ring_timeout", 30)
+...
+
+3.2. options_accept (string)
+
+   This parameter is the content of the Accept header field. Note: it is
+   not clearly written in RFC3261 if a proxy should accept any content
+   (the default “*/*”) because it does not care about content. Or if it
+   does not accept any content, which is “”.
+
+   Default value is “*/*”.
+
+   Example 1.2. Set options_accept parameter
+...
+modparam("siputils", "options_accept", "application/*")
+...
+
+3.3. options_accept_encoding (string)
+
+   This parameter is the content of the Accept-Encoding header field.
+   Please do not change the default value because Kamailio does not
+   support any encodings yet.
+
+   Default value is “”.
+
+   Example 1.3. Set options_accept_encoding parameter
+...
+modparam("siputils", "options_accept_encoding", "gzip")
+...
+
+3.4. contact_flds_separator (string)
+
+   First char of this parameter is used as separator for encoding/decoding
+   Contact header.
+
+Warning
+
+   First char of this field must be set to a value which is not used
+   inside username,password or other fields of contact. Otherwise it is
+   possible for the decoding step to fail/produce wrong results.
+
+   Default value is “*”.
+
+   Example 1.4. Set contact_flds_separator parameter
+...
+modparam("siputils", "contact_flds_separator", "-")
+...
+
+   then an encoded uri might look
+   sip:user-password-ip-port-protocol@PublicIP
+
+3.5. options_accept_language (string)
+
+   This parameter is the content of the Accept-Language header field. You
+   can set any language code which you prefer for error descriptions from
+   other devices, but presumably there are not many devices around which
+   support other languages than the default English.
+
+   Default value is “en”.
+
+   Example 1.5. Set options_accept_language parameter
+...
+modparam("siputils", "options_accept_language", "de")
+...
+
+3.6. options_support (string)
+
+   This parameter is the content of the Support header field, indicating
+   SIP extensions. Please do not change the default value, because
+   Kamailio currently does not support any of the SIP extensions
+   registered at the IANA.
+
+   Default value is “”.
+
+   Example 1.6. Set options_support parameter
+...
+modparam("siputils", "options_support", "100rel")
+...
+
+3.7. rpid_prefix (string)
+
+   Prefix to be added to Remote-Party-ID header field just before the URI
+   returned from either radius or database.
+
+   Default value is “”.
+
+   Example 1.7. rpid_prefix parameter example
+modparam("auth", "rpid_prefix", "Whatever <")
+
+3.8. rpid_suffix (string)
+
+   Suffix to be added to Remote-Party-ID header field after the URI
+   returned from either radius or database.
+
+   Default value is “;party=calling;id-type=subscriber;screen=yes”.
+
+   Example 1.8. rpid_suffix parameter example
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
+
+3.9. rpid_avp (string)
+
+   Full AVP specification for the AVP which stores the RPID value. It used
+   to transport the RPID value from authentication backend modules
+   (auth_db or auth_radius) or from script to the auth function
+   append_rpid_hf and is_rpid_user_e164.
+
+   If defined to NULL string, all RPID functions will fail at runtime.
+
+   Default value is “$avp(s:rpid)”.
+
+   Example 1.9. rpid_avp parameter example
+modparam("auth", "rpid_avp", "$avp(myrpid)")
+
+4. Functions
+
+   4.1. ring_insert_callid()
+   4.2. options_reply()
+   4.3. is_user(username)
+   4.4. has_totag()
+   4.5. uri_param(param)
+   4.6. uri_param(param,value)
+   4.7. add_uri_param(param)
+   4.8. get_uri_param(name, var)
+   4.9. tel2sip(uri, hostpart, result)
+   4.10. is_e164(pseudo-variable)
+   4.11. is_uri_user_e164(pseudo-variable)
+   4.12. is_uri(pseudo-variable)
+   4.13. is_tel_number(tval)
+   4.14. is_numeric(tval)
+   4.15. is_alphanum(tval)
+   4.16. is_alphanumex(tval, eset)
+   4.17. encode_contact(encoding_prefix,hostpart)
+   4.18. decode_contact()
+   4.19. decode_contact_header()
+   4.20. cmp_uri(str1, str2)
+   4.21. cmp_aor(str1, str2)
+   4.22. append_rpid_hf()
+   4.23. append_rpid_hf(prefix, suffix)
+   4.24. is_rpid_user_e164()
+   4.25. set_uri_user(uri, user)
+   4.26. set_uri_host(uri, host)
+   4.27. is_request()
+   4.28. is_reply()
+   4.29. is_gruu([uri])
+   4.30. is_supported(option)
+   4.31. is_first_hop()
+   4.32. sip_p_charging_vector(flags)
+
+4.1.  ring_insert_callid()
+
+   Inserting the call-id in the internal list, which is checked when
+   further replies arrive. Any 183 reply that is received during the
+   timeout value will be converted to a 180 message. Please note that you
+   need to set a positive timeout value in order to use this function.
+
+   The function returns TRUE on success, and FALSE during processing
+   failures.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.10. ring_insert_callid() usage
+...
+ring_insert_callid();
+...
+
+4.2.  options_reply()
+
+   This function checks if the request method is OPTIONS and if the
+   request URI does not contain an username. If both is true the request
+   will be answered stateless with “200 OK” and the capabilities from the
+   modules parameters.
+
+   It sends “500 Server Internal Error” for some errors and returns false
+   if it is called for a wrong request.
+
+   The check for the request method and the missing username is optional
+   because it is also done by the function itself. But you should not call
+   this function outside the myself check because in this case the
+   function could answer OPTIONS requests which are sent to you as
+   outbound proxy but with an other destination then your proxy (this
+   check is currently missing in the function).
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.11. options_reply usage
+...
+if (uri==myself) {
+        if ((method==OPTIONS) && (! uri=~"sip:.*[@]+.*")) {
+                options_reply();
+        }
+}
+...
+
+4.3.  is_user(username)
+
+   Check if the username in credentials matches the given username.
+
+   Meaning of the parameters is as follows:
+     * username - Username string.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.12. is_user usage
+...
+if (is_user("john")) {
+        ...
+};
+...
+
+4.4.  has_totag()
+
+   Check if To header field uri contains tag parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. has_totag usage
+...
+if (has_totag()) {
+        ...
+};
+...
+
+4.5.  uri_param(param)
+
+   Find if Request URI has a given parameter with no value
+
+   Meaning of the parameters is as follows:
+     * param - parameter name to look for.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.14. uri_param usage
+...
+if (uri_param("param1")) {
+        ...
+};
+...
+
+4.6.  uri_param(param,value)
+
+   Find if Request URI has a given parameter with matching value
+
+   Meaning of the parameters is as follows:
+     * param - parameter name to look for.
+     * value - parameter value to match.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.15. uri_param usage
+...
+if (uri_param("param1","value1")) {
+        ...
+};
+...
+
+4.7.  add_uri_param(param)
+
+   Add to RURI a parameter (name=value);
+
+   Meaning of the parameters is as follows:
+     * param - parameter to be appended in “name=value” format.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.16. add_uri_param usage
+...
+add_uri_param("nat=yes");
+...
+
+4.8.  get_uri_param(name, var)
+
+   Get the value of RURI parameter.
+
+   Meaning of the parameters is as follows:
+     * name - the name of R-URI parameter
+     * var - the variable where to store the value of the parameter
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.17. add_uri_param usage
+...
+get_uri_param("nat", "$var(nat)");
+...
+
+4.9.  tel2sip(uri, hostpart, result)
+
+   Converts URI in first param (pseudo variable or string) to SIP URI, if
+   it is a tel URI. If conversion was done, writes resulting SIP URI to
+   third param (pseudo variable). Returns 1 if conversion succeeded, 2 if
+   no conversion was needed, and -1 in case of error.
+
+   The conversion follows the rules in RFC 3261 section 19.1.6:
+     * Visual separators ( "-", ".", "(", ")" ) are removed from tel URI
+       number before converting it to SIP URI userinfo.
+     * tel URI parameters are downcased before appending them to SIP URI
+       userinfo
+
+   The SIP URI hostpart is taken from second param (pseudo variable or
+   string).
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, or ONREPLY_ROUTE.
+
+   Example 1.18. tel2sip usage
+...
+# $ru: tel:+(34)-999-888-777
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+34999888777@foo.com;user=phone
+
+# $ru: tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
+...
+
+4.10.  is_e164(pseudo-variable)
+
+   Checks if string value of pseudo variable argument is an E164 number.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, and
+   LOCAL_ROUTE.
+
+   Example 1.19. is_e164 usage
+...
+if (is_e164("$fU")) {  # Check From header URI user part
+   ...
+}
+if (is_e164("$avp(i:705)") {
+   # Check stgring value stored in avp i:705
+   ...
+};
+...
+
+4.11.  is_uri_user_e164(pseudo-variable)
+
+   Checks if userpart of URI stored in pseudo variable is E164 number.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. is_uri_user_e164 usage
+...
+if (is_uri_user_e164("$fu")) {  # Check From header URI user part
+   ...
+}
+if (is_uri_user_e164("$avp(i:705)") {
+   # Check user part of URI stored in avp i:705
+   ...
+};
+...
+
+4.12.  is_uri(pseudo-variable)
+
+   Checks if string value of pseudo variable argument is a valid uri.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. is_uri usage
+...
+if (is_uri("$var(x)")) {  # Check if variable contains a uri
+   ...
+}
+if (is_uri("$avp(i:705)") {
+   # Check value stored in avp i:705
+   ...
+};
+...
+
+4.13.  is_tel_number(tval)
+
+   Checks if the parameter value is a telephone number: starting with one
+   optional +, followed by digits. The parameter can include variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. is_tel_number usage
+...
+if (is_tel_number("$rU")) {  # Test if R-URI user is telephone number
+   ...
+}
+if (is_tel_number("+24242424")) {
+   ...
+}
+...
+
+4.14.  is_numeric(tval)
+
+   Checks if the parameter value consists solely of decimal digits. The
+   parameter can include variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. is_numeric usage
+...
+if (is_numeric("$rU")) {  # Test if R-URI user consists of decimal digits
+   ...
+}
+...
+
+4.15.  is_alphanum(tval)
+
+   Checks if the parameter value consists solely of decimal digits or
+   alphabetic ASCII characters. The parameter can include variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. is_alphanum usage
+...
+if (is_alphanum("$rU")) {
+   ...
+}
+...
+
+4.16.  is_alphanumex(tval, eset)
+
+   Checks if the value of parameter 'tval' consists solely of decimal
+   digits, alphabetic ASCII characters and the characters in the second
+   parameter 'eset'. The parameters can include variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. is_alphanumex usage
+...
+if (is_alphanumex("$rU", "+.-_")) {
+   ...
+}
+...
+
+4.17.  encode_contact(encoding_prefix,hostpart)
+
+   This function will encode uri-s inside Contact header in the following
+   manner sip:username:password@ip:port;transport=protocol goes
+   sip:encoding_prefix*username*ip*port*protocol@hostpart.
+
+   * is the default separator and can be changed by setting the
+   contact_flds_separator module parameter.
+
+   Note: This function discards all of the URI parameters. Thus, none of
+   the parameters (except the transport parameter which is encoded into
+   the userpart) can be restored.
+
+   The function returns negative on error, 1 on success.
+
+   Meaning of the parameters is as follows:
+     * encoding_prefix - Something to allow us to determine that a contact
+       is encoded.
+     * hostpart - An IP address or a hostname.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+   Example 1.26. encode_contact usage
+...
+if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
+...
+
+4.18.  decode_contact()
+
+   This function will decode the request URI. If the RURI is in the format
+   sip:encoding_prefix*username*ip*port*protocol@hostpart it will be
+   decoded to sip:username:password@ip:port;transport=protocol It uses the
+   default set parameter for contact encoding separator.
+
+   The function returns negative on error, 1 on success.
+
+   Meaning of the parameters is as follows:
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.27. decode_contact usage
+...
+if (uri =~ "^sip:natted_client") { decode_contact(); }
+...
+
+4.19.  decode_contact_header()
+
+   This function will decode URIs inside Contact header. If the URI in the
+   format sip:encoding_prefix*username*ip*port*protocol@hostpart it will
+   be decoded to sip:username:password@ip:port;transport=protocol. It uses
+   the default set parameter for contact encoding separator.
+
+   The function returns negative on error, 1 on success.
+
+   Meaning of the parameters is as follows:
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+   Example 1.28. decode_contact_header usage
+...
+reply_route[2] {
+        ...
+        decode_contact_header();
+        ...
+}
+...
+
+4.20.  cmp_uri(str1, str2)
+
+   The function returns true if the two parameters matches as SIP URI.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.29. cmp_uri usage
+...
+if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
+{
+    # do interesting stuff here
+}
+...
+
+4.21.  cmp_aor(str1, str2)
+
+   The function returns true if the two parameters matches as AoR. The
+   parameters have to be SIP URIs.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.30. cmp_aor usage
+...
+if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
+{
+    # do interesting stuff here
+}
+...
+
+4.22.  append_rpid_hf()
+
+   Appends to the message a Remote-Party-ID header that contains header
+   'Remote-Party-ID: ' followed by the saved value of the SIP URI received
+   from the database or radius server followed by the value of module
+   parameter radius_rpid_suffix. The function does nothing if no saved SIP
+   URI exists.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.31. append_rpid_hf usage
+...
+append_rpid_hf();  # Append Remote-Party-ID header field
+...
+
+4.23.  append_rpid_hf(prefix, suffix)
+
+   This function is the same as Section 4.22, “ append_rpid_hf()”. The
+   only difference is that it accepts two parameters--prefix and suffix to
+   be added to Remote-Party-ID header field. This function ignores
+   rpid_prefix and rpid_suffix parameters, instead of that allows to set
+   them in every call.
+
+   Meaning of the parameters is as follows:
+     * prefix - Prefix of the Remote-Party-ID URI. The string will be
+       added at the beginning of the body of the header field, just before
+       the URI.
+     * suffix - Suffix of the Remote-Party-ID header field. The string
+       will be appended at the end of the header field. It can be used to
+       set various URI parameters, for example.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.32. append_rpid_hf(prefix, suffix) usage
+...
+# Append Remote-Party-ID header field
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
+...
+
+4.24.  is_rpid_user_e164()
+
+   The function checks if the SIP URI received from the database or radius
+   server and will potentially be used in Remote-Party-ID header field
+   contains an E164 number (+followed by up to 15 decimal digits) in its
+   user part. Check fails, if no such SIP URI exists (i.e. radius server
+   or database didn't provide this information).
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.33. is_rpid_user_e164 usage
+...
+if (is_rpid_user_e164()) {
+    # do something here
+};
+...
+
+4.25.  set_uri_user(uri, user)
+
+   Sets userpart of SIP URI stored in writable pseudo variable 'uri' to
+   value of pseudo variable 'user'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.34. set_uri_user usage
+...
+$var(uri) = "sip:user@host";
+$var(user) = "new_user";
+set_uri_user("$var(uri)", "$var(user)");
+...
+
+4.26.  set_uri_host(uri, host)
+
+   Sets hostpart of SIP URI stored in writable pseudo variable 'uri' to
+   value of pseudo variable 'host'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.35. set_uri_host usage
+...
+$var(uri) = "sip:user@host";
+$var(host) = "new_host";
+set_uri_host("$var(uri)", "$var(host)");
+...
+
+4.27.  is_request()
+
+   Return true if the SIP message is a request.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.36. is_request usage
+...
+if (is_request()) {
+        ...
+}
+...
+
+4.28.  is_reply()
+
+   Return true if the SIP message is a reply.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.37. is_reply usage
+...
+if (is_reply()) {
+        ...
+}
+...
+
+4.29.  is_gruu([uri])
+
+   The function returns true if the uri is GRUU ('gr' parameter is
+   present): 1 - pub-gruu; 2 - temp-gruu.
+
+   Meaning of the parameters is as follows:
+     * uri - the SIP URI to check for GRUU parameter. It is optional, when
+       missing, the value of R-URI is used.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.38. is_gruu() usage
+...
+if(is_gruu()) { ... }
+...
+
+4.30.  is_supported(option)
+
+   Function returns true if given option is listed in Supported header(s)
+   (if any) of the request. Currently the following options are known:
+   path, 100rel, timer, eventlist, gruu, and outbound.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.39. is_supported() usage
+...
+if (is_supported("outbound")) { ... }
+...
+
+4.31.  is_first_hop()
+
+   The function returns true if the proxy is first hop after the original
+   sender. For incoming SIP requests, it means there is only one Via
+   header. For incoming SIP replies, it means that top Record-Route URI is
+   'myself' and source address is not matching it (to avoid detecting in
+   case of local loops). The detection is done only when Record-Route has
+   an IP address in its URI (for a domain, it returns -1/false).
+
+   Note that it does not detect spirals, which can have the condition for
+   replies true also in the case of additional SIP reply reception.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.40. is_first_hop() usage
+...
+if(is_first_hop()) { ... }
+...
+
+4.32.  sip_p_charging_vector(flags)
+
+   Manage the P-Charging-Vector header (RFC7315). The flags can be: 'r' -
+   remove; 'g' - generate; 'f' - force (remove + generate).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.41. sip_p_charging_vector() usage
+...
+sip_p_charging_vector("g");
+...
+
+5. Exported pseudo-variables
+
+   5.1. $pcv(all)
+   5.2. $pcv(value)
+   5.3. $pcv(genaddr)
+   5.4. $pcv(orig)
+   5.5. $pcv(term)
+
+5.1. $pcv(all)
+
+   full P-Charging-Vector header
+
+5.2. $pcv(value)
+
+   icid-value field (see RFC7315 section 5.6)
+
+5.3. $pcv(genaddr)
+
+   icid-generated-at field (see RFC7315 section 5.6)
+
+5.4. $pcv(orig)
+
+   orig-ioi field (see RFC7315 section 5.6)
+
+5.5. $pcv(term)
+
+   term-ioi field (see RFC7315 section 5.6)

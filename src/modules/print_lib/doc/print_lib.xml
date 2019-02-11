@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>Print_lib Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>pelinescu-onciul@fokus.fhg.de</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="print_lib.overview">
+	<title>Overview</title>
+	<para>
+	    This is an example module. It implements only one function that
+	    prints its string parameter to stderr (it won't work if server is
+		started in daemon mode). Its purpose is to show how to link to
+		an internal library (lib/print).
+	</para>
+    </section>
+    
+    <xi:include href="functions.xml"/>
+    </chapter>
+</book>
+

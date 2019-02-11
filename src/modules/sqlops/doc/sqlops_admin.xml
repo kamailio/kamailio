@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The SQLOPS module adds support for raw SQL queries in the configuration file.
+	</para>
+	<para>
+		Among the features:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>Multiple database connections</emphasis> - the sqlops module
+			can connect to many databases on different servers using different DB
+			driver modules at the same time.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Many query results</emphasis> - the module can store
+			many results of different SQL queries in separate structures at
+			the same time. Thus it is possible to work in parallel with several
+			queries and results.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Access via pseudo-variables</emphasis> - the content
+			of the SQL query result is accessible via pseudo-variables. Please
+			note that only integer and string variables are supported at the
+			moment because of the internal usage of <quote>AVPs</quote> to hold
+			the values. So it is not possible for example to return floating
+			point or big integer values this way.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Array indexes</emphasis> - fast access to result values
+			via array position: [row,column].
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Persistence in process space</emphasis> - a result can
+			be used many times in the same worker process. Query once, use many
+			times.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Results can be stored in xavps</emphasis>
+			- columns are accessed by their names, rows by xavp index. Xavp's
+			are available during the transactions lifetime and don't need to
+			be destroyed manually.
+		</para>
+		</listitem>
+
+	</itemizedlist>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a DB SQL module (mysql, postgres, ...)</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="sqlops.p.sqlcon">
+		<title><varname>sqlcon</varname> (str)</title>
+		<para>
+		The definition of a DB connection. The value of the parameter must have
+		the following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"connection_name=&gt;database_url"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This parameter may be set multiple times to get many DB connections
+			in the same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>connection_name</emphasis> - string specifying the name
+			of a database connection. This string is used by the <quote>sql_query()</quote>
+			function to refer to the DB connection.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>database_url</emphasis> - Standardized &kamailio; database URL
+			used to connect to database.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sqlcon</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","cb=&gt;&defaultdb;")
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sqlops.p.sqlres">
+		<title><varname>sqlres</varname> (str)</title>
+		<para>
+		The definition of a database result ID. The value of the parameter can be
+		any string. Results IDs are also added at fixup time when sql_query()
+		parameters are parsed, so there is no need to declare them via module
+		parameter unless you want to use them from within other modules and be
+		available in all application processes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sqlres</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "sqlres", "ra")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sqlops.p.tr_buf_size">
+		<title><varname>tr_buf_size</varname> (int)</title>
+		<para>
+		The size of the transformations for SQL operations.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2048.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tr_buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "tr_buf_size", 4096)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sqlops.p.connect_mode">
+		<title><varname>connect_mode</varname> (int)</title>
+		<para>
+		Control if the module must stop loading when connecting to database
+		server fails during start up. Values: 0 - stop loading; 1 - continue
+		even if connecting to database server fails.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connect_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "connect_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<para>
+		Note that sql_query(), sql_xquery() and sql_pvquery() functions have
+		the following return values:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>-1</emphasis> - error in parameters or query execution
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>1</emphasis> - query successful, at least one row in resultset (for SELECTs)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>2</emphasis> - query successful, no rows returned
+		</para>
+		</listitem>
+	</itemizedlist>
+	<section>
+		<title>
+		<function moreinfo="none">sql_query(connection, query[, result])</function>
+		</title>
+		<para>
+			Make an SQL query using 'connection' and store data in 'result'.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for the query (defined via the <quote>sqlcon</quote> parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - string name to identify the
+				result. Will be used by $dbr(...) pseudo-variable to access
+				result attributes.
+				If omitted, any resultset will be discarded. The result parameter should
+				normally only be omitted when no result is expected (INSERT, UPDATE, DELETE).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_query()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("number of rows in table domain: $dbr(ra=&gt;rows)\n");
+sql_result_free("ra");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sql_xquery(connection, query, result)</function>
+		</title>
+		<para>
+			Make an SQL query using 'connection' and store data in 'result' xavp.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for the query (defined via the <quote>sqlcon</quote> parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - string name to identify the
+				result xavp. Each row will be added to this xavp, each column can 
+				be accessed by its name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_xquery()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_xquery("ca", "select * from domain", "ra");
+xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+...
+if (sql_xquery("ca", "select * from domain", "ra") == 1) {
+    xlog("domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+}
+..
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sql_pvquery(connection, query, result)</function>
+		</title>
+		<para>
+			Make an SQL query using 'connection' and store data in arbitrary
+			pseudo variables specified by 'result' parameter.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for query (defined via the <quote>sqlcon</quote> parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - a list with PV names where
+				to store the result. The format is
+				<quote>$pv;$pv;...</quote>. Every PV that is writable may 
+				be used (for example $var, $avp, $xavp, $ru, $du, $sht, etc).
+			</para>
+			<para>
+				The PV are assigned values in the following order: last row
+				to first row, first field to last field. Assignment has the
+				same behavior as assigning in the script itself with one
+				exception for avp's, a NULL value will not delete an avp, but
+				will be skipped over.
+			</para>
+			<para>
+				Beware that if multiple rows are returned, non-(x)avp variables
+				will only hold the last added value, which corresponds to the 
+				first returned row.
+			</para>
+			<para>
+				The value type of the PV (string or integer) will
+				be derived from the type of the columns. Please note that only
+				these two datatypes are supported, other datatypes will/may be
+				converted to string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE. Returns -1 on Error,
+			1 on successful query, 2 if query provided no result set,
+			3 if result is ignored (no result parameter given)
+		</para>
+		<example>
+		<title><function>sql_pvquery()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_pvquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
+	"$var(a), $avp(col2), $xavp(item[0]=>s), $ru");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sql_result_free(result)</function>
+		</title>
+		<para>
+			Free data in SQL 'result'.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_result_free()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("number of rows in table domain: $dbr(ra=&gt;rows)\n");
+...
+sql_result_free("ra");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sqlops.f.sql_query_async">
+		<title>
+		<function moreinfo="none">sql_query_async(connection, query)</function>
+		</title>
+		<para>
+			Make an async SQL query using 'connection', if implemented by db
+			driver module (e.g., db_mysql). The query is executed in another
+			process and result is not available back to config, thus it should
+			be used only for sql statements that don't return values (e.g.,
+			insert, delete, update...). Note that async_workers core parameter
+			must be set in order to enable the asynchronous framework
+			needed by this function.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for the query (defined via <quote>sqlcon</quote>
+				parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or
+				pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_query_async()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query_async("ca", "delete from domain");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported pseudo-variables</title>
+		
+		<section>
+			<title><varname>$dbr(result=>key)</varname></title>
+			<para>
+				Access hash table entries.
+			</para>
+			<para>
+				The <quote>result</quote> must be the name identifying a SQL
+				result (third parameter of sql_query(...)).
+			</para>
+
+			<para>
+			The <quote>key</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>rows</emphasis> - return the number of rows in
+						query result</para>
+				</listitem>	  
+				<listitem>
+					<para><emphasis>cols</emphasis> - return the number of
+						columns in the result.</para>
+				</listitem>	  
+				<listitem>
+					<para><emphasis>[row,col]</emphasis> - return the value
+					at position (row,col) in the result set. 'row' and 'col' must
+					be integer or pseudo-variable holding an integer.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>colname[N]</emphasis> - return the name
+					of the N-th column in the result set.</para>
+				</listitem>	  
+			</itemizedlist>
+
+			<example>
+				<title><function moreinfo="none">$dbr(result=&gt;key)</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("rows: $dbr(ra=&gt;rows) cols: $dbr(ra=&gt;cols)\n");
+if($dbr(ra=>rows)>0)
+{
+    $var(i) = 0;
+    while($var(i)&lt;$dbr(ra=&gt;cols))
+    {
+        xlog("--- SCRIPT: column[$var(i)] = $dbr(ra=&gt;colname[$var(i)])\n");
+        $var(i) = $var(i) + 1;
+    }
+    $var(i) = 0;
+    while($var(i)&lt;$dbr(ra=&gt;rows))
+    {
+        $var(j) = 0;
+        while($var(j)&lt;$dbr(ra=&gt;cols))
+        {
+            xlog("[$var(i),$var(j)] = $dbr(ra=&gt;[$var(i),$var(j)])\n");
+            $var(j) = $var(j) + 1;
+        }
+        $var(i) = $var(i) + 1;
+    }
+}
+sql_result_free("ra");
+...
+
+
+...
+if (sql_xquery("ca", "select * from domain", "ra") == 1)
+{
+# non-destructive iteration
+    $var(i) = 0;
+    while($xavp(ra[$var(i)]) != $null)
+    {
+        xlog("[id, domain] = [$xavp(ra[$var(i)]=&gt;id), $xavp(ra[$var(i)]=&gt;domain)]\n");
+        $var(i) = $var(i) + 1;
+    }
+
+# destructive iteration
+    while($xavp(ra) != $null)
+    {
+        xlog("[id, domain] = [$xavp(ra=&gt;id), $xavp(ra=&gt;domain)]\n");
+        pv_unset("$xavp(ra)");
+    }
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>$sqlrows(con)</varname></title>
+			<para>
+				Number of affected rows of the previous query on the
+				specified connection. It's primary use is to get the number
+				of rows affected by UPDATE, INSERT and DELETE queries.
+			</para>
+			<para>
+				<quote>con</quote> must be the name identifying a DB
+				connection.
+			</para>
+			<example>
+				<title><function moreinfo="none">$sqlrows(con)</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query("ca", "update domain set domain='mydomain' where id=5");
+xlog("Affected rows: $sqlrows(ca)\n");
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>
+

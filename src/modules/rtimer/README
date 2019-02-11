@@ -1,0 +1,145 @@
+RTimer Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2009 http://www.asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. timer (str)
+              3.2. exec (str)
+
+   List of Examples
+
+   1.1. Set timer parameter
+   1.2. Set exec parameter
+   1.3. Use exec parameter with a Kemi engine
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. timer (str)
+        3.2. exec (str)
+
+1. Overview
+
+   The module executes route blocks on a timer base. It can create new
+   timer processes and execute many route blocks on same timer.
+
+   A static faked SIP message is given as parameter to called functions,
+   so all functions available for REQUEST_ROUTE can be used.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. timer (str)
+   3.2. exec (str)
+
+3.1. timer (str)
+
+   The definition of a timer. The value of the parameter must have the
+   following format:
+     * "name=_string_;mode=_number_;interval=_number_"
+
+   The parameter can be set multiple times to get more timers in same
+   configuration file.
+     * name - name of the timer.
+     * mode - if set to 0, the timer will use the main (shared) timer. Any
+       number > 0 will create the specified amount of new timer processes
+       (which will only be handling this timer).
+     * interval - timer interval in seconds or micro-seconds (the value
+       must be ended in 'u'). For micro-seconds intervals, mode is set
+       always to 1.
+
+   Default value is NULL.
+
+   Example 1.1. Set timer parameter
+...
+# time interval set to 10 seconds
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+# time interval set to 100 mili-seconds
+modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
+...
+
+3.2. exec (str)
+
+   Specify route to be executed on timer. The value of the parameter must
+   have the following format:
+     * "timer=_string_;route=_number_"
+
+   The parameter can be set multiple times to get more routes executed on
+   same timer.
+     * timer - name of the timer.
+     * route - the name of the route block to be executed, or the name of
+       the function from kemi script. The kemi function receives a string
+       parameter with the value being the name of the module.
+
+   Default value is NULL.
+
+   Example 1.2. Set exec parameter
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=ONTIMER")
+
+route[ONTIMER] {
+    xlog("timer routine: time is $TF\n");
+    # delete from my sql cache table entries older than 2H
+    sql_query("delete from kamailio_cache where last_updated<$TS-3600");
+}
+...
+
+   Example 1.3. Use exec parameter with a Kemi engine
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=ksr_rtimer")
+...
+-- rtimer event callback function implemented in Lua
+function ksr_rtimer(evname)
+        KSR.info("===== rtimer module triggered event\n");
+        return 1;
+end
+...

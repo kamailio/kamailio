@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=11.cfg
 
@@ -31,7 +31,7 @@ fi ;
 
 SIPDOMAIN=127.0.0.1
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
@@ -155,10 +155,10 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 # restart to test preload_udomain functionality
-$BIN -w . -f $CFG -a no> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no> /dev/null
 ret=$?
 
 sleep 1
@@ -178,6 +178,6 @@ fi;
 # cleanup
 $MYSQL "delete from location where username like '49721123456789%';"
 
-$KILL
+kill_kamailio
 
 exit $ret

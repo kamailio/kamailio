@@ -51,8 +51,14 @@ if [ -z "$DBROOTUSER" ]; then
 	fi
 fi
 
-CMD="psql -q -h $DBHOST -U $DBROOTUSER "
-DUMP_CMD="pg_dump -h $DBHOST -U $DBROOTUSER -c"
+if [ -z "$DBPORT" ] ; then
+	CMD="psql -q -h $DBHOST -U $DBROOTUSER "
+	DUMP_CMD="pg_dump -h $DBHOST -U $DBROOTUSER -c"
+else
+	CMD="psql -q -h $DBHOST -p $DBPORT -U $DBROOTUSER "
+	DUMP_CMD="pg_dump -h $DBHOST -p $DBPORT -U $DBROOTUSER -c"
+fi
+
 #################################################################
 
 
@@ -235,9 +241,9 @@ done
 for TABLE in $EXTRA_TABLES; do
 	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE $TABLE TO $DBRWUSER;"
 	sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
-	if [ $TABLE != "route_tree" ] ; then
+	if [ $TABLE != "route_tree" ] && [ $TABLE != "dr_gateways" ] && [ $TABLE != "dr_rules" ] ; then
 		sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE "$TABLE"_id_seq TO $DBRWUSER;"
-	    sql_query "$1" "GRANT SELECT ON TABLE "$TABLE"_id_seq TO $DBROUSER;"
+		sql_query "$1" "GRANT SELECT ON TABLE "$TABLE"_id_seq TO $DBROUSER;"
 	fi
 	if [ $? -ne 0 ] ; then
 		merr "Grant privileges to extra tables failed!"

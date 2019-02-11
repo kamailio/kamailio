@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="cfg_rpc.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>RPC Commands</title>
+
+    <para>
+	The module implements the RPC commands documented in the next sections.
+	</para>
+	<section id="cfg_rpc.rpc.list">
+    <title>cfg.list</title>
+	    <para>
+		<emphasis>cfg.list</emphasis> - List the configuration
+		variables. The function has one optional parameter:
+		group name.
+		</para>
+		<example>
+		<title>Use <varname>cfg.get</varname> RPC command</title>
+		<programlisting format="linespecific">
+...
+# &sercmd; cfg.list
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfg_rpc.rpc.get">
+    <title>cfg.get</title>
+	    <para>
+		<emphasis>cfg.get</emphasis> - Get the value of
+		a configuration variable. The function accepts two parameters:
+		group name, variable name, but if all the elements belonging to a certain group is wanted to be retrieved
+		then only the group name would suffice as the function parameter. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+		<example>
+		<title>Use <varname>cfg.get</varname> RPC command</title>
+		<programlisting format="linespecific">
+...
+# &sercmd; cfg.get core debug
+# &sercmd; cfg.get tm
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfg_rpc.rpc.seti">
+    <title>cfg.seti</title>
+	    <para>
+		<emphasis>cfg.seti</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		The function accepts three parameters: group name, variable
+		name, integer value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+		<example>
+		<title>Use <varname>cfg.seti</varname> RPC command</title>
+		<programlisting format="linespecific">
+...
+# &kamcmd; cfg.seti core debug 1
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfg_rpc.rpc.set_now_int">
+    <title>cfg.set_now_int</title>
+	    <para>
+		<emphasis>cfg.set_now_int</emphasis> - This is an alias to
+		the command <emphasis>cfg.seti</emphasis>.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.sets">
+    <title>cfg.sets</title>
+	    <para>
+		<emphasis>cfg.sets</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		The function accepts three parameters: group name, variable
+		name, string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+		<example>
+		<title>Use <varname>cfg.sets</varname> RPC command</title>
+		<programlisting format="linespecific">
+...
+# &kamcmd; cfg.sets voicemail srv_ip "1.2.3.4"
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="cfg_rpc.rpc.reset">
+    <title>cfg.reset</title>
+            <para>
+                <emphasis>cfg.reset</emphasis> - Reset the variable values of
+                a configuration group. The function accepts only one parameter:
+                group name.
+            </para>
+                <example>
+                <title>Use <varname>cfg.reset</varname> RPC command</title>
+                <programlisting format="linespecific">
+...
+# &sercmd; cfg.reset core
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfg_rpc.rpc.set_now_string">
+    <title>cfg.set_now_string</title>
+	    <para>
+		<emphasis>cfg.set_now_string</emphasis> - This is an alias to
+		the command <emphasis>cfg.sets</emphasis>.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.set">
+    <title>cfg.set</title>
+	    <para>
+		<emphasis>cfg.set</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		This is a wrapper command for cfg.set_now_int and cfg.set_now_string
+		depending on the type of the value provided.
+		The function accepts three parameters: group name, variable
+		name, int/string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.del">
+    <title>cfg.del</title>
+	    <para>
+		<emphasis>cfg.del</emphasis> - Delete the value of
+		a configuration variable from a group instance and commit the change immediately.
+		The value is reset to the default value and it follows the changes
+		of that.
+		The function accepts two parameters: group name, variable
+		name. The group name must contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.set_delayed_int">
+    <title>cfg.set_delayed_int</title>
+	    <para>
+		<emphasis>cfg.set_delayed_int</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		The function accepts three parameters: group name, variable
+		name, integer value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.set_delayed_string">
+    <title>cfg.set_delayed_string</title>
+	    <para>
+		<emphasis>cfg.set_delayed_string</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		The function accepts three parameters: group name, variable
+		name, string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.set_delayed">
+    <title>cfg.set_delayed</title>
+	    <para>
+		<emphasis>cfg.set_delayed</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		This is a wrapper command for cfg.set_delayed_int and cfg.set_delayed_string
+		depending on the type of the value provided.
+		The function accepts three parameters: group name, variable
+		name, int/string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.del_delayed">
+    <title>cfg.del_delayed</title>
+	    <para>
+		<emphasis>cfg.del_delayed</emphasis> - Prepare the deletion of the value of
+		a configuration variable from a group instance, but does not commit the change yet.
+		The value is reset to the default value and it follows the changes
+		of that.
+		The function accepts two parameters: group name, variable
+		name. The group name must contain the
+		group instance id, for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.commit">
+    <title>cfg.commit</title>
+	    <para>
+		<emphasis>cfg.commit</emphasis> - Commit the previously
+		prepared configuration changes. The function does not have
+		any parameters.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.rollback">
+    <title>cfg.rollback</title>
+	    <para>
+		<emphasis>cfg.rollback</emphasis> - Drop the prepared
+		configuration changes. The function does not have any
+		parameters.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.help">
+    <title>cfg.help</title>
+	    <para>
+		<emphasis>cfg.help</emphasis> - Print the description of
+		a configuration variable. The function accepts two parameters:
+		group name, variable name.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.diff">
+    <title>cfg.diff</title>
+	    <para>
+		<emphasis>cfg.diff</emphasis> - List the pending
+		configuration changes that have not been committed yet.
+		The function does not have any parameters.
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.add_group_inst">
+    <title>cfg.add_group_inst</title>
+	    <para>
+		<emphasis>cfg.add_group_inst</emphasis> - Add a new instance
+		to an existing configuration group. The function accepts one parameter:
+		group name[instance id], for example foo[5].
+	    </para>
+	</section>
+	<section id="cfg_rpc.rpc.del_group_inst">
+    <title>cfg.del_group_inst</title>
+	    <para>
+		<emphasis>cfg.del_group_inst</emphasis> - Delete an instance
+		of an existing configuration group. The function accepts one parameter:
+		group name[instance id], for example foo[5].
+	    </para>
+	</section>
+</section>

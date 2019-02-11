@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//pub/kamailio/.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
+    <name>sip_trace</name>
+    <version>4</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used to store incoming/outgoing SIP messages in
+			database. More informations can be found in the siptrace module
+			documentation at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;siptrace.html">&KAMAILIO_MOD_DOC;siptrace.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="time_stamp">
+        <name>time_stamp</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Time stamp of processing the SIP message</description>
+    </column>
+
+    <column id="time_us">
+        <name>time_us</name>
+        <type>unsigned int</type>
+        <default>0</default>
+        <description>Store the milliseconds part of the time</description>
+    </column>
+
+    <column id="callid">
+        <name>callid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>call ID from SIP message</description>
+        <natural/>
+    </column>
+
+    <column id="traced_user">
+        <name>traced_user</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>SIP URI of the user being traced</description>
+    </column>
+
+    <column>
+        <name>msg</name>
+        <type>largetext</type>
+        <description>Full SIP message</description>
+    </column>
+
+    <column>
+        <name>method</name>
+        <type>string</type>
+        <size>50</size>
+        <default/>
+        <description>SIP method name</description>
+    </column>
+
+    <column>
+        <name>status</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>SIP reply status</description>
+    </column>
+
+    <column id="fromip">
+        <name>fromip</name>
+        <type>string</type>
+        <size>&ip_add_len;</size>
+        <default/>
+        <description>Source IP address</description>
+    </column>
+
+    <column>
+        <name>toip</name>
+        <type>string</type>
+        <size>&ip_add_len;</size>
+        <default/>
+        <description>Destination IP address</description>
+    </column>
+
+    <column>
+        <name>fromtag</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default/>
+        <description>From tag</description>
+    </column>
+
+    <column>
+        <name>totag</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default/>
+        <description>To tag</description>
+    </column>
+
+    <column>
+        <name>direction</name>
+        <type>string</type>
+        <size>4</size>
+        <default/>
+        <description>Destination IP address</description>
+    </column>
+
+    <index>
+        <name>traced_user_idx</name>
+        <colref linkend="traced_user"/>
+    </index>
+
+    <index>
+        <name>date_idx</name>
+        <colref linkend="time_stamp"/>
+    </index>
+
+    <index>
+        <name>fromip_idx</name>
+        <colref linkend="fromip"/>
+    </index>
+
+    <index>
+        <name>callid_idx</name>
+        <colref linkend="callid"/>
+    </index>
+
+</table>

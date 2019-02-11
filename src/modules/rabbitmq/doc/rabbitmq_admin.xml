@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+
+		<para>
+			This module offers amqp communication using librabbitmq.
+			This module was created using <emphasis>rabbitmq-c</emphasis> C client
+			(<ulink url="https://github.com/alanxz/rabbitmq-c">https://github.com/alanxz/rabbitmq-c</ulink>).
+			An new amqp connection is setup on a per-children basis, when Kamailio starts.
+			If connection is lost, the process tries to re-establish it when a new amqp action is required.
+		</para>
+
+		<para>
+			Currently librabbitmq offers no async API, but sync API, with a timeout. See below link for updates on this issue:
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>https://github.com/alanxz/rabbitmq-c/issues/370</emphasis>.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+
+		<section>
+			<title>&kamailio; modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+
+		<section>
+			<title>External libraries or applications</title>
+			<para>
+				The following libraries or applications must be installed before
+				running &kamailio; with this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>librabbitmq-dev</emphasis> -
+							(<ulink url="https://github.com/alanxz/rabbitmq-c">https://github.com/alanxz/rabbitmq-c</ulink>).
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Parameters</title>
+
+		<section id="rabbitmq.p.url">
+			<title><varname>url</varname> (string)</title>
+			<para>
+				The amqp connection url.
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>amqp://guest:guest@localhost:5672/%2F</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>url</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "url", "amqp://kamailio:kamailio@localhost:5672/%2Fkamailio")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="rabbitmq.p.timeout_sec">
+			<title><varname>timeout_sec</varname> (int)</title>
+			<para>
+				The timeout in seconds.
+				The timeout_sec + timeout_usec combination gives the time to wait for an amqp reply, when rabbitmq_publish_consume() is used.
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>1</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>timeout_sec</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "timeout_sec", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="rabbitmq.p.timeout_usec">
+			<title><varname>timeout_usec</varname> (int)</title>
+			<para>
+				The timeout in micro seconds.
+				The timeout_sec + timeout_usec combination gives the time to wait for an amqp reply, when rabbitmq_publish_consume() is used.
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>0</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>timeout_usec</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "timeout_usec", 0)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="rabbitmq.p.direct_reply_to">
+			<title><varname>direct_reply_to</varname> (int)</title>
+			<para>
+				Setting this parameter to 1, enables rabbitmq direct reply-to feature. More info about this, can be found at https://www.rabbitmq.com/direct-reply-to.html.
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>0</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>direct_reply_to</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "direct_reply_to", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>Functions</title>
+
+		<section id="rabbitmq.f.rabbitmq_publish">
+			<title>
+				<function moreinfo="none">rabbitmq_publish(exchange, routing_key, content_type, messagebody)</function>
+			</title>
+			<para>
+				The function publishes messagebody without waiting for a reply. 
+			</para>
+			<para>
+				Meaning of the parameters is as follows:
+			</para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>exchange</emphasis> - the amqp exchange.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>routing_key</emphasis> - the amqp routing_key.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>content_type</emphasis> - the content_type of the messagebody.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>messagebody</emphasis> - the messagebody to be published.
+						</para>
+					</listitem>
+				</itemizedlist>
+
+			<para>
+				This function can be used from REQUEST_ROUTE.
+			</para>
+
+			<example>
+				<title><function>rabbitmq_publish</function> usage</title>
+				<programlisting format="linespecific">
+rabbitmq_publish("exchange", "routing_key", "application/json", "$avp(json_request)");
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="rabbitmq.f.rabbitmq_publish_consume">
+			<title>
+				<function moreinfo="none">rabbitmq_publish_consume(exchange, routing_key, content_type, messagebody, reply)</function>
+			</title>
+			<para>
+				The function publishes messagebody and waits timeoute_sec + timeout_usec for a reply. 
+				If the reply comes, one can read it in the <emphasis>reply</emphasis> avp.
+			</para>
+			<para>
+				Meaning of the parameters is as follows:
+			</para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>exchange</emphasis> - the amqp exchange.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>routing_key</emphasis> - the amqp routing_key.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>content_type</emphasis> - the content_type of the messagebody.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>messagebody</emphasis> - the messagebody to be published.
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>reply</emphasis> - the consumed reply.
+						</para>
+					</listitem>
+				</itemizedlist>
+
+			<para>
+				This function can be used from REQUEST_ROUTE.
+			</para>
+
+			<example>
+				<title><function>rabbitmq_publish_consume</function> usage</title>
+				<programlisting format="linespecific">
+rabbitmq_publish_consume("exchange", "routing_key", "application/json", "$avp(json_request)", "$avp(json_reply)");
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>

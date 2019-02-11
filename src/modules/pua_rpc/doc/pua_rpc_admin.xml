@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	  The pua_rpc module offers the possibility to publish presence
+	  information via the RPC transport.  Subscribing to presence
+      	  information has not been implemented yet.
+	</para>
+	<para>
+	  Using this module you can create independent applications/scripts to
+	  publish SIP and not SIP related information (e.g., MWI message
+      	  summary information, system resources like CPU-usage, memory,
+          number of active subscribers, ...).  Future version of this module
+          may allow non-SIP speaking applications to subscribe
+          to presence information kept in a SIP presence server.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+	  <title>&kamailio; Modules</title>
+	  <para>
+		The following modules must be loaded before this module:
+	  </para>
+	  <itemizedlist>
+		<listitem>
+		  <para>
+			<emphasis>pua</emphasis>
+		  </para>
+		</listitem>
+	  </itemizedlist>
+	</section>
+
+	<section>
+	  <title>External Libraries or Applications</title>
+	  <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+		</para>
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  <emphasis>none</emphasis>
+			</para>
+		  </listitem>
+		</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<para>
+	  <emphasis>none</emphasis>
+	</para>
+	</section>
+
+	<section>
+	  <title>RPC Commands</title>
+	  <section id="pua_rpc.r.pua.publish">
+		<title>pua.publish</title>
+		<para>
+		Send a SIP PUBLISH request and wait for its response.
+		</para>
+		<para>
+		Command parameters:
+		</para>
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  <emphasis>presentity_uri</emphasis>
+			  - e.g. sip:jh@tutpro.com
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>expires</emphasis>
+			  - Relative expires time in seconds (e.g. 3600).
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>event package</emphasis>
+			  - Event package that is target of published information
+              			(e.g. message-summary).
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>content type</emphasis>
+			  - Content type of published information
+              			(e.g. application/simple-message-summary) or . if no
+              			information is enclosed.
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>id</emphasis>
+			  - id for a series of related PUBLISHes to the same
+		      presentity-uri or . to always use the same series.
+		      For example dialog-info must reuse the same id for the
+		      same call otherwise status will be lost when multiple
+		      parallel calls to/from the same user take place. The
+		      dialog-id from the dialog-info body qualifies as a suitable
+		      id here.
+		    </para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>ETag</emphasis>
+			  - ETag that publish should match or . if no ETag is given.
+		    </para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>outbound proxy</emphasis>
+			  - SIP URI of outbound proxy to be used when
+              		sending PUBLISH request or . if no outbound proxy is given.
+		    </para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>extra_headers</emphasis>
+			  - Extra headers added to PUBLISH request or . if no extra headers.
+		    </para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>body</emphasis>
+			  - The body of the publish
+		      request containing published information or missing if
+		      no published information.
+		      It has to be a single line for FIFO transport.
+			</para>
+		  </listitem>
+		</itemizedlist>
+		<example>
+		  <title><function>pua.publish</function> XMLRPC example</title>
+	      <programlisting format="linespecific">
+            <![CDATA[
+
+<?xml version="1.0" ?>
+<methodCall>
+ <methodName>pua.publish</methodName>
+ <params>
+  <param>
+   <value>
+    <string>sip:jh@test.tutpro.com</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>7776000</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>message-summary</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>application/simple-message-summary</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>.</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>a.1481534683.13958.6.7</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>sip:127.0.0.1:5080;transport=tcp</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>P-Flags: 0
+
+</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>Messages-Waiting: yes
+
+Message-Account: sip:jh@vm.test.tutpro.com
+
+Voice-Message: 2/0 (0/0)
+
+</string>
+   </value>
+  </param>
+ </params>
+</methodCall>
+
+                     ]]>
+          </programlisting>
+        </example>
+	</section>
+	<section id="pua_rpc.r.pua.send_publish">
+		<title>pua.send_publish</title>
+		<para>
+		Send a SIP PUBLISH request without waiting for its response.
+		</para>
+		<para>
+		Command parameters are the same as for pua.publish.
+		</para>
+	</section>
+	<section id="pua_rpc.r.subscribe">
+		<title>pua.subscribe</title>
+		<para>
+			Send a SIP SUBSCRIBE request. Command parameters:
+		</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>presentity_uri</emphasis>
+					- e.g. sip:presentity@kamailio.org
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>watcher_uri</emphasis>
+					- e.g. sip:watcher@kamailio.org
+				</para>
+			</listitem>
+
+			<listitem>
+				<para>
+					<emphasis>event_package</emphasis>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>expires</emphasis>
+					- Relative time in seconds for the desired validity
+					of the subscription.
+				    </para>
+			</listitem>
+			</itemizedlist>
+	</section>
+    </section>
+
+</chapter>
+

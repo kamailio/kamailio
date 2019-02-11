@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>Distributed Message Queue Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Marius Ovidiu</firstname>
+		<surname>Bucur</surname>
+		<address>
+		<email>bucur_marius_ovidiu@yahoo.com</email>
+		</address>
+	    </author>
+            <author>
+                <firstname>Charles</firstname>
+                <surname>Chance</surname>
+		<affiliation>Sipcentric Ltd.</affiliation>
+            </author>
+            <author>
+                <firstname>Olle E.</firstname>
+                <surname>Johansson</surname>
+		<affiliation>Edvina AB</affiliation>
+            </author>
+            <editor>
+                <firstname>Marius Ovidiu</firstname>
+                <surname>Bucur</surname>
+                <address>
+                <email>bucur_marius_ovidiu@yahoo.com</email>
+                </address>
+            </editor>
+            <editor>
+                <firstname>Charles</firstname>
+                <surname>Chance</surname>
+            </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2011</year>
+	    <holder>Marius Bucur</holder>
+	</copyright>
+        <copyright>
+            <year>2013</year>
+            <holder>Charles Chance, Sipcentric Ltd.</holder>
+        </copyright>
+        <copyright>
+            <year>2015</year>
+            <holder>Olle E. Johansson, Edvina AB</holder>
+        </copyright>
+  </bookinfo>
+    <toc></toc>
+    
+    <xi:include href="dmq_admin.xml"/>
+    <xi:include href="dmq_devel.xml"/>
+    
+</book>
+
+

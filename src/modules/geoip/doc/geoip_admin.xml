@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows real-time queries against the Max Mind GeoIP 
+		database to be performed from the config script. It uses the old
+		version of API, still very common on OS distributions. For using
+		the new version of GeoIP API, see geoip2 module.
+	</para>
+	<para>
+		The Max Mind GeoIP database is a map of IP network address assignments 
+		to geographical locales that can be useful -- though approximate --
+		in identifying the physical location with which an IP host address
+		is associated on a relatively granular level.
+	</para>
+	<para>
+		This database itself can be obtained on a free or commercial basis 
+		from <ulink url="http://www.maxmind.com/app/ip-location">
+		http://www.maxmind.com/app/ip-location</ulink>. The 
+		library that interfaces with the Max Mind API, as well as scripts to
+		automate downloading of the on-disk version of the open-source 
+		database is also packaged by the Debian Linux distribution and 
+		its derivatives as <emphasis>libgeoip</emphasis>, and probably by
+		other distributions as well.
+	</para>
+	<para>
+		Debian Linux squeeze includes already a database as dependency, but as
+		this contain the wrong data, it will not work correctly with the module.
+		More accurate, the module expect the <emphasis>GeoIP City Edition</emphasis>,
+		and will not work with the <emphasis>GeoIP Country Edition</emphasis>. In
+		newer Debian Linux releases the package <emphasis>geoip-database-contrib</emphasis>
+		should contain the necessary database. You can download the Lite edition
+		of the DB from <ulink url="http://www.maxmind.com/app/geolitecity">
+		http://www.maxmind.com/app/geolitecity</ulink>.
+	</para>
+	<para>
+		This module exports a new class of pseudo-variables -
+		$gip(pvc=&gt;key) - to enable access to the results of a query to the
+		database.
+	</para>
+	<para>
+		Many queries can be done and store results in different containers to
+		be able to use in parallel. Database is loaded at startup in cache.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>libgeoip</emphasis> - the GeoIP library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>path</varname> (string)</title>
+	    <para>
+		Path to the GeoIP database file.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>null</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">geoip_match(ipaddr, pvc)</function>
+	    </title>
+	    <para>
+			Match ipaddr against the GeoIP database and set the pvc container. The
+			function has to be called before accessing a key via: $gip(pvc=&gt;key).
+	    </para>
+		<example>
+		<title><function>geoip_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(geoip_match("$si", "src"))
+    xlog("SIP message from: $gip(src=&gt;cc)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
+				identifier for this query result;  it is designated by the second 
+				parameter of geoip_match(). The <emphasis>key</emphasis> can be one of
+				the following:
+				</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>cc</emphasis> - country code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>tz</emphasis> - time zone
+				</para></listitem>
+				<listitem><para>
+					<emphasis>zip</emphasis> - postal code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>lat</emphasis> - latitude
+				</para></listitem>
+				<listitem><para>
+					<emphasis>lon</emphasis> - longitude
+				</para></listitem>
+				<listitem><para>
+					<emphasis>dma</emphasis> - dma code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>ips</emphasis> - ip start
+				</para></listitem>
+				<listitem><para>
+					<emphasis>ipe</emphasis> - ip end
+				</para></listitem>
+				<listitem><para>
+					<emphasis>city</emphasis> - city
+				</para></listitem>
+				<listitem><para>
+					<emphasis>area</emphasis> - area code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>regc</emphasis> - region
+				</para></listitem>
+				<listitem><para>
+					<emphasis>regn</emphasis> - region name
+				</para></listitem>
+				<listitem><para>
+					<emphasis>metro</emphasis> - metro code
+				</para></listitem>
+				<listitem><para>
+					<emphasis>contc</emphasis> - continent code
+				</para></listitem>
+			</itemizedlist>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>
+

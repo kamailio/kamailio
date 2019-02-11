@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="flatstore.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="flush">
+	<title><varname>flush</varname> (integer)</title>
+	<para>
+	    Enable or disable flushing after each write.
+	</para>
+	<para>
+	    Default value is 1.
+	</para>
+    </section>
+    <section id="encode_delimiter">
+	<title><varname>encode_delimiter</varname> (integer)</title>
+	<para>
+	    Enable or disable encoding of the escaped character
+	    using  ""%" HEX HEX" mechanism for escaping from RFC 2396
+	</para>
+	<para>
+	    Default value is 1.
+	    Default delimiter '|' is replaced with %7C if found in any string
+	</para>
+    </section>
+</section>

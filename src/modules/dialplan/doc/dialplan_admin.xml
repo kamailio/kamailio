@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    <title>&adminguide;</title>
+
+	<section id="dialplan.overview">
+	<title>Overview</title>
+	<para>
+	This module implements generic string translations based on matching and
+	replacement rules. It can be used to manipulate the request URI or a PV and to
+	translate it to a new format/value. Dialplan can also be used to match
+	a given URI and retrieve a set of attributes based on the match. It is a very
+	flexible module that can be used to handle call routing, prefix rewrites
+	and much more.
+	</para>
+	</section>
+
+	<section id="dialplan.introduction">
+	<title>How it works</title>
+	<para>
+	At startup the module will load a set of matching and transformation rules from a
+	database. Rules are grouped into dialplans. Every database row will be
+	stored in memory as a dialplan rule. Each rule will describe how the
+	matching will be made, how the input value will be modified and which
+	attributes that will be set for the matching transformation.
+	</para>
+	<para>
+	The module expects an input value which will be matched against a rule
+	by using regular expressions (see 'man pcresyntax' for syntax), string
+	or fnmatch (see 'man fnmatch') matching. Overlapping matching expressions
+	can be controlled via priorities. One priority can have multiple
+	dialplan entries. Priorities need not be numbered with consecutive
+	numbers. The next higher priority will be used after trying to match all
+	entries in one priority.
+	</para>
+	<para>
+	Once a rule is matched, the defined transformation (if any) is applied and
+	the result is returned as output value. Also, if any string attribute is
+	associated to the rule, this will be returned to the script along with
+	the output value. This can be used to identify the used rule.
+	</para>
+	<para>
+	<emphasis> The first matching rule will be processed.</emphasis>
+	</para>
+	</section>
+
+	<section id="dialplan.usecases">
+	<title>Dialplan use cases</title>
+	<para>
+	The module can be used to implement multiple dialplans - to do
+	auto-completion of dialed numbers (like national to international),
+	to convert generic numbers to specific numbers (like for emergency numbers).
+	</para>
+	<para>
+	The module can also be used for detecting a range or sets of numbers mapped
+	on a service/case - the attribute string can be used to store extra
+	information about the service/case.
+	</para>
+	<para>
+	Non-SIP string translation can be implemented - like converting country
+	names from all possible formats to a canonical format:
+	<emphasis>(UK, England, United Kingdom) -> GB.
+	</emphasis></para>
+	<para>
+	Any other string-base translation or detection for whatever other purposes.
+	</para>
+	</section>
+
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>A database module</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				 <emphasis>libpcre - the libraries of <ulink url="http://www.pcre.org/">PCRE</ulink></emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Parameters</title>
+	<section id="dialplan.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		The translation rules will be loaded using this database URL.
+		</para>
+		<para>
+		<emphasis>
+			Default value is
+				<quote>&defaultdb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.table_name">
+		<title><varname>table_name</varname> (string)</title>
+		<para>
+		The name of the database table used to load the translation rules.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dialplan</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>table_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "table_name", "my_table")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.dpid_col">
+		<title><varname>dpid_col</varname> (string)</title>
+		<para>
+		The column name used to store the dialplan group ID.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dpid</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dpid_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "dpid_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.pr_col">
+		<title><varname>pr_col</varname> (string)</title>
+		<para>
+		The column name used to store the priority of the corresponding rule from the database
+		row.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>pr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pr_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "pr_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.match_op_col">
+		<title><varname>match_op_col</varname> (string)</title>
+		<para>
+		The column name used to store the type of matching of the rule.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>match_op</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>match_op_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "match_op_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.match_exp_col">
+		<title><varname>match_exp_col</varname> (string)</title>
+		<para>
+		The column name to store the rule match expression.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>match_exp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>match_exp_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "match_exp_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.match_len_col">
+		<title><varname>match_len_col</varname> (string)</title>
+		<para>
+		The column name to store the length of a string matching the
+		match expression.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>match_len</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pr_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "match_len_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.subst_exp_col">
+		<title><varname>subst_exp_col</varname> (string)</title>
+		<para>
+		The column name to store the rule's substitution expression.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>subst_exp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pr_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "subst_exp_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.repl_exp_col">
+		<title><varname>repl_exp_col</varname> (string)</title>
+		<para>
+		The column name to store the rule's replacement expression.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>repl_exp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>repl_exp_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "repl_exp_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.attrs_col">
+		<title><varname>attrs_col</varname> (string)</title>
+		<para>
+		The column name to store the rule's attributes to be set after match (see
+		<varname>attrs_pvar</varname> )
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>attrs</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>attrs_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "attrs_col", "column_name")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.attrs_pvar">
+		<title><varname>attrs_pvar</varname> (string)</title>
+		<para>
+		The pseudovariable used to store the rule's attributes,
+		after translation (when <function>dp_translate</function>() succeeds).
+		This parameter can be an <quote>AVP</quote> or a script variable (<quote>$var()</quote>)..
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>attrs_pvar</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.fetch_rows">
+		<title><varname>fetch_rows</varname> (int)</title>
+		<para>
+		The number of rows to be fetched at once from database
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1000</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "fetch_rows", 4000)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="dialplan.p.match_dynamic">
+		<title><varname>match_dynamic</varname> (int)</title>
+		<para>
+		If set to 1, the match and substitution expressions can
+		include script variables and their values are evaluated at
+		runtime.
+		</para>
+		<para>
+		During the loading process, the values that contain
+		variables are no longer pre-compiled to PCRE structure in
+		memory, because the values change at runtime, thus expect slightly
+		slower performances. Values without script variables are pre-compiled
+		even if this parameter is enabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>match_dynamic</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "match_dynamic", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="dialplan.p.append_branch">
+		<title><varname>append_branch</varname> (int)</title>
+		<para>
+		If set to 1, the module appends a new outgoing branch when request
+		URI (r-uri) or its user part are changed by dp_translate() or
+		dp_replace() inside a failure_route block. Set it to 0 if the branch
+		should not be added.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_branch</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "append_branch", 0)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+
+	<section>
+	<title>Functions</title>
+
+	<section id="dialplan.p.dp_replace">
+	<title>
+		<function moreinfo="none">dp_replace(dpid, inval, outvar)</function>
+	</title>
+	<para>
+	The function translates the input value 'inval' using the rules with dialplan
+	id 'dpid', storing the value in the variable 'outvar'. If the rule that was
+	applied has attributes, they are stored in the variable provided via the
+	module parameter 'attrs_pvar'.
+	</para>
+	<para>
+	The behavior is same as dp_translate("dpid", "inval/outvar"), but the
+	parameters have a more flexible format.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+		<emphasis>dpid</emphasis> - the dialplan id to match the rules and apply
+		the transformations. It can be a static string or a config variable
+		holding an integer value.
+		</para>
+  	</listitem>
+	<listitem>
+		<para>
+ 		<emphasis>inval</emphasis> - input value. It can be a static or a
+		dynamic string. The dynamic string can contain config variables,
+		combined or not with static strings, that are evaluated at runtime.
+ 		</para>
+    </listitem>
+	<listitem>
+		<para>
+ 		<emphasis>outvar</emphasis> - output variable name. The value resulted
+		after applying the matching rule is stored in this variable. The name
+		must refer to a writable variable.
+ 		</para>
+    </listitem>
+	</itemizedlist>
+	<para>
+	This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>dp_replace</function> usage</title>
+	<programlisting format="linespecific">
+...
+dp_replace("240", "$rU", "$var(newru)");
+xlog("'$rU' was translated to '$var(newru)'\n");
+dp_replace("240", "+49$rU", "$var(newval)");
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="dialplan.p.dp_match">
+	<title>
+		<function moreinfo="none">dp_match(dpid, inval)</function>
+	</title>
+	<para>
+	The function matches the input value 'inval' using the rules with dialplan
+	id 'dpid'. If the rule that was applied has attributes, they are stored in
+	the variable provided via the module parameter 'attrs_pvar'.
+	</para>
+	<para>
+	The behavior is same as dp_translate("dpid", "inval"), but the
+	parameters have a more flexible format.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+		<emphasis>dpid</emphasis> - the dialplan id to match the rules and apply
+		the transformations. It can be a static string or a config variable
+		holding an integer value.
+		</para>
+  	</listitem>
+	<listitem>
+		<para>
+ 		<emphasis>inval</emphasis> - input value. It can be a static or a
+		dynamic string. The dynamic string can contain config variables,
+		combined or not with static strings, that are evaluated at runtime.
+ 		</para>
+    </listitem>
+	</itemizedlist>
+	<para>
+	This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>dp_match</function> usage</title>
+	<programlisting format="linespecific">
+...
+dp_match("240", "+49$rU");
+xlog("the attributes associated with '+49$rU' are '$var(attrs)'\n");
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="dialplan.p.dp_translate">
+	<title>
+		<function moreinfo="none">dp_translate(id, [src[/dest]])</function>
+	</title>
+	<para>
+	Will try to translate <quote>src</quote> into <quote>dest</quote> according to
+	the translation rules in the dialplan identified by <quote>id</quote> .
+	If src/dest is missing the default parameter <quote>ruri.user/ruri.user</quote> will
+	be used, thus translating the request URI user part. If only <quote>dest</quote> is
+	missing, only matching and storing of the matching rule's attributes is done.
+
+	</para>
+	<para>
+	  Returns 1, if translation succeeded, -1 in case of some error
+	  occurred, and -2 if dialplan with ID equal to id does not exist.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+		<emphasis>id</emphasis> -the dialplan id of the possible matching rules.
+		This parameter can have the following types:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para><emphasis>integer</emphasis>- the dialplan id is statically
+			assigned </para>
+			</listitem>
+
+			<listitem>
+			<para><emphasis>avp var</emphasis>
+			- the dialplan id is the value of an existing avp variable
+			</para>
+			</listitem>
+
+			<listitem>
+			<para><emphasis>script var</emphasis>
+			- the dialplan id is the value of an existing script variable.</para>
+			</listitem>
+		</itemizedlist>
+  	</listitem>
+
+	<listitem>
+		<para>
+ 		<emphasis>src/dest</emphasis> - input and output of the function.
+ 		</para>
+		<para>Input parameter src can be any pseudo variable.
+		Output parameter dest can be:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para><emphasis>R-URI</emphasis></para>
+			<para>
+			- the string is the r-uri or r-uri user part
+			</para>
+			</listitem>
+
+			<listitem>
+			<para><emphasis>avp var</emphasis> </para>
+			<para>
+			- At input the function will get the input string from an existing
+			avp variable. At output the function will add an avp with the
+			value of the output string.
+			</para>
+			</listitem>
+
+			<listitem>
+			<para><emphasis>script var</emphasis> </para>
+			<para>
+			- At input the function will get the input string from an existing
+			script variable. At output the function will set an script variable
+			with the value of the output string.
+			</para>
+			</listitem>
+        </itemizedlist>
+        </listitem>
+	</itemizedlist>
+	<para>
+	This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>dp_translate</function> usage</title>
+	<programlisting format="linespecific">
+...
+dp_translate("240", "$ruri.user/$avp(s:dest)");
+xlog("translated to var $avp(s:dest) \n");
+...
+	</programlisting>
+	</example>
+	<example>
+	<title><function>dp_translate</function> usage</title>
+	<programlisting format="linespecific">
+...
+$avp(s:src) = $ruri.user;
+dp_translate("$var(x)", "$avp(s:src)/$var(y)");
+xlog("translated to var $var(y) \n");
+...
+	</programlisting>
+	</example>
+
+	</section>
+
+	<section id="dispatcher.f.dp_reload">
+		<title>
+		<function moreinfo="none">dp_reload()</function>
+		</title>
+		<para>
+		Forces an update of the translation rules from the database.
+		</para>
+		<para>
+		Name: <emphasis>dp_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+
+	</section>
+
+
+	<section>
+	<title>RPC Commands</title>
+
+		<section id="dialplan.r.dp.dump">
+			<title><varname>dialplan.dump</varname></title>
+			<para>
+			Dumps the content of one dialplan ID
+			</para>
+			<para>
+			Name: <emphasis>dialplan.dump</emphasis>
+			</para>
+			<para>Parameters: <emphasis>Dialplan ID</emphasis></para>
+			<para>
+			Example:
+			</para>
+        <programlisting  format="linespecific">
+		&kamcmd; dialplan.dump 100
+		</programlisting>
+		</section>
+		<section id="dialplan.r.dp.reload">
+			<title><varname>dialplan.reload</varname></title>
+			<para>
+			Forces an update of the translation rules from the database.
+			</para>
+			<para>
+			Name: <emphasis>dialplan.reload</emphasis>
+			</para>
+			<para>Parameters: <emphasis>none</emphasis></para>
+			<para>
+			Example:
+			</para>
+        <programlisting  format="linespecific">
+		&kamcmd; dialplan.reload
+		</programlisting>
+		</section>
+
+		<section id="dialplan.r.dp.translate">
+			<title><varname>dialplan.translate</varname></title>
+			<para>
+                	Will apply a translation rule identified by a dialplan
+                	id and an input string.
+			</para>
+			<para>
+			Name: <emphasis>dialplan.translate</emphasis>
+			</para>
+        		<para>Parameters: <emphasis>2</emphasis></para>
+        		<itemizedlist>
+                	<listitem>
+					<para><emphasis>Dial plan ID</emphasis> (number)</para>
+                	</listitem>
+                	<listitem>
+					<para><emphasis>Input string</emphasis> (string) - it
+					can be prefixed with 's:' to avoid auto-conversion when
+					the command is executed with CLI apps such as &kamcmd;.</para>
+                	</listitem>
+			</itemizedlist>
+			<para>
+			Example:
+			</para>
+		<programlisting  format="linespecific">
+		&kamcmd; dialplan.translate 1 "abcdxyz"
+		&kamcmd; dialplan.translate 1 s:123456789
+		</programlisting>
+		</section>
+	</section>
+
+    	<section id="dialplan.installation">
+	    <title>Installation</title>
+	    <para>
+		The modules requires one table in &kamailio; database: dialplan.
+		The SQL syntax to create them can be found in dialplan-create.sql
+       		 script in the database directories in the kamailio/scripts folder.
+        	You can also find the complete database documentation on the
+        	project webpage, &kamailiodbdocslink;.
+        	</para>
+		<para>
+		Some sample records from a dialplan table are presented in the next
+		figure.
+        	</para>
+		<example>
+		<title>Example of rules</title>
+		<programlisting format="linespecific">
+...
+dpid: 1
+pr: 1
+match_op: 1
+match_exp: ^0[1-9][0-9]+$
+match_len: 0
+subst_exp: ^0([1-9][0-9]+)$
+repl_exp: 0049\1
+attrs: de
+...
+dpid: 1
+pr: 2
+match_op: 1
+match_exp: ^0[1-9][0-9]+$
+match_len: 0
+subst_exp: ^0(.+)$
+repl_exp: $var(prefix)\1
+attrs: xyz
+...
+		</programlisting>
+		</example>
+		<para>
+		Note that you can use config variables in the replacement expression
+		(repl_exp) field. However, not all of config variables are safe to use
+		there - specifically the variables that have in their name other
+		variables (variables with dynamic name). References to SIP message,
+		private variables ($var(...)) and AVPs with static name are among
+		those that are safe to use in replacement expressions.
+		</para>
+		<para>
+		The match_op field specify matching operator, valid values:
+        	<itemizedlist>
+               	<listitem>
+		0 - string comparison;
+               	</listitem>
+               	<listitem>
+		1 - regular expression matching (pcre);
+               	</listitem>
+               	<listitem>
+		2 - fnmatch (shell-like pattern) matching.
+               	</listitem>
+        	</itemizedlist>
+		</para>
+    </section>
+
+</chapter>

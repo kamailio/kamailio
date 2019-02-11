@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<reference id="sstr">
+<title>String</title>
+
+<partintro>
+<para>String is basic data structure. Standard zero terminated C strings have
+some bad properties which may slow down processing or disallow use of binary
+values. This structure is an attempt to do it better :-).</para>
+<para>This structure was taken from SIP Express
+Router due to it's usability and need of testing some parts of SER's code
+outside of <quote>SER's environment</quote>. Many of string functions were
+inspired by or directly taken from SER's code. Another reason for this structure 
+was to put string operations to one place and not leave them independently and
+often duplicately in SER's modules.</para>
+</partintro>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_t.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_dup.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_clear.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_free.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_free_content.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_other.xml"/>
+
+</reference>

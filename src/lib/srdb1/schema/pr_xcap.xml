@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="xcap" xmlns:db="http://docbook.org/ns/docbook">
+    <name>xcap</name>
+    <version>4</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			Table for the presence module. More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;presence.html">&KAMAILIO_MOD_DOC;presence.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+	<primary/>
+    </column>
+
+    <column id="username">
+        <name>username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>User name</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>doc</name>
+        <type>largebinary</type>
+        <description>doc</description>
+    </column>
+
+    <column id="doc_type">
+        <name>doc_type</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Document type</description>
+    </column>
+
+    <column id="etag">
+        <name>etag</name>
+        <type>string</type>
+        <size>&etag_len;</size>
+        <description>Document Etag</description>
+    </column>
+
+    <column id="source">
+        <name>source</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Entity inserting the record</description>
+    </column>
+
+    <column id="doc_uri">
+        <name>doc_uri</name>
+        <type>string</type>
+        <size>&xcap_uri_len;</size>
+        <description>Document uri</description>
+    </column>
+
+    <column id="port">
+        <name>port</name>
+        <type>int</type>
+        <size>11</size>
+        <description>XCAP server port</description>
+    </column>
+
+    <index>
+        <name>doc_uri_idx</name>
+	<colref linkend="doc_uri"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>account_doc_type_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="doc_type"/>
+    </index>
+
+    <index>
+        <name>account_doc_type_uri_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="doc_type"/>
+        <colref linkend="doc_uri"/>
+    </index>
+
+    <index>
+        <name>account_doc_uri_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="doc_uri"/>
+    </index>
+</table>

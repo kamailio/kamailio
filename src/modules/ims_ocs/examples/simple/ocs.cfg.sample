@@ -1,0 +1,9 @@
+# IP-Adress for incoming SIP-Traffic, in the following format:
+
+# SIP / UDP
+listen=udp:11.22.33.44:5080
+# SIP / TCP
+#listen=tcp:11.22.33.44:5060
+# SIP / TCP/TLS
+#listen=tls:11.22.33.44:5061
+

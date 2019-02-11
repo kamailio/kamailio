@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>The module is an implementation of the internal DB API v1 connector
+		for SQlite 3 file.</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>SQlite 3 library</emphasis> - e.g., libsqlite3-0
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>SQlite 3 devel library</emphasis> - to compile
+				the module e.g. libsqlite3-dev
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>SQlite 3 utilities</emphasis> - for kamdbctl
+				e.g. sqlite3
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="db_sqlite.p.db_set_readonly">
+		<title><varname>db_set_readonly</varname> (string)</title>
+		<para>
+		This will set the db connection to "SQLITE_OPEN_READONLY", useful if another program is writing to the DB.
+		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
+
+		This parameter may be set multiple times to set many DB connections to readonly in the same configuration file.
+		</para>
+		<para>
+		<emphasis>
+			By default all the db connections are using "SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE"
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_set_readonly</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using the sqlops module
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="db_sqlite.p.db_set_journal_mode">
+		<title><varname>db_set_journal_mode</varname> (string)</title>
+		<para>
+		This will set the db connection journal mode, for the given connection.
+		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
+
+		Other journal mode are : DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
+
+		This parameter may be set multiple times to set many DB connections to readonly in the same configuration file.
+		</para>
+		<para>
+		<emphasis>
+			By default all the db connections are using sqlite default journaling mode.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_set_journal_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# In this example we are using Write-Ahead Logging in order to update the database from another process(external to Kamailio) without facing any locking.
+
+#!subst "!DB_FILE!/var/mydb.sqlite!"
+modparam("db_sqlite","db_set_readonly","DB_FILE")   # We are also opening the database in readonly
+modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
+...
+		</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<para>
+		NONE
+		</para>
+	</section>
+
+	<section>
+	<title>Usage</title>
+		<para>
+			To use the module, first you have to load it in the &kamailio;
+			configuration file.
+		</para>
+		<example>
+		<title><function>loading the module</function> usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "db_sqlite.so"
+...
+</programlisting>
+		</example>
+		<para>
+			Then set the db_url (or similar) parameter of modules that have to
+			use the SQLite database to driver part 'sqlite://', followed by the
+			path to database file. For example:
+		</para>
+		<example>
+		<title><function>db_url module parameter</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
+...
+</programlisting>
+		</example>
+		<para>
+			In the default config file, defined token DBURL can be updated like:
+		</para>
+		<example>
+		<title><function>DBURL define</function> usage</title>
+		<programlisting format="linespecific">
+...
+#!define DBURL "sqlite:///etc/kamailio/kamailio.db"
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

@@ -1,0 +1,883 @@
+sca Module
+
+Andrew Mortensen
+
+   University of Pennsylvania
+
+   Copyright © 2012 Andrew Mortensen, admorten@isc.upenn.edu
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Modules
+
+        3. Parameters
+
+              3.1. hash_table_size (integer)
+              3.2. call_info_max_expires (integer)
+              3.3. line_seize_max_expires (integer)
+              3.4. purge_expired_interval (integer)
+              3.5. db_url (str)
+              3.6. subs_table (str)
+              3.7. db_update_interval (integer)
+              3.8. onhold_bflag (integer)
+              3.9. server_address (string)
+
+        4. Functions
+
+              4.1. sca_handle_subscribe()
+              4.2. sca_call_info_update([mask, to, from])
+
+        5. Exported RPC Commands
+
+              5.1. sca.all_subscriptions
+              5.2. sca.all_appearances
+              5.3. sca.seize_appearance
+              5.4. sca.update_appearance
+              5.5. sca.release_appearance
+
+        6. Sample kamailio.cfg with SCA
+
+   List of Examples
+
+   1.1. Set hash_table_size:
+   1.2. Set call_info_max_expires:
+   1.3. Set line_seize_max_expires:
+   1.4. Set purge_expired_interval:
+   1.5. Set db_url parameter:
+   1.6. Set subs_table parameter:
+   1.7. Set db_update_interval:
+   1.8. Set onhold_bflag parameter
+   1.9. Set server_address parameter
+   1.10. sca_handle_subscribe usage:
+   1.11. sca_call_info_update usage:
+   1.12. kamailio.cfg
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Modules
+
+   3. Parameters
+
+        3.1. hash_table_size (integer)
+        3.2. call_info_max_expires (integer)
+        3.3. line_seize_max_expires (integer)
+        3.4. purge_expired_interval (integer)
+        3.5. db_url (str)
+        3.6. subs_table (str)
+        3.7. db_update_interval (integer)
+        3.8. onhold_bflag (integer)
+        3.9. server_address (string)
+
+   4. Functions
+
+        4.1. sca_handle_subscribe()
+        4.2. sca_call_info_update([mask, to, from])
+
+   5. Exported RPC Commands
+
+        5.1. sca.all_subscriptions
+        5.2. sca.all_appearances
+        5.3. sca.seize_appearance
+        5.4. sca.update_appearance
+        5.5. sca.release_appearance
+
+   6. Sample kamailio.cfg with SCA
+
+1. Overview
+
+   The sca module implements Shared Call Appearances. It handles SUBSCRIBE
+   messages for call-info and line-seize events, and sends call-info
+   NOTIFYs to line subscribers to implement line bridging. The module
+   implements SCA as defined in Broadworks SIP Access Side Extensions
+   Interface Specifications, Release 13.0, version 1, sections 2, 3 and 4.
+
+   SCA group members receive call state notifications when other group
+   members participate in calls. An SCA caller can place a call on hold,
+   and the call may be retrieved from hold by another member of the group.
+
+   Subscribers to SCA call-info events SUBSCRIBE to their
+   address-of-record (AoR), asking the application server to send
+   call-info NOTIFYs with line state information as lines in the
+   subscriber group are used.
+
+   For example, when an SCA subscriber takes the phone off hook, it sends
+   a line-seize SUBSCRIBE to the application server. The application
+   server acknowledges the request, and sends to the subscriber a
+   line-seize NOTIFY with the appearance index of the line claimed for the
+   subscriber. The application also sends call-info NOTIFYs to the other
+   SCA subscribers to the AoR, letting them know that an appearance within
+   the group has gone off hook. Subscribers update their display
+   appropriately.
+
+   Subscribers to an SCA address-of-record will receive call-info NOTIFYs
+   when a member of the group seizes a line (seized); receives a 180
+   ringing response from the remote party (ringing); receives a 183
+   progressing response from the remote party (progressing); when the
+   remote party answers the call (active); when either party in the call
+   places the call on hold (held); and when an SCA line goes back on hook
+   (idle).
+
+   The call-info subscriber information is stored in memory and is
+   periodically written to the database. Call state information is stored
+   in memory. A future release may periodically write call state to the
+   database, as well. The database is purely for restoring subscriptions
+   after a restart of the application server. Subscriber information is
+   also flushed to the database when the service is stopped.
+
+   At the time of this writing, Polycom and Cisco handsets are known to
+   implement the call-info and line-seize event packages defined in the
+   document, which may be found freely on the web.
+
+   To date, this module has only been tested with Polycom Soundpoint 550s
+   and 650s running Polycom SIP 3.3.4.
+
+2. Dependencies
+
+   2.1. Modules
+
+2.1. Modules
+
+   The following modules must be loaded before this module:
+     * a database module
+     * sl
+     * tm
+
+3. Parameters
+
+   3.1. hash_table_size (integer)
+   3.2. call_info_max_expires (integer)
+   3.3. line_seize_max_expires (integer)
+   3.4. purge_expired_interval (integer)
+   3.5. db_url (str)
+   3.6. subs_table (str)
+   3.7. db_update_interval (integer)
+   3.8. onhold_bflag (integer)
+   3.9. server_address (string)
+
+3.1. hash_table_size (integer)
+
+   Size, as a power of two, of the shared memory hash table containing the
+   call-info subscriptions and the appearance state. A larger power of two
+   means better performance (fewer collisions, making for fewer subscriber
+   URI comparisons) at the expense of increased shared memory use.
+
+   Default value is 9 (2 ^ 9 == 512).
+
+   Example 1.1. Set hash_table_size:
+...
+# create shared memory hash table with 2^8 (256) slots
+modparam( "sca", "hash_table_size", 8 )
+...
+
+3.2. call_info_max_expires (integer)
+
+   The maximum allowed call-info subscription time in seconds.
+
+   Default value is 3600 (1 hour).
+
+   Example 1.2. Set call_info_max_expires:
+...
+modparam( "sca", "call_info_max_expires", 1800 )
+...
+
+3.3. line_seize_max_expires (integer)
+
+   The maximum allowed line-seize subscription time in seconds.
+
+   Default value is 15 (15 seconds).
+
+   A maximum line-seize subscription time of 15 seconds is recommended in
+   the SIP Access Side Extensions document. This interval is purposely
+   short to prevent a client from seizing an appearance without making a
+   call for extended periods of time.
+
+   Example 1.3. Set line_seize_max_expires:
+...
+modparam( "sca", "line_seize_max_expires", 30 )
+...
+
+3.4. purge_expired_interval (integer)
+
+   The period of time in seconds between purges of expired call-info and
+   line-seize subscriptions.
+
+   Default value is 120 (2 minutes).
+
+   On finding an expired subscription, the module removes the subscription
+   from the shared memory hash table, and sends a NOTIFY with
+   Subscription-State "terminated;expired" header value to the subscriber.
+   It also NOTIFYs other members of the group, in the event that the
+   expired subscription was a line-seize.
+
+   Example 1.4. Set purge_expired_interval:
+...
+modparam( "sca", "purge_expired_interval", 60 )
+...
+
+3.5. db_url (str)
+
+   URL of database to which subscribers will be written.
+
+   Default value is mysql://kamailio:kamailiorw@localhost/kamailio
+
+   Example 1.5. Set db_url parameter:
+...
+modparam( "sca", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio" )
+...
+
+3.6. subs_table (str)
+
+   Name of the database table where call-info subscriptions are written.
+
+   Default value is “sca_subscriptions”.
+
+   Example 1.6. Set subs_table parameter:
+...
+modparam( "sca", "subs_table", "call_info_subscriptions" )
+...
+
+3.7. db_update_interval (integer)
+
+   Period in seconds between writes of call-info subscriber information to
+   the database.
+
+   Default value is 300 (5 minutes).
+
+   Example 1.7. Set db_update_interval:
+...
+modparam( "sca", "db_update_interval", 120 )
+...
+
+3.8. onhold_bflag (integer)
+
+   When bflag is set the media will be treated as on-hold and sdp parse
+   will be skipped. If the bflag is not set the sdp will be parsed to
+   detect on-hold.
+
+   Default value is -1 (disabled).
+
+   Example 1.8. Set onhold_bflag parameter
+...
+modparam("sca", "onhold_bflag", 15)
+...
+
+3.9. server_address (string)
+
+   The server address which will become the value of Contact header filed
+   for reply messages.
+
+   Default value is "" (disabled).
+
+   Example 1.9. Set server_address parameter
+...
+modparam("sca", "server_address", "sip:10.10.10.10:5060")
+...
+
+4. Functions
+
+   4.1. sca_handle_subscribe()
+   4.2. sca_call_info_update([mask, to, from])
+
+4.1.  sca_handle_subscribe()
+
+   The function handling call-info and line-seize SUBSCRIBE requests. It
+   stores or updates the subscriptions in shared memory, and sends NOTIFYs
+   to the subscriber and other members of the group as needed.
+
+   For example, a line-seize SUBSCRIBE will cause the module to reserve an
+   appearance index for the subscriber; send a line-seize NOTIFY to the
+   subscriber indicating which appearance index it must use; and send
+   call-info NOTIFYs to other subscribers to the address-of-record letting
+   them know the appearance is off hook.
+
+   This function can be used from the REQUEST_ROUTE.
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.10. sca_handle_subscribe usage:
+...
+if ( is_method( "SUBSCRIBE" )) {
+        if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
+        sca_handle_subscribe();
+        exit;
+        }
+}
+...
+
+4.2.  sca_call_info_update([mask, to, from])
+
+     * mask - integer (optional)
+       controls what to check as shared line (BOTH, CALLER, CALLEE)
+          + 0 - SCA_CALL_INFO_SHARED_NONE (default) check both
+          + 1 - SCA_CALL_INFO_SHARED_CALLER
+          + 2 - SCA_CALL_INFO_SHARED_CALLEE
+     * to - string (optional)
+       string to use as To and skip parsing To header from the message.
+       The parameter allows pseudo-variables usage
+     * from - string (optional)
+       string to use as From and skip parsing From header from the
+       message. The parameter allows pseudo-variables usage
+
+   The sca_call_info_update function updates call state for SCA
+   appearances. If a request or response packet contains a Call-Info
+   header, the function extracts call state from the header and sends
+   NOTIFYs to subscribers if needed. If no Call-Info header is included in
+   the packet, the module looks up the To and From URIs to see if either
+   are SCA addresses-of-record. If either the To or From URI are SCA AoRs,
+   the function looks up the appearance by dialog and updates call state
+   as needed, sending NOTIFYs to members of the group if the call state
+   has changed.
+
+   The sca_call_info_update function updates call state for INVITE,
+   CANCEL, BYE, PRACK and REFER requests and responses.
+
+   This function can be used from the REQUEST_ROUTE, REPLY_ROUTE, and
+   FAILURE_ROUTE.
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.11. sca_call_info_update usage:
+...
+route
+{
+...
+        sca_call_info_update(0, "$var(to)", "$var(from)@$var(domain)");
+...
+}
+
+onreply_route[REPLY_ROUTE]
+{
+...
+        if ( status =~ "[456][0-9][0-9]" ) {
+        # don't update SCA state here, since there may be
+        # failure route processing (e.g., call forwarding).
+        # update state in failure route instead.
+        break;
+        }
+
+        sca_call_info_update();
+...
+}
+
+failure_route[FAILURE_ROUTE]
+{
+...
+        sca_call_info_update();
+...
+}
+...
+
+5. Exported RPC Commands
+
+   5.1. sca.all_subscriptions
+   5.2. sca.all_appearances
+   5.3. sca.seize_appearance
+   5.4. sca.update_appearance
+   5.5. sca.release_appearance
+
+5.1. sca.all_subscriptions
+
+   List all current call-info and line-seize subscriptions.
+
+   Name: sca.all_subscriptions
+
+   Parameters: none
+
+   Example:
+                kamcmd sca.all_subscriptions
+
+5.2. sca.all_appearances
+
+   List all SCA appearances with non-idle state.
+
+   Name: sca.all_appearances
+
+   Parameters: none
+
+   Example:
+                        kamcmd sca.all_appearances
+
+5.3. sca.seize_appearance
+
+   Seize an appearance index for a specific contact within an SCA group,
+   and notify other members of the group that the appearance is off hook.
+   Useful for testing SCA signaling.
+
+   Name: sca.seize_appearance
+
+   Parameters: 2
+     * SCA Address-of-Record
+     * SCA Contact URI
+
+   Example:
+                # seize next available appearance of sip:215@voice.example.com
+                # for contact sip:215@10.0.1.2
+                        kamcmd sca.seize_appearance sip:215@voice.example.com si
+p:215@10.0.1.2
+
+5.4. sca.update_appearance
+
+   Update the state of an in-use appearance index, and notify other
+   members of the group. Useful for testing SCA signaling.
+
+   Name: sca.update_appearance
+
+   Parameters: 3 or 4
+     * SCA Address-of-Record
+     * Index of In-Use Appearance
+     * Appearance State (seized, ringing, progressing, active, held,
+       held-private)
+     * Appearance Display Info (Optional)
+
+   Example:
+                # update in-use appearance index 3 of sip:215@voice.example.com
+                # state held.
+                        kamcmd sca.update_appearance sip:215@voice.example.com 3
+ held
+
+5.5. sca.release_appearance
+
+   Set a non-idle appearance index to idle and NOTIFY members of the
+   group.
+
+   Name: sca.release_appearance
+
+   Parameters: 2
+     * SCA Address-of-Record
+     * Appearance Index
+
+   Example:
+                # release appearance of sip:215@voice.example.com with
+                # appearance index 3
+                        kamcmd sca.release_appearance sip:215@voice.example.com
+3
+
+6. Sample kamailio.cfg with SCA
+
+   The following is a basic kamailio.cfg providing Shared Call Appearances
+   to local subscribers. It has been tested with Polycom handsets.
+
+   Example 1.12. kamailio.cfg
+##
+#!KAMAILIO
+#
+# example kamailio.cfg with Shared Call Appearances (SCA)
+
+#!define WITH_AUTH
+#!define WITH_MYSQL
+#!define WITH_SCA
+
+####### Defined Values #########
+
+#!ifdef WITH_MYSQL
+# - database URL - used to connect to database server by modules such
+#       as: auth_db, acc, usrloc, a.s.o.
+#!ifndef DBURL
+#!define DBURL "mysql://kamailio:kamailiorw@localhost/kamailio"
+#!endif
+#!endif
+
+####### Global Parameters #########
+
+#!ifdef WITH_DEBUG
+debug=4
+log_stderror=yes
+#!else
+debug=2
+log_stderror=no
+#!endif
+
+memdbg=5
+memlog=5
+
+log_facility=LOG_LOCAL0
+
+fork=yes
+children=4
+
+listen=udp:10.0.0.10:5060
+port=5060
+
+####### Modules Section ########
+
+# set paths to location of modules (to sources or installation folders)
+#!ifdef WITH_SRCPATH
+mpath="modules_k:modules"
+#!else
+mpath="/usr/local/kamailio/lib64/kamailio/modules_k/:/usr/local/kamailio/lib64/k
+amailio/modules/"
+#!endif
+
+#!ifdef WITH_MYSQL
+loadmodule "db_mysql.so"
+#!endif
+
+loadmodule "tm.so"
+loadmodule "sl.so"
+loadmodule "rr.so"
+loadmodule "pv.so"
+loadmodule "maxfwd.so"
+loadmodule "usrloc.so"
+loadmodule "registrar.so"
+loadmodule "textops.so"
+loadmodule "siputils.so"
+loadmodule "xlog.so"
+loadmodule "sanity.so"
+loadmodule "ctl.so"
+loadmodule "cfg_rpc.so"
+
+#!ifdef WITH_AUTH
+loadmodule "auth.so"
+loadmodule "auth_db.so"
+#!ifdef WITH_IPAUTH
+loadmodule "permissions.so"
+#!endif
+#!endif
+
+#!ifdef WITH_SCA
+loadmodule "sca.so"
+#!endif
+
+
+# ----------------- setting module-specific parameters ---------------
+
+
+# ----- tm params -----
+# auto-discard branches from previous serial forking leg
+modparam("tm", "failure_reply_mode", 3)
+# default retransmission timeout: 30sec
+modparam("tm", "fr_timer", 30000)
+# default invite retransmission timeout after 1xx: 120sec
+modparam("tm", "fr_inv_timer", 120000)
+
+
+# ----- rr params -----
+# add value to ;lr param to cope with most of the UAs
+modparam("rr", "enable_full_lr", 1)
+# do not append from tag to the RR (no need for this script)
+modparam("rr", "append_fromtag", 0)
+
+
+# ----- registrar params -----
+modparam("registrar", "method_filtering", 1)
+/* uncomment the next line to disable parallel forking via location */
+# modparam("registrar", "append_branches", 0)
+/* uncomment the next line not to allow more than 10 contacts per AOR */
+#modparam("registrar", "max_contacts", 10)
+# max value for expires of registrations
+modparam("registrar", "max_expires", 3600)
+# set it to 1 to enable GRUU
+modparam("registrar", "gruu_enabled", 0)
+
+
+# ----- usrloc params -----
+/* enable DB persistency for location entries */
+#!ifdef WITH_USRLOCDB
+modparam("usrloc", "db_url", DBURL)
+modparam("usrloc", "db_mode", 2)
+modparam("usrloc", "use_domain", 0)
+#!endif
+
+
+# ----- auth_db params -----
+#!ifdef WITH_AUTH
+modparam("auth_db", "db_url", DBURL)
+modparam("auth_db", "calculate_ha1", yes)
+modparam("auth_db", "password_column", "password")
+modparam("auth_db", "load_credentials", "")
+
+# ----- permissions params -----
+#!ifdef WITH_IPAUTH
+modparam("permissions", "db_url", DBURL)
+modparam("permissions", "db_mode", 1)
+#!endif
+
+#!endif
+
+# ----- sca params -----
+#!ifdef WITH_SCA
+modparam("sca", "call_info_max_expires", 300)
+modparam("sca", "db_url", DBURL)
+#!endif
+
+
+####### Routing Logic ########
+
+# Main SIP request routing logic
+# - processing of any incoming SIP request starts with this route
+# - note: this is the same as route { ... }
+request_route {
+
+        # per request initial checks
+        route(REQINIT);
+
+        # CANCEL processing
+        if (is_method("CANCEL"))
+        {
+                if (t_check_trans()) {
+                        route(SCA);
+                        t_relay();
+                }
+                exit;
+        }
+
+        # handle requests within SIP dialogs
+        route(WITHINDLG);
+
+        ### only initial requests (no To tag)
+
+        t_check_trans();
+
+        # authentication
+        route(AUTH);
+
+        # record routing for dialog forming requests (in case they are routed)
+        # - remove preloaded route headers
+        remove_hf("Route");
+        if (is_method("INVITE|SUBSCRIBE"))
+                record_route();
+
+        # dispatch requests to foreign domains
+        route(SIPOUT);
+
+        # handle registrations
+        route(REGISTRAR);
+
+        if ($rU==$null)
+        {
+                # request with no Username in RURI
+                sl_send_reply("484","Address Incomplete");
+                exit;
+        }
+
+        # user location service
+        route(LOCATION);
+
+        route(RELAY);
+}
+
+
+route[RELAY] {
+
+        # enable additional event routes for forwarded requests
+        if (is_method("INVITE|BYE|SUBSCRIBE|PRACK|REFER|UPDATE")) {
+                if(!t_is_set("onreply_route")) t_on_reply("MANAGE_REPLY");
+        }
+        if (is_method("INVITE")) {
+                if(!t_is_set("failure_route")) t_on_failure("MANAGE_FAILURE");
+        }
+
+        route(SCA);
+
+        if (!t_relay()) {
+                sl_reply_error();
+        }
+        exit;
+}
+
+# Per SIP request initial checks
+route[REQINIT] {
+        if (!mf_process_maxfwd_header("10")) {
+                sl_send_reply("483","Too Many Hops");
+                exit;
+        }
+
+        if(!sanity_check("1511", "7"))
+        {
+                xlog("Malformed SIP message from $si:$sp\n");
+                exit;
+        }
+}
+
+# Handle requests within SIP dialogs
+route[WITHINDLG] {
+        if (has_totag()) {
+                # sequential request withing a dialog should
+                # take the path determined by record-routing
+                if (loose_route()) {
+                        if ( is_method("NOTIFY") ) {
+                                # Add Record-Route for in-dialog NOTIFY as per R
+FC 6665.
+                                record_route();
+                        }
+                        route(RELAY);
+                } else {
+                        if (is_method("SUBSCRIBE") && uri == myself) {
+                                # in-dialog subscribe requests
+                                route(SCA);
+                                exit;
+                        }
+                        if ( is_method("ACK") ) {
+                                if ( t_check_trans() ) {
+                                        # no loose-route, but stateful ACK;
+                                        # must be an ACK after a 487
+                                        # or e.g. 404 from upstream server
+                                        t_relay();
+                                        exit;
+                                } else {
+                                        # ACK without matching transaction ... i
+gnore and discard
+                                        exit;
+                                }
+                        }
+                        sl_send_reply("404","Not here");
+                }
+                exit;
+        }
+}
+
+# Handle SIP registrations
+route[REGISTRAR] {
+        if (is_method("REGISTER"))
+        {
+                if (!save("location"))
+                        sl_reply_error();
+
+                exit;
+        }
+}
+
+# USER location service
+route[LOCATION] {
+        $avp(oexten) = $rU;
+        if (!lookup("location")) {
+                $var(rc) = $rc;
+                t_newtran();
+                switch ($var(rc)) {
+                        case -1:
+                        case -3:
+                                send_reply("404", "Not Found");
+                                exit;
+                        case -2:
+                                send_reply("405", "Method Not Allowed");
+                                exit;
+                }
+        }
+}
+
+# Authentication route
+route[AUTH] {
+#!ifdef WITH_AUTH
+
+#!ifdef WITH_IPAUTH
+        if((!is_method("REGISTER")) && allow_source_address())
+        {
+                # source IP allowed
+                return;
+        }
+#!endif
+
+        if (is_method("REGISTER") || from_uri==myself)
+        {
+                # authenticate requests
+                if (!auth_check("$fd", "subscriber", "1")) {
+                        auth_challenge("$fd", "0");
+                        exit;
+                }
+                # user authenticated - remove auth header
+                if(!is_method("REGISTER|PUBLISH"))
+                        consume_credentials();
+        }
+        # if caller is not local subscriber, then check if it calls
+        # a local destination, otherwise deny, not an open relay here
+        if (from_uri!=myself && uri!=myself)
+        {
+                sl_send_reply("403","Not relaying");
+                exit;
+        }
+
+#!endif
+        return;
+}
+
+# Shared Call Appearances handling
+route[SCA] {
+#!ifdef WITH_SCA
+        if(is_method("SUBSCRIBE")) {
+                if ($hdr(Event) == "call-info" || $hdr(Event) == "line-seize") {
+                        xdbg("SCA: $hdr(Event) SUBSCRIBE $ru from $si:$sp");
+                        sca_handle_subscribe();
+                        exit;
+                }
+
+                return;
+        }
+
+        if (!is_method("BYE|CANCEL|INVITE|PRACK|REFER")) {
+                return;
+        }
+
+        # this updates appearance state and NOTIFYs SCA subscribers as
+        # necessary. it also removes the Call-Info header, if found.
+        sca_call_info_update();
+#!endif
+
+        return;
+}
+
+# Routing to foreign domains
+route[SIPOUT] {
+        if (!uri==myself)
+        {
+                append_hf("P-hint: outbound\r\n");
+                route(RELAY);
+        }
+}
+
+# XMLRPC routing
+#!ifdef WITH_XMLRPC
+route[XMLRPC] {
+        # allow XMLRPC from localhost
+        if ((method=="POST" || method=="GET")
+                        && (src_ip==127.0.0.1)) {
+                # close connection only for xmlrpclib user agents (there is a bu
+g in
+                # xmlrpclib: it waits for EOF before interpreting the response).
+                if ($hdr(User-Agent) =~ "xmlrpclib")
+                        set_reply_close();
+                set_reply_no_connect();
+                dispatch_rpc();
+                exit;
+        }
+        send_reply("403", "Forbidden");
+        exit;
+}
+#!endif
+
+# manage incoming replies
+onreply_route[MANAGE_REPLY] {
+        xdbg("incoming reply\n");
+
+        if (status =~ "[456][0-9][0-9]") {
+                # don't update SCA state here, since there may be
+                # failure route processing (e.g., call forwarding).
+                # update state in failure route instead.
+            return;
+        }
+
+        route(SCA);
+}
+
+# manage failure routing cases
+failure_route[MANAGE_FAILURE] {
+        if (t_is_canceled()) {
+                exit;
+        }
+
+        route(SCA);
+}

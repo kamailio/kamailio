@@ -1,0 +1,214 @@
+pua_reginfo Module
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+Edited by
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+   Copyright © 2011 Carsten Bock, carsten@ng-voice.com,
+   http://www.ng-voice.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. default_domain(str)
+              3.2. publish_reginfo(int)
+              3.3. outbound_proxy(str)
+              3.4. server_address(str)
+
+        4. Functions
+
+              4.1. reginfo_handle_notify(uldomain)
+              4.2. reginfo_subscribe(uri[, expires])
+
+   List of Examples
+
+   1.1. Set default_domain parameter
+   1.2. Set publish_reginfo parameter
+   1.3. Set outbound_proxy parameter
+   1.4. Set server_address parameter
+   1.5. reginfo_handle_notify usage
+   1.6. reginfo_subscribe usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. default_domain(str)
+        3.2. publish_reginfo(int)
+        3.3. outbound_proxy(str)
+        3.4. server_address(str)
+
+   4. Functions
+
+        4.1. reginfo_handle_notify(uldomain)
+        4.2. reginfo_subscribe(uri[, expires])
+
+1. Overview
+
+   This modules publishes information about "reg"-events according to to
+   RFC 3680. This can be used distribute the registration-info status to
+   the subscribed watchers.
+
+   This module "PUBLISH"es information when a new user registers at this
+   server (e.g. when "save()" is called) to users, which have subscribed
+   for the reg-info for this user.
+
+   This module can "SUBSCRIBE" for information at another server, so it
+   will receive "NOTIFY"-requests, when the information about a user
+   changes.
+
+   And finally, it can process received "NOTIFY" requests and it will
+   update the local registry accordingly.
+
+   Use cases for this might be:
+     * Keeping different Servers in Sync regarding the location database
+     * Get notified, when a user registers: A presence-server, which
+       handles offline message storage for an account, would get notified,
+       when the user comes online.
+     * A client could subscribe to it's own registration-status, so he
+       would get notified as soon as his account gets administratively
+       unregistered.
+     * ...
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * pua.
+     * usrloc.
+
+2.2. External Libraries or Applications
+
+   None.
+
+3. Parameters
+
+   3.1. default_domain(str)
+   3.2. publish_reginfo(int)
+   3.3. outbound_proxy(str)
+   3.4. server_address(str)
+
+3.1. default_domain(str)
+
+   The default domain for the registered users to be used when
+   constructing the uri for the registrar callback.
+
+   Default value is “NULL”.
+
+   Example 1.1. Set default_domain parameter
+...
+modparam("pua_reginfo", "default_domain", "kamailio.org")
+...
+
+3.2. publish_reginfo(int)
+
+   Whether or not to generate PUBLISH requests.
+
+   Default value is “1” (enabled).
+
+   Example 1.2. Set publish_reginfo parameter
+...
+modparam("pua_reginfo", "publish_reginfo", 0)
+...
+
+3.3. outbound_proxy(str)
+
+   The outbound_proxy uri to be used when sending Subscribe and Publish
+   requests.
+
+   Default value is “NULL”.
+
+   Example 1.3. Set outbound_proxy parameter
+...
+modparam("pua_reginfo", "outbound_proxy", "sip:proxy@kamailio.org")
+...
+
+3.4. server_address(str)
+
+   The IP address of the server.
+
+   Example 1.4. Set server_address parameter
+...
+modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
+...
+
+4. Functions
+
+   4.1. reginfo_handle_notify(uldomain)
+   4.2. reginfo_subscribe(uri[, expires])
+
+4.1.  reginfo_handle_notify(uldomain)
+
+   This function processes received "NOTIFY"-requests and updates the
+   local registry accordingly.
+
+   This method does not create any SIP-Response, this has to be done by
+   the script-writer.
+
+   The parameter has to correspond to user location table (domain) where
+   to store the record.
+
+   Return codes:
+     * 2 - contacts successfully updated, but no more contacts online now.
+       1 - contacts successfully updated and at at least one contact still
+       registered.
+       -1 - Invalid NOTIFY or other error (see log-file)
+
+   Example 1.5. reginfo_handle_notify usage
+...
+if(is_method("NOTIFY"))
+        if (reginfo_handle_notify("location"))
+                send_reply("202", "Accepted");
+...
+
+4.2.  reginfo_subscribe(uri[, expires])
+
+   This function will subscribe for reginfo-information at the given
+   server URI.
+
+   Meaning of the parameters is as follows:
+     * uri - SIP-URI of the server, where to subscribe, may contain
+       pseudo-variables.
+       expires - Expiration date for this subscription, in seconds
+       (default 3600)
+
+   Example 1.6. reginfo_subscribe usage
+...
+route {
+        t_on_reply("1");
+        t_relay();
+}
+
+reply_route[1] {
+        if (t_check_status("200"))
+                reginfo_subscribe("$ru");
+}
+...

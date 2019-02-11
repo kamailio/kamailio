@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section id="diversion.overview">
+	<title>Overview</title>
+	<para>
+		The module implements the Diversion extensions as per 
+		RFC 5806. The diversion extensions are useful in various
+		scenarios involving call forwarding. Typically one needs to communicate
+		the original recipient of the call to the PSTN gateway and this is what
+		the diversion extensions can be used for.
+	</para>
+	<warning><para>
+		Note that RFC 5806 has historic status.
+	</para></warning>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>None.</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="diversion.p.suffix">
+		<title><varname>suffix</varname> (string)</title>
+		<para>
+		The suffix to be appended to the end of the header field. You can use 
+		the parameter to specify additional parameters to be added to the 
+		header field, see the example.
+		</para>
+		<para>
+		Default value is <quote></quote> (empty string).
+		</para>
+		<example>
+		<title><varname>suffix</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("diversion", "suffix", ";privacy=full")
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="diversion.f.add_diversion">
+		<title><function moreinfo="none">add_diversion(reason [, uri])</function></title>
+		<para>
+		The function adds a new diversion header field before any other 
+		existing Diversion header field in the message (the newly added 
+		Diversion header field will become the topmost Diversion header field).
+		If 'uri' parameter is missing, the inbound (without any modifications done
+		by the proxy server) Request-URI will be used as the Diversion URI.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>reason</emphasis> - The reason string to be added 
+			as the reason parameter
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>uri</emphasis> - The URI to be set in Diversion header
+			</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		The parameters can contain pseudo-variables.
+	</para>
+	<para>
+	This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+	</para>
+	<example>
+		<title><function moreinfo="none">add_diversion</function> usage</title>
+		<programlisting format="linespecific">
+...
+add_diversion("user-busy");
+add_diversion("user-busy", "$ru");
+...
+</programlisting>
+	</example>
+	</section>
+	</section>
+
+	<section>
+		<title>Diversion Example</title>
+		<para>
+			The following example shows a Diversion header field added to 
+			INVITE message. The original INVITE received by the user agent 
+			of sip:bob@sip.org is:
+		</para>
+		<programlisting format="linespecific">
+INVITE sip:bob@sip.org SIP/2.0
+Via: SIP/2.0/UDP 1.2.3.4:5060
+From: "mark" &lt;sip:mark@sip.org&gt;;tag=ldgheoihege
+To: "Bob" &lt;sip:bob@sip.org&gt;
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Contact: &lt;sip:mark@1.2.3.4&gt;
+Content-Length: 0
+</programlisting>
+		<para>
+			The INVITE message is diverted by the user agent 
+			of sip:bob@sip.org because the user was talking to someone else 
+			and the new destination is sip:alice@sip.org :
+		</para>
+		<programlisting format="linespecific">
+INVITE sip:alice@sip.org SIP/2.0
+Via: SIP/2.0/UDP 5.6.7.8:5060
+Via: SIP/2.0/UDP 1.2.3.4:5060
+From: "mark" &lt;sip:mark@sip.org&gt;;tag=ldgheoihege
+To: "Bob" &lt;sip:bob@sip.org&gt;
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Diversion: &lt;sip:bob@sip.org&gt;;reason=user-busy
+Contact: &lt;sip:mark@1.2.3.4&gt;
+Content-Length: 0
+</programlisting>
+		</section>
+</chapter>
+

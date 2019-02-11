@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avp_db.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<!-- following is not needed in every section - it is needless here? 
+    <sectioninfo>
+    </sectioninfo>-->
+
+    <title>Functions</title>
+<!--
+    <section id="avp_load">
+	<title><function moreinfo="none">avp_load(type)</function></title>
+	<para>
+	    Load AVPs from the database.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>type</emphasis> - One of:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>caller_uuid</emphasis> - Load AVPs
+				for caller identified by UUID. All AVP names
+				will have "caller_" prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>callee_uuid</emphasis> - Load AVPs
+				for callee identified by UUID. All AVP
+				names will have "callee_" prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>caller</emphasis> - Load AVPs for
+				caller based on the URI of the caller
+				(From). All AVP names will have "caller_"
+				prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>callee</emphasis> - Load AVPs for
+				callee based on the URI of the callee
+				(Request-URI). All AVP names will have
+				"callee_" prefix.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+	-->
+
+	<section><title>load_attrs (track, id)</title>
+	<para>
+		Loads attributes from the database.
+
+		<variablelist>
+		Track can have following values:
+		<varlistentry>
+			<term>track</term>
+			<listitem><para>
+			<variablelist>
+			
+			<varlistentry>
+				<term>$fu</term>
+				<listitem><para>Load user attributes into from track. In this case
+				the second parameter is UID used to search attributes.
+				</para></listitem>
+			</varlistentry>
+			
+			<varlistentry>
+				<term>$tu</term>
+				<listitem><para>Load user attributes into to track. In this case
+				the second parameter is UID used to search attributes.
+				</para></listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term>$fr</term>
+				<listitem><para>Load uri attributes into from track. In this case
+				the second parameter is URI used to search attributes.
+				</para></listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term>$tr</term>
+				<listitem><para>Load uri attributes into to track. In this case
+				the second parameter is URI used to search attributes.
+				</para></listitem>
+			</varlistentry>
+
+			</variablelist>
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>id</term>
+			<listitem><para>Identifier used for searching attributes. When
+			searching for user attributes it is UID, when searching uri
+			attributes it is URI.
+			</para></listitem>
+		</varlistentry>
+
+		</variablelist>
+	</para>
+	</section>
+
+	<section><title>load_extra_attrs (group_id, id)</title>
+	<para>
+		Loads 'extra attributes' stored by previous call to save_extra_attrs. 
+		<variablelist>
+			<varlistentry>
+				<term>group_id</term>
+				<listitem><para>Identifies attribute group,	see <xref
+				linkend="extra_attr_group"/>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>id</term>
+				<listitem><para>Identifies attributes which should be loaded.
+				</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</para>
+	</section>
+	
+	<section><title>save_extra_attrs (group_id, id)</title>
+	<para>
+		Saves 'extra attributes' flagged by group flag under given id. 
+		<variablelist>
+			<varlistentry>
+				<term>group_id</term>
+				<listitem><para>Identifies attribute group,	see <xref
+				linkend="extra_attr_group"/>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>id</term>
+				<listitem><para>Identifier stored with flagged attributes.
+				</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</para>
+	</section>
+
+	<section><title>remove_extra_attrs (group_id, id)</title>
+	<para>
+		Removes all extra attributes with given id.
+		<variablelist>
+			<varlistentry>
+				<term>group_id</term>
+				<listitem><para>Identifies attribute group,	see <xref
+				linkend="extra_attr_group"/>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>id</term>
+				<listitem><para>Identifies attributes which should be removed.
+				</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</para>
+	</section>
+
+	<section><title>lock_extra_attrs (group_id, id)</title>
+	<para>
+		Locks extra attributes. Currently locks whole attribute group (not only
+		id).
+		<variablelist>
+			<varlistentry>
+				<term>group_id</term>
+				<listitem><para>Identifies attribute group,	see <xref
+				linkend="extra_attr_group"/>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>id</term>
+				<listitem><para>Identifies attributes which should be locked.
+				</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</para>
+	</section>
+
+	<section><title>unlock_extra_attrs (group_id, id)</title>
+	<para>
+		Unlocks extra attributes. Currently unlocks whole attribute group (not only
+		id).
+		<variablelist>
+			<varlistentry>
+				<term>group_id</term>
+				<listitem><para>Identifies attribute group,	see <xref
+				linkend="extra_attr_group"/>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>id</term>
+				<listitem><para>Identifies attributes which should be unlocked.
+				</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</para>
+	</section>
+
+</section>

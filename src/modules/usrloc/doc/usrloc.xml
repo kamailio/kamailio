@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>usrloc Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<address>
+			<email>jan@iptel.org</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>Voice Sistem SRL</holder>
+	</copyright>
+	<copyright>
+		<year>2015</year>
+		<holder>ng-voice GmbH</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="usrloc_admin.xml"/>
+	<xi:include href="usrloc_devel.xml"/>
+	
+	
+</book>

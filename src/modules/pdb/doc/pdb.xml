@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>pdb Module</title>
+	<productname class="trade">&kamailioname;</productname>        
+	<authorgroup>
+		<editor>
+		<firstname>Henning</firstname>
+		<surname>Westerholt</surname>
+		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+		<email>henning.westerholt@1und1.de</email>
+		</editor>
+		<editor>
+		<firstname>Pawel</firstname>
+		<surname>Kuzak</surname>
+		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+		<email>pawel.kuzak@1und1.de</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2009</year>
+		<holder>1&amp;1 Internet AG</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="pdb_admin.xml"/>
+</book>

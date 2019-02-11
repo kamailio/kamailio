@@ -1,6 +1,6 @@
 {
   "name": "uacreg",
-  "version": 1,
+  "version": 3,
   "columns": [
     "id": {
       "type": "int",
@@ -47,12 +47,27 @@
       "default": "",
       "null": false
     },
+    "auth_ha1": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
     "auth_proxy": {
       "type": "string",
       "default": "",
       "null": false
     },
     "expires": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "reg_delay": {
       "type": "int",
       "default": 0,
       "null": false

@@ -1,0 +1,2 @@
+id/int,ruid/string,username/string,domain/string,contact/string,received/string,path/string,expires/int,q/double,callid/string,cseq/int,last_modified/int,flags/int,cflags/int,user_agent/string,socket/string,methods/int,instance/string,reg_id/int,server_id/int,connection_id/int,keepalive/int,partition/int,
+8

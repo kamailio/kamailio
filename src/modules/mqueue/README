@@ -1,0 +1,250 @@
+mqueue Module
+
+Elena-Ramona Modroiu
+
+   asipto.com
+
+Edited by
+
+Elena-Ramona Modroiu
+
+   <ramona@asipto.com>
+
+Edited by
+
+Alex Balashov
+
+   Evariste Systems
+   <abalashov@evaristesys.com>
+
+Edited by
+
+Ovidiu Sas
+
+   VoIP Embedded, Inc.
+   <osas@voipembedded.com>
+
+Edited by
+
+Julien Chavanton
+
+   <jchavanton@gmail.com>
+
+   Copyright © 2010 Elena-Ramona Modroiu (asipto.com)
+
+   Copyright © 2018 Julien chavanton, Flowroute
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. mqueue (string)
+
+        4. Functions
+
+              4.1. mq_add(queue, key, value)
+              4.2. mq_fetch(queue)
+              4.3. mq_pv_free(queue)
+              4.4. mq_size(queue)
+
+        5. Exported Variables
+        6. RPC Commands
+
+              6.1. mqueue.get_size
+              6.2. mqueue.fetch
+
+   List of Examples
+
+   1.1. Set mqueue parameter
+   1.2. mq_add usage
+   1.3. mq_fetch usage
+   1.4. mq_pv_free usage
+   1.5. mq_size usage
+   1.6. mqueue.get_size usage
+   1.7. mqueue.fetch usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. mqueue (string)
+
+   4. Functions
+
+        4.1. mq_add(queue, key, value)
+        4.2. mq_fetch(queue)
+        4.3. mq_pv_free(queue)
+        4.4. mq_size(queue)
+
+   5. Exported Variables
+   6. RPC Commands
+
+        6.1. mqueue.get_size
+        6.2. mqueue.fetch
+
+1. Overview
+
+   The mqueue module offers a generic message queue system in shared
+   memory for inter-process communication using the config file. One
+   example of usage is to send time consuming operations to one or several
+   timer processes that consumes items in the queue, without affecting SIP
+   message handling in the socket-listening process.
+
+   There can be many defined queues. Access to queued values is done via
+   pseudo variables.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. mqueue (string)
+
+3.1. mqueue (string)
+
+   Definition of a memory queue
+
+   Default value is “none”.
+
+   Value must be a list of parameters: attr=value;...
+     * Mandatory attributes:
+          + name: name of the queue.
+     * Optional attributes:
+          + size: size of the queue. Specifies the maximum number of items
+            in queue. If exceeded the oldest one is removed. If not set
+            the queue will be limitless.
+
+   The parameter can be set many times, each holding the definition of one
+   queue.
+
+   Example 1.1. Set mqueue parameter
+...
+modparam("mqueue", "mqueue", "name=myq;size=20;")
+modparam("mqueue", "mqueue", "name=qaz")
+...
+
+4. Functions
+
+   4.1. mq_add(queue, key, value)
+   4.2. mq_fetch(queue)
+   4.3. mq_pv_free(queue)
+   4.4. mq_size(queue)
+
+4.1.  mq_add(queue, key, value)
+
+   Add a new item (key, value) in the queue. If max size of queue is
+   exceeded, the oldest one is removed.
+
+   Example 1.2. mq_add usage
+...
+mq_add("myq", "$rU", "call from $fU");
+...
+
+4.2.  mq_fetch(queue)
+
+   Take oldest item from queue and fill $mqk(queue) and $mqv(queue) pseudo
+   variables.
+
+   Return: true on success (1); false on failure (-1) or no item fetched
+   (-2).
+
+   Example 1.3. mq_fetch usage
+...
+while(mq_fetch("myq"))
+{
+   xlog("$mqk(myq) - $mqv(myq)\n");
+}
+...
+
+4.3.  mq_pv_free(queue)
+
+   Free the item fetched in pseudo-variables. It is optional, a new fetch
+   frees the previous values.
+
+   Example 1.4. mq_pv_free usage
+...
+mq_pv_free("myq");
+...
+
+4.4.  mq_size(queue)
+
+   Returns the current number of elements in the mqueue.
+
+   If the mqueue is empty, the function returns -1. If the mqueue is not
+   found, the function returns -2.
+
+   Example 1.5. mq_size usage
+...
+$var(q_size) = mq_size("queue");
+xlog("L_INFO", "Size of queue is: $var(q_size)\n");
+...
+
+5. Exported Variables
+
+     * $mqk(mqueue) - the most recent item key fetched from the specified
+       mqueue
+     * $mqv(mqueue) - the most recent item value fetched from the
+       specified mqueue
+     * $mq_size(mqueue) - the size of the specified mqueue
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.
+
+6. RPC Commands
+
+   6.1. mqueue.get_size
+   6.2. mqueue.fetch
+
+6.1. mqueue.get_size
+
+   Get the size of a memory queue.
+
+   Parameters:
+     * name - the name of memory queue
+
+   Example 1.6. mqueue.get_size usage
+...
+kamcmd mqueue.get_size xyz
+...
+
+6.2. mqueue.fetch
+
+   Fetch a key-value pair from a memory queue.
+
+   Parameters:
+     * name - the name of memory queue
+
+   Example 1.7. mqueue.fetch usage
+...
+kamcmd mqueue.fetch xyz
+...

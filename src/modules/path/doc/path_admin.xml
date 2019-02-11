@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+		<para>
+		This module is designed to be used at intermediate sip proxies like loadbalancers in front of
+		registrars and proxies. It provides functions for inserting a Path header including a parameter for
+		passing forward the received-&uri; of a registration to the next hop. It also provides a mechanism
+		for evaluating this parameter in subsequent requests and to set the destination &uri; according to it.
+		</para>
+		<section>
+			<title>Path Insertion For Registrations</title>
+			<para>
+			For registrations in a scenario like <quote>[UAC] -> [P1] -> [REG]</quote>,
+			the "path" module can be used at the intermediate proxy P1 to insert a Path
+			header into the message before forwarding it to the registrar REG. Two functions
+			can be used to achieve this:
+			<itemizedlist>
+				<listitem>
+					<para>
+					<emphasis>add_path(...)</emphasis> adds a Path header in the form of
+					<quote>Path: &lt;sip:1.2.3.4;lr&gt;</quote> to the message using the address
+					of the outgoing interface. A port is only added if it's not the default
+					port 5060.
+					</para>
+					<para>
+					If a username is passed to the function, it is also included in the Path
+					&uri;, like <quote>Path: &lt;sip:username@1.2.3.4;lr&gt;</quote>.
+					</para>
+				</listitem>
+
+				<listitem>
+					<para>
+					<emphasis>add_path_received(...)</emphasis> also add a Path header in the
+					same form as above, but also adds a parameter indicating the received-&uri;
+					of the message, like
+					<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>. This
+					is especially useful if the proxy does NAT detection and wants to pass
+					the NAT'ed address to the registrar.
+					</para>
+					<para>
+					If the function is called with a username, it's included in the Path &uri; too.
+					</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+				Note that some SIP registrars may check if header Supported includes 'path'. It
+				can be added in &kamailio;.cfg using append_hf() from textops module.
+			</para>
+		<example>
+		<title>Add Supported header</title>
+		<programlisting format="linespecific">
+...
+append_hf("Supported: path\r\n");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+			<title>Outbound routing to NAT'ed UACs</title>
+			<para>
+			If the NAT'ed address of an UAC is passed to the registrar, the registrar routes back
+			subsequent requests using the Path header of the registration as Route header of the
+			current request. If the intermediate proxy had inserted a Path header including the
+			<quote>received</quote> parameter during the registration, this parameter will show up
+			in the Route header of the new request as well, allowing the intermediate proxy to route
+			to this address instead of the one propagated in the Route &uri; for tunneling through NAT.
+			This behaviour can be activated by setting the module parameter <quote>use_received</quote>.
+			</para>
+		</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				The "rr" module is needed for outbound routing according to the <quote>received</quote>
+				parameter.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				The "outbound" module is needed for outbound routing as per RFC 5626.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="path.p.use_received">
+		<title><varname>use_received</varname> (int)</title>
+		<para>
+		If set to 1, the <quote>received</quote> parameter of the first Route &uri; is evaluated and
+		used as destination-&uri; if present.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_received</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("path", "use_received", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="path.p.received_format">
+		<title><varname>received_format</varname> (int)</title>
+		<para>
+			If set to 0, the <quote>received</quote> parameter value will be
+			in the escaped SIP URI format.
+		</para>
+		<para>
+			If set to 1, the <quote>received</quote> parameter value will be
+			in the same format as the <quote>alias</quote> parameter added by
+			set_contact_alias() from <quote>nathelper</quote> module (i.e.,
+			<quote>ip~port~protid</quote>). This is a solution with some
+			SIP applications that incorrectly match the transport from
+			received parameter instead of the one from the SIP URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>received_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("path", "received_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="path.p.enable_r2">
+		<title><varname>enable_r2</varname> (int)</title>
+		<para>
+		If set to 1, the module will add two Path headers, similar to the
+		double Record-Route done by rr module. One Path headers corresponds
+		to incoming network socket and the other to outgoing network socket.
+		The URIs in the Path headers will have the 'r2=on' parameter as well.
+		</para>
+		<para>
+		Note: if enabled, the module adds the two Path headers even when the
+		incoming socket is the same as outgoing socket. Improvements to skip
+		the second Path header in this case may be introduced in the future,
+		meanwhile, if you need to enable this parameter but also deal with
+		same socket routing, use 'insert_hf("Path: &lt;$Ru&gt;\r\n")'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_r2</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("path", "enable_r2", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="path.f.add_path">
+		<title>
+		<function moreinfo="none">add_path()</function>
+		</title>
+		<para>
+		This function is used to insert a Path header in the form
+		<quote>Path: &lt;sip:1.2.3.4;lr&gt;</quote>, where <quote>1.2.3.4</quote> is the address
+		of the outgoing interface.
+		</para>
+		<para>
+		If the <quote>outbound</quote> module was loaded before this module, and outbound is
+		required for this request, the header will be in the form
+		<quote>Path: &lt;sip:flowtoken@1.2.3.4;lr;ob&gt;</quote>, where <quote>flowtoken</quote>
+		is the RFC 5626 flow-token that can be used to identify the source and local address and
+		transport the request was received on, and where <quote>1.2.3.4</quote> is the address of
+		the outgoing interface.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path()) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_u">
+		<title>
+		<function moreinfo="none">add_path(user)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:user@1.2.3.4;lr&gt;</quote>.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path(user)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path("loadbalancer")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_up">
+		<title>
+		<function moreinfo="none">add_path(user, parameters)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:user@1.2.3.4;lr&gt;</quote> and appends the
+		given <emphasis>parameters</emphasis> as additional URI parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>parameters</emphasis> - Additional URI parameters to be
+			appended to the URI. The semicolon separator is added automatically.
+			The script writer is responsible for proper URI escaping.
+			SPVE is supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path(user, parameters)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path("loadbalancer", "ob")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_rcv">
+		<title>
+		<function moreinfo="none">add_path_received()</function>
+		</title>
+		<para>
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting its own
+		outgoing address as domain-part, and the address the request has been received from as
+		received-parameter.
+		</para>
+		<para>
+		If the <quote>outbound</quote> module was loaded before this module, and outbound is
+		required for this request, the header will be in the form
+		<quote>Path: &lt;sip:flowtoken@1.2.3.4;lr;received=sip:2.3.4.5:1234;ob&gt;</quote>, where <quote>flowtoken</quote>
+		is the RFC 5626 flow-token that can be used to identify the source and local address and
+		transport the request was received on, and where <quote>1.2.3.4</quote> is the address of
+		the outgoing interface.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received()) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_rcv_u">
+		<title>
+		<function moreinfo="none">add_path_received(user)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
+		'user' as username part of address, its own
+		outgoing address as domain-part, and the address the request has been received from as
+		received-parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received(user)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received("inbound")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_rcv_up">
+		<title>
+		<function moreinfo="none">add_path_received(user, parameters)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
+		'user' as username part of address, its own
+		outgoing address as domain-part, and the address the request has been received from as
+		received-parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received(user, parameters)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received("inbound", "ob")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	</section>
+
+
+</chapter>

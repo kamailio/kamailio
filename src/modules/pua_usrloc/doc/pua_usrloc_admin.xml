@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		 The pua_usrloc module is the connector between the usrloc and pua modules.
+		 With this module, you can monitor the status of SIP registrations.
+		 The module sends PUBLISH requests for user location record changes, 
+		 based on specific events (e.g., when a new record is
+		 added in usrloc, a PUBLISH with status open (online) is issued;
+		 when expires, it sends closed (offline)).
+	</para>
+	<para>
+		Using this module phones which have no support for presence can
+		be seen as online/offline. 
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>usrloc</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>default_domain</varname> (str)</title>
+		<para>
+		The default domain to use when constructing the presentity
+		URI if it is missing from stored AOR in the usrloc table (in
+		memory or database). 
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "default_domain", "kamailio.org")
+...
+</programlisting>
+		</example>
+</section>
+	<section>
+		<title><varname>entity_prefix</varname> (str)</title>
+		<para>
+		The prefix used when constructing the entity attribute to be added to
+		a presence node in the XML PIDF document.
+		(ex: pres:user@domain ).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>presentity_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "entity_prefix", "pres")
+...
+</programlisting>
+		</example>
+</section>
+
+	<section>
+		<title><varname>branch_flag</varname> (int)</title>
+		<para>
+		Which branch flag to be used to select the contact addresses for which
+		to generate PUBLISH. Valid values are 0 to 31.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>-1</quote> (disabled).	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>branch_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "branch_flag", 9)
+...
+</programlisting>
+		</example>
+	</section>
+
+</section>
+<section>
+	<title>Functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">pua_set_publish()</function>
+				</title>
+			<para>
+				The function is used to mark REGISTER requests that have to
+				issue a PUBLISH. The PUBLISH is issued when REGISTER is saved
+				in location table.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>pua_set_publish</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("REGISTER") &amp;&amp; from_uri=~"john@kamailio.org") 
+	pua_set_publish();		
+...
+</programlisting>
+		</example>
+
+		</section>
+
+</section>		
+
+</chapter>
+

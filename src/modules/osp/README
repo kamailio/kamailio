@@ -1,0 +1,586 @@
+OSP Module for Secure, Multi-Lateral Peering
+
+Ulrich Abend
+
+   FhG FOKUS
+
+   <ullstar@iptel.org>
+
+Edited by
+
+Di-Shi Sun
+
+   TransNexus, Inc.
+
+   <support@transnexus.com>
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+        3. Parameters
+
+              3.1. sp1_uri, sp2_uri, ..., sp16_uri
+              3.2. sp1_weight, sp2_weight, ..., sp16_weight
+              3.3. device_ip
+              3.4. device_port
+              3.5. token_format
+              3.6. private_key, local_certificate, ca_certificates
+              3.7. enable_crypto_hardware_support
+              3.8. ssl_lifetime
+              3.9. persistence
+              3.10. retry_delay
+              3.11. retry_limit
+              3.12. timeout
+              3.13. max_destinations
+              3.14. validate_call_id
+              3.15. use_rpid_for_calling_number
+              3.16. redirection_uri_format
+              3.17. source_networkid_avp
+
+        4. Functions
+
+              4.1. checkospheader()
+              4.2. validateospheader()
+              4.3. requestosprouting()
+              4.4. checkosproute()
+              4.5. prepareosproute()
+              4.6. checkcallingtranslation()
+              4.7. prepareallosproute()
+              4.8. reportospusage()
+
+   2. Developer Guide
+
+   List of Examples
+
+   1.1. Setting the OSP servers
+   1.2. Setting the OSP server weights
+   1.3. Setting the device IP address
+   1.4. Setting the device port
+   1.5. Setting the token format
+   1.6. Set authorization files
+   1.7. Setting the hardware support
+   1.8. Setting the ssl lifetime
+   1.9. Setting the persistence
+   1.10. Setting the retry delay
+   1.11. Setting the retry limit
+   1.12. Setting the timeout
+   1.13. Setting the number of destination
+   1.14. Instructing the module to validate call id
+   1.15. Instructing the module to use calling number in Remote-Party-ID
+   1.16. Setting the redirection URI format
+   1.17. Setting the source network ID AVP
+   1.18. checkospheader usage
+   1.19. validateospheader usage
+   1.20. requestosprouting usage
+   1.21. checkosproute usage
+   1.22. prepareosproute usage
+   1.23. checkcallingtranslation usage
+   1.24. prepareallosproute usage
+   1.25. reportospusage usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+   3. Parameters
+
+        3.1. sp1_uri, sp2_uri, ..., sp16_uri
+        3.2. sp1_weight, sp2_weight, ..., sp16_weight
+        3.3. device_ip
+        3.4. device_port
+        3.5. token_format
+        3.6. private_key, local_certificate, ca_certificates
+        3.7. enable_crypto_hardware_support
+        3.8. ssl_lifetime
+        3.9. persistence
+        3.10. retry_delay
+        3.11. retry_limit
+        3.12. timeout
+        3.13. max_destinations
+        3.14. validate_call_id
+        3.15. use_rpid_for_calling_number
+        3.16. redirection_uri_format
+        3.17. source_networkid_avp
+
+   4. Functions
+
+        4.1. checkospheader()
+        4.2. validateospheader()
+        4.3. requestosprouting()
+        4.4. checkosproute()
+        4.5. prepareosproute()
+        4.6. checkcallingtranslation()
+        4.7. prepareallosproute()
+        4.8. reportospusage()
+
+1. Overview
+
+   The OSP module enables Kamailio to support secure, multi-lateral
+   peering using the OSP standard defined by ETSI (TS 101 321 V4.1.1).
+   This module will enable your Kamailio to:
+     * Send a peering authorization request to a peering server.
+     * Validate a digitally signed peering authorization token received in
+       a SIP INVITE message.
+     * Report usage information to a peering server.
+
+2. Dependencies
+
+   The OSP module depends on the following modules which must be loaded
+   before the OSP module.
+     * sl -- stateless replier
+     * tm -- stateful processing
+     * rr -- Record-Route/Route operation
+     * textops -- text based operation
+     * siputils -- Remote-Party-ID operattion
+     * OSP Toolkit -- The OSP Toolkit, available from
+       http://sourceforge.net/projects/osp-toolkit, must be built before
+       building Kamailio with the OSP Module. For instructions on building
+       Kamailio with the OSP Toolkit, see
+       http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with
+       _Kamailio_V1.4.pdf
+
+3. Parameters
+
+   3.1. sp1_uri, sp2_uri, ..., sp16_uri
+   3.2. sp1_weight, sp2_weight, ..., sp16_weight
+   3.3. device_ip
+   3.4. device_port
+   3.5. token_format
+   3.6. private_key, local_certificate, ca_certificates
+   3.7. enable_crypto_hardware_support
+   3.8. ssl_lifetime
+   3.9. persistence
+   3.10. retry_delay
+   3.11. retry_limit
+   3.12. timeout
+   3.13. max_destinations
+   3.14. validate_call_id
+   3.15. use_rpid_for_calling_number
+   3.16. redirection_uri_format
+   3.17. source_networkid_avp
+
+3.1. sp1_uri, sp2_uri, ..., sp16_uri
+
+   These sp_uri (string) parameters define peering servers to be used for
+   requesting peering authorization and routing information. At least one
+   peering server must be configured. Others are required only if there
+   are more than one peering servers. Each peering server address takes
+   the form of a standard URL, and consists of up to four components:
+     * An optional indication of the protocol to be used for communicating
+       with the peering server. Both HTTP and HTTP secured with SSL/TLS
+       are supported and are indicated by "http://" and "https://"
+       respectively. If the protocol is not explicitly indicated, the
+       Kamailio defaults to HTTP secured with SSL.
+     * The Internet domain name for the peering server. An IP address may
+       also be used, provided it is enclosed in square brackets such as
+       [172.16.1.1].
+     * An optional TCP port number for communicating with the peering
+       server. If the port number is omitted, the Kamailio defaults to
+       port 1080 (for HTTP) or port 1443 (for HTTP secured with SSL).
+       The uniform resource identifier for requests to the peering server.
+       This component is not optional and must be included.
+
+   Example 1.1. Setting the OSP servers
+modparam("osp","sp1_uri","http://osptestserver.transnexus.com:1080/osp")
+modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
+
+3.2. sp1_weight, sp2_weight, ..., sp16_weight
+
+   These sp_weight (integer) parameters are used for load balancing
+   peering requests to peering servers. These parameters are most
+   effective when configured as factors of 1000. For example, if sp1_uri
+   should manage twice the traffic load of sp2_uri, then set sp1_weight to
+   2000 and sp2_weight to 1000. Shared load balancing between peering
+   servers is recommended. However, peering servers can be configured as
+   primary and backup by assigning a sp_weight of 0 to the primary server
+   and a non-zero sp_weight to the back-up server. The default values for
+   sp1_weight and sp2_weight are 1000.
+
+   Example 1.2. Setting the OSP server weights
+modparam("osp","sp1_weight",1000)
+
+3.3. device_ip
+
+   The device_ip (string) is a recommended parameter that explicitly
+   defines the IP address of Kamailio in a peering request message (as
+   SourceAlternate type=transport). The IP address must be in brackets as
+   shown in the example below.
+
+   Example 1.3. Setting the device IP address
+modparam("osp","device_ip","[1.1.1.1]")
+
+3.4. device_port
+
+   The device_port (string) parameter is an optional field which includes
+   the SIP port being used by Kamailio in the peering request (as
+   SourceAlternate type=network) to the peering server. If is not
+   configured, this information is not included in the peering request.
+   This field is useful if multiple Kamailio are running on the same Linux
+   computer since it enables the peering server to administer different
+   peering policies based on different SIP proxies. This parameter has not
+   been implemented yet.
+
+   Example 1.4. Setting the device port
+modparam("osp","device_port","5060")
+
+3.5. token_format
+
+   When Kamailio receives a SIP INVITE with a peering token, the OSP
+   Module will validate the token to determine whether or not the call has
+   been authorized by a peering server. Peering tokens may, or may not, be
+   digitally signed. The token_format (integer) parameter defines if
+   Kamailio will validate signed or unsigned tokens or both. The values
+   for token format are defined below. The default value is 2.
+
+   0 - Validate only signed tokens. Calls with valid signed tokens are
+   allowed.
+
+   1 - Validate only unsigned tokens. Calls with valid unsigned tokens are
+   allowed.
+
+   2 - Validate both signed and unsigned tokens are allowed. Calls with
+   valid tokens are allowed.
+
+   Example 1.5. Setting the token format
+modparam("osp","token_format",2)
+
+3.6. private_key, local_certificate, ca_certificates
+
+   These parameters identify files are used for validating peering
+   authorization tokens and establishing a secure channel between Kamailio
+   and a peering server using SSL. The files are generated using the
+   'Enroll' utility from the OSP Toolkit. By default, the proxy will look
+   for pkey.pem, localcert.pem, and cacart_0.pem in the default
+   configuration directory. The default config directory is set at compile
+   time using CFG_DIR and defaults to /usr/local/etc/kamailio/. The files
+   may be copied to the expected file location or the parameters below may
+   be changed.
+
+   Example 1.6. Set authorization files
+
+   If the default CFG_DIR value was used at compile time, the files will
+   be loaded from:
+modparam("osp","private_key","/usr/local/etc/kamailio/pkey.pem")
+modparam("osp","local_certificate","/usr/local/etc/kamailio/localcert.pem")
+modparam("osp","ca_certificates","/usr/local/etc/kamailio/cacert.pem")
+
+3.7. enable_crypto_hardware_support
+
+   The enable_crypto_hardware_support (integer) parameter is used to set
+   the cryptographic hardware acceleration engine in the openssl library.
+   The default value is 0 (no crypto hardware is present). If crypto
+   hardware is used, the value should be set to 1.
+
+   Example 1.7. Setting the hardware support
+modparam("osp","enable_crypto_hardware_support",0)
+
+3.8. ssl_lifetime
+
+   The ssl_lifetime (integer) parameter defines the lifetime, in seconds,
+   of a single SSL session key. Once this time limit is exceeded, the OSP
+   Module will negotiate a new session key. Communication exchanges in
+   progress will not be interrupted when this time limit expires. This is
+   an optional field with default value is 200 seconds.
+
+   Example 1.8. Setting the ssl lifetime
+modparam("osp","ssl_lifetime",200)
+
+3.9. persistence
+
+   The persistence (integer) parameter defines the time, in seconds, that
+   an HTTP connection should be maintained after the completion of a
+   communication exchange. The OSP Module will maintain the connection for
+   this time period in anticipation of future communication exchanges to
+   the same peering server.
+
+   Example 1.9. Setting the persistence
+modparam("osp","persistence",1000)
+
+3.10. retry_delay
+
+   The retry_delay (integer) parameter defines the time, in seconds,
+   between retrying connection attempts to an OSP peering server. After
+   exhausting all peering servers the OSP Module will delay for this
+   amount of time before resuming connection attempts. This is an optional
+   field with default value is 1 second.
+
+   Example 1.10. Setting the retry delay
+modparam("osp","retry_delay",1)
+
+3.11. retry_limit
+
+   The retry_limit (integer) parameter defines the maximum number of
+   retries for connection attempts to a peering server. If no connection
+   is established after this many retry attempts to all peering servers,
+   the OSP Module will cease connection attempts and return appropriate
+   error codes. This number does not count the initial connection attempt,
+   so that a retry_limit of 1 will result in a total of two connection
+   attempts to every peering server. The default value is 2.
+
+   Example 1.11. Setting the retry limit
+modparam("osp","retry_limit",2)
+
+3.12. timeout
+
+   The timeout (integer) parameter defines the maximum time in
+   milliseconds, to wait for a response from a peering server. If no
+   response is received within this time, the current connection is
+   aborted and the OSP Module attempts to contact the next peering server.
+   The default value is 10 seconds.
+
+   Example 1.12. Setting the timeout
+modparam("osp","timeout",10)
+
+3.13. max_destinations
+
+   The max_destinations (integer) parameter defines the maximum number of
+   destinations that Kamailio requests the peering server to return in a
+   peering response. The default value is 5.
+
+   Example 1.13. Setting the number of destination
+modparam("osp","max_destinations",5)
+
+3.14. validate_call_id
+
+   The validate_call_id (integer) parameter instructs the OSP module to
+   validate call id in the peering token. If this value is set to 1, the
+   OSP Module validates that the call id in the SIP INVITE message matches
+   the call id in the peering token. If they do not match the INVITE is
+   rejected. If this value is set to 0, the OSP Module will not validate
+   the call id in the peering token. The default value is 1.
+
+   Example 1.14. Instructing the module to validate call id
+modparam("osp","validate_call_id",1)
+
+3.15. use_rpid_for_calling_number
+
+   The use_rpid_for_calling_number (integer) parameter instructs the OSP
+   module to use the calling number in the Remote-Party-ID of the SIP
+   INVITE message. If this value is set to 1, the OSP Module uses the
+   calling number in the Remote-Party-ID header of the INVITE message when
+   a Remote-Party-ID exists. If this value is set to 0, the OSP Module
+   will use the calling number in the From header of the INVITE message.
+   The default value is 1.
+
+   Example 1.15. Instructing the module to use calling number in
+   Remote-Party-ID
+modparam("osp","use_rpid_calling_number",1)
+
+3.16. redirection_uri_format
+
+   The redirection_uri_format (integer) parameter instructs the OSP module
+   to use the different URI format in the SIP redirection message. If this
+   value is set to 0, the OSP Module uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI
+   in the SIP redirection messages. If this value is set to 1, the OSP
+   Module will use “<xxxxxxxxxx@xxx.xxx.xxx.xxx>” URI in the SIP
+   redirection messages. The default value is 0
+
+   Example 1.16. Setting the redirection URI format
+modparam("osp","redirection_uri_format",1)
+
+3.17. source_networkid_avp
+
+   The source_networkid_avp (string) parameter instructs the OSP module to
+   use the defined AVP to pass the source network ID value. The default
+   value is "$avp(s:_osp_source_networkid_)". Then the source network ID
+   can be set by "$avp(s:_osp_source_networkid_) = pseudo-variables". All
+   pseudo variables are described in
+   http://kamailio.org/dokuwiki/doku.php/pseudovariables:1.3.x.
+
+   Example 1.17. Setting the source network ID AVP
+modparam("osp","source_networkid_avp","$avp(s:snid)")
+
+4. Functions
+
+   4.1. checkospheader()
+   4.2. validateospheader()
+   4.3. requestosprouting()
+   4.4. checkosproute()
+   4.5. prepareosproute()
+   4.6. checkcallingtranslation()
+   4.7. prepareallosproute()
+   4.8. reportospusage()
+
+4.1. checkospheader()
+
+   This function checks for the existence of the OSP-Auth-Token header
+   field.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.18. checkospheader usage
+...
+if (checkospheader()) {
+  log(1,"OSP header field found.\n");
+} else {
+  log(1,"no OSP header field present\n");
+};
+...
+
+4.2. validateospheader()
+
+   This function validates an OSP-Token specified in the
+   OSP-Auth-Tokenheader field of the SIP message. If a peering token is
+   present, it will be validated locally. If no OSP header is found or the
+   header token is invalid or expired, -1 is returned; on successful
+   validation 1 is returned.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.19. validateospheader usage
+...
+if (validateospheader()) {
+  log(1,"valid OSP header found\n");
+} else {
+  log(1,"OSP header not found, invalid or expired\n");
+};
+...
+
+4.3. requestosprouting()
+
+   This function launches a query to the peering server requesting the IP
+   address of one or more destination peers serving the called party. If
+   destination peers are available, the peering server will return the IP
+   address and a peering authorization token for each destination peer.
+   The OSP-Auth-Token Header field is inserted into the SIP message and
+   the SIP uri is rewritten to the IP address of destination peer provided
+   by the peering server.
+
+   The address of the called party must be a valid E164 number, otherwise
+   this function returns -1. If the transaction was accepted by the
+   peering server, the uri is being rewritten and 1 returned, on errors
+   (peering servers are not available, authentication failed or there is
+   no route to destination or the route is blocked) -1 is returned.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.20. requestosprouting usage
+...
+if (requestosprouting()) {
+  log(1,"successfully queried OSP server, now relaying call\n");
+} else {
+  log(1,"Authorization request was rejected from OSP server\n");
+};
+...
+
+4.4. checkosproute()
+
+   This function is used to check if there is any route for the call.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.21. checkosproute usage
+...
+if (checkosproute()) {
+  log(1,"There is at least one route for the call\n");
+} else {
+  log(1,"There is not any route for the call\n");
+};
+...
+
+4.5. prepareosproute()
+
+   This function tries to prepare the INVITE to be forwarded using the
+   destination in the list returned by the peering server. If the calling
+   number is translated, a RPID value for the RPID AVP will be set. If the
+   route could not be prepared, the function returns 'FALSE' back to the
+   script, which can then decide how to handle the failure. Note, if
+   checkosproute has been called and returns 'TRUE' before calling
+   prepareosproute, prepareosproute should not return 'FALSE' because
+   checkosproute has confirmed that there is at least one route.
+
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1.22. prepareosproute usage
+...
+if (prepareosproute()) {
+  log(1,"successfully prepared the route, now relaying call\n");
+} else {
+  log(1,"could not prepare the route, there is not route\n");
+};
+...
+
+4.6. checkcallingtranslation()
+
+   This function is used to check if the calling number is translated.
+   Before calling checkcallingtranslation, prepareosproute should be
+   called. If the calling number does been translated, the original
+   Remote-Party-ID, if it exists, should be removed from the INVITE
+   message. And a new Remote-Party-ID header should be added (a RPID value
+   for the RPID AVP has been set by prepareosproute). If the calling
+   number is not translated, nothing should be done.
+
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1.23. checkcallingtranslation usage
+...
+if (checkcallingtranslation()) {
+  # Remove the Remote_Party-ID from the received message
+  # Otherwise it will be forwarded on to the next hop
+  remove_hf("Remote-Party-ID");
+
+  # Append a new Remote_Party
+  append_rpid_hf();
+}
+...
+
+4.7. prepareallosproute()
+
+   This function tries to prepare all the routes in the list returned by
+   the peering server. The message is then either forked off or redirected
+   to the destination. If unsuccessful in preparing the routes a SIP 500
+   is sent back and a trace message is logged.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.24. prepareallosproute usage
+...
+if (prepareallosproute()) {
+  log(1,"Routes are prepared, now either forking or redirecting the call\n");
+} else {
+  log(1,"Could not prepare the routes. No destination available\n");
+};
+...
+
+4.8. reportospusage()
+
+   This function should be called after receiving a BYE message. If the
+   message contains an OSP cookie, the function will forward originating
+   and/or terminating duration usage information to a peering server. The
+   function returns TRUE if the BYE includes an OSP cookie. The actual
+   usage message will be send on a different thread and will not delay BYE
+   processing. The function should be called before relaying the message.
+
+   Meaning of the parameter is as follows:
+     * "0" - Source device releases the call.
+     * "1" - Destination device releases the call.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.25. reportospusage usage
+...
+if (is_direction("downstream")) {
+  log(1,"This BYE message is from SOURCE\n");
+  if (!reportospusage("0")) {
+    log(1,"This BYE message does not include OSP usage information\n");
+  }
+} else {
+  log(1,"This BYE message is from DESTINATION\n");
+  if (!reportospusage("1")) {
+    log(1,"This BYE message does not include OSP usage information\n");
+  }
+}
+...
+
+Chapter 2. Developer Guide
+
+   The functions of the OSP modules are not used by other Kamailio
+   modules.

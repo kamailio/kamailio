@@ -40,7 +40,7 @@ $MYSQL "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
 
 $MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 
-../$BIN -w . -f $CFG &> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
 ret=$?
@@ -64,7 +64,7 @@ fi;
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
+kill_kamailio
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
 $MYSQL "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"

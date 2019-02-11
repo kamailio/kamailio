@@ -1,0 +1,514 @@
+JSONRPC-S (jsonrpc server) Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Important Remarks
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. pretty_format (int)
+              4.2. transport (int)
+              4.3. fifo_name (str)
+              4.4. fifo_mode (int)
+              4.5. fifo_group (int or str)
+              4.6. fifo_user (int or str)
+              4.7. fifo_reply_dir (str)
+              4.8. dgram_socket (str)
+              4.9. dgram_workers (str)
+              4.10. dgram_mode (int)
+              4.11. dgram_group (int) dgram_group (str)
+              4.12. dgram_user (int) dgram_group (str)
+              4.13. dgram_timeout (int)
+
+        5. Functions
+
+              5.1. jsonrpc_dispatch()
+              5.2. jsonrpc_exec(cmd)
+
+        6. JSONRPC Commands
+        7. JSONRPC Transports
+
+              7.1. JSONRPC Over HTTP
+              7.2. JSONRPC Over FIFO
+              7.3. JSONRPC Over DATAGRAM
+
+   List of Examples
+
+   1.1. Set pretty_format parameter
+   1.2. Set transport parameter
+   1.3. Set fifo_name parameter
+   1.4. Set fifo_mode parameter
+   1.5. Set fifo_group parameter
+   1.6. Set fifo_user parameter
+   1.7. Set fifo_reply_dir parameter
+   1.8. Set dgram_socket parameter
+   1.9. Set dgram_workers parameter
+   1.10. Set dgram_mode parameter
+   1.11. Set dgram_group parameter
+   1.12. Set dgram_user parameter
+   1.13. Set dgram_timeout parameter
+   1.14. jsonrpc_dispatch usage
+   1.15. jsonrpc_exec usage
+   1.16. JSONRPC Commands - Examples
+   1.17. JSONRPC Over Fifo Command
+   1.18. JSONRPC Over Fifo Command From Termina
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Important Remarks
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. pretty_format (int)
+        4.2. transport (int)
+        4.3. fifo_name (str)
+        4.4. fifo_mode (int)
+        4.5. fifo_group (int or str)
+        4.6. fifo_user (int or str)
+        4.7. fifo_reply_dir (str)
+        4.8. dgram_socket (str)
+        4.9. dgram_workers (str)
+        4.10. dgram_mode (int)
+        4.11. dgram_group (int) dgram_group (str)
+        4.12. dgram_user (int) dgram_group (str)
+        4.13. dgram_timeout (int)
+
+   5. Functions
+
+        5.1. jsonrpc_dispatch()
+        5.2. jsonrpc_exec(cmd)
+
+   6. JSONRPC Commands
+   7. JSONRPC Transports
+
+        7.1. JSONRPC Over HTTP
+        7.2. JSONRPC Over FIFO
+        7.3. JSONRPC Over DATAGRAM
+
+1. Overview
+
+   This module provides a JSON-RPC v2 server, tailored for the needs of
+   Kamailio. It implements the Kamailio RPC interface over JSON-RPC.
+
+   The specification for JSON-RPC is available at:
+   http://www.jsonrpc.org/specification.
+
+   The transports supported by the module are: FIFO file, datagram (UDP)
+   over unix socket files or network sockets, HTTP and HTTPS.
+
+   The JSONRPCS module requires the xHTTP module to handle HTTP/S
+   requests. Read the documentation of the xHTTP module for more details.
+
+2. Important Remarks
+
+     * This module implements the support for asynchronous RPC commands
+       only for HTTP and HTTPS transports.
+     * This module does not accept parameters embedded in a structure (see
+       the RPC documentation for more info about how parameters can be
+       passed to RPC).
+     * For the RPC interface implemented by Kamailio, the order of
+       parameters is important. If the parameters are given with names,
+       the names are ignored.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * xhttp - xHTTP (optional, required when http transport is wanted).
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+4. Parameters
+
+   4.1. pretty_format (int)
+   4.2. transport (int)
+   4.3. fifo_name (str)
+   4.4. fifo_mode (int)
+   4.5. fifo_group (int or str)
+   4.6. fifo_user (int or str)
+   4.7. fifo_reply_dir (str)
+   4.8. dgram_socket (str)
+   4.9. dgram_workers (str)
+   4.10. dgram_mode (int)
+   4.11. dgram_group (int) dgram_group (str)
+   4.12. dgram_user (int) dgram_group (str)
+   4.13. dgram_timeout (int)
+
+4.1. pretty_format (int)
+
+   Pretty format for JSON-RPC response document if set to 1. To disable,
+   set to 0.
+
+   Default value is '1' (on).
+
+   Example 1.1. Set pretty_format parameter
+...
+modparam("jsonrpcs", "pretty_format", 0)
+...
+
+4.2. transport (int)
+
+   Control what transports are enabled. The value can be:
+     * 0 - all transports that can be enabled. For http, the xhttp module
+       must be loaded. For FIFO, the fifo_name parameter must be set. For
+       DATAGRAM, the dgram_socket parameter must be set.
+     * 1 - only HTTP transport
+     * 2 - only FIFO transport
+     * 4 - only DATAGRAM transport
+
+   The value can be also a combination of specific transports. Make the
+   sum of the desired transports to enable them. For example, enabling
+   FIFO and DATAGRAM can be done setting transport=6.
+
+   Default value is '6' (fifo and datagram transport).
+
+   Example 1.2. Set transport parameter
+...
+modparam("jsonrpcs", "transport", 1)
+...
+
+4.3. fifo_name (str)
+
+   The name of the FIFO file to be created for listening and reading
+   external commands. If the given path is not absolute, the fifo file is
+   created relative to run_dir (global parameter).
+
+   Default value is "kamailio_rpc.fifo".
+
+   Example 1.3. Set fifo_name parameter
+...
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc.fifo")
+...
+
+4.4. fifo_mode (int)
+
+   Permission to be used for creating the listening FIFO file. It follows
+   the UNIX conventions.
+
+   Default value is 0660 (rw-rw----).
+
+   Example 1.4. Set fifo_mode parameter
+...
+modparam("jsonrpcs", "fifo_mode", 0600)
+...
+
+4.5. fifo_group (int or str)
+
+   System Group to be used for creating the listening FIFO file.
+
+   Default value is the inherited one (process group).
+
+   Example 1.5. Set fifo_group parameter
+...
+modparam("jsonrpcs", "fifo_group", 0)
+modparam("jsonrpcs", "fifo_group", "root")
+...
+
+4.6. fifo_user (int or str)
+
+   System User to be used for creating the listening FIFO file.
+
+   Default value is the inherited one (process user).
+
+   Example 1.6. Set fifo_user parameter
+...
+modparam("jsonrpcs", "fifo_user", 0)
+modparam("jsonrpcs", "fifo_user", "root")
+...
+
+4.7. fifo_reply_dir (str)
+
+   Directory to be used for creating the reply FIFO files.
+
+   Default value is “/tmp/”
+
+   Example 1.7. Set fifo_reply_dir parameter
+...
+modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
+...
+
+4.8. dgram_socket (str)
+
+   The name of a Unix socket file or an IP address. The Unix datagram or
+   UDP socket will be created using this parameter in order to read the
+   external commands. Both IPv4 and IPv6 are supported. If the given path
+   for Unix socket is not absolute, then it is created relative to run_dir
+   (global parameter).
+
+   Default value is "kamailio_rpc.sock".
+
+   Example 1.8. Set dgram_socket parameter
+...
+modparam("jsonrpcs", "dgram_socket", "/tmp/kamailio_rpc.sock")
+...
+modparam("jsonrpcs", "dgram_socket", "udp:1.2.3.4:8090")
+...
+
+4.9. dgram_workers (str)
+
+   The number of worker processes to be created. Each worker process will
+   be a datagram server.
+
+   Default value is 1.
+
+   Example 1.9. Set dgram_workers parameter
+...
+modparam("jsonrpcs", "dgram_workers", 4)
+...
+
+4.10. dgram_mode (int)
+
+   Permission to be used for creating the listening UNIX datagram socket.
+   Not necessary for a UDP socket. It follows the UNIX conventions.
+
+   Default value is 0660 (rw-rw----).
+
+   Example 1.10. Set dgram_mode parameter
+...
+modparam("jsonrpcs", "dgram_mode", 0600)
+...
+
+4.11. dgram_group (int) dgram_group (str)
+
+   Group to be used for creating the listening UNIX socket.
+
+   Default value is the inherited one.
+
+   Example 1.11. Set dgram_group parameter
+...
+modparam("jsonrpcs", "dgram_group", 0)
+modparam("jsonrpcs", "dgram_group", "root")
+...
+
+4.12. dgram_user (int) dgram_group (str)
+
+   User to be used for creating the listening UNIX socket.
+
+   Default value is the inherited one.
+
+   Example 1.12. Set dgram_user parameter
+...
+modparam("jsonrpcs", "dgram_user", 0)
+modparam("jsonrpcs", "dgram_user", "root")
+...
+
+4.13. dgram_timeout (int)
+
+   The reply will expire after trying to sent it for socket_timeout
+   milliseconds.
+
+   Default value is 2000.
+
+   Example 1.13. Set dgram_timeout parameter
+...
+modparam("jsonrpcs", "dgram_timeout", 2000)
+...
+
+5. Functions
+
+   5.1. jsonrpc_dispatch()
+   5.2. jsonrpc_exec(cmd)
+
+5.1.  jsonrpc_dispatch()
+
+   Handle the JSONRPC request and generate a response.
+
+   Example 1.14. jsonrpc_dispatch usage
+...
+#!KAMAILIO
+
+memdbg=5
+memlog=5
+
+debug=3
+log_stderror=yes
+
+fork=yes
+children=2
+
+tcp_accept_no_cl=yes
+
+loadmodule "sl.so"
+loadmodule "pv.so"
+loadmodule "xhttp.so"
+loadmodule "jsonrpcs.so"
+
+modparam("jsonrpcs", "transport", 1)
+
+request_route {
+        send_reply("404", "not found");
+        exit;
+}
+
+event_route[xhttp:request] {
+    if(src_ip!=127.0.0.1) {
+        xhttp_reply("403", "Forbidden", "text/html",
+            "<html><body>Not allowed from $si</body></html>");
+        exit;
+        }
+        if ($hu =~ "^/RPC") {
+                jsonrpc_dispatch();
+        } else {
+        xhttp_reply("200", "OK", "text/html",
+            "<html><body>Wrong URL $hu</body></html>");
+    }
+    return;
+}
+...
+
+5.2.  jsonrpc_exec(cmd)
+
+   Execute a JSON-RPC command given as a parameter.
+
+   The parameter has to be a valid full JSON-RPC document. It can be a
+   dynamic string with variables. The result of the command can be
+   accessed via $jsonrpl(key) pseudo variables.
+
+   Example 1.15. jsonrpc_exec usage
+...
+jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
+xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
+...
+
+6. JSONRPC Commands
+
+   Here are some examples of RPC commands with the equivalent of running
+   them with kamcmd and the corresponding JSON document for them. It is
+   important to be aware that the name of the parameters doesn't matter,
+   only the order of the values must be the one expected by Kamailio RPC
+   command.
+
+   Example 1.16. JSONRPC Commands - Examples
+...
+# kamcmd core.psx
+
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "id": 1
+}
+...
+## - prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
+# kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": ["ip", 2, "sip:127.0.0.1:5080"],
+  "id": 1
+}
+
+## - or:
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": {
+    "state": "ip",
+    "grpup": 2,
+    "address": "sip:127.0.0.1:5080"
+  },
+  "id": 1
+}
+...
+
+7. JSONRPC Transports
+
+   7.1. JSONRPC Over HTTP
+   7.2. JSONRPC Over FIFO
+   7.3. JSONRPC Over DATAGRAM
+
+   JSONRPC specifications do not enforce a specific transport to carry the
+   JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
+   supported by Kamailio. In addition, Kamailio supports receiving JSON
+   documents via a local FIFO file.
+
+7.1. JSONRPC Over HTTP
+
+   It requires that XHTTP module is loaded. HTTPS can be used if you
+   enable TLS for Kamailio. The JSONRPC requests have to be sent to the
+   TCP or TLS ports of Kamailio.
+
+   The 'transport' parameter has to be 0 or 1.
+
+   The format of the JSON document must follow the JSONRPC specifications.
+
+7.2. JSONRPC Over FIFO
+
+   This module can retrieve JSONRPC requests via a local FIFO file. To
+   enable this feature, 'fifo_name' parameter must be set and 'transport'
+   parameter has to be 0 or 2.
+
+   The format of the JSON document must follow the JSONRPC specifications
+   plus an additional field named 'reply_name'. The value for this field
+   must be the name of the FIFO file were to write the JSONRPC response.
+   The reply FIFO file is created in the folder specified by
+   'fifo_reply_dir'. Next is an example showing a JSONRPC command to be
+   sent via FIFO transport.
+
+   Example 1.17. JSONRPC Over Fifo Command
+...
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "reply_name": "kamailio_jsonrpc_reply_fifo",
+  "id": 1
+}
+...
+
+   Next is an example of how to test it from a terminal, assuming that the
+   parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
+
+   Example 1.18. JSONRPC Over Fifo Command From Termina
+...
+mkfifo /tmp/kamailio_jsonrpc_reply_fifo
+cat /tmp/kamailio_jsonrpc_reply_fifo &
+echo '{"jsonrpc": "2.0", "method": "core.psx", \
+          "reply_name": "kamailio_jsonrpc_reply_fifo", "id": 1}' \
+     > /tmp/kamailio_jsonrpc_fifo
+rm /tmp/kamailio_jsonrpc_reply_fifo
+
+7.3. JSONRPC Over DATAGRAM
+
+   This module can retrieve JSONRPC requests via a UNIX socket file or UDP
+   IPv4/IPv6 socket. To enable this feature, 'dgram_socket' parameter must
+   be set and 'transport' parameter has to be 0 or 4.
+
+   The 'transport' parameter has to be 0 or 4.
+
+   The format of the JSON document must follow the JSONRPC specifications.

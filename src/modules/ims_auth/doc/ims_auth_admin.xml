@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Auth_db Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module contains all authentication related functions for an IMS
+    environment. The module does not depend on the base Kamailio auth modules
+    as other auth modules do. Instead ims_auth is dependent on the CDP (C
+    Diameter Peer) modules for communicating with HSS as specified in 3GPP
+    specs.</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>TM - Transaction Manager</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP - C Diameter Peer</para>
+        </listitem>
+
+        <listitem>
+          <para>CDP_AVP - CDP AVP Applications</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the internal IMS library.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>name</varname> (string)</title>
+
+      <para>This is the name of the SCSCF as identified in communication with
+      the HSS (Server-Name AVP of MAR).</para>
+
+      <para><emphasis> Default value is 'sip:scscf.ims.smilecoms.com:6060'.
+      </emphasis></para>
+
+      <example>
+        <title><varname>name</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "name", "sip:scscf3.ims.smilecoms.com:6060")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>auth_data_hash_size</varname> (integer)</title>
+
+      <para>This is the size of the hash table used to store auth vectors
+      (AV). Default value is fine for most people. Use the parameter if you
+      really need to change it.</para>
+
+      <para>Default value is <quote>1024</quote>.</para>
+
+      <example>
+        <title><varname>auth_data_hash_size</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "auth_data_hash_size", 1024)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>auth_vector_timeout</varname> (integer)</title>
+
+      <para>This is the time, in seconds, that a SENTauth vector is valid for.
+      If there is no response ...</para>
+
+      <para>Default value is <quote>60</quote>.</para>
+
+      <example>
+        <title><varname>auth_vector_timeout</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "auth_vector_timeout", "domain")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>auth_data_timeout</varname> (int)</title>
+
+      <para>Time, in seconds, an used auth vector is valid for.</para>
+
+      <para>Default value is <quote>60</quote>.</para>
+
+      <example>
+        <title><varname>password_column</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "auth_data_timeout", 60)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>av_request_at_once</varname> (integer)</title>
+
+      <para>How many auth vectors to request in MAR.</para>
+
+      <para>Default value is 1</para>
+
+      <example>
+        <title><varname>av_request_at_once</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "av_request_at_once", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>av_request_at_sync</varname> (integer)</title>
+
+      <para>How many auth vectors to request at sync. Default value is
+      1.</para>
+
+      <example>
+        <title><varname>av_request_at_sync</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "av_request_at_sync", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>registration_default_algorithm</varname>
+      (string)</title>
+
+      <para>The default authentication algorithm to use for registration if
+      one is not specified.</para>
+
+      <para>Options are: <itemizedlist>
+          <listitem>
+            <para><emphasis>AKAV1-MD5</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis>AKAV2-MD5</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis>MD5</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para>HSS-Selected - HSS will decide on auth algorithm</para>
+          </listitem>
+        </itemizedlist>Default value is <quote>AKAv1-MD5</quote>.</para>
+
+      <example>
+        <title><varname>registration_default_algorithm</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "registration_default_algorithm", "HSS-Selected")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>registration_qop</varname> (string)</title>
+
+      <para>The QOP options to put in the authorisation challenges.</para>
+
+      <para>Default value of this parameter is
+      <quote>auth,auth-int</quote>.</para>
+
+      <example>
+        <title><varname>registration_qop</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "registration_qop", "auth-int")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_forced_peer</varname> (string)</title>
+
+      <para>FQDN of Diameter Peer (HSS) to use for communication (MAR). If you
+      use this, the routing defined in your diameter xml configuration file
+      (CDP) will be ignored and as a result you will lose the benefits of load
+      balancing and failover. </para>
+
+      <para>Default value is <quote/>.</para>
+
+      <example>
+        <title><varname>cxdx_forced_peer</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_dest_realm</varname> (string)</title>
+
+      <para>Destination realm to be used in Diameter messages to HSS</para>
+
+      <para>Default value is <quote>ims.smilecoms.com</quote>.</para>
+
+      <example>
+        <title><varname>cxdx_dest_realm</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_dest_host</varname> (string)</title>
+
+      <para>Destination Host to be used in Diameter-MAR messages to HSS</para>
+
+      <para>Default value is <quote></quote> (not set).</para>
+
+      <example>
+        <title><varname>cxdx_dest_host</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "cxdx_dest_host", "hss.ims.ng-voice.com")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>max_nonce_reuse</varname> (integer)</title>
+
+      <para>Defines, how many times a nonce can be reused (provided nc is
+      incremented)</para>
+
+      <para>Default value is <quote>0</quote> (don't allow reuse).</para>
+
+      <example>
+        <title><varname>max_nonce_reuse</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "max_nonce_reuse", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>add_authinfo_hdr</varname> (integer)</title>
+
+      <para>Should an Authentication-Info header be added on 200 OK
+      responses?</para>
+
+      <para>Default value is <quote>1</quote> (add Authentication-Info
+      header).</para>
+
+      <example>
+        <title><varname>add_authinfo_hdr</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "add_authinfo_hdr", 0)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ignore_failed_auth</varname> (integer)</title>
+
+      <para>Ignore invalid passwords (only IMPI/IMPU is checked).</para>
+
+      <para>It should be used only for testing, e.g. load balancing with SIPP
+      where we don't want to worry about auth.</para>
+
+      <para>Default value is <quote>0</quote> (don't ignore the failed
+      authentication).</para>
+
+      <example>
+        <title><varname>ignore_failed_auth</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "ignore_failed_auth", 1)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>av_check_only_impu</varname> (integer)</title>
+
+      <para>When storing the authentication vectors for an account, use either
+      IMPI/IMPU (=0, default) or IMPU (=1).</para>
+
+      <para>In case the IMPI is different from the IMPU, this option needs to
+      be enabled to allow registration from classic "SIP-clients", such as
+      Snom phones and others, as they do not send an authentication username
+      in the first REGISTER.</para>
+
+      <para>Default value is <quote>0</quote> (store authentication vectors
+      based on IMPI/IMPU).</para>
+
+      <example>
+        <title><varname>av_check_only_impu</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "av_check_only_impu", 1)
+...
+</programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function moreinfo="none">ims_www_authorize(realm,
+      table)</function></title>
+
+      <para>The function verifies credentials according to <ulink
+      url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the
+      credentials are verified successfully then the function will succeed and
+      mark the credentials as authorized (marked credentials can be later used
+      by some other functions). If the function was unable to verify the
+      credentials for some reason then it will fail and the script should call
+      <function moreinfo="none">www_challenge</function> which will challenge
+      the user again.</para>
+
+      <para>Negative codes may be interpreted as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>-1 (generic error)</emphasis> - some generic error
+          occurred and no reply was sent out;</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-2 (invalid password)</emphasis> - valid user, but
+          wrong password;</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-3 (invalid user)</emphasis> - authentication user
+          does not exist.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>realm</emphasis> - Realm is a opaque string that the
+          user agent should present to the user so he can decide what username
+          and password to use. Usually this is domain of the host the server
+          is running on.</para>
+
+          <para>It must not be empty string <quote/>. In case of REGISTER
+          requests To header field domain (e.g., variable $td) can be used
+          (because this header field represents the user being registered),
+          for all other messages From header field domain can be used (e.g.,
+          variable $fd).</para>
+
+          <para>The string may contain pseudo variables.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>table</emphasis> - Table to be used to lookup
+          usernames and passwords (usually subscribers table).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function moreinfo="none">www_authorize</function>
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+if (!www_authorize("kamailio.org", "subscriber")) {
+	www_challenge(""REG_MAR_REPLY"", "kamailio.org", "1");
+};         
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">ims_www_authenticate(realm)</function></title>
+
+      <para>It is the same function as www_authenticate(realm, table). This
+      name is kept for backward compatibility, since it was named this way
+      first time by it actually does user authentication.</para>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ims_www_challenge(route_block,
+      realm)</function></title>
+
+      <para>Name alias: proxy_authorize(realm, table)</para>
+
+      <para>The function verifies credentials according to <ulink
+      url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the
+      credentials are verified successfully then the function will succeed and
+      mark the credentials as authorized (marked credentials can be later used
+      by some other functions). If the function was unable to verify the
+      credentials for some reason then it will fail and the script should call
+      <function moreinfo="none">proxy_challenge</function> which will
+      challenge the user again.</para>
+
+      <para>Negative return codes have the same meaning as for
+      www_authenticate().</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Route block to resume after async MAR Diameter reply.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>realm</emphasis> - Realm is a opaque string that the
+          user agent should present to the user so he can decide what username
+          and password to use. Usually this is domain of the host the server
+          is running on.</para>
+
+          <para>It must not be empty string <quote/>. Apart of a static
+          string, typical value is From header field domain (e.g., variable
+          $fd).</para>
+
+          <para>If an empty string <quote/> is used then the server will
+          generate it from the request. From header field domain will be used
+          as realm.</para>
+
+          <para>The string may contain pseudo variables.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title>ims_www_challenge usage</title>
+
+        <programlisting format="linespecific">
+...
+if (!proxy_authorize("$fd", "subscriber)) {
+	proxy_challenge(""REG_MAR_REPLY","$fd");  # Realm will be autogenerated
+};
+...
+            ...
+route[REG_MAR_REPLY]
+{
+     #this is async so to know status we have to check the reply avp
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");   
+
+     switch ($avp(s:maa_return_code)){
+             case 1: #success
+                     xlog("L_DBG", "MAR success - 401/407 response sent from module\n");
+                     break;
+             case -1: #failure
+                     xlog("L_ERR", "MAR failure - error response sent from module\n");
+                     break;
+             case -2: #error
+                     xlog("L_ERR", "MAR error - sending error response now\n");
+                     t_reply("500", "MAR failed");
+                     break;
+             default:
+                     xlog("L_ERR", "Unknown return code from MAR, value is [$avp(s:uaa_return_code)]\n");
+                     t_reply("500", "Unknown response code from MAR");
+                     break;
+     }
+     exit;           
+}               
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ims_www_challenge(route_block, realm,
+      algorithm)</function></title>
+
+      <para>Same as 4.3 except here there is the additional option to specify
+      the authorisation algorithm</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>algorithm</emphasis> - The algorithm to be used when
+          challenging the client. Can be AKAv1-MD5, AKAv2-MD5, MD5, or
+          HSS-Selected. If left as an empty string, the default algorithm will
+          be chosen according to the parameter registration_default_algorithm
+          (see section 3.7)</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title>ims_www_challenge usage</title>
+
+        <programlisting format="linespecific">
+...
+ if (!ims_www_authenticate(NETWORKNAME)) {
+                #user has not been authenticated. Lets send a challenge via 401 Unauthorized
+                if ($? == -2) {
+                        t_reply("403", "Authentication Failed");
+                        exit;
+                } else if ($? == -3) {
+                        t_reply("400", "Bad Request");
+                        exit;
+                } else if ($? == -9) {
+                        xlog("L_DBG", "Authentication re-sync requested\n");
+                        ims_www_resync_auth("REG_RESYNC_REPLY", "$td");
+                        exit;
+                } else {
+                        xlog("L_DBG","About to challenge! auth_ims\n"); 
+                        ims_www_challenge("REG_MAR_REPLY", "$td", "MD5");
+                        exit;
+                }
+        }
+
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ims_proxy_challenge(route_block, realm,
+      table)</function></title>
+
+      <para>Name alias: proxy_authorize(realm, table)</para>
+
+      <para>The function verifies credentials according to <ulink
+      url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the
+      credentials are verified successfully then the function will succeed and
+      mark the credentials as authorized (marked credentials can be later used
+      by some other functions). If the function was unable to verify the
+      credentials for some reason then it will fail and the script should call
+      <function moreinfo="none">proxy_challenge</function> which will
+      challenge the user again.</para>
+
+      <para>Negative return codes have the same meaning as for
+      www_authenticate().</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Route block to resume after async MAR Diameter reply.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>realm</emphasis> - Realm is a opaque string that the
+          user agent should present to the user so he can decide what username
+          and password to use. Usually this is domain of the host the server
+          is running on.</para>
+
+          <para>It must not be empty string <quote/>. Apart of a static
+          string, typical value is From header field domain (e.g., variable
+          $fd).</para>
+
+          <para>If an empty string <quote/> is used then the server will
+          generate it from the request. From header field domain will be used
+          as realm.</para>
+
+          <para>The string may contain pseudo variables.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>table</emphasis> - Table to be used to lookup
+          usernames and passwords (usually subscribers table).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title>proxy_authorize usage</title>
+
+        <programlisting format="linespecific">
+...
+if (!proxy_authorize("$fd", "subscriber)) {
+	proxy_challenge("REG_MAR_REPLY","$fd", "1");  # Realm will be autogenerated
+};
+...
+route[REG_MAR_REPLY]
+{
+     #this is async so to know status we have to check the reply avp
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");   
+
+     switch ($avp(s:maa_return_code)){
+             case 1: #success
+                     xlog("L_DBG", "MAR success - 401/407 response sent from module\n");
+                     break;
+             case -1: #failure
+                     xlog("L_ERR", "MAR failure - error response sent from module\n");
+                     break;
+             case -2: #error
+                     xlog("L_ERR", "MAR error - sending error response now\n");
+                     t_reply("500", "MAR failed");
+                     break;
+             default:
+                     xlog("L_ERR", "Unknown return code from MAR, value is [$avp(s:uaa_return_code)]\n");
+                     t_reply("500", "Unknown response code from MAR");
+                     break;
+     }
+     exit;           
+}            
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ims_proxy_authenticate(realm,
+      table)</function></title>
+
+      <para>It is same function as proxy_authenticate(realm, table). This name
+      is kept for backward compatibility, since it was named this way first
+      time but it actually does user authentication.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Statistics</title>
+
+    <section>
+      <title>MAR Timeouts (mar_timeouts)</title>
+
+      <para>The number of timeouts on sending a MAR. i.e. no response to
+      MAR.</para>
+    </section>
+
+    <section>
+      <title>Average MAR Response Time (mar_avg_response_time)</title>
+
+      <para>The average response time in milliseconds for MAR-MAA
+      transaction.</para>
+    </section>
+  </section>
+</chapter>

@@ -1,0 +1,197 @@
+ACC_DIAMETER Module
+
+Jiri Kuthan
+
+   iptel.org
+   <jiri@iptel.org>
+
+Ramona-Elena Modroiu
+
+   rosdev.ro
+   <ramona@rosdev.ro>
+
+   Copyright © 2002, 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. diameter_flag (integer)
+              3.2. diameter_missed_flag (integer)
+              3.3. diameter_client_host (string)
+              3.4. diameter_client_port (int)
+              3.5. diameter_extra (string)
+
+        4. Functions
+
+              4.1. acc_diam_request(comment)
+
+   List of Examples
+
+   1.1. diameter_flag example
+   1.2. diameter_missed_flag example
+   1.3. diameter_client_host example
+   1.4. diameter_client_host example
+   1.5. diameter_extra example
+   1.6. acc_diam_request usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. diameter_flag (integer)
+        3.2. diameter_missed_flag (integer)
+        3.3. diameter_client_host (string)
+        3.4. diameter_client_port (int)
+        3.5. diameter_extra (string)
+
+   4. Functions
+
+        4.1. acc_diam_request(comment)
+
+1. Overview
+
+   ACC_DIAMETER module is used to account transactions information to a
+   DIAMETER server. Read also the documentation for 'acc' module.
+
+   NOTE: This was developed based on some very early version of the
+   Diameter protocol, and has not been really tested for many years. It is
+   very likely to be deleted in upcoming releases. If you want to revive
+   this module, you are welcome, be sure you do proper testing before
+   using in production -- it also may need to be updated first to match
+   the exported API by 'acc' module.
+
+   NOTE: diameter support was developed for DISC (DIameter Server Client
+   project at http://developer.berlios.de/projects/disc/). This project
+   seems to be no longer maintained and DIAMETER specifications were
+   updated in the meantime. Thus, the DIAMETER part in the module is
+   obsolete and needs rework to be usable with opendiameter or other
+   DIAMETER servers.
+
+   IMPORTANT: If you need Diameter accounting, consider to use the
+   ims_charging module, it is up to date and used in IMS/VoLTE
+   deployments.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * acc -- accounting module
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. diameter_flag (integer)
+   3.2. diameter_missed_flag (integer)
+   3.3. diameter_client_host (string)
+   3.4. diameter_client_port (int)
+   3.5. diameter_extra (string)
+
+3.1. diameter_flag (integer)
+
+   Request flag which needs to be set to account a transaction -- DIAMETER
+   specific.
+
+   Default value is not-set (no flag).
+
+   Example 1.1. diameter_flag example
+...
+modparam("acc_diameter", "diameter_flag", 2)
+...
+
+3.2. diameter_missed_flag (integer)
+
+   Request flag which needs to be set to account missed calls -- DIAMETER
+   specific.
+
+   Default value is not-set (no flag).
+
+   Example 1.2. diameter_missed_flag example
+...
+modparam("acc_diameter", "diameter_missed_flag", 3)
+...
+
+3.3. diameter_client_host (string)
+
+   Hostname of the machine where the DIAMETER Client is running --
+   DIAMETER specific.
+
+   Default value is “localhost”.
+
+   Example 1.3. diameter_client_host example
+...
+modparam("acc_diameter", "diameter_client_host", "3a_server.net")
+...
+
+3.4. diameter_client_port (int)
+
+   Port number where the Diameter Client is listening -- DIAMETER
+   specific.
+
+   Default value is 3000.
+
+   Example 1.4. diameter_client_host example
+...
+modparam("acc_diameter", "diameter_client_port", 3000)
+...
+
+3.5. diameter_extra (string)
+
+   Extra values to be logged via DIAMETER - DIAMETER specific. See section
+   the section about extra accounting in 'acc' module for more details.
+
+   Default value is NULL.
+
+   Example 1.5. diameter_extra example
+...
+modparam("acc_diameter", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:
+email)")
+...
+
+4. Functions
+
+   4.1. acc_diam_request(comment)
+
+4.1.  acc_diam_request(comment)
+
+   Like acc_log_request, acc_diam_request reports on a request. It reports
+   to the configured Diameter server.
+
+   Meaning of the parameters is as follows:
+     * comment - Comment to be appended. The string can contain any number
+       of pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. acc_diam_request usage
+...
+acc_diam_request("Some comment");
+acc_diam_request("$var(code) Error: $avp(reason)");
+...

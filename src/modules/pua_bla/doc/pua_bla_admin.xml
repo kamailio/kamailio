@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		 The pua_bla module enables Bridged Line Appearances support according to 
+		 the specifications in draft-anil-sipping-bla-03.txt.
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>usrloc</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>default_domain</varname>(str)</title>
+		<para>
+		The default domain for the registered users to be used when
+		constructing the uri for the registrar callback. 
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "default_domain", "kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>header_name</varname>(str)</title>
+		<para>
+		The name of the header to be added to Publish requests.
+		It will contain the uri of the user agent that sent the
+		Notify that is transformed into Publish. It stops sending 
+		a Notification with the same information to the sender.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "header_name", "Sender")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>outbound_proxy</varname>(str)</title>
+		<para>
+		The outbound_proxy uri to be used when sending Subscribe requests.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "outbound_proxy", "sip:proxy@kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>server_address</varname>(str)</title>
+		<para>
+		The IP address of the server.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
+...
+</programlisting>
+		</example>
+	</section>
+
+</section>	
+	
+	
+<section>
+	<title>Functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">bla_set_flag</function>
+				</title>
+			<para>
+				The function is used to mark REGISTER requests made to a BLA AOR.
+				The modules subscribes to the registered contacts for dialog;sla 
+				event.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>bla_set_flag</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("REGISTER") &amp;&amp; to_uri=~"bla_aor@kamailio.org") 
+	bla_set_flag();		
+...
+</programlisting>
+		</example>
+
+		</section>
+	<section>
+				<title>
+				<function moreinfo="none">bla_handle_notify</function>
+				</title>
+			<para>
+				The function handles Notify requests sent from phones on the
+				same BLA to the server. The message is transformed in Publish 
+				request and passed to presence module for further handling.
+				in case of a successful processing a 2xx reply should be sent.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>bla_handle_notify</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("NOTIFY") &amp;&amp; to_uri=~"bla_aor@kamailio.org") 
+{
+		if( bla_handle_notify() ) 
+			t_reply("200", "OK");
+}	
+...
+</programlisting>
+		</example>
+
+		</section>
+</section>		
+
+</chapter>
+

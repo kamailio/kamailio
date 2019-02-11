@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides on-server speed dial facilities. A user can store
+		records consisting of pairs short numbers (2 digits) and SIP addresses
+		into a table of &kamailio;. Then it can dial the two digits whenever it
+		wants to call the SIP address associated with them.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database module (mysql, dbtext, ...)</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		The URL of database where the table containing speed dial records.
+		</para>
+		<para>
+		<emphasis>
+			Default value is DEFAULT_RODB_URL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "db_url", "&defaultdb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>user_column</varname> (string)</title>
+		<para>
+		The name of column storing the user name of the owner of the speed dial
+		record.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "user_column", "userid")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
+		The name of column storing the domain of the owner of the speed dial
+		record.
+		</para>
+		<para>
+		<emphasis>
+			Default value is  <quote>domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "domain_column", "userdomain")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>sd_user_column</varname> (string)</title>
+		<para>
+		The name of the column storing the user part of the short dial address.
+		</para>
+		<para>
+		<emphasis>
+			Default value is  <quote>sd_username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sd_user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "sd_user_column", "short_user")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>sd_domain_column</varname> (string)</title>
+		<para>
+		The name of the column storing the domain of the short dial address.
+		</para>
+		<para>
+		<emphasis>
+			Default value is  <quote>sd_domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sd_domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "sd_domain_column", "short_domain")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>new_uri_column</varname> (string)</title>
+		<para>
+		The name of the column containing the URI that will be use to replace
+		the short dial URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>new_uri</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>new_uri_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "new_uri_column", "real_uri")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>domain_prefix</varname> (string)</title>
+		<para>
+		If the domain of the owner (From URI) starts with the value of this parameter, then
+		it is stripped before performing the lookup of the short number.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "domain_prefix", "tel.")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
+		The parameter specifies whether or not to use the domain when searching a
+		speed dial record (0 - no domain, 1 - use domain from From URI,
+		2 - use both domains, from From URI and from request URI).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("speeddial", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sd_lookup(table [, owner])</function>
+		</title>
+		<para>
+		The function lookups the short dial number from R-URI in 'table' and replaces the R-URI with associated address.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>table</emphasis> - The name of the table storing the
+			speed dial records.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>owner</emphasis> - The SIP URI of the owner of
+			short dialing codes. If not present, URI of From header is used.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>sd_lookup</function> usage</title>
+		<programlisting format="linespecific">
+...
+# 'speed_dial' is the default table name created by kamailio db script
+if(uri=~"sip:[0-9]{2}@.*")
+	sd_lookup("speed_dial");
+# use auth username
+if(uri=~"sip:[0-9]{2}@.*")
+	sd_lookup("speed_dial", "sip:$au@$fd");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Installation and Running</title>
+		<section>
+		<title>&kamailio; config file</title>
+		<para>
+		Next picture displays a sample usage of speeddial.
+		</para>
+		<example>
+		<title>&kamailio; config script - sample speeddial usage</title>
+		<programlisting format="linespecific">
+...
+<xi:include href="speeddial.cfg" parse="text"/>
+...
+		</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

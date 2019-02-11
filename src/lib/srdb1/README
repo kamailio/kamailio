@@ -1,0 +1,9 @@
+This directory contains the generic database support interface - db1. The interface 
+should be used by all modules willing to communicate with a database. Kamailio
+can then switch from one database to another simply by loading a different 
+database support module. For documentation please have a look to doxygen
+comments in the respective header files.
+
+The directory schema contains the XML structure for the different databases
+definitions. Please use this structure, don't add SQL files for table
+definitions directly.

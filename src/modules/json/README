@@ -1,0 +1,125 @@
+JSON Module
+
+Matthew Williams
+
+   <matthew@flowroute.com>
+
+Edited by
+
+Matthew Williams
+
+   <matthew@flowroute.com>
+
+   Copyright © 2011 Flowroute LLC (flowroute.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. json_get_field(json_string, field_name, destination)
+              3.2. json_get_string(json_string, field_name, destination)
+
+        4. Transformations
+
+   List of Examples
+
+   1.1. json_get_field usage
+   1.2. json_get_string usage
+   1.3. json.parse usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. json_get_field(json_string, field_name, destination)
+        3.2. json_get_string(json_string, field_name, destination)
+
+   4. Transformations
+
+1. Overview
+
+   This is a simple module allowing to retrieve values from a JSON string.
+
+   For more complex operations with JSON documents, see the JANSSON
+   module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libjson (https://github.com/json-c/json-c/wiki)
+
+3. Functions
+
+   3.1. json_get_field(json_string, field_name, destination)
+   3.2. json_get_string(json_string, field_name, destination)
+
+3.1.  json_get_field(json_string, field_name, destination)
+
+   Copy field 'field_name' from json object 'json_string' and store it in
+   pvar 'destination'.
+
+   Note that the result is the string representation of that JSON filed.
+   For example, if you want to retrieve a field that has a string value,
+   then the result is the value enclosed in quotes. If the field value is
+   a structure, then the result is the string-formatted representation of
+   that structure.
+
+   Example 1.1. json_get_field usage
+...
+json_get_field("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+
+3.2.  json_get_string(json_string, field_name, destination)
+
+   Copy field 'field_name' from json object 'json_string' and store it in
+   pvar 'destination'.
+
+   Example 1.2. json_get_string usage
+...
+json_get_string("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+
+4. Transformations
+
+   You can use the transformation to extract values from the json
+   structured pseudo-variables
+     * json
+       Example 1.3.  json.parse usage
+        ...
+        # extract value of "Custom-Data" from $rb pseudo-variable and set it to
+$var(Custom-Data)
+        $var(Custom-Data) = $(rb{json.parse,Custom-Data});
+        if($var(Custom-Data) != $null) {        xlog("L_INFO", "$ci|log|custom d
+ata: $var(Custom-Data) from Request: $rb");
+        }
+        ...

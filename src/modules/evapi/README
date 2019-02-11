@@ -1,0 +1,401 @@
+EVAPI Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2014 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. workers (int)
+              3.2. bind_addr (str)
+              3.3. netstring_format (int)
+              3.4. event_callback (str)
+              3.5. max_clients (int)
+
+        4. Functions
+
+              4.1. evapi_relay(evdata)
+              4.2. evapi_async_relay(evdata)
+              4.3. evapi_multicast(evdata, etag)
+              4.4. evapi_async_multicast(evdata, etag)
+              4.5. evapi_unicast(evdata, etag)
+              4.6. evapi_async_unicast(evdata, etag)
+              4.7. evapi_close()
+              4.8. evapi_set_tag(tname)
+
+        5. Event routes
+
+              5.1. evapi:connection-new
+              5.2. evapi:connection-closed
+              5.3. evapi:message-received
+
+        6. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set workers parameter
+   1.2. Set bind_addr parameter
+   1.3. Set netstring_format parameter
+   1.4. Set event_callback parameter
+   1.5. Set max_clients parameter
+   1.6. evapi_relay usage
+   1.7. TCP message
+   1.8. evapi_async_relay usage
+   1.9. evapi_multicast usage
+   1.10. evapi_async_multicast usage
+   1.11. evapi_unicast usage
+   1.12. evapi_async_unicast usage
+   1.13. evapi_close usage
+   1.14. evapi_set_tag usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. workers (int)
+        3.2. bind_addr (str)
+        3.3. netstring_format (int)
+        3.4. event_callback (str)
+        3.5. max_clients (int)
+
+   4. Functions
+
+        4.1. evapi_relay(evdata)
+        4.2. evapi_async_relay(evdata)
+        4.3. evapi_multicast(evdata, etag)
+        4.4. evapi_async_multicast(evdata, etag)
+        4.5. evapi_unicast(evdata, etag)
+        4.6. evapi_async_unicast(evdata, etag)
+        4.7. evapi_close()
+        4.8. evapi_set_tag(tname)
+
+   5. Event routes
+
+        5.1. evapi:connection-new
+        5.2. evapi:connection-closed
+        5.3. evapi:message-received
+
+   6. Exported pseudo-variables
+
+1. Overview
+
+   The EVAPI module can be used to create an event message flow from
+   Kamailio to any application that can connect to a TCP socket. The
+   remote application can also issue messages received by Kamailio.
+
+   There is no protocol definition, it is all up to the author of the
+   routing script. Events can be generated for any event in Kamailio. For
+   3rd party transaction control, a transaction can be automatically
+   suspended when sending the event, to be resumed at a later point, maybe
+   triggered by an incoming message on the event socket.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - (optional) needed only by evapi_async_relay()
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libev - http://software.schmorp.de/pkg/libev
+
+3. Parameters
+
+   3.1. workers (int)
+   3.2. bind_addr (str)
+   3.3. netstring_format (int)
+   3.4. event_callback (str)
+   3.5. max_clients (int)
+
+3.1. workers (int)
+
+   Number of worker processes to be started to handle incoming messages
+   from remote applications.
+
+   Default value is 1.
+
+   Example 1.1. Set workers parameter
+...
+modparam("evapi", "workers", 2)
+...
+
+3.2. bind_addr (str)
+
+   Local IP and port to listen on for incoming TCP connections.
+
+   Default value is "127.0.0.1:8448".
+
+   Example 1.2. Set bind_addr parameter
+...
+modparam("evapi", "bind_addr", "1.2.3.4:8228")
+...
+
+3.3. netstring_format (int)
+
+   Control if messages on the socket (to and from clients) are
+   encapsulated in netstring format.
+
+   Default value is 1 (netstring format).
+
+   Example 1.3. Set netstring_format parameter
+...
+modparam("evapi", "netstring_format", 0)
+...
+
+3.4. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values are: 'evapi:connection-new', 'evapi:connection-closed',
+   'evapi:message-received'.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.4. Set event_callback parameter
+...
+modparam("evapi", "event_callback", "ksr_evapi_event")
+...
+-- event callback function implemented in Lua
+function ksr_evapi_event(evname)
+        KSR.info("===== evapi module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
+3.5. max_clients (int)
+
+   Maximum number of clients that can connect to evapi socket.
+
+   Default value is 8.
+
+   Example 1.5. Set max_clients parameter
+...
+modparam("evapi", "max_clients", 4)
+...
+
+4. Functions
+
+   4.1. evapi_relay(evdata)
+   4.2. evapi_async_relay(evdata)
+   4.3. evapi_multicast(evdata, etag)
+   4.4. evapi_async_multicast(evdata, etag)
+   4.5. evapi_unicast(evdata, etag)
+   4.6. evapi_async_unicast(evdata, etag)
+   4.7. evapi_close()
+   4.8. evapi_set_tag(tname)
+
+4.1.  evapi_relay(evdata)
+
+   Relay the event data given as parameter to connected applications.
+
+   The format on the network is netstring with evdata payload if
+   netstring_format parameter is set to 1 or bare evdata if
+   netstring_format parameter is set to 0.
+
+   The function is passing the task to evapi dispatcher process, therefore
+   the SIP worker process is not blocked. Also, it doesn't wait for any
+   response, therefore the processing of the configuration continues very
+   fast when executing evapi_relay().
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. evapi_relay usage
+...
+evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
+...
+
+   The above exaple will send the following message over tcp:
+
+   Example 1.7. TCP message
+...
+47:{
+ "event": "test",
+ "data": { "fU": "test" }
+},
+...
+
+4.2.  evapi_async_relay(evdata)
+
+   Relay the event data given as parameter to connected applications.
+   Before evaluating the parameter, the request processing is suspended
+   using tm module (using the t_suspend()/t_continue() framework). The
+   routing of the SIP request can be continued once
+   event_route[evapi:message-received] is triggered. After
+   evapi_async_relay() returns true, no relaying should happen in
+   request_route(), it should be followed by exit;.
+
+   The format on the network is netstring with evdata payload if
+   netstring_format parameter is set to 1 or bare evdata if
+   netstring_format parameter is set to 0.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.8. evapi_async_relay usage
+...
+evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
+        " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
+...
+
+4.3.  evapi_multicast(evdata, etag)
+
+   Relay the event data given as parameter to connections that match the
+   tag provided by etag value. The etag can be a variable. For more see
+   evapi_relay() and evapi_set_tag().
+
+   Example 1.9. evapi_multicast usage
+...
+evapi_multicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "ta
+gx");
+...
+
+4.4.  evapi_async_multicast(evdata, etag)
+
+   Async relay the event data given as parameter to connections that match
+   the tag provided by etag value. The etag can be a variable. For more
+   see evapi_async_relay() and evapi_set_tag().
+
+   Example 1.10. evapi_async_multicast usage
+...
+evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
+    " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
+...
+
+4.5.  evapi_unicast(evdata, etag)
+
+   Relay the event data given as parameter to the first connection that
+   match the tag provided by etag value. The etag can be a variable. For
+   more see evapi_relay() and evapi_set_tag().
+
+   Example 1.11. evapi_unicast usage
+...
+evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx
+");
+...
+
+4.6.  evapi_async_unicast(evdata, etag)
+
+   Async relay the event data given as parameter to the first connection
+   that match the tag provided by etag value. The etag can be a variable.
+   For more see evapi_async_relay() and evapi_set_tag().
+
+   Example 1.12. evapi_async_unicast usage
+...
+evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
+    " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
+...
+
+4.7.  evapi_close()
+
+   Close evapi current client connection.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. evapi_close usage
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)!="127.0.0.1") {
+    evapi_close();
+    exit;
+  }
+}
+...
+
+4.8.  evapi_set_tag(tname)
+
+   Set tag name for current client connection. The parameters has to be a
+   string up to 64 characters. It can also be a variable holding such
+   string.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. evapi_set_tag usage
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)=="127.0.0.1") {
+    evapi_set_tag("local");
+    exit;
+  }
+}
+...
+
+5. Event routes
+
+   5.1. evapi:connection-new
+   5.2. evapi:connection-closed
+   5.3. evapi:message-received
+
+5.1.  evapi:connection-new
+
+   If defined, the module calls event_route[evapi:connection-new] when a
+   new client is connected.
+...
+event_route[evapi:connection-new] {
+    xlog("new connection from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+5.2.  evapi:connection-closed
+
+   If defined, the module calls event_route[evapi:connection-closed] when
+   a client connection is closed.
+...
+event_route[evapi:connection-closed] {
+    xlog("connection closed by $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+5.3.  evapi:message-received
+
+   If defined, the module calls event_route[evapi:message-received] when a
+   message is received from a client.
+...
+event_route[evapi:message-received] {
+    xlog("received [$evapi(msg)] from $evapi(srcaddr):$evapi(srcport)\n");
+}
+...
+
+6. Exported pseudo-variables
+
+     * $evapi(srcaddr) - source ip
+     * $evapi(srcport) - source port
+     * $evapi(msg) - received event message
+     * $evapi(conidx) - internal connection index
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.

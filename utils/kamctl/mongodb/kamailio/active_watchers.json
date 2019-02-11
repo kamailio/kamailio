@@ -1,6 +1,6 @@
 {
   "name": "active_watchers",
-  "version": 11,
+  "version": 12,
   "columns": [
     "id": {
       "type": "int",
@@ -90,7 +90,7 @@
     "reason": {
       "type": "string",
       "default": null,
-      "null": false
+      "null": true
     },
     "version": {
       "type": "int",
@@ -126,6 +126,16 @@
       "type": "int",
       "default": null,
       "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "user_agent": {
+      "type": "string",
+      "default": "",
+      "null": true
     }
   ]
 }

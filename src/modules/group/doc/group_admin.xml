@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+		<title>Overview</title>
+		<para>
+		This module provides functionality for two different methods of group 
+		membership checking.
+		</para>
+		<section>
+			<title>Strict membership checking</title>
+			<para>
+			The module uses a database table that contains a list of users and groups 
+			they belong to. The module provides the possibility to check if a
+			specific user belongs to a specific group.
+			</para>
+			<para>
+			There is no DB caching support, which means that each check involves a DB query.
+			</para>
+		</section>
+		<section>
+			<title>Regular Expression based checking</title>
+			<para>
+			Another database table contains list of regular expressions and 
+			group IDs. A matching occurs if the user URI match the regular
+			expression. This type of matching may be used to fetch the 
+			group ID(s) the user belongs to (via RE matching) .
+			</para>
+			<para>
+			Due to performance reasons (regular expression evaluation), DB cache
+			support is available: the table content is loaded into memory at 
+			startup and all regular expressions are compiled.
+			</para>
+		</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				A database module, like db_mysql, db_postgres or db_text
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="group.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		&url; of the database table to be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 
+			<quote>&defaultrodb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.table">
+		<title><varname>table</varname> (string)</title>
+		<para>
+		Name of the table holding strict definitions of groups and 
+		their members.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "table", "grp_table")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.user_column">
+		<title><varname>user_column</varname> (string)</title>
+		<para>
+		Name of the <quote>table</quote> column holding usernames.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>username</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "user_column", "user")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.domain_column">
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
+		Name of the <quote>table</quote> column holding domains.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>domain</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "domain_column", "realm")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.group_column">
+		<title><varname>group_column</varname> (string)</title>
+		<para>
+		Name of the <quote>table</quote> column holding group names.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>group_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "group_column", "grp")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.use_domain">
+		<title><varname>use_domain</varname> (integer)</title>
+		<para>
+		If enabled (set to a non zero value) then the domain will be used also used
+		for strict group matching; otherwise only the username part will be 
+		used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.re_table">
+		<title><varname>re_table</varname> (string)</title>
+		<para>
+		Name of the table holding definitions for regular-expression 
+		based groups. If no table is defined, the regular-expression
+		support is disabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>re_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "re_table", "re_grp")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.re_exp_column">
+		<title><varname>re_exp_column</varname> (string)</title>
+		<para>
+		Name of the <quote>re_table</quote> column holding the regular
+		expression used for user matching.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>reg_exp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>re_exp_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "re_exp_column", "re")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>re_gid_column</varname> (string)</title>
+		<para>
+		Name of the <quote>re_table</quote> column holding the group IDs.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>group_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>re_gid_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "re_gid_column", "grp_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.p.multiple_gid">
+		<title><varname>multiple_gid</varname> (integer)</title>
+		<para>
+		If enabled (non zero value) the regular-expression matching will
+		return all group IDs that match the user; otherwise only the first
+		will be returned.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote> (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>multiple_gid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "multiple_gid", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="group.f.is_user_in">
+		<title>
+		<function moreinfo="none">is_user_in(URI, group)</function>
+		</title>
+		<para>
+		This function is to be used for script group membership. The function 
+		returns true if username in the given &uri; is a member of the given
+		group and false if not.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>&uri;</emphasis> - &uri; whose username and 
+			optionally domain to be used, this can be one of:
+			<itemizedlist>
+				<listitem>
+				<para>Request-URI - Use Request-URI username and 
+				(optionally) domain.</para>
+				</listitem>
+				<listitem>
+				<para>To - Use To username and (optionally) domain.</para>
+				</listitem>
+				<listitem>
+				<para>From - Use From username and (optionally) domain.</para>
+				</listitem>
+				<listitem>
+				<para>Credentials - Use digest credentials username.</para>
+				</listitem>
+				<listitem>
+				<para>$avp(name) - Use the URI from the AVP
+				specified by this pseudo-variable.</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>group</emphasis> - Name of the group to check.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>is_user_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_user_in("Request-URI", "ld")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="group.f.get_user_group">
+		<title>
+		<function moreinfo="none">get_user_group(URI, AVP)</function>
+		</title>
+		<para>
+		This function is to be used for regular expression based group 
+		membership. The function returns true if username in the given &uri; 
+		belongs to at least one group; the group ID(s) are returned as AVPs.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>&uri;</emphasis> - &uri; to be matched against
+			the regular expressions:
+			<itemizedlist>
+				<listitem>
+				<para>Request-URI - Use Request-URI</para>
+				</listitem>
+				<listitem>
+				<para>To - Use To URI.</para>
+				</listitem>
+				<listitem>
+				<para>From - Use From URI</para>
+				</listitem>
+				<listitem>
+				<para>Credentials - Use digest credentials username 
+				and realm.</para>
+				</listitem>
+				<listitem>
+				<para>$avp(name) - Use the URI from the AVP
+				specified by this pseudo-variable.</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>AVP</emphasis> - $avp(name) - the matched group
+			IDs are returned in this AVP.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>get_user_group</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (get_user_group("Request-URI", "$avp(i:10)")) {
+    xgdb("User $ru belongs to $(avp(i:10)[*]) group(s)\n");
+    ....
+};
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+
+</chapter>
+

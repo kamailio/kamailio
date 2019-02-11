@@ -1,0 +1,422 @@
+The SL Module - Stateless request handling
+
+Bogdan Iancu
+
+   FhG FOKUS
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Parameters
+
+              2.1. default_code (int)
+              2.2. default_reason (str)
+              2.3. bind_tm (int)
+
+        3. Functions
+
+              3.1. sl_send_reply(code, reason)
+              3.2. send_reply(code, reason)
+              3.3. sl_reply_error()
+              3.4. sl_forward _reply([ code, [ reason ] ])
+
+        4. Statistics
+
+              4.1. 1xx_replies
+              4.2. 200_replies
+              4.3. 202_replies
+              4.4. 2xx_replies
+              4.5. 300_replies
+              4.6. 301_replies
+              4.7. 302_replies
+              4.8. 3xx_replies
+              4.9. 400_replies
+              4.10. 401_replies
+              4.11. 403_replies
+              4.12. 404_replies
+              4.13. 407_replies
+              4.14. 408_replies
+              4.15. 483_replies
+              4.16. 4xx_replies
+              4.17. 500_replies
+              4.18. 5xx_replies
+              4.19. 6xx_replies
+              4.20. xxx_replies
+              4.21. sent_replies
+              4.22. sent_err_replies
+              4.23. failures
+              4.24. received_ACKs
+
+        5. Event routes
+
+              5.1. sl:filtered-ack
+              5.2. sl:local-response
+
+   List of Examples
+
+   1.1. default_code example
+   1.2. default_reason example
+   1.3. bind_tm example
+   1.4. sl_send_reply usage
+   1.5. send_reply usage
+   1.6. sl_reply_error usage
+   1.7. send_reply usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Parameters
+
+        2.1. default_code (int)
+        2.2. default_reason (str)
+        2.3. bind_tm (int)
+
+   3. Functions
+
+        3.1. sl_send_reply(code, reason)
+        3.2. send_reply(code, reason)
+        3.3. sl_reply_error()
+        3.4. sl_forward _reply([ code, [ reason ] ])
+
+   4. Statistics
+
+        4.1. 1xx_replies
+        4.2. 200_replies
+        4.3. 202_replies
+        4.4. 2xx_replies
+        4.5. 300_replies
+        4.6. 301_replies
+        4.7. 302_replies
+        4.8. 3xx_replies
+        4.9. 400_replies
+        4.10. 401_replies
+        4.11. 403_replies
+        4.12. 404_replies
+        4.13. 407_replies
+        4.14. 408_replies
+        4.15. 483_replies
+        4.16. 4xx_replies
+        4.17. 500_replies
+        4.18. 5xx_replies
+        4.19. 6xx_replies
+        4.20. xxx_replies
+        4.21. sent_replies
+        4.22. sent_err_replies
+        4.23. failures
+        4.24. received_ACKs
+
+   5. Event routes
+
+        5.1. sl:filtered-ack
+        5.2. sl:local-response
+
+1. Overview
+
+   The SL module allows the SIP server to act as a stateless UA server and
+   generate replies to SIP requests without keeping state. That is
+   beneficial in many scenarios, in which you wish not to burden server's
+   memory and scale well.
+
+   The SL module needs to filter ACKs sent after a local stateless reply
+   to an INVITE was generated. To recognize such ACKs, Kamailio adds a
+   special "signature" in to-tags. This signature is sought for in
+   incoming ACKs, and if included, the ACKs are absorbed.
+
+   To speed up the filtering process, the module uses a timeout mechanism.
+   When a reply is sent, a timer is set. As long as the timer is valid,
+   the incoming ACK requests will be checked using TO tag value. Once the
+   timer expires, all the ACK messages are let through - a long time
+   passed till it sent a reply, so it does not expect any ACK that have to
+   be blocked.
+
+   The ACK filtering may fail in some rare cases. If you think these
+   matter to you, better use stateful processing (TM module) for INVITE
+   processing. Particularly, the problem happens when a UA sends an INVITE
+   which already has a to-tag in it (e.g., a re-INVITE) and the server
+   want to reply to it. Then, it will keep the current to-tag, which will
+   be mirrored in ACK. Kamailio will not see its signature and forward the
+   ACK downstream. Caused harm is not bad, just a useless ACK is
+   forwarded.
+
+2. Parameters
+
+   2.1. default_code (int)
+   2.2. default_reason (str)
+   2.3. bind_tm (int)
+
+2.1. default_code (int)
+
+   Default reply status code.
+
+   Default value is 500.
+
+   Example 1.1. default_code example
+...
+modparam("sl", "default_code", 505)
+...
+
+2.2. default_reason (str)
+
+   Default reply reason phrase.
+
+   Default value is 'Internal Server Error'.
+
+   Example 1.2. default_reason example
+...
+modparam("sl", "default_reason", "Server Error")
+...
+
+2.3. bind_tm (int)
+
+   Controls if SL module should attempt to bind to TM module in order to
+   send stateful reply when the transaction is created.
+
+   Default value is 1 (enabled).
+
+   Example 1.3. bind_tm example
+...
+modparam("sl", "bind_tm", 0)  # feature disabled
+...
+
+3. Functions
+
+   3.1. sl_send_reply(code, reason)
+   3.2. send_reply(code, reason)
+   3.3. sl_reply_error()
+   3.4. sl_forward _reply([ code, [ reason ] ])
+
+3.1.  sl_send_reply(code, reason)
+
+   For the current request, a reply is sent back having the given code and
+   text reason. The reply is sent stateless, totally independent of the
+   Transaction module and with no retransmission for the INVITE's replies.
+
+   If the code is in the range 300-399 (redirect reply), the current
+   destination set is appended to the reply as Contact headers. The
+   destination set contains the request URI (R-URI), if it is modified
+   compared to the received one, plus the branches added to the request
+   (e.g., after an append_branch() or lookup("location")). If the R-URI
+   was changed but it is not desired to be part of the destination set, it
+   can be reverted using the function revert_uri().
+
+   Custom headers to the reply can be added using append_to_reply()
+   function from textops module.
+
+   Meaning of the parameters is as follows:
+     * code - Return code.
+     * reason - Reason phrase.
+
+   Example 1.4. sl_send_reply usage
+...
+sl_send_reply("404", "Not found");
+...
+
+3.2.  send_reply(code, reason)
+
+   For the current request, a reply is sent back having the given code and
+   text reason. The reply is sent stateful or stateless, depending of the
+   TM module: if a transaction exists for the current request, then the
+   reply is sent statefully, otherwise stateless.
+
+   Meaning of the parameters is as follows:
+     * code - Return code.
+     * reason - Reason phrase.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE. It can
+   be used on ONREPLY_ROUTE executed by tm module (upon a t_on_reply()
+   callback).
+
+   Example 1.5. send_reply usage
+...
+send_reply("404", "Not found");
+...
+send_reply("403", "Invalid user - $fU");
+...
+
+3.3.  sl_reply_error()
+
+   Sends back an error reply describing the nature of the last internal
+   error. Usually this function should be used after a script function
+   that returned an error code.
+
+   Example 1.6. sl_reply_error usage
+...
+sl_reply_error();
+...
+
+3.4.  sl_forward _reply([ code, [ reason ] ])
+
+   Forward statelessly the current received SIP reply, with the option to
+   change the status code and reason text. The new code has to be in the
+   same class. The received reply is forwarded as well by core when the
+   config execution ended, unless it is dropped from config.
+
+   Meaning of the parameters is as follows:
+     * code - Status code.
+     * reason - Reason phrase.
+
+   This function can be used from ONREPLY_ROUTE.
+
+   Example 1.7. send_reply usage
+...
+if(status=="408")
+    sl_forward_reply("404", "Not found");
+...
+
+4. Statistics
+
+   4.1. 1xx_replies
+   4.2. 200_replies
+   4.3. 202_replies
+   4.4. 2xx_replies
+   4.5. 300_replies
+   4.6. 301_replies
+   4.7. 302_replies
+   4.8. 3xx_replies
+   4.9. 400_replies
+   4.10. 401_replies
+   4.11. 403_replies
+   4.12. 404_replies
+   4.13. 407_replies
+   4.14. 408_replies
+   4.15. 483_replies
+   4.16. 4xx_replies
+   4.17. 500_replies
+   4.18. 5xx_replies
+   4.19. 6xx_replies
+   4.20. xxx_replies
+   4.21. sent_replies
+   4.22. sent_err_replies
+   4.23. failures
+   4.24. received_ACKs
+
+4.1. 1xx_replies
+
+   Number of 1xx replies.
+
+4.2. 200_replies
+
+   Number of 201 replies.
+
+4.3. 202_replies
+
+   Number of 202 replies.
+
+4.4. 2xx_replies
+
+   Number of 2xx replies.
+
+4.5. 300_replies
+
+   Number of 300 replies.
+
+4.6. 301_replies
+
+   Number of 301 replies.
+
+4.7. 302_replies
+
+   Number of 302 replies.
+
+4.8. 3xx_replies
+
+   Number of 3xx replies.
+
+4.9. 400_replies
+
+   Number of 400 replies.
+
+4.10. 401_replies
+
+   Number of 401 replies.
+
+4.11. 403_replies
+
+   Number of 403 replies.
+
+4.12. 404_replies
+
+   Number of 404 replies.
+
+4.13. 407_replies
+
+   Number of 407 replies.
+
+4.14. 408_replies
+
+   Number of 408 replies.
+
+4.15. 483_replies
+
+   Number of 483 replies.
+
+4.16. 4xx_replies
+
+   Number of 4xx replies.
+
+4.17. 500_replies
+
+   Number of 500 replies.
+
+4.18. 5xx_replies
+
+   Number of 5xx replies.
+
+4.19. 6xx_replies
+
+   Number of 6xx replies.
+
+4.20. xxx_replies
+
+   Number of replies whose code don't match any above.
+
+4.21. sent_replies
+
+   Number of all sent replies.
+
+4.22. sent_err_replies
+
+   Number of sent error replies.
+
+4.23. failures
+
+   Number of failures.
+
+4.24. received_ACKs
+
+   Number of received ACKs filtered by SL module.
+
+5. Event routes
+
+   5.1. sl:filtered-ack
+   5.2. sl:local-response
+
+5.1. sl:filtered-ack
+
+   Executed when ACK to locally generated reply is recognized and
+   absorbed.
+...
+event_route[sl:filtered-ack] {
+    xlog("sl:filtered-ack ACK to local reply absorbed\n");
+}
+...
+
+5.2. sl:local-response
+
+   Executed after sl module reply function has sent local reply.
+...
+event_route[sl:local-response] {
+    xlog("sl:local-response replied locally\n");
+}
+...

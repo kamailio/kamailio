@@ -1,0 +1,818 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<chapter id="user">
+    <title>The Sip Express Application Server User's Guide</title>
+
+    <section>
+      <title>Application Servers</title>
+
+      <section>
+        <title>Sip Express Application Server module overview</title>
+
+        <para><acronym>SEAS</acronym> module enables &kamailio; to transfer the
+        execution logic control of a sip message to a given external entity,
+        called the Application Server. When the &kamailio; script is being
+        executed on an incoming SIP message, invocation of the as_relay_t()
+        function makes this module send the message along with some
+        transaction information to the specified Application Server. The
+        Application Server then executes some call-control logic code, and
+        tells &kamailio; to take some actions, ie. forward the message
+        downstream, or respond to the message with a SIP reply, etc.</para>
+
+        <para>The module acts implements a network protocol acting as the
+        interface between &kamailio; internal API and the external Application
+        Server entity.</para>
+
+        <para>There's only one relevant function, as_relay_t, exported by this
+        module. This function receives as a parameter the name of the
+        application server to which the message should be relayed. Every
+        message relayed to an Application Server is automatically associated
+        to a SIP transaction (a transaction is created for it). Just after the
+        message is relayed to the Application Server, the script stops its
+        execution on the message, because the control of message-processing is
+        now in the Application Server.</para>
+
+        <para>In the context of SEAS module, relaying a message to an App
+        Server, is _not_ done in SIP protocol, but in a special protocol by
+        means of which the SEAS module and the Application Server communicate
+        efficiently and seamlessly. This protocol is specially designed so
+        that a message doesn't need to be parsed again once it arrives at the
+        Application Server. This protocol carries information regarding the
+        internal structure of the SIP message (to avoid reparsing) and also
+        information about the associated transaction (recall that invoking
+        as_relay_t indirectly calls t_newtran). This way, all the
+        SIP-Transaction machinery, and the SIP-Message parsing, is handled at
+        the &kamailio; core, while the execution of the Application Logic is
+        carried in the Application Server.</para>
+
+        <para>The SEAS module and protocol provide a means by which an
+        external entity can utilize &kamailio; as a transaction-stateful
+        SIP-stack to act on behalf of it. This means that this external entity
+        (which we call the Application Server) is notified whenever a
+        SIP-Request enters &kamailio;, and this external entity can then order
+        &kamailio; to execute some actions, either replying the request, or
+        generating new UAC transactions.</para>
+
+        <para>This version of SEAS works with VozTelecom's WeSIP Application
+        Server. This Application Server is a SipServlet JAVA Container.</para>
+      </section>
+
+      <section id="ApplicationServer">
+        <title>Application Servers</title>
+
+        <para>When &kamailio; starts and SEAS module is loaded, a new process is
+        spawn which listens on a server-socket (IP and port are specified as a
+        parameter in the config script). From then on, the Application Servers
+        can connect to that socket so that &kamailio; can relay messages to them.
+        When an Application Server connects to the socket, it sends its name
+        through the socket, so every App Server is identified with a name.
+        Within the &kamailio; script, invoking as_relay_t() receives a string as
+        a parameter, which specifies the name of an application server to
+        which the message has to be sent. If that concrete application server
+        hasn't already connected to the module, the function returns a
+        negative value, otherwise (the Application Server is connected), the
+        message is relayed to it.</para>
+      </section>
+
+      <section>
+        <title>Dependencies</title>
+
+        <section>
+          <title>&kamailio; Modules</title>
+
+          <para>SEAS module relies on the Transaction Module (TM module) for
+          operation.</para>
+        </section>
+
+        <section>
+          <title>External Applications</title>
+
+          <para>Using the SEAS module requires to have an Application Server
+          running and connected to a particular instance of &kamailio;.</para>
+
+          <para>At the moment, the only Application Server that works with
+          SEAS is WeSIP Application Server, which can be downloaded from
+          www.wesip.eu, and used freely for non-comercial purposes.</para>
+        </section>
+      </section>
+
+      <section>
+        <title>Parameters</title>
+
+        <section>
+          <title><varname>listen_sockets</varname> (string)</title>
+
+          <para>The listen_sockets string tells SEAS where to listen for
+          incoming connections of Application Servers. It has the form:
+          "ip:port". SEAS will open two server-sockets on that IP, at the
+          specified port, and another at port+1. Application Servers must be
+          configured to connect to that port.</para>
+
+          <para>In case this parameter is omitted, SEAS listens on the default
+          IP which &kamailio; is using, and opens the ports 5080 and 5081 to
+          listen for Application Servers.</para>
+
+          <example>
+            <title>Set <varname>listen_sockets</varname> parameter</title>
+
+            <programlisting format="linespecific">
+...
+modparam("seas", "listen_sockets","127.0.0.1:5080")
+...
+</programlisting>
+          </example>
+        </section>
+      </section>
+
+      <section>
+        <title>Functions</title>
+
+        <section>
+          <title><function moreinfo="none">as_relay_t(String
+          name)</function></title>
+
+          <para>Creates a new transaction (if it isn't already created) and
+          sends the SIP Request and transaction information to the Application
+          Server specified in the parameter. Every Application Server
+          connected to &kamailio; through the SEAS module, must be identified
+          with a different name.</para>
+
+          <para>This function can be used within REQUEST_ROUTE.</para>
+
+          <example>
+            <title><function>as_relay_t</function> usage</title>
+
+            <programlisting format="linespecific">
+...
+if (!as_relay_t("app_server_1")) { 
+log("Error sending to app server"); 
+t_reply("500","App Server not connected"); 
+}
+...
+</programlisting>
+          </example>
+
+          <section>
+            <title>Return value</title>
+
+            <para>In case the Application Server is connected to &kamailio;, the
+            function does _not_ return, the Application Server is now in
+            charge of processing the request, and it may then reply to the
+            request, initiate new transactions, or whatever the application
+            being executed wants.</para>
+
+            <para>In case the Application Server identified by the string
+            parameter passed to as_relay_t() is not connected to &kamailio;, the
+            function returns 0, so that the script can continue processing the
+            request.</para>
+          </section>
+        </section>
+      </section>
+    </section>
+
+    <section>
+      <title>WeSIP Application Server</title>
+
+      <para>At the moment, the only Application Server known to work with SEAS
+      is WeSIP. You can download a copy from www.wesip.eu.</para>
+
+      <para>WeSIP is a converged Sip/Http Servlet Container.</para>
+
+      <section>
+        <title>The Servlet programming paradigm: Sip/Http Servlets</title>
+
+        <para>Servlets are pieces of code that encapsulate the logic of an
+        application. Servlets are deployed into an Application Server.
+        Whenever a user requests service, the Application Server processes the
+        request, and passes control to the servlet. The servlet then executes
+        some logic, may it be a query to a database, the execution of a
+        business process, the creation of customized content for the user, or
+        whatever the service programmer could imagine. When the servlet
+        finishes the execution, it creates a response and gives it back to the
+        Application Server, which is in charge of making it reach back to the
+        user. The Application Server implements the network protocol, it takes
+        care of everything needed for a proper communication between user and
+        server, so the servlet doesn&#8217;t have to care about these things. The
+        servlet uses a set of resources from the Application Server, such as
+        Session management, service routing or chaining, and request/response
+        header composition.</para>
+
+        <para>In HttpServlets, a service programmer has to implement a method
+        in a JAVA class, which could be called doGet() or doPost(). Whenever
+        an HTTP request arrived at the server, one of these functions was
+        called with the request as a parameter, so the logic of the
+        application was executed over that particular request.</para>
+
+        <para>HttpServlet has been extensively used over the past years, in
+        all kinds of business and web services.</para>
+
+        <para>This is how a typical HttpServlet looks like:</para>
+
+        <para><example>
+            <title>Typical example of an HttpServlet</title>
+
+            <para><programlisting>public final class Hello extends HttpServlet {
+protected void doGet(HttpServletRequest request,HttpServletResponse response)
+      throws IOException, ServletException 
+    {
+response.setContentType("text/html");
+PrintWriter writer = response.getWriter();
+writer.println("&lt;html&gt;");
+writer.println("&lt;head&gt;");
+writer.println("&lt;title&gt;Sample Application Servlet&lt;/title&gt;");
+writer.println("&lt;/head&gt;");
+writer.println("&lt;body bgcolor=white&gt;");
+writer.println("&lt;table border=\"0\" width=\"100%\"&gt;");
+Enumeration names = request.getHeaderNames();
+while (names.hasMoreElements()) {
+    String name = (String) names.nextElement();
+    writer.println("&lt;tr&gt;");
+    writer.println("&lt;th align=\"right\"&gt;"+name+":&lt;/th&gt;");
+    writer.println("&lt;td&gt;"+request.getHeader(name)+"&lt;/td&gt;");
+    writer.println("&lt;/tr&gt;");
+}
+writer.println("&lt;/table&gt;");
+writer.println("&lt;/body&gt;");
+writer.println("&lt;/html&gt;");
+    }
+}</programlisting></para>
+          </example></para>
+
+        <para>The successor of HttpServlet for SIP networks, is the SipServlet
+        API. Making most of the success of HttpServlet, the SipServlet API
+        follows the same programming paradigm, so that SIP application
+        programmers can reuse their knowledge in the field.</para>
+
+        <para>SipServlet API works the same way as HttpServlet: an Application
+        Server implements a SIP Stack and executes all the complex protocol
+        logic. It receives and pre-processes the requests from the network,
+        and at the right moment, passes control to the servlet doXxx() method,
+        where the programmer implemented the application logic. Depending on
+        what kind of SIP Message it was, a method or another will be executed.
+        For example, if an INVITE is received, the doInvite() method will be
+        invoked in the servlet.</para>
+
+        <para>The application can then access all the parts of the request and
+        do its work. When the service has been executed, it passes control
+        back to the Application Server with a response, so that it can be
+        forwarded to the user, and the service be satisfied.</para>
+
+        <para>Sip Servlets can be used to implement basic SIP network
+        functionalities (such as Proxy or Registrar servers), but their true
+        power emerges in the implementation of value-added services, which
+        greatly surpasses the basic service functionality of plain SIP
+        servers.</para>
+
+        <para>Examples of value-added services, are Virtual PBX or IPCentrex,
+        Attended call forwarding, Instant Messaging, etc.</para>
+
+        <para>This is the appearance a typical SipServlet:</para>
+
+        <para><example>
+            <title>Typical Sip Servlet Example</title>
+
+            <para><programlisting>public class ProxyServlet extends SipServlet {
+    protected void doInvite(SipServletRequest req) throws 
+ServletException, IOException
+    {
+        if (req.isInitial()) {
+            Proxy proxy = req.getProxy();
+            proxy.setRecordRoute(false);
+            proxy.setParallel(parallel);
+            proxy.setSupervised(supervised);
+            SipURI rrURI = proxy.getRecordRouteURI();
+            rrURI.setParameter("foo", "bar");
+            req.setContent("Method is INVITE", "text/plain");
+            proxy.proxyTo(uris);
+        } else {
+            log("re-INVITE");
+        }
+    }
+    protected void doAck(SipServletRequest req) throws 
+ServletException, IOException
+    {
+        log("doAck " + req.getRequestURI());
+        if (req.isInitial()) {
+            throw new ServletException("unexpectedly got initial ACK");</programlisting></para>
+          </example>The servlet programming API is event-ridden: every time a
+        request comes into the Application Server (may it be an Http or SIP
+        one), the specific servlet is executed and the service provided within
+        it.</para>
+
+        <para>It is a very straightforward way of programming services, and
+        the Servlet API provides very easy and powerful means to access
+        information about the SIP-session or Http-session, about the request
+        or response, about the state of the dialog, or whatever it is
+        needed.</para>
+
+        <para>The application programmer has a rich framework of resources
+        that allow him to focus only on the service logic, without having to
+        worry about the underlying protocol specifics (SIP or HTTP).</para>
+
+          <figure>
+            <title>SipServlet UML diagram</title>
+
+            <mediaobject>
+              <imageobject>
+				  <imagedata fileref="./images/image024.png"/>
+              </imageobject>
+            </mediaobject>
+		</figure>
+		<para>The Servlet programming language is JAVA, which offers a
+        wide spectrum of programming API&#8217;s dealing with all kinds of
+        techniques, tools and resources, which also are available seamlessly
+        from the Servlet context.</para>
+
+        <para>This makes the SipServlet API very desirable for all kinds
+        application developers.</para>
+
+        <para>SipServlet allows a rapid SIP application development and
+        deployment, and also provides a reliable and secure framework of
+        service execution (the JAVA sandbox and the Application Server
+        execution environment).</para>
+
+        <section>
+          <title>Converged Http/Sip Servlet Containers</title>
+
+          <para>SipServlets achieve the most of it when they can be deployed
+          along with HttpServlets, in the same Application Server (also known
+          as Servlet Container). This environment truly realizes the power of
+          converged voice/data networks: Http protocol represents one of the
+          most powerful data transmission protocols used in modern networks
+          (think of the SOAP web-services protocol), and SIP is the protocol
+          of choice in most of the modern and future voice over IP (VoIP)
+          networks for the signaling part. So an Application Server capable of
+          combining and leveraging the power of these two APIs will be the
+          most successful.</para>
+
+          <para>Convergence of SIP and HTTP protocols into the same
+          Application Server offers, amongst others, the following key
+          advantages:</para>
+
+          <para>-It doesn&#8217;t require to have 2 different servers (Http and Sip)
+          so it relieves from maintenance problems, and eases user and
+          configuration provisioning.</para>
+
+          <para>-It offers great convenience to the application programmer to
+          have all the classes related to the different protocols handled
+          within the same code.</para>
+
+          <para>-As it eases development of interactive and multimedia
+          services, realizing the power of well-known web-services and
+          intermixing them with new voice services.</para>
+
+          <para>These are some simple, but suggestive examples of services
+          that could be developed within a converged Http/Sip servlet:</para>
+
+          <para>-IP Centrex: through the use of the Web-interface, users could
+          have a layout of the office in a web page, and see what phones were
+          ringing at a given moment, so they could pick-up a call ringing in
+          another phone in their own desktop. Or they could forward a call to
+          another party by clicking on the web page and selecting which of the
+          office phones it had to be transferred to.</para>
+
+          <para>-Voicemail: users could upload an audio file to the server
+          through a web-page, to be used as the automatic answering message,
+          and then also download their voicemail through the web-page, or
+          organize the messages and remove the old ones.</para>
+
+          <para>-Instant Messaging: users could continue a voice call by
+          starting or joining a new Instant Messaging session carried over a
+          web-page.</para>
+
+          <para>-Click-to-dial: users could initiate SIP sessions only by
+          clicking a link on a web page, without the need of the Web-Browser
+          being SIP-aware nor needing even a SIP phone: the server could
+          handle all the logic so the user who clicked could receive a call
+          from the server&#8217;s SIP network.</para>
+        </section>
+      </section>
+
+      <section>
+        <title>Configuring WeSIP to work with SEAS</title>
+
+        <para>The WeSIP Application Server configuration file is based on the
+        Apache Tomcat configuration system: It is an XML-formatted file, in
+        which the different components of the server are specified.</para>
+
+        <para>The default config file that comes with the WeSIP distribution
+        package should be suitable for most of the deployment
+        configurations.</para>
+
+        <para/>
+
+        <section>
+          <title>Server</title>
+
+          <para>The topmost element in the XML configuration file is the
+          "server" which has 2 xml attributes, called "port" and "shutdown".
+          The former specifies a port on which the WeSIP AS will listen for
+          the shutdown command, and the latter is the magic word that will
+          make the server shutdown.</para>
+
+          <example>
+            <title>Server</title>
+
+            <para><programlisting>&lt;Server port="8005" shutdown="SHUTDOWN" &gt;</programlisting></para>
+          </example>
+
+          <para>if you send the magic word "SHUTDOWN" to the port 8005 of the
+          localhost, the server will stop cleanly.</para>
+
+          <para/>
+        </section>
+
+        <section>
+          <title>Service</title>
+
+          <para>Nested within the Server element, must be a "Service" element,
+          with an attribute called "name" which specifies the name for the
+          service. This attribute is not very relevant, you can call it
+          whatever you like.</para>
+
+          <example>
+            <title>Service</title>
+
+            <para>&lt;Service name="WeSIP-Standalone"&gt;</para>
+          </example>
+
+          <para>Within the Service element must be two or more elements: the
+          connectors and the engines. A connector is the instance that will
+          receive messages from the network. You can specify HTTP connectors
+          and/or SIP connectors. Every connector needs an attribute called
+          "className" which specifies which class will be responsible for
+          receiving the messages from the network. For HTTP connectors, the
+          classname must be "org.apache.catalina.connector.http.HttpConnector"
+          and for SIP connectors
+          "com.voztele.sipservlet.connector.SipConnector".</para>
+        </section>
+
+        <section>
+          <title>Connector</title>
+
+          <para>The SIP Connector uses 4 attributes:</para>
+
+          <para><programlisting>className="com.voztele.sipservlet.connector.SipConnector"</programlisting></para>
+
+          <para>specifies the classname of the connector.</para>
+
+          <para><programlisting>minProcessors="5"</programlisting></para>
+
+          <para>specifies the minimum number of SIPprocessor instances (and
+          threads in the pool) to process incoming SIP messages. More
+          processors should allow more load to be processed. This is the
+          minimum number of instances, even if they are spare and not
+          working.</para>
+
+          <para><programlisting>maxProcessors="10"</programlisting></para>
+
+          <para>specifies the maximum number of SIP processors used (a
+          negative value specifies that there is no limit).</para>
+
+          <para><programlisting>addresses="localhost:5060"</programlisting></para>
+
+          <para>Specifies the SIP address and port in which the Application
+          Server from which the Application Server will process the SIP
+          messages. This address is where &kamailio; listens for the messages, so
+          in fact, &kamailio; is listening on them, but &kamailio; passes the
+          messages to WeSIP, so WeSIP must be aware of this IP/port.</para>
+
+          <warning>
+            <para>this attribute MUST match one of the listening points
+            declared within &kamailio; in the "listen" parameters.</para>
+
+            <para>For example in &kamailioconfig;:<programlisting>listen = tcp:localhost:5060
+listen = udp:localhost:5060</programlisting></para>
+          </warning>
+
+          <para>Within the SIP Connector element there must be an
+          ExtraProperties element, containing nested Property elements. Each
+          property element specifies a parameter for the SIP Stack. Each
+          property is specified by a key and a value. The most significant
+          keys are:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>com.voztele.javax.sip.SER_ADDRESS</para>
+
+              <para>This specifies the IP and port in which the &kamailio; is
+              listening for Application Servers to connect and register.This
+              specifies the IP and port in which the &kamailio; is listening for
+              Application Servers to connect and register.</para>
+
+              <para><warning>
+                  <para>This needs to match the
+                  <varname>listen_sockets</varname> seas module parameter
+                  within the &kamailio; configuration file. Ie.:</para>
+
+                  <para><programlisting>modparam("seas", "listen_sockets","127.0.0.1:5080") </programlisting></para>
+                </warning></para>
+            </listitem>
+
+            <listitem>
+              <para>javax.sip.STACK_NAME</para>
+
+              <para>Specifies the name identifying this instance of the
+              Application Server.</para>
+
+              <para><warning>
+                  <para>This is the name you will set in the &kamailio;
+                  configuration script when you invoke the WeSIP Application
+                  Server, by calling the as_relay_t function. This is the name
+                  you pass as the parameter of the function. If you have
+                  different WeSIP instances all connecting to the same
+                  &kamailio;, they must each one have a different STACK_NAME",
+                  and within &kamailio; you can call each of them by invoking
+                  as_relay_t() with a different name. Example:</para>
+
+                  <para><programlisting>&lt;Property key="javax.sip.STACK_NAME" value="app_server_one" /&gt;</programlisting></para>
+                </warning></para>
+            </listitem>
+
+            <listitem>
+              <para>com.voztele.javax.sip.THREAD_POOL_SIZE (integer)</para>
+
+              <para>Specifies the number of threads there must be in the pool
+              to process incoming SIP messages. If unspecified, the default
+              is "infinity".</para>
+            </listitem>
+
+            <listitem>
+              <para>com.voztele.javax.sip.SPIRAL_HDR</para>
+
+              <para>This property tells WeSIP and SEAS that every SipRequest
+              and UAC transaction generated from WeSIP, must spiral through
+              SER, and will be added a special Header called "X-WeSIP-SPIRAL:
+              true" this will make all the outgoing messages pass again
+              through the &kamailio; script, so that they can be accounted or
+              whatever the configurator wants. For example, the configuration
+              script could go:</para>
+
+              <para><programlisting>route{
+        if(is_present_hf("X-WeSIP-SPIRAL")){
+ /* account, log, register, or whatever */
+                t_relay();
+        }else{
+                as_relay_t("app_server_1");
+        }
+}</programlisting></para>
+            </listitem>
+          </itemizedlist>
+
+          <para/>
+        </section>
+
+        <section>
+          <title>Engine</title>
+
+          <para>The Engine must also be nested within the Server element,
+          along with the Connectors. It must have a "name" attribute with
+          whatever name you feel like. It needs to have another attribute
+          called "defaultHost" which will be the default host to which to pass
+          the incoming request (in HTTP/1.0 the requests don&#8217;t have a Host
+          header, so they will be passed to this default host, in SIP, this
+          attribute doesn&#8217;t have a meaning.). In order to have this Engine
+          handling also SIP messages, the "className" attribute of the Engine
+          <emphasis>must be
+          "com.voztele.sipservlet.core.ConvergedEngine".</emphasis></para>
+
+          <para>Within the Engine, there can be one or more Hosts, each one
+          specified within a "Host" element nested in the engine.</para>
+        </section>
+
+        <section>
+          <title>Mapper</title>
+
+          <para>A mapper is used to map an incoming request to one or another
+          SIP or HTTP host. In case it is a SIP request, the mapping is done
+          based on the sip.xml deployment descriptor rules. The classname of
+          the SIP mapper MUST BE
+          "com.voztele.sipservlet.core.EngineSipMapper". The "mapper" element
+          must also have a "protocol" attribute, specifying which protocol
+          this mapper handles. In<emphasis> case of the SIP mapper it must be
+          "SIP/2.0". The HTTP mapper's classname must be
+          "org.apache.catalina.core.StandardEngineMapper" and the protocol
+          attribute "HTTP/1.1"</emphasis></para>
+        </section>
+
+        <section>
+          <title>Realm</title>
+
+          <para>The authentication in HTTP is performed in Apache-Tomcat
+          through Realms. The memory realm is (textual copy from the
+          Apache-Tomcat javadoc"): "Simple implementation of Realm that reads
+          an XML file to configure the valid users, passwords, and
+          roles."</para>
+
+          <para>The classname must be
+          "org.apache.catalina.realm.MemoryRealm"</para>
+
+          <para>A "pathname" attribute can be specified to tell the Realm
+          which file contains the usernames, passwords and roles. If not
+          specified, it is "conf/wesip-users.xml"</para>
+        </section>
+
+        <section>
+          <title>Host</title>
+
+          <para>A Host represents a VirtualHost in HTTP/1.1 servers, so the
+          requests will be dispatched to one or another virtual host depending
+          on the Host: header. In SIP this doesn't make much sense, because
+          there's no such Host: header, and virtual hosting is not done in
+          this way. Every host must have a "name" attribute which specifies
+          the name of the virtual host, it must also have a "nameSip"
+          attribute which MUST MATCH the IP or hostname _and_ port" specified
+          in &kamailio; listen parameters and in the Sip Connector the hostname
+          and the port must be separated with an underscore. for example:
+          nameSip="localhost_5060" or nameSip="192.168.1.1_5060" The next
+          important attribute that must have the Host element is "appBase"
+          which declares the directory where the WEB and SIP applications
+          reside. It usually is a directory called apps in the directory from
+          which the server runs. The attribute "unpackWARs" says the WeSIP
+          Application Server to unpack the Web or Sip Application Archives
+          (.war or .sar extensions) found inside the appBase directory. It
+          should usually be set to "true". The "port" attribute specifies the
+          port where this host is going to receive SIP messages . This only
+          has to do with the SIP protocol, not with HTTP. It must be the same
+          as the port specified in &kamailio; parameter "listen_sockets" (for the
+          seas module). The "autoDeploy" attribute tells the host to monitor
+          the "appBase" directory for new application archives (.sar or .war)
+          so they can automatically be deployed. This parameter should be set
+          to "true". The "className" used for the Host _must_be_
+          "com.voztele.sipservlet.core.ConvergedHost"</para>
+        </section>
+
+        <section>
+          <title>Mapper</title>
+
+          <para>Hosts must also have a nested Mapper element, but when the
+          mapper is inside a Host (and not in an Engine) the classnames must
+          be "com.voztele.sipservlet.core.SipHostMapper" for the "SIP/2.0"
+          protocol and "org.apache.catalina.core.HttpHostMapper" for the
+          "HTTP/1.1" protocol. (2 mappers must be nested inside the
+          Host).</para>
+        </section>
+      </section>
+
+      <section>
+        <title>Configuration Examples</title>
+
+        <para>In general, you can configure WeSIP to work with your &kamailio; in
+        two ways: have 2 &kamailio; instances, the first acting as
+        Proxy/Registrar/Redirect and the second cooperating with WeSIP to act
+        as the Application Server. This is the preferred deployment layout, as
+        the first &kamailio; works as usual, and the requests that need special
+        services are relayed to another &kamailio; which acts on behalf of the
+        WeSIP AS. This configuration profile distributes load (call-routing
+        logic in one instance, and Application Services in the other), and is
+        also more fault-tolerant. On the other hand, you can have all your
+        call-routing logic and Application Server on the same &kamailio;, having
+        one script handle all the logic, and then invoking the App Server at
+        any point.</para>
+
+        <para/>
+
+        <section>
+          <title>&kamailioconfig; in standalone</title>
+
+          <para><programlisting>debug=3            # debug level (cmd line: -dddddddddd)
+fork=yes
+log_stderror=no    # (cmd line: -E)
+check_via=no    # (cmd. line: -v)
+dns=no          # (cmd. line: -r)
+rev_dns=no      # (cmd. line: -R)
+port=5060
+children=4
+loadmodule "/usr/local/lib/kamailio/modules/sl.so"
+loadmodule "/usr/local/lib/kamailio/modules/tm.so"
+loadmodule "/usr/local/lib/kamailio/modules/rr.so"
+loadmodule "/usr/local/lib/kamailio/modules/maxfwd.so"
+loadmodule "/usr/local/lib/kamailio/modules/usrloc.so"
+loadmodule "/usr/local/lib/kamailio/modules/registrar.so"
+loadmodule "/usr/local/lib/kamailio/modules/textops.so"
+loadmodule "/usr/local/lib/kamailio/modules/seas.so"
+loadmodule "/usr/local/lib/kamailio/modules/mi_fifo.so"
+
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+modparam("usrloc", "db_mode",   0)
+modparam("rr", "enable_full_lr", 1)
+modparam("seas", "listen_sockets", "127.0.0.1:5080");
+
+route{
+       if (!mf_process_maxfwd_header("10")) {
+               sl_send_reply("483","Too Many Hops");
+               exit;
+       };
+       if (msg:len &gt;=  2048 ) {
+               sl_send_reply("513", "Message too big");
+               exit;
+       };
+       if (!method=="REGISTER")
+               record_route();
+       if (loose_route()) {
+               append_hf("P-hint: rr-enforced\r\n");
+               route(1);
+       };
+       if (uri==myself) {
+               if (method=="REGISTER") {
+                       save("location");
+                       exit;
+               };
+               lookup("aliases");
+               if (!uri==myself) {
+                       append_hf("P-hint: outbound alias\r\n");
+                       route(1);
+               };
+               if (!lookup("location")) {
+                       sl_send_reply("404", "Not Found");
+                       exit;
+               };
+               append_hf("P-hint: usrloc applied\r\n");
+       };
+       route(1);
+}
+route[1] {
+                if(!as_relay_t("app_server_one")){
+                       t_reply("500","Application Server error");
+               }
+}</programlisting></para>
+        </section>
+
+        <section>
+          <title>&kamailioconfig; working as WeSIP front-end</title>
+
+          <para><programlisting>debug=9            # debug level (cmd line: -dddddddddd)
+fork=yes
+log_stderror=yes    # (cmd line: -E)
+
+check_via=no    # (cmd. line: -v)
+dns=no          # (cmd. line: -r)
+rev_dns=no      # (cmd. line: -R)
+port=5060
+children=4
+
+reply_to_via=1
+listen = tcp:localhost:5060 
+listen = udp:localhost:5060 
+
+mpath="/home/elias/src/sipservlet/seas"
+
+loadmodule "modules/tm/tm.so"
+loadmodule "modules/seas/seas.so"
+loadmodule "modules/mi_fifo/mi_fifo.so"
+
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+modparam("seas", "listen_sockets","127.0.0.1:5080")
+
+route{
+                if(!as_relay_t("app_server_1")){
+                        t_reply("500","Application Server error");
+                }
+
+}</programlisting></para>
+        </section>
+
+        <section>
+          <title>Server.xml</title>
+
+          <para><programlisting>&lt;Server port="8005" shutdown="SHUTDOWN" debug="0"&gt;
+  &lt;Service name="WeSIP-Standalone"&gt;
+    &lt;Connector className="org.apache.catalina.connector.http.HttpConnector"
+        port="8080" minProcessors="5" maxProcessors="75"
+        enableLookups="true" address="localhost" acceptCount="10" debug="10" /&gt;
+        &lt;Connector className="com.voztele.sipservlet.connector.SipConnector"
+        minProcessors="5" maxProcessors="75"
+        addresses="localhost:5060" &gt;
+               &lt;ExtraProperties&gt;
+                       &lt;Property key="com.voztele.javax.sip.SER_ADDRESS" value="127.0.0.1:5080" /&gt;
+                       &lt;Property key="javax.sip.STACK_NAME" value="app_server_one" /&gt;
+                       &lt;Property key="com.voztele.javax.sip.THREAD_POOL_SIZE" value="10" /&gt;
+               &lt;/ExtraProperties&gt;
+       &lt;/Connector&gt;
+    &lt;Engine name="Standalone" defaultHost="localhost" debug="10"
+       className="com.voztele.sipservlet.core.ConvergedEngine"&gt;
+
+        &lt;Logger className="org.apache.catalina.logger.SystemOutLogger"
+           timestamp="true"/&gt;
+        &lt;Mapper className="org.apache.catalina.core.StandardEngineMapper" protocol="HTTP/1.1"/&gt;
+        &lt;Mapper className="com.voztele.sipservlet.core.EngineSipMapper" protocol="SIP/2.0"/&gt;
+        &lt;Realm  className="org.apache.catalina.realm.MemoryRealm" /&gt;
+        &lt;Host name="localhost" nameSip="localhost_5060" debug="10" appBase="webapps" unpackWARs="true"
+        port="5060" autoDeploy="true" className="com.voztele.sipservlet.core.ConvergedHost"&gt;
+               &lt;Mapper className="com.voztele.sipservlet.core.SipHostMapper" protocol="SIP/2.0"/&gt;
+               &lt;Mapper className="org.apache.catalina.core.HttpHostMapper" protocol="HTTP/1.1"/&gt;
+     &lt;/Host&gt;
+  &lt;/Engine&gt;
+&lt;/Service&gt;
+&lt;/Server&gt;</programlisting></para>
+        </section>
+      </section>
+    </section>
+  </chapter>

@@ -1,0 +1,204 @@
+/*
+ * $Id$ 
+ *
+ * Path handling for intermediate proxies
+ *
+ * Copyright (C) 2006 Inode GmbH (Andreas Granig <andreas.granig@inode.info>)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+/*! \file
+ * \brief Path :: Core
+ *
+ * \ingroup path
+ * - Module: path
+ */
+
+/*! \defgroup path Path:: Handling of "path" header for intermediate proxies
+ * This module is designed to be used at intermediate sip proxies
+ * like loadbalancers in front of registrars and proxies. It
+ * provides functions for inserting a Path header including a
+ * parameter for passing forward the received-URI of a
+ * registration to the next hop. It also provides a mechanism for
+ * evaluating this parameter in subsequent requests and to set the
+ * destination URI according to it.
+ *
+ * - No developer API
+ * - No MI functions
+ */
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
+#include "../outbound/api.h"
+#include "../rr/api.h"
+
+#include "path.h"
+#include "path_mod.h"
+
+MODULE_VERSION
+
+
+/*! \brief If received-param of current Route uri should be used
+ * as dst-uri. */
+int path_use_received = 0;
+
+int path_received_format = 0;
+int path_enable_r2 = 0;
+
+/*! \brief
+ * Module initialization function prototype
+ */
+static int mod_init(void);
+
+/*! \brief
+ * rr callback API
+ */
+struct rr_binds path_rrb;
+
+/*! \brief
+ * outbound API
+ */
+ob_api_t path_obb;
+
+/*! \brief
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{ "add_path",          (cmd_function)add_path,              0,
+			0,              0,  REQUEST_ROUTE },
+	{ "add_path",          (cmd_function)add_path_usr,          1,
+			fixup_spve_null, 0, REQUEST_ROUTE },
+	{ "add_path",          (cmd_function)add_path_usr,          2,
+			fixup_spve_spve, 0, REQUEST_ROUTE },
+	{ "add_path_received", (cmd_function)add_path_received,     0,
+			0,              0, REQUEST_ROUTE },
+	{ "add_path_received", (cmd_function)add_path_received_usr, 1,
+			fixup_spve_null, 0, REQUEST_ROUTE },
+	{ "add_path_received", (cmd_function)add_path_received_usr, 2,
+			fixup_spve_spve, 0, REQUEST_ROUTE },
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+
+/*! \brief
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"use_received",    INT_PARAM, &path_use_received },
+	{"received_format", INT_PARAM, &path_received_format },
+	{"enable_r2",       INT_PARAM, &path_enable_r2 },
+	{ 0, 0, 0 }
+};
+
+
+/*! \brief
+ * Module interface
+ */
+struct module_exports exports = {
+	"path",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* Exported functions */
+	params,          /* Exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	0,               /* child initialization function */
+	0                /* destroy function */
+};
+
+
+static int mod_init(void)
+{
+	if (path_use_received) {
+		if (load_rr_api(&path_rrb) != 0) {
+			LM_ERR("failed to load rr-API\n");
+			return -1;
+		}
+		if (path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
+			LM_ERR("failed to register rr callback\n");
+			return -1;
+		}
+	}
+
+	if (ob_load_api(&path_obb) == 0)
+		LM_DBG("Bound path module to outbound module\n");
+	else {
+		LM_INFO("outbound module not available\n");
+		memset(&path_obb, 0, sizeof(ob_api_t));
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_path_exports[] = {
+	{ str_init("path"), str_init("add_path"),
+		SR_KEMIP_INT, ki_add_path,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_user"),
+		SR_KEMIP_INT, ki_add_path_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_user_params"),
+		SR_KEMIP_INT, ki_add_path_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received"),
+		SR_KEMIP_INT, ki_add_path_received,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_user"),
+		SR_KEMIP_INT, ki_add_path_received_user,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_user_params"),
+		SR_KEMIP_INT, ki_add_path_received_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_path_exports);
+	return 0;
+}

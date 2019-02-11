@@ -1,0 +1,125 @@
+
+.TH Call Control Module
+.SH Overview
+.TP
+This module allows one to limit the duration of calls and automatically end them when they exceed the imposed limit. Its main use case is to implement a prepaid system, but it can also be used to impose a global limit on all calls processed by the proxy.
+.SH Description
+.TP
+Callcontrol consists of 3 components: The Kamailio call_control module An external application called callcontrol which keeps track of the calls that have a time limit and automatically ends them when they exceed it. This application receives requests from Kamailio and makes requests to a rating engine (see below) to find out if a call needs to be limited or not. When a call ends (or is ended) it will also instruct the rating engine to debit the balance for the caller with the consumed amount. The callcontrol application is available from http://callcontrol.ag-projects.com/ A rating engine that is used to calculate the time limit based on the caller's credit and the destination price and to debit the caller's balance after a call ends. This is available as part of CDRTool from http://cdrtool.ag-projects.com/
+.TP
+The callcontrol application runs on the same machine as Kamailio and they communicate over a filesystem socket, while the rating engine can run on a different host and communicates with the callcontrol application using a TCP connection.
+.TP
+Callcontrol is invoked by calling the call_control() function for the initial INVITE of every call we want to apply a limit to. This will end up as a request to the callcontrol application, which will interrogate the rating engine for a time limit for the given caller and destination. The rating engine will determine if the destination has any associated cost and if the caller has any credit limit and if so will return the amount of time he is allowed to call that destination. Otherwise it will indicate that there is no limit associated with the call. If there is a limit, the callcontrol application will retain the session and attach a timer to it that will expire after the given time causing it to call back to Kamailio with a request to end the dialog. If the rating engine returns that there is no limit for the call, the session is discarded by the callcontrol application and it will allow it to go proceed any limit. An appropriate response is returned to the call_control module that is then returned by the call_control() function call and allows the script to make a decision based on the answer.
+.SH Features
+.TP
+Very simple API consisting of a single function that needs to be called once for the first INVITE of every call. The rest is done automatically in the background using dialog callbacks. Gracefully end dialogs when they exceed their time by triggering a dlg_end_dlg request into the dialog module, that will generate two BYE messages towards each endpoint, ending the call cleanly. Allow parallel sessions using one balance per subscriber Integrates with mediaproxy's ability to detect when a call does timeout sending media and is closed. In this case the dlg_end_dlg that is triggered by mediaproxy will end the callcontrol session before it reaches the limit and consumes all the credit for a call that died and didn't actually take place. For this mediaproxy has to be used and it has to be started by engage_media_proxy() to be able to keep track of the call's dialog and end it on timeout. Even when mediaproxy is unable to end the dialog because it was not started with engage_media_proxy(), the callcontrol application is still able to detect calls that did timeout sending media, by looking in the radius accounting records for entries recorded by mediaproxy for calls that did timeout. These calls will also be ended gracefully by the callcontrol application itself.
+.SH Dependencies
+.TP 16
+.I Kamailio Modules
+.TP
+The following modules must be loaded before this module: dialog module
+.TP 16
+.I External Libraries or Applications
+.TP
+The following libraries or applications must be installed before running Kamailio with this module loaded: None.
+.SH Exported parameters
+.TP 16
+.I disable (int)
+.TP
+Boolean flag that specifies if callcontrol should be disabled. This is useful when you want to use the same Kamailio configuration in two different context, one using callcontrol, the other not. In the case callcontrol is disabled, calls to the call_control() function will return a code indicating that there is no limit associated with the call, allowing the use of the same configuration without changes.
+.TP
+Default value is 0.
+.TP
+.B Setting the disable parameter
+.TP
+ modparam("call_control", "disable", 1) ...
+.TP 16
+.I socket_name (string)
+.TP
+It is the path to the filesystem socket where the callcontrol application listens for commands from the module.
+.TP
+Default value is /var/run/callcontrol/socket.
+.TP
+.B Setting the socket_name parameter
+.TP
+ modparam("call_control", "socket_name", "/var/run/callcontrol/socket") ...
+.TP 16
+.I socket_timeout (int)
+.TP
+How much time (in milliseconds) to wait for an answer from the callcontrol application.
+.TP
+Default value is 500 (ms).
+.TP
+.B Setting the socket_timeout parameter
+.TP
+ modparam("call_control", "socket_timeout", 500) ...
+.TP 16
+.I signaling_ip_avp (string)
+.TP
+Specification of the AVP which holds the IP address from where the SIP signaling originated. If this AVP is set it will be used to get the signaling IP address, else the source IP address from where the SIP message was received will be used. This AVP is meant to be used in cases where there are more than one proxy in the call setup path and the proxy that actually starts callcontrol doesn't receive the SIP messages directly from the UA and it cannot determine the NAT IP address from where the signaling originated. In such a case attaching a SIP header at the first proxy and then copying that header's value into the signaling_ip_avp on the proxy that starts callcontrol will allow it to get the correct NAT IP address from where the SIP signaling originated.
+.TP
+This is used by the rating engine which finds the rates to apply to a call based on caller's SIP URI, caller's SIP domain or caller's IP address (whichever yields a rate first, in this order).
+.TP
+Default value is $avp(s:signaling_ip).
+.TP
+.B Setting the signaling_ip_avp parameter
+.TP
+ modparam("call_control", "signaling_ip_avp", "$avp(s:signaling_ip)") ...
+.TP 16
+.I canonical_uri_avp (string)
+.TP
+Specification of the AVP which holds an optional application defined canonical request URI. When this is set, it will be used as the destination when computing the call price, otherwise the request URI will be used. This is useful when the username of the ruri needs to have a different, canonical form in the rating engine computation than it has in the ruri.
+.TP
+Default value is $avp(s:can_uri).
+.TP
+.B Setting the canonical_uri_avp parameter
+.TP
+ modparam("call_control", "canonical_uri_avp", "$avp(s:can_uri)") ...
+.TP 16
+.I diverter_avp_id (string)
+.TP
+Specification of the id of an integer AVP which holds an optional application defined diverter SIP URI. When this is set, it will be used by the rating engine as the billing party when finding the rates to apply to a given call, otherwise, the caller's URI taken from the From field will be used. When set, this AVP should contain a value in the form user@domain (no sip: prefix should be used).
+.TP
+This is useful when a destination diverts a call, thus becoming the new caller. In this case the billing party is the diverter and this AVP should be set to it, to allow the rating engine to pick the right rates for the call. For example, if A calls B and B diverts all its calls unconditionally to C, then the diverter AVP should the set to B's URI, because B is the billing party in the call not A after the call was diverted.
+.TP
+Default value is 805.
+.TP
+.B Setting the diverter_avp_id parameter
+.TP
+ modparam("call_control", "diverter_avp_id", 805) route { ... # alice@example.com is paying for this call $avp(i:805) = "sip:alice@example.com"; ... } ...
+.SH Exported Functions
+.TP 16
+.I call_control()
+.TP
+Trigger the use of callcontrol for the dialog started by the INVITE for which this function is called (the function should only be called for the first INVITE of a call). Further in-dialog requests will be processed automatically using internal bindings into the dialog state machine, allowing callcontrol to update its internal state as the dialog progresses, without any other intervention from the script.
+.TP
+This function should be called right before the message is sent out using t_relay(), when all the request uri modifications are over and a final destination has been determined.
+.TP
+This function has the following return codes:
+.TP
++2 - call has no limit +1 - call has limit and is traced by callcontrol -1 - not enough credit to make the call -2 - call is locked by another call in progress -5 - internal error (message parsing, communication, )
+.TP
+This function can be used from REQUEST_ROUTE.
+.TP
+.B Using the call_control function
+.TP
+ if (is_avp_set("$avp(i:805)")) { # the diverter AVP is set, use it as billing party $avp(s:billing_party_domain) = $(avp(i:805){uri.domain}); } else { $avp(s:billing_party_domain) = $fd; } if (method==INVITE &amp;&amp; !has_totag() &amp;&amp; is_domain_local("$avp(s:billing_party_domain)")) { call_control(); switch ($retcode) { case 2: # Call with no limit case 1: # Call has limit and is under callcontrol management break; case -1: # Not enough credit (prepaid call) sl_send_reply("402", "Not enough credit"); exit; break; case -2: # Locked by another call in progress (prepaid call) sl_send_reply("403", "Call locked by another call in progress"); exit; break; default: # Internal error (message parsing, communication, ...) if (PREPAID_ACCOUNT) { xlog("Call control: internal server error\n"); sl_send_reply("500", "Internal server error"); exit; } else { xlog("L_WARN", "Cannot set time limit for postpaid call\n"); } } } t_relay(); ...
+
+.SH AUTHORS
+
+see 
+.B /usr/share/doc/kamailio/AUTHORS
+
+.SH SEE ALSO
+.BR kamailio(8), 
+.BR kamailio.cfg(5)
+.PP
+Full documentation on Kamailio is available at
+.I http://www.kamailio.org/.
+.PP
+Mailing lists:
+.nf 
+users@lists.kamailio.org - Kamailio user community
+.nf 
+devel@lists.kamailio.org - Kamailio development, new features and unstable version
+

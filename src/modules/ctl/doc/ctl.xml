@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="ctl" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Ctl Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+			<email>andrei@iptel.org</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2009</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+    </bookinfo>
+
+    <chapter>
+	<title>Admin Guide</title>
+	<section id="ctl.overview">
+	<title>Overview</title>
+	<para>
+		This module implements the binrpc transport interface for &kamailio; RPCs.
+		It supports various transports over which it speaks binrpc:
+		Unix datagram sockets, Unix stream sockets, UDP and TCP.
+		It also supports a backward compatible FIFO interface (using the old
+		&kamailio; FIFO protocol).
+	</para>
+	<para>
+		By default (if no parameters are changed in the config file) it uses
+		a Unix stream socket under /var/run/&kamailiobinary;:
+		/var/run/&kamailiobinary;/&ctlsocket;. This socket is also the
+		default for &sercmd;.
+	</para>
+	<para>
+		In general it's used in conjunction with &sercmd;. &sercmd; is a Unix
+		tool for invoking &kamailio; RPC functions. It can be used both in
+		interactive mode (supports tab-completion and history) or command
+		line mode.
+		<example>
+		<title><function>&sercmd; example</function> usage</title>
+		<programlisting format="linespecific">
+
+$ &sercmd; ps
+11262	attendant
+11268	udp receiver child=0 sock=127.0.0.1:5060
+11269	udp receiver child=1 sock=127.0.0.1:5060
+11270	udp receiver child=0 sock=192.168.1.101:5060
+11271	udp receiver child=1 sock=192.168.1.101:5060
+11272	slow timer
+11273	timer
+11274	ctl handler
+11275	tcp receiver child=0
+11276	tcp receiver child=1
+11277	tcp main process
+
+		</programlisting>
+		</example>
+	See <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/sercmd/EXAMPLES' >utils/&sercmd;/EXAMPLES</ulink>
+	for more examples.
+	</para>
+	</section>
+	<section id="ctl.binrpc">
+	<title>BINRPC</title>
+	<para>
+		binrpc is a &kamailio; proprietary binary protocol for invoking rpcs.
+		It was designed such that it would minimize the packet sizes and it
+		would be very fast to parse (as opposed to XML-rpc).
+	</para>
+	<para>
+		The binrpc encoding format is fully documented inside
+		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/ctl/binrpc.h' >
+		modules/ctl/binrpc.h</ulink>.
+	</para>
+	</section>
+
+    <xi:include href="ctl_params.xml"/>
+    <xi:include href="ctl_rpc.xml"/>
+    </chapter>
+</book>
+

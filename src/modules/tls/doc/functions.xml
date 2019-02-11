@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="tls.functions">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="tls.f.is_peer_verfied">
+		<title><function>is_peer_verified()</function></title>
+		<para>
+			Returns true if the connection on which the message was received
+			is TLS, the peer presented an X509 certificate and the
+			certificate chain verified ok.
+		</para>
+		<para>
+			It can be used only in a request route.
+		</para>
+		<example>
+			<title><function>is_peer_verified</function> usage</title>
+			<programlisting>
+	if (proto==TLS &amp;&amp; !is_peer_verified()) {
+		sl_send_reply("400", "No certificate or verification failed");
+		exit;
+	}
+			</programlisting>
+		</example>
+	</section>
+</section>

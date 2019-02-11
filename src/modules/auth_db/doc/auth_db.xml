@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Auth_db Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Jakob</firstname>
+		<surname>Schlyter</surname>
+		<email>jakob@schlyter.se</email>
+		</author>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>Voice Sistem SRL</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="auth_db_admin.xml"/>
+
+</book>

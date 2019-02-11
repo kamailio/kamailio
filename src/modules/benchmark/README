@@ -1,0 +1,453 @@
+Benchmark Module
+
+Bastian Friedrich
+
+   Collax GmbH
+   <bastian.friedrich@collax.com>
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Bastian Friedrich
+
+   <bastian.friedrich@collax.com>
+
+   Copyright © 2007 Collax GmbH
+
+   Copyright © 2007 Voice System SRL
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. enable (int)
+              3.2. granularity (int)
+              3.3. loglevel (int)
+              3.4. register (str)
+
+        4. Functions
+
+              4.1. bm_start_timer(name)
+              4.2. bm_log_timer(name)
+
+        5. Exported Variables
+
+              5.1. $BM_time_diff
+
+        6. RPC Commands
+
+              6.1. benchmark.enable_global
+              6.2. benchmark.enable_timer
+              6.3. benchmark.granularity
+              6.4. benchmark.loglevel
+              6.5. benchmark.timer_list
+              6.6. benchmark.timer_name_list
+
+        7. Example of usage
+
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. bm_register(name, mode, id)
+              1.2. bm_start(id)
+              1.3. bm_log(id)
+
+        2. Benchmark API Example
+
+   List of Examples
+
+   1.1. Set enable parameter
+   1.2. Set granularity parameter
+   1.3. Set loglevel parameter
+   1.4. Set register parameter
+   1.5. bm_start_timer usage
+   1.6. bm_log_timer usage
+   1.7. Enabling a timer
+   1.8. List all timers
+   1.9. List one timer
+   1.10. benchmark usage
+   2.1. Using the benchmark module's API from another module
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. enable (int)
+        3.2. granularity (int)
+        3.3. loglevel (int)
+        3.4. register (str)
+
+   4. Functions
+
+        4.1. bm_start_timer(name)
+        4.2. bm_log_timer(name)
+
+   5. Exported Variables
+
+        5.1. $BM_time_diff
+
+   6. RPC Commands
+
+        6.1. benchmark.enable_global
+        6.2. benchmark.enable_timer
+        6.3. benchmark.granularity
+        6.4. benchmark.loglevel
+        6.5. benchmark.timer_list
+        6.6. benchmark.timer_name_list
+
+   7. Example of usage
+
+1. Overview
+
+   This module helps developers to benchmark their module functions. By
+   adding this module's functions via the configuration file or through
+   its API, Kamailio can log profiling information for every function.
+
+   The duration between calls to start_timer and log_timer is stored and
+   logged via Kamailio's logging facility. Please note that all durations
+   are given as microseconds (don't confuse with milliseconds!).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. enable (int)
+   3.2. granularity (int)
+   3.3. loglevel (int)
+   3.4. register (str)
+
+3.1. enable (int)
+
+   Even when the module is loaded, benchmarking is not enabled per
+   default. This variable may have three different values:
+     * -1 - Globally disable benchmarking
+     * 0 - Enable per-timer enabling. Single timers are inactive by
+       default and can be activated through the RPC interface as soon as
+       that feature is implemented.
+     * 1 - Globally enable benchmarking
+
+   Default value is “0”.
+
+   Example 1.1. Set enable parameter
+...
+modparam("benchmark", "enable", 1)
+...
+
+3.2. granularity (int)
+
+   Logging normally is not done for every reference to the log_timer()
+   function, but only every n'th call. n is defined through this variable.
+   A sensible granularity seems to be 100.
+
+   Default value is “1”.
+
+   Example 1.2. Set granularity parameter
+...
+modparam("benchmark", "granularity", 500)
+...
+
+3.3. loglevel (int)
+
+   Set the log level for the benchmark logs. These levels should be used:
+     * -5 - L_ALERT
+     * -4 - L_BUG
+     * -3 - L_CRIT
+     * -2 - L_CRIT (no prefix)
+     * -1 - L_ERR
+     * 0 - L_WARN
+     * 1 - L_NOTICE
+     * 2 - L_INFO
+     * 3 - L_DBG
+
+   Default value is “3” (L_INFO).
+
+   Example 1.3. Set loglevel parameter
+...
+modparam("benchmark", "loglevel", 4)
+...
+
+   This will set the logging level to L_DBG.
+
+3.4. register (str)
+
+   Register a timer id at startup. Required when using the start/log
+   functions via Kemi framework. This parameter can be set many times to
+   register several timer ids.
+
+   Default value is “NONE”.
+
+   Example 1.4. Set register parameter
+...
+modparam("benchmark", "register", "test")
+modparam("benchmark", "register", "auth")
+...
+
+4. Functions
+
+   4.1. bm_start_timer(name)
+   4.2. bm_log_timer(name)
+
+4.1.  bm_start_timer(name)
+
+   Start timer “name”. A later call to “bm_log_timer()” logs this timer..
+
+   Example 1.5. bm_start_timer usage
+...
+bm_start_timer("test");
+...
+
+4.2.  bm_log_timer(name)
+
+   This function logs the timer with the given ID. The following data are
+   logged:
+     * Last msgs is the number of calls in the last logging interval. This
+       equals the granularity variable.
+
+     * Last sum is the accumulated duration in the current logging
+       interval (i.e. for the last “granularity” calls).
+
+     * Last min is the minimum duration between start/log_timer calls
+       during the last interval.
+
+     * Last max - maximum duration.
+
+     * Last average is the average duration between bm_start_timer() and
+       bm_log_timer() since the last logging.
+
+     * Global msgs number of calls to log_timer.
+
+     * Global sum total duration in microseconds.
+
+     * Global min... You get the point. :)
+
+     * Global max also obvious.
+
+     * Global avg possibly the most interesting value.
+
+   Example 1.6. bm_log_timer usage
+...
+bm_log_timer("test");
+...
+
+5. Exported Variables
+
+   5.1. $BM_time_diff
+
+   Exported pseudo-variables are listed in the next sections.
+
+5.1. $BM_time_diff
+
+   $BM_time_diff - the time difference elapsed between calls of
+   bm_start_timer(name) and bm_log_timer(name). The value is 0 if no
+   bm_log_timer() was called.
+
+6. RPC Commands
+
+   6.1. benchmark.enable_global
+   6.2. benchmark.enable_timer
+   6.3. benchmark.granularity
+   6.4. benchmark.loglevel
+   6.5. benchmark.timer_list
+   6.6. benchmark.timer_name_list
+
+6.1. benchmark.enable_global
+
+   Enables/disables the module. Parameter may be -1, 0 or 1. See
+   description of "enable" parameter.
+
+6.2. benchmark.enable_timer
+
+   Enable or disable a single timer. The following example enables timer
+   "test" (the second parameter must be 0 to disable):
+
+   Example 1.7. Enabling a timer
+...
+kamcmd benchmark.enable_timer test 1
+...
+
+6.3. benchmark.granularity
+
+   Modifies the benchmarking granularity. See "granularity" variable.
+
+6.4. benchmark.loglevel
+
+   Modifies the module log level. See "loglevel" variable.
+
+6.5. benchmark.timer_list
+
+   List data for all timers (Last complete period and global data)
+   Displays info close to the one output in the log by using a RPC
+   structure. period_sum, period_min and period_media show data for last
+   granularity period already completed.
+
+   Example 1.8. List all timers
+...
+kamcmd benchmark.timer_list
+{
+        name: test
+        state: enabled
+        id: 0
+        granularity: 2
+        period_sum: 69
+        period_min: 22
+        period_max: 47
+        period_media: 34.500000
+        calls: 4
+        sum: 217
+        global_min: 22
+        global_max: 88
+        global_media: 54.250000
+}
+{
+        name: test2
+        state: enabled
+        id: 1
+        granularity: 2
+        period_sum: 122
+        period_min: 25
+        period_max: 97
+        period_media: 61.000000
+        calls: 4
+        sum: 349
+        global_min: 25
+        global_max: 151
+        global_media: 87.250000
+}
+...
+
+6.6. benchmark.timer_name_list
+
+   List data for one timer based on its name (Last complete period and
+   global data) It displays info close to the one output in the log by
+   using a RPC structure. period_sum, period_min and period_media show
+   data for last granularity period already completed.
+
+   Example 1.9. List one timer
+...
+kamcmd benchmark.timer_name_list test
+{
+        name: test
+        state: enabled
+        id: 0
+        granularity: 2
+        period_sum: 69
+        period_min: 22
+        period_max: 47
+        period_media: 34.500000
+        calls: 4
+        sum: 217
+        global_min: 22
+        global_max: 88
+        global_media: 54.250000
+}
+...
+
+7. Example of usage
+
+   Measure the duration of user location lookup.
+
+   Example 1.10. benchmark usage
+...
+bm_start_timer("usrloc-lookup");
+lookup("location");
+bm_log_timer("usrloc-lookup");
+...
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. bm_register(name, mode, id)
+        1.2. bm_start(id)
+        1.3. bm_log(id)
+
+   2. Benchmark API Example
+
+   The benchmark module provides an internal API to be used by other
+   Kamailio modules. The available functions are identical to the user
+   exported functions.
+
+   Please note that this module is intended mainly for developers. It
+   should be used with caution in production environments.
+
+1. Available Functions
+
+   1.1. bm_register(name, mode, id)
+   1.2. bm_start(id)
+   1.3. bm_log(id)
+
+1.1.  bm_register(name, mode, id)
+
+   This function register a new timer and/or returns the internal ID
+   associated with the timer. mode controls the creation of new timer if
+   not found. id is to be used by start and log timer functions.
+
+1.2.  bm_start(id)
+
+   This function equals the user-exported function bm_start_timer. The id
+   is passed as an integer, though.
+
+1.3.  bm_log(id)
+
+   This function equals the user-exported function bm_log_timer. The id is
+   passed as an integer, though.
+
+2. Benchmark API Example
+
+   Example 2.1. Using the benchmark module's API from another module
+...
+#include "../benchmark/benchmark.h"
+...
+struct bm_binds bmb;
+...
+...
+/* load the benchmarking API */
+if (load_bm_api( &bmb )!=0) {
+    LM_ERR("can't load benchmark API\n");
+    goto error;
+}
+...
+...
+/* Start/log timers during a (usually user-exported) module function */
+bmp.bm_register("test", 1, &id)
+bmb.bm_start(id);
+do_something();
+bmb.bm_log(id);
+...

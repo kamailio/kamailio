@@ -12,9 +12,9 @@ CREATE TABLE `topos_d` (
     `bs_contact` VARCHAR(128) DEFAULT '' NOT NULL,
     `a_tag` VARCHAR(255) DEFAULT '' NOT NULL,
     `b_tag` VARCHAR(255) DEFAULT '' NOT NULL,
-    `a_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
-    `b_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
-    `s_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
+    `a_rr` MEDIUMTEXT,
+    `b_rr` MEDIUMTEXT,
+    `s_rr` MEDIUMTEXT,
     `iflags` INT(10) UNSIGNED DEFAULT 0 NOT NULL,
     `a_uri` VARCHAR(128) DEFAULT '' NOT NULL,
     `b_uri` VARCHAR(128) DEFAULT '' NOT NULL,
@@ -27,6 +27,8 @@ CREATE TABLE `topos_d` (
 
 CREATE INDEX rectime_idx ON topos_d (`rectime`);
 CREATE INDEX a_callid_idx ON topos_d (`a_callid`);
+CREATE INDEX a_uuid_idx ON topos_d (`a_uuid`);
+CREATE INDEX b_uuid_idx ON topos_d (`b_uuid`);
 
 INSERT INTO version (table_name, table_version) values ('topos_d','1');
 
@@ -39,11 +41,11 @@ CREATE TABLE `topos_t` (
     `a_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
     `b_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
     `direction` INT DEFAULT 0 NOT NULL,
-    `x_via` MEDIUMTEXT DEFAULT '' NOT NULL,
+    `x_via` MEDIUMTEXT,
     `x_vbranch` VARCHAR(255) DEFAULT '' NOT NULL,
-    `x_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
-    `y_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
-    `s_rr` MEDIUMTEXT DEFAULT '' NOT NULL,
+    `x_rr` MEDIUMTEXT,
+    `y_rr` MEDIUMTEXT,
+    `s_rr` MEDIUMTEXT,
     `x_uri` VARCHAR(128) DEFAULT '' NOT NULL,
     `a_contact` VARCHAR(128) DEFAULT '' NOT NULL,
     `b_contact` VARCHAR(128) DEFAULT '' NOT NULL,
@@ -60,6 +62,8 @@ CREATE TABLE `topos_t` (
 
 CREATE INDEX rectime_idx ON topos_t (`rectime`);
 CREATE INDEX a_callid_idx ON topos_t (`a_callid`);
+CREATE INDEX x_vbranch_idx ON topos_t (`x_vbranch`);
+CREATE INDEX a_uuid_idx ON topos_t (`a_uuid`);
 
 INSERT INTO version (table_name, table_version) values ('topos_t','1');
 

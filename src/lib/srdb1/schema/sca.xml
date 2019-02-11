@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="sca_susbcriptions" xmlns:db="http://docbook.org/ns/docbook">
+    <name>sca_subscriptions</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used by the sca module to store active subscriptions.
+			At startup time, the sca module loads unexpired subscriptions into
+			its subscription hash table. More information about the sca module
+			can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;sca.html">&KAMAILIO_MOD_DOC;sca.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="subscriber">
+        <name>subscriber</name>
+        <type>string</type>
+        <size>255</size>
+        <description>URI of SCA subscriber</description>
+    </column>
+
+    <column id="aor">
+        <name>aor</name>
+        <type>string</type>
+	<size>255</size>
+        <description>SCA Address-of-Record for the group</description>
+    </column>
+
+    <column id="event">
+        <name>event</name>
+        <type>int</type>
+        <default>0</default>
+        <description>SCA event type. 0 - call-info, 1 - line-seize</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+	<default>0</default>
+        <description>Epoch time of SCA subscription expiration</description>
+    </column>
+
+    <column id="state">
+        <name>state</name>
+        <type>int</type>
+	<default>0</default>
+        <description>SCA subscription state, 0 - active</description>
+    </column>
+
+    <column id="app_idx">
+        <name>app_idx</name>
+        <type>int</type>
+	<default>0</default>
+        <description>Seized line appearance index</description>
+    </column> 
+
+    <column id="call_id">
+        <name>call_id</name>
+        <type>string</type>
+	<size>&callid_len;</size>
+        <description>Call-ID value for subscription dialog</description>
+    </column>
+
+    <column id="from_tag">
+        <name>from_tag</name>
+        <type>string</type>
+	<size>&domain_len;</size>
+        <description>From-tag for subscription dialog</description>
+    </column>
+
+    <column id="to_tag">
+        <name>to_tag</name>
+        <type>string</type>
+	<size>&domain_len;</size>
+        <description>To-tag for subscription dialog</description>
+    </column>
+
+    <column id="record_route">
+        <name>record_route</name>
+        <type>text</type>
+	<null />
+        <description>Subscription Record-Route values</description>
+    </column>
+
+    <column id="notify_cseq">
+        <name>notify_cseq</name>
+        <type>int</type>
+	<size>&cseq_len;</size>
+        <description>Cseq for NOTIFYs sent to subscriber</description>
+    </column>
+
+    <column id="subscribe_cseq">
+        <name>subscribe_cseq</name>
+        <type>int</type>
+	<size>&cseq_len;</size>
+        <description>Cseq for SUBSCRIBEs sent from subscriber</description>
+    </column>
+
+    <column id="server_id">
+        <name>server_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of server_id from configuration file</description>
+    </column>
+
+    <index>
+	<name>sca_subscriptions_idx</name>
+	<colref linkend="subscriber" />
+	<colref linkend="call_id" />
+	<colref linkend="from_tag" />
+	<colref linkend="to_tag" />
+	<unique />
+    </index>
+
+    <index>
+	<name>sca_expires_idx</name>
+	<colref linkend="server_id" />
+	<colref linkend="expires" />
+    </index>
+
+    <index>
+	<name>sca_subscribers_idx</name>
+	<colref linkend="subscriber" />
+	<colref linkend="event" />
+    </index>
+</table>

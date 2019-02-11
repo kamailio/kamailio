@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="ldap" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>db2_ldap module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>jan  at iptel dot org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Iptel.org GmBH</holder>
+	</copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="ldap.overview">
+		<title>Overview</title>
+		<para>
+		The LDAP module is database driver, i.e. it implements DBv2 API functions.
+		The goal is map database query defined by table, matching fields and result fields
+		to LDAP search in sub-tree defined by root, object class, attributes and
+		pass it to the <emphasis>OpenLDAP</emphasis> which communicates with the LDAP server.
+		</para>
+		
+		<para>
+		This procedure is sometimes tricky because the LDAP does not support
+		all database features or supports them in different manner. Here we
+		must express especially <emphasis>filtering</emphasis> and <emphasis>
+		multi-values</emphasis>. The multi-value is de facto array of single
+		values. If the LDAP module get a multi-value field then generates
+		record for every single value, respectively for every combination
+		in case the more fields contain multi-value.
+		</para>
+
+		<para>		
+		The LDAP supports natively "AND", "OR", "NOT" logical operators and "equal", "non-equal",
+		"less-or-equal" and "greater-or-equal" comparison operators. Therefore
+		"less" and "greater" operators are mapped as "less/greater-or-equal-AND-not-equal".
+		It's important realize it when the attribute which will be used for
+		filtering may contain multi-value. 
+		The LDAP server evaluates comparison operator on multi-value so that
+		the result for record is true if the condition is satisfied for any single
+		value. The single values not satisfying condition are not truncated. It implies two cases
+		for positive comparison, e.g. "equal", the result contains values not satisfying the
+		condition, the case may be handled by additional filter in the LDAP module,
+		the negative comparison, e.g. "non-equal", does not return record at all.
+		Because the LDAP module cannot know if the LDAP attribute may
+		logically contain multi-value so there is introduced DB API option <emphasis>client_side_filtering</emphasis>
+		which forces filtering such fields in the LDAP module, i.e. the LDAP server returns
+		larger result set because the filtering condition is not passed there.
+		</para>
+
+		<para>
+		The syntax of <emphasis>client_side_filtering</emphasis> value is comma delimited
+		of field names which won't be used for server-side filter if such a field appears in a match
+		condition. Instead records will 
+		be filtered out in module. It implies such fields MUST exist in result field list.
+		</para>
+		
+		<para>
+		The necessary condition of successful filtering of particular
+		attribute at the LDAP server is correct attribute definition.
+		The "equal"/"non-equal" operator requires <emphasis>equality matching rule</emphasis>,
+		the "greater"/"less" operator requires <emphasis>ordering matching rule</emphasis>.
+		If required matching rule is missing the LDAP server silently returns
+		empty result set. In case of double filtering both at the LDAP server and the LDAP
+		module, e.g. multi-value and equal comparison, check the LDAP server matching
+		rule satisfies your needs or use <emphasis>client_side_filtering</emphasis> feature. 
+		</para>
+
+		<para>
+		The LDAP server may be identified either 
+		complete specification of host, user, password in URI or
+		is specification reference to <varname>connection</varname> section
+		of <varname>config</varname> file. Note in the second case there is only
+		one slash.
+		</para>
+
+		<example>
+			<title>URI example</title>
+			<programlisting>
+	...
+	modparam("auth", "db_url", "ldap://admin:heslo@127.0.0.1");
+
+	modparam("auth", "db_url", "ldap:/ldap_server1");
+
+	...
+			</programlisting>
+		</example>
+
+		<para>
+			Features:
+			<itemizedlist>
+				<listitem>
+					<para>
+						simple, SASL authentication, TLS
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						server and client side filtering
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						read-only queries
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						optional referral chasing by OpenLDAP
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						optional reference chasing by OpenLDAP
+
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+    </section>
+
+	<section id="ldap.dep">
+		<title>Dependencies</title>
+				   
+		<para>
+		none
+		</para>
+	</section>
+
+	<section id="ldap.parameters">
+
+		<title>Parameters</title>
+
+		<section id="config">
+			<title><varname>config</varname> (string)</title>
+			<para>
+				Default value is <emphasis>ldap.cfg</emphasis>.
+			</para>
+			<para>
+			The filename (relatively to ser config file) of mapping database to LDAP definition.
+
+			It is the main configuration file for the LDAP module in SER.
+			The configuration file maps database table names used in SER to LDAP directory
+			sub-trees to be searched. In addition to that the configuration file also allows to
+			configure the LDAP search filter and maps database field names to
+			LDAP attribute names and vice versa. 
+			</para>
+			<example>
+				<title>Example <varname>config</varname></title>
+				<programlisting>
+	...
+	modparam("ldap", "config", "my-ldap.cfg");
+	...
+				</programlisting>
+			</example>
+
+
+			<example>
+				<title>Configuration file example</title>
+				<programlisting>
+# Supported Attribute Type Names:
+#  * GeneralizedTime
+#  * Integer
+#  * BitString
+#  * Boolean
+#  * String
+#  * Binary
+#  * Float
+#
+
+[connection:ldap_server1]
+host=127.0.0.1
+port=389
+username=ser
+password=heslo
+# LDAP or LDAP SASL authentication mechanism.
+# Allowed values: none (default), simple, digest-md5, external
+authtype=simple
+
+# tls encryption
+tls=off
+
+# Specifies the file that contains certificates for all of the Certificate
+# Authorities the ldap module will recognize.
+ca_list=/home/kg/work/openssl/demoCA/cacert.pem
+
+# Specifies what checks to perform on server certificates in a TLS session
+# allowed values are never/allow/try/demand
+# see the TLS_REQCERT tls option part of ldap.conf(8) man page for more details
+require_certificate=demand
+
+#
+# Table credentials contains SIP digest authentication credentials.
+#
+[table:credentials]
+
+# In our LDAP directory we store SIP digest credentials under 
+# "Digest Credentials" organization unit so this is where searches for digest 
+# credentials should start.
+base = "ou=Digest Credentials,dc=iptel,dc=org"
+
+# We search the whole subtree.
+scope = subtree
+
+# For digest credentials we are only interested in objects with objectClass 
+# 'digestAuthCredentials', objects of all other types are ignored.
+filter = "(objectClass=digestAuthCredentials)"
+
+# Mapping of field names to LDAP attribute names and vice versa. Names are
+# delimited using ':', the first name is database field name as used in SER
+# modules, the second name (after :) is corresponding LDAP attribute name,
+# optionally preceded with LDAP attribute syntax name in parentheses.
+field_map = password : (Binary) digestPassword
+field_map = realm : digestRealm
+field_map = auth_username : digestUsername
+field_map = uid : serUID
+field_map = flags : (BitString) serFlags
+
+# retrieve at most sizelimit entries for a search
+#sizelimit = 2147483647
+
+# wait at most timelimit seconds for a search to complete
+#timelimit = 120
+
+# chase references automatically by OpenLDAP. Default is "never"
+# chase_references = never | searching | finding | always
+
+# chase referrals automatically by OpenLDAP. Default is "no"
+# chase_referrals = yes | no
+
+#
+# Domain table stores information about virtual domains
+#
+[table:domain]
+
+# Objects mapping domain IDs to domain names and vice versa are stored
+# in the subtree with the following root:
+base = "ou=Domains,dc=iptel,dc=org"
+
+scope = subtree
+
+# We are only interested in serDomain objects when looking up information
+# about virtual domains.
+filter = "(objectClass=serDomain)"
+
+field_map = did : (String) serDID
+field_map = domain : (String) serDomain
+field_map = flags : (BitString) serFlags
+
+#
+# Table domain_attrs contains domain attributes, domain attributes store
+# extra information about virtual domains.
+#
+[table:domain_attrs]
+base = "ou=Domains, dc=iptel,dc=org"
+scope = subtree
+
+filter = "(objectClass=serDomainAttr)"
+
+field_map = did : serDID
+field_map = name : serAttrName
+field_map = type : (Integer) serAttrType
+field_map = value : serAttrValue
+field_map = flags : (BitString) serFlags			
+				</programlisting>
+			</example>
+			
+		</section>
+
+		<section id="reconnect_attempt">
+			<title><varname>reconnect_attempt</varname> (integer)</title>
+			<para>
+			Default value is <emphasis>3</emphasis>.
+			</para>
+			<para>
+			Number of reconnect attempts when connection to the LDAP server is lost.
+			</para>
+
+			<example>
+				<title>Example <varname>reconnect_attempt</varname></title>
+				<programlisting>
+	...
+	modparam("ldap", "reconnect_attempt", "5");
+	...
+				</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section id="ldap.functions">
+		<title>Functions</title>
+		<para>
+		none
+		</para>
+	</section>
+    </chapter>
+</book>
+

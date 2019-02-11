@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+    <para>This module serves as a storage engine for SCSCF contacts, much like the standard Kamailio module that is usrloc, is a storage engine for standard SIP contacts.</para>
+  </section>
+  <section>
+    <title>Dependencies</title>
+    <section>
+      <title>&kamailio; Modules</title>
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>TM</emphasis></para>
+          </listitem>
+          <listitem>
+            <para><emphasis>Presence</emphasis></para>
+          </listitem>
+          <listitem>
+            <para><emphasis>IMS dialog</emphasis></para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+  </section>
+  <section>
+    <title>Parameters</title>
+    <section id="ims_usrloc_scscf.p.db_url">
+      <title><varname>db_url</varname> (string)</title>
+      <para>database <acronym>URL</acronym> for storing impu/contacts records</para>
+      <example>
+        <title>Set <varname>db_url</varname>parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "db_url", "mysql//username:password@localhost/scscf")
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="ims_usrloc_scscf.p.db_mode">
+      <title><varname>db_mode</varname> (string)</title>
+      <para>This is the database mode to be used for the SCSCF usrloc data persistent storage. Currently this module supports the Write-Back scheme only.</para>
+      <itemizedlist>
+  		<listitem>
+  			<para>
+  			0 - This disables database completely. Only memory will be used.
+  			Contacts will not survive restart.
+  			</para>
+  		</listitem>
+  		<listitem>
+  			<para>
+  			1 - Write-Backend scheme. All changes are made to memory and database synchronization is done in the timer
+  			</para>
+  		</listitem>
+  		</itemizedlist>
+      <para><emphasis> Default value is 0. </emphasis></para>
+      <example>
+        <title>Set <varname>db_mode</varname>(int)</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "db_mode", 1)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.maxcontact">
+      <title>maxcontact (int)</title>
+      <para>The parameter can be used to limit the number of contact for each impu</para>
+      <para><emphasis>Default value is 0(max)</emphasis></para>
+      <example>
+        <title>Set <varname>maxcontact</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "maxcontact", 10)
+        </programlisting>
+       </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.maxcontact_3gpp">
+      <title>maxcontact_3gpp (int)</title>
+      <para>The parameter can be used to limit the number of 3GPP contact for each impu</para>
+      <para><emphasis> Default value is 0.(max) </emphasis></para>
+      <example>
+        <title>Set <varname>maxcontact_3gpp</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "maxcontact_3gpp", 0)
+        </programlisting>
+       </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.maxcontact_behaviour">
+      <title>maxcontact_behaviour (int)</title>
+      <para>Behaviour of usrloc , after impu reach max contacts limit.</para>
+      <itemizedlist>
+  		<listitem>
+  			<para>
+  			0 - Disabled
+  			</para>
+  		</listitem>
+  		<listitem>
+  			<para>
+  			1 - Reject after reaching limit.
+  			</para>
+  		</listitem>
+      <listitem>
+  			<para>
+  			2 - Overwrite
+  			</para>
+  		</listitem>
+  		</itemizedlist>
+      <para><emphasis> Default value is 0. </emphasis></para>
+      <example>
+        <title>Set <varname>maxcontact_behaviour</varname>
+        parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "maxcontact_behaviour", 2)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.max_subscribes">
+      <title>max_subscribes(int)</title>
+      <para>Max number of subscribes allowed per watcher for each IMPU </para>
+      <para><emphasis> Default value is 0. </emphasis></para>
+      <example>
+        <title>Set <varname>subscription_expires_range</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "max_subscribes", 2)
+        </programlisting>
+      </example>
+     </section>
+    <section id="ims_usrloc_scscf.p.sub_dialog_hash_size">
+      <title>sub_dialog_hash_size(int)</title>
+      <para>Subscriber dialog hash table size</para>
+      <para><emphasis> Default value is 10. </emphasis></para>
+      <example>
+        <title>Set<varname>sub_dialog_hash_size</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "sub_dialog_hash_size", 512)
+      </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.timer_procs">
+      <title>timer_procs(int)</title>
+      <para>process number of handling registeration </para>
+      <para><emphasis> Default value is 0 </emphasis></para>
+      <example>
+        <title>Set<varname>timer_procs</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "timer_procs", 5)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.timer_interval">
+      <title>timer_interval (int)</title>
+      <para>Number of seconds between two timer runs. The module uses a timer to delete expired contacts,
+         synchronize with database and other tasks, that need to be run periodically</para>
+      <para><emphasis> Default value is 90  </emphasis></para>
+      <example>
+        <title>Set <varname>timer_interval</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "timer_interval", 120)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.desc_time_order">
+      <title>desc_time_order (int)</title>
+      <para>If the user's contacts should be kept timestamp ordered; otherwise the contact will be ordered based on q value. Non 0 value means true.</para>
+      <para><emphasis> Default value is timestamp ordering not enabled  </emphasis></para>
+      <example>
+        <title>Set <varname>desc_time_order</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "desc_time_order", 1)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.matching_mode">
+      <title>matching_mode (int)</title>
+      <para>What contact matching algorithm to be used.</para>
+      <itemizedlist>
+  		<listitem>
+  			<para>
+  			0 - Contact Only matching
+  			</para>
+  		</listitem>
+  		<listitem>
+  			<para>
+  			1 - Contact and Callid Matching
+  			</para>
+  		</listitem>
+      <listitem>
+  			<para>
+  			2 - Contact and Path header matching
+  			</para>
+  		</listitem>
+      <listitem>
+        <para>
+        3 - Only contact IP and Port Matching
+        </para>
+      </listitem>
+  		</itemizedlist>
+      <para><emphasis> Default value is 0. </emphasis></para>
+      <example>
+        <title>Set <varname>matching_mode</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "matching_mode", 0)
+       </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.cseq_delay">
+      <title>cseq_delay (int)</title>
+      <para>Delay (in seconds) for accepting as retransmissions register requests with same Call-ID and Cseq.</para>
+      <para><emphasis> Default value is 20. </emphasis></para>
+      <example>
+        <title>Set <varname>scscf_name</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "cseq_delay", 20)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.fetch_rows">
+      <title>fetch_rows(int)</title>
+      <para>The number of the rows to be fetched at once from database when loading the location records.</para>
+      <para><emphasis> Default value is 2000. </emphasis></para>
+      <example>
+        <title>Set <varname>fetch_rows</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "fetch_rows", 3000)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.hash_size">
+      <title>hash_size (string)</title>
+      <para>The number of entries of the hash table used by usrloc </para>
+      <para><emphasis> Default value 512</emphasis></para>
+      <example>
+        <title>Set <varname>hash_size</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "hash_size", 512)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.subs_hash_size">
+      <title>subs_hash_size (int)</title>
+      <para>The number of entries of the hash table used by usrloc to store the ims subscribe records</para>
+      <para><emphasis> Default value 512</emphasis></para>
+      <example>
+        <title>Set <varname>subs_hash_size</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "subs_hash_size", 512)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.contacts_hash_size">
+      <title>contacts_hash_size (integer)</title>
+      <para>The number of entries of the hash table used by usrloc to store the contact records</para>
+      <para><emphasis> Default value is 512</emphasis></para>
+      <example>
+        <title>Set <varname>contacts_hash_size</varname>parameter</title>
+        <programlisting format="linespecific">...
+        modparam("ims_usrloc_scscf", "contacts_hash_size", 512)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.nat_bflag">
+      <title>nat_bflag (integer)</title>
+      <para>NAT marker to handle natted registration</para>
+      <para><emphasis> Default value is 0 </emphasis></para>
+      <example>
+        <title>Set <varname>nat_bflag</varname>parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "nat_bflag", 3)
+       </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.contact_delete_delay">
+      <title>contact_delete_delay (int)</title>
+      <para>If contact is put into delay delete state ,this is how long we delay before deleting </para>
+      <para><emphasis> Default value is 30</emphasis></para>
+      <example>
+        <title>Set <varname>contact_delete_delay</varname>parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
+	     </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.support_wildcardPSI">
+      <title>support_wildcardPSI (int)</title>
+      <para>Wildcard Public-Service-Identity (RFC5002). it will be actived by setting  1  </para>
+      <para><emphasis> Default value is 0.(disabled) </emphasis></para>
+      <example>
+        <title>Set <varname>support_wildcardPSI</varname> parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "support_wildcardPSI", 0)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.unreg_validity">
+      <title>unreg_validity (int)</title>
+      <para>Default validity time in seconds for unregister assignment to SCSCF </para>
+      <para><emphasis> Default value is 1800 </emphasis></para>
+      <example>
+        <title>Set <varname>unreg_validity</varname> parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "unreg_validity", 0)
+        </programlisting>
+      </example>
+    </section>
+    <section id="ims_usrloc_scscf.p.user_data_xsd">
+      <title>user_data_xsd (string)</title>
+      <para> </para>
+      <para><emphasis> Default value is 1800 </emphasis></para>
+      <example>
+        <title>Set <varname>unreg_validity</varname> parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "user_data_xsd", "/usr/local/etc/kamailio/CxDataType_Rel6.xsd")
+        </programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>RPC Commands</title>
+    <para>Exported RPC commands.</para>
+    <section id="ims_usrloc_scscf.r.status">
+      <title>ulscscf.status</title>
+      <para></para>
+    </section>
+    <section id="ims_usrloc_scscf.r.showimpu">
+      <title>ulscscf.showimpu</title>
+      <para></para>
+    </section>
+    <section id="ims_usrloc_scscf.r.snapshot">
+      <title>ulscscf.snapshot</title>
+      <para></para>
+    </section>
+  </section>
+</chapter>

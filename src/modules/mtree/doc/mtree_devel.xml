@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+	<section>
+	<title>Available Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">mt_load_api(api)
+			</function>
+		</title>
+		<para>
+		The function imports all API functions that are exported by the 
+		mtree module (see sections below).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>mtree_api_t* api</emphasis> - mtree API
+			</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">mt_match(msg, mtree, value, mode)</function>
+		</title>
+		<para>
+		Match 'value' against 'mtree' using 'mode' (see mt_match
+        function Admin Guide documentation).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>sip_msg_t *msg</emphasis> - SIP Request
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>str *mtree</emphasis> - Name of mtree
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>str *value</emphasis> - Value to match
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>int mode</emphasis> - Match mode
+			</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+	</section>
+
+</chapter>
+

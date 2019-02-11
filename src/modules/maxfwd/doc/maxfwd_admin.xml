@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section id="maxfwd.overview">
+	<title>Overview</title>
+	<para>
+		The module implements all of the operations that handle the Max-Forward
+		SIP header field, like adding it (if not present) or decrementing and checking 
+		the value of the existent one.
+	</para>
+	<para>
+		The SIP Max-Forward header is used to prevent loops in a SIP network.
+		Every server that process and forward a SIP request lowers the Max-Forward
+		value with one. When the value reaches zero, the request is not forwarded
+		and an error response is sent to the UAC.
+	</para>
+	</section>
+	<section id="maxfwd.dependencies">
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="maxfwd.p.max_limit">
+		<title><varname>max_limit</varname> (integer)</title>
+		<para>
+		Set an upper limit for the max-forward value in the outgoing requests.
+		If the header is present, the decremented value is not allowed to
+		exceed this max_limits - if it does, the header value will by
+		decreased to <quote>max_limit</quote>.
+		</para>
+		<para>Note: This check is done when calling the
+		maxfwd_process() function.
+		</para>
+		<para>
+		The range of values stretches from 1 to 256, which is the maximum
+		MAX-FORWARDS value allowed by RFC 3261. The value can be changed at
+		runtime.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>70</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_limit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("maxfwd", "max_limit", 32)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Functions</title>
+	<section id="maxfwd.f.maxfwd_process">
+		<title>
+		<function moreinfo="none">maxfwd_process(max_value)</function>
+		</title>
+		<para>
+		If no Max-Forward header is present in the received request, a header
+		will be added having the original value equal with
+		<quote>max_value</quote>. If a Max-Forward header is already present,
+		its value will be decremented (if not 0). The parameter can be a
+		variable.
+		</para>
+		<para>Return codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>2 (true)</emphasis> - header was not found and
+			a new header was successfully added.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1 (true)</emphasis> - header was found and its
+			value was successfully decremented (had a non-0 value).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-1 (false)</emphasis> - the header was found and
+			its value is 0 (cannot be decremented).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-2 (false)</emphasis> - error during processing.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		The return code may be extensively tested via script variable
+		<quote>retcode</quote> (or <quote>$?</quote>).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>max_value</emphasis> - Value to be added if
+			there is no Max-Forwards header field in the message.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>maxfwd_process</function> usage</title>
+		<programlisting format="linespecific">
+...
+# initial sanity checks -- messages with
+# max_forwards==0, or excessively long requests
+if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
+	sl_send_reply("483","Too Many Hops");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="maxfwd.f.mf_process_maxfwd_header">
+		<title>
+		<function moreinfo="none">mf_process_maxfwd_header(max_value)</function>
+		</title>
+		<para>
+			Same as maxfwd_process(max_value).
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">process_maxfwd(max_value)</function>
+		</title>
+		<para>
+			Same as maxfwd_process(max_value).
+		</para>
+	</section>
+
+	<section id="maxfwd.f.is_maxfwd_lt">
+		<title>
+		<function moreinfo="none">is_maxfwd_lt(max_value)</function>
+		</title>
+		<para>
+		Checks if the Max-Forward header value is less then the
+		<quote>max_value</quote> parameter value. It considers also the value
+		of the new inserted header (if locally added). The parameter can be
+		a variable.
+		</para>
+		<para>Retuning codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>1 (true)</emphasis> - header was found or set and
+			its value is strictly less than <quote>max_value</quote>.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-1 (false)</emphasis> - the header was found or
+			set and its value is greater or equal to <quote>max_value</quote>.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-2 (false)</emphasis> - header was not found or
+			not set.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-3 (false)</emphasis> - error during processing.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		The return code may be extensively tested via script variable
+		<quote>retcode</quote> (or <quote>$?</quote>).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>max_value</emphasis> - value to check the
+			Max-Forward.value against (as less than).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>is_maxfwd_lt</function> usage</title>
+		<programlisting format="linespecific">
+...
+# next hop is a gateway, so make no sense to
+# forward if MF is 0 (after decrement)
+if ( is_maxfwd_lt("1") ) {
+	sl_send_reply("483","Too Many Hops");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="maxfwd.f.maxfwd_at_least">
+		<title>
+		<function moreinfo="none">maxfwd_at_least(max_value)</function>
+		</title>
+		<para>
+			Same as is_maxfwd_lt(max_value).
+		</para>
+	</section>
+
+	<section id="maxfwd.f.mf_lowlimit">
+		<title>
+		<function moreinfo="none">mf_lowlimit(max_value)</function>
+		</title>
+		<para>
+			Same as is_maxfwd_lt(max_value).
+		</para>
+	</section>
+
+	</section>
+</chapter>
+

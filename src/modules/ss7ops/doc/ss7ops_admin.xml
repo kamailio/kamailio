@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The ss7ops module can currently handle M2UA/MTP-L3/ISUP and
+		convert it to JSON. In the future this might gain support for
+		more SIGTRAN adoptions and ITU TCAP/GSM MAP.
+	</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="ss7ops.f.isup_to_json">
+		<function moreinfo="none">isup_to_json(proto)</function>
+		<title><varname>isup_to_json</varname></title>
+		<para>
+		Pass the HEP protocol type as parameter (e.g. 8 for M2UA) and the
+		contained ISUP payload will be converted to a JSON string. The result
+		can be accessed using the $isup(1) variable.
+		</para>
+		<para>
+		<example>
+		<title><function>isup_to_json</function> usage</title>
+		<programlisting format="linespecific">
+...
+isup_to_json(8);
+...
+</programlisting>
+	    </example>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Variables</title>
+	<section id="ss7ops.f.isup">
+		<title><varname>isup(id)</varname></title>
+		<para>
+		If id is set to 1, return the JSON representation as string for the last
+		message that was parsed.
+		</para>
+	</section>
+	</section>
+
+</chapter>

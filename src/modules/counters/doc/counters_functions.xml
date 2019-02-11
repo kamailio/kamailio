@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<section id="cnts.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+	 <sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="counters.f.cnt_inc">
+	<title>
+		<function>cnt_inc([group.]name)</function>
+	</title>
+	<para>
+		Increments the counter <emphasis>group.name</emphasis>. The counter
+		must be defined using the <varname>script_counter</varname>
+		module parameter.
+		If the group name is missing, the group specified by the
+		<varname>script_cnt_grp_name</varname>  modparam will be used.
+	</para>
+	<example>
+		<title><function>cnt_inc</function> usage</title>
+		<programlisting>
+...
+modparam("counters", "script_counter", "reqs")
+modparam("counters", "script_counter", "out.reqs  forwarded requests")
+...
+route {
+	cnt_inc("reqs");
+	if (forward(uri:host, uri:port))
+		cnt_inc("out.reqs");
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="counters.f.cnt_add">
+	<title>
+		<function>cnt_add([group.]name, number)</function>
+	</title>
+	<para>
+		Adds <emphasis>number</emphasis> the counter
+		<emphasis>group.name</emphasis>.
+		The counter must be defined using the
+		<varname>script_counter</varname> module parameter.
+		If the group name is missing, the group specified by the
+		<varname>script_cnt_grp_name</varname>  modparam will be used.
+	</para>
+	<example>
+		<title><function>cnt_add</function> usage</title>
+		<programlisting>
+...
+modparam("counters", "script_counter", "reqs10  reqs times 10")
+...
+route {
+	cnt_add("reqs10", 10);
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="counters.f.cnt_reset">
+	<title>
+		<function>cnt_reset([group.]name)</function>
+	</title>
+	<para>
+		Resets the counter <emphasis>group.name</emphasis>. The counter
+		must be defined using the <varname>script_counter</varname>
+		module parameter.
+		If the group name is missing, the group specified by the
+		<varname>script_cnt_grp_name</varname>  modparam will be used.
+	</para>
+	<example>
+		<title><function>cnt_reset</function> usage</title>
+		<programlisting>
+...
+modparam("counters", "script_counter", "reqs")
+...
+route {
+	if (...)
+		cnt_reset("reqs");
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
+</section>

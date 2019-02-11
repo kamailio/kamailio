@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module implements SIP authentication and authorization with
+	DIAMETER server, namely DIameter Server Client (DISC).
+	</para>
+	<para>
+	NOTE: diameter support was developed for DISC (DIameter Server Client 
+	project at http://developer.berlios.de/projects/disc/). This project 
+	seems to be no longer maintained and DIAMETER specifications were updated
+	in the meantime. Thus, the module is obsolete and needs rework to be 
+	usable with opendiameter or other DIAMETER servers.
+	</para>
+	<para>
+	The digest authentication mechanism is presented in next figure.
+	</para>
+	<example>
+	<title>Digest Authentication</title>
+	<programlisting format="linespecific">
+...
+	a) First phase of Digest Authentication for SIP:
+
+
+     +----+ SIP INVITE   +=====+  DIAMETER      +------+       +------+
+     |    | no Auth hdr  #/////#  AA-Request    |      |       |      |
+     |    |---------1---&gt;#/////#-------2-------&gt;|      |---2--&gt;|      |
+     |UAC |              #UAS//#                |DClnt |       |DSrv  |
+     |    |&lt;-----4-------#(SER)#&lt;------3--------|(DISC)|&lt;--3---|(DISC)|
+     |    |     401      #/////#  DIAMETER      |      |       |      |
+     +----+ Unauthorized +=====+  AA-Answer     +------+       +------+
+                                  Result-Code=4001
+
+
+	b) Second phase of Digest Authentication for SIP:
+
+
+     +----+ SIP INVITE   +=====+  DIAMETER     +------+       +----+
+     |    | Auth hdr     #/////#  AA-Request   |      |       |    |
+     |    |--------1----&gt;#/////#-------2------&gt;|      |---2--&gt;|    |
+     |UAC |              #UAS//#               |DClnt |       |DSrv|
+     |    |&lt;-------4-----#(SER)#&lt;------3-------|      |&lt;--3---|    |
+     |    |      200 OK  #/////#  DIAMETER     |      |       |    |
+     +----+              +=====+  AA-Answer    +------+       +----+
+                                  Result-Code=2001
+
+...
+</programlisting>
+	</example>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - used to send stateless replies.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>diameter_client_host</varname> (string)</title>
+		<para>
+		Hostname of the machine where the DIAMETER Client is running.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>localhost</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>diameter_client_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_client_port</varname> (int)</title>
+		<para>
+		Port number where the DIAMETER Client is listening.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>3000</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>diameter_client_port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_diameter", "diameter_client_port", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
+		Specifies whether the domain name part of URI is used when checking the
+		user's privileges.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0 (0==false and 1==true )</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_diameter", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">diameter_www_authorize(realm)</function>
+		</title>
+		<para>
+		SIP Server checks for authorization having a DIAMETER server in backend.
+		If no credentials are provided inside the SIP request then a challenge
+		is sent back to UAC. If the credentials don't match the ones computed by
+		DISC then <quote>403 Forbidden</quote> is sent back.
+		</para>
+		<para>Negative codes may be interpreted as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>-5 (generic error)</emphasis> - some generic error
+			occurred and no reply was sent out;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
+			</para></listitem>
+		</itemizedlist>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - the realm to be use for
+			authentication and authorization. The string may contain 
+			pseudo variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>diameter_www_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!diameter_www_authorize("siphub.net"))
+{ /* user is not authorized */
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">diameter_proxy_authorize(realm)</function>
+		</title>
+		<para>
+		SIP Proxy checks for authorization having a DIAMETER server in backend.
+		If no credentials are provided inside the SIP request then a challenge
+		is sent back to UAC. If the credentials don't match the ones computed by
+		DISC then <quote>403 Forbidden</quote> is sent back.  For more about 
+		the negative return codes, see the above function.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - the realm to be use for
+			authentication and authorization. The string may contain 
+			pseudo variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>diameter_proxy_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!diameter_proxy_authorize("siphub.net"))
+{ /* user is not authorized */
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">diameter_is_user_in(who, group)</function>
+		</title>
+		<para>
+		The method performs group membership checking with DISC.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>who</emphasis> - what header to be used to get the
+			SIP URI that is wanted to be checked being member in a certain group.
+			It can be: <quote>Request-URI</quote>, <quote>From</quote>,
+			<quote>To</quote> or <quote>Credentials</quote>.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>group</emphasis> - the group name where to check if
+			the user is part of.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>diameter_is_user_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!diameter_is_user_in("From", "voicemail"))
+{ /* user is not authorized */
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Installation and Running</title>
+	<para>Notes about installation and running.</para>
+	</section>
+</chapter>
+

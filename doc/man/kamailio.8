@@ -1,0 +1,200 @@
+.\"
+.TH kamailio 8 06.12.2016 kamailio "Kamailio SIP Server"
+.\" Process with
+.\" groff -man -Tascii kamailio.8
+.\"
+.SH NAME
+kamailio \- a very fast and configurable SIP server
+.SH SYNOPSIS
+.B kamailio
+[
+.B \-hcrRvdDEVTI
+] [
+.BI \-f " config\-file"
+] [
+.BI \-l " address"
+] [
+.BI \-n " processes\-no"
+] [
+.BI \-N " tcp processes\-no"
+] [
+.BI \-b " max_rcv_buf_size"
+] [
+.BI \-m " shared_mem_size"
+] [
+.BI \-M " private_mem_size"
+] [
+.BI \-w " working\-dir"
+] [
+.BI \-t " chroot\-dir"
+] [
+.BI \-u " uid"
+] [
+.BI \-g " gid"
+] [
+.BI \-P " pid\-file"
+] [
+.BI \-G " pgid\-file"
+] [
+.BI \-L " modules\-dir"
+] [
+.BI \-a " auto\-aliases\-mode"
+] [
+.BI \-A " pre\-processor\-define"
+]
+
+.SH DESCRIPTION
+.B kamailio
+is a very fast and configurable SIP (RFC3261) server.
+
+.SH OPTIONS
+.TP 12
+.B \-h
+Displays a short usage description, including all available options.
+.TP
+.BI \-c
+Checks the config file and displays the aliases and listen interface list.
+.TP
+.BI \-r
+Uses dns to check if it is necessary to add a "received=" field to a via.
+.TP
+.BI \-R
+Same as
+.B \-r
+but uses reverse dns.
+.TP
+.BI \-K
+Turns on via host checking when forwarding replies.
+.TP
+.BI \-d
+Turns on debugging, multiple
+.B \-d
+increase the debug level.
+.TP
+.BI \-D
+Control how daemonize is done:
+.br
+.B \-D
+- do not fork (almost) anyway (run in foreground, doesn't fork into daemon mode);
+.br
+.B \-DD
+- do not daemonize creator (main process is not daemonized);
+.br
+.B \-DDD
+- daemonize (default)
+.TP
+.BI \-E
+Sends all the log messages to stderr.
+.TP
+.BI \-T
+Disables TCP support.
+.TP
+.BI \-V
+Displays the version number.
+.TP
+.BI \-I
+Displays details of internal constants and attributes.
+.TP
+.BI \-f " config\-file"
+Reads the configuration from
+.B " config\-file"
+(default
+.I  /etc/kamailio/kamailio.cfg
+).
+.TP
+.BI \-l " address"
+Listens on the specified address/interface. Multiple
+.B \-l
+mean listening on multiple addresses. The address format is
+[proto:]address[:port], where proto = udp|tcp and
+address = host|ip_address|interface_name. Example: -l localhost,
+-l udp:127.0.0.1:5080, -l eth0:5062.
+The default behaviour is to listen on all the ipv4 interfaces.
+.TP
+.BI \-n " processes\-no"
+Specifies the number of children processes forked per interface (default 8).
+.TP
+.BI \-N " tcp processes\-no"
+Specifies the number of children processes forked to handle tcp incoming connections (by default is equal to
+.BI \-n
+).
+.TP
+.BI \-b " max_rcv_buf_size"
+Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
+.TP
+.BI \-m " shared_mem_size"
+Size of the shared memory which will be allocated (in Megabytes).
+.TP
+.BI \-M " private_mem_size"
+Size of the private memory which will be allocated per process (in Megabytes).
+.TP
+.BI \-w " working\-dir"
+Specifies the working directory. In the very improbable event that
+.B kamailio
+will crash, the core file will be generated here.
+.TP
+.BI \-t " chroot\-dir"
+Forces
+.B kamailio
+to chroot after reading the config file.
+.TP
+.BI \-u " uid"
+Changes the user id under which
+.B kamailio
+runs.
+.TP
+.BI \-g " gid"
+Changes the group id under which
+.B kamailio
+runs.
+.TP
+.BI \-P " pid\-file"
+Creates a file containing the pid of the main
+.B kamailio
+process.
+.TP
+.BI \-G " pgid\-file"
+Creates a file containing the pgid of the main
+.B kamailio
+process.
+.TP
+.BI \-L " modules\-dir"
+Specifies the directory where to look for
+.B kamailio
+modules (default: /usr/lib/kamailio/modules or /usr/lib64/kamailio/modules)
+.TP
+.BI \-a " auto\-aliases\-mode"
+Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
+.TP
+.BI \-A " pre\-processor\-define"
+Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
+
+.SH FILES
+.PD 0
+.B /usr/sbin/kamailio
+.br
+.B /etc/kamailio/kamailio.cfg
+.br
+.B /usr/lib/kamailio/modules/*
+.PD
+.SH AUTHORS
+
+see
+.B /usr/share/doc/kamailio/AUTHORS
+
+.SH SEE ALSO
+.BR kamailio.cfg(5)
+.PP
+Full documentation on kamailio, including configuration guidelines, FAQs and
+licensing conditions, is available at
+.I https://www.kamailio.org/
+.PP
+For reporting  bugs see
+.I
+https://github.com/kamailio/kamailio/issues.
+.PP
+Mailing lists:
+.nf
+sr-users@lists.kamailio.org - kamailio user community
+.nf
+sr-dev@lists.kamailio.org - kamailio development, new features and unstable version

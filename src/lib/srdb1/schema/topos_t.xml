@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//pub/kamailio/.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="topos_t" xmlns:db="http://docbook.org/ns/docbook">
+    <name>topos_t</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table is used to store topos structures in database. More
+			informations can be found in the topos module documentation at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;topos.html">&KAMAILIO_MOD_DOC;topos.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="rectime">
+        <name>rectime</name>
+        <type>datetime</type>
+        <description>Date and time when this record was written.</description>
+    </column>
+
+    <column id="s_method">
+        <name>s_method</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Method from SIP message</description>
+    </column>
+
+   <column id="s_cseq">
+        <name>s_cseq</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>CSeq from SIP message</description>
+	</column>
+
+    <column id="a_callid">
+        <name>a_callid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>Call ID from SIP message</description>
+        <natural/>
+    </column>
+
+    <column id="a_uuid">
+        <name>a_uuid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>UUID for A side</description>
+        <natural/>
+	</column>
+
+    <column id="b_uuid">
+        <name>b_uuid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>UUID for B side</description>
+        <natural/>
+	</column>
+
+    <column id="direction">
+        <name>direction</name>
+        <type>int</type>
+        <description>Forwarding direction</description>
+        <default>0</default>
+        <natural/>
+	</column>
+
+    <column id="x_via">
+        <name>x_via</name>
+        <type>largetext</type>
+        <null/>
+        <description>Via stack - A or B side</description>
+    </column>
+
+    <column id="x_vbranch">
+        <name>x_vbranch</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>Via branch - A or B side</description>
+        <natural/>
+	</column>
+
+    <column id="x_rr">
+        <name>x_rr</name>
+        <type>largetext</type>
+        <null/>
+        <description>RR stack - incoming A or B side</description>
+	</column>
+
+    <column id="y_rr">
+        <name>y_rr</name>
+        <type>largetext</type>
+        <null/>
+        <description>RR stack - the other A or B side</description>
+	</column>
+
+   <column id="s_rr">
+        <name>s_rr</name>
+        <type>largetext</type>
+        <null/>
+        <description>RR stack - the S side</description>
+	</column>
+
+	<column id="x_uri">
+		<name>x_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+        <default/>
+		<description>The R-URI</description>
+	</column>
+
+     <column id="a_contact">
+        <name>a_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - A side</description>
+    </column>
+
+    <column id="b_contact">
+        <name>b_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - B side</description>
+    </column>
+
+     <column id="as_contact">
+        <name>as_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server A side</description>
+    </column>
+
+    <column id="bs_contact">
+        <name>bs_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server B side</description>
+	</column>
+
+	<column id="x_tag">
+		<name>x_tag</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+        <default/>
+		<description>From tag - A or B side.</description>
+	</column>
+
+	<column id="a_tag">
+		<name>a_tag</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+        <default/>
+		<description>From tag - A side.</description>
+	</column>
+
+	<column id="b_tag">
+		<name>b_tag</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+        <default/>
+		<description>From tag - B side.</description>
+	</column>
+
+    <column id="a_srcaddr">
+        <name>a_srcaddr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Source address - A side</description>
+    </column>
+
+    <column id="b_srcaddr">
+        <name>b_srcaddr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Source address - B side</description>
+    </column>
+
+    <column id="a_socket">
+        <name>a_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - A side</description>
+    </column>
+
+    <column id="b_socket">
+        <name>b_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - B side</description>
+    </column>
+
+    <index>
+        <name>rectime_idx</name>
+        <colref linkend="rectime"/>
+    </index>
+
+    <index>
+        <name>a_callid_idx</name>
+        <colref linkend="a_callid"/>
+    </index>
+
+    <index>
+        <name>x_vbranch_idx</name>
+        <colref linkend="x_vbranch"/>
+    </index>
+
+    <index>
+        <name>a_uuid_idx</name>
+        <colref linkend="a_uuid"/>
+    </index>
+
+</table>

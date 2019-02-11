@@ -1,0 +1,229 @@
+Peering Module
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+Edited by
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+   Copyright © 2008 Juha Heinanen
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. radius_config (string)
+              3.2. verify_destination_service_type (integer)
+              3.3. verify_source_service_type (integer)
+
+        4. Functions
+
+              4.1. verify_destination()
+              4.2. verify_source()
+
+   List of Examples
+
+   1.1. radius_config parameter usage
+   1.2. verify_destination_service_type parameter usage
+   1.3. verify_source_service_type parameter usage
+   1.4. verify_destination() usage
+   1.5. verify_source() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. radius_config (string)
+        3.2. verify_destination_service_type (integer)
+        3.3. verify_source_service_type (integer)
+
+   4. Functions
+
+        4.1. verify_destination()
+        4.2. verify_source()
+
+1. Overview
+
+   The peering module allows SIP providers (operators or organizations) to
+   verify from a broker if source or destination of a SIP request is a
+   trusted peer.
+
+   This module is obsolete and will be removed in the next release.
+
+   In order to participate in the trust community provided by a broker,
+   each SIP provider registers the domains (host parts of SIP URIs) that
+   they serve with the broker. When a SIP proxy of a provider needs to
+   send a SIP request to a non-local domain, it can find out from the
+   broker using verify_destination() function if the non-local domain is
+   served by a trusted peer. If so, the provider receives from the broker
+   a hash of the SIP request and a timestamp that it includes in the
+   request to the non-local domain. When a SIP proxy of the non-local
+   domain receives the SIP request, it, in turn, can verify from the
+   broker using verify_source() function if the request came from a
+   trusted peer.
+
+   Verification functions communicate with the broker using Radius
+   protocol. Sample FreeRADIUS configuration files for broker's Radius
+   server are available from http://www.wirlab.net/tsi/.
+
+   Comments and suggestions for improvements are welcome.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   compiling Kamailio with this module loaded:
+     * radiusclient-ng 0.5.0 or higher -- library and development files.
+       See http://developer.berlios.de/projects/radiusclient-ng/.
+
+3. Parameters
+
+   3.1. radius_config (string)
+   3.2. verify_destination_service_type (integer)
+   3.3. verify_source_service_type (integer)
+
+3.1. radius_config (string)
+
+   This is the location of the configuration file of Radius client
+   libraries.
+
+   Default value is “/usr/local/etc/radiusclient-ng/radiusclient.conf”.
+
+   Example 1.1. radius_config parameter usage
+modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
+
+3.2. verify_destination_service_type (integer)
+
+   This is the value of the Service-Type Radius attribute to be used, when
+   sender of SIP Request verifies the request's destination using
+   verify_destination() function.
+
+   Default value is the dictionary value of “Sip-Verify-Destination”
+   Service-Type.
+
+   Example 1.2. verify_destination_service_type parameter usage
+modparam("peering", "verify_destination_service_type", 21)
+
+3.3. verify_source_service_type (integer)
+
+   This is the value of the Service-Type Radius attribute to be used, when
+   receiver of SIP Request verifies the request's source using
+   verify_source() function.
+
+   Default value is the dictionary value of “Sip-Verify-Source”
+   Service-Type.
+
+   Example 1.3. verify_source_service_type parameter usage
+modparam("peering", "verify_source_service_type", 22)
+
+4. Functions
+
+   4.1. verify_destination()
+   4.2. verify_source()
+
+4.1. verify_destination()
+
+   Function verify_destination() queries from broker's Radius server if
+   domain (host part) of Request URI is served by a trusted peer. Radius
+   request contains the following attributes/values:
+     * User-Name - Request-URI host
+     * SIP-URI-User - Request-URI user
+     * SIP-From-Tag - From tag
+     * SIP-Call-Id - Call id
+     * Service-Type - verify_destination_service_type
+
+   Function returns value 1 if domain of Request URI is served by a
+   trusted peer and -1 otherwise. In case of positive result, the Radius
+   server returns a set of SIP-AVP reply attributes. The value of each
+   SIP-AVP is of form:
+
+   [#]name(:|#)value
+
+   Value of each SIP-AVP reply attribute is mapped to an Kamailio AVP.
+   Prefix # in front of name or value indicates a string name or string
+   value, respectively.
+
+   One of the SIP-AVP reply attributes contains a string that the source
+   peer must include "as is" in a P-Request-Hash: header when it sends the
+   SIP request to the destination peer. The string value may, for example,
+   be of form hash@timestamp, where hash contains a hash calculated by the
+   broker based on the attributes of the query and some local information
+   and timestamp is the time when the calculation was done.
+
+   AVP names used in reply attributes are assigned by the broker.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.4. verify_destination() usage
+...
+if (verify_destination()) {
+   append_hf("P-Request-Hash: $avp(i:200)\r\n");
+}
+...
+
+4.2. verify_source()
+
+   Function verify_source() queries the broker's Radius server whether the
+   SIP request was received from a trusted peer. The Radius request
+   contains the following attributes/values:
+     * User-Name - Request-URI host
+     * SIP-URI-User - Request-URI user
+     * SIP-From-Tag - From tag
+     * SIP-Call-Id - Call id
+     * SIP-Request-Hash - body of P-Request-Hash header
+     * Service-Type - verify_source_service_type
+
+   Function returns value 1 if SIP request was received from a trusted
+   peer and -1 otherwise. In case of positive result, Radius server may
+   return a set of SIP-AVP reply attributes. Value of each SIP-AVP is of
+   form:
+
+   [#]name(:|#)value
+
+   Value of each SIP-AVP reply attribute is mapped to an Kamailio AVP.
+   Prefix # in front of name or value indicates a string name or string
+   value, respectively.
+
+   AVP names used in reply attributes are assigned by the broker.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.5. verify_source() usage
+...
+if (is_present_hf("P-Request-Hash")) {
+   if (verify_source()) {
+      xlog("L_INFO", "Request came from trusted peer\n")
+   }
+}
+...

@@ -1,0 +1,271 @@
+utils
+
+Juha Heinanen
+
+   TutPro Inc.
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2008-2009 Juha Heinanen
+
+   Copyright © 2013-2015 Carsten Bock, ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. forward_active (int)
+              3.2. pres_db_url (string)
+              3.3. xcap_table (string)
+
+        4. Functions
+
+              4.1. xcap_auth_status(watcher_uri, presentity_uri)
+
+        5. MI Commands
+
+              5.1. forward_list
+              5.2. forward_switch
+              5.3. forward_filter
+              5.4. forward_proxy
+
+        6. Configuration syntax
+
+   List of Examples
+
+   1.1. Set forward_active parameter
+   1.2. Set pres_db_url parameter
+   1.3. Set xcap_table parameter
+   1.4. xcap_auth_status() usage
+   1.5. forward_list usage
+   1.6. forward_switch usage
+   1.7. forward_filter usage
+   1.8. forward_proxy usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. forward_active (int)
+        3.2. pres_db_url (string)
+        3.3. xcap_table (string)
+
+   4. Functions
+
+        4.1. xcap_auth_status(watcher_uri, presentity_uri)
+
+   5. MI Commands
+
+        5.1. forward_list
+        5.2. forward_switch
+        5.3. forward_filter
+        5.4. forward_proxy
+
+   6. Configuration syntax
+
+1. Overview
+
+   This module implements various utility functions that are not SIP
+   related.
+
+   The forward functionality allows Kamailio to configure forwarding at
+   runtime with FIFO commands. The forwarding is executed in the pre
+   script call back and therefore handled before the routing script is
+   executed on the current message. The callback is not installed on
+   default, thus this functionality has no runtime overhead when its
+   deactivated.
+
+   Function xcap_auth_status can be used to check from presence server
+   database, if watcher is authorized to subscribe event “presence” of
+   presentity.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * a database module if xcap_auth_status function is enabled.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none.
+
+3. Parameters
+
+   3.1. forward_active (int)
+   3.2. pres_db_url (string)
+   3.3. xcap_table (string)
+
+3.1. forward_active (int)
+
+   Defines if the forwarding callback should be installed.
+
+   Default value is “0” - disabled.
+
+   Example 1.1. Set forward_active parameter
+                                        ...
+                                        modparam("utils", "forward_active", 1)
+                                        ...
+
+3.2. pres_db_url (string)
+
+   Defines presence server database URL. If not given, the
+   xcap_auth_status function is disabled.
+
+   There is no default value.
+
+   Example 1.2. Set pres_db_url parameter
+...
+modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
+...
+
+3.3. xcap_table (string)
+
+   Defines the name of the xcap table in the presence server database. See
+   the xcap_server module documentation for more information.
+
+   Default value is “xcap”.
+
+   Example 1.3. Set xcap_table parameter
+...
+modparam("utils", "xcap_table", "pres_xcap")
+...
+
+4. Functions
+
+   4.1. xcap_auth_status(watcher_uri, presentity_uri)
+
+4.1.  xcap_auth_status(watcher_uri, presentity_uri)
+
+   Function checks in the presence server database if a watcher is
+   authorized to subscribe to event “presence” of presentity. Sphere
+   checking is not included.
+
+   Both watcher_uri and presentity_uri are pseudo variables. The function
+   returns ACTIVE_STATUS, if a subscription is allowed and PENDING_STATUS,
+   TERMINATED_STATUS, or WAITING_STATUS otherwise. See
+   presence/subscribe.h for the corresponding integer codes. In case of
+   error, function returns -1.
+
+   Function can be used from REQUEST_ROUTE.
+
+   Example 1.4. xcap_auth_status() usage
+...
+if (method=="MESSAGE") {
+    xcap_auth_status("$fu", $ru");
+    if ($retcode == 1) {
+        t_relay();
+    } else {
+        send_reply("403", "Forbidden");
+    }
+}
+...
+
+5. MI Commands
+
+   5.1. forward_list
+   5.2. forward_switch
+   5.3. forward_filter
+   5.4. forward_proxy
+
+5.1. forward_list
+
+   List active forward rules.
+
+   No parameters.
+
+   Example 1.5. forward_list usage
+...
+kamctl fifo forward_list
+id switch                         filter proxy
+ 0    off      REGISTER:INVITE:SUBSCRIBE host-a.domain-a:5060
+...
+
+5.2. forward_switch
+
+   This command can be used to activate or deactivate forwarding rules.
+   The syntax of this configuration string is described in 1.6.
+   (switch_setting_list).
+
+   Example 1.6. forward_switch usage
+...
+kamctl fifo forward_switch 0=on
+...
+
+5.3. forward_filter
+
+   Can be used to specify the filter for a certain id. Messages will only
+   be forwarded if one of the filters matches the message.
+
+   There are special filters and regular filters. Special filters are:
+     * REQUEST (matches on every request)
+     * REPLY (matches on every reply)
+
+   Regular filters are arbitrary strings not containing the delimiter ':'.
+   They are matched against the request method names of the sip messages.
+   The syntax of this configuration string is described in 1.6.
+   (filter_setting_list).
+
+   Example 1.7. forward_filter usage
+...
+kamctl fifo forward_filter 0=REGISTER:INVITE
+...
+
+5.4. forward_proxy
+
+   This command can be used to configure forwarding rules. Specifies the
+   destination for a certain id. Messages will be forwarded to this
+   destination if the preconditions hold (matching id, filter, and
+   switch). The syntax of this configuration string is described in 1.6.
+   (proxy_setting_list).
+
+   Example 1.8. forward_proxy usage
+...
+kamctl fifo forward_proxy 0=host-c.domain-c:5060
+...
+
+6. Configuration syntax
+
+   This grammar specify the usable configuration syntax
+     * switch_setting_list ::= switch_setting { "," switch_setting }
+     * filter_setting_list ::= switch_setting { "," switch_setting }
+     * proxy_setting_list ::= proxy_setting { "," proxy_setting }
+     * switch_setting ::= id "=" switch
+     * filter_setting ::= id "=" filter_list
+     * proxy_setting ::= id "=" proxy
+     * switch ::= ( "off" | "on" )
+     * filter_list ::= filter { ":" filter }
+     * proxy ::= host ":" port
+     * filter ::= ( special_filter | regular_filter )
+     * special_filter ::= ( "REQUEST" | "REPLY" )
+     * regular_filter ::= ? [^:]* ?
+     * host ::= char { char }
+     * char ::= ? A-Za-z0-9.-_ ?
+     * id ::= number
+     * port ::= number
+     * number ::= digit {digit}
+     * digit ::= ? 0-9 ?

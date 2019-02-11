@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+
+	<para>
+	The benchmark module provides an internal <acronym>API</acronym> to be used by 
+	other &kamailio; modules. The available functions are identical to the user exported
+	functions.
+	</para>
+	<para>
+	Please note that this module is intended mainly for developers. It should
+	be used with caution in production environments.
+	</para>
+
+	<section>
+	<title>Available Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">bm_register(name, mode, id)</function>
+		</title>
+		<para>
+		This function register a new timer and/or returns the internal ID
+		associated with the timer. mode controls the creation of new timer
+		if not found. id is to be used by start and log timer functions.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">bm_start(id)</function>
+		</title>
+		<para>
+		This function equals the user-exported function bm_start_timer. The
+		id is passed as an integer, though.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">bm_log(id)</function>
+		</title>
+		<para>
+		This function equals the user-exported function bm_log_timer. The id
+		is passed as an integer, though.
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+		<title>Benchmark API Example</title>
+		<example>
+			<title>Using the benchmark module's API from another module</title>
+			<programlisting format="linespecific">
+...
+#include "../benchmark/benchmark.h"
+...
+struct bm_binds bmb;
+...
+...
+/* load the benchmarking API */
+if (load_bm_api( &amp;bmb )!=0) {
+    LM_ERR("can't load benchmark API\n");
+    goto error;
+}
+...
+...
+/* Start/log timers during a (usually user-exported) module function */
+bmp.bm_register("test", 1, &amp;id)
+bmb.bm_start(id);
+do_something();
+bmb.bm_log(id);
+...
+</programlisting>
+		</example>
+	</section>
+
+</chapter>
+

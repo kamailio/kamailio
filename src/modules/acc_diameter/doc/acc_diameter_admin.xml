@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Acc Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		ACC_DIAMETER module is used to account transactions information to a
+		DIAMETER server. Read also the documentation for 'acc' module.
+	</para>
+	<para>
+		NOTE: This was developed based on some very early version of
+		the <acronym>Diameter</acronym> protocol, and has not been really
+		tested for many years. It is very likely to be deleted in upcoming
+		releases. If you want to revive this module, you are welcome, be sure
+		you do proper testing before using in production -- it also may need to
+		be updated first to match the exported API by 'acc' module.
+	</para>
+	<para>
+		NOTE: diameter support was developed for DISC (DIameter Server Client
+		project at http://developer.berlios.de/projects/disc/). This project
+		seems to be no longer maintained and DIAMETER specifications were updated
+		in the meantime. Thus, the DIAMETER part in the module is obsolete and
+		needs rework to be usable with opendiameter or other DIAMETER servers.
+	</para>
+	<para>
+		IMPORTANT: If you need Diameter accounting, consider to use the
+		<acronym>ims_charging</acronym> module, it is up to date and used in
+		IMS/VoLTE deployments.
+	</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>acc</emphasis> -- accounting module</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>None</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section id="acc_diameter.i.params">
+	<title>Parameters</title>
+	<!-- DIAMETER specific ACC parameters -->
+	<section id="acc_diameter.p.diameter_flag">
+		<title><varname>diameter_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a
+		transaction -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>diameter_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_diameter", "diameter_flag", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc_diameter.p.diameter_missed_flag">
+		<title><varname>diameter_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed
+		calls -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>diameter_missed_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_diameter", "diameter_missed_flag", 3)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc_diameter.p.diameter_client_host">
+		<title><varname>diameter_client_host</varname> (string)</title>
+		<para>
+		Hostname of the machine where the DIAMETER Client is
+		running -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is <quote>localhost</quote>.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_diameter", "diameter_client_host", "3a_server.net")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc_diameter.p.diameter_client_port">
+		<title><varname>diameter_client_port</varname> (int)</title>
+		<para>
+		Port number where the Diameter Client is
+		listening -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is 3000.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_diameter", "diameter_client_port", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc_diameter.p.diameter_extra">
+		<title><varname>diameter_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via DIAMETER - DIAMETER specific.
+		See section the section about extra accounting in 'acc' module for more
+		details.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>diameter_extra example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_diameter", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="acc_diameter.f.acc_diam_request">
+		<title>
+			<function moreinfo="none">acc_diam_request(comment)</function>
+		</title>
+		<para>
+		Like <function moreinfo="none">acc_log_request</function>,
+		<function moreinfo="none">acc_diam_request</function> reports on
+		a request. It reports to the configured Diameter server.
+		</para>
+		<para>
+		Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			The string can contain any number of pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>acc_diam_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_diam_request("Some comment");
+acc_diam_request("$var(code) Error: $avp(reason)");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

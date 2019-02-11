@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>cpl-c modules implements a CPL (Call Processing Language)
+		interpreter. Support for uploading/downloading/removing scripts via
+		SIP REGISTER method is present.
+		</para>
+		<para>
+		CPL is an IETF specification detailed in RFC3880
+		(https://tools.ietf.org/html/rfc3880).
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>any DB module- a DB module for interfacing the DB
+				operations (modules like mysql, postgres, dbtext, etc)
+				</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>TM (Transaction) module- used for proxying/forking
+				requests
+				</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>SL (StateLess) module - used for sending stateless
+				reply when responding to REGISTER request or for sending back
+				error responses
+				</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>USRLOC (User Location) module - used for implementing
+				lookup("registration") tag (adding into location set of the
+				users' contact)
+				</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed
+				before running &kamailio; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>libxml2 and libxml2-devel - on some SO, these to
+					packages are merged into libxml2. This library contains an
+					engine for XML parsing, DTD validation and
+					DOM manipulation.
+					</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Parameters</title>
+		<section id="cplc.p.db_url">
+			<title><varname>db_url</varname> (string)</title>
+			<para>
+				A SQL URL have to be given to the module for knowing where the
+				database containing the table with CPL scripts is locates. If
+				required a user name and password can be specified for allowing
+				the module to connect to the database server.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>&defaultdb;</quote>.
+			</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","db_url","&exampledb;")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.db_table">
+			<title><varname>db_table</varname> (string)</title>
+			<para>
+				Indicates the name of the table that store the CPL scripts.
+				This table must be locate into the database specified by
+				<quote>db_url</quote> parameter. For more about the format of the CPL
+				table please see the modules/cpl-c/init.mysql file.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>cpl</quote>.
+			</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","cpl_table","cpl")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.username_column">
+			<title><varname>username_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the username.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>username</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>username_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","username_column","username")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.domain_column">
+			<title><varname>domain_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the domain.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>domain</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>domain_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","domain_column","domain")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.xml_column">
+			<title><varname>cpl_xml_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the
+				the XML version of the cpl script.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>cpl_xml</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_xml_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","cpl_xml_column","cpl_xml")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.bin_column">
+			<title><varname>cpl_bin_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the
+				the binary version of the cpl script (compiled version).
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>cpl_bin</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_bin_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","cpl_bin_column","cpl_bin")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.dtd_file">
+			<title><varname>cpl_dtd_file</varname> (string)</title>
+			<para>
+				Points to the DTD file describing the CPL grammar. The file
+				name may include also the path to the file. This path can be
+				absolute or relative (be careful the path will be relative
+				to the starting directory of &kamailio;).
+			</para>
+			<para>
+				<emphasis>
+					This parameter is MANDATORY!
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.log_dir">
+			<title><varname>log_dir</varname> (string)</title>
+			<para>
+				Points to a directory where should be created all the log file
+				generated by the LOG CPL node. A log file per user will be
+				created (on demand) having the name username.log.
+			</para>
+			<para>
+				<emphasis>
+					If this parameter is absent, the logging will be disabled
+					without generating error on execution.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>log_dir</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.proxy_recurse">
+			<title><varname>proxy_recurse</varname> (int)</title>
+			<para>
+				Tells for how many time is allow to have recurse for PROXY CPL
+				node If it has value 2, when doing proxy, only twice the proxy
+				action will be re-triggered by  a redirect response; the third
+				time, the proxy execution will end by going on REDIRECTION
+				branch. The recurse feature can be disable by setting this
+				parameter to 0
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","proxy_recurse",2)
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.proxy_route">
+			<title><varname>proxy_route</varname> (string)</title>
+			<para>
+				Before doing proxy (forward), a script route can be executed.
+				All modifications made by that route will be reflected only for
+				the current branch.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is NULL (none).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_route</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","proxy_route","1")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.case_sensitive">
+			<title><varname>case_sensitive</varname> (int)</title>
+			<para>
+				Tells if the username matching should be perform case
+				sensitive or not. Set it to a non zero value to force
+				a case sensitive handling of usernames.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>case_sensitive</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","case_sensitive",1)
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.realm_prefix">
+			<title><varname>realm_prefix</varname> (string)</title>
+			<para>
+				Defines a prefix for the domain part which should be ignored
+				in handling users and scripts.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is empty string.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>realm_prefix</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","realm_prefix","sip.")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.timer_avp">
+			<title><varname>timer_avp</varname> (string)</title>
+			<para>
+				Full specification (ID, NAME, ALIAS) of the AVP to be used to
+				set the value of the Final Response INVITE timeout - it's
+				used by the TIMEOUT attribute from the PROXY tag.
+			</para>
+			<para>
+				NOTE: take care and synchronize this value with the similar
+				parameters in TM module.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>timer_avp</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","timer_avp","$avp(i:14)")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.lookup_domain">
+			<title><varname>lookup_domain</varname> (string)</title>
+			<para>
+				Used by lookup tag to indicate where to perform user location.
+				Basically this is the name of the usrloc domain (table) where
+				the user registrations are kept.
+			</para>
+			<para>
+				If set to empty string, the lookup node will be disabled - no
+				user location will be performed.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>lookup_domain</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","lookup_domain","location")
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.lookup_append_branches">
+			<title><varname>lookup_append_branches</varname> (int)</title>
+			<para>
+				Tells if the lookup tag should append branches (to do parallel
+				forking) if user_location lookup returns more than one contact.
+				Set it to a non zero value to enable parallel forking for
+				location lookup tag.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>lookup_append_branches</varname>
+					parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","lookup_append_branches",1)
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.use_domain">
+			<title><varname>use_domain</varname> (integer)</title>
+			<para>
+				Indicates if the domain part of the URI should be used in
+				user identification (otherwise only username part will be
+				used).
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>0 (disabled)</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>use_domain</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl-c","use_domain",1)
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+
+	<section>
+		<title>Functions</title>
+		<section id="cplc.f.cpl_run_script">
+			<title>
+				<function moreinfo="none">cpl_run_script(type,mode, [uri])</function>
+			</title>
+			<para>
+				Starts the execution of the CPL script. The user name is
+				fetched from new_uri or requested uri or from To header -in
+				this order- (for incoming execution) or from FROM header (for
+				outgoing execution).
+				Regarding the stateful/stateless message processing, the
+				function  is very flexible, being able to run in different
+				modes (see below the"mode" parameter).
+				Normally this function will end script execution.  There is no
+				guaranty that the CPL script interpretation ended when &kamailio;
+				script ended also (for the same INVITE ;-)) - this can happen
+				when the CPL script does a PROXY and the script interpretation
+				pause after proxying and it will be resume when some reply is
+				received (this can happen in a different process of SER).
+				If the function returns to script, the SIP server should
+				continue with the normal behavior as if no script existed.
+				When some error is returned, the function itself haven't sent
+				any SIP error reply (this can be done from script).
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>type</emphasis> - which part of the script
+				should be run; set it to "incoming" for having the incoming
+				part of script executed (when an INVITE is received) or to
+				"outgoing" for running the outgoing part of script (when a
+				user is generating an INVITE - call).
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>mode</emphasis> - sets the interpreter mode as
+				stateless/stateful behavior. The following modes are accepted:
+				</para>
+				<itemizedlist>
+				<listitem>
+					<para>
+					<emphasis>IS_STATELESS</emphasis> - the current INVITE has
+					no transaction created yet. All replies (redirection or
+					deny) will be done is a stateless way. The execution will
+					switch to stateful only when proxy is done. So, if the
+					function returns, will be in stateless mode.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+					<emphasis>IS_STATEFUL</emphasis> - the current INVITE has
+					already a transaction associated. All signaling operations
+					(replies or proxy) will be done in stateful way.So, if
+					the function returns, will be in stateful mode.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+					<emphasis>FORCE_STATEFUL</emphasis> - the current INVITE
+					has no transaction created yet. All signaling operations
+					will be done is a stateful way (on signaling, the
+					transaction will be created from within the interpreter).
+					So, if the function returns, will be in stateless mode.
+					</para>
+				</listitem>
+				</itemizedlist>
+				<para>
+				<emphasis>HINT</emphasis>: is_stateful is very
+				difficult to manage from the routing script (script processing
+				can continue in stateful mode); is_stateless is the fastest and
+				less resources consumer (transaction is created only if
+				proxying is done), but there is minimal protection against
+				retransmissions (since replies are send stateless);
+				force_stateful is a good compromise - all signaling is done
+				stateful (retransmission protection) and in the same time, if
+				returning to script, it will be in stateless mode (easy to
+				continue the routing script execution)
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>uri</emphasis> - optional - provide the SIP URI
+				to be used for loading the CPL script, instead of taking it from
+				R-URI or headers.
+				</para>
+			</listitem>
+
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>cpl_run_script</function> usage</title>
+				<programlisting format="linespecific">
+...
+cpl_run_script("incoming","force_stateful");
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.f.process_register">
+			<title>
+				<function moreinfo="none">cpl_process_register()</function>
+			</title>
+			<para>
+				This function MUST be called only for REGISTER requests. It
+				checks if the current REGISTER request is related or not with
+				CPL script upload/download/ remove. If it is, all the needed
+				operation will be done. For checking if the REGISTER is CPL
+				related, the function looks fist to "Content-Type" header. If
+				it exists and has a the mime type set to "application/cpl+xml"
+				means this is a CPL script upload/remove operation. The
+				distinction between to case is made by looking at
+				"Content-Disposition" header; id its value is
+				"script;action=store", means it's an upload; if it's
+				"script;action=remove", means it's a remove operation; other
+				values are considered to be errors. If no "Content-Type"
+				header is present, the function looks to "Accept" header and
+				if it contains the "*" or "application/cpl-xml" the request
+				it will be consider one for downloading CPL scripts.
+				The functions returns to script only if the REGISTER is
+				not related to CPL. In other case, the function will send by
+				itself the necessary replies (stateless - using sl), including
+				for errors.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>cpl_process_register</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (method=="REGISTER") {
+    cpl_process_register();
+}
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cplc.p.process_register_norpl">
+			<title>
+				<function moreinfo="none">cpl_process_register_norpl()
+					</function>
+			</title>
+			<para>
+				Same as <quote>cpl_process_register</quote> without
+				internally generating the reply. All information (script) is
+				appended to the reply but without sending it out.
+			</para>
+			<para>
+				Main purpose of this function is to allow integration
+				between CPL and UserLocation services via same REGISTER
+				messages.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>cpl_process_register_norpl</function> usage
+					</title>
+				<programlisting format="linespecific">
+...
+if (method=="REGISTER") {
+    cpl_process_register();
+    # continue with usrloc part
+    save("location");
+}
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>RPC Commands</title>
+		<section id="cpl.r.load">
+			<title>cpl.load</title>
+			<para>
+			For the given user, loads the XML cpl file, compiles it into
+			binary format and stores both format into database.
+			</para>
+			<para>
+			Name: <emphasis>cpl.load</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>
+			<listitem><para>cpl_filename: file name </para></listitem>
+			</itemizedlist>
+			<para>
+			RPC Command format:
+			</para>
+			<programlisting format="linespecific">
+...
+&kamcmd; cpl.load username cpl_filename
+...
+</programlisting>
+		</section>
+
+		<section id="cpl.r.remove">
+			<title>cpl.remove</title>
+			<para>
+			For the given user, removes the entire database record
+			(XML cpl and binary cpl); user with empty cpl scripts are not
+			accepted.
+			</para>
+			<para>
+			Name: <emphasis>cpl.remove</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>
+			</itemizedlist>
+			<para>
+			RPC Command format:
+			</para>
+			<programlisting format="linespecific">
+...
+&kamcmd; cpl.remove username
+...
+</programlisting>
+		</section>
+
+		<section id="cpl.r.get">
+			<title>cpl.get</title>
+			<para>
+			For the given user, returns the CPL script in XML format.
+			</para>
+			<para>
+			Name: <emphasis>cpl.get</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>
+			</itemizedlist>
+			<para>
+			RPC Command format:
+			</para>
+			<programlisting format="linespecific">
+...
+&kamcmd; cpl.get username
+...
+</programlisting>
+		</section>
+	</section>
+
+	<section>
+		<title>Installation and Running</title>
+		<section>
+			<title>Database setup</title>
+			<para>
+			Before running &kamailio; with cpl-c, you have to setup the database 
+			table where the module will store the CPL scripts. For that, if
+			the table was not created by the installation script or you choose
+			to install everything by yourself you can use the cpc-create.sql
+			<acronym>SQL</acronym> script in the database directories in the
+			kamailio/scripts folder as template.
+			Database and table name can be set with module parameters so they
+			can be changed, but the name of the columns must be as they are
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &kamailiodbdocslink;.
+			</para>
+		</section>
+	</section>
+</chapter>
+

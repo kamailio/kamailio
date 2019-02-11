@@ -1,0 +1,307 @@
+#
+#
+# control tool for maintaining Kamailio
+#
+#===================================================================
+
+##### ----------------------------------------------- #####
+### RPC FIFO specific variables and functions
+#
+
+##### ----------------------------------------------- #####
+### load CTL base
+#
+if [ -f "$MYLIBDIR/kamctl.ctlbase" ]; then
+	. "$MYLIBDIR/kamctl.ctlbase"
+else
+	mwarn "Cannot load CTL core functions '$MYLIBDIR/kamctl.ctlbase' ..."
+	# exit -1
+fi
+
+#
+##### ----------------------------------------------- #####
+### parameters
+#
+if [ -z "$RPCFIFOPATH" ]; then
+	RPCFIFOPATH=/var/run/kamailio/kamailio_rpc.fifo
+fi
+
+#
+##### ----------------------------------------------- #####
+### functions
+#
+usage_rpc() {
+	echo
+	mecho " -- command 'rpc' - send raw RPC commands"
+	echo
+cat <<EOF
+ rpc ................................ send raw RPC command
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_rpc"
+
+isnum() {
+  printf "%f" $1 >/dev/null 2>&1
+}
+
+rpcparamval() {
+	RPCVAL="${1}"
+
+	case "${1}" in
+		s:*)
+			prefix="s:"
+			RPCVAL="\"${1#${prefix}}\""
+		;;
+		i:*)
+			prefix="i:"
+			RPCVAL="${1#${prefix}}"
+		;;
+		*)
+			if isnum ${1} ; then
+				RPCVAL="${1}"
+			else
+				RPCVAL="\"${1}\""
+			fi
+		;;
+	esac
+}
+
+rpc_cmd()
+{
+	mdbg "entering rpc_cmd $*"
+
+	if [ "$#" -lt 1 ]; then
+		merr "rpc_cmd must take at least command name as parameter"
+		exit 1
+	fi
+	name=kamailio_receiver_$$
+	path=$CHROOT_DIR/tmp/$name
+	# delete existing fifo file with same name
+	if test -p $path; then
+		rm -f $path
+	fi
+	if [ ! -w $RPCFIFOPATH ]; then
+		merr "Error opening Kamailio's FIFO $RPCFIFOPATH"
+		merr "Make sure you have loaded the jsonrpcs module and set FIFO transport parameters"
+		if [ ! -z $CHROOT_DIR ]; then
+			merr "[chrooted environment] Check that $RPCFIFOPATH is symlinked to ${CHROOT_DIR}${RPCFIFOPATH}"
+		fi
+		exit 2
+	fi
+	if ! test -p $path; then
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			merr "error opening read fifo $path"
+			exit 3
+		fi
+		chmod a+w $path
+	fi
+
+	# construct the command now
+	CMD="{\"jsonrpc\": \"2.0\", \"method\": \"$1\"";
+	shift
+	RPCPARAMS="no"
+	if [ -n "$1" ] ; then
+		rpcparamval "${1}"
+		CMD="${CMD}, \"params\": [${RPCVAL}"
+		RPCPARAMS="yes"
+	fi
+	shift
+	while [ -n "$1" ] ; do
+		rpcparamval "${1}"
+		CMD="${CMD}, ${RPCVAL}"
+		shift
+	done
+	if [ "$RPCPARAMS" = "yes" ]; then
+		CMD="${CMD}]"
+	fi
+	CMD="${CMD}, \"reply_name\": \"${name}\", \"id\": $$}\n"
+
+	trap "rm -f $path; kill 0" 2
+
+	# start reader now so that it is ready for replies
+	# immediately after a request was sent out
+	cat < $path | filter_json | $EXPAND &
+
+	# issue FIFO request (printf taken to deal with \n)
+	printf "$CMD" > $RPCFIFOPATH
+
+	# wait for the reader to complete
+	wait
+	rm $path
+
+	mdbg "FIFO command was:\n$CMD"
+}
+
+
+CTLCMD=rpc_cmd
+
+rpc_cmd_print()
+{
+	name=kamailio_receiver_$$
+	# construct the command now
+	CMD="{\"jsonrpc\": \"2.0\", \"method\": \"$1\"";
+	shift
+	RPCPARAMS="no"
+	if [ -n "$1" ] ; then
+		rpcparamval "${1}"
+		CMD="${CMD}, \"params\": [${RPCVAL}"
+		RPCPARAMS="yes"
+		shift
+	fi
+	while [ -n "$1" ] ; do
+		rpcparamval "${1}"
+		CMD="${CMD}, ${RPCVAL}"
+		shift
+	done
+	if [ "$RPCPARAMS" = "yes" ]; then
+		CMD="${CMD}]"
+	fi
+	CMD="${CMD}, \"reply_name\": \"${name}\", \"id\": $$}\n"
+
+	minfo "The command is:\n"
+
+	mecho "$CMD"
+}
+
+CTLCMDPRINT=rpc_cmd_print
+
+rpc_kamailio_monitor() {
+	name=kamailio_receiver_$$
+	path=$CHROOT_DIR/tmp/$name
+	# delete existing fifo file with same name
+	if test -p $path; then
+		rm -f $path
+	fi
+	if [ ! -w $RPCFIFOPATH ]; then
+		merr "Error opening Kamailio's FIFO $RPCFIFOPATH"
+		merr "Make sure you have loaded the jsonrpcs module and set FIFO transport parameters"
+		exit 1
+	fi
+	if ! test -p $path; then
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			merr "monitor - error opening read fifo $path"
+			exit 1
+		fi
+		chmod a+w $path
+	fi
+	trap "rm $path;  clear; echo monitor ^C-ed; exit 1" 2
+	attempt=0
+	if [ "$2" = "" ]; then
+		loops=-1;
+	else
+		loops=$2;
+	fi
+	clear
+	while [ $loops -ne $attempt ] ; do
+		attempt=`$EXPR $attempt + 1`
+		#clear
+		tput clear
+
+		# print_stats $name $path $attempt
+		mecho "[cycle #: $attempt; if constant make sure server lives]"
+		mecho "Kamailio Runtime Details: "
+
+		cat < $path | filter_json | $EXPAND | grep "result" | awk -F'"' '{ print $4 }' &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "core.version",
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+
+		cat < $path | filter_json | $EXPAND | egrep "now|up_since|uptime" | sed 's/[",]//g' &
+		cat > $RPCFIFOPATH << EOF
+{
+  "jsonrpc": "2.0",
+  "method": "core.uptime",
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Transaction Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "UAS_transactions", "UAC_transactions", "active_transactions", "inuse_transactions"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Stateless Server Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "sent_replies", "sent_err_replies"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "UsrLoc Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "usrloc:"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Core Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "rcv_requests", "fwd_requests", "rcv_replies", "fwd_replies"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Shared Memory Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "shmem:"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+
+		if [ $loops -ne $attempt ] ; then
+			sleep $WATCH_PERIOD
+		fi
+	done
+	rm $path
+	exit 0
+}
+
+KAMAILIO_MONITOR=rpc_kamailio_monitor
+

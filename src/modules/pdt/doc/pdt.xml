@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>pdt Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		    <email>ramona@asipto.com</email>
+	    </author>
+	    <editor>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		    <email>ramona@asipto.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<copyright>
+	    <year>2004</year>
+	    <holder>Voice Sistem SRL</holder>
+	</copyright>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Elena-Ramona Modroiu</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+    
+    <xi:include href="pdt_admin.xml"/>
+    
+    
+</book>

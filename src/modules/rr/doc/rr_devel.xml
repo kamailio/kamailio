@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+
+	<para>
+	The RR module provides an internal <acronym>API</acronym> to be used by 
+	other &kamailio; modules. The <acronym>API</acronym> offers support for
+	SIP dialog based functionalities - for more about the dialog support
+	offered by RR module, see <xref linkend="RR-dialog-id"/>.
+	</para>
+	<para>
+	For internal(non-script) usage, the RR module offers to other module the
+	possibility to register callback functions to be executed each time a
+	local Route header is processed. The callback function will receive as
+	parameter the register parameter and the Route header parameter string.
+	</para>
+
+
+	<section>
+	<title>Available Functions</title>
+
+	<section id="record-route-id-dev">
+		<title>
+		<function moreinfo="none">record_route(string)</function>
+		</title>
+		<para>
+		The function adds a new Record-Route header field. The header field 
+		will be inserted in the message before any other Record-Route header 
+		fields.
+		</para>
+		<para>
+		If any string is passed as parameter, it will be appended as URI
+		parameter to the Record-Route header. The string must follow the 
+		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>record_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">record_route_advertised_address(string)</function>
+		</title>
+		<para>
+		This function will add the string into a new Record-Route header field. Don't use 
+		unless you know what you are doing.
+		The header field will be inserted in the message before any other Record-Route
+		header fields.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>string</emphasis> - String to be inserted into the 
+				header field.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Calls to add_rr_param() will add parameters to the Record-Route header.
+		Note: A second Record-Route will be inserted if the transport used on the inbound
+		and outbound interfaces changes.
+		</para>
+		<example>
+		<title><function>record_route_advertised_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route_advertised_address("1.2.3.4:5090");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">add_rr_param( msg, param)</function>
+		</title>
+		<para>
+		Adds a parameter to the requests's Record-Route URI (param must be in 
+		<quote>;name=value</quote> format).
+		</para>
+		<para>
+		The function returns 0 on success. Otherwise, -1 is returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg* msg</emphasis> - request that
+				will has the parameter <quote>param</quote> added to its 
+				Record-Route header.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str* param</emphasis> - parameter to be added 
+				to the Record-Route header - it must be in 
+				<quote>;name=value</quote> format.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">check_route_param( msg, re)</function>
+		</title>
+		<para>
+		The function checks for the request <quote>msg</quote> if the URI 
+		parameters of the local Route header (corresponding to the local 
+		server) matches the given regular expression <quote>re</quote>. 
+		It must be call after the loose_route was done.
+		</para>
+		<para>
+		The function returns 0 on success. Otherwise, -1 is returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg* msg</emphasis> - request that
+				will has the Route header parameters checked.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>regex_t* param</emphasis> - compiled regular
+				expression to be checked against the Route header parameters.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_direction( msg, dir)</function>
+		</title>
+		<para>
+		The function checks the flow direction of the request 
+		<quote>msg</quote>. As for checking it's used the <quote>ftag</quote> 
+		Route header parameter, the append_fromtag (see 
+		<xref linkend="append-fromtag-id"/> module parameter 
+		must be enables. Also this must be call only after the loose_route is 
+		done.
+		</para>
+		<para>
+		The function returns 0 if the <quote>dir</quote> is the same with
+		the request's flow direction. Otherwise, -1 is returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg* msg</emphasis> - request that
+				will have the direction checked.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>int dir</emphasis> - direction to be checked
+				against. It may be <quote>RR_FLOW_UPSTREAM</quote> or 
+				<quote>RR_FLOW_DOWNSTREAM</quote>.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">get_route_param( msg, name, val)</function>
+		</title>
+		<para>
+		The function search in to the <quote>msg</quote>'s Route header 
+		parameters the parameter called <quote>name</quote> and returns its
+		value into <quote>val</quote>. It must be call only after the 
+		loose_route is done.
+		</para>
+		<para>
+		The function returns 0 if parameter was found (even if it has no value).
+		Otherwise, -1 is returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg* msg</emphasis> - request that
+				will have the Route header parameter searched.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *name</emphasis> - contains the Route header
+				parameter to be searched.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *val</emphasis> - returns the value of the 
+				searched Route header parameter if found. It might be empty 
+				string if the parameter had no value.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">register_rrcb( callback, param)</function>
+		</title>
+		<para>
+		The function register a new callback (along with its parameter). The
+		callback will be called when a loose route will be performed for the
+		local address.
+		</para>
+		<para>
+		The function returns 0 on success. Otherwise, -1 is returned.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>rr_cb_t callback</emphasis> - callback
+				function to be registered.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>void *param</emphasis> - parameter to be passed
+				to the callback function.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+		<title>Examples</title>
+		<example>
+			<title>Loading RR module's API from another module</title>
+			<programlisting format="linespecific">
+...
+#include "../rr/api.h"
+...
+struct rr_binds my_rrb;
+...
+...
+/* load the RR API */
+if (load_rr_api( &amp;my_rrb )!=0) {
+    LM_ERR("can't load RR API\n");
+    goto error;
+}
+...
+...
+/* register a RR callback */
+if (my_rrb.register_rrcb(my_callback,0))!=0) {
+    LM_ERR("can't register RR callback\n");
+    goto error;
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+</chapter>
+

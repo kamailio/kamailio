@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module offer the functionality of a presence user agent client,
+		sending SUBSCRIBE and PUBLISH SIP  messages. It's a core part of &kamailio;'s
+		SIP presence package, implementing SIMPLE and various shared line appearance
+		implementations.
+	</para>
+	<para>
+		 It can be used with the following modules: pua_rpc, pua_usrloc,
+		 pua_bla, pua_dialoginfo, pua_reginfo and pua_xmpp.
+		 The <emphasis>pua_rpc</emphasis> module offer the possibility to publish any kind of information via the RPC transport.
+		 The <emphasis>pua_usrloc</emphasis> module calls a function exported by pua modules to publish
+		 elementary presence information, such as basic status "open" or "closed",
+		 for clients that do not implement client-to-server presence.
+		 Through <emphasis>pua_bla</emphasis> , BRIDGED LINE APPEARANCE features are added to &kamailio;
+		 The <emphasis>pua_xmpp</emphasis> module represents a gateway between SIP and XMPP, so that
+		 jabber and SIP clients can exchange presence information.
+		 The <emphasis>pua_reginfo</emphasis> modules presents registration information from the usrloc module
+		 using the reginfo event package.
+	</para>
+	<para>
+		The module supports 2 modes of operation. In the first a cache is used to store
+		the presentity list and writes to database on timer to be able to recover upon
+		restart. The presence is kept in-memory	during run-time. The second is a database
+		only mode where the presentity list is stored purely in a database, allowing
+		both scalability and resilience.
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database modules</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>hash_size</varname> (int)</title>
+		<para>
+		The size of the hash table used for storing SUBSCRIBE and 
+		PUBLISH information. 
+        	This parameter will be used as the power of 2 when computing table size.
+        	</para>
+		<para>
+		<emphasis>Default value is <quote>9</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "hash_size", 11)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database url.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>>&defaultdb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_url" "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table</varname> (str)</title>
+		<para>
+		The name of the database table.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>pua</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_table", "pua")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>min_expires</varname> (int)</title>
+		<para>
+		The inferior expires limit for both Publish and Subscribe.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>min_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "min_expires", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>default_expires</varname> (int)</title>
+		<para>
+		The default expires value used in case this information is not provisioned.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>3600</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "default_expires", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>update_period</varname> (int)</title>
+		<para>
+		The interval at which the information in database and hash table
+		should be updated. In the case of the hash table updating means 
+		deleting expired messages. 
+		Setting a value less than or equal to zero, disables updates.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>update_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "update_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (str)</title>
+		<para>
+		SIP URI of outbound proxy to be used when sending
+		PUBLISH requests if no outbound proxy is given in
+                outbound_proxy field of struct publ_info.
+		</para>
+		<para>
+		<emphasis>By default, no outbound proxy has been defined.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "outbound_proxy", "sip:outbound.example.com")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>dlginfo_increase_version</varname> (int)</title>
+		<para>
+		When sending PUBLISH messages for Event: dialog, the body contains an
+		XML document according to RFC 4235. This XML document contains a 
+		version attribute to easily detect changes in the dialog state.
+		By setting this parameter, the pua module parses the XML document and
+		sets the version attribute to the proper value. If the receiver of
+		the PUBLISH does not care about the version parameter (e.g. like
+		&kamailio; presence_dialoginfo module) it makes no sense to waste 
+		CPU resources for parsing the XML body and the parameter should be 
+		set to 0.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlginfo_increase_version</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "dlginfo_increase_version", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>reginfo_increase_version</varname> (int)</title>
+		<para>
+		When sending PUBLISH messages for Event: reg, the body contains an
+		XML document according to RFC 4235(?). This XML document contains a 
+		version attribute to easily detect changes in the registration state.
+		By setting this parameter, the pua module parses the XML document and
+		sets the version attribute to the proper value. If the receiver of
+		the PUBLISH does not care about the version parameter (e.g. like
+		&kamailio; presence_reginfo module) it makes no sense to waste 
+		CPU resources for parsing the XML body and the parameter should be 
+		set to 0.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reginfo_increase_version</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "reginfo_increase_version", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_mode</varname> (int)</title>
+		<para>
+		The module supports 2 modes of operation, high speed memory
+		based storage (mode 0), and database only (mode 2) where all 
+		data is stored in a database, allowing scalability at the expense of speed.
+		Mode 1 is reserved.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+	    <title><varname>db_table_lock_write</varname> (integer)</title>
+	    <para>
+		Enable (=1) or disable (=0) the Locks for table during an transaction.
+		Locking only the "current" table causes problems with a MySQL-Databases
+		in "DB-Only" mode.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (Write Lock for the Tables).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table_lock_write</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_table_lock_write", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section>
+		<title><varname>check_remote_contact</varname> (int)</title>
+		<para>
+		When sending a SUBSCRIBE check that the remote contact matches the
+		one in the stored dialog or not. If the remote contact is checked
+		and does not match the one in the stored dialog then the dialog is
+		not matched. Checking the remote contact can cause problems when
+		using modules like RLS and should not be required in order to
+		properly match the dialog anyway. Set this parameter to 0 to
+		disable checking of remote contact for SUBSCRIBE dialog matching.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>check_remote_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "check_remote_contact", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 500.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "fetch_rows", 1000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+		
+	<section>
+		<title>
+		<function moreinfo="none">pua_update_contact()</function>
+		</title>
+		<para>
+		The remote target can be updated by the Contact of a subsequent in
+		dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
+		this means that the remote target for the following Subscribe messages
+		can be updated at any time by the contact of a Notify message. 
+		If this function is called on request route on receiving a Notify
+		message, it will try to update the stored remote target.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+	
+		<example>
+		<title><function>pua_update_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="NOTIFY")
+    pua_update_contact();
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+
+<section>
+	<title>RPC Commands</title>
+	<section id="pua.r.cleanup">
+	  <title>
+		<function moreinfo="none">pua.cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions for the pua table.
+		Useful if you have set <varname>update_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>pua.cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+
+	  <para>
+		RPC Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+...
+&kamcmd; pua.cleanup
+...
+	  </programlisting>
+	</section>
+</section>
+
+<section>
+	<title>Installation</title>
+	<para>
+	The module requires one table in the &kamailio; database: pua. The SQL 
+	syntax to create it can be found in presence_xml-create.sql     
+	script in the database directories in the kamailio/scripts folder.
+	You can also find the complete database documentation on the
+	project webpage, &kamailiodbdocslink;.
+	</para>
+</section>
+
+
+</chapter>
+

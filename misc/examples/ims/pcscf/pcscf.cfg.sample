@@ -1,0 +1,112 @@
+# IP-Adress for incoming SIP-Traffic, in the following format:
+
+# SIP / UDP
+listen=udp:11.22.33.44:5060
+# SIP / TCP
+#listen=tcp:11.22.33.44:5060
+# SIP / TCP/TLS
+#listen=tls:11.22.33.44:5061
+
+# IPSEC / UDP
+#!define IPSEC_LISTEN_ADDR "11.22.33.44"
+#!define IPSEC_CLIENT_PORT 5062
+#!define IPSEC_SERVER_PORT 5063
+
+alias=pcscf.mnc001.mcc001.3gppnetwork.org
+
+#!define MY_WS_PORT 80
+#!define MY_WSS_PORT 443
+
+#!define PCSCF_URL "sip:pcscf.mnc001.mcc001.3gppnetwork.org"
+
+#!define TCP_PROCESSES 8
+
+#!subst "/NETWORKNAME/mnc001.mcc001.3gppnetwork.org/"
+#!subst "/HOSTNAME/pcscf.mnc001.mcc001.3gppnetwork.org/"
+
+# SIP-Address of capturing node, if not set, capturing is disabled.
+##!define CAPTURE_NODE "sip:127.0.0.1:9060"
+
+# Allowed IPs for XML-RPC-Queries
+##!define XMLRPC_WHITELIST_1 "127.0.0.1"
+##!define XMLRPC_WHITELIST_2 "127.0.0.1"
+##!define XMLRPC_WHITELIST_3 "127.0.0.1"
+
+# Databases:
+#!define DB_URL "con1=>mysql://pcscf:heslo@127.0.0.1/pcscf"
+##!define DB_URL2 "con2=>mysql://pcscf:heslo@127.0.0.1/pcscf"
+
+#!define SQLOPS_DBURL "pcscf=>mysql://pcscf:heslo@127.0.0.1/pcscf"
+
+#! Optional: Server-URL for Websocket-Requests
+##!define WEBSOCKET_WEBSERVER "phone.ng-voice.com"
+
+##!define TRF_FUNCTION "trf.mnc001.mcc001.3gppnetwork.org"
+
+#
+# Several features can be enabled using '#!define WITH_FEATURE' directives:
+#
+# *** To run in debug mode: 
+#     - define WITH_DEBUG
+#
+# *** To enable nat traversal execute:
+#     - define WITH_NAT
+#     - define the connection to the RTP-Proxy: RTPPROXY_ADDRESS
+#
+# *** To force alls calls through the RTP-Proxy
+#     - this will automagically enable NAT-Traversal
+#     - define FORCE_RTPRELAY
+#
+# *** To enable IPv4/IPv6 Translation (RTPProxy)
+#     - this will automagically enable NAT-Traversal
+#     - define WITH_RTPIPV4
+#
+# *** To enable TCP support execute:
+#     - define WITH_TCP
+#
+# *** To enable TLS support execute:
+#     - adjust CFGDIR/tls.cfg as needed
+#     - define WITH_TLS
+#     - this will automagically enable TCP
+#
+# *** To enable XMLRPC support execute:
+#     - define WITH_XMLRPC
+#     - this will automagically enable TCP
+#
+# *** To enable anti-flood detection execute:
+#     - adjust pike and htable=>ipban settings as needed (default is
+#       block if more than 16 requests in 2 seconds and ban for 300 seconds)
+#     - define WITH_ANTIFLOOD
+#
+# *** To enable the Rx-Interface:
+#     - Configure Rx-Diameter-Interface in pcscf.xml
+#     - define WITH_RX
+#
+# *** To enable a Homer SIP-Capter-Node:
+#     - define CAPTURE_NODE with a proper address
+#
+# *** To enable support for the SEMS-SBC
+#     - define WITH_SBC
+#     - configure dispatcher-list with a set of SBC's
+
+#
+# Enabled Features for this host:
+##!define WITH_DEBUG
+#!define WITH_NAT
+#!define WITH_NATPING
+#!define FORCE_RTPRELAY
+##!define WITH_TLS
+##!define WITH_XMLRPC
+##!define WITH_IPBLOCK
+##!define WITH_ANTIFLOOD
+##!define WITH_RX
+##!define WITH_RX_REG
+##!define WITH_RX_CALL
+##!define WITH_TCP
+##!define WITH_RTPIPV4
+##!define WITH_SBC
+##!define WITH_SBC_CALL
+##!define WITH_REGINFO
+##!define WITH_RTPPING
+##!define WITH_WEBSOCKET
+##!define WITH_IPSEC

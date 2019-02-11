@@ -1,0 +1,196 @@
+app_ruby Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2018 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. load (str)
+
+        4. Functions
+
+              4.1. ruby_run(function, params)
+
+        5. RPC Commands
+
+              5.1. app_ruby.reload
+              5.2. ruby_jsdt.api_list
+
+        6. Example of usage
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. jsdt_run usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. load (str)
+
+   4. Functions
+
+        4.1. ruby_run(function, params)
+
+   5. RPC Commands
+
+        5.1. app_ruby.reload
+        5.2. ruby_jsdt.api_list
+
+   6. Example of usage
+
+1. Overview
+
+   This module allows executing Ruby scripts from the Kamailio
+   configuration file. It exports all KEMI functions to Ruby in order to
+   access the currently processed SIP message. These functions are
+   available within the Ruby module 'KSR'.
+
+   IMPORTANT: because of Ruby language policy (which require that a public
+   submodule name has to start with an uppercase letter), the KSR
+   submodule names are with all letters uppercase. For example, what is
+   documented as KSR.sl in KEMI docs, must be used as KSR::SL in Ruby
+   scripts.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libruby - the ruby library (for compilation on Debian, ruby-dev
+       package is needed.
+
+3. Parameters
+
+   3.1. load (str)
+
+3.1. load (str)
+
+   Set the path to the Ruby file to be loaded at startup. Then you can use
+   Ruby_run(function, params) to execute a function from the script at
+   runtime. If you use it for KEMI configuration, then it has to include
+   the requited functions.
+
+   Default value is “null”.
+
+   Example 1.1. Set load parameter
+...
+modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
+...
+
+4. Functions
+
+   4.1. ruby_run(function, params)
+
+4.1.  ruby_run(function, params)
+
+   Execute the Ruby function 'func' giving params as parameters. There can
+   be up to 3 string parameters. The function must exist in the script
+   loaded at startup via parameter 'load'. Parameters can be strings with
+   pseudo-variables that are evaluated at runtime.
+
+   Example 1.2. jsdt_run usage
+...
+if(!ruby_run("rb_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute ruby function!\n");
+}
+...
+ruby_run("rb_funcx", "$rU", "2");
+...
+
+5. RPC Commands
+
+   5.1. app_ruby.reload
+   5.2. ruby_jsdt.api_list
+
+5.1.  app_ruby.reload
+
+   Marks the need to reload the js script. The actual reload is done by
+   every working process when the next call to ruby_run() function or KEMI
+   config is executed.
+
+   Name: app_ruby.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_ruby.reload
+...
+
+5.2.  ruby_jsdt.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: ruby_jsdt.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_ruby.api_list
+...
+
+6. Example of usage
+
+   Create your Ruby script and store it on the file system, say:
+   '/usr/local/etc/kamailio/ruby/myscript.rb'.
+...
+def ksr_sl_reply()
+        KSR.dbg("==== from ruby - src ip: " + KSR::PV.get("$si") + "\n")
+        KSR::SL.sl_send_reply(200, "OK-Ruby")
+end
+...
+
+   Load the script via parameter 'load' and execute function via
+   ruby_run(...).
+...
+modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
+...
+request_route {
+    ...
+    if(!ruby_run("ksr_sl_reply")) {
+        xdbg("SCRIPT: failed to execute ruby function!\n");
+    }
+    ...
+}
+...

@@ -1,0 +1,2 @@
+id/int,time_stamp/int,time_us/int,callid/string,traced_user/string,msg/string,method/string,status/string,fromip/string,toip/string,fromtag/string,totag/string,direction/string,
+4

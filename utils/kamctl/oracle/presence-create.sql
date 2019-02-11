@@ -3,13 +3,15 @@ CREATE TABLE presentity (
     username VARCHAR2(64),
     domain VARCHAR2(64),
     event VARCHAR2(64),
-    etag VARCHAR2(64),
+    etag VARCHAR2(128),
     expires NUMBER(10),
     received_time NUMBER(10),
     body BLOB,
     sender VARCHAR2(128),
     priority NUMBER(10) DEFAULT 0 NOT NULL,
-    CONSTRAINT presentity_presentity_idx  UNIQUE (username, domain, event, etag)
+    ruid VARCHAR2(64),
+    CONSTRAINT presentity_presentity_idx  UNIQUE (username, domain, event, etag),
+    CONSTRAINT presentity_ruid_idx  UNIQUE (ruid)
 );
 
 CREATE OR REPLACE TRIGGER presentity_tr
@@ -23,7 +25,7 @@ BEGIN map2users('presentity'); END;
 CREATE INDEX presentity_presentity_expires  ON presentity (expires);
 CREATE INDEX presentity_account_idx  ON presentity (username, domain, event);
 
-INSERT INTO version (table_name, table_version) values ('presentity','4');
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 
 CREATE TABLE active_watchers (
     id NUMBER(10) PRIMARY KEY,
@@ -99,7 +101,7 @@ CREATE TABLE xcap (
     domain VARCHAR2(64),
     doc BLOB,
     doc_type NUMBER(10),
-    etag VARCHAR2(64),
+    etag VARCHAR2(128),
     source NUMBER(10),
     doc_uri VARCHAR2(255),
     port NUMBER(10),
@@ -128,7 +130,7 @@ CREATE TABLE pua (
     expires NUMBER(10),
     desired_expires NUMBER(10),
     flag NUMBER(10),
-    etag VARCHAR2(64),
+    etag VARCHAR2(128),
     tuple_id VARCHAR2(64),
     watcher_uri VARCHAR2(128),
     call_id VARCHAR2(255),

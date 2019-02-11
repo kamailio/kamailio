@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="cfg_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    <title>The configuration database module - cfg_db</title>
+	<authorgroup>
+	    <author>
+		<firstname>Tomas</firstname>
+		<surname>Mandys</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>tomas dot mandys at iptel dot org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Tomas Mandys</holder>
+	</copyright>
+
+    </bookinfo>
+
+    <chapter>
+	<title>Admin Guide</title>
+	<section id="cfg_db.overview">
+		<title>Overview</title>
+		<para>
+		The module implements a database driver for the configuration parameters API. When
+		configuration parameters are being declared (typically when starting)
+		API then driver is notified and has chance to set value (of any
+		parameter) based on value taken from database. It's primarily
+		targeted for interfacing with 3rd party software which is aware
+		of the &kamailio; configuration.
+		</para>
+		<para>
+		A parameter is uniquely identified by a <emphasis>group_name</emphasis> plus a
+		<emphasis>name</emphasis>, which is used by the driver to check if a value can be found.
+		Because configuration parameters may be spread in many tables, a translation table 
+		is used to indicate where to start searching.  Multiple look-up tables may be 
+		defined for single parameter, tables are searched in the first round by exact match
+		until parameter is found, all tables listed with wildcard (asterisk) in group name
+		are searched in the second round. If a parameter is not found then its value is left unchanged.
+		</para>
+		<para>
+		Configuration parameters are normally declared in C code and this module
+		additionally supports also declaring custom parameters in extra table.
+		Such parameters may be used typically in script only. All parameters
+		listed in the table are declared in the first step, values are initialized
+		in the second step using the same procedure as C-code parameters.
+		</para>
+		<para>
+		The module does not reflect changes made in parameters when &kamailio; is running.
+		It just declares variables and assigns values when &kamailio; is starting. That's all.
+		</para>
+	</section>
+
+	<section id="cfg_db.dep">
+		<title>Dependencies</title>
+				   
+		<para>
+		A loaded database module.
+		</para>
+	</section>
+
+	<xi:include href="cfg_db_params.xml"/>
+
+    <section id="cfg_db.examples">
+		<title>Examples</title>
+		<example>
+			<title>Content of tables</title>
+			<programlisting>
+	cfg_transl table:
+	group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_field|cfg_table_value_field
+	core|use_dst_blacklist|cfg_dns|||
+	core|dst_blacklist_mem|cfg_dns|||
+	core|dst_blacklist_expire|||
+	my|route_addr|cfg_my|my_group_name|my_name|my_value	; overrides &lt;default&gt; values
+	my|use_rtp_proxy|cfg_my|my_group_name|my_name|my_value
+	*|*||||	; matches all param ids, points to tables defined in row &lt;default&gt;
+	&lt;default&gt;||cfg_var|group_name|name|value  ; default cfg_table* values
+		
+	cfg_custom table:
+	group_name|name|value_type|min_value|max_value|description
+	my|route_addr|S|||Routing address
+	my|use_rtp_proxy|I|0|1|Use RTP proxy
+	
+	cfg_var table:
+	group_name|my_name|value
+	core|debug|4
+	
+	cfg_my table:
+	my_group_name|my_name|my_value
+	my|route_addr|127.0.0.1
+	my|use_rtp_proxy|1
+	
+	cfg_dns table:
+	group_name|name|value
+	dns|use_dst_blacklist|1
+	dns|dst_blacklist_mem|1024
+	dns|dst_blacklist_expire|60
+	
+			</programlisting>
+
+		</example>
+    </section>
+    </chapter>
+</book>
+

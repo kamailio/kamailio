@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<section id="tcpops.ex.event_routes">
+	<title>Event routes</title>
+		<para>The 3 following routes are called when a socket is closed.</para>
+		<para>
+			The corresponding
+			<emphasis>$conid</emphasis>
+			,
+			<emphasis>$Ri</emphasis>
+			,
+			<emphasis>$Rp</emphasis>
+			,
+			<emphasis>$si</emphasis>
+			,
+			<emphasis>$sp</emphasis>
+			and
+			<emphasis>$proto</emphasis>
+			variable will be available in the event routes.
+		</para>
+		<para>
+			Whether these routes are always called, never, or on a per socket
+			basis is controlled by the
+			<emphasis>closed_event</emphasis>
+			parameter.
+		</para>
+	<section>
+		<title>
+			<function moreinfo="none">tcp:closed</function>
+		</title>
+		<para>
+			Called for each "normal" TCP socket closure by the other side (FIN,ACK).
+		</para>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">tcp:timeout</function>
+		</title>
+		<para>
+			Called for connection timeouts (unanswered keepalives).
+		</para>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">tcp:reset</function>
+		</title>
+		<para>
+			Called if the connection is reset by peer (RST).
+		</para>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">Example</function>
+		</title>
+		<para>
+			<programlisting format="linespecific">
+...
+event_route[tcp:closed] {
+	xlog("L_INFO", "$proto connection closed ($conid)\n");
+}
+
+event_route[tcp:timeout] {
+	xlog("L_INFO", "$proto connection timed out ($conid)\n");
+}
+
+event_route[tcp:reset] {
+	xlog("L_INFO", "$proto connection reset by peer ($conid)\n");
+}
+...
+			</programlisting>
+		</para>
+	</section>
+</section>

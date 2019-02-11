@@ -1,0 +1,229 @@
+xHTTP Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Alex Balashov
+
+   <abalashov@evaristesys.com>
+
+   Copyright © 2010 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Note on Latency
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. Kamailio Core Settings
+              3.3. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. url_skip (str)
+              4.2. url_match (str)
+              4.3. event_callback (str)
+
+        5. Functions
+
+              5.1. xhttp_reply(code, reason, ctype, body)
+
+        6. Event Routes
+
+              6.1. xhttp:request
+
+   List of Examples
+
+   1.1. Set url_skip parameter
+   1.2. Set url_match parameter
+   1.3. Set event_callback parameter
+   1.4. xhttp_reply usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Note on Latency
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. Kamailio Core Settings
+        3.3. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. url_skip (str)
+        4.2. url_match (str)
+        4.3. event_callback (str)
+
+   5. Functions
+
+        5.1. xhttp_reply(code, reason, ctype, body)
+
+   6. Event Routes
+
+        6.1. xhttp:request
+
+1. Overview
+
+   This module provides basic HTTP/1.0 server functionality inside
+   Kamailio. SIP and HTTP are very similar protocols, so, practically, the
+   SIP parser can easily handle HTTP requests just by adding a fake Via
+   header.
+
+   The <module>xmlrpc</module> module uses the same concept. The xHTTP
+   module offers a generic way of handling the HTTP protocol, by calling
+   event_route[xhttp:request] in your config. You can check the HTTP URL
+   via the config variable $hu. Note that use of $ru will raise errors
+   since the structure of an HTTP URL is not compatible with that of a SIP
+   URI.
+
+2. Note on Latency
+
+   Because HTTP requests in xhttp are handled by the same, finite number
+   of SIP worker processes that operate on SIP messages, the same general
+   principles regarding script execution speed and throughput should be
+   observed by the writer in event_route[xhttp:request] as in any other
+   part of the route script.
+
+   For example, if you initiate a database query in the HTTP request route
+   that takes a long time to return rows, the SIP worker process in which
+   the request is handled will be blocked for that time and unable to
+   process other SIP messages. In most typical installations, there are
+   only a few of these worker processes running.
+
+   Therefore, it is highly inadvisable to execute particularly slow things
+   in the event_route[xhttp:request], because the request is not handled
+   in an asynchronous manner or otherwise peripherally to general SIP
+   processing. SIP worker threads will block, pending the outcome of the
+   event route just like any other config script route.
+
+   This is no more or less true for xhttp than it is for any other block
+   of script in any other scenario, and does not warrant any extraordinary
+   concern. It nevertheless bears mention here because some processes with
+   embedded HTTP servers have the request processing take place "outside"
+   of the main synchronous event sequence, whether by creating separate
+   threads or by some other asynchronous handling. That is not the case
+   with xhttp.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. Kamailio Core Settings
+   3.3. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl - stateless reply.
+
+3.2. Kamailio Core Settings
+
+   SIP requires a Content-Length header for TCP transport. But most HTTP
+   clients do not set the content length for normal GET requests.
+   Therefore, the core must be configured to allow incoming requests
+   without content length header:
+     * tcp_accept_no_cl=yes
+
+3.3. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+4. Parameters
+
+   4.1. url_skip (str)
+   4.2. url_match (str)
+   4.3. event_callback (str)
+
+4.1. url_skip (str)
+
+   Regular expression to match the HTTP URL. If there is a match, the
+   event route is not executed.
+
+   Default value is null (don't skip).
+
+   Example 1.1. Set url_skip parameter
+...
+modparam("xhttp", "url_skip", "^/RPC2")
+...
+
+4.2. url_match (str)
+
+   Regular expression to match the HTTP URL. If there is no match, the
+   event route is not executed. This check is done after url_skip, so if
+   both url_skip and url_match would match then the event route is not
+   executed (url_skip has higher priority).
+
+   Default value is null (match everything).
+
+   Example 1.2. Set url_match parameter
+...
+modparam("xhttp", "url_match", "^/sip/")
+...
+
+4.3. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[xhttp:request] block.
+
+   The function has one string parameter with the value "xhttp:request".
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.3. Set event_callback parameter
+...
+modparam("xhttp", "event_callback", "ksr_xhttp_event")
+...
+-- event callback function implemented in Lua
+function ksr_xhttp_event(evname)
+        KSR.info("===== xhttp module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
+5. Functions
+
+   5.1. xhttp_reply(code, reason, ctype, body)
+
+5.1.  xhttp_reply(code, reason, ctype, body)
+
+   Send back a reply with content-type and body.
+
+   Example 1.4. xhttp_reply usage
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+...
+
+6. Event Routes
+
+   6.1. xhttp:request
+
+6.1.  xhttp:request
+
+   The event route is executed when a new HTTP request is received.
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+...

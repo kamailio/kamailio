@@ -1,0 +1,260 @@
+IMS Diameter Server Module
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2016-2017 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. diameter_request([peer], appid, commandcode, message)
+              3.2. diameter_request_async([peer], appid, commandcode,
+                      message)
+
+        4. Exported Pseudo Variables
+
+              4.1. $diameter_application
+              4.2. $diameter_command
+              4.3. $diameter_request
+              4.4. $diameter_response
+
+        5. Event routes
+
+              5.1. diameter:request
+              5.2. diameter:response
+
+   List of Examples
+
+   1.1. diameter_request usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. diameter_request([peer], appid, commandcode, message)
+        3.2. diameter_request_async([peer], appid, commandcode, message)
+
+   4. Exported Pseudo Variables
+
+        4.1. $diameter_application
+        4.2. $diameter_command
+        4.3. $diameter_request
+        4.4. $diameter_response
+
+   5. Event routes
+
+        5.1. diameter:request
+        5.2. diameter:response
+
+1. Overview
+
+   This module implements a generic Diameter Server.
+
+   This module translates incoming Diameter Messages into a JSON structure
+   and will pass this on to the routing engine for further operations.
+
+   The module expects a reply (again in JSON), which then is translated
+   into a Diameter Response.
+
+   Additionally, it allows you to send Diameter-Requests to another peer.
+
+   The JSON contains an array with all AVP's in the Diameter-Message and
+   it's attributes. The format is identical for both requests and replies.
+[
+   {
+      "avpCode":277,
+      "vendorId":0,
+      "Flags":64,
+      "int32":0
+   },
+   {
+      "avpCode":260,
+      "vendorId":0,
+      "Flags":64,
+      "list":[
+         {
+            "avpCode":266,
+            "vendorId":0,
+            "Flags":64,
+            "int32":10415
+         },
+         {
+            "avpCode":258,
+            "vendorId":0,
+            "Flags":64,
+            "int32":16777216
+         }
+      ]
+   },
+   {
+      "avpCode":1,
+      "vendorId":0,
+      "Flags":64,
+      "string":"alice@kamailio.org"
+   },
+   {
+      "avpCode":618,
+      "vendorId":10415,
+      "Flags":64,
+      "list":[
+         {
+            "avpCode":621,
+            "vendorId":10415,
+            "Flags":64,
+            "string":"pcscf.kamailio.org"
+         }
+      ]
+   },
+   {
+      "avpCode":268,
+      "vendorId":0,
+      "Flags":64,
+      "int32":2001
+   }
+]
+
+   The module could be used (for example) for:
+     * a Home-Subscriber-Server (it was written do be used as one)
+     * a Charging-Server (Ro/Rf)
+     * for testing Diameter-Applications
+     * a PCRF/PCEF Emulator/Gateway
+     * a Diameter-Routing-Agent (DRA)
+     * ...
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following mouldes must be loaded before this module:
+     * CDP - C Diameter Peer
+     * CDP_AVP - CDP AVP Applications
+
+2.2. External Libraries or Applications
+
+   No external libraries are required.
+
+3. Functions
+
+   3.1. diameter_request([peer], appid, commandcode, message)
+   3.2. diameter_request_async([peer], appid, commandcode, message)
+
+3.1.  diameter_request([peer], appid, commandcode, message)
+
+   This method will send a Diameter Request.
+
+   Meaning of the parameters is as follows:
+     * peer - send the diameter request directly to a diameter peer
+       [optional]. If this parameter is omitted, the default routing is
+       used (see CDP).
+     * appid - Diameter-Application, e.g.:
+       Typical App-ID's are:
+          + 16777216 - Diameter Cx/Dx
+          + 16777217 - Diameter Sh
+          + 4 - Diameter Ro (Online Charging)
+          + ...
+     * commandcode - Diameter-Command-Code, e.g.:
+          + 300 - Diameter Cx/Dx User-Assignment Request (UAR)
+          + 301 - Diameter Cx/Dx Server-Assignment Request (SAR)
+          + ...
+     * message - the Diameter Message (as JSON), which should be sent.
+
+   This function can be used from any route.
+
+   Example 1.1. diameter_request usage
+...
+diameter_request("16777216", "300", "{ some json }");
+...
+
+3.2.  diameter_request_async([peer], appid, commandcode, message)
+
+   This method will send a Diameter Request asynchronously. The Reply to
+   this request will be visible in the event-route "diameter:response".
+
+   The meaning of the parameters are identical to the diameter_request
+   function.
+
+   This function is only available, if the diameter:response event-route
+   is defined.
+
+4. Exported Pseudo Variables
+
+   4.1. $diameter_application
+   4.2. $diameter_command
+   4.3. $diameter_request
+   4.4. $diameter_response
+
+4.1.  $diameter_application
+
+   This PV provides the requested Diameter Application, for example:
+     * 16777216 - Diameter Cx/Dx
+     * 16777217 - Diameter Sh
+     * 4 - Diameter Ro (Online Charging)
+     * ...
+
+4.2.  $diameter_command
+
+   This PV provides the requested Diameter Command, for example:
+     * 300 - Diameter Cx/Dx User-Assignment Request (UAR)
+     * 301 - Diameter Cx/Dx Server-Assignment Request (SAR)
+     * ...
+
+4.3.  $diameter_request
+
+   This PV provides the Diameter Request as JSON.
+
+4.4.  $diameter_response
+
+   The Response is read from the PVAR.
+
+5. Event routes
+
+   5.1. diameter:request
+   5.2. diameter:response
+
+5.1.  diameter:request
+
+   This route is called for any incoming Diameter Request
+...
+event_route[diameter:request] {
+        $var(res) = http_connect("hss", "/application/$diameter_application/comm
+and/$diameter_command", "application/json", "$diameter_request", "$var(response)
+");
+        if ($var(res) == 200) {
+                $diameter_response = $var(response);
+        }
+}
+...
+
+5.2.  diameter:response
+
+   This route is called for incoming Diameter replies, if the request was
+   processed asynchronously.
+...
+event_route[diameter:response] {
+        xlog("Reply to Diameter request $diameter_request is $diameter_response\
+n");
+}
+...

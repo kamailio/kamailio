@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    <title>cnxcc Module</title>
+    <productname class="trade">&kamailioname;</productname>
+    <authorgroup>
+	<author>
+	<firstname>Carlos</firstname>
+	<surname>Ruiz Díaz</surname>
+	<affiliation>
+	    <orgname>ConexionGroup S.A.</orgname>
+	</affiliation>
+	<address>
+	    <email>carlos.ruizdiaz@gmail.com</email>
+	</address>
+	</author>
+        <editor>
+        <firstname>Jose Luis</firstname>
+        <surname>Verdeguer</surname>
+        <email>verdeguer@zoonsuite.com</email>
+        <affiliation><orgname>Zoon Suite</orgname></affiliation>
+        <address>
+                <email>verdeguer@zoonsuite.com</email>
+        </address>
+        </editor>
+    </authorgroup>
+    <copyright>
+	<year>2013</year>
+	<holder>Carlos Ruiz Díaz, carlos.ruizdiaz@gmail.com</holder>
+    </copyright>
+    <copyright>
+	<year>2014</year>
+	<holder>Carlos Ruiz Díaz, carlos@latamvoices.com</holder>
+    </copyright>
+    <copyright>
+	<year>2018</year>
+	<holder>Jose Luis Verdeguer</holder>
+    </copyright>
+
+    </bookinfo>
+
+    <toc></toc>
+
+    <xi:include href="cnxcc_admin.xml" />
+</book>

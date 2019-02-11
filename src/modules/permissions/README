@@ -1,0 +1,1055 @@
+permissions Module
+
+Miklos Tirpak
+
+Edited by
+
+Miklos Tirpak
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+Edited by
+
+Juha Heinanen
+
+Edited by
+
+Emmanuel Schmidbauer
+
+   Copyright © 2003 Miklos Tirpak
+
+   Copyright © 2006-2008 Juha Heinanen
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+
+              1.1. Call Routing
+              1.2. Registration Permissions
+              1.3. URI Permissions
+              1.4. Address Permissions
+              1.5. Trusted Requests
+
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. default_allow_file (string)
+              3.2. default_deny_file (string)
+              3.3. check_all_branches (integer)
+              3.4. allow_suffix (string)
+              3.5. deny_suffix (string)
+              3.6. db_url (string)
+              3.7. address_table (string)
+              3.8. grp_col (string)
+              3.9. ip_addr_col (string)
+              3.10. mask_col (string)
+              3.11. port_col (string)
+              3.12. db_mode (integer)
+              3.13. trusted_table (string)
+              3.14. source_col (string)
+              3.15. proto_col (string)
+              3.16. from_col (string)
+              3.17. ruri_col (string)
+              3.18. tag_col (string)
+              3.19. priority_col (string)
+              3.20. peer_tag_avp (AVP string)
+              3.21. peer_tag_mode (integer)
+              3.22. max_subnets (int)
+              3.23. load_backends (int)
+
+        4. Functions
+
+              4.1. allow_routing()
+              4.2. allow_routing(basename)
+              4.3. allow_routing(allow_file,deny_file)
+              4.4. allow_register(basename)
+              4.5. allow_register(allow_file, deny_file)
+              4.6. allow_uri(basename, pvar)
+              4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
+              4.8. allow_source_address([group_id])
+              4.9. allow_source_address_group()
+              4.10. allow_address_group(addr, port)
+              4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
+
+        5. RPC Commands
+
+              5.1. permissions.addressReload
+              5.2. permissions.addressDump
+              5.3. permissions.subnetDump
+              5.4. permissions.domainDump
+              5.5. permissions.testUri
+              5.6. permissions.allowUri
+              5.7. permissions.trustedReload
+              5.8. permissions.trustedDump
+
+   List of Examples
+
+   1.1. Set default_allow_file parameter
+   1.2. Set default_deny_file parameter
+   1.3. Set check_all_branches parameter
+   1.4. Set allow_suffix parameter
+   1.5. Set deny_suffix parameter
+   1.6. Set db_url parameter
+   1.7. Set address_table parameter
+   1.8. Set grp_col parameter
+   1.9. Set ip_addr_col parameter
+   1.10. Set mask_col parameter
+   1.11. Set port_col parameter
+   1.12. Set db_mode parameter
+   1.13. Set trusted_table parameter
+   1.14. Set source_col parameter
+   1.15. Set proto_col parameter
+   1.16. Set from_col parameter
+   1.17. Set ruri_col parameter
+   1.18. Set tag_col parameter
+   1.19. Set priority_col parameter
+   1.20. Set peer_tag_avp parameter
+   1.21. Set peer_tag_mode parameter
+   1.22. Set max_subnets parameter
+   1.23. Set load_backends parameter
+   1.24. allow_routing usage
+   1.25. allow_routing(basename) usage
+   1.26. allow_routing(allow_file, deny_file) usage
+   1.27. allow_register(basename) usage
+   1.28. allow_register(allow_file, deny_file) usage
+   1.29. allow_uri(basename, pvar) usage
+   1.30. allow_address() usage
+   1.31. allow_source_address(group_id) usage
+   1.32. allow_source_address_group() usage
+   1.33. allow_source_address_group() usage
+   1.34. allow_trusted() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Call Routing
+        1.2. Registration Permissions
+        1.3. URI Permissions
+        1.4. Address Permissions
+        1.5. Trusted Requests
+
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. default_allow_file (string)
+        3.2. default_deny_file (string)
+        3.3. check_all_branches (integer)
+        3.4. allow_suffix (string)
+        3.5. deny_suffix (string)
+        3.6. db_url (string)
+        3.7. address_table (string)
+        3.8. grp_col (string)
+        3.9. ip_addr_col (string)
+        3.10. mask_col (string)
+        3.11. port_col (string)
+        3.12. db_mode (integer)
+        3.13. trusted_table (string)
+        3.14. source_col (string)
+        3.15. proto_col (string)
+        3.16. from_col (string)
+        3.17. ruri_col (string)
+        3.18. tag_col (string)
+        3.19. priority_col (string)
+        3.20. peer_tag_avp (AVP string)
+        3.21. peer_tag_mode (integer)
+        3.22. max_subnets (int)
+        3.23. load_backends (int)
+
+   4. Functions
+
+        4.1. allow_routing()
+        4.2. allow_routing(basename)
+        4.3. allow_routing(allow_file,deny_file)
+        4.4. allow_register(basename)
+        4.5. allow_register(allow_file, deny_file)
+        4.6. allow_uri(basename, pvar)
+        4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
+        4.8. allow_source_address([group_id])
+        4.9. allow_source_address_group()
+        4.10. allow_address_group(addr, port)
+        4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
+
+   5. RPC Commands
+
+        5.1. permissions.addressReload
+        5.2. permissions.addressDump
+        5.3. permissions.subnetDump
+        5.4. permissions.domainDump
+        5.5. permissions.testUri
+        5.6. permissions.allowUri
+        5.7. permissions.trustedReload
+        5.8. permissions.trustedDump
+
+1. Overview
+
+   1.1. Call Routing
+   1.2. Registration Permissions
+   1.3. URI Permissions
+   1.4. Address Permissions
+   1.5. Trusted Requests
+
+   The Permissions module provides functions for handling IP based access
+   control lists (ACL) in a number of ways.
+     * Call Routing
+     * Registration permissions
+     * URI permissions
+     * Address permissions
+     * Trusted Requests
+
+   The Address permissions and Trusted request handling supports using a
+   database to load ACLs into RAM for fast processing.
+
+1.1. Call Routing
+
+   The module can be used to determine if a call has appropriate
+   permission to be established. Permission rules are stored in plaintext
+   configuration files similar to hosts.allow and hosts.deny files used by
+   tcpd.
+
+   When allow_routing function is called it tries to find a rule that
+   matches selected fields of the message.
+
+   Kamailio is a forking proxy and therefore a single message can be sent
+   to different destinations simultaneously. When checking permissions all
+   the destinations must be checked and if one of them fails, the
+   forwarding will fail.
+
+   The matching algorithm is as follows, first match wins:
+     * Create a set of pairs of form (From, R-URI of branch 1), (From,
+       R-URI of branch 2), etc.
+     * Routing will be allowed when all pairs match an entry in the allow
+       file.
+     * Otherwise routing will be denied when one of pairs matches an entry
+       in the deny file.
+     * Otherwise, routing will be allowed.
+
+   A non-existing permission control file is treated as if it were an
+   empty file. Thus, permission control can be turned off by providing no
+   permission control files.
+
+   From header field and Request-URIs are always compared with regular
+   expressions! For the syntax see the sample file:
+   config/permissions.allow.
+
+1.2. Registration Permissions
+
+   In addition to call routing it is also possible to check REGISTER
+   messages and decide--based on the configuration files--whether the
+   message should be allowed and the registration accepted or not.
+
+   Main purpose of the function is to prevent registration of "prohibited"
+   IP addresses. One example, when a malicious user registers a contact
+   containing IP address of a PSTN gateway, he might be able to bypass
+   authorization checks performed by the SIP proxy. That is undesirable
+   and therefore attempts to register IP address of a PSTN gateway should
+   be rejected. Files config/register.allow and config/register.deny
+   contain an example configuration.
+
+   The function for registration checking is called allow_register and the
+   algorithm is very similar to the algorithm described in Section 1.1,
+   “Call Routing”. The only difference is in the way how pairs are
+   created.
+
+   Instead of the From header field the function uses the To header field
+   because th To header field in REGISTER messages contains the URI of the
+   person being registered. Instead of the Request-URI of branches the
+   function uses the Contact header field.
+
+   Thus, the pairs used in matching will look like this: (To, Contact 1),
+   (To, Contact 2), (To, Contact 3), and so on..
+
+   The algorithm of matching is the same as described in Section 1.1,
+   “Call Routing”.
+
+1.3. URI Permissions
+
+   The module can be used to determine if a request to a destination is
+   allowed, based on an URI stored in a pvar. Permission rules are stored
+   in plaintext configuration files similar to hosts.allow and hosts.deny
+   used by tcpd.
+
+   When the allow_uri function is called, it tries to find a rule that
+   matches selected fields of the message. The matching algorithm is as
+   follows, where the first match wins:
+     * Create a pair <From URI, URI stored in pvar>.
+     * Request will be allowed when the pair matches an entry in the allow
+       file.
+     * Request will be denied when the pair matches an entry in the deny
+       file.
+     * Otherwise, request will be allowed.
+
+   A non-existing permission control file is treated as if it were an
+   empty file. Thus, permission control can be turned off by providing no
+   permission control files.
+
+   The From URI and the URI stored in pvar are always compared with
+   regular expressions! For the syntax see the sample file:
+   config/permissions.allow.
+
+1.4. Address Permissions
+
+   The module can be used to determine if an address (IP address and port
+   or DNS domain name) matches any of the addresses stored in a cached
+   Kamailio database table. IP addresses in the database table can be
+   subnet addresses. Port 0 in cached database table matches any port. The
+   address and port to be matched can be either taken from the request
+   (allow_source_address) or given as pvar arguments (allow_address).
+
+   Addresses stored in the database table can be grouped together into one
+   or more groups specified by a group identifier (positive integer value,
+   i.e., equal or greater than 1). The group identifier is given as an
+   argument to the allow_address() and allow_source_address() functions.
+   One group can contain all of the three types of addresses: exact IP
+   address, subnet IP address or DNS domain name.
+
+   When the argument is an IP address, it is tried to be matched with the
+   records from that group that are of type exact IP or subnet. If the
+   argument is not an IP it is tried to be matched with the records that
+   are DNS domain names. No DNS lookup is performed, only strict matching.
+
+   As a side effect of matching the address, non-NULL tag (see tag_col
+   module parameter) is added as value to peer_tag AVP if peer_tag_avp
+   module parameter has been defined.
+
+1.5. Trusted Requests
+
+   The module can be used to determine if an incoming request can be
+   trusted without authentication.
+
+   When the allow_trusted function is called, it tries to find a rule that
+   matches the request. Rules contain the following fields: <source
+   address, transport protocol, regular expression>.
+
+   A requests is accepted if there exists a rule, where
+     * source address is equal to the source address of the request or the
+       source address given in pvar,
+     * transport protocol is either "ANY" or equal to the transport
+       protocol of request or the transport protocol given in pvar, and
+     * regular expression is either empty (NULL in database) or matches
+       the request's From (or optionally provided) URI.
+
+   Otherwise the request is rejected.
+
+   As a side effect of accepting the request, the peer's non-NULL tag (see
+   tag_col module parameter) is added as value to peer_tag AVP if the
+   peer_tag_avp module parameter has been defined.
+
+   Rules are stored in a database table specified by the module
+   parameters. There is a module parameter called db_mode that determines
+   if the rules are cached into memory for faster matching or if the
+   database is consulted for each invocation of the allow_trusted()
+   function call.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. default_allow_file (string)
+   3.2. default_deny_file (string)
+   3.3. check_all_branches (integer)
+   3.4. allow_suffix (string)
+   3.5. deny_suffix (string)
+   3.6. db_url (string)
+   3.7. address_table (string)
+   3.8. grp_col (string)
+   3.9. ip_addr_col (string)
+   3.10. mask_col (string)
+   3.11. port_col (string)
+   3.12. db_mode (integer)
+   3.13. trusted_table (string)
+   3.14. source_col (string)
+   3.15. proto_col (string)
+   3.16. from_col (string)
+   3.17. ruri_col (string)
+   3.18. tag_col (string)
+   3.19. priority_col (string)
+   3.20. peer_tag_avp (AVP string)
+   3.21. peer_tag_mode (integer)
+   3.22. max_subnets (int)
+   3.23. load_backends (int)
+
+3.1. default_allow_file (string)
+
+   Default allow file used by the functions with no parameters. If you
+   don't specify a full pathname then the directory in which is the main
+   config file is located will be used.
+
+   Default value is “permissions.allow”.
+
+   Example 1.1. Set default_allow_file parameter
+...
+modparam("permissions", "default_allow_file", "/etc/permissions.allow")
+...
+
+3.2. default_deny_file (string)
+
+   Default file containing deny rules. The file is used by functions with
+   no parameters. If you don't specify a full pathname then the directory
+   in which the main config file is located will be used.
+
+   Default value is “permissions.deny”.
+
+   Example 1.2. Set default_deny_file parameter
+...
+modparam("permissions", "default_deny_file", "/etc/permissions.deny")
+...
+
+3.3. check_all_branches (integer)
+
+   If set then allow_routing functions will check Request-URI of all
+   branches (default). If disabled then only Request-URI of the first
+   branch will be checked.
+
+Warning
+
+   Do not disable this parameter unless you really know what you are
+   doing.
+
+   Default value is 1.
+
+   Example 1.3. Set check_all_branches parameter
+...
+modparam("permissions", "check_all_branches", 0)
+...
+
+3.4. allow_suffix (string)
+
+   Suffix to be appended to basename to create filename of the allow file
+   when version with one parameter of either allow_routing or
+   allow_register is used.
+
+Note
+
+   Including leading dot.
+
+   Default value is “.allow”.
+
+   Example 1.4. Set allow_suffix parameter
+...
+modparam("permissions", "allow_suffix", ".allow")
+...
+
+3.5. deny_suffix (string)
+
+   Suffix to be appended to basename to create filename of the deny file
+   when version with one parameter of either allow_routing or
+   allow_register is used.
+
+Note
+
+   Including leading dot.
+
+   Default value is “.deny”.
+
+   Example 1.5. Set deny_suffix parameter
+...
+modparam("permissions", "deny_suffix", ".deny")
+...
+
+3.6. db_url (string)
+
+   This is URL of the database to be used to store rules used by
+   allow_trusted function.
+
+   Default value is “NULL”.
+
+   Example 1.6. Set db_url parameter
+...
+modparam("permissions", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.7. address_table (string)
+
+   The name of the database table containing IP subnets and DNS domain
+   names used by allow_address and allow_source_address functions.
+
+   Default value is “address”.
+
+   Example 1.7. Set address_table parameter
+...
+modparam("permissions", "address_table", "addr")
+...
+
+3.8. grp_col (string)
+
+   Name of address table column containing the group identifier of the
+   address.
+
+   Default value is “grp”.
+
+   Example 1.8. Set grp_col parameter
+...
+modparam("permissions", "grp_col", "group_id")
+...
+
+3.9. ip_addr_col (string)
+
+   Name of address table column containing the IP address part of the
+   address.
+
+   Default value is “ip_addr”.
+
+   Example 1.9. Set ip_addr_col parameter
+...
+modparam("permissions", "ip_addr_col", "ip_address")
+...
+
+3.10. mask_col (string)
+
+   Name of address table column containing the network mask of the
+   address. Possible values are 0-32 for IPv4 and 0-128 for IPv6
+   addresses.
+
+   Default value is “mask”.
+
+   Example 1.10. Set mask_col parameter
+...
+modparam("permissions", "mask_col", "subnet_length")
+...
+
+3.11. port_col (string)
+
+   Name of address table column containing the port part of the address.
+
+   Default value is “port”.
+
+   Example 1.11. Set port_col parameter
+...
+modparam("permissions", "port_col", "port")
+...
+
+3.12. db_mode (integer)
+
+   Database mode. 0 means non-caching, 1 means caching. Valid only for the
+   allow_trusted function.
+
+   Default value is 0 (non-caching).
+
+   Example 1.12. Set db_mode parameter
+...
+modparam("permissions", "db_mode", 1)
+...
+
+3.13. trusted_table (string)
+
+   Name of database table containing the matching rules used by the
+   allow_trusted function.
+
+   Default value is “trusted”.
+
+   Example 1.13. Set trusted_table parameter
+...
+modparam("permissions", "trusted_table", "pbx")
+...
+
+3.14. source_col (string)
+
+   Name of column in the “trusted” table containing the source IP address
+   that is matched against source IP address of received request.
+
+   Default value is “src_ip”.
+
+   Example 1.14. Set source_col parameter
+...
+modparam("permissions", "source_col", "source_ip_address")
+...
+
+3.15. proto_col (string)
+
+   Name of column in the “trusted” table containing the transport protocol
+   that is matched against transport protocol of the received request.
+   Possible values that can be stored in proto_col are “any”, “udp”,
+   “tcp”, “tls”, “sctp”, “ws”, “wss”, and “none”. Value “any” matches
+   always and value “none” never.
+
+   Default value is “proto”.
+
+   Example 1.15. Set proto_col parameter
+...
+modparam("permissions", "proto_col", "transport")
+...
+
+3.16. from_col (string)
+
+   Name of the column trusted table containing a regular expression that
+   is matched against the From URI.
+
+   Default value is “from_pattern”.
+
+   Example 1.16. Set from_col parameter
+...
+modparam("permissions", "from_col", "regexp")
+...
+
+3.17. ruri_col (string)
+
+   Name of the column trusted table containing a regular expression that
+   is matched against the Request URI.
+
+   Default value is “ruri_pattern”.
+
+   Example 1.17. Set ruri_col parameter
+...
+modparam("permissions", "ruri_col", "regexp")
+...
+
+3.18. tag_col (string)
+
+   Name of the column in the “address” or “trusted” table containing a
+   string that is added as value to peer_tag AVP if peer_tag AVP has been
+   defined and if the address or peer matches.
+
+   Default value is “tag”.
+
+   Example 1.18. Set tag_col parameter
+...
+modparam("permissions", "tag_col", "peer_tag")
+...
+
+3.19. priority_col (string)
+
+   The column name used to store the priority of the corresponding rule
+   from the database row. Priority values should be integer. When db_mode
+   is set to 1 (caching), priorities are ordered from highest to lowest.
+   In non-caching mode, priority order (ASC vs DESC) is determined by
+   database.
+
+   Default value is “priority”.
+
+   Example 1.19. Set priority_col parameter
+...
+modparam("permissions", "priority_col", "column_name")
+...
+
+3.20. peer_tag_avp (AVP string)
+
+   If defined, the AVP will be set as a side effect of allow_trusted call
+   to not NULL tag column value of the matching peer.
+
+   Default value is “undefined”.
+
+   Example 1.20. Set peer_tag_avp parameter
+...
+modparam("permissions", "peer_tag_avp", "$avp(i:707)")
+...
+
+3.21. peer_tag_mode (integer)
+
+   Tag mode for allow_trusted. “0” sets only the tag of the first match.
+   “1” adds the tags of all matches to the avp. In addition the return
+   value of allow_trusted is the number of matches. This parameter is not
+   used for address table matching functions.
+
+   Default value is “0”.
+
+   Example 1.21. Set peer_tag_mode parameter
+...
+modparam("permissions", "peer_tag_mode", 1)
+...
+
+3.22. max_subnets (int)
+
+   The maximum number of subnet addresses to be loaded from address table.
+
+   Default value is “512”.
+
+   Example 1.22. Set max_subnets parameter
+...
+modparam("permissions", "max_subnets", 1024)
+...
+
+3.23. load_backends (int)
+
+   Control what backends should be loaded: 1 - address table; 2 - trusted
+   table; 4 - allow file; 8 - deny file.
+
+   It can be a combination (sum) of the options to load many backends
+   (e.g., 3 - loads address and trusted tables).
+
+   Default value is “0xffff” (load all backends).
+
+   Example 1.23. Set load_backends parameter
+...
+modparam("permissions", "load_backends", 1)
+...
+
+4. Functions
+
+   4.1. allow_routing()
+   4.2. allow_routing(basename)
+   4.3. allow_routing(allow_file,deny_file)
+   4.4. allow_register(basename)
+   4.5. allow_register(allow_file, deny_file)
+   4.6. allow_uri(basename, pvar)
+   4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
+   4.8. allow_source_address([group_id])
+   4.9. allow_source_address_group()
+   4.10. allow_address_group(addr, port)
+   4.11. allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
+
+4.1.  allow_routing()
+
+   Returns true if all pairs constructed as described in Section 1.1,
+   “Call Routing” have appropriate permissions according to the
+   configuration files. This function uses default configuration files
+   specified in default_allow_file and default_deny_file.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.24. allow_routing usage
+...
+if (allow_routing()) {
+        t_relay();
+};
+...
+
+4.2.  allow_routing(basename)
+
+   Returns true if all pairs constructed as described in Section 1.1,
+   “Call Routing” have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+     * basename - Basename from which allow and deny filenames will be
+       created by appending contents of allow_suffix and deny_suffix
+       parameters.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.25. allow_routing(basename) usage
+...
+if (allow_routing("basename")) {
+        t_relay();
+};
+...
+
+4.3.  allow_routing(allow_file,deny_file)
+
+   Returns true if all pairs constructed as described in Section 1.1,
+   “Call Routing” have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.26. allow_routing(allow_file, deny_file) usage
+...
+if (allow_routing("rules.allow", "rules.deny")) {
+        t_relay();
+};
+...
+
+4.4.  allow_register(basename)
+
+   The function returns true if all pairs constructed as described in
+   Section 1.2, “Registration Permissions” have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+     * basename - Basename from which allow and deny filenames will be
+       created by appending contents of allow_suffix and deny_suffix
+       parameters.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.27. allow_register(basename) usage
+...
+if (method=="REGISTER") {
+        if (allow_register("register")) {
+                save("location");
+                exit;
+        } else {
+                sl_send_reply("403", "Forbidden");
+        };
+};
+...
+
+4.5.  allow_register(allow_file, deny_file)
+
+   The function returns true if all pairs constructed as described in
+   Section 1.2, “Registration Permissions” have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.28. allow_register(allow_file, deny_file) usage
+...
+if (method=="REGISTER") {
+        if (allow_register("register.allow", "register.deny")) {
+                save("location");
+                exit;
+        } else {
+                sl_send_reply("403", "Forbidden");
+        };
+};
+...
+
+4.6.  allow_uri(basename, pvar)
+
+   Returns true if the pair constructed as described in Section 1.3, “URI
+   Permissions” have appropriate permissions according to the
+   configuration files specified by the parameter.
+
+   Meaning of the parameter is as follows:
+     * basename - Basename from which allow and deny filenames will be
+       created by appending contents of allow_suffix and deny_suffix
+       parameters.
+       If the parameter doesn't contain full pathname then the function
+       expects the file to be located in the same directory as the main
+       configuration file of the server.
+     * pvar - Any pseudo-variable defined in Kamailio.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.29. allow_uri(basename, pvar) usage
+...
+if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
+        t_relay();
+};
+if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
+        t_relay();
+};
+...
+
+4.7.  allow_address(group_id, ip_addr_pvar, port_pvar)
+
+   Returns true if the address and port given as values of pvar arguments
+   belonging to a group given as group_id argument matches an IP subnet or
+   a DNS domain name found in cached address table.
+
+   When matching is done if the argument is an IP address, it is matched
+   with the records from that group that are of type exact IP or subnet.
+   If the argument is not an IP it is tried to be matched with the records
+   that are DNS domain names. No DNS lookup is performed, only strict
+   matching. Cached address table entry containing port value “0” matches
+   any port. The “group_id” argument can be an integer string or a pseudo
+   variable.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.30. allow_address() usage
+...
+
+// Check if source address/port is in group 1
+if (!allow_address("1", "$si", "$sp")) {
+        sl_send_reply("403", "Forbidden");
+};
+// Check address/port stored in AVPs src_adr/src_port is in group 2
+$avp(dst_adr) = "sipdomain.com";
+$avp(dst_port) = "0";
+if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
+        sl_send_reply("403", "Forbidden");
+};
+...
+
+4.8.  allow_source_address([group_id])
+
+   Equal to “allow_address(group_id, "$si", "$sp")”. If 'group_id' is
+   missing, the function is equal to allow_address("1", "$si", "$sp").
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.31. allow_source_address(group_id) usage
+...
+
+// Check source address/port of request
+if (!allow_source_address("1")) {
+        sl_send_reply("403", "Forbidden");
+};
+...
+
+4.9.  allow_source_address_group()
+
+   Checks if source address/port is found in cached address or subnet
+   table in any group. If yes, returns that group. If not returns -1. Port
+   value 0 in cached address and group table matches any port.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.32. allow_source_address_group() usage
+...
+
+$var(group) = allow_source_address_group();
+if ($var(group) != -1) {
+   # do something with $var(group)
+};
+...
+
+4.10.  allow_address_group(addr, port)
+
+   Checks if address/port is found in cached address or subnet table in
+   any group. If yes, returns that group. If not returns -1. Port value 0
+   in cached address and group table matches any port. The parameters can
+   be pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.33. allow_source_address_group() usage
+...
+
+$var(group) = allow_address_group("1.2.3.4", "5060");
+if ($var(group) != -1) {
+   # do something with $var(group)
+};
+...
+
+4.11.  allow_trusted([src_ip_pvar, proto_pvar, furi_pvar])
+
+   Checks based either on request's source address and transport protocol
+   or source address and transport protocol given in pvar arguments, and
+   From URI of request (or furi_pvar if provided) if request can be
+   trusted without authentication. Returns “1” if a match is found as
+   described in Section 1.5, “Trusted Requests” and “-1” otherwise. If a
+   match is found and peer_tag_avp has been defined, adds a non-NULL tag
+   column value of the matching peer to AVP peer_tag_avp.
+
+   NOTE: source IP is matched using string comparison. Be careful if the
+   IP can have different forms, for a safer alternative for matching IP
+   addresses, look at allow_source_address or allow_address().
+
+   Source address, transport protocol and uri given in the arguments must
+   be in string format and they can contain script variables. Valid
+   transport protocol values are (ignoring case) "any", "udp, "tcp",
+   "tls", "ws", "wss" and "sctp".
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.34. allow_trusted() usage
+...
+if (allow_trusted()) {
+        t_relay();
+}
+...
+if (allow_trusted("$si", "$proto")) {
+        t_relay();
+}
+...
+if (allow_trusted("$si", "any", "$ai")) {
+        t_relay();
+}
+...
+
+5. RPC Commands
+
+   5.1. permissions.addressReload
+   5.2. permissions.addressDump
+   5.3. permissions.subnetDump
+   5.4. permissions.domainDump
+   5.5. permissions.testUri
+   5.6. permissions.allowUri
+   5.7. permissions.trustedReload
+   5.8. permissions.trustedDump
+
+5.1.  permissions.addressReload
+
+   Causes the permissions module to re-read the contents of address
+   database table into cache memory. In cache memory the entries are for
+   performance reasons stored in two different tables: address table and
+   subnet table depending on the value of the mask field (IPv6: 64 or
+   smaller, IPv4: 32 or smaller).
+
+   Parameters: none
+
+5.2.  permissions.addressDump
+
+   Causes the permissions module to dump the contents of cache memory
+   address table. (Not the subnet table).
+
+   Parameters: none
+
+5.3.  permissions.subnetDump
+
+   Causes permissions module to dump contents of cache memory subnet
+   table.
+
+   Parameters: none
+
+5.4.  permissions.domainDump
+
+   Causes permissions module to dump contents of cache memory domain
+   table.
+
+   Parameters: none
+
+5.5.  permissions.testUri
+
+   Tests if the (URI, Contact) pair is allowed according to allow/deny
+   files. The files must already have been loaded by Kamailio.
+
+   Parameters:
+     * basename - Basename from which allow and deny filenames will be
+       created by appending contents of the allow_suffix and deny_suffix
+       parameters.
+     * URI - URI to be tested
+     * Contact - Contact to be tested
+
+5.6.  permissions.allowUri
+
+5.7.  permissions.trustedReload
+
+   Causes the permissions module to re-read the contents of the trusted
+   database table into cache memory.
+
+   Parameters: none
+
+5.8.  permissions.trustedDump
+
+   Causes the permissions module to dump contents of the trusted database
+   table from cache memory.
+
+   Parameters: none

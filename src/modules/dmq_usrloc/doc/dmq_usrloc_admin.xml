@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module adds user location (usrloc) records replication
+		between multiple servers via DMQ module.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>DMQ module.</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>USRLOC module.</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="usrloc_dmq.p.enable">
+		<title><varname>enable</varname> (int)</title>
+		<para>
+			The parameter controls whether the replication is active or not.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - replication is disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - replication is enabled
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "enable", 1)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.sync">
+		<title><varname>sync</varname> (int)</title>
+		<para>
+			The parameter controls whether to request synchronization of all
+			usrloc records at startup.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "sync", 0)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_size">
+		<title><varname>batch_size</varname> (int)</title>
+		<para>
+			The parameter controls whether to throttle synchronization of
+			all contacts in batches. Once a batch of SIP requests is sent out,
+			then sleep for 'batch_usleep' microseconds.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				&lt;=0 - disabled (no batching)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				&gt;0 - how many records to be sent in a batch
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_size", 4000)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_usleep">
+		<title><varname>batch_usleep</varname> (int)</title>
+		<para>
+			The parameter controls whether to throttle synchronization of
+			all contacts in batches. Once a batch of SIP requests is sent out,
+			then sleep for 'batch_usleep' microseconds.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				&lt;=0 - no sleep (it disables the batching)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				&gt;0 - how many microseconds to sleep before sending
+				out another batch of usrloc records.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_usleep", 1000)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_msg_size">
+		<title><varname>batch_msg_size</varname> (int)</title>
+		<para>
+			The parameter controls the size of the messages during a sync. 
+			This is to make sure the messages are never larger then 65536 (the maximum datagram size).
+		</para>
+		<para>
+			Note that batch_msg_contacts will also be checked.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 60000.
+			Maximum value is 60000.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch_msg_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_msg_contacts", 50)  # 50 contacts / message
+modparam("dmq_usrloc", "batch_msg_size", 500000)
+# with this config, when doing a full sync, each message will be sent a soon as the body is larger 50K or contains 50 contacts
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_msg_contacts">
+		<title><varname>batch_msg_contacts</varname> (int)</title>
+		<para>
+			The parameter controls the amount of contact per message/transaction during a sync.
+		</para>
+		<para>
+			Note that batch_msg_size will also be checked.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+			Maximum value is 150.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch_msg_contacts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_msg_contacts", 50)  # 50 contacts / message
+modparam("dmq_usrloc", "batch_size", 10000)       # 10000 contacts / batch
+modparam("dmq_usrloc", "batch_usleep", 500000)    # one batch every 500ms
+# syncing 20K contacts/second with 50 contacts/message
+...
+</programlisting>
+	</example>
+	</section>
+
+	<section id="usrloc_dmq.p.usrloc_domain">
+		<title><varname>usrloc_domain</varname> (string)</title>
+		<para>
+			The usrloc domain to synchronize.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>location</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>usrloc_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "usrloc_domain", "my_domain")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+</chapter>
+

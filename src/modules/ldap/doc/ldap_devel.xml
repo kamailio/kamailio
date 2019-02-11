@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- LDAP_H350 Module Developer's Guide -->
+
+<chapter>
+    <title>&develguide;</title>
+	<section>
+		<title>Overview</title>
+		<para>
+		The LDAP module API can be used by other &kamailio; modules to implement
+		LDAP search functionality. This frees the module implementer from having
+		to care about LDAP connection management and configuration. 
+		</para>
+		<para>
+		In order to use this API, a module has to load the API using the <varname>load_ldap_api</varname>
+		function which returns a pointer to a <varname>ldap_api</varname> structure. This structure
+		includes pointers to the API functions described below. The LDAP module source file
+		<varname>api.h</varname> includes all declarations needed to load the API, it has to
+		be included in the file that use the API. Loading the API is typically done inside a
+		module's <varname>mod_init</varname> call as the following example shows:			
+			<example>
+				<title>Example code fragment to load LDAP module API</title>
+				<programlisting><![CDATA[
+#include "../../sr_module.h"
+#include "../ldap/api.h"
+
+/*
+ * global pointer to ldap api
+ */
+extern ldap_api_t ldap_api;
+
+...
+
+static int mod_init(void)
+{
+    /*
+     * load the LDAP API
+     */
+    if (load_ldap_api(&ldap_api) != 0)
+    {
+        LM_ERR("Unable to load LDAP API - this module requires ldap module\n");
+        return -1;
+    }
+
+    ...
+}
+
+...
+]]>		
+				</programlisting>
+			</example>
+		</para>
+		<para>
+			The API functions can then be used like in the following example:
+			<example>
+				<title>Example LDAP module API function call</title>
+				<programlisting><![CDATA[
+...
+	
+    rc = ldap_api.ldap_rfc4515_escape(str1, str2, 0);	
+				
+...		
+]]>		
+				</programlisting>
+			</example>	
+		</para>
+	
+	</section>
+	
+	<section>
+		<title>API Functions</title>
+		
+		<section>
+			<title>ldap_params_search</title>
+			<para>
+				Performs an LDAP search using the parameters given as function arguments.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_params_search_t)(int* _ld_result_count,
+                                    char* _lds_name,
+                                    char* _dn,
+                                    int _scope,
+                                    char** _attrs,
+                                    char* _filter,
+                                    ...);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>int* _ld_result_count</term>
+					<listitem>
+						<para>
+						The function stores the number of returned LDAP entries
+						in <varname>_ld_result_count</varname>. 
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>char* _lds_name</term>
+					<listitem>
+						<para>
+						LDAP session name as configured in the LDAP
+						module configuration file.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>char* _dn</term>
+					<listitem>
+						<para>
+							LDAP search DN.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>int _scope</term>
+					<listitem>
+						<para>
+						LDAP search scope, one of <varname>LDAP_SCOPE_ONELEVEL</varname>,
+						<varname>LDAP_SCOPE_BASE</varname>, or <varname>LDAP_SCOPE_SUBTREE</varname>,
+						as defined in OpenLDAP's <varname>ldap.h</varname>.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>char** _attrs</term>
+					<listitem>
+						<para>
+						A null-terminated  array  of attribute types to return from entries.
+						If empty (<varname>NULL</varname>), all attribute types are returned.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>char* _filter</term>
+					<listitem>
+						<para>
+						LDAP search filter string according to RFC 4515. 
+						<varname>printf</varname> patterns in this string do get replaced with
+						the function arguments' values following the <varname>_filter</varname> argument.
+						</para>
+					</listitem>
+				</varlistentry>
+				
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							Internal error.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+						Success, <varname>_ld_result_count</varname> includes the number of LDAP entries found.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_url_search</title>
+			<para>
+				Performs an LDAP search using an LDAP URL.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_url_search_t)(char* _ldap_url,
+                                 int* _result_count);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>char* _ldap_url</term>
+					<listitem>
+						<para>
+							LDAP URL as described in <xref linkend="ldap-urls" />.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>int* _result_count</term>
+					<listitem>
+						<para>
+							The function stores the number of returned LDAP entries in <varname>_ld_result_count</varname>.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							Internal error.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+							Success, <varname>_ld_result_count</varname> includes the number of LDAP entries found.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_result_attr_vals</title>
+			<para>
+				Retrieve the value(s) of a returned LDAP attribute. The function accesses
+				the LDAP result returned by the last call of <varname>ldap_params_search</varname>
+				or <varname>ldap_url_search</varname>. The <varname>berval</varname> structure is
+				defined in OpenLDAP's <varname>ldap.h</varname>, which has to be included.
+			</para>
+			<para>
+				This function allocates memory to store the LDAP attribute value(s). This memory
+				has to freed with the function <varname>ldap_value_free_len</varname> (see next section).
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_result_attr_vals_t)(str* _attr_name,
+                                       struct berval ***_vals);
+									   
+typedef struct berval {
+        ber_len_t       bv_len;
+        char            *bv_val;
+} BerValue;
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>str* _attr_name</term>
+					<listitem>
+						<para>
+							<varname>str</varname> structure holding the LDAP attribute name.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>struct berval ***_vals</term>
+					<listitem>
+						<para>
+							A null-terminated array of the attribute's value(s).
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							Internal error.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+							Success, <varname>_vals</varname> includes the attribute's value(s).
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>1</term>
+					<listitem>
+						<para>
+							No attribute value found.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_value_free_len</title>
+			<para>
+				Function used to free memory allocated by <varname>ldap_result_attr_vals</varname>.
+				The <varname>berval</varname> structure is defined in OpenLDAP's 
+				<varname>ldap.h</varname>, which has to be included.
+			</para>
+			<programlisting><![CDATA[
+typedef void (*ldap_value_free_len_t)(struct berval **_vals);
+
+typedef struct berval {
+        ber_len_t       bv_len;
+        char            *bv_val;
+} BerValue;
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>struct berval **_vals</term>
+					<listitem>
+						<para>
+						<varname>berval</varname> array returned by <varname>ldap_result_attr_vals</varname>.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_result_next</title>
+			<para>
+				Increments the LDAP result pointer.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_result_next_t)();
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+						No LDAP result found, probably because <varname>ldap_params_search</varname>
+						or <varname>ldap_url_search</varname> was not called.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+							Success, LDAP result pointer points now to next result.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>1</term>
+					<listitem>
+						<para>
+							No more results available.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_str2scope</title>
+			<para>
+				Converts LDAP search scope string into integer value e.g. for <varname>ldap_params_search</varname>.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_str2scope_t)(char* scope_str);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>char* scope_str</term>
+					<listitem>
+						<para>
+							LDAP search scope string. One of "one", "onelevel", "base", "sub", or "subtree".
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							<varname>scope_str</varname> not recognized.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>n &gt;= 0</term>
+					<listitem>
+						<para>
+							LDAP search scope integer.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>ldap_rfc4515_escape</title>
+			<para>
+				Applies escaping rules described in <xref linkend="ldap-filter-url-encode-fn" />.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encode);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>str *sin</term>
+					<listitem>
+						<para>
+							<varname>str</varname> structure holding the string to apply the escaping rules.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>str *sout</term>
+					<listitem>
+						<para>
+							<varname>str</varname> structure holding the escaped string. The length of this string must be at least three times the length of <varname>sin</varname> plus one.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>int url_encode</term>
+					<listitem>
+						<para>
+							Flag that specifies if a '?' character gets escaped with '%3F' or not. If <varname>url_encode</varname> equals <varname>0</varname>, '?' does not get escaped.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							Internal error.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+							Success, <varname>sout</varname> contains escaped string.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>get_ldap_handle</title>
+			<para>
+				Returns the OpenLDAP LDAP handle for a specific LDAP session. This allows a module
+				implementor to use the OpenLDAP API functions directly, instead of using the API
+				functions exported by the &kamailio; LDAP module. The <varname>LDAP</varname> structure
+				is defined in OpenLDAP's <varname>ldap.h</varname>, which has to be included.
+			</para>
+			<programlisting><![CDATA[
+typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>char* _lds_name</term>
+					<listitem>
+						<para>
+						LDAP session name as specified in the LDAP module configuration file.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>LDAP** _ldap_handle</term>
+					<listitem>
+						<para>
+						OpenLDAP LDAP handle returned by this function.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+			<variablelist>
+				<title>Return Values:</title>
+				<varlistentry>
+					<term>-1</term>
+					<listitem>
+						<para>
+							Internal error.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>0</term>
+					<listitem>
+						<para>
+							Success, <varname>_ldap_handle</varname> contains the OpenLDAP LDAP handle.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+		
+		<section>
+			<title>get_last_ldap_result</title>
+			<para>
+				Returns the OpenLDAP LDAP handle and OpenLDAP result handle of the last LDAP search 
+				operation. These handles can be used as input for OpenLDAP LDAP result API functions.
+				<varname>LDAP</varname> and <varname>LDAPMessage</varname> structures are defined in 
+				OpenLDAP's <varname>ldap.h</varname>, which has to be included.
+			</para> 
+			<programlisting><![CDATA[
+typedef void (*get_last_ldap_result_t)
+	     (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result);
+]]>
+			</programlisting>
+			<variablelist>
+				<title>Function arguments:</title>
+				<varlistentry>
+					<term>LDAP** _last_ldap_handle</term>
+					<listitem>
+						<para>
+							OpenLDAP LDAP handle returned by this function.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>LDAPMessage** _last_ldap_result</term>
+					<listitem>
+						<para>
+							OpenLDAP result handle returned by this function.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</section>
+	</section>
+	<section>
+		<title>Example Usage</title>
+		<para>
+			The following example shows how this API can be used to perform an LDAP search operation.
+			It is assumed that the API is loaded and available through the <varname>ldap_api</varname> pointer.
+		</para>
+		<programlisting><![CDATA[
+...
+	
+int rc, ld_result_count, scope = 0;
+char* sip_username = "test";
+
+/*
+ * get LDAP search scope integer
+ */
+scope = ldap_api.ldap_str2scope("sub");
+if (scope == -1)
+{
+    LM_ERR("ldap_str2scope failed\n");
+    return -1;
+}
+
+/*
+ * perform LDAP search
+ */
+
+if (ldap_api.ldap_params_search(
+       &ld_result_count,
+       "campus",
+       "dc=example,dc=com",
+       scope,
+       NULL,
+       "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))",
+       sip_username)
+     != 0)
+{
+    LM_ERR("LDAP search failed\n");
+    return -1;
+}
+
+/*
+ * check result count
+ */
+if (ld_result_count < 1)
+{
+    LM_ERR("LDAP search returned no entry\n");
+    return 1;
+}
+
+/*
+ * get password attribute value 
+ */
+ 
+struct berval **attr_vals = NULL;
+str ldap_pwd_attr_name = str_init("SIPIdentityPassword");
+str res_password;
+
+rc = ldap_api.ldap_result_attr_vals(&ldap_pwd_attr_name, &attr_vals);
+if (rc < 0)
+{
+    LM_ERR("ldap_result_attr_vals failed\n");
+    ldap_api.ldap_value_free_len(attr_vals);
+    return -1;
+}
+if (rc == 1)
+{
+    LM_INFO("No password attribute value found for [%s]\n", sip_username);
+    ldap_api.ldap_value_free_len(attr_vals);
+    return 2;
+}
+
+res_password.s = attr_vals[0]->bv_val;
+res_password.len = attr_vals[0]->bv_len;
+
+ldap_api.ldap_value_free_len(attr_vals);
+
+LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s);
+
+...
+
+return 0;		
+]]>
+		</programlisting>
+	</section>
+</chapter>
+

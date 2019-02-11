@@ -6,7 +6,7 @@ CREATE TABLE `dialplan` (
     `match_exp` VARCHAR(64) NOT NULL,
     `match_len` INT(11) NOT NULL,
     `subst_exp` VARCHAR(64) NOT NULL,
-    `repl_exp` VARCHAR(64) NOT NULL,
+    `repl_exp` VARCHAR(256) NOT NULL,
     `attrs` VARCHAR(64) NOT NULL
 );
 

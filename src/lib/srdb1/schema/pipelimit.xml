@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="pl_pipes" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pl_pipes</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table us used by the pipelimit module to keep the
+			definition of pipes. More information about the pipelimit module
+			can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;pipelimit.html">&KAMAILIO_MOD_DOC;pipelimit.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column>
+        <name>pipeid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Unique ID for pipe</description>
+    </column>
+
+    <column>
+        <name>algorithm</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+		<description>Algorithm to be used for pipe limits. See the readme of the
+		module for description of available options: NOP, RED, TAILDROP, FEEDBACK, NETWORK
+		</description>
+    </column>
+
+    <column>
+        <name>plimit</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Pipe limit (hits per second)</description>
+    </column>
+
+</table>

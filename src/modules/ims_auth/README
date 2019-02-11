@@ -1,0 +1,590 @@
+ims_auth Module
+
+Dragos Vingarzan
+
+   FhG Fokus
+   <Dragos.Vingarzan@fokus.fraunhofer.de>
+
+Jason Penton
+
+   Smile Communications
+   <jason.penton@smilecoms.com>
+
+Richard Good
+
+   Smile Communications
+   <richard.good@smilecoms.com>
+
+Edited by
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2007 FhG FOKUS
+
+   Copyright © 2012 Smile Communications
+
+   Copyright © 2015 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. name (string)
+              3.2. auth_data_hash_size (integer)
+              3.3. auth_vector_timeout (integer)
+              3.4. auth_data_timeout (int)
+              3.5. av_request_at_once (integer)
+              3.6. av_request_at_sync (integer)
+              3.7. registration_default_algorithm (string)
+              3.8. registration_qop (string)
+              3.9. cxdx_forced_peer (string)
+              3.10. cxdx_dest_realm (string)
+              3.11. cxdx_dest_host (string)
+              3.12. max_nonce_reuse (integer)
+              3.13. add_authinfo_hdr (integer)
+              3.14. ignore_failed_auth (integer)
+              3.15. av_check_only_impu (integer)
+
+        4. Functions
+
+              4.1. ims_www_authorize(realm, table)
+              4.2. ims_www_authenticate(realm)
+              4.3. ims_www_challenge(route_block, realm)
+              4.4. ims_www_challenge(route_block, realm, algorithm)
+              4.5. ims_proxy_challenge(route_block, realm, table)
+              4.6. ims_proxy_authenticate(realm, table)
+
+        5. Statistics
+
+              5.1. MAR Timeouts (mar_timeouts)
+              5.2. Average MAR Response Time (mar_avg_response_time)
+
+   List of Examples
+
+   1.1. name parameter usage
+   1.2. auth_data_hash_size parameter usage
+   1.3. auth_vector_timeout parameter usage
+   1.4. password_column parameter usage
+   1.5. av_request_at_once parameter usage
+   1.6. av_request_at_sync parameter usage
+   1.7. registration_default_algorithm parameter usage
+   1.8. registration_qop parameter usage
+   1.9. cxdx_forced_peer parameter usage
+   1.10. cxdx_dest_realm parameter usage
+   1.11. cxdx_dest_host parameter usage
+   1.12. max_nonce_reuse parameter usage
+   1.13. add_authinfo_hdr parameter usage
+   1.14. ignore_failed_auth parameter usage
+   1.15. av_check_only_impu parameter usage
+   1.16. www_authorize usage
+   1.17. ims_www_challenge usage
+   1.18. ims_www_challenge usage
+   1.19. proxy_authorize usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. name (string)
+        3.2. auth_data_hash_size (integer)
+        3.3. auth_vector_timeout (integer)
+        3.4. auth_data_timeout (int)
+        3.5. av_request_at_once (integer)
+        3.6. av_request_at_sync (integer)
+        3.7. registration_default_algorithm (string)
+        3.8. registration_qop (string)
+        3.9. cxdx_forced_peer (string)
+        3.10. cxdx_dest_realm (string)
+        3.11. cxdx_dest_host (string)
+        3.12. max_nonce_reuse (integer)
+        3.13. add_authinfo_hdr (integer)
+        3.14. ignore_failed_auth (integer)
+        3.15. av_check_only_impu (integer)
+
+   4. Functions
+
+        4.1. ims_www_authorize(realm, table)
+        4.2. ims_www_authenticate(realm)
+        4.3. ims_www_challenge(route_block, realm)
+        4.4. ims_www_challenge(route_block, realm, algorithm)
+        4.5. ims_proxy_challenge(route_block, realm, table)
+        4.6. ims_proxy_authenticate(realm, table)
+
+   5. Statistics
+
+        5.1. MAR Timeouts (mar_timeouts)
+        5.2. Average MAR Response Time (mar_avg_response_time)
+
+1. Overview
+
+   This module contains all authentication related functions for an IMS
+   environment. The module does not depend on the base Kamailio auth
+   modules as other auth modules do. Instead ims_auth is dependent on the
+   CDP (C Diameter Peer) modules for communicating with HSS as specified
+   in 3GPP specs.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following modules must be loaded before this module:
+     * TM - Transaction Manager
+     * CDP - C Diameter Peer
+     * CDP_AVP - CDP AVP Applications
+
+2.2. External Libraries or Applications
+
+   This modules requires the internal IMS library.
+
+3. Parameters
+
+   3.1. name (string)
+   3.2. auth_data_hash_size (integer)
+   3.3. auth_vector_timeout (integer)
+   3.4. auth_data_timeout (int)
+   3.5. av_request_at_once (integer)
+   3.6. av_request_at_sync (integer)
+   3.7. registration_default_algorithm (string)
+   3.8. registration_qop (string)
+   3.9. cxdx_forced_peer (string)
+   3.10. cxdx_dest_realm (string)
+   3.11. cxdx_dest_host (string)
+   3.12. max_nonce_reuse (integer)
+   3.13. add_authinfo_hdr (integer)
+   3.14. ignore_failed_auth (integer)
+   3.15. av_check_only_impu (integer)
+
+3.1. name (string)
+
+   This is the name of the SCSCF as identified in communication with the
+   HSS (Server-Name AVP of MAR).
+
+   Default value is 'sip:scscf.ims.smilecoms.com:6060'.
+
+   Example 1.1. name parameter usage
+...
+modparam("ims_auth", "name", "sip:scscf3.ims.smilecoms.com:6060")
+...
+
+3.2. auth_data_hash_size (integer)
+
+   This is the size of the hash table used to store auth vectors (AV).
+   Default value is fine for most people. Use the parameter if you really
+   need to change it.
+
+   Default value is “1024”.
+
+   Example 1.2. auth_data_hash_size parameter usage
+...
+modparam("ims_auth", "auth_data_hash_size", 1024)
+...
+
+3.3. auth_vector_timeout (integer)
+
+   This is the time, in seconds, that a SENTauth vector is valid for. If
+   there is no response ...
+
+   Default value is “60”.
+
+   Example 1.3. auth_vector_timeout parameter usage
+...
+modparam("ims_auth", "auth_vector_timeout", "domain")
+...
+
+3.4. auth_data_timeout (int)
+
+   Time, in seconds, an used auth vector is valid for.
+
+   Default value is “60”.
+
+   Example 1.4. password_column parameter usage
+...
+modparam("ims_auth", "auth_data_timeout", 60)
+...
+
+3.5. av_request_at_once (integer)
+
+   How many auth vectors to request in MAR.
+
+   Default value is 1
+
+   Example 1.5. av_request_at_once parameter usage
+...
+modparam("ims_auth", "av_request_at_once", 1)
+...
+
+3.6. av_request_at_sync (integer)
+
+   How many auth vectors to request at sync. Default value is 1.
+
+   Example 1.6. av_request_at_sync parameter usage
+...
+modparam("ims_auth", "av_request_at_sync", 1)
+...
+
+3.7. registration_default_algorithm (string)
+
+   The default authentication algorithm to use for registration if one is
+   not specified.
+
+   Options are:
+     * AKAV1-MD5
+     * AKAV2-MD5
+     * MD5
+     * HSS-Selected - HSS will decide on auth algorithm
+
+   Default value is “AKAv1-MD5”.
+
+   Example 1.7. registration_default_algorithm parameter usage
+...
+modparam("ims_auth", "registration_default_algorithm", "HSS-Selected")
+...
+
+3.8. registration_qop (string)
+
+   The QOP options to put in the authorisation challenges.
+
+   Default value of this parameter is “auth,auth-int”.
+
+   Example 1.8. registration_qop parameter usage
+...
+modparam("ims_auth", "registration_qop", "auth-int")
+...
+
+3.9. cxdx_forced_peer (string)
+
+   FQDN of Diameter Peer (HSS) to use for communication (MAR). If you use
+   this, the routing defined in your diameter xml configuration file (CDP)
+   will be ignored and as a result you will lose the benefits of load
+   balancing and failover.
+
+   Default value is “”.
+
+   Example 1.9. cxdx_forced_peer parameter usage
+...
+modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
+...
+
+3.10. cxdx_dest_realm (string)
+
+   Destination realm to be used in Diameter messages to HSS
+
+   Default value is “ims.smilecoms.com”.
+
+   Example 1.10. cxdx_dest_realm parameter usage
+...
+modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
+...
+
+3.11. cxdx_dest_host (string)
+
+   Destination Host to be used in Diameter-MAR messages to HSS
+
+   Default value is “” (not set).
+
+   Example 1.11. cxdx_dest_host parameter usage
+...
+modparam("ims_auth", "cxdx_dest_host", "hss.ims.ng-voice.com")
+...
+
+3.12. max_nonce_reuse (integer)
+
+   Defines, how many times a nonce can be reused (provided nc is
+   incremented)
+
+   Default value is “0” (don't allow reuse).
+
+   Example 1.12. max_nonce_reuse parameter usage
+...
+modparam("ims_auth", "max_nonce_reuse", 1)
+...
+
+3.13. add_authinfo_hdr (integer)
+
+   Should an Authentication-Info header be added on 200 OK responses?
+
+   Default value is “1” (add Authentication-Info header).
+
+   Example 1.13. add_authinfo_hdr parameter usage
+...
+modparam("ims_auth", "add_authinfo_hdr", 0)
+...
+
+3.14. ignore_failed_auth (integer)
+
+   Ignore invalid passwords (only IMPI/IMPU is checked).
+
+   It should be used only for testing, e.g. load balancing with SIPP where
+   we don't want to worry about auth.
+
+   Default value is “0” (don't ignore the failed authentication).
+
+   Example 1.14. ignore_failed_auth parameter usage
+...
+modparam("ims_auth", "ignore_failed_auth", 1)
+...
+
+3.15. av_check_only_impu (integer)
+
+   When storing the authentication vectors for an account, use either
+   IMPI/IMPU (=0, default) or IMPU (=1).
+
+   In case the IMPI is different from the IMPU, this option needs to be
+   enabled to allow registration from classic "SIP-clients", such as Snom
+   phones and others, as they do not send an authentication username in
+   the first REGISTER.
+
+   Default value is “0” (store authentication vectors based on IMPI/IMPU).
+
+   Example 1.15. av_check_only_impu parameter usage
+...
+modparam("ims_auth", "av_check_only_impu", 1)
+...
+
+4. Functions
+
+   4.1. ims_www_authorize(realm, table)
+   4.2. ims_www_authenticate(realm)
+   4.3. ims_www_challenge(route_block, realm)
+   4.4. ims_www_challenge(route_block, realm, algorithm)
+   4.5. ims_proxy_challenge(route_block, realm, table)
+   4.6. ims_proxy_authenticate(realm, table)
+
+4.1. ims_www_authorize(realm, table)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call www_challenge which will challenge the user again.
+
+   Negative codes may be interpreted as follows:
+     * -1 (generic error) - some generic error occurred and no reply was
+       sent out;
+     * -2 (invalid password) - valid user, but wrong password;
+     * -3 (invalid user) - authentication user does not exist.
+
+   Meaning of the parameters is as follows:
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. In case of REGISTER requests To
+       header field domain (e.g., variable $td) can be used (because this
+       header field represents the user being registered), for all other
+       messages From header field domain can be used (e.g., variable $fd).
+       The string may contain pseudo variables.
+     * table - Table to be used to lookup usernames and passwords (usually
+       subscribers table).
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.16. www_authorize usage
+...
+if (!www_authorize("kamailio.org", "subscriber")) {
+        www_challenge(""REG_MAR_REPLY"", "kamailio.org", "1");
+};
+...
+
+4.2. ims_www_authenticate(realm)
+
+   It is the same function as www_authenticate(realm, table). This name is
+   kept for backward compatibility, since it was named this way first time
+   by it actually does user authentication.
+
+4.3. ims_www_challenge(route_block, realm)
+
+   Name alias: proxy_authorize(realm, table)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call proxy_challenge which will challenge the user again.
+
+   Negative return codes have the same meaning as for www_authenticate().
+
+   Meaning of the parameters is as follows:
+     * Route block to resume after async MAR Diameter reply.
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. Apart of a static string, typical
+       value is From header field domain (e.g., variable $fd).
+       If an empty string “” is used then the server will generate it from
+       the request. From header field domain will be used as realm.
+       The string may contain pseudo variables.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.17. ims_www_challenge usage
+...
+if (!proxy_authorize("$fd", "subscriber)) {
+        proxy_challenge(""REG_MAR_REPLY","$fd");  # Realm will be autogenerated
+};
+...
+            ...
+route[REG_MAR_REPLY]
+{
+     #this is async so to know status we have to check the reply avp
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");
+
+     switch ($avp(s:maa_return_code)){
+             case 1: #success
+                     xlog("L_DBG", "MAR success - 401/407 response sent from mod
+ule\n");
+                     break;
+             case -1: #failure
+                     xlog("L_ERR", "MAR failure - error response sent from modul
+e\n");
+                     break;
+             case -2: #error
+                     xlog("L_ERR", "MAR error - sending error response now\n");
+                     t_reply("500", "MAR failed");
+                     break;
+             default:
+                     xlog("L_ERR", "Unknown return code from MAR, value is [$avp
+(s:uaa_return_code)]\n");
+                     t_reply("500", "Unknown response code from MAR");
+                     break;
+     }
+     exit;
+}
+
+4.4. ims_www_challenge(route_block, realm, algorithm)
+
+   Same as 4.3 except here there is the additional option to specify the
+   authorisation algorithm
+     * algorithm - The algorithm to be used when challenging the client.
+       Can be AKAv1-MD5, AKAv2-MD5, MD5, or HSS-Selected. If left as an
+       empty string, the default algorithm will be chosen according to the
+       parameter registration_default_algorithm (see section 3.7)
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.18. ims_www_challenge usage
+...
+ if (!ims_www_authenticate(NETWORKNAME)) {
+                #user has not been authenticated. Lets send a challenge via 401
+Unauthorized
+                if ($? == -2) {
+                        t_reply("403", "Authentication Failed");
+                        exit;
+                } else if ($? == -3) {
+                        t_reply("400", "Bad Request");
+                        exit;
+                } else if ($? == -9) {
+                        xlog("L_DBG", "Authentication re-sync requested\n");
+                        ims_www_resync_auth("REG_RESYNC_REPLY", "$td");
+                        exit;
+                } else {
+                        xlog("L_DBG","About to challenge! auth_ims\n");
+                        ims_www_challenge("REG_MAR_REPLY", "$td", "MD5");
+                        exit;
+                }
+        }
+
+4.5. ims_proxy_challenge(route_block, realm, table)
+
+   Name alias: proxy_authorize(realm, table)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will succeed
+   and mark the credentials as authorized (marked credentials can be later
+   used by some other functions). If the function was unable to verify the
+   credentials for some reason then it will fail and the script should
+   call proxy_challenge which will challenge the user again.
+
+   Negative return codes have the same meaning as for www_authenticate().
+
+   Meaning of the parameters is as follows:
+     * Route block to resume after async MAR Diameter reply.
+     * realm - Realm is a opaque string that the user agent should present
+       to the user so he can decide what username and password to use.
+       Usually this is domain of the host the server is running on.
+       It must not be empty string “”. Apart of a static string, typical
+       value is From header field domain (e.g., variable $fd).
+       If an empty string “” is used then the server will generate it from
+       the request. From header field domain will be used as realm.
+       The string may contain pseudo variables.
+     * table - Table to be used to lookup usernames and passwords (usually
+       subscribers table).
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.19. proxy_authorize usage
+...
+if (!proxy_authorize("$fd", "subscriber)) {
+        proxy_challenge("REG_MAR_REPLY","$fd", "1");  # Realm will be autogenera
+ted
+};
+...
+route[REG_MAR_REPLY]
+{
+     #this is async so to know status we have to check the reply avp
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");
+
+     switch ($avp(s:maa_return_code)){
+             case 1: #success
+                     xlog("L_DBG", "MAR success - 401/407 response sent from mod
+ule\n");
+                     break;
+             case -1: #failure
+                     xlog("L_ERR", "MAR failure - error response sent from modul
+e\n");
+                     break;
+             case -2: #error
+                     xlog("L_ERR", "MAR error - sending error response now\n");
+                     t_reply("500", "MAR failed");
+                     break;
+             default:
+                     xlog("L_ERR", "Unknown return code from MAR, value is [$avp
+(s:uaa_return_code)]\n");
+                     t_reply("500", "Unknown response code from MAR");
+                     break;
+     }
+     exit;
+}
+...
+
+4.6. ims_proxy_authenticate(realm, table)
+
+   It is same function as proxy_authenticate(realm, table). This name is
+   kept for backward compatibility, since it was named this way first time
+   but it actually does user authentication.
+
+5. Statistics
+
+   5.1. MAR Timeouts (mar_timeouts)
+   5.2. Average MAR Response Time (mar_avg_response_time)
+
+5.1. MAR Timeouts (mar_timeouts)
+
+   The number of timeouts on sending a MAR. i.e. no response to MAR.
+
+5.2. Average MAR Response Time (mar_avg_response_time)
+
+   The average response time in milliseconds for MAR-MAA transaction.

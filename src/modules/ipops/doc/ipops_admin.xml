@@ -1,0 +1,1069 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+ 
+]>
+
+<!-- Module User's Guide -->
+     
+<chapter>
+
+  <title>&adminguide;</title>
+       
+  <section>
+         
+    <title>Overview</title>
+         
+    <para>
+      The IPops module offers operations for handling IP addresses, both IPv4 and IPv6.
+    </para>
+    <para>
+      IPv6 is defined in <ulink url="http://tools.ietf.org/html/rfc2460">RFC 2460</ulink>.
+	The same IPv6 address can be represented by different ASCII strings, so binary comparison is required.
+	For example, the following IPv6 addresses are equivalent:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para>2001:DB8:0000:0000:0008:0800:200C:417A</para>
+      </listitem>
+      <listitem>
+        <para>2001:DB8:0:0:8:800:200C:417A</para>
+      </listitem>
+      <listitem>
+        <para>2001:DB8::200C:417A</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      	When using IPv6 in an URI (i.e. a SIP URI) the IP address must be written in "IPv6 reference" format 
+	(which is the textual representation of the IPv6 enclosed between [ ] symbols).
+	An example is <quote>sip:alice@[2001:DB8:0:0:8:800:200C:417A]</quote>. This allows separation of
+	address and port number with a :, like <quote>[2001:DB8:0:0:8:800:200C:417A]:5060</quote>.
+	This module also allows comparing an IPv6 address with its IPv6 reference representation.
+    </para>
+           
+  </section>
+           
+  <section>
+             
+    <title>Dependencies</title>
+             
+    <section>
+      <title>&siprouter; Modules</title>
+      <para>
+        The following modules must be loaded before this module:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <emphasis>No dependencies on other &siprouter; modules</emphasis>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+               
+    <section>
+      <title>External Libraries or Applications</title>
+      <para>
+        The following libraries or applications must be installed before running &siprouter; with this module loaded:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <emphasis>No dependencies on external libraries</emphasis>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+             
+  </section>
+           
+  <section>
+
+    <title>Parameters</title>
+             
+  </section>
+           
+  <section>
+
+    <title>Functions</title>
+             
+    <section id="ipops.f.is_ip">
+      <title>
+        <function moreinfo="none">is_ip (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a valid IPv4, IPv6 or IPv6 reference. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP address to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ip($rd)) {
+  xlog("L_INFO", "RURI domain is an IP address (not a host name/domain)\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_pur_ip">
+      <title>
+        <function moreinfo="none">is_pure_ip (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a valid IPv4 or IPv6. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_pure_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+$var(ip) = "::1";
+if (is_pure_ip($var(ip))) {
+  xlog("L_INFO", "it's IPv4 or IPv6\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_ipv4">
+      <title>
+        <function moreinfo="none">is_ipv4 (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a valid IPv4. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ipv4</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ipv4("1.2.3.4")) {
+  xlog("L_INFO", "it's IPv4\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_ipv6">
+      <title>
+        <function moreinfo="none">is_ipv6 (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a valid IPv6. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ipv6</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
+  xlog("L_INFO", "it's IPv6\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_ipv6_reference">
+      <title>
+        <function moreinfo="none">is_ipv6_reference (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a valid IPv6 reference. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ipv6_reference</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
+  xlog("L_INFO", "it's IPv6 reference\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_ip_type">
+      <title>
+        <function moreinfo="none">ip_type (ip)</function>
+      </title>
+
+      <para>
+        Returns the type of the given IP.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - IPv4
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>2</emphasis> - IPv6
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>3</emphasis> - IPv6 reference
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>-1</emphasis> - invalid IP
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>ip_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+ip_type($var(myip));
+switch($rc) {
+  case 1:
+    xlog("L_INFO", "it's IPv4\n");
+    break;
+  case 2:
+    xlog("L_INFO", "it's IPv6\n");
+    break;
+  case 3:
+    xlog("L_INFO", "it's IPv6 reference\n");
+    break;
+  case -1:
+    xlog("L_INFO", it's type invalid\n");
+    break;
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.detailed_ip_type">
+      <title>
+        <function moreinfo="none">detailed_ip_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.txt, http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.txt, RFC 5735 and RFC 6598: PRIVATE, SHARED, LOOPBACK, IPV4MAP, DISCARD etc).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv4 </emphasis> - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+ 	      </listitem>
+	      <listitem>  
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST     
+ 	      </listitem>              
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occurred
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ip_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ip_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.detailed_ipv4_type">
+      <title>
+        <function moreinfo="none">detailed_ipv4_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see RFC 5735 and RFC 6598).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv4 </emphasis> - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+ 	      </listitem>	                 
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occurred
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ipv4_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ipv4_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+        </programlisting>
+      </example>
+
+    </section>	
+
+    <section id="ipops.f.detailed_ipv6_type">
+      <title>
+        <function moreinfo="none">detailed_ipv6_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.txt, http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.txt).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST    
+ 	      </listitem>	                 
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occurred
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ipv6_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ipv6_type("2001:8d8:7c0:402:217:72:194:30","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+
+    detailed_ipv6_type("[2001:8d8:7c0:402:217:72:194:30]","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");	
+...
+        </programlisting>
+      </example>
+
+    </section>	
+
+
+    <section id="ipops.f.compare_ips">
+      <title>
+        <function moreinfo="none">compare_ips (ip1, ip2)</function>
+      </title>
+
+      <para>
+        Returns TRUE if both IP addresses are the same. FALSE otherwise.
+	This function also allows comparing an IPv6 address against an IPv6 reference.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip1</emphasis> - String or pseudo-variable containing the first IP to compare.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ip2</emphasis> - String or pseudo-variable containing the second IP to compare.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>compare_ips</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:417A]")) {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.compare_pure_ips">
+      <title>
+        <function moreinfo="none">compare_pure_ips (ip1, ip2)</function>
+      </title>
+
+      <para>
+        Returns TRUE if both IP's are the same. FALSE otherwise. This function does NOT 
+	allow comparing an IPv6 against an IPv6 reference.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip1</emphasis> - String or pseudo-variable containing the first IP address to compare.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ip2</emphasis> - String or pseudo-variable containing the second IP address to compare.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>compare_pure_ips</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.is_ip_rfc1918">
+      <title>
+        <function moreinfo="none">is_ip_rfc1918 (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a private IPv4 according to RFC 1918. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ip_rfc1918</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ip_rfc1918("10.0.123.123")) {
+  xlog("L_INFO", "it's a private IPv4\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+ 
+    <section id="ipops.f.is_in_subnet">
+      <title>
+        <function moreinfo="none">is_in_subnet (ip, subnets_list)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the first argument is an IP address within the (CIDR notation)
+        subnets list in the second argument. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - string or pseudo-variable containing the ip to evaluate.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>subnet</emphasis> - string or pseudo-variable containing the (CIDR notation) subnets list to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_in_subnet</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
+  xlog("L_INFO", "it's in the subnet\n");
+}
+...
+if (is_in_subnet("10.0.123.123", "10.0.0.0/16,192.168.0.0/24")) {
+  xlog("L_INFO", "it's in the subnets\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.dns_sys_match_ip">
+      <title>
+        <function moreinfo="none">dns_sys_match_ip(hostname, ipaddr)</function>
+      </title>
+
+      <para>
+		  Returns TRUE if ipaddr is associated by DNS to hostname. FALSE otherwise. It
+		  does not use the internal DNS resolver, but directly getaddrinfo(...). All
+		  addresses returned for the hostname are checked. Note that some hosts may
+		  return different lists of IP addresses for each query, if the DNS server
+		  is configured in that way (e.g., for providing load balancing through DNS).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_sys_match_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (!dns_sys_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.dns_int_match_ip">
+      <title>
+        <function moreinfo="none">dns_int_match_ip(hostname, ipaddr)</function>
+      </title>
+
+      <para>
+		  Returns TRUE if ipaddr is associated by DNS to hostname. FALSE otherwise. It
+		  uses internal DNS resolver. At this moment, the function might not check all
+		  the IP addresses as returned by dns_sys_match_ip(), because the internal
+		  resolver targets to discover the first address to be used for relaying
+		  SIP traffic. Thus is better to use dns_sys_match_ip() if the host you want
+		  to check has many IP addresses, in different address families (IPv4/6).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ipaddr</emphasis> - string or pseudo-variable containing the ip address.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_int_match_ip</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
+    xdbg("ip address not associated with hostname\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.dns_query">
+      <title>
+        <function moreinfo="none">dns_query(hostname, pvid)</function>
+      </title>
+
+      <para>
+		  Store the IP addresses and their type that correspond to hostname
+		  in a config variable $dns(pvid=>key).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>hostname</emphasis> - string or pseudo-variable containing the hostname.
+			  The resulting IP addresses from DNS query are compared with ipaddr.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if(dns_query("test.com", "xyz"))
+{
+    xlog(" number of addresses: $dns(xyz=>count)\n");
+    xlog(" ipv4 address found: $dns(xyz=>ipv4)\n");
+    xlog(" ipv6 address found: $dns(xyz=>ipv6)\n");
+    $var(i) = 0;
+    while($var(i)&lt;$dns(xyz=>count)) {
+        xlog(" #[$var(i)] type ($dns(xyz=>type[$var(i)]))"
+             " addr [$dns(xyz=>addr[$var(i)])]\n");
+        $var(i) = $var(i) + 1;
+    }
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.srv_query">
+      <title>
+        <function moreinfo="none">srv_query(srvcname, pvid)</function>
+      </title>
+
+      <para>
+Queries DNS SRV records to resolve a service/protocol name into a list of priorities, weights, ports, and targets sorted by priority and weight as outlined in <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>srvcname</emphasis> - string or pseudo-variable containing the service/protocol. For example, "_sip._tcp.example.com".
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Output:</para>
+
+      <para>
+        Returns a positive number indicating success or a negative number when an error is encountered. It can be used from ANY_ROUTE.
+      </para>
+
+      <para>
+        The $srvquery pseudo-variable (PV) is loaded with the results of the query. Multiple queries can be stored in the PV using the pvid key. Each query contains zero-indexed arrays sorted by priority and weight that contain:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>count</emphasis> - number of records found
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>port [index]</emphasis> - port number
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>priority [index]</emphasis> - priority number as defined by <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>target [index]</emphasis> - target host name
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>weight [index]</emphasis> - weight number as defined by <ulink url="http://tools.ietf.org/html/rfc2782">RFC 2782</ulink>
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>
+          <function>srv_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (srv_query ("_sip._udp.example.com", "udp") > 0) {
+  $var(cnt) = $srvquery(udp=>count);
+  $var(i) = 0;
+  while ($var(i) &lt; $var(cnt)) {
+    xlog ("port[$var(i)] $srvquery(udp=>port[$var(i)])\n");
+    xlog ("priority[$var(i)] $srvquery(udp=>priority[$var(i)])\n");
+    xlog ("target[$var(i)] $srvquery(udp=>target[$var(i)])\n");
+    xlog ("weight[$var(i)] $srvquery(udp=>weight[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
+}
+...
+        </programlisting>
+      </example>
+    </section>
+ 
+    <section id="ipops.f.naptr_query">
+      <title>
+        <function moreinfo="none">naptr_query(domain, pvid)</function>
+      </title>
+
+      <para>
+         Queries DNS NAPTR records to resolve a domain name into a list of orders, preferences, flags, services, regex, replaces sorted by orders and preferences as outlined in <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>domain</emphasis> - string or pseudo-variable containing the domain. For example, "example.com".
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - container id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Output:</para>
+
+      <para>
+        Returns a positive number indicating success or a negative number when an error is encountered. It can be used from ANY_ROUTE.
+      </para>
+
+      <para>
+        The $naptrquery pseudo-variable (PV) is loaded with the results of the query. Multiple queries can be stored in the PV using the pvid key. Each query contains zero-indexed arrays sorted by order and preference that contain:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>count</emphasis> - number of records found
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>order [index]</emphasis> - order as defined by <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pref [index]</emphasis> - preference as defined by <ulink url="http://tools.ietf.org/html/rfc2915">RFC 2915</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>flags [index]</emphasis> - flags
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>services [index]</emphasis> - services
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>regex [index]</emphasis> - regular expression
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>replace [index]</emphasis> - replace
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>
+          <function>naptr_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (naptr_query ("example.com", "res") > 0) {
+  $var(cnt) = $naptrquery(res=>count);
+  $var(i) = 0;
+  while ($var(i) &lt; $var(cnt)) {
+    xlog ("order[$var(i)] $naptrquery(udp=>order[$var(i)])\n");
+    xlog ("pref[$var(i)] $naptrquery(udp=>pref[$var(i)])\n");
+    xlog ("flags[$var(i)] $naptrquery(udp=>flags[$var(i)])\n");
+    xlog ("services[$var(i)] $naptrquery(udp=>services[$var(i)])\n");
+    xlog ("regex[$var(i)] $naptrquery(udp=>regex[$var(i)])\n");
+    xlog ("replace[$var(i)] $naptrquery(udp=>replace[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+  </section>
+ 
+</chapter>

@@ -3,14 +3,14 @@ CREATE TABLE location (
     ruid VARCHAR2(64) DEFAULT '',
     username VARCHAR2(64) DEFAULT '',
     domain VARCHAR2(64) DEFAULT NULL,
-    contact VARCHAR2(255) DEFAULT '',
+    contact VARCHAR2(512) DEFAULT '',
     received VARCHAR2(128) DEFAULT NULL,
     path VARCHAR2(512) DEFAULT NULL,
     expires DATE DEFAULT to_date('2030-05-28 21:32:15','yyyy-mm-dd hh24:mi:ss'),
     q NUMBER(10,2) DEFAULT 1.0 NOT NULL,
     callid VARCHAR2(255) DEFAULT 'Default-Call-ID',
     cseq NUMBER(10) DEFAULT 1 NOT NULL,
-    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss'),
+    last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss'),
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     cflags NUMBER(10) DEFAULT 0 NOT NULL,
     user_agent VARCHAR2(255) DEFAULT '',
@@ -37,7 +37,7 @@ CREATE INDEX location_account_contact_idx  ON location (username, domain, contac
 CREATE INDEX location_expires_idx  ON location (expires);
 CREATE INDEX location_connection_idx  ON location (server_id, connection_id);
 
-INSERT INTO version (table_name, table_version) values ('location','8');
+INSERT INTO version (table_name, table_version) values ('location','9');
 
 CREATE TABLE location_attrs (
     id NUMBER(10) PRIMARY KEY,
@@ -46,8 +46,8 @@ CREATE TABLE location_attrs (
     domain VARCHAR2(64) DEFAULT NULL,
     aname VARCHAR2(64) DEFAULT '',
     atype NUMBER(10) DEFAULT 0 NOT NULL,
-    avalue VARCHAR2(255) DEFAULT '',
-    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
+    avalue VARCHAR2(512) DEFAULT '',
+    last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
 );
 
 CREATE OR REPLACE TRIGGER location_attrs_tr

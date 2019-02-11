@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides logging to custom systems, replacing the
+		default core logging to syslog. At this moment it can send the
+		logs to an IP and port via UDP, once all modules have been
+		initialized.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Core Logging</title>
+		<para>
+		This module can replace the syslog logging with sending the log messages
+		to a remote address and port via UDP. The logging to remote target is
+		started when all the modules are initialized, before that the default
+		syslog system is used.
+		</para>
+		<para>
+		It requires that core parameters log_engine_type to be set to 'udp' and
+		log_engine_data to be set to target 'address:port'.  It is not enabled
+		if log_stderror=yes.
+		</para>
+		<example>
+		<title><function>log_udp</function> usage</title>
+		<programlisting format="linespecific">
+...
+log_engine_type="udp"
+log_engine_data="127.0.0.1:9"
+...
+loadmodule "log_custom.so"
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="log_custom.f.log_udp">
+	    <title>
+		<function moreinfo="none">log_udp(text)</function>
+	    </title>
+		<para>
+		Send the text to the address specified in core parameter log_engine_data.
+		It is provided as sample function mainly for testing, because all logs
+		messages printed by kamailio should be diverted as described in the
+		section 'Core Logging', so you can use xlog functions in config file.
+		</para>
+		<para>
+		The parameter can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>log_udp</function> usage</title>
+		<programlisting format="linespecific">
+...
+   log_udp("R-URI is $ru\n");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+

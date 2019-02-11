@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # test basic fifo functionality
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 CFG=4.cfg
 
@@ -29,22 +29,21 @@ if ! (check_kamailio); then
 fi ;
 
 # setup config
-echo -e "loadmodule \"$SRC_DIR/modules/mi_fifo/mi_fifo.so\"" > $CFG
-echo -e "loadmodule \"$SRC_DIR/modules/kex/kex.so\"" >> $CFG
-echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
-echo -e "\nrequest_route {\n ;\n}" >> $CFG
+printf "loadmodule \"jsonrpcs.so\"\n" > $CFG
+printf "modparam(\"jsonrpcs\", \"transport\", 2)\n" >> $CFG
+printf "modparam(\"jsonrpcs\", \"fifo_name\", \"$RPCFIFOPATH\")\n" >> $CFG
+printf "\nrequest_route {\n ;\n}" >> $CFG
 
-        
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
 	sleep 1
-	$CTL version > /dev/null
+	$CTL rpc core.version > /dev/null
 	ret=$?
 fi ;
 
-$KILL
+kill_kamailio
 
 rm -f $CFG
 

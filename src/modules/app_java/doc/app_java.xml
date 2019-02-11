@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding='utf-8'?>
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>app_java Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Konstantin</firstname>
+		<surname>Mosesov</surname>
+	    </author>
+	    <editor>
+	    	<firstname>Konstantin</firstname>
+	    	<surname>Mosesov</surname>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2013</year>
+	    <year>2014</year>
+	    <holder>Konstantin Mosesov</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="app_java_admin.xml"/>
+    
+</book>

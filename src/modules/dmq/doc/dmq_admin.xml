@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	The DMQ module implements a distributed message queue on top of Kamailio in order to enable the
+	passing/replication of data between multiple instances. The DMQ "nodes" within the system are grouped
+	in a logical entity called the DMQ "bus" and are able to communicate with each other by
+	sending/receiving messages (either by broadcast or directly to a specific node). The system
+	transparently deals with node discovery, consistency, retransmissions, etc.
+	</para>
+	<para>
+	Other entities ("peers") are then able to utilize the DMQ bus to pass messages between themselves.
+	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers.
+	This grouping of peers can be compared to a topic in a typical pub/sub system.
+	</para>
+	<para>
+	DMQ sends SIP requests using the <emphasis>KDMQ</emphasis> request method, that is private
+	to Kamailio.
+	</para>
+<example>
+                <title>Example of a KDMQ message</title>
+		<para>
+		This message is for basic DMQ bus handling. Other messages are produced
+		by other modules, like the <emphasis>htable</emphasis> module.
+		</para>
+                <programlisting format="linespecific">
+
+
+KDMQ sip:notification_peer@192.168.40.15:5090 SIP/2.0
+Via: SIP/2.0/UDP 192.168.40.15;branch=z9hG4bK55e5.423d95110000
+To: &lt;sip:notification_peer@192.168.40.15:5090&gt;
+From: &lt;sip:notification_peer@192.168.40.15:5060&gt;;tag=2cdb7a33a7f21abb98fd3a44968e3ffd-5b01
+CSeq: 10 KDMQ
+Call-ID: 1fe138e07b5d0a7a-50419@192.168.40.15
+Content-Length: 116
+User-Agent: kamailio (4.3.0 (x86_64/linneaus))
+Max-Forwards: 1
+Content-Type: text/plain
+
+sip:192.168.40.16:5060;status=active
+sip:192.168.40.15:5060;status=disabled
+sip:192.168.40.17:5060;status=active
+
+</programlisting>
+                </example>
+
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>
+				The DMQ module itself has no external dependencies. However, each peer will need 
+				to use its own (de)serialization mechanism. Some examples are libtpl, protobuf.
+				</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="dmq.p.server_address">
+		<title><varname>server_address</varname>(str)</title>
+		<para>
+		The local server address. This is the interface over which the DMQ engine will send/receive messages.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "server_address", "sip:10.0.0.20:5060")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.notification_address">
+		<title><varname>notification_address</varname>(str)</title>
+		<para>
+		The address of another DMQ node from which the local node should retrieve initial information about all other nodes.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notification_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.multi_notify">
+		<title><varname>multi_notify</varname>(int)</title>
+		<para>
+		Enables the ability to resolve multiple IPv4/IPv6 addresses for
+		a single notification address.
+		</para>
+		<para>
+		A value of zero resolves to the first IP address found.
+		A non-zero value resolves to all IP addresses associated with the host.
+		This includes addresses from DNS SRV records, A and AAAA records.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>multi_notify</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "multi_notify", 1)
+...
+</programlisting>
+		</example>
+	</section>
+        <section id="dmq.p.num_workers">
+                <title><varname>num_workers</varname>(int)</title>
+                <para>
+                The number of worker threads for sending/receiving messages.
+                </para>
+                <para>
+                <emphasis>Default value is <quote>2</quote>.</emphasis>
+                </para>
+                <example>
+                <title>Set <varname>num_workers</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("dmq", "num_workers", 4)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="dmq.p.worker_usleep">
+		<title><varname>worker_usleep</varname>(int)</title>
+		<para>
+		The default locking/synchronisation mechanism between producer/consumer
+		threads is the optimum for most environments. On some systems (e.g. FreeBSD)
+		it can cause high CPU load and in such cases, it can be useful to disable
+		locking and switch to polling for tasks at set intervals instead - putting
+		the thread to sleep in-between and taking it out of process during that time.
+		</para>
+		<para>
+		A value >0 will disable the default locking and set the polling interval
+		(in microseconds), which can be tuned to suit the specific environment.
+		</para>
+		<para>
+		<emphasis>Default value is 0 (recommended for most systems).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>worker_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "worker_usleep", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+        <section id="dmq.p.ping_interval">
+                <title><varname>ping_interval</varname>(int)</title>
+                <para>
+                The number of seconds between node pings (for checking status of other nodes).
+                </para>
+                <para>
+                <emphasis>Minimum value is <quote>60</quote> (default).</emphasis>
+                </para>
+                <example>
+                <title>Set <varname>ping_interval</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("dmq", "ping_interval", 90)
+...
+</programlisting>
+                </example>
+        </section>
+	</section>
+
+	<section>
+        <title>Functions</title>
+        <section id="dmq.f.dmq_handle_message">
+                <title>
+                <function moreinfo="none">dmq_handle_message([continue])</function>
+                </title>
+                <para>
+                Handles a DMQ message by passing it to the appropriate local peer (module).
+		The peer is identified by the user part of the To header.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>continue</emphasis> - by default, dmq_handle_message() will end
+                                execution of routing script. If this optional parameter is set to "1", dmq_handle_message()
+                                will continue executing the routing script after it's been called.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from REQUEST_ROUTE.
+                </para>
+
+                <example>
+                <title><function>dmq_handle_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        if(is_method("KDMQ"))
+        {
+                dmq_handle_message();
+        }
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_send_message">
+                <title>
+               	<function moreinfo="none">dmq_send_message(peer, node, body, content_type)</function>
+                </title>
+                <para>
+                Sends a DMQ message directly from config file to a single node.
+                </para>
+		<para>Meaning of parameters:</para>
+                <itemizedlist>
+	                <listitem>
+        	                <para>
+               	        	<emphasis>peer</emphasis> - name of peer that should handle the message.
+                        	</para>
+	                </listitem>
+        	        <listitem>
+                	        <para>
+                       		<emphasis>node</emphasis> - the node to which the message should be sent.
+	                        </para>
+        	        </listitem>
+                	<listitem>
+                        	<para>
+	                        <emphasis>body</emphasis> - the message body.
+	                        </para>
+	                </listitem>
+                	<listitem>
+                        	<para>
+	                        <emphasis>content_type</emphasis> - the MIME type of the message body.
+	                        </para>
+	                </listitem>
+		</itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_send_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_bcast_message">
+                <title>
+                <function moreinfo="none">dmq_bcast_message(peer, body, content_type)</function>
+                </title>
+                <para>
+                Broadcasts a DMQ message from config file to all active nodes (except self).
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of peer that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_bcast_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+        dmq_bcast_message("peer_name", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_t_replicate">
+                <title>
+                <function moreinfo="none">dmq_t_replicate([skip_loop_test])</function>
+                </title>
+                <para>
+		Replicates the current SIP message to all active nodes (except self). Useful for replicating
+		REGISTER, PUBLISH etc. in a clustered environment.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+				<emphasis>skip_loop_test</emphasis> - by default, DMQ checks the source IP of the
+				message prior to replication, to ensure it has not been sent by another DMQ node
+				(to avoid infinite loops). If this optional parameter is set to "1", the loop test
+				is not performed. This makes sense, from a performance perspective, if you have
+				already performed the necessary checks in the config script (see dmq_is_from_node()).
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from REQUEST_ROUTE only.
+                </para>
+
+                <example>
+                <title><function>dmq_t_replicate</function> usage</title>
+                <programlisting format="linespecific">
+...
+        dmq_t_replicate();
+...
+		</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_is_from_node">
+                <title>
+                <function moreinfo="none">dmq_is_from_node()</function>
+                </title>
+                <para>
+                Checks whether the current message has been sent by another DMQ node in the cluster.
+                </para>
+                <para>
+                This function can be used from REQUEST_ROUTE only.
+                </para>
+
+                <example>
+                <title><function>dmq_is_from_node</function> usage</title>
+                <programlisting format="linespecific">
+...
+	# Example REGISTER block
+        if (dmq_is_from_node()) {
+		# Already authenticated, just save contact...
+	} else {
+		# Authenticate, save contact etc.
+		# Assuming all successful...
+		dmq_t_replicate("1"); # Already checked source, don't perform loop test again
+	}
+...
+                </programlisting>
+                </example>
+        </section>
+
+	</section>
+
+	<section>
+        <title>RPC Commands</title>
+        <section id="dmq.r.list_nodes">
+            <title>dmq.list_nodes</title>
+			<para>
+				List the DMQ nodes. It has no parameters.
+			</para>
+               <example>
+                <title>dmq.list_nodes usage</title>
+                <programlisting format="linespecific">
+...
+&kamcmd; dmq.list_nodes
+...
+                </programlisting>
+                </example>
+        </section>
+	</section>
+</chapter>
+

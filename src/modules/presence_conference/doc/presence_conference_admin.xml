@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module is a mixer for presence notifications published by
+		an audio conference mixer as per RFC 4353: A Framework for
+		Conferencing with SIP and RFC 4575: A SIP Event Package for
+		Conference State. In other words it is presence handling of
+		conference events - conference-info+xml documents.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>presence</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>libxml2</emphasis> - xml handling library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>use_partial_states</varname> (int)</title>
+	    <para>
+		Control usage of partial state notifications.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_partial_states</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_conference", "use_partial_states", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+	<section>
+		<title>MI Commands</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">conference_reset</function>
+		</title>
+		<para>
+		Reset internal data.
+		</para>
+		<para>
+		Name: <emphasis>conference_reset</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>none</para></listitem>	  
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:conference_reset:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+
+    </section>
+
+</chapter>
+

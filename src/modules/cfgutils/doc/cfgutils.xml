@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>cfgutils Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Henning</firstname>
+		<surname>Westerholt</surname>
+		<affiliation><orgname>1und1 Internet AG</orgname></affiliation>
+		<email>henning.westerholt@1und1.de</email>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>BASIS AudioNet GmbH</orgname></affiliation>
+		<address>
+		<email>bock@basis-audionet.de</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>rosdev.ro</orgname></affiliation>
+		<email>ramona@rosdev.ro</email>
+		</author>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<email>oej@edvina.net</email>
+		</author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+		</author>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2014</year>
+		<year>2013</year>
+		<year>2007</year>
+		<year>2008</year>
+		<year>2004</year>
+		<holder>Edvina AB</holder>
+		<holder>1und1 Internet AG</holder>
+		<holder>BASIS AudioNet GmbH</holder>
+		<holder>Elena-Ramona Modroiu</holder>
+		<holder>Juha Heinanen</holder>
+		<holder>&fhg;</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="cfgutils_admin.xml"/>
+
+</book>

@@ -1,0 +1,691 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<refentry id="module.auth"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>auth</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>auth</refname>
+    <refpurpose>Basic Functionality for Digest Authentication</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>auth</command> module of &kamailio; provides basic functionality
+      for digest authentication. However, it does not provide access to
+      the user information and therefore relies on another module. These
+      modules are <serdoc:module>auth_db</serdoc:module>,
+      <serdoc:module>auth_diameter</serdoc:module>,
+      <serdoc:module>auth_identity</serdoc:module>, and
+      <serdoc:module>auth_radius</serdoc:module>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.consume_credentials">
+      <title>
+        <function>consume_credentials</function> ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>consume_credentials()</function> function
+        removes previously authorized credentials from the request.
+        This means that forwarded or relayed requests
+        will not contain credentials that were checked by this server
+        and ensures that the proxy will not reveal information about
+        credentials used to downstream elements. In addition, the
+        message will be shorter.
+      </para>
+      <para>
+        The function must be called after a call to an authorization
+        function such as
+        <serdoc:func>www_authenticate</serdoc:func>.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.auth.auth_checks_in_dlg">
+      <title><parameter>auth_checks_in_dlg</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>0</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>auth_checks_in_dlg</parameter> parameter controls
+        which integrity checks are performed on requests within a dialog,
+        ie., requests that carry a To tag. The default value of
+        <literal>0</literal> turns off any checks. Otherwise, the value
+        indicates which checks are run.
+      </para>
+      <para>
+        See <serdoc:link linkend="module.auth.integrity_checks">Additional
+        Integrity Checks</serdoc:link> below for more details.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.auth_checks_no_dlg">
+      <title><parameter>auth_checks_no_dlg</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>0</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>auth_checks_no_dlg</parameter> parameter controls
+        which integrity checks are performed on out-of-dialog requests,
+        ie., requests that do not carry a To tag. The default value of
+        <literal>0</literal> turns off any checks. Otherwise, the value
+        indicates which checks are run.
+      </para>
+      <para>
+        See <serdoc:link linkend="module.auth.integrity_checks">Additional
+          Integrity Checks</serdoc:link> below for more details.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.auth_checks_register">
+      <title><parameter>auth_checks_register</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>0</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>auth_checks_register</parameter> parameter
+        controls which integrity checks are performed on a REGISTER
+        message. If the parameter is changed from its default value
+        of <literal>0</literal>, it activates those checks and defines,
+        which checks are run.
+      </para>
+      <para>
+        See <serdoc:link linkend="module.auth.integrity_checks">Additional
+          Integrity Checks</serdoc:link> below for more details.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.challenge_attr">
+      <title><parameter>challenge_attr</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>attriubte name</serdoc:paramtype>
+        <serdoc:paramdefault>$digest_challenge</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>challenge_attr</parameter> parameter names the
+        attribute which will contain the complete header field with the
+        authentication challenge. The content if this attribute has to
+        be added to the response in order to transmit the challenge
+        to the client.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nc_array_order">
+      <title><parameter>nc_array_order</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>20</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nc_array_order</parameter> parameter is an
+        alternative way to set the maximum number of nonces for the nonce
+        check enabled by the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        parameter. Its meaning is identical to that of the
+        <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>
+        parameter but the size is given by stating the power of 2.
+        See <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>
+        and <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        for more details.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nc_array_size">
+      <title><parameter>nc_array_size</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>1048576</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nc_array_size</parameter> parameter sets the
+        maximum number of in-flight nonces for the nonce
+        count check enabled by the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        parameter. It represents the maximum number of nonces for which
+        state will be kept. When this number is exceeded, state for older
+        nonces will be discarded to make space for new ones. See
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam> for
+        more details.
+      </para>
+      <para>
+        The value should be a power of 2. If it is not, it will be rounded
+        down to such a number. For example a value of 1000000 will be
+        rounded down to 524288. The
+        <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
+        parameter can be used to directly specify the power of 2. For
+        instance, a value for 
+        <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
+        of 20 is equivalent to a <parameter>nc_array_size</parameter>
+        of 1048576.
+      </para>
+      <para>
+        The memory used to keep the nonce state will be
+        equal to the value of <parameter>nc_array_size</parameter> in
+        bytes.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nid_pool_no">
+      <title><parameter>nid_pool_no</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>1</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nid_pool_no</parameter> parameter controls the number
+        of partitions for the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam> and
+        <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>
+        arrays. It is common to both of them to reduce the nonce size.
+      </para>
+      <para>
+        Instead of using single arrays for keeping nonce state, these arrays
+        can be divided into several partitions. Each &kamailio; process is assigned
+        to one of these partitions, allowing for higher concurrency on
+        multi-CPU machines. Besides increasing performance, increasing
+        <parameter>nid_pool_no</parameter> has also a negative effect: it
+        could decrease the maximum supported in-flight nonces in certain
+        conditions.  In the worst case, when only one &kamailio; process receives
+        most of the traffic (e.g. very busy TCP connection between two
+        proxies), the in-flight nonces could be limited to the array size
+        (<serdoc:modparam module="auth">nc_array_size</serdoc:modparam>
+        for <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        and <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>
+        for <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>)
+        divided by the partitions number
+        (<parameter>nid_pool_no</parameter>). However for normal traffic,
+        where
+        the process receiving a message is either random or chosen in a
+        round-robin fashion, the maximum number of in-flight nonces will be
+        influenced to a very small degree by
+        <parameter>nid_pool_no</parameter>, since the messages
+        will be close to equally distributed to processes using different
+        partitions.
+      </para>
+      <para>
+        The <parameter>nid_pool_no</parameter> value should be one of:
+        1, 2, 4, 8, 16, 32 or 64 (the maximum value is 64 and all values
+        should be a power of 2 or else they will be rounded down to such
+        a value).
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nonce_auth_max_drift">
+      <title><parameter>nonce_auth_max_drift</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>3</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nonce_auth_max_drift</parameter> parameter
+        specifies the maximum difference in seconds between a nonce
+        creation time and the current time, if the nonce creation time
+        appears to be in the future.
+      </para>
+      <para>
+        In some cases, like shortly after a system time backward
+        adjustment or when the current proxy is part of a cluster which is
+        not time-synchronized, it's possible to receive a nonce with
+        a creation time in the future. In this case if the difference is
+        greater then the value of <parameter>nonce_auth_max_drift</parameter>
+        in seconds, the nonce is  considered stale and the request
+        re-challenged. If this were not done, a dramatic time change
+        backwards may lead to nonces having been generated before the
+        cange being valid for too long.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nonce_count">
+      <title><parameter>nonce_count</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nonce_count</parameter> parameter controls, whether
+        tracking of nounce count is enabled. If it is set to
+        <literal>yes</literal>, the received <parameter>nc</parameter> value
+        is remembered and checked against the value used in the previous
+        digest response. For a successful authentication the received
+        <parameter>nc</parameter> must be greater then the previously
+        received one (See RFC 2617 for more details). This will	provide
+        protection against replay attacks while still allowing credentials
+        caching at the UA side.
+      </para>
+      <para>
+        In order for this to work, the
+        <serdoc:modparam module="auth">qop</serdoc:modparam> parameter
+        must not be set to an empty string. It it is, the challenges won’t
+        include the <parameter>qop</parameter> parameter and the user agent
+        will probably not include the <parameter>qop</parameter> or
+        <parameter>nc</parameter> parameters in its response.
+      </para>
+      <para>
+        If a response doesn’t include <parameter>qop</parameter> or
+        <parameter>nc</parameter> (for example obsolete UAs that don't
+        support them) the response will be checked according to the other
+        enabled nonce checks, in this order:
+        <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam> and
+        the applicable of the additional integrity checks. If a response
+        includes <parameter>nc</parameter> only the normal
+        <serdoc:modparam module="auth">nonce_expire</serdoc:modparam>
+        checks and the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam> checks
+        will be performed, all the other checks will be ignored.
+      </para>
+      <para>
+        The <parameter>nonce_count</parameter> checks work by tracking a
+        limited number of nonces. The maximum number of tracked nonces is
+        set using the
+        <serdoc:modparam module="auth">nc_array_size</serdoc:modparam> or
+        <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
+        parameters. If this number is exceeded, older entries will be
+        overwritten. As long as the maximum rate of challengeable messages
+        per average response time is lower then
+        <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>,
+        the nonce count check should work flawlessly. For optimal
+        performance (maximum reuse of cache credentials)
+        <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>
+        divided by
+        <serdoc:modparam module="auth">nid_pool_no</serdoc:modparam>
+        should be lower then the message rate multiplied by the desired
+        <serdoc:modparam module="auth">nonce_expire</serdoc:modparam>.
+        <!-- XXX: Give an example with default nonce_expire and typical
+                  RTT. -->
+      </para>
+      <para>
+        The maximum accepted <parameter>nc</parameter> value is 255. If
+        <parameter>nc</parameter> becomes greater then this, the nonce will
+        be considered stale and the UA will be re-challenged.
+      </para>
+      <para>
+        <emphasis>Note:</emphasis> If the <parameter>nonce_count</parameter>
+        parameter is enabled, all challenges should be done in stateful
+        mode, ie., a transaction should be created prior to the
+        authentication check, for instance by using the function
+        <serdoc:func>t_newtran</serdoc:func>, to absorb possible
+        retransmissions. All the replies need to be sent statefuly,
+        using <serdoc:func>t_reply()</serdoc:func>). Otherwise,
+        all retransmissions will be challenged which may cause the user
+        agent to believe the password supplied by the user to be wrong.
+      </para>
+      <para>
+        For more information on stateful processing, see
+        <serdoc:module>tm</serdoc:module>. An example on how to implement
+        a stateful registrar can be found in
+        <serdoc:module>registrar</serdoc:module>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.nonce_expire">
+      <title><parameter>nonce_expire</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>300</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>nonce_exipre</parameter> parameter determines the
+        time in seconds before a nonce is considered stale.
+      </para>
+      <para>
+        Nonces have a limited lifetime after which they 
+        will be considered stale.
+        This is to protect replay attacks. Credentials containing a stale
+        nonce will be not authorized. The user agent will be challenged
+        again instead. This new challenge will not only contain a newly
+        generated nonce, but also the <parameter>stale</parameter>
+        parameter which indicates to the client the failure was not due
+        to a wrong username or password and it doesn't need to disturb
+        the user asking for them. It can simply recalculate its answer 
+	using existing username and password.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.one_time_nonce">
+      <title><parameter>one_time_nonce</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>one_time_nonce</parameter> controls whether digist
+        responses with a reused nonce will be rejected. If it is set to
+        <literal>yes</literal>, nonces cannot be reused by user agents.
+      </para>
+      <para>
+        This results in each request being challenged. To avoid retransmits
+        being challenged, it should only be used in stateful mode, ie., by
+        creating a transaction before authentication, for instance trough
+        a call to the <serdoc:func>t_newtran</serdoc:func> function. For
+        more information on stateful mode see
+        <serdoc:module>tm</serdoc:module>. An example on how to implement
+        a stateful registrar can be found in
+        <serdoc:module>registrar</serdoc:module>.
+      </para>
+      <para>
+        The one time nonce provides enhanced replay protections at the cost
+        of invalidating UA side credentials
+        caching and causing extra round trips. Therefore, the nonce chount
+        check enabled through the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        parameter should be preferred.
+      </para>
+      <para>
+        The one time nonce provides the same protection as the nonce count
+        check but requiring more messages. The advantages are that it uses
+        less memory for the same supported number of maximum in-flight
+        nonces (by a factor of 8) and that it works
+        with user agents that do not support <parameter>qop</parameter>
+        and <parameter>nc</parameter>. It shoud thus be used if such
+        user agents are in use and the checks described in section
+        <serdoc:link linkend="module.auth.integrity_checks">Additional
+          Integrity Checks</serdoc:link> are not deemed sufficient.
+      </para>
+      <para>
+        Like the nonce count check, one time nonces works by tracking a
+        limited number of nonces. The maximum number of tracked nonces is
+        set using the
+        <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>
+        or
+        <serdoc:modparam module="auth">otn_in_flight_order</serdoc:modparam>
+        parameters. If this number is exceeded, older entries will be
+        overwritten. As long as the maximum rate of challengeable messages
+        per average response time is lower then
+        <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>,
+        the one time nonce check should work flawlessly.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.otn_in_flight_no">
+      <title><parameter>otn_in_flight_no</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>1048576</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>otn_in_flight_no</parameter> parameter specifies
+        the maximum number of in-flight nonces for the one time nonce
+        check enabled by the
+        <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>
+        parameter. It represents the maximum number of nonces remembered
+        for the one time nonce check. When this number is exceeded,
+        information about older nonces will be discarded and overwritten
+        with information about newly generated nonces. See
+        <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>
+        for more details.
+      </para>
+      <para>
+        The value should be a power of 2. If it is not, it will be rounded
+        down to such a value. The
+        <serdoc:modparam module="auth">otn_in_flight_order</serdoc:modparam>
+        parameter can be used to directly specify the power of 2.
+      </para>
+      <para>
+        The memory used to keep the nonce information will be identical to
+        the value of <parameter>otn_in_flight_no</parameter> divided by 8
+        since only 1 bit of state is kept per nonce.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.otn_in_flight_order">
+      <title><parameter>otn_in_flight_order</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>20</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>otn_in_flight_order</parameter> parameter is an
+        alternative way to set the maximum number of nonces for the
+        one time nonce check enabled by the
+        <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>
+        parameter. Its meaning is identical to that of the
+        <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>
+        parameter but the size is given by stating the power of 2.
+        See <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>
+        and <serdoc:modparam module="auth">one_time_nonce</serdoc:modparam>
+        for more details.
+      </para>
+    </refsect2>
+
+
+    <refsect2 xml:id="module.auth.protect_contacts">
+      <title><parameter>protect_contacts</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        If the <parameter>protect_contacts</parameter> parameter is set
+        to <literal>yes</literal>, the contacts are included when creating
+        a nonce.
+      </para>
+      <!-- XXX What does this exactly mean? -->
+    </refsect2>
+
+
+    <refsect2 xml:id="module.auth.proxy_challenge_header">
+      <title><parameter>proxy_challenge_header</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"Proxy-Authenticate"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>proxy_challenge_header</parameter> parameter
+        contains the name of the header field that should be used to
+        include the proxy-to-user challenge.
+      </para>
+    </refsect2> 
+
+    <refsect2 xml:id="module.auth.qop">
+      <title><parameter>qop</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"auth"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>qop</parameter> parameter determines, which value
+        for the <parameter>qop</parameter> parameter should be included
+        in a challenge. The parameter was optional in the SIP revision
+        described by RFC 2543. The current version from RFC 3261 states,
+        however, that the parameter must be included in all challenges.
+      </para>
+      <para>
+        In digest authentication, the <parameter>qop</parameter>
+        parameter, short for ‘quality of protection’, indicates which
+        parts of a request should be used for the calculation of the
+        digest response. If the value is <literal>auth</literal>,
+        only authentication should be done and the response is solely
+        calculated using information from the challenge plus the user’s
+        password. A value of <literal>auth-int</literal> indicates that
+        in addition the integrity of the request body is to be verified.
+        For this purpose, a hash over the body is additionally included
+        in the calculation.
+      </para>
+      <para>
+        In a challenge the parameter indicates, which of these methods
+        the server supports. This can either be one of them or both,
+        separated by a comma. For challenges generated by &kamailio;, this
+        is given by the <parameter>qop</parameter> module. It may also
+        be an empty string, in which case no <parameter>qop</parameter>
+        parameter will be present in challenges created by &kamailio;. This may
+        be necessary for compatibility with some old clients but will
+        make your &kamailio; not comply with RFC 3261.
+      </para>
+      <para>
+        Protection against nonce replay attacks can be achieved by
+        additionally enabling the
+        <serdoc:modparam module="auth">nonce_count</serdoc:modparam>
+        parameter. See there for more information.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.secret">
+      <title><parameter>secret</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>random value</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>secret</parameter> parameter
+        sets the secret used for the calculation of the nonce and for
+        message integrity checks. If not set, a random secret will be
+        chosen upon start.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth.www_challenge_header">
+      <title><parameter>www_challenge_header</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"WWW-Authenticate</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>www_challenge_header</parameter> parameter
+        contains the name of the header field that should be used to
+        transmit a user-to-user challenge for authentication.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 id="module.auth.integrity_checks">
+    <title>Additional Integrity Checks</title>
+    <para>
+      The auth module can perform additional integrity checks on the
+      authentication response inclued in a request by the client.
+    </para>
+    <para>
+      Without the extra checks, the nonce value will be used only to
+      store the expire time (see <parameter>nonce_expire</parameter>),
+      plus an MD5 hash over it and some secret to prevent tampering
+      with the expire time. With this arrangement, some replay attacks
+      are still possible in the expire "window".
+    </para>
+    <para>
+      A
+      possible workaround is to always force qop authentification and
+      always check the URI from the authorization header, but this does not
+      work if an upstream proxy rewrites the URI and it will also not work
+      with a lot of UA implementations.
+    </para>
+    <para>
+      When the extra checks are enabled, the nonce will include and extra
+      MD5 hash over some selected parts of the message and another secret.
+      This will be used to check if these parts of the message are the same
+      when a UA retries the request with the authentication response, thus 
+      protecting from replay attacks or at least severly limiting their
+      possibility.
+    </para>
+    <para>
+      Three module parameters control which parts of the message will be
+      included for different types of requests. The parameter
+      <parameter>auth_checks_register</parameter> sets them for REGISTER
+      requests. The parameter <parameter>auth_checks_no_dlg</parameter> 
+      does the same for requests that to not have a
+      <parameter>tag</parameter> parameter in the To header field or have
+      no To header field altogether (in other words requests sent outside
+      of an existing dialog). And, finally, the parameter
+      <parameter>auth_checks_in_dlg</parameter> controls the checks for
+      SIP requests sent within dialogs, such as BYEs or re-INVITEs.
+    </para>
+    <para>
+      The default value for all three parameters is 0, in which case no
+      extra checks are performed and the module behaves as it did before
+      their introduction. Otherwise the parameter is a bit field. The
+      message parts to be included in the check can be determined by adding
+      any of the following values together:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><literal>1</literal></term>
+        <listitem>
+          <para>
+            check the full Request-URI,
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>2</literal></term>
+        <listitem>
+          <para>
+            check the Call-ID,
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>4</literal></term>
+        <listitem>
+          <para>
+            check the <parameter>tag</parameter> parameter of the From
+            header field,
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>9</literal></term>
+        <listitem>
+          <para>
+            check the source IP address the request was received from.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para> 
+      For example, setting <parameter>auth_checks_register</parameter> to
+      <literal>6</literal> would check if the Call-ID or the From tag
+      have changed from the REGISTER message for which the nonce was
+      generated. This allows nonce reuse only within the same UA and
+      for the expire time.  Note that enabling the extra checks will
+      limit nonce caching by UAs, requiring extra challenges and
+      round trips, but will provide much better protection.
+    </para>
+    <para>
+      When the <parameter>secret</parameter> parameter is set and the
+      extra checks are enabled, the first half of the secret will be used
+      for the expire time hash and the other half for the hash on the
+      extra checks, so make sure you have a long secret. At least 32 
+      characterss are recommended.
+    </para>
+  </refsect1> 
+
+  <refsect1>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>auth_db</serdoc:module></member>
+      <member><serdoc:module>auth_diameter</serdoc:module></member>
+      <member><serdoc:module>auth_identity</serdoc:module></member>
+      <member><serdoc:module>auth_radius</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+
+<!-- vim:sw=2 sta et sts=2 ai tw=76
+  -->

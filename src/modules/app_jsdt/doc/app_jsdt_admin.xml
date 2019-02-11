@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows executing JavaScript scripts from the Kamailio 
+		configuration file.
+		It exports all KEMI functions to JavaScript in order to access the
+		currently processed SIP message. These functions are named within
+		the JavaScript object 'KSR'.
+	</para>
+	<para>
+		The module is based on the Duktape JavaScript engine (http://www.duktape.org),
+		which is a fast and easy to embed JavaScript interpreter. The exported API
+		from Kamailio to JavaScript is documented in the wiki.
+	</para>
+	<para>
+		The module has two JavaScript contexts:
+    	<itemizedlist>
+	    <listitem>
+		<para>
+			<emphasis>first</emphasis> is used for functions jsdt_dofile()
+			and jsdt_dostring().
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>second</emphasis> is used for function jsdt_run()
+			and parameter 'load'. Therefore jsdt_run() cannot execute functions
+			from scripts loaded via jsdt_dofile() in config. This is kind of
+			caching mode, avoiding reading file every time, but you must be sure
+			you do not have someting that is executed by default and requires
+			access to SIP message. This environment is also used by KEMI
+			framework for the config SIP routing functions.
+		</para>
+	    </listitem>
+    	</itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>libm</emphasis> - the math library (part of standard
+				system libraries - it is needed to complile embedded Duktape JS
+				interpreter).
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="app_jsdt.p.load">
+	    <title><varname>load</varname> (str)</title>
+	    <para>
+			Set the path to the JavaScript file to be loaded at startup. Then you
+			can use jsdt_run(function, params) to execute a function from the
+			script at runtime. If you use it for KEMI configuration,
+			then it has to include the requited functions.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>null</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section id="app_jsdt.f.jsdt_dofile">
+	    <title>
+		<function moreinfo="none">jsdt_dofile(path)</function>
+	    </title>
+	    <para>
+		Execute the JavaScript script stored in 'path'. The parameter can be
+		a string with pseudo-variables evaluated at runtime.
+	    </para>
+		<example>
+		<title><function>jsdt_dofile</function> usage</title>
+		<programlisting format="linespecific">
+...
+jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
+...
+</programlisting>
+	    </example>
+	</section>
+
+ 	<section id="app_jsdt.f.jsdt_dostring">
+	    <title>
+		<function moreinfo="none">jsdt_dostring(script)</function>
+	    </title>
+	    <para>
+		Execute the JavaScript script stored in parameter. The parameter can be
+		a string with pseudo-variables.
+	    </para>
+		<example>
+		<title><function>jsdt_dostring</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!jsdt_dostring('KSR.dbg("test message\n")'))
+{
+    xdbg("SCRIPT: failed to execute js script!\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="app_jsdt.f.jsdt_run">
+	    <title>
+		<function moreinfo="none">jsdt_run(function, params)</function>
+	    </title>
+	    <para>
+		Execute the JS function 'func' giving params as parameters. There
+		can be up to 3 string parameters. The function must exist in the
+		script loaded at startup via parameter 'load'. Parameters can be
+		strings with pseudo-variables that are evaluated at runtime.
+	    </para>
+		<example>
+		<title><function>jsdt_run</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!jsdt_run("js_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute js function!\n");
+}
+...
+jsdt_run("js_funcx", "$rU", "2");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="app_jsdt.f.jsdt_runstring">
+	    <title>
+		<function moreinfo="none">jsdt_runstring(script)</function>
+	    </title>
+	    <para>
+		Execute the JS script stored in parameter. The parameter can be
+		a string with pseudo-variables. The script is executed in JS context
+		specific to loaded JS files at startup.
+	    </para>
+		<example>
+		<title><function>jsdt_runstring</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
+{
+    xdbg("failed to execute js script!\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+    <section>
+        <title>RPC Commands</title>
+        <section id="app_jsdt.r.reload">
+            <title>
+            <function moreinfo="none">app_jsdt.reload</function>
+            </title>
+            <para>
+            Marks the need to reload the js script.
+            The actual reload is done by every working process when the next
+            call to jsdt_run() function or KEMI config is executed.
+            </para>
+            <para>
+            Name: <emphasis>app_jsdt.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_jsdt.reload
+...
+            </programlisting>
+        </section>
+       <section id="app_jsdt.r.api_list">
+            <title>
+            <function moreinfo="none">app_jsdt.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>app_jsdt.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_jsdt.api_list
+...
+            </programlisting>
+        </section>
+    </section>
+
+    <section>
+	<title>Example of usage</title>
+    <para>
+		Create your JS script and store it on the file system,
+		say: '/usr/local/etc/kamailio/js/myscript.js'.
+    </para>
+<programlisting format="linespecific">
+...
+function sr_append_fu_to_reply()
+{
+	KSR.hdr.append_to_reply("P-From: " + KSR.pv.get("$fu") + "\r\n");
+}
+...
+</programlisting>
+    <para>
+		Load the script via parameter 'load' and execute function
+		via jsdt_run(...).
+    </para>
+<programlisting format="linespecific">
+...
+modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
+...
+request_route {
+    ...
+    if(!jsdt_run("sr_append_fu_to_reply"))
+    {
+        xdbg("SCRIPT: failed to execute js function!\n");
+    }
+    ...
+}
+...
+</programlisting>
+    </section>
+</chapter>
+

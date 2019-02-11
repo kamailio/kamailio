@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Auth_radius Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+		</author>
+		<author>
+		<firstname>Stelios</firstname>
+		<surname>Sidiroglou-Douskos</surname>
+		</author>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+		</editor>
+		<editor>
+		<firstname>Phil</firstname>
+		<surname>Lavin</surname>
+		<email>phil.lavin@synety.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>Voice Sistem SRL</holder>
+	</copyright>
+	<copyright>
+		<year>2008-2010</year>
+		<holder>Juha Heinanen</holder>
+	</copyright>
+	<para></para>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="auth_radius_admin.xml"/>
+</book>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>IMS Online Charging Server (OCS) Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+		    <email>carsten@ng-voice.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2016</year>
+	    <holder>ng-voice GmbH</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="ims_ocs.overview">
+	<title>Overview</title>
+	<para>
+	    This module provides a simple Online Charging Server Module for
+            working with the ims_charging module. It communicates with the 
+            ims_charging module via the Diameter-Ro Interface.
+	</para>
+	<para>
+            This module is dependent on the CDP (C Diameter Peer) modules for 
+            communicating with a Charging-Server as specified in 3GPP
+            specification TS xx.xxx.
+	</para>
+	<para>
+            Please also refer to RFC 4006 (Diameter Credit-Control Application).
+	</para>
+	<para>
+            The module works will create fake SIP messages and provide them
+            to an event route for further operations. It up to the script writer
+            to do the processing.
+	</para>
+    </section>
+
+  <section id="ims_ocs.dependencies">
+    <title>Dependencies</title>
+
+    <section>
+      <title>Kamailio Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>CDP - C Diameter Peer</para>
+        </listitem>
+        <listitem>
+          <para>CDP_AVP - CDP AVP Applications</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+    <section>
+      <title>External Libraries or Applications</title>
+      <para>No external libraries are required.</para>
+    </section>
+    </section>
+
+  <section id="ims_ocs.functionalities">
+    <title>Faked Messages</title>
+    <section id="ims_ocs.diameter2sip">
+      <title>Translating SIP to Diameter</title>
+      <para>The incoming Charging requests are translated into the following methods:</para>
+      <itemizedlist>
+        <listitem>
+          <para>INVITE - For "Start" Charging Requests</para>
+        </listitem>
+        <listitem>
+          <para>UPDATE - For "Interim" Charging Requests</para>
+        </listitem>
+        <listitem>
+          <para>BYE - For "Stop" Charging Requests</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+    <section id="ims_ocs.sipheaders">
+      <title>SIP-Information in the faked messages</title>
+      <para>The faked messages contain the following information:</para>
+      <itemizedlist>
+        <listitem>
+          <para>Method - See previous section</para>
+        </listitem>
+        <listitem>
+          <para>Request-URI - The dialed number of the call</para>
+        </listitem>
+        <listitem>
+          <para>From-Header - The originator of the session</para>
+        </listitem>
+        <listitem>
+          <para>To-Header - Same as request-URI</para>
+        </listitem>
+        <listitem>
+          <para>Call-ID - The Diameter-Charging-ID (not the SIP-Call-ID)</para>
+        </listitem>
+        <listitem>
+          <para>P-Requested-Units - The requested units for this call</para>
+        </listitem>
+        <listitem>
+          <para>P-Used-Units - The used units for this call (only useful for Interim and Stop Events)</para>
+        </listitem>
+        <listitem>
+          <para>P-Access-Network-Info - The used access network - if available</para>
+        </listitem>
+        <listitem>
+          <para>P-Service-Identifier - The service identifier, if you want to differentiate different services (e.g. Audio and Video)</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+  </section>
+
+
+	<section>
+	<title>Functions</title>
+	<section id="ims_ocs.f.ccr_result">
+		<title>
+		<function moreinfo="none">ccr_result(resultcode, grantedunits, finalunit)</function>
+		</title>
+		<para>
+		This method sets the response code of the Diameter Request.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>resultcode</emphasis> - the Diameter Response
+			code for the request. Typical response codes are:	
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<quote>2001</quote> - Ok
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>5030</quote> - User unknown
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>5031</quote> - Rating failed
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>4010</quote> - End-User Service denied (e.g. Service blocked)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>5006</quote> - Resources exceeded (e.g. too many concurrent calls)
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>grantedunits</emphasis> - the number of granted units for this particular user
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>finalunit</emphasis> - indication, that all following requests will be denied (this is the final unit for the session)
+                        </para>
+                </listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from the event route.
+		</para>
+		<example>
+		<title><function>ds_select_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+ccr_result("2001", "600", "0");
+...
+$var(result) = 2001;
+$var(granted) = $hdr(P-Requested-Units);
+$var(final) = 0;
+ccr_result("$var(result)", "$var(granted)", "$var(final)");
+...
+ccr_result("2001", "$hdr(P-Requested-Units)", "0");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+        <section id="ims_ocs.ex.event_routes">
+        <title>Event routes</title>
+        <section>
+                <title>
+                <function moreinfo="none">ocs:ccr-orig</function>
+                </title>
+                <para>
+			This route is called for Charging Requests with the
+			session-case "originating" - a call from a user to
+			another destination.
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[ocs:ccr-orig] {
+	xlog("Session-Case: Originating\n");
+	xlog("----------------------------------------\n");
+	if (is_method("INVITE")) {
+		xlog("START - Request\n");
+	} else if (is_method("UPDATE")) {
+		xlog("INTERIM - Request\n");
+	} else if (is_method("BYE")) {
+		xlog("STOP - Request\n");
+	}
+	xlog("----------------------------------------\n");
+	xlog("From:               $fu\n");
+	xlog("To:                 $ru\n");
+	xlog("Call-ID:            $ci\n");
+	xlog("Requested Units:    $hdr(P-Requested-Units)\n");
+	xlog("Used Units:         $hdr(P-Used-Units)\n");
+	xlog("Access Network:     $hdr(P-Access-Network-Info)\n");
+	xlog("Service Identifier: $hdr(P-Service-Identifier)\n");
+
+	ccr_result("2001", "600", "0");
+}
+...
+                </programlisting>
+	</section>
+        <section>
+                <title>
+                <function moreinfo="none">ocs:ccr-term</function>
+                </title>
+                <para>
+			This route is called for Charging Requests with the
+			session-case "terminating" - a call to a user from
+			another destination.
+                </para>
+                <para>
+			You can have an "originating" and a "terminating"
+			request for a single call, e.g. if a user calls another
+			user. Since the Diameter-Session-ID is provided as
+			"Call-ID", it will have a different Call-ID, since it
+			is logical two separate sessions.
+                </para>
+                <para>
+			This route is optional.
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[ocs:ccr-term] {
+	xlog("Session-Case: Terminating\n");
+	xlog("----------------------------------------\n");
+	if (is_method("INVITE")) {
+		xlog("START - Request\n");
+	} else if (is_method("UPDATE")) {
+		xlog("INTERIM - Request\n");
+	} else if (is_method("BYE")) {
+		xlog("STOP - Request\n");
+	}
+	xlog("----------------------------------------\n");
+	xlog("From:               $fu\n");
+	xlog("To:                 $ru\n");
+	xlog("Call-ID:            $ci\n");
+	xlog("Requested Units:    $hdr(P-Requested-Units)\n");
+	xlog("Used Units:         $hdr(P-Used-Units)\n");
+	xlog("Access Network:     $hdr(P-Access-Network-Info)\n");
+	xlog("Service Identifier: $hdr(P-Service-Identifier)\n");
+
+	ccr_result("2001", "600", "0");
+}
+...
+                </programlisting>
+    </section>
+    </section>
+    </chapter>
+</book>
+

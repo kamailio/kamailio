@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+
+<section id="carrierroute.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>RPC Commands</title>
+
+	<section id="carrierroute.rpc.reload_routes">
+			<title>
+				<function moreinfo="none">cr.reload_routes</function>
+			</title>
+			<para>This command reloads the routing data from the data source.</para>
+			<para>
+			Name: <emphasis>cr.reload_routes</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>none</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Important: When new domains have been added, a restart of the server must be
+			done, because the mapping of the ids used in the config script cannot be
+			updated at runtime at the moment. So a reload could result in a wrong routing
+			behaviour, because the ids used in the script could differ from the one used
+			internally from the server. Modifying of already existing domains is no problem.</para>
+	</section>
+
+	<section id="carrierroute.rpc.dump_routes">
+			<title>
+				<function moreinfo="none">cr.dump_routes</function>
+			</title>
+			<para>This command prints the route rules on the command line.</para>
+			<para>
+			Name: <emphasis>cr.dump_routes</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>none</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+</section>

@@ -12,9 +12,9 @@ CREATE TABLE topos_d (
     bs_contact VARCHAR(128) DEFAULT '' NOT NULL,
     a_tag VARCHAR(255) DEFAULT '' NOT NULL,
     b_tag VARCHAR(255) DEFAULT '' NOT NULL,
-    a_rr TEXT DEFAULT '' NOT NULL,
-    b_rr TEXT DEFAULT '' NOT NULL,
-    s_rr TEXT DEFAULT '' NOT NULL,
+    a_rr TEXT,
+    b_rr TEXT,
+    s_rr TEXT,
     iflags INTEGER DEFAULT 0 NOT NULL,
     a_uri VARCHAR(128) DEFAULT '' NOT NULL,
     b_uri VARCHAR(128) DEFAULT '' NOT NULL,
@@ -27,6 +27,8 @@ CREATE TABLE topos_d (
 
 CREATE INDEX topos_d_rectime_idx ON topos_d (rectime);
 CREATE INDEX topos_d_a_callid_idx ON topos_d (a_callid);
+CREATE INDEX topos_d_a_uuid_idx ON topos_d (a_uuid);
+CREATE INDEX topos_d_b_uuid_idx ON topos_d (b_uuid);
 
 INSERT INTO version (table_name, table_version) values ('topos_d','1');
 
@@ -39,11 +41,11 @@ CREATE TABLE topos_t (
     a_uuid VARCHAR(255) DEFAULT '' NOT NULL,
     b_uuid VARCHAR(255) DEFAULT '' NOT NULL,
     direction INTEGER DEFAULT 0 NOT NULL,
-    x_via TEXT DEFAULT '' NOT NULL,
+    x_via TEXT,
     x_vbranch VARCHAR(255) DEFAULT '' NOT NULL,
-    x_rr TEXT DEFAULT '' NOT NULL,
-    y_rr TEXT DEFAULT '' NOT NULL,
-    s_rr TEXT DEFAULT '' NOT NULL,
+    x_rr TEXT,
+    y_rr TEXT,
+    s_rr TEXT,
     x_uri VARCHAR(128) DEFAULT '' NOT NULL,
     a_contact VARCHAR(128) DEFAULT '' NOT NULL,
     b_contact VARCHAR(128) DEFAULT '' NOT NULL,
@@ -60,6 +62,8 @@ CREATE TABLE topos_t (
 
 CREATE INDEX topos_t_rectime_idx ON topos_t (rectime);
 CREATE INDEX topos_t_a_callid_idx ON topos_t (a_callid);
+CREATE INDEX topos_t_x_vbranch_idx ON topos_t (x_vbranch);
+CREATE INDEX topos_t_a_uuid_idx ON topos_t (a_uuid);
 
 INSERT INTO version (table_name, table_version) values ('topos_t','1');
 

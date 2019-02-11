@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section id="exec.overview">
+	<title>Overview</title>
+	<para>
+		The exec module allows external commands to be executed from a &kamailio; 
+		script. The commands may be any valid shell commands--the command string is 
+		passed to the shell using <quote>popen</quote> command. &kamailio; passes 
+		additional information about the request in environment variables:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			SIP_HF_&lt;hf_name&gt; contains value of each header field in 
+			request. If a header field occurred multiple times, values are 
+			concatenated and comma-separated. &lt;hf_name&gt; is in capital 
+			letters. Ff a header-field name occurred in compact form, 
+			&lt;hf_name&gt; is canonical.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_TID is transaction identifier. All request retransmissions or 
+			CANCELs/ACKs associated with a previous INVITE result in the same 
+			value.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_DID is dialog identifier, which is the same as to-tag. 
+			Initially, it is empty.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_SRCIP is source &ip; address from which request came.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_ORURI is the original request &uri;.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_RURI is <emphasis>current</emphasis> request &uri; (if 
+			unchanged, equal to original).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_USER is userpart of <emphasis>current</emphasis> request &uri;.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			SIP_OUSER is userpart of original request &uri;.
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		NOTE: The environment variables must be specified with double $
+		(e.g., $$SIP_OUSER) in the parameters given to exec functions.
+		Otherwise they will be evaluated as &kamailio; pseudo-variables,
+		throwing errors.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="exec.p.setvars">
+		<title><varname>setvars</varname> (integer)</title>
+		<para>
+		Turn off to disable setting environment variables for executed commands.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>setvars</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("exec", "setvars", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="exec.p.time_to_kill">
+		<title>
+			<varname>time_to_kill</varname> (integer)
+		</title>
+		<para>
+		Specifies the longest time a program is allowed to execute. If the 
+		time is exceeded, the program is killed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>time_to_kill</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("exec", "time_to_kill", 20)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="exec.f.exec_dset">
+		<title>
+		<function moreinfo="none">exec_dset(command)</function>
+		</title>
+		<para>
+		Executes an external command. Current &uri; is passed to the command 
+		as parameter. Output of the command is considered &uri; set 
+		(separated by lines).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It can
+			include pseudo- variabes;
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for example:
+		exec_dset("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_dset</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_dset("echo TEST > /tmp/test.txt");
+exec_dset("echo TEST > /tmp/$rU.txt");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="exec.f.exec_msg">
+		<title>
+		<function moreinfo="none">exec_msg(command)</function>
+		</title>
+		<para>
+		Executes an external command. The whole message is passed to it in 
+		input, no command-line parameters are added, output of the command is 
+		not processed.
+		</para>
+		<para>
+		The <quote>examples</quote> directory in the source tarball contains several examples
+		that shows how to use this function.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It
+			can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for example:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_msg</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_msg("echo TEST > /tmp/test.txt");
+exec_msg("echo TEST > /tmp/$rU.txt");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="exec.f.exec_avp">
+		<title>
+		<function moreinfo="none">exec_avp(command [, avplist])</function>
+		</title>
+		<para>
+		Executes an external command. Each line from output of the command
+		is saved in an AVP from 'avplist'. If 'avplist' is missing, the
+		AVPs are named 1, 2, 3, ...
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It can
+			include pseudo- variabes;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>avplist</emphasis> - comma separated list with AVP 
+			names to store the result in;
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for example:
+		exec_avp("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_avp</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_avp("echo TEST");
+exec_avp("echo TEST", "$avp(s:test)");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="exec.f.exec_cmd">
+		<title>
+		<function moreinfo="none">exec_cmd(command)</function>
+		</title>
+		<para>
+			Executes an external command. It is a lightweight version, which
+			does not pass the SIP message as parameter, does not set the
+			environment variables and it does not use the output of the command.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It
+			can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for example:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_cmd</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_cmd("echo TEST > /tmp/test.txt");
+exec_cmd("echo TEST > /tmp/$rU.txt");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section id="exec.known_issues">
+	<title>Known Issues</title>
+	<para>
+		There is currently no guarantee that scripts ever return and stop
+		blocking the &sip; server. (There is kill.c but it is not used along with
+		the current mechanisms based on popen. Besides that kill.c is ugly).
+	</para>
+	</section>
+</chapter>
+

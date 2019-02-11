@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module helps developers to benchmark their module functions. By adding
+		this module's functions via the configuration file or through its API, &kamailio;
+		can log profiling information for every function.
+	</para>
+	<para>
+		The duration between calls to start_timer and log_timer is stored and logged
+		via &kamailio;'s logging facility. Please note that all durations are given as
+		microseconds (don't confuse with milliseconds!).
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+
+	<section>
+		<title><varname>enable</varname> (int)</title>
+		<para>
+			Even when the module is loaded, benchmarking is not enabled
+			per default. This variable may have three different values:
+			<itemizedlist>
+			<listitem>
+			<para>
+				-1 - Globally disable benchmarking
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				0 - Enable per-timer enabling. Single timers are inactive by default
+				and can be activated through the RPC interface as soon as that feature is
+				implemented.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - Globally enable benchmarking
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>granularity</varname> (int)</title>
+		<para>
+			Logging normally is not done for every reference to the log_timer()
+			function, but only every n'th call. n is defined through this variable.
+			A sensible granularity seems to be 100.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>granularity</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "granularity", 500)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>loglevel</varname> (int)</title>
+		<para>
+			Set the log level for the benchmark logs. These levels should be used:
+			<itemizedlist>
+			<listitem><para>-5 - L_ALERT</para></listitem>
+			<listitem><para>-4 - L_BUG</para></listitem>
+			<listitem><para>-3 - L_CRIT</para></listitem>
+			<listitem><para>-2 - L_CRIT (no prefix)</para></listitem>
+			<listitem><para>-1 - L_ERR</para></listitem>
+			<listitem><para>0 - L_WARN</para></listitem>
+			<listitem><para>1 - L_NOTICE</para></listitem>
+			<listitem><para>2 - L_INFO</para></listitem>
+			<listitem><para>3 - L_DBG</para></listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>3</quote> (L_INFO).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>loglevel</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "loglevel", 4)
+...
+</programlisting>
+		</example>
+		<para>
+		This will set the logging level to L_DBG.
+		</para>
+	</section>
+
+	<section id="benchmark.p.register">
+		<title><varname>register</varname> (str)</title>
+		<para>
+			Register a timer id at startup. Required when using the start/log
+			functions via Kemi framework. This parameter can be set many
+			times to register several timer ids.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NONE</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>register</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("benchmark", "register", "test")
+modparam("benchmark", "register", "auth")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="benchmark.f.bm_start_timer">
+		<title>
+		<function moreinfo="none">bm_start_timer(name)</function>
+		</title>
+		<para>
+		Start timer <quote>name</quote>. A later call to
+		<quote>bm_log_timer()</quote> logs this timer..
+		</para>
+		<example>
+		<title><function>bm_start_timer</function> usage</title>
+		<programlisting format="linespecific">
+...
+bm_start_timer("test");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="benchmark.f.bm_log_timer">
+		<title>
+		<function moreinfo="none">bm_log_timer(name)</function>
+		</title>
+		<para>
+			This function logs the timer with the given ID. The following data are
+			logged:
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Last msgs</emphasis> is the number of calls in the last logging interval. This equals the granularity variable.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Last sum</emphasis> is the accumulated duration in the current logging interval (i.e. for the last <quote>granularity</quote> calls).
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Last min</emphasis> is the minimum duration between start/log_timer calls during the last interval.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Last max</emphasis> - maximum duration.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Last average</emphasis> is the average duration between
+					bm_start_timer() and bm_log_timer() since the last logging.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Global msgs</emphasis> number of calls to log_timer.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Global sum</emphasis> total duration in microseconds.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Global min</emphasis>... You get the point. :)
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Global max</emphasis> also obvious.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>Global avg</emphasis> possibly the most interesting value.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<example>
+		<title><function>bm_log_timer</function> usage</title>
+		<programlisting format="linespecific">
+...
+bm_log_timer("test");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+		<title>Exported Variables</title>
+		<para>
+		Exported pseudo-variables are listed in the next sections.
+		</para>
+		<section>
+		<title>$BM_time_diff</title>
+			<para>
+			<emphasis>$BM_time_diff</emphasis> - the time difference
+			elapsed between calls of bm_start_timer(name) and
+			bm_log_timer(name). The value is 0 if no bm_log_timer()
+			was called.
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>RPC Commands</title>
+		<section id="benchmark.rpc.enable_global">
+			<title><function moreinfo="none">benchmark.enable_global</function></title>
+			<para>
+				Enables/disables the module. Parameter may be -1, 0 or 1. See
+				description of "enable" parameter.
+			</para>
+		</section>
+		<section id="benchmark.rpc.enable_timer">
+			<title><function moreinfo="none">benchmark.enable_timer</function></title>
+			<para>
+				Enable or disable a single timer. The following example enables
+				timer "test" (the second parameter must be 0 to disable):
+			</para>
+			<example>
+				<title>Enabling a timer</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; benchmark.enable_timer test 1
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="benchmark.rpc.granularity">
+			<title><function moreinfo="none">benchmark.granularity</function></title>
+			<para>
+				Modifies the benchmarking granularity. See "granularity" variable.
+			</para>
+		</section>
+		<section id="benchmark.rpc.loglevel">
+			<title><function moreinfo="none">benchmark.loglevel</function></title>
+			<para>
+				Modifies the module log level. See "loglevel" variable.
+			</para>
+		</section>
+		<section id="benchmark.rpc.timer_list">
+			<title><function moreinfo="none">benchmark.timer_list</function></title>
+			<para>
+				List data for all timers (Last complete period and global data)
+				Displays info close to the one output in the log by using a RPC structure.
+				period_sum, period_min and period_media show data for last granularity
+				period already completed.
+			</para>
+			<example>
+				<title>List all timers</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; benchmark.timer_list
+{
+	name: test
+	state: enabled
+	id: 0
+	granularity: 2
+	period_sum: 69
+	period_min: 22
+	period_max: 47
+	period_media: 34.500000
+	calls: 4
+	sum: 217
+	global_min: 22
+	global_max: 88
+	global_media: 54.250000
+}
+{
+	name: test2
+	state: enabled
+	id: 1
+	granularity: 2
+	period_sum: 122
+	period_min: 25
+	period_max: 97
+	period_media: 61.000000
+	calls: 4
+	sum: 349
+	global_min: 25
+	global_max: 151
+	global_media: 87.250000
+}
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="benchmark.rpc.timer_name_list">
+			<title><function moreinfo="none">benchmark.timer_name_list</function></title>
+			<para>
+				List data for one timer based on its name (Last complete period and global data)
+				It displays info close to the one output in the log by using a RPC structure.
+				period_sum, period_min and period_media show data for last granularity
+				period already completed.
+			</para>
+			<example>
+				<title>List one timer</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; benchmark.timer_name_list test
+{
+	name: test
+	state: enabled
+	id: 0
+	granularity: 2
+	period_sum: 69
+	period_min: 22
+	period_max: 47
+	period_media: 34.500000
+	calls: 4
+	sum: 217
+	global_min: 22
+	global_max: 88
+	global_media: 54.250000
+}
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Example of usage</title>
+		<para>
+		Measure the duration of user location lookup.
+		</para>
+		<example>
+			<title>benchmark usage</title>
+			<programlisting format="linespecific">
+...
+bm_start_timer("usrloc-lookup");
+lookup("location");
+bm_log_timer("usrloc-lookup");
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

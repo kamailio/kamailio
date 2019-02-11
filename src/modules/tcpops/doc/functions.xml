@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="print.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="tcpops.f.tcp_conid_alive">
+		<title>
+			<function>tcp_conid_alive(conid)</function>
+		</title>
+		<para>
+				Check the state of a TCP or WS connection ID
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optional): the Kamailio internal
+				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<para>1: Connection is OK</para>
+		<para>-1: Connection has errors, does not exist or is about to be closed)</para>
+		<example>
+			<title><function>tcp_conid_alive</function> usage</title>
+			<programlisting><![CDATA[
+...
+	$var(conid) = $conid;
+	if(!tcp_conid_alive("$var(conid)")) {
+		xlog("L_ERR", "Connection $conid can no longer be used\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
+	<section id="tcpops.f.tcp_conid_state">
+		<title>
+			<function>tcp_conid_state(conid)</function>
+		</title>
+		<para>
+				Check the state of a TCP or WS connection ID
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optional): the Kamailio internal
+				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<para>1: Connection is OK</para>
+		<para>2: Socket is accepting incoming connections</para>
+		<para>3: Socket is setting up outgoing connection</para>
+		<para>-1: Connection does not exist (or was closed)</para>
+		<para>-2: Socket has reached EOF</para>
+		<para>-3: Socket error has occurred. Connection will likely close. </para>
+		<para>-4: Socket is in unknown bad state. Connection will likely close. </para>
+		<example>
+			<title><function>tcp_conid_state</function> usage</title>
+			<programlisting><![CDATA[
+...
+	if(!tcp_conid_state("$var(conid)")) {
+		xlog("L_ERR", "Connection $conid is closed or malfunctional\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
+
+	<section id="tcpops.f.tcp_keepalive_enable">
+		<title>
+			<function>tcp_keepalive_enable([conid], idle, count, interval)</function>
+		</title>
+		<para>
+			Enables keepalive on a TCP connection.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optional): the &kamailio; internal
+				connection id on which TCP keepalive will be enabled. If no parameter
+				is given, the keepalive mechanism will be enabled on the current message
+				source connection.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>idle</emphasis> (seconds): the time before the first
+				keepalive packet is sent out.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>count</emphasis>: number of non-acked keepalive before
+				resetting the connection. 
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>interval</emphasis> (seconds): time between two keepalive
+				probes. 
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Returns 1 on success, -1 on failure.</para>
+		<example>
+			<title><function>tcp_keepalive_enable</function> usage</title>
+			<programlisting><![CDATA[
+request_route {
+	if (is_method("INVITE")) {
+		$avp(caller_conid) = $conid;
+		t_on_reply("foo");
+	}
+	...
+}
+
+onreply_route[foo] {
+	if (is_method("INVITE") && status == 200) {
+		# enable on callee's connection
+		tcp_keepalive_enable("60", "5", "5");
+		# enable on caller's connection
+		tcp_keepalive_enable("$avp(caller_conid)", "60", "5", "2");
+	}
+	...
+}
+			]]></programlisting>
+		</example>
+	</section>
+	
+	 <section id="tcpops.f.tcp_keepalive_disable">
+		<title>
+			<function>tcp_keepalive_disable([conid])</function>
+		</title>
+		<para>
+			Disables keepalive on a TCP connection.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optional): the &kamailio; internal
+				connection id on which TCP keepalive will be disabled. If no parameter
+				is given, the keepalive mechanism will be disabled on the current message
+				source connection.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Returns 1 on success, -1 on failure.</para>
+		<example>
+			<title><function>tcp_keepalive_disable</function> usage</title>
+			<programlisting><![CDATA[
+request_route {
+	...
+	if (is_method("BYE")) {
+		$avp(bye_conid) = $conid;
+		t_on_reply("foo");
+	}
+	...
+}
+
+onreply_route[foo] {
+	...
+	if (is_method("BYE") && status == 200) {
+		tcp_keepalive_disable();
+		tcp_keepalive_disable("$avp(bye_conid)");
+	}
+	...
+}
+			]]></programlisting>
+		</example>
+	</section>
+	<section id="tcpops.f.tcp_set_connection_lifetime">
+                <title>
+                        <function>tcp_set_connection_lifetime([conid], lifetime)</function>
+                </title>
+                <para>
+			Sets the connection lifetime of a connection (TCP).
+                </para>
+                <para>Meaning of the parameters is as follows:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para><emphasis>conid</emphasis> (optional): the &kamailio; internal
+                                connection id on which to set the new lifetime. If no parameter
+                                is given, it will be set on the current message source connection.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para><emphasis>lifetime</emphasis> (seconds): the new connection lifetime.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>Returns 1 on success, -1 on failure.</para>
+                <example>
+                        <title><function>tcp_set_connection_lifetime</function> usage</title>
+                        <programlisting><![CDATA[
+...
+# use 10s as default lifetime
+tcp_connection_lifetime=10 
+...
+
+request_route {
+        ...
+        if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
+                # raise the TCP lifetime to a bigger value
+                tcp_set_connection_lifetime("3605");
+        }
+        ...
+}
+                        ]]></programlisting>
+                </example>
+        </section>
+
+        <section id="tcpops.f.tcp_enable_closed_event">
+                <title>
+                        <function>tcp_enable_closed_event([conid])</function>
+                </title>
+                <para>
+			Explicitly enables the "tcp:closed" event route on a TCP connection.
+                </para>
+                <para>Meaning of the parameters is as follows:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para><emphasis>conid</emphasis> (optional): the &kamailio; internal
+                                connection id. If no parameter
+                                is given, it will be enabled on the current message source connection.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>Returns 1 on success, -1 on failure.</para>
+                <example>
+                        <title><function>tcp_set_closed_event</function> usage</title>
+                        <programlisting><![CDATA[
+...
+# "tcp:closed" event route is "manual" mode
+modparam("tcpops", "closed_event", 2)
+...
+
+request_route {
+	...
+	if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
+		# it will be called for this specific connection
+		tcp_enable_closed_event();
+	}
+	...
+
+}
+
+event_route[tcp:closed] {
+	xlog("connection $conid was closed");
+}
+]]></programlisting>
+                </example>
+        </section>
+	<section id="tcpops.f.tcp_get_conid">
+		<title>
+			<function>tcp_get_conid(hostport, pvname)</function>
+		</title>
+		<para>
+			Get the connection id based on target host:port. The connection id
+			is set in the variable named by pvname parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>hostport</emphasis> - target "host:port" address,
+				the port can be omitted (default to 5060) and the parameter can
+				contain variables.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>pvname</emphasis> - target variable name.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<para>1: connection was found</para>
+		<para>-1: connection was not found or an error occurred</para>
+		<example>
+			<title><function>tcp_get_conid</function> usage</title>
+			<programlisting><![CDATA[
+...
+	if(tcp_conid_alive("127.0.0.1:5060", "$var(conid)")) {
+		xlog("connection id is: $var(conid)\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
+</section>

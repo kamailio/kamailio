@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+
+	<title>&adminguide;</title>
+	
+	<section>
+	  <title>Overview</title>
+	    <para> 
+		The module extends the presence server implementation, providing the ability 
+		to handle the 'ua-profile' event. When a user agent subscribes to ua-profile
+		event for its own AoR, it retrieves the profile data document from the body 
+		of a NOTIFY request.
+	    </para>
+	    <para>
+		The profile data document format is usually specific to the user agent. Such
+		documents have to be built and added to presentity table by either the admin
+		or a third party application.
+	    </para>
+	    <para>
+		Warning: When you add a profile data document (i.e. the user agent's
+		provisioning config) to the presentity table, you must make sure that you
+		set the presentity table expires field to a time value far in the future.
+	    </para>
+	    <para>
+		  Read more about SIP user agent configuration framework in RFC6080:
+		  <ulink url="http://tools.ietf.org/html/rfc6080">http://tools.ietf.org/html/rfc6080</ulink>.
+	    </para>
+	</section>
+
+	<section>
+	  <title>Dependencies</title>
+	  <section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	  </section>
+
+	  <section>
+		<title>External Libraries or Applications</title>
+		<para>
+		None.
+		</para>
+	  </section>
+	</section>
+	
+	<section>
+	  <title>Exported Parameters</title>
+		<para>
+		  None.
+		</para>
+        </section>
+
+        <section>
+	  <title>Exported Functions</title>
+	      <para>
+	        None to be used in configuration file.
+	      </para>
+	</section>
+
+</chapter>
+

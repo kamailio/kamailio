@@ -1,0 +1,221 @@
+IMS Online Charging Server (OCS) Module
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2016 ng-voice GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Faked Messages
+
+              3.1. Translating SIP to Diameter
+              3.2. SIP-Information in the faked messages
+
+        4. Functions
+
+              4.1. ccr_result(resultcode, grantedunits, finalunit)
+
+        5. Event routes
+
+              5.1. ocs:ccr-orig
+              5.2. ocs:ccr-term
+
+   List of Examples
+
+   1.1. ds_select_dst usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Faked Messages
+
+        3.1. Translating SIP to Diameter
+        3.2. SIP-Information in the faked messages
+
+   4. Functions
+
+        4.1. ccr_result(resultcode, grantedunits, finalunit)
+
+   5. Event routes
+
+        5.1. ocs:ccr-orig
+        5.2. ocs:ccr-term
+
+1. Overview
+
+   This module provides a simple Online Charging Server Module for working
+   with the ims_charging module. It communicates with the ims_charging
+   module via the Diameter-Ro Interface.
+
+   This module is dependent on the CDP (C Diameter Peer) modules for
+   communicating with a Charging-Server as specified in 3GPP specification
+   TS xx.xxx.
+
+   Please also refer to RFC 4006 (Diameter Credit-Control Application).
+
+   The module works will create fake SIP messages and provide them to an
+   event route for further operations. It up to the script writer to do
+   the processing.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following modules must be loaded before this module:
+     * CDP - C Diameter Peer
+     * CDP_AVP - CDP AVP Applications
+
+2.2. External Libraries or Applications
+
+   No external libraries are required.
+
+3. Faked Messages
+
+   3.1. Translating SIP to Diameter
+   3.2. SIP-Information in the faked messages
+
+3.1. Translating SIP to Diameter
+
+   The incoming Charging requests are translated into the following
+   methods:
+     * INVITE - For "Start" Charging Requests
+     * UPDATE - For "Interim" Charging Requests
+     * BYE - For "Stop" Charging Requests
+
+3.2. SIP-Information in the faked messages
+
+   The faked messages contain the following information:
+     * Method - See previous section
+     * Request-URI - The dialed number of the call
+     * From-Header - The originator of the session
+     * To-Header - Same as request-URI
+     * Call-ID - The Diameter-Charging-ID (not the SIP-Call-ID)
+     * P-Requested-Units - The requested units for this call
+     * P-Used-Units - The used units for this call (only useful for
+       Interim and Stop Events)
+     * P-Access-Network-Info - The used access network - if available
+     * P-Service-Identifier - The service identifier, if you want to
+       differentiate different services (e.g. Audio and Video)
+
+4. Functions
+
+   4.1. ccr_result(resultcode, grantedunits, finalunit)
+
+4.1.  ccr_result(resultcode, grantedunits, finalunit)
+
+   This method sets the response code of the Diameter Request.
+
+   Meaning of the parameters is as follows:
+     * resultcode - the Diameter Response code for the request. Typical
+       response codes are:
+          + “2001” - Ok
+          + “5030” - User unknown
+          + “5031” - Rating failed
+          + “4010” - End-User Service denied (e.g. Service blocked)
+          + “5006” - Resources exceeded (e.g. too many concurrent calls)
+     * grantedunits - the number of granted units for this particular user
+     * finalunit - indication, that all following requests will be denied
+       (this is the final unit for the session)
+
+   This function can be used from the event route.
+
+   Example 1.1. ds_select_dst usage
+...
+ccr_result("2001", "600", "0");
+...
+$var(result) = 2001;
+$var(granted) = $hdr(P-Requested-Units);
+$var(final) = 0;
+ccr_result("$var(result)", "$var(granted)", "$var(final)");
+...
+ccr_result("2001", "$hdr(P-Requested-Units)", "0");
+...
+
+5. Event routes
+
+   5.1. ocs:ccr-orig
+   5.2. ocs:ccr-term
+
+5.1.  ocs:ccr-orig
+
+   This route is called for Charging Requests with the session-case
+   "originating" - a call from a user to another destination.
+...
+event_route[ocs:ccr-orig] {
+        xlog("Session-Case: Originating\n");
+        xlog("----------------------------------------\n");
+        if (is_method("INVITE")) {
+                xlog("START - Request\n");
+        } else if (is_method("UPDATE")) {
+                xlog("INTERIM - Request\n");
+        } else if (is_method("BYE")) {
+                xlog("STOP - Request\n");
+        }
+        xlog("----------------------------------------\n");
+        xlog("From:               $fu\n");
+        xlog("To:                 $ru\n");
+        xlog("Call-ID:            $ci\n");
+        xlog("Requested Units:    $hdr(P-Requested-Units)\n");
+        xlog("Used Units:         $hdr(P-Used-Units)\n");
+        xlog("Access Network:     $hdr(P-Access-Network-Info)\n");
+        xlog("Service Identifier: $hdr(P-Service-Identifier)\n");
+
+        ccr_result("2001", "600", "0");
+}
+...
+
+5.2.  ocs:ccr-term
+
+   This route is called for Charging Requests with the session-case
+   "terminating" - a call to a user from another destination.
+
+   You can have an "originating" and a "terminating" request for a single
+   call, e.g. if a user calls another user. Since the Diameter-Session-ID
+   is provided as "Call-ID", it will have a different Call-ID, since it is
+   logical two separate sessions.
+
+   This route is optional.
+...
+event_route[ocs:ccr-term] {
+        xlog("Session-Case: Terminating\n");
+        xlog("----------------------------------------\n");
+        if (is_method("INVITE")) {
+                xlog("START - Request\n");
+        } else if (is_method("UPDATE")) {
+                xlog("INTERIM - Request\n");
+        } else if (is_method("BYE")) {
+                xlog("STOP - Request\n");
+        }
+        xlog("----------------------------------------\n");
+        xlog("From:               $fu\n");
+        xlog("To:                 $ru\n");
+        xlog("Call-ID:            $ci\n");
+        xlog("Requested Units:    $hdr(P-Requested-Units)\n");
+        xlog("Used Units:         $hdr(P-Used-Units)\n");
+        xlog("Access Network:     $hdr(P-Access-Network-Info)\n");
+        xlog("Service Identifier: $hdr(P-Service-Identifier)\n");
+
+        ccr_result("2001", "600", "0");
+}
+...

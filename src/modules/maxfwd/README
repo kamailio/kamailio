@@ -1,0 +1,206 @@
+maxfwd Module
+
+Bogdan-Andrei Iancu
+
+   Voice Sistem SRL
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. max_limit (integer)
+
+        4. Functions
+
+              4.1. maxfwd_process(max_value)
+              4.2. mf_process_maxfwd_header(max_value)
+              4.3. process_maxfwd(max_value)
+              4.4. is_maxfwd_lt(max_value)
+              4.5. maxfwd_at_least(max_value)
+              4.6. mf_lowlimit(max_value)
+
+   List of Examples
+
+   1.1. Set max_limit parameter
+   1.2. maxfwd_process usage
+   1.3. is_maxfwd_lt usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. max_limit (integer)
+
+   4. Functions
+
+        4.1. maxfwd_process(max_value)
+        4.2. mf_process_maxfwd_header(max_value)
+        4.3. process_maxfwd(max_value)
+        4.4. is_maxfwd_lt(max_value)
+        4.5. maxfwd_at_least(max_value)
+        4.6. mf_lowlimit(max_value)
+
+1. Overview
+
+   The module implements all of the operations that handle the Max-Forward
+   SIP header field, like adding it (if not present) or decrementing and
+   checking the value of the existent one.
+
+   The SIP Max-Forward header is used to prevent loops in a SIP network.
+   Every server that process and forward a SIP request lowers the
+   Max-Forward value with one. When the value reaches zero, the request is
+   not forwarded and an error response is sent to the UAC.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. max_limit (integer)
+
+3.1. max_limit (integer)
+
+   Set an upper limit for the max-forward value in the outgoing requests.
+   If the header is present, the decremented value is not allowed to
+   exceed this max_limits - if it does, the header value will by decreased
+   to “max_limit”.
+
+   Note: This check is done when calling the maxfwd_process() function.
+
+   The range of values stretches from 1 to 256, which is the maximum
+   MAX-FORWARDS value allowed by RFC 3261. The value can be changed at
+   runtime.
+
+   Default value is “70”.
+
+   Example 1.1. Set max_limit parameter
+...
+modparam("maxfwd", "max_limit", 32)
+...
+
+4. Functions
+
+   4.1. maxfwd_process(max_value)
+   4.2. mf_process_maxfwd_header(max_value)
+   4.3. process_maxfwd(max_value)
+   4.4. is_maxfwd_lt(max_value)
+   4.5. maxfwd_at_least(max_value)
+   4.6. mf_lowlimit(max_value)
+
+4.1.  maxfwd_process(max_value)
+
+   If no Max-Forward header is present in the received request, a header
+   will be added having the original value equal with “max_value”. If a
+   Max-Forward header is already present, its value will be decremented
+   (if not 0). The parameter can be a variable.
+
+   Return codes:
+     * 2 (true) - header was not found and a new header was successfully
+       added.
+     * 1 (true) - header was found and its value was successfully
+       decremented (had a non-0 value).
+     * -1 (false) - the header was found and its value is 0 (cannot be
+       decremented).
+     * -2 (false) - error during processing.
+
+   The return code may be extensively tested via script variable “retcode”
+   (or “$?”).
+
+   Meaning of the parameters is as follows:
+     * max_value - Value to be added if there is no Max-Forwards header
+       field in the message.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.2. maxfwd_process usage
+...
+# initial sanity checks -- messages with
+# max_forwards==0, or excessively long requests
+if (!maxfwd_process("10") && $retcode==-1) {
+        sl_send_reply("483","Too Many Hops");
+        exit;
+};
+...
+
+4.2.  mf_process_maxfwd_header(max_value)
+
+   Same as maxfwd_process(max_value).
+
+4.3.  process_maxfwd(max_value)
+
+   Same as maxfwd_process(max_value).
+
+4.4.  is_maxfwd_lt(max_value)
+
+   Checks if the Max-Forward header value is less then the “max_value”
+   parameter value. It considers also the value of the new inserted header
+   (if locally added). The parameter can be a variable.
+
+   Retuning codes:
+     * 1 (true) - header was found or set and its value is strictly less
+       than “max_value”.
+     * -1 (false) - the header was found or set and its value is greater
+       or equal to “max_value”.
+     * -2 (false) - header was not found or not set.
+     * -3 (false) - error during processing.
+
+   The return code may be extensively tested via script variable “retcode”
+   (or “$?”).
+
+   Meaning of the parameters is as follows:
+     * max_value - value to check the Max-Forward.value against (as less
+       than).
+
+   Example 1.3. is_maxfwd_lt usage
+...
+# next hop is a gateway, so make no sense to
+# forward if MF is 0 (after decrement)
+if ( is_maxfwd_lt("1") ) {
+        sl_send_reply("483","Too Many Hops");
+        exit;
+};
+...
+
+4.5.  maxfwd_at_least(max_value)
+
+   Same as is_maxfwd_lt(max_value).
+
+4.6.  mf_lowlimit(max_value)
+
+   Same as is_maxfwd_lt(max_value).

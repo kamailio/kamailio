@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="uid_avp_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>UID AVP DB Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<email>jiri@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <year>2005</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="uid_avp_db.overview">
+	<title>Overview</title>
+	<para>
+	    This module contains several functions that can be used to
+	    manipulate the contents of AVPs (Attribute-Value pairs). The AVPs
+	    are variables attached to the SIP message being processed. Each
+	    variable has its name and value. AVPs can be used to store
+	    arbitrary data or as a means of inter-module communication.
+	</para>
+	<para>
+	    You may also want to check the avpops module which is more flexible
+	    and contains more functions. In future SER releases the avp module
+	    will be probably deprecated in favor of avpops module.
+	</para>
+	<para>
+	    Domain module operates in caching mode. Domain module reads the
+	    default values of AVPs into cache memory when the module is
+	    loaded. After that default values is re-read only when module is
+	    given avp_list_reload fifo command. Any changes in
+	    usr_preferences_types table must thus be followed by
+	    avp_list_reload command in order to reflect them in module
+	    behavior.
+	</para>
+    </section>
+    
+    <section id="uid_avp_db.dep">
+	<title>Dependencies</title>
+	<para>
+	    A database module, such as mysql, postgres, or dbtext.
+	</para>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <!-- <xi:include href="fifo.xml"/> -->
+
+	<section><title>Example extra attributes usage</title>
+	<para><programlisting><include xmlns="http://www.w3.org/2001/XInclude"
+href="avp_dialogs.cfg" parse="text"/></programlisting></para>
+	</section>
+    </chapter>
+</book>

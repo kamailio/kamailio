@@ -1,0 +1,279 @@
+TSILO Module
+
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
+Edited by
+
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
+   Copyright © 2015 Federico Cabiddu
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio modules
+              2.2. External libraries or applications
+
+        3. Parameters
+
+              3.1. hash_size (integer)
+              3.2. use_domain (integer)
+
+        4. Functions
+
+              4.1. ts_store([uri])
+              4.2. ts_append(domain, ruri)
+              4.3. ts_append_to(tindex, tlabel, domain, [uri])
+
+        5. RPC Commands
+
+              5.1. ts.dump
+              5.2. ts.lookup
+
+        6. Statistics
+
+              6.1. stored_ruris
+              6.2. stored_transactions
+              6.3. added_branches
+              6.4. total_ruris
+              6.5. total_transactions
+
+   List of Examples
+
+   1.1. Set hash_size parameter
+   1.2. Set use_domain parameter
+   1.3. ts_store usage
+   1.4. ts_append usage
+   1.5. ts_append_to usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio modules
+        2.2. External libraries or applications
+
+   3. Parameters
+
+        3.1. hash_size (integer)
+        3.2. use_domain (integer)
+
+   4. Functions
+
+        4.1. ts_store([uri])
+        4.2. ts_append(domain, ruri)
+        4.3. ts_append_to(tindex, tlabel, domain, [uri])
+
+   5. RPC Commands
+
+        5.1. ts.dump
+        5.2. ts.lookup
+
+   6. Statistics
+
+        6.1. stored_ruris
+        6.2. stored_transactions
+        6.3. added_branches
+        6.4. total_ruris
+        6.5. total_transactions
+
+1. Overview
+
+   This module provides transaction storage for the Kamailio SIP Server
+   Platform. It stores in an internal table transactions for a Request-URI
+   (R-URI) and add branches to them later if new contacts for the AOR are
+   added.
+
+   For each message, the modules stores “Request-URI” (“R-URI”), URI and
+   the internal transaction index and label.
+
+   When a transaction is destroyed by the TM module, it is removed from
+   the module's table too.
+
+2. Dependencies
+
+   2.1. Kamailio modules
+   2.2. External libraries or applications
+
+2.1. Kamailio modules
+
+   The following modules must be loaded before this module:
+     * REGISTRAR--registrar module-- used to lookup for new contacts and
+       update the dset for the r-uri.
+     * TM--transaction module-- used to send SIP requests.
+     * SL
+
+2.2. External libraries or applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module:
+     * none.
+
+3. Parameters
+
+   3.1. hash_size (integer)
+   3.2. use_domain (integer)
+
+3.1. hash_size (integer)
+
+   The size of the hash table internally used to keep the transaction. A
+   larger table is much faster but consumes more memory. The hash size
+   must be a power of two, otherwise it will be rounded down to the
+   nearest power of two.
+
+   Default value is “2048”.
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("tsilo", "hash_size", 1024)
+...
+
+3.2. use_domain (integer)
+
+   Specify if the domain part of the URI should be also saved and used for
+   storing and retrieving users' transactions. Useful in multi domain
+   scenarios. Non 0 value means true.
+
+   Default value is “0”.
+
+   Example 1.2. Set use_domain parameter
+...
+modparam("tsilo", "use_domain", 1)
+...
+
+4. Functions
+
+   4.1. ts_store([uri])
+   4.2. ts_append(domain, ruri)
+   4.3. ts_append_to(tindex, tlabel, domain, [uri])
+
+4.1. ts_store([uri])
+
+   The method stores uri, tindex and tlabel of the current transaction. If
+   the uri parameter is missing, then the value is taken from r-uri. The
+   uri parameter can contain variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.3. ts_store usage
+...
+if (is_method("INVITE")) {
+    if (t_newtran()) {
+        ts_store();
+        # t_store("sip:alice@$td");
+    }
+}
+...
+
+4.2. ts_append(domain, ruri)
+
+   The method add branches to all the stored transactions for the SIP ruri
+   passed as parameter, performing a contact lookup on the table specified
+   by the domain parameter. The method should be called when a REGISTER
+   request is received.
+
+   Meaning of the parameters is as follows:
+     * domain - Name of table that should be used for looking up new
+       contacts for r-uri.
+     * ruri - The r-uri for which we want to check existing transactions
+       and add them new branches. Can be a static string value or a
+       dynamic string with pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.4. ts_append usage
+...
+if (is_method("REGISTER")) {
+        ts_append("location", "$tu");
+}
+...
+
+4.3. ts_append_to(tindex, tlabel, domain, [uri])
+
+   The method add branches to the transaction identified by tindex and
+   tlabel, performing a contacts lookup on the table specified by the
+   domain parameter. The method should be called when a REGISTER request
+   is received.
+
+   Meaning of the parameters is as follows:
+     * tindex - internal index of transaction. Can be an integer or a
+       pseudo-variable.
+     * tlabel - internal label of transaction. Can be an integer or a
+       pseudo-variable.
+     * domain - Name of table that should be used for looking up new
+       contacts for r-uri.
+     * uri (optional) - uri for which to do lookup for new destinations.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.5. ts_append_to usage
+...
+if (is_method("REGISTER")) {
+        $var(tindex) = ...
+        $var(tlabel) = ...
+        ts_append_to("$var(tindex)", "$var(tlabel", "location");
+}
+...
+
+5. RPC Commands
+
+   5.1. ts.dump
+   5.2. ts.lookup
+
+5.1. ts.dump
+
+   Dumps the content of the TSILO table
+
+   Name: ts.dump
+
+   RPC Command Format:
+                        kamcmd ts.dump
+
+5.2. ts.lookup
+
+   Dumps the transactions stored for the given RURI
+
+   Name: ts.lookup
+
+   RPC Command Format:
+                        kamcmd ts.lookup sip:abcd@example.com
+
+6. Statistics
+
+   6.1. stored_ruris
+   6.2. stored_transactions
+   6.3. added_branches
+   6.4. total_ruris
+   6.5. total_transactions
+
+6.1. stored_ruris
+
+   Number of ruris currently stored in the TSILO table.
+
+6.2. stored_transactions
+
+   Number of transactions currently stored in the TSILO table.
+
+6.3. added_branches
+
+   Total number of added branches from the startup.
+
+6.4. total_ruris
+
+   Total number of stored ruris from the startup.
+
+6.5. total_transactions
+
+   Total number of stored transactions from the startup.

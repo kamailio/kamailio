@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="cds_malloc"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>cds_malloc</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>cds_malloc</refname> <!-- function name -->
+<refpurpose>memory allocation</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/memory.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void *<function>cds_malloc</function></funcdef>
+  <paramdef>unsigned int <parameter>size</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Allocates Memory of given size. If compiled with SER it internally uses
+<function>shm_malloc</function>, if compiled without SER it uses 
+<function>malloc</function>.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>Returns NULL on error, pointer to allocated memory otherwise.
+<!-- return value description -->
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="cds_malloc"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

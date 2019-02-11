@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>SNMPStats Module (Simple Network Management Protocal Statistic Module)</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jeffrey</firstname>
+		<surname>Magder</surname>
+		<affiliation><orgname>SOMA Networks, Inc.</orgname></affiliation>
+		<address>
+			<email>jmagder@somanetworks.com</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Jeffrey</firstname>
+		<surname>Magder</surname>
+		<address>
+			<email>jmagder@somanetworks.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<address>
+			<email>oej@edvina.net</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2006</year>
+		<holder>SOMA Networks, Inc.</holder>
+	</copyright>
+	<copyright>
+		<year>2013</year>
+		<holder>Edvina AB, Sollentuna, Sweden</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="snmpstats_admin.xml"/>
+	<xi:include href="snmpstats_faq.xml"/>
+	
+</book>

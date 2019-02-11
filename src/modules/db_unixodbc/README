@@ -1,0 +1,229 @@
+unixodbc Module
+
+Marco Lorrai
+
+   abbeynet.it
+
+Edited by
+
+Marco Lorrai
+
+   Copyright © 2005, 2006 Marco Lorrai
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. ping_interval (int)
+              3.2. auto_reconnect (int)
+              3.3. use_escape_common (int)
+              3.4. replace_query (int)
+              3.5. quote_char (str)
+
+        4. Functions
+        5. Installation and Running
+
+              5.1. Installing
+              5.2. Configuring and Running
+
+   2. Developer Guide
+
+   List of Examples
+
+   1.1. Set the “ping_interval” parameter
+   1.2. Set the “auto_reconnect” parameter
+   1.3. Set the “use_escape_common” parameter
+   1.4. Set the “replace_query” parameter
+   1.5. Set the “quote_char” parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. ping_interval (int)
+        3.2. auto_reconnect (int)
+        3.3. use_escape_common (int)
+        3.4. replace_query (int)
+        3.5. quote_char (str)
+
+   4. Functions
+   5. Installation and Running
+
+        5.1. Installing
+        5.2. Configuring and Running
+
+1. Overview
+
+   This module allows to use the unixodbc package with Kamailio. It have
+   been tested with mysql and the odbc connector, but it should work also
+   with other database. The auth_db module works.
+
+   For more information, see the http://www.unixodbc.org/ project web
+   page.
+
+   To see what DB engines can be used via unixodbc, look at
+   http://www.unixodbc.org/drivers.html.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. ping_interval (int)
+   3.2. auto_reconnect (int)
+   3.3. use_escape_common (int)
+   3.4. replace_query (int)
+   3.5. quote_char (str)
+
+3.1. ping_interval (int)
+
+   Sets the ping time interval.
+
+   Default value is “300” seconds.
+
+   Example 1.1. Set the “ping_interval” parameter
+...
+modparam("db_unixodbc", "ping_interval", 600)
+...
+
+3.2. auto_reconnect (int)
+
+   Turns on or off the auto_reconnect mode.
+
+   Default value is “1”, this means it is enabled.
+
+   Example 1.2. Set the “auto_reconnect” parameter
+...
+modparam("db_unixodbc", "auto_reconnect", 0)
+...
+
+3.3. use_escape_common (int)
+
+   Escape values in query using internal escape_common() function. It
+   escapes single quote ''', double quote '"', backslash '\', and NULL
+   characters.
+
+   You should enable this parameter if you know that the ODBC driver
+   considers the above characters as special (for marking begin and end of
+   a value, escape other characters ...). It prevents against SQL
+   injection.
+
+   Default value is “0” (0 = disabled; 1 = enabled).
+
+   Example 1.3. Set the “use_escape_common” parameter
+...
+modparam("db_unixodbc", "use_escape_common", 1)
+...
+
+3.4. replace_query (int)
+
+   Tells if the ODBC replace query is supported by the DB odbc driver.
+
+   Default value is “1” seconds.
+
+   Example 1.4. Set the “replace_query” parameter
+...
+modparam("db_unixodbc", "replace_query", 0)
+...
+
+3.5. quote_char (str)
+
+   The character to be used for quoting the table and column names in
+   database queries.
+
+   Default value: “not set” (no quoting).
+
+   Example 1.5. Set the “quote_char” parameter
+...
+modparam("db_unixodbc", "quote_char", "`")
+...
+
+4. Functions
+
+   NONE
+
+5. Installation and Running
+
+   5.1. Installing
+   5.2. Configuring and Running
+
+5.1. Installing
+
+   Prerequirement: you should first install unixodbc (or another program
+   that implements the odbc standard, such iodbc), your database, and the
+   right connector. Set the DSN in the odbc.ini file and the connector
+   drivers in the odbcinst.ini file.
+
+5.2. Configuring and Running
+
+   In the Kamailio.cfg file, add the line:
+....
+loadmodule "/usr/local/lib/kamailio/modules/db_unixodbc.so"
+....
+
+   You should also uncomment this:
+....
+loadmodule "/usr/local/lib/kamailio/modules/auth.so"
+loadmodule "/usr/local/lib/kamailio/modules/auth_db.so"
+modparam("usrloc", "db_mode", 2)
+modparam("auth_db", "calculate_ha1", yes)
+modparam("auth_db", "password_column", "password")
+....
+
+   and setting the DSN specified in the odbc.ini, inserting this with the
+   url adding this line:
+....
+modparam("usrloc|auth_db", "db_url",
+    "unixodbc://kamailio:kamailiorw@localhost/my_dsn")
+....
+
+   replacing my_dsn with the correct value.
+
+   HINT: if unixodbc don't want to connect to mysql server, try restarting
+   mysql server with:
+shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
+
+   The connector search the socket in /var/lib/mysql/mysql.sock and not in
+   /tmp/mysql.sock
+
+   REMARK: Oracle ODBC driver doesn't support ODBC query. To disable its
+   usage and replace the replace query by an update or insert query, use
+   the parameter:
+....
+modparam("db_unixodbc", "replace_query", 0)
+....
+
+Chapter 2. Developer Guide
+
+   The module implements the Kamailio DB API, in order to be used by other
+   modules.

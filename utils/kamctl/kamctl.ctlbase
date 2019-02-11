@@ -83,6 +83,12 @@ cat <<EOF
  ps ................................. details about running processes
 EOF
 	echo
+	mecho " -- command 'psa' - print all attributes about running processes"
+	echo
+cat <<EOF
+ psa ................................ all attributes about running processes
+EOF
+	echo
 	mecho " -- command 'uptime' - print uptime details"
 	echo
 cat <<EOF

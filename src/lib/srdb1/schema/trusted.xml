@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="trusted" xmlns:db="http://docbook.org/ns/docbook">
+    <name>trusted</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used by the permissions module to determine if a call
+			has the appropriate permission to be established. More information
+			about the permissions module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;permissions.html">&KAMAILIO_MOD_DOC;permissions.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="src_ip">
+        <name>src_ip</name>
+        <type>string</type>
+        <size>&ip_add_len;</size>
+        <description>Source address is equal to source address of request</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>proto</name>
+        <type>string</type>
+        <size>4</size>
+        <description>Transport protocol is either "any" or equal to transport protocol of request. Possible values that can be stored are "any", "udp", "tcp", "tls", and "sctp".</description>
+    </column>
+
+    <column>
+        <name>from_pattern</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default><null/></default>
+        <null/>
+        <description>Regular expression matches From URI of request.</description>
+    </column>
+
+    <column>
+        <name>ruri_pattern</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default><null/></default>
+        <null/>
+        <description>Regular expression matches Request URI of request.</description>
+    </column>
+
+    <column>
+        <name>tag</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Tag</description>
+    </column>
+
+    <column>
+        <name>priority</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Priority of rule.</description>
+    </column>
+
+    <index>
+        <name>peer_idx</name>
+        <colref linkend="src_ip"/>
+    </index>
+
+</table>

@@ -1,6 +1,6 @@
 {
   "name": "sca_subscriptions",
-  "version": 1,
+  "version": 2,
   "columns": [
     "id": {
       "type": "int",
@@ -65,6 +65,11 @@
     "subscribe_cseq": {
       "type": "int",
       "default": null,
+      "null": false
+    },
+    "server_id": {
+      "type": "int",
+      "default": 0,
       "null": false
     }
   ]

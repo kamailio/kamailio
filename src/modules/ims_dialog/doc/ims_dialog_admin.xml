@@ -1,0 +1,1238 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+        <title>Overview</title>
+        <para>
+	The ims_dialog module provides dialog awareness to the &kamailio; proxy. Its
+	functionality is to keep track of the current dialogs, to offer information
+	about them (like how many dialogs are active) or to manage them. The module
+	exports several functions that could be used directly from scripts.
+        The ims_dialog module extends the original dialog module by providing support
+        for forked calling and early dialog termination.  It is the intention that
+        the ims_dialog module will eventually replace the dialog module.
+        </para>
+        <para>
+	The module, via an internal API, also provide the foundation to build on
+	top of it more complex dialog-based functionalities via other &kamailio;
+	modules.
+        </para>
+    </section>
+
+    <section>
+        <title>How it works</title>
+        <para>
+	To create the dialog associated to an initial request, the flag
+            <quote>dlg_flag</quote> (
+            <xref linkend="dlg-flag-id"/>) must be set before
+	creating the corresponding transaction.
+        </para>
+        <para>
+	The dialog is automatically destroyed when a
+            <quote>BYE</quote> is
+	received. In case of no
+            <quote>BYE</quote>, the dialog lifetime is
+	controlled via the default timeout (see
+            <quote>default_timeout</quote>
+	-
+            <xref linkend="default-timeout-id"/>) and custom timeout (see
+            <quote>timeout_avp</quote> -
+            <xref linkend="timeout-avp-id"/>). The
+	dialog timeout is reset each time a sequential request passes.
+        </para>
+    </section>
+
+    <section>
+        <title>Dialog profiling</title>
+        <para>
+	Dialog profiling is a mechanism that helps in classifying, sorting and
+	keeping trace of certain types of dialogs, using whatever properties of
+	the dialog (like caller, destination, type of calls, etc).
+	Dialogs can be dynamically added in different (and several) profile
+	tables - logically, each profile table can have a special meaning (like
+	dialogs outside the domain, dialogs terminated to PSTN, etc).
+        </para>
+        <para>
+	There are two types of profiles:
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>with no value</emphasis> - a dialog simply belongs
+			to a profile. (like outbound calls profile). There is no other
+			additional information to describe the dialog's belonging to the
+			profile;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>with value</emphasis> - a dialog belongs to a profile
+			having a certain value (like in caller profile, where the value
+			is the caller ID). The belonging of the dialog to the profile is
+			strictly related to the value.
+                    </para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>
+	A dialog can be added to multiple profiles in the same time.
+        </para>
+        <para>
+	Profiles are visible (at the moment) in the request route (for initial
+	and sequential requests) and in the branch, failure and reply routes of
+	the original request.
+        </para>
+    </section>
+
+    <section>
+        <title>Dependencies</title>
+        <section>
+            <title>&kamailio; Modules</title>
+            <para>
+		The following modules must be loaded before this module:
+                <itemizedlist>
+                    <listitem>
+                        <para>
+                            <emphasis>TM</emphasis> - Transaction module
+                        </para>
+                    </listitem>
+                    <listitem>
+                        <para>
+                            <emphasis>RR</emphasis> - Record-Route module
+                        </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+
+
+        <section>
+            <title>External Libraries or Applications</title>
+            <para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module loaded:
+                <itemizedlist>
+                    <listitem>
+                        <para>
+                            <emphasis>None</emphasis>.
+                        </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+    </section>
+
+
+    <section>
+        <title>Parameters</title>
+        <section>
+            <title>
+                <varname>enable_stats</varname> (integer)
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>hash_size</varname> (integer)
+            </title>
+            <para>
+		The size of the hash table internally used to keep the dialogs. A
+		larger table is much faster but consumes more memory. The hash size
+		must be a power of two number.
+            </para>
+            <para>
+		IMPORTANT: If dialogs' information should be stored in a database,
+		a constant hash_size should be used, otherwise the restoring process
+		will not take place. If you really want to modify the hash_size you
+		must delete all table's rows before restarting the server.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>4096</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>hash_size</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "hash_size", 1024)
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>rr_param</varname> (string)
+            </title>
+            <para>
+		Name of the Record-Route parameter to be added with the dialog cookie.
+		It is used for the fast dialog matching of sequential requests.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>did</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>rr_param</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "rr_param", "xyz")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="dlg-flag-id">
+            <title>
+                <varname>dlg_flag</varname> (integer)
+            </title>
+            <para>
+		Flag to be used for marking if a dialog should be constructed for the
+		current request (this make sense only for initial requests).
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>none</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>dlg_flag</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "dlg_flag", 4)
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="timeout-avp-id">
+            <title>
+                <varname>timeout_avp</varname> (string)
+            </title>
+            <para>
+		The specification of an AVP that contain a custom timeout (in seconds)
+		for the dialog. It may be used only in a request (initial or sequential)
+		context
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>none</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>timeout_avp</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "timeout_avp", "$avp(i:10)")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section id="default-timeout-id">
+            <title>
+                <varname>default_timeout</varname> (integer)
+            </title>
+            <para>
+		The default dialog timeout (in seconds) if no custom one is set.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>43200 (12 hours)</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>default_timeout</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "default_timeout", 21600)
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_extra_hdrs</varname> (string)
+            </title>
+            <para>
+		A string containing the extra headers (full format, with EOH)
+		to be added in the requests generated by the module (like BYEs).
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>NULL</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>dlf_extra_hdrs</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_match_mode</varname> (integer)
+            </title>
+            <para>
+		Deprecated - in the new dialog module we always match using DID ONLY
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>detect_spirals</varname> (integer)
+            </title>
+            <para>
+			Whether spirals (i.e., messages routed through the proxy multiple times)
+			should be detected or not.
+            </para>
+            <para>
+			If set to 0, spirals will not be detected and result in the generation of a
+			new, possibly dangling dialog structure per occurring spiral. If set to 1,
+			spirals are detected and internally mapped to existing dialog structures.
+            </para>
+            <para>
+			Default value is 1.
+            </para>
+            <example>
+                <title>Set
+                    <varname>detect_spirals</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("ims_dialog", "detect_spirals", 1)
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>db_url</varname> (string)
+            </title>
+            <para>
+		Db storage not yet supported by ims_dialog - this to be done in future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>db_mode</varname> (integer)
+            </title>
+            <para>
+		Db storage not yet supported by ims_dialog - this to be done in future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>db_update_period</varname> (integer)
+            </title>
+            <para>
+		Db storage not yet supported by ims_dialog - this to be done in future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>db_fetch_rows</varname> (integer)
+            </title>
+            <para>
+		Db storage not yet supported by ims_dialog - this to be done in future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>table_name</varname> (string)
+            </title>
+            <para>
+		Db storage not yet supported by ims_dialog - this to be done in future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>profiles_with_value</varname> (string)
+            </title>
+            <para>
+			List of names for profiles with values.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>empty</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>profiles_with_value</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("dialog", "profiles_with_value", "caller ; my_profile")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>profiles_no_value</varname> (string)
+            </title>
+            <para>
+			List of names for profiles without values.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>empty</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>profiles_no_value</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("dialog", "profiles_no_value", "inbound ; outbound")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>bridge_controller</varname> (string)
+            </title>
+            <para>
+			SIP address to be used in From header when initiating a call bridge.
+            </para>
+            <para>
+                <emphasis>
+			Default value is
+                    <quote>sip:controller@kamailio.org</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set
+                    <varname>bridge_controller</varname> parameter
+                </title>
+                <programlisting format="linespecific">
+...
+modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <varname>initial_cbs_inscript</varname> (string)
+            </title>
+            <para>
+            This has been deprecated since dlg_manage has been removed.
+            </para>
+        </section>
+
+    </section>
+
+
+    <section>
+        <title>Functions</title>
+        <section>
+            <title>
+                <function moreinfo="none">set_dlg_profile(profile,[value])</function>
+            </title>
+            <para>
+		Inserts the current dialog into a profile. Note that if the profile does
+		not supports values, this will be silently discarded. Also, there is
+		no check for inserting the same dialog in the same profile for multiple
+		times.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>profile</emphasis> - name of the profile to be
+			added to;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>value</emphasis> (optional) - string value to
+			define the belonging of the dialog to the profile - note that the
+			profile must support values.
+			Pseudo-variables are supported.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>set_dlg_profile</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+set_dlg_profile("inbound_call");
+set_dlg_profile("caller","$fu");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">unset_dlg_profile(profile,[value])</function>
+            </title>
+            <para>
+		Removes the current dialog from a profile.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>profile</emphasis> - name of the profile to be
+			removed from;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>value</emphasis> (optional) - string value to
+			define the belonging of the dialog to the profile - note that the
+			profile must support values.
+			Pseudo-variables are supported.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>unset_dlg_profile</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+unset_dlg_profile("inbound_call");
+unset_dlg_profile("caller","$fu");
+...
+                </programlisting>
+            </example>
+        </section>
+
+
+        <section>
+            <title>
+                <function moreinfo="none">is_in_profile(profile,[value])</function>
+            </title>
+            <para>
+		Checks if the current dialog belongs to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - if the dialog was inserted into the profile for a
+		specific value. If no value is passed, only the simply belonging of
+		the  dialog to the profile is checked. Note that if the profile does
+		not supports values, this will be silently discarded.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>profile</emphasis> - name of the profile to be
+			checked against;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>value</emphasis> (optional) - string value to
+			further restrict the check. Pseudo-variables are supported.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>is_in_profile</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+if (is_in_profile("inbound_call")) {
+	log("this request belongs to a inbound call\n");
+}
+...
+if (is_in_profile("caller","XX")) {
+	log("this request belongs to a call of user XX\n");
+}
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">get_profile_size(profile,[value],size)</function>
+            </title>
+            <para>
+		Returns the number of dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - how many dialogs were inserted into the profile with
+		a specific value. If no value is passed, only simply belonging of the
+		dialog to the profile is checked. Note that if the profile does not
+		supports values, this will be silently discarded.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>profile</emphasis> - name of the profile to get
+			the size for;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>value</emphasis> (optional) - string value to
+			further restrict the check. Pseudo-variables are supported;
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>size</emphasis> - an AVP or script variable to
+			return the profile size in.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>get_profile_size</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+if(get_profile_size("inbound_call","$avp(size)"))
+    xlog("currently there are $avp(size) inbound calls\n");
+...
+if(get_profile_size("caller","$fu","$avp(size)"))
+    xlog("currently, the user $fu has $avp(size) active outgoing calls\n");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_isflagset(flag)</function>
+            </title>
+            <para>
+		Check if the dialog flag is set or not.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>dlg_isflagset</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+if(dlg_isflagset("1"))
+{
+    ...
+}
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_setflag(flag)</function>
+            </title>
+            <para>
+		Set the dialog flag.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>dlg_setflag</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+dlg_setflag("1");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_resetflag(flag)</function>
+            </title>
+            <para>
+		Reset the dialog flag.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>dlg_resetflag</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+redlg_setflag("1");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_terminate</function>
+            </title>
+            <para>
+		Terminates a dialog.  In ims_dialog module this function now
+                includes support for early as well as confirmed dialogs.
+            </para>
+            <para>Meaning of the parameters is as follows:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>side</emphasis> - which side to terminate.
+                            It can be: caller, callee or both of them.
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>reason</emphasis> - reason for termination.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+            </para>
+            <example>
+                <title>
+                    <function>dlg_terminate</function> usage
+                </title>
+                <programlisting format="linespecific">
+...
+dlg_terminate("all", "Insufficient QoS");
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_refer(side, address)</function>
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_manage()</function>
+            </title>
+            <para>
+		This has been deprecated in ims_dialog. Instead set dialog flag for
+                initial INVITE and Route-parameter-callback execution for
+                within-dialog requests.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <function moreinfo="none">dlg_bridge(from, to, op)</function>
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+		<title>
+		<function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
+		</title>
+		<para>
+			Search and set current dialog based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_get("abcdef", "123", "456"))
+{
+	dlg_bye("all");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+        <section>
+            <title>
+                <function moreinfo="none">is_known_dlg()</function>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+    </section>
+
+
+    <section>
+        <title>Exported statistics</title>
+        <section>
+            <title>
+                <varname>active_dialogs</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>early_dialogs</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>processed_dialogs</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>expired_dialogs</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>failed_dialogs</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+    </section>
+
+
+    <section>
+        <title>MI Commands</title>
+
+        <section>
+            <title>
+                <varname>dlg_list</varname>
+            </title>
+            <para>
+		Lists the description of a dialog or of all dialogs (calls). If only
+		one dialogs is to be listed, the dialog identifiers are to be passed
+		as parameter (callid and fromtag).  In ims_dialog module this also now
+                also lists all dlg_out entries for early dialogs.
+            </para>
+            <para>
+		Name:
+                <emphasis>dlg_list</emphasis>
+            </para>
+            <para>Parameters:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>callid</emphasis> (optional) - callid if a single
+				dialog to be listed.
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>from_tag</emphasis> (optional, but cannot be present
+				without the callid parameter) - from tag (as per initial request)
+				of the dialog to be listed.  Note that if the from_tag is not
+				specified, only dialogs created by a request without a from tag
+				are matched, which will only occur with broken clients and is
+				thus a very rare situation.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+		MI FIFO Command Format:
+            </para>
+            <programlisting  format="linespecific">
+		:dlg_list:_reply_fifo_file_
+		_empty_line_
+            </programlisting>
+            <programlisting  format="linespecific">
+		:dlg_list:_reply_fifo_file_
+		abcdrssfrs122444@192.168.1.1
+		AAdfeEFF33
+            </programlisting>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_list_ctx</varname>
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_end_dlg</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_terminate_dlg</varname>
+            </title>
+            <para>
+		Terminates a singe dialog, identified by the call_id, ftag, ttag. In ims_dialog module this
+                dialog can be terminated in the early or confirmed states.
+            </para>
+            <para>
+		Name:
+                <emphasis>dlg_terminate_dlg</emphasis>
+            </para>
+            <para>Parameters:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <emphasis>callid</emphasis> - callid of the dialog to be terminated.
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>ftag</emphasis> fromtag of dialog to be terminated.
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <emphasis>ttag</emphasis> totag of dialog to be terminated.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>
+                <emphasis>Note: Works for confirmed and early dialogs.</emphasis>
+            </para>
+            <para>
+		MI FIFO Command Format:
+            </para>
+            <programlisting  format="linespecific">
+		:dlg_terminate_dlg:_reply_fifo_file_
+		abcdrssfrs122444@192.168.1.1
+		AAdfeEFF33 ftag-1234 t-tag1234
+            </programlisting>
+        </section>
+
+        <section>
+            <title>
+                <varname>profile_get_size</varname>
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>profile_list_dlgs</varname>
+            </title>
+            <para>
+		This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg_bridge</varname>
+            </title>
+            <para>
+			This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+    </section>
+
+
+    <section>
+        <title>RPC Commands</title>
+        <section>
+            <title>
+                <varname>dlg.list</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.list_ctx</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.dlg_list</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.dlg_list_ctx</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.end_dlg</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.profile_get_size</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.profile_list</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>dlg.bridge_dlg</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+    </section>
+
+
+
+    <section>
+        <title>Exported pseudo-variables</title>
+
+        <section>
+            <title>
+                <varname>$DLG_count</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>$DLG_status</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>$DLG_lifetime</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>$dlg(...)</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+        <section>
+            <title>
+                <varname>$dlg_ctx(...)</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+        <section>
+            <title>
+                <varname>$dlg_var(key)</varname>
+            </title>
+            <para>
+                    This function is currently not supported by the ims_dialog module.
+                    To be incorporated in the future.
+            </para>
+        </section>
+
+    </section>
+
+
+
+</chapter>

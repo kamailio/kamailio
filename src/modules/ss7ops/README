@@ -1,0 +1,84 @@
+SS7 Ops Module
+
+Holger Freyther
+
+   <help@moiji-mobile.com>
+
+Edited by
+
+Holger Freyther
+
+   <help@moiji-mobile.com>
+
+   Copyright © 2016 Strong Leaf Consultant Ltd.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. External Libraries or Applications
+        3. Functions
+
+              3.1. isup_to_json
+
+        4. Variables
+
+              4.1. isup(id)
+
+   List of Examples
+
+   1.1. isup_to_json usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. External Libraries or Applications
+   3. Functions
+
+        3.1. isup_to_json
+
+   4. Variables
+
+        4.1. isup(id)
+
+1. Overview
+
+   The ss7ops module can currently handle M2UA/MTP-L3/ISUP and convert it
+   to JSON. In the future this might gain support for more SIGTRAN
+   adoptions and ITU TCAP/GSM MAP.
+
+2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Functions
+
+   3.1. isup_to_json
+
+3.1. isup_to_json
+
+   isup_to_json(proto)
+
+   Pass the HEP protocol type as parameter (e.g. 8 for M2UA) and the
+   contained ISUP payload will be converted to a JSON string. The result
+   can be accessed using the $isup(1) variable.
+
+   Example 1.1. isup_to_json usage
+...
+isup_to_json(8);
+...
+
+4. Variables
+
+   4.1. isup(id)
+
+4.1. isup(id)
+
+   If id is set to 1, return the JSON representation as string for the
+   last message that was parsed.

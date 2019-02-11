@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<chapterinfo>
+	</chapterinfo>
+	<title>Developer's Guide</title>
+	<para>
+	The module does not provide any <acronym>API</acronym> to use in other &kamailio; modules.
+	</para>
+</chapter>

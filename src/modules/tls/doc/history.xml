@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="tls.status">
+	<title>Status</title>
+	<section id="tls.license">
+	<title>License</title>
+		<para>
+			Most of the code for this module has been released under BSD by
+			iptelorg. The GPL parts are released with an exception to link
+			with OpenSSL toolkit software components.
+		</para>
+	</section>
+	<section id="tls.history">
+	<title>History</title>
+		<para>
+			For version 3.1 most of the TLS specific code was completely
+			re-written to add support for asynchronous TLS and fix several
+			long standing bugs.
+		</para>
+		<para>
+			The code is currently maintained by Andrei Pelinescu-Onciul
+			<email>andrei@iptel.org</email>.
+		</para>
+		<para>
+			Install does not generate self-signed certificates by default
+			anymore. In order to generate them now you should do
+			"make install-tls-cert"
+		</para>
+	</section>
+</section>

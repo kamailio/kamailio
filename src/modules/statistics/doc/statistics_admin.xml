@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section id="statistics.overview">
+    <title>Overview</title>
+
+    <para>The <acronym>Statistics</acronym> module is a wrapper over the
+    internal statistics manager, allowing the script writer to dynamically
+    define and use of statistic variables.</para>
+
+    <para>By bringing the statistics support into the script, it takes
+    advantage of the script flexibility in defining logics, making possible
+    implementation of any kind of statistic scenario.</para>
+  </section>
+
+  <section id="statistics.dependencies">
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>No dependencies on other &kamailio;
+            modules</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>The following libraries or applications must be installed before
+      running &kamailio; with this module loaded: <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </section>
+
+  <section id="statistics.parameters">
+    <title>Parameters</title>
+
+    <section id="statistics.p.variable">
+      <title><varname>variable</varname> (string)</title>
+
+      <para>Name of a new statistic variable. The name may be followed by
+      additional flag which describe the variable behavior:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>no_reset</emphasis> : variable cannot be
+          reset.</para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>variable example</title>
+
+        <programlisting format="linespecific">
+modparam("statistics", "variable", "register_counter")
+modparam("statistics", "variable", "active_calls/no_reset")
+</programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section id="statistics.functions">
+    <title>Functions</title>
+
+    <section id="statistics.f.update_stat">
+      <title><function
+      moreinfo="none">update_stat(variable,value)</function></title>
+
+      <para>Updates the value of the statistic variable with the new
+      value.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>variable</emphasis> - variable to be updated (it can
+          be a string or a pseudovariable);</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>value</emphasis> - value to update with; it may be
+          also negative (it can be a string or pseudovariable).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from ANY_ROUTE.</para>
+
+      <example>
+        <title><function>update_stat</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+update_stat("register_counter", "+1");
+...
+$var(a_calls) = "active_calls";
+update_stat("$var(a_calls)", "-1");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="statistics.f.reset_stat">
+      <title><function moreinfo="none">reset_stat(variable)</function></title>
+
+      <para>Resets to zero the value of the statistic variable.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>variable</emphasis> - variable to be reset (it
+          can be a string or a pseudovariable).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+      FAILURE_ROUTE and ONREPLY_ROUTE.</para>
+
+      <example>
+        <title><function>reset_stat</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+reset_stat("register_counter");
+...
+$var(reg_counter) = "register_counter";
+update_stat("$var(reg_counter)");
+...
+</programlisting>
+      </example>
+    </section>
+  </section>
+</chapter>

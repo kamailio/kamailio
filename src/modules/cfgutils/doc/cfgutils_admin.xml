@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- cfgutils Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>Useful extensions for the server configuration.</para>
+	<para>
+	The cfgutils module can be used to introduce randomness to
+	the behaviour of the server. It provides setup functions
+	and the <quote>rand_event</quote> function. This function return either
+	true or false, depending on a random value and a specified probability.
+	E.g. if you set via fifo or script a probability value of 5%, then 5% of
+	all calls to rand_event will return true.
+	The pseudovariable <quote>$RANDOM</quote> could be used to introduce 
+	random values e.g. into a SIP reply.
+	</para>
+	<para>
+	The benefit of this module is the probability of the decision
+	can be manipulated by external applications such as web interface
+	or command line tools. The probability must be specified as 
+	percent value, ranging from 0 to 100.
+	</para>
+	<para>
+	The module exports commands to FIFO server that can be used to change
+	the global settings via FIFO interface. The FIFO commands are:
+	<quote>set_prob</quote>, <quote>reset_prob</quote> and
+	<quote>get_prob</quote>.
+	</para>
+	<para>
+	This module can be used for simple load-shedding, e.g. reply 5% of
+	the Invites with a 503 error and a adequate random Retry-After value.
+	</para>
+	<para>
+	The module provides as well functions to delay the execution of the
+	server. The functions <quote>sleep</quote> and <quote>usleep</quote> could
+	be used to let the server wait a specific time interval.
+	</para>
+	<para>It can also hash the config file used from the server with a (weak)
+	cryptographic hash function on startup. This value is saved and can be
+	later compared to the actual hash, to detect modifications of this file
+	after the server start. This functions are available as the FIFO commands
+	<quote>check_config_hash</quote> and <quote>get_config_hash</quote>.
+	</para>
+	<para>
+	The gflags functionality (global flags) keeps a bitmap of flags in shared
+	memory and may be used to change behaviour of server based on value of the
+	flags. Example:
+	<programlisting format="linespecific">
+	if (is_gflag("1")) {
+		t_relay("udp:10.0.0.1:5060");
+	} else {
+		t_relay("udp:10.0.0.2:5060");
+	}
+	</programlisting>
+	</para>
+	<para>
+	The benefit of this is the value of the switch flags can be manipulated
+	by external applications such as web interface or command line tools.
+	The size of bitmap is 32.
+	</para>
+	<para>
+	The module exports external commands that can be used to change
+	the global flags via Management Interface and RPC. See relevant
+	sections below.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the
+		listed modules must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>none</emphasis></para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="cfgutils.p.initial_propability">
+		<title><varname>initial_probability</varname> (string)</title>
+		<para>
+		The initial value of the probability.
+		</para>
+		<para>
+		Default value is
+			<quote>10</quote>.
+		</para>
+		<example>
+		<title><varname>initial_probability</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "initial_probability", 15)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="cfgutils.p.hash_file">
+		<title><varname>hash_file</varname> (string)</title>
+		<para>
+		The config file name for that a hash value should be calculated on startup.
+		</para>
+		<para>
+		There is no default value, is no parameter is given the hash functionality
+		is disabled.
+		</para>
+		<example>
+		<title><varname>hash_file</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "hash_file", "/etc/kamailio/&kamailioconfig;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+		<section id="cfgutils.p.initial_gflags">
+		<title><varname>initial_gflags</varname> (integer)</title>
+		<para>
+		The initial value of global flags bitmap.
+		</para>
+		<para>
+		Default value is <quote>0</quote>.
+		</para>
+		<example>
+		<title><varname>initial</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "initial_gflags", 15)
+...
+		</programlisting>
+		</example>
+	</section>
+		<section id="cfgutils.p.lock_set_size">
+		<title><varname>lock_set_size</varname> (integer)</title>
+		<para>
+		Size of lock set - the value is used as power of two to compute the
+		size of lock array.
+		</para>
+		<para>
+		Default value is <quote>0</quote> - no lock set created.
+		</para>
+		<example>
+		<title><varname>lock_set_size</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "lock_set_size", 4)
+...
+		</programlisting>
+		</example>
+	</section>
+</section>
+
+    <section>
+	<title>Functions</title>
+	<section  id="cfgutils.f.rand_event">
+		<title><function moreinfo="none">rand_event()</function></title>
+		<para>
+			Return true or false, depending on a random value and a
+			probability value.
+		</para>
+		<example>
+			<title><function moreinfo="none">rand_event()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (rand_event()) {
+  append_to_reply("Retry-After: 120\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.rand_set_prob">
+	    <title><function moreinfo="none">rand_set_prob(probability)</function></title>
+	    <para>
+		Set the <quote>probability</quote> of the decision.
+	    </para>
+	    <para>
+		<quote>probability</quote> can have a value from the range 0..100.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_set_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_set_prob("4");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="cfgutils.f.rand_reset_prob">
+	    <title><function moreinfo="none">rand_reset_prob()</function></title>
+	    <para>
+		Reset the probability back to the initial value.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_reset_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_reset_prob();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="cfgutils.f.rand_get_prob">
+	    <title><function moreinfo="none">rand_get_prob()</function></title>
+	    <para>
+		Return the current probability setting, e.g. for logging purposes.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_get_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_get_prob();
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="cfgutils.f.sleep">
+		<title>
+			<function moreinfo="none">sleep(time)</function>
+		</title>
+		<para>
+			Waits "time" seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in seconds.
+					It can be an integer or a variable
+					holding an integer.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>sleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+sleep("1");
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.usleep">
+		<title>
+			<function moreinfo="none">usleep(time)</function>
+		</title>
+		<para>
+			Waits "time" micro-seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in micro-seconds
+					(1/1000000 of a second). It can be an integer or a variable
+					holding an integer.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>usleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+# wait 5 milliseconds
+usleep("5000");
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.abort">
+		<title>
+			<function moreinfo="none">abort()</function>
+		</title>
+		<para>
+			Debugging function that aborts the server. Depending on the
+			configuration of the server a core dump will be created.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>abort</function> usage</title>
+			<programlisting format="linespecific">
+...
+abort();
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.pkg_status">
+		<title>
+			<function moreinfo="none">pkg_status()</function>
+		</title>
+		<para>
+			Debugging function that dumps the status for the private (PKG) memory.
+			This information is logged to the default log facility, depending on
+			the general log level and the memlog setting. You need to compile
+			the server with activated memory debugging to get detailed informations.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>pkg_status</function> usage</title>
+			<programlisting format="linespecific">
+...
+pkg_status();
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.pkg_summary">
+		<title>
+			<function moreinfo="none">pkg_summary()</function>
+		</title>
+		<para>
+			Debugging function that dumps the summary for the private (PKG) memory
+			usage. This information is logged to the default log facility,
+			depending on the general log level and the memlog setting. You need
+			to compile the server with activated memory debugging to get detailed
+			informations.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>pkg_summary</function> usage</title>
+			<programlisting format="linespecific">
+...
+pkg_summary();
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.shm_status">
+		<title>
+			<function moreinfo="none">shm_status()</function>
+		</title>
+		<para>
+			Debugging function that dumps the status for the shared (SHM) memory.
+			This information is logged to the default log facility, depending on
+			the general log level and the memlog setting. You need to compile
+			the server with activated memory debugging to get detailed informations.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>shm_status</function> usage</title>
+			<programlisting format="linespecific">
+...
+shm_status();
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section  id="cfgutils.f.shm_summary">
+		<title>
+			<function moreinfo="none">shm_summary()</function>
+		</title>
+		<para>
+			Debugging function that dumps the summary for the shared (SHM) memory
+			usage. This information is logged to the default log facility,
+			depending on the general log level and the memlog setting. You need
+			to compile the server with activated memory debugging to get detailed
+			informations.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>shm_summary</function> usage</title>
+			<programlisting format="linespecific">
+...
+shm_summary();
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.set_gflag">
+		<title><function moreinfo="none">set_gflag(flag)</function></title>
+		<para>
+		Set the bit at the position <quote>flag</quote> in global flags.
+		</para>
+		<para>
+		<quote>flag</quote> can have a value in the range of 0..31.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">set_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_gflag("4");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.reset_gflag">
+		<title><function moreinfo="none">reset_gflag(flag)</function></title>
+		<para>
+		Reset the bit at the position <quote>flag</quote> in global flags.
+		</para>
+		<para>
+		<quote>flag</quote> can have a value in the range of 0..31.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">reset_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+reset_gflag("4");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="cfgutils.f.is_gflag">
+		<title><function moreinfo="none">is_gflag(flag)</function></title>
+		<para>
+		Check if bit at the position <quote>flag</quote> in global flags is
+		set.
+		</para>
+		<para>
+		<quote>flag</quote> can have a value in the range of 0..31.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">is_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_gflag("4"))
+{
+	log("global flag 4 is set\n");
+} else {
+	log("global flag 4 is not set\n");
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.lock">
+		<title><function moreinfo="none">lock(key)</function></title>
+		<para>
+		Lock the key. Can be used to synchronize operations in config file,
+		a hash id is computed over the key and appropriate lock is set in the
+		lock array controlled by parameter "lock_set_size". Do not use lock()
+		after another lock() unless you are sure the keys hit different array
+		entries.
+		</para>
+		<para>
+		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">lock()</function> usage</title>
+		<programlisting format="linespecific">
+...
+lock("$rU");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.trylock">
+		<title><function moreinfo="none">trylock(key)</function></title>
+		<para>
+		Try to lock the key. If the lock can not be obtained (possibly already locked),
+		the function returns an error and script execution continues.
+		</para>
+		<para>
+		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">trylock()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (trylock("$rU")) {
+	xlog("L_INFO", "Doing some cool stuff\n");
+	unlock("$rU");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.unlock">
+		<title><function moreinfo="none">unlock(key)</function></title>
+		<para>
+		Unlock the key.
+		</para>
+		<para>
+		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">unlock()</function> usage</title>
+		<programlisting format="linespecific">
+...
+unlock("$rU");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.check_route_exists">
+		<title><function moreinfo="none">check_route_exists(route)</function></title>
+		<para>
+		Check if a route block exists. It returns true (1) on found and false on
+		not found or error.
+		</para>
+		<para>Parameters:</para>
+		<para>
+		<quote>name</quote> of a route block in the config file, like <quote>route[FROGJUMP]</quote>
+		</para>
+		<para>
+		This function can be used from any route. You can only check for
+		route[] blocks, not reply, event or other routes.
+		</para>
+		<example>
+		<title><function moreinfo="none">check_route_exists()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(check_route_exists("JUMP") {
+	$var(jumping_frogs) = 1;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.route_if_exists">
+		<title><function moreinfo="none">route_if_exists(route)</function></title>
+		<para>
+		Execute a routing block only if it is defined. If it's not defined, silently
+		move to the next action in the configuration script.
+		</para>
+		<para>
+		It returns the code of last action in the route block, if that exists, or
+		false if the route doesn't exists or was an error executing it.
+		</para>
+		<para>Parameters:</para>
+		<para>
+		<quote>name</quote> of a route block in the config file, like <quote>route[FROGJUMP]</quote>
+		</para>
+		<para>
+		This function can be used from any route. You can only execute it for
+		route[] blocks, not reply, event or other routes.
+		</para>
+		<example>
+		<title><function moreinfo="none">route_if_exists()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(route_if_exists("JUMP")) {
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfgutils.f.core_hash">
+		<title><function moreinfo="none">core_hash(string1, string2, size)</function></title>
+		<para>
+		Exported function that enables the core_hash() function to be used
+		from the configuration file.
+		</para>
+		<para>
+		This is a quick and simple hash function and it is not
+		cryptographically secure.  This function should not be used for
+		any security related purposes.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para><quote>string1</quote> first string to
+					hash</para>
+			</listitem>
+			<listitem>
+				<para><quote>string2</quote> (optional) second
+					string to hash (set to "" if not
+					needed)</para>
+			</listitem>
+			<listitem>
+				<para><quote>size</quote> size of the hash space
+					(used as a power of 2)</para>
+			</listitem>
+		</itemizedlist>
+		<para>This function can be used from ANY_ROUTE.</para>
+		<example>
+		<title><function moreinfo="none">core_hash()</function> usage</title>
+		<programlisting format="linespecific">
+...
+core_hash("$ci", "", 4);
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+	<section>
+		<title>RPC Commands</title>
+			<para>Functions that check or change some global flags accepts one
+			parameter which is the flag bitmap/mask specifying the corresponding
+			flags. It is not possible to specify directly the flag position that
+			should be changed as in the functions available in the routing
+			script.
+		</para>
+		<section id="cfgutils.rpc.rand_set_prob">
+			<title><function moreinfo="none">cfgutils.rand_set_prop</function></title>
+			<para>
+				Set the probability value to the given parameter.
+				The parameter should be a percent value.
+			</para>
+			<para>
+				The parameter value must be a number from 0 to 100.
+			</para>
+			<example>
+				<title><function moreinfo="none">cfgutils.rand_set_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.rand_set_prob 10
+...
+</programlisting>
+			</example>
+
+		</section>
+		<section id="cfgutils.rpc.rand_reset_prob">
+			<title><function moreinfo="none">cfgutils.rand_reset_prob</function></title>
+			<para>
+				Reset the probability value to the initial start value.
+			</para>
+			<para>
+				This command don't need a parameter.
+			</para>
+			<example>
+				<title>
+					<function moreinfo="none">cfgutils.rand_reset_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.rand_reset_prob
+...
+</programlisting>
+			</example>
+		</section>
+		<section  id="cfgutils.rpc.rand_get_prob">
+			<title><function moreinfo="none">cfgutils.rand_get_prob</function></title>
+			<para>
+				Return the actual probability setting.
+			</para>
+			<para>
+				The function return the actual probability value.
+			</para>
+			<example>
+				<title><function moreinfo="none">cfgutils.rand_get_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.rand_get_prob
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cfgutils.rpc.check_config_hash">
+			<title><function moreinfo="none">cfgutils.check_config_hash</function></title>
+			<para>
+				Check if the actual config file hash is identical to the stored one.
+			</para>
+			<para>
+				The function returns 200 OK if the hash values are identical, 400 if
+				there are not identical, 404 if no file for hashing has been configured
+				and 500 on errors. Additional a short text message is printed.
+			</para>
+			<example>
+				<title><function moreinfo="none">cfgutils.check_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.check_config_hash
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cfgutils.rpc.get_config_hash">
+			<title><function moreinfo="none">cfgutils.get_config_hash</function></title>
+			<para>
+				Return the stored config file hash.
+			</para>
+			<para>
+				The function returns 200 OK and the hash value on success or 404 if no
+				file for hashing has been configured.
+			</para>
+			<example>
+				<title><function moreinfo="none">cfgutils.get_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.get_config_hash
+...
+</programlisting>
+			</example>
+		</section>
+		<section  id="cfgutils.rpc.set_gflag">
+			<title><function moreinfo="none">cfgutils.set_gflag</function></title>
+			<para>
+			Set the value of some flags (specified by bitmask) to 1.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
+			</para>
+			<example>
+			<title><function moreinfo="none">cfgutils.set_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.set_gflag 1
+...
+</programlisting>
+			</example>
+
+		</section>
+		<section  id="cfgutils.rpc.reset_gflag">
+			<title><function moreinfo="none">cfgutils.reset_gflag</function></title>
+			<para>
+			Reset the value of some flags to 0.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">cfgutils.reset_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.reset_gflag 1
+...
+</programlisting>
+			</example>
+		</section>
+		<section  id="cfgutils.rpc.is_gflag">
+			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
+			<para>
+			Returns true if the all the flags from the bitmask are set.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
+			</para>
+			<para>
+			The function returns TRUE if all the flags from the set are set
+			and FALSE if at least one is not set.
+			</para>
+			<example>
+			<title><function moreinfo="none">cfgutils.is_gflag</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.set_gflag 1024
+$ &kamcmd; cfgutils.is_gflag 1024
+TRUE
+...
+</programlisting>
+			</example>
+		</section>
+		<section id="cfgutils.rpc.get_gflags">
+			<title><function moreinfo="none">cfgutils.get_gflags</function></title>
+			<para>
+			Return the bitmap with all flags. The function gets no
+			parameters and returns the bitmap in hexadecimal and decimal format.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">cfgutils.get_gflags</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; cfgutils.get_gflags
+...
+</programlisting>
+			</example>
+		</section>
+</section>
+
+<section>
+	<title>Exported pseudo-variables</title>
+
+		<section>
+			<title><varname>$RANDOM</varname></title>
+			<para>
+				Returns a random value from the [0 - 2^31) range.
+			</para>
+			<example>
+				<title><function moreinfo="none">RANDOM pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (rand_event()) {
+  $avp(i:10) = ($RANDOM / 16777216); # 2^24
+  if ($avp(i:10) &lt; 10) {
+     $avp(i:10) = 10;
+  }
+  append_to_reply("Retry-After: $avp(i:10)\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+
+				 </programlisting>
+			</example>
+	</section>
+</section>
+</chapter>
+

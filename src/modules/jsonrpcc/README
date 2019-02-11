@@ -1,0 +1,185 @@
+JSONRPCC (jsonrpc client) Module
+
+Matthew Williams
+
+   <matthew@flowroute.com>
+
+Edited by
+
+Jordan Levy
+
+   <jordan@flowroute.com>
+
+   Copyright © 2011 Flowroute LLC (flowroute.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. servers (string)
+              3.2. max_conn_attempts (int)
+
+        4. Functions
+
+              4.1. jsonrpc_notification(method, parameters)
+              4.2. jsonrpc_request(method, parameters, return_route,
+                      error_route, result_var)
+
+   List of Examples
+
+   1.1. Set servers parameter
+   1.2. Set max_conn_attempts parameter
+   1.3. jsonrpc_notification usage
+   1.4. jsonrpc_request usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. servers (string)
+        3.2. max_conn_attempts (int)
+
+   4. Functions
+
+        4.1. jsonrpc_notification(method, parameters)
+        4.2. jsonrpc_request(method, parameters, return_route,
+                error_route, result_var)
+
+1. Overview
+
+   This module provides access to json-rpc services (operating over
+   TCP/Netstrings).
+
+   This module uses t_suspend() and t_continue() from the TM module.
+
+   Note that after invoking an asynchronous operation, the processing will
+   continue later, in another application process. Therefore, do not rely
+   on variables stored in private memory, use shared memory if you want to
+   get values after the processing is resumed (e.g., $shv(...) or htable
+   $sht(...)).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - transaction management.
+
+2.2. External Libraries or Applications
+
+   Note: this module uses Linux specific API, part of glibc library, it
+   might not compile on other types of operating systems.
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libjson (https://github.com/json-c/json-c/wiki)
+     * libevent - http://libevent.org/
+     * glibc - http://www.gnu.org/software/libc/ (v2.8 or higher)
+
+3. Parameters
+
+   3.1. servers (string)
+   3.2. max_conn_attempts (int)
+
+3.1. servers (string)
+
+   The servers providing the remote jsonrpc service. Format is
+   "host1:port1,priority1 host2:port2,priority2". Requests to servers of
+   the same priority will be distributed evenly (round robin). Server
+   groups with higher priority are used first.
+
+   Example 1.1. Set servers parameter
+...
+modparam("jsonrpcc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server
+:9999,1")
+...
+
+3.2. max_conn_attempts (int)
+
+   Max number of connection attempts for a server. -1 will keep
+   reconnecting forever, 0 will skip any attempt to reconnect.
+
+   Example 1.2. Set max_conn_attempts parameter
+...
+modparam("jsonrpcc", "max_conn_attempts", 10)
+...
+
+4. Functions
+
+   4.1. jsonrpc_notification(method, parameters)
+   4.2. jsonrpc_request(method, parameters, return_route, error_route,
+          result_var)
+
+4.1.  jsonrpc_notification(method, parameters)
+
+   Invokes the remote 'method' with the given 'parameters' as a
+   notification. Unlike jsonrpc_request (below), notifications do not
+   receive a response. Script processing continues in the usual fashion as
+   soon as the notification has been sent.
+
+   The method and parameters can be a static string or dynamic string
+   value with config variables.
+
+   Example 1.3. jsonrpc_notification usage
+...
+jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
+...
+
+4.2.  jsonrpc_request(method, parameters, return_route, error_route,
+result_var)
+
+   Invokes the remote 'method' with the given 'parameters'. When the
+   response is received, continues processing of the SIP request with the
+   route[return_route]. If a timeout occurs, no servers can be reached, or
+   a jsonrpc error message is received, continues process at
+   route[error_route]. In this case, the result_var will contain one of
+   "timeout", "failure", or the error message received back from the
+   jsonrpc server.
+
+   The method, parameters, return_route, and error_route can be a static
+   string or a dynamic string value with config variables.
+
+   Since the SIP request handling is resumed in another process, the
+   config file execution is lost. As mentioned above, only shared
+   variables ($shv, etc) should be used for any value that will be needed
+   when the script is resumed.
+
+   The result is stored in the pseudo-variable 'result_var'. Since this
+   variable is set after the response is received, it is possible to use a
+   $var for this parameter.
+
+   Example 1.4. jsonrpc_request usage
+...
+jsonrpc_request("get_user", "{'id': 1234}", "RESPONSE", "ERROR", "$var(result)")
+;
+...
+route[RESPONSE] {
+        xlog("Result received: $var(result)");
+        ...
+}
+...
+route[ERROR] {
+        xlog("Error received: $var(result)");
+        ...
+}
+...

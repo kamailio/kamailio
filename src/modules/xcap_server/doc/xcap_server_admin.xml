@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides an XCAP server functionally inside Kamailio
+		and SER SIP servers.
+	</para>
+	<para>
+		Benefits brought by this integrated XCAP server:
+		<itemizedlist>
+		<listitem>
+		<para>
+			reuse of SIP router transport layer - XCAP documents can be sent
+			via SIP (UDP, TCP, TLS and SCTP) and via HTTP (TCP or TLS (HTTPS)).
+			For HTTP/S, you need to load XHTTP module to handle HTTP/S
+			requests.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			the Presence server has access immediately to the latest version
+			of XCAP documents. No more need to trigger refresh of XCAP
+			documents via RPC command.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			can be used stand-alone, with a different Presence server. It is not
+			specific for Kamailio or SER. Documents can be fetched via GET
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			no exotic dependencies, it is written in C. It depends on
+			libxml2, sl module and a database module (required to store the
+			xcap documents).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			you can do digest authentication using database, radius, ldap, etc.
+			Can reuse authorization mechanisms provided by SIP server.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			flexibility - the XCAP server is controlled from config file of
+			SIP server, therefore you can blend the XCAP logic with features
+			provided by core or other modules.
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Important: be sure you have global parameter: 'tcp_accept_no_cl=yes'.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - stateless reply module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>db</emphasis> - a database engine module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - embedded HTTP server
+				if you want to get XCAP documents via HTTP.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml2</emphasis> - libxml2 library for runtime and
+				libxml2-dev for compilation.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="xcap_server.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		Database &url;.
+		</para>
+		<para>
+		<emphasis>
+			Default value is
+			<quote>&defaultdb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>db_url</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "db_url", "mysql://user:passwd@host.com/dbname")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.xcap_table">
+		<title><varname>xcap_table</varname> (string)</title>
+		<para>
+		The name of table where to store the xcap documents.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>xcap</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>xcap_table</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("xcap_server", "xcap_table", "xcapdocs")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.xcap_root">
+		<title><varname>xcap_root</varname> (str)</title>
+		<para>
+			XCAP root URL.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '/xcap-root/'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "xcap_root", "/xcap-root/")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.buf_size">
+		<title><varname>buf_size</varname> (int)</title>
+		<para>
+		Size of local buffer for handling XCAP documents.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1024</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>buf_size</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("xcap_server", "buf_size", 2048)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.xml_ns">
+		<title><varname>xml_ns</varname> (str)</title>
+		<para>
+			Register extra XML namespaces to be used with XPath. You
+			can set the parameter many times to add more namespaces. The
+			format is 'prefix=href'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'null'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xml_ns</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "xml_ns",
+    "rl=urn:ietf:params:xml:ns:resource-lists")
+modparam("xcap_server", "xml_ns",
+    "my=urn:my:prefix")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.directory_scheme">
+		<title><varname>directory_scheme (int)</varname></title>
+		<para>
+			Allows the scheme used in
+			org.openmobilealliance.xcap-directory listings to be
+			set to a specific value.
+		</para>
+		<para>
+			The URLs in an org.oma.xcap-directory listing must be
+			be paths a client can use to download the listed XCAP
+			documents. In some cases (for example, when the XCAP
+			server is accessed using HTTP from an HTTP proxy the
+			client connected to using HTTPS) the XCAP server may
+			not be able to automatically determine the correct
+			scheme to use based on the HTTP connection.
+		</para>
+		<itemizedlist>
+		<listitem><para>
+		<emphasis>-1 (default)</emphasis> - determine scheme
+		automatically.  HTTP for TCP connections and HTTPS for TLS
+		connections.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>0</emphasis> - use the HTTP scheme.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>1</emphasis> - use the HTTPS scheme.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Set <varname>directory_scheme</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "directory_scheme", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_server.p.directory_hostname">
+		<title><varname>directory_hostname (str)</varname></title>
+		<para>
+			Allows the hostname (and port) used in
+			org.openmobilealliance.xcap-directory listings to be
+			set to a specific value.
+		</para>
+		<para>
+			The URLs in an org.oma.xcap-directory listing must be
+			be paths a client can use to download the listed XCAP
+			documents. In some cases (for example, when the XCAP
+			server is accessed through a proxy that re-writes
+			headers, or a client is non-conforming and does not
+			include a Host: header) the XCAP server may not be able
+			to automatically determine the correct hostname to use.
+		</para>
+		<para>
+			When this parameter is not set the XCAP server will
+			attempt to use the contents of the (mandatory) Host:
+			header. If the Host: header is not present the XCAP
+			server will use the IP address and port the XCAP
+			request was received on.
+		</para>
+		<example>
+		<title>Set <varname>directory_hostname</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "directory_hostname", "xcap.example.com")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+ 	<section id="xcap_server.f.xcaps_put">
+	    <title>
+		<function moreinfo="none">xcaps_put(uri, path, doc)</function>
+	    </title>
+	    <para>
+		Handle XCAP PUT command.
+	    </para>
+		<example>
+		<title><function>xcaps_put</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[xhttp:request] {
+	if($hu=~"^/xcap-root/")
+	{
+		# xcap ops
+		switch($rm) {
+			case "PUT":
+				xcaps_put("sip:101@$Ri", "$hu", "$rb");
+				exit;
+				break;
+		}
+	}
+}
+...
+</programlisting>
+	    </example>
+	</section>
+ 	<section id="xcap_server.f.xcaps_get">
+	    <title>
+		<function moreinfo="none">xcaps_get(uri, path)</function>
+	    </title>
+	    <para>
+		Handle XCAP GET command.
+	    </para>
+		<example>
+		<title><function>xcaps_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[xhttp:request] {
+	if($hu=~"^/xcap-root/")
+	{
+		# xcap ops
+		switch($rm) {
+			case "GETT":
+				xcaps_get("sip:101@$Ri", "$hu");
+				exit;
+				break;
+		}
+	}
+}
+...
+</programlisting>
+	    </example>
+	</section>
+ 	<section id="xcap_server.f.xcaps_del">
+	    <title>
+		<function moreinfo="none">xcaps_del(uri, path)</function>
+	    </title>
+	    <para>
+		Handle XCAP DELETE command.
+	    </para>
+		<example>
+		<title><function>xcaps_del</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[xhttp:request] {
+	if($hu=~"^/xcap-root/")
+	{
+		# xcap ops
+		switch($rm) {
+			case "DELETE":
+				xcaps_del("sip:101@$Ri", "$hu");
+				exit;
+				break;
+		}
+	}
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+		<title>Pseudo Variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$xcapuri(name=>key)</emphasis> - name can be any
+				to idenitfy the XCAP uri; key can be: data, uri, root, auid,
+				type, tree, xuid, file, node, target, domain, uri_adoc.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+		<example>
+		<title>$xcapuri(...) PV</title>
+		<programlisting format="linespecific">
+...
+    $xcapuri(u=>data) = $hu;
+    xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	<title>Simple XCAP Server Config</title>
+		<example>
+		<title>sample xcap server</title>
+		<programlisting format="linespecific">
+...
+tcp_accept_no_cl=yes
+...
+loadmodule "xhttp.so"
+loadmodule "xcap_server.so"
+
+...
+
+# ----- xcap_server params -----
+modparam("xcap_server", "db_url",
+	"&defaultdb;")
+
+...
+
+event_route[xhttp:request] {
+    if (!www_authorize("xcap", "subscriber"))
+    {
+        www_challenge("xcap", "0");
+        exit;
+    }
+    if($hu=~"^/xcap-root/")
+    {
+        set_reply_close();
+        set_reply_no_connect();
+        # xcap ops - break down http uri to get xcap user id
+        $xcapuri(u=>data) = $hu;
+        if($xcapuri(u=>xuid)=~"^sip:.+@.+")
+            $var(uri) = $xcapuri(u=>xuid);
+        else
+            $var(uri) = "sip:"+ $xcapuri(u=>xuid) + "@" + $Ri;
+
+        # handle XCAP capability request
+        if($xcapuri(u=>auid)=="xcap-caps")
+        {
+            if ($rm == "GET")
+            {
+                $var(xbody) =
+"&lt;?xml version='1.0' encoding='UTF-8'?&gt;
+&lt;xcap-caps xmlns='urn:ietf:params:xml:ns:xcap-caps'&gt;
+  &lt;auids&gt;
+    &lt;auid&gt;rls-services&lt;/auid&gt;
+    &lt;auid&gt;pidf-manipulation&lt;/auid&gt;
+    &lt;auid&gt;xcap-caps&lt;/auid&gt;
+    &lt;auid&gt;resource-lists&lt;/auid&gt;
+    &lt;auid&gt;pres-rules&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.pres-rules&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.user-profile&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.pres-content&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.search&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.xcap-directory&lt;/auid&gt;
+  &lt;/auids&gt;
+  &lt;extensions&gt;
+  &lt;/extensions&gt;
+  &lt;namespaces&gt;
+    &lt;namespace&gt;urn:ietf:params:xml:ns:rls-services&lt;/namespace&gt;
+    &lt;namespace&gt;urn:ietf:params:xml:ns:pidf&lt;/namespace&gt;
+    &lt;namespace&gt;urn:ietf:params:xml:ns:xcap-caps&lt;/namespace&gt;
+    &lt;namespace&gt;urn:ietf:params:xml:ns:resource-lists&lt;/namespace&gt;
+    &lt;namespace&gt;urn:ietf:params:xml:ns:pres-rules&lt;/namespace&gt;
+    &lt;namespace&gt;urn:oma:xml:xdm:user-profile&lt;/namespace&gt;
+    &lt;namespace&gt;urn:oma:xml:prs:pres-content&lt;/namespace&gt;
+    &lt;namespace&gt;urn:oma:xml:xdm:search&lt;/namespace&gt;
+    &lt;namespace&gt;urn:oma:xml:xdm:xcap-directory&lt;/namespace&gt;
+  &lt;/namespaces&gt;
+&lt;/xcap-caps&gt;";
+                xhttp_reply("200", "ok", "application/xcap-caps+xml",
+                            "$var(xbody)");
+            }
+            else
+            {
+                append_to_reply("Allow: GET\r\n");
+                xhttp_reply("405", "Method Not Allowed", "", "");
+            }
+            exit;
+        }
+        # be sure auth user access only its documents
+        if ($au!=$(var(uri){uri.user})) {
+            xhttp_reply("403", "Forbidden", "text/html",
+                    "operation not allowed");
+            exit;
+        }
+
+        xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+        switch($rm) {
+            case "PUT":
+                xcaps_put("$var(uri)", "$hu", "$rb");
+                if($xcapuri(u=>auid)=~"pres-rules")
+                {
+                    pres_update_watchers("$var(uri)", "presence");
+                    pres_refresh_watchers("$var(uri)", "presence", 1);
+                }
+                else if($xcapuri(u=>auid)=~"rls-services"
+                        || $xcapuri(u=>auid)=~"resource-lists")
+                {
+                    rls_update_subs("$var(uri)", "presence");
+                }
+                else if($xcapuri(u=>auid)=~"pidf-manipulation")
+                {
+                    pres_refresh_watchers("$var(uri)", "presence", 2,
+                                            "$xcapuri(u=>uri_adoc)",
+                                            "$xcapuri(u=>file)");
+                }
+                exit;
+            break;
+            case "GET":
+                xcaps_get("$var(uri)", "$hu");
+                exit;
+            break;
+            case "DELETE":
+                xcaps_del("$var(uri)", "$hu");
+                if($xcapuri(u=>auid)=~"pres-rules")
+                {
+                    pres_update_watchers("$var(uri)", "presence");
+                    pres_refresh_watchers("$var(uri)", "presence", 1);
+                }
+                else if($xcapuri(u=>auid)=~"rls-services"
+                        || $xcapuri(u=>auid)=~"resource-lists")
+                {
+                    rls_update_subs("$var(uri)", "presence");
+                }
+                else if($xcapuri(u=>auid)=~"pidf-manipulation")
+                {
+                    pres_refresh_watchers("$var(uri)", "presence", 2,
+                                            "$xcapuri(u=>uri_adoc)",
+                                            "$xcapuri(u=>file)");
+                }
+                exit;
+            break;
+            case "POST":
+                if($xcapuri(u=>auid)=~"search")
+                {
+                    xhttp_reply("501", "Not Implemented", "", "");
+                }
+                else
+                {
+                    if($xcapuri(u=>auid)=~"xcap-directory")
+                    {
+                        append_to_reply("Allow: GET\r\n");
+                    }
+                    else
+                    {
+                        append_to_reply("Allow: DELETE, GET, PUT\r\n");
+                    }
+                    xhttp_reply("405", "Method Not Allowed", "", "");
+                }
+                exit;
+            break;
+        }
+    }
+
+    # other http requests
+    xhttp_reply("404", "Not Found", "", "");
+    exit;
+}
+...
+</programlisting>
+	    </example>
+	<para>
+		The URL for XCAP has to be:
+	</para>
+	<para>
+		http://_your_sip_server_ip_:_your_sip_server_port_/xcap-root/...
+	</para>
+	<para>
+		For example, if your SIP server IP is 10.1.1.10 and it is listening
+		on TCP port 5060 and TLS port 5061, following XCAP URLs can be used:
+	</para>
+	<para>
+		http://10.1.1.10:5060/xcap-root/...
+	</para>
+	<para>
+		https://10.1.1.10:5061/xcap-root/...
+	</para>
+	</section>
+
+</chapter>
+

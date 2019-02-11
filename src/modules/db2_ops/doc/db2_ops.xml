@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="db2_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>db2_ops module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Tomas</firstname>
+		<surname>Mandys</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>tomas dot mandys at iptel dot org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Tomas Mandys</holder>
+	</copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="db_ops.overview">
+		<title>Overview</title>
+		<para>
+		The module introduces possibility to run SQL queries from script.
+		</para>
+    </section>
+
+	<section id="db_ops.dep">
+		<title>Dependencies</title>
+				   
+		<para>
+		none
+		</para>
+	</section>
+
+	<section id="db_ops.syntax">
+		<title>ABNF syntax</title>
+		<programlisting>
+	xltext = text_parsed_by_xl_lib
+	database = type "://" user:psw "@" host "/" database_name
+	field = xltext
+	fields = field [ "," field ... ]
+	op = "=" | "&lt;" | ">" | "&lt;=" | ">=" | "&lt;>" | "!=" 
+	where = fields
+	ops = op [ "," op ... ]
+	order = field
+	type = "s" | "i" | "d" | "f" | "t" ; enables to force particular type when writing to db driver (string/int/double/float/datetime), valueable especially for datetime
+	value = [type ":"] xltext
+	values = value [ "," value ...]
+	extra_op = name "=" [type ":"] text
+	extra_ops = extra_op [ "," extra_op]
+
+	select = [database "/"] "select/" table "/" fields "/" where "/" ops "/" order "/" values [ "/" extra_ops ]
+	insert = [database "/"] "insert/" table "/" fields "/" values [ "/" extra_ops ]
+	update = [database "/"] "update/" table "/" fields "/" where "/" ops "/" values [ "/" extra_ops ]
+	replace = [database "/"] "replace/" table "/" fields "/" values [ "/" extra_ops ]
+	delete = [database "/"] "delete/" table "/" where "/" ops "/" values [ "/" extra_ops ]
+	raw_query = [database "/"] "select ...." | "insert ..." [[ / "values" [ "/" extra_ops ]]  # not delimited by "/"
+	query = (select | insert | update | replace | delete | raw_query)
+	query_id = alphanum
+	handle = alphanum  (plain text possible but alphanum recommended)
+	declare_query_param = query_id "=" query
+	declare_handle_param = handle
+		</programlisting>
+	</section>
+
+	<section id="db_ops.parameters">
+
+		<title>Parameters</title>
+
+		<section id="db_url">
+			<title><varname>db_url</varname> (string)</title>
+			<para>
+			Default database URL. 
+			</para>
+			<para>
+			The format is:
+			</para>
+			<programlisting>
+			db_url = database
+			</programlisting>
+			<example>
+				<title>Example <varname>db_url</varname></title>
+				<programlisting>
+	...
+	modparam("db_ops", "db_url", "mysql://ser:123@127.0.0.1:12345/ser");
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="declare_query">
+			<title><varname>declare_query</varname> (string)</title>
+			<para>
+			Declare query_id for <varname>@db.query_id</varname> (see select syntax) or for reference from <function>db_query(query_id)</function>.
+			Queries are pre-compiled therefore volatile stuff must be passed via parameters (AVP or so).
+			</para>
+			<para>
+			The format is:
+			</para>
+			<programlisting>
+			declare_query = declare_query_param
+			</programlisting>
+			<example>
+				<title>Example <varname>declare_query</varname></title>
+				<programlisting>
+	...
+	modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid");
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="declare_handle">
+			<title><varname>declare_handle</varname> (string)</title>
+			<para>
+			Declare handle for fetching.
+			</para>
+			<para>
+			The format is:
+			</para>
+			<programlisting>
+			declare_handle = declare_handle_param
+			</programlisting>
+			<example>
+				<title>Example <varname>declare_handle</varname></title>
+				<programlisting>
+	...
+	modparam("db_ops", "declare_handle", "my_handle");
+	...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section id="db_ops.functions">
+		<title>Functions</title>
+
+		<section id="db_query">
+			<title>
+				<function>db_query(query | query_id [,handle] )</function>
+			</title>
+			<para>
+				Executes query and in case of SELECT returns result via <emphasis>handle</emphasis>, seeks the first 
+				record and returns TRUE if table is not empty.
+				The result is accessible using <function>@db.fetch</function> select. See also <varname>declare_handle</varname>.
+				<emphasis>Query_id</emphasis> references to query declared using <varname>declare_query</varname>,
+				<emphasis>handle</emphasis> references to query declared using <varname>declare_handle</varname>.
+			</para>
+
+			<example>
+				<title><function>db_query</function> usage</title>
+				<programlisting>
+	...
+	db_query("delete/silo///");
+	if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { 	
+	...
+	}
+	...
+	if (db_query(sel1, my_handle)) {
+
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_close">
+			<title>
+				<function>db_close(handle)</function>
+			</title>
+			<para>
+				Close table that has been opened using <function>db_query</function>.
+				Note all close after script processing automatically.
+			</para>
+			<example>
+				<title><function>db_close</function> usage</title>
+				<programlisting>
+	...
+	db_close(my_handle);
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_first">
+			<title>
+				<function>db_first(handle)</function>
+			</title>
+			<para>
+				Returns TRUE if table is not empty. Note that rewind might not be supported by particular db driver.
+			</para>
+			<example>
+				<title><function>db_first</function> usage</title>
+				<programlisting>
+	...
+	if (db_first(my_handle)) {
+	...
+	}
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_next">
+			<title>
+				<function>db_next(handle)</function>
+			</title>
+			<para>
+				Moves to the next record and returns TRUE if not EOF.
+			</para>
+			<example>
+				<title><function>db_next</function> usage</title>
+				<programlisting>
+	...
+	if (db_next(my_handle)) {
+	...
+	}
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_seek">
+			<title>
+				<function>db_seek(handle, row_no)</function>
+			</title>
+			<para>
+				Seeks at the row no (origin is zero) and Returns TRUE in case of success. Backward seek might not be supported by db driver.
+			</para>
+			<example>
+				<title><function>db_seek</function> usage</title>
+				<programlisting>
+	...
+	if (db_seek(my_handle, $row_no)) {
+	...
+	}
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_foreach">
+			<title>
+				<function>db_foreach(handle, route)</function>
+			</title>
+			<para>
+				Call specific route for each row, loop is interrupted if route returns code &lt;= 0.
+				Return code of the last route call is returned as result of <function>db_foreach</function> (or -1 when no select is empty).
+			</para>
+			<example>
+				<title><function>db_foreach</function> usage</title>
+				<programlisting>
+
+	route["print_row"] {
+	....
+	}
+	
+	...
+	if (db_foreach(my_handle, print_row)) {
+	...
+	}
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_proper">
+			<title>
+				<function>db_proper()</function>
+			</title>
+			<para>
+				Hack which enables using db_ops queries in failure route.
+				Call it at the beginning of FAILURE_ROUTE block.
+			</para>
+			<example>
+				<title><function>db_proper</function> usage</title>
+				<programlisting>
+
+	failure_route["my_failure"] {
+		db_proper();
+		db_query(my_query, my_handle);		
+	....
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id">
+			<title>
+				<function>@db.query.query_id</function>
+			</title>
+			<para>
+				Returns value of the first row and the first field.
+			</para>
+
+			<example>
+				<title><function>db.query.query_id</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query == "my") {
+	....
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id.count">
+			<title>
+				<function>@db.query.query_id.count</function>
+			</title>
+			<para>
+				Returns number of rows in select query.
+			</para>
+
+			<example>
+				<title><function>db.query.query_id.count</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query.count == "2") {
+	....
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id.is_empty">
+			<title>
+				<function>@db.query.query_id.is_empty</function>
+			</title>
+			<para>
+				Returns 1 if select query is empty.
+			</para>
+
+			<example>
+				<title><function>db.query.query_id.is_empty</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query.is_query == "1") {
+		# query is empty
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id.field">
+			<title>
+				<function>@db.query.query_id.field[m]</function>
+			</title>
+			<para>
+				Returns value of the first row and the m-th field.
+				<emphasis>@*.field</emphasis> supports <emphasis>select_any_uri</emphasis> and <emphasis>select_any_nameaddr</emphasis>.
+			</para>
+
+			<example>
+				<title><function>db.query.query_id.field[m]</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query.field[2] == "xyz") {
+		...
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id.row">
+			<title>
+				<function>@db.query.query_id.row[n]</function>
+			</title>
+			<para>
+				Returns value of the n-th row and the first field, negative values count from the end (-1 == last row).
+			</para>
+
+			<example>
+				<title><function>db.query.query_id.row[n]</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query.row[2] == "xyz") {
+		...
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.query.query_id.row.field">
+			<title>
+				<function>@db.query.query_id.row[n].field[m]</function>
+			</title>
+			<para>
+				Returns value of the n-th row and the m-th field.
+				<emphasis>@*.field</emphasis> supports <emphasis>select_any_uri</emphasis> and <emphasis>select_any_nameaddr</emphasis>.
+			</para>
+
+			<example>
+				<title><function>db.query.query_id.row[n].field[m]</function> usage</title>
+				<programlisting>
+
+	if (@db.query.my_query.row[2].field[1] == "xyz") {
+		...
+	}
+				</programlisting>
+			</example>
+		</section>
+
+		
+		<section id="db.fetch.handle">
+			<title>
+				<function>@db.fetch.handle</function>
+			</title>
+			<para>
+				Similar functionality as <function>@db.query</function> selects with exception that 
+				operation is performed at query has been opened by <function>db_query</function>.
+			</para>
+			<para>
+				<function>@db.fetch.handle.count</function> invalidates current record, do <function>db_seek</function>/<function>db_first</function>!
+			</para>
+			<para>
+				 Note all opened queries are closed in POST_SCRIPT callback not to leak memory.
+			</para>
+
+			<example>
+				<title><function>db.fetch.handle</function> usage</title>
+				<programlisting>
+
+	db_query(sel1, my_handle);
+	if (@db.fetch.my_handle.is_empty == "0") {
+		if (@db.fetch.my_handle == "xyz") {
+
+		}
+	}
+	db_close(my_handle);
+	
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db.fetch.handle.row_no">
+			<title>
+				<function>@db.fetch.handle.row_no</function>
+			</title>
+			<para>
+				Returns current row number (origin is zero).
+			</para>
+
+			<example>
+				<title><function>db.fetch.handle.row_no</function> usage</title>
+				<programlisting>
+
+	db_query(sel1, my_handle);
+	...
+	db_next(my_handle);
+	if (@db.handle == "xyz") {
+		db_next(my_handle);
+	}
+	if (@db.fetch.my_handle.row_no == "1") {
+
+		}
+	}
+	if (@db.fetch.my_handle.count == "10") {
+		...
+	}
+	if (@db.fetch.my_handle.row_no == "1") {	# always false because .count has invalidated current record!
+
+	}	
+	db_close(my_handle);
+	
+				</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+        <section id="db_ops.examples">
+		<title>Examples</title>
+		<example>
+			<title>db_ops common example</title>
+			<programlisting>
+modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid");  
+modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greeting/uid,allow_find///%$uidparam,1");  
+modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.uid");  
+modparam("db_ops", "declare_query", "del1=delete from location where expires&lt;now()"); # raw query
+
+# @db.query.sel1             ..  SELECT received FROM location WHERE uid = "%$f.uid"
+# @db.query.sel1.count       ..  SELECT count(*) FROM location WHERE uid = "%$f.uid"
+# @db.query.sel2.field[0]    ..  SELECT email_address FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
+# @db.query.sel2.field[1]    ..  SELECT greeting FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
+# @db.query.sel3.count       ..  SELECT count(*) FROM silo WHERE uid = "%$f.uid"
+# @db.query.sel1.is_empty
+
+
+db_query("delete/silo///");     #  DELETE FROM silo
+db_query("delete/silo/expired/&lt;=/%Ts");     #  DELETE FROM silo WHERE expired &lt;= now;
+db_query("insert/foo/bar,rab,abr,rbs/%$f.id,'hello world %fu',1,2");  # INSERT INTO foo(bar,rab,abr,rbs) VALUES ("%$f.id","hello world %fu",1,2)
+db_query("update/foo/rab,abr/bar//'hello world %f',1,2,%$f.id");      # UPDATE foo SET rab="hello world %fu",rbs=45 WHERE bar="%$f.id"
+
+db_query("mysql://pretorian:sandra@net/delete/fbi/identities//");
+
+if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { #  SELECT body FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time
+    @db.fetch.my_handle             ..  get first raw
+    if (db_next(my_handle)) {
+	@db.fetch.my_handle      ..  get second raw
+    }
+}
+
+if (db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", my_next_handle)) { # SELECT src_addr,dest_addr,body FROM silo WHERE uid = "%$t.uid" ORDER BY inc_time
+    @db.fetch.my_next_handle.row[-1].field[1]	.. get last dest_addr, not supported now!
+}
+db_close(my_handle);
+db_close(my_next_handle);
+
+# parametrization of queries
+$uidparam="xx";
+@db.query.sel2
+
+$uidparam="yy";
+@db.query.sel2
+
+$uidparam="zz";
+db_query(sel2, my_handle);
+
+$uidparam="qq";
+db_query(sel2, my_next_handle);
+if (@db.fetch.my_handle == @db.fetch.my_next_handle) ....
+
+db_close(my_handle);
+db_close(my_next_handle);
+
+db_query(sel3, my_handle);
+forach(my_handle, PROCESS_ROW_ROUTE);
+
+			</programlisting>
+
+			<title>db_ops example with timer</title>
+			<programlisting>
+loadmodule "mysql.so"
+loadmodule "xprint.so"
+loadmodule "db_ops.so"
+loadmodule "timer.so"
+
+modparam("timer", "declare_timer", "timer_route,1000,,enable");
+
+# -------------------------  request routing logic -------------------
+
+modparam("db_ops", "db_url", "mysql://admin:123456789@127.0.0.1:12345/ser");
+
+modparam("db_ops", "declare_query", "q1=select/location/uid,aor,contact,received//////"); #key=location_key,key_omit=i:3");
+modparam("db_ops", "declare_query", "q2=select/location/uid,aor,contact,received/uid///%$f.uid/key=location_key,key_omit=i:1");
+# select raw query not yet supported
+modparam("db_ops", "declare_query", "q3=select uid,aor,contact,received from location where uid=?/%$f.uid");
+modparam("db_ops", "declare_query", "q4=mysql://admin:123456789@127.0.0.1:12345/ser/replace/location/uid,aor,contact,received,expires,q,callid,cseq,user_agent,instance,path,service_route,assoc_uri,flags,nated_contact,term_toi/QWERTY,aor@qqq,1.2.3.4:5678,1.2.3.4:5678;proto=tcp,d:1000,0.8,CAALL,6543,bubak,INSTANCE@bubak,sip:path_to_localhost,,,0,1,,");
+modparam("db_ops", "declare_query", "q5=mysql://admin:123456789@127.0.0.1:12345/ser/delete from location where uid=?/s:QWERTY");
+
+modparam("db_ops", "declare_handle", "h0");
+modparam("db_ops", "declare_handle", "h1");
+
+route["print_count"] {
+# testing count
+	xplog("L_INFO", "print count\n");
+	db_query("q1", "h1");
+	xplog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch.h1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_no: %@db.fetch.h1.row_no\n");
+
+	xplog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.query.q1.count\n");
+}
+
+route["print_record"] {
+	xplog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.field[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]\n");
+
+}
+
+route["print_tbl"] {
+	route("print_record");
+	if (!db_next("h0")) return;
+	route("print_record");
+	if (!db_next("h0")) return;
+	route("print_record");
+	if(!db_seek("h0", 5)) return;
+	route("print_record");
+	if (!db_first("h0")) return;
+	route("print_record");
+
+}
+
+route["db_test"] {
+
+	route("print_count");
+	
+	$f.uid="QWERTY";
+	xplog("L_INFO", "query #1\n");
+	if (db_query("q1", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	xplog("L_INFO", "replace\n"); 
+	db_query("q4");
+
+	xplog("L_INFO", "query #2\n");
+	if (db_query("q2", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	xplog("L_INFO", "query #3\n");
+	if (db_query("q3", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	route("print_count");
+
+
+	db_query("q5");
+	route("print_count");
+
+	
+	xplog("L_INFO", "foreach\n");
+	db_query("q1", "h0");
+	db_foreach("h0", "print_record");
+
+	xplog("L_INFO", "query test\n");
+	xplog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0].field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
+	xplog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1].field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
+	xplog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3].field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
+
+
+}
+
+route["timer_route"] {
+	xplog("L_INFO", "\n\n\ntimer\n");
+	route("db_test");
+
+	timer_enable(0, 0);
+	xplog("L_INFO", "\n\n\n");
+}
+			</programlisting>
+		</example>
+	</section>
+    </chapter>
+</book>
+

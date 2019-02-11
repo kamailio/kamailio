@@ -12,9 +12,9 @@ CREATE TABLE topos_d (
     bs_contact VARCHAR2(128) DEFAULT '',
     a_tag VARCHAR2(255) DEFAULT '',
     b_tag VARCHAR2(255) DEFAULT '',
-    a_rr CLOB DEFAULT '',
-    b_rr CLOB DEFAULT '',
-    s_rr CLOB DEFAULT '',
+    a_rr CLOB,
+    b_rr CLOB,
+    s_rr CLOB,
     iflags NUMBER(10) DEFAULT 0 NOT NULL,
     a_uri VARCHAR2(128) DEFAULT '',
     b_uri VARCHAR2(128) DEFAULT '',
@@ -35,6 +35,8 @@ BEGIN map2users('topos_d'); END;
 /
 CREATE INDEX topos_d_rectime_idx  ON topos_d (rectime);
 CREATE INDEX topos_d_a_callid_idx  ON topos_d (a_callid);
+CREATE INDEX topos_d_a_uuid_idx  ON topos_d (a_uuid);
+CREATE INDEX topos_d_b_uuid_idx  ON topos_d (b_uuid);
 
 INSERT INTO version (table_name, table_version) values ('topos_d','1');
 
@@ -47,11 +49,11 @@ CREATE TABLE topos_t (
     a_uuid VARCHAR2(255) DEFAULT '',
     b_uuid VARCHAR2(255) DEFAULT '',
     direction NUMBER(10) DEFAULT 0 NOT NULL,
-    x_via CLOB DEFAULT '',
+    x_via CLOB,
     x_vbranch VARCHAR2(255) DEFAULT '',
-    x_rr CLOB DEFAULT '',
-    y_rr CLOB DEFAULT '',
-    s_rr CLOB DEFAULT '',
+    x_rr CLOB,
+    y_rr CLOB,
+    s_rr CLOB,
     x_uri VARCHAR2(128) DEFAULT '',
     a_contact VARCHAR2(128) DEFAULT '',
     b_contact VARCHAR2(128) DEFAULT '',
@@ -76,6 +78,8 @@ BEGIN map2users('topos_t'); END;
 /
 CREATE INDEX topos_t_rectime_idx  ON topos_t (rectime);
 CREATE INDEX topos_t_a_callid_idx  ON topos_t (a_callid);
+CREATE INDEX topos_t_x_vbranch_idx  ON topos_t (x_vbranch);
+CREATE INDEX topos_t_a_uuid_idx  ON topos_t (a_uuid);
 
 INSERT INTO version (table_name, table_version) values ('topos_t','1');
 

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="silo" xmlns:db="http://docbook.org/ns/docbook">
+    <name>silo</name>
+    <version>8</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table us used by the msilo module to provide offline message
+			storage More information about the msilo module can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;msilo.html">&KAMAILIO_MOD_DOC;msilo.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column>
+        <name>src_addr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Source address - From URI</description>
+    </column>
+
+    <column>
+        <name>dst_addr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Destination address - To URI</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>SIP domain of target user</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Username / phone number of target user</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>inc_time</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Incoming time</description>
+    </column>
+
+    <column>
+        <name>exp_time</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Expiration time</description>
+    </column>
+
+    <column>
+        <name>snd_time</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Reminder send time</description>
+    </column>
+
+    <column>
+        <name>ctype</name>
+        <type>string</type>
+        <size>32</size>
+        <default>text/plain</default>
+        <description>Content type</description>
+    </column>
+
+    <column>
+        <name>body</name>
+        <type>binary</type>
+        <null/>
+        <description>Body of the message</description>
+    </column>
+
+    <column>
+        <name>extra_hdrs</name>
+        <type>text</type>
+        <null/>
+        <description>Extra headers that must be restored</description>
+    </column>
+
+    <column id="callid">
+        <name>callid</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>SIP Call-Id</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>status</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Status of notification</description>
+    </column>
+
+	<index>
+        <name>account_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+    </index>
+
+</table>

@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section id="xlog.overview">
+	<title>Overview</title>
+	<para>
+		This module provides the possibility to print user formatted log or
+		debug messages from &kamailio; scripts, similar to the printf function. 
+		A C-style printf specifier is replaced with a part of the &sip; request or other
+		variables from system.
+	</para>
+	</section>
+	<section id="sec-implemented-specifiers">
+	<title>Implemented Specifiers</title>
+	<para>
+	In the xlog function, you use pseudo-variables, that are a part
+	of &kamailio; core and are used by other modules as well (e.g., <emphasis>avpops</emphasis>
+	in the function <function>avp_printf()</function>)
+	</para>
+	<para>
+	The most important changes from earlier versions of &kamailio; are:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+		- '%' has been replaced by '$'
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		- to print a header, use $hdr(header_name[index]) instead of
+		%{header_name[index]}
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		- to print an AVP, use now $avp([si]:avp_id[index]) instead of
+		%{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
+		%{[$avp_alias[index]}
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+	The full list of available pseudo-variables in &kamailio; is
+	available at: &kamwikilink;
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				Note that many modules publish pseudovariables that you can use
+				in this module. The core module for this is the <emphasis>pv</emphasis> module.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="xlog.p.buf_size">
+		<title><varname>buf_size</varname> (integer)</title>
+		<para>
+		Maximum size of the log message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 4096.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "buf_size", 8192)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.force_color">
+		<title><varname>force_color</varname> (integer)</title>
+		<para>
+		When set to 1, forces color codes in log messages even if <varname>log_stderror</varname> is set to 0.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_color</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "force_color", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.long_format">
+		<title><varname>long_format</varname> (integer)</title>
+		<para>
+		When set to 1, outputs the configuration file name in xlogl() and xdbgl()
+		before the line number.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>long_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "long_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.varname">
+		<title><varname>prefix</varname> (str)</title>
+		<para>
+		Prefix to be output before the log message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "&lt;script&gt;: ".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "prefix", "-xlog: ")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.log_facility">
+		<title><varname>log_facility</varname> (string)</title>
+		<para>
+		Syslog facility to be used for the xlog output.
+		By setting this, and configuring syslog, you can get the xlog messages 
+		in a separate syslog file than the debug messages issued from the source code.
+		</para>
+		<para>
+		Default value is NULL (unset - use same facility as source code debug
+		messages).
+		</para>
+		<example>
+		<title>log_facility example</title>
+		<programlisting format="linespecific">
+modparam("xlog", "log_facility", "LOG_DAEMON")
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.log_colors">
+		<title><varname>log_colors</varname> (string)</title>
+		<para>
+		Update terminal colors used by the &kamailio; core for log levels (when log_stderr=1
+		and log_color=1). The value has to be 'logname=colors', where colors
+		is two characters specifying foreground and background in the same
+		format as $C(xy) variable.
+		</para>
+		<para>
+		The parameter can be set many times. The value can also be a
+		';'-separated list of color specifications.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>log_colors example</title>
+		<programlisting format="linespecific">
+modparam("xlog", "log_colors", "L_ERR=cr")
+modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.methods_filter">
+		<title><varname>methods_filter</varname> (int)</title>
+		<para>
+		The bitmask with internal SIP method ids to be ignored by
+		xlogm() function. The value can be changed at runtime via
+		cfg reload framework:
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd cfg.set_now_int xlog methods_filter 15
+...
+</programlisting>
+		<para>
+		To see the associated internal ids for SIP requests, look
+		in source tree inside parser/msg_parser.h for enum request_method.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (all SIP methods are ignored).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_filter</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "long_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="xlog.f.xlog">
+		<title>
+		<function moreinfo="none">xlog([ [facility,] level,] format)</function>
+		</title>
+		<para>
+		Output a formatted log message.
+		</para>
+		<para>Meaning of the parameters are as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>facility</emphasis> - The syslog facility that will be used for this single log message.
+			</para>
+			<para>
+			If this parameter is missing, the implicit facility is either the facility set with
+			the 'log_facility' module parameter or the core's log facility.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				L_ALERT - log level -5
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_BUG - log level -4
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_CRIT - log level -3
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_ERR - log level -1
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_WARN - log level 0
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_NOTICE - log level 1
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_INFO - log level 2
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_DBG - log level 3
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				$pv - any valid pseudo-variable, that has an integer value.
+				See above options for valid log levels.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			If it is not a pseudo-variable, then what really matters is the
+			third letter of the value. If the log level is higher than the
+			<quote>debug</quote> global parameter, the message is not printed
+			to syslog.
+			</para>
+			<para>
+			If this parameter is missing, the implicit log level is 'L_ERR'.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed. 
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>xlog</function> usage</title>
+		<programlisting format="linespecific">
+...
+xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+xlog("time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+$var(loglevel) = 2;
+xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
+...
+xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LOCAL3\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xdbg">
+		<title>
+		<function moreinfo="none">xdbg(format)</function>
+		</title>
+		<para>
+		Print a formatted message using DBG function.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xdbg</function> usage</title>
+		<programlisting format="linespecific">
+...
+xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xinfo">
+		<title>
+		<function moreinfo="none">xinfo(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_INFO level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xinfo</function> usage</title>
+		<programlisting format="linespecific">
+...
+xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xnotice">
+		<title>
+		<function moreinfo="none">xnotice(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_NOTICE level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xnotice</function> usage</title>
+		<programlisting format="linespecific">
+...
+xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xwarn">
+		<title>
+		<function moreinfo="none">xwarn(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_WARN level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xwarn</function> usage</title>
+		<programlisting format="linespecific">
+...
+xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xerr">
+		<title>
+		<function moreinfo="none">xerr(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_ERR level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xerr</function> usage</title>
+		<programlisting format="linespecific">
+...
+xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xbug">
+		<title>
+		<function moreinfo="none">xbug(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_BUG level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xbug</function> usage</title>
+		<programlisting format="linespecific">
+...
+xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xcrit">
+		<title>
+		<function moreinfo="none">xcrit(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_CRIT level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xcrit</function> usage</title>
+		<programlisting format="linespecific">
+...
+xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xalert">
+		<title>
+		<function moreinfo="none">xalert(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_ALERT level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xalert</function> usage</title>
+		<programlisting format="linespecific">
+...
+xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xlogl">
+		<title>
+		<function moreinfo="none">xlogl([ [facility,] level,] format)</function>
+		</title>
+		<para>
+		Similar to xlog(), in addition prints configuration file line number
+		at the beginning of message.
+		</para>
+	</section>
+	<section id="xlog.f.xdbgl">
+		<title>
+		<function moreinfo="none">xdbgl(format)</function>
+		</title>
+		<para>
+		Similar to xdbg(), in addition prints configuration file line number
+		at the beginning of message.
+		</para>
+	</section>
+	<section id="xlog.f.xlogm">
+		<title>
+		<function moreinfo="none">xlogm(level, format)</function>
+		</title>
+		<para>
+			Similar to xlog(level, format), but skips writing the log messages
+			for SIP requests and responses that match the SIP method id with
+			methods_filter parameter value.
+		</para>
+	</section>
+	</section>
+</chapter>
+

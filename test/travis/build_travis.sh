@@ -2,7 +2,7 @@
 #
 # build script for travis CI
 # environment based docker container at
-# https://hub.docker.com/r/linuxmaniac/pkg-kamailio-docker/
+# https://hub.docker.com/r/kamailio/pkg-kamailio-docker/
 #
 
 set -e

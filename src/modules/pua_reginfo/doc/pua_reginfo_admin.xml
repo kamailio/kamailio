@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+
+	<title>&adminguide;</title>
+	
+	<section>
+	  <title>Overview</title>
+	    <para> 
+	      This modules publishes information about "reg"-events according to
+              to RFC 3680. This can be used distribute the registration-info
+              status to the subscribed watchers.
+	    </para>
+	    <para>
+ 	      This module "PUBLISH"es information when a new user registers
+              at this server (e.g. when "save()" is called) to users, which have
+              subscribed for the reg-info for this user.
+	    </para>
+	    <para>
+ 	      This module can "SUBSCRIBE" for information at another server, so it
+              will receive "NOTIFY"-requests, when the information about a user
+              changes.
+	    </para>
+	    <para>
+ 	      And finally, it can process received "NOTIFY" requests and it will 
+              update the local registry accordingly.
+	    </para>
+	    <para>
+ 	      Use cases for this might be:
+		<itemizedlist>
+		<listitem>Keeping different Servers in Sync regarding
+		the location database
+		</listitem>
+		<listitem>Get notified, when a user registers: A presence-server,
+		which handles offline message storage for an account, would get
+		notified, when the user comes online.
+		</listitem>
+		<listitem>A client could subscribe to it's own registration-status,
+		so he would get notified as soon as his account gets administratively
+		unregistered.
+		</listitem>
+		<listitem>...</listitem>
+		</itemizedlist>
+	    </para>
+
+	</section>
+
+	<section>
+	  <title>Dependencies</title>
+	  <section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>usrloc</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	  </section>
+
+	  <section>
+		<title>External Libraries or Applications</title>
+		<para>
+		None.
+		</para>
+	  </section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>default_domain</varname>(str)</title>
+		<para>
+		The default domain for the registered users to be used when
+		constructing the uri for the registrar callback. 
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_reginfo", "default_domain", "kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>publish_reginfo</varname>(int)</title>
+		<para>
+		Whether or not to generate PUBLISH requests.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>1</quote> (enabled).	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>publish_reginfo</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_reginfo", "publish_reginfo", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>outbound_proxy</varname>(str)</title>
+		<para>
+		The outbound_proxy uri to be used when sending Subscribe and Publish requests.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_reginfo", "outbound_proxy", "sip:proxy@kamailio.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>server_address</varname>(str)</title>
+		<para>
+		The IP address of the server.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>	
+	<section>
+		<title>Functions</title>
+		<section id="pua_reginfo.f.reginfo_handle_notify">
+			<title>
+				<function moreinfo="none">reginfo_handle_notify(uldomain)</function>
+			</title>
+			<para>
+				This function processes received "NOTIFY"-requests and updates
+				the local registry accordingly.
+			</para>
+			<para>
+				This method does not create any SIP-Response, this has to be done
+				by the script-writer.
+			</para>
+			<para>
+				The parameter has to correspond to user location table (domain)
+				where to store the record.
+			</para>
+			<para>Return codes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>2</emphasis> - contacts successfully updated,
+				but no more contacts online now.
+				</para>
+				<para>
+				<emphasis>1</emphasis> - contacts successfully updated and at
+				at least one contact still registered.
+				</para>
+				<para>
+				<emphasis>-1</emphasis> - Invalid NOTIFY or other error (see log-file)
+				</para>
+			</listitem>
+			</itemizedlist>
+
+			<example>
+				<title><function>reginfo_handle_notify</function> usage</title>
+				<programlisting format="linespecific">
+...
+if(is_method("NOTIFY")) 
+	if (reginfo_handle_notify("location"))
+		send_reply("202", "Accepted");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">reginfo_subscribe(uri[, expires])</function>
+			</title>
+			<para>
+				This function will subscribe for reginfo-information at the given
+				server URI.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>uri</emphasis> - SIP-URI of the server, where to subscribe,
+				may contain pseudo-variables.
+				</para>
+				<para>
+				<emphasis>expires</emphasis> - Expiration date for this subscription, in seconds (default 3600)
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>reginfo_subscribe</function> usage</title>
+				<programlisting format="linespecific">
+...
+route {
+	t_on_reply("1");
+	t_relay();
+}
+
+reply_route[1] {
+	if (t_check_status("200")) 
+		reginfo_subscribe("$ru");		
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>

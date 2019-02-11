@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+
+<chapter>
+    <chapterinfo>
+    </chapterinfo>
+    <title>User's Guide</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+	      The p_usrloc module is built upon the usrloc module and provides the same usrloc export to the registrar module (for example). The usrloc module must not be loaded at the same time with the p_usrloc module. The parameters and the interface for the p_usrloc module are thus almost the same, so in this document only extra parameters (specific only to p_usrloc module) and differences are noted. For a complete description of the parameters that are inherited from usrloc see the page here. Note that the modparam statement must still refer to the p_usrloc module.
+	</para>
+
+	<para> The goal of the p_usrloc module is to provide partitioned user location service to Kamailio/SER. This provides three major benefits:
+	      <itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>Redundancy</emphasis> Failure of a location database does not mean that the location service is down
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis> Load Balancing</emphasis> DB performance is greatly increased as queries are automatically split on a pool of ID(number configurable at runtime). Furthermore, a read only db handler can be used to further increase the spread of the "select" queries.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis> Failover </emphasis> A faulty DB server is detected and taken out. When it recovers, the module makes sure that no stale contacts are returned from it.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	</para>
+	<para>
+	</para>
+
+	<para>Write queries are replicated to two or more databases, depending on some
+	distribution keys, e.g. the username and domain the subscribers. The number of databases
+	used for replication is configurable at compile time by modifying the DB_NUM define.
+	Its main field of application is for storing and retrieving location data. The actual
+	database for this subscriber is chosen from a set that is specified in the master
+	database. Read queries are executed on one database of the set. If this database is
+	not available, the other database would be used. This failure is recorded in the
+	master database.
+	</para>
+	
+	<para>Connections to the distributed databases are setup prior the actual query
+	is executed. The module maintains a cache of the database handles to provide
+	better performance. This handles are periodically checked if there are still valid
+	and if needed updated from the master database. As default only one key is used
+	for the database lookup, but the additional usage of a second one is possible.
+	</para>
+	
+	<para>Changes in the master database are autodetected. For better performance it is
+	possible to use one read-only instance, that is locally installed, and write only
+	errors and other status information to a central master database.
+	It is also possible to specify different failover schemas and even use transaction to
+	provide additional data safety. This module could further try to minimize the impact
+	of a database error with the usage of spare databases that are automatically activated.
+	It also supports the manual deactivation of redundant databases for maintenance purposes.
+	</para>
+
+	<para><warning>
+	      The p_usrloc module still has some missing feature, like automatic expiry of contacts and dumping of all users via the fifo cmd.
+	</warning></para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>a database module</emphasis> necessary to connect to the 
+				master database and to the distributed databases.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>write_db_url</varname> (string)</title>
+	    <para>
+		The url to the master database where errors are written to.
+	    </para>
+	    <para>
+		    Default value is <quote>&defaultdb;</quote>
+	    </para>
+	    <example>
+		<title>Set <varname>write_db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "write_db_url", "mysql://username:password@localhost/databasename")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>read_db_url</varname> (string)</title>
+	    <para>
+		The url to the master database where the distribution data is
+		read from. It is separated from write access, so for better
+		performance, a local replicate can be used for read access.
+	    </para>
+	    <para>
+		<emphasis>Default value is &defaultdb; .
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>read_db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
+...
+</programlisting>
+	    </example>
+	</section>
+      <section>
+		<title><varname>reg_db_table</varname> (string)</title>
+	    <para>
+		Specifies the table where the information about the distributed databases
+		is stored.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>locdb</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reg_db_table</varname> parameter</title> 
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "reg_db_table", "locdb")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>id_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the id of a distributed database is stored.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>id</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "id_column", "id")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>num_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the associated number of the distributed 
+		database is stored. For each distributed database ID there
+		must be at least two databases available, the databases above
+		the second are ignored.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>no</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>num_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "num_column", "nr")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>url_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the url of the distributed database is stored.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>url</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>url_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "url_column", "url")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>status_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the status of the distributed database is stored.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>status</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>status_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "status_column", "status")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>failover_time_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the failover time of the
+		location databases is stored. This field is set to the
+		current time when a databases is turned off or turned on.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>failover</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>failover_time_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "failover_time_column", "fail")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>spare_flag_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the spare flag of the location 
+		databases is stored. It is possible to declare an entry in
+		the p_usrloc table as spare which is used in a failover.
+		Due to the fact that the data is stored in two databases and
+		it takes the spare the complete expire time to be up to
+		date, it is not very useful.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>spare</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>spare_flag_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "spare_flag_column", "spare")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>error_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the errors of the distributed 
+		databases are stored. Each call to db_handle_error increases
+		the error counter. After exceeding the error threshold, the
+		database's status is set to off.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>errors</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>error_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "error_column", "error")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>risk_group_column</varname> (string)</title>
+	    <para>
+		Specifies the column where the risk group of the distributed
+		databases is stored. All databases on one host are in the
+		same risk group. This is only useful when using spares and
+		prevents the module from taking a spare which shares the same
+		risk as the broken database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>rg</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>risk_group_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "risk_group_column", "rg")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>expire_time</varname> (int)</title>
+	    <para>
+		Specifies the time (in seconds) when a contact expires, used
+		for resetting the failover time of a reactivated database.
+		It should be equal or greater than the contact expiration
+		time of the registrar module.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>3600</quote>.
+		</emphasis>
+	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc expire_time 7200
+			</programlisting>
+		</para>
+	    <example>
+		<title>Set <varname>expire_time</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "expire_time", "3600")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>db_err_threshold</varname> (int)</title>
+	    <para>
+		Specifies the error value on which a database shall be turned of.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>50</quote>.
+		</emphasis>
+	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc db_err_threshold 20
+			</programlisting>
+		</para>
+	    <example>
+		<title>Set <varname>db_err_threshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_err_threshold", "50")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>failover_level</varname> (int)</title>
+	    <para>
+		Specifies the manner a failover is done. Following modes are supported:
+	    </para>
+		<itemizedlist>
+		<listitem>
+		    <para><emphasis>1</emphasis> - Just turn off the broken database</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - Try to find a spare, if none found, just
+			turn off the broken database</para>
+		</listitem>
+		</itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is <quote>1</quote>.
+		</emphasis>
+	    </para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int p_usrloc failover_level 2
+			</programlisting>
+		</para>
+	    <example>
+		<title>Set <varname>failover_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "failover_level", "1")
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>db_retry_interval</varname> (int)</title>
+	    <para>
+		Specifies the interval (in seconds) in which a timer process
+		shall check the availability of the databases and try to reconnect
+		to broken ones. It don't make sense to choose a lower value as 10.
+		It's necessary to provide a writeable master database, otherwise
+		this check stays disabled.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>10</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_retry_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_retry_interval", "10")
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>db_use_transactions</varname> (int)</title>
+	    <para>
+		Specifies if transactions should be used (set to 1) to reach a higher data
+		consistency. Keep in mind that this will probably decrease performance.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_use_transactions</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_use_transactions", "0")
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>db_transaction_level</varname> (string)</title>
+	    <para>
+		Specifies the isolation level on which transactions are performed.
+		Possible values: Modes supported by the database backend. In order
+		to activate transaction the db_use_transactions parameter must be
+		also set.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>READ UNCOMMITED</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_transaction_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>write_on_master_db</varname> (int)</title>
+	    <para>
+		Sets the write access to the master database. If set to 0,
+		no write operations are permitted on the master database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>write_on_master_db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "write_on_master_db", "0")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+		<title><varname>mdb_availability_control</varname>(str)</title>
+		<para>
+		  Checks the master database in certain time intervals specified by the <quote>retry_interval</quote> parameter. Overwrites the <quote>write_on_master_db</quote> parameter based on the reachability of master database. If the master db is unavailable then the aforementioned parameter will be deactivated.                        
+		</para>
+                <para>
+                <emphasis>
+                    Default value is <quote>0</quote>.
+                </emphasis>
+            </para>
+	    <example>
+		<title>Set <varname>mdb_availability_control</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "mdb_availability_control", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>write_on_db</varname> (int)</title>
+	    <para>
+		Sets the write access to the distributed databases. If set 
+		to 0, no write operations are permitted on the databases.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>write_on_db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "write_on_db", "0")
+...
+</programlisting>
+	    </example>
+	</section>
+		<section>
+		<title><varname>connection_expires</varname> (int)</title>
+	    <para>
+		Specifies the period (in seconds) after a database connection
+		expires. Usage of a too small value will probably decrease the
+		performance.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>300</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>connection_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "connection_expires", "300")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>alg_location</varname> (int)</title>
+	    <para>
+		Specify the way the distribution of the subscriptions are computed. At the moment the only way is to use the CRC32 algorithm to compute the  location ID. Any integer value is fine.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>alg_location</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("p_usrloc", "alg_location", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>domain_db</varname>(str)</title>
+		<para>
+		Specify the way the lookup is made. In can be either partitioned or single. For example, if you have a location table that is large and needs to be partitioned, and a smaller table cfa that is ok to be on only the master db(so there is no need to have it distributed), you can set this parameter to <quote>location=cluster,cfa=single</quote>. This means that a call to <programlisting>lookup(location)</programlisting> will be done via the partition databases configured via the  reg_db_table parameter, but a call to <programlisting>lookup(cfa)</programlisting> will be done on only the master database (as with usrloc module)
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>location=cluster,cfa=single</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>domain_db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>default_db_type</varname>(str)</title>
+		<para>
+		  In case  a domain (like location,cfa) is not matched by a domain_db definition, the type is configured by using this parameter. Accepted values are single and cluster.
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>single</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_db_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "default_db_type", "cluster")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	<title><varname>db_ops_ruid</varname> (int)</title>
+	<para>
+		If set to 1, database queries for update or delete are done using
+		ruid value. If it is set to 0, the old style using aor, contact and
+		call-id is done.
+	</para>
+	<para>
+	<emphasis>
+		Default value is <quote>0</quote>.
+	</emphasis>
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+		$ &sercmd; cfg.set_now_int p_usrloc db_ops_ruid 1
+		</programlisting>
+	</para>
+	<example>
+	<title>Set <varname>db_ops_ruid</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_ops_ruid", 0)
+...
+    </programlisting>
+    </example>
+	</section>
+    
+    <section>
+        <title><varname>db_update_as_insert</varname> (string)</title>
+        <para>
+                Set this parameter if you want to do INSERT DB operations
+                instead of UPDATE DB operations. It is recommended to set this parameter
+                if you use Cassandra as a DB backend.
+        </para>
+        <para>
+        <emphasis>
+             Default value is <quote>1</quote>.
+        </emphasis>
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+		$ &sercmd; cfg.set_now_int p_usrloc db_update_as_insert 1
+		</programlisting>
+	</para>
+	<example>
+	<title>Set <varname>db_update_as_insert</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("usrloc", "db_update_as_insert", 1)
+...
+</programlisting>
+    </example>
+    </section>
+
+    </section>
+
+    	<section>
+		<title><varname>default_db_url</varname>(str)</title>
+		<para>
+		  The URL of the default database for Location domains (for domains that are single). This must be configured if they are use.
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>DEFAULT_DB_URL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_db_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
+...
+</programlisting>
+	    </example>
+	</section>
+
+    <section>
+    <title> Changes from usrloc module </title>
+    <section>
+	<title><varname>db_mode</varname> (integer)</title>
+		<para>
+		The p_usrloc module must utilize database for persistent contact storage.
+		Only mode 3 is possible at this time. Because of the way other matching mode work,
+		they make no sense on a distributed environment.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			3 - DB-Only scheme. No memory cache is kept, all operations being
+			directly performed with the database. The timer deletes all
+			expired contacts from database - cleans after clients that didn't
+			un-register or re-register. The mode is useful if you configure
+			more servers sharing the same DB without any replication at SIP
+			level. The mode may be slower due the high number of DB operation.
+			For example NAT pinging is a killer since during each ping cycle
+			all nated contact are loaded from the DB; The lack of memory
+			caching also disable the statistics exports.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is 3.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+	<title><varname>db_url</varname></title> <para> This parameters is now obsolete, and replaced by specific p_usrloc parameters</para>
+	</section>
+    </section>
+  
+
+    <section>	    
+	<title>Installation &amp; Running</title>
+	<section>
+	<title>Database setup</title>
+	<section>
+		<title>Configuration Table</title>
+		<para>
+			Before running &kamailio; with p_usrloc, you have to setup the master database
+			table where the module will find data about the distributed databases. 
+			For that, if the table was not created by the installation script or you choose
+			to install everything by yourself you can use the p_usrloc-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			utils/kamctl/mysql/ folder as template. 
+			Database and table name can be set with module parameters so they
+			can be changed, but the name of the columns must be as they are
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &kamailiodbdocs;.
+		</para>
+	<example>
+		<title>Example database content - reg_table (locdb) table</title>
+		<programlisting format="linespecific">
+...
++----+----+------+--------+--------+---------------------+-------+----+
+| id | no | url  | status | errors | failover            | spare | rg |
++----+----+------+--------+--------+---------------------+-------+----+
+|  1 |  1 | URL1 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  1 |  2 | URL2 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  2 |  1 | URL3 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  2 |  2 | URL4 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
++----+----+------+--------+--------+---------------------+-------+----+
+...
+		</programlisting>
+		<para>The URLs are omitted for a better overview, but you can use
+			standard &kamailio; database URLs like
+			&defaultdb; 
+			Databases don't need to be on different hosts, e.g. for testing purposes.
+		</para>
+	</example>
+		<para>
+			This table contains two database groups. The first with id one,
+			and the second with the id two.
+		</para>
+	</section>
+	</section>
+	<section>
+		<title>Maintenance</title>
+		
+		<para>The module supports the deactivation of redundant databases for maintenance
+		reasons. This can be done by setting the status column of the respective database
+		in the p_usrloc to the value <quote>2</quote>. This setting is autodetected from
+		all modules on the server cluster. Changes in the locdb table are periodically
+		polled with help of a timer process. After one minute the all read and write traffic
+		is removed from the deactivated database, and maintenance can be done.
+		</para>
+		<para>
+		In order to activate the database again, after the maintenance has been finished,
+		the respective status column needs to be set to <quote>0</quote>. This is
+		autodetected as well, the first module that noticed the change will set the status
+		column to <quote>1</quote> and setting the failover column to the current time and
+		date. Write requests are now transferred again to the database, but no reads are done
+		yet.
+		</para>
+		<para>
+		After the configured expire_time has been passed, i.e. every contact has been
+		inserted at least one time in the database the respective failover time column
+		is set to the default value again. The database is then also used to read contacts
+		from, the cluster is in normal operation with full redundancy again.
+		</para>
+		
+	</section>
+	<section>
+		<title>Additional configuration</title>
+		
+		<para>As this module is only used internally from other modules, there is no
+		additional configuration except for the module parameter setup necessary.
+		</para>
+		
+	</section>
+	</section>
+</chapter>
+

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tm.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+	<title>RPC Commands</title>
+
+	<section id="tm.rpc.list">
+		<title>
+		<function moreinfo="none">tm.list</function>
+		</title>
+		<para>
+		List details of transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.rpc.t_uac_start">
+		<title>
+		<function moreinfo="none">tm.t_uac_start</function>
+		</title>
+		<para>
+		Generates and sends a local SIP request.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>method</emphasis> - request method
+			</para></listitem>
+			<listitem><para>
+				<emphasis>RURI</emphasis> - request SIP URI
+			</para></listitem>
+			<listitem><para>
+				<emphasis>NEXT HOP</emphasis> - next hop SIP URI (OBP);
+				use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>socket</emphasis> - local socket to be used for
+				sending the request; use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>headers</emphasis> - set of additional headers to
+				be added to the request; at least
+				<quote>From</quote> and <quote>To</quote> headers must be
+				provided)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				request body (if present, requires the
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start, but waits for the SIP response and tries to
+		provide its details via RPC response.
+		</para>
+	</section>
+
+	<section id="tm.rpc.cancel">
+		<title>
+		<function moreinfo="none">tm.cancel</function>
+		</title>
+		<para>
+		Generates and sends a CANCEL for an existing local SIP request.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - callid of the INVITE request
+				to be cancelled.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - cseq of the INVITE request to be
+				cancelled.
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.rpc.hash_stats">
+		<title>
+		<function moreinfo="none">tm.hash_stats</function>
+		</title>
+		<para>
+		Gets information about the load of TM internal hash table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.rpc.reply">
+		<title>
+		<function moreinfo="none">tm.reply</function>
+		</title>
+		<para>
+		Generates and sends a reply for an existing inbound SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>code</emphasis> - reply code
+			</para></listitem>
+			<listitem><para>
+				<emphasis>reason</emphasis> - reason phrase.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>trans_id</emphasis> - transaction identifier
+				(has the hash_entry:label format)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to_tag</emphasis> - To tag to be added to TO header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>new_headers</emphasis> - extra headers to be
+				appended to the reply; use a dot (<quote>.</quote>) char
+				only if there are no headers;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				reply body (if present, requires the
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section id="tm.rpc.reply_callid">
+		<title>
+		<function moreinfo="none">tm.reply_callid</function>
+		</title>
+		<para>
+		Generates and sends a reply for an existing inbound SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>code</emphasis> - reply code
+			</para></listitem>
+			<listitem><para>
+				<emphasis>reason</emphasis> - reason phrase.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>callid</emphasis> - SIP Call-ID header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - SIP CSeq header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to_tag</emphasis> - To tag to be added to TO header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>new_headers</emphasis> - extra headers to be
+				appended to the reply; use a dot (<quote>.</quote>) char
+				only if there are no headers;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				reply body (if present, requires the
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+	<section id="tm.rpc.clean">
+		<title>
+		<function moreinfo="none">tm.clean</function>
+		</title>
+		<para>
+		Trigger an hard clean of expired transactions.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="tm.stats">
+		<title>
+		<function moreinfo="none">tm.stats</function>
+		</title>
+		<para>
+		Gets information about current and past TM transaction handling.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+</section>

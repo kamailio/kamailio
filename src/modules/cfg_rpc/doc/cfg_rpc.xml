@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>cfg_rpc Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Miklos</firstname>
+		<surname>Tirpak</surname>
+		<email>miklos@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>iptelorg GmbH</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="cfg_rpc.overview">
+	<title>Overview</title>
+	<para>
+	    The module implements RPC commands to set and get
+	    configuration variables on-the-fly, that are declared
+		by &kamailio; core and by the modules.
+	</para>
+	<para>
+		For example, it can be used to fine-tune values for
+		global parameters such as debug, tcp/sctp/dns attributes,
+	    	without the need of restart.
+	</para>
+	<para>
+		RPC connector modules, such as <quote>ctl</quote> or <quote>xmlrpc</quote>, although
+		not a dependency, should be loaded in order to execute
+		the RPC commands exported by this module. When the ctl module
+		is loaded, the tool '&sercmd;' can be used to execute
+		the RPC commands implemented in this module.
+	</para>
+    </section>
+
+	<section id="cfg_rpc.dependencies">
+	<title>Dependencies</title>
+	<section id="cfg_rpc.depmods">
+		<title>&siprouter; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &siprouter; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section id="cfg_rpc.deplibs">
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&siprouter; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+    <xi:include href="rpc.xml"/>
+    </chapter>
+
+</book>
+

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	<title>&adminguide;</title>
+	<section>
+	<title>Overview</title>
+	<para>
+		This is a simple module allowing to retrieve values from
+		a JSON string.
+	</para>
+	<para>
+		For more complex operations with JSON documents,
+		see the JANSSON module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libjson (https://github.com/json-c/json-c/wiki)</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="json.f.json_get_field">
+	    <title>
+		<function moreinfo="none">json_get_field(json_string, field_name, destination)</function>
+	    </title>
+	    <para>
+		Copy field 'field_name' from json object 'json_string' and store it in pvar 'destination'.
+		</para>
+		<para>
+		Note that the result is the string representation of that JSON filed.
+		For example, if you want to retrieve a field that has a string value,
+		then the result is the value enclosed in quotes. If the field value is a structure,
+		then the result is the string-formatted representation of that structure.
+		</para>
+		<example>
+		<title><function>json_get_field</function> usage</title>
+		<programlisting format="linespecific">
+...
+json_get_field("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section id="json.f.json_get_string">
+	    <title>
+		<function moreinfo="none">json_get_string(json_string, field_name, destination)</function>
+	    </title>
+	    <para>
+		Copy field 'field_name' from json object 'json_string' and store it in pvar 'destination'.
+		</para>
+		<para>
+		</para>
+		<example>
+		<title><function>json_get_string</function> usage</title>
+		<programlisting format="linespecific">
+...
+json_get_string("{'foo':'bar'}", "foo", "$var(foo)");
+xlog("foo is $var(foo)");
+...
+		</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Transformations</title>
+	<para>You can use the transformation to extract values from the json structured pseudo-variables</para>
+	<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>json</emphasis>
+			</para>
+			<example>
+				<title>
+					<function>json.parse</function> usage
+				</title>
+				<programlisting format="linespecific">
+	...
+	# extract value of "Custom-Data" from $rb pseudo-variable and set it to $var(Custom-Data)
+	$var(Custom-Data) = $(rb{json.parse,Custom-Data});
+	if($var(Custom-Data) != $null) {	xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data) from Request: $rb");
+	}
+	...
+				</programlisting>
+			</example>
+		</listitem>
+	</itemizedlist>
+	</section>
+</chapter>
+

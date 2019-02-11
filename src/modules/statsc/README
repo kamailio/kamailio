@@ -1,0 +1,161 @@
+STATSC Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2016 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. interval (int)
+              3.2. items (int)
+              3.3. track (str)
+
+        4. RPC Commands
+
+              4.1. statsc.report
+
+   List of Examples
+
+   1.1. Set interval parameter
+   1.2. Set items parameter
+   1.3. Set track parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. interval (int)
+        3.2. items (int)
+        3.3. track (str)
+
+   4. RPC Commands
+
+        4.1. statsc.report
+
+1. Overview
+
+   This module provides a statistics collector engine. It can track the
+   values of various internal Kamailio statistics for a specific period of
+   time, allowing to retrieve them or a report over them via RPC commands.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded along this module:
+     * various - (optional, e.g., sl, tm, usrloc) for getting access to
+       the statistics exported by these modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. interval (int)
+   3.2. items (int)
+   3.3. track (str)
+
+3.1. interval (int)
+
+   Timer interval when to record the value for statistics.
+
+   Default value is 900 (15min).
+
+   Example 1.1. Set interval parameter
+...
+modparam("statsc", "interval", 300)
+...
+
+3.2. items (int)
+
+   How many items to store for each statistic.
+
+   Default value is 100.
+
+   Example 1.2. Set items parameter
+...
+modparam("statsc", "items", 200)
+...
+
+3.3. track (str)
+
+   Specify the statistics to track. The parameter can be set many times
+   and one value can specify many statistics.
+
+   The format is "rname=sname", where the rname is the name for report and
+   sname is internal Kamailio statistic name.
+
+   Next statistics are tracked by default:
+     * shm.free - the internal statistic 'free_size' (from group 'shmem').
+     * shm.used - the internal statistic 'used_size' (from group 'shmem').
+     * shm.real_used - the internal statistic 'real_used_size' (from group
+       'shmem').
+
+   Default value is "".
+
+   Example 1.3. Set track parameter
+...
+modparam("statsc", "track", "req.received=rcv_requests")
+modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
+)
+...
+
+4. RPC Commands
+
+   4.1. statsc.report
+
+4.1.  statsc.report
+
+   Get the report of recorded statistics.
+
+   Name: statsc.report
+
+   Parameters:
+     * _type_ :
+          + “list”: list recorded values
+          + “diff”: show diff between recorded values
+     * _name_: (optional) name of the statistic to show the report for. If
+       missing or set to 'all', then the reports for all recorded
+       statistics are done.
+     * _limit_: (optional) how many items to be included in the report
+
+   Example:
+...
+# prototype: kamcmd statsc.report _type_ _name_ _limit_
+kamcmd statsc.report list
+kamcmd statsc.report list all 10
+kamcmd statsc.report diff
+...

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>ACC_RADIUS Module</title>
+	<productname class="trade">&kamailio;</productname>
+	<authorgroup>
+        <author>
+        <firstname>Juha</firstname>
+        <surname>Heinanen</surname>
+        <email>jh@tutpro.com</email>
+        </author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+		</author>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="acc_radius_admin.xml"/>
+</book>

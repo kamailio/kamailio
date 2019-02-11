@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+
+	<title>&adminguide;</title>
+	
+	<section>
+	  <title>Overview</title>
+	    <para> 
+	      The module enables the handling of "Event: reg" (as defined 
+	      in RFC 3680) inside of the presence module. This can be used
+	      distribute the registration-info status to the subscribed watchers.
+	    </para>
+	    <para>
+ 	      The module does not currently implement any authorization
+	      rules.  It assumes that publish requests are only issued by
+	      an authorized application and subscribe requests only by
+	      authorized users.  Authorization can thus be easily done in 
+	      &kamailio; configuration file before calling handle_publish() 
+	      and handle_subscribe() functions.
+	    </para>
+	    <para>
+	      Note: This module only activates the processing of the "reg" 
+	      in the presence module. To send dialog-info to watchers you also 
+	      need a source which PUBLISH the reg info to the presence module.
+	      For example you can use the pua_reginfo module or any external
+	      component. This approach allows to have the presence server and the
+	      reg-info aware publisher (e.g. the main proxy) on different 
+	      &kamailio; instances.
+	    </para>
+	</section>
+
+	<section>
+	  <title>Dependencies</title>
+	  <section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	  </section>
+
+	  <section>
+		<title>External Libraries or Applications</title>
+		<para>
+		None.
+		</para>
+	  </section>
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<para>
+			None to be used in configuration file.
+		</para>
+	</section>
+
+</chapter>

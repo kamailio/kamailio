@@ -1,7 +1,5 @@
 /*
- * $Id$
- *
- * sercmd GPL license, standard disclaimer and copyright
+ * kamcmd GPL license, standard disclaimer and copyright
  */
 
 #ifndef __license_h_

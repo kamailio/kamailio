@@ -1,0 +1,792 @@
+COREX Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Muhammad Shahzad Shafi
+
+   <shahzad@voip-demos.com>
+
+   Copyright © 2012 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. alias_subdomains (string)
+              3.2. network_io_intercept (int)
+              3.3. min_msg_len (int)
+              3.4. msg_avp (string)
+
+        4. Functions
+
+              4.1. append_branch([ uri, [ q ] ])
+              4.2. send_udp([ host [ :port ] ])
+              4.3. send_tcp([ host [ :port ] ])
+              4.4. send_data(uri, data)
+              4.5. sendx(uri, sock, data)
+              4.6. is_incoming()
+              4.7. msg_iflag_set(flagname)
+              4.8. msg_iflag_reset(flagname)
+              4.9. msg_iflag_is_set(flagname)
+              4.10. file_read(fpath, var)
+              4.11. file_write(fpath, content)
+              4.12. setxflag(flag)
+              4.13. isxflagset(flag)
+              4.14. resetxflag(flag)
+              4.15. set_send_socket(saddr)
+              4.16. set_recv_socket(saddr)
+              4.17. set_source_address(saddr)
+              4.18. via_add_srvid(flags)
+              4.19. via_add_xavp_params(flags)
+              4.20. via_use_xavp_fields(flags)
+
+        5. RPC Commands
+
+              5.1. corex.debug
+              5.2. corex.list_sockets
+              5.3. corex.list_aliases
+              5.4. corex.shm_status
+              5.5. corex.shm_summary
+              5.6. corex.pkg_summary
+
+        6. Event Routes
+
+              6.1. event_route[network:msg]
+
+        7. Examples of Usage
+
+   List of Examples
+
+   1.1. Set alias_subdomains parameter
+   1.2. Set network_io_intercept parameter
+   1.3. Set min_msg_len parameter
+   1.4. Set msg_avp parameter
+   1.5. append_branch usage
+   1.6. send_udp usage
+   1.7. send_tcp usage
+   1.8. send_data usage
+   1.9. sendx usage
+   1.10. is_incoming usage
+   1.11. msg_iflag_set usage
+   1.12. msg_iflag_reset usage
+   1.13. msg_iflag_is_set usage
+   1.14. file_read usage
+   1.15. file_write usage
+   1.16. setxflag usage
+   1.17. isxflagset usage
+   1.18. resetxflag usage
+   1.19. set_send_socket usage
+   1.20. set_recv_socket usage
+   1.21. set_source_address usage
+   1.22. via_add_srvid usage
+   1.23. via_add_xavp_params usage
+   1.24. via_use_xavp_fields usage
+   1.25. event_route[network:msg] use cases
+   1.26. Sample PERL code for do_compress and do_uncompress
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. alias_subdomains (string)
+        3.2. network_io_intercept (int)
+        3.3. min_msg_len (int)
+        3.4. msg_avp (string)
+
+   4. Functions
+
+        4.1. append_branch([ uri, [ q ] ])
+        4.2. send_udp([ host [ :port ] ])
+        4.3. send_tcp([ host [ :port ] ])
+        4.4. send_data(uri, data)
+        4.5. sendx(uri, sock, data)
+        4.6. is_incoming()
+        4.7. msg_iflag_set(flagname)
+        4.8. msg_iflag_reset(flagname)
+        4.9. msg_iflag_is_set(flagname)
+        4.10. file_read(fpath, var)
+        4.11. file_write(fpath, content)
+        4.12. setxflag(flag)
+        4.13. isxflagset(flag)
+        4.14. resetxflag(flag)
+        4.15. set_send_socket(saddr)
+        4.16. set_recv_socket(saddr)
+        4.17. set_source_address(saddr)
+        4.18. via_add_srvid(flags)
+        4.19. via_add_xavp_params(flags)
+        4.20. via_use_xavp_fields(flags)
+
+   5. RPC Commands
+
+        5.1. corex.debug
+        5.2. corex.list_sockets
+        5.3. corex.list_aliases
+        5.4. corex.shm_status
+        5.5. corex.shm_summary
+        5.6. corex.pkg_summary
+
+   6. Event Routes
+
+        6.1. event_route[network:msg]
+
+   7. Examples of Usage
+
+1. Overview
+
+   This module provides reimplementation of a few very old functions that
+   used to be in the core and supported only static string or integer
+   parameters. The new versions bring support for dynamic parameters
+   (allowing variables inside the parameters).
+
+   There are also brand new features, related to core internals, but
+   controlled from configuration file or via control interfaces.
+
+   Contributions to this module must be done under the BSD license, to
+   follow the requirements of the core contributions.
+
+   This module now also provides access to network input / output data
+   through event_route[network:msg]. The raw data received from a remote
+   host or about to be sent to a remote host is available in variable $mb.
+   The script writer may manipulate this data and save the final result in
+   an AVP defined by msg_avp module parameter. The content of this AVP
+   will then be processed by SIP worker as normal, i.e. a received message
+   will be parsed and sent to appropriate route block while a sent message
+   is forwarded to remote host.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. alias_subdomains (string)
+   3.2. network_io_intercept (int)
+   3.3. min_msg_len (int)
+   3.4. msg_avp (string)
+
+3.1. alias_subdomains (string)
+
+   Register a domain and all its sub-domains to match the “myself”
+   condition. It can be set many times. Its full format is:
+   'proto:domain:port', allowing to set restrictions on protocol and port
+   as well. Protocol and port are optional.
+
+   Default value is “NULL”.
+
+   Example 1.1. Set alias_subdomains parameter
+...
+modparam("corex", "alias_subdomains", "kamailio.org")
+modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
+...
+
+3.2. network_io_intercept (int)
+
+   If set to non-zero then raw data received from a remote host or about
+   to be sent to a remote host is made available in
+   event_route[network:msg]. The script writer may modify this and save to
+   msg_avp, which will then be processed by SIP worker as normal.
+
+   Default value is 0, i.e. do not allow access to network io data.
+
+   Example 1.2. Set network_io_intercept parameter
+...
+modparam("corex", "network_io_intercept", 1)
+...
+
+3.3. min_msg_len (int)
+
+   Minimum content length of the packet to execute the
+   event_route[network:msg]. This only works if network_io_intercept
+   parameter is set to non-zero.
+
+   Default value is 0.
+
+   Example 1.3. Set min_msg_len parameter
+...
+modparam("corex", "min_msg_len", 32)
+...
+
+3.4. msg_avp (string)
+
+   AVP name to store modified content to be set in the packet. If not set
+   in event_route[network:msg], then all changes are lost and original
+   contents are used. This only works if network_io_intercept parameter is
+   to set non-zero.
+
+   Default value is empty.
+
+   Example 1.4. Set msg_avp parameter
+...
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+
+4. Functions
+
+   4.1. append_branch([ uri, [ q ] ])
+   4.2. send_udp([ host [ :port ] ])
+   4.3. send_tcp([ host [ :port ] ])
+   4.4. send_data(uri, data)
+   4.5. sendx(uri, sock, data)
+   4.6. is_incoming()
+   4.7. msg_iflag_set(flagname)
+   4.8. msg_iflag_reset(flagname)
+   4.9. msg_iflag_is_set(flagname)
+   4.10. file_read(fpath, var)
+   4.11. file_write(fpath, content)
+   4.12. setxflag(flag)
+   4.13. isxflagset(flag)
+   4.14. resetxflag(flag)
+   4.15. set_send_socket(saddr)
+   4.16. set_recv_socket(saddr)
+   4.17. set_source_address(saddr)
+   4.18. via_add_srvid(flags)
+   4.19. via_add_xavp_params(flags)
+   4.20. via_use_xavp_fields(flags)
+
+4.1.  append_branch([ uri, [ q ] ])
+
+   Append a new branch to the destination set, useful to build the set of
+   destination addresses for parallel forking or redirect replies.
+
+   Both parameters are optional, If no uri parameter is provided, then the
+   address from request URI (r-uri) is used to build the new branch.
+
+   Meaning of the parameters is as follows:
+     * uri - SIP address of the branch to be used as R-URI in the outgoing
+       request.
+     * q - the Q value to set the priority of the branch based on Contact
+       address specifications
+
+   This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+
+   Example 1.5. append_branch usage
+...
+    append_branch();
+    append_branch("$avp(uri)", "0.5");
+...
+
+4.2.  send_udp([ host [ :port ] ])
+
+   Send the original SIP message to a specific destination in stateless
+   mode. No changes are applied to received message, no Via header is
+   added. Host can be an IP address or hostname. Port is optional and
+   defaults to 5060. Used protocol: UDP.
+
+   The parameter is optional and defaults to the destination URI from the
+   SIP message if left out. Otherwise it's a string parameter (supporting
+   pseudo-variables) in format "hostname" or "hostname:port", where
+   hostname" can also be a numeric IP address.
+
+   This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+
+   Example 1.6. send_udp usage
+...
+        send_udp();
+        send_udp("10.20.15.10");
+        send_udp("sip.example.com:5070");
+        send_udp("$var(res)");
+...
+
+4.3.  send_tcp([ host [ :port ] ])
+
+   This function is identical to send_udp() described above, except that
+   it sends the SIP message using the TCP protocol instead of UDP.
+
+   Example 1.7. send_tcp usage
+...
+        send_tcp();
+        send_tcp("10.20.15.10");
+        send_tcp("sip.example.com:5070");
+        send_tcp("$var(res)");
+...
+
+4.4.  send_data(uri, data)
+
+   Send the data to address specified by uri. Both parameters can contain
+   pseudo-variables. The uri parameter has to be a valid SIP URI. The data
+   parameter can by any arbitrary content.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. send_data usage
+...
+        send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
+...
+
+4.5.  sendx(uri, sock, data)
+
+   Send the data to address specified by uri using a specific local
+   socket. All parameters can contain pseudo-variables. The uri parameter
+   has to be a valid SIP URI. The sock parameter has to be a valid socket
+   specifier (like values assigned to $fs). The data parameter can by any
+   arbitrary content.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. sendx usage
+...
+sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $T
+s");
+...
+
+4.6.  is_incoming()
+
+   Returns true if contents of message buffer $mb are the data received
+   from remote host, otherwise false indicating that the contents of $mb
+   are data that is about to be sent out to remote host. This only works
+   if network_io_intercept parameter is set to non-zero.
+
+   This function can be used from event_route[network:msg].
+
+   Example 1.10. is_incoming usage
+...
+event_route[network:msg] {
+    if (is_incoming()) {
+        xlog("L_INFO", "Received message '$mb' \n");
+        $avp(msg) = $mb;
+    } else {
+        xlog("L_INFO", "Sending message '$mb' \n");
+        $avp(msg) = $mb;
+    };
+}
+...
+
+4.7.  msg_iflag_set(flagname)
+
+   Set internal SIP message flag. The parameter flagname can be:
+   USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+
+   This functions should not be used in configuration file for (re)setting
+   the internal flags, those are done by various functions internally,
+   however, in very particular cases they might be useful (e.g., changing
+   From/To via textops functions).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. msg_iflag_set usage
+...
+    msg_iflag_set("UAC_AUTH");
+...
+
+4.8.  msg_iflag_reset(flagname)
+
+   Reset the internal flag given as parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. msg_iflag_reset usage
+...
+    msg_iflag_reset("UAC_AUTH");
+...
+
+4.9.  msg_iflag_is_set(flagname)
+
+   Test if the internal flag given as parameter is set.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. msg_iflag_is_set usage
+...
+    if(msg_iflag_is_set("UAC_AUTH")) { ... }
+...
+
+4.10.  file_read(fpath, var)
+
+   Read content of a text file into a variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. file_read usage
+...
+if(file_read("/tmp/data.txt", "$var(data)")) { ... }
+...
+
+4.11.  file_write(fpath, content)
+
+   Write content of parameter to a text file.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. file_write usage
+...
+if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
+...
+
+4.12. setxflag(flag)
+
+   Set the extended message (transaction) flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be set. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. setxflag usage
+...
+setxflag("1");
+...
+$var(flag) = 11;
+setxflag("$var(flag)");
+...
+
+4.13. isxflagset(flag)
+
+   Return true of the extended message (transaction) flag is set.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be tested. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. isxflagset usage
+...
+if(isxflagset("1"))
+{
+    ...
+}
+...
+
+4.14. resetxflag(flag)
+
+   Reset the extended message (transaction) flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be reset. Can be integer or
+       pseudo-variable with integer value (range 0-63).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. resetxflag usage
+...
+resetxflag("1");
+...
+
+4.15. set_send_socket(saddr)
+
+   Set the socket for sending out.
+
+   Meaning of the parameters is as follows:
+     * saddr - the address of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. set_send_socket usage
+...
+set_send_socket("udp:127.0.0.1:5060");
+...
+
+4.16. set_recv_socket(saddr)
+
+   Switch local socket used for receiving the message.
+
+   Meaning of the parameters is as follows:
+     * saddr - the address of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. set_recv_socket usage
+...
+set_recv_socket("udp:127.0.0.1:5060");
+...
+
+4.17. set_source_address(saddr)
+
+   Set the source address for the message.
+
+   Meaning of the parameters is as follows:
+     * saddr - the source address in socket format. Can be a static string
+       or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. set_source_address usage
+...
+set_source_address("udp:127.0.0.1:5080");
+...
+
+4.18. via_add_srvid(flags)
+
+   Control if srvid parameter is added or not to local Via. If yes, the
+   value is server_id, added only if it is different than 0.
+
+   Meaning of the parameters is as follows:
+     * flags: 1 - add srvid parameter; 0 - do not add srvid parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. via_add_srvid usage
+...
+via_add_srv("1");
+...
+
+4.19. via_add_xavp_params(flags)
+
+   Control if fields of the xavp with the name specified by
+   xavp_via_params global parameter are added or not to local Via.
+
+   Meaning of the parameters is as follows:
+     * flags: 1 - add xavp parameters; 0 - do not add xavp parameters.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. via_add_xavp_params usage
+...
+via_add_xavp_params("1");
+...
+
+4.20. via_use_xavp_fields(flags)
+
+   Control if fields of the xavp with the name specified by
+   xavp_via_fields global parameter are used or not to build local Via.
+
+   Meaning of the parameters is as follows:
+     * flags: 1 - use xavp fields; 0 - do not use xavp fields.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. via_use_xavp_fields usage
+...
+via_use_xavp_fields("1");
+...
+
+5. RPC Commands
+
+   5.1. corex.debug
+   5.2. corex.list_sockets
+   5.3. corex.list_aliases
+   5.4. corex.shm_status
+   5.5. corex.shm_summary
+   5.6. corex.pkg_summary
+
+5.1.  corex.debug
+
+   Set or get the global log level (the value for global parameter
+   'debug'). To set the debug, provide an integer parameter. If no
+   parameter is provided, then the current value is returned.
+
+   Example:
+                kamcmd corex.debug
+                kamcmd corex.debug 2
+
+5.2.  corex.list_sockets
+
+   Print the list of sockets the application is listening on.
+
+   Example:
+                kamcmd corex.list_sockets
+
+5.3.  corex.list_aliases
+
+   Print the list of hostname aliases used to match the myself condition.
+
+   Example:
+                kamcmd corex.list_aliases
+
+5.4.  corex.shm_status
+
+   Trigger shm status dump to syslog.
+
+   Example:
+                kamcmd corex.shm_status
+
+5.5.  corex.shm_summary
+
+   Trigger shm summary dump to syslog.
+
+   Example:
+                kamcmd corex.shm_summary
+
+5.6.  corex.pkg_summary
+
+   Trigger pkg summary dump to syslog for a specific pid or process index.
+   It has two parameters: first to specify what matching type is desired
+   (can be 'pid' or 'idx'); second to specify the value for desired match.
+
+   The dump is happening when the selected process is doing a runtime
+   handling (e.g., processing a sip message).
+
+   Example:
+                kamcmd corex.pkg_summary pid 2345
+                kamcmd corex.pkg_summary idx 1
+
+6. Event Routes
+
+   6.1. event_route[network:msg]
+
+6.1.  event_route[network:msg]
+
+   Event route block to be executed when new data is received from network
+   or the data that is about to be sent to a remote host by a SIP worker
+   process.
+
+   The kamailio script writer can check which type of data triggered this
+   event route using is_incoming method.
+
+   After executing of this event route, if msg_avp was defined and set
+   then its value is used for further processing, otherwise, original
+   value of $mb is used. If message was received from remote host, then it
+   is parsed and proceeds to appropriate route. Otherwise if message set
+   to send out, then is sent to remote host per configured SIP timers in
+   config script.
+
+   Please note this event route is meant to prepare the message for
+   on-wire communication, e.g. to do custom encryption or decryption,
+   compression/decompression etc. of the message sent to or received from
+   remote host. Therefore, except text operations, no module functions or
+   pseudo variables are available in this event route.
+
+7. Examples of Usage
+
+   To use network event_route[network:msg] the remote SIP UA must also
+   implement and understand the encoding / decoding done in this event
+   route. It is up to Kamailio config script writer to define and
+   implement how encoding and decoding is done. Any language module such
+   as app_perl or app_lua can be called in in event_route[network:msg] to
+   implement desired logic.
+
+   The most simple use case is to compress the SIP packet on-wire. As SIP
+   is a text based protocol, so it is highly compressable. Using this
+   module, one can compress entire SIP message, including headers and
+   message body before sending it to remote host using any compression
+   algorithm of choice, thus saving significant bandwidth on mobile data
+   networks.
+
+   A useful case is to use this function between SIP edge proxy and SIP
+   application server. The SIP messages received from end-user at SIP edge
+   proxy may be decrypted and sent to SIP application server at remote
+   location unencrypted, where they are processed as normal. One the way
+   back, the messages received from SIP application server at edge proxy
+   can be encrypted before being sent to actual destination. The edge
+   proxy can check whether received message came from end-user or SIP
+   application server by using simple regular expressions.
+
+   Another use case is to implement a virtual HTTP tunnel for SIP
+   messages. The SIP client app can convert SIP message to binary e.g. by
+   doing XOR, Base64 etc., then prepend some fake HTTP headers to make it
+   look like an HTTP request before sending it to kamailio over SIP TCP
+   socket. At kamailio, the fake headers are removed and data is decoded
+   back to normal SIP and processed per config script logic. For the data
+   that is to be sent to SIP client app, one can prepend fake HTTP reply
+   headers to encoded data before sending it to client app.
+
+   More advance use cases may involve custom encryption algorithms such as
+   ITV encryption algorithm, https://github.com/mshary/itv
+
+   For example, the client app running on Android or iPhone, may send
+   device UUID along with ITV key, encrypted using RSA or AES256 with
+   pre-shared secret, as first packet, which is set as cookie by server in
+   e.g. memcache. This cookie is referred by client app in each next
+   packet, so server can retrieve encryption key from cache and use that
+   for decryption. Same can be done for server at client app side, so
+   messages encrypted by server can be decrypted at client app.
+
+   Next is a basic usage example where encoding and decoding is done using
+   PERL,
+
+   Example 1.25. event_route[network:msg] use cases
+...
+loadmodule "app_perl.so"
+loadmodule "corex.so"
+...
+# ----- app_perl params -----
+modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
+modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
+
+# ----- corex params -----
+modparam("corex", "network_io_intercept", 32)
+modparam("corex", "min_msg_len", 32)
+modparam("corex", "msg_avp", "$avp(msg)")
+...
+event_route[network:msg] {
+        if (is_incoming()) {
+                if (perl_exec_simple("do_uncompress", "" + $mb + "")) {
+                        xlog("L_INFO", "Received message '$avp(msg)' \n");
+                } else {
+                        xlog("L_INFO", "Received message '$mb' \n");
+                        $avp(msg) = $mb;
+                };
+        } else {
+                xlog("L_INFO", "Sending message '$mb' \n");
+                if (!perl_exec_simple("do_compress", "" + $mb + "")) {
+                        $avp(msg) = $mb;
+                };
+        };
+}
+...
+
+   Example 1.26. Sample PERL code for do_compress and do_uncompress
+...
+use strict;
+use warnings;
+use IO::Compress::Gzip qw(gzip $GzipError) ;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+
+sub do_compress() {
+        my $input = shift;
+        my $output;
+
+        gzip \$input => \$output
+                or eval {
+                        Kamailio::log(L_WARN, "GZIP failed: $GzipError\n");
+                        $output = $input;
+                };
+
+        Kamailio::AVP::add("msg", $output);
+}
+
+sub do_uncompress() {
+        my $input = shift;
+        my $output;
+
+        gunzip \$input => \$output
+                or eval {
+                        Kamailio::log(L_WARN, "GUNZIP failed: $GzipError\n");
+                        $output = $input;
+                };
+
+        Kamailio::AVP::add("msg", $output);
+}
+...

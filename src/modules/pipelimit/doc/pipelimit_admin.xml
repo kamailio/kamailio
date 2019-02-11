@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module implements traffic limiting for SIP requests.
+	</para>
+	<para>
+		The module defines in an abstract mode the notion of 'pipe',
+		which can be a reference to an IP address, to a network or a trunk.
+		The association of traffic to a pipe is done in the config file,
+		therefore, a pipe could represent SIP traffic coming from a user or
+		the flow of specific SIP requests such as INVITE or REGISTER.
+	</para>
+	<para>
+		Pipelimit started from ratelimit module, adding support for definition
+		of pipes limits in database and dynamic names. Complexity of keeping
+		everything in a module and make it dual mode functional resulted in a
+		new module which is focused on just traffic shaping policies, the
+		implementation of queues was discarded.
+	</para>
+	</section>
+	<section>
+		<title>Algorithms</title>
+		<para>
+			Algorithms are based from the ratelimit module, which describes the
+			algorithms in more detail. The algorithms are used by the pipelimit
+			module to determine if a message should be blocked.
+		</para>
+		<para>
+			<emphasis>Tail Drop Algorithm (TAILDROP)</emphasis>
+		</para>
+		<para>
+			This is a trivial algorithm that imposes some risks when used in
+			conjunction with long timer intervals. At the start of each interval an
+			internal counter is reset and incremented for each incoming message.
+			Once the counter hits the configured limit pl_check() returns false
+			(negative value).
+		</para>
+		<para>
+			<emphasis>Random Early Detection Algorithm (RED)</emphasis>
+		</para>
+		<para>
+			The Random Early Detection Algorithm tries to circumvent the
+			synchronization problem imposed by the tail drop algorithm by measuring
+			the average load and adapting the drop rate dynamically. When running
+			with the RED algorithm (enabled by default) Kamailio will return errors
+			to the Kamailio routing engine every n'th packet trying to evenly
+			spread the measured load of the last timer interval onto the current
+			interval. As a negative side effect Kamailio might drop messages
+			although the limit might not be reached within the interval. Decrease
+			the timer interval if you encounter this.
+		</para>
+		<para>
+			<emphasis>Network Algorithm (NETWORK)</emphasis>
+		</para>
+		<para>
+			This algorithm relies on information provided by network interfaces.
+			The total amount of bytes waiting to be consumed on all the network
+			interfaces is retrieved once every timer_interval seconds. If the
+			returned amount exceeds the limit specified in the modparam, pl_check()
+			returns false (negative value).
+		</para>
+		<para>
+			<emphasis>Feedback Algorithm (FEEDBACK)</emphasis>
+		</para>
+		<para>
+			Using the PID Controller model (see Wikipedia page), the drop rate is
+			adjusted dynamically based on the load factor so that the load factor
+			always drifts towards the specified limit (or setpoint, in PID terms).
+		</para>
+		<para>
+			As reading the CPU load average is relatively expensive (opening
+			/proc/stat, parsing it, etc), this only happens once every
+			timer_interval seconds and consequently the FEEDBACK value is only at
+			these intervals recomputed. This in turn makes it difficult for the
+			drop rate to adjust quickly. Worst case scenarios are request rates
+			going up/down instantly by thousands - it takes up to 20 seconds for
+			the controller to adapt to the new request rate.
+		</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database connection module</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl: Stateless Request Handling</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="pipelimit.p.hash_size">
+	    <title><varname>hash_size</varname> (int)</title>
+	    <para>
+		Used to compute the number of slots for the internal hash table,
+		as power of 2 (number of slots = 2^hash_size, aka 1&lt;&lt;hash_size).
+		If you have many pipes, increase this value for proper performances,
+		but don't go too high (hash_size=10 means 1024 slots).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>6</quote> (64 slots).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "hash_size", 10)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="pipelimit.p.db_url">
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		URL of the database server to be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "db_url", "&exampledb;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="pipelimit.p.plp_table_name">
+	    <title><varname>plp_table_name</varname> (string)</title>
+	    <para>
+			Name of DB table where data definition for pipes is stores.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>pl_pipes</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_table_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_table_name", "mypipes")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="pipelimit.p.plp_pipeid_column">
+	    <title><varname>plp_pipeid_column</varname> (string)</title>
+	    <para>
+		Name of 'pipeid' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>pipeid</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_pipeid_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_pipeid_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="pipelimit.p.plp_limit_column">
+	    <title><varname>plp_limit_column</varname> (string)</title>
+	    <para>
+		Name of 'limit' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>limit</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_limit_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_limit_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="pipelimit.p.plp_algorithm_column">
+	    <title><varname>plp_algorithm_column</varname> (string)</title>
+	    <para>
+		Name of 'algorithm' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>algorithm</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_algorithm_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_algorithm_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="pipelimit.p.timer_interval">
+		<title><varname>timer_interval</varname> (integer)</title>
+		<para>
+		The length of the timer interval in seconds. Counted messages are reset
+		each timer_interval, therefore the amounts of messages have to be divided
+		by this timer_interval value to get the messages per second value. For
+		example, if you want to allow an average of 10 messages per second with
+		a timer interval of 10 seconds, then the limit value has to be 100.
+		</para>
+		<para>
+		Note: A too small value may lead to performance penalties due to
+		timer process overloading.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "timer_interval", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.p.timer_mode">
+		<title><varname>timer_mode</varname> (integer)</title>
+		<para>
+		Control what timer process to be used: 0 - use main fast timer; 1 - use
+		secondary wheel timer.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "timer_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.p.load_fetch">
+		<title><varname>load_fetch</varname> (integer)</title>
+		<para>
+		Control if the module should fetch the load for CPU and network traffic.
+		If set to 0, no load is fetched; if set to 1, the load is fetched every
+		timer interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>load_fetch</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "load_fetch", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.p.reply_code">
+		<title><varname>reply_code</varname> (integer)</title>
+		<para>
+		The code of the reply sent by &kamailio; while limiting.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 503.
+		</emphasis>
+
+		</para>
+		<example>
+		<title>Set <varname>reply_code</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "reply_code", 505)
+...
+</programlisting>
+		</example>
+		<para>
+		This value can be modified at runtime using &sercmd;
+		</para>
+		<example>
+		<title> Set <varname>reply_code</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+&sercmd; cfg.set_now_int pipelimit reply_code 505
+
+		</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.p.reply_reason">
+		<title><varname>reply_reason</varname> (string)</title>
+		<para>
+		The reason of the reply sent by &kamailio; while limiting.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "Server Unavailable".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_reason</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "reply_reason", "Limiting")
+...
+</programlisting>
+		</example>
+		<para>
+		This value can be modified at runtime using &sercmd;
+		</para>
+		<example>
+		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+&sercmd; cfg.set_now_string pipelimit reply_reason "Limiting"
+
+		</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.p.clean_unused">
+		<title><varname>clean_unused</varname> (int)</title>
+		<para>
+		Clean unused pipes afetr this number of timer intervals.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (cleanup disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_unused</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "clean_unused", 10)
+...
+</programlisting>
+		</example>
+		<para>
+		This value can be modified at runtime using &sercmd;
+		</para>
+		<example>
+		<title> Set <varname>clean_unused</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+&sercmd; cfg.set_now_int pipelimit clean_unused 10
+
+		</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="pipelimit.f.pl_check">
+		<title>
+		<function moreinfo="none">pl_check(name [, algorithm, limit])</function>
+		</title>
+		<para>
+		Check the current request against the 'name' pipe.
+		</para>
+		<para>	
+		If algorithm and limit are provided, the function attempts to create a
+		new pipe if one with that name doesn't exit. If it exists, no changes
+		to algorithm is done and the pipe limit is set to the 'limit' parameter
+		value, if this is greater than 0. Algorithm is case sensitive.
+		</para>
+		<para>	
+		The pipe name can be provided via a pseudo variable.
+		</para>
+		<para>The method will return:
+		<itemizedlist>
+			<listitem><para><emphasis>-2</emphasis> if no pipe was found</para></listitem>
+			<listitem><para><emphasis>-1</emphasis> if pipe limit was reached</para></listitem>
+			<listitem><para><emphasis>1</emphasis> if pipe limit was NOT reached</para></listitem>
+			<listitem><para><emphasis>2</emphasis> if pipe has NOP algorithm</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>name</emphasis> - the string or pseudovariable with the pipe name.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>algorithm</emphasis> - the string or pseudovariable with the
+			algorithm. The values can be: TAILDROP, RED, NETWORK, or FEEDBACK - see
+			readme of ratelimit module for details on each algorithm.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>limit</emphasis> - the integer or pseudovariable with the limit value
+			per timer_interval.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pl_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+	# perform pipe match for current method
+	if (!pl_check("one")) {
+		pl_drop();
+		exit;
+	}
+...
+	# use pipe 'one' for the current method via PV
+	$var(p) = "one";
+	$var(check_result) = pl_check("$var(p)");
+	switch($var(check_result)) {
+	case -2:
+		xlog("L_ALERT","pl_check(\"$var(p)\") drop -pipe NOT found\n");
+		pl_drop();
+		exit;
+		break;
+	case -1:
+		xlog("L_ALERT","pl_check(\"$var(p)\") drop\n");
+		pl_drop();
+		exit;
+		break;
+	case 1:
+		xlog("L_INFO", "pl_check(\"$var(p)\") pass\n");
+		break;
+	case 2:
+		xlog("L_ALERT","pl_check(\"$var(p)\") pass -NOP algorithm\n");
+		break;
+	default:
+		xlog("L_ERR","pl_check(\"$var(p)\") dropping \
+with unexpected retcode=$var(check_result)\n");
+		pl_drop();
+		exit;
+	}
+...
+	# perform pipe match for authenticated user
+	$var(limit) = 20;
+	if (!pl_check("$au", "TAILDROP", "$var(limit)")) {
+		pl_drop();
+		exit;
+	}
+...
+	# perform pipe match for INVITE
+	if (is_method("INVITE")) {
+		$var(invlimit) = 10;
+		if (!pl_check("$si", "TAILDROP", "$var(invlimit)")) {
+			pl_drop();
+			exit;
+		}
+	}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pipelimit.f.pl_drop">
+		<title>
+		<function moreinfo="none">pl_drop([ [min ], max ])</function>
+		</title>
+		<para>
+		For the current request, a "503 - Server Unavailable" reply is sent back.
+		The reply may or may not have a "Retry-After" header.  If no parameter is given,
+		there will be no "Retry-After" header.  If only the
+		<emphasis>max</emphasis> parameter is given, the
+		reply will contain a "Retry-After: <emphasis>max</emphasis>" header.  If both
+		<emphasis>min</emphasis> and <emphasis>max</emphasis> params are given, the
+		reply will contain a "Retry-After: <emphasis>random</emphasis>" header with
+		<emphasis>random</emphasis> being a random value between the given min and max.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>min</emphasis> - the minimum value of "Retry-After" header.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			<emphasis>max</emphasis> - the maximum value of "Retry-After" header.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE.
+		</para>
+		<example>
+		<title><function>pl_drop</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if (!pl_check("one")) {
+		# send back a "503 - Server Unavailable"
+		# with a "Retry-After: 5"
+		pl_drop("5");
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="pipelimit.r.pl.list">
+		<title>
+		<function moreinfo="none">pl.list</function>
+		</title>
+		<para>
+		Lists the details of one or all pipes, respectively the attributes
+		pipe name (id), algorithm, limit and counter.
+		</para>
+		<para>
+		Name: <emphasis>pl.list</emphasis>
+		</para>
+		<para>Parameters: <emphasis>name</emphasis> - (optional) pipe name</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamctl rpc pl.list
+kamctl rpc pl.list testid
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.stats">
+		<title>
+		<function moreinfo="none">pl.stats</function>
+		</title>
+		<para>
+		Lists the parameters and variables in the pipelimit module:
+		pipe id, pipe load and pipe counter.
+		</para>
+		<para>
+		Name: <emphasis>pl.stats</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.stats
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.set_pipe">
+		<title>
+		<function moreinfo="none">pl.set_pipe</function>
+		</title>
+		<para>
+		Sets the pipe parameters for the given pipe id.
+		</para>
+		<para>
+		Name: <emphasis>pl.set_pipe</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>pipe_id</emphasis> - pipe id.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>pipe_algorithm</emphasis> - the
+			algorithm assigned to the given pipe id.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>pipe_limit</emphasis> - the limit
+			assigned to the given pipe id.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.set_pipe 2 RED 10
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.get_pipes">
+		<title>
+		<function moreinfo="none">pl.get_pipes</function>
+		</title>
+		<para>
+		Gets the list of in use pipes.
+		</para>
+		<para>
+		Name: <emphasis>pl.get_pipes</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.get_pipes
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.set_pid">
+		<title>
+		<function moreinfo="none">pl.set_pid</function>
+		</title>
+		<para>
+		Sets the PID Controller parameters for the Feedback Algorithm.
+		</para>
+		<para>
+		Name: <emphasis>pl.set_pid</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>ki</emphasis> - the integral parameter.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>kp</emphasis> - the proportional parameter.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>kd</emphasis> - the derivative parameter.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.set_pid 0.5 0.5 0.5
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.get_pid">
+		<title>
+		<function moreinfo="none">pl.get_pid</function>
+		</title>
+		<para>
+		Gets the list of in use PID Controller parameters.
+		</para>
+		<para>
+		Name: <emphasis>pl.get_pid</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.get_pid
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.push_load">
+		<title>
+		<function moreinfo="none">pl.push_load</function>
+		</title>
+		<para>
+		Force the value of the load parameter. This command is useful
+		for testing the Feedback algorithm.
+		</para>
+		<para>
+		Name: <emphasis>pl.push_load</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>load</emphasis> - the forced value of load
+			(it must be greater then 0.0 and smaller then 1.0).
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.push_load 0.85
+...
+		</programlisting>
+	</section>
+	</section>
+
+</chapter>

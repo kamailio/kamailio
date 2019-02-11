@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="counters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Counters Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+			<email>andrei@iptel.org</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2010</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+	</bookinfo>
+
+	<chapter>
+	<title>Admin Guide</title>
+	<section id="cnts.overview">
+	<title>Overview</title>
+	<para>
+		This module exports counters/statistics manipulating script functions
+		and RPCs.
+	</para>
+	</section>
+
+	<xi:include href="counters_params.xml"/>
+	<xi:include href="counters_functions.xml"/>
+	<xi:include href="counters_rpc.xml"/>
+	</chapter>
+</book>
+

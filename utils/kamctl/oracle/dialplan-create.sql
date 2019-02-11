@@ -6,7 +6,7 @@ CREATE TABLE dialplan (
     match_exp VARCHAR2(64),
     match_len NUMBER(10),
     subst_exp VARCHAR2(64),
-    repl_exp VARCHAR2(64),
+    repl_exp VARCHAR2(256),
     attrs VARCHAR2(64)
 );
 

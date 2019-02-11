@@ -1,0 +1,437 @@
+xlog Module
+
+Elena-Ramona Modroiu
+
+   rosdev.ro
+   <ramona@rosdev.ro>
+
+Edited by
+
+Elena-Ramona Modroiu
+
+   <ramona@rosdev.ro>
+
+   Copyright © 2003 FhG FOKUS
+
+   Copyright © 2008-2010 Elena-Ramona Modroiu
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Implemented Specifiers
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. buf_size (integer)
+              4.2. force_color (integer)
+              4.3. long_format (integer)
+              4.4. prefix (str)
+              4.5. log_facility (string)
+              4.6. log_colors (string)
+              4.7. methods_filter (int)
+
+        5. Functions
+
+              5.1. xlog([ [facility,] level,] format)
+              5.2. xdbg(format)
+              5.3. xinfo(format)
+              5.4. xnotice(format)
+              5.5. xwarn(format)
+              5.6. xerr(format)
+              5.7. xbug(format)
+              5.8. xcrit(format)
+              5.9. xalert(format)
+              5.10. xlogl([ [facility,] level,] format)
+              5.11. xdbgl(format)
+              5.12. xlogm(level, format)
+
+   List of Examples
+
+   1.1. Set buf_size parameter
+   1.2. Set force_color parameter
+   1.3. Set long_format parameter
+   1.4. Set prefix parameter
+   1.5. log_facility example
+   1.6. log_colors example
+   1.7. Set methods_filter parameter
+   1.8. xlog usage
+   1.9. xdbg usage
+   1.10. xinfo usage
+   1.11. xnotice usage
+   1.12. xwarn usage
+   1.13. xerr usage
+   1.14. xbug usage
+   1.15. xcrit usage
+   1.16. xalert usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Implemented Specifiers
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. buf_size (integer)
+        4.2. force_color (integer)
+        4.3. long_format (integer)
+        4.4. prefix (str)
+        4.5. log_facility (string)
+        4.6. log_colors (string)
+        4.7. methods_filter (int)
+
+   5. Functions
+
+        5.1. xlog([ [facility,] level,] format)
+        5.2. xdbg(format)
+        5.3. xinfo(format)
+        5.4. xnotice(format)
+        5.5. xwarn(format)
+        5.6. xerr(format)
+        5.7. xbug(format)
+        5.8. xcrit(format)
+        5.9. xalert(format)
+        5.10. xlogl([ [facility,] level,] format)
+        5.11. xdbgl(format)
+        5.12. xlogm(level, format)
+
+1. Overview
+
+   This module provides the possibility to print user formatted log or
+   debug messages from Kamailio scripts, similar to the printf function. A
+   C-style printf specifier is replaced with a part of the SIP request or
+   other variables from system.
+
+2. Implemented Specifiers
+
+   In the xlog function, you use pseudo-variables, that are a part of
+   Kamailio core and are used by other modules as well (e.g., avpops in
+   the function avp_printf())
+
+   The most important changes from earlier versions of Kamailio are:
+     * - '%' has been replaced by '$'
+     * - to print a header, use $hdr(header_name[index]) instead of
+       %{header_name[index]}
+     * - to print an AVP, use now $avp([si]:avp_id[index]) instead of
+       %{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
+       %{[$avp_alias[index]}
+
+   The full list of available pseudo-variables in Kamailio is available
+   at: https://www.kamailio.org/wiki/
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules. Note that many modules
+       publish pseudovariables that you can use in this module. The core
+       module for this is the pv module.
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+4. Parameters
+
+   4.1. buf_size (integer)
+   4.2. force_color (integer)
+   4.3. long_format (integer)
+   4.4. prefix (str)
+   4.5. log_facility (string)
+   4.6. log_colors (string)
+   4.7. methods_filter (int)
+
+4.1. buf_size (integer)
+
+   Maximum size of the log message.
+
+   Default value is 4096.
+
+   Example 1.1. Set buf_size parameter
+...
+modparam("xlog", "buf_size", 8192)
+...
+
+4.2. force_color (integer)
+
+   When set to 1, forces color codes in log messages even if log_stderror
+   is set to 0.
+
+   Default value is 0.
+
+   Example 1.2. Set force_color parameter
+...
+modparam("xlog", "force_color", 0)
+...
+
+4.3. long_format (integer)
+
+   When set to 1, outputs the configuration file name in xlogl() and
+   xdbgl() before the line number.
+
+   Default value is 0.
+
+   Example 1.3. Set long_format parameter
+...
+modparam("xlog", "long_format", 1)
+...
+
+4.4. prefix (str)
+
+   Prefix to be output before the log message.
+
+   Default value is "<script>: ".
+
+   Example 1.4. Set prefix parameter
+...
+modparam("xlog", "prefix", "-xlog: ")
+...
+
+4.5. log_facility (string)
+
+   Syslog facility to be used for the xlog output. By setting this, and
+   configuring syslog, you can get the xlog messages in a separate syslog
+   file than the debug messages issued from the source code.
+
+   Default value is NULL (unset - use same facility as source code debug
+   messages).
+
+   Example 1.5. log_facility example
+modparam("xlog", "log_facility", "LOG_DAEMON")
+
+4.6. log_colors (string)
+
+   Update terminal colors used by the Kamailio core for log levels (when
+   log_stderr=1 and log_color=1). The value has to be 'logname=colors',
+   where colors is two characters specifying foreground and background in
+   the same format as $C(xy) variable.
+
+   The parameter can be set many times. The value can also be a
+   ';'-separated list of color specifications.
+
+   Default value is NULL.
+
+   Example 1.6. log_colors example
+modparam("xlog", "log_colors", "L_ERR=cr")
+modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
+
+4.7. methods_filter (int)
+
+   The bitmask with internal SIP method ids to be ignored by xlogm()
+   function. The value can be changed at runtime via cfg reload framework:
+...
+kamcmd cfg.set_now_int xlog methods_filter 15
+...
+
+   To see the associated internal ids for SIP requests, look in source
+   tree inside parser/msg_parser.h for enum request_method.
+
+   Default value is -1 (all SIP methods are ignored).
+
+   Example 1.7. Set methods_filter parameter
+...
+modparam("xlog", "long_format", 1)
+...
+
+5. Functions
+
+   5.1. xlog([ [facility,] level,] format)
+   5.2. xdbg(format)
+   5.3. xinfo(format)
+   5.4. xnotice(format)
+   5.5. xwarn(format)
+   5.6. xerr(format)
+   5.7. xbug(format)
+   5.8. xcrit(format)
+   5.9. xalert(format)
+   5.10. xlogl([ [facility,] level,] format)
+   5.11. xdbgl(format)
+   5.12. xlogm(level, format)
+
+5.1.  xlog([ [facility,] level,] format)
+
+   Output a formatted log message.
+
+   Meaning of the parameters are as follows:
+     * facility - The syslog facility that will be used for this single
+       log message.
+       If this parameter is missing, the implicit facility is either the
+       facility set with the 'log_facility' module parameter or the core's
+       log facility.
+     * level - The level that will be used in LOG function. It can be:
+          + L_ALERT - log level -5
+          + L_BUG - log level -4
+          + L_CRIT - log level -3
+          + L_ERR - log level -1
+          + L_WARN - log level 0
+          + L_NOTICE - log level 1
+          + L_INFO - log level 2
+          + L_DBG - log level 3
+          + $pv - any valid pseudo-variable, that has an integer value.
+            See above options for valid log levels.
+       If it is not a pseudo-variable, then what really matters is the
+       third letter of the value. If the log level is higher than the
+       “debug” global parameter, the message is not printed to syslog.
+       If this parameter is missing, the implicit log level is 'L_ERR'.
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. xlog usage
+...
+xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+xlog("time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+$var(loglevel) = 2;
+xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
+...
+xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LO
+CAL3\n");
+...
+
+5.2.  xdbg(format)
+
+   Print a formatted message using DBG function.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. xdbg usage
+...
+xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.3.  xinfo(format)
+
+   Print a formatted log message at L_INFO level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. xinfo usage
+...
+xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.4.  xnotice(format)
+
+   Print a formatted log message at L_NOTICE level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. xnotice usage
+...
+xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.5.  xwarn(format)
+
+   Print a formatted log message at L_WARN level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. xwarn usage
+...
+xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.6.  xerr(format)
+
+   Print a formatted log message at L_ERR level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. xerr usage
+...
+xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.7.  xbug(format)
+
+   Print a formatted log message at L_BUG level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. xbug usage
+...
+xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.8.  xcrit(format)
+
+   Print a formatted log message at L_CRIT level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. xcrit usage
+...
+xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.9.  xalert(format)
+
+   Print a formatted log message at L_ALERT level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. xalert usage
+...
+xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.10.  xlogl([ [facility,] level,] format)
+
+   Similar to xlog(), in addition prints configuration file line number at
+   the beginning of message.
+
+5.11.  xdbgl(format)
+
+   Similar to xdbg(), in addition prints configuration file line number at
+   the beginning of message.
+
+5.12.  xlogm(level, format)
+
+   Similar to xlog(level, format), but skips writing the log messages for
+   SIP requests and responses that match the SIP method id with
+   methods_filter parameter value.

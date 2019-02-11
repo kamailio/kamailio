@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+		<title>Overview</title>
+
+		<para>The SNMPStats module provides an SNMP management interface
+		to Kamailio.  Specifically, it provides general SNMP queryable 
+		scalar statistics, table representations of more complicated data such as 
+		user and contact information, and alarm monitoring capabilities.
+		</para>
+		<para>
+		The MIB has been renamed in version 4.0.0 to reflect the product name. Please
+		note that all the OID names has changed, as well as the MIB itself.
+		</para>
+		<section>
+			<title>General Scalar Statistics</title>
+			<para>
+			The SNMPStats module provides a number of general scalar statistics.  
+			Details are available in KAMAILIO-MIB, KAMAILIO-REG-MIB, 
+			KAMAILIO-SIP-COMMON-MIB, and KAMAILIO-SIP-SERVER-MIB.  But briefly, 
+			these scalars are:
+			</para>
+			<para>
+			<itemizedlist>
+			<listitem>
+			kamailioSIPProtocolVersion</listitem><listitem> kamailioSIPServiceStartTime</listitem><listitem> kamailioSIPEntityType</listitem><listitem>
+			kamailioSIPSummaryInRequests</listitem><listitem> kamailioSIPSummaryOutRequest</listitem><listitem> 
+			kamailioSIPSummaryInResponses</listitem><listitem> kamailioSIPSummaryOutResponses</listitem><listitem>
+			kamailioSIPSummaryTotalTransactions</listitem><listitem> kamailioSIPCurrentTransactions</listitem><listitem> 
+			kamailioSIPNumUnsupportedUris</listitem><listitem> kamailioSIPNumUnsupportedMethods</listitem><listitem> 
+			kamailioSIPOtherwiseDiscardedMsgs</listitem><listitem> kamailioSIPProxyStatefulness
+			kamailioSIPProxyRecordRoute</listitem><listitem> kamailioSIPProxyAuthMethod</listitem><listitem> 
+			kamailioSIPNumProxyRequireFailures</listitem><listitem> kamailioSIPRegMaxContactExpiryDuration</listitem><listitem>
+			kamailioSIPRegMaxUsers</listitem><listitem> kamailioSIPRegCurrentUsers</listitem><listitem> 
+			kamailioSIPRegDfltRegActiveInterval</listitem><listitem> kamailioSIPRegAcceptedRegistrations</listitem><listitem>
+			kamailioSIPRegRejectedRegistrations</listitem><listitem> kamailioMsgQueueDepth</listitem><listitem>
+			kamailioCurNumDialogs</listitem><listitem> kamailioCurNumDialogsInProgress</listitem><listitem> 
+			kamailioCurNumDialogsInSetup</listitem><listitem> kamailioTotalNumFailedDialogSetups</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+			There are also scalars associated with alarms.  They are as follows:
+			</para>
+
+			<para>
+			<itemizedlist>
+			<listitem>
+			kamailioMsgQueueMinorThreshold</listitem><listitem> kamailioMsgQueueMajorThreshold</listitem><listitem>
+			kamailioMsgQueueDepthAlarmStatus</listitem><listitem> kamailioMsgQueueDepthMinorAlarm</listitem><listitem>
+			kamailioMsgQueueDepthMajorAlarm</listitem><listitem> kamailioDialogLimitMinorThreshold</listitem><listitem>
+			kamailioDialogLimitMajorThreshold</listitem><listitem> kamailioDialogUsageState</listitem><listitem>
+			kamailioDialogLimitAlarmStatus</listitem><listitem> kamailioDialogLimitMinorAlarm</listitem><listitem>
+			kamailioDialogLimitMajorAlarm
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+			In Kamailio 4.1 a set of new OIDs was added to reflect the
+			&kamailio; configuration, the version, core status (memory, connections),
+			transports and module data.
+			</para>
+		</section>
+		<section>
+			<title>SNMP Tables</title>
+			<para>
+			The SNMPStats module provides several tables, containing more complicated
+			data.  The current available tables are:
+			</para>
+
+			<para>
+			kamailioSIPPortTable, kamailioSIPMethodSupportedTable, 
+			kamailioSIPStatusCodesTable, kamailioSIPRegUserTable, kamailioSIPContactTable,
+			kamailioSIPRegUserLookupTable
+			</para>
+		</section>
+		<section>
+			<title>Alarm Monitoring</title>
+			<para>
+			If enabled, the SNMPStats module will monitor for alarm conditions. 
+			Currently, there are two alarm types defined.  
+			</para>
+			
+			<orderedlist numeration="arabic">
+			<listitem>
+				<para>
+				The number of active dialogs has passed a minor or major threshold.
+				The idea is that a network operation centre can be made aware that 
+				their SIP servers may be overloaded, without having to explicitly
+				check for this condition.
+				</para>
+				<para>
+				If a minor or major condition has occurred, then a 
+				kamailioDialogLimitMinorEvent trap or a 
+				kamailioDialogLimitMajorEvent trap will be generated, 
+				respectively. The minor and major thresholds are
+				described in the parameters section below.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				The number of bytes waiting to be consumed across all of Kamailios
+				listening ports has passed a minor or major threshold.  The idea is
+				that a network operation centre can be made aware that a machine 
+				hosting a SIP server may be entering a degraded state, and to 
+				investigate why this is so. 
+				</para>
+				<para>
+				If the number of bytes to be consumed passes a minor or major 
+				threshold, then a kamailioMsgQueueDepthMinorEvent or 
+				kamailioMsgQueueDepthMajorEvent trap will be sent out, respectively.
+				</para>
+			</listitem>
+
+			</orderedlist>
+			<para>
+			Full details of these traps can be found in the distributions KAMAILIO-MIB
+			file.  
+			</para>
+		</section>
+	</section>
+
+	
+	<section>
+	<title>How it works</title>
+
+	<section>
+	<title>How the SNMPStats module gets its data</title>
+	<para>
+	The SNMPStats module uses Kamailios internal statistic framework to collect most of its
+	data. However, there are two exceptions.  
+	<orderedlist>
+		<listitem>
+			<para>
+			The kamailioSIPRegUserTable and kamailioSIPContactTable rely on the usrloc 
+			modules	callback system.  Specifically, the SNMPStats module will receive 
+			callbacks whenever a user/contact is added to the system.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			The SNMPStats modules kamailioSIPMsgQueueDepthMinorEvent and 
+			kamailioSIPMsgQueueDepthMajorEvent alarms rely on the Kamailio core to find out
+			what interfaces, ports, and transports Kamailio is listening on.  However,
+			the module will actually query the proc file system to find out the number
+			of bytes waiting to be consumed.  (Currently, this will only work on systems
+			providing the proc file system).
+			</para>
+		</listitem>
+	</orderedlist> 
+	</para>
+	</section>
+	<section>
+	<title>How data is moved from the SNMPStats module to a NOC</title>
+	<para>
+	We have now explained how the SNMPStats module gathers its data. We still have not
+	explained how it exports this data to a NOC (Network Operations Centre), or
+	administrator.
+	</para>
+	<para>
+	The SNMPStats module expects to connect to a <emphasis>Master Agent</emphasis>.  This
+	would be a NetSNMP daemon running either on the same system as the Kamailio instance, or 
+	on another system.  (Communication can take place over TCP, so there is no restriction
+	that this daemon need be on the same system as Kamailio).
+	</para>
+	<para>
+	If the master agent is unavailable when Kamailio first starts up, the SNMPStats module will
+	continue to run.  However, you will not be able to query it.  Thankfully, the SNMPStats
+	module continually looks for its master agent.  So even if the master agent is started late, 
+	or if the link to the SNMPStats module is severed due to a temporary hardware failure
+	or crashed and restarted master agent, the link will eventually be re-established.  No
+	data should be lost, and querying can begin again. 
+	</para>
+	<para>
+	To request for this data, you will need to query the master agent.  The master agent will
+	then redirect the request to the SNMPStats module, which will respond to the master agent, 
+	which will in turn respond to your request.  
+	</para>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The SNMPStats module provides a plethora of statistics, some of which are collected
+		by other modules.  If the dependent modules are not loaded then those specific 
+		statistics will still be returned, but with zeroed values.  All other statistics will
+		continue to function normally.  This means that the SNMPStats module has no  
+		<emphasis>hard/mandatory</emphasis> dependencies on other modules.  There are however,
+		<emphasis>soft</emphasis> dependencies, as follows:
+		<itemizedlist>
+		
+		<listitem>
+		<para>
+		<emphasis>usrloc</emphasis> - all scalars and tables relating to users and contacts are
+		dependent on the usrloc module.  If the module is not loaded, the respective tables
+		will be empty. 
+		</para>
+		</listitem>
+		
+		<listitem>
+		<para>
+		<emphasis>dialog or dialog-ng</emphasis> - all scalars relating to the number of dialogs are 
+		dependent on the presence of a dialog module.  Furthermore, if the module is 
+		not loaded, then the kamailioDialogLimitMinorEvent, and kamailioDialogLimitMajorEvent
+		alarm will be disabled. 
+		</para>
+		</listitem>
+		
+		</itemizedlist>
+		The contents of the kamailioSIPMethodSupportedTable change depending on which modules
+		are loaded.  
+		</para>
+	</section>
+	<section>
+	<title>External Libraries or Applications</title>
+	<para>
+	The following libraries or applications must be installed before running
+	&kamailio; with this module loaded:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>NetSNMP v5.3 or greater</emphasis> - NetSNMP must be around 
+			at the time of compilation.  Furthermore, there are several shared objects
+			that must be loadable at the time SNMPStats is loaded.  This means that
+			NetSNMP must be installed (but not necessarily running) on the system that
+			has loaded the SNMPStats module.  (Details can be found in the compilation 
+			section	below).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>lm_sensors-dev</emphasis> - on some OS-es, this lib is
+			required for compilation (http://www.lm-sensors.org/).
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id ="snmpstats.p.sipentitytape">
+		<title><varname>sipEntityType</varname> (String) </title>
+
+		<para>
+		This parameter describes the entity type for this Kamailio instance,
+		and will be used in determining what is returned for the
+		kamailioSIPEntityType scalar. Valid parameters are:
+		</para>
+
+		<para>
+		<emphasis>
+		registrarServer, redirectServer, proxyServer, userAgent, edgeproxyServer, sipcaptureServer,other
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>sipEntityType</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "sipEntityType", "registrarServer")
+modparam("snmpstats", "sipEntityType", "proxyServer")
+...
+		</programlisting>
+		</example>
+
+		<para>
+		Note that as the above example shows, you can define this parameter more
+		than once.  This is of course because a given Kamailio instance can take on
+		more than one role. The edgeproxyServer is an edge server using the outbound
+		module and path extensions. The sipcaptureServer is a Homer Sip Capture
+		server that collect SIP messages.
+		</para>
+	</section>
+
+	<section id ="snmpstats.p.MsqQueueMinorTreshold">
+		<title><varname>MsgQueueMinorThreshold</varname> (Integer)</title>
+
+		<para>
+		The SNMPStats module monitors the number of bytes waiting to be consumed by 
+		Kamailio.  If the number of bytes waiting to be consumed exceeds a minor
+		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMinorEvent
+		trap to signal that an alarm condition has occurred.  The minor threshold is set
+		with the MsgQueueMinorThreshold parameter.  
+		</para>
+
+		<example>
+		<title>Setting the <varname>MsgQueueMinorThreshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
+...
+		</programlisting>
+		</example>
+
+		<para>
+		If this parameter is not set, then there will be no minor alarm monitoring.
+		</para>
+	</section>
+	
+	<section id ="snmpstats.p.MsqQueueMajorTreshold">
+		<title><varname>MsgQueueMajorThreshold</varname> (Integer)</title>
+
+		<para>
+		The SNMPStats module monitors the number of bytes waiting to be consumed by 
+		Kamailio.  If the number of bytes waiting to be consumed exceeds a major
+		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMajorEvent
+		trap to signal that an alarm condition has occurred.  The major threshold is set
+		with the MsgQueueMajorThreshold parameter.  
+		</para>
+
+		<example>
+		<title>Setting the <varname>MsgQueueMajorThreshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
+...
+		</programlisting>
+		</example>
+
+		<para>
+		If this parameter is not set, then there will be no major alarm monitoring.
+		</para>
+	</section>
+
+	<section id ="snmpstats.p.dlg_minor_treshold">
+		<title><varname>dlg_minor_threshold</varname> (Integer)</title>
+
+		<para>
+		The SNMPStats module monitors the number of active dialogs.  If the number of
+		active dialogs exceeds a minor threshold, the SNMPStats module will send out 
+		an kamailioDialogLimitMinorEvent trap to signal that an alarm condition has 
+		occurred.  The minor threshold is set with the dlg_minor_threshold parameter.  
+		</para>
+
+		<example>
+		<title>Setting the <varname>dlg_minor_threshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+  modparam("snmpstats", "dlg_minor_threshold", 500)
+...
+		</programlisting>
+		</example>
+
+		<para>
+		If this parameter is not set, then there will be no minor alarm monitoring.
+		</para>
+	</section>
+
+	<section id ="snmpstats.p.dlg_major_treshold">
+		<title><varname>dlg_major_threshold</varname> (Integer)</title>
+
+		<para>
+		The SNMPStats module monitors the number of active dialogs.  If the number of
+		active dialogs exceeds a major threshold, the SNMPStats module will send out 
+		an kamailioDialogLimitMajorEvent trap to signal that an alarm condition has 
+		occurred.  The major threshold is set with the dlg_major_threshold parameter.  
+		</para>
+
+		<example>
+		<title>Setting the <varname>dlg_major_threshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+  modparam("snmpstats", "dlg_major_threshold", 750)
+...
+		</programlisting>
+		</example>
+
+		<para>
+		If this parameter is not set, then there will be no major alarm monitoring.
+		</para>
+	</section>
+
+	<section id ="snmpstats.p.snmpgetPath">
+		<title><varname>snmpgetPath</varname> (String)</title>
+
+		<para>
+		The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
+		This scalar requires the SNMPStats module to perform a snmpget query
+		to the master agent.  You can use this parameter to set the path to 
+		your instance of NetSNMP's snmpget program.  
+		</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>/usr/local/bin/</quote>.
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>snmpgetPath</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
+...
+		</programlisting>
+		</example>
+	</section>
+	
+	<section id ="snmpstats.p.snmpCommunity">
+		<title><varname>snmpCommunity</varname> (String)</title>
+
+		<para>
+		The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
+		This scalar requires the SNMPStats module to perform a snmpget query
+		to the master agent.  If you have defined a custom community string
+		for the snmp daemon, you need to specify it with this parameter.  
+		</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>public</quote>.
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>snmpCommunity</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "snmpCommunity", "customCommunityString")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id ="snmpstats.p.export_registrar">
+		<title><varname>export_registrar</varname> (int)</title>
+
+		<para>
+		The SNMPStats module will export registrar (usrloc) records if
+		this parameter is set to 1. This will result in more memory usage
+		and bigger exporter structure.
+		</para>
+		<para>
+		If you enable this setting and NOT use it (i.e. not check the SNMP tables
+		for registrations) an internal memory queue of usrloc changes will
+		keep growing in shared (core) memory. To release the queue memory,
+		run snmpwalk or use a monitoring tool to check the tables with
+		regular intervals.
+		</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (don't export).
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>export_registrar</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "export_registrar", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+		<para>
+		Currently, there are no exported functions.
+		</para>
+	</section>
+	<section>
+	<title>Installation and Running</title>
+	<para>
+	There are several things that need to be done to get the SNMPStats module
+	compiled and up and running.
+	</para>
+
+	<section>
+	<title>
+	Compiling the SNMPStats Module
+	</title>
+	<para>
+	In order for the SNMPStats module to compile, you will need at least version
+	5.3 of the NetSNMP source code.  The source can be found at:
+
+	<programlisting format="linespecific">
+    http://net-snmp.sourceforge.net/ 
+	</programlisting>
+
+	For the specifics of installing NetSNMP, please see the INSTALL document in the
+	root of the NetSNMP source package.  
+	</para>
+
+	<para>
+	The SNMPStats modules makefile requires that the NetSNMP script
+	"net-snmp-config" can run.  At a minimum, running "net-snmp-config --agent-libs"
+	from the Kamailio source directory should return something similar to: 
+
+	<programlisting format="linespecific">
+    -L/usr/local/lib -lnetsnmpmibs -lnetsnmpagent -lnetsnmphelpers -lnetsnmp
+	</programlisting>
+
+	The specifics of what is returned depends on how the system was configured. If
+	your NetSNMP installation was installed from an RPM (or another packaged
+	version), then there is a good chance that net-snmp-config will return
+	something unnecessarily longer.  It is highly recommended you install NetSNMP
+	from source to avoid bringing in excessive dependencies to the SNMPStats
+	module.
+	</para>
+	</section>
+	
+	<section>
+	<title>
+	Configuring NetSNMP to allow connections from the SNMPStats module.
+	</title>
+	<para>
+	The SNMPStats module will communicate with the NetSNMP Master Agent.  This 
+	communication happens over a protocol known as AgentX. This means that NetSNMP
+	must have been compiled with AgentX support.  This will always be the case when
+	you are compiling from source unless you explicitly removed AgentX support with
+	./configure.  
+	</para>
+
+	<para>
+	After AgentX support has been compiled into NetSNMP, its configuration file needs
+	to be changed to turn on AgentX support.  The exact location of the configuration 
+	file (snmpd.conf) may vary depending on your system.  On my system, it is located in:
+ 
+	<programlisting format="linespecific">
+    /usr/local/share/snmp/snmpd.conf.
+    	</programlisting>
+
+	At the very end of the file add the following line:
+
+	<programlisting format="linespecific">
+    master agentx
+	</programlisting>
+
+	The line tells NetSNMP to act as an AgentX master agent, so that it can accept
+	connections from sub-agents such as the SNMPStats module.  
+	</para>
+
+	<para>
+	There is still one last step.  Even though we have compiled and configured NetSNMP
+	to have AgentX support, we still need to tell the daemon which interface and 
+	port to listen to for AgentX connections. This is done when the daemon is started
+	as follows:
+
+	<programlisting format="linespecific">
+    snmpd -x mySystemName:PortNumber
+	</programlisting>
+
+	On my system, I start the NetSNMP daemon with:
+
+	<programlisting format="linespecific">
+    snmpd -x localhost:705
+	</programlisting>
+
+	This tells NetSNMP to act as a master agent, listening on the localhost UDP
+	interface at port 705.  
+	</para>
+	</section>
+	
+	<section>
+	<title>
+	Configuring the SNMPStats module for communication with a Master Agent
+	</title>
+	<para>
+	The previous section explained how to set up a NetSNMP master agent to accept
+	AgentX connections.  We now need to tell the SNMPStats module how to communicate
+	with this master agent.  This is done by giving the SNMPStats module its own
+	NetSNMP configuration file.  The file must be named snmpstats.conf, and must be
+	in the same folder as the snmpd.conf file that was configured above. On my 
+	system this would be:
+
+	<programlisting format="linespecific">
+    /usr/local/share/snmp/snmpstats.conf
+	</programlisting>
+
+	The default configuration file included with the distribution can be used, and
+	contains the following:
+
+	<programlisting format="linespecific">
+    agentXSocket tcp:localhost:705
+	</programlisting>
+
+	The above line tells the SNMPStats module to register with the master agent on
+	the localhost, port 705.  The parameters should match up with the snmpd process.
+	Note that the master agent (snmpd) does not need to be present on the same
+	machine as Kamailio.  localhost could be replaced with any other machine. 
+	</para>
+	</section>
+	
+	<section>
+	<title>
+	Testing for a proper Configuration
+	</title>
+	<para>
+	As a quick test to make sure that the SNMPStats module sub-agent can successfully
+	connect to the NetSNMP Master agent, start snmpd with the following:
+
+	<programlisting format="linespecific">
+    snmpd -f -Dagentx -x tcp:localhost:705 2>&amp;1 | less
+	</programlisting>
+
+	You should see something similar to the following:
+
+	<programlisting format="linespecific">
+    No log handling enabled - turning on stderr logging
+    registered debug token agentx, 1
+    ...
+    Turning on AgentX master support.
+    agentx/master: initializing...
+    agentx/master: initializing...   DONE
+    NET-SNMP version 5.3.1
+	</programlisting>
+
+	Now, start up Kamailio in another window.  In the snmpd window, you should see a
+	bunch of:
+
+	<programlisting format="linespecific">
+    agentx/master: handle pdu (req=0x2c58ebd4,trans=0x0,sess=0x0)
+    agentx/master: open 0x81137c0
+    agentx/master: opened 0x814bbe0 = 6 with flags = a0
+    agentx/master: send response, stat 0 (req=0x2c58ebd4,trans=0x0,sess=0x0)
+    agentx_build: packet built okay
+	</programlisting>
+
+	The messages beginning with "agentx" are debug messages stating that something is happening
+	with an AgentX sub-agent, appearing because of the -Dagentx snmpd switch.  The large number
+	of debug messages appear at startup as the SNMPStats module registers all of its scalars
+	and tables with the Master Agent.  If you receive these messages, then SNMPStats module
+	and NetSNMP daemon have both been configured correctly.
+	</para>
+	</section>
+
+	</section>
+</chapter>
+

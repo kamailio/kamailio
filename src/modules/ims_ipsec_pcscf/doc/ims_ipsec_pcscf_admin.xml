@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module contains methods for IPSec initialisation/deinitialisation related for usage of Kamailio as a
+	Proxy-CSCF.</para>
+
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The Following modules must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Usrloc PCSCF</para>
+        </listitem>
+
+        <listitem>
+          <para>TM</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>This modules requires the internal IMS library and libmnl for operating with netlink sockets.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title><varname>ipsec_listen_addr</varname> (string)</title>
+
+      <para>IP address which the Proxy-CSCF will use for incoming/outgoing SIP traffic over IPSec.</para>
+      <para><emphasis>Default value is "127.0.0.1"</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_listen_addr</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "127.0.0.1")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_client_port</varname> (int)</title>
+
+      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+
+      <para><emphasis>Default value is 5963.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_client_port</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_server_port</varname> (int)</title>
+
+      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+
+      <para><emphasis>Default value is 5063.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_server_port</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_spi_id_start</varname> (int)</title>
+
+      <para>Each IPSec tunnel has a unique system-wide identifier. This and the following option
+      allows to tune the SPIs used by Kamailio in order to avoid collisions with other IPSec useres.
+      If Kamailio is the only process on the system which uses IPSec,
+      don't bother with this option.</para>
+
+      <para><emphasis>Default value is 100.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_spi_id_start</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_spi_id_range</varname> (int)</title>
+
+      <para>How many SPIs to be allocated for the process. E.g. if ipsec_spi_id_start = 100
+      and ipsec_spi_id_range = 1000, SPIs between 100 and 1100 will be used.</para>
+
+      <para><emphasis>Default value is 1000.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_spi_id_range</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
+...
+        </programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <title><function moreinfo="none">ipsec_create(domain)</function></title>
+
+      <para>This function creates IPSec SA and Policy based on the parameters sent
+    in Security-Client header in the REGISTER message. It's called when OK
+    is received. The function also adds Security-Server header to the
+    REGISTER.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          <emphasis>domain</emphasis> - Logical domain within the registrar.
+          If a database is used then this must be name of the table which
+          stores the contacts.
+          </para>
+        </listitem>
+		  </itemizedlist>
+      <example>
+        <title>ipsec_create</title>
+
+        <programlisting format="linespecific">
+...
+ipsec_create("location");
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ipsec_forward(domain)</function></title>
+      <para>The function processes redirects outgoing message via the IPSec tunnel
+      initiated with ipsec_create().</para>
+		  <para>Meaning of the parameters is as follows:</para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          <emphasis>domain</emphasis> - Logical domain within the registrar.
+          If a database is used then this must be name of the table which
+          stores the contacts.
+          </para>
+        </listitem>
+      </itemizedlist>
+      <example>
+        <title>ipsec_forward</title>
+
+        <programlisting format="linespecific">
+...
+ipsec_forward("location");
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">ipsec_destroy(domain)</function></title>
+      <para>The function destroys IPSec tunnel, created with ipsec_create.</para>
+      <para>Meaning of the parameters is as follows:</para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          <emphasis>domain</emphasis> - Logical domain within the registrar.
+          If a database is used then this must be name of the table which
+          stores the contacts.
+          </para>
+        </listitem>
+		  </itemizedlist>
+      <example>
+        <title>ipsec_forward</title>
+
+        <programlisting format="linespecific">
+...
+ipsec_destroy("location");
+...
+        </programlisting>
+      </example>
+    </section>
+  </section>
+</chapter>

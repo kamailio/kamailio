@@ -1,6 +1,6 @@
 {
   "name": "lcr_rule",
-  "version": 2,
+  "version": 3,
   "columns": [
     "id": {
       "type": "int",
@@ -23,6 +23,11 @@
       "null": true
     },
     "request_uri": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "mt_tvalue": {
       "type": "string",
       "default": null,
       "null": true

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<chapter>
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	The matrix module can be used to arbitrary lookup operations over an array.
+	One possible use-case is to define which routing tree should
+  	be used depending on the preferred carrier of the source number and
+  	the carrier id of the destination number.
+
+  	The matrix cells are read from a database and can be reloaded using
+  	a FIFO command.
+
+  	You do not have to define all matrix cells. The matrix can be sparse.
+
+  	Currently, the implementation is designed for a small number of
+  	columns (they are stored in a linked list). This does
+  	not scale well and has to be replaced by more an efficient data
+  	data structure when needed.
+
+	</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>none</emphasis></para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+
+<section>
+	<title>Parameters</title>
+	<section id="matrix.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+	  <para>
+			The URL for the database connection.
+	  </para>
+	  <para>
+			<emphasis>
+				Default value is <quote>&defaultrodb;</quote>.
+		  </emphasis>
+	  </para>
+	  <example>
+		  <title>Set <varname>db_url</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("matrix", "db_url", "&defaultrodb;")
+...
+		  </programlisting>
+	  </example>
+  </section>
+	<section id="matrix.p.matrix_table">
+		<title><varname>matrix_table</varname> (string)</title>
+	  <para>
+			The name of the table containing the matrix data.
+	  </para>
+	  <para>
+			<emphasis>
+				Default value is <quote>matrix</quote>.
+		  </emphasis>
+	  </para>
+	  <example>
+		  <title>Set <varname>matrix_table</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("matrix", "matrix_table", "matrix")
+...
+		  </programlisting>
+	  </example>
+  </section>
+	<section id="matrix.p.matrix_first_col">
+		<title><varname>matrix_first_col</varname> (string)</title>
+	  <para>
+			The name of the column containing the first row in the matrix.
+	  </para>
+	  <para>
+			<emphasis>
+				Default value is <quote>first</quote>.
+		  </emphasis>
+	  </para>
+	  <example>
+		  <title>Set <varname>matrix_first_col</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("matrix", "matrix_first_col", "first")
+...
+		  </programlisting>
+	  </example>
+  </section>
+	<section id="matrix.p.matrix_second_col">
+		<title><varname>matrix_second_col</varname> (string)</title>
+	  <para>
+			The name of the column containing the second row in the matrix.
+	  </para>
+	  <para>
+			<emphasis>
+				Default value is <quote>second</quote>.
+		  </emphasis>
+	  </para>
+	  <example>
+		  <title>Set <varname>matrix_second_col</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("matrix", "matrix_second_col", "second")
+...
+		  </programlisting>
+	  </example>
+  </section>
+	<section id="matrix.p.matrix_res_col">
+		<title><varname>matrix_res_col</varname> (string)</title>
+	  <para>
+			The name of the column containing the result ID to be used.
+	  </para>
+	  <para>
+			<emphasis>
+				Default value is <quote>res</quote>.
+		  </emphasis>
+	  </para>
+	  <example>
+		  <title>Set <varname>matrix_res_col</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("matrix", "matrix_res_col", "res")
+...
+		  </programlisting>
+	  </example>
+  </section>
+</section>
+<section>
+	<title>Functions</title>
+	<section id="matrix.f.matrix">
+	  <title>
+			<function moreinfo="none">matrix (string first, string second, string dstavp)</function>
+		</title>
+		<para>
+			Looks up the desired result ID in the matrix for the given column
+			and value and saves the result in dstavp. Returns false if the cell
+      			is not defined or when an error occurred.
+
+			Pseudo-variables or AVPs can be used for first and second.
+	  </para>
+		<example>
+			<title><function>matrix</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (!matrix("$avp(first)", "$avp(second)", "$avp(route_tree)"))
+  $avp(route_tree) = $avp(frst); # default routing as defined for source number
+}
+cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
+...
+			</programlisting>
+	  </example>
+	</section>
+</section>
+<section>
+	<title>RPC Commands</title>
+	<section id="matrix.rpc.reload">
+	    <title>
+			<function moreinfo="none">matrix.reload</function>
+	    </title>
+	    <para>
+			Reloads the internal matrix representation from the database.
+			This is necessary after entries in the database have been changed.
+	    </para>
+			<example>
+				<title><function>matrix.reload</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; matrix.reload
+...
+				</programlisting>
+	    </example>
+	</section>
+	</section>
+  <section>
+		<title>Installation and Running</title>
+		<section>
+			<title>Database setup</title>
+			<para>
+				Before running &kamailio; with matrix, you have to setup the database
+				table where the module will read the matrix data. For that, if
+				the table was not created by the installation script or you choose
+				to install everything by yourself you can use the matrix-create.sql
+				<acronym>SQL</acronym> script in the database directories in the 
+				kamailio/scripts folder as template.
+				Database, table, and column names can be set with module parameters so they
+				can be changed.
+				You can also find the complete database documentation on the
+				project webpage, &kamailiodbdocs;.
+			</para>
+
+			<example>
+				<title>Example database content - matrix table</title>
+				<programlisting format="linespecific">
+...
++---------+--------------+---------+
+|  first  |    second    |   res   |
++---------+--------------+---------+
+|       1 |            9 |       2 |
+|       2 |           69 |       1 |
+|       2 |           13 |       3 |
++---------+--------------+---------+
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>

@@ -15,4 +15,5 @@
 		<column><field>record_route</field><type>DB1_BLOB</type></column>
 		<column><field>notify_cseq</field><type>DB1_INT</type></column>
 		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
+		<column><field>server_id</field><type>DB1_INT</type></column>
 	</db_table>

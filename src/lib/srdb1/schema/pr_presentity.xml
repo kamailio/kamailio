@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="presentity" xmlns:db="http://docbook.org/ns/docbook">
+    <name>presentity</name>
+    <version>5</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			Table for the presence module. More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;presence.html">&KAMAILIO_MOD_DOC;presence.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>User name</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain</description>
+        <natural/>
+    </column>
+
+    <column id="event">
+        <name>event</name>
+        <type>string</type>
+        <size>&event_len;</size>
+        <description>Event</description>
+        <natural/>
+    </column>
+
+    <column id="etag">
+        <name>etag</name>
+        <type>string</type>
+        <size>&etag_len;</size>
+        <description>Etag attribute</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Expires</description>
+        <index/>
+    </column>
+
+    <column>
+        <name>received_time</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Received time</description>
+    </column>
+
+    <column>
+        <name>body</name>
+        <type>binary</type>
+    </column>
+
+    <column id="sender">
+        <name>sender</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Sender contact</description>
+    </column>
+
+    <column>
+        <name>priority</name>
+        <type>int</type>
+        <size>11</size>
+		<default>0</default>
+        <description>Priority of the record</description>
+	</column>
+
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Record internal unique id</description>
+    </column>
+
+    <index>
+        <name>presentity_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="event"/>
+        <colref linkend="etag"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>ruid_idx</name>
+        <colref linkend="ruid"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>presentity_expires</name>
+        <colref linkend="expires"/>
+    </index>
+
+    <index>
+        <name>account_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="event"/>
+    </index>
+
+</table>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+		<para>
+			This module provides access to json-rpc services (operating over TCP/Netstrings).
+		</para>
+		<para>
+			This module uses t_suspend() and t_continue() from the TM module.
+		</para>
+		<para>
+			Note that after invoking an asynchronous operation, the processing
+			will continue later, in another application process. Therefore, do not
+			rely on variables stored in private memory, use shared memory if you
+			want to get values after the processing is resumed (e.g., $shv(...)
+			or htable $sht(...)).
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>tm</emphasis> - transaction management.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				Note: this module uses Linux specific API, part of glibc library,
+				it might not compile on other types of operating systems.
+			</para>
+			<para>
+				The following libraries or applications must be installed before running
+				&kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>libjson (https://github.com/json-c/json-c/wiki)</emphasis>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>libevent</emphasis> - http://libevent.org/
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>glibc</emphasis> - http://www.gnu.org/software/libc/
+							(v2.8 or higher)
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	<section>
+		<title>Parameters</title>
+		<section>
+			<title><varname>servers</varname> (string)</title>
+			<para>
+				The servers providing the remote jsonrpc service. Format is "host1:port1,priority1 host2:port2,priority2". Requests to servers of the same priority will be distributed evenly (round robin). Server groups with higher priority are used first. 
+			</para>
+			<example>
+				<title>Set <varname>servers</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("jsonrpcc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:9999,1")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>max_conn_attempts</varname> (int)</title>
+			<para>
+				Max number of connection attempts for a server. -1 will keep reconnecting
+				forever, 0 will skip any attempt to reconnect.
+			</para>
+			<example>
+				<title>Set <varname>max_conn_attempts</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("jsonrpcc", "max_conn_attempts", 10)
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+		<title>Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">jsonrpc_notification(method, parameters)</function>
+			</title>
+			<para>
+				Invokes the remote 'method' with the given 'parameters' as a notification.
+				Unlike jsonrpc_request (below), notifications do not receive a response. 
+				Script processing continues in the usual fashion as soon as the notification
+				has been sent.
+			</para>
+			<para>
+				The method and parameters can be a static string or dynamic string value with 
+				config variables.
+			</para>
+			<example>
+				<title><function>jsonrpc_notification</function> usage</title>
+				<programlisting format="linespecific">
+...
+jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title>
+				<function moreinfo="none">jsonrpc_request(method, parameters, return_route, error_route, result_var)</function>
+			</title>
+			<para>
+				Invokes the remote 'method' with the given 'parameters'. 
+				When the response is received, continues processing of the SIP request
+				with the route[return_route]. If a timeout occurs, no servers can be reached,
+				or a jsonrpc error message is received, continues process at route[error_route].
+				In this case, the result_var will contain one of "timeout", "failure", or the error
+				message received back from the jsonrpc server.
+			</para>
+			<para>
+				The method, parameters, return_route, and error_route can be a static string or 
+				a dynamic string value with config variables.
+			</para>
+			<para>
+				Since the SIP request handling is resumed in another process,
+				the config file execution is lost. As mentioned above, only 
+				shared variables ($shv, etc) should be used for any value that
+				will be needed when the script is resumed.
+			</para>
+			<para>
+				The result is stored in the pseudo-variable 'result_var'. Since this 
+				variable is set <emphasis>after</emphasis> the response is received,
+				it is possible to use a $var for this parameter.
+			</para>
+			<example>
+				<title><function>jsonrpc_request</function> usage</title>
+				<programlisting format="linespecific">
+...
+jsonrpc_request("get_user", "{'id': 1234}", "RESPONSE", "ERROR", "$var(result)");
+...
+route[RESPONSE] {
+	xlog("Result received: $var(result)");
+	...
+}
+...
+route[ERROR] {
+	xlog("Error received: $var(result)");
+	...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>
+

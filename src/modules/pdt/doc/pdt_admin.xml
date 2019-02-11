@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module translates a numerical prefix into a domain and updates
+		accordingly the request &uri;.
+	</para>
+	<para>
+	    The module looks up at the R-&uri; part of a message and if the user
+		part begins with an established prefix it will update the &uri;.
+		Updating the uri consists of: remove the prefix from the user part of
+		the uri and keep the rest as the user part of the new uri. The host
+		and port are changed with the domain matched for the leading prefix and
+		the domain in From URI.
+	</para>
+	<para>
+	    &lt;prefix&gt;&lt;userid&gt;&lt;:password&gt;@&lt;mydomain.com&gt; ...
+	</para>
+	<para>
+	    and the result will be:
+	</para>
+	<para>
+	    &lt;userid&gt;&lt;:password&gt;@&lt;domain[:port]&gt;...
+	</para>
+	<example>
+	    <title>prefix-domain translation</title>
+	    <programlisting format="linespecific">
+prefix=123, domain(FROM)=siphub.org
+
+entry in database:
+ sdomain=siphub.org
+    domain[123]=alpha.org
+    domain[124]=beta.org
+    domain[125]=gamma.org
+	
+The RURI will be updated in the following way"
+sip:12391001@mydomain.com  => sip:91001@alpha.org    
+</programlisting>
+	</example>
+	<para>
+	    The prefix could be prefixed by other digits. These digits
+	    will not be used to look up the domain (the classic example, 00 used
+		for international calls, then follows the country prefix). For more
+		information on this, see 'prefix' parameter.
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    A sample config file is located in './doc/'.
+		</para>
+		</listitem>
+		
+		<listitem>
+		<para>
+			<acronym>MySQL</acronym> script to create the database needed by
+			PDT is located in '../../scripts/mysql/pdt-create.sql'
+		</para>
+		<para>
+			The database is loaded by &kamailio; only at start up time and 
+			only cache is used to lookup domains. Check the MI Functions for
+			adding/deleting prefix-domain pairs or reloading from database
+			at runtime.
+		</para>
+		</listitem>
+
+	    <listitem>
+		<para>
+		    Sample shell scripts to manage prefix-domain pairs are also located
+			in './doc/' (pdt_fifo_list.sh).
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>A &kamailio; database module (e.g., mysql,
+				dbtext)</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		URL of the database table to be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "db_url", "&exampledb;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		Table name.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>pdt</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "db_table", "pdt")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>sdomain_column</varname> (string)</title>
+	    <para>
+		Name of 'sdomain' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>sdomain</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>sdomain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "domain_column", "source_domain")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>prefix_column</varname> (string)</title>
+	    <para>
+		Name of 'prefix' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>prefix</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>prefix_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "prefix_column", "prefix")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>domain_column</varname> (string)</title>
+	    <para>
+		Name of 'domain' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>domain</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>domain_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "domain_column", "hostname")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>prefix</varname> (string)</title>
+	    <para>
+		Default leading prefix who denotes what &uri; needs to be translated
+		- if it is NULL the module will not check the R-&uri; against it and
+		the PDT prefix is considered starting from the first digit. Otherwise,
+		the module will check first if the R-&uri; starts with it and will
+		skip it to look up the domain.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is NULL.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "prefix", "00")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1000.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "fetch_rows", 4000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>char_list</varname> (string)</title>
+	    <para>
+		The list with characters allowed in prefix.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0123456789</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>char_list</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "char_list", "0123456789*+")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>check_domain</varname> (integer)</title>
+	    <para>
+		Module will check if destination domain is duplicated for same
+		source domain (1 - check; 0 - don't check).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>check_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "check_domain", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+	
+    <section>
+	<title>Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain(rewrite_mode, multidomain_mode)</function>
+	    </title>
+	    <para>
+		Build a new &uri; if it is necessary. Returns 1 when the translation
+		was made or there was nothing to translate (user part of the &uri; is
+		empty, it does not match the prefix parameter or there is no domain
+		associated with a possible prefix from user part).
+		Returns -1 in error cases.
+	    </para>
+		<para>
+		The translation is done based on lookup up for a entry in the database
+		where the sdomain equals the domain in FROM uri, and the prefix matches
+		the beginning of the user part of the RURI. If such an entry is found,
+		then the domain in RURI is updated with the domain of this entry
+		(sdomain, prefix, domain).
+		</para>
+		<para>
+		There is also the possibility to have the translation of &uri; regardless of
+		source domain. This can be achieved inserting in the database entries where
+		sdomain has the value "*".
+		</para>
+		<para>
+		The <quote>rewrite_mode</quote> parameter specifies whether to strip or not
+		the prefix from user part. The possible values are:
+		</para>
+		<itemizedlist>
+			<listitem>	  
+				<para>0: the prefix is removed along with the leading prefix.</para>
+			</listitem>	  
+			<listitem>	  
+				<para>1: only the leading prefix is removed.</para> 
+			</listitem>	  
+			<listitem>
+				<para>2: the user part of the URI is not changed.</para>
+			</listitem>	  
+			<listitem>
+				<para>$PV : any PV holding one of the above values.</para>
+			</listitem>	  
+		</itemizedlist>
+		<para>
+		The <quote>multidomain_mode</quote> parameter specifies the kind of multidomain
+		support to use. The possible values are:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>0 : Translation of &uri; regardless of source domain.</para>
+			</listitem>	  
+			<listitem>
+				<para>1 :  Translation of &uri; using as source domain the domain
+					in From-URI.</para>
+			</listitem>			
+			<listitem>
+				<para>2 :  Translation of &uri; using as source domain the domain
+				in From-URI. In case there is no entry for the required sdomain,
+				it tries the translation using "*" as sdomain.</para>
+			</listitem>
+			<listitem>
+				<para>$PV : any PV holding one of the above values.</para>
+			</listitem>	  
+		</itemizedlist>		
+	    <para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>prefix2domain</function> usage</title>
+		<programlisting format="linespecific">
+...
+prefix2domain("2", "2");
+...
+$var(a) = 1;
+prefix2domain("$var(a)", "2");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain(rewrite_mode)</function>
+	    </title>
+		<para>The same as prefix2domain(rewrite_mode, "0"), that is without 
+		multidomain support, translation of  &uri; being done regardless of 
+		the source domain.
+		</para>
+		<programlisting format="linespecific">
+...
+prefix2domain("2");
+...
+</programlisting>
+    </section>
+	
+	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain()</function>
+	    </title>
+		<para>The same as prefix2domain("0", "0").</para>
+		<programlisting format="linespecific">
+...
+prefix2domain();
+...
+</programlisting>
+    </section>
+	
+	<section>
+	    <title>
+		<function moreinfo="none">pd_translate(sdomain, rewrite_mode)</function>
+	    </title>
+	    <para>
+		Translate R-URI based on source domain and longest prefix matching.
+		Returns 1 when the translation was made or there was nothing to translate.
+		Returns -1 in error cases.
+	    </para>
+		<para>
+		The translation is done based on lookup up for an entry in the database
+		where the sdomain parameter equals the sdomain in database table.
+		</para>
+		<para>
+		The <quote>sdomain</quote> parameter specifies the source domain to be
+		used to match the longest prefix. Can be a static string or dynamic parameter
+		with variables inside.
+		</para>
+		<para>
+		The <quote>rewrite_mode</quote> parameter specifies whether to strip or not
+		the prefix from user part. The possible values are:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>0: the prefix is removed along with the leading prefix.</para>
+			</listitem>
+			<listitem>
+				<para>1: only the leading prefix is removed.</para> 
+			</listitem>
+			<listitem>
+				<para>2: the user part of the URI is not changed.</para>
+			</listitem>
+			<listitem>
+				<para>$PV : any PV holding one of the above values.</para>
+			</listitem>
+		</itemizedlist>
+	    <para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE or
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>pd_translate</function> usage</title>
+		<programlisting format="linespecific">
+...
+pd_translate("$fd", "2");
+...
+pd_translate("*", "$var(a)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+	<section>
+		<title>RPC Commands</title>
+		<para>
+		The database is loaded by &kamailio; at start up time.
+		The module uses only the cache to look up domains. If you want to
+		add or delete a new prefix-domain pair at runtime you have to use
+		RPC commands. All changes made via these commands are applied to
+		database and the cache is updated correspondingly.
+		</para>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt.list</function>
+		</title>
+		<para>
+		Produces a listing of the entries prefixes/domains/sdomains.
+		</para>
+		<para>
+		Name: <emphasis>pdt.list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_sdomain_ : a source domain value. </para></listitem>
+			<listitem><para>_prefix_ : a prefix value</para></listitem>
+            <listitem><para>_domain_: a domain value </para></listitem>
+		</itemizedlist>
+		<para>
+		"." (dot) means NULL value
+		</para>
+		<para>
+		The comparison operation is 'START WITH' -- if domain is 'a' then all domains
+		starting with 'a' are listed.
+		</para>
+		<para>
+		RPC Command Example:
+		</para>
+		<programlisting format="linespecific">
+...
+&kamcmd; pdt.list kamailio.org 123
+...
+		</programlisting>
+		<para>
+		 Examples:
+		 <itemizedlist>
+			<listitem><para><quote>pdt.list siph 2 .</quote>  : Lists the entries where sdomain is
+			starting with 'siph', prefix is starting with '2' and domain is anything
+			</para></listitem>
+
+			<listitem><para><quote>pdt.list siph 2</quote>  : Lists the entries where sdomain is
+			starting with 'siph', prefix is starting with '2' and domain is anything
+			</para></listitem>
+
+			 <listitem><para><quote>pdt.list . 2 open</quote>  : Lists the entries where sdomain
+			 is anything, prefix starts with '2' and domain starts with 'open'.
+			</para></listitem>
+		</itemizedlist>
+		</para>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt.reload</function>
+		</title>
+		<para>
+		Reload all sdomain-prefix-domain records from database.
+		</para>
+		<para>
+		Name: <emphasis>pdt.reload</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>none</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Example:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; pdt.reload
+...
+		</programlisting>
+    </section>
+    </section>
+
+    <section>
+	<title>Installation and Running</title>
+    <para>
+	Example shell scripts for MI FIFO commands are placed in './doc/'
+	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).
+	</para>
+    </section>
+</chapter>
+

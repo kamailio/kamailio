@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>Tracing of trouble</title>
+<para>Sometimes it is needed to solve problems with presence related stuff...
+;-)</para>
+
+<section id="pres.known_problems"><title>Known problems</title>
+<para>
+<itemizedlist>
+
+	<listitem><para>AVPs might not work properly with presence. If you create
+	AVPs they can disappear after call to handle_subscription or similar
+	function. The reason is that from such functions is created new transaction
+	(sent a NOTIFY request) and AVPs are not returned correctly to previous
+	one.</para></listitem>
+
+	<listitem><para>There are some standard incompliances in presence modules, 
+	often caused by standard ambiguity or contradiction or by partial 
+	implementation only. Please refer to specific
+	module documentation in such situations.</para></listitem>
+	<listitem><para>SIP clients often use broken data, not corresponding with
+	the data format specification. Look into the specification in such cases (for
+	example <xref linkend="pres_rfc_pidf"/>).</para></listitem>
+
+	<listitem><para>The XCAP module is incompatible with TLS module due to Openssl
+	initialization!</para>
+	<para>XCAP module uses libcurl for HTTP communication and libcurl is using
+	libopenssl internaly. But the TLS module needs some extra openssl initialization which
+	is not working when libcurl initializes Openssl by itself.</para>
+	<para>Thanks Samuel (samu60@gmail.com) for pointing this out.</para></listitem>
+
+</itemizedlist>
+</para>
+</section>
+
+<section><title>Reporting problems</title>
+<para>If you can not find the source of your problem or if you are not sure how
+to do this or that, you can: 
+<itemizedlist>
+	<listitem><para>Try to search for similar problem in mailing lists on
+	<ulink url="http://www.sip-router.org/">SIP-router's main page</ulink> or in
+	<ulink url="http://lists.kamailio.org/cgi-bin/mailman/listinfo/">list archives</ulink>.
+	</para></listitem>
+
+	<listitem><para>Send an email to <ulink
+	url="mailto:sr-users@lists.kamailio.org">sr-users@lists.kamailio.org</ulink> for
+	user related problem or
+	<ulink url="mailto:sr-dev@lists.kamailio.org">sr-dev@lists.kamailio.org</ulink>
+	for development related things. There are lots of interesting people on
+	these lists with lots of experiences with SIP related stuff ;-).
+	</para></listitem>
+
+	<listitem><para>For presence-only related things you can send me an email
+	directly to vaclav.kubart@iptel.org, but I highly prefer to use one of
+	mailing lists above because many people may be interested in the same
+	problem as you have.</para></listitem>
+</itemizedlist>
+</para>
+
+<para>If you find a bug, please report it to our <ulink
+url="http://sip-router.org/tracker/">bug tracker</ulink>
+or send an email to lists mentioned above or directly to me (email above).</para>
+
+</section>
+
+<section><title>New features</title>
+<para>There is a list of features to be implemented in my TODO list. I will put them
+into our bug tracker as soon as I will have more time for it. ;-)
+</para>
+
+<para>If you are interested in a feature you can search or ask in mailing lists
+or you can add your feature into bug tracker and might be that it will be
+implemented or at least discussed.
+</para>
+</section> <!-- new features -->
+
+<section><title>Searching a problem</title>
+<para>Most of presence modules have <quote>trace</quote> method which can be
+invoked through SIP-router's management interface. Such methods often dumps current status,
+existing subscriptions etc.
+</para>
+
+<para>For calling management methods you can simply use set of
+<application>sercmd</application> utilities (don't mess with deprecated serctl
+utility which is from unknown reason still installed with SIP-router) or
+<application>binrpc</application> which uses more effective binary
+protocol.</para>
+
+<example id="searching_problem_trace">
+<title>Using ser_ctl for debugging problems</title>
+<para>
+<programlisting>
+<userinput>kubartv@~/src/serctl$ ./ser_rpc -t pa.trace 2</userinput>
+<![CDATA[+------------------------------------------------------------------------------------------------------------------------+
+| value                                                                                                                  |
++------------------------------------------------------------------------------------------------------------------------+
+| registrar                                                                                                              |
+| * sip:parf@example.com (uid=parf)                                                                                      |
+|  - tuples:                                                                                                             |
+|     6574y1y45d334fay6e9d7c60 contact='sip:parf@10.38.2.19:6198;transport=udp' exp=976014034 status=0 published=0 (id=) |
+|       notes:                                                                                                           |
+|       extension elements:                                                                                              |
+|       status extension elements:                                                                                       |
+|                                                                                                                        |
+|  - watchers:                                                                                                           |
+|  - winfo watchers:                                                                                                     |
+|     sip:parf@example.com status=1 exp=3545                                                                             |
+|  - internal watchers:                                                                                                  |
+|  - notes:                                                                                                              |
+|  - extension elements:                                                                                                 |
+| * sip:gozner@example.com (uid=gozner)                                                                                  |
+|  - tuples:                                                                                                             |
+|  - watchers:                                                                                                           |
+|     sip:parf@example.com status=1 exp=3562                                                                             |
+|  - winfo watchers:                                                                                                     |
+|  - internal watchers:                                                                                                  |
+|  - notes:                                                                                                              |
+|  - extension elements:                                                                                                 |
+| presentity count: 2                                                                                                    |
++------------------------------------------------------------------------------------------------------------------------+
+]]></programlisting>
+</para>
+</example>
+
+</section>
+
+</section>

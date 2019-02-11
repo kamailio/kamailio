@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="gflags.fifo" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>FIFO Interface</title>
+
+    <para>
+	The state of the global flags can be read and modified over the FIFO
+	interface of &kamailio;. This module implements the following FIFO interface
+	functions:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<emphasis>set_gflag</emphasis> - Set the value of a flag to
+		1. The function accepts one parameter which is the number of
+		the flag to be set.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>reset_gflag</emphasis> - Reset the value of a flag to
+		0. The function accepts one parameter which is the number of
+		the flag to be reset.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>is_gflag</emphasis> - Return the status of a
+		flag. The FIFO function would return TRUE if the flag is set
+		and FALSE if it is not set. The only parameter of this function
+		is the number of the flag.
+	    </para>
+	</listitem>
+    </itemizedlist>
+</section>

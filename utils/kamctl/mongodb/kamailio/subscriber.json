@@ -1,6 +1,6 @@
 {
   "name": "subscriber",
-  "version": 6,
+  "version": 7,
   "columns": [
     "id": {
       "type": "int",
@@ -22,11 +22,6 @@
       "default": "",
       "null": false
     },
-    "email_address": {
-      "type": "string",
-      "default": "",
-      "null": false
-    },
     "ha1": {
       "type": "string",
       "default": "",
@@ -36,11 +31,6 @@
       "type": "string",
       "default": "",
       "null": false
-    },
-    "rpid": {
-      "type": "string",
-      "default": null,
-      "null": true
     }
   ]
 }

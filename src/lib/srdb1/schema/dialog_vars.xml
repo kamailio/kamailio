@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dialog_vars" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dialog_vars</name>
+	<version>1</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>
+			Persistent dialog variable information for the dialog module.
+			More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;dialog.html">&KAMAILIO_MOD_DOC;dialog.html</ulink>.
+			</listitem>
+			</itemizedlist>
+		</db:para>
+	</description>
+
+	<column id="id">
+		<name>id</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="dbtext">int,auto</type>
+		<description>unique ID</description>
+	</column>
+
+	<column id="hash_entry">
+		<name>hash_entry</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>Number of the hash entry in the dialog hash table
+		</description>
+		<natural/>
+	</column>
+
+	<column id="hash_id">
+		<name>hash_id</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The ID on the hash entry</description>
+		<natural/>
+	</column>
+
+	<column>
+		<name>dialog_key</name>
+		<type>string</type>
+		<size>128</size>
+		<description>The key of the dialog variable</description>
+	</column>
+
+	<column>
+		<name>dialog_value</name>
+		<type>string</type>
+		<size>&long_hf_len;</size>
+		<description>The value of the dialog variable</description>
+	</column>
+
+	<index>
+		<name>hash_idx</name>
+		<colref linkend="hash_entry"/>
+		<colref linkend="hash_id"/>
+	</index>
+</table>

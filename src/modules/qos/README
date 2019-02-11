@@ -1,0 +1,194 @@
+QOS Module
+
+Ovidiu Sas
+
+   SOMA Networks, Inc.
+
+Edited by
+
+Ovidiu Sas
+
+   Copyright © 2008 SOMA Networks, Inc.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. How it works
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. qos_flag (integer)
+
+        5. Functions
+        6. Statistics
+        7. Exported pseudo-variables
+        8. Installation and Running
+
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. register_qoscb (qos, type, cb, param)
+
+   List of Examples
+
+   1.1. Set qos_flag parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. How it works
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. qos_flag (integer)
+
+   5. Functions
+   6. Statistics
+   7. Exported pseudo-variables
+   8. Installation and Running
+
+1. Overview
+
+   The qos module provides a way to keep track of per dialog SDP
+   session(s).
+
+2. How it works
+
+   The qos module uses the dialog module to be notified of any new or
+   updated dialogs. It will then look for and extract the SDP session (if
+   present) from SIP requests and replies and keep track of it for the
+   entire life of a dialog.
+
+   All of this happens with a properly configured dialog and qos module
+   and setting the dialog flag and the qos flag at the time any INVITE SIP
+   message is seen. There is no config script function call required to
+   set the SDP session tracking mechanism. See the dialog module users
+   guide for more information.
+
+   A dialog can have one or more SDP sessions active in one of the
+   following states:
+     * pending - only one endpoint of the SDP session is known.
+     * negotiated - both endpoints of the SDP session are known.
+
+   An SDP session can be established in one of the following scenarios:
+     * INVITE/200ok - typical "INVITE" and "200 OK" SDP exchange.
+     * 200ok/ACK - "200 OK" and "ACK" SDP exchange (for calls starting
+       with an empty INVITE).
+     * 183/PRACK - early media via "183 Session Progress" and "PRACK" (see
+       RFC 3959 for more information) - not implemented yet.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * dialog - dialog module and its dependencies (tm).
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+4. Parameters
+
+   4.1. qos_flag (integer)
+
+4.1. qos_flag (integer)
+
+   The module will not do anything to any message unless instructed to do
+   so via the config script. You must set the qos_flag value in the
+   setflag() call of the INVITE you want the qos module to process. But
+   before you can do that, you need to tell the qos module which flag
+   value you are assigning to qos.
+
+   In most cases when ever you set the dialog flag you will want to set
+   the qos flag. If the dialog flag is not set and the qos flag is set, it
+   will not have any effect.
+
+   This parameter must be set or the module will not load.
+
+   Default value is “Not set!”.
+
+   Example 1.1. Set qos_flag parameter
+...
+modparam("dialog", "dlg_flag", 5)
+modparam("qos", "qos_flag", 7)
+...
+route {
+  ...
+  if (method=="INVITE") {
+    setflag(5); # set the dialog flag
+    setflag(7); # Set the qos flag
+  }
+  ...
+}
+
+5. Functions
+
+   There are no exported functions that could be used in scripts.
+
+6. Statistics
+
+   There are no exported statistics for the qos module.
+
+7. Exported pseudo-variables
+
+   There are no exported pseudo-variables for the qos module.
+
+8. Installation and Running
+
+   Just load the module and remember to set the flag.
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. register_qoscb (qos, type, cb, param)
+
+1. Available Functions
+
+   1.1. register_qoscb (qos, type, cb, param)
+
+1.1.  register_qoscb (qos, type, cb, param)
+
+   Register a new callback to the qos.
+
+   Meaning of the parameters is as follows:
+     * struct qos_ctx_st* qos - qos to register callback to. If maybe NULL
+       only for QOSCB_CREATED callback type, which is not a per qos type.
+     * int type - types of callbacks; more types may be register for the
+       same callback function; only QOSCB_CREATED must be register alone.
+       Possible types:
+          + QOSCB_CREATED - called when a new qos context is created -
+            it's a global type (not associated to any qos).
+          + QOSCB_ADD_SDP - called when a new SDP was added to the qos
+            context - it's a per qos type.
+          + QOSCB_UPDATE_SDP - called when an existing SDP is updated -
+            it's a per qos type.
+          + QOSCB_REMOVE_SDP - called when an existing SDP is removed -
+            it's a per qos type.
+          + QOSCB_TERMINATED - called when the qos is terminated.
+     * qos_cb cb - callback function to be called. Prototype is: “void
+       (qos_cb) (struct qos_ctx_st *qos, int type, struct qos_cb_params
+       *params); ”
+     * void *param - parameter to be passed to the callback function.

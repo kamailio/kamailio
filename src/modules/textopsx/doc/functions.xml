@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="textopsx.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Functions</title>
+
+	<section id="textopsx.f.msg_apply_changes">
+		<title>
+		<function moreinfo="none">msg_apply_changes()</function>
+		</title>
+		<para>
+		Use this function to apply changes performed on SIP message content. Be
+		careful when using this function;  due to special handling of changes
+		to the SIP message buffer so far, using this function might change
+		the behaviour of your config.  Do test your config properly!
+		</para>
+   		<para>
+		The function returns true (1) on success. If it is failure before the
+		new content is build, the function returns false (-1), the old content
+		is still in place. If parsing of the new content is failing, the
+		function stops executions of the config file (the internal structure
+		is no longer valid for config processing, like it happens when a
+		broken message is received from network).
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE or core REPLY_ROUTE.
+		</para>
+		<para>
+		Note: It must be used before the transaction is created in
+		request_route and not inside the onreply_route[name] executed by tm
+		module. Also, do not use after resuming a suspended request or reply,
+		at that moment the transaction is already created.
+		</para>
+		<example>
+		<title><function>msg_apply_changes()</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("My-Header: yes\r\n");
+if(msg_apply_changes())
+{
+    # msg buffer has a new content
+    if(is_present_hf("My-Header"))
+    {
+        # will get here always
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+    <section id="textopsx.f.change_reply_status">
+	<title>
+	    <function>change_reply_status(code, reason)</function>
+	</title>
+	<para>
+		Intercept a SIP reply (in an onreply_route) and change its status code 
+		and reason phrase prior to forwarding it.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>code</emphasis> - Status code.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>reason</emphasis> - Reason phrase.
+		</para>
+	    </listitem>
+	</itemizedlist>
+   		<para>
+		This function can be used from ONREPLY_ROUTE.
+		</para>
+	<example>
+	    <title><function>change_reply_status</function> usage</title>
+	    <programlisting>
+...
+reply_route {
+    if (status == "603") {
+        change_reply_status(404, "Not Found");
+        exit;
+    }
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="textopsx.f.remove_body">
+		<title>
+		<function moreinfo="none">remove_body()</function>
+		</title>
+		<para>
+		Use this function to remove the body of SIP requests or replies.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_body()</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_body();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textopsx.f.keep_hf">
+		<title>
+		<function moreinfo="none">keep_hf([regexp])</function>
+		</title>
+		<para>
+			Remove headers that don't match the regular expression regexp.
+			Several header are ignored always (thus not removed): Via, From,
+			To, Call-ID, CSeq, Content-Length, Content-Type, Max-Forwards,
+			Contact, Route, Record-Route -- these can be removed one by one
+			with remove_hf(). If regexp is missing, then only the headers
+			listed above are kept, the rest are removed.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>keep_hf()</function> usage</title>
+		<programlisting format="linespecific">
+...
+keep_hf("User-Agent");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textopsx.f.fnmatch">
+		<title>
+		<function moreinfo="none">fnmatch(value, expr [, flags])</function>
+		</title>
+		<para>
+			Match the value against the expr using shell-style pattern
+			for file name matching (see man page for C function fnmatch()).
+			It is known to be faster and use less-memory than regular expressions.
+		</para>
+		<para>
+			Parameter 'flags' is optional and can be 'i' to do case insensitive
+			matching.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>fnmatch()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(fnmatch("$rU", "123*"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+    <section id="textopsx.f.append_hf_value">
+	<title>
+	    <function>append_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Append new header value after an existing header, if no index acquired append at the end of
+		list. Note that a header may consist of comma delimited list of values.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
+		If index is not specified new header is inserted at the end of message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - Value to be added, config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>append_hf_value</function> usage</title>
+	    <programlisting>
+...
+append_hf_value("foo", "gogo;stamp=$Ts")   # add new header
+append_hf_value("foo[1]", "gogo")  # add new value behind first value
+append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if not exists add new header
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.insert_hf_value">
+	<title>
+	    <function>insert_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Insert new header value before an existing header, if no index acquired insert before first
+		hf header. Note that a header may consist of comma delimited list of values.
+		To insert value behind last value use <function>appenf_hf_value</function>.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
+		If index is not specified new header is inserted at the top of message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - Value to be added, config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>insert_hf_value</function> usage</title>
+	    <programlisting>
+...
+insert_hf_value("foo[2]", "gogo")
+insert_hf_value("foo", "$avp(foo)")   # add new header at the top of list
+insert_hf_value("foo[1]", "gogo") # try add to the first header
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.remove_hf_value">
+	<title>
+	    <function>remove_hf_value(hf_par)</function>
+	</title>
+	<para>
+		Remove the header value from existing header, Note that a header may consist of comma delimited list of values.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_par</emphasis> - Header field/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>remove_hf_value</function> usage</title>
+	    <programlisting>
+...
+remove_hf_value("foo")  # remove foo[1]
+remove_hf_value("foo[*]")  # remove all foo's headers
+remove_hf_value("foo[-1]") # last foo
+remove_hf_value("foo.bar")  # delete parameter
+remove_hf_value("foo[*].bar") # for each foo delete bar parameters
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.remove_hf_value2">
+	<title>
+	    <function>remove_hf_value2(hf_par)</function>
+	</title>
+	<para>
+		Remove specified header or parameter. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_par</emphasis> - Header/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>remove_hf_value2</function> usage</title>
+	    <programlisting>
+...
+remove_hf_value2("foo")  # remove foo[1]
+remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_header("foo[*]");
+remove_hf_value2("foo[-1]") # last foo
+remove_hf_value2("foo.bar")  # delete parameter
+remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.assign_hf_value">
+	<title>
+	    <function>assign_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Assign value to specified header value / param.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+			<para><emphasis>hf_para</emphasis> - Header field value / param to be appended.
+				Format: HFNAME [ [IDX] ] [. PARAM]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	    <listitem>
+			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var
+				formatting supported. If value is empty then no equal sign appears in param.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>assign_hf_value</function> usage</title>
+	    <programlisting>
+...
+assign_hf_value("foo", "gogo")  # foo[1]
+assign_hf_value("foo[-1]", "gogo")  # foo[last_foo]
+
+assign_hf_value("foo.bar", "")
+assign_hf_value("foo[3].bar", "")
+assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
+assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.assign_hf_value2">
+	<title>
+	    <function>assign_hf_value2(hf, hvalue)</function>
+	</title>
+	<para>
+		Assign value to specified header. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_para</emphasis> - Header field value / param to be appended. Format: HFNAME [ [IDX] ] [. PARAM]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	    <listitem>
+			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var formatting supported.
+				If value is empty then no equal sign appears in param.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>assign_hf_value2</function> usage</title>
+	    <programlisting>
+...
+assign_hf_value2("Authorization.integrity-protected", "\"yes\"")
+assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
+assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.include_hf_value">
+	<title>
+	    <function>include_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Add value in set if not exists, eg. "Supported: path,100rel".
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>include_hf_value</function> usage</title>
+	    <programlisting>
+...
+include_hf_value("Supported", "path");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.exclude_hf_value">
+	<title>
+	    <function>exclude_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Remove value from set if exists, eg. "Supported: path,100rel".
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>exclude_hf_value</function> usage</title>
+	    <programlisting>
+...
+exclude_hf_value("Supported", "100rel");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="textopsx.f.hf_value_exists">
+	<title>
+	    <function>hf_value_exists(hf, hvalue)</function>
+	</title>
+	<para>
+		Check if value exists in set. Alternate select <emphasis>@hf_value_exists.HF.VALUE</emphasis>
+		may be used. It returns one or zero.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected. Underscores are treated as dashes.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>hf_value_exists</function> usage</title>
+	    <programlisting>
+...
+if (hf_value_exists("Supported", "100rel")) {
+
+}
+
+if (@hf_value_exists.supported.path == "1") {
+
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

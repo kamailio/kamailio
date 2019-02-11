@@ -1,0 +1,53 @@
+Print_lib Module
+
+Andrei Pelinescu-Onciul
+
+   FhG FOKUS
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Functions
+
+              2.1. print_stderr(txt)
+
+   List of Examples
+
+   1.1. print_stderr usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Functions
+
+        2.1. print_stderr(txt)
+
+1. Overview
+
+   This is an example module. It implements only one function that prints
+   its string parameter to stderr (it won't work if server is started in
+   daemon mode). Its purpose is to show how to link to an internal library
+   (lib/print).
+
+2. Functions
+
+   2.1. print_stderr(txt)
+
+2.1.  print_stderr(txt)
+
+   Prints string to stderr.
+
+   Meaning of the parameters is as follows:
+     * txt - string to be printed.
+
+   Example 1.1. print_stderr usage
+...
+print_stderr("The answer is 42\n");
+...

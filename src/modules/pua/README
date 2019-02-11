@@ -1,0 +1,604 @@
+Presence User Agent Module
+
+Anca-Maria Vamanu
+
+   Voice Sistem SRL
+
+Edited by
+
+Anca-Maria Vamanu
+
+   Copyright © 2006 Voice Sistem SRL
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. hash_size (int)
+              3.2. db_url (str)
+              3.3. db_table (str)
+              3.4. min_expires (int)
+              3.5. default_expires (int)
+              3.6. update_period (int)
+              3.7. outbound_proxy (str)
+              3.8. dlginfo_increase_version (int)
+              3.9. reginfo_increase_version (int)
+              3.10. db_mode (int)
+              3.11. db_table_lock_write (integer)
+              3.12. check_remote_contact (int)
+              3.13. fetch_rows (integer)
+
+        4. Functions
+
+              4.1. pua_update_contact()
+
+        5. RPC Commands
+
+              5.1. pua.cleanup
+
+        6. Installation
+
+   2. Developer Guide
+
+        1. bind_pua(pua_api_t* api)
+        2. send_publish
+        3. send_subscribe
+        4. is_dialog
+        5. register_puacb
+        6. add_event
+
+   List of Examples
+
+   1.1. Set hash_size parameter
+   1.2. Set db_url parameter
+   1.3. Set db_table parameter
+   1.4. Set min_expires parameter
+   1.5. Set default_expires parameter
+   1.6. Set update_period parameter
+   1.7. Set outbound_proxy parameter
+   1.8. Set dlginfo_increase_version parameter
+   1.9. Set reginfo_increase_version parameter
+   1.10. Set db_mode parameter
+   1.11. Set db_table_lock_write parameter
+   1.12. Set check_remote_contact parameter
+   1.13. Set fetch_rows parameter
+   1.14. pua_update_contact usage
+   2.1. pua_api structure
+   2.2. pua_is_dialog usage example
+   2.3. register_puacb usage example
+   2.4. add_event usage example
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. hash_size (int)
+        3.2. db_url (str)
+        3.3. db_table (str)
+        3.4. min_expires (int)
+        3.5. default_expires (int)
+        3.6. update_period (int)
+        3.7. outbound_proxy (str)
+        3.8. dlginfo_increase_version (int)
+        3.9. reginfo_increase_version (int)
+        3.10. db_mode (int)
+        3.11. db_table_lock_write (integer)
+        3.12. check_remote_contact (int)
+        3.13. fetch_rows (integer)
+
+   4. Functions
+
+        4.1. pua_update_contact()
+
+   5. RPC Commands
+
+        5.1. pua.cleanup
+
+   6. Installation
+
+1. Overview
+
+   This module offer the functionality of a presence user agent client,
+   sending SUBSCRIBE and PUBLISH SIP messages. It's a core part of
+   Kamailio's SIP presence package, implementing SIMPLE and various shared
+   line appearance implementations.
+
+   It can be used with the following modules: pua_rpc, pua_usrloc,
+   pua_bla, pua_dialoginfo, pua_reginfo and pua_xmpp. The pua_rpc module
+   offer the possibility to publish any kind of information via the RPC
+   transport. The pua_usrloc module calls a function exported by pua
+   modules to publish elementary presence information, such as basic
+   status "open" or "closed", for clients that do not implement
+   client-to-server presence. Through pua_bla , BRIDGED LINE APPEARANCE
+   features are added to Kamailio The pua_xmpp module represents a gateway
+   between SIP and XMPP, so that jabber and SIP clients can exchange
+   presence information. The pua_reginfo modules presents registration
+   information from the usrloc module using the reginfo event package.
+
+   The module supports 2 modes of operation. In the first a cache is used
+   to store the presentity list and writes to database on timer to be able
+   to recover upon restart. The presence is kept in-memory during
+   run-time. The second is a database only mode where the presentity list
+   is stored purely in a database, allowing both scalability and
+   resilience.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * a database modules.
+     * tm.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libxml.
+
+3. Parameters
+
+   3.1. hash_size (int)
+   3.2. db_url (str)
+   3.3. db_table (str)
+   3.4. min_expires (int)
+   3.5. default_expires (int)
+   3.6. update_period (int)
+   3.7. outbound_proxy (str)
+   3.8. dlginfo_increase_version (int)
+   3.9. reginfo_increase_version (int)
+   3.10. db_mode (int)
+   3.11. db_table_lock_write (integer)
+   3.12. check_remote_contact (int)
+   3.13. fetch_rows (integer)
+
+3.1. hash_size (int)
+
+   The size of the hash table used for storing SUBSCRIBE and PUBLISH
+   information. This parameter will be used as the power of 2 when
+   computing table size.
+
+   Default value is “9”.
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("pua", "hash_size", 11)
+...
+
+3.2. db_url (str)
+
+   Database url.
+
+   Default value is “>mysql://kamailio:kamailiorw@localhost/kamailio”.
+
+   Example 1.2. Set db_url parameter
+...
+modparam("pua", "db_url" "dbdriver://username:password@dbhost/dbname")
+...
+
+3.3. db_table (str)
+
+   The name of the database table.
+
+   Default value is “pua”.
+
+   Example 1.3. Set db_table parameter
+...
+modparam("pua", "db_table", "pua")
+...
+
+3.4. min_expires (int)
+
+   The inferior expires limit for both Publish and Subscribe.
+
+   Default value is “0”.
+
+   Example 1.4. Set min_expires parameter
+...
+modparam("pua", "min_expires", 0)
+...
+
+3.5. default_expires (int)
+
+   The default expires value used in case this information is not
+   provisioned.
+
+   Default value is “3600”.
+
+   Example 1.5. Set default_expires parameter
+...
+modparam("pua", "default_expires", 3600)
+...
+
+3.6. update_period (int)
+
+   The interval at which the information in database and hash table should
+   be updated. In the case of the hash table updating means deleting
+   expired messages. Setting a value less than or equal to zero, disables
+   updates.
+
+   Default value is “100”.
+
+   Example 1.6. Set update_period parameter
+...
+modparam("pua", "update_period", 100)
+...
+
+3.7. outbound_proxy (str)
+
+   SIP URI of outbound proxy to be used when sending PUBLISH requests if
+   no outbound proxy is given in outbound_proxy field of struct publ_info.
+
+   By default, no outbound proxy has been defined.
+
+   Example 1.7. Set outbound_proxy parameter
+...
+modparam("pua", "outbound_proxy", "sip:outbound.example.com")
+...
+
+3.8. dlginfo_increase_version (int)
+
+   When sending PUBLISH messages for Event: dialog, the body contains an
+   XML document according to RFC 4235. This XML document contains a
+   version attribute to easily detect changes in the dialog state. By
+   setting this parameter, the pua module parses the XML document and sets
+   the version attribute to the proper value. If the receiver of the
+   PUBLISH does not care about the version parameter (e.g. like Kamailio
+   presence_dialoginfo module) it makes no sense to waste CPU resources
+   for parsing the XML body and the parameter should be set to 0.
+
+   Default value is “0”.
+
+   Example 1.8. Set dlginfo_increase_version parameter
+...
+modparam("pua", "dlginfo_increase_version", 1)
+...
+
+3.9. reginfo_increase_version (int)
+
+   When sending PUBLISH messages for Event: reg, the body contains an XML
+   document according to RFC 4235(?). This XML document contains a version
+   attribute to easily detect changes in the registration state. By
+   setting this parameter, the pua module parses the XML document and sets
+   the version attribute to the proper value. If the receiver of the
+   PUBLISH does not care about the version parameter (e.g. like Kamailio
+   presence_reginfo module) it makes no sense to waste CPU resources for
+   parsing the XML body and the parameter should be set to 0.
+
+   Default value is “0”.
+
+   Example 1.9. Set reginfo_increase_version parameter
+...
+modparam("pua", "reginfo_increase_version", 1)
+...
+
+3.10. db_mode (int)
+
+   The module supports 2 modes of operation, high speed memory based
+   storage (mode 0), and database only (mode 2) where all data is stored
+   in a database, allowing scalability at the expense of speed. Mode 1 is
+   reserved.
+
+   Default value is “0”.
+
+   Example 1.10. Set db_mode parameter
+...
+modparam("pua", "db_mode", 0)
+...
+
+3.11. db_table_lock_write (integer)
+
+   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Locking only the "current" table causes problems with a MySQL-Databases
+   in "DB-Only" mode.
+
+   Default value is 1 (Write Lock for the Tables).
+
+   Example 1.11. Set db_table_lock_write parameter
+...
+modparam("pua", "db_table_lock_write", 0)
+...
+
+3.12. check_remote_contact (int)
+
+   When sending a SUBSCRIBE check that the remote contact matches the one
+   in the stored dialog or not. If the remote contact is checked and does
+   not match the one in the stored dialog then the dialog is not matched.
+   Checking the remote contact can cause problems when using modules like
+   RLS and should not be required in order to properly match the dialog
+   anyway. Set this parameter to 0 to disable checking of remote contact
+   for SUBSCRIBE dialog matching.
+
+   Default value is “1”.
+
+   Example 1.12. Set check_remote_contact parameter
+...
+modparam("pua", "check_remote_contact", 0)
+...
+
+3.13. fetch_rows (integer)
+
+   Number of rows to be loaded in one step from database.
+
+   Default value is 500.
+
+   Example 1.13. Set fetch_rows parameter
+...
+modparam("pua", "fetch_rows", 1000)
+...
+
+4. Functions
+
+   4.1. pua_update_contact()
+
+4.1.  pua_update_contact()
+
+   The remote target can be updated by the Contact of a subsequent in
+   dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
+   this means that the remote target for the following Subscribe messages
+   can be updated at any time by the contact of a Notify message. If this
+   function is called on request route on receiving a Notify message, it
+   will try to update the stored remote target.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Return code:
+     * 1 - if success.
+     * -1 - if error.
+
+   Example 1.14. pua_update_contact usage
+...
+if(method=="NOTIFY")
+    pua_update_contact();
+...
+
+5. RPC Commands
+
+   5.1. pua.cleanup
+
+5.1.  pua.cleanup
+
+   Manually triggers the cleanup functions for the pua table. Useful if
+   you have set update_period to zero or less.
+
+   Name: pua.cleanup
+
+   Parameters: none
+
+   RPC Command Format:
+...
+kamcmd pua.cleanup
+...
+
+6. Installation
+
+   The module requires one table in the Kamailio database: pua. The SQL
+   syntax to create it can be found in presence_xml-create.sql script in
+   the database directories in the kamailio/scripts folder. You can also
+   find the complete database documentation on the project webpage,
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. bind_pua(pua_api_t* api)
+   2. send_publish
+   3. send_subscribe
+   4. is_dialog
+   5. register_puacb
+   6. add_event
+
+   The module provides the following functions that can be used by other
+   Kamailio modules.
+
+1.  bind_pua(pua_api_t* api)
+
+   This function binds the pua modules and fills the structure with the
+   two exported functions.
+
+   Example 2.1. pua_api structure
+...
+typedef struct pua_api {
+        send_subscribe_t send_subscribe;
+        send_publish_t send_publish;
+        query_dialog_t is_dialog;
+        register_puacb_t register_puacb;
+        add_pua_event_t add_event;
+} pua_api_t;
+...
+
+2.  send_publish
+
+   Field type:
+...
+typedef int (*send_publish_t)(publ_info_t* publ);
+...
+
+   This function receives as a parameter a structure with Publish required
+   information and sends a Publish message.
+
+   The structure received as a parameter:
+...
+typedef struct publ_info
+
+  str id;             /*  (optional )a value unique for one combination
+                          of pres_uri and flag */
+  str* pres_uri;      /*  the presentity uri */
+  str* body;          /*  the body of the Publish message;
+                          can be NULL in case of an update expires*/
+  int  expires;       /*  the expires value that will be used in
+                          Publish Expires header*/
+  int flag;           /*  it can be : INSERT_TYPE or UPDATE_TYPE
+                          if missing it will be established according
+                          to the result of the search in hash table*/
+  int source_flag;    /*  flag identifying the resource ;
+                          supported values: UL_PUBLISH, MI_PUBLISH,
+                          BLA_PUBLISH, XMPP_PUBLISH*/
+  int event;          /*  the event flag;
+                          supported values: PRESENCE_EVENT, BLA_EVENT,
+                          MWI_EVENT */
+  str content_type;   /*  the content_type of the body if present
+                          (optional if the same as the default value
+                          for that event)*/
+  str* etag;          /*  (optional) the value of the etag the request
+                          should match */
+  str* outbound_proxy;/*  outbound_proxy to use when sending the
+                          Publish request */
+  str* extra_headers  /*  (optional) extra_headers that should be added
+                          to Publish msg*/
+}publ_info_t;
+...
+
+3.  send_subscribe
+
+   Field type:
+...
+typedef int (*send_subscribe_t)(subs_info_t* subs);
+...
+
+   This function receives as a parameter a structure with Subscribe
+   required information and sends a Subscribe message.
+
+   The structure received as a parameter:
+...
+typedef struct subs_info
+
+  str id;              /*  an id value unique for one combination
+                           of pres_uri and flag */
+  str* pres_uri;       /*  the presentity uri */
+  str* watcher_uri;    /*  the watcher uri */
+  str* contact;        /*  the uri that will be used in
+                           Contact header*/
+  str* remote_target;  /*  the uri that will be used as R-URI
+                           for the Subscribe message(not compulsory;
+                           if not set the value of the pres_uri field
+                           is used) */
+  str* outbound_proxy; /*  the outbound_proxy to use when sending the
+                           Subscribe request*/
+  int event;           /*  the event flag; supported value:
+                           PRESENCE_EVENT, BLA_EVENT, PWINFO_EVENT*/
+  int expires;         /*  the expires value that will be used in
+                           Subscribe Expires header */
+  int flag;            /*  it can be : INSERT_TYPE or UPDATE_TYPE
+                           not compulsory */
+  int source_flag;     /*  flag identifying the resource ;
+                           supported values:  MI_SUBSCRIBE,
+                           BLA_SUBSCRIBE, XMPP_SUBSCRIBE,
+                           XMPP_INITIAL_SUBS */
+}subs_info_t;
+...
+
+4.  is_dialog
+
+   Field type:
+...
+typedef int  (*query_dialog_t)(ua_pres_t* presentity);
+...
+
+   This function checks is the parameter corresponds to a stored Subscribe
+   initiated dialog.
+
+   Example 2.2. pua_is_dialog usage example
+...
+        if(pua_is_dialog(dialog) < 0)
+        {
+                LM_ERR("querying dialog\n");
+                goto error;
+        }
+...
+
+5.  register_puacb
+
+   Field type:
+...
+typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
+...
+
+   This function registers a callback to be called on receiving the reply
+   message for a sent Publish or Subscribe request. The type parameter
+   should be set the same as the source_flag for that request. The
+   function registered as callback for pua should be of type pua_cb ,
+   which is: typedef void (pua_cb)(ua_pres_t* hentity, struct msg_start *
+   fl); The parameters are the dialog structure for that request and the
+   first line of the reply message.
+
+   Example 2.3. register_puacb usage example
+...
+        if(pua.register_puacb(XMPP_SUBSCRIBE, Sipreply2Xmpp, NULL) & 0)
+        {
+                LM_ERR("Could not register callback\n");
+                return -1;
+        }
+...
+
+   The callback function type:
+...
+typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
+...
+
+6.  add_event
+
+   Field type:
+...
+typedef int (*add_pua_event_t)(int ev_flag, char* name,
+   char* content_type,evs_process_body_t* process_body);
+
+- ev_flag     : an event flag defined as a macro in pua module
+- name        : the event name to be used in Event request headers
+- content_type: the default content_type for Publish body for
+                that event (NULL if winfo event)
+- process_body: function that processes the received body before
+                using it to construct the PUBLISH request
+                (NULL if winfo event)
+...
+
+   This function allows registering new events to the pua module. Now
+   there are 4 events supported by the pua module: presence,
+   presence;winfo, message-summary, dialog;sla, application/reginfo+xml.
+   These events are registered from within the pua module.
+
+   Filed type for process_body:
+...
+typedef int (evs_process_body_t)(struct publ_info* publ,
+  str** final_body, int ver, str* tuple);
+- publ      : the structure received as a parameter in send_publish
+              function ( initial body found in publ->body)
+- final_body: the pointer where the result(final_body) should be stored
+- ver       : a counter for the sent Publish requests
+              (used for winfo events)
+- tuple     : a unique identifier for the resource;
+              if an initial Publish it should be returned as a result
+              and it will be stored  for that record, otherwise it will
+              be given as a parameter;
+...
+
+   Example 2.4. add_event usage example
+...
+        if(pua.add_event((PRESENCE_EVENT, "presence", "application/pidf+xml",
+                                pres_process_body) & 0)
+        {
+                LM_ERR("Could not register new event\n");
+                return -1;
+        }
+...

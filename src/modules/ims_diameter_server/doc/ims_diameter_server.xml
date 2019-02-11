@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>IMS Diameter Server Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+		    <email>carsten@ng-voice.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2016-2017</year>
+	    <holder>ng-voice GmbH</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="ims_diameter_server.overview">
+	<title>Overview</title>
+	<para>
+	    This module implements a generic Diameter Server.
+	</para>
+	<para>
+	    This module translates incoming Diameter Messages 
+            into a JSON structure and will pass this on to the routing engine for 
+            further operations.
+	</para>
+	<para>
+            The module expects a reply (again in JSON), which then is translated
+            into a Diameter Response.
+	</para>
+	<para>
+	    Additionally, it allows you to send Diameter-Requests to another peer.
+	</para>
+	<para>
+	    The JSON contains an array with all AVP's in the Diameter-Message
+		and it's attributes. The format is identical for both requests
+		and replies.
+	</para>
+	<programlisting format="linespecific">
+[
+   {
+      "avpCode":277,
+      "vendorId":0,
+      "Flags":64,
+      "int32":0
+   },
+   {
+      "avpCode":260,
+      "vendorId":0,
+      "Flags":64,
+      "list":[
+         {
+            "avpCode":266,
+            "vendorId":0,
+            "Flags":64,
+            "int32":10415
+         },
+         {
+            "avpCode":258,
+            "vendorId":0,
+            "Flags":64,
+            "int32":16777216
+         }
+      ]
+   },
+   {
+      "avpCode":1,
+      "vendorId":0,
+      "Flags":64,
+      "string":"alice@kamailio.org"
+   },
+   {
+      "avpCode":618,
+      "vendorId":10415,
+      "Flags":64,
+      "list":[
+         {
+            "avpCode":621,
+            "vendorId":10415,
+            "Flags":64,
+            "string":"pcscf.kamailio.org"
+         }
+      ]
+   },
+   {
+      "avpCode":268,
+      "vendorId":0,
+      "Flags":64,
+      "int32":2001
+   }
+]
+	</programlisting>
+	<para>
+            The module could be used (for example) for:
+	</para>
+      <itemizedlist>
+        <listitem>
+          <para>a Home-Subscriber-Server (it was written do be used as one)</para>
+        </listitem>
+        <listitem>
+          <para>a Charging-Server (Ro/Rf)</para>
+        </listitem>
+        <listitem>
+          <para>for testing Diameter-Applications</para>
+        </listitem>
+        <listitem>
+          <para>a PCRF/PCEF Emulator/Gateway</para>
+        </listitem>
+        <listitem>
+          <para>a Diameter-Routing-Agent (DRA)</para>
+        </listitem>
+        <listitem>
+          <para>...</para>
+        </listitem>
+      </itemizedlist>
+
+    </section>
+
+  <section id="ims_diameter_server.dependencies">
+    <title>Dependencies</title>
+
+    <section>
+      <title>Kamailio Modules</title>
+
+      <para>The Following mouldes must be loaded before this module:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>CDP - C Diameter Peer</para>
+        </listitem>
+        <listitem>
+          <para>CDP_AVP - CDP AVP Applications</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+    <section>
+      <title>External Libraries or Applications</title>
+      <para>No external libraries are required.</para>
+    </section>
+    </section>
+	<section>
+	<title>Functions</title>
+	<section id="ims_diameter_server.f.diameter_request">
+		<title>
+		<function moreinfo="none">diameter_request([peer], appid, commandcode, message)</function>
+		</title>
+		<para>
+		This method will send a Diameter Request.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>peer</emphasis> - send the diameter request directly to a diameter peer [optional]. If this parameter is omitted, the default routing is used (see CDP).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>appid</emphasis> - Diameter-Application, e.g.:
+                        </para>
+			<para>
+			Typical App-ID's are:
+                        </para>
+		      <itemizedlist>
+			<listitem>
+			  <para>16777216 - Diameter Cx/Dx</para>
+			</listitem>
+			<listitem>
+			  <para>16777217 - Diameter Sh</para>
+			</listitem>
+			<listitem>
+			  <para>4 - Diameter Ro (Online Charging)</para>
+			</listitem>
+			<listitem>
+			  <para>...</para>
+			</listitem>
+		      </itemizedlist>
+                </listitem>
+		<listitem>
+			<para>
+			<emphasis>commandcode</emphasis> - Diameter-Command-Code, e.g.:
+                        </para>
+		      <itemizedlist>
+			<listitem>
+			  <para>300 - Diameter Cx/Dx User-Assignment Request (UAR)</para>
+			</listitem>
+			<listitem>
+			  <para>301 - Diameter Cx/Dx Server-Assignment Request (SAR)</para>
+			</listitem>
+			<listitem>
+			  <para>...</para>
+			</listitem>
+		      </itemizedlist>
+                </listitem>
+		<listitem>
+			<para>
+			<emphasis>message</emphasis> - the Diameter Message (as JSON), which should be sent.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from any route.
+		</para>
+		<example>
+		<title><function>diameter_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+diameter_request("16777216", "300", "{ some json }");
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="ims_diameter_server.f.diameter_request_async">
+		<title>
+		<function moreinfo="none">diameter_request_async([peer], appid, commandcode, message)</function>
+		</title>
+		<para>
+		This method will send a Diameter Request asynchronously. The Reply to this request will be visible in the event-route "diameter:response".
+		</para>
+		<para>The meaning of the parameters are identical to the diameter_request function.</para>
+		<para>This function is only available, if the diameter:response event-route is defined.</para>
+	</section>
+	</section>
+        <section id="ims_diameter_server.ex.pv">
+        <title>Exported Pseudo Variables</title>
+        <section id="ims_diameter_server.pv.diameter_application">
+                <title>
+                <function moreinfo="none">$diameter_application</function>
+                </title>
+                <para>
+			This PV provides the requested Diameter Application,
+                        for example:
+                </para>
+      <itemizedlist>
+        <listitem>
+          <para>16777216 - Diameter Cx/Dx</para>
+        </listitem>
+        <listitem>
+          <para>16777217 - Diameter Sh</para>
+        </listitem>
+        <listitem>
+          <para>4 - Diameter Ro (Online Charging)</para>
+        </listitem>
+        <listitem>
+          <para>...</para>
+        </listitem>
+      </itemizedlist>
+	</section>
+        <section id="ims_diameter_server.pv.diameter_command">
+                <title>
+                <function moreinfo="none">$diameter_command</function>
+                </title>
+                <para>
+			This PV provides the requested Diameter Command,
+                        for example:
+                </para>
+      <itemizedlist>
+        <listitem>
+          <para>300 - Diameter Cx/Dx User-Assignment Request (UAR)</para>
+        </listitem>
+        <listitem>
+          <para>301 - Diameter Cx/Dx Server-Assignment Request (SAR)</para>
+        </listitem>
+        <listitem>
+          <para>...</para>
+        </listitem>
+      </itemizedlist>
+	</section>
+      <section id="ims_diameter_server.pv.diameter_request">
+                <title>
+                <function moreinfo="none">$diameter_request</function>
+                </title>
+                <para>
+			This PV provides the Diameter Request as JSON.
+                </para>
+	</section>
+      <section id="ims_diameter_server.pv.diameter_response">
+                <title>
+                <function moreinfo="none">$diameter_response</function>
+                </title>
+                <para>
+			The Response is read from the PVAR.
+                </para>
+	</section>
+    </section>
+        <section id="ims_diameter_server.ex.event_routes">
+        <title>Event routes</title>
+        <section>
+                <title>
+                <function moreinfo="none">diameter:request</function>
+                </title>
+                <para>
+			This route is called for any incoming Diameter Request
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[diameter:request] {
+	$var(res) = http_connect("hss", "/application/$diameter_application/command/$diameter_command", "application/json", "$diameter_request", "$var(response)");
+	if ($var(res) == 200) {
+		$diameter_response = $var(response);
+	}
+}
+...
+                </programlisting>
+	</section>
+<section>
+                <title>
+                <function moreinfo="none">diameter:response</function>
+                </title>
+                <para>
+			This route is called for incoming Diameter replies, if the request was processed asynchronously.
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[diameter:response] {
+	xlog("Reply to Diameter request $diameter_request is $diameter_response\n");
+}
+...
+                </programlisting>
+	</section>
+    </section>
+    </chapter>
+</book>
+

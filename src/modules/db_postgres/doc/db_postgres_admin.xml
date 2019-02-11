@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>The module is an implementation of the internal DB API v1 and v2
+		connector for PostgreSQL server. It has support for reconnecting
+		when the connection is broken.</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>PostgreSQL library</emphasis> - e.g., libpq5.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>PostgreSQL devel library</emphasis> - to compile
+				the module (e.g., libpq-dev).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>retries</varname> (integer)</title>
+		<para>
+			How many retries to attempt to reconnect if connection to Postgres
+			server becomes broken.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (that means three attempts to submit the query,
+			first will trigger the connection error and two more (the value
+			of this parameter) after resetting the connection).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retries</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "retries", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>timeout</varname> (integer)</title>
+		<para>
+			Setting this variable to any value larger than zero (which is the
+			default value) enables both a connection timeout and a query
+			timeout. If a connection attempt or a query takes longer than this
+			many seconds, the operation will be aborted and an error will be
+			returned.
+		</para>
+		<para>
+			Note that this timeout is applied to each underlying operation
+			(i.e. for each connection attempt), so depending on circumstances
+			and on the value of the <quote>retries</quote> variable, a single
+			query from the &sip; proxy's point of view can take longer than the
+			<quote>timeout</quote>.
+		</para>
+		<example>
+		<title>Set <varname>timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "timeout", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>tcp_keepalive</varname> (integer)</title>
+		<para>
+			Enable the TCP keepalive timer and set the number of seconds the
+			connection must be idle before to start sending keepalive packets.
+			Defaults to zero, which disables TCP keepalive packets.
+		</para>
+		<para>
+		<emphasis>
+			Only supported on platforms which understand and support the
+			<quote>TCP_KEEPIDLE</quote> socket option.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "tcp_keepalive", 600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lockset</varname> (integer)</title>
+		<para>
+			The value is used as power of two to compute the size of the
+			lock set needed to implement the equivalent of REPLACE SQL
+			statement.
+		</para>
+		<para>
+			Default value is 4 (lock set size is 16).
+		</para>
+		<example>
+		<title>Set <varname>lockset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "lockset", 6)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="db_postgres.p.bytea_output_escape">
+		<title><varname>bytea_output_escape</varname> (integer)</title>
+		<para>
+			Control if the module should request escaping the output for
+			bytea fields.
+		</para>
+		<para>
+			Default value is 1 (do the escape).
+		</para>
+		<example>
+		<title>Set <varname>bytea_output_escape</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "bytea_output_escape", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<para>
+		NONE
+		</para>
+	</section>
+</chapter>
+

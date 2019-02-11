@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>mqueue Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+	    </author>
+	    <editor>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		    <email>ramona@asipto.com</email>
+	    </editor>
+	    <editor>
+		<firstname>Alex</firstname>
+		<surname>Balashov</surname>
+		<email>abalashov@evaristesys.com</email>
+		<affiliation><orgname>Evariste Systems</orgname></affiliation>
+	    </editor>
+	    <editor>
+		<firstname>Ovidiu</firstname>
+		<surname>Sas</surname>
+		<email>osas@voipembedded.com</email>
+		<affiliation><orgname>VoIP Embedded, Inc.</orgname></affiliation>
+	    </editor>
+	    <editor>
+		<firstname>Julien</firstname>
+		<surname>Chavanton</surname>
+		<email>jchavanton@gmail.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2010</year>
+	    <holder>Elena-Ramona Modroiu (asipto.com)</holder>
+	</copyright>
+	<copyright>
+	    <year>2018</year>
+	    <holder>Julien chavanton, Flowroute</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+    
+	<xi:include href="mqueue_admin.xml"/>
+    
+</book>

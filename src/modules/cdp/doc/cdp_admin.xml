@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>CDP (C Diameter Peer) allows Diameter communication to and from
+    Kamailio. Most of the code is inherited from DISC
+    http://developer.berlios.de/projects/disc/ and OpenIMS and modified for
+    use within Kamailio. A few improvements and new functionality has been
+    added along the way, for example, threshold reporting on Diameter calls
+    that are serviced above a certain threshold.</para>
+  </section>
+
+  <section>
+    <title>How it works</title>
+
+    <para>CDP forks the following processes:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>1 x Timer</para>
+      </listitem>
+
+      <listitem>
+        <para>1 x Acceptor</para>
+      </listitem>
+
+      <listitem>
+        <para>k x Workers (k configurable through configuration)</para>
+      </listitem>
+
+      <listitem>
+        <para>i x Receivers (one for each peer plus one for unknown
+        peers)</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>CDP is really only an API and offers all of its methods to other
+    modules. No commands are made available to the main Kamailio configuration
+    file. The exported API can be seen in mod.c. The Full Diameter API is in
+    diameter.h and diameter_api.h. IMS-specific constants can be found in
+    diameter_ims.h. The protocol coding is implemented in diameter_avp.c and
+    diameter_msg.c. The diameter state machine is implemented in
+    peerstatemachine.c - there is one of these for each peer which maintains
+    all protocol/application state for each peer. peermanager.c is responsible
+    for peer administration. Diameter transactions are implemented in
+    transaction.c.</para>
+
+    <para>There are 2 configuration areas for CDP. Firstly it must be loaded
+    and configured in the Kamailio.cfg file (this is the normal task
+    associated with Kamailio modules). Then, an XML file is required to
+    configure various Diameter parameters and all related peers and the
+    associated routes.</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>The following libraries or applications must be installed before
+      running &kamailio; with this module loaded: <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title>config_file (string)</title>
+
+      <para>This is the location of the XML configuration file.</para>
+
+      <para><emphasis> Default value is <quote>DiameterPeer.xml</quote>.
+      </emphasis></para>
+
+      <example>
+        <title>Set <varname>config_file</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>latency_threshold (int)</title>
+
+      <para>The time in ms above which a log error is written to log file for
+      long CDP transactions.</para>
+
+      <para><emphasis> Default value is <quote>500</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>latency_threshold</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "latency_threshold", 1000)
+...
+</programlisting>
+      </example>
+    </section>
+    <section>
+      <title>workerq_length_threshold_percentage (int)</title>
+
+      <para>The threshold of the length of the worker queue as a percentage of 
+	  the maximum queue size - when exceeded a warning is written to the log
+	  file. 0  means disabled</para>
+
+      <para><emphasis> Default value is <quote>0</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>workerq_length_threshold_percentage</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "workerq_length_threshold_percentage", 25)
+...
+	</programlisting>
+      </example>
+    </section>
+ <section>
+      <title>debug_heavy (int)</title>
+
+      <para>Flag to enable a more verbose log, which tells you
+		more details about peers. This is disabled by default
+		because it brings to a log too much verbose in DBG mode
+		Can be enabled upon needs</para>
+
+      <para><emphasis> Default value is <quote>0</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>debug_heavy</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "debug_heavy", 1)
+...
+	</programlisting>
+      </example>
+ </section>
+  </section>
+
+
+
+	<section>
+	<title>Functions</title>
+  	<section id="cdp.f.cdp_check_peer">
+ 		<title>
+ 		<function moreinfo="none">cdp_check_peer(fqdn)</function>
+ 		</title>
+ 		<para>
+ 		The method checks, if a specific peer is connected and ready.
+ 		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>fqdn</emphasis> - the Fully qualified domain
+				name of the peer, that should be checked.
+				The parameter may contain pseudovariables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>cdp_check_peer</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
+	send_reply("503", "HSS not ready");
+	exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+  	<section id="cdp.f.cdp_has_app">
+ 		<title>
+ 		<function moreinfo="none">cdp_has_app([vendorid, ]application)</function>
+ 		</title>
+ 		<para>
+ 		The method checks, if any peer with this specific application has connected.
+ 		</para>
+		<para>Meaning of the parameters are as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>vendorid</emphasis> - The Vendor ID of the App
+			</para>
+			<para>
+			<emphasis>application</emphasis> - The Application ID
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>cdp_check_peer</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!cdp_has_app("10415", "4")) {
+	send_reply("503", "Charging Server not ready");
+	exit;
+}
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>cdp_check_peer</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!cdp_has_app("16777216")) {
+	send_reply("503", "Cx/Dx Interface not ready");
+	exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+  <section>
+    <title>RPC Commands</title>
+
+    <para>exported RPC commands.</para>
+
+    <section>
+      <title>cdp.disable_peer</title>
+
+      <para>instantly disable a particular diameter peer.</para>
+    </section>
+
+    <section>
+      <title>cdp.enable_peer</title>
+
+      <para>enabe/re-enable a diameter peer</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Configuration Examples</title>
+
+    <section>
+      <title>DiameterPeer.xml example</title>
+
+      <para>This is an example CDP configuration file. The location of this
+      file is configured as a CDP parameter (config_file) - See section 4.1
+      Above</para>
+
+      <example>
+        <title>DiameterPeer.xml example</title>
+
+        <programlisting format="linespecific">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!-- 
+
+ DiameterPeer Parameters 
+  - FQDN - FQDN of this peer, as it should appear in the Origin-Host AVP
+  - Realm - Realm of this peer, as it should appear in the Origin-Realm AVP
+  - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
+  - Product_Name - Product Name to appear in the Capabilities Exchange 
+  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN 
+    not configured below
+  - DropUnknownOnDisconnect - Whether to drop (1) or keep (0) and retry connections (until restart)
+    unknown peers in the list of peers after a disconnection.
+  - Tc - Value for the RFC3588 Tc timer - default 30 seconds
+  - Workers - Number of incoming messages processing workers forked processes.
+  - Queue - Length of queue of tasks for the workers:
+     - too small and the incoming messages will be blocked too often;
+     - too large and the senders of incoming messages will have a longer feedback loop to notice that
+     this Diameter peer is overloaded in processing incoming requests;
+     - a good choice is to have it about 2 times the number of workers. This will mean that each worker
+     will have about 2 tasks in the queue to process before new incoming messages will start to block.
+  - ConnectTimeout - time in seconds to wait for an outbound TCP connection to be established.
+  - TransactionTimeout - time in seconds after which the transaction timeout callback will be fired,
+    when using transactional processing.
+  - SessionsHashSize - size of the hash-table to use for the Diameter sessions. When searching for a 
+    session, the time required for this operation will be that of sequential searching in a list of 
+    NumberOfActiveSessions/SessionsHashSize. So higher the better, yet each hashslot will consume an
+    extra 2xsizeof(void*) bytes (typically 8 or 16 bytes extra).
+  - DefaultAuthSessionTimeout - default value to use when there is no Authorization Session Timeout 
+  AVP present.
+  - MaxAuthSessionTimeout - maximum Authorization Session Timeout as a cut-out measure meant to
+  enforce session refreshes.
+      
+ --&gt;
+&lt;DiameterPeer 
+        FQDN="pcscf.ims.smilecoms.com"
+        Realm="ims.smilecoms.com"
+        Vendor_Id="10415"
+        Product_Name="CDiameterPeer"
+        AcceptUnknownPeers="0"
+        DropUnknownOnDisconnect="1"
+        Tc="30"
+        Workers="4"
+        QueueLength="32"
+        ConnectTimeout="5"
+        TransactionTimeout="5"
+        SessionsHashSize="128"
+        DefaultAuthSessionTimeout="60"
+        MaxAuthSessionTimeout="300"
+&gt;
+
+        &lt;!--
+                Definition of peers to connect to and accept connections from. For each peer found in here
+                a dedicated receiver process will be forked. All other unknown peers will share a single
+                receiver. NB: You must have a peer definition for each peer listed in the realm routing section
+        --&gt;
+        &lt;Peer FQDN="pcrf1.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf2.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf3.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf4.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf5.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf6.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+
+        &lt;!--
+                Definition of incoming connection acceptors. If no bind is specified, the acceptor will bind
+                on all available interfaces.
+        --&gt;
+        &lt;Acceptor port="3868"  /&gt;
+        &lt;Acceptor port="3869" bind="127.0.0.1" /&gt;
+        &lt;Acceptor port="3870" bind="192.168.1.1" /&gt;
+
+        &lt;!--
+                Definition of Auth (authorization) and Acct (accounting) supported applications. This
+                information is sent as part of the Capabilities Exchange procedures on connecting to
+                peers. If no common application is found, the peers will disconnect. Messages will only
+                be sent to a peer if that peer actually has declared support for the application id of 
+                the message.
+        --&gt;
+        &lt;Acct id="16777216" vendor="10415" /&gt;
+        &lt;Acct id="16777216" vendor="0" /&gt;
+        &lt;Auth id="16777216" vendor="10415"/&gt;
+        &lt;Auth id="16777216" vendor="0" /&gt;
+
+        &lt;!-- 
+                Supported Vendor IDs - list of values which will be sent in the CER/CEA in the
+                Supported-Vendor-ID AVPs
+        --&gt;
+        &lt;SupportedVendor vendor="10415" /&gt;
+
+        &lt;!--
+                Realm routing definition.
+                Each Realm can have a different table of peers to route towards. In case the Destination
+                Realm AVP contains a Realm not defined here, the DefaultRoute entries will be used.
+
+                Note: In case a message already contains a Destination-Host AVP, Realm Routing will not be
+                applied.
+                Note: Routing will only happen towards connected and application id supporting peers.
+                
+                The metric is used to order the list of preferred peers, while looking for a connected and
+                application id supporting peer. In the end, of course, just one peer will be selected.
+        --&gt;
+        &lt;Realm name="ims.smilecoms.com"&gt;
+                &lt;Route FQDN="pcrf1.ims.smilecoms.com" metric="3"/&gt;
+                &lt;Route FQDN="pcrf2.ims.smilecoms.com" metric="5"/&gt;
+        &lt;/Realm&gt;
+
+        &lt;Realm name="temp.ims.smilecoms.com"&gt;
+                &lt;Route FQDN="pcrf3.ims.smilecoms.com" metric="7"/&gt;
+                &lt;Route FQDN="pcrf4.ims.smilecoms.com" metric="11"/&gt;
+        &lt;/Realm&gt;
+        &lt;DefaultRoute FQDN="pcrf5.ims.smilecoms.com" metric="15"/&gt;
+        &lt;DefaultRoute FQDN="pcrf6.ims.smilecoms.com" metric="13"/&gt;
+
+
+&lt;/DiameterPeer&gt;
+
+</programlisting>
+      </example>
+    </section>
+
+    <section/>
+  </section>
+</chapter>

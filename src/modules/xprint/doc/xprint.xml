@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="xprint" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Xprint Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>Asipto</orgname></affiliation>
+		<address>
+		<email>ramona@asipto.com</email>
+		<otheraddr>
+		<ulink url="http://www.asipto.com">http://www.asipto.com</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+    </bookinfo>
+
+    <chapter>
+    <title>Admin Guide</title>
+
+    <section id="xprint.overview">
+	<title>Overview</title>
+	<para>
+		IMPORTANT: this is former xlog module from SIP Express Router (SER)
+		kept because it is used by other modules via API to get the value
+		for strings with specifiers. If you want to print log messages
+		from configuration file, use the real module named 'xlog'.
+	</para>
+	<para>
+	    This module provides the possibility to print user formatted log or
+	    debug messages from SER scripts, similar to printf function but now
+	    a specifier is replaced with a part of the SIP request. <xref
+	    linkend="implemented_specifiers"/> shows what can be printed out.
+	</para>
+    </section>
+
+    <section id="implemented_specifiers">
+	<title>Implemented Specifiers</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    %% : '%'
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %br : request's first branch
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %bR : request's all branches
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ci : call-id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %cs : cseq
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ct : contact header
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Cxy : color printing based on escape sequences (x - foreground
+			color, y - background color). The values for colors: x - default
+			color of the terminal; s - Black; r - Red; g - Green; y - Yellow;
+			b - Blue; p - Purple; c - Cyan; w - White 
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ds : destination set
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %fu : 'From' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ft : 'From' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hn : host's hostname (if system hostname is FQDN, part before first .)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hd : host's domain (if system hostname is FQDN, part behind first .)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hf : host's FQDN hostname
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hi : host's IP address
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mb : whole SIP message buffer
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mf : flags set for current SIP request
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mi : SIP message id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ml : SIP message length
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mx : SIP message id (in hex notation)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %nh : message's next hop
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %pp : process id (pid)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %px : process id (pid) (in hex notation)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rm : request's method
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ru : request's r-uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rr : reply's reason
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rs : reply's status
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rt : 'Refer-To' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ri : IP address of the interface where the request
+		    has been received
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Rp : received port
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %si : IP source address 
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %sp : source port
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tu : 'To' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tt : 'To' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ts : unix time stamp
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Tf : string formatted time
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Tx : unix time stamp (in hex notation)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ua : User agent header field
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %uq : unique id (per SER's process) - to make really unique id use
+			%uq-%px-%mx or %uq-%px-%Tx
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %{name[N]} : print the body of the Nth header identified by
+		    'name'. If [N] is omitted then the body of the first header
+		    is printed. The first header is got when N=0, for the
+		    second N=1, a.s.o. To print the last header of that type,
+		    use -1, no other negative values are supported now. No
+		    white spaces are allowed inside the specifier (before },
+		    before or after {, [, ] symbols). When N='*', all headers
+		    of that type are printed.
+		</para>
+		<para>
+		    The module should identify most of compact header names
+		    (the ones recognized by ser which should be all at this
+		    moment), if not, the compact form has to be specified
+		    explicitly. It is recommended to use dedicated specifiers
+		    for headers (e.g., %ua for user agent header), if they are
+		    available -- they are faster.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+			%&lt;name[N]&gt; : print the value of AVP optionally
+			%indexed by the [N] value
+			It uses AVPs subindexing, e.g. if you don't specify
+			subindex and there are more AVPs with the same name, the
+			result is NULL. To specify first AVP use [1], negative
+			values are indexes counted backward through the list.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %@select.framework[N].value : print the value of select
+			framework call. For detailed info what calls are available
+			see select framework documentation (and modules
+			documentation, as modules can extend select framework
+			calls).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %| or %(space) : end of %@select.framework identifier.
+			If you need to concatenate select framework call and
+			another non-whitespace literal, you need to explicitly
+			set the end of the select framework identifier.
+		</para>
+		<para>
+			E.g. %@ruri.user%|@%@ruri.host converts all featured request
+			uri into user@host form only.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    </chapter>
+    <chapter>
+    <title>Developer Guide</title>
+    <xi:include href="api.xml"/>
+    </chapter>
+</book>

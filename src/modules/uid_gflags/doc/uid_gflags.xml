@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>UID Gflags Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="uid_gflags.overview">
+	<title>Overview</title>
+	<para>
+	    The module implements global flags. The difference between the
+	    global flags and flags that can be used in the configuration file
+	    or AVPs is that they the scope of the global flags is not limited
+	    to the SIP message or transaction being processed. Global flags are
+	    always available, their contents is not forgotten when a SIP
+	    transaction gets destroyed in &kamailio;.
+	</para>
+	<para>
+	    Global flags can be accessed from the configuration script, for example:
+	</para>
+	<programlisting>
+if (is_ugflag("1")) {
+    t_relay_to_udp("10.0.0.1", "5060");
+} else {
+    t_relay_to_udp("10.0.0.2", "5060");
+};
+	</programlisting>
+	<para>
+	    The value of the global flags can be manipulated by external tools
+	    such as the web interface of &kamailio; or cmd line administration
+	    tools. One particular application of global flags could be runtime
+	    configuration changes without the need to restart &kamailio;.
+	</para>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="fifo.xml"/>
+    <xi:include href="xmlrpc.xml"/>
+    </chapter>
+
+</book>
+

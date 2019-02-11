@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides DB APIv1 connector for MongoDB NoSQL server.
+	</para>
+	<para>
+	It can be used as a replacement for other database modules such as
+	db_mysql, db_postgres, a.s.o. Not all the specs of DB APIv1 are
+	implemented, thus the usage of this module might be restricted to
+	specific modules.
+	</para>
+	<para>
+		You can read more about MongoDB at:
+		<ulink url="http://www.mongodb.org">http://www.mongodb.org</ulink>.
+	</para>
+	</section>
+
+	<section id="db_mongodb.s.limitations">
+	<title>Limitations</title>
+	<para>
+		This module has implemented the equivalent operations for INSERT,
+		UPDATE, DELETE and SELECT. The match condition (WHERE clause)
+		works with the operators: equal, not equal, greater than, less than,
+		equal or greater than, equal or less than. Raw query is not
+		implemented inside this module, use ndb_mongodb for sending any
+		kind of command to a MongoDB server.
+	</para>
+	</section>
+
+	<section id="db_mongodb.s.remarks">
+	<title>Remarks</title>
+	<para>
+		Using this module as a database driver may require additional settings
+		for various modules. For example, you have to set module parameter
+		'db_insert_null' to 1 for 'usrloc' module. If the module you are using
+		with 'db_mongodb' fails, check its README for notes about using it
+		with no-SQL databases.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mongo-c-driver</emphasis> - available at
+				<ulink url="https://github.com/mongodb/mongo-c-driver">https://github.com/mongodb/mongo-c-driver</ulink>
+			</para>
+			<para>
+				Note: if you use tls module, use at least mongo-c-driver v1.3.5
+				and compile the library by configuring it without automatic init
+				and cleanup (you have to run:
+				'./configure --disable-automatic-init-and-cleanup') -- this
+				option is planned to be removed in future versions. An alternative
+				for v1.3.5 could be the patch from:
+				https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca48491682a5ffec4f83cde55
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Usage</title>
+		<para>
+			Load the module and set the the DB URL for specific modules to:
+			mongodb://username:password@host:port/database. Username, password
+			and port are optional.
+		</para>
+		<example>
+		<title>Usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "db_mongodb.so"
+...
+#!define DBURL "mongodb://localhost/kamailio"
+modparam("acc", "db_url", DBURL)
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+

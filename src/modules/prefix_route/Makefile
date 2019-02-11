@@ -1,0 +1,13 @@
+# prefix_route
+#
+include ../../Makefile.defs
+
+auto_gen=
+NAME=prefix_route.so
+LIBS=
+
+DEFS+=
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
+include ../../Makefile.modules

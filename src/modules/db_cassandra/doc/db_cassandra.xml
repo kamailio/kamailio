@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+		<title>DB Cassandra Module</title>
+		<productname class="trade">&kamailioname;</productname>
+		<authorgroup>
+			<author>
+				<firstname>Anca</firstname>
+				<surname>Vamanu</surname>
+				<email>anca.vamanu@1and1.ro</email>
+			</author>
+			<author>
+				<firstname>Boudewyn</firstname>
+				<surname>Ligthart</surname>
+				<email>bligthart@btlnet.co.uk</email>
+			</author>
+			<editor>
+				<firstname>Anca</firstname>
+				<surname>Vamanu</surname>
+				<email>anca.vamanu@1and1.ro</email>
+			</editor>
+		</authorgroup>
+		<copyright>
+			<year>2012</year>
+			<holder>1&amp;1 Internet AG</holder>
+		</copyright>
+	</bookinfo>
+	<xi:include href="db_cassandra_admin.xml"/>
+</book>
+

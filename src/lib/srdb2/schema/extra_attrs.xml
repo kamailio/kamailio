@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table>
+  <name>extra_attrs</name>
+  <version>1</version>
+
+  <column id="extra_attrs.id">
+	<name>id</name>
+	<type>string</type>
+	<size>256</size>
+  </column>
+
+  <column id="extra_attrs.name">
+	<name>name</name>
+	<type>string</type>
+	<size>&avp_name_len;</size>
+  </column>
+
+  <column id="extra_attrs.value">
+	<name>value</name>
+	<type>string</type>
+	<null/>
+	<size>&avp_val_len;</size>
+  </column>
+
+  <column>
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+  </column>
+
+  <column id="extra_attrs.flags">
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+	<description>
+	  Various flags (SER_LOAD and such).
+	</description>
+  </column>
+
+  <index> 
+	<!-- 
+		 Note: we don't need unique index, but some databases require it.
+		 We need only non-unique index according id because of reading.
+	  -->
+	<unique/>
+	<name>userattrs_idx</name>
+	<colref linkend="extra_attrs.id"/>
+	<colref linkend="extra_attrs.name"/>
+	<colref linkend="extra_attrs.value"/>
+  </index>
+
+</table>

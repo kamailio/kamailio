@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+	The modules is a XCAP client for &kamailio; that can be used by other modules.
+	It fetches XCAP elements, either documents or part of them, by sending
+	HTTP GET requests to an XCAP server. It also offers support for
+	conditional queries.  It uses the <emphasis>libcurl</emphasis> library as a
+	client-side HTTP transfer library.
+	</para>
+	<para>
+	The module offers a XCAP client interface with general functions that
+	allow requesting for a specific element from a XCAP server.
+	In addition to that it also offers the service of storing and updating
+	the documents it receives. In this case only an initial
+	request to the module is required - xcapGetNewDoc - which is like a
+	request to the module to handle from that point on the referenced
+	document so as to promise that the newest version will always be
+	present in database.
+	</para>
+	<para>
+	The update method is also configurable, either through periodical
+	queries, applicable to any kind of XCAP server or with an management command 
+	that should be sent by the server upon an update.
+	</para>
+	<para>
+	The module is currently used by the <quote>presence_xml</quote> module, if the
+	'integrated_xcap_server' parameter is not set.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+			The modules is not dependent of any &kamailio; module.
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="xcap_client.p.db_url">
+		<title><varname>db_url</varname>(str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_client", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_client.p.xcap_table">
+		<title><varname>xcap_table</varname>(str)</title>
+		<para>
+		The name of the db table where XCAP documents are stored.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>xcap</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xcap_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_client", "xcap_table", "xcaps")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_client.p.peridical_query">
+		<title><varname>periodical_query</varname>(int)</title>
+		<para>
+		A flag to disable periodical query as an update method for
+		the documents the module is responsible for. It could be
+		disabled when the XCAP server is capable to send the exported
+		management command when a change occurs or when another module in &kamailio;
+		handles updates.
+		</para>
+		<para>
+		To disable it set this parameter to 0.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>periodical_query</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_client", "periodical_query", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xcap_client.p.query_period">
+		<title><varname>query_period</varname>(int)</title>
+		<para>
+		Should be set if periodical query is not disabled.
+		Represents the time interval the XCAP servers should be
+		queried for an update.
+		</para>
+		<para>
+		To disable it set this parameter to 0.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>query_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_client", "query_period", 50)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+<section>
+	<title>RPC Commands</title>
+	<section id="xcap_client.rpc.refreshXcapDoc">
+		<title>
+		<function moreinfo="none">xcap_client.refreshXcapDoc</function>
+		</title>
+		<para>
+		Management command that should be sent by an XCAP server when a
+		stored document changes.
+		</para>
+		<para>
+		Name: <emphasis>xcap_client.refreshXcapDoc</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>document uri: the uri of the document</para>
+			</listitem>
+			<listitem>
+				<para>xcap server port: the port of the xcap server</para>
+			</listitem>
+		 </itemizedlist>
+
+        <para>
+		RPC Command Example:
+		</para>
+        <programlisting  format="linespecific">
+...
+# execute in a single line command
+&kamcmd; xcap_client.refreshXcapDoc
+     /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml 8000
+...
+		</programlisting>
+	</section>
+
+   	</section>
+	<section id="xcap_client.s.remarks">
+		<title>Remarks</title>
+		<para>
+			Note: libcurl leak in CentOS 6 - this module uses libcurl library
+			and in case if you are using CentOS 6, be aware that standard
+			libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+			libcurl from city-fan repository. More details at:
+			<ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6">
+				https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6</ulink>
+		</para>
+	</section>
+
+</chapter>
+

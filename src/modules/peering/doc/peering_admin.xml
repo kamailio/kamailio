@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Peering Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>The peering module allows SIP providers (operators or organizations) 
+	to verify from a broker if source or destination of a SIP request is
+    a trusted peer.
+    </para>
+    <para>This module is obsolete and will be removed in the next release.
+    </para>
+    <para>
+	In order to participate in the trust community provided by a
+	broker, each SIP provider registers the domains (host parts of SIP URIs) 
+	that they serve with the broker.  When a SIP proxy of a
+	provider needs to send a SIP request to a non-local domain, it
+	can find out from the broker using verify_destination() function
+	if the non-local domain is served by a trusted peer.  If so, the
+	provider receives from the broker a hash of the SIP request and
+	a timestamp that it includes in the request to the non-local
+	domain.  When a SIP proxy of the non-local domain receives the SIP request, it, in
+	turn, can verify from the broker using verify_source() function
+	if the request came from a trusted peer.
+        </para>
+        <para>
+        Verification functions communicate with the broker using Radius
+        protocol.  Sample FreeRADIUS configuration files for broker's
+	Radius server are available from http://www.wirlab.net/tsi/.
+        </para>
+
+        <para>
+        Comments and suggestions for improvements are welcome.
+        </para>
+
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+		<section>
+		<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules
+			(in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before compiling &kamailio; with this module
+				loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis>
+				0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		This is the location of the configuration file of Radius client 
+		libraries.
+		</para>
+		<para>
+		Default value is 
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
+		</para>
+		<example>
+		<title><varname>radius_config</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>verify_destination_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type Radius attribute to be
+		used, when sender of SIP Request verifies the request's
+		destination using verify_destination() function.
+		</para>
+		<para>
+		Default value is the dictionary value of <quote>Sip-Verify-Destination</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>verify_destination_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("peering", "verify_destination_service_type", 21)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>verify_source_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type Radius attribute to be
+		used, when receiver of SIP Request verifies the request's
+		source using verify_source() function.
+		</para>
+		<para>
+		Default value is the dictionary value of <quote>Sip-Verify-Source</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>verify_source_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("peering", "verify_source_service_type", 22)
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section>
+		<title><function moreinfo="none">verify_destination()</function></title>
+		<para>
+		Function verify_destination() queries from
+		broker's Radius server if domain (host part) of Request
+		URI is served by a trusted peer.  Radius request contains the
+		following attributes/values:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>User-Name - Request-URI host</para>
+		</listitem>
+		<listitem>
+			<para>SIP-URI-User - Request-URI user</para>
+		</listitem>
+		<listitem>
+			<para>SIP-From-Tag - From tag</para>
+		</listitem>
+		<listitem>
+			<para>SIP-Call-Id - Call id</para>
+		</listitem>
+		<listitem>
+			<para>Service-Type - verify_destination_service_type</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Function returns value 1 if domain of Request URI is
+		served by a trusted peer and -1 otherwise.  In case of positive
+		result, the Radius server returns a set of SIP-AVP reply attributes.
+		The value of each SIP-AVP is of form:
+		 </para>
+		 <para>
+		 [#]name(:|#)value
+		 </para>
+		 <para>
+		 Value of each SIP-AVP reply attribute is mapped to an
+		 &kamailio; AVP.  Prefix # in front of name or value indicates a
+		 string name or string value, respectively.
+		 </para>
+		 <para>
+		 One of the SIP-AVP reply attributes contains a string
+		 that the source peer must include "as is" in a 
+		 <emphasis>P-Request-Hash:</emphasis> header when it sends the SIP request to
+		 the destination peer.  The string value may, for
+		 example, be of form hash@timestamp, where hash contains
+		 a hash calculated by the broker based on the attributes
+		 of the query and some local information and timestamp
+		 is the time when the calculation was done.
+		 </para>
+		 <para>
+		 AVP names used in reply attributes are assigned by the
+		 broker.
+		 </para>
+		<para>
+		This function can be used from REQUEST_ROUTE and
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function
+	moreinfo="none">verify_destination()</function> usage</title> 
+		<programlisting format="linespecific">
+...
+if (verify_destination()) {
+   append_hf("P-Request-Hash: $avp(i:200)\r\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">verify_source()</function></title>
+		<para>
+		Function verify_source() queries the
+		broker's Radius server whether the SIP request was received from
+		a trusted peer.  The Radius request contains the
+		following attributes/values:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>User-Name - Request-URI host</para>
+		</listitem>
+		<listitem>
+			<para>SIP-URI-User - Request-URI user</para>
+		</listitem>
+		<listitem>
+			<para>SIP-From-Tag - From tag</para>
+		</listitem>
+		<listitem>
+			<para>SIP-Call-Id - Call id</para>
+		</listitem>
+		<listitem>
+			<para>SIP-Request-Hash - body of P-Request-Hash header</para>
+		</listitem>
+		<listitem>
+			<para>Service-Type - verify_source_service_type</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Function returns value 1 if SIP request was received
+		from a trusted peer and -1 otherwise.  In case of positive
+		result, Radius server may return a set of SIP-AVP reply
+		attributes.  Value of each SIP-AVP is of form:
+		 </para>
+		 <para>
+		 [#]name(:|#)value
+		 </para>
+		 <para>
+		 Value of each SIP-AVP reply attribute is mapped to an
+		 &kamailio; 
+		 AVP.  Prefix # in front of name or value indicates a
+		string name or string value, respectively.
+		 </para>
+		 <para>
+		 AVP names used in reply attributes are
+		 assigned by the broker.
+		 </para>
+		<para>
+		This function can be used from REQUEST_ROUTE and
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function
+	moreinfo="none">verify_source()</function> usage</title>  
+		<programlisting format="linespecific">
+...
+if (is_present_hf("P-Request-Hash")) {
+   if (verify_source()) {
+      xlog("L_INFO", "Request came from trusted peer\n")
+   }
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+</chapter>

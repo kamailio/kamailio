@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		It provides logging to systemd journal from the moment
+		of loading this module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libsystemd</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Core Logging</title>
+		<para>
+		This module can replace the syslog logging with sending the log messages
+		to systemd journal. The logging to systemd is
+		started when this module is loaded, before that the default
+		syslog system is used.
+		</para>
+		<para>
+		It requires that core parameters log_engine_type to be set to 'systemd'.
+		It is not enabled if log_stderror=yes.
+		</para>
+		<example>
+		<title><function>Core Logging Replacement with Systemd</function></title>
+		<programlisting format="linespecific">
+...
+log_engine_type="systemd"
+...
+loadmodule "log_systemd.so"
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="log_systemd.f.sd_journal_print">
+	    <title>
+		<function moreinfo="none">sd_journal_print(level, text)</function>
+	    </title>
+		<para>
+		Print the text in the systemd journal at the provided level parameter.
+		</para>
+		<para>
+		Both parameters can contain variables.
+		</para>
+		<para>
+		For more, see the manual page for function sd_journal_print() in C library libsystemd.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sd_journal_print</function> usage</title>
+		<programlisting format="linespecific">
+...
+   sd_journal_print("LOG_INFO", "R-URI is $ru\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="log_systemd.f.sd_journal_send_xavp">
+	    <title>
+		<function moreinfo="none">sd_journal_send_xavp(name)</function>
+	    </title>
+	    <para>Creates a structured log event in journald.</para>
+		<para>The sd_journal_send_xavp(name) function sends a log event in journald, based on the
+		fields provided in the xavp whose root name is specified as parameter. This function is
+		a wrapper for journald's <emphasis>sd_journal_send()</emphasis> function, and allows to
+		specify as many custom fields as desired (see <emphasis>sd_journal_send(3)</emphasis>).
+		</para>
+		<para>
+		The xavp given as parameter must contain child AVPs with names conforming to journald's
+		field name policy (only uppercase letters, numbers and underscore), otherwise they will
+		be discarded by journald.
+		</para>
+		<para>
+		Some field name have a default meaning for journald:
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>MESSAGE</emphasis>: the human-readable message string for this entry.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>PRIORTTY</emphasis>: integer priority value between 0 ("emerg") and 7 ("debug")
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				(...) (see <emphasis>systemd.journald-fields(7)</emphasis>)
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sd_journal_send_xavp</function> usage</title>
+		<programlisting format="linespecific">
+request_route {
+    $xavp(event=>MESSAGE) = $rm + " request logged with journald";
+    $xavp(event[0]=>SIP_MESSAGE) = $mb;
+# don't forget the '[0]', otherwise kamailio will create and
+# stack new AVPs (see pseudovariable documentation) over the previous one
+    $xavp(event[0]=>SIP_CALL_ID) = $ci;
+    $xavp(event[0]=>SIP_SRC_PORT) = $sp;
+    $xavp(event[0]=>PRIORITY) = 6;
+    sd_journal_send_xavp("event");
+(...)
+}
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+

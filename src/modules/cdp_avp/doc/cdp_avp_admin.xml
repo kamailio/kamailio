@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>CDP AVP is a helper module for various applications ontop of CDP (C
+    Diameter Peer). CDP AVP module adds support for the following
+    applications:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Various base AVPs (implemented in base.h) for RFC3588 base
+        AVPs</para>
+      </listitem>
+
+      <listitem>
+        <para>Base AVPs (implemented in nasapp.h) for RFC4005 base AVPs</para>
+      </listitem>
+
+      <listitem>
+        <para>Diameter Credit Control App (implemented in ccap.h) for RFC4006
+        AVPs</para>
+      </listitem>
+
+      <listitem>
+        <para>EPC (implemented in epcapp.h) for 3GPP Rx, Gx(x) interface AVPs
+        - see TS29l061, TS29.212, TS29.214, TS29.272 and TS29.299</para>
+      </listitem>
+
+      <listitem>
+        <para>IMS (implemented in imsapp.h) for 3GPP IMS AVPs, Cx, Dx, Sh
+        interfaces - see TS29.229 and TS29.329</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>How it works</title>
+
+    <para>CDP AVP is a lightweight helper module that doesn't really do much
+    other than offer a set of AVP facilitating functions for various
+    application uses. CDP AVP module is used in conjunction with CDP
+    module.</para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>CDP</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>The following libraries or applications must be installed before
+      running &kamailio; with this module loaded: <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <para>None</para>
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <para>No functions available from configuration. See API for internal
+    functions.</para>
+  </section>
+</chapter>

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module hides the SIP routing headers that show topology details.
+		It is not affected by the server being transaction stateless or
+		stateful. The script interpreter gets the SIP messages decoded,
+		so all existing functionality is preserved.
+	</para>
+	<para>
+		The module is transparent for the configuration writer. It only needs to be
+		loaded (tune the parameters if needed). The SIP server can be restarted
+		without affecting ongoing calls - once it is up, can encode/decode
+		topology details, thus no call will be lost.
+	</para>
+	<para>
+		By using same mask_key, many SIP servers can decode the message,
+		for example, applicable for servers behind load balancers.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>rr module</emphasis> - server must perform record
+				routing to ensure in-dialog requests are encoded/decoded.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>. In the future the module can be
+				enhanced to use a stronger encryption algorithm.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="topoh.p.mask_key">
+		<title><varname>mask_key</varname> (str)</title>
+		<para>
+		Keyword to mask the headers.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "_static_value_".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "mask_key", "some secret here")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.mask_ip">
+		<title><varname>mask_ip</varname> (str)</title>
+		<para>
+		IP address to be used in masked headers to build valid
+		SIP URIs. Can be any IP address, even a private-space or non-existing
+		IP address (e.g., 192.168.1.1, 127.0.0.2), including the SIP server
+		address, but must not be an address potentially used by clients.
+		It is not used at all for SIP routing.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "127.0.0.8".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_ip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "mask_ip", "192.168.0.1")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.mask_callid">
+		<title><varname>mask_callid</varname> (integer)</title>
+		<para>
+			Whether to encode the Call-id: header. Some SIP extensions include
+			the Call-id in the SIP message payload or header, so it is safe to
+			not encode Call-id in such cases. Well-known extensions such as
+			call transfer or conference join will be added to work with encoded
+			Call-id.
+		</para>
+		<para>
+			NOTE: if you are using dialog module to terminate calls and this
+			parameter is enabled, you must set the dialog module parameter
+			'lreq_callee_headers' to include the header: 'TH: dlh\r\n'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not mask).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_callid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "mask_callid", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.uparam_name">
+		<title><varname>uparam_name</varname> (str)</title>
+		<para>
+		Name of URI parameter where to store encoded value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "line".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uparam_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "uparam_name", "myparam")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.uparam_prefix">
+		<title><varname>uparam_prefix</varname> (str)</title>
+		<para>
+		Prefix to be added in encoded URI parameters.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sr-".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uparam_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "uparam_prefix", "xyz")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.vparam_name">
+		<title><varname>vparam_name</varname> (str)</title>
+		<para>
+		Name of Via: parameter used to store encoded value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "branch".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vparam_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "vparam_name", "myv")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.vparam_prefix">
+		<title><varname>vparam_prefix</varname> (str)</title>
+		<para>
+		Prefix to be added in encoded Via: parameters.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "z9hG4bKsr-".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vparam_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "vparam_prefix", "xyz")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.callid_prefix">
+		<title><varname>callid_prefix</varname> (str)</title>
+		<para>
+		Prefix to be added in encoded Call-ID: headers.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "!!:".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>callid_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "callid_prefix", "***")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.sanity_checks">
+		<title><varname>sanity_checks</varname> (integer)</title>
+		<para>
+			If set to 1, topoh module will bind to sanity module in order
+			to perform sanity checks over received SIP request. Default
+			sanity checks are done. It is useful to check if received request
+			is well formatted before proceeding to encoding/decoding.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not bind to sanity module).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sanity_checks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "sanity_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.uri_prefix_checks">
+		<title><varname>uri_prefix_checks</varname> (integer)</title>
+		<para>
+			If set to 1, topoh module will check if URIs to be decoded match
+			the expected prefix composed from mask IP and parameter name prefix.
+			It can make the topoh processing safer by avoiding to try decoding
+			URIs which were not encoded previously by topoh.
+		</para>
+		<para>
+			Note: do not enable this option if you have SIP devices that can
+			alter the URI values it takes from Contact or Record-Route headers
+			(like adding port 5060 when no port is in received URIs, or
+			that introduces new parameters at an unknown position).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uri_prefix_checks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "uri_prefix_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the KEMI configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "event_callback", "ksr_topoh_event")
+...
+-- event callback function implemented in Lua
+function ksr_topoh_event(evname)
+	KSR.info("===== topoh module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Event Routes</title>
+	<section>
+		<title>event_route[topoh:msg-outgoing]</title>
+		<para>
+		It is executed before doing topology hiding processing for an outgoing
+		SIP message. If 'drop' is executed inside the event route, then the
+		module skips doing the topology hiding.
+		</para>
+		<para>
+		Inside the event route the variables $sndto(ip), $sndto(port) and
+		$sndto(proto) point to the destination. The SIP message is not the one
+		to be sent out, but an internally generated one at startup, to avoid
+		reparsing the outgoing SIP message for the cases when topology hiding
+		is not wanted.
+		</para>
+		<example>
+		<title>Usage of event_route[topoh:msg-outgoing]</title>
+		<programlisting format="linespecific">
+...
+event_route[topoh:msg-outgoing] {
+  if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

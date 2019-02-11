@@ -1,0 +1,197 @@
+pdb Module
+
+Edited by
+
+Henning Westerholt
+
+   1&1 Internet AG
+   <henning.westerholt@1und1.de>
+
+Edited by
+
+Pawel Kuzak
+
+   1&1 Internet AG
+   <pawel.kuzak@1und1.de>
+
+   Copyright © 2009 1&1 Internet AG
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. timeout (integer)
+              3.2. server (string)
+
+        4. Functions
+
+              4.1. pdb_query (string query, string dstavp)
+
+        5. RPC Commands
+
+              5.1. pdb.status
+              5.2. pdb.activate
+              5.3. pdb.deactivate
+
+   List of Examples
+
+   1.1. Set timeout parameter
+   1.2. Set server parameter
+   1.3. pdb_query usage
+   1.4. pdb.status usage
+   1.5. pdb.activate usage
+   1.6. pdb.deactivate usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. timeout (integer)
+        3.2. server (string)
+
+   4. Functions
+
+        4.1. pdb_query (string query, string dstavp)
+
+   5. RPC Commands
+
+        5.1. pdb.status
+        5.2. pdb.activate
+        5.3. pdb.deactivate
+
+1. Overview
+
+   This is a module for fast number portability handling. The client is
+   this module and the server exists in the /utils/pdbt directory. The PDB
+   module and server supports load-balancing and aggressive timeouts.
+   Normally it does not need more than a few ms to query the remote server
+   and return the reply to the configuration script.
+
+   The pdb module allows Kamailio to send queries to a list of servers and
+   store the answer in an AVP. The idea is to ask all servers in parallel
+   and use the first answer, that comes back. A timeout for the query can
+   be defined in milliseconds. The querying can be activated and
+   deactivated using FIFO commands.
+
+   More about the new communication protocol between this module and
+   pdb_server can be found in utils/pdbt/docs/network_protocol.txt. The
+   current version is 1.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * The PDB server
+
+3. Parameters
+
+   3.1. timeout (integer)
+   3.2. server (string)
+
+3.1. timeout (integer)
+
+   This is the timeout in milliseconds for the pdb_query function.
+
+   Default value is “50”.
+
+   Example 1.1. Set timeout parameter
+...
+modparam("pdb", "timeout", 10)
+...
+
+3.2. server (string)
+
+   This is the list of servers to be used by the pdb_query function.
+   Queries will be sent in parallel to all servers configured in this
+   list. This parameter is mandatory.
+
+   Example 1.2. Set server parameter
+...
+modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
+...
+
+4. Functions
+
+   4.1. pdb_query (string query, string dstavp)
+
+4.1.  pdb_query (string query, string dstavp)
+
+   Sends the query string to all configured servers and stores the answer
+   in dstavp. If it takes more than the configured timeout, false is
+   returned. Pseudo-variables or AVPs can be used for the query string.
+   The answer must consist of the null terminated query string followed by
+   a two byte integer value in network byte order. The integer value will
+   be stored in the given AVP.
+
+   Example 1.3. pdb_query usage
+...
+# query external service for routing information
+if (!pdb_query("$rU", "$avp(i:82)"))
+  $avp(i:82) = 0; # default routing
+}
+cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
+...
+
+5. RPC Commands
+
+   5.1. pdb.status
+   5.2. pdb.activate
+   5.3. pdb.deactivate
+
+5.1. pdb.status
+
+   Prints the status of the module. This can either be "active" or
+   "deactivated".
+
+   Example 1.4. pdb.status usage
+...
+kamcmd pdb.status
+...
+
+5.2. pdb.activate
+
+   Activates the module. This is the default after loading the module.
+
+   Example 1.5. pdb.activate usage
+...
+kamcmd pdb.activate
+...
+
+5.3.  pdb.deactivate
+
+   Deactivates the module. No more queries are performed until it is
+   activated again. As long as the module is deactivated, the pdb_query
+   function will return -1.
+
+   Example 1.6. pdb.deactivate usage
+...
+kamcmd pdb.deactivate
+...

@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Domain Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		Domain module implements checks that based on domain table
+		determine if a domain is <quote>local</quote>.
+		A <quote>local</quote> domain is one that the proxy is
+		responsible for.  SIP URIs of local users must have hostpart
+		that is equal to one of these domains.
+	</para>
+	<para>
+		Domain module reads the contents of domain and domain_attrs
+		tables into cache memory when the module is loaded.
+		Any changes in domain or domain_attrs tables must thus be
+		followed by <quote>domain.reload</quote> rpc command in
+		order to reflect them in module behavior.
+	</para>
+	<para>
+		Caching is implemented using a hash table. The size of
+		the hash table is given by HASH_SIZE constant defined in
+		domain_mod.h. Its <quote>factory default</quote> value is 128.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<para>
+		The module depends on the following modules (in the other words the 
+		listed modules must be loaded before this module):
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>database</emphasis> -- Any database module</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="domain.p.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		This is <acronym>URL</acronym> of the database to be used.
+		</para>
+		<para>
+		Default value is
+			<quote>&defaultrodb;</quote>
+		</para>
+		<example>
+		<title>Setting db_url parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.domain_table">
+		<title><varname>domain_table</varname> (string)</title>
+		<para>
+		Name of table containing names of local domains that the proxy is
+		responsible for.
+		</para>
+		<para>
+		Default value is <quote>domain</quote>.
+		</para>
+		<example>
+		<title>Setting domain_table parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_table", "new_name")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.domain_attrs_table">
+		<title><varname>domain_attrs_table</varname> (string)</title>
+		<para>
+		Name of table containing attributes of local domains.
+		</para>
+		<para>
+		Default value is <quote>domain_attrs</quote>.
+		</para>
+		<example>
+		<title>Setting domain_attrs_table parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_attrs_table", "local_domain_attributes")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.did_col">
+		<title><varname>did_col</varname> (string)</title>
+		<para>
+		Name of column containing domain id (did) of domain in domain
+		and domain_attrs tables.  In domain table, a did column value
+		may be NULL, which means that it has same value as
+		domain column.
+		</para>
+		<para>
+		Default value is <quote>did</quote>.
+		</para>
+		<example>
+		<title>Setting did_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "did_col", "domain_did")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.domain_col">
+		<title><varname>domain_col</varname> (string)</title>
+		<para>
+		Name of column containing domain name in domain table.
+		</para>
+		<para>
+		Default value is <quote>domain</quote>.
+		</para>
+		<example>
+		<title>Setting domain_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_col", "domain_name")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.name_col">
+		<title><varname>name_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute name in domain_attrs table.
+		</para>
+		<para>
+		Default value is <quote>name</quote>.
+		</para>
+		<example>
+		<title>Setting name_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "name_col", "attr_name")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.type_col">
+		<title><varname>type_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute type in domain_attrs table.
+		Type value 0 is integer and type value 2 is string.
+		</para>
+		<para>
+		Default value is <quote>type</quote>.
+		</para>
+		<example>
+		<title>Setting name_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "type_col", "attr_type")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.value_col">
+		<title><varname>value_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute value in domain_attrs table.
+		</para>
+		<para>
+		Default value is <quote>value</quote>.
+		</para>
+		<example>
+		<title>Setting value_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "value_col", "attr_value")
+</programlisting>
+		</example>
+	</section>
+	<section id="domain.p.register_myself">
+		<title><varname>register_myself</varname> (integer)</title>
+		<para>
+			Register the list of domains to match 'myself' check:
+			0 means no myself registration, 1 means enable myself
+			registration.
+		</para>
+		<para>
+		Default value is 0 (disable).
+		</para>
+		<example>
+		<title>register_myself example</title>
+		<programlisting format="linespecific">
+modparam("domain", "register_myself", 1)
+</programlisting>
+		</example>
+	</section>
+
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<section id="domain.f.is_from_local">
+		<title><function moreinfo="none">is_from_local()</function></title>
+		<para>
+		Checks based on domain table if host part of From header uri is
+		one of the local domains that the proxy is responsible for
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title>is_from_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_from_local()) {
+	...
+};
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="domain.f.is_uri_host_local">
+		<title><function moreinfo="none">is_uri_host_local()</function></title>
+		<para>
+		If called from route or failure route block, checks
+		based on domain table if host part of Request-URI is one
+		of the local domains that the proxy is responsible for.
+		If called from branch route, the test is made on host
+		part of URI of first branch, which thus must have been
+		appended to the transaction before is_uri_host_local()
+		is called.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title>is_uri_host_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_uri_host_local()) {
+	...
+};
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="domain.f.is_domain_local">
+		<title><function moreinfo="none">is_domain_local(domain)</function></title>
+		<para>
+		This function checks if the domain contained in the
+		parameter is local. The parameter can be a static string or contain
+		pseudo-variables.
+		</para>
+		<para>
+		This function is a generalized form of the is_from_local()
+		and is_uri_host_local() functions, being able to completely
+		replace them and also extends them by allowing the domain to
+		be taken from any of the above mentioned sources.
+        The following equivalences exist:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			is_domain_local("$rd") is same as is_uri_host_local()
+		</para></listitem>
+		<listitem><para>
+			is_domain_local("$fd") is same as is_from_local()
+		</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title>is_domain_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_domain_local("$rd")) {
+	...
+}
+if (is_domain_local("my.domain.com")) {
+	...
+}
+if (is_domain_local("$fd")) {
+	...
+}
+if (is_domain_local("$avp(some_avp_alias)")) {
+	...
+}
+if (is_domain_local("$avp(i:850)")) {
+	...
+}
+if (is_domain_local("$avp(s:some_avp)")) {
+	...
+}
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="domain.f.lookup_domain">
+		<title><function moreinfo="none">lookup_domain(domain [, prefix])</function></title>
+		<para>
+		This function checks if domain given in domain argument is local and,
+		if so, adds attributes associated with domain's id (did) to AVPs.
+		If prefix argument (string) is given, names of attributes are prefixes
+		by it. In addition to attributes given in domain_attrs table, AVP
+		named did containing the did of domain is added.
+		</para>
+		<para>
+		Both parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title>lookup_domain</title>
+		<programlisting format="linespecific">
+...
+if (lookup_domain("$fd", "from_")) {
+    xlog("L_INFO", "did of domain $fd is $avp(from_did)\n");
+}
+...
+		</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>RPC Commands</title>
+	<section id="domain.rpc.reload">
+		<title><function moreinfo="none">domain.reload</function></title>
+		<para>
+		Causes domain module to re-read the contents of domain table
+		into cache memory.
+		</para>
+		<para>
+		Name: <emphasis>domain.reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; domain.reload
+		</programlisting>
+	</section>
+	<section id="domain.rpc.dump">
+		<title><function moreinfo="none">domain.dump</function></title>
+		<para>
+		Causes domain module to dump domain names in
+		its cache memory.
+		</para>
+		<para>
+		Name: <emphasis>domain.dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; domain.dump
+		</programlisting>
+	</section>
+	</section>
+	<section>
+	<title>Known Limitations</title>
+	<para>
+		There is an unlikely race condition on domain reload.  If a
+		process uses a table, which is reloaded at the same time twice
+		through <acronym>RPC</acronym>, the second reload will delete the
+		original table still in use by the process.
+	</para>
+	</section>
+</chapter>
+

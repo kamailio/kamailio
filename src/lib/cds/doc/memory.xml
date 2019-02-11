@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<reference id="memory">
+<title>Memory operations</title>
+
+<partintro>
+<para>Memory operations are common for whole CDS library. Because it must work
+together with SER's memory management and must work without it too, there are
+wrapper macros for memory allocation/deallocation.</para>
+
+<para>These macros were functions and it may change in the future, but macros
+are probably better - they allow better debugging than functions. There are
+defined another macros (see <xref linkend="cds_malloc_ptr"/>, <xref
+linkend="cds_free_ptr"/>), which point and will point to allocation/deallocation
+functions, thus they may be used as function pointers.
+<!--
+standalone functions (?macros in the future?) which cover internal
+implementation of memory allocation/deallocation functions.-->
+</para>
+
+<para>It is possible to redefine these macros/functions to help with memory debugging
+or for monitoring purposes or so.
+</para>
+
+<!--
+<para>It might be useful some parts of code determined for SER probe out of it,
+with a memory debugging tool like valgrind
+</para> -->
+</partintro>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_malloc.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_free.xml"/>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_malloc_ptr.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_free_ptr.xml"/>
+</reference>

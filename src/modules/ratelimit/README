@@ -1,0 +1,522 @@
+ratelimit Module
+
+Ovidiu Sas
+
+Bogdan Vasile Harjoc
+
+Hendrik Scholz
+
+Edited by
+
+Ovidiu Sas
+
+Edited by
+
+Bogdan Vasile Harjoc
+
+Edited by
+
+Hendrik Scholz
+
+   Copyright © 2006 Freenet Cityline GmbH
+
+   Copyright © 2008-2010 VoIP Embedded Inc.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Use Cases
+        3. Static Rate Limiting Algorithms
+
+              3.1. Tail Drop Algorithm (TAILDROP)
+              3.2. Random Early Detection Algorithm (RED)
+              3.3. Network Algorithm (NETWORK)
+              3.4. Dynamic Rate Limiting Algorithms
+              3.5. Feedback Algorithm (FEEDBACK)
+
+        4. Dependencies
+
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
+
+        5. Parameters
+
+              5.1. timer_interval (integer)
+              5.2. queue (integer:string)
+              5.3. pipe (integer:string:integer)
+
+        6. Functions
+
+              6.1. rl_check([pvar])
+              6.2. rl_check_pipe(pipe_no)
+
+        7. RPC Commands
+
+              7.1. rl.stats
+              7.2. rl.set_pipe
+              7.3. rl.get_pipes
+              7.4. rl.set_queue
+              7.5. rl.get_queues
+              7.6. rl.set_pid
+              7.7. rl.get_pid
+              7.8. rl.push_load
+              7.9. rl.set_dbg
+
+        8. Known limitations
+
+   List of Examples
+
+   1.1. Set timer_interval parameter
+   1.2. Set queue parameter
+   1.3. Set pipe parameter
+   1.4. rl_check usage
+   1.5. rl_check_pipe usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Use Cases
+   3. Static Rate Limiting Algorithms
+
+        3.1. Tail Drop Algorithm (TAILDROP)
+        3.2. Random Early Detection Algorithm (RED)
+        3.3. Network Algorithm (NETWORK)
+        3.4. Dynamic Rate Limiting Algorithms
+        3.5. Feedback Algorithm (FEEDBACK)
+
+   4. Dependencies
+
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
+
+   5. Parameters
+
+        5.1. timer_interval (integer)
+        5.2. queue (integer:string)
+        5.3. pipe (integer:string:integer)
+
+   6. Functions
+
+        6.1. rl_check([pvar])
+        6.2. rl_check_pipe(pipe_no)
+
+   7. RPC Commands
+
+        7.1. rl.stats
+        7.2. rl.set_pipe
+        7.3. rl.get_pipes
+        7.4. rl.set_queue
+        7.5. rl.get_queues
+        7.6. rl.set_pid
+        7.7. rl.get_pid
+        7.8. rl.push_load
+        7.9. rl.set_dbg
+
+   8. Known limitations
+
+1. Overview
+
+   This module implements rate limiting for SIP requests. In contrast to
+   the PIKE module this limits the flow based on a per SIP request type
+   basis and not per source IP. The RPC interface can be used to change
+   tunables while running Kamailio.
+
+   The module implements the pipe/queue policy from BSD's ipfw manual,
+   with some simplifications. In principle, each specified method is
+   associated with its own queue and a number of queues are connected to a
+   certain pipe (see the queue and pipe params).
+
+   Please also take a look at the “pipelimit” module, that implements the
+   pipe policy with database support. Note that it doesn't implement the
+   queues that exist in this module.
+
+2. Use Cases
+
+   Limiting the rate messages are processed on a system directly
+   influences the load. The ratelimit module can be used to protect a
+   single host or to protect an Kamailio cluster when run on the
+   dispatching box in front.
+
+   A sample configuration snippet might look like this:
+...
+        if (is_method("INVITE|REGISTER|SUBSCRIBE") {
+                if (!rl_check()) {
+                        append_to_reply("Retry-After: 5\r\n");
+                        sl_send_reply("503","Limiting");
+                        exit;
+                };
+        };
+...
+
+   Upon every incoming request listed above rl_check is invoked. It
+   returns an OK code if the current per request load is below the
+   configured threshold. If the load is exceeded the function returns an
+   error and an administrator can discard requests with a stateless
+   response.
+
+3. Static Rate Limiting Algorithms
+
+   3.1. Tail Drop Algorithm (TAILDROP)
+   3.2. Random Early Detection Algorithm (RED)
+   3.3. Network Algorithm (NETWORK)
+   3.4. Dynamic Rate Limiting Algorithms
+   3.5. Feedback Algorithm (FEEDBACK)
+
+   The ratelimit module supports two different statc algorithms to be used
+   by rl_check to determine whether a message should be blocked or not.
+
+3.1. Tail Drop Algorithm (TAILDROP)
+
+   This is a trivial algorithm that imposes some risks when used in
+   conjunction with long timer intervals. At the start of each interval an
+   internal counter is reset and incremented for each incoming message.
+   Once the counter hits the configured limit rl_check returns an error.
+
+   The downside of this algorithm is that it can lead to SIP client
+   synchronization. During a relatively long interval only the first
+   requests (i.e. REGISTERs) would make it through. Following messages
+   (i.e. RE-REGISTERs) will all hit the SIP proxy at the same time when a
+   common Expire timer expired. Other requests will be retransmitted after
+   a given time, the same on all devices with the same firmware/by the
+   same vendor.
+
+3.2. Random Early Detection Algorithm (RED)
+
+   The Random Early Detection Algorithm tries to circumvent the
+   synchronization problem imposed by the tail drop algorithm by measuring
+   the average load and adapting the drop rate dynamically. When running
+   with the RED algorithm (enabled by default) Kamailio will return errors
+   to the Kamailio routing engine every n'th packet trying to evenly
+   spread the measured load of the last timer interval onto the current
+   interval. As a negative side effect Kamailio might drop messages
+   although the limit might not be reached within the interval. Decrease
+   the timer interval if you encounter this.
+
+3.3. Network Algorithm (NETWORK)
+
+   This algorithm relies on information provided by network interfaces.
+   The total amount of bytes waiting to be consumed on all the network
+   interfaces is retrieved once every timer_interval seconds. If the
+   returned amount exceeds the limit specified in the modparam, rl_check
+   returns an error.
+
+3.4. Dynamic Rate Limiting Algorithms
+
+   When running Kamailio on different machines, one has to adjust the drop
+   rates for the static algorithms to maintain a sub 100% load average or
+   packets will start getting dropped in the network stack. While this is
+   not in itself difficult, it isn't neither accurate nor trivial: another
+   server taking a notable fraction of the CPU time will require re-tuning
+   the parameters.
+
+   While tuning the drop rates from the outside based on a certain factor
+   is possible, having the algorithm run inside ratelimit permits tuning
+   the rates based on internal server parameters and is somewhat more
+   flexible (or it will be when support for external load factors - as
+   opposed to cpu load - is added).
+
+3.5. Feedback Algorithm (FEEDBACK)
+
+   Using the PID Controller model (see Wikipedia page), the drop rate is
+   adjusted dynamically based on the load factor so that the load factor
+   always drifts towards the specified limit (or setpoint, in PID terms).
+
+   As reading the CPU load average is relatively expensive (opening
+   /proc/stat, parsing it, etc), this only happens once every
+   timer_interval seconds and consequently the FEEDBACK value is only at
+   these intervals recomputed. This in turn makes it difficult for the
+   drop rate to adjust quickly. Worst case scenarios are request rates
+   going up/down instantly by thousands - it takes up to 20 seconds for
+   the controller to adapt to the new request rate.
+
+   Generally though, as real life request rates drift by less, adapting
+   should happen much faster.
+
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * SL: Stateless request handling.
+
+4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+5. Parameters
+
+   5.1. timer_interval (integer)
+   5.2. queue (integer:string)
+   5.3. pipe (integer:string:integer)
+
+5.1. timer_interval (integer)
+
+   The initial length of a timer interval in seconds. All amounts of
+   messages have to be divided by this timer to get a messages per second
+   value.
+
+   IMPORTANT: A too small value may lead to performance penalties due to
+   timer process overloading.
+
+   Default value is 10.
+
+   Example 1.1. Set timer_interval parameter
+...
+modparam("ratelimit", "timer_interval", 5)
+...
+
+5.2. queue (integer:string)
+
+   The format of the queue parameter is "pipe_no:method". For each defined
+   method, the algorithm defined by pipe number "pipe_no" will be used.
+
+   To specify a queue that accepts all methods, use “*” instead of METHOD.
+   As queues are matched against request methods, you will usually want to
+   have this as the last queue added or other queues with specific methods
+   will never match. At this time, glob or regexp patterns are not
+   supported.
+
+   Example 1.2. Set queue parameter
+...
+# assign pipe no 0 to method REGISTER
+# assign pipe no 3 to method INVITE
+# assign pipe no 2 to all other methods
+modparam("ratelimit", "queue", "0:REGISTER")
+modparam("ratelimit", "queue", "3:INVITE")
+modparam("ratelimit", "queue", "2:*")
+...
+
+5.3. pipe (integer:string:integer)
+
+   The format of the pipe param is "pipe_no:algorithm:limit". For each
+   defined pipe, the given algorithm with the given limit will be used.
+
+   A pipe is characterised by its algorithm and limit (bandwidth, in ipfw
+   terms). When specifying a limit, the unit depends on the algorithm used
+   and doesn't need to be specified also (eg, for TAILDROP or RED, limit
+   means packets/sec, whereas with the FEEDBACK algorithm, it means [CPU]
+   load factor).
+
+   Example 1.3. Set pipe parameter
+...
+# define pipe 0 with a limit of 200 pkts/sec using TAILDROP algorithm
+# define pipe 1 with a limit of 100 pkts/sec using RED algorithm
+# define pipe 2 with a limit of 50 pkts/sec using TAILDROP algorithm
+# define pipe 3 with a limit of load factor 80 using FEEDBACK algorithm
+# define pipe 4 with a limit of 10000 pending bytes in the rx_queue
+#                                     using NETWORK algorithm
+modparam("ratelimit", "pipe", "0:TAILDROP:200")
+modparam("ratelimit", "pipe", "1:RED:100")
+modparam("ratelimit", "pipe", "2:TAILDROP:50")
+modparam("ratelimit", "pipe", "3:FEEDBACK:80")
+modparam("ratelimit", "pipe", "4:NETWORK:10000")
+...
+
+6. Functions
+
+   6.1. rl_check([pvar])
+   6.2. rl_check_pipe(pipe_no)
+
+6.1.  rl_check([pvar])
+
+   Check the current request against the matched ratelimit algorithm. If
+   no parameter is provided, the queue will be matched based on method
+   type, and then the pipe will be identified based on the matched queue.
+   If a pipe number is provided as a parameter, then the given pipe number
+   will be used for identifying the ratelimit algorithm. The pipe number
+   must be provided as number or via a pseudovariable.
+
+   The method will return an error code if the limit for the matched
+   algorithm is reached.
+
+   Meaning of the parameters is as follows:
+     * pvar - the pseudovariable holding the pipe id to be used by
+       ratelimit.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.4. rl_check usage
+...
+        # perform queue/pipe match for current method
+        if (!rl_check()) {
+                append_to_reply("Retry-After: 5\r\n");
+                sl_send_reply("503","Limiting");
+                exit;
+        }
+...
+        # use pipe no 1 for the current method
+        # set int pvar to 1
+        $var(p) = 1;
+        if (!rl_check("$var(p)")) {
+                append_to_reply("Retry-After: 5\r\n");
+                sl_send_reply("503","Limiting");
+                exit;
+        }
+...
+
+6.2.  rl_check_pipe(pipe_no)
+
+   Check the current request against the matched ratelimit algorithm of
+   the pipe provided as parameter. The parameter can be provided as number
+   or variable.
+
+   The method will return an error code if the limit for the matched
+   algorithm is reached.
+
+   Meaning of the parameters is as follows:
+     * pipe_no - the pipe id to be used by ratelimit.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. rl_check_pipe usage
+...
+        # use pipe no 1 for the current method
+        if (!rl_check_pipe("1") {
+                append_to_reply("Retry-After: 5\r\n");
+                sl_send_reply("503","Limiting");
+                exit;
+        }
+...
+
+7. RPC Commands
+
+   7.1. rl.stats
+   7.2. rl.set_pipe
+   7.3. rl.get_pipes
+   7.4. rl.set_queue
+   7.5. rl.get_queues
+   7.6. rl.set_pid
+   7.7. rl.get_pid
+   7.8. rl.push_load
+   7.9. rl.set_dbg
+
+7.1.  rl.stats
+
+   Lists the parameters and variables in the ratelimit module.
+
+   Name: rl.stats
+
+   Parameters: none
+
+   RPC Command Format:
+                kamcmd rl.stats
+
+7.2.  rl.set_pipe
+
+   Sets the pipe parameters for the given pipe id.
+
+   Name: rl.set_pipe
+
+   Parameters:
+     * pipe_id - pipe id.
+     * pipe_algorithm - the algorithm assigned to the given pipe id.
+     * pipe_limit - the limit assigned to the given pipe id.
+
+   RPC Command Format:
+                kamcmd rl.set_pipe 2 RED 10
+
+7.3.  rl.get_pipes
+
+   Gets the list of in use pipes.
+
+   Name: rl.get_pipes
+
+   Parameters:none
+
+   RPC Command Format:
+                kamcmd rl.get_pipes
+
+7.4.  rl.set_queue
+
+   Sets the queue parameters for the given queue id.
+
+   Name: rl.set_queue
+
+   Parameters:
+     * queue_id - queue id.
+     * queue_method - the method assigned to the given queue id.
+     * pipe_id - the pipe id assigned to the given queue id.
+
+   RPC Command Format:
+                kamcmd rl.set_queue 3 INVITE 2
+
+7.5.  rl.get_queues
+
+   Gets the list of in use queues.
+
+   Name: rl.get_queues
+
+   Parameters: none
+
+   RPC Command Format:
+                kamcmd rl.get_queues
+
+7.6.  rl.set_pid
+
+   Sets the PID Controller parameters for the Feedback Algorithm.
+
+   Name: rl.set_pid
+
+   Parameters:
+     * ki - the integral parameter.
+     * kp - the proportional parameter.
+     * kd - the derivative parameter.
+
+   RPC Command Format:
+                kamcmd rl.set_pid 0.5 0.5 0.5
+
+7.7.  rl.get_pid
+
+   Gets the list of in use PID Controller parameters.
+
+   Name: rl.get_pid
+
+   Parameters: none
+
+   RPC Command Format:
+                kamcmd rl.get_pid
+
+7.8.  rl.push_load
+
+   Force the value of the load parameter. This method is useful for
+   testing the Feedback algorithm.
+
+   Name: rl.push_load
+
+   Parameters:
+     * load - the forced value of load (it must be greater then 0.0 and
+       smaller then 1.0).
+
+   RPC Command Format:
+                kamcmd rl.push_load 0.85
+
+7.9.  rl.set_dbg
+
+   This function will enable/disable a WARNING debug log exposing the
+   internal counters for each pipe (useful in monitoring the ratelimit
+   internals).
+
+   Name: rl.set_dbg
+
+   Parameters:
+     * dbg - the debug value (0 means disable and 1 means enable).
+
+   RPC Command Format:
+                kamcmd rl.set_dbg 1
+
+8. Known limitations
+
+   The pipes and queues are stored as static vectors, so no more than
+   MAX_PIPES/MAX_QUEUES can be added without recompilation.
+     * MAX_PIPES - 16
+     * MAX_QUEUES - 10

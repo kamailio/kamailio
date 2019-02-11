@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="auth_identity" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>SIP Authenticated Identity Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Gergely</firstname>
+		<surname>Kovacs</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>gergo@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Iptel.org</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="auth_identity.overview">
+	<title>Overview</title>
+	<para>
+		Auth Identity module provides functionalities for securely identifying
+		originators of SIP messages. It implements the SIP Identity standard where a
+		SIP proxy signs messages that is sent to other domains.
+		This module has two basic services:
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>authorizer</emphasis> - authorizes a message and adds Identity and
+				Identity-Info headers
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>verifier</emphasis> - verifies an authorized message
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+	    Known limitations in this version:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+			authorizer and verifier support all SIP requests except for
+			<emphasis>CANCEL</emphasis> and <emphasis>REGISTER</emphasis>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+			verifier does not support the subjectAltName extension of
+			certificates
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+
+    <section id="auth_identity.dep">
+	<title>Dependencies</title>
+	<para>
+		This module does not depend any other module.
+	</para>
+    </section>
+
+	<section id="auth_identity.compilation">
+		<title>Compilation</title>
+		<para>
+		This module needs the following headers and libraries:
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>OpenSSL</emphasis> (version 0.9.8 or higher) for cryptographic functions
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>libcurl</emphasis> for HTTP, HTTPS functions
+				</para>
+			</listitem>
+		</itemizedlist>
+		If you'd like to use <emphasis>TLS</emphasis> module too then use the
+		corresponding LIB line in auth_identity's Makefile
+		</para>
+	</section>
+
+	<section id="auth_identity.install_and_run">
+	<title>Installation And Running</title>
+	<para>
+		the <emphasis>Authorizer</emphasis> service needs to make the public key,
+		which conveyed in a certificate, available over HTTPS or HTTP for
+		verifiers. The domain the authorizer is responsible for and the
+		domain part of the URL of the certificate must be the same. This
+		service needs access to the private key too.
+	</para>
+    </section>
+
+
+    <xi:include href="auth_identity_params.xml"/>
+    <xi:include href="auth_identity_functions.xml"/>
+
+
+	<section>
+		<title>Authorizer service examples</title>
+
+			<programlisting><![CDATA[
+...
+route[INIT]
+{
+	# we process new transactions only
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+...
+route[OUTBOUND]
+{
+	# If we are responsible for the domain of the sender of this message
+	if ($f.did && !$t.did) {
+		# Authentication service
+		if (method=="INVITE" || method=="BYE"
+			|| method=="OPTION" || method=="ACK") {
+			# Identity and Identity-info headers must not exist
+			if (@identity) {
+				t_reply("403", "Invalid Identity header");
+				drop;
+			}
+			if (@identity_info) {
+				t_reply("403", "Invalid Identity-info header");
+				drop;
+			}
+
+			if (!auth_date_proc()) {
+				t_reply("403", "Invalid Date value");
+				drop;
+			}
+
+			if (!auth_add_identity()) {
+				t_reply("480", "Authentication error");
+				drop;
+			}
+		}
+		route(FORWARD);
+	}
+}
+...
+]]></programlisting>
+	</section>
+
+
+	<section>
+		<title>Verifier service examples</title>
+
+		<programlisting><![CDATA[
+...
+route[INIT]
+{
+	# we process new transactions only
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+...
+route[VERIFY]
+{
+	# if we've already processed this message then we drop it
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+
+	if (method=="INVITE" || method=="BYE"
+		|| method=="OPTION" || method=="ACK") {
+		# Identity and Identity-info are required for verification
+		if (!@identity) {
+			t_reply("428", "Use Identity Header");
+			drop;
+		}
+		if (!@identity_info) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_date()) {
+			t_reply("403", "Outdated Date header value");
+			drop;
+		}
+
+		if (!vrfy_get_certificate()) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_certificate()) {
+			t_reply("437", "Unsupported Certificate");
+			drop;
+		}
+
+		if (!vrfy_check_msgvalidity()) {
+			t_reply("438", "Invalid Identity Header");
+			drop;
+		}
+
+		if (!vrfy_check_callid()) {
+			t_reply("403", "Message is replayed");
+			drop;
+		}
+	}
+}
+...
+]]></programlisting>
+	</section>
+	<section id="auth_identity.s.remarks">
+		<title>Remarks</title>
+		<para>
+			Note: libcurl leak in CentOS 6 - this module uses libcurl library
+			and in case if you are using CentOS 6, be aware that standard
+			libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+			libcurl from city-fan repository. More details at:
+			<ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6">
+				https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6</ulink>
+		</para>
+	</section>
+	</chapter>
+</book>

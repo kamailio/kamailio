@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section id="qos.overview">
+		<title>Overview</title>
+
+		<para>The qos module provides a way to keep track of
+		per dialog SDP session(s).</para>
+	</section>
+	
+	<section>
+	<title>How it works</title>
+	
+	<para>
+	The <emphasis>qos</emphasis> module uses the
+	<emphasis>dialog</emphasis> module to be notified of any new or
+	updated dialogs.  It will then look for and extract
+	the <acronym>SDP</acronym> session (if present) from SIP requests
+	and replies and keep track of it for the entire life of a dialog.
+	</para>
+
+	<para>
+	All of this happens with a properly configured dialog
+	and qos module and setting the dialog flag and the qos flag at
+	the time any INVITE SIP message is seen.  There is no
+	config script function call required to set the SDP session
+	tracking mechanism.  See the dialog module users guide for
+	more information.
+	</para>
+
+	<para>
+	A dialog can have one or more SDP sessions active in one
+	of the following states:
+	<itemizedlist>
+	<listitem>
+	<para><emphasis>pending</emphasis> - only one endpoint of the
+	SDP session is known.
+	</para>
+	</listitem>
+	<listitem>
+	<para><emphasis>negotiated</emphasis> - both endpoints of the
+	SDP session are known.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</para>
+
+	<para>
+	An SDP session can be established in one of the following scenarios:
+	<itemizedlist>
+	<listitem>
+	<para><emphasis>INVITE/200ok</emphasis> - typical "INVITE" and
+	"200 OK" SDP exchange.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+	<emphasis>200ok/ACK</emphasis> - "200 OK" and  "ACK" SDP
+	exchange (for calls starting with an empty INVITE).
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+	<emphasis>183/PRACK</emphasis> - early media via "183
+	Session Progress" and "PRACK" (see RFC 3959 for more information)
+	<emphasis>- not implemented yet</emphasis>.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		
+		<para>The following modules must be loaded
+		before this module:
+		<itemizedlist>
+		<listitem>
+		<para>
+		<emphasis>dialog</emphasis> - dialog module and
+		its dependencies (tm).
+		</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	<section>
+	<title>External Libraries or Applications</title>
+	<para>
+	The following libraries or applications must be installed before
+	running &kamailio; with this module loaded:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>None</emphasis>.
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="qos.p.qos_flag">
+		<title><varname>qos_flag</varname> (integer)</title>
+		
+		<para>The module will not do anything to any message unless
+		instructed to do so via the config script. You must set the
+		<varname>qos_flag</varname> value in the <function>setflag()</function>
+		call of the INVITE you want the qos module to process. But
+		before you can do that, you need to tell the qos module which
+		flag value you are assigning to qos.</para>
+
+		<para>In most cases when ever you set the dialog flag
+		you will want to set the qos flag. If the dialog flag
+		is not set and the qos flag is set, it will not have
+		any effect.</para>
+
+		<para><emphasis>This parameter must be set or the module will
+		not load.</emphasis></para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>Not set!</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>qos_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_flag", 5)
+modparam("qos", "qos_flag", 7)
+...
+route {
+  ...
+  if (method=="INVITE") {
+    setflag(5); # set the dialog flag
+    setflag(7); # Set the qos flag
+  }
+  ...
+}
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Functions</title>
+	<para>There are no exported functions that could be used in scripts.
+	</para>
+	</section>
+
+	<section>
+	<title>Statistics</title>
+	<para>There are no exported statistics for the qos module.</para>
+	</section>
+
+	<section>
+	<title>Exported pseudo-variables</title>
+	<para>There are no exported pseudo-variables for the qos module.
+	</para>
+	</section>
+
+    <section>
+	<title>Installation and Running</title>
+	<para>Just load the module and remember to set the flag.
+	</para>
+	</section>
+</chapter>
+

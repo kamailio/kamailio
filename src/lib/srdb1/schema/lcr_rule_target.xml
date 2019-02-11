@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="lcr_rule_target" xmlns:db="http://docbook.org/ns/docbook">
+    <name>lcr_rule_target</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the lcr (Least Cost Routing)
+			module to store routing rule targets.
+			More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;lcr.html">&KAMAILIO_MOD_DOC;lcr.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="lcr_id">
+        <name>lcr_id</name>
+        <type>unsigned short</type>
+        <description>LCR instance identifier</description>
+    </column>
+
+    <column id="rule_id">
+        <name>rule_id</name>
+        <type>unsigned int</type>
+        <description>Identifies a rule in lcr_rule table</description>
+    </column>
+
+    <column id="gw_id">
+        <name>gw_id</name>
+        <type>unsigned int</type>
+        <description>Identifies a gateway in lcr_gw table</description>
+    </column>
+
+    <column>
+        <name>priority</name>
+        <type>unsigned char</type>
+        <description>Priority of this target (0-255)</description>
+    </column>
+
+    <column id="weight">
+        <name>weight</name>
+        <type>unsigned int</type>
+        <default>1</default>
+        <description>Weight of this target (1-254)</description>
+    </column>
+
+    <index>
+        <name>rule_id_gw_id_idx</name>
+        <colref linkend="rule_id"/>
+        <colref linkend="gw_id"/>
+	<unique/>
+    </index>
+
+    <index>
+        <name>lcr_id_idx</name>
+        <colref linkend="lcr_id"/>
+    </index>
+
+</table>

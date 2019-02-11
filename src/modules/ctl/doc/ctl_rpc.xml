@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="ctl.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>RPC Functions</title>
+
+	<section id="ctl.listen">
+	<title> <function>ctl.listen</function></title>
+	<para>
+		List all the sockets on which the ctl module listens.
+	</para>
+	<example>
+		<title><function>print</function> usage</title>
+		<programlisting>
+ $ &sercmd; -f"[%v] %v:%v %v\n" ctl.listen
+[binrpc] unix_stream:/var/run/&kamailiobinary;/&kamailiobinary;_ctl
+ 
+# note: the above command is equivalent with &sercmd; listen
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="ctl.connections">
+	<title> <function>ctl.connections</function></title>
+	<para>
+		Returns the number of open binrpc connections (to the ctl module).
+	</para>
+	<example>
+		<title><function>ctl.connections</function> usage</title>
+		<programlisting>
+ $ &sercmd; ctl.connections
+1
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="ctl.who">
+	<title> <function>ctl.who</function></title>
+	<para>
+		List open binrpc connections (to the ctl module).
+	</para>
+	<example>
+		<title><function>ctl.who</function> usage</title>
+		<programlisting>
+ $ &sercmd; -f"[%v] %v: %v %v -> %v %v\n" ctl.who
+[binrpc] unix_stream: &lt;anonymous unix socket&gt;  -> /var/run/&kamailiobinary;/&kamailiobinary;_ctl
+
+# note the above command is equivalent to &sercmd; who
+		</programlisting>
+	</example>
+	</section>
+
+</section>

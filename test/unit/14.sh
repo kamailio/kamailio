@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 CFG=14.cfg
 
@@ -30,7 +30,7 @@ fi ;
 
 cp $CFG $CFG.bak
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
@@ -71,7 +71,7 @@ Printing tree for domain 'other' (3)
 	fi ;
 fi ;
 
-$KILL
+kill_kamailio
 
 mv $CFG.bak $CFG
 rm -f $TMPFILE

@@ -1,0 +1,429 @@
+misc_radius Module
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2004-2008 Juha Heinanen
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. radius_config (string)
+              3.2. caller_service_type (integer)
+              3.3. callee_service_type (integer)
+              3.4. group_service_type (integer)
+              3.5. uri_service_type (integer)
+              3.6. caller_extra (string)
+              3.7. callee_extra (string)
+              3.8. group_extra (string)
+              3.9. uri_extra (string)
+              3.10. use_sip_uri_host (integer)
+              3.11. common_response (integer)
+
+        4. Functions
+
+              4.1. radius_load_caller_avps(caller)
+              4.2. radius_load_callee_avps(callee)
+              4.3. radius_is_user_in(user, group)
+              4.4. radius_does_uri_exist([uri])
+              4.5. radius_does_uri_user_exist([user])
+
+   List of Examples
+
+   1.1. “SIP-AVP” RADIUS AVP examples
+   1.2. radius_config parameter usage
+   1.3. caller_service_type parameter usage
+   1.4. callee_service_type parameter usage
+   1.5. group_service_type parameter usage
+   1.6. uri_service_type parameter usage
+   1.7. caller_extra parameter usage
+   1.8. callee_extra parameter usage
+   1.9. group_extra parameter usage
+   1.10. uri_extra parameter usage
+   1.11. use_sip_uri_host parameter usage
+   1.12. common_response parameter usage
+   1.13. radius response with common_response value 1
+   1.14. radius_load_caller_avps() usage
+   1.15. radius_load_callee_avps() usage
+   1.16. radius_is_user_in() usage
+   1.17. radius_does_uri_exist() usage
+   1.18. radius_does_uri_user_exist() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. radius_config (string)
+        3.2. caller_service_type (integer)
+        3.3. callee_service_type (integer)
+        3.4. group_service_type (integer)
+        3.5. uri_service_type (integer)
+        3.6. caller_extra (string)
+        3.7. callee_extra (string)
+        3.8. group_extra (string)
+        3.9. uri_extra (string)
+        3.10. use_sip_uri_host (integer)
+        3.11. common_response (integer)
+
+   4. Functions
+
+        4.1. radius_load_caller_avps(caller)
+        4.2. radius_load_callee_avps(callee)
+        4.3. radius_is_user_in(user, group)
+        4.4. radius_does_uri_exist([uri])
+        4.5. radius_does_uri_user_exist([user])
+
+1. Overview
+
+   The misc_radius module implements various RADIUS related functions.
+   Functions exist for loading caller's or callee's attributes into AVPs,
+   checking if user belongs to a group, and checking if a specific URI
+   belongs to a user. It thus replaces old avp_radius, group_radius, and
+   uri_radius modules.
+
+   All functions of this module load AVPs from SIP-AVP reply items
+   received from RADIUS upon a successful request. Value of the SIP-AVP
+   reply item must be a string of form:
+     * value = SIP_AVP_NAME SIP_AVP_VALUE
+     * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+     * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
+
+   Example 1.1. “SIP-AVP” RADIUS AVP examples
+....
+"email:joe@yahoo.com"
+    -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    -> ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    -> STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    -> ID AVP (14) with INTEGER VALUE (28)
+....
+
+   Unlike in old avp_radius module, functions radius_load_calle[re]_avps()
+   do not prefix string names of AVPs by string “caller_” or “callee_”
+   depending if caller's or callee's attributes were loaded. If you need
+   these prefixes, make your RADIUS server to prepend them into attribute
+   names when it constructs reply items.
+
+   A new feature of misc_radius module is that it is now possible to
+   include user defined extra RADIUS attributes in all requests send by
+   functions of this module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * radiusclient-ng 0.5.0 or higher, freeradius-client
+       https://github.com/FreeRADIUS/freeradius-client/ or radcli
+       http://radcli.github.io/radcli/.
+     * freeradius-client library can be used after setting FREERADIUS
+       variable in source code with 'export FREERADIUS=1' before compile.
+     * radcli library can be used after setting RADCLI variable in source
+       code with 'export RADCLI=1' before compile.
+
+3. Parameters
+
+   3.1. radius_config (string)
+   3.2. caller_service_type (integer)
+   3.3. callee_service_type (integer)
+   3.4. group_service_type (integer)
+   3.5. uri_service_type (integer)
+   3.6. caller_extra (string)
+   3.7. callee_extra (string)
+   3.8. group_extra (string)
+   3.9. uri_extra (string)
+   3.10. use_sip_uri_host (integer)
+   3.11. common_response (integer)
+
+3.1. radius_config (string)
+
+   This is the location of the configuration file of radius client
+   libraries.
+
+   Default value is “/usr/local/etc/radiusclient-ng/radiusclient.conf”.
+
+   Example 1.2. radius_config parameter usage
+...
+modparam("misc_radius", "radius_config", "/etc/radiusclient.conf")
+...
+
+3.2. caller_service_type (integer)
+
+   This is the value of the Service-Type radius attribute to be used, when
+   caller's attributes are loaded.
+
+   Default value is dictionary value of “SIP-Caller-AVPs” Service-Type.
+
+   Example 1.3. caller_service_type parameter usage
+...
+modparam("misc_radius", "caller_service_type", 18)
+...
+
+3.3. callee_service_type (integer)
+
+   This is the value of the Service-Type radius attribute to be used, when
+   callee's attributes are loaded.
+
+   Default value is dictionary value of “SIP-Callee-AVPs” Service-Type.
+
+   Example 1.4. callee_service_type parameter usage
+...
+modparam("misc_radius", "callee_service_type", 19)
+...
+
+3.4. group_service_type (integer)
+
+   This is the value of Service-Type RADIUS attribute to be used, when
+   radius_is_user_in() function is called.
+
+   Default value is dictionary value of “Group-Check” Service-Type.
+
+   Example 1.5. group_service_type parameter usage
+...
+modparam("misc_radius", "group_service_type", 20)
+...
+
+3.5. uri_service_type (integer)
+
+   This is the value of Service-Type RADIUS attribute to be used, when
+   radius_does_uri[_user]_exist() function is called.
+
+   Default value is dictionary value of “Call-Check” Service-Type.
+
+   Example 1.6. uri_service_type parameter usage
+...
+modparam("misc_radius", "uri_service_type", 21)
+...
+
+3.6. caller_extra (string)
+
+   Semi-colon separated list of extra RADIUS attribute name=pseudo
+   variable pairs. When radius_load_caller_avps() is called, the listed
+   extra attributes are included RADIUS request with current values of
+   corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes are
+   included.
+
+   Example 1.7. caller_extra parameter usage
+...
+modparam("misc_radius", "caller_extra", "Calling-Station-Id=$fu")
+...
+
+3.7. callee_extra (string)
+
+   Semi-colon separated list of extra RADIUS attribute name=pseudo
+   variable pairs. When radius_load_callee_avps() is called, the listed
+   extra attributes are included RADIUS request with current values of
+   corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes are
+   included.
+
+   Example 1.8. callee_extra parameter usage
+...
+modparam("misc_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$rd")
+...
+
+3.8. group_extra (string)
+
+   Semi-colon separated list of extra RADIUS attribute name=pseudo
+   variable pairs. When radius_is_user_in() is called, the listed extra
+   attributes are included RADIUS request with current values of
+   corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes are
+   included.
+
+   Example 1.9. group_extra parameter usage
+...
+modparam("misc_radius", "group_extra", "My-Special=$avp(i:100)")
+...
+
+3.9. uri_extra (string)
+
+   Semi-colon separated list of extra RADIUS attribute name=pseudo
+   variable pairs. When radius_does_uri[_user]_exist() function is called,
+   the listed extra attributes are included in RADIUS request with current
+   values of corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes are
+   included.
+
+   Example 1.10. uri_extra parameter usage
+...
+modparam("misc_radius", "uri_extra", "Called-Station-Id=$tu")
+...
+
+3.10. use_sip_uri_host (integer)
+
+   If zero, radius_does_uri_exist() function sends to RADIUS server
+   userpart@hostpart in UserName attribute. If non-zero,
+   radius_does_uri_exist() function sends to RADIUS server userpart in
+   UserName attribute and hostpart in SIP-URI-Host attribute.
+
+   Default value is 0 (only use UserName attribute).
+
+   Example 1.11. use_sip_uri_host parameter usage
+...
+modparam("misc_radius", "use_sip_uri_host", 1)
+...
+
+3.11. common_response (integer)
+
+   Set it to 1 if you need common radius response attributes to be added
+   as AVPs in radius_load_caller_avps and radius_load_callee_avps with
+   name as radius attribute name and value as radius attribute value.
+
+   Default value is “0”.
+
+   Example 1.12. common_response parameter usage
+...
+modparam("misc_radius", "common_response", 1)
+...
+radius_load_caller_avps($fU);
+...
+
+   Example 1.13. radius response with common_response value 1
+...
+    Sending Access-Accept of id 60 to 192.168.25.32 port 59736
+    Session-Timeout = 4261674
+    next-hop-ip = "SIP/00111222333444@cisco-out"
+    SIP-AVP = "email:sr-users@lists.kamailio.org session-timeout#161 next-hop-ip
+:h323/0001111@myvoip-gate.kamailio.org"
+    session-protocol = "SIP"
+...
+
+$avp(Session-Timeout) has integer value 4261674
+$avp(next-hop-ip) has string value "SIP/005555777888@cisco-out"
+$avp(session-protocol) has string value "SIP"
+$avp(SIP-AVP) has string value  "email:sr-users@lists.kamailio.org session-timeo
+ut#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
+
+...
+    When receiving negative response, check appropriate avp's:
+    $avp(Reply-Message) = "Not enough money on deposit '-89.83'. Rejected"
+    $avp(Filter-Id) = "neg_deposit"
+...
+
+4. Functions
+
+   4.1. radius_load_caller_avps(caller)
+   4.2. radius_load_callee_avps(callee)
+   4.3. radius_is_user_in(user, group)
+   4.4. radius_does_uri_exist([uri])
+   4.5. radius_does_uri_user_exist([user])
+
+4.1. radius_load_caller_avps(caller)
+
+   The functions loads caller's attributes from radius and stores them
+   into AVPs. Parameter “caller” is a string that may contain pseudo
+   variables. It indicates the user, whose attributes are loaded.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.14. radius_load_caller_avps() usage
+...
+radius_load_caller_avps("$fU@$fd");     # take caller from From URI
+...
+radius_load_caller_avps("$au@$ar");     # take caller from Authorization
+...                                     # or Proxy-Authorization header
+
+4.2. radius_load_callee_avps(callee)
+
+   The functions loads callee's attributes from radius and stores them
+   into AVPs. Parameter “callee” is a string that may contain pseudo
+   variables. It indicates the user, whose attributes are loaded.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.15. radius_load_callee_avps() usage
+...
+radius_load_callee_avps("$rU@$rd");     # take callee from Request-URI
+...
+
+4.3. radius_is_user_in(user, group)
+
+   The functions checks from RADIUS, if user given in first argument
+   belongs to group given in second argument. Both arguments are strings,
+   but user string may also contain pseudo variables. In case of positive
+   result, loads AVPs from SIP-AVP reply items, if any.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and LOCAL_ROUTE.
+
+   Example 1.16. radius_is_user_in() usage
+...
+radius_is_user_in("$rU@$rd", "1");      # take user from Request-URI
+...
+radius_is_user_in("$au@$ar", "group_x");# take user from credentials
+...
+
+4.4. radius_does_uri_exist([uri])
+
+   Checks from RADIUS if userpart@hostpart of Request-URI or of an URI
+   stored in optional pseudo variable argument belongs to a local user. In
+   case of positive result, loads AVPs from SIP-AVP reply items, if any.
+
+   This function can be used from REQUEST_ROUTE and LOCAL_ROUTE.
+
+   Example 1.17. radius_does_uri_exist() usage
+...
+if (radius_does_uri_exist()) ...        # check Request-URI
+...
+if (radius_does_uri_exist("$avp(i:99)")) ...    # check URI in $avp(i:99)
+...
+
+4.5. radius_does_uri_user_exist([user])
+
+   Similar to radius_does_uri_exist, but check is done based only on
+   Request-URI userpart or userpart stored in optional pseudo variable
+   argument. Userpart should thus be unique among all user URIs, such as
+   an E.164 number. In case of positive result, loads AVPs from SIP-AVP
+   reply items, if any.
+
+   This function can be used from REQUEST_ROUTE and LOCAL_ROUTE.
+
+   Example 1.18. radius_does_uri_user_exist() usage
+...
+if (radius_does_uri_user_exist()) ...   # check Request-URI userpart
+...
+if (radius_does_uri_exist("$fU")) ...   # check From URI userpart
+...

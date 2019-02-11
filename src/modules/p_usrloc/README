@@ -1,0 +1,908 @@
+p_usrloc - Distributed databases
+
+Henning Westerholt
+
+   1&1 Internet AG
+
+Edited by
+
+Patric Marschall
+
+   1&1 Internet AG
+
+   Copyright © 2007 1&1 Internet AG
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. User's Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. write_db_url (string)
+              3.2. read_db_url (string)
+              3.3. reg_db_table (string)
+              3.4. id_column (string)
+              3.5. num_column (string)
+              3.6. url_column (string)
+              3.7. status_column (string)
+              3.8. failover_time_column (string)
+              3.9. spare_flag_column (string)
+              3.10. error_column (string)
+              3.11. risk_group_column (string)
+              3.12. expire_time (int)
+              3.13. db_err_threshold (int)
+              3.14. failover_level (int)
+              3.15. db_retry_interval (int)
+              3.16. db_use_transactions (int)
+              3.17. db_transaction_level (string)
+              3.18. write_on_master_db (int)
+              3.19. mdb_availability_control(str)
+              3.20. write_on_db (int)
+              3.21. connection_expires (int)
+              3.22. alg_location (int)
+              3.23. domain_db(str)
+              3.24. default_db_type(str)
+              3.25. db_ops_ruid (int)
+              3.26. db_update_as_insert (string)
+
+        4. default_db_url(str)
+        5. Changes from usrloc module
+
+              5.1. db_mode (integer)
+              5.2. db_url
+
+        6. Installation & Running
+
+              6.1. Database setup
+
+                    6.1.1. Configuration Table
+
+              6.2. Maintenance
+              6.3. Additional configuration
+
+   2. Developer's Guide
+
+        1. load_ul_db_api(ul_db_api_t * api)
+        2. int (* ul_db_insert_t) (str * table, str * first, str * second,
+                db_key_t* _k, db_val_t* _v, int _n)
+
+        3. int (* ul_db_update_t) (str * table, str * first, str * second,
+                db_key_t* _k, db_op_t * _op, db_val_t* _v, db_key_t* _uk,
+                db_val_t* _uv, int _n, int _un);
+
+        4. int (* ul_db_insert_update_t) (str * table, str * first, str *
+                second, db_key_t* _k, db_val_t* _v, int _n)
+
+        5. int (* ul_db_replace_t) (str * table, str * first, str *
+                second, db_key_t* _k, db_val_t* _v, int _n)
+
+        6. int (* ul_db_delete_t) (str * table, str * first, str * second,
+                db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+
+        7. int (* ul_db_query_t) (str * table, str * first, str * second,
+                db_con_t *** _r_h, db_key_t* _k, db_op_t* _op, db_val_t*
+                _v, db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t**
+                _r);
+
+        8. int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);
+
+   List of Examples
+
+   1.1. Set write_db_url parameter
+   1.2. Set read_db_url parameter
+   1.3. Set reg_db_table parameter
+   1.4. Set id_column parameter
+   1.5. Set num_column parameter
+   1.6. Set url_column parameter
+   1.7. Set status_column parameter
+   1.8. Set failover_time_column parameter
+   1.9. Set spare_flag_column parameter
+   1.10. Set error_column parameter
+   1.11. Set risk_group_column parameter
+   1.12. Set expire_time parameter
+   1.13. Set db_err_threshold parameter
+   1.14. Set failover_level parameter
+   1.15. Set db_retry_interval parameter
+   1.16. Set db_use_transactions parameter
+   1.17. Set db_transaction_level parameter
+   1.18. Set write_on_master_db parameter
+   1.19. Set mdb_availability_control parameter
+   1.20. Set write_on_db parameter
+   1.21. Set connection_expires parameter
+   1.22. Set alg_location parameter
+   1.23. Set domain_db parameter
+   1.24. Set default_db_type parameter
+   1.25. Set db_ops_ruid parameter
+   1.26. Set db_update_as_insert parameter
+   1.27. Set default_db_type parameter
+   1.28. Set db_mode parameter
+   1.29. Example database content - reg_table (locdb) table
+
+Chapter 1. User's Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. write_db_url (string)
+        3.2. read_db_url (string)
+        3.3. reg_db_table (string)
+        3.4. id_column (string)
+        3.5. num_column (string)
+        3.6. url_column (string)
+        3.7. status_column (string)
+        3.8. failover_time_column (string)
+        3.9. spare_flag_column (string)
+        3.10. error_column (string)
+        3.11. risk_group_column (string)
+        3.12. expire_time (int)
+        3.13. db_err_threshold (int)
+        3.14. failover_level (int)
+        3.15. db_retry_interval (int)
+        3.16. db_use_transactions (int)
+        3.17. db_transaction_level (string)
+        3.18. write_on_master_db (int)
+        3.19. mdb_availability_control(str)
+        3.20. write_on_db (int)
+        3.21. connection_expires (int)
+        3.22. alg_location (int)
+        3.23. domain_db(str)
+        3.24. default_db_type(str)
+        3.25. db_ops_ruid (int)
+        3.26. db_update_as_insert (string)
+
+   4. default_db_url(str)
+   5. Changes from usrloc module
+
+        5.1. db_mode (integer)
+        5.2. db_url
+
+   6. Installation & Running
+
+        6.1. Database setup
+
+              6.1.1. Configuration Table
+
+        6.2. Maintenance
+        6.3. Additional configuration
+
+1. Overview
+
+   The p_usrloc module is built upon the usrloc module and provides the
+   same usrloc export to the registrar module (for example). The usrloc
+   module must not be loaded at the same time with the p_usrloc module.
+   The parameters and the interface for the p_usrloc module are thus
+   almost the same, so in this document only extra parameters (specific
+   only to p_usrloc module) and differences are noted. For a complete
+   description of the parameters that are inherited from usrloc see the
+   page here. Note that the modparam statement must still refer to the
+   p_usrloc module.
+
+   The goal of the p_usrloc module is to provide partitioned user location
+   service to Kamailio/SER. This provides three major benefits:
+     * Redundancy Failure of a location database does not mean that the
+       location service is down
+     * Load Balancing DB performance is greatly increased as queries are
+       automatically split on a pool of ID(number configurable at
+       runtime). Furthermore, a read only db handler can be used to
+       further increase the spread of the "select" queries.
+     * Failover A faulty DB server is detected and taken out. When it
+       recovers, the module makes sure that no stale contacts are returned
+       from it.
+
+   Write queries are replicated to two or more databases, depending on
+   some distribution keys, e.g. the username and domain the subscribers.
+   The number of databases used for replication is configurable at compile
+   time by modifying the DB_NUM define. Its main field of application is
+   for storing and retrieving location data. The actual database for this
+   subscriber is chosen from a set that is specified in the master
+   database. Read queries are executed on one database of the set. If this
+   database is not available, the other database would be used. This
+   failure is recorded in the master database.
+
+   Connections to the distributed databases are setup prior the actual
+   query is executed. The module maintains a cache of the database handles
+   to provide better performance. This handles are periodically checked if
+   there are still valid and if needed updated from the master database.
+   As default only one key is used for the database lookup, but the
+   additional usage of a second one is possible.
+
+   Changes in the master database are autodetected. For better performance
+   it is possible to use one read-only instance, that is locally
+   installed, and write only errors and other status information to a
+   central master database. It is also possible to specify different
+   failover schemas and even use transaction to provide additional data
+   safety. This module could further try to minimize the impact of a
+   database error with the usage of spare databases that are automatically
+   activated. It also supports the manual deactivation of redundant
+   databases for maintenance purposes.
+
+Warning
+
+   The p_usrloc module still has some missing feature, like automatic
+   expiry of contacts and dumping of all users via the fifo cmd.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * a database module necessary to connect to the master database and
+       to the distributed databases.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. write_db_url (string)
+   3.2. read_db_url (string)
+   3.3. reg_db_table (string)
+   3.4. id_column (string)
+   3.5. num_column (string)
+   3.6. url_column (string)
+   3.7. status_column (string)
+   3.8. failover_time_column (string)
+   3.9. spare_flag_column (string)
+   3.10. error_column (string)
+   3.11. risk_group_column (string)
+   3.12. expire_time (int)
+   3.13. db_err_threshold (int)
+   3.14. failover_level (int)
+   3.15. db_retry_interval (int)
+   3.16. db_use_transactions (int)
+   3.17. db_transaction_level (string)
+   3.18. write_on_master_db (int)
+   3.19. mdb_availability_control(str)
+   3.20. write_on_db (int)
+   3.21. connection_expires (int)
+   3.22. alg_location (int)
+   3.23. domain_db(str)
+   3.24. default_db_type(str)
+   3.25. db_ops_ruid (int)
+   3.26. db_update_as_insert (string)
+
+3.1. write_db_url (string)
+
+   The url to the master database where errors are written to.
+
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”
+
+   Example 1.1. Set write_db_url parameter
+...
+modparam("p_usrloc", "write_db_url", "mysql://username:password@localhost/databa
+sename")
+...
+
+3.2. read_db_url (string)
+
+   The url to the master database where the distribution data is read
+   from. It is separated from write access, so for better performance, a
+   local replicate can be used for read access.
+
+   Default value is mysql://kamailio:kamailiorw@localhost/kamailio .
+
+   Example 1.2. Set read_db_url parameter
+...
+modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
+...
+
+3.3. reg_db_table (string)
+
+   Specifies the table where the information about the distributed
+   databases is stored.
+
+   Default value is “locdb”.
+
+   Example 1.3. Set reg_db_table parameter
+...
+modparam("p_usrloc", "reg_db_table", "locdb")
+...
+
+3.4. id_column (string)
+
+   Specifies the column where the id of a distributed database is stored.
+
+   Default value is “id”.
+
+   Example 1.4. Set id_column parameter
+...
+modparam("p_usrloc", "id_column", "id")
+...
+
+3.5. num_column (string)
+
+   Specifies the column where the associated number of the distributed
+   database is stored. For each distributed database ID there must be at
+   least two databases available, the databases above the second are
+   ignored.
+
+   Default value is “no”.
+
+   Example 1.5. Set num_column parameter
+...
+modparam("p_usrloc", "num_column", "nr")
+...
+
+3.6. url_column (string)
+
+   Specifies the column where the url of the distributed database is
+   stored.
+
+   Default value is “url”.
+
+   Example 1.6. Set url_column parameter
+...
+modparam("p_usrloc", "url_column", "url")
+...
+
+3.7. status_column (string)
+
+   Specifies the column where the status of the distributed database is
+   stored.
+
+   Default value is “status”.
+
+   Example 1.7. Set status_column parameter
+...
+modparam("p_usrloc", "status_column", "status")
+...
+
+3.8. failover_time_column (string)
+
+   Specifies the column where the failover time of the location databases
+   is stored. This field is set to the current time when a databases is
+   turned off or turned on.
+
+   Default value is “failover”.
+
+   Example 1.8. Set failover_time_column parameter
+...
+modparam("p_usrloc", "failover_time_column", "fail")
+...
+
+3.9. spare_flag_column (string)
+
+   Specifies the column where the spare flag of the location databases is
+   stored. It is possible to declare an entry in the p_usrloc table as
+   spare which is used in a failover. Due to the fact that the data is
+   stored in two databases and it takes the spare the complete expire time
+   to be up to date, it is not very useful.
+
+   Default value is “spare”.
+
+   Example 1.9. Set spare_flag_column parameter
+...
+modparam("p_usrloc", "spare_flag_column", "spare")
+...
+
+3.10. error_column (string)
+
+   Specifies the column where the errors of the distributed databases are
+   stored. Each call to db_handle_error increases the error counter. After
+   exceeding the error threshold, the database's status is set to off.
+
+   Default value is “errors”.
+
+   Example 1.10. Set error_column parameter
+...
+modparam("p_usrloc", "error_column", "error")
+...
+
+3.11. risk_group_column (string)
+
+   Specifies the column where the risk group of the distributed databases
+   is stored. All databases on one host are in the same risk group. This
+   is only useful when using spares and prevents the module from taking a
+   spare which shares the same risk as the broken database.
+
+   Default value is “rg”.
+
+   Example 1.11. Set risk_group_column parameter
+...
+modparam("p_usrloc", "risk_group_column", "rg")
+...
+
+3.12. expire_time (int)
+
+   Specifies the time (in seconds) when a contact expires, used for
+   resetting the failover time of a reactivated database. It should be
+   equal or greater than the contact expiration time of the registrar
+   module.
+
+   Default value is “3600”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc expire_time 7200
+
+   Example 1.12. Set expire_time parameter
+...
+modparam("p_usrloc", "expire_time", "3600")
+...
+
+3.13. db_err_threshold (int)
+
+   Specifies the error value on which a database shall be turned of.
+
+   Default value is “50”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc db_err_threshold 20
+
+   Example 1.13. Set db_err_threshold parameter
+...
+modparam("p_usrloc", "db_err_threshold", "50")
+...
+
+3.14. failover_level (int)
+
+   Specifies the manner a failover is done. Following modes are supported:
+     * 1 - Just turn off the broken database
+     * 2 - Try to find a spare, if none found, just turn off the broken
+       database
+
+   Default value is “1”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int p_usrloc failover_level 2
+
+   Example 1.14. Set failover_level parameter
+...
+modparam("p_usrloc", "failover_level", "1")
+...
+
+3.15. db_retry_interval (int)
+
+   Specifies the interval (in seconds) in which a timer process shall
+   check the availability of the databases and try to reconnect to broken
+   ones. It don't make sense to choose a lower value as 10. It's necessary
+   to provide a writeable master database, otherwise this check stays
+   disabled.
+
+   Default value is “10”.
+
+   Example 1.15. Set db_retry_interval parameter
+...
+modparam("p_usrloc", "db_retry_interval", "10")
+...
+
+3.16. db_use_transactions (int)
+
+   Specifies if transactions should be used (set to 1) to reach a higher
+   data consistency. Keep in mind that this will probably decrease
+   performance.
+
+   Default value is “0”.
+
+   Example 1.16. Set db_use_transactions parameter
+...
+modparam("p_usrloc", "db_use_transactions", "0")
+...
+
+3.17. db_transaction_level (string)
+
+   Specifies the isolation level on which transactions are performed.
+   Possible values: Modes supported by the database backend. In order to
+   activate transaction the db_use_transactions parameter must be also
+   set.
+
+   Default value is “READ UNCOMMITED”.
+
+   Example 1.17. Set db_transaction_level parameter
+...
+modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
+...
+
+3.18. write_on_master_db (int)
+
+   Sets the write access to the master database. If set to 0, no write
+   operations are permitted on the master database.
+
+   Default value is “0”.
+
+   Example 1.18. Set write_on_master_db parameter
+...
+modparam("p_usrloc", "write_on_master_db", "0")
+...
+
+3.19. mdb_availability_control(str)
+
+   Checks the master database in certain time intervals specified by the
+   “retry_interval” parameter. Overwrites the “write_on_master_db”
+   parameter based on the reachability of master database. If the master
+   db is unavailable then the aforementioned parameter will be
+   deactivated.
+
+   Default value is “0”.
+
+   Example 1.19. Set mdb_availability_control parameter
+...
+modparam("p_usrloc", "mdb_availability_control", 1)
+...
+
+3.20. write_on_db (int)
+
+   Sets the write access to the distributed databases. If set to 0, no
+   write operations are permitted on the databases.
+
+   Default value is “0”.
+
+   Example 1.20. Set write_on_db parameter
+...
+modparam("p_usrloc", "write_on_db", "0")
+...
+
+3.21. connection_expires (int)
+
+   Specifies the period (in seconds) after a database connection expires.
+   Usage of a too small value will probably decrease the performance.
+
+   Default value is “300”.
+
+   Example 1.21. Set connection_expires parameter
+...
+modparam("p_usrloc", "connection_expires", "300")
+...
+
+3.22. alg_location (int)
+
+   Specify the way the distribution of the subscriptions are computed. At
+   the moment the only way is to use the CRC32 algorithm to compute the
+   location ID. Any integer value is fine.
+
+   Default value is “0”.
+
+   Example 1.22. Set alg_location parameter
+...
+modparam("p_usrloc", "alg_location", 1)
+...
+
+3.23. domain_db(str)
+
+   Specify the way the lookup is made. In can be either partitioned or
+   single. For example, if you have a location table that is large and
+   needs to be partitioned, and a smaller table cfa that is ok to be on
+   only the master db(so there is no need to have it distributed), you can
+   set this parameter to “location=cluster,cfa=single”. This means that a
+   call to
+lookup(location)
+
+   will be done via the partition databases configured via the
+   reg_db_table parameter, but a call to
+lookup(cfa)
+
+   will be done on only the master database (as with usrloc module)
+
+   Default value is “location=cluster,cfa=single”.
+
+   Example 1.23. Set domain_db parameter
+...
+modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
+...
+
+3.24. default_db_type(str)
+
+   In case a domain (like location,cfa) is not matched by a domain_db
+   definition, the type is configured by using this parameter. Accepted
+   values are single and cluster.
+
+   Default value is “single”.
+
+   Example 1.24. Set default_db_type parameter
+...
+modparam("p_usrloc", "default_db_type", "cluster")
+...
+
+3.25. db_ops_ruid (int)
+
+   If set to 1, database queries for update or delete are done using ruid
+   value. If it is set to 0, the old style using aor, contact and call-id
+   is done.
+
+   Default value is “0”.
+
+   Can be set at runtime, e.g.:
+                $ kamcmd cfg.set_now_int p_usrloc db_ops_ruid 1
+
+   Example 1.25. Set db_ops_ruid parameter
+...
+modparam("p_usrloc", "db_ops_ruid", 0)
+...
+
+3.26. db_update_as_insert (string)
+
+   Set this parameter if you want to do INSERT DB operations instead of
+   UPDATE DB operations. It is recommended to set this parameter if you
+   use Cassandra as a DB backend.
+
+   Default value is “1”.
+
+   Can be set at runtime, e.g.:
+                $ kamcmd cfg.set_now_int p_usrloc db_update_as_insert 1
+
+   Example 1.26. Set db_update_as_insert parameter
+...
+modparam("usrloc", "db_update_as_insert", 1)
+...
+
+4. default_db_url(str)
+
+   The URL of the default database for Location domains (for domains that
+   are single). This must be configured if they are use.
+
+   Default value is “DEFAULT_DB_URL”.
+
+   Example 1.27. Set default_db_type parameter
+...
+modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
+...
+
+5.  Changes from usrloc module
+
+   5.1. db_mode (integer)
+   5.2. db_url
+
+5.1. db_mode (integer)
+
+   The p_usrloc module must utilize database for persistent contact
+   storage. Only mode 3 is possible at this time. Because of the way other
+   matching mode work, they make no sense on a distributed environment.
+     * 3 - DB-Only scheme. No memory cache is kept, all operations being
+       directly performed with the database. The timer deletes all expired
+       contacts from database - cleans after clients that didn't
+       un-register or re-register. The mode is useful if you configure
+       more servers sharing the same DB without any replication at SIP
+       level. The mode may be slower due the high number of DB operation.
+       For example NAT pinging is a killer since during each ping cycle
+       all nated contact are loaded from the DB; The lack of memory
+       caching also disable the statistics exports.
+
+   Default value is 3.
+
+   Example 1.28. Set db_mode parameter
+...
+modparam("p_usrloc", "db_mode", 2)
+...
+
+5.2. db_url
+
+   This parameters is now obsolete, and replaced by specific p_usrloc
+   parameters
+
+6. Installation & Running
+
+   6.1. Database setup
+
+        6.1.1. Configuration Table
+
+   6.2. Maintenance
+   6.3. Additional configuration
+
+6.1. Database setup
+
+6.1.1. Configuration Table
+
+   Before running Kamailio with p_usrloc, you have to setup the master
+   database table where the module will find data about the distributed
+   databases. For that, if the table was not created by the installation
+   script or you choose to install everything by yourself you can use the
+   p_usrloc-create.sql SQL script in the database directories in the
+   utils/kamctl/mysql/ folder as template. Database and table name can be
+   set with module parameters so they can be changed, but the name of the
+   columns must be as they are in the SQL script. You can also find the
+   complete database documentation on the project webpage,
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+   Example 1.29. Example database content - reg_table (locdb) table
+...
++----+----+------+--------+--------+---------------------+-------+----+
+| id | no | url  | status | errors | failover            | spare | rg |
++----+----+------+--------+--------+---------------------+-------+----+
+|  1 |  1 | URL1 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  1 |  2 | URL2 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  2 |  1 | URL3 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
+|  2 |  2 | URL4 |      1 |      0 | 1900-01-01 00:00:01 |     0 |  0 |
++----+----+------+--------+--------+---------------------+-------+----+
+...
+
+   The URLs are omitted for a better overview, but you can use standard
+   Kamailio database URLs like
+   mysql://kamailio:kamailiorw@localhost/kamailio Databases don't need to
+   be on different hosts, e.g. for testing purposes.
+
+   This table contains two database groups. The first with id one, and the
+   second with the id two.
+
+6.2. Maintenance
+
+   The module supports the deactivation of redundant databases for
+   maintenance reasons. This can be done by setting the status column of
+   the respective database in the p_usrloc to the value “2”. This setting
+   is autodetected from all modules on the server cluster. Changes in the
+   locdb table are periodically polled with help of a timer process. After
+   one minute the all read and write traffic is removed from the
+   deactivated database, and maintenance can be done.
+
+   In order to activate the database again, after the maintenance has been
+   finished, the respective status column needs to be set to “0”. This is
+   autodetected as well, the first module that noticed the change will set
+   the status column to “1” and setting the failover column to the current
+   time and date. Write requests are now transferred again to the
+   database, but no reads are done yet.
+
+   After the configured expire_time has been passed, i.e. every contact
+   has been inserted at least one time in the database the respective
+   failover time column is set to the default value again. The database is
+   then also used to read contacts from, the cluster is in normal
+   operation with full redundancy again.
+
+6.3. Additional configuration
+
+   As this module is only used internally from other modules, there is no
+   additional configuration except for the module parameter setup
+   necessary.
+
+Chapter 2. Developer's Guide
+
+   Table of Contents
+
+   1. load_ul_db_api(ul_db_api_t * api)
+   2. int (* ul_db_insert_t) (str * table, str * first, str * second,
+          db_key_t* _k, db_val_t* _v, int _n)
+
+   3. int (* ul_db_update_t) (str * table, str * first, str * second,
+          db_key_t* _k, db_op_t * _op, db_val_t* _v, db_key_t* _uk,
+          db_val_t* _uv, int _n, int _un);
+
+   4. int (* ul_db_insert_update_t) (str * table, str * first, str *
+          second, db_key_t* _k, db_val_t* _v, int _n)
+
+   5. int (* ul_db_replace_t) (str * table, str * first, str * second,
+          db_key_t* _k, db_val_t* _v, int _n)
+
+   6. int (* ul_db_delete_t) (str * table, str * first, str * second,
+          db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+
+   7. int (* ul_db_query_t) (str * table, str * first, str * second,
+          db_con_t *** _r_h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
+          db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t** _r);
+
+   8. int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);
+
+   These are the primary functions that are used to perform the SQL
+   queries.
+
+1.  load_ul_db_api(ul_db_api_t * api)
+
+   Import the dbd API, setup the master database connection.
+
+   Meaning of the parameters is as follows:
+     * api - Pointer to distributed database API structure
+
+2.  int (* ul_db_insert_t) (str * table, str * first, str * second, db_key_t*
+_k, db_val_t* _v, int _n)
+
+   Lookup the first and if needed the second key, and insert the given
+   values into the chosen databases.
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _k - Pointer to the inserted db keys.
+     * _v - Pointer to the inserted db values.
+     * _n - Number of key-value pairs in _k and _v parameters.
+
+3.  int (* ul_db_update_t) (str * table, str * first, str * second, db_key_t*
+_k, db_op_t * _op, db_val_t* _v, db_key_t* _uk, db_val_t* _uv, int _n, int
+_un);
+
+   Lookup the first and if needed the second key, and update the given
+   values in the chosen databases.
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _k - Pointer to the db keys that will be matched.
+     * _op - Pointer to the db options for this operation.
+     * _v - Pointer to the db values that will be matched.
+     * _uk - Pointer to the updated db keys.
+     * _uv - Pointer to the updated db values.
+     * _n - Number of key-value pairs in _k and _v parameters.
+     * _un - Number of key-value pairs in _uk and _uv parameters.
+
+4.  int (* ul_db_insert_update_t) (str * table, str * first, str * second,
+db_key_t* _k, db_val_t* _v, int _n)
+
+   Lookup the first and if needed the second key, and insert on duplicate
+   key update the given values in the chosen databases. This is like an
+   insert, but update if the key already exist.
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _k - Pointer to the inserted or updated db keys.
+     * _v - Pointer to the inserted or updated db values.
+     * _n - Number of key-value pairs in _k and _v parameters.
+
+5.  int (* ul_db_replace_t) (str * table, str * first, str * second,
+db_key_t* _k, db_val_t* _v, int _n)
+
+   Lookup the first and if needed the second key, and replace the given
+   values in the chosen databases.
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _k - Pointer to the replaced db keys.
+     * _v - Pointer to the replaced db values.
+     * _n - Number of key-value pairs in _k and _v parameters.
+
+6.  int (* ul_db_delete_t) (str * table, str * first, str * second, db_key_t*
+_k, db_op_t* _o, db_val_t* _v, int _n)
+
+   Lookup the first and if needed the second key, and delete the given
+   values into the chosen databases.
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _k - Pointer to the deleted db keys.
+     * _op - Pointer to the db options for this operation.
+     * _v - Pointer to the deleted db values.
+     * _n - Number of key-value pairs in _k and _v parameters.
+
+7.  int (* ul_db_query_t) (str * table, str * first, str * second, db_con_t
+*** _r_h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int
+_nc, db_key_t _o, db_res_t** _r);
+
+   Lookup the first and if needed the second key, and performs a query in
+   one of the chosen databases. The returned handle _r_h must be used to
+   free the result set after the usage of the returned database entries,
+   otherwise a memory leak will occur.You must call ul_db_free_result
+   before you can call ul_db_query again!
+
+   Meaning of the parameters is as follows:
+     * table - Pointer to the table name.
+     * first - Pointer to the first key.
+     * second - Pointer to the second key.
+     * _r_h - Pointer to the result handle, to free the result.
+     * _op - Pointer to the db options for this operation.
+     * _k - Pointer to the queried db keys.
+     * _v - Pointer to the queried db values.
+     * _c - Pointer to the db keys that should be returned.
+     * _n - Number of key-value pairs in _k and _v parameters.
+     * _nc - Number of key-value pairs in _c parameter.
+     * _o - Order by options for the query.
+     * _nc - Pointer to the result set.
+
+8.  int (* ul_db_free_result_t)(db_con_t ** dbh, db_res_t * res);
+
+   Frees the given result set, .
+
+   Meaning of the parameters is as follows:
+     * dbh - Pointer to the result handle.
+     * res - Pointer to the result.

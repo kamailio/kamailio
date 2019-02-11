@@ -1,0 +1,293 @@
+# Kamailio build system
+#
+# module Makefile
+#(to be included from each module)
+#
+#
+
+#
+# Variables that should be defined in the modules, prior to including
+# this makefile:
+#
+# NAME - module binary name, complete with .so and no path (MUST).
+#
+# COREPATH - path to the main/core directory (OPTIONAL, default ../..)
+#
+# DEFS - per module extra defines (OPTIONAL)
+#
+# LIBS - per module extra libs (OPTIONAL)
+#
+# SER_LIBS - ser/sr libs that should be compiled, linked against and installed
+#           along the module. The format is: <path>/<shortname>, e.g.
+#           SER_LIBS=../../lib/srdb2/srdb2 for libsrdb2 with the sources
+#            in ../../lib/srdb2. (OPTIONAL)
+#
+# MOD_INSTALL_UTILS - list of utils directories that should be compiled and
+#                     installed along the module. The utils must know how to
+#                     install themselves (make install).
+#                     E.g.: MOD_INSTALL_UTILS=../../utils/sercmd
+#                     (OPTIONAL)
+#
+# MOD_INSTALL_SCRIPTS - list of scripts (complete path including the file name)
+#                       that should be installed along the module.
+#                       E.g.: MOD_INSTALL_SCRIPTS=../../scripts/foo/foo.sh
+#                       (OPTIONAL)
+#
+# MOD_INSTALL_CFGS - list of extra config files that should be installed in
+#                    the main config directory, along the module (OPTIONAL).
+#
+# MOD_INSTALL_SHARE - list of files to install into the arch-independent
+#                     shared directory (by default
+#                     /usr/local/share/$(MAIN_NAME))
+#
+
+MOD_NAME=$(NAME:.so=)
+
+# allow placing modules in separate directory apart from ser core
+COREPATH ?=../..
+
+ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
+ $(COREPATH)/Makefile.modules $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
+
+#override modules value, a module cannot have submodules
+override modules=
+override static_modules=
+override static_modules_path=
+
+# should be set in the Makefile of each module
+# INCLUDES += -I$(COREPATH)
+
+# temporary def (visible only in the module, not exported)
+DEFS += -DMOD_NAME='"$(MOD_NAME)"'
+
+
+ifneq ($(makefile_defs_included),1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the module dir!
+
+#$(warning "you should run make from the main ser directory")
+
+else
+# called by the main Makefile
+
+ALLDEP+=$(COREPATH)/Makefile
+
+endif
+
+include $(COREPATH)/Makefile.sources
+
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
+ifeq (,$(filter $(MOD_NAME), $(static_modules)))
+CFLAGS:=$(MOD_CFLAGS)
+LDFLAGS:=$(MOD_LDFLAGS)
+endif
+
+
+err_fail?=1
+
+include $(COREPATH)/Makefile.dirs
+include $(COREPATH)/Makefile.targets
+include $(COREPATH)/Makefile.rules
+include $(COREPATH)/Makefile.shared
+
+# default: if not overwritten by the main Makefile, install in modules
+mods_dst=$(modules_prefix)/$(modules_dir)/modules
+
+$(mods_dst):
+		mkdir -p $(mods_dst)
+
+LIBS:=$(filter-out -ldl -lresolv, $(LIBS))
+
+
+.PHONY: install
+.PHONY: install-libs
+.PHONY: install-utils
+.PHONY: install-scripts
+.PHONY: install-cfgs
+install: $(NAME) $(mods_dst) install-libs install-utils install-scripts \
+		install-cfg install-share
+	$(INSTALL_TOUCH) $(mods_dst)/$(NAME)
+	$(INSTALL_MODULES)  $(NAME)  $(mods_dst)
+
+ifneq (,$(SER_LIBS))
+install-libs:
+	@for lib in $(dir $(SER_LIBS)) ; do \
+		$(call try_err, $(MAKE) -C "$${lib}" install-if-newer ) ;\
+	done; true
+
+else
+install-libs:
+
+endif # $(SER_LIBS)
+
+.PHONY: utils
+.PHONY: clean-utils
+.PHONY: proper-utils
+.PHONY: distclean-utils
+.PHONY: realclean-utils
+.PHONY: maintainer-clean-utils
+ifneq (,$(MOD_INSTALL_UTILS))
+install-utils:
+	@for ut in $(MOD_INSTALL_UTILS) ; do \
+		$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+	done; true
+
+utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		$(call try_err, $(MAKE) -C "$$r" ) ;\
+	done; true
+
+clean-utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" clean ; \
+		fi ; \
+	done
+
+proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
+ clean_target=$(patsubst %-utils,%,$@)
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" $(clean_target); \
+		fi ; \
+	done
+
+else
+# ! MOD_INSTALL_UTILS
+install-utils:
+utils:
+clean-utils:
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
+
+endif # $(MOD_INSTALL_UTILS)
+
+ifneq (,$(MOD_INSTALL_SCRIPTS))
+install-scripts: $(bin_prefix)/$(bin_dir)
+	@for r in $(MOD_INSTALL_SCRIPTS) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(call try_err, $(INSTALL_TOUCH) \
+					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-scripts:
+
+endif # $(MOD_INSTALL_SCRIPTS)
+
+ifneq (,$(MOD_INSTALL_CFGS))
+install-cfg: $(cfg_prefix)/$(cfg_dir)
+	@for r in $(MOD_INSTALL_CFGS) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				n=`basename "$$r"` ; \
+				$(call try_err, $(INSTALL_TOUCH) \
+					"$(cfg_prefix)/$(cfg_dir)/$$n.sample" ); \
+				$(call try_err,\
+					$(INSTALL_CFG)  "$$r"  \
+						"$(cfg_prefix)/$(cfg_dir)/$$n.sample"); \
+				if [ -z "${skip_cfg_install}" -a \
+						! -f "$(cfg_prefix)/$(cfg_dir)$$n" ]; then \
+					mv -f $(cfg_prefix)/$(cfg_dir)$$n.sample \
+						$(cfg_prefix)/$(cfg_dir)$$n; \
+				fi ; \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-cfg:
+
+endif # $(MOD_INSTALL_CFGS)
+
+ifneq (,$(MOD_INSTALL_SHARE))
+install-share: $(share_prefix)/$(share_dir)
+	@for r in $(MOD_INSTALL_SHARE) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(call try_err, $(INSTALL_TOUCH) \
+					$(share_prefix)/$(share_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_SHARE)  "$$r"  $(share_prefix)/$(share_dir) ); \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-share:
+
+endif # $(MOD_INSTALL_SHARE)
+
+
+$(bin_prefix)/$(bin_dir):
+	mkdir -p $@
+
+$(cfg_prefix)/$(cfg_dir):
+	mkdir -p $@
+
+$(share_prefix)/$(share_dir):
+	mkdir -p $@
+
+# README build rules
+ifneq (,$(wildcard doc/Makefile))
+#doc/Makefile present => we can generate README
+
+README: doc/*.xml ../../../doc/docbook/entities.xml
+	$(MAKE) -C doc $(MOD_NAME).txt
+	mv doc/$(MOD_NAME).txt $@
+
+else
+# do nothing
+
+README:
+endif
+
+#man page build rules
+ifneq (,$(wildcard $(MOD_NAME).xml))
+ifneq ($(DOCBOOKMAN),)
+$(MOD_NAME).7: $(MOD_NAME).xml
+	$(DOCBOOKMAN) -s ../../../doc/stylesheets/serdoc2man.xsl $<
+
+man: $(MOD_NAME).7
+else
+man:
+	@echo "info - no docbook to man tool to convert $(MOD_NAME).xml"
+endif
+else
+man:
+endif
+
+
+printmiface:
+	@echo -n $(MODIFACE)
+
+endif # ifeq($(makefile_defs),1)
+
+include $(COREPATH)/Makefile.cfg

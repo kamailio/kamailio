@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+
+	<para>
+	The KeepAlive module provides an internal <acronym>API</acronym> to be used by 
+	other &kamailio; modules. This <acronym>API</acronym> offers support for destinations 
+	monitoring.
+	</para>
+	<para>
+	For internal (non-script) usage, the KeepAlive module offers to other module the
+	possibility to register callback functions to be executed for each destination's
+	status change.
+	</para>
+
+
+	<section>
+	<title>Available Functions</title>
+
+	<section id="dev-add_destination">
+		<title>
+		<function moreinfo="none">add_destination(uri, owner, flags, [callback, [user_attr]])</function>
+		</title>
+		<para>
+			This function registers a new destination to monitor. 
+			Monitoring of the destination starts as soon as it returns with success (0 value).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri (string)</emphasis> - address of destination to monitor. Valid format is [proto:]ip[:port], with:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<emphasis>proto</emphasis> being one of <emphasis>sip</emphasis> or <emphasis>sips</emphasis> (SIP over TLS). 
+					If omitted, <emphasis>sip</emphasis> is used by default
+				</listitem>
+				<listitem>
+					<emphasis>port</emphasis> being optional (using default standard port, 5060 for sip and 5061 for sips)
+				</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>owner (string)</emphasis> - module name <quote>owning</quote> the destination
+				(for information purpose)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>flags (integer)</emphasis> - destination flags (<emphasis>unused for now, use 0 value</emphasis>)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>callback (ka_statechanged_f, optional)</emphasis> - callback function, executed on destination's state change.
+			</para>
+			<para>
+				The callback function is of type <code>void (*ka_statechanged_f)(str *uri, int state, void *user_attr);</code>. Use <emphasis>NULL</emphasis> to set no callback.
+			</para>
+			<para>
+				destination's state value is one of:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<emphasis>0</emphasis> - unknown state (this is the destination state at first, waiting first ping replies or timeout)
+				</listitem>
+				<listitem>
+					<emphasis>1</emphasis> - destination is UP
+				</listitem>
+				<listitem>
+					<emphasis>2</emphasis> - destination is DOWN
+				</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>user_attr (void * pointer, optional)</emphasis> - If callback function is setup, this parameter will be forwarded to it, as last parameter. Use <emphasis>NULL</emphasis> to set no user_attr parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+			Returned values:
+		</para>
+		<itemizedlist>
+			<listitem><emphasis>0</emphasis> if ok
+			</listitem>
+			<listitem><emphasis>-1</emphasis> if an error occurred
+			</listitem>
+		</itemizedlist>
+		
+	</section>
+
+
+	<section>
+		<title>Examples</title>
+		<example>
+			<title>Loading KeepAlive module's API from another module, adding a destination to monitor &amp; registering a callback</title>
+			<programlisting format="linespecific">
+...
+#include "../keepalive/api.h"
+...
+keepalive_api_t ka_api;
+...
+...
+/* loading keepalive API */
+if (bind_keepalive( &amp;ka_api ) != 0) {
+    LM_ERR("can't load KeepAlive API\n");
+    goto error;
+}
+...
+...
+/* callback function */
+void my_callback(str uri, int state, void *user_attr) {
+
+	printf("%.*s new state is: %d\n", uri.len, uri.str, state)
+}
+
+/* register a new destination */
+str dest  = str_init("sip:192.168.10.21:5060");
+str owner = str_init("mymodule");
+
+if (ka_api.add_destination(dest, owner, 0, my_callback, NULL) != 0) {
+    LM_ERR("can't add destination\n");
+    goto error;
+}
+...
+   			</programlisting>
+		</example>
+	</section>
+</section>
+</chapter>
+

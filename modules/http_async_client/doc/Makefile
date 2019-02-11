@@ -1,4 +1,0 @@
-docs = http_async_client.xml
-
-docbook_dir = ../../../docbook
-include $(docbook_dir)/Makefile.module

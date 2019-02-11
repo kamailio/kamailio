@@ -127,6 +127,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -139,6 +140,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
@@ -154,6 +156,7 @@
 				<col><field>prefix</field></col>
 				<col><field>from_uri</field></col>
 				<col><field>request_uri</field></col>
+				<col><field>mt_tvalue</field></col>
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>

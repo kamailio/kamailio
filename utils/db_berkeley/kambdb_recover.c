@@ -336,14 +336,14 @@ int recover(char* jfn)
 		return 2;
 	}
 	
-	tp  = tbc->dtp;
-	
-	if(!tbc || !tp)
+	if(!tbc || !tbc->dtp)
 	{
 		fprintf(stderr, "[recover]: FAILED to get find metadata for : %s.\n", tn);
 		fclose(fp);
 		return 3;
 	}
+
+	tp  = tbc->dtp;
 	
 	while ( fgets(line , MAX_ROW_SIZE, fp) != NULL )
 	{

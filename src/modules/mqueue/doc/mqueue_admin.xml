@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		The mqueue module offers a generic message queue system in shared memory for
+		inter-process communication using the config file. One example of usage is
+		to send time consuming operations to one or several timer processes that consumes
+		items in the queue, without affecting SIP message handling in the socket-listening
+		process.
+	</para>
+	<para>
+		There can be many defined queues. Access to queued values is done via
+		pseudo variables.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+
+	<section id="mqueue.p.mqueue">
+	    <title><varname>mqueue</varname> (string)</title>
+	    <para>
+		Definition of a memory queue
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>none</quote>.
+		</emphasis>
+	    </para>
+		<para>
+		Value must be a list of parameters: attr=value;...
+		<itemizedlist>
+		<listitem>
+			<para>Mandatory attributes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>name</emphasis>: name of the queue.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>Optional attributes:</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>size</emphasis>: size of the queue.
+				Specifies the maximum number of items in queue.
+				If exceeded the oldest one is removed.
+				If not set the queue will be limitless.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+	    </para>
+		<para>
+		The parameter can be set many times, each holding the definition of one
+		queue.
+	    </para>
+	    <example>
+		<title>Set <varname>mqueue</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "mqueue", "name=myq;size=20;")
+modparam("mqueue", "mqueue", "name=qaz")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section id="mqueue.f.mq_add">
+	    <title>
+		<function moreinfo="none">mq_add(queue, key, value)</function>
+	    </title>
+	    <para>
+		Add a new item (key, value) in the queue. If max size of queue is
+		exceeded, the oldest one is removed.
+	    </para>
+		<example>
+		<title><function>mq_add</function> usage</title>
+		<programlisting format="linespecific">
+...
+mq_add("myq", "$rU", "call from $fU");
+...
+</programlisting>
+	    </example>
+	</section>
+
+ 	<section id="mqueue.f.mq_fetch">
+	    <title>
+		<function moreinfo="none">mq_fetch(queue)</function>
+	    </title>
+	    <para>
+		Take oldest item from queue and fill $mqk(queue) and
+		$mqv(queue) pseudo variables.
+	    </para>
+	    <para>
+		Return: true on success (1); false on failure (-1) or
+		no item fetched (-2).
+	    </para>
+		<example>
+		<title><function>mq_fetch</function> usage</title>
+		<programlisting format="linespecific">
+...
+while(mq_fetch("myq"))
+{
+   xlog("$mqk(myq) - $mqv(myq)\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+ 	<section id="mqueue.f.mq_pv_free">
+	    <title>
+		<function moreinfo="none">mq_pv_free(queue)</function>
+	    </title>
+	    <para>
+		Free the item fetched in pseudo-variables. It is optional, a new fetch
+		frees the previous values.
+	    </para>
+		<example>
+		<title><function>mq_pv_free</function> usage</title>
+		<programlisting format="linespecific">
+...
+mq_pv_free("myq");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="mqueue.f.mq_size">
+	    <title>
+		<function moreinfo="none">mq_size(queue)</function>
+	    </title>
+	    <para>
+		Returns the current number of elements in the mqueue.
+	    </para>
+	    <para>
+	    If the mqueue is empty, the function returns -1. If the
+	    mqueue is not found, the function returns -2.
+	    </para>
+		<example>
+		<title><function>mq_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(q_size) = mq_size("queue");
+xlog("L_INFO", "Size of queue is: $var(q_size)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+
+    <section>
+	<title>Exported Variables</title>
+		<itemizedlist>
+			<listitem>
+				<emphasis>$mqk(mqueue)</emphasis> - the most recent item key fetched from the specified mqueue
+			</listitem>
+			<listitem>
+				<emphasis>$mqv(mqueue)</emphasis> - the most recent item value fetched from the specified mqueue
+			</listitem>
+			<listitem>
+				<emphasis>$mq_size(mqueue)</emphasis> - the size of the specified mqueue
+			</listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+    <section>
+	<title>RPC Commands</title>
+	<section id="mqueue.r.get_size">
+		<title>mqueue.get_size</title>
+		<para>
+			Get the size of a memory queue.
+		</para>
+		<para>
+			Parameters:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>name</emphasis> - the name of memory queue
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mqueue.get_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mqueue.get_size xyz
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="mqueue.r.fetch">
+		<title>mqueue.fetch</title>
+		<para>
+			Fetch a key-value pair from a memory queue.
+		</para>
+		<para>
+			Parameters:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>name</emphasis> - the name of memory queue
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mqueue.fetch</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mqueue.fetch xyz
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+
+</chapter>
+

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dialplan" xmlns:db="http://docbook.org/ns/docbook">
+    <name>dialplan</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used by the dialplan module for the translation
+			rules. More information is available at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;dialplan.html">&KAMAILIO_MOD_DOC;dialplan.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="dpid">
+        <name>dpid</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Dialplan ID.</description>
+    </column>
+
+    <column id="pr">
+        <name>pr</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Priority of rule.</description>
+    </column>
+
+    <column id="match_op">
+        <name>match_op</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Matching operator for rule (0-equal, 1-regexp).</description>
+    </column>
+
+     <column id="match_exp">
+        <name>match_exp</name>
+        <type>string</type>
+        <size>64</size>
+        <description>Matching expression (regexp or string).</description>
+    </column>
+
+    <column id="match_len">
+        <name>match_len</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Length of the matching expression (used only for equal operator).</description>
+    </column>
+
+     <column id="subst_exp">
+        <name>subst_exp</name>
+        <type>string</type>
+        <size>64</size>
+        <description>Substitution expression.</description>
+    </column>
+    
+    <column id="repl_exp">
+        <name>repl_exp</name>
+        <type>string</type>
+        <size>256</size>
+        <description>Replacement expression (sed like).</description>
+    </column>
+
+    <column id="attrs">
+        <name>attrs</name>
+        <type>string</type>
+        <size>64</size>
+        <description>General attributes string to be returned in case of rule matching.</description>
+    </column>
+ 
+</table>

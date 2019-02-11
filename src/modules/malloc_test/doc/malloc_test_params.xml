@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+		%docentities;
+	]
+>
+
+<section id="malloc_test.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+	<title>Parameters</title>
+
+	<section id="check_content">
+		<title><varname>check_content</varname></title>
+		<para>
+			When doing the tests, check also for the possibility of the
+			memory being overwritten. When activated, the allocated memory
+			will be filled with a special pattern, that will be checked on
+			free.
+		</para>
+		<para>
+			Default: 0 (off).
+		</para>
+		<para>
+			It can be changed also at runtime, via the rpc interface.
+		</para>
+		<example>
+			<title>
+				Set <varname>check_content</varname> in the config file
+			</title>
+			<programlisting>
+modparam("malloc_test", "check_content", 1)
+			</programlisting>
+		</example>
+		<example>
+			<title>
+				Set <varname>check_content</varname> at runtime via kamcmd
+			</title>
+			<programlisting>
+$ &kamcmd; cfg.set_now_int malloc_test check_content 1
+			</programlisting>
+		</example>
+	</section>
+
+</section>

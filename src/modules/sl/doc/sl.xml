@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+
+<book id="sl" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+		<title>The SL Module - Stateless request handling</title>
+	<authorgroup>
+	    <author>
+		<firstname>Bogdan</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>iancu@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<address>
+		    <email>miconda@gmail.com</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="sl.overview">
+	<title>Overview</title>
+	<para>
+	    The <acronym>SL</acronym> module allows the SIP server to act as a stateless
+	    UA server and generate replies to SIP requests without keeping
+	    state. That is beneficial in many scenarios, in which you wish not
+	    to burden server's memory and scale well.
+	</para>
+	<para>
+	    The <acronym>SL</acronym> module needs to filter ACKs sent after a
+	    local stateless reply to an INVITE was generated. To recognize such
+	    ACKs, &kamailio; adds a special "signature" in to-tags. This signature is
+	    sought for in incoming ACKs, and if included, the ACKs are
+	    absorbed.
+	</para>
+	<para>
+	    To speed up the filtering process, the module uses a timeout
+	    mechanism. When a reply is sent, a timer is set. As long as the
+	    timer is valid, the incoming ACK requests will be checked using TO
+	    tag value. Once the timer expires, all the ACK messages are let 
+	    through - a long time passed till it sent a reply, so it does not 
+	    expect any ACK that have to be blocked.
+	</para>
+	<para>
+	    The ACK filtering may fail in some rare cases. If you think these
+	    matter to you, better use stateful processing (<acronym>TM</acronym> 
+	    module) for INVITE processing. Particularly, the problem happens when a UA
+	    sends an INVITE which already has a to-tag in it (e.g., a
+	    re-INVITE) and the server want to reply to it. Then, it will keep the
+	    current to-tag, which will be mirrored in ACK. &kamailio; will not see
+	    its signature and forward the ACK downstream. Caused harm is not
+	    bad, just a useless ACK is forwarded.
+	</para>
+
+    </section>
+
+    <xi:include href="sl_params.xml"/>
+    <xi:include href="sl_functions.xml"/>
+    <xi:include href="sl_stats.xml"/>
+
+	<section>
+		<title>Event routes</title>
+			<section>
+					<title><function moreinfo="none">sl:filtered-ack</function></title>
+					<para>
+					Executed when ACK to locally generated reply is recognized and absorbed.
+					</para>
+					<programlisting  format="linespecific">
+...
+event_route[sl:filtered-ack] {
+    xlog("sl:filtered-ack ACK to local reply absorbed\n");
+}
+...
+					</programlisting>
+			</section>
+			<section>
+					<title><function moreinfo="none">sl:local-response</function></title>
+					<para>
+					Executed after sl module reply function has sent local reply.
+					</para>
+					<programlisting  format="linespecific">
+...
+event_route[sl:local-response] {
+    xlog("sl:local-response replied locally\n");
+}
+...
+					</programlisting>
+			</section>
+	</section>
+
+    </chapter>
+</book>

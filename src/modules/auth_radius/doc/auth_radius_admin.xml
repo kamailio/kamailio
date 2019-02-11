@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module contains functions that are used to perform authentication
+		using a Radius server. Basically the proxy will pass along the
+		credentials to the radius server which will in turn send a reply
+		containing result of the authentication. So basically the whole
+		authentication is done in the Radius server. Before sending the request
+		to the radius server we perform some sanity checks over the
+		credentials to make sure that only well formed credentials will get to
+		the server. We have implemented radius authentication according to
+		draft-sterman-aaa-sip-00. This module requires the radiusclient-ng
+		library version 0.5.0 or higher or freeradius-client which is available from
+		<ulink url='https://github.com/FreeRADIUS/freeradius-client/'>
+		https://github.com/FreeRADIUS/freeradius-client/</ulink>.
+		You can also install this library from distribution repositories.
+	</para>
+	</section>
+	<section>
+	<title>Additional Credentials</title>
+	<para>
+		When performing authentication, the RADIUS server may include additional
+		credentials in the response. This scheme is very useful in fetching
+		additional user information from the RADIUS server without making
+		extra queries.
+	</para>
+	<para>
+		The additional credentials are embedded in the RADIUS reply as AVPs
+		<quote>SIP-AVP</quote>. The syntax of the value is:
+		<itemizedlist>
+			<listitem><para><emphasis>
+			value = SIP_AVP_NAME SIP_AVP_VALUE
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
+			</emphasis></para></listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		All additional credentials will be stored as &kamailio; AVPs
+		(SIP_AVP_NAME = SIP_AVP_VALUE).
+	</para>
+	<para>
+		The RPID value may be fetch via this mechanism.
+	</para>
+	<example>
+	<title><quote>SIP-AVP</quote> RADIUS AVP examples</title>
+		<programlisting format="linespecific">
+....
+"email:joe@yahoo.com"
+    - STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    - ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    - STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    - ID AVP (14) with INTEGER VALUE (28)
+....
+		</programlisting>
+	</example>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+		<section>
+			<title>Modules</title>
+			<para>
+			The module depends on the following modules (in the other words
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>auth</emphasis>
+				-- Generic authentication functions
+				</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed
+			before compiling &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<para>One of these libraries. Notice that development of
+				radiusclient-ng has stopped, as the project merged with
+				freeradius-client.</para>
+				<listitem>
+				<para>
+				<emphasis>freeradius-client</emphasis>  available from
+				<ulink url='https://github.com/FreeRADIUS/freeradius-client/'>
+				https://github.com/FreeRADIUS/freeradius-client/</ulink>.
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher --
+				library and development files. See <ulink
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="auth_radius.p.radius_config">
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		This is the location of the configuration file of radius client
+		libraries.
+		</para>
+		<para>
+		Default value is
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
+		</para>
+		<example>
+		<title><varname>radius_config</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
+		</programlisting>
+		</example>
+	</section>
+	<section id="auth_radius.p.service_type">
+		<title><varname>service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type radius attribute to be used.
+		The default should be fine for most people. See your radius client
+		include files for numbers to be put in this parameter if you need
+		to change it.
+		</para>
+		<para>
+		Default value is <quote>15</quote>.
+		</para>
+		<example>
+		<title><varname>service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "service_type", 15)
+		</programlisting>
+		</example>
+	</section>
+	<section id="auth_radius.p.auth_extra">
+		<title><varname>auth_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS attribute
+		name=pseudo variable pairs. When radius_www_authorize() or
+		radius_proxy_authorize() function is called, listed extra
+		attributes are included in RADIUS request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>auth_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "auth_extra", "Acct-Session-Id=$ci")
+		</programlisting>
+		</example>
+	</section>
+        <section id="auth_radius.p.use_ruri_flag">
+                <title><varname>use_ruri_flag</varname> (integer)</title>
+                <para>
+                When this parameter is set to the value other than "-1" and the
+                request being authenticated has flag with matching number set
+                via setflag() function, use Request URI instead of uri parameter
+                value from the Authorization / Proxy-Authorization header field
+                to perform RADIUS authentication.  This is intended to provide
+                workaround for misbehaving NAT / routers / ALGs that alter request
+                in the transit, breaking authentication.  At the time of this
+                writing, certain versions of Linksys WRT54GL are known to do that.
+                </para>
+                <para>
+                Default value is <quote>-1</quote>.
+                </para>
+                <example>
+                <title><varname>use_ruri_flag</varname> parameter usage</title>
+                <programlisting format="linespecific">
+modparam("auth_radius", "use_ruri_flag", 22)
+                </programlisting>
+                </example>
+        </section>
+	<section id="auth_radius.p.radius_avps_mode">
+		<title><varname>radius_avps_mode</varname> (integer)</title>
+		<para>
+			If set to 1, all RADIUS AVPs returned by RADIUS server are stored
+			in &kamailio; AVPs list. If set to 0, only the SIP_AVP type of RADIUS
+			AVPs are stored in &kamailio; AVPs list.
+		</para>
+		<para>
+			Default value is 0.
+		</para>
+		<example>
+		<title><varname>radius_avps_mode</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "radius_avps_mode", 1)
+		</programlisting>
+		</example>
+	</section>
+	<section id="auth_radius.p.append_realm_to_username">
+		<title><varname>append_realm_to_username</varname> (integer)</title>
+		<para>
+			If set to 1, the username passed to the RADIUS server will have the
+			digest realm appended to it, if no domain is provided in the digest
+			username.
+		</para>
+		<para>
+			Default value is 1.
+		</para>
+		<example>
+		<title><varname>append_realm_to_username</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "append_realm_to_username", 0)
+		</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="auth_radius.f.radius_www_authorize">
+		<title><function moreinfo="none">radius_www_authorize(realm [, uri_user])</function></title>
+		<para>
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
+		be later used by some other functions).
+		</para>
+		<para>
+		If the function	was unable to
+		verify the credentials for some reason, it fails and
+		assigns a WWW-Authorize header containing a new
+	challenge to digest_challenge AVP (see modules/auth).
+	The script should
+	then respond with 401 that includes this header, which will
+	challenge the user again.
+		</para>
+		<para>Negative result codes may be interpreted as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>-7 (internal error)</emphasis> - some
+			internal error occurred (see syslog);
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-6 (nonce reused)</emphasis> - nonce is used more than once;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-5 (no credentials)</emphasis> - credentials were not found in request;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-4 (stale nonce)</emphasis> - stale nonce;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-2 (authorization failed)</emphasis> - RADIUS responded
+			with Access Reject which may be, for example, due to user not found or wrong password;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-1 (error)</emphasis> - some error occurred during authorization (see syslog);
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function will perform sanity checks over
+	the received
+		credentials and then pass them along to RADIUS
+	server which will
+		verify the credentials and return whether they are valid or not.
+		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - Realm is a
+	opaque string that
+			the user agent should present to the user so he
+	can decide what
+			username and password to use.  In case of
+	REGISTER requests it is usually hostpart of To URI.
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>uri_user</emphasis> - Uri_user is an
+			optional pseudo variable parameter whose value, if
+			present, will be given to Radius server as value of
+			SIP-URI-User check item.
+			If uri_user pseudo variable parameter is not
+			present, the server will generate
+                        SIP-URI-User check item value from user part of
+			To/From URI.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (!radius_www_authorize("$td")) {
+        switch ($rc) {
+        case -7:
+	    send_reply("500", "Server Internal Error");
+	    exit;
+        case -1:
+	    send_reply("400", "Bad Request");
+	    exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &amp;&amp;
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("401", "Unauthorized");
+        exit;
+    };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="auth_radius.f.radius_proxy_authorize">
+		<title><function
+		moreinfo="none">radius_proxy_authorize(realm [, uri_user])</function></title>
+		<para>
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
+		be later used by some other functions).
+		</para>
+		<para>If the function was unable to
+		verify the credentials for some reason, it fails and
+		assigns a Proxy-Authorize header containing a new
+	challenge to digest_challenge AVP.  The script should
+	then respond with 407 that includes this header, which will
+	challenge the user again.
+		For negative result codes, see the above function.
+		</para>
+		<para>
+		This function will perform sanity checks over the received
+		credentials and then pass them along to RADIUS server which will
+		verify the credentials and return whether they are valid or not.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use.  In case of
+	non-REGISTER requests it is usually hostpart of From or
+		P-Preferred-Identity URI.
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>uri_user</emphasis> - Uri_user is an
+			optional pseudo variable parameter whose value, if
+			present, will be given to Radius server as value of
+			SIP-URI-User check item.
+			If uri_user pseudo variable parameter is not
+			present, the server will generate
+                        SIP-URI-User check item value from user part of
+			To/From URI.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">proxy_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
+        switch ($rc) {                           # from P-Preferred-Identity
+        case -7:                                 # header field
+	    send_reply("500", "Server Internal Error");
+	    exit;
+        case -1:
+	    send_reply("400", "Bad Request");
+	    exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &amp;&amp;
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("407", "Proxy Authentication Required");
+        exit;
+    };
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>

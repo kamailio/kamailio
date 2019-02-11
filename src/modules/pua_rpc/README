@@ -1,0 +1,195 @@
+PUA RPC
+
+Juha Heinanen
+
+   TutPro Inc.
+
+Anca-Maria Vamanu
+
+   Voice Sistem SRL
+
+   Copyright © 2016 TutPro Inc.
+
+   Copyright © 2006 Voice Sistem SRL
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+        4. RPC Commands
+
+              4.1. pua.publish
+              4.2. pua.send_publish
+              4.3. pua.subscribe
+
+   List of Examples
+
+   1.1. pua.publish XMLRPC example
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+   4. RPC Commands
+
+        4.1. pua.publish
+        4.2. pua.send_publish
+        4.3. pua.subscribe
+
+1. Overview
+
+   The pua_rpc module offers the possibility to publish presence
+   information via the RPC transport. Subscribing to presence information
+   has not been implemented yet.
+
+   Using this module you can create independent applications/scripts to
+   publish SIP and not SIP related information (e.g., MWI message summary
+   information, system resources like CPU-usage, memory, number of active
+   subscribers, ...). Future version of this module may allow non-SIP
+   speaking applications to subscribe to presence information kept in a
+   SIP presence server.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * pua
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   none
+
+4. RPC Commands
+
+   4.1. pua.publish
+   4.2. pua.send_publish
+   4.3. pua.subscribe
+
+4.1. pua.publish
+
+   Send a SIP PUBLISH request and wait for its response.
+
+   Command parameters:
+     * presentity_uri - e.g. sip:jh@tutpro.com
+     * expires - Relative expires time in seconds (e.g. 3600).
+     * event package - Event package that is target of published
+       information (e.g. message-summary).
+     * content type - Content type of published information (e.g.
+       application/simple-message-summary) or . if no information is
+       enclosed.
+     * id - id for a series of related PUBLISHes to the same
+       presentity-uri or . to always use the same series. For example
+       dialog-info must reuse the same id for the same call otherwise
+       status will be lost when multiple parallel calls to/from the same
+       user take place. The dialog-id from the dialog-info body qualifies
+       as a suitable id here.
+     * ETag - ETag that publish should match or . if no ETag is given.
+     * outbound proxy - SIP URI of outbound proxy to be used when sending
+       PUBLISH request or . if no outbound proxy is given.
+     * extra_headers - Extra headers added to PUBLISH request or . if no
+       extra headers.
+     * body - The body of the publish request containing published
+       information or missing if no published information. It has to be a
+       single line for FIFO transport.
+
+   Example 1.1. pua.publish XMLRPC example
+
+<?xml version="1.0" ?>
+<methodCall>
+ <methodName>pua.publish</methodName>
+ <params>
+  <param>
+   <value>
+    <string>sip:jh@test.tutpro.com</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>7776000</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>message-summary</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>application/simple-message-summary</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>.</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>a.1481534683.13958.6.7</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>sip:127.0.0.1:5080;transport=tcp</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>P-Flags: 0
+
+</string>
+   </value>
+  </param>
+  <param>
+   <value>
+    <string>Messages-Waiting: yes
+
+Message-Account: sip:jh@vm.test.tutpro.com
+
+Voice-Message: 2/0 (0/0)
+
+</string>
+   </value>
+  </param>
+ </params>
+</methodCall>
+
+4.2. pua.send_publish
+
+   Send a SIP PUBLISH request without waiting for its response.
+
+   Command parameters are the same as for pua.publish.
+
+4.3. pua.subscribe
+
+   Send a SIP SUBSCRIBE request. Command parameters:
+     * presentity_uri - e.g. sip:presentity@kamailio.org
+     * watcher_uri - e.g. sip:watcher@kamailio.org
+     * event_package
+     * expires - Relative time in seconds for the desired validity of the
+       subscription.

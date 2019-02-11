@@ -38,7 +38,7 @@ fi ;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
 # start
-$BIN -w . -f $CFG &> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 ret=$?
 
 # this should work
@@ -66,7 +66,7 @@ if [ "$ret" -eq 1 ]; then
 fi;
 
 sleep 1
-$KILL
+kill_kamailio
 killall -9 sipp > /dev/null 2>&1
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"

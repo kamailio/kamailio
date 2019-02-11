@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module FAQ -->
+
+<chapter>
+    
+    <title>&faqguide;</title>
+    <qandaset defaultlabel="number">
+	<qandaentry>
+	    <question>
+		<para>Where can I find more about SNMP?</para>
+	    </question>
+	    <answer>
+		<para>
+			There are many websites that explain SNMP at all levels of detail.
+			A great general introduction can be found at http://en.wikipedia.org/wiki/SNMP
+
+			If you are interested in the nitty gritty details of the protocol, 
+			then please look at RFC 3410.  RFC 3410 maps out the many other RFCs
+			that define SNMP, and can be found at http://www.rfc-archive.org/getrfc.php?rfc=3410
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I find more about NetSNMP?</para>
+	    </question>
+	    <answer>
+		<para>
+			NetSNMP source code, documentation, FAQs, and tutorials can all be found at
+			http://net-snmp.sourceforge.net/.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I find out more about AgentX?</para>
+	    </question>
+	    <answer>
+		<para>
+			The full details of the AgentX protocol are explained in RFC 2741, 
+			available at: http://www.rfc-archive.org/getrfc.php?rfc=2741
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Why am I not receiving any SNMP Traps?</para>
+	    </question>
+	    <answer>
+		<para>
+		Assuming you've configured the trap thresholds in &kamailioconfig; with something similar to:
+		</para>
+
+		<programlisting format="linespecific">
+    modparam("snmpstats", "MsgQueueMinorThreshold", 1234)
+    modparam("snmpstats", "MsgQueueMajorThreshold", 5678)
+
+    modparam("snmpstats", "dlg_minor_threshold", 500)
+    modparam("snmpstats", "dlg_minor_threshold", 600)
+		</programlisting>
+		<para>
+		Then either &kamailio; is not reaching these thresholds (which is a good thing),
+		or you haven't set up the trap monitor correctly.  To prove this to yourself,
+		you can start NetSNMP with:
+		</para>
+
+		<programlisting format="linespecific">
+    snmpd -f -Dtrap -x localhost:705
+		</programlisting>
+
+		<para>
+		The -f tells the NetSNMP process to not daemonize, and the -Dtrap enables trap
+		debug logs.  You should see something similar to the following: 
+		</para>
+
+		<programlisting format="linespecific">
+    registered debug token trap, 1
+    trap: adding callback trap sink            ----- You should see both
+    trapsess: adding to trap table             ----- of these lines.
+    Turning on AgentX master support.
+    trap: send_trap 0 0 NET-SNMP-TC::linux
+    trap: sending trap type=167, version=1
+    NET-SNMP version 5.3.1
+		</programlisting>
+
+		<para>
+		If the two lines above did not appear, then you probably have not included
+		the following in your snmpd.conf file.
+		</para>
+		
+		<programlisting format="linespecific">
+    trap2sink machineToSendTrapsTo:machinesPortNumber.
+		</programlisting>
+
+		<para>
+		When a trap has been received by snmpd, the following will appear in the
+		above output:
+		</para>
+
+		<programlisting format="linespecific">
+    sent_trap -1 -1 NET-SNMP-TC::linus
+    sending trap type=167, version=1
+		</programlisting>
+
+		<para>
+		You'll also need a program to collect the traps and do something with them
+		(such as sending them to syslog).  NetSNMP provides snmptrapd for this.  Other
+		solutions exist as well.  Google is your friend.
+		</para>		
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>&kamailio; refuses to load the SNMPStats module.  Why is it displaying "load_module: could not open module snmpstats.so"?
+		</para>
+	    </question>
+	    <answer>
+		<para>
+		On some systems, you may receive the following error at stdout or the log files
+		depending on the configuration.  
+		</para>
+
+		<programlisting format="linespecific">
+    ERROR: load_module: could not open module &lt;/usr/local/lib/kamailio/modules_k/snmpstats.so&gt;: 
+           libnetsnmpmibs.so.10: cannot open shared object file: No such file or directory.
+		</programlisting>
+	
+		<para>	
+		This means one of two things:
+		</para>
+	
+		<orderedlist numeration="arabic">
+			<listitem>
+				<para>
+				You did not install NetSNMP.  ("make install" if building from source)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				The dynamic linker cannot find the necessary libraries.  
+				</para>
+			</listitem>
+		</orderedlist>
+		
+		<para>	
+		In the second case, the fix is as follows:
+		</para>
+
+		<orderedlist numeration="arabic">
+			<listitem>
+				<para>
+				find / -name "libnetsnmpmibs*"
+				<itemizedlist>
+					<listitem>
+						<para>
+			You will find a copy unless you haven't installed NetSNMP.
+			Make note of the path.
+						</para>
+					</listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				less /etc/ld.so.conf
+				<itemizedlist>
+					<listitem>
+						<para>
+			If the file is missing the path from step 1, then add the path to
+			ld.so.conf
+						</para>
+					</listitem>
+				</itemizedlist>
+
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				ldconfig
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				Try starting &kamailio; again.
+				</para>
+			</listitem>
+		</orderedlist>
+
+		<para>
+		Alternatively, you may prefix your startup command with:
+		</para>
+
+		<programlisting format="linespecific">
+    LD_LIBRARY_PATH=/path/noted/in/step/one/above
+		</programlisting>
+
+	    	<para>
+		For example, on my system I ran:
+		</para>
+
+		<programlisting format="linespecific">
+    LD_LIBRARY_PATH=/usr/local/lib &ctltool; start
+		</programlisting>
+
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How can I learn what all the scalars and tables are?</para>
+	    </question>
+	    <answer>
+		<para>
+		All scalars and tables are named in the SNMPStats module overview.  The files
+		KAMAILIO-MIB, KAMAILIO-REG-MIB, KAMAILIO-SIP-COMMON-MIB and KAMAILIO-SIP-SERVER-MIB
+		contain the full definitions and descriptions.  Note however, that the MIBs
+		may actually contain scalars and tables which are currently not provided by the
+		SNMPStats module.  Therefore, it is better to use NetSNMP's snmptranslate
+		as an alternative. Take the kamailioSIPEntityType scalar as an example. You can
+		invoke snmptranslate as follows:
+
+		<programlisting format="linespecific">
+    snmptranslate -TBd kamailioSIPEntityType
+		</programlisting>		
+
+		Which would result in something similar to the following:
+
+		<programlisting format="linespecific">
+    -- FROM       KAMAILIO-SIP-COMMON-MIB
+    -- TEXTUAL CONVENTION KamailioSIPEntityRole
+    SYNTAX        BITS {other(0), userAgent(1), proxyServer(2), redirectServer(3), registrarServer(4)} 
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   " This object identifies the list of SIP entities this
+                   row is related to. It is defined as a bit map.  Each
+                   bit represents a type of SIP entity.
+                   If a bit has value 1, the SIP entity represented by
+                   this row plays the role of this entity type.
+  
+                   If a bit has value 0, the SIP entity represented by
+                   this row does not act as this entity type
+                   Combinations of bits can be set when the SIP entity
+                   plays multiple SIP roles."
+		</programlisting>  
+
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Why do snmpget, snmpwalk, and snmptable always time out?</para>
+	    </question>
+	    <answer>
+		<para>
+		If your snmp operations are always returning with: "Timeout: No Response
+		from localhost", then chances are that you are making the query with the wrong
+		community string.  Default installs will most likely use "public" as their
+		default community strings. Grep your snmpd.conf file for the string 
+		"rocommunity", and use the result as your community string in your queries.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How do I use snmpget?</para>
+	    </question>
+	    <answer>
+		<para>
+		NetSNMP's snmpget is used as follows:
+
+		<programlisting format="linespecific">
+    snmpget -v 2c -c theCommunityString machineToSendTheMachineTo scalarElement.0
+    		</programlisting>
+
+		For example, consider an snmpget on the kamailioSIPEntityType scalar, 
+		run on the same machine running the &kamailio; instance, with the default
+		"public" community string.  The command would be:
+
+		<programlisting format="linespecific">
+    snmpget -v2c -c public localhost kamailioSIPEntityType.0
+		</programlisting>
+
+		Which would result in something similar to:
+
+		<programlisting format="linespecific">
+    KAMAILIO-SIP-COMMON-MIB::kamailioSIPEntityType.0 = BITS: F8 \
+		other(0) userAgent(1) proxyServer(2)          \
+		redirectServer(3) registrarServer(4) 
+		</programlisting>
+
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How do I use snmptable?</para>
+	    </question>
+	    <answer>
+		<para>
+		NetSNMP's snmptable is used as follows:
+
+		<programlisting format="linespecific">
+    snmptable -Ci -v 2c -c theCommunityString machineToSendTheMachineTo theTableName
+    		</programlisting>
+
+		For example, consider the kamailioSIPRegUserTable.  If we run the snmptable
+		command on the same machine as the running &kamailio; instance, configured with
+		the default "public" community string.  The command would be:
+
+		<programlisting format="linespecific">
+    snmptable -Ci -v 2c -c public localhost kamailioSIPRegUserTable
+		</programlisting>
+
+		Which would result in something similar to:
+
+		<programlisting format="linespecific">
+    index kamailioSIPUserUri kamailioSIPUserAuthenticationFailures
+        1       DefaultUser                                    0
+        2            bogdan                                    0
+        3    jeffrey.magder                                    0
+		</programlisting>
+
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I find more about &kamailio;?</para>
+	    </question>
+	    <answer>
+		<para>
+			Take a look at &kamailiohomelink;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I post a question about this module?</para>
+	    </question>
+	    <answer>
+		<para>
+			First at all check if your question was already answered on one of
+			our mailing lists: 
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>User Mailing List - &kamailiouserslink;</para>
+		    </listitem>
+		    <listitem>
+			<para>Developer Mailing List - &kamailiodevlink;</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &kamailio; release should be sent to 
+			&kamailiousersmail; and e-mails regarding development versions
+			should be sent to &kamailiodevmail;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How can I report a bug?</para>
+	    </question>
+	    <answer>
+		<para>
+			Please follow the guidelines provided at:
+			&kamailiobugslink;.
+		</para>
+	    </answer>
+	</qandaentry>
+    </qandaset>
+</chapter>
+

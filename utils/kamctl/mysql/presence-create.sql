@@ -3,19 +3,21 @@ CREATE TABLE `presentity` (
     `username` VARCHAR(64) NOT NULL,
     `domain` VARCHAR(64) NOT NULL,
     `event` VARCHAR(64) NOT NULL,
-    `etag` VARCHAR(64) NOT NULL,
+    `etag` VARCHAR(128) NOT NULL,
     `expires` INT(11) NOT NULL,
     `received_time` INT(11) NOT NULL,
     `body` BLOB NOT NULL,
     `sender` VARCHAR(128) NOT NULL,
     `priority` INT(11) DEFAULT 0 NOT NULL,
-    CONSTRAINT presentity_idx UNIQUE (`username`, `domain`, `event`, `etag`)
+    `ruid` VARCHAR(64),
+    CONSTRAINT presentity_idx UNIQUE (`username`, `domain`, `event`, `etag`),
+    CONSTRAINT ruid_idx UNIQUE (`ruid`)
 );
 
 CREATE INDEX presentity_expires ON presentity (`expires`);
 CREATE INDEX account_idx ON presentity (`username`, `domain`, `event`);
 
-INSERT INTO version (table_name, table_version) values ('presentity','4');
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 
 CREATE TABLE `active_watchers` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -35,7 +37,7 @@ CREATE TABLE `active_watchers` (
     `record_route` TEXT,
     `expires` INT(11) NOT NULL,
     `status` INT(11) DEFAULT 2 NOT NULL,
-    `reason` VARCHAR(64) NOT NULL,
+    `reason` VARCHAR(64),
     `version` INT(11) DEFAULT 0 NOT NULL,
     `socket_info` VARCHAR(64) NOT NULL,
     `local_contact` VARCHAR(128) NOT NULL,
@@ -44,7 +46,7 @@ CREATE TABLE `active_watchers` (
     `updated` INT(11) NOT NULL,
     `updated_winfo` INT(11) NOT NULL,
     `flags` INT(11) DEFAULT 0 NOT NULL,
-    `user_agent` VARCHAR(255) DEFAULT '' NOT NULL,
+    `user_agent` VARCHAR(255) DEFAULT '',
     CONSTRAINT active_watchers_idx UNIQUE (`callid`, `to_tag`, `from_tag`)
 );
 
@@ -75,7 +77,7 @@ CREATE TABLE `xcap` (
     `domain` VARCHAR(64) NOT NULL,
     `doc` MEDIUMBLOB NOT NULL,
     `doc_type` INT(11) NOT NULL,
-    `etag` VARCHAR(64) NOT NULL,
+    `etag` VARCHAR(128) NOT NULL,
     `source` INT(11) NOT NULL,
     `doc_uri` VARCHAR(255) NOT NULL,
     `port` INT(11) NOT NULL,
@@ -96,7 +98,7 @@ CREATE TABLE `pua` (
     `expires` INT(11) NOT NULL,
     `desired_expires` INT(11) NOT NULL,
     `flag` INT(11) NOT NULL,
-    `etag` VARCHAR(64) NOT NULL,
+    `etag` VARCHAR(128) NOT NULL,
     `tuple_id` VARCHAR(64),
     `watcher_uri` VARCHAR(128) NOT NULL,
     `call_id` VARCHAR(255) NOT NULL,

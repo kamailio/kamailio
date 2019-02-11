@@ -1,0 +1,312 @@
+TOPOS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2016 FhG FOKUS
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. storage (str)
+              3.2. db_url (str)
+              3.3. mask_callid (int)
+              3.4. sanity_checks (int)
+              3.5. branch_expire (int)
+              3.6. dialog_expire (int)
+              3.7. clean_interval (int)
+              3.8. event_callback (str)
+              3.9. event_mode (int)
+              3.10. contact_host (str)
+
+        4. Event Routes
+
+              4.1. event_route[topos:msg-outgoing]
+              4.2. event_route[topos:msg-sending]
+
+   List of Examples
+
+   1.1. Set storage parameter
+   1.2. Set db_url parameter
+   1.3. Set mask_callid parameter
+   1.4. Set sanity_checks parameter
+   1.5. Set branch_expire parameter
+   1.6. Set dialog_expire parameter
+   1.7. Set clean_interval parameter
+   1.8. Set event_callback parameter
+   1.9. Set event_mode parameter
+   1.10. Set contact_host parameter
+   1.11. Usage of event_route[topos:msg-outgoing]
+   1.12. Usage of event_route[topos:msg-sending]
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. storage (str)
+        3.2. db_url (str)
+        3.3. mask_callid (int)
+        3.4. sanity_checks (int)
+        3.5. branch_expire (int)
+        3.6. dialog_expire (int)
+        3.7. clean_interval (int)
+        3.8. event_callback (str)
+        3.9. event_mode (int)
+        3.10. contact_host (str)
+
+   4. Event Routes
+
+        4.1. event_route[topos:msg-outgoing]
+        4.2. event_route[topos:msg-sending]
+
+1. Overview
+
+   This module offers topology hiding by stripping the SIP routing headers
+   that show topology details. The script interpreter gets the SIP
+   messages with full content, so all existing functionality is preserved.
+
+   The module is transparent for the configuration writer. It only needs
+   to be loaded (tune the parameters if needed).
+
+   It also works for SIP MESSAGE or other requests that do not create a
+   call dialog -- record_route() must be used for them as well, the
+   headers are not going to be in the messages sent to the network, they
+   are needed to know local addresses used to communicate with each side.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * rr module - server must perform record routing to ensure in-dialog
+       requests are encoded/decoded (it must be done for all initial
+       requests).
+     * database module - to store the data for topology stripping and
+       restoring.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none.
+
+3. Parameters
+
+   3.1. storage (str)
+   3.2. db_url (str)
+   3.3. mask_callid (int)
+   3.4. sanity_checks (int)
+   3.5. branch_expire (int)
+   3.6. dialog_expire (int)
+   3.7. clean_interval (int)
+   3.8. event_callback (str)
+   3.9. event_mode (int)
+   3.10. contact_host (str)
+
+3.1. storage (str)
+
+   Type of storage, valid types are:
+     * db - Database Backend
+     * redis - Redis Backend
+
+   Default value is “db”.
+
+   Example 1.1. Set storage parameter
+...
+modparam("topos", "storage", "redis")
+...
+
+3.2. db_url (str)
+
+   Database URL.
+
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
+
+   Example 1.2. Set db_url parameter
+...
+modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.3. mask_callid (int)
+
+   Note: this functionality is not implemented yet - the parameter is
+   present in order to be in pair with topoh module.
+
+   Whether to replace or not the Call-ID with another unique id generated
+   by Kamailio.
+
+   Default value is 0 (do not mask).
+
+   Example 1.3. Set mask_callid parameter
+...
+modparam("topos", "mask_callid", 1)
+...
+
+3.4. sanity_checks (int)
+
+   If set to 1, topos module will bind to sanity module in order to
+   perform sanity checks over received SIP request. Default sanity checks
+   are done. It is useful to check if received request is well formatted
+   before proceeding to encoding/decoding.
+
+   Default value is 0 (do not bind to sanity module).
+
+   Example 1.4. Set sanity_checks parameter
+...
+modparam("topos", "sanity_checks", 1)
+...
+
+3.5. branch_expire (int)
+
+   Interval in seconds after which the branch records are deleted.
+
+   Default value is 180 (3 min).
+
+   Example 1.5. Set branch_expire parameter
+...
+modparam("topos", "branch_expire", 300)
+...
+
+3.6. dialog_expire (int)
+
+   Interval in seconds after which the dialog records are deleted.
+
+   Default value is 10800 (3 hours).
+
+   Example 1.6. Set dialog_expire parameter
+...
+modparam("topos", "dialog_expire", 3600)
+...
+
+3.7. clean_interval (int)
+
+   Interval in seconds to run the clean up of stored records.
+
+   Default value is 60 (1 min).
+
+   Example 1.7. Set clean_interval parameter
+...
+modparam("topos", "clean_interval", 30)
+...
+
+3.8. event_callback (str)
+
+   The name of the function in the KEMI configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.8. Set event_callback parameter
+...
+modparam("topos", "event_callback", "ksr_topos_event")
+...
+-- event callback function implemented in Lua
+function ksr_topos_event(evname)
+        KSR.info("===== topos module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
+3.9. event_mode (int)
+
+   Control what event_route blocks to be executed. It is a bitmask of: 1 -
+   execute event_route[topos:outgoing]; 2 - execute
+   event_route[topos:sending].
+
+   Default value is 3 (execute both event_route blocks).
+
+   Example 1.9. Set event_mode parameter
+...
+modparam("topos", "event_mode", 2)
+...
+
+3.10. contact_host (str)
+
+   You may need to control the host part of the Contact header added by
+   topos. For example when using TLS with TOPOS the remote UAS must be
+   able to open a new TLS socket to the contact header. In this case, the
+   contact header must contain a domain name with a trusted CA signed
+   certitificate.
+
+   Default value is taken from the Record-Route URI.
+
+   Example 1.10. Set contact_host parameter
+...
+modparam("topos", "contact_host", "proxy.domain.com")
+...
+
+4. Event Routes
+
+   4.1. event_route[topos:msg-outgoing]
+   4.2. event_route[topos:msg-sending]
+
+4.1. event_route[topos:msg-outgoing]
+
+   It is executed before doing topology stripping processing for an
+   outgoing SIP message. If 'drop' is executed inside the event route,
+   then the module skips doing the topology hiding.
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is not the one
+   to be sent out, but an internally generated one at startup, to avoid
+   reparsing the outgoing SIP message for the cases when topology hiding
+   is not wanted.
+
+   Example 1.11. Usage of event_route[topos:msg-outgoing]
+...
+event_route[topos:msg-outgoing] {
+  if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+
+4.2. event_route[topos:msg-sending]
+
+   It is executed before doing topology stripping processing for a SIP
+   message to be sent out, being executed after
+   event_route[topos:sending].
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is the one to
+   be sent out.
+
+   Example 1.12. Usage of event_route[topos:msg-sending]
+...
+event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
+    drop;
+  }
+}
+...
