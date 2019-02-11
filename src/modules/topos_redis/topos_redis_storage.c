@@ -279,7 +279,7 @@ int tps_redis_insert_dialog(tps_data_t *td)
 		}
 		return -1;
 	}
-	LM_DBG("expire set on dialog record for [%.*s] with argc %d\n",
+	LM_DBG("expire %lu set on dialog record for [%.*s] with argc %d\n", lval,
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
@@ -390,7 +390,7 @@ int tps_redis_insert_invite_branch(tps_data_t *td)
 		}
 		return -1;
 	}
-	LM_DBG("expire set on branch record for [%.*s] with argc %d\n",
+	LM_DBG("expire %lu set on branch record for [%.*s] with argc %d\n", lval,
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
@@ -518,7 +518,7 @@ int tps_redis_insert_branch(tps_data_t *td)
 		}
 		return -1;
 	}
-	LM_DBG("expire set on branch record for [%.*s] with argc %d\n",
+	LM_DBG("expire %lu set on branch record for [%.*s] with argc %d\n", lval,
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
@@ -1418,7 +1418,7 @@ int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		}
 		return -1;
 	}
-	LM_DBG("expire set on branch record for [%.*s] with argc %d\n",
+	LM_DBG("expire %lu set on dialog record for [%.*s] with argc %d\n", lval,
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
