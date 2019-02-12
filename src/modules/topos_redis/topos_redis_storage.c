@@ -376,7 +376,7 @@ int tps_redis_insert_invite_branch(tps_data_t *td)
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	lval = (unsigned long)_tps_api.get_branch_expire();
+	lval = (unsigned long)_tps_api.get_dialog_expire();
 	if(lval==0) {
 		return 0;
 	}
@@ -504,7 +504,7 @@ int tps_redis_insert_branch(tps_data_t *td)
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	lval = (unsigned long)_tps_api.get_branch_expire();
+	lval = (unsigned long)_tps_api.get_dialog_expire();
 	if(lval==0) {
 		return 0;
 	}
