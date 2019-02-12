@@ -1003,7 +1003,8 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	}
 
 	if(dialog!=0) {
-		tps_storage_end_dialog(msg, &mtsd, ptsd);
+		if(get_cseq(msg)->method_id==METHOD_BYE)
+			tps_storage_end_dialog(msg, &mtsd, ptsd);
 		if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 			goto error;
 		}
