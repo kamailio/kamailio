@@ -53,6 +53,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <arpa/inet.h>
+
 
 extern str ipsec_listen_addr;
 extern short ipsec_listen_port;
@@ -269,24 +271,82 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m)
     return 0;
 }
 
-static int create_ipsec_tunnel(const str remote_addr, unsigned short proto, ipsec_t* s)
+static int convert_ip_address(const str ip_addr, const unsigned int af, struct ip_addr* result) {
+    memset(result, 0, sizeof(struct ip_addr));
+    int return_code = -1;
+
+    //Allocate dynamically memory in order to avoid buffer overflows
+    char* ipaddr_str = NULL;
+    if((ipaddr_str = pkg_malloc(ip_addr.len + 1)) == NULL) {
+        LM_CRIT("Error allocating memory for IP address conversion.\n");
+        return -1;
+    }
+    memset(ipaddr_str, 0, ip_addr.len + 1);
+    memcpy(ipaddr_str, ip_addr.s, ip_addr.len);
+
+    int err = 0;
+
+    if((err = inet_pton(af, ipaddr_str, &result->u.addr)) != 1) {
+        if(err == 0) {
+            LM_ERR("Error converting ipsec listen IP address. Bad format %.*s\n", ip_addr.len, ip_addr.s);
+        }
+        else {
+            LM_ERR("Error converting ipsec listen IP address: %s\n", strerror(errno));
+        }
+        goto cleanup;   // return_code = -1 by default
+    }
+
+    //Set len by address family
+    if(af == AF_INET6) {
+        result->len = 16;
+    }
+    else {
+        result->len = 4;
+    }
+
+    result->af = af;
+
+    //Set success return code
+    return_code = 0;
+
+cleanup:
+    pkg_free(ipaddr_str);
+    return return_code;
+}
+
+static int create_ipsec_tunnel(const struct ip_addr *remote_addr, unsigned short proto, ipsec_t* s)
 {
     struct mnl_socket* sock = init_mnl_socket();
     if (sock == NULL) {
         return -1;
     }
 
-    LM_DBG("Creating security associations: Local IP: %.*s client port: %d server port: %d; UE IP: %.*s; client port %d server port %d\n",
+    //Convert ipsec address from str to struct ip_addr
+    struct ip_addr ipsec_addr;
+    if(convert_ip_address(ipsec_listen_addr, remote_addr->af, &ipsec_addr) != 0) {
+        //there is an error msg in convert_ip_address()
+        return -1;
+    }
+
+    //Convert to char* for logging
+    char remote_addr_str[128];
+    memset(remote_addr_str, 0, sizeof(remote_addr_str));
+    if(inet_ntop(remote_addr->af, remote_addr->u.addr, remote_addr_str, sizeof(remote_addr_str)) == NULL) {
+        LM_CRIT("Error converting remote IP address: %s\n", strerror(errno));
+        return -1;
+    }
+
+    LM_DBG("Creating security associations: Local IP: %.*s client port: %d server port: %d; UE IP: %s; client port %d server port %d\n",
             ipsec_listen_addr.len, ipsec_listen_addr.s, ipsec_client_port, ipsec_server_port,
-            remote_addr.len, remote_addr.s, s->port_uc, s->port_us);
+            remote_addr_str, s->port_uc, s->port_us);
 
     // P-CSCF 'client' tunnel to UE 'server'
-    add_sa    (sock, proto, ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, s->ck, s->ik);
-    add_policy(sock, proto,  ipsec_listen_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
+    add_sa    (sock, proto, &ipsec_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, s->ck, s->ik);
+    add_policy(sock, proto, &ipsec_addr, remote_addr, ipsec_client_port, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
     // UE 'client' to P-CSCF 'server' tunnel
-    add_sa    (sock, proto, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, s->ck, s->ik);
-    add_policy(sock, proto, remote_addr, ipsec_listen_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
+    add_sa    (sock, proto, remote_addr, &ipsec_addr, s->port_uc, ipsec_server_port, s->spi_ps, s->ck, s->ik);
+    add_policy(sock, proto, remote_addr, &ipsec_addr, s->port_uc, ipsec_server_port, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
     close_mnl_socket(sock);
 
@@ -451,7 +511,17 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
         goto cleanup;
     }
 
-    if(create_ipsec_tunnel(ci.received_host, ci.received_proto, s) != 0) {
+    // Get request from reply
+    struct cell *t = tmb.t_gett();
+    if (!t || t == (void*) -1) {
+        LM_ERR("fill_contact(): Reply without transaction\n");
+        return -1;
+    }
+
+    struct sip_msg* req = t->uas.request;
+    ////
+
+    if(create_ipsec_tunnel(&req->rcv.src_ip, ci.received_proto, s) != 0) {
         goto cleanup;
     }
 
