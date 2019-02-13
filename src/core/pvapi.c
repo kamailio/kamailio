@@ -1430,7 +1430,8 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 				n += it->text.len;
 				cur += it->text.len;
 			} else {
-				LM_ERR("no more space for text [%d]\n", it->text.len);
+				LM_ERR("no more space for text value - printed:%d token:%d buffer:%d\n",
+						n, it->text.len, *len);
 				goto overflow;
 			}
 		}
@@ -1449,7 +1450,8 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 					cur += tok.rs.len;
 				}
 			} else {
-				LM_ERR("no more space for spec value\n");
+				LM_ERR("no more space for spec value - printed:%d token:%d buffer:%d\n",
+						n, tok.rs.len, *len);
 				goto overflow;
 			}
 		}
