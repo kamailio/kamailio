@@ -388,7 +388,8 @@ case $1 in
 		# create new database structures
 
 		# confirm dropping of database
-		get_answer ask "This will drop your current database and create a new one.\nIt is recommended to backup your database first.\n\nContinue with reinit? (y/n): "
+		echo -e "This will drop your current database and create a new one.\nIt is recommended to first backup your database.\n"
+		get_answer ask "Continue with reinit? (y/n): "
 		if [ "$ANSWER" != "y" ]; then
 			exit 1
 		fi
