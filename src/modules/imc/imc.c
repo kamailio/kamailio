@@ -716,6 +716,7 @@ static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 	int i;
 	imc_room_p irp = NULL;
 	void *vh;
+	static str unknown = STR_STATIC_INIT("");
 
 	for(i=0; i<imc_hash_size; i++)
 	{
@@ -730,7 +731,7 @@ static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 			rpc->struct_add(vh, "SdS",
 					"room", &irp->uri,
 					"members", irp->nr_of_members,
-					"owner", &irp->members->uri);
+					"owner", (irp->nr_of_members > 0) ? &irp->members->uri : &unknown);
 
 			irp = irp->next;
 		}
