@@ -674,9 +674,9 @@ static void destroy(void)
 				return;
 			}
 
-			if(imc_dbf.insert(imc_db, rq_cols, rq_vals, 3)<0)
+			if(imc_dbf.replace(imc_db, rq_cols, rq_vals, 3, 2, 0)<0)
 			{
-				LM_ERR("failed to insert into table imc_rooms\n");
+				LM_ERR("failed to replace into table imc_rooms\n");
 				return;
 			}
 			LM_DBG("room %d %.*s\n", i, irp->name.len, irp->name.s);
@@ -694,9 +694,9 @@ static void destroy(void)
 					return;
 				}
 
-				if(imc_dbf.insert(imc_db, mq_cols, mq_vals, 4)<0)
+				if(imc_dbf.replace(imc_db, mq_cols, mq_vals, 4, 2, 0)<0)
 				{
-					LM_ERR("failed to insert  into table imc_rooms\n");
+					LM_ERR("failed to replace  into table imc_rooms\n");
 					return;
 				}
 				member = member->next;
@@ -716,6 +716,7 @@ static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 	int i;
 	imc_room_p irp = NULL;
 	void *vh;
+	static str unknown = STR_STATIC_INIT("");
 
 	for(i=0; i<imc_hash_size; i++)
 	{
@@ -730,7 +731,7 @@ static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 			rpc->struct_add(vh, "SdS",
 					"room", &irp->uri,
 					"members", irp->nr_of_members,
-					"owner", &irp->members->uri);
+					"owner", (irp->nr_of_members > 0) ? &irp->members->uri : &unknown);
 
 			irp = irp->next;
 		}
