@@ -273,12 +273,6 @@ snapshot() {
 }
 
 prepare() {
-	# Workarround for broken hiredis-devel package (0.13.3-r1)
-	sudo sed -i -e 's:prefix=/usr/local:prefix=/usr:' \
-	            -e 's:^libdir.*$:libdir=${exec_prefix}/lib:' \
-	            -e 's:^includedir.*:includedir=${prefix}/include/hiredis:' \
-	            /usr/lib/pkgconfig/hiredis.pc
-
 	default_prepare
 	cd "$builddir"
 
