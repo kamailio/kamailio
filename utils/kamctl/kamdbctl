@@ -375,6 +375,14 @@ case $1 in
 	drop)
 		# delete kamailio database
 		# create new database structures
+
+		# confirm dropping of database
+		echo -e "This will drop your current database.\nIt is recommended to first backup your database.\n"
+		get_answer ask "Continue with drop? (y/n): "
+		if [ "$ANSWER" != "y" ]; then
+			exit 1
+		fi
+
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
