@@ -15,7 +15,7 @@
 #
 # If you want to setup a database with kamdbctl, you must at least specify
 # this parameter.
-DBENGINE=MYSQL
+# DBENGINE=MYSQL
 
 ## database host
 # DBHOST=localhost
