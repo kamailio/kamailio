@@ -213,7 +213,27 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 </programlisting>
 		</example>
 	</section>
-
+	<section>
+		<title><varname>create_on_join</varname> (integer)</title>
+		<para>
+		If set to 1 and user requests to join a non-existing
+		room, the room will be automatically created. If set
+		to 0, joinin a non-existing room returns an error.
+		</para>
+		<para>
+		<emphasis>
+		The default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>create_on_join</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "create_on_join", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
