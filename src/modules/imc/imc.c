@@ -82,6 +82,7 @@ str imc_cmd_start_str = str_init(IMC_CMD_START_STR);
 char imc_cmd_start_char;
 str extra_hdrs = {NULL, 0};
 int imc_create_on_join = 1;
+int imc_check_on_create = 0;
 
 /** module functions */
 static int mod_init(void);
@@ -114,6 +115,7 @@ static param_export_t params[]={
 	{"outbound_proxy",		PARAM_STR, &outbound_proxy},
 	{"extra_hdrs",        PARAM_STR, &extra_hdrs},
 	{"create_on_join", INT_PARAM, &imc_create_on_join},
+	{"check_on_create", INT_PARAM, &imc_check_on_create},
 	{0,0,0}
 };
 

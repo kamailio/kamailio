@@ -234,6 +234,27 @@ modparam("imc", "create_on_join", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>check_on_create</varname> (integer)</title>
+		<para>
+		  If set to 1, the chat server will report an error if
+		  the user attempts to create a room that already
+		  exists.
+		</para>
+		<para>
+		<emphasis>
+		The default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>check_on_create</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "check_on_create", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>

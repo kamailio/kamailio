@@ -46,6 +46,7 @@ static str imc_msg_type = { "MESSAGE", 7 };
 static str msg_room_created    = STR_STATIC_INIT(PREFIX "Room was created");
 static str msg_room_destroyed  = STR_STATIC_INIT(PREFIX "The room has been destroyed");
 static str msg_room_not_found  = STR_STATIC_INIT(PREFIX "Room not found");
+static str msg_room_exists     = STR_STATIC_INIT(PREFIX "Room already exists");
 static str msg_user_joined     = STR_STATIC_INIT(PREFIX "<%.*s> has joined the room");
 static str msg_user_joined2    = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> has joined the room");
 static str msg_user_left       = STR_STATIC_INIT(PREFIX "<%.*s> has left the room");
@@ -216,11 +217,17 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
 		goto done;
 	}
-	
-	/* room already exists */
 
+	/* room already exists */
 	LM_DBG("room [%.*s] already exists\n", STR_FMT(&cmd->param[0]));
-	if(!(room->flags & IMC_ROOM_PRIV)) 
+
+	if (imc_check_on_create)
+	{
+		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_exists);
+		goto done;
+	}
+
+	if(!(room->flags & IMC_ROOM_PRIV))
 	{
 		LM_DBG("checking if the user [%.*s] is a member\n",
 				STR_FMT(&src->user));
