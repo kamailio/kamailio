@@ -30,6 +30,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/str.h"
 #include "imc_mng.h"
+#include "imc.h"
 
 #define IMC_CMD_START		'#'
 #define IMC_CMD_START_STR	"#"
@@ -37,7 +38,7 @@
 #define IMC_CMDID_CREATE	1
 #define IMC_CMDID_INVITE	2
 #define IMC_CMDID_JOIN		3
-#define IMC_CMDID_LEAVE         4
+#define IMC_CMDID_LEAVE		4
 #define IMC_CMDID_ACCEPT	5
 #define IMC_CMDID_REJECT	6
 #define IMC_CMDID_REMOVE	7
@@ -92,28 +93,28 @@ typedef struct _imc_cmd
 int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd);
 
 int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd,
-		str *src, str *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd,
-		str *src, str *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_message(struct sip_msg* msg, str *msgbody,
-		struct sip_uri *src, struct sip_uri *dst);
+		struct imc_uri *src, struct imc_uri *dst);
 
 #endif

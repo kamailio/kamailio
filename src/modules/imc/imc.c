@@ -447,8 +447,8 @@ static int ki_imc_manager(struct sip_msg* msg)
 {
 	imc_cmd_t cmd;
 	str body;
-	struct sip_uri from_uri, *pto_uri=NULL, *pfrom_uri=NULL;
-	struct to_body *pfrom;
+	struct sip_uri from_uri;
+	struct imc_uri src, dst;
 	int ret = -1;
 
 	body.s = get_body( msg );
@@ -472,25 +472,29 @@ static int ki_imc_manager(struct sip_msg* msg)
 		goto error;
 	}
 
+	dst.uri = GET_RURI(msg);
 	if(parse_sip_msg_uri(msg)<0)
 	{
 		LM_ERR("failed to parse r-uri\n");
 		goto error;
 	}
-
-	pto_uri=&msg->parsed_uri;
+	dst.parsed = &msg->parsed_uri;
+	dst.user = dst.parsed->user;
+	dst.host = dst.parsed->host;
 
 	if(parse_from_header(msg)<0)
 	{
-		LM_ERR("failed to parse  From header\n");
+		LM_ERR("failed to parse From header\n");
 		goto error;
 	}
-	pfrom = (struct to_body*)msg->from->parsed;
-	if(parse_uri(pfrom->uri.s, pfrom->uri.len, &from_uri)<0){
+	src.uri = &((struct to_body*)msg->from->parsed)->uri;
+	if(parse_uri(src.uri->s, src.uri->len, &from_uri)<0){
 		LM_ERR("failed to parse From URI\n");
 		goto error;
 	}
-	pfrom_uri=&from_uri;
+	src.parsed = &from_uri;
+	src.user = src.parsed->user;
+	src.host = src.parsed->host;
 
 	if(body.s[0]== imc_cmd_start_char)
 	{
@@ -505,7 +509,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 		switch(cmd.type)
 		{
 		case IMC_CMDID_CREATE:
-			if(imc_handle_create(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_create(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'create'\n");
 				ret = -30;
@@ -513,7 +517,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_JOIN:
-			if(imc_handle_join(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_join(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'join'\n");
 				ret = -40;
@@ -521,7 +525,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_INVITE:
-			if(imc_handle_invite(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_invite(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'invite'\n");
 				ret = -50;
@@ -529,7 +533,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_ACCEPT:
-			if(imc_handle_accept(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_accept(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'accept'\n");
 				ret = -60;
@@ -537,7 +541,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_REJECT:
-			if(imc_handle_reject(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_reject(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'reject'\n");
 				ret = -70;
@@ -545,7 +549,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_REMOVE:
-			if(imc_handle_remove(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_remove(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'remove'\n");
 				ret = -80;
@@ -553,7 +557,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_LEAVE:
-			if(imc_handle_leave(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_leave(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'leave'\n");
 				ret = -90;
@@ -561,7 +565,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_LIST:
-			if(imc_handle_list(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_list(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'list'\n");
 				ret = -100;
@@ -569,7 +573,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_DESTROY:
-			if(imc_handle_destroy(msg, &cmd, pfrom_uri, pto_uri)<0)
+			if(imc_handle_destroy(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'destroy'\n");
 				ret = -110;
@@ -577,8 +581,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		case IMC_CMDID_HELP:
-			if(imc_handle_help(msg, &cmd, &pfrom->uri,
-			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
+			if(imc_handle_help(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'help'\n");
 				ret = -120;
@@ -586,8 +589,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 			}
 		break;
 		default:
-			if(imc_handle_unknown(msg, &cmd, &pfrom->uri,
-			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
+			if(imc_handle_unknown(msg, &cmd, &src, &dst)<0)
 			{
 				LM_ERR("failed to handle 'unknown'\n");
 				ret = -130;
@@ -598,7 +600,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 		goto done;
 	}
 
-	if(imc_handle_message(msg, &body, pfrom_uri, pto_uri)<0)
+	if(imc_handle_message(msg, &body, &src, &dst)<0)
 	{
 		LM_ERR("failed to handle 'message'\n");
 		ret = -200;
