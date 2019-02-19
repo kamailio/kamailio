@@ -37,20 +37,22 @@
 
 #define IMC_BUF_SIZE	1024
 
+#define PREFIX "*** "
+
 static char imc_body_buf[IMC_BUF_SIZE];
 
 static str imc_msg_type = { "MESSAGE", 7 };
 
-static str msg_room_created    = STR_STATIC_INIT("*** room was created");
-static str msg_room_destroyed  = STR_STATIC_INIT("*** The room has been destroyed");
-static str msg_room_not_found  = STR_STATIC_INIT("*** Room not found");
-static str msg_user_joined     = STR_STATIC_INIT("*** <%.*s> has joined the room");
-static str msg_user_joined2    = STR_STATIC_INIT("*** <%.*s@%.*s> has joined the room");
-static str msg_user_left       = STR_STATIC_INIT("*** <%.*s> has left the room");
-static str msg_join_attempt    = STR_STATIC_INIT("*** <%.*s@%.*s> attempted to join the room");
-static str msg_invite          = STR_STATIC_INIT("INVITE from: <%.*s> (Type '%.*saccept' or '%.*sreject')");
-static str msg_user_removed    = STR_STATIC_INIT("You have been removed from this room");
-static str msg_invalid_command = STR_STATIC_INIT("invalid command '%.*s' - send ''%.*shelp' for details");
+static str msg_room_created    = STR_STATIC_INIT(PREFIX "Room was created");
+static str msg_room_destroyed  = STR_STATIC_INIT(PREFIX "The room has been destroyed");
+static str msg_room_not_found  = STR_STATIC_INIT(PREFIX "Room not found");
+static str msg_user_joined     = STR_STATIC_INIT(PREFIX "<%.*s> has joined the room");
+static str msg_user_joined2    = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> has joined the room");
+static str msg_user_left       = STR_STATIC_INIT(PREFIX "<%.*s> has left the room");
+static str msg_join_attempt    = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> attempted to join the room");
+static str msg_invite          = STR_STATIC_INIT(PREFIX "Invite to join the room from: <%.*s> (send '%.*saccept' or '%.*sreject')");
+static str msg_user_removed    = STR_STATIC_INIT(PREFIX "You have been removed from the room");
+static str msg_invalid_command = STR_STATIC_INIT(PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)");
 
 int imc_send_message(str *src, str *dst, str *headers, str *body);
 int imc_room_broadcast(imc_room_p room, str *ctype, str *body);
