@@ -47,7 +47,7 @@ static str msg_user_joined     = STR_STATIC_INIT("*** <%.*s> has joined the room
 static str msg_user_joined2    = STR_STATIC_INIT("*** <%.*s@%.*s> has joined the room");
 static str msg_user_left       = STR_STATIC_INIT("*** <%.*s> has left the room");
 static str msg_join_attempt    = STR_STATIC_INIT("*** <%.*s@%.*s> attempted to join the room");
-static str msg_invite          = STR_STATIC_INIT("INVITE from: <%.*> (Type '#accept' or '#reject')");
+static str msg_invite          = STR_STATIC_INIT("INVITE from: <%.*s> (Type '%.*saccept' or '%.*sreject')");
 static str msg_user_removed    = STR_STATIC_INIT("You have been removed from this room");
 static str msg_invalid_command = STR_STATIC_INIT("invalid command '%.*s' - send ''%.*shelp' for details");
 
@@ -484,7 +484,8 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	body.s = imc_body_buf;
-        body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invite.s, STR_FMT(&member->uri));
+        body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invite.s, STR_FMT(&member->uri),
+		STR_FMT(&imc_cmd_start_str), STR_FMT(&imc_cmd_start_str));
 
 	LM_DBG("to=[%.*s]\nfrom=[%.*s]\nbody=[%.*s]\n",
 	       STR_FMT(&member->uri), STR_FMT(&room->uri), STR_FMT(&body));
