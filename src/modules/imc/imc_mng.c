@@ -317,11 +317,11 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	memcpy(imp->uri.s+5+user->len, domain->s, domain->len);
 	imp->uri.s[imp->uri.len] = '\0';
 	
-	LM_DBG("[uri]= %.*s\n", imp->uri.len, imp->uri.s);
+	LM_DBG("[uri]= %.*s\n", STR_FMT(&imp->uri));
 	imp->user.len = user->len;
 	imp->user.s = imp->uri.s+4;
 	
-	LM_DBG("[user]= %.*s\n", imp->user.len, imp->user.s);
+	LM_DBG("[user]= %.*s\n", STR_FMT(&imp->user));
 	imp->domain.len = domain->len;
 	imp->domain.s = imp->uri.s+5+user->len;
 
