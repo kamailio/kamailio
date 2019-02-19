@@ -189,7 +189,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		}	
 		LM_DBG("added room uri= %.*s\n", room->uri.len, room->uri.s);
 		flag_member |= IMC_MEMBER_OWNER;
-		/* adding the owner as the forst member*/
+		/* adding the owner as the first member*/
 		member= imc_add_member(room, &src->user, &src->host, flag_member);
 		if(member == NULL)
 		{
@@ -358,33 +358,22 @@ error:
 	return -1;
 }
 
-/**
- *
- */
-int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
-{
-	imc_room_p room = 0;
-	imc_member_p member = 0;
-	int flag_member = 0;
-	int size = 0;
-	int i = 0;
-	int add_domain = 0;
-	int add_sip = 0;
-	str uri = {0, 0};
-	str body;
-	str room_name;
-	struct sip_uri inv_uri;
-	del_member_t *cback_param = NULL;
-	int result;
-	uac_req_t uac_r;
 
-	size = cmd->param[0].len+2 ;	
-	add_domain = 1;
-	add_sip = 0;
+
+
+static str
+param2uri(struct sip_uri *parsed_uri, str param, struct sip_uri *dst)
+{
+	int size;
+	int add_domain = 1;
+	int add_sip = 0;
+	int i = 0;
+	str uri = {0, 0};
+
+	size = param.len+2 ;
 	while (i<size )
 	{
-		if(cmd->param[0].s[i]== '@')
+		if(param.s[i]== '@')
 		{	
 			add_domain = 0;
 			break;
@@ -394,7 +383,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 
 	if(add_domain)
 		size += dst->host.len;
-	if(cmd->param[0].len<4 || strncmp(cmd->param[0].s, "sip:", 4)!=0)
+	if(param.len<4 || strncmp(param.s, "sip:", 4)!=0)
 	{
 		size += 4;
 		add_sip = 1;
@@ -413,8 +402,8 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 		size=4;
 	}
 		
-	memcpy(uri.s+size, cmd->param[0].s, cmd->param[0].len);
-	size += cmd->param[0].len;
+	memcpy(uri.s+size, param.s, param.len);
+	size += param.len;
 
 	if(add_domain)
 	{	
@@ -425,12 +414,42 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 	uri.len = size;
 
-	if(parse_uri(uri.s, uri.len, &inv_uri)!=0)
+	if(parse_uri(uri.s, uri.len, parsed_uri)!=0)
 	{
 		LM_ERR("bad uri [%.*s]!\n", uri.len, uri.s);
 		goto error;
 	}
-					
+        return uri;
+
+error:
+	if(uri.s!=0)
+		pkg_free(uri.s);
+        uri.s = 0;
+        uri.len = 0;
+        return uri;
+}
+
+
+/**
+ *
+ */
+int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
+		struct sip_uri *src, struct sip_uri *dst)
+{
+	imc_room_p room = 0;
+	imc_member_p member = 0;
+	int flag_member = 0;
+	str uri = {0, 0};
+	str body;
+	str room_name;
+	del_member_t *cback_param = NULL;
+	int result;
+	uac_req_t uac_r;
+        struct sip_uri inv_uri;
+
+        uri = param2uri(&inv_uri, cmd->param[0], dst);
+        if (uri.s == 0) goto error;
+
 	room_name = (cmd->param[1].s)?cmd->param[1]:dst->user;
 	room = imc_get_room(&room_name, &dst->host);				
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
@@ -592,63 +611,10 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	str room_name;
 	str body;
 	str uri = {0, 0};
-	int size =0;
-	int i = 0;
-	int add_domain = 0;
-	int add_sip = 0;
-	struct sip_uri inv_uri;
+        struct sip_uri parsed_uri;
 
-	size= cmd->param[0].len+2;
-	add_domain = 1;
-	while (i<size )
-	{
-		if(cmd->param[0].s[i]== '@')
-		{	
-			add_domain =0;
-			break;
-		}
-		i++;
-	}
-
-	if(add_domain)
-		size += dst->host.len;
-	if(cmd->param[0].len<=4 || strncmp(cmd->param[0].s, "sip:", 4)!=0)
-	{
-		size+= 4;
-		add_sip = 1;
-	}
-
-	uri.s = (char*)pkg_malloc(size*sizeof(char));
-	if(uri.s == NULL)
-	{
-		LM_ERR("no more pkg memory\n");
-		goto error;
-	}
-
-	size= 0;
-	if(add_sip)
-	{	
-		strcpy(uri.s, "sip:");
-		size = 4;
-	}
-					
-	memcpy(uri.s+size, cmd->param[0].s, cmd->param[0].len);
-	size+= cmd->param[0].len;
-
-	if(add_domain)
-	{	
-		uri.s[size] = '@';
-		size++;
-		memcpy(uri.s+size, dst->host.s, dst->host.len);
-		size+= dst->host.len;
-	}
-	uri.len = size;
-
-	if(parse_uri(uri.s, uri.len, &inv_uri)<0)
-	{
-		LM_ERR("invalid uri [%.*s]\n", uri.len, uri.s);
-		goto error;
-	}
+        uri = param2uri(&parsed_uri, cmd->param[0], dst);
+        if (uri.s == NULL) goto error;
 					
 	room_name = cmd->param[1].s?cmd->param[1]:dst->user;
 	room= imc_get_room(&room_name, &dst->host);
@@ -678,18 +644,18 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	/* verify if the user that is to be removed is a member of the room */
-	member= imc_get_member(room, &inv_uri.user, &inv_uri.host);
+	member= imc_get_member(room, &parsed_uri.user, &parsed_uri.host);
 	if(member== NULL)
 	{
 		LM_ERR("user [%.*s] is not member of room [%.*s]!\n", 
-				inv_uri.user.len, inv_uri.user.s, room_name.len, room_name.s);
+				parsed_uri.user.len, parsed_uri.user.s, room_name.len, room_name.s);
 		goto error;
 	}
 				
 	if(member->flags & IMC_MEMBER_OWNER)
 	{
 		LM_ERR("user [%.*s] is owner of room [%.*s]"
-			" -- cannot be removed!\n", inv_uri.user.len, inv_uri.user.s,
+			" -- cannot be removed!\n", parsed_uri.user.len, parsed_uri.user.s,
 			room_name.len, room_name.s);
 		goto error;
 	}	
@@ -704,7 +670,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 
 	member->flags |= IMC_MEMBER_DELETED;
-	imc_del_member(room, &inv_uri.user, &inv_uri.host);
+	imc_del_member(room, &parsed_uri.user, &parsed_uri.host);
 
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, "*** <%.*s> has joined the room",
@@ -793,7 +759,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 	str body;
 	char *p;
 	
-	/* the user wants to leave the room */
+	/* the user wants to list the room */
 	room_name = cmd->param[0].s?cmd->param[0]:dst->user;
 
 	room= imc_get_room(&room_name, &dst->host);
