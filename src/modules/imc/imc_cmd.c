@@ -175,7 +175,7 @@ done:
  *
  */
 int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -223,14 +223,13 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 
 	if (imc_check_on_create)
 	{
-		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_exists);
+		imc_send_message(dst->uri, src->uri, &all_hdrs, &msg_room_exists);
 		goto done;
 	}
 
 	if(!(room->flags & IMC_ROOM_PRIV))
 	{
-		LM_DBG("checking if the user [%.*s] is a member\n",
-				STR_FMT(&src->user));
+		LM_DBG("checking if the user [%.*s] is a member\n", STR_FMT(&src->user));
 		member= imc_get_member(room, &src->user, &src->host);
 		if(member== NULL)
 		{					
@@ -268,7 +267,7 @@ error:
  *
  */
 int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -283,28 +282,29 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	{			
 		LM_DBG("could not find room [%.*s]\n", STR_FMT(&room_name));
 
-		if (imc_create_on_join) {
-			LM_DBG("Creating room [%.*s]\n", STR_FMT(&room_name));
-			room= imc_add_room(&room_name, &dst->host, flag_room);
-			if(room == NULL)
-			{
-				LM_ERR("failed to add new room [%.*s]\n", STR_FMT(&room_name));
-				goto error;
-			}
-			LM_DBG("created a new room [%.*s]\n", STR_FMT(&room->name));
-
-			flag_member |= IMC_MEMBER_OWNER;
-			member= imc_add_member(room, &src->user, &src->host, flag_member);
-			if(member == NULL)
-			{
-				LM_ERR("failed to add new member [%.*s]\n", STR_FMT(&src->user));
-				goto error;
-			}
-			/* send info message */
-			imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
-		} else {
-			imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_not_found);
+		if (!imc_create_on_join)
+		{
+			imc_send_message(dst->uri, src->uri, &all_hdrs, &msg_room_not_found);
+			goto done;
 		}
+
+		LM_DBG("Creating room [%.*s]\n", STR_FMT(&room_name));
+		room= imc_add_room(&room_name, &dst->host, flag_room);
+		if(room == NULL)
+		{
+			LM_ERR("failed to add new room [%.*s]\n", STR_FMT(&room_name));
+			goto error;
+		}
+		LM_DBG("created a new room [%.*s]\n", STR_FMT(&room->name));
+			flag_member |= IMC_MEMBER_OWNER;
+		member= imc_add_member(room, &src->user, &src->host, flag_member);
+		if(member == NULL)
+		{
+			LM_ERR("failed to add new member [%.*s]\n", STR_FMT(&src->user));
+			goto error;
+		}
+		/* send info message */
+		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
 		goto done;
 	}
 
@@ -444,7 +444,7 @@ error:
  *
  */
 int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -457,7 +457,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	uac_req_t uac_r;
 	struct sip_uri inv_uri;
 
-	uri = param2uri(&inv_uri, cmd->param[0], dst);
+	uri = param2uri(&inv_uri, cmd->param[0], dst->parsed);
 	if (uri.s == 0) goto error;
 
 	room_name = (cmd->param[1].s)?cmd->param[1]:dst->user;
@@ -553,7 +553,7 @@ error:
  *
  */
 int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -600,7 +600,7 @@ error:
  *
  */
 int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -609,7 +609,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	str uri = {0, 0};
         struct sip_uri parsed_uri;
 
-        uri = param2uri(&parsed_uri, cmd->param[0], dst);
+        uri = param2uri(&parsed_uri, cmd->param[0], dst->parsed);
         if (uri.s == NULL) goto error;
 					
 	room_name = cmd->param[1].s?cmd->param[1]:dst->user;
@@ -690,7 +690,7 @@ error:
  *
  */
 int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -742,7 +742,7 @@ error:
  *
  */
 int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -814,7 +814,7 @@ error:
  *
  */
 int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -881,7 +881,7 @@ error:
  *
  */
 int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
@@ -934,7 +934,7 @@ error:
 /**
  *
  */
-int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
+int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, struct imc_uri *src, struct imc_uri *dst)
 {
 	str body;
 	uac_req_t uac_r;
@@ -942,12 +942,12 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 	body.s   = IMC_HELP_MSG;
 	body.len = IMC_HELP_MSG_LEN;
 
-	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src), STR_FMT(dst));
+	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src->uri), STR_FMT(dst->uri));
 	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
-				src,									/* To */
-				dst,									/* From */
+				src->uri,								/* To */
+				dst->uri,								/* From */
 				(outbound_proxy.s)?&outbound_proxy:NULL/* outbound proxy */
 				);
 	return 0;
@@ -956,7 +956,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 /**
  *
  */
-int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
+int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, struct imc_uri *src, struct imc_uri *dst)
 {
 	str body;
 	uac_req_t uac_r;
@@ -971,12 +971,12 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 		return -1;
 	}
 
-	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src), STR_FMT(dst));
+	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src->uri), STR_FMT(dst->uri));
 	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
-				src,									/* To */
-				dst,									/* From */
+				src->uri,								/* To */
+				dst->uri,								/* From */
 				(outbound_proxy.s)?&outbound_proxy:NULL /* outbound proxy */
 			);
 	return 0;
@@ -986,7 +986,7 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
  *
  */
 int imc_handle_message(struct sip_msg* msg, str *msgbody,
-		struct sip_uri *src, struct sip_uri *dst)
+		struct imc_uri *src, struct imc_uri *dst)
 {
 	imc_room_p room = 0;
 	imc_member_p member = 0;
