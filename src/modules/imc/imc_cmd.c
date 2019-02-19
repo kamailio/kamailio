@@ -43,6 +43,7 @@ static str imc_msg_type = { "MESSAGE", 7 };
 
 static str msg_room_created    = STR_STATIC_INIT("*** room was created");
 static str msg_room_destroyed  = STR_STATIC_INIT("*** The room has been destroyed");
+static str msg_room_not_found  = STR_STATIC_INIT("*** Room not found");
 static str msg_user_joined     = STR_STATIC_INIT("*** <%.*s> has joined the room");
 static str msg_user_joined2    = STR_STATIC_INIT("*** <%.*s@%.*s> has joined the room");
 static str msg_user_left       = STR_STATIC_INIT("*** <%.*s> has left the room");
@@ -271,24 +272,30 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	room=imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{			
-		LM_DBG("could not find room [%.*s]- adding\n", STR_FMT(&room_name));
-		room= imc_add_room(&room_name, &dst->host, flag_room);
-		if(room == NULL)
-		{
-			LM_ERR("failed to add new room [%.*s]\n", STR_FMT(&room_name));
-			goto error;
-		}
-		LM_DBG("created a new room [%.*s]\n", STR_FMT(&room->name));
+		LM_DBG("could not find room [%.*s]\n", STR_FMT(&room_name));
 
-		flag_member |= IMC_MEMBER_OWNER;
-		member= imc_add_member(room, &src->user, &src->host, flag_member);
-		if(member == NULL)
-		{
-			LM_ERR("failed to add new member [%.*s]\n", STR_FMT(&src->user));
-			goto error;
+		if (imc_create_on_join) {
+			LM_DBG("Creating room [%.*s]\n", STR_FMT(&room_name));
+			room= imc_add_room(&room_name, &dst->host, flag_room);
+			if(room == NULL)
+			{
+				LM_ERR("failed to add new room [%.*s]\n", STR_FMT(&room_name));
+				goto error;
+			}
+			LM_DBG("created a new room [%.*s]\n", STR_FMT(&room->name));
+
+			flag_member |= IMC_MEMBER_OWNER;
+			member= imc_add_member(room, &src->user, &src->host, flag_member);
+			if(member == NULL)
+			{
+				LM_ERR("failed to add new member [%.*s]\n", STR_FMT(&src->user));
+				goto error;
+			}
+			/* send info message */
+			imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
+		} else {
+			imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_not_found);
 		}
-		/* send info message */
-		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
 		goto done;
 	}
 
