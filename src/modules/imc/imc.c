@@ -548,10 +548,10 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
-		case IMC_CMDID_EXIT:
-			if(imc_handle_exit(msg, &cmd, pfrom_uri, pto_uri)<0)
+		case IMC_CMDID_LEAVE:
+			if(imc_handle_leave(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LM_ERR("failed to handle 'exit'\n");
+				LM_ERR("failed to handle 'leave'\n");
 				ret = -90;
 				goto error;
 			}

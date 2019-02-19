@@ -383,7 +383,7 @@ if(is_method("MESSAGE)
   -eg: #remove sip:john@kamailio.org, sent to sip:chat-000@kamailio.org
   -error case: return codes: -80 -- -89
 
-7.exit
+7.leave
   -leaving a room
   -takes one optional parameter - the address of the room - if not
     present it will be considered to be the address in the To header
@@ -393,7 +393,7 @@ if(is_method("MESSAGE)
 
 8.destroy
   -removing a room
-  -the parameter is the same as for exit
+  -the parameter is the same as for leave
   -only the owner of a room has the right to destroy it
   -error case: return codes: -110 -- -119
 
