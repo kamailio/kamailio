@@ -157,12 +157,12 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} while(1);
 	
 done:
-	LM_DBG("command: [%.*s]\n", cmd->name.len, cmd->name.s);
+	LM_DBG("command: [%.*s]\n", STR_FMT(&cmd->name));
 	for(i=0; i<IMC_CMD_MAX_PARAM; i++)
 	{
 		if(cmd->param[i].len<=0)
 			break;
-		LM_DBG("parameter %d=[%.*s]\n", i, cmd->param[i].len, cmd->param[i].s);
+		LM_DBG("parameter %d=[%.*s]\n", i, STR_FMT(&cmd->param[i]));
 	}
 	return 0;
 }
@@ -182,7 +182,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	room = imc_get_room(&cmd->param[0], &dst->host);
 	if(room== NULL)
 	{
-		LM_DBG("new room [%.*s]\n",	cmd->param[0].len, cmd->param[0].s);
+		LM_DBG("new room [%.*s]\n",	STR_FMT(&cmd->param[0]));
 		if(cmd->param[1].len==IMC_ROOM_PRIVATE_LEN
 			&& !strncasecmp(cmd->param[1].s, IMC_ROOM_PRIVATE,
 				cmd->param[1].len))
@@ -197,17 +197,17 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 			LM_ERR("failed to add new room\n");
 			goto error;
 		}	
-		LM_DBG("added room uri= %.*s\n", room->uri.len, room->uri.s);
+		LM_DBG("added room uri= %.*s\n", STR_FMT(&room->uri));
 		flag_member |= IMC_MEMBER_OWNER;
 		/* adding the owner as the first member*/
 		member= imc_add_member(room, &src->user, &src->host, flag_member);
 		if(member == NULL)
 		{
-			LM_ERR("failed to add owner [%.*s]\n", src->user.len, src->user.s);
+			LM_ERR("failed to add owner [%.*s]\n", STR_FMT(&src->user));
 			goto error;
 		}
 		LM_DBG("added the owner as the first member "
-				"[%.*s]\n",member->uri.len, member->uri.s);
+				"[%.*s]\n", STR_FMT(&member->uri));
 	
 		/* send info message */
 		imc_send_message(&room->uri, &member->uri, &all_hdrs, &msg_room_created);
@@ -216,22 +216,21 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	
 	/* room already exists */
 
-	LM_DBG("room [%.*s] already exists\n", cmd->param[0].len, cmd->param[0].s);
+	LM_DBG("room [%.*s] already exists\n", STR_FMT(&cmd->param[0]));
 	if(!(room->flags & IMC_ROOM_PRIV)) 
 	{
 		LM_DBG("checking if the user [%.*s] is a member\n",
-				src->user.len, src->user.s);
+				STR_FMT(&src->user));
 		member= imc_get_member(room, &src->user, &src->host);
 		if(member== NULL)
 		{					
 			member= imc_add_member(room, &src->user, &src->host, flag_member);
 			if(member == NULL)
 			{
-				LM_ERR("failed to add member [%.*s]\n",
-					src->user.len, src->user.s);
+				LM_ERR("failed to add member [%.*s]\n", STR_FMT(&src->user));
 				goto error;
 			}
-			LM_DBG("added as member [%.*s]\n",member->uri.len, member->uri.s);
+			LM_DBG("added as member [%.*s]\n", STR_FMT(&member->uri));
 			/* send info message */
 			body.s = imc_body_buf;
 			body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(&member->uri));
@@ -239,7 +238,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 				imc_room_broadcast(room, &all_hdrs, &body);
 
 			if(body.len>=IMC_BUF_SIZE)
-				LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+				LM_ERR("member name %.*s truncated\n", STR_FMT(&member->uri));
 		}
 	}
 
@@ -272,23 +271,20 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	room=imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{			
-		LM_DBG("could not find room [%.*s]- adding\n", 
-				room_name.len, room_name.s);
+		LM_DBG("could not find room [%.*s]- adding\n", STR_FMT(&room_name));
 		room= imc_add_room(&room_name, &dst->host, flag_room);
 		if(room == NULL)
 		{
-			LM_ERR("failed to add new room [%.*s]\n",
-				room_name.len, room_name.s);
+			LM_ERR("failed to add new room [%.*s]\n", STR_FMT(&room_name));
 			goto error;
 		}
-		LM_DBG("created a new room [%.*s]\n", room->name.len, room->name.s);
+		LM_DBG("created a new room [%.*s]\n", STR_FMT(&room->name));
 
 		flag_member |= IMC_MEMBER_OWNER;
 		member= imc_add_member(room, &src->user, &src->host, flag_member);
 		if(member == NULL)
 		{
-			LM_ERR("failed to add new member [%.*s]\n",
-				src->user.len, src->user.s);
+			LM_ERR("failed to add new member [%.*s]\n", STR_FMT(&src->user));
 			goto error;
 		}
 		/* send info message */
@@ -297,32 +293,31 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	/* room exists */
-	LM_DBG("found room [%.*s]\n", room_name.len, room_name.s);
+	LM_DBG("found room [%.*s]\n", STR_FMT(&room_name));
 
 	member= imc_get_member(room, &src->user, &src->host);
 	if(!(room->flags & IMC_ROOM_PRIV))
 	{
-		LM_DBG("room [%.*s] is public\n", room_name.len, room_name.s);
+		LM_DBG("room [%.*s] is public\n", STR_FMT(&room_name));
 		if(member== NULL)
 		{					
-			LM_DBG("adding new member [%.*s]\n", src->user.len, src->user.s);
+			LM_DBG("adding new member [%.*s]\n", STR_FMT(&src->user));
 			member= imc_add_member(room, &src->user,
 									&src->host, flag_member);	
 			if(member == NULL)
 			{
-				LM_ERR("adding new user [%.*s]\n", src->user.len, src->user.s);
+				LM_ERR("adding new user [%.*s]\n", STR_FMT(&src->user));
 				goto error;
 			}	
 			goto build_inform;
 		} else {	
-			LM_DBG("member [%.*s] is in room already\n",
-				member->uri.len,member->uri.s );
+			LM_DBG("member [%.*s] is in room already\n", STR_FMT(&member->uri));
 		}
 	} else {
 		if(member==NULL)
 		{
 			LM_ERR("attept to join private room [%.*s] from user [%.*s]\n",
-					room_name.len, room_name.s,	src->user.len, src->user.s);
+					STR_FMT(&room_name), STR_FMT(&src->user));
 			goto build_inform;
 
 		}
@@ -344,8 +339,7 @@ build_inform:
 	if(body.len>0)
 		imc_room_broadcast(room, &all_hdrs, &body);
 	if(body.len>=IMC_BUF_SIZE)
-		LM_ERR("member name %.*s@%.*s truncated\n",
-				src->user.len, src->user.s, src->host.len, src->host.s);
+		LM_ERR("member name %.*s@%.*s truncated\n", STR_FMT(&src->user), STR_FMT(&src->host));
 
 done:
 	if(room!=NULL)
@@ -416,7 +410,7 @@ param2uri(struct sip_uri *parsed_uri, str param, struct sip_uri *dst)
 
 	if(parse_uri(uri.s, uri.len, parsed_uri)!=0)
 	{
-		LM_ERR("bad uri [%.*s]!\n", uri.len, uri.s);
+		LM_ERR("bad uri [%.*s]!\n", STR_FMT(&uri));
 		goto error;
 	}
         return uri;
@@ -445,17 +439,16 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	del_member_t *cback_param = NULL;
 	int result;
 	uac_req_t uac_r;
-        struct sip_uri inv_uri;
+	struct sip_uri inv_uri;
 
-        uri = param2uri(&inv_uri, cmd->param[0], dst);
-        if (uri.s == 0) goto error;
+	uri = param2uri(&inv_uri, cmd->param[0], dst);
+	if (uri.s == 0) goto error;
 
 	room_name = (cmd->param[1].s)?cmd->param[1]:dst->user;
 	room = imc_get_room(&room_name, &dst->host);				
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("the room does not exist [%.*s]!\n",
-				room_name.len, room_name.s);
+		LM_ERR("the room does not exist [%.*s]!\n", STR_FMT(&room_name));
 		goto error;
 	}			
 	member= imc_get_member(room, &src->user, &src->host);
@@ -463,14 +456,14 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member==NULL)
 	{
 		LM_ERR("user [%.*s] is not member of[%.*s]!\n",
-			src->user.len, src->user.s, room_name.len, room_name.s);
+			STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 	if(!(member->flags & IMC_MEMBER_OWNER) &&
 			!(member->flags & IMC_MEMBER_ADMIN))
 	{
 		LM_ERR("user [%.*s] has no right to invite"
-				" other users!\n", src->user.len, src->user.s);
+				" other users!\n", STR_FMT(&src->user));
 		goto error;
 	}
     
@@ -478,7 +471,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member!=NULL)
 	{
 		LM_ERR("user [%.*s] is already member"
-				" of the room!\n", inv_uri.user.len, inv_uri.user.s);
+				" of the room!\n", STR_FMT(&inv_uri.user));
 		goto error;
 	}
 		
@@ -486,8 +479,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	member=imc_add_member(room, &inv_uri.user, &inv_uri.host, flag_member);
 	if(member == NULL)
 	{
-		LM_ERR("adding member [%.*s]\n",
-				inv_uri.user.len, inv_uri.user.s);
+		LM_ERR("adding member [%.*s]\n", STR_FMT(&inv_uri.user));
 		goto error;
 	}
 
@@ -556,15 +548,14 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	room=imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n",	room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n",	STR_FMT(&room_name));
 		goto error;
 	}			
 	/* if aready invited add as a member */
 	member=imc_get_member(room, &src->user, &src->host);
 	if(member==NULL || !(member->flags & IMC_MEMBER_INVITED))
 	{
-		LM_ERR("user [%.*s] not invited to the room!\n",
-				src->user.len, src->user.s);
+		LM_ERR("user [%.*s] not invited to the room!\n", STR_FMT(&src->user));
 		goto error;
 	}
 			
@@ -577,7 +568,7 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 		imc_room_broadcast(room, &all_hdrs, &body);
 
 	if(body.len>=IMC_BUF_SIZE)
-		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+		LM_ERR("member name %.*s truncated\n", STR_FMT(&member->uri));
 
 	imc_release_room(room);
 	return 0;
@@ -608,7 +599,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	room= imc_get_room(&room_name, &dst->host);
 	if(room==NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s]does not exist!\n", room_name.len, room_name.s);
+		LM_ERR("room [%.*s]does not exist!\n", STR_FMT(&room_name));
 		goto error;
 	}			
 
@@ -619,7 +610,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member== NULL)
 	{
 		LM_ERR("user [%.*s] is not member of room [%.*s]!\n", 
-				src->user.len, src->user.s, room_name.len, room_name.s);
+				STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 	
@@ -627,7 +618,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 		!(member->flags & IMC_MEMBER_ADMIN))
 	{
 			LM_ERR("user [%.*s] has no right to remove other users [%.*s]!\n",
-					src->user.len, src->user.s,	uri.len, uri.s);
+					STR_FMT(&src->user), STR_FMT(&uri));
 			goto error;
 	}
 
@@ -636,15 +627,15 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member== NULL)
 	{
 		LM_ERR("user [%.*s] is not member of room [%.*s]!\n", 
-				parsed_uri.user.len, parsed_uri.user.s, room_name.len, room_name.s);
+				STR_FMT(&parsed_uri.user), STR_FMT(&room_name));
 		goto error;
 	}
 				
 	if(member->flags & IMC_MEMBER_OWNER)
 	{
 		LM_ERR("user [%.*s] is owner of room [%.*s]"
-			" -- cannot be removed!\n", parsed_uri.user.len, parsed_uri.user.s,
-			room_name.len, room_name.s);
+			" -- cannot be removed!\n", STR_FMT(&parsed_uri.user),
+			STR_FMT(&room_name));
 		goto error;
 	}	
 
@@ -663,7 +654,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 		imc_room_broadcast(room, &all_hdrs, &body);
 
 	if(body.len>=IMC_BUF_SIZE)
-		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+		LM_ERR("member name %.*s truncated\n", STR_FMT(&member->uri));
 
 	if(uri.s!=0)
 		pkg_free(uri.s);
@@ -695,7 +686,7 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n", room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n", STR_FMT(&room_name));
 		goto error;
 	}			
 	/* If the user is an invited member, delete it froim the list */
@@ -703,7 +694,7 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member==NULL || !(member->flags & IMC_MEMBER_INVITED))
 	{
 		LM_ERR("user [%.*s] was not invited to room [%.*s]!\n",
-				src->user.len, src->user.s,	room_name.len, room_name.s);
+				STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}		
 	
@@ -712,12 +703,12 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, 
 			"The user [%.*s] has rejected the invitation",
-			src->user.len, src->user.s);
+			STR_FMT(&src->user));
 	if(body.len>0)
 	    imc_send_message(&room->uri, &memeber->uri, &all_hdrs, &body);
 #endif
 	LM_ERR("user [%.*s] rejected invitation to room [%.*s]!\n",
-			src->user.len, src->user.s,	room_name.len, room_name.s);
+			STR_FMT(&src->user), STR_FMT(&room_name));
 
 	imc_del_member(room, &src->user, &src->host);
 	
@@ -749,7 +740,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 	room= imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n",	room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n",	STR_FMT(&room_name));
 		goto error;
 	}		
 
@@ -759,7 +750,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member == NULL)
 	{
 		LM_ERR("user [%.*s] is not member of room [%.*s]!\n", 
-				src->user.len, src->user.s,	room_name.len, room_name.s);
+				STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 	p = imc_body_buf;
@@ -791,7 +782,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 	*(--p) = 0;
 	body.s   = imc_body_buf;
 	body.len = p-body.s;
-	LM_DBG("members = [%.*s]\n", body.len, body.s);
+	LM_DBG("members = [%.*s]\n", STR_FMT(&body));
 	imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 
 
@@ -819,7 +810,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	room= imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n",	room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n",	STR_FMT(&room_name));
 		goto error;
 	}		
 
@@ -829,7 +820,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member== NULL)
 	{
 		LM_ERR("user [%.*s] is not member of room [%.*s]!\n", 
-				src->user.len, src->user.s,	room_name.len, room_name.s);
+				STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 			
@@ -855,7 +846,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 			imc_room_broadcast(room, &all_hdrs, &body);
 
 		if(body.len>=IMC_BUF_SIZE)
-			LM_ERR("user name %.*s truncated\n", src->user.len, src->user.s);
+			LM_ERR("user name %.*s truncated\n", STR_FMT(&src->user));
 	}
 
 done:
@@ -885,7 +876,7 @@ int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
 	room= imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n",	room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n",	STR_FMT(&room_name));
 		goto error;
 	}		
 
@@ -895,14 +886,14 @@ int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(member== NULL)
 	{
 		LM_ERR("user [%.*s] is not a member of room [%.*s]!\n", 
-				src->user.len, src->user.s,	room_name.len, room_name.s);
+				STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 			
 	if(!(member->flags & IMC_MEMBER_OWNER))
 	{
 		LM_ERR("user [%.*s] is not owner of room [%.*s] -- cannot destroy it"
-				"!\n", src->user.len, src->user.s, room_name.len, room_name.s);
+				"!\n", STR_FMT(&src->user), STR_FMT(&room_name));
 		goto error;
 	}
 	room->flags |= IMC_ROOM_DELETED;
@@ -934,7 +925,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 	body.s   = IMC_HELP_MSG;
 	body.len = IMC_HELP_MSG_LEN;
 
-	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
+	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src), STR_FMT(dst));
 	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
@@ -963,7 +954,7 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 		return -1;
 	}
 
-	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
+	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(src), STR_FMT(dst));
 	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
@@ -987,7 +978,7 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	room = imc_get_room(&dst->user, &dst->host);		
 	if(room==NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] does not exist!\n",	dst->user.len, dst->user.s);
+		LM_ERR("room [%.*s] does not exist!\n",	STR_FMT(&dst->user));
 		goto error;
 	}
 
@@ -995,17 +986,17 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	if(member== NULL || (member->flags & IMC_MEMBER_INVITED))
 	{
 		LM_ERR("user [%.*s] has no rights to send messages to room [%.*s]!\n",
-				src->user.len, src->user.s,	dst->user.len, dst->user.s);
+				STR_FMT(&src->user), STR_FMT(&dst->user));
 		goto error;
 	}
 	
-	LM_DBG("broadcast to room [%.*s]\n", room->uri.len, room->uri.s);
+	LM_DBG("broadcast to room [%.*s]\n", STR_FMT(&room->uri));
 
 	body.s = imc_body_buf;
 	body.len = msgbody->len + member->uri.len /* -4 (sip:) +4 (<>: ) */;
 	if(body.len>=IMC_BUF_SIZE)
 	{
-		LM_ERR("buffer overflow [%.*s]\n", msgbody->len, msgbody->s);
+		LM_ERR("buffer overflow [%.*s]\n", STR_FMT(msgbody));
 		goto error;
 	}
 	body.s[0] = '<';
@@ -1043,7 +1034,7 @@ int imc_room_broadcast(imc_room_p room, str *ctype, str *body)
 
 	while(imp)
 	{
-		LM_DBG("to uri = %.*s\n", imp->uri.len, imp->uri.s);
+		LM_DBG("to uri = %.*s\n", STR_FMT(&imp->uri));
 		if((imp->flags&IMC_MEMBER_INVITED)||(imp->flags&IMC_MEMBER_DELETED)
 				|| (imp->flags&IMC_MEMBER_SKIP))
 		{
@@ -1101,10 +1092,8 @@ void imc_inv_callback( struct cell *t, int type, struct tmcb_params *ps)
 	
 	LM_DBG("completed with status %d [member name domain:"
 			"%p/%.*s/%.*s]\n",ps->code, ps->param, 
-			((del_member_t *)(*ps->param))->member_name.len,
-			((del_member_t *)(*ps->param))->member_name.s,
-			((del_member_t *)(*ps->param))->member_domain.len, 
-			((del_member_t *)(*ps->param))->member_domain.s);
+			STR_FMT(&((del_member_t *)(*ps->param))->member_name),
+			STR_FMT(&((del_member_t *)(*ps->param))->member_domain));
 	if(ps->code < 300)
 		return;
 	else
@@ -1157,8 +1146,8 @@ send_message:
 	strncpy(to_uri_s.s,((del_member_t *)(*ps->param))->inv_uri.s ,
 			((del_member_t *)(*ps->param))->inv_uri.len);
 
-	LM_DBG("to: %.*s\nfrom: %.*s\nbody: %.*s\n", to_uri_s.len, to_uri_s.s,
-			from_uri_s.len, from_uri_s.s, body_final.len, body_final.s);
+	LM_DBG("to: %.*s\nfrom: %.*s\nbody: %.*s\n", STR_FMT(&to_uri_s),
+			STR_FMT(&from_uri_s), STR_FMT(&body_final));
 	set_uac_req(&uac_r, &imc_msg_type, &extra_hdrs, &body_final, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 					NULL,									/* Request-URI */

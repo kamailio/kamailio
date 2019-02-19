@@ -250,8 +250,8 @@ int add_from_db(void)
 			flag = m_row_vals[2].val.int_val;
 
 			LM_DBG("adding memeber: [name]=%.*s [domain]=%.*s"
-					" in [room]= %.*s\n",name.len, name.s, domain.len,domain.s,
-					room->uri.len, room->uri.s);
+					" in [room]= %.*s\n", STR_FMT(&name), STR_FMT(&domain),
+					STR_FMT(&room->uri));
 
 			member = imc_add_member(room, &name, &domain, flag);
 			if(member == NULL)
@@ -423,12 +423,12 @@ static int child_init(int rank)
 	{
 		if (imc_dbf.use_table(imc_db, &rooms_table) < 0)
 		{
-			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, rooms_table.len, rooms_table.s);
+			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&rooms_table));
 			return -1;
 		}
 		if (imc_dbf.use_table(imc_db, &members_table) < 0)
 		{
-			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, members_table.len, members_table.s);
+			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&members_table));
 			return -1;
 		}
 
