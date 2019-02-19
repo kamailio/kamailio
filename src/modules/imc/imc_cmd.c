@@ -102,9 +102,12 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("remove")-1)
 				&& !strncasecmp(cmd->name.s, "remove", cmd->name.len)) {
 		cmd->type = IMC_CMDID_REMOVE;
+	} else if(cmd->name.len==(sizeof("leave")-1)
+				&& !strncasecmp(cmd->name.s, "leave", cmd->name.len)) {
+		cmd->type = IMC_CMDID_LEAVE;
 	} else if(cmd->name.len==(sizeof("exit")-1)
 				&& !strncasecmp(cmd->name.s, "exit", cmd->name.len)) {
-		cmd->type = IMC_CMDID_EXIT;
+		cmd->type = IMC_CMDID_LEAVE;
 	} else if(cmd->name.len==(sizeof("list")-1)
 				&& !strncasecmp(cmd->name.s, "list", cmd->name.len)) {
 		cmd->type = IMC_CMDID_LIST;
@@ -852,7 +855,7 @@ error:
 /**
  *
  */
-int imc_handle_exit(struct sip_msg* msg, imc_cmd_t *cmd,
+int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst)
 {
 	imc_room_p room = 0;
