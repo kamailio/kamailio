@@ -532,10 +532,10 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
-		case IMC_CMDID_DENY:
-			if(imc_handle_deny(msg, &cmd, pfrom_uri, pto_uri)<0)
+		case IMC_CMDID_REJECT:
+			if(imc_handle_reject(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LM_ERR("failed to handle 'deny'\n");
+				LM_ERR("failed to handle 'reject'\n");
 				ret = -70;
 				goto error;
 			}

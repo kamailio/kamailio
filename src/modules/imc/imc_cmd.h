@@ -39,7 +39,7 @@
 #define IMC_CMDID_JOIN		3
 #define IMC_CMDID_EXIT		4
 #define IMC_CMDID_ACCEPT	5
-#define IMC_CMDID_DENY		6
+#define IMC_CMDID_REJECT	6
 #define IMC_CMDID_REMOVE	7
 #define IMC_CMDID_DESTROY	8
 #define IMC_CMDID_HELP		9
@@ -51,7 +51,7 @@
 #define IMC_CMD_JOIN	"join"
 #define IMC_CMD_EXIT	"exit"
 #define IMC_CMD_ACCEPT	"accept"
-#define IMC_CMD_DENY	"deny"
+#define IMC_CMD_REJECT	"reject"
 #define IMC_CMD_REMOVE	"remove"
 #define IMC_CMD_DESTROY	"destroy"
 #define IMC_CMD_LIST	"list"
@@ -67,8 +67,8 @@ join the conference room\r\n\
 invite a user to join a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_ACCEPT" - \
 accept invitation to join a conference room\r\n\
-"IMC_CMD_START_STR IMC_CMD_DENY" - \
-deny invitation to join a conference room\r\n\
+"IMC_CMD_START_STR IMC_CMD_REJECT" - \
+reject invitation to join a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_REMOVE" <user_name> [<room_name>] - \
 remove an user from the conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_LIST" - \
@@ -99,7 +99,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst);
 int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst);
-int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
+int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst);
 int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst);
