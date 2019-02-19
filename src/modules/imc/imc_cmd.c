@@ -93,9 +93,12 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("accept")-1)
 				&& !strncasecmp(cmd->name.s, "accept", cmd->name.len)) {
 		cmd->type = IMC_CMDID_ACCEPT;
+	} else if(cmd->name.len==(sizeof("reject")-1)
+				&& !strncasecmp(cmd->name.s, "reject", cmd->name.len)) {
+		cmd->type = IMC_CMDID_REJECT;
 	} else if(cmd->name.len==(sizeof("deny")-1)
 				&& !strncasecmp(cmd->name.s, "deny", cmd->name.len)) {
-		cmd->type = IMC_CMDID_DENY;
+		cmd->type = IMC_CMDID_REJECT;
 	} else if(cmd->name.len==(sizeof("remove")-1)
 				&& !strncasecmp(cmd->name.s, "remove", cmd->name.len)) {
 		cmd->type = IMC_CMDID_REMOVE;
@@ -476,8 +479,8 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	memcpy(body.s, "INVITE from: ", 13);
 	memcpy(body.s+13, member->uri.s + 4, member->uri.len - 4);
-	memcpy(body.s+ 9 + member->uri.len, "(Type: '#accept' or '#deny')", 28);	
 	body.s[body.len] = '\0';			
+	memcpy(body.s+ 9 + member->uri.len, "(Type: '#accept' or '#reject')", 30);
 
 	LM_DBG("to=[%.*s]\nfrom=[%.*s]\nbody=[%.*s]\n", 
 			member->uri.len,member->uri.s,room->uri.len, room->uri.s,
@@ -725,7 +728,7 @@ error:
 /**
  *
  */
-int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
+int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct sip_uri *src, struct sip_uri *dst)
 {
 	imc_room_p room = 0;
@@ -733,7 +736,7 @@ int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
 	str room_name;
 	// str body;
 
-	/* denying an invitation */
+	/* rejecting an invitation */
 	room_name = cmd->param[0].s?cmd->param[0]:dst->user;
 	room= imc_get_room(&room_name, &dst->host);
 
@@ -746,7 +749,7 @@ int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
 	member= imc_get_member(room, &src->user, &src->host);
 	if(member==NULL || !(member->flags & IMC_MEMBER_INVITED))
 	{
-		LM_ERR("user [%.*s] was not invited in room [%.*s]!\n", 
+		LM_ERR("user [%.*s] was not invited to room [%.*s]!\n",
 				src->user.len, src->user.s,	room_name.len, room_name.s);
 		goto error;
 	}		
@@ -755,12 +758,12 @@ int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
 	/* send info message */
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, 
-			"The user [%.*s] has denied the invitation",
+			"The user [%.*s] has rejected the invitation",
 			src->user.len, src->user.s);
 	if(body.len>0)
 	    imc_send_message(&room->uri, &memeber->uri, &all_hdrs, &body);
 #endif
-	LM_ERR("user [%.*s] declined invitation in room [%.*s]!\n", 
+	LM_ERR("user [%.*s] rejected invitation to room [%.*s]!\n",
 			src->user.len, src->user.s,	room_name.len, room_name.s);
 
 	imc_del_member(room, &src->user, &src->host);

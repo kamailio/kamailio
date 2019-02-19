@@ -368,7 +368,7 @@ if(is_method("MESSAGE)
   -eg: #accept sip:john@kamailio.org
   -error case: return codes: -60 -- -69
 
-5.deny
+5.reject
   -rejects an invitation
   -the parameter is the same as for accept
   -error case: return codes: -70 -- -79
