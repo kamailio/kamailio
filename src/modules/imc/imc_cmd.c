@@ -205,7 +205,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	
 	/* room already exists */
 
-	LM_DBG("room [%.*s] already created\n",	cmd->param[0].len, cmd->param[0].s);
+	LM_DBG("room [%.*s] already exists\n", cmd->param[0].len, cmd->param[0].s);
 	if(!(room->flags & IMC_ROOM_PRIV)) 
 	{
 		LM_DBG("checking if the user [%.*s] is a member\n",
@@ -545,14 +545,14 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	room=imc_get_room(&room_name, &dst->host);
 	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
 	{
-		LM_ERR("room [%.*s] is not created!\n",	room_name.len, room_name.s);
+		LM_ERR("room [%.*s] does not exist!\n",	room_name.len, room_name.s);
 		goto error;
 	}			
 	/* if aready invited add as a member */
 	member=imc_get_member(room, &src->user, &src->host);
 	if(member==NULL || !(member->flags & IMC_MEMBER_INVITED))
 	{
-		LM_ERR("user [%.*s] not invited in the room!\n",
+		LM_ERR("user [%.*s] not invited to the room!\n",
 				src->user.len, src->user.s);
 		goto error;
 	}
@@ -1052,7 +1052,7 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	member= imc_get_member(room, &src->user, &src->host);
 	if(member== NULL || (member->flags & IMC_MEMBER_INVITED))
 	{
-		LM_ERR("user [%.*s] has no rights to send messages in room [%.*s]!\n",
+		LM_ERR("user [%.*s] has no rights to send messages to room [%.*s]!\n",
 				src->user.len, src->user.s,	dst->user.len, dst->user.s);
 		goto error;
 	}
