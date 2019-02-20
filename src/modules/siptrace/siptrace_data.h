@@ -56,4 +56,16 @@ typedef struct _siptrace_data
 #endif
 } siptrace_data_t;
 
+/*
+ * even though there's only one member in this structure keep it
+ * first implementation was with 2 members and it can be removed
+ * but leaving it like this will allow easy extension in the future
+ * */
+typedef struct {
+	str* correlation_id;
+} siptrace_info_t;
+
+
+enum siptrace_type_t {SIPTRACE_NONE=0, SIPTRACE_MESSAGE = 'm', SIPTRACE_TRANSACTION = 't', SIPTRACE_DIALOG = 'd'};
+
 #endif

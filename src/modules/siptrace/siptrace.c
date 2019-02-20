@@ -48,6 +48,7 @@
 #include "../../core/pvar.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
+#include "../../modules/dialog/dlg_load.h"
 #include "../../core/str.h"
 #include "../../core/onsend.h"
 #include "../../core/events.h"
@@ -63,6 +64,7 @@ MODULE_VERSION
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
 struct tm_binds tmb;
+struct dlg_binds dlgb;
 
 /** SL API structure */
 sl_api_t slb;
@@ -72,23 +74,34 @@ static int mod_init(void);
 static int siptrace_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
-static int sip_trace(sip_msg_t *, dest_info_t *, str *, char *);
+static int sip_trace(sip_msg_t *msg, dest_info_t *, str *, char *);
 static int w_sip_trace0(struct sip_msg *, char *p1, char *p2);
-static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
+static int w_sip_trace1(struct sip_msg *, char *dest);
 static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
+static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char *trace_type);
 static int fixup_siptrace(void **param, int param_no);
+
+static int parse_siptrace_uri(str* duri, dest_info_t* dst);
+static enum siptrace_type_t parse_siptrace_flag(str* sflags);
 
 static int w_hlog1(struct sip_msg *, char *message, char *);
 static int w_hlog2(struct sip_msg *, char *correlationid, char *message);
 
 static int sip_trace_store_db(siptrace_data_t *sto);
 
-static void trace_onreq_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(sl_cbp_t *slcb);
 static void trace_sl_ack_in(sl_cbp_t *slcb);
+
+
+
+static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int register_free_func);
+static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
+static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
+static void free_trace_info(void* trace_info);
+static int  serialize_siptrace_info(siptrace_info_t* info, str* serial_data);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
 int siptrace_net_data_send(sr_event_param_t *evp);
@@ -109,6 +122,9 @@ static str fromtag_column = str_init("fromtag");		 /* 08 */
 static str direction_column = str_init("direction");	 /* 09 */
 static str time_us_column = str_init("time_us");		 /* 10 */
 static str totag_column = str_init("totag");			 /* 11 */
+
+static str siptrace_info_dlgkey = str_init("__siptrace_info_dlg_key__");
+static str siptrace_info_avp_str = str_init("$avp(__siptrace_info_avp__)");
 
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
@@ -148,6 +164,9 @@ static unsigned short trace_table_avp_type = 0;
 static int_str trace_table_avp;
 static str trace_table_avp_str = {NULL, 0};
 
+static unsigned short siptrace_info_avp_type = 0;
+static int_str siptrace_info_avp;
+
 static str trace_local_ip = {NULL, 0};
 
 int hep_mode_on = 0;
@@ -163,7 +182,9 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"sip_trace", (cmd_function)w_sip_trace1, 1, fixup_siptrace, 0,
 		ANY_ROUTE},
-	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_spve_spve, 0,
+	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_siptrace, 0,
+		ANY_ROUTE},
+	{"sip_trace", (cmd_function)w_sip_trace3, 3, fixup_siptrace, 0,
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0,
 		ANY_ROUTE},
@@ -304,11 +325,39 @@ static int mod_init(void)
 	/* register callbacks to TM */
 	if(load_tm_api(&tmb) != 0) {
 		LM_WARN("can't load tm api. Will not install tm callbacks.\n");
-	} else if(tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0)
+	}
+
+	if (load_dlg_api(&dlgb) < 0) {
+		LM_WARN("can't load dlg api. Will not install dialog callbacks.\n");
+	}
+	else {
+		if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, trace_dialog, NULL, NULL) != 0) {
+			LM_ERR("failed to register dialog callbacks! Tracing dialogs won't be available\n");
+		}
+
+		if(pv_parse_spec(&siptrace_info_avp_str, &avp_spec) == 0
+				|| avp_spec.type != PVT_AVP) {
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					siptrace_info_avp_str.len, siptrace_info_avp_str.s);
+			return -1;
+		}
+
+		if(pv_get_avp_name(
+				   0, &avp_spec.pvp, &siptrace_info_avp, &siptrace_info_avp_type)
+				!= 0) {
+			LM_ERR("[%.*s] - invalid AVP definition\n", siptrace_info_avp_str.len,
+					siptrace_info_avp_str.s);
+			return -1;
+		}
+	}
+
+#if 0
+	else if(tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0)
 			  <= 0) {
 		LM_ERR("can't register trace_onreq_in\n");
 		return -1;
 	}
+#endif
 
 	/* bind the SL API */
 	if(sl_load_api(&slb) != 0) {
@@ -636,85 +685,95 @@ error:
 	return -1;
 }
 
+enum siptrace_type_t parse_siptrace_flag(str* sflags)
+{
+	int idx;
+	enum siptrace_type_t trace_type = SIPTRACE_NONE;
+
+	if (sflags == NULL || sflags->s == NULL || sflags->len == 0) {
+		return SIPTRACE_NONE;
+	}
+
+	for (idx = 0; idx < sflags->len; idx++) {
+		switch(sflags->s[idx]|0x20) { /*|0x20 - to lowercase */
+			case SIPTRACE_MESSAGE:
+			case SIPTRACE_TRANSACTION:
+			case SIPTRACE_DIALOG:
+				if (trace_type != SIPTRACE_NONE) {
+					LM_ERR("only one tracing flag can be used <%.*s>!\n",
+							sflags->len, sflags->s);
+					return SIPTRACE_NONE;
+				}
+
+				trace_type = (sflags->s[idx]|0x20);
+				break;
+			case ' ':
+			case '\t':
+				break;
+			default:
+				LM_ERR("idx %d %d\n", idx, sflags->len);
+				LM_ERR("Invalid character <%c> in <%.*s>!\n", sflags->s[idx],
+						sflags->len, sflags->s);
+				return SIPTRACE_NONE;
+		}
+	}
+
+	return trace_type;
+}
+
 static int fixup_siptrace(void **param, int param_no)
 {
-	char *duri;
-	sip_uri_t uri;
-	dest_info_t *dst = NULL;
-	proxy_l_t *p = NULL;
-	str dup_uri_str = {0, 0};
+	str sflags;
+	enum siptrace_type_t trace_type;
 
-	if(param_no != 1) {
+	LM_ERR("fixup function aaa\n");
+	if(param_no < 1 || param_no > 3) {
 		LM_DBG("params:%s\n", (char *)*param);
 		return 0;
 	}
 
-	if(((char *)(*param))[0] == '\0') {
-		// Empty URI, use the URI set at module level (dup_uri)
-		if(dup_uri) {
-			uri = *dup_uri;
-		} else {
-			LM_ERR("Missing duplicate URI\n");
+	if (param_no == 1 || param_no == 2) {
+		/* correlation id */
+		return fixup_spve_spve(param, param_no);
+	} else if (param_no == 3) {
+		/* tracing type; string only */
+		sflags.s = *param;
+		sflags.len = strlen(*param);
+
+		trace_type = parse_siptrace_flag(&sflags);
+		if (trace_type == SIPTRACE_NONE) {
+			LM_ERR("Failed to parse trace type!\n");
 			return -1;
 		}
-	} else {
-		duri = (char *)*param;
 
-		if(!(*duri)) {
-			LM_ERR("invalid dup URI\n");
-			return -1;
-		}
-
-		LM_DBG("sip_trace URI:%s\n", duri);
-
-		dup_uri_str.s = duri;
-		dup_uri_str.len = strlen(dup_uri_str.s);
-		memset(&uri, 0, sizeof(struct sip_uri));
-
-		if(parse_uri(dup_uri_str.s, dup_uri_str.len, &uri) < 0) {
-			LM_ERR("bad dup uri\n");
-			return -1;
-		}
+		*param = pkg_malloc(sizeof(trace_type));
+		memcpy(*param, &trace_type, sizeof(trace_type));
 	}
 
-	dst = (dest_info_t *)pkg_malloc(sizeof(dest_info_t));
-	if(dst == 0) {
-		LM_ERR("no more pkg memory left\n");
-		return -1;
-	}
-	init_dest_info(dst);
-	/* create a temporary proxy*/
-	dst->proto = PROTO_UDP;
-	p = mk_proxy(&uri.host, (uri.port_no) ? uri.port_no : SIP_PORT, dst->proto);
-	if(p == 0) {
-		LM_ERR("bad host name in uri\n");
-		pkg_free(dst);
-		return -1;
-	}
-	hostent2su(&dst->to, &p->host, p->addr_idx, (p->port) ? p->port : SIP_PORT);
-
-	pkg_free(*param);
-	/* free temporary proxy*/
-	if(p) {
-		free_proxy(p); /* frees only p content, not p itself */
-		pkg_free(p);
-	}
-
-	*param = (void *)dst;
 	return 0;
 }
 
+
 /**
- * Send sip trace with destination and correlation id
+ * TODO TODO TODO:
+ *
+ * parse_siptrace_uri (to replace siptrace_fixup and ki_sip_trace_dst_cid beginning)
+ * parse_siptrace_type
+ *
+ *
  */
-static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
+
+static int parse_siptrace_uri(str* duri, dest_info_t* dst)
 {
-	dest_info_t *dst = NULL;
 	sip_uri_t uri;
 	proxy_l_t *p = NULL;
 
-	// If the dest is empty, use the module parameter, if set
-	if(duri == NULL || duri->len <= 0) {
+	if (dst == NULL) {
+		LM_ERR("bad destination!\n");
+		return -1;
+	}
+
+	if (duri == NULL || duri->len <= 0) {
 		if(dup_uri) {
 			uri = *dup_uri;
 		} else {
@@ -729,11 +788,6 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 		}
 	}
 
-	dst = (dest_info_t *)pkg_malloc(sizeof(dest_info_t));
-	if(dst == 0) {
-		LM_ERR("no more pkg memory left\n");
-		return -1;
-	}
 	init_dest_info(dst);
 
 	/* create a temporary proxy*/
@@ -753,7 +807,40 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 		pkg_free(p);
 	}
 
-	return sip_trace(msg, dst, ((cid!=NULL && cid->len>0)?cid:NULL), NULL);
+	return 0;
+}
+
+/**
+ * Send sip trace with destination and correlation id and specify what messages to be traced
+ */
+static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* sflag)
+{
+	dest_info_t dst;
+	enum siptrace_type_t trace_type;
+
+	if (parse_siptrace_uri(duri, &dst) < 0) {
+		LM_ERR("failed to parse siptrace uri!\n");
+		return -1;
+	}
+
+	if (sflag) {
+		trace_type = parse_siptrace_flag(sflag);
+		if (trace_type == SIPTRACE_NONE) {
+			LM_ERR("Invalid flags <%.*s>\n", sflag->len, sflag->s);
+		}
+	} else {
+		trace_type = SIPTRACE_MESSAGE;
+	}
+
+	return sip_trace(msg, &dst, cid,  NULL);
+}
+
+/**
+ * Send sip trace with destination and correlation id
+ */
+static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
+{
+	return ki_sip_trace_dst_cid_flag(msg, duri, cid, NULL);
 }
 
 /**
@@ -761,7 +848,7 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
  */
 static int ki_sip_trace_dst(sip_msg_t *msg, str *duri)
 {
-	return ki_sip_trace_dst_cid(msg, duri, NULL);
+	return ki_sip_trace_dst_cid_flag(msg, duri, NULL, NULL);
 }
 
 /**
@@ -769,7 +856,7 @@ static int ki_sip_trace_dst(sip_msg_t *msg, str *duri)
  */
 static int ki_sip_trace(sip_msg_t *msg)
 {
-	return sip_trace(msg, NULL, NULL, NULL);
+	return ki_sip_trace_dst_cid_flag(msg, NULL, NULL, NULL);
 }
 
 /**
@@ -777,15 +864,15 @@ static int ki_sip_trace(sip_msg_t *msg)
  */
 static int w_sip_trace0(sip_msg_t *msg, char *dest, char *correlation_id)
 {
-	return sip_trace(msg, NULL, NULL, NULL);
+	return w_sip_trace3(msg, NULL, NULL, NULL);
 }
 
 /**
  *
  */
-static int w_sip_trace1(sip_msg_t *msg, char *dest, char *correlation_id)
+static int w_sip_trace1(sip_msg_t *msg, char *dest)
 {
-	return sip_trace(msg, (dest_info_t*)dest, NULL, NULL);
+	return w_sip_trace3(msg, dest, NULL, NULL);
 }
 
 /**
@@ -793,21 +880,110 @@ static int w_sip_trace1(sip_msg_t *msg, char *dest, char *correlation_id)
  */
 static int w_sip_trace2(sip_msg_t *msg, char *dest, char *correlation_id)
 {
+	return w_sip_trace3(msg, dest, correlation_id, NULL);
+}
+
+
+static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *trace_type_p)
+{
+	avp_value_t avp_val;
 	str dup_uri_str = {0, 0};
 	str correlation_id_str = {0, 0};
+	dest_info_t dest_info;
+	enum siptrace_type_t trace_type;
+	siptrace_info_t* info;
 
-	if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_str) != 0) {
-		LM_ERR("unable to parse the dest URI string\n");
+	if (dest) {
+		if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_str) != 0) {
+			LM_ERR("unable to parse the dest URI string\n");
+			return -1;
+		}
+	}
+
+	/* if arg dest uri is null  dup_uri_str will have length 0 and global dup_uri will be used */
+	if (parse_siptrace_uri(&dup_uri_str, &dest_info) < 0) {
+		LM_ERR("failed to parse uri!\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t *)correlation_id, &correlation_id_str)
-			!= 0) {
-		LM_ERR("unable to parse the correlation id\n");
-		return -1;
+	if (correlation_id) {
+		if(fixup_get_svalue(msg, (gparam_t *)correlation_id, &correlation_id_str)
+				!= 0) {
+			LM_ERR("unable to parse the correlation id\n");
+			return -1;
+		}
 	}
 
-	return ki_sip_trace_dst_cid(msg, &dup_uri_str, &correlation_id_str);
+	if (trace_type_p != NULL) {
+		trace_type = *(enum siptrace_type_t *)(trace_type_p);
+	} else {
+		/* fallback to default */
+		trace_type = SIPTRACE_MESSAGE;
+	}
+
+	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
+		/*
+		 * for each type check that conditions are created
+		 * transaction: it's a request starting a transaction; tm module loaded
+		 * dialog: it's an INVITE; dialog module is loaded
+		 *
+		 * */
+		if (tmb.t_gett == NULL) {
+			LM_WARN("TM module not loaded! Tracing only current message!\n");
+			goto trace_current;
+		}
+
+		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
+			LM_WARN("DIALOG module not loaded! Tracing only current message!\n");
+			goto trace_current;
+		}
+
+		if (msg->first_line.type != SIP_REQUEST ||
+				(trace_type == SIPTRACE_DIALOG && msg->first_line.u.request.method_value != METHOD_INVITE)) {
+			LM_WARN("When tracing a %s sip_trace() has to be initiated on the %s\n",
+					trace_type == SIPTRACE_TRANSACTION ? "transaction" : "dialog",
+					trace_type == SIPTRACE_TRANSACTION ? "request message" : "initial invite");
+			return -1;
+		}
+
+		info = shm_malloc(sizeof(siptrace_info_t));
+		if (info == NULL) {
+			LM_ERR("No more shm!\n");
+			return -1;
+		}
+
+		info->correlation_id = &correlation_id_str;
+
+		if (trace_type == SIPTRACE_TRANSACTION) {
+			trace_transaction(msg, info, 1);
+		} else if (trace_type == SIPTRACE_DIALOG) {
+			trace_transaction(msg, info, 1);
+			if (unlikely(dlgb.set_dlg_var == NULL)) {
+				LM_ERR("Dialog api not loaded! will trace only current transaction!\n");
+			} else {
+				/* serialize what's in info */
+				/* save correlation id in siptrace_info avp
+				 * we want to have traced user avp value at the moment of sip_trace function call*/
+				if (serialize_siptrace_info(info, &avp_val.s) < 0) {
+					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
+					return -1;
+				} else {
+					/* save serialized data into an avp */
+					if (add_avp(siptrace_info_avp_type | AVP_VAL_STR,
+								siptrace_info_avp, avp_val) < 0) {
+						LM_ERR("Failed to add <%.*s> avp value\n",
+								siptrace_info_avp_str.len, siptrace_info_avp_str.s);
+						return -1;
+					}
+
+					msg->msg_flags |= FL_SIPTRACE;
+				}
+			}
+		}
+	}
+
+trace_current:
+	return sip_trace(msg, &dest_info, &correlation_id_str, NULL);
 }
 
 static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
@@ -815,6 +991,11 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 {
 	siptrace_data_t sto;
 	onsend_info_t *snd_inf = NULL;
+
+	if(msg == NULL) {
+		LM_DBG("nothing to trace\n");
+		return -1;
+	}
 
 	if(dst) {
 		if(dst->send_sock == 0) {
@@ -828,10 +1009,6 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		}
 	}
 
-	if(msg == NULL) {
-		LM_DBG("nothing to trace\n");
-		return -1;
-	}
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	if(traced_user_avp.n != 0)
@@ -842,6 +1019,7 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		LM_DBG("trace off...\n");
 		return -1;
 	}
+
 	if(sip_trace_prepare(msg) < 0)
 		return -1;
 
@@ -951,62 +1129,7 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 }
 
 #define trace_is_off(_msg)                        \
-	(trace_on_flag == NULL || *trace_on_flag == 0 \
-			|| ((_msg)->flags & trace_flag) == 0)
-
-static void trace_onreq_in(struct cell *t, int type, struct tmcb_params *ps)
-{
-	struct sip_msg *msg;
-	int_str avp_value;
-	struct usr_avp *avp;
-
-	if(t == NULL || ps == NULL) {
-		LM_DBG("no uas request, local transaction\n");
-		return;
-	}
-
-	msg = ps->req;
-	if(msg == NULL) {
-		LM_DBG("no uas request, local transaction\n");
-		return;
-	}
-
-	avp = NULL;
-	if(traced_user_avp.n != 0)
-		avp = search_first_avp(
-				traced_user_avp_type, traced_user_avp, &avp_value, 0);
-
-	if((avp == NULL) && trace_is_off(msg)) {
-		LM_DBG("trace off...\n");
-		return;
-	}
-
-	if(parse_from_header(msg) == -1 || msg->from == NULL
-			|| get_from(msg) == NULL) {
-		LM_ERR("cannot parse FROM header\n");
-		return;
-	}
-
-	if(parse_headers(msg, HDR_CALLID_F, 0) != 0) {
-		LM_ERR("cannot parse call-id\n");
-		return;
-	}
-
-	if(tmb.register_tmcb(0, t, TMCB_REQUEST_SENT, trace_onreq_out, 0, 0) <= 0) {
-		LM_ERR("can't register trace_onreq_out\n");
-		return;
-	}
-	if(tmb.register_tmcb(0, t, TMCB_RESPONSE_IN, trace_onreply_in, 0, 0) <= 0) {
-		LM_ERR("can't register trace_onreply_in\n");
-		return;
-	}
-
-	if(tmb.register_tmcb(0, t, TMCB_RESPONSE_SENT, trace_onreply_out, 0, 0)
-			<= 0) {
-		LM_ERR("can't register trace_onreply_out\n");
-		return;
-	}
-}
+	 (((_msg)->msg_flags & FL_SIPTRACE) == 0)
 
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 {
@@ -1016,12 +1139,12 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	dest_info_t *dst;
 
 	if(t == NULL || ps == NULL) {
-		LM_DBG("very weird\n");
+		LM_ERR("very weird\n");
 		return;
 	}
 
 	if(ps->flags & TMCB_RETR_F) {
-		LM_DBG("retransmission\n");
+		LM_ERR("retransmission\n");
 		return;
 	}
 	msg = ps->req;
@@ -1336,12 +1459,36 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	return;
 }
 
+static int serialize_siptrace_info(siptrace_info_t* info, str* serial_data)
+{
+	if (info == NULL || info->correlation_id == NULL) {
+		LM_ERR("Nothing to serialize!\n");
+		return -1;
+	}
+
+	if (serial_data == NULL) {
+		LM_ERR("Invalid NULL pointer for return value!\n");
+		return -1;
+	}
+
+	serial_data->s = shm_malloc(info->correlation_id->len);
+	if (serial_data->s == NULL) {
+		LM_ERR("no more shared memory!\n");
+		return -1;
+	}
+
+	memcpy((char *)serial_data->s, info->correlation_id->s, info->correlation_id->len);
+	serial_data->len = info->correlation_id->len;
+
+	return 0;
+}
+
 static void trace_sl_ack_in(sl_cbp_t *slcbp)
 {
 	sip_msg_t *req;
 	LM_DBG("storing ack...\n");
 	req = slcbp->req;
-	sip_trace(req, 0, NULL, 0);
+	sip_trace(req, 0, NULL, NULL);
 }
 
 static void trace_sl_onreply_out(sl_cbp_t *slcbp)
@@ -1428,6 +1575,113 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 
 	sip_trace_store(&sto, NULL, NULL);
 	return;
+}
+
+static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int register_free_func)
+{
+	/* trace current message on out */
+	msg->msg_flags |= FL_SIPTRACE;
+
+	LM_ERR("trace request out registration\n");
+	if(tmb.register_tmcb(msg, 0, TMCB_REQUEST_SENT, trace_onreq_out, info, 0) <= 0) {
+		LM_ERR("can't register trace_onreq_out\n");
+		return;
+	}
+
+	/* trace reply on in */
+	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_IN, trace_onreply_in, info, 0) <= 0) {
+		LM_ERR("can't register trace_onreply_in\n");
+		return;
+	}
+
+	/* trace reply on out */
+	LM_CRIT("trace resp sent!\n");
+	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info, register_free_func ? free_trace_info : 0)
+			<= 0) {
+		LM_ERR("can't register trace_onreply_out\n");
+		return;
+	}
+
+	/* TODO */
+	/* check the following callbacks: TMCB_REQUEST_PENDING, TMCB_RESPONSE_READY, TMCB_ACK_NEG_IN */
+}
+
+//static void trace_dialog(sip_msg_t* msg, siptrace_info_t* info)
+static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *params)
+{
+	int_str avp_value;
+	struct usr_avp* avp = NULL;
+
+	LM_ERR("TRACING THIS DIALOGHES!\n");
+
+	if (!dlgb.get_dlg) {
+		LM_ERR("Dialog API not loaded! Trace off...\n");
+		return;
+	}
+
+	/* request - params->req */
+	if (params == NULL || params->req == NULL) {
+		LM_ERR("Invalid args!\n");
+		return;
+	}
+
+	if (!(params->req->msg_flags & FL_SIPTRACE)) {
+		LM_DBG("Trace is off for this request...\n");
+		return;
+	}
+
+	avp = search_first_avp(siptrace_info_avp_type, siptrace_info_avp, &avp_value, 0);
+	if (avp == NULL) {
+		LM_ERR("Siptrace info avp not set!\n");
+		return;
+	}
+
+	if (dlgb.set_dlg_var(dlg,
+				&siptrace_info_dlgkey,
+				&avp_value.s) != 0) {
+		LM_ERR("failed to set siptrace info dlgkey\n");
+		return;
+	}
+
+	if(dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN,
+				trace_dialog_transaction, 0, 0) != 0) {
+		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
+		return;
+	}
+
+	if(dlgb.register_dlgcb(dlg, DLGCB_TERMINATED,
+				trace_dialog_transaction, 0, 0) != 0) {
+		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
+		return;
+	}
+
+	/* flag for stateless replies?? */
+
+	/* trace negative ACKS? */
+	/* trace 180? */
+	/* trace CANCEL and BYE transactions */
+	return;
+}
+
+
+static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_cb_params *params)
+{
+	siptrace_info_t info;
+
+	memset(&info, 0, sizeof(siptrace_info_t));
+	info.correlation_id = dlgb.get_dlg_var(dlg, &siptrace_info_dlgkey);
+
+	trace_transaction(params->req, &info, 0);
+
+	sip_trace(params->req, NULL, info.correlation_id, NULL);
+}
+
+static void free_trace_info(void* trace_info)
+{
+	LM_DBG("free trace info!\n");
+	if (!trace_info) return;
+
+	shm_free(trace_info);
 }
 
 /**
@@ -1659,6 +1913,11 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 	},
 	{ str_init("siptrace"), str_init("sip_trace_dst_cid"),
 		SR_KEMIP_INT, ki_sip_trace_dst_cid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("sip_trace_dst_cid_type"),
+		SR_KEMIP_INT, ki_sip_trace_dst_cid_flag,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
