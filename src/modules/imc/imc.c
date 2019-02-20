@@ -447,7 +447,6 @@ static int ki_imc_manager(struct sip_msg* msg)
 {
 	imc_cmd_t cmd;
 	str body;
-	struct sip_uri from_uri;
 	struct imc_uri src, dst;
 	int ret = -1;
 
@@ -472,29 +471,24 @@ static int ki_imc_manager(struct sip_msg* msg)
 		goto error;
 	}
 
-	dst.uri = GET_RURI(msg);
+	dst.uri = *GET_RURI(msg);
 	if(parse_sip_msg_uri(msg)<0)
 	{
 		LM_ERR("failed to parse r-uri\n");
 		goto error;
 	}
-	dst.parsed = &msg->parsed_uri;
-	dst.user = dst.parsed->user;
-	dst.host = dst.parsed->host;
+	dst.parsed = msg->parsed_uri;
 
 	if(parse_from_header(msg)<0)
 	{
 		LM_ERR("failed to parse From header\n");
 		goto error;
 	}
-	src.uri = &((struct to_body*)msg->from->parsed)->uri;
-	if(parse_uri(src.uri->s, src.uri->len, &from_uri)<0){
+	src.uri = ((struct to_body*)msg->from->parsed)->uri;
+	if (parse_uri(src.uri.s, src.uri.len, &src.parsed)<0){
 		LM_ERR("failed to parse From URI\n");
 		goto error;
 	}
-	src.parsed = &from_uri;
-	src.user = src.parsed->user;
-	src.host = src.parsed->host;
 
 	if(body.s[0]== imc_cmd_start_char)
 	{
