@@ -43,20 +43,22 @@ static char imc_body_buf[IMC_BUF_SIZE];
 
 static str imc_msg_type = { "MESSAGE", 7 };
 
-static str msg_room_created    = STR_STATIC_INIT(PREFIX "Room was created");
-static str msg_room_destroyed  = STR_STATIC_INIT(PREFIX "The room has been destroyed");
-static str msg_room_not_found  = STR_STATIC_INIT(PREFIX "Room not found");
-static str msg_room_exists     = STR_STATIC_INIT(PREFIX "Room already exists");
-static str msg_user_joined     = STR_STATIC_INIT(PREFIX "<%.*s> has joined the room");
-static str msg_user_joined2    = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> has joined the room");
-static str msg_user_left       = STR_STATIC_INIT(PREFIX "<%.*s> has left the room");
-static str msg_join_attempt    = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> attempted to join the room");
-static str msg_invite          = STR_STATIC_INIT(PREFIX "Invite to join the room from: <%.*s> (send '%.*saccept' or '%.*sreject')");
+static str msg_room_created       = STR_STATIC_INIT(PREFIX "Room was created");
+static str msg_room_destroyed     = STR_STATIC_INIT(PREFIX "The room has been destroyed");
+static str msg_room_not_found     = STR_STATIC_INIT(PREFIX "Room not found");
+static str msg_room_exists        = STR_STATIC_INIT(PREFIX "Room already exists");
+static str msg_room_exists_priv   = STR_STATIC_INIT(PREFIX "A private room with the same name already exists");
+static str msg_room_exists_member = STR_STATIC_INIT(PREFIX "The room already exists and you are a member");
+static str msg_user_joined        = STR_STATIC_INIT(PREFIX "<%.*s> has joined the room");
+static str msg_user_joined2       = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> has joined the room");
+static str msg_user_left          = STR_STATIC_INIT(PREFIX "<%.*s> has left the room");
+static str msg_join_attempt       = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> attempted to join the room");
+static str msg_invite             = STR_STATIC_INIT(PREFIX "Invite to join the room from: <%.*s> (send '%.*saccept' or '%.*sreject')");
 #if 0
-static str msg_rejected        = STR_STATIC_INIT(PREFIX "User [%.*s] has rejected invitation");
+static str msg_rejected           = STR_STATIC_INIT(PREFIX "User [%.*s] has rejected invitation");
 #endif
-static str msg_user_removed    = STR_STATIC_INIT(PREFIX "You have been removed from the room");
-static str msg_invalid_command = STR_STATIC_INIT(PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)");
+static str msg_user_removed       = STR_STATIC_INIT(PREFIX "You have been removed from the room");
+static str msg_invalid_command    = STR_STATIC_INIT(PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)");
 
 int imc_send_message(str *src, str *dst, str *headers, str *body);
 int imc_room_broadcast(imc_room_p room, str *ctype, str *body);
@@ -251,9 +253,8 @@ done:
 	return 0;
 }
 
-/**
- *
- */
+
+
 int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 					  struct imc_uri *src, struct imc_uri *dst)
 {
@@ -264,24 +265,60 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	int flag_member = 0;
 	str body;
 	struct imc_uri room;
+	int params = 0;
+	str rs, ps = STR_NULL;
 
 	memset(&room, '\0', sizeof(room));
-	if (build_imc_uri(&room, cmd->param[0], &dst->parsed) != 0)
+
+	if (cmd->param[0].s) params++;
+	if (cmd->param[1].s) params++;
+
+	switch(params) {
+	case 0:
+		/* With no parameter, use To for the room uri and create a public room */
+		break;
+
+	case 1:
+		/* With one parameter, if the value is "private", it indicates
+		 * a private room, otherwise it is the URI of the room and we
+		 * create a public room. */
+		if (cmd->param[0].len == IMC_ROOM_PRIVATE_LEN && !strncasecmp(cmd->param[0].s, IMC_ROOM_PRIVATE, cmd->param[0].len)) {
+			ps = cmd->param[0];
+		} else {
+			rs = cmd->param[0];
+		}
+		break;
+
+	case 2:
+		/* With two parameters, the first parameter is room URI and
+		 * the second parameter must be "private". */
+		rs = cmd->param[0];
+		ps = cmd->param[1];
+		break;
+
+	default:
+		LM_ERR("Invalid number of parameters %d\n", params);
 		goto error;
+	}
+
+	if (build_imc_uri(&room, rs.s ? rs : dst->parsed.user, &dst->parsed) != 0)
+		goto error;
+
+	if (ps.len == IMC_ROOM_PRIVATE_LEN && !strncasecmp(ps.s, IMC_ROOM_PRIVATE, ps.len)) {
+		flag_room |= IMC_ROOM_PRIV;
+		LM_DBG("Room with private flag on\n");
+	} else {
+		LM_ERR("Second argument to command 'create' must be string 'private'\n");
+		goto error;
+	}
 
 	rm = imc_get_room(&room.parsed.user, &room.parsed.host);
 	if (rm == NULL) {
-		LM_DBG("Creating room [%.*s]\n", STR_FMT(&room.uri));
-		if (cmd->param[1].len == IMC_ROOM_PRIVATE_LEN
-			&& !strncasecmp(cmd->param[1].s, IMC_ROOM_PRIVATE,
-				cmd->param[1].len)) {
-			flag_room |= IMC_ROOM_PRIV;
-			LM_DBG("room with private flag on\n");
-		}
+		LM_DBG("Creating new room [%.*s]\n", STR_FMT(&room.uri));
 
 		rm = imc_add_room(&room.parsed.user, &room.parsed.host, flag_room);
-		if(rm == NULL) {
-			LM_ERR("failed to add new room\n");
+		if (rm == NULL) {
+			LM_ERR("Failed to add new room\n");
 			goto error;
 		}
 		LM_DBG("Added room [%.*s]\n", STR_FMT(&rm->uri));
@@ -293,8 +330,8 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 			LM_ERR("failed to add owner [%.*s]\n", STR_FMT(&src->uri));
 			goto error;
 		}
-		LM_DBG("added the owner as the first member "
-				"[%.*s]\n", STR_FMT(&member->uri));
+		LM_DBG("Added [%.*s] as the first member in room [%.*s]\n",
+			   STR_FMT(&member->uri), STR_FMT(&rm->uri));
 
 		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_room_created);
 		goto done;
@@ -307,26 +344,33 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto done;
 	}
 
-	if (!(rm->flags & IMC_ROOM_PRIV)) {
-		LM_DBG("Checking if user [%.*s] is a member\n", STR_FMT(&src->uri));
-		member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
-		if (member == NULL) {
-			member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
-			if (member == NULL) {
-				LM_ERR("Failed to add member [%.*s]\n", STR_FMT(&src->uri));
-				goto error;
-			}
-			LM_DBG("added [%.*s] as member\n", STR_FMT(&member->uri));
-
-			body.s = imc_body_buf;
-			body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(&member->uri));
-			if (body.len > 0)
-				imc_room_broadcast(rm, &all_hdrs, &body);
-
-			if (body.len >= IMC_BUF_SIZE)
-				LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
-		}
+	if (rm->flags & IMC_ROOM_PRIV) {
+		imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_exists_priv);
+		goto done;
 	}
+
+	LM_DBG("Checking if user [%.*s] is a member\n", STR_FMT(&src->uri));
+	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
+
+	if (member) {
+		imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_exists_member);
+		goto done;
+	}
+
+	member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
+	if (member == NULL) {
+		LM_ERR("Failed to add member [%.*s]\n", STR_FMT(&src->uri));
+		goto error;
+	}
+	LM_DBG("Added [%.*s] as member to room [%.*s]\n", STR_FMT(&member->uri), STR_FMT(&rm->uri));
+
+	body.s = imc_body_buf;
+	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(&member->uri));
+	if (body.len > 0)
+		imc_room_broadcast(rm, &all_hdrs, &body);
+
+	if (body.len >= IMC_BUF_SIZE)
+		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 done:
 	rv = 0;
@@ -337,9 +381,6 @@ error:
 }
 
 
-/**
- *
- */
 int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct imc_uri *src, struct imc_uri *dst)
 {
