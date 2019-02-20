@@ -170,6 +170,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	unsigned int cidlockidx = 0;
 	unsigned int cidlockset = 0;
 	int errsipmsg = 0;
+	int exectime = 0;
 
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len) == 0) {
@@ -257,6 +258,12 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		cidlockset = 1;
 	}
 
+
+	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
+			|| stats_on == 1) {
+		exectime = 1;
+	}
+
 	if(msg->first_line.type == SIP_REQUEST) {
 		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
 		if(!IS_SIP(msg)) {
@@ -293,8 +300,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 
 		/*	skip: */
 		LM_DBG("preparing to run routing scripts...\n");
-		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-				|| stats_on == 1) {
+		if(exectime) {
 			gettimeofday(&tvb, &tz);
 		}
 		/* execute pre-script callbacks, if any; -jiri */
@@ -344,13 +350,15 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			}
 		}
 
-		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-				|| stats_on == 1) {
+		if(exectime) {
 			gettimeofday(&tve, &tz);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
-			LOG(cfg_get(core, core_cfg, latency_cfg_log),
-					"request-route executed in: %d usec\n", diff);
+			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
+					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
+				LOG(cfg_get(core, core_cfg, latency_cfg_log),
+						"request-route executed in: %d usec\n", diff);
+			}
 #ifdef STATS
 			stats->processed_requests++;
 			stats->acc_req_time += diff;
@@ -369,8 +377,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			goto error02;
 		}
 
-		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-				|| stats_on == 1) {
+		if(exectime) {
 			gettimeofday(&tvb, &tz);
 		}
 #ifdef STATS
@@ -432,13 +439,15 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		/* send the msg */
 		forward_reply(msg);
 	skip_send_reply:
-		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-				|| stats_on == 1) {
+		if(exectime) {
 			gettimeofday(&tve, &tz);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
-			LOG(cfg_get(core, core_cfg, latency_cfg_log),
-					"reply-route executed in: %d usec\n", diff);
+			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
+					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
+				LOG(cfg_get(core, core_cfg, latency_cfg_log),
+						"reply-route executed in: %d usec\n", diff);
+			}
 #ifdef STATS
 			stats->processed_responses++;
 			stats->acc_res_time += diff;

@@ -495,6 +495,7 @@ extern char *default_routename;
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
+%token LATENCY_LIMIT_CFG
 %token MSG_TIME
 %token ONSEND_RT_REPLY
 
@@ -1637,6 +1638,8 @@ assign_stm:
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_ACTION EQUAL NUMBER { default_core_cfg.latency_limit_action=$3; }
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
+    | LATENCY_LIMIT_CFG EQUAL NUMBER { default_core_cfg.latency_limit_cfg=$3; }
+	| LATENCY_LIMIT_CFG EQUAL error  { yyerror("number  expected"); }
     | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
 	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
 	| ONSEND_RT_REPLY EQUAL NUMBER { onsend_route_reply=$3; }

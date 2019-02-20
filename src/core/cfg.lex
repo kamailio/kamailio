@@ -463,6 +463,7 @@ LATENCY_CFG_LOG			latency_cfg_log
 LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
+LATENCY_LIMIT_CFG		latency_limit_cfg
 
 MSG_TIME	msg_time
 ONSEND_RT_REPLY		"onsend_route_reply"
@@ -960,6 +961,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{ONSEND_RT_REPLY}	{ count(); yylval.strval=yytext; return ONSEND_RT_REPLY; }
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
 <INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
+<INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
