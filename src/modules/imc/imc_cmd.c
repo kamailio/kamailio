@@ -512,6 +512,11 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	memset(&user, '\0', sizeof(user));
 	memset(&room, '\0', sizeof(room));
 
+	if (cmd->param[0].s == NULL) {
+		LM_INFO("Invite command with missing argument from [%.*s]\n", STR_FMT(&src->uri));
+		goto error;
+	}
+	
 	if (build_imc_uri(&user, cmd->param[0], &dst->parsed))
 		goto error;
 
