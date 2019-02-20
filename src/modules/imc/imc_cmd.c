@@ -879,7 +879,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	if (member->flags & IMC_MEMBER_OWNER) {
-		/*If the user is the owner of the room, the room is distroyed */
+		/*If the user is the owner of the room, the room is destroyed */
 		rm->flags |= IMC_ROOM_DELETED;
 		imc_room_broadcast(rm, &all_hdrs, &msg_room_destroyed);
 
@@ -893,10 +893,10 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 		body.s = imc_body_buf;
 		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
 
-		imc_del_member(rm, &src->parsed.user, &src->parsed.host);
-
 		if (body.len > 0)
 			imc_room_broadcast(rm, &all_hdrs, &body);
+
+		imc_del_member(rm, &src->parsed.user, &src->parsed.host);
 
 		if (body.len >= IMC_BUF_SIZE)
 			LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
