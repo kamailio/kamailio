@@ -106,13 +106,13 @@ rpc_cmd()
 		CMD="${CMD}, \"params\": [${RPCVAL}"
 		RPCPARAMS="yes"
 	fi
-	shift
-	while [ -n "$1" ] ; do
-		rpcparamval "${1}"
-		CMD="${CMD}, ${RPCVAL}"
-		shift
-	done
 	if [ "$RPCPARAMS" = "yes" ]; then
+		shift
+		while [ -n "$1" ] ; do
+			rpcparamval "${1}"
+			CMD="${CMD}, ${RPCVAL}"
+			shift
+		done
 		CMD="${CMD}]"
 	fi
 	CMD="${CMD}, \"reply_name\": \"${name}\", \"id\": $$}\n"
