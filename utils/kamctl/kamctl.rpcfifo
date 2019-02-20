@@ -149,12 +149,12 @@ rpc_cmd_print()
 		RPCPARAMS="yes"
 		shift
 	fi
-	while [ -n "$1" ] ; do
-		rpcparamval "${1}"
-		CMD="${CMD}, ${RPCVAL}"
-		shift
-	done
 	if [ "$RPCPARAMS" = "yes" ]; then
+		while [ -n "$1" ] ; do
+			rpcparamval "${1}"
+			CMD="${CMD}, ${RPCVAL}"
+			shift
+		done
 		CMD="${CMD}]"
 	fi
 	CMD="${CMD}, \"reply_name\": \"${name}\", \"id\": $$}\n"
