@@ -66,6 +66,10 @@ int imc_room_broadcast(imc_room_p room, str *ctype, str *body);
 void imc_inv_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 
+extern imc_hentry_p _imc_htable;
+extern int imc_hash_size;
+
+
 static str *format_uri(str uri)
 {
 	static char buf[512];
@@ -234,6 +238,9 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("members")-1)
 				&& !strncasecmp(cmd->name.s, "members", cmd->name.len)) {
 		cmd->type = IMC_CMDID_MEMBERS;
+	} else if(cmd->name.len==(sizeof("rooms")-1)
+				&& !strncasecmp(cmd->name.s, "rooms", cmd->name.len)) {
+		cmd->type = IMC_CMDID_ROOMS;
 	} else if(cmd->name.len==(sizeof("list")-1)
 				&& !strncasecmp(cmd->name.s, "list", cmd->name.len)) {
 		cmd->type = IMC_CMDID_MEMBERS;
@@ -928,6 +935,61 @@ overrun:
 error:
 	if (room.uri.s != NULL) pkg_free(room.uri.s);
 	if (rm != NULL) imc_release_room(rm);
+	return rv;
+}
+
+
+int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
+		struct imc_uri *src, struct imc_uri *dst)
+{
+	int i, rv = -1;
+	imc_room_p room;
+	str body, *name;
+	char *p;
+	size_t left;
+
+	p = imc_body_buf;
+	left = IMC_BUF_SIZE;
+
+	memcpy(p, "Rooms:\n", 9);
+	p += 9;
+	left -= 9;
+
+	for (i = 0; i < imc_hash_size; i++) {
+		lock_get(&_imc_htable[i].lock);
+		for (room = _imc_htable[i].rooms; room != NULL ; room = room->next) {
+			if (room->flags & IMC_ROOM_DELETED) continue;
+
+			name = format_uri(room->uri);
+			if (left < name->len) {
+				lock_release(&_imc_htable[i].lock);
+				goto error;
+			}
+			strncpy(p, name->s, name->len);
+			p += name->len;
+			left -= name->len;
+
+			if (left < 1) {
+				lock_release(&_imc_htable[i].lock);
+				goto error;
+			}
+			*p++ = '\n';
+			left--;
+		}
+		lock_release(&_imc_htable[i].lock);
+	}
+
+	/* write over last '\n' */
+	*(--p) = 0;
+	body.s   = imc_body_buf;
+	body.len = p - body.s;
+
+	LM_DBG("rooms = '%.*s'\n", STR_FMT(&body));
+	imc_send_message(&dst->uri, &src->uri, &all_hdrs, &body);
+
+	rv = 0;
+error:
+	LM_ERR("Buffer too small for member list message\n");
 	return rv;
 }
 

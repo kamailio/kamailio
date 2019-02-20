@@ -574,6 +574,14 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
+		case IMC_CMDID_ROOMS:
+			if(imc_handle_rooms(msg, &cmd, &src, &dst)<0)
+			{
+				LM_ERR("failed to handle 'rooms'\n");
+				ret = -100;
+				goto error;
+			}
+		break;
 		case IMC_CMDID_DESTROY:
 			if(imc_handle_destroy(msg, &cmd, &src, &dst)<0)
 			{
