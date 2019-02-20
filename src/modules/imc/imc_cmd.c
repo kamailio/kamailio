@@ -50,12 +50,11 @@ static str msg_room_exists        = STR_STATIC_INIT(PREFIX "Room already exists"
 static str msg_room_exists_priv   = STR_STATIC_INIT(PREFIX "A private room with the same name already exists");
 static str msg_room_exists_member = STR_STATIC_INIT(PREFIX "The room already exists and you are a member");
 static str msg_user_joined        = STR_STATIC_INIT(PREFIX "<%.*s> has joined the room");
-static str msg_user_joined2       = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> has joined the room");
 static str msg_user_left          = STR_STATIC_INIT(PREFIX "<%.*s> has left the room");
-static str msg_join_attempt       = STR_STATIC_INIT(PREFIX "<%.*s@%.*s> attempted to join the room");
-static str msg_invite             = STR_STATIC_INIT(PREFIX "Invite to join the room from: <%.*s> (send '%.*saccept' or '%.*sreject')");
+static str msg_join_attempt       = STR_STATIC_INIT(PREFIX "<%.*s> attempted to join the room");
+static str msg_invite             = STR_STATIC_INIT(PREFIX "<%.*s> invites you to join room (send '%.*saccept' or '%.*sreject')");
 #if 0
-static str msg_rejected           = STR_STATIC_INIT(PREFIX "User [%.*s] has rejected invitation");
+static str msg_rejected           = STR_STATIC_INIT(PREFIX "User <%.*s> has rejected invitation");
 #endif
 static str msg_user_removed       = STR_STATIC_INIT(PREFIX "You have been removed from the room");
 static str msg_invalid_command    = STR_STATIC_INIT(PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)");
@@ -456,9 +455,9 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 build_inform:
 	body.s = imc_body_buf;
 	if (member != NULL) {
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined2.s, STR_FMT(&src->parsed.user), STR_FMT(&src->parsed.host));
+		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(&member->uri));
 	} else {
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt.s, STR_FMT(&src->parsed.user), STR_FMT(&src->parsed.host));
+		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt.s, STR_FMT(&src->uri));
 	}
 	if (body.len > 0)
 		imc_room_broadcast(rm, &all_hdrs, &body);
@@ -512,7 +511,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 
 	if (!(member->flags & IMC_MEMBER_OWNER) &&
 			!(member->flags & IMC_MEMBER_ADMIN)) {
-		LM_ERR("User [%.*s] has no right to invite others!\n", STR_FMT(&src->uri));
+		LM_ERR("User [%.*s] has no right to invite others!\n", STR_FMT(&member->uri));
 		goto error;
 	}
 
@@ -530,7 +529,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invite.s, STR_FMT(&member->uri),
+	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invite.s, STR_FMT(&src->uri),
 		STR_FMT(&imc_cmd_start_str), STR_FMT(&imc_cmd_start_str));
 
 	LM_DBG("to=[%.*s]\nfrom=[%.*s]\nbody=[%.*s]\n",
