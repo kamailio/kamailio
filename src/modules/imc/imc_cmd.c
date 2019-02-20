@@ -25,12 +25,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <strings.h>
+
 #include <sys/types.h>
 #include "../../core/mem/shm_mem.h"
 #include "../../core/mem/mem.h"
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/msg_parser.h"
 
 #include "imc.h"
 #include "imc_cmd.h"
@@ -68,6 +71,41 @@ void imc_inv_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 extern imc_hentry_p _imc_htable;
 extern int imc_hash_size;
+
+
+static str *get_callid(struct sip_msg *msg)
+{
+	if ((parse_headers(msg, HDR_CALLID_F, 0) != -1)
+		&& msg->callid) {
+		return &msg->callid->body;
+	}
+	return NULL;
+}
+
+
+static str *build_headers(struct sip_msg *msg)
+{
+	static str name = STR_STATIC_INIT("In-Reply-To: ");
+	static char buf[1024];
+	static str rv;
+	str *callid;
+
+	if ((callid = get_callid(msg)) == NULL)
+		return &all_hdrs;
+
+	rv.s = buf;
+	rv.len = all_hdrs.len + name.len + callid->len;
+
+	if (rv.len > sizeof(buf)) {
+		LM_ERR("Header buffer too small for In-Reply-To header\n");
+		return &all_hdrs;
+	}
+
+	memcpy(buf, all_hdrs.s, all_hdrs.len);
+	memcpy(buf + all_hdrs.len, name.s, name.len);
+	memcpy(buf + all_hdrs.len + name.len, callid->s, callid->len);
+	return &rv;
+}
 
 
 static str *format_uri(str uri)
@@ -372,19 +410,19 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		LM_DBG("Added [%.*s] as the first member in room [%.*s]\n",
 			   STR_FMT(&member->uri), STR_FMT(&rm->uri));
 
-		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_room_created);
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_room_created);
 		goto done;
 	}
 
 	LM_DBG("Room [%.*s] already exists\n", STR_FMT(&rm->uri));
 
 	if (imc_check_on_create) {
-		imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_exists);
+		imc_send_message(&dst->uri, &src->uri, build_headers(msg), &msg_room_exists);
 		goto done;
 	}
 
 	if (rm->flags & IMC_ROOM_PRIV) {
-		imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_exists_priv);
+		imc_send_message(&dst->uri, &src->uri, build_headers(msg), &msg_room_exists_priv);
 		goto done;
 	}
 
@@ -392,7 +430,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
 
 	if (member) {
-		imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_exists_member);
+		imc_send_message(&dst->uri, &src->uri, build_headers(msg), &msg_room_exists_member);
 		goto done;
 	}
 
@@ -406,7 +444,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
 	if (body.len > 0)
-		imc_room_broadcast(rm, &all_hdrs, &body);
+		imc_room_broadcast(rm, build_headers(msg), &body);
 
 	if (body.len >= IMC_BUF_SIZE)
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
@@ -440,7 +478,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		LM_DBG("Room [%.*s] not found\n", STR_FMT(&room.uri));
 
 		if (!imc_create_on_join) {
-			imc_send_message(&dst->uri, &src->uri, &all_hdrs, &msg_room_not_found);
+			imc_send_message(&dst->uri, &src->uri, build_headers(msg), &msg_room_not_found);
 			goto done;
 		}
 
@@ -458,7 +496,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 			goto error;
 		}
 		/* send info message */
-		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_room_created);
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_room_created);
 		goto done;
 	}
 
@@ -467,7 +505,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
 	if (member && !(member->flags & IMC_MEMBER_DELETED)) {
 		LM_DBG("User [%.*s] is already in the room\n", STR_FMT(&member->uri));
-		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_already_joined);
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_already_joined);
 		goto done;
 	}
 
@@ -486,11 +524,11 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 			STR_FMT(&rm->uri), STR_FMT(&src->uri));
 
 		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
-		imc_send_message(&rm->uri, &src->uri, &all_hdrs, &msg_join_attempt_ucast);
+		imc_send_message(&rm->uri, &src->uri, build_headers(msg), &msg_join_attempt_ucast);
 	}
 
 	if (body.len > 0)
-		imc_room_broadcast(rm, &all_hdrs, &body);
+		imc_room_broadcast(rm, build_headers(msg), &body);
 
 	if (body.len >= IMC_BUF_SIZE)
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
@@ -588,7 +626,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	cback_param->inv_uri = member->uri;
 	/*?!?! possible race with 'remove user' */
 
-	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, TMCB_LOCAL_COMPLETED,
+	set_uac_req(&uac_r, &imc_msg_type, build_headers(msg), &body, 0, TMCB_LOCAL_COMPLETED,
 				imc_inv_callback, (void*)(cback_param));
 	result = tmb.t_request(&uac_r,
 		&member->uri,							/* Request-URI */
@@ -650,7 +688,7 @@ int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
 	if (!(member->flags & IMC_MEMBER_OWNER) &&
 			!(member->flags & IMC_MEMBER_ADMIN)) {
 		LM_ERR("User [%.*s] has no right to add others!\n", STR_FMT(&member->uri));
-		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_add_reject);
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_add_reject);
 		goto done;
 	}
 
@@ -669,7 +707,7 @@ int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
 	if (body.len > 0)
-		imc_room_broadcast(rm, &all_hdrs, &body);
+		imc_room_broadcast(rm, build_headers(msg), &body);
 
 	if (body.len >= IMC_BUF_SIZE)
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
@@ -716,7 +754,7 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
 	if (body.len > 0)
-		imc_room_broadcast(rm, &all_hdrs, &body);
+		imc_room_broadcast(rm, build_headers(msg), &body);
 
 	if (body.len >= IMC_BUF_SIZE)
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
@@ -785,7 +823,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("to: [%.*s]\nfrom: [%.*s]\nbody: [%.*s]\n",
 			STR_FMT(&member->uri) , STR_FMT(&rm->uri),
 			STR_FMT(&msg_user_removed));
-	imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_user_removed);
+	imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_user_removed);
 
 	member->flags |= IMC_MEMBER_DELETED;
 	imc_del_member(rm, &user.parsed.user, &user.parsed.host);
@@ -793,7 +831,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
 	if (body.len > 0)
-		imc_room_broadcast(rm, &all_hdrs, &body);
+		imc_room_broadcast(rm, build_headers(msg), &body);
 
 	if (body.len >= IMC_BUF_SIZE)
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
@@ -837,7 +875,7 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_rejected.s, STR_FMT(format_uri(src->uri)));
 	if (body.len > 0)
-	    imc_send_message(&rm->uri, &member->uri, &all_hdrs, &body);
+	    imc_send_message(&rm->uri, &member->uri, build_headers(msg), &body);
 #endif
 
 	LM_DBG("User [%.*s] rejected invitation to room [%.*s]!\n",
@@ -927,7 +965,8 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = p - body.s;
 
 	LM_DBG("members = '%.*s'\n", STR_FMT(&body));
-	imc_send_message(&rm->uri, &member->uri, &all_hdrs, &body);
+	LM_ERR("Message-ID: '%.*s'\n", STR_FMT(get_callid(msg)));
+	imc_send_message(&rm->uri, &member->uri, build_headers(msg), &body);
 
 	rv = 0;
 overrun:
@@ -985,7 +1024,7 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = p - body.s;
 
 	LM_DBG("rooms = '%.*s'\n", STR_FMT(&body));
-	imc_send_message(&dst->uri, &src->uri, &all_hdrs, &body);
+	imc_send_message(&dst->uri, &src->uri, build_headers(msg), &body);
 
 	rv = 0;
 error:
@@ -1024,7 +1063,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	if (member->flags & IMC_MEMBER_OWNER) {
 		/*If the user is the owner of the room, the room is destroyed */
 		rm->flags |= IMC_ROOM_DELETED;
-		imc_room_broadcast(rm, &all_hdrs, &msg_room_destroyed);
+		imc_room_broadcast(rm, build_headers(msg), &msg_room_destroyed);
 
 		imc_release_room(rm);
 		rm = NULL;
@@ -1034,7 +1073,7 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 		body.s = imc_body_buf;
 		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
 		if (body.len > 0)
-			imc_room_broadcast(rm, &all_hdrs, &body);
+			imc_room_broadcast(rm, build_headers(msg), &body);
 		if (body.len >= IMC_BUF_SIZE)
 			LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));			
 		
@@ -1084,7 +1123,7 @@ int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
 	rm->flags |= IMC_ROOM_DELETED;
 
 	/* braodcast message */
-	imc_room_broadcast(rm, &all_hdrs, &msg_room_destroyed);
+	imc_room_broadcast(rm, build_headers(msg), &msg_room_destroyed);
 
 	imc_release_room(rm);
 	rm = NULL;
@@ -1109,7 +1148,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, struct imc_uri *src, st
 	body.len = IMC_HELP_MSG_LEN;
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(&src->uri), STR_FMT(&dst->uri));
-	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
+	set_uac_req(&uac_r, &imc_msg_type, build_headers(msg), &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				&src->uri,								/* To */
@@ -1135,7 +1174,7 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", STR_FMT(&src->uri), STR_FMT(&dst->uri));
-	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
+	set_uac_req(&uac_r, &imc_msg_type, build_headers(msg), &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				&src->uri,								/* To */
@@ -1179,7 +1218,7 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	}
 
 	member->flags |= IMC_MEMBER_SKIP;
-	imc_room_broadcast(room, &all_hdrs, &body);
+	imc_room_broadcast(room, build_headers(msg), &body);
 	member->flags &= ~IMC_MEMBER_SKIP;
 
 	rv = 0;
