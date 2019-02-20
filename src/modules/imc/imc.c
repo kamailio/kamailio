@@ -558,10 +558,10 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
-		case IMC_CMDID_LIST:
-			if(imc_handle_list(msg, &cmd, &src, &dst)<0)
+		case IMC_CMDID_MEMBERS:
+			if(imc_handle_members(msg, &cmd, &src, &dst)<0)
 			{
-				LM_ERR("failed to handle 'list'\n");
+				LM_ERR("failed to handle 'members'\n");
 				ret = -100;
 				goto error;
 			}

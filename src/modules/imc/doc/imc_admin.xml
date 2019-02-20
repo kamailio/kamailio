@@ -438,7 +438,7 @@ if(is_method("MESSAGE)
   -only the owner of a room has the right to destroy it
   -error case: return codes: -110 -- -119
 
-9.list
+9.members
   -list members in a room
   -error case: return codes: -100 -- -109
 
