@@ -56,7 +56,7 @@
 MODULE_VERSION
 
 /** header variables */
-str imc_hdr_ctype = str_init("Content-Type: text/plain\r\n");
+str imc_hdrs = str_init("Content-Type: text/plain\r\nSupported: kamailio/imc\r\n");
 char hdr_buf[1024];
 str all_hdrs;
 
@@ -354,17 +354,17 @@ static int mod_init(void)
 	}
 
 	if (extra_hdrs.s) {
-		if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
+		if (extra_hdrs.len + imc_hdrs.len > 1024) {
 			LM_ERR("extra_hdrs too long\n");
 			return -1;
 		}
 		all_hdrs.s = &(hdr_buf[0]);
-		memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
-		memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
+		memcpy(all_hdrs.s, imc_hdrs.s, imc_hdrs.len);
+		memcpy(all_hdrs.s + imc_hdrs.len, extra_hdrs.s,
 				extra_hdrs.len);
-		all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
+		all_hdrs.len = extra_hdrs.len + imc_hdrs.len;
 	} else {
-		all_hdrs = imc_hdr_ctype;
+		all_hdrs = imc_hdrs;
 	}
 
 	/*  binding to mysql module */
