@@ -2779,16 +2779,16 @@ kamailio_trap() {
 	DATE=`/bin/date +%Y%m%d_%H%M%S`
 	LOG_FILE=/tmp/gdb_kamailio_$DATE
 	minfo "Trap file: $LOG_FILE"
-	$SERCTLCMD ps > $LOG_FILE
+	ctl_cmd_run core.psx > $LOG_FILE
 	echo -n "Trapping Kamailio with gdb: "
-	PID_TIMESTAMP_VECTOR=`sed -e 's/\([0-9]*\).*/\1/' $LOG_FILE`
+	PID_TIMESTAMP_VECTOR=`$EGREP 'PID' $LOG_FILE | $EGREP -Eo '[0-9]+'`
 	for pid in $PID_TIMESTAMP_VECTOR
 	do
 		echo -n "."
 		PID=`echo $pid | cut -d '-' -f 1`
 		echo "" >> $LOG_FILE
 		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
-		$GDB kamailio $PID -batch --eval-command="bt full" & >> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="bt full" >> $LOG_FILE 2>&1
 		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
 	done
 	echo "."
