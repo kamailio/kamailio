@@ -50,8 +50,10 @@ static str msg_room_exists        = STR_STATIC_INIT(PREFIX "Room already exists"
 static str msg_room_exists_priv   = STR_STATIC_INIT(PREFIX "A private room with the same name already exists");
 static str msg_room_exists_member = STR_STATIC_INIT(PREFIX "Room already exists and you are a member");
 static str msg_user_joined        = STR_STATIC_INIT(PREFIX "%.*s has joined the room");
+static str msg_already_joined     = STR_STATIC_INIT(PREFIX "You are in the room already");
 static str msg_user_left          = STR_STATIC_INIT(PREFIX "%.*s has left the room");
-static str msg_join_attempt       = STR_STATIC_INIT(PREFIX "%.*s attempted to join the room");
+static str msg_join_attempt_bcast = STR_STATIC_INIT(PREFIX "%.*s attempted to join the room");
+static str msg_join_attempt_ucast = STR_STATIC_INIT(PREFIX "Private rooms are by invitation only. Room owners have been notified.");
 static str msg_invite             = STR_STATIC_INIT(PREFIX "%.*s invites you to join the room (send '%.*saccept' or '%.*sreject')");
 #if 0
 static str msg_rejected           = STR_STATIC_INIT(PREFIX "%.*s has rejected invitation");
@@ -453,37 +455,30 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("Found room [%.*s]\n", STR_FMT(&rm->uri));
 
 	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
-	if (!(rm->flags & IMC_ROOM_PRIV)) {
-		LM_DBG("Room [%.*s] is public\n", STR_FMT(&rm->uri));
-		if (member == NULL) {
-			LM_DBG("adding new member [%.*s]\n", STR_FMT(&src->uri));
-			member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
-			if (member == NULL) {
-				LM_ERR("Failed to add new user [%.*s]\n", STR_FMT(&src->uri));
-				goto error;
-			}
-			goto build_inform;
-		} else {
-			LM_DBG("User [%.*s] is already in room\n", STR_FMT(&member->uri));
-		}
-	} else {
-		if (member == NULL) {
-			LM_DBG("Attept to join private room [%.*s] by [%.*s]\n",
-					STR_FMT(&rm->uri), STR_FMT(&src->uri));
-			goto build_inform;
-		}
-
-		if (member->flags & IMC_MEMBER_INVITED)
-			member->flags &= ~IMC_MEMBER_INVITED;
+	if (member) {
+		LM_DBG("User [%.*s] is already in the room\n", STR_FMT(&member->uri));
+		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_already_joined);
+		goto done;
 	}
 
-build_inform:
 	body.s = imc_body_buf;
-	if (member != NULL) {
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	if (!(rm->flags & IMC_ROOM_PRIV)) {
+		LM_DBG("adding new member [%.*s]\n", STR_FMT(&src->uri));
+		member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
+		if (member == NULL) {
+			LM_ERR("Failed to add new user [%.*s]\n", STR_FMT(&src->uri));
+			goto error;
+		}
+
+		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(src->uri)));
 	} else {
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt.s, STR_FMT(format_uri(src->uri)));
+		LM_DBG("Attept to join private room [%.*s] by [%.*s]\n",
+			STR_FMT(&rm->uri), STR_FMT(&src->uri));
+
+		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
+		imc_send_message(&rm->uri, &src->uri, &all_hdrs, &msg_join_attempt_ucast);
 	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, &all_hdrs, &body);
 
@@ -491,6 +486,9 @@ build_inform:
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 done:
+	if (member != NULL && (member->flags & IMC_MEMBER_INVITED))
+		member->flags &= ~IMC_MEMBER_INVITED;
+
 	rv = 0;
 error:
 	if (room.uri.s) pkg_free(room.uri.s);
