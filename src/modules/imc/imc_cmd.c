@@ -454,7 +454,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("Found room [%.*s]\n", STR_FMT(&rm->uri));
 
 	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
-	if (member) {
+	if (member && !(member->flags & IMC_MEMBER_DELETED)) {
 		LM_DBG("User [%.*s] is already in the room\n", STR_FMT(&member->uri));
 		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_already_joined);
 		goto done;
