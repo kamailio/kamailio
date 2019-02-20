@@ -54,6 +54,7 @@ static str msg_user_left          = STR_STATIC_INIT(PREFIX "%.*s has left the ro
 static str msg_join_attempt_bcast = STR_STATIC_INIT(PREFIX "%.*s attempted to join the room");
 static str msg_join_attempt_ucast = STR_STATIC_INIT(PREFIX "Private rooms are by invitation only. Room owners have been notified.");
 static str msg_invite             = STR_STATIC_INIT(PREFIX "%.*s invites you to join the room (send '%.*saccept' or '%.*sreject')");
+static str msg_add_reject         = STR_STATIC_INIT(PREFIX "You don't have the permmission to add members to this room");
 #if 0
 static str msg_rejected           = STR_STATIC_INIT(PREFIX "%.*s has rejected invitation");
 #endif
@@ -209,6 +210,9 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("invite")-1)
 				&& !strncasecmp(cmd->name.s, "invite", cmd->name.len)) {
 		cmd->type = IMC_CMDID_INVITE;
+	} else if(cmd->name.len==(sizeof("add")-1)
+				&& !strncasecmp(cmd->name.s, "add", cmd->name.len)) {
+		cmd->type = IMC_CMDID_ADD;
 	} else if(cmd->name.len==(sizeof("accept")-1)
 				&& !strncasecmp(cmd->name.s, "accept", cmd->name.len)) {
 		cmd->type = IMC_CMDID_ACCEPT;
@@ -551,7 +555,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	flag_member |= IMC_MEMBER_INVITED;
 	member = imc_add_member(rm, &user.parsed.user, &user.parsed.host, flag_member);
 	if (member == NULL) {
-		LM_ERR("Adding member [%.*s]\n", STR_FMT(&user.uri));
+		LM_ERR("Adding member [%.*s] failed\n", STR_FMT(&user.uri));
 		goto error;
 	}
 
@@ -591,6 +595,79 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 	}
 
+	rv = 0;
+error:
+	if (user.uri.s != NULL) pkg_free(user.uri.s);
+	if (room.uri.s != NULL) pkg_free(room.uri.s);
+	if (rm != NULL) imc_release_room(rm);
+	return rv;
+}
+
+
+int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
+		struct imc_uri *src, struct imc_uri *dst)
+{
+	int rv = -1;
+	imc_room_p rm = 0;
+	imc_member_p member = 0;
+	str body;
+	struct imc_uri user, room;
+
+	memset(&user, '\0', sizeof(user));
+	memset(&room, '\0', sizeof(room));
+
+	if (cmd->param[0].s == NULL) {
+		LM_INFO("Add command with missing argument from [%.*s]\n", STR_FMT(&src->uri));
+		goto error;
+	}
+
+	if (build_imc_uri(&user, cmd->param[0], &dst->parsed))
+		goto error;
+
+	if (build_imc_uri(&room, cmd->param[1].s ? cmd->param[1] : dst->parsed.user, &dst->parsed))
+		goto error;
+
+	rm = imc_get_room(&room.parsed.user, &room.parsed.host);
+	if (rm == NULL || (rm->flags & IMC_ROOM_DELETED)) {
+		LM_ERR("Room [%.*s] does not exist!\n", STR_FMT(&room.uri));
+		goto error;
+	}
+	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
+
+	if (member == NULL) {
+		LM_ERR("User [%.*s] is not member of room [%.*s]!\n",
+			STR_FMT(&src->uri), STR_FMT(&room.uri));
+		goto error;
+	}
+
+	if (!(member->flags & IMC_MEMBER_OWNER) &&
+			!(member->flags & IMC_MEMBER_ADMIN)) {
+		LM_ERR("User [%.*s] has no right to add others!\n", STR_FMT(&member->uri));
+		imc_send_message(&rm->uri, &member->uri, &all_hdrs, &msg_add_reject);
+		goto done;
+	}
+
+	member = imc_get_member(rm, &user.parsed.user, &user.parsed.host);
+	if (member != NULL) {
+		LM_ERR("User [%.*s] is already in room [%.*s]!\n", STR_FMT(&member->uri), STR_FMT(&rm->uri));
+		goto error;
+	}
+
+	member = imc_add_member(rm, &user.parsed.user, &user.parsed.host, 0);
+	if (member == NULL) {
+		LM_ERR("Adding member [%.*s] failed\n", STR_FMT(&user.uri));
+		goto error;
+	}
+
+	body.s = imc_body_buf;
+	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	if (body.len > 0)
+		imc_room_broadcast(rm, &all_hdrs, &body);
+
+	if (body.len >= IMC_BUF_SIZE)
+		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
+
+done:
 	rv = 0;
 error:
 	if (user.uri.s != NULL) pkg_free(user.uri.s);
