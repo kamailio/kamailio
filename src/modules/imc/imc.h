@@ -39,10 +39,8 @@ extern int imc_create_on_join;
 extern int imc_check_on_create;
 
 struct imc_uri {
-	str *uri;
-	str user;
-	str host;
-	struct sip_uri *parsed;
+	str uri;
+	struct sip_uri parsed;
 };
 
 #endif
