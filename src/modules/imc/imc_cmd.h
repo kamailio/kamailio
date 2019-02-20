@@ -46,6 +46,8 @@
 #define IMC_CMDID_HELP		9
 #define IMC_CMDID_MEMBERS	10
 #define IMC_CMDID_UNKNOWN	11
+#define IMC_CMDID_ADD		12
+
 
 #define IMC_CMD_CREATE	"create"
 #define IMC_CMD_INVITE	"invite"
@@ -56,6 +58,7 @@
 #define IMC_CMD_REMOVE	"remove"
 #define IMC_CMD_DESTROY	"destroy"
 #define IMC_CMD_MEMBERS	"members"
+#define IMC_CMD_ADD	    "add"
 
 #define IMC_ROOM_PRIVATE		"private"
 #define IMC_ROOM_PRIVATE_LEN	(sizeof(IMC_ROOM_PRIVATE)-1)
@@ -66,6 +69,8 @@ create new conference room\r\n\
 join the conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_INVITE" <user_name> [<room_name>] - \
 invite a user to join a conference room\r\n\
+"IMC_CMD_START_STR IMC_CMD_ADD" <user_name> [<room_name>] - \
+add a user to a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_ACCEPT" - \
 accept invitation to join a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_REJECT" - \
@@ -97,6 +102,8 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
+		struct imc_uri *src, struct imc_uri *dst);
+int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct imc_uri *src, struct imc_uri *dst);
 int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct imc_uri *src, struct imc_uri *dst);

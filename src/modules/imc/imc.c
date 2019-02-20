@@ -526,6 +526,14 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
+		case IMC_CMDID_ADD:
+			if(imc_handle_add(msg, &cmd, &src, &dst)<0)
+			{
+				LM_ERR("failed to handle 'add'\n");
+				ret = -50;
+				goto error;
+			}
+		break;
 		case IMC_CMDID_ACCEPT:
 			if(imc_handle_accept(msg, &cmd, &src, &dst)<0)
 			{
