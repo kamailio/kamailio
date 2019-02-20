@@ -35,10 +35,9 @@
 #include "imc.h"
 #include "imc_cmd.h"
 
-#define IMC_BUF_SIZE	1024
-
 #define PREFIX "*** "
 
+#define IMC_BUF_SIZE 32768
 static char imc_body_buf[IMC_BUF_SIZE];
 
 static str imc_msg_type = { "MESSAGE", 7 };
@@ -888,18 +887,15 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 
 		imc_del_room(&room.parsed.user, &room.parsed.host);
 	} else {
-		/* delete user */
-		member->flags |= IMC_MEMBER_DELETED;
 		body.s = imc_body_buf;
 		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
-
 		if (body.len > 0)
 			imc_room_broadcast(rm, &all_hdrs, &body);
-
-		imc_del_member(rm, &src->parsed.user, &src->parsed.host);
-
 		if (body.len >= IMC_BUF_SIZE)
 			LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
+
+		member->flags |= IMC_MEMBER_DELETED;
+		imc_del_member(rm, &src->parsed.user, &src->parsed.host);
 	}
 
 	rv = 0;
