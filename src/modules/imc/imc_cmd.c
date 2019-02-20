@@ -204,9 +204,12 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("exit")-1)
 				&& !strncasecmp(cmd->name.s, "exit", cmd->name.len)) {
 		cmd->type = IMC_CMDID_LEAVE;
+	} else if(cmd->name.len==(sizeof("members")-1)
+				&& !strncasecmp(cmd->name.s, "members", cmd->name.len)) {
+		cmd->type = IMC_CMDID_MEMBERS;
 	} else if(cmd->name.len==(sizeof("list")-1)
 				&& !strncasecmp(cmd->name.s, "list", cmd->name.len)) {
-		cmd->type = IMC_CMDID_LIST;
+		cmd->type = IMC_CMDID_MEMBERS;
 	} else if(cmd->name.len==(sizeof("destroy")-1)
 				&& !strncasecmp(cmd->name.s, "destroy", cmd->name.len)) {
 		cmd->type = IMC_CMDID_DESTROY;
@@ -740,7 +743,7 @@ error:
 }
 
 
-int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
+int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 		struct imc_uri *src, struct imc_uri *dst)
 {
 	int rv = -1;
