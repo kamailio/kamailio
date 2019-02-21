@@ -299,6 +299,105 @@ int hi2_iri_sip_exist_in_htable(struct sip_msg *msg){
     return 0;
 }
 
+int hi2_check_received_ip_via( struct sip_msg *msg ){
+    struct hdr_field *p;
+    struct via_body *pp = NULL;
+    int rcvd;
+
+    if(!msg->eoh
+       && (parse_headers(msg, HDR_EOH_F, 0) == -1 || !msg->eoh)) {
+        ERR("bad msg while parsing to EOH \n");
+        return -1;
+    }
+
+    p = msg->h_via1;
+    while (p->type == HDR_VIA_T){
+
+        pp = p->parsed;
+//		LM_INFO("Step-1\n");
+//		LM_INFO("Via:<%.*s>\n", pp->host.len, pp->host.s);
+        rcvd = (hi2_check_via_address(&msg->rcv.src_ip, &pp->host, pp->port, received_dns)!=0);
+        if (!rcvd)		//the match is found. return.
+            return 1;
+        p = p->next;
+    }
+    return 0;
+}
+
+/* This function is exactly the same check_via_address funcion in core/msg_translator.c file.
+ * checks if ip is in host(name) and ?host(ip)=name?
+ * ip must be in network byte order!
+ *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
+ * return 0 if equal */
+int hi2_check_via_address(struct ip_addr* ip, str *name,
+                          unsigned short port, int resolver)
+{
+    struct hostent* he;
+    int i;
+    char* s;
+    int len;
+    char lproto;
+
+    /* maybe we are lucky and name it's an ip */
+    s=ip_addr2a(ip);
+    if (s){
+                LM_DBG("(%s, %.*s, %d)\n", s, name->len, name->s, resolver);
+
+        len=strlen(s);
+
+        /* check if name->s is an ipv6 address or an ipv6 address ref. */
+        if ((ip->af==AF_INET6) &&
+            (	((len==name->len)&&(strncasecmp(name->s, s, name->len)==0))
+                 ||
+                 ((len==(name->len-2))&&(name->s[0]=='[')&&
+                  (name->s[name->len-1]==']')&&
+                  (strncasecmp(name->s+1, s, len)==0))
+            )
+                ) {
+            return 0;
+        }
+        else {
+            if (unlikely(name->s==NULL)) {
+                        LM_CRIT("invalid Via host name\n");
+                return -1;
+            }
+
+            if (len==name->len && strncmp(name->s, s, name->len)==0)
+                return 0;
+        }
+    }else{
+                LM_CRIT("could not convert ip address\n");
+        return -1;
+    }
+
+    if (port==0) port=SIP_PORT;
+    if (resolver&DO_DNS){
+                LM_DBG("doing dns lookup\n");
+        /* try all names ips */
+        lproto = PROTO_NONE;
+        he=sip_resolvehost(name, &port, &lproto); /* don't use naptr */
+        if (he && ip->af==he->h_addrtype){
+            for(i=0;he && he->h_addr_list[i];i++){
+                if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
+                    return 0;
+            }
+        }
+    }
+    if (resolver&DO_REV_DNS){
+                LM_DBG("doing rev. dns lookup\n");
+        /* try reverse dns */
+        he=rev_resolvehost(ip);
+        if (he && (strncmp(he->h_name, name->s, name->len)==0))
+            return 0;
+        for (i=0; he && he->h_aliases[i];i++){
+            if (strncmp(he->h_aliases[i],name->s, name->len)==0)
+                return 0;
+        }
+    }
+    return -1;
+}
+
+
 struct HI2_Session_list *hi2_session_activated(struct sip_msg *msg){
     str  callid;
     char correlation[32];

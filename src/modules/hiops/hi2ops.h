@@ -34,6 +34,9 @@
 #include "../../core/md5.h"
 #include "../../core/md5utils.h"
 #include "../../core/events.h"
+#include "../../core/globals.h"
+#include "../../core/resolve.h"
+#include "../../core/ip_addr.h"
 
 #include "../htable/ht_api.h"
 #include "../htable/ht_var.h"
@@ -99,6 +102,10 @@ int hi2_iri_interception_based_sip_initial(struct sip_msg *msg, HI1_Listed_P_t *
 int hi2_iri_interception_based_sip_sequential(struct sip_msg *msg, HI1_Listed_P_t *list);
 int hi2_iri_interception_based_sip_reply(struct sip_msg *msg, HI1_Listed_P_t *list);
 int hi2_iri_sip_exist_in_htable(struct sip_msg *msg);
+
+/* check if IP address:Port in rcv is exist in Via IP address of signaling */
+int hi2_check_received_ip_via( struct sip_msg *msg );
+int hi2_check_via_address(struct ip_addr* ip, str *name, unsigned short port, int resolver);
 
 
 int hi2_destructor();
