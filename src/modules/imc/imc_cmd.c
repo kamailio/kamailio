@@ -49,6 +49,7 @@ static str msg_room_created       = STR_STATIC_INIT(PREFIX "Room was created");
 static str msg_room_destroyed     = STR_STATIC_INIT(PREFIX "Room has been destroyed");
 static str msg_room_not_found     = STR_STATIC_INIT(PREFIX "Room not found");
 static str msg_room_exists        = STR_STATIC_INIT(PREFIX "Room already exists");
+static str msg_leave_error        = STR_STATIC_INIT(PREFIX "You are the room's owner and cannot leave. Use #destroy if you wish to destroy the room.");
 static str msg_room_exists_priv   = STR_STATIC_INIT(PREFIX "A private room with the same name already exists");
 static str msg_room_exists_member = STR_STATIC_INIT(PREFIX "Room already exists and you are a member");
 static str msg_user_joined        = STR_STATIC_INIT(PREFIX "%.*s has joined the room");
@@ -1061,26 +1062,21 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	if (member->flags & IMC_MEMBER_OWNER) {
-		/*If the user is the owner of the room, the room is destroyed */
-		rm->flags |= IMC_ROOM_DELETED;
-		imc_room_broadcast(rm, build_headers(msg), &msg_room_destroyed);
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_leave_error);
+        goto done;
+    }
 
-		imc_release_room(rm);
-		rm = NULL;
+	body.s = imc_body_buf;
+	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
+	if (body.len > 0)
+		imc_room_broadcast(rm, build_headers(msg), &body);
+	if (body.len >= IMC_BUF_SIZE)
+		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
-		imc_del_room(&room.parsed.user, &room.parsed.host);
-	} else {
-		body.s = imc_body_buf;
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
-		if (body.len > 0)
-			imc_room_broadcast(rm, build_headers(msg), &body);
-		if (body.len >= IMC_BUF_SIZE)
-			LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
+	member->flags |= IMC_MEMBER_DELETED;
+	imc_del_member(rm, &src->parsed.user, &src->parsed.host);
 
-		member->flags |= IMC_MEMBER_DELETED;
-		imc_del_member(rm, &src->parsed.user, &src->parsed.host);
-	}
-
+done:
 	rv = 0;
 error:
 	if (room.uri.s != NULL) pkg_free(room.uri.s);
