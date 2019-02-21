@@ -139,36 +139,43 @@ static int ht_dmq_cell_group_flush(dmq_node_t* node) {
 
 	srjson_doc_t *jdoc = &ht_dmq_jdoc_cell_group.jdoc;
 	srjson_t *jdoc_cells = ht_dmq_jdoc_cell_group.jdoc_cells;
+	int ret = 0;
 
 	srjson_AddItemToObject(jdoc, jdoc->root, "cells", jdoc_cells);
 
-	LM_DBG("json[%s]\n", srjson_PrintUnformatted(jdoc, jdoc->root));
+	LM_DBG("jdoc size[%d]\n", ht_dmq_jdoc_cell_group.size);
 	jdoc->buf.s = srjson_PrintUnformatted(jdoc, jdoc->root);
 	if(jdoc->buf.s==NULL) {
 		LM_ERR("unable to serialize data\n");
-		return -1;
+		ret = -1;
+		goto cleanup;
 	}
 	jdoc->buf.len = strlen(jdoc->buf.s);
 
 	LM_DBG("sending serialized data %.*s\n", jdoc->buf.len, jdoc->buf.s);
 	if (ht_dmq_send(&jdoc->buf, node)!=0) {
 		LM_ERR("unable to send data\n");
-		return -1;
+		ret = -1;
 	}
 
-	LM_DBG("jdoc size[%d]\n", ht_dmq_jdoc_cell_group.size);
+cleanup:
 
-	srjson_Delete(jdoc, jdoc_cells);
-	ht_dmq_jdoc_cell_group.jdoc_cells = srjson_CreateArray(&ht_dmq_jdoc_cell_group.jdoc);
-	if (ht_dmq_jdoc_cell_group.jdoc_cells==NULL) {
-		LM_ERR("cannot re-create json cells array! \n");
-		return -1;
-	}
-
+	srjson_DeleteItemFromObject(jdoc, jdoc->root, "cells");
 	ht_dmq_jdoc_cell_group.count = 0;
 	ht_dmq_jdoc_cell_group.size = dmq_cell_group_empty_size;
 
-	return 0;
+	if(jdoc->buf.s!=NULL) {
+		jdoc->free_fn(jdoc->buf.s);
+		jdoc->buf.s = NULL;
+	}
+
+	ht_dmq_jdoc_cell_group.jdoc_cells = srjson_CreateArray(&ht_dmq_jdoc_cell_group.jdoc);
+	if (ht_dmq_jdoc_cell_group.jdoc_cells==NULL) {
+		LM_ERR("cannot re-create json cells array! \n");
+		ret = -1;
+	}
+
+	return ret;
 }
 
 static void ht_dmq_cell_group_destroy() {
