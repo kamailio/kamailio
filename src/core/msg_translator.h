@@ -134,9 +134,6 @@ int received_test( struct sip_msg *msg );
 /* check if IP address in Via != source IP address of signaling */
 int received_via_test( struct sip_msg *msg );
 
-/* check if IP address:Port in rcv is exist in Via IP address of signaling */
-int received_in_via( struct sip_msg *msg );
-
 /* builds a char* buffer from message headers without body
  * first line is excluded in case of skip_first_line=1
  */
