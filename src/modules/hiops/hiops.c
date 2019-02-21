@@ -213,7 +213,9 @@ int th_msg_received(sr_event_param_t *evp) {
         return -1;
     }
 
-    if (received_in_via(&msg))
+//    if (received_in_via(&msg))
+    if (hi2_check_received_ip_via(&msg))
+
         LM_INFO("The rcv ip address is exist in via headers.\n");
     else {
 
