@@ -784,7 +784,7 @@ Additional layer of security over our communications.
 %package    sipcapture-daemon-config
 Summary:    Reference config for sipcapture daemon
 Group:      %{PKGGROUP}
-Requires:   kamailio-sipcapture = %ver
+Requires:   kamailio = %ver
 %if 0%{?suse_version}
 Requires:  filesystem
 %endif
