@@ -233,8 +233,8 @@ Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
 Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < %ver, kamailio-redis < %ver
-Conflicts:  kamailio-regex < %ver, kamailio-ruby < %ver, kamailio-sctp < %ver
-Conflicts:  kamailio-sipdump < %ver
+Conflicts:  kamailio-regex < %ver, kamailio-ruby < %ver
+Conflicts:  kamailio-sctp < %ver, kamailio-secfilter < %ver, kamailio-sipdump < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
@@ -769,6 +769,16 @@ BuildRequires:  lksctp-tools-devel
 %description    sctp
 SCTP transport for Kamailio.
 %endif
+
+
+%package    secfilter
+Summary:    Additional layer of security over our communications
+Group:      %{PKGGROUP}
+Requires:   kamailio = %ver
+#BuildRequires:  lksctp-tools-devel
+
+%description    secfilter
+Additional layer of security over our communications.
 
 
 %package    sipcapture-daemon-config
@@ -1955,6 +1965,12 @@ fi
 %endif
 
 
+%files      secfilter
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.secfilter
+%{_libdir}/kamailio/modules/secfilter.so
+
+
 %files      sipdump
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.sipdump
@@ -2069,6 +2085,8 @@ fi
 
 
 %changelog
+* Tue Feb 21 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
+  - Added secfilter package
 * Tue Dec 11 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-1
   - Added Ruby package
 * Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-0
