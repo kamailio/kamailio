@@ -16,7 +16,7 @@ Julien Chavanton
    flowroute.com
    <jchavanton@gmail.com>
 
-   Copyright © 2017-2018 Flowroute.com
+   Copyright © 2017-2019 Flowroute.com
      __________________________________________________________________
 
    Table of Contents
@@ -37,9 +37,10 @@ Julien Chavanton
 
               4.1. rms_answer ()
               4.2. rms_hangup ()
-              4.3. rms_session_check ()
-              4.4. rms_sip_request ()
-              4.5. rms_play ()
+              4.3. rms_bridge ()
+              4.4. rms_session_check ()
+              4.5. rms_sip_request ()
+              4.6. rms_play ()
 
    List of Examples
 
@@ -49,6 +50,7 @@ Julien Chavanton
    1.4. usage example
    1.5. usage example
    1.6. usage example
+   1.7. usage example
 
 Chapter 1. Admin Guide
 
@@ -68,9 +70,10 @@ Chapter 1. Admin Guide
 
         4.1. rms_answer ()
         4.2. rms_hangup ()
-        4.3. rms_session_check ()
-        4.4. rms_sip_request ()
-        4.5. rms_play ()
+        4.3. rms_bridge ()
+        4.4. rms_session_check ()
+        4.5. rms_sip_request ()
+        4.6. rms_play ()
 
 1. Overview
 
@@ -138,14 +141,14 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 
    4.1. rms_answer ()
    4.2. rms_hangup ()
-   4.3. rms_session_check ()
-   4.4. rms_sip_request ()
-   4.5. rms_play ()
+   4.3. rms_bridge ()
+   4.4. rms_session_check ()
+   4.5. rms_sip_request ()
+   4.6. rms_play ()
 
 4.1. rms_answer ()
 
    Create a session and a call leg and call the event_route[rms:start]
-   config example
 
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
@@ -187,7 +190,39 @@ route {
         rms_hangup();
 ...
 
-4.3. rms_session_check ()
+4.3. rms_bridge ()
+
+   Bridge the incoming call, create a second call leg using a UAC in a
+   B2BUA manner, this is needed in case we want to un-bridge later, a
+   feature not currently implemented Call the specified event_route,
+   defaulting to [rms:bridge].
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.4. usage example
+...
+event_route[rms:bridged] {
+        xnotice("[rms:bridged] !\n");
+};
+
+route {
+        if (t_precheck_trans()) {
+                t_check_trans();
+                exit;
+        }
+        t_check_trans();
+        if (is_method("INVITE") && !has_totag()) {
+                $var(target) = "sip:" + $rU + "@mydomain.com:5060;";
+                if (!rms_bridge("$var(target)", "rms:bridged")) {
+                        t_reply("503", "server error");
+                }
+        }
+        if(rms_session_check()) // If the dialog is managed by the RMS module, t
+he in-dialog request needs to be handled by it.
+                rms_sip_request();
+...
+
+4.4. rms_session_check ()
 
    Returns true if the current SIP message it handled/known by the RMS
    module, else it may be handle in any other way by Kamailio.
@@ -195,7 +230,7 @@ route {
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.4. usage example
+   Example 1.5. usage example
 ...
         if (rms_session_check()) {
                 xnotice("This session is handled by the RMS module\n");
@@ -203,7 +238,7 @@ route {
         }
 ...
 
-4.4. rms_sip_request ()
+4.5. rms_sip_request ()
 
    This should be called for every in-dialog SIP request, it will be
    forwarded behaving as a B2BUA, the transaction will be suspended until
@@ -215,14 +250,14 @@ route {
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.5. usage example
+   Example 1.6. usage example
 ...
         if (rms_session_check()) {
                 rms_sip_request();
         }
 ...
 
-4.5. rms_play ()
+4.6. rms_play ()
 
    Play a wav file, a resampler is automaticaly configured to resample and
    convert stereo to mono if needed.
@@ -232,7 +267,7 @@ route {
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.6. usage example
+   Example 1.7. usage example
 ...
         rms_play("file.wav", "event_route_name");
 ...
