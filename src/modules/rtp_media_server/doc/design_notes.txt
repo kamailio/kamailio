@@ -29,8 +29,7 @@
 
 
 TODO:
-- Implement and test a_leg received CANCEL handling
-- Implement and test in-dialog message FAILURE.
+- Implement early media bridding
 - Implement RE-INVITE with and without codec modification.
 - Verify and enforce state control when receiving re-transmission of multiple INITIAL INVITEs / BYEs
 - The B2BUA logic must be able to handle multiple b_leg Dialogs responses that could be created because of upstream call forking,

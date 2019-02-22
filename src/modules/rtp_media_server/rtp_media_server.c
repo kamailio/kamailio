@@ -459,6 +459,10 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 		return;
 	} else if(ntype == TMCB_LOCAL_COMPLETED) {
 		LM_NOTICE("COMPLETED [%d]\n", pcbp->code);
+	} else if(ntype == TMCB_LOCAL_RESPONSE_IN){
+		LM_NOTICE("RESPONSE [%d]\n", pcbp->code);
+		if (pcbp->code != 180 && pcbp->code != 183)
+			return;
 	} else {
 		LM_NOTICE("TMCB_TYPE[%d][%d]\n", ntype, pcbp->code);
 	}
@@ -484,14 +488,19 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 	} else {
 		rms_str_dup(&si->remote_tag, &to->tag_value, 1);
 	}
+
 	if(from->tag_value.len == 0) {
 		LM_ERR("not from tag.\n");
 		goto error;
 	} else {
 		rms_str_dup(&si->local_tag, &from->tag_value, 1);
 	}
-	LM_NOTICE("session created [%s][%s][%s]\n", si->callid.s, si->remote_tag.s,
+
+	LM_NOTICE("session updated [%s][%s][%s]\n", si->callid.s, si->remote_tag.s,
 			si->local_tag.s);
+	if (pcbp->code == 180 || pcbp->code == 183) {
+		return; // early media not tested/handled properly
+	}
 
 	rms_sdp_info_t *sdp_info = &si->sdp_info_answer;
 	if(!rms_get_sdp_info(sdp_info, msg)) {
@@ -557,7 +566,6 @@ static int rms_bridging_call(rms_session_info_t *si, rms_action_t *a)
 			si->local_ip.s, si->local_port);
 	headers.len = strlen(buff);
 	headers.s = buff;
-	si->bridged_si->cseq++;
 	LM_INFO("si[%p]call-id[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]\n", si,
 			si->callid.len, si->callid.s, si->bridged_si->cseq, param_uri->len, param_uri->s,
 			si->bridged_si->remote_uri.s, si->bridged_si->local_uri.s);
@@ -569,15 +577,14 @@ static int rms_bridging_call(rms_session_info_t *si, rms_action_t *a)
 		LM_ERR("error in tmb.new_dlg_uac\n");
 		goto error;
 	}
-	//dialog->id.rem_tag.s = si->remote_tag.s;
-	//dialog->id.rem_tag.len = si->remote_tag.len;
 	dialog->rem_target.s = param_uri->s;
 	dialog->rem_target.len = param_uri->len - 1;
 	rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
 
 	set_uac_req(&uac_r, &method_invite, &headers, &sdp_info->new_body, dialog,
-			TMCB_LOCAL_COMPLETED | TMCB_ON_FAILURE, bridge_cb, a);
+			TMCB_LOCAL_COMPLETED | TMCB_LOCAL_RESPONSE_IN | TMCB_ON_FAILURE, bridge_cb, a);
 	result = tmb.t_request_within(&uac_r);
+	si->bridged_si->cseq = dialog->loc_seq.value;
 	if(result < 0) {
 		LM_ERR("error in tmb.t_request\n");
 		goto error;
@@ -598,7 +605,6 @@ static int rms_hangup_call(rms_session_info_t *si)
 	str headers = str_init("Max-Forwards: 70" CRLF);
 	str method_bye = str_init("BYE");
 
-	si->cseq++;
 	LM_INFO("si[%p]callid[%.*s]cseq[%d]remote_uri[%s]local_uri[%s]\n", si, si->callid.len, si->callid.s,
 			si->cseq, si->remote_uri.s, si->local_uri.s);
 	LM_INFO("contact[%.*s]\n", si->contact_uri.len, si->contact_uri.s);
@@ -617,6 +623,7 @@ static int rms_hangup_call(rms_session_info_t *si)
 	set_uac_req(&uac_r, &method_bye, &headers, NULL, dialog,
 			TMCB_LOCAL_COMPLETED, NULL, NULL);
 	result = tmb.t_request_within(&uac_r);
+	si->cseq = dialog->loc_seq.value;
 	if(result < 0) {
 		LM_ERR("error in tmb.t_request\n");
 		return -1;
@@ -861,6 +868,48 @@ error:
 	return -1;
 }
 
+
+static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
+{
+	tm_cell_t *trans;
+	tm_cell_t *bkt;
+	int bkb;
+	struct cancel_info cancel_data;
+	int fl = 0;
+	int rcode = 0;
+
+	if(rcode<100 || rcode>699)
+		rcode = 0;
+
+	bkt = tmb.t_gett();
+	bkb = tmb.t_gett_branch();
+	if (tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0 ) {
+		LM_NOTICE("Lookup failed - no transaction [%s][%s]\n", callid_s->s, cseq_s->s);
+		tmb.t_sett(bkt, bkb);
+		if(!tmb.t_reply(msg, 481, "Call/Transaction Does Not Exist")) {
+			return -1;
+		}
+		return 1;
+	}
+
+	if(trans->uas.request && fl>0 && fl<32)
+		setflag(trans->uas.request, fl);
+	init_cancel_info(&cancel_data);
+	cancel_data.reason.cause = rcode;
+	cancel_data.cancel_bitmap = 0;
+	tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
+	tmb.cancel_uacs(trans, &cancel_data, 0);
+
+	tmb.t_sett(bkt, bkb);
+	if(!tmb.t_reply(msg, 202, "cancelling")) {
+		LM_ERR("can not reply cancelling ?\n");
+		return -1;
+	}
+	LM_DBG("cancelling ...\n");
+	return 1;
+}
+
+
 static int rms_sip_forward(
 		rms_session_info_t *si, struct sip_msg *msg, str *method)
 {
@@ -869,11 +918,20 @@ static int rms_sip_forward(
 	str headers;
 	char buff[1024];
 
-	// suspend & forward ...
 	if(!rms_create_trans(msg))
-		goto error;
+		return 0;
 	si->action.cell = tmb.t_gett();
 	si->action.si = si;
+
+	if (strncmp(method->s, "CANCEL", 6) == 0) {
+		LM_INFO("[CANCEL][%s][%.*s]\n", si->bridged_si->remote_uri.s, si->remote_tag.len, si->remote_tag.s);
+		str cseq;
+		cseq.s = buff;
+		cseq.len = snprintf(buff, 1024, "%d", si->bridged_si->cseq);
+		rms_sip_cancel(msg, &si->callid, &cseq);
+		return 1;
+	}
+
 	if(tmb.t_suspend(
 			   msg, &si->action.tm_info.hash_index, &si->action.tm_info.label)
 			< 0) {
@@ -887,7 +945,6 @@ static int rms_sip_forward(
 	headers.len = strlen(buff);
 	headers.s = buff;
 
-	si->bridged_si->cseq++;
 	LM_INFO("si[%p]callid[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]\n", si, si->callid.len,
 			si->callid.s, si->bridged_si->cseq, si->bridged_si->contact_uri.len,
 			si->bridged_si->contact_uri.s, si->bridged_si->remote_uri.s,
@@ -903,12 +960,14 @@ static int rms_sip_forward(
 	}
 	dialog->id.rem_tag.s = si->bridged_si->remote_tag.s;
 	dialog->id.rem_tag.len = si->bridged_si->remote_tag.len;
+
 	dialog->rem_target.s = si->bridged_si->contact_uri.s;
 	dialog->rem_target.len = si->bridged_si->contact_uri.len;
 
 	set_uac_req(&uac_r, method, &headers, NULL, dialog,
 			TMCB_LOCAL_COMPLETED | TMCB_ON_FAILURE, forward_cb, &si->action);
 	result = tmb.t_request_within(&uac_r);
+	si->bridged_si->cseq = dialog->loc_seq.value;
 	if(result < 0) {
 		LM_ERR("error in tmb.t_request\n");
 		goto error;

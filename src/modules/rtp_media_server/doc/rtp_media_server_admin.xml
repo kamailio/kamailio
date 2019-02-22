@@ -110,7 +110,6 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 		<title><varname>rms_answer</varname> ()</title>
 		<para>
 		Create a session and a call leg and call the event_route[rms:start]
-		config example
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
@@ -161,6 +160,43 @@ route {
 ...
 		</programlisting></example>
 	</section>
+
+	<section id="rtp_media_server.f.rms_bridge">
+		<title><varname>rms_bridge</varname> ()</title>
+		<para>
+		Bridge the incoming call, create a second call leg using a UAC
+		in a B2BUA manner, this is needed in case we want to un-bridge later, a feature not currently implemented
+		Call the specified event_route, defaulting to [rms:bridge].
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+event_route[rms:bridged] {
+	xnotice("[rms:bridged] !\n");
+};
+
+route {
+	if (t_precheck_trans()) {
+		t_check_trans();
+		exit;
+	}
+	t_check_trans();
+	if (is_method("INVITE") &amp;&amp; !has_totag()) {
+		$var(target) = "sip:" + $rU + "@mydomain.com:5060;";
+		if (!rms_bridge("$var(target)", "rms:bridged")) {
+			t_reply("503", "server error");
+		}
+	}
+	if(rms_session_check()) // If the dialog is managed by the RMS module, the in-dialog request needs to be handled by it.
+		rms_sip_request();
+...
+		</programlisting></example>
+	</section>
+
 
 	<section id="rtp_media_server.f.rms_session_check">
 		<title><varname>rms_session_check</varname> ()</title>
