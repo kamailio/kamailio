@@ -32,6 +32,8 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/parser/parse_param.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
@@ -55,12 +57,20 @@ static int child_init(int);
 int evrexec_param(modparam_t type, void* val);
 void evrexec_process(evrexec_task_t *it, int idx);
 
+static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_evr_name(pv_spec_p sp, str *in);
 
 static param_export_t params[]={
 	{"exec",  PARAM_STRING|USE_FUNC_PARAM, (void*)evrexec_param},
 	{0,0,0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{ {"evr", (sizeof("evr")-1)}, PVT_OTHER, pv_get_evr, 0,
+		pv_parse_evr_name, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 /** module exports */
 struct module_exports exports= {
@@ -69,13 +79,14 @@ struct module_exports exports= {
 	0,					/* exported functions */
 	params,				/* exported parameters */
 	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
+	mod_pvs,			/* exported pseudo-variables */
 	0,					/* response handling function */
 	mod_init,			/* module initialization function */
 	child_init,			/* per-child init function */
 	0					/* module destroy function */
 };
 
+static rpc_export_t evr_rpc_methods[];
 
 /**
  * init module function
@@ -83,6 +94,12 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	evrexec_task_t *it;
+
+	if(rpc_register_array(evr_rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	if(_evrexec_list==NULL)
 		return 0;
 
@@ -253,3 +270,129 @@ int evrexec_param(modparam_t type, void *val)
 	free_params(params_list);
 	return 0;
 }
+
+static str *pv_evr_data = NULL;
+
+/**
+ *
+ */
+static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL || pv_evr_data==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* data */
+			return pv_get_strval(msg, param, res, pv_evr_data);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_evr_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 4:
+			if(strncmp(in->s, "data", 4)==0) {
+				sp->pvp.pvn.u.isname.name.n = 0;
+			} else {
+				goto error;
+			}
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV evr key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+const char *rpc_evr_run_doc[2] = {
+	"Execute event_route block", 0
+};
+
+/**
+ *
+ */
+void rpc_evr_run(rpc_t *rpc, void *c)
+{
+	str evr_name = STR_NULL;
+	str evr_data = STR_NULL;
+	int ret = 0;
+	int evr_id = -1;
+	sr_kemi_eng_t *keng = NULL;
+	sip_msg_t *fmsg = NULL;
+	int rtbk = 0;
+	char evr_buf[2];
+
+	ret = rpc->scan(c, "s*s", &evr_name.s, &evr_data.s);
+	if(ret<1) {
+		LM_ERR("failed getting the parameters");
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	evr_name.len = strlen(evr_name.s);
+	if(ret<2) {
+		evr_buf[0] = '\0';
+		evr_data.s = evr_buf;
+		evr_data.len = 0;
+	} else {
+		evr_data.len = strlen(evr_data.s);
+	}
+
+	pv_evr_data = &evr_data;
+	keng = sr_kemi_eng_get();
+	if(keng==NULL) {
+		evr_id = route_lookup(&event_rt, evr_name.s);
+		if(evr_id == -1) {
+			pv_evr_data = NULL;
+			LM_ERR("event route not found: %.*s\n", evr_name.len, evr_name.s);
+			rpc->fault(c, 500, "Event route not found");
+			return;
+		}
+	} else {
+		evr_id = -1;
+	}
+
+	fmsg = faked_msg_next();
+	rtbk = get_route_type();
+	set_route_type(LOCAL_ROUTE);
+
+	if(evr_id>=0) {
+		if(event_rt.rlist[evr_id]!=NULL) {
+			run_top_route(event_rt.rlist[evr_id], fmsg, 0);
+		} else {
+			LM_WARN("empty event route block [%.*s]\n",
+					evr_name.len, evr_name.s);
+		}
+	} else {
+		if(keng->froute(fmsg, EVENT_ROUTE, &evr_name, &evr_data)<0) {
+			LM_ERR("error running event route kemi callback\n");
+		}
+	}
+	set_route_type(rtbk);
+	pv_evr_data = NULL;
+}
+
+/**
+ *
+ */
+static rpc_export_t evr_rpc_methods[] = {
+	{"evrexec.run",  rpc_evr_run, rpc_evr_run_doc, 0},
+	{0, 0, 0, 0}
+};
