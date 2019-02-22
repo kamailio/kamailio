@@ -1,4 +1,3 @@
-
 rtp_media_server Module
 
 Julien Chavanton
@@ -38,8 +37,9 @@ Julien Chavanton
 
               4.1. rms_answer ()
               4.2. rms_hangup ()
-              4.3. rms_media_stop ()
-              4.4. rms_play ()
+              4.3. rms_session_check ()
+              4.4. rms_sip_request ()
+              4.5. rms_play ()
 
    List of Examples
 
@@ -48,6 +48,7 @@ Julien Chavanton
    1.3. usage example
    1.4. usage example
    1.5. usage example
+   1.6. usage example
 
 Chapter 1. Admin Guide
 
@@ -67,8 +68,9 @@ Chapter 1. Admin Guide
 
         4.1. rms_answer ()
         4.2. rms_hangup ()
-        4.3. rms_media_stop ()
-        4.4. rms_play ()
+        4.3. rms_session_check ()
+        4.4. rms_sip_request ()
+        4.5. rms_play ()
 
 1. Overview
 
@@ -111,6 +113,10 @@ Chapter 1. Admin Guide
      * mediastreamer2 git clone git://git.linphone.org/mediastreamer2.git
        Mediastreamer2 is a powerful and lightweight streaming engine
        specialized for voice/video telephony applications.
+     * bcunit git clone
+       https://github.com/BelledonneCommunications/bcunit.git
+       fork of the defunct project CUnit, with several fixes and patches
+       applied. CUnit is a Unit testing framework for C.
 
 3. Parameters
 
@@ -132,8 +138,9 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 
    4.1. rms_answer ()
    4.2. rms_hangup ()
-   4.3. rms_media_stop ()
-   4.4. rms_play ()
+   4.3. rms_session_check ()
+   4.4. rms_sip_request ()
+   4.5. rms_play ()
 
 4.1. rms_answer ()
 
@@ -166,11 +173,7 @@ route {
                         t_reply("503", "server error");
                 }
         }
-
-        if (is_method("BYE")){
-                xnotice("BYE RECEIVED [$ci]\n");
-                rms_media_stop();
-        }
+        rms_sip_request();
 ...
 
 4.2. rms_hangup ()
@@ -184,10 +187,27 @@ route {
         rms_hangup();
 ...
 
-4.3. rms_media_stop ()
+4.3. rms_session_check ()
 
-   This should be called on reception of a BYE, this will delete the RTP
-   session and the media ressources. and reply "200 OK".
+   Returns true if the current SIP message it handled/known by the RMS
+   module, else it may be handle in any other way by Kamailio.
+
+   This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1.4. usage example
+...
+        if (rms_session_check()) {
+                xnotice("This session is handled by the RMS module\n");
+                rms_sip_request();
+        }
+...
+
+4.4. rms_sip_request ()
+
+   This should be called for every in-dialog SIP request, it will be
+   forwarded behaving as a B2BUA, the transaction will be suspended until
+   the second leg replies.
 
    If the SIP session is not found "481 Call/Transaction Does Not Exist"
    is returned.
@@ -195,14 +215,14 @@ route {
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.4. usage example
+   Example 1.5. usage example
 ...
-        if (is_method("BYE")){
-                rms_media_stop();
+        if (rms_session_check()) {
+                rms_sip_request();
         }
 ...
 
-4.4. rms_play ()
+4.5. rms_play ()
 
    Play a wav file, a resampler is automaticaly configured to resample and
    convert stereo to mono if needed.
@@ -212,7 +232,7 @@ route {
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.5. usage example
+   Example 1.6. usage example
 ...
         rms_play("file.wav", "event_route_name");
 ...
