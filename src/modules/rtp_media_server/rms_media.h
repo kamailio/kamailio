@@ -34,8 +34,11 @@
 #include <ortp/ortp.h>
 #include <ortp/port.h>
 
-struct rms_session_info;
+#include "rtp_media_server.h"
+// #include "rms_session_info.h"
+// struct rms_session_info;
 typedef struct rms_action rms_action_t;
+
 
 typedef struct call_leg_media
 {
@@ -58,7 +61,7 @@ typedef struct call_leg_media
 	int local_port;
 	str remote_ip;
 	int remote_port;
-	struct rms_session_info *si;
+	const struct rms_session_info *si;
 } call_leg_media_t;
 
 int create_call_leg_media(call_leg_media_t *m);

@@ -36,9 +36,11 @@ typedef struct rms_sdp_info
 	int udp_local_port;
 } rms_sdp_info_t;
 
+int rms_get_sdp_info(rms_sdp_info_t *sdp_info, struct sip_msg *msg);
 int rms_sdp_set_body(struct sip_msg *msg, str *new_body);
 int rms_sdp_prepare_new_body(rms_sdp_info_t *, int payload_type_number);
 void rms_sdp_info_init(rms_sdp_info_t *sdp_info);
+int rms_sdp_info_clone(rms_sdp_info_t *dst, rms_sdp_info_t *src);
 void rms_sdp_info_free(rms_sdp_info_t *sdp_info);
 PayloadType *rms_sdp_check_payload(rms_sdp_info_t *);
 

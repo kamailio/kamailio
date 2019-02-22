@@ -140,11 +140,7 @@ route {
 			t_reply("503", "server error");
 		}
 	}
-
-	if (is_method("BYE")){
-		xnotice("BYE RECEIVED [$ci]\n");
-		rms_media_stop();
-	}
+	rms_sip_request();
 ...
 		</programlisting></example>
 	</section>
@@ -166,12 +162,34 @@ route {
 		</programlisting></example>
 	</section>
 
-	<section id="rtp_media_server.f.rms_media_stop">
-		<title><varname>rms_media_stop</varname> ()</title>
+	<section id="rtp_media_server.f.rms_session_check">
+		<title><varname>rms_session_check</varname> ()</title>
 		<para>
-		This should be called on reception of a BYE, this will
-		delete the RTP session and the media ressources.
-		and reply "200 OK".
+		Returns true if the current SIP message it handled/known by
+		the RMS module, else it may be handle in any other way by
+		Kamailio.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>usage example</title>
+		<programlisting format="linespecific">
+...
+	if (rms_session_check()) {
+		xnotice("This session is handled by the RMS module\n");
+		rms_sip_request();
+	}
+...
+		</programlisting></example>
+	</section>
+
+	<section id="rtp_media_server.f.rms_sip_request">
+		<title><varname>rms_sip_request</varname> ()</title>
+		<para>
+		This should be called for every in-dialog SIP request,
+		it will be forwarded behaving as a B2BUA, the transaction
+		will be suspended until the second leg replies.
 		</para>
 		<para>
 		If the SIP session is not found "481 Call/Transaction Does Not Exist"
@@ -184,8 +202,8 @@ route {
 		<title>usage example</title>
 		<programlisting format="linespecific">
 ...
-	if (is_method("BYE")){
-		rms_media_stop();
+	if (rms_session_check()) {
+		rms_sip_request();
 	}
 ...
 		</programlisting></example>

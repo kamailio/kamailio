@@ -1,0 +1,38 @@
+
+
+
+|rms_bridge_f| >> create a_leg and b_leg
+               >> link them and add them to the sessions
+               >> suspend a_leg connection
+               ---------------------------
+               | caller-leg | callee-leg |
+               ---------------------------
+               |offer|answer|offer|answer|
+               ---------------------------
+               |  x  |      |  x  |      | // create a resulting offer depending on codecs etc.
+               ---------------------------
+               >> BRIDING
+
+|BRIDGING|     >> INVITE b_leg using the callee-leg offer's
+               >> wait for transaction response/timeout
+               ---------------------------
+               | caller-leg | callee-leg |
+               ---------------------------
+               |offer|answer|offer|answer|
+               ---------------------------
+               |  x  |  x   |  x  |  x   | // create a resulting answer depending on codecs etc.
+               ---------------------------
+               >> BRIDGED
+
+|BRIDGED|      >> continue a_leg considering the state of b_leg
+
+
+
+TODO:
+- Implement and test a_leg received CANCEL handling
+- Implement and test in-dialog message FAILURE.
+- Implement RE-INVITE with and without codec modification.
+- Verify and enforce state control when receiving re-transmission of multiple INITIAL INVITEs / BYEs
+- The B2BUA logic must be able to handle multiple b_leg Dialogs responses that could be created because of upstream call forking,
+  when receiving multiple connections https://tools.ietf.org/html/rfc3261#section-15)
+  a soon as one Dialog connect, we need to terminate / cancel all other Dialogs if any.

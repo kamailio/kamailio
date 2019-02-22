@@ -22,6 +22,7 @@
 #include "rms_util.h"
 #include "../../core/data_lump.h"
 #include "../../core/parser/parse_content.h"
+#include "../../core/parser/sdp/sdp.h"
 
 // https://tools.ietf.org/html/rfc4566
 // (protocol version)
@@ -37,26 +38,96 @@ const char *sdp_t = "t=0 0\r\n";
 //"a=rtpmap:96 opus/48000/2\r\n"
 //"a=fmtp:96 useinbandfec=1\r\n";
 
-static char *rms_sdp_get_rtpmap(str body, int type_number)
+int rms_get_sdp_info(rms_sdp_info_t *sdp_info, struct sip_msg *msg)
 {
-	char *pos = body.s;
-	while((pos = strstr(pos, "a=rtpmap:"))) {
-		int id;
-		int sampling_rate;
-		char codec[64];
-		sscanf(pos, "a=rtpmap:%d %s/%d", &id, codec, &sampling_rate);
-		if(id == type_number) {
-			LM_INFO("[%d][%s/%d]\n", id, codec, sampling_rate);
-			return rms_char_dup(codec, 1);
-		}
-		pos++;
+	sdp_session_cell_t *sdp_session;
+	sdp_stream_cell_t *sdp_stream;
+	str media_ip, media_port;
+	int sdp_session_num = 0;
+	int sdp_stream_num = get_sdp_stream_num(msg);
+	if(parse_sdp(msg) < 0) {
+		LM_INFO("can not parse sdp\n");
+		return 0;
 	}
-	return NULL;
+	sdp_info_t *sdp = (sdp_info_t *)msg->body;
+	if(!sdp) {
+		LM_INFO("sdp null\n");
+		return 0;
+	}
+	rms_str_dup(&sdp_info->recv_body, &sdp->text, 1);
+	if(!sdp_info->recv_body.s)
+		goto error;
+	LM_INFO("sdp body - type[%d]\n", sdp->type);
+	if(sdp_stream_num > 1 || !sdp_stream_num) {
+		LM_INFO("only support one stream[%d]\n", sdp_stream_num);
+	}
+	sdp_stream_num = 0;
+	sdp_session = get_sdp_session(msg, sdp_session_num);
+	if(!sdp_session) {
+		return 0;
+	} else {
+		int sdp_stream_num = 0;
+		sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+		if(!sdp_stream) {
+			LM_INFO("can not get the sdp stream\n");
+			return 0;
+		} else {
+			rms_str_dup(&sdp_info->payloads, &sdp_stream->payloads, 1);
+			if(!sdp_info->payloads.s)
+				goto error;
+		}
+	}
+	if(sdp_stream->ip_addr.s && sdp_stream->ip_addr.len > 0) {
+		media_ip = sdp_stream->ip_addr;
+	} else {
+		media_ip = sdp_session->ip_addr;
+	}
+	rms_str_dup(&sdp_info->remote_ip, &media_ip, 1);
+	if(!sdp_info->remote_ip.s)
+		goto error;
+	rms_str_dup(&media_port, &sdp_stream->port, 0);
+	if(!media_port.s)
+		goto error;
+	sdp_info->remote_port = atoi(media_port.s);
+	pkg_free(media_port.s);
+	return 1;
+error:
+	rms_sdp_info_free(sdp_info);
+	return 0;
 }
+
+//static char *rms_sdp_get_rtpmap(str body, int type_number)
+//{
+//	char *pos = body.s;
+//	while((pos = strstr(pos, "a=rtpmap:"))) {
+//		int id;
+//		int sampling_rate;
+//		char codec[64];
+//		sscanf(pos, "a=rtpmap:%d %s/%d", &id, codec, &sampling_rate);
+//		if(id == type_number) {
+//			LM_INFO("[%d][%s/%d]\n", id, codec, sampling_rate);
+//			return rms_char_dup(codec, 1);
+//		}
+//		pos++;
+//	}
+//	return NULL;
+//}
 
 void rms_sdp_info_init(rms_sdp_info_t *sdp_info)
 {
 	memset(sdp_info, 0, sizeof(rms_sdp_info_t));
+}
+
+int rms_sdp_info_clone(rms_sdp_info_t *dst, rms_sdp_info_t *src)
+{
+	rms_sdp_info_init(dst);
+	if(!rms_str_dup(&dst->remote_ip, &src->remote_ip, 1))
+		return 0;
+	if(!rms_str_dup(&dst->payloads, &src->payloads, 1))
+		return 0;
+	if(!rms_str_dup(&dst->new_body, &src->new_body, 1))
+		return 0;
+	return 1;
 }
 
 void rms_sdp_info_free(rms_sdp_info_t *sdp_info)
@@ -99,8 +170,9 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, int payload_type_number)
 			payload_type_number);
 	body->len += strlen(sdp_m);
 
-	body->s = pkg_malloc(body->len + 1);
-	if (!body->s) return 0;
+	body->s = shm_malloc(body->len + 1);
+	if(!body->s)
+		return 0;
 	strcpy(body->s, sdp_v);
 	strcat(body->s, sdp_o);
 	strcat(body->s, sdp_s);
@@ -110,11 +182,19 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, int payload_type_number)
 	return 1;
 }
 
+PayloadType *
+rms_payload_type_new() // TODO: convert at the last minute from the MS manager process instead.
+{
+	PayloadType *newpayload = (PayloadType *)shm_malloc(sizeof(PayloadType));
+	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+	return newpayload;
+}
+
 PayloadType *rms_sdp_check_payload(rms_sdp_info_t *sdp)
 {
 	// https://tools.ietf.org/html/rfc3551
 	LM_INFO("payloads[%s]\n", sdp->payloads.s); // 0 8
-	PayloadType *pt = payload_type_new();
+	PayloadType *pt = rms_payload_type_new();
 	char *payloads = sdp->payloads.s;
 	char *payload_type_number = strtok(payloads, " ");
 	if(!payload_type_number) {
@@ -166,7 +246,6 @@ PayloadType *rms_sdp_check_payload(rms_sdp_info_t *sdp)
 			pt->clock_rate, pt->channels);
 	return pt;
 }
-
 
 
 int rms_sdp_set_body(struct sip_msg *msg, str *new_body)

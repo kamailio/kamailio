@@ -37,10 +37,9 @@
 #include "rms_util.h"
 #include "rms_sdp.h"
 #include "rms_media.h"
-
+#include "rms_session_info.h"
 
 ser_lock_t session_list_mutex;
-
 
 typedef struct rms
 {
@@ -52,49 +51,5 @@ typedef struct rms
 
 struct tm_binds tmb;
 
-typedef struct ms_res
-{
-	AudioStream *audio_stream;
-	RtpProfile *rtp_profile;
-} ms_res_t;
-
-typedef enum rms_action_type
-{
-	RMS_NONE,
-	RMS_START,
-	RMS_STOP,
-	RMS_HANGUP,
-	RMS_PLAY,
-	RMS_DONE,
-} rms_action_type_t;
-
-typedef struct rms_action
-{
-	struct rms_action *next;
-	struct rms_action *prev;
-	str param;
-	str route;
-	rms_action_type_t type;
-} rms_action_t;
-
-typedef struct rms_session_info
-{
-	struct rms_session_info *next;
-	struct rms_session_info *prev;
-	rms_sdp_info_t sdp_info_offer;
-	rms_sdp_info_t sdp_info_answer;
-	str callid;
-	str local_ip;
-	str local_uri;
-	str local_tag;
-	str remote_uri;
-	str remote_tag;
-	str contact_uri;
-	int cseq;
-	ms_res_t ms;
-	call_leg_media_t caller_media;
-	call_leg_media_t callee_media;
-	rms_action_t action;
-} rms_session_info_t;
 
 #endif
