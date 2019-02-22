@@ -28,6 +28,10 @@ Daniel-Constantin Mierla
 
               3.1. exec (str)
 
+        4. RPC Commands
+
+              4.1. evrexec.run
+
    List of Examples
 
    1.1. Set exec parameter
@@ -45,6 +49,10 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. exec (str)
+
+   4. RPC Commands
+
+        4.1. evrexec.run
 
 1. Overview
 
@@ -107,4 +115,31 @@ event_route[evrexec:timer] {
     sleep("600");
   }
 }
+...
+
+4. RPC Commands
+
+   4.1. evrexec.run
+
+4.1. evrexec.run
+
+   Run an event_route block or a KEMI function upon an RPC command.
+
+   Name: evroute.run
+
+   Parameters:
+     * evname
+       - the name of the event route block or the KEMI function.
+     * evdata
+       - (optional) - arbitrary data passed as a string, which is made
+       available inside event route block as $evr(data).
+
+   RPC Command Format:
+...
+event_route[evrexec:test] {
+   xlog("rpc command data: $evr(data)\n");
+}
+...
+kamctl rpc evroute.run evroute:test
+kamctl rpc evroute.run evroute:test mydata
 ...
