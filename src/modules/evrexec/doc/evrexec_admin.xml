@@ -123,5 +123,43 @@ event_route[evrexec:timer] {
 	</section>
 	</section>
 
+	<section>
+	<title>RPC Commands</title>
+	<section id="evrexec.r.run">
+		<title>evrexec.run</title>
+		<para>
+		Run an event_route block or a KEMI function upon an RPC command.
+		</para>
+		<para>
+		Name: <emphasis>evroute.run</emphasis>
+		</para>
+		<para>Parameters:
+		<itemizedlist>
+			<listitem>
+			<para>evname</para> - the name of the event route block or the KEMI
+			function.
+			</listitem>
+			<listitem>
+			<para>evdata</para> - (optional) - arbitrary data passed as a string,
+			which is made available inside event route block as $evr(data).
+			</listitem>
+		</itemizedlist>
+		</para>
+
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+event_route[evrexec:test] {
+   xlog("rpc command data: $evr(data)\n");
+}
+...
+kamctl rpc evroute.run evroute:test
+kamctl rpc evroute.run evroute:test mydata
+...
+		</programlisting>
+	</section>
+	</section>
 </chapter>
 
