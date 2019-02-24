@@ -411,7 +411,7 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 				else
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
 							&th_vparam_prefix, 0, &out.len);
-				if(out.s==NULL)
+				if(out.s==NULL || out.len<=0)
 				{
 					LM_ERR("cannot decode via %d\n", i);
 					return -1;
@@ -945,7 +945,12 @@ int th_add_via_cookie(sip_msg_t *msg, struct via_body *via)
 	if (via->params.s) {
 		viap = via->params.s - via->hdr.s - 1;
 	} else {
-		viap = via->host.s - via->hdr.s + via->host.len;
+		if (via->host.s) {
+			viap = via->host.s - via->hdr.s + via->host.len;
+		} else {
+			LM_ERR("no via parameter and no via host, can't insert cookie\n");
+			return -1;
+		}
 		if (via->port!=0)
 			viap += via->port_str.len + 1; /* +1 for ':'*/
 	}

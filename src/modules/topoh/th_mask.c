@@ -141,6 +141,12 @@ char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
 
 	*olen = (((ilen-((prefix!=NULL&&prefix->len>0)?prefix->len:0)) * 6) >> 3)
 				- n;
+
+	if (*olen<=0) {
+		LM_ERR("invalid olen parameter calculated, can't continue %d\n", *olen);
+		return NULL;
+	}
+
 	out = (char*)pkg_malloc((*olen+1+extra)*sizeof(char));
 
 	if(out==NULL)
