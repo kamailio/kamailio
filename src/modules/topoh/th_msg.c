@@ -267,6 +267,11 @@ int th_mask_contact(sip_msg_t *msg)
 	}
 
 	c = ((contact_body_t*)msg->contact->parsed)->contacts;
+	if(c == NULL)
+	{
+		LM_ERR("invalid contact header\n");
+		return -1;
+	}
 	in = c->uri;
 
 	out.s = th_mask_encode(in.s, in.len, &th_uri_prefix, &out.len);
