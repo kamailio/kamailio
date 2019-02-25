@@ -132,6 +132,8 @@ static const char *command_strings[] = {
 	[OP_UNBLOCK_DTMF]	= "unblock DTMF",
 	[OP_BLOCK_MEDIA]	= "block media",
 	[OP_UNBLOCK_MEDIA]	= "unblock media",
+	[OP_START_FORWARDING]	= "start forwarding",
+	[OP_STOP_FORWARDING]	= "stop forwarding",
 };
 
 struct minmax_mos_stats {
@@ -187,6 +189,8 @@ static int block_dtmf_f(struct sip_msg *, char *, char *);
 static int unblock_dtmf_f(struct sip_msg *, char *, char *);
 static int block_media_f(struct sip_msg *, char *, char *);
 static int unblock_media_f(struct sip_msg *, char *, char *);
+static int start_forwarding_f(struct sip_msg *, char *, char *);
+static int stop_forwarding_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -334,6 +338,18 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0,
 		ANY_ROUTE },
 	{"unblock_media",	(cmd_function)unblock_media_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"start_forwarding",	(cmd_function)start_forwarding_f,	0,
+		0, 0,
+		ANY_ROUTE },
+	{"stop_forwarding",	(cmd_function)stop_forwarding_f,	0,
+		0, 0,
+		ANY_ROUTE},
+	{"start_forwarding",	(cmd_function)start_forwarding_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"stop_forwarding",	(cmd_function)stop_forwarding_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
@@ -2339,7 +2355,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
 	}
 	else if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
-			|| op == OP_UNBLOCK_MEDIA)
+			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING)
 	{
 		ng_flags.flags = bencode_list(bencbuf);
 	}
@@ -2393,7 +2409,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
 	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
-			|| op == OP_UNBLOCK_MEDIA)
+			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING)
 	{
 		if (ng_flags.directional)
 			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
@@ -3722,6 +3738,44 @@ unblock_media_f(struct sip_msg* msg, char *str1, char *str2)
 	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_media_wrap, flags.s, 1);
+}
+
+static int rtpengine_start_forwarding_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_START_FORWARDING, d);
+}
+
+static int rtpengine_stop_forwarding_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_STOP_FORWARDING, d);
+}
+
+static int
+start_forwarding_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_forwarding_wrap, flags.s, 1);
+}
+
+static int
+stop_forwarding_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	str flags;
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_forwarding_wrap, flags.s, 1);
 }
 
 static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
