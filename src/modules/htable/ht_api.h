@@ -108,6 +108,8 @@ void ht_timer(unsigned int ticks, void *param);
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
+int ht_get_cell(ht_t *ht, str *name, int_str *val, int *type);
+
 
 int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 		int exv);

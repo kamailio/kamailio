@@ -94,6 +94,19 @@ int ht_api_get_cell_expire(str *hname, str *name,
 /**
  *
  */
+int ht_api_get_cell(str *hname, str *name,
+						   int_str *val, int *type)
+{
+	ht_t* ht;
+	ht = ht_get_table(hname);
+	if(ht==NULL)
+		return -1;
+	return ht_get_cell(ht, name, val, type);
+}
+
+/**
+ *
+ */
 int ht_api_rm_cell_re(str *hname, str *sre, int mode)
 {
 	ht_t* ht;
@@ -137,6 +150,7 @@ int bind_htable(htable_api_t* api)
 		return -1;
 	}
 	api->set = ht_api_set_cell;
+	api->get = ht_api_get_cell;
 	api->rm  = ht_api_del_cell;
 	api->set_expire = ht_api_set_cell_expire;
 	api->get_expire = ht_api_get_cell_expire;
