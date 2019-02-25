@@ -107,15 +107,15 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 	<title>Functions</title>
 
 	<section id="rtp_media_server.f.rms_answer">
-		<title><varname>rms_answer</varname> ()</title>
+		<title><varname>rms_answer</varname> (event_route)</title>
 		<para>
-		Create a session and a call leg and call the event_route[rms:start]
+		Create a session and a call leg and call the event_route
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_answer usage example</title>
 		<programlisting format="linespecific">
 ...
 event_route[rms:start] {
@@ -135,7 +135,7 @@ route {
 	}
 	t_check_trans();
 	if (is_method("INVITE") &amp;&amp; !has_totag()) {
-		if (!rms_answer()) {
+		if (!rms_answer("rms:start")) {
 			t_reply("503", "server error");
 		}
 	}
@@ -153,7 +153,7 @@ route {
 		This function can be used from EVENT_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_hangup usage example</title>
 		<programlisting format="linespecific">
 ...
 	rms_hangup();
@@ -162,7 +162,7 @@ route {
 	</section>
 
 	<section id="rtp_media_server.f.rms_bridge">
-		<title><varname>rms_bridge</varname> ()</title>
+		<title><varname>rms_bridge</varname> (target URI, event_route)</title>
 		<para>
 		Bridge the incoming call, create a second call leg using a UAC
 		in a B2BUA manner, this is needed in case we want to un-bridge later, a feature not currently implemented
@@ -172,7 +172,7 @@ route {
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_bridge usage example</title>
 		<programlisting format="linespecific">
 ...
 event_route[rms:bridged] {
@@ -209,7 +209,7 @@ route {
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_session_check usage example</title>
 		<programlisting format="linespecific">
 ...
 	if (rms_session_check()) {
@@ -235,7 +235,7 @@ route {
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_sip_request usage example</title>
 		<programlisting format="linespecific">
 ...
 	if (rms_session_check()) {
@@ -246,7 +246,7 @@ route {
 	</section>
 
 	<section id="rtp_media_server.f.rms_play">
-		<title><varname>rms_play</varname> ()</title>
+		<title><varname>rms_play</varname> (file, event_route)</title>
 		<para>
 		Play a wav file, a resampler is automaticaly configured to resample
 		and convert stereo to mono if needed.
@@ -257,7 +257,7 @@ route {
 		This function can be used from EVENT_ROUTE.
 		</para>
 		<example>
-		<title>usage example</title>
+		<title>rms_play usage example</title>
 		<programlisting format="linespecific">
 ...
 	rms_play("file.wav", "event_route_name");

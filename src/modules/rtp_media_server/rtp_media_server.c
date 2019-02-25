@@ -30,28 +30,33 @@ static int child_init(int);
 str playback_fn = {0, 0};
 str log_fn = {0, 0};
 
+static char *rms_bridge_default_route = "rms:bridged";
+static char *rms_answer_default_route = "rms:start";
+
+
 static rms_t rms;
 
 static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si);
 static int fixup_rms_action_play(void **param, int param_no);
 static int fixup_rms_bridge(void **param, int param_no);
+static int fixup_rms_answer(void **param, int param_no);
 static int rms_hangup_call(rms_session_info_t *si);
 static int rms_bridging_call(rms_session_info_t *si, rms_action_t *a);
 static int rms_bridged_call(rms_session_info_t *si, rms_action_t *a);
 
-static int rms_answer_f(struct sip_msg *);
+static int rms_answer_f(struct sip_msg *, char *);
 static int rms_sip_request_f(struct sip_msg *);
 static int rms_action_play_f(struct sip_msg *, str *, str *);
 static int rms_session_check_f(struct sip_msg *);
 static int rms_hangup_f(struct sip_msg *);
-static int rms_bridge_f(struct sip_msg *, char *, str *);
+static int rms_bridge_f(struct sip_msg *, char *, char *);
 
 static int rms_update_call_sdp(struct sip_msg *msg,
 		const rms_session_info_t *si, call_leg_media_t *m,
 		rms_sdp_info_t *sdp_info);
 
 static cmd_export_t cmds[] = {
-		{"rms_answer", (cmd_function)rms_answer_f, 0, 0, 0, EVENT_ROUTE},
+		{"rms_answer", (cmd_function)rms_answer_f, 1, fixup_rms_answer, 0, EVENT_ROUTE},
 		{"rms_sip_request", (cmd_function)rms_sip_request_f, 0, 0, 0,
 				EVENT_ROUTE},
 		{"rms_play", (cmd_function)rms_action_play_f, 2, fixup_rms_action_play,
@@ -132,9 +137,15 @@ static void run_action_route(rms_session_info_t *si, char *route)
 
 static int fixup_rms_bridge(void **param, int param_no)
 {
-	if(param_no == 1)
+	if(param_no == 1 || param_no == 2)
 		return fixup_spve_null(param, 1);
-	if(param_no == 2)
+	LM_ERR("invalid parameter count [%d]\n", param_no);
+	return -1;
+}
+
+static int fixup_rms_answer(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2)
 		return fixup_spve_null(param, 1);
 	LM_ERR("invalid parameter count [%d]\n", param_no);
 	return -1;
@@ -142,9 +153,7 @@ static int fixup_rms_bridge(void **param, int param_no)
 
 static int fixup_rms_action_play(void **param, int param_no)
 {
-	if(param_no == 1)
-		return fixup_spve_null(param, 1);
-	if(param_no == 2)
+	if(param_no == 1 || param_no == 2 || param_no ==3)
 		return fixup_spve_null(param, 1);
 	LM_ERR("invalid parameter count [%d]\n", param_no);
 	return -1;
@@ -276,7 +285,7 @@ static rms_session_info_t *rms_session_action_check(rms_session_info_t *si)
 			create_call_leg_media(&si->media);
 			LM_INFO("session action RMS_START [%s]\n", si->callid.s);
 			rms_start_media(&si->media, a->param.s);
-			run_action_route(si, "rms:start");
+			run_action_route(si, a->route.s);
 			a->type = RMS_NONE;
 			return si;
 		}
@@ -399,6 +408,7 @@ static int rms_answer_call(
 			return 0;
 		}
 		LM_INFO("answered\n");
+		si->state = RMS_ST_CONNECTED;
 	} else {
 		LM_INFO("no request found\n");
 	}
@@ -786,32 +796,49 @@ static int rms_action_play_f(struct sip_msg *msg, str *playback_fn, str *route)
 	return 0;
 }
 
-static int rms_bridge_f(struct sip_msg *msg, char *_target, str *route)
+static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 {
 	str target = {NULL, 0};
-	int status = rms_create_trans(msg);
+	str route = {NULL, 0};
+	rms_session_info_t *si = rms_session_search(msg);
+	int status = 1;
 
-	if(get_str_fparam(&target, msg, (gparam_p)_target) != 0) {
-		LM_ERR("rms_bridge: missing target\n");
-		tmb.t_reply(msg, 404, "Not found");
-		return -1;
-	}
-
-	LM_NOTICE("rms_bridge[%s][%d]\n", target.s, target.len);
-	if(status < 1)
-		return status;
 	if(!rms_check_msg(msg))
 		return -1;
-	rms_session_info_t *si = rms_session_search(msg);
-	if(si) { // bridge an existing session, another command/context ??
-		return 1;
+
+	if (si) {
+		if (si->state == RMS_ST_CONNECTED) {
+			LM_INFO("already connected, bridging\n");
+		} else {
+			LM_ERR("bridging an existing session that is not connected.\n");
+			return -1;
+		}
 	} else {
-		str to_tag;
+		status = rms_create_trans(msg);
+		if(status < 1)
+			return status;
 		// create a_leg session
 		si = rms_session_new(msg);
 		if(!si)
 			return -1;
+	}
 
+	if(get_str_fparam(&target, msg, (gparam_p)_target) != 0) {
+		if (si->state != RMS_ST_CONNECTED) {
+			LM_ERR("rms_bridge: missing target\n");
+			tmb.t_reply(msg, 404, "Not found");
+		}
+		return -1;
+	}
+	if(get_str_fparam(&route, msg, (gparam_p)_route) != 0) {
+		route.len = strlen(rms_bridge_default_route);
+		route.s = rms_bridge_default_route;
+	}
+
+	LM_NOTICE("rms_bridge[%s][%d]\n", target.s, target.len);
+
+	str to_tag;
+	{
 		parse_from(msg, si);
 		tmb.t_get_reply_totag(msg, &to_tag);
 		rms_str_dup(&si->local_tag, &to_tag, 1);
@@ -831,23 +858,29 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, str *route)
 		rms_sdp_prepare_new_body(sdp_info, si->media.pt->type);
 		LM_NOTICE("payload[%d]\n", si->media.pt->type);
 	}
-	tmb.t_reply(msg, 100, "Trying");
+
+
+
 	si->local_port = msg->rcv.dst_port;
 	rms_action_t *a = rms_action_new(RMS_BRIDGING);
 	if(!a)
 		return -1;
 	LM_NOTICE("remote target[%.*s]\n", target.len, target.s);
-	LM_NOTICE("remote route[%.*s]\n", route->len, route->s);
+	LM_NOTICE("remote route[%.*s]\n", route.len, route.s);
 	if(!rms_str_dup(&a->param, &target, 1)) {
 		goto error;
 	}
 
-	a->route.len = route->len;
-	a->route.s = route->s;
-	a->cell = tmb.t_gett();
-	if(tmb.t_suspend(msg, &a->tm_info.hash_index, &a->tm_info.label) < 0) {
-		LM_ERR("t_suspend() failed\n");
-		goto error;
+	a->route.len = route.len;
+	a->route.s = route.s;
+
+	if (si->state != RMS_ST_CONNECTED) { // a_leg: suspend transaction
+		a->cell = tmb.t_gett();
+		tmb.t_reply(msg, 100, "Trying");
+		if(tmb.t_suspend(msg, &a->tm_info.hash_index, &a->tm_info.label) < 0) {
+			LM_ERR("t_suspend() failed\n");
+			goto error;
+		}
 	}
 
 	LM_INFO("transaction request[%p]\n", a->cell->uas.request);
@@ -1028,12 +1061,19 @@ static int rms_sip_request_f(struct sip_msg *msg)
 	return 1;
 }
 
-static int rms_answer_f(struct sip_msg *msg)
+static int rms_answer_f(struct sip_msg *msg, char * _route)
 {
 	str to_tag;
+	str route;
+
 	int status = rms_create_trans(msg);
 	if(status < 1)
 		return status;
+
+	if(get_str_fparam(&route, msg, (gparam_p)_route) != 0) {
+		route.len = strlen(rms_answer_default_route);
+		route.s = rms_answer_default_route;
+	}
 
 	if(rms_session_search(msg))
 		return -1;
@@ -1060,9 +1100,12 @@ static int rms_answer_f(struct sip_msg *msg)
 	}
 	LM_INFO("RTP session [%s:%d]<>[%s:%d]\n", si->media.local_ip.s,
 			si->media.local_port, si->media.remote_ip.s, si->media.remote_port);
+
 	rms_action_t *a = rms_action_new(RMS_START);
 	if(!a)
 		return -1;
+	a->route.len = route.len;
+	a->route.s = route.s;
 	rms_action_add(si, a);
 	return 1;
 error:
