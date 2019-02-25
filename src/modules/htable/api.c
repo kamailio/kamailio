@@ -94,14 +94,13 @@ int ht_api_get_cell_expire(str *hname, str *name,
 /**
  *
  */
-int ht_api_get_cell(str *hname, str *name,
-						   int_str *val, int *type)
+ht_cell_t* ht_api_get_cell(str *hname, str *name)
 {
-	ht_t* ht;
-	ht = ht_get_table(hname);
-	if(ht==NULL)
-		return -1;
-	return ht_get_cell(ht, name, val, type);
+    ht_t* ht;
+    ht = ht_get_table(hname);
+    if(ht==NULL)
+        return NULL;
+    return ht_get_cell(ht, name);
 }
 
 /**

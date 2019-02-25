@@ -1227,50 +1227,19 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 	return 0;
 }
 
-int ht_get_cell(ht_t *ht, str *name, int_str *val, int *type)
+ht_cell_t* ht_get_cell(ht_t *ht, str *name)
 {
-	unsigned int idx;
-	unsigned int hid;
-	ht_cell_t *it;
+    ht_cell_t *htc = NULL;
+    ht_cell_t *_htc_local = NULL;
 
-    /*  Default values if the key was expired. */
-    *type = -1;
-    val->n = 0;
-    val->s.len = 0;
-    val->s.s = NULL;
-
-	if(ht==NULL || ht->entries==NULL)
-		return -1;
-
-	/* not auto-expire htable */
-	if(ht->htexpire==0)
-		return 0;
-
-	hid = ht_compute_hash(name);
-
-	idx = ht_get_entry(hid, ht->htsize);
-
-	ht_slot_lock(ht, idx);
-	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
-		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-		   && strncmp(name->s, it->name.s, name->len)==0)
-		{
-			/* update value and type */
-			*val = it->value;
-            *type = it->flags;
-			ht_slot_unlock(ht, idx);
-			return 0;
-		}
-		it = it->next;
-	}
-	ht_slot_unlock(ht, idx);
-	return 0;
+    htc = ht_cell_pkg_copy(ht, name, _htc_local);
+    if(_htc_local!=htc)
+    {
+        ht_cell_pkg_free(_htc_local);
+        _htc_local=htc;
+    }
+    return htc;
 }
-
 
 int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 {
