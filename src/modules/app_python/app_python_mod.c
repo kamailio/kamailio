@@ -542,6 +542,11 @@ static sr_kemi_t sr_kemi_app_python_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("app_python"), str_init("execx"),
+		SR_KEMIP_INT, ki_app_python_exec,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("app_python"), str_init("exec_p1"),
 		SR_KEMIP_INT, ki_app_python_exec_p1,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
