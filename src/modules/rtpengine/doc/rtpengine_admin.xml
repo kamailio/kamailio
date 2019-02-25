@@ -2716,6 +2716,53 @@ unblock_media("all");
 		</example>
 	</section>
 
+	<section id="rtpengine.f.start_forwarding">
+		<title>
+		<function moreinfo="none">start_forwarding([flags])</function>
+		</title>
+		<para>
+		Controls the PCM forwarding feature of the recording daemon. Unlike the
+		recording feature, PCM forwarding can be done directionally for individual
+		call participants only, therefore this command takes the same flags as
+		the media/DTMF blocking commands above.
+		</para>
+		<para>
+		See <quote>block_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>start_forwarding</function> usage</title>
+		<programlisting format="linespecific">
+...
+start_forwarding();
+start_forwarding("directional");
+start_forwarding("address=192.168.42.42");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.stop_forwarding">
+		<title>
+		<function moreinfo="none">stop_forwarding([flags])</function>
+		</title>
+		<para>
+		Analogous to <quote>unblock_dtmf</quote>, but controls the PCM forwarding feature
+		instead of DTMF blocking.
+		</para>
+		<para>
+		See <quote>unblock_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>stop_forwarding</function> usage</title>
+		<programlisting format="linespecific">
+...
+stop_forwarding();
+stop_forwarding("all");
+...
+		</programlisting>
+		</example>
+	</section>
+
 
 	</section>
 
