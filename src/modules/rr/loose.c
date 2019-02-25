@@ -998,7 +998,19 @@ int redo_route_params(sip_msg_t *msg)
 		return -1;
 	}
 
-	if(msg->route==NULL || msg->route->parsed==NULL) {
+	if(msg->route==NULL) {
+		return -1;
+	}
+
+	if(msg->route->parsed==NULL) {
+		if (parse_rr(msg->route) < 0) {
+			LM_ERR("failed to parse Route HF\n");
+			return -1;
+		}
+	}
+
+	if(msg->route->parsed==NULL) {
+		LM_ERR("NULL parsed Route header\n");
 		return -1;
 	}
 
