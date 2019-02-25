@@ -455,6 +455,11 @@ static sr_kemi_t sr_kemi_ndb_mongodb_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
+	{ str_init("ndb_mongodb"), str_init("execx"),
+		SR_KEMIP_INT, ki_mongodbc_exec,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
 	{ str_init("ndb_mongodb"), str_init("find"),
 		SR_KEMIP_INT, ki_mongodbc_find,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
