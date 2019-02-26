@@ -17,6 +17,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_without phonenum
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -40,6 +41,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_without phonenum
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -63,6 +65,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_without phonenum
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -86,6 +89,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_without phonenum
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -109,6 +113,7 @@
 %bcond_without memcached
 %bcond_with mongodb
 %bcond_without perl
+%bcond_with phonenum
 %bcond_with rabbitmq
 %bcond_with redis
 %bcond_with ruby
@@ -133,6 +138,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_without phonenum
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -156,6 +162,7 @@
 %bcond_without memcached
 %bcond_with mongodb
 %bcond_without perl
+%bcond_with phonenum
 %bcond_with rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -179,6 +186,7 @@
 %bcond_with memcached
 %bcond_with mongodb
 %bcond_with perl
+%bcond_with phonenum
 %bcond_with rabbitmq
 %bcond_with redis
 %bcond_with ruby
@@ -202,6 +210,7 @@
 %bcond_with memcached
 %bcond_without mongodb
 %bcond_without perl
+%bcond_with phonenum
 %bcond_with rabbitmq
 %bcond_without redis
 %bcond_with ruby
@@ -668,6 +677,19 @@ Perl extensions and database driver for Kamailio.
 %endif
 
 
+%if %{with phonenum}
+%package    phonenum
+Summary:    Phonenum module the Kamailio
+Group:      %{PKGGROUP}
+Requires:   kamailio = %ver
+Requires:   libphonenumber
+BuildRequires:  libphonenumber-devel libicu-devel protobuf-devel
+
+%description    phonenum
+Phonenum module the Kamailio.
+%endif
+
+
 %package    postgresql
 Summary:    PostgreSQL database connectivity for Kamailio
 Group:      %{PKGGROUP}
@@ -1097,6 +1119,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with perl}
     kperl \
 %endif
+%if %{with phonenum}
+    kphonenum \
+%endif
     kpostgres kpresence kpython kradius \
 %if %{with redis}
     kredis \
@@ -1173,6 +1198,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kmysql koutbound \
 %if %{with perl}
     kperl \
+%endif
+%if %{with phonenum}
+    kphonenum \
 %endif
     kpostgres kpresence kpython kradius \
 %if %{with redis}
@@ -1842,6 +1870,14 @@ fi
 %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Describe.pm
 %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Speeddial.pm
 %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/TableVersions.pm
+%endif
+
+
+%if %{with phonenum}
+%files      phonenum
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.phonenum
+%{_libdir}/kamailio/modules/phonenum.so
 %endif
 
 
