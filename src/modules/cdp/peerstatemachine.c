@@ -670,7 +670,7 @@ void add_peer_application(peer *p, int id, int vendor, app_type type)
 				p->applications[i].vendor == vendor &&
 				p->applications[i].type == type) return;
 
-  if (p->applications_cnt > p->applications_max) {
+  if (p->applications_cnt >= p->applications_max) {
 		LM_ERR("Too many applications for this peer (max %i), not adding Application %i:%i.\n", p->applications_max, id, vendor);
 		return;
 	}
