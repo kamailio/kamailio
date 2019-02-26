@@ -672,7 +672,7 @@ typedef struct tm_faked_env {
 	int backup_route_type;
 	struct cell *backup_t;
 	int backup_branch;
-	unsigned int backup_msgid;
+	msg_ctx_id_t ctxid;
 	avp_list_t* backup_user_from;
 	avp_list_t* backup_user_to;
 	avp_list_t* backup_domain_from;
@@ -738,9 +738,11 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 		/* backup */
 		_tm_faked_env[_tm_faked_env_idx].backup_t = get_t();
 		_tm_faked_env[_tm_faked_env_idx].backup_branch = get_t_branch();
-		_tm_faked_env[_tm_faked_env_idx].backup_msgid = global_msg_id;
+		_tm_faked_env[_tm_faked_env_idx].ctxid.msgid = tm_global_ctx_id.msgid;
+		_tm_faked_env[_tm_faked_env_idx].ctxid.pid = tm_global_ctx_id.pid;
 		/* fake transaction and message id */
-		global_msg_id = msg->id;
+		tm_global_ctx_id.msgid = msg->id;
+		tm_global_ctx_id.pid = msg->pid;
 
 		if (is_async_env) {
 			set_t(t, t->async_backup.backup_branch);
@@ -789,7 +791,8 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 		/* restore original environment */
 		set_t(_tm_faked_env[_tm_faked_env_idx].backup_t,
 				_tm_faked_env[_tm_faked_env_idx].backup_branch);
-		global_msg_id = _tm_faked_env[_tm_faked_env_idx].backup_msgid;
+		tm_global_ctx_id.msgid = _tm_faked_env[_tm_faked_env_idx].ctxid.msgid;
+		tm_global_ctx_id.pid = _tm_faked_env[_tm_faked_env_idx].ctxid.pid;
 		set_route_type(_tm_faked_env[_tm_faked_env_idx].backup_route_type);
 		/* restore original avp list */
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,
@@ -2204,6 +2207,8 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* if transaction found, increment the rpl_received counter */
 	t_stats_rpl_received();
+
+	LM_DBG("transaction found - T:%p branch:%d\n", t, branch);
 
 	/* lock -- onreply_route, safe avp usage, ... */
 	/* - it is a recurrent mutex, so it is safe if a function executed

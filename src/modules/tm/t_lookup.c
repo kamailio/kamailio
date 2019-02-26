@@ -90,7 +90,7 @@
 #define HF_LEN(_hf) ((_hf)->len)
 
 /* presumably matching transaction for an e2e ACK */
-static struct cell *t_ack;
+static struct cell *t_ack = NULL;
 
 /* this is a global variable which keeps pointer to
  * transaction currently processed by a process; it it
@@ -100,36 +100,52 @@ static struct cell *t_ack;
  * It has a valid value only if:
  * - it's checked inside a failure or tm on_reply route (not core
  *   on_reply[0]!)
- * - global_msg_id == msg->id in all the other kinds of routes
+ * - tm_global_ctx_id.{msgid, pid} == msg->{id, pid} in all the other kinds of routes
  * Note that this is the safest check and is valid also for
- * failure routes (because fake_env() sets global_msg_id) or tm
+ * failure routes (because fake_env() sets tm_global_ctx_id) or tm
  * tm onreply routes (the internal reply_received() t_check() will set
- * T and global_msg_id).
+ * T and tm_global_ctx_id).
  */
-static struct cell *T;
+static struct cell *T = NULL;
 
 /* this is a global variable which keeps the current branch
  * for the transaction currently processed.
- * It has a valid value only if T is valid (global_msg_id==msg->id -- see
- * above, and T!=0 and T!=T_UNDEFINED).
+ * It has a valid value only if T is valid (tm_global_ctx_id.{msgid, pid}==msg->{id, pid}
+ * -- see above, and T!=0 and T!=T_UNDEFINED).
  * For a request it's value is T_BR_UNDEFINED (it can have valid values only
  * for replies).
  */
-static int T_branch;
+static int T_branch = 0;
 
 /* number of currently processed message; good to know
  * to be able to doublecheck whether we are still working
  * on a current transaction or a new message arrived;
  * don't even think of changing it.
  */
-unsigned int     global_msg_id;
+msg_ctx_id_t tm_global_ctx_id = { 0 };
 
 
+struct cell *get_t()
+{
+	return T;
+}
 
-struct cell *get_t() { return T; }
-void set_t(struct cell *t, int branch) { T=t; T_branch=branch; }
-void init_t() {global_msg_id=0; set_t(T_UNDEFINED, T_BR_UNDEFINED);}
-int get_t_branch() { return T_branch; }
+void set_t(struct cell *t, int branch)
+{
+	T=t; T_branch=branch;
+}
+
+void init_t()
+{
+	tm_global_ctx_id.msgid=0;
+	tm_global_ctx_id.pid=0;
+	set_t(T_UNDEFINED, T_BR_UNDEFINED);
+}
+
+int get_t_branch()
+{
+	return T_branch;
+}
 
 static inline int parse_dlg( struct sip_msg *msg )
 {
@@ -1022,11 +1038,12 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 
 	ret=0;
 	/* is T still up-to-date ? */
-	LM_DBG("msg (%p) id=%d global id=%d T start=%p\n",
-			p_msg,p_msg->id,global_msg_id,T);
-	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
+	LM_DBG("msg (%p) id=%u/%d global id=%u/%d T start=%p\n",
+			p_msg, p_msg->id, p_msg->pid, tm_global_ctx_id.msgid,
+			tm_global_ctx_id.pid, T);
+	if ( msg_ctx_id_match(p_msg, &tm_global_ctx_id)!=1 || T==T_UNDEFINED )
 	{
-		global_msg_id = p_msg->id;
+		msg_ctx_id_set(p_msg, &tm_global_ctx_id);
 		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
@@ -1091,9 +1108,10 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 					" (msg %p)\n", T, T->flags, p_msg);
 		}
 #endif
-		LM_DBG("msg (%p) id=%d global id=%d T end=%p\n",
-				p_msg,p_msg->id,global_msg_id,T);
-	} else { /*  ( p_msg->id == global_msg_id && T!=T_UNDEFINED ) */
+		LM_DBG("msg (%p) id=%u/%d global id=%u/%d T end=%p\n",
+				p_msg, p_msg->id, p_msg->pid, tm_global_ctx_id.msgid,
+				tm_global_ctx_id.pid, T);
+	} else { /* (msg_ctx_id_match(p_msg, &tm_global_ctx_id)!=1 || && T!=T_UNDEFINED ) */
 		if (T){
 			LM_DBG("T (%p) already found for msg (%p)!\n", T, p_msg);
 			ret=1;
@@ -1323,8 +1341,9 @@ int t_newtran( struct sip_msg* p_msg )
 
 
 	/* is T still up-to-date ? */
-	LM_DBG("msg id=%d , global msg id=%d ,"
-			" T on entrance=%p\n",p_msg->id,global_msg_id,T);
+	LM_DBG("msg (%p) id=%u/%d global id=%u/%d T start=%p\n",
+			p_msg, p_msg->id, p_msg->pid, tm_global_ctx_id.msgid,
+			tm_global_ctx_id.pid, T);
 
 	if(faked_msg_match(p_msg)) {
 		LM_INFO("attempt to create transaction for a faked request"
@@ -1343,7 +1362,7 @@ int t_newtran( struct sip_msg* p_msg )
 		return E_SCRIPT;
 	}
 
-	global_msg_id = p_msg->id;
+	msg_ctx_id_set(p_msg, &tm_global_ctx_id);
 	set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	/* first of all, parse everything -- we will store in shared memory
 	 * and need to have all headers ready for generating potential replies
