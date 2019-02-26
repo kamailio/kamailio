@@ -3111,6 +3111,7 @@ int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 
 	memset(msg, 0, sizeof(sip_msg_t));
 	msg->id = id;
+	msg->pid = my_pid();
 	msg->buf = buf;
 	msg->len = len;
 	if (parse_msg(buf, len, msg)!=0) {
