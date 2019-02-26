@@ -336,7 +336,7 @@ char* b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 	}
 	*outbszp += zerocount;
 
-	return outb + outbsz - (*outbszp);
+	return outb + i;
 }
 
 /**
