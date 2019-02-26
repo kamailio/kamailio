@@ -34,8 +34,7 @@
 
 #define T_BR_UNDEFINED (-1)
 
-extern unsigned int     global_msg_id;
-
+extern msg_ctx_id_t  tm_global_ctx_id;
 
 
 void init_t(void);
