@@ -326,11 +326,11 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			}
 			if(unlikely(cidlockset)) {
 				rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-				if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0)
+				if(sr_kemi_route(keng, msg, REQUEST_ROUTE, NULL, NULL) < 0)
 					LM_NOTICE("negative return code from engine function\n");
 				rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 			} else {
-				if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL) < 0)
+				if(sr_kemi_route(keng, msg, REQUEST_ROUTE, NULL, NULL) < 0)
 					LM_NOTICE("negative return code from engine function\n");
 			}
 		} else {
@@ -409,10 +409,10 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				sr_kemi_act_ctx_set(&ctx);
 				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+					ret = sr_kemi_route(keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				} else {
-					ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+					ret = sr_kemi_route(keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 				}
 				sr_kemi_act_ctx_set(bctx);
 			} else {
