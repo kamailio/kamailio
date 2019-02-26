@@ -144,4 +144,7 @@ str *sr_kemi_param_map_get_params(int *ptypes);
 
 int sr_kemi_core_set_drop(sip_msg_t *msg);
 
+int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
+		str *ename, str *edata);
+
 #endif
