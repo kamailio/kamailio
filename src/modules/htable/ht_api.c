@@ -1128,7 +1128,7 @@ void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
 		run_top_route(event_rt.rlist[ht->evex_index], fmsg, 0);
 	} else {
 		if(keng!=NULL) {
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 						&ht_event_callback, &ht->evex_name)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}

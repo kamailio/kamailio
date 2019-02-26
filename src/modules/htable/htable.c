@@ -288,7 +288,7 @@ static int child_init(int rank)
 			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
 		} else {
 			if(keng!=NULL) {
-				if(keng->froute(fmsg, EVENT_ROUTE,
+				if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 							&ht_event_callback, &evname)<0) {
 					LM_ERR("error running event route kemi callback\n");
 					return -1;
