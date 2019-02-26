@@ -347,7 +347,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 					bctx = sr_kemi_act_ctx_get();
 					init_run_actions_ctx(&ctx);
 					sr_kemi_act_ctx_set(&ctx);
-					if(keng->froute(i_req, BRANCH_ROUTE,
+					if(sr_kemi_route(keng, i_req, BRANCH_ROUTE,
 							sr_kemi_cbname_lookup_idx(branch_route), NULL)<0) {
 						LM_ERR("error running branch route kemi callback\n");
 					}

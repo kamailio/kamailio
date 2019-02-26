@@ -999,7 +999,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			/* run a failure_route action if some was marked */
 			keng = sr_kemi_eng_get();
 			if(unlikely(keng!=NULL)) {
-				if(keng->froute(faked_req, FAILURE_ROUTE,
+				if(sr_kemi_route(keng, faked_req, FAILURE_ROUTE,
 						sr_kemi_cbname_lookup_idx(on_failure), NULL)<0) {
 					LM_ERR("error running failure route kemi callback\n");
 				}
@@ -1073,7 +1073,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			/* run a branch_failure_route action if some was marked */
 			keng = sr_kemi_eng_get();
 			if(unlikely(keng!=NULL)) {
-				if(keng->froute(faked_req, BRANCH_FAILURE_ROUTE,
+				if(sr_kemi_route(keng, faked_req, BRANCH_FAILURE_ROUTE,
 						sr_kemi_cbname_lookup_idx(on_branch_failure), NULL)<0) {
 					LM_ERR("error running branch failure route kemi callback\n");
 				}
@@ -2415,7 +2415,7 @@ int reply_received( struct sip_msg  *p_msg )
 			bctx = sr_kemi_act_ctx_get();
 			init_run_actions_ctx(&ctx);
 			sr_kemi_act_ctx_set(&ctx);
-			keng->froute(p_msg, TM_ONREPLY_ROUTE,
+			sr_kemi_route(keng, p_msg, TM_ONREPLY_ROUTE,
 					sr_kemi_cbname_lookup_idx(onreply_route), NULL);
 			sr_kemi_act_ctx_set(bctx);
 		} else {
