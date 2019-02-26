@@ -93,7 +93,7 @@ static inline int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst,
 			if(keng) {
 				bctx = sr_kemi_act_ctx_get();
 				sr_kemi_act_ctx_set(&ra_ctx);
-				ret=keng->froute(orig_msg, ONSEND_ROUTE, NULL, NULL);
+				ret=sr_kemi_route(keng, orig_msg, ONSEND_ROUTE, NULL, NULL);
 				sr_kemi_act_ctx_set(bctx);
 			} else {
 				ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
