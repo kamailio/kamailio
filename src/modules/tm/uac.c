@@ -230,7 +230,7 @@ static inline int t_run_local_req(
 	int backup_route_type;
 	struct cell *backup_t;
 	int backup_branch;
-	unsigned int backup_msgid;
+	msg_ctx_id_t backup_ctxid;
 	int refresh_shortcuts = 0;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("tm:local-request");
@@ -259,9 +259,11 @@ static inline int t_run_local_req(
 	/* set T to the current transaction */
 	backup_t=get_t();
 	backup_branch=get_t_branch();
-	backup_msgid=global_msg_id;
+	backup_ctxid.msgid=tm_global_ctx_id.msgid;
+	backup_ctxid.pid=tm_global_ctx_id.pid;
 	/* fake transaction and message id */
-	global_msg_id=lreq.id;
+	tm_global_ctx_id.msgid=lreq.id;
+	tm_global_ctx_id.pid=lreq.pid;
 	set_t(new_cell, T_BR_UNDEFINED);
 	if(goto_on_local_req>=0) {
 		run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
@@ -279,7 +281,8 @@ static inline int t_run_local_req(
 	}
 	/* restore original environment */
 	set_t(backup_t, backup_branch);
-	global_msg_id=backup_msgid;
+	tm_global_ctx_id.msgid=backup_ctxid.msgid;
+	tm_global_ctx_id.pid=backup_ctxid.pid;
 	set_route_type( backup_route_type );
 	p_onsend=0;
 
