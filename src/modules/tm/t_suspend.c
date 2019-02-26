@@ -314,7 +314,7 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 						if(cbparam && cbparam->s) {
 							evname = *cbparam;
 						}
-						if(keng->froute(faked_req, FAILURE_ROUTE, cbname,
+						if(sr_kemi_route(keng, faked_req, FAILURE_ROUTE, cbname,
 								&evname)<0) {
 							LM_ERR("error running event route kemi callback\n");
 							return -1;
@@ -392,8 +392,8 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 						if(cbparam && cbparam->s) {
 							evname = *cbparam;
 						}
-						if(keng->froute(t->uac[branch].reply, TM_ONREPLY_ROUTE,
-								cbname, &evname)<0) {
+						if(sr_kemi_route(keng, t->uac[branch].reply,
+									TM_ONREPLY_ROUTE, cbname, &evname)<0) {
 							LM_ERR("error running event route kemi callback\n");
 						}
 					} else {

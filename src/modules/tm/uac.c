@@ -273,7 +273,7 @@ static inline int t_run_local_req(
 			LM_WARN("event callback (%s) set, but no cfg engine\n",
 					tm_event_callback.s);
 		} else {
-			if(keng->froute(&lreq, EVENT_ROUTE,
+			if(sr_kemi_route(keng, &lreq, EVENT_ROUTE,
 						&tm_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
