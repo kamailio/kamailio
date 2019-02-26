@@ -474,11 +474,11 @@ void reset_ua(struct sip_msg* const msg);
 
 /**
  * struct to identify a msg context
- * - the pair of pid and message-id
+ * - the pair of message-id and pid (fields in sip_msg_t)
  */
 typedef struct msg_ctx_id {
+	unsigned int msgid;
 	int pid;
-	int msgid;
 } msg_ctx_id_t;
 
 /**
