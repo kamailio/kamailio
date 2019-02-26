@@ -1685,7 +1685,7 @@ int run_child_one_init_route(void)
 		} else {
 			bctx = sr_kemi_act_ctx_get();
 			sr_kemi_act_ctx_set(&ctx);
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 						&kemi_event_route_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				return -1;
