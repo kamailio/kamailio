@@ -162,7 +162,7 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	} else {
 		keng = sr_kemi_eng_get();
 		if(keng!=NULL) {
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 						&_evapi_event_callback, rtname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
