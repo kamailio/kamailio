@@ -20,7 +20,7 @@
 ## database host
 # DBHOST=localhost
 
-## database host
+## database port
 # DBPORT=3306
 
 ## database name (for ORACLE this is TNS name)
