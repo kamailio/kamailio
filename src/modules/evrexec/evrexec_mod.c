@@ -181,7 +181,7 @@ void evrexec_process(evrexec_task_t *it, int idx)
 			}
 		} else {
 			sidx.s = int2str(idx, &sidx.len);
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 						&it->ename, &sidx)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
@@ -381,7 +381,7 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 					evr_name.len, evr_name.s);
 		}
 	} else {
-		if(keng->froute(fmsg, EVENT_ROUTE, &evr_name, &evr_data)<0) {
+		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &evr_name, &evr_data)<0) {
 			LM_ERR("error running event route kemi callback\n");
 		}
 	}
