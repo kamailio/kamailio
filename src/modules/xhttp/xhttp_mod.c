@@ -302,7 +302,7 @@ static int xhttp_process_request(sip_msg_t* orig_msg,
 	} else {
 		keng = sr_kemi_eng_get();
 		if(keng!=NULL) {
-			if(keng->froute(msg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, msg, EVENT_ROUTE,
 						&xhttp_event_callback, &evrtname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
