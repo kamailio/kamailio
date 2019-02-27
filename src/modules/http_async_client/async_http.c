@@ -260,7 +260,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		} else {
 			cbname.s = aq->cbname;
 			cbname.len = aq->cbname_len;
-			if(keng->froute(fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
