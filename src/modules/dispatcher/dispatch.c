@@ -2752,7 +2752,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 			if(keng!=NULL) {
 				evname.s = route;
 				evname.len = strlen(evname.s);
-				if(keng->froute(fmsg, EVENT_ROUTE,
+				if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 							&ds_event_callback, &evname)<0) {
 					LM_ERR("error running event route kemi callback\n");
 				}
