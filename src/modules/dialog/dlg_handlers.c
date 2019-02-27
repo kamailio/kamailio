@@ -1562,7 +1562,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 					if(keng!=NULL) {
 						evname.s = "dialog:timeout";
 						evname.len = sizeof("dialog:timeout") - 1;
-						if(keng->froute(fmsg, EVENT_ROUTE,
+						if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 									&dlg_event_callback, &evname)<0) {
 							LM_ERR("error running event route kemi callback\n");
 						}
@@ -1762,7 +1762,7 @@ int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate)
 			run_top_route(event_rt.rlist[rt], fmsg, 0);
 		} else {
 			if(keng!=NULL) {
-				if(keng->froute(fmsg, EVENT_ROUTE,
+				if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 							&dlg_event_callback, &evname)<0) {
 					LM_ERR("error running event route kemi callback (%d %d)\n",
 							ostate, nstate);
