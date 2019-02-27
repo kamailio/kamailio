@@ -300,10 +300,8 @@ static void wsconn_run_route(ws_connection_t *wsc)
 	init_run_actions_ctx(&ctx);
 	if(rt < 0) {
 		/* kemi script event route callback */
-		if(keng
-				&& keng->froute(
-						   fmsg, EVENT_ROUTE, &ws_event_callback, &evrtname)
-						   < 0) {
+		if(keng && sr_kemi_route(keng,fmsg, EVENT_ROUTE, &ws_event_callback,
+					&evrtname) < 0) {
 			LM_ERR("error running event route kemi callback\n");
 		}
 	} else {
