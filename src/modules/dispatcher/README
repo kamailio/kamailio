@@ -494,8 +494,10 @@ modparam("dispatcher", "force_dst", 1)
    The name of the XAVP which will hold the list with addresses and
    associated properties, in the order they have been selected by the
    chosen algorithm. If use_default is 1, the values of last XAVP
-   correspond to the last address in destination set. The first XAVP is
-   the current selected destination. All the other addresses from the
+   correspond to the last address in destination set. In case of using
+   dispatcher.list file, you have to set the priority field for each
+   destination to ensure a particular order there. The first XAVP is the
+   current selected destination. All the other addresses from the
    destination set will be added in the XAVP list to be able to implement
    serial forking.
 
