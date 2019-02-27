@@ -215,7 +215,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data)
 		if(keng==NULL) {
 			run_actions(&ra_ctx, main_rt.rlist[a->route_no], msg);
 		} else {
-			if(keng->froute(msg, EVENT_ROUTE, &a->route_name, &evname)<0) {
+			if(sr_kemi_route(keng, msg, EVENT_ROUTE, &a->route_name, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
