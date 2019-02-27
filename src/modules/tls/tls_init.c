@@ -773,7 +773,7 @@ int init_tls_h(void)
 		low_mem_threshold2*=1024; /* KB */
 	if ((low_mem_threshold1==0) || (low_mem_threshold2==0))
 	 LM_WARN("tls: openssl bug #1491 (crash/mem leaks on low memory)"
-				" workarround disabled\n");
+				" workaround disabled\n");
 	else
 		LM_WARN("openssl bug #1491 (crash/mem leaks on low memory)"
 				" workaround enabled (on low memory tls operations will fail"
