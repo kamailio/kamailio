@@ -551,7 +551,7 @@ static int msrp_frame_received(sr_event_param_t *evp)
 			LM_ERR("event callback (%s) set, but no cfg engine\n",
 					msrp_event_callback.s);
 		} else {
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 						&msrp_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
