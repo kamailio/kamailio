@@ -744,7 +744,7 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 		keng = sr_kemi_eng_get();
 		if (keng!=NULL) {
 			str evname = str_init("usrloc:contact-expired");
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
 					&reg_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
