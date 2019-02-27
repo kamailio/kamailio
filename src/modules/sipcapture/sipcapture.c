@@ -2937,7 +2937,7 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 			set_route_type(rtb);
 			return -1;
 		}
-		if(keng->froute(msg, EVENT_ROUTE, &sc_event_callback, &evname) < 0) {
+		if(sr_kemi_route(keng, msg, EVENT_ROUTE, &sc_event_callback, &evname) < 0) {
 			LM_ERR("error running event route kemi callback\n");
 			set_route_type(rtb);
 			return -1;
