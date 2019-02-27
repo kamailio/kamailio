@@ -92,6 +92,7 @@ static int sip_trace_store_db(siptrace_data_t *sto);
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps);
+static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(sl_cbp_t *slcb);
 static void trace_sl_ack_in(sl_cbp_t *slcb);
 
@@ -1271,7 +1272,7 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 
 	req = ps->req;
 	msg = ps->rpl;
-	if(msg == NULL || req == NULL) {
+	if((type != TMCB_ACK_NEG_IN) && (msg == NULL || req == NULL)) {
 		LM_DBG("no reply\n");
 		return;
 	}
@@ -1281,8 +1282,8 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
 				&sto.avp_value, &sto.state);
 
-	if((sto.avp == NULL) && trace_is_off(req)) {
-		LM_DBG("trace off...\n");
+	if((type != TMCB_ACK_NEG_IN) && ((sto.avp == NULL) && trace_is_off(req))) {
+		LM_DBG("trace off... %d %d\n", sto.avp == NULL, trace_is_off(req));
 		return;
 	}
 
@@ -1459,6 +1460,19 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	return;
 }
 
+static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps)
+{
+	LM_DBG("storing negative ack...\n");
+
+	/* this condition should not exist but there seems to be a BUG in kamailio
+	 * letting requests other than the ACK inside */
+	if (ps->req->first_line.u.request.method_value != METHOD_ACK) {
+		return;
+	}
+
+	sip_trace(ps->req, 0, NULL, NULL);
+}
+
 static int serialize_siptrace_info(siptrace_info_t* info, str* serial_data)
 {
 	if (info == NULL || info->correlation_id == NULL) {
@@ -1604,6 +1618,11 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int registe
 
 	/* TODO */
 	/* check the following callbacks: TMCB_REQUEST_PENDING, TMCB_RESPONSE_READY, TMCB_ACK_NEG_IN */
+	/* trace reply on in */
+	if(tmb.register_tmcb(msg, 0, TMCB_ACK_NEG_IN, trace_tm_neg_ack_in, info, 0) <= 0) {
+		LM_ERR("can't register trace_onreply_in\n");
+		return;
+	}
 }
 
 //static void trace_dialog(sip_msg_t* msg, siptrace_info_t* info)
