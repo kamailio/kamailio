@@ -63,6 +63,7 @@ static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_get_conid(sip_msg_t* msg, char *paddr, char *pvn);
 static int fixup_numpv(void** param, int param_no);
 
+str tcpops_event_callback = STR_NULL;
 
 static cmd_export_t cmds[]={
 	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4,
@@ -92,6 +93,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[] = {
 	{"closed_event",    PARAM_INT,    &tcp_closed_event},
+	{"event_callback",  PARAM_STR,    &tcpops_event_callback},
 	{0, 0, 0}
 };
 
@@ -132,10 +134,7 @@ static int mod_init(void)
 			return -1;
 		}
 
-		/* get event routes */
-		tcp_closed_routes[TCP_CLOSED_EOF] = route_get(&event_rt, "tcp:closed");
-		tcp_closed_routes[TCP_CLOSED_TIMEOUT] = route_get(&event_rt, "tcp:timeout");
-		tcp_closed_routes[TCP_CLOSED_RESET] = route_get(&event_rt, "tcp:reset");
+		tcpops_init_evroutes();
 	}
 
 	return 0;
