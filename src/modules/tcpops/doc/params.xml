@@ -13,7 +13,7 @@
     </sectioninfo>
 
     <title>Parameters</title>
-		<section>
+	<section>
 		<title><varname>closed_event</varname> (int)</title>
 		<para>
 			If set to 0 (globally disabled), the "tcp:closed" event route will never be called on TCP
@@ -42,7 +42,36 @@ modparam("tcpops", "closed_event", 0)
 </programlisting>
 		</example>
 	</section>
-
-
+	<section id="tcpops.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values are: 'tcp:closed', 'tcp:timeout', 'tcp:reset'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tcpops", "event_callback", "ksr_tcpops_event")
+...
+-- event callback function implemented in Lua
+function ksr_tcpops_event(evname)
+	KSR.info("===== evapi module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>
