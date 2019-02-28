@@ -619,7 +619,6 @@ void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 	LOG(llev, "%s [end] transaction %p\n", ltext, tcell);
 }
 
-#define TM_LIFETIME_LIMIT 90
 /* clean active but very old transactions */
 void tm_clean_lifetime(void)
 {
