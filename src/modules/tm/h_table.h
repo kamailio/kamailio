@@ -125,6 +125,8 @@ enum kill_reason
 	REQ_ERR_DELAYED = 16
 };
 
+/* interval for safer force removal after t lifetime (in sec) */
+#define TM_LIFETIME_LIMIT 90
 
 /* #define F_RB_T_ACTIVE		0x01  (obsolete) fr or retr active */
 #define F_RB_T2 0x02
@@ -411,6 +413,7 @@ typedef struct cell
 
 	/* bindings to wait and delete timer */
 	struct timer_ln wait_timer; /* used also for delete */
+	ticks_t wait_start; /* ticks when put on wait first time */
 
 	/* UA Server */
 	struct ua_server uas;
@@ -595,6 +598,7 @@ inline static void insert_into_hash_table_unsafe(
 inline static void remove_from_hash_table_unsafe(struct cell *p_cell)
 {
 	clist_rm(p_cell, next_c, prev_c);
+
 	p_cell->next_c = 0;
 	p_cell->prev_c = 0;
 #ifdef EXTRA_DEBUG
@@ -608,6 +612,7 @@ inline static void remove_from_hash_table_unsafe(struct cell *p_cell)
 #ifdef TM_HASH_STATS
 	_tm_table->entries[p_cell->hash_index].cur_entries--;
 #endif
+
 	t_stats_deleted(is_local(p_cell));
 }
 

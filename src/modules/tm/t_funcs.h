@@ -103,6 +103,9 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 			free_cell((_T_cell)); \
 		}else{ \
 			if(_T_unlinked){ \
+				if(t_linked_timers(_T_cell)) { \
+					unlink_timers((_T_cell)); \
+				} \
 				free_cell((_T_cell)); \
 			}else{ \
 				t_stats_delayed_free(); \
