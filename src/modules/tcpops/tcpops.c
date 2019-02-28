@@ -31,17 +31,40 @@
 #include "../../core/globals.h"
 #include "../../core/pass_fd.h"
 #include "../../core/timer.h"
+#include "../../core/route.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 #include "../../core/sr_module.h"
 
 #include "tcpops.h"
 
+
+extern str tcpops_event_callback;
+
+static str tcpops_evrt_closed = str_init("tcp:closed");
+static str tcpops_evrt_timeout = str_init("tcp:timeout");
+static str tcpops_evrt_reset = str_init("tcp:reset");
 
 /* globally enabled by default */
 int tcp_closed_event = 1;
 
 int tcp_closed_routes[_TCP_CLOSED_REASON_MAX] =
 	{[0 ... sizeof(tcp_closed_routes)/sizeof(*tcp_closed_routes)-1] = -1};
+
+/**
+ *
+ */
+void tcp_init_evroutes(void)
+{
+	if(tcpops_event_callback.len > 0) {
+		return;
+	}
+
+	/* get event routes */
+	tcp_closed_routes[TCP_CLOSED_EOF] = route_get(&event_rt, tcpops_evrt_closed.s);
+	tcp_closed_routes[TCP_CLOSED_TIMEOUT] = route_get(&event_rt, tcpops_evrt_timeout.s);
+	tcp_closed_routes[TCP_CLOSED_RESET] = route_get(&event_rt, tcpops_evrt_reset.s);
+}
 
 /**
  * gets the fd of the current message source connection
@@ -202,13 +225,22 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str *evname;
 
-	rt = tcp_closed_routes[tev->reason];
-	LM_DBG("event reason id: %d rt: %d\n", tev->reason, rt);
-	if (rt == -1) return;
+	if(tcpops_event_callback.len > 0) {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_DBG("even callback set, but no kemi engine\n");
+			return;
+		}
+	} else {
+		rt = tcp_closed_routes[tev->reason];
+		LM_DBG("event reason id: %d rt: %d\n", tev->reason, rt);
+		if (rt == -1) return;
+	}
 
-	if (faked_msg_init() < 0)
-	{
+	if (faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
@@ -218,7 +250,18 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	if(keng == NULL) {
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+	} else {
+		if(tev->reason==TCP_CLOSED_TIMEOUT) {
+			evname = &tcpops_evrt_timeout;
+		} else if(tev->reason==TCP_CLOSED_RESET) {
+			evname = &tcpops_evrt_reset;
+		} else {
+			evname = &tcpops_evrt_closed;
+		}
+		sr_kemi_route(keng, fmsg, EVENT_ROUTE, &tcpops_event_callback, evname);
+	}
 	set_route_type(backup_rt);
 }
 

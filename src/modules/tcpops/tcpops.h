@@ -36,5 +36,6 @@ int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int close
 int tcpops_keepalive_disable(int fd, int closefd);
 int tcpops_set_connection_lifetime(struct tcp_connection* con, int time);
 int tcpops_handle_tcp_closed(sr_event_param_t *evp);
+void tcpops_init_evroutes(void);
 
 #endif /* _TCPOPS_H_ */
