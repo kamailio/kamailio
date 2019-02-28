@@ -631,28 +631,62 @@ disabled:
 
 ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 {
-	struct cell *p_cell;
+	tm_cell_t *p_cell;
 	ticks_t ret;
+	int unlinked = 0;
+	int rcount = 0;
 
-	p_cell = (struct cell *)data;
+	p_cell = (tm_cell_t*)data;
 #ifdef TIMER_DEBUG
 	LM_DBG("WAIT timer hit @%d for %p (timer_lm %p)\n", ti, p_cell, wait_tl);
 #endif
 
 #ifdef TM_DEL_UNREF
 	/* stop cancel timers if any running */
-	if(is_invite(p_cell))
+	if(is_invite(p_cell)) {
 		cleanup_localcancel_timers(p_cell);
+	}
+
 	/* remove the cell from the hash table */
 	LOCK_HASH(p_cell->hash_index);
-	remove_from_hash_table_unsafe(p_cell);
-	UNLOCK_HASH(p_cell->hash_index);
-	p_cell->flags |= T_IN_AGONY;
-	if(t_linked_timers(p_cell)) {
-		UNREF_FREE(p_cell, 0);
+	rcount = atomic_get(&p_cell->ref_count);
+	if(rcount > 1) {
+		/* t still referenced */
+		LM_DBG("transaction: %p referenced with: %d\n", p_cell, rcount);
+		if(p_cell->wait_start==0) {
+			p_cell->wait_start = ti;
+		}
+		if(p_cell->wait_start + S_TO_TICKS(TM_LIFETIME_LIMIT) < ti) {
+			/* too long in the wait state */
+			if(p_cell->prev_c != NULL && p_cell->next_c != NULL) {
+				/* unlink and put back on timer for one last wait cycle */
+				LM_DBG("unlinking transaction: %p\n", p_cell);
+				remove_from_hash_table_unsafe(p_cell);
+				unlink_timers(p_cell);
+				UNLOCK_HASH(p_cell->hash_index);
+				return wait_tl->initial_timeout;
+			} else {
+				LM_DBG("unlinked transaction: %p\n", p_cell);
+				unlinked = 1;
+			}
+		} else {
+			/* add back to timer for one more wait cycle */
+			LM_DBG("re-cycled transaction: %p\n", p_cell);
+			UNLOCK_HASH(p_cell->hash_index);
+			return wait_tl->initial_timeout;
+		}
 	} else {
-		UNREF_FREE(p_cell, 1);
+		/* t ready to destroy */
+		LM_DBG("finished transaction: %p (p:%p/n:%p)\n", p_cell, p_cell->prev_c,
+				p_cell->next_c);
+		if(p_cell->prev_c != NULL && p_cell->next_c != NULL) {
+			remove_from_hash_table_unsafe(p_cell);
+		}
 	}
+	UNLOCK_HASH(p_cell->hash_index);
+
+	p_cell->flags |= T_IN_AGONY;
+	UNREF_FREE(p_cell, unlinked);
 	ret = 0;
 #else  /* TM_DEL_UNREF */
 	if(p_cell->flags & T_IN_AGONY) {

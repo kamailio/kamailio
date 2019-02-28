@@ -146,6 +146,9 @@ void put_on_wait(  struct cell  *Trans  )
 	}else{
 		LM_DBG("transaction %p already on wait\n", Trans);
 	}
+	if(Trans->wait_start==0) {
+		Trans->wait_start = get_ticks_raw();
+	}
 }
 
 
