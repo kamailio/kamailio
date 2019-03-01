@@ -167,6 +167,7 @@ typedef struct sr_net_info {
 	dest_info_t* dst;
 } sr_net_info_t;
 
+sr_net_info_t *ksr_evrt_rcvnetinfo_get(void);
 
 #define SND_FLAGS_INIT(sflags) \
 	do{ \

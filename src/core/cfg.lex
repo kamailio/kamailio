@@ -455,6 +455,8 @@ KEMI     "kemi"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
 REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
+RECEIVED_ROUTE_CALLBACK	"received_route_callback"
+RECEIVED_ROUTE_MODE		"received_route_mode"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
 MAX_BRANCHES_PARAM		"max_branches"
@@ -953,6 +955,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
 <INITIAL>{ONSEND_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return ONSEND_ROUTE_CALLBACK;}
 <INITIAL>{EVENT_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return EVENT_ROUTE_CALLBACK;}
+<INITIAL>{RECEIVED_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return RECEIVED_ROUTE_CALLBACK;}
+<INITIAL>{RECEIVED_ROUTE_MODE}  { count(); yylval.strval=yytext; return RECEIVED_ROUTE_MODE;}
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{MAX_BRANCHES_PARAM}  { count(); yylval.strval=yytext; return MAX_BRANCHES_PARAM;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}

@@ -44,6 +44,7 @@
 #include "script_cb.h"
 #include "nonsip_hooks.h"
 #include "dset.h"
+#include "fmsg.h"
 #include "usr_avp.h"
 #ifdef WITH_XAVP
 #include "xavp.h"
@@ -144,6 +145,79 @@ int sip_check_fline(char *buf, unsigned int len)
 	return -1;
 }
 
+/**
+ *
+ */
+static sr_net_info_t *ksr_evrt_rcvnetinfo = NULL;
+int ksr_evrt_received_mode = 0;
+str kemi_received_route_callback = STR_NULL;
+
+/**
+ *
+ */
+sr_net_info_t *ksr_evrt_rcvnetinfo_get(void)
+{
+	return ksr_evrt_rcvnetinfo;
+}
+
+/**
+ *
+ */
+int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
+{
+	sr_kemi_eng_t *keng = NULL;
+	sr_net_info_t netinfo;
+	int ret = 0;
+	int rt = -1;
+	run_act_ctx_t ra_ctx;
+	run_act_ctx_t *bctx = NULL;
+	sip_msg_t *fmsg = NULL;
+	str evname = str_init("core:msg-received");
+
+	if(len==0 || rcv_info==NULL || buf==NULL) {
+		LM_ERR("required parameters are not available\n");
+		return -1;
+	}
+
+	if(kemi_received_route_callback.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_DBG("kemi enabled with no core:msg-receive event route callback\n");
+			return 0;
+		}
+	} else {
+		rt = route_lookup(&event_rt, evname.s);
+		if (rt < 0 || event_rt.rlist[rt] == NULL) {
+			LM_DBG("event route core:msg-received not defined\n");
+			return 0;
+		}
+	}
+	memset(&netinfo, 0, sizeof(sr_net_info_t));
+	netinfo.data.s = buf;
+	netinfo.data.len = len;
+	netinfo.rcv = rcv_info;
+
+	ksr_evrt_rcvnetinfo = &netinfo;
+	set_route_type(REQUEST_ROUTE);
+	fmsg = faked_msg_get_next();
+	if(keng) {
+		bctx = sr_kemi_act_ctx_get();
+		sr_kemi_act_ctx_set(&ra_ctx);
+		ret=sr_kemi_route(keng, fmsg, REQUEST_ROUTE,
+				&kemi_received_route_callback, NULL);
+		sr_kemi_act_ctx_set(bctx);
+	} else {
+		ret=run_actions(&ra_ctx, event_rt.rlist[rt], fmsg);
+	}
+	if(ra_ctx.run_flags&DROP_R_F) {
+		LM_DBG("dropping received message\n");
+		ret = -1;
+	}
+	ksr_evrt_rcvnetinfo = NULL;
+
+	return ret;
+}
+
 /** Receive message
  *  WARNING: buf must be 0 terminated (buf[len]=0) or some things might
  * break (e.g.: modules/textops)
@@ -172,6 +246,12 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	int errsipmsg = 0;
 	int exectime = 0;
 
+	if(ksr_evrt_received_mode!=0) {
+		if(ksr_evrt_received(buf, len, rcv_info)<0) {
+			LM_DBG("dropping the received message\n");
+			goto error00;
+		}
+	}
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len) == 0) {
 			memset(&netinfo, 0, sizeof(sr_net_info_t));

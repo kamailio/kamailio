@@ -193,6 +193,9 @@ extern int mlock_pages;
 /* execute onsend_route for replies */
 extern int onsend_route_reply;
 
+extern int ksr_evrt_received_mode;
+extern str kemi_received_route_callback;
+
 /* real time stuff */
 extern int real_time;
 extern int rt_prio;
