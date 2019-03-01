@@ -506,7 +506,8 @@ xlog("translated to var $var(y) \n");
 
 6.4.  dp_reload()
 
-   Forces an update of the translation rules from the database.
+   Reload the translation rules from the database. Note that there is a
+   rate limiting of maximum one reload in five seconds.
 
    Name: dp_reload
 
