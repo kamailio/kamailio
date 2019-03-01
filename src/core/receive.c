@@ -200,6 +200,7 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
 	ksr_evrt_rcvnetinfo = &netinfo;
 	set_route_type(REQUEST_ROUTE);
 	fmsg = faked_msg_get_next();
+	init_run_actions_ctx(&ra_ctx);
 	if(keng) {
 		bctx = sr_kemi_act_ctx_get();
 		sr_kemi_act_ctx_set(&ra_ctx);
