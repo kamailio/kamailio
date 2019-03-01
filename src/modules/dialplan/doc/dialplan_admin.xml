@@ -620,7 +620,8 @@ xlog("translated to var $var(y) \n");
 		<function moreinfo="none">dp_reload()</function>
 		</title>
 		<para>
-		Forces an update of the translation rules from the database.
+		Reload the translation rules from the database. Note that there is
+		a rate limiting of maximum one reload in five seconds.
 		</para>
 		<para>
 		Name: <emphasis>dp_reload</emphasis>
