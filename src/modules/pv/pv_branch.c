@@ -533,6 +533,110 @@ error:
 	return -1;
 }
 
+int pv_get_rcv(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	sr_net_info_t *neti = NULL;
+	str s;
+
+	neti = ksr_evrt_rcvnetinfo_get();
+
+	if (neti==NULL || neti->rcv==NULL || neti->rcv->bind_address==NULL)
+		return pv_get_null(msg, param, res);
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* buf */
+			s.s   = neti->data.s;
+			s.len = neti->data.len;
+			return pv_get_strval(msg, param, res, &s);
+		case 2: /* len */
+			return pv_get_uintval(msg, param, res,
+					(int)neti->data.len);
+		case 3: /* proto */
+			return pv_get_uintval(msg, param, res, (int)neti->rcv->proto);
+		case 4: /* srcip */
+			s.s = ip_addr2a(&neti->rcv->src_ip);
+			s.len = strlen(s.s);
+			return pv_get_strval(msg, param, res, &s);
+		case 5: /* rcvip */
+			s.s = ip_addr2a(&neti->rcv->dst_ip);
+			s.len = strlen(s.s);
+			return pv_get_strval(msg, param, res, &s);
+		case 6: /* sproto */
+			if(get_valid_proto_string((int)neti->rcv->proto,
+						0, 0, &s)<0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &s);
+		case 7: /* srcport */
+			return pv_get_uintval(msg, param, res,
+					(int)neti->rcv->src_port);
+		case 8: /* rcvport */
+			return pv_get_uintval(msg, param, res,
+					(int)neti->rcv->dst_port);
+		default:
+			/* 0 - af */
+			return pv_get_uintval(msg, param, res,
+					(int)neti->rcv->bind_address->address.af);
+	}
+
+	return 0;
+}
+
+int pv_parse_rcv_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "af", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 3:
+			if(strncmp(in->s, "buf", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "proto", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "srcip", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "rcvip", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "sproto", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+		break;
+		case 7:
+			if(strncmp(in->s, "srcport", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else if(strncmp(in->s, "rcvport", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV rcv name %.*s\n", in->len, in->s);
+	return -1;
+}
+
 int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

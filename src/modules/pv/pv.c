@@ -90,6 +90,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_snd_name, 0, 0, 0 },
 	{ {"sndfrom", (sizeof("sndfrom")-1)}, PVT_OTHER, pv_get_sndfrom, 0,
 		pv_parse_snd_name, 0, 0, 0 },
+	{ {"rcv", (sizeof("rcv")-1)}, PVT_OTHER, pv_get_rcv, 0,
+		pv_parse_rcv_name, 0, 0, 0 },
 #ifdef WITH_XAVP
 	{ {"xavp", sizeof("xavp")-1}, /* xavp */
 		PVT_XAVP, pv_get_xavp, pv_set_xavp,
