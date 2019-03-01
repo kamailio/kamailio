@@ -88,6 +88,8 @@ int dp_fetch_rows = 1000;
 int dp_match_dynamic = 0;
 int dp_append_branch = 1;
 
+static time_t *dp_rpc_reload_time = NULL;
+
 static param_export_t mod_params[]={
 	{ "db_url",			PARAM_STR,	&dp_db_url },
 	{ "table_name",		PARAM_STR,	&dp_table_name },
@@ -187,6 +189,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	dp_rpc_reload_time = shm_malloc(sizeof(time_t));
+	if(dp_rpc_reload_time == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	*dp_rpc_reload_time = 0;
+
 	return 0;
 }
 
@@ -203,6 +212,10 @@ static void mod_destroy(void)
 	if(default_par2){
 		shm_free(default_par2);
 		default_par2 = NULL;
+	}
+	if(dp_rpc_reload_time!=NULL) {
+		shm_free(dp_rpc_reload_time);
+		dp_rpc_reload_time = 0;
 	}
 	destroy_data();
 }
@@ -603,6 +616,17 @@ static const char* dialplan_rpc_reload_doc[2] = {
  */
 static void dialplan_rpc_reload(rpc_t* rpc, void* ctx)
 {
+	if(dp_rpc_reload_time==NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return;
+	}
+	if(*dp_rpc_reload_time!=0 && *dp_rpc_reload_time > time(NULL) - 5) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "ongoing reload");
+		return;
+	}
+	*dp_rpc_reload_time = time(NULL);
 	if (dp_connect_db() < 0) {
 		LM_ERR("failed to reload rules fron database (db connect)\n");
 		rpc->fault(ctx, 500, "DB Connection Error");
