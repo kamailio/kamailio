@@ -410,12 +410,17 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 					LM_ERR("cannot find param in via %d\n", i);
 					return -1;
 				}
-				if(i==2)
+				if(vp->value.len <= th_vparam_prefix.len) {
+					LM_ERR("invalid param len in via %d\n", i);
+					return -1;
+				}
+				if(i==2) {
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
 							&th_vparam_prefix, CRLF_LEN+1, &out.len);
-				else
+				} else {
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
 							&th_vparam_prefix, 0, &out.len);
+				}
 				if(out.s==NULL || out.len<=0)
 				{
 					LM_ERR("cannot decode via %d\n", i);
