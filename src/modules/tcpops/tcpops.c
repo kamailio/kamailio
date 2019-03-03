@@ -54,7 +54,7 @@ int tcp_closed_routes[_TCP_CLOSED_REASON_MAX] =
 /**
  *
  */
-void tcp_init_evroutes(void)
+void tcpops_init_evroutes(void)
 {
 	if(tcpops_event_callback.len > 0) {
 		return;
