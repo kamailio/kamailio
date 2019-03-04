@@ -173,24 +173,81 @@ static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_rtjson_init_routes(sip_msg_t *msg, str *srdoc)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(rtjson_init_routes(msg, srdoc)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_rtjson_push_routes(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(rtjson_push_routes(msg)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_rtjson_next_route(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(rtjson_next_route(msg)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_rtjson_update_branch(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(rtjson_update_branch(msg)<0)
+		return -1;
+
+	return 1;
+}
+
+
+/**
+ *
+ */
 static sr_kemi_t sr_kemi_rtjson_exports[] = {
 	{ str_init("rtjson"), str_init("init_routes"),
-		SR_KEMIP_INT, rtjson_init_routes,
+		SR_KEMIP_INT, ki_rtjson_init_routes,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rtjson"), str_init("push_routes"),
-		SR_KEMIP_INT, rtjson_push_routes,
+		SR_KEMIP_INT, ki_rtjson_push_routes,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rtjson"), str_init("next_route"),
-		SR_KEMIP_INT, rtjson_next_route,
+		SR_KEMIP_INT, ki_rtjson_next_route,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rtjson"), str_init("update_branch"),
-		SR_KEMIP_INT, rtjson_update_branch,
+		SR_KEMIP_INT, ki_rtjson_update_branch,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
