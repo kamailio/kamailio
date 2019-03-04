@@ -197,6 +197,7 @@ static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
 static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
+static int rtpengine_info1_f(struct sip_msg *, char *, char *);
 
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
@@ -363,6 +364,12 @@ static cmd_export_t cmds[] = {
 		0, 0,
 		ANY_ROUTE},
 	{"rtpengine_answer",	(cmd_function)rtpengine_answer1_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"rtpengine_info",	(cmd_function)rtpengine_info1_f,	0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpengine_info",	(cmd_function)rtpengine_info1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_manage",	(cmd_function)rtpengine_manage1_f,	0,
@@ -2303,7 +2310,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_item_t *item, *resp;
 	str viabranch = STR_NULL;
 	str body = STR_NULL, error = STR_NULL;
-	int ret, queried_nodes = 0;
+	int ret, queried_nodes = 0, cont_type = 0;
 	struct rtpp_node *node;
 	char *cp;
 	pv_value_t pv_val;
@@ -2354,7 +2361,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 				body = pv_val.rs;
 			}
 
-		} else if (extract_body(msg, &body) == -1) {
+		} else if ((cont_type = extract_body(msg, &body)) == -1) {
 			LM_ERR("can't extract body from the message\n");
 			goto error;
 		}
@@ -2375,6 +2382,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 	if (parse_flags(&ng_flags, msg, &op, flags_str))
 		goto error;
+
+	/* trickle ice sdp fragment? */
+	if (cont_type == 3)
+		bencode_list_add_string(ng_flags.flags, "fragment");
 
 	/* only add those if any flags were given at all */
 	if (ng_flags.direction && ng_flags.direction->child)
@@ -2518,7 +2529,7 @@ select_node:
 		else
 			LM_INFO("proxy %.*s has reached its load limit (%.*s) - trying next one",
 					node->rn_url.len, node->rn_url.s,
-					item->iov[1].iov_len, item->iov[1].iov_base);
+					(int) item->iov[1].iov_len, (char *) item->iov[1].iov_base);
 		goto select_node;
 	}
 
@@ -3554,6 +3565,26 @@ rtpengine_manage1_f(struct sip_msg *msg, char *str1, char *str2)
 	}
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, flags.s, 1);
+}
+
+static int rtpengine_info_wrap(struct sip_msg *msg, void *d, int more) {
+	return rtpp_function_call_simple(msg, OP_OFFER, d);
+}
+
+static int
+rtpengine_info1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	str flags;
+
+	flags.s = NULL;
+	if (str1) {
+		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_info_wrap, flags.s, 1);
 }
 
 static int rtpengine_offer_wrap(struct sip_msg *msg, void *d, int more) {
