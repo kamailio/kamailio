@@ -77,6 +77,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
+#include "../../core/char_msg_val.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
@@ -199,7 +200,7 @@ static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
-static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more);
+static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more);
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(unsigned int id_set);
@@ -2212,6 +2213,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 						ng_flags->via = 3;
 					else if (str_eq(&val, "extra"))
 						ng_flags->via = -1;
+					else if (str_eq(&val, "next"))
+						ng_flags->via = -2;
 					else
 						goto error;
 					goto next;
@@ -2304,6 +2307,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	struct rtpp_node *node;
 	char *cp;
 	pv_value_t pv_val;
+	char md5[MD5_LEN];
+	char branch_buf[MAX_BRANCH_PARAM_LEN];
 
 	/*** get & init basic stuff needed ***/
 
@@ -2387,12 +2392,30 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
 	if (ng_flags.via) {
-		if (ng_flags.via == 1 || ng_flags.via == 2)
-			ret = get_via_branch(msg, ng_flags.via, &viabranch);
-		else if (ng_flags.via == -1 && extra_id_pv)
-			ret = get_extra_id(msg, &viabranch);
-		else
-			ret = -1;
+		ret = -1;
+		switch (ng_flags.via) {
+			case 3:
+				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 2 : 1;
+				/* fall thru */
+			case 1:
+			case 2:
+				ret = get_via_branch(msg, ng_flags.via, &viabranch);
+				break;
+			case -1:
+				if (extra_id_pv)
+					ret = get_extra_id(msg, &viabranch);
+				break;
+			case -2:
+				if (!char_msg_val(msg, md5))
+					break;
+				msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
+
+				viabranch.s = branch_buf;
+				if (branch_builder(msg->hash_index, 0, md5, 0, branch_buf, &viabranch.len))
+					ret = 0;
+				break;
+		}
+
 		if (ret == -1 || viabranch.len == 0) {
 			LM_ERR("can't get Via branch/extra ID\n");
 			goto error;
@@ -3555,7 +3578,7 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 }
 
 static int
-rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more)
+rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
