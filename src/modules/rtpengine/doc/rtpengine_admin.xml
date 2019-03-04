@@ -2063,7 +2063,9 @@ rtpengine_offer();
 				<quote>auto</quote> - use the first <quote>Via</quote> header if this is
 				a request, or the second one if this is a reply;
 				<quote>extra</quote> - don't take the value from a header, but instead use
-				the value of the <quote>extra_id_pv</quote> variable.
+				the value of the <quote>extra_id_pv</quote> variable;
+				<quote>next</quote> - use the value of the <quote>Via/branch</quote>
+				tag that Kamailio will generate for the next branch.
 				This can be used to create one media session per branch
 				on the &rtp; proxy. When sending a subsequent <quote>delete</quote> command to
 				the &rtp; proxy, you can then stop just the session for a specific branch when
@@ -2429,6 +2431,34 @@ if (has_body("application/sdp")) {
 		</para>
 		</example>
         </section>
+	<section id="rtpengine.f.rtpengine_info">
+		<title>
+		<function moreinfo="none">rtpengine_info([flags])</function>
+		</title>
+		<para>
+		Send an updated offer to rtpengine. This is meant to be used when processing
+		Tricke ICE &sdp; Fragments that are carried in &sip; INFO messages
+		and are proxied to endpoints that do not support ICE. With a matching
+		content type, the &sdp; fragment is used to update rtpengine's list of ICE
+		candidates. No new &sdp; is returned and so the &sip; INFO message should
+		be consumed after calling this function.
+		</para>
+		<para>
+		While this function supports the same flags as <quote>rtpengine_offer</quote>
+		et al, it is not normally necessary to provide any.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_info</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_info();
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.f.rtpengine_delete">
 		<title>
 		<function moreinfo="none">rtpengine_delete([flags])</function>
