@@ -2309,6 +2309,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	pv_value_t pv_val;
 	char md5[MD5_LEN];
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
+	bencode_item_t *result;
 
 	/*** get & init basic stuff needed ***/
 
@@ -2331,6 +2332,9 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		return NULL;
 	}
 	ng_flags.dict = bencode_dictionary(bencbuf);
+
+	item = bencode_dictionary_add_list(ng_flags.dict, "supports");
+	bencode_list_add_string(item, "load limit");
 
 	body.s = NULL;
 	if (op == OP_OFFER || op == OP_ANSWER) {
@@ -2499,7 +2503,26 @@ select_node:
 		goto error;
 	}
 
-	if (!bencode_dictionary_get_strcmp(resp, "result", "error")) {
+	result = bencode_dictionary_get_expect(resp, "result", BENCODE_STRING);
+	if (!result) {
+		LM_ERR("No 'result' dictionary entry in response from proxy %.*s",
+				node->rn_url.len, node->rn_url.s);
+		goto error;
+	}
+
+	if (!bencode_strcmp(result, "load limit")) {
+		item = bencode_dictionary_get_expect(resp, "message", BENCODE_STRING);
+		if (!item)
+			LM_INFO("proxy %.*s has reached its load limit - trying next one",
+					node->rn_url.len, node->rn_url.s);
+		else
+			LM_INFO("proxy %.*s has reached its load limit (%.*s) - trying next one",
+					node->rn_url.len, node->rn_url.s,
+					item->iov[1].iov_len, item->iov[1].iov_base);
+		goto select_node;
+	}
+
+	if (!bencode_strcmp(result, "error")) {
 		if (!bencode_dictionary_get_str(resp, "error-reason", &error)) {
 			LM_ERR("proxy return error but didn't give an error reason: %.*s\n", ret, cp);
 		} else {
