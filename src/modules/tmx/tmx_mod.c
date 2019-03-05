@@ -715,9 +715,7 @@ static int ki_t_drop_rcode(sip_msg_t* msg, int rcode)
 	}
 
 	t->uas.status = (unsigned int)rcode;
-	if(t_is_request_route(msg) == 1) {
-		_tmx_tmb.t_release(msg);
-	}
+	_tmx_tmb.t_release_transaction(t);
 	return 0;
 }
 
