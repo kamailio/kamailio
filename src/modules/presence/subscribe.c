@@ -760,7 +760,7 @@ subs_t *_pres_subs_last_sub = NULL;
  * version 21
  * flags 22
  * user_agent 23
- *
+ * sockinfo 24
  */
 
 int pv_parse_subscription_name(pv_spec_p sp, str *in)
@@ -822,6 +822,8 @@ int pv_parse_subscription_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 9;
 			} else if(strncmp(in->s, "from_tag", 8) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 11;
+			} else if(strncmp(in->s, "sockinfo", 8) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 24;
 			} else {
 				goto error;
 			};
@@ -961,6 +963,8 @@ int pv_get_subscription(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_sintval(msg, param, res, _pres_subs_last_sub->flags);
 	} else if(param->pvn.u.isname.name.n == 23) {
 		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->user_agent);
+	} else if(param->pvn.u.isname.name.n == 24) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->sockinfo_str);
 	}
 
 	LM_ERR("unknown specifier\n");
