@@ -128,6 +128,7 @@ struct tm_binds {
 	cmd_function	t_load_contacts;
 	cmd_function	t_next_contacts;
 	tset_fr_f set_fr;
+	trelease_t      t_release_transaction;
 };
 
 typedef struct tm_binds tm_api_t;
