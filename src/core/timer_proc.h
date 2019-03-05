@@ -58,6 +58,8 @@ int register_basic_timers(int timers);
  */
 int fork_basic_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval);
+int fork_basic_timer_w(int child_id, char* desc, int make_sock,
+						timer_function_w* f, int worker, void* param, int interval);
 
 #define fork_dummy_timer fork_basic_timer
 
@@ -80,6 +82,8 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
  */
 int fork_basic_utimer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int uinterval);
+int fork_basic_utimer_w(int child_id, char* desc, int make_sock,
+						timer_function_w* f, int worker, void* param, int uinterval);
 /**
  * \brief Forks a timer process based on the local timer
  *
