@@ -1707,7 +1707,7 @@ static int sr_pop_yy_state()
 
 /* define/ifdef support */
 
-#define MAX_DEFINES    256
+#define MAX_DEFINES    512
 static ksr_ppdefine_t pp_defines[MAX_DEFINES];
 static int pp_num_defines = 0;
 static int pp_define_type = 0;
@@ -1717,7 +1717,7 @@ static int pp_define_index = -1;
  * ifdef(defined), ifndef(undefined), or the opposite of these
  * two, but in an else branch
  */
-#define MAX_IFDEFS    256
+#define MAX_IFDEFS    512
 static int pp_ifdef_stack[MAX_IFDEFS];
 static int pp_sptr = 0; /* stack pointer */
 
