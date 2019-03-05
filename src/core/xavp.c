@@ -660,14 +660,11 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 			if(navp==NULL)
 			{
 				LM_ERR("cannot create cloned embedded xavp\n");
-				if(xnew->val.v.xavp == NULL)
-				{
-					shm_free(xnew);
-					return NULL;
-				} else {
-					xavp_destroy_list(&navp);
-					return NULL;
+				if(xnew->val.v.xavp != NULL) {
+					xavp_destroy_list(&xnew->val.v.xavp);
 				}
+				shm_free(xnew);
+				return NULL;
 			}
 			LM_DBG("cloned inner xavp [%.*s]\n", oavp->name.len, oavp->name.s);
 			if(xnew->val.v.xavp == NULL)
