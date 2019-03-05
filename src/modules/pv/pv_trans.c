@@ -1389,29 +1389,24 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			break;
 		case TR_URI_TOSOCKET:
-			if(msg==NULL) {
+			if(get_valid_proto_string(_tr_parsed_uri.proto, 1, 0, &sproto)<0) {
+				LM_WARN("unknown transport protocol\n");
 				val->rs = _tr_empty;
 				break;
-			} else {
-				if(get_valid_proto_string(msg->rcv.proto, 1, 0, &sproto)<0) {
-					LM_WARN("unknown transport protocol\n");
-					val->rs = _tr_empty;
-					break;
-				}
-				tr_set_crt_buffer();
-				val->rs.len = snprintf(_tr_buffer, TR_BUFFER_SIZE,
-						"%.*s:%.*s:%d", sproto.len, sproto.s,
-						_tr_parsed_uri.host.len, _tr_parsed_uri.host.s,
-						(_tr_parsed_uri.port_no!=0)
-								?(int)_tr_parsed_uri.port_no:5060);
-				if(val->rs.len<=0 || val->rs.len>=TR_BUFFER_SIZE) {
-					LM_WARN("error converting uri to socket address [%.*s]\n",
-							_tr_uri.len, _tr_uri.s);
-					val->rs = _tr_empty;
-					break;
-				}
-				val->rs.s = _tr_buffer;
 			}
+			tr_set_crt_buffer();
+			val->rs.len = snprintf(_tr_buffer, TR_BUFFER_SIZE,
+					"%.*s:%.*s:%d", sproto.len, sproto.s,
+					_tr_parsed_uri.host.len, _tr_parsed_uri.host.s,
+					(_tr_parsed_uri.port_no!=0)
+							?(int)_tr_parsed_uri.port_no:5060);
+			if(val->rs.len<=0 || val->rs.len>=TR_BUFFER_SIZE) {
+				LM_WARN("error converting uri to socket address [%.*s]\n",
+						_tr_uri.len, _tr_uri.s);
+				val->rs = _tr_empty;
+				break;
+			}
+			val->rs.s = _tr_buffer;
 			break;
 		default:
 			LM_ERR("unknown subtype %d\n",
@@ -2684,7 +2679,7 @@ char* tr_parse_uri(str* in, trans_t *t)
 	} else if(name.len==6 && strncasecmp(name.s, "scheme", 6)==0) {
 		t->subtype = TR_URI_SCHEME;
 		goto done;
-	} else if(name.len==6 && strncasecmp(name.s, "tosocket", 8)==0) {
+	} else if(name.len==8 && strncasecmp(name.s, "tosocket", 8)==0) {
 		t->subtype = TR_URI_TOSOCKET;
 		goto done;
 	}
