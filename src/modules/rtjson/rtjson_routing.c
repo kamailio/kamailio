@@ -271,6 +271,8 @@ int rtjson_push_routes(sip_msg_t *msg)
 		return -1;
 	}
 
+	LM_DBG("routes index: %d\n", iavp->val.v.i);
+
 	srjson_InitDoc(&tdoc, NULL);
 
 	tdoc.root = srjson_Parse(&tdoc, javp->val.v.s.s);
@@ -619,6 +621,8 @@ int rtjson_next_route(sip_msg_t *msg)
 		return -1;
 	}
 
+	LM_DBG("routes index: %d\n", iavp->val.v.i);
+
 	srjson_InitDoc(&tdoc, NULL);
 
 	tdoc.root = srjson_Parse(&tdoc, javp->val.v.s.s);
@@ -653,12 +657,16 @@ int rtjson_next_route(sip_msg_t *msg)
 		nj = nj->next;
 		i++;
 	}
-	if(nj==NULL)
+	if(nj==NULL) {
+		LM_DBG("no route at index: %d\n", iavp->val.v.i);
 		goto error;
+	}
 
 	iavp->val.v.i++;
-	if(rtjson_append_branch(msg, &tdoc, nj)<0)
+	if(rtjson_append_branch(msg, &tdoc, nj)<0) {
+		LM_DBG("route index %d not appended\n", iavp->val.v.i);
 		goto error;
+	}
 
 	srjson_DestroyDoc(&tdoc);
 	return 0;
