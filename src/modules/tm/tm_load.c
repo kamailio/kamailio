@@ -141,6 +141,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_load_contacts = t_load_contacts;
 	tmb->t_next_contacts = t_next_contacts;
 	tmb->set_fr = t_set_fr;
+	tmb->t_release_transaction = t_release_transaction;
 	return 1;
 }
 
