@@ -43,6 +43,7 @@ Daniel-Constantin Mierla
               4.9. load_fetch (integer)
               4.10. reply_code (integer)
               4.11. reply_reason (string)
+              4.12. clean_unused (int)
 
         5. Functions
 
@@ -74,8 +75,10 @@ Daniel-Constantin Mierla
    1.11. Set reply_code parameter at runtime
    1.12. Set reply_reason parameter
    1.13. Set reply_reason parameter at runtime
-   1.14. pl_check usage
-   1.15. pl_drop usage
+   1.14. Set clean_unused parameter
+   1.15. Set clean_unused parameter at runtime
+   1.16. pl_check usage
+   1.17. pl_drop usage
 
 Chapter 1. Admin Guide
 
@@ -101,6 +104,7 @@ Chapter 1. Admin Guide
         4.9. load_fetch (integer)
         4.10. reply_code (integer)
         4.11. reply_reason (string)
+        4.12. clean_unused (int)
 
    5. Functions
 
@@ -211,6 +215,7 @@ Chapter 1. Admin Guide
    4.9. load_fetch (integer)
    4.10. reply_code (integer)
    4.11. reply_reason (string)
+   4.12. clean_unused (int)
 
 4.1. hash_size (int)
 
@@ -357,6 +362,22 @@ modparam("pipelimit", "reply_reason", "Limiting")
    Example 1.13.  Set reply_reason parameter at runtime
 kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
+4.12. clean_unused (int)
+
+   Clean unused pipes afetr this number of timer intervals.
+
+   Default value is 0 (cleanup disabled).
+
+   Example 1.14. Set clean_unused parameter
+...
+modparam("pipelimit", "clean_unused", 10)
+...
+
+   This value can be modified at runtime using kamcmd
+
+   Example 1.15.  Set clean_unused parameter at runtime
+kamcmd cfg.set_now_int pipelimit clean_unused 10
+
 5. Functions
 
    5.1. pl_check(name [, algorithm, limit])
@@ -389,7 +410,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. pl_check usage
+   Example 1.16. pl_check usage
 ...
         # perform pipe match for current method
         if (!pl_check("one")) {
@@ -458,7 +479,7 @@ with unexpected retcode=$var(check_result)\n");
    This function can be used from
    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE.
 
-   Example 1.15. pl_drop usage
+   Example 1.17. pl_drop usage
 ...
         if (!pl_check("one")) {
                 # send back a "503 - Server Unavailable"

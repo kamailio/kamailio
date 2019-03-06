@@ -408,6 +408,7 @@ modparam("rr", "ignore_sips", 1)
      * 2 - route calculation based on flow-token has been successful
      * -1 - route calculation has been unsuccessful
      * -2 - outbound flow-token shows evidence of tampering
+     * -3 - next hop is taken from a preloaded route set
 
    This function can be used from REQUEST_ROUTE.
 
