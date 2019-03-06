@@ -520,11 +520,15 @@ int rtjson_append_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 
 	rj = srjson_GetObjectItem(jdoc, nj, "uri");
 	if(rj==NULL || rj->type!=srjson_String || rj->valuestring==NULL) {
-		return -1;
+		if (msg->new_uri.s!=NULL) {
+			uri = msg->new_uri;
+		} else {
+			uri = msg->first_line.u.request.uri;
+		}
+	} else {
+		uri.s = rj->valuestring;
+		uri.len = strlen(uri.s);
 	}
-
-	uri.s = rj->valuestring;
-	uri.len = strlen(uri.s);
 
 	rj = srjson_GetObjectItem(jdoc, nj, "dst_uri");
 	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
