@@ -996,6 +996,54 @@ static int sr_kemi_core_is_method_prack(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_proto_udp(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_UDP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto_tcp(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_TCP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto_tls(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_TLS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto_ws(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_WS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto_wss(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_WSS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto_sctp(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_SCTP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
@@ -1508,6 +1556,36 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_PRACK"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_method_prack,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_UDP"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_udp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_TCP"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_tcp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_TLS"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_tls,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_WS"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_ws,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_WSS"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_wss,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_SCTP"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_sctp,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
