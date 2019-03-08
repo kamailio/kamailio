@@ -92,6 +92,19 @@ int ht_api_get_cell_expire(str *hname, str *name,
 }
 
 /**
+ * get a clone in pkg for an htable item
+ * - returned pointer must be pkg_free() after use
+ */
+ht_cell_t* ht_api_get_cell_clone(str *hname, str *name)
+{
+    ht_t* ht;
+    ht = ht_get_table(hname);
+    if(ht==NULL)
+        return NULL;
+    return ht_cell_pkg_copy(ht, name, NULL);
+}
+
+/**
  *
  */
 int ht_api_rm_cell_re(str *hname, str *sre, int mode)
@@ -137,6 +150,7 @@ int bind_htable(htable_api_t* api)
 		return -1;
 	}
 	api->set = ht_api_set_cell;
+	api->get_clone = ht_api_get_cell_clone;
 	api->rm  = ht_api_del_cell;
 	api->set_expire = ht_api_set_cell_expire;
 	api->get_expire = ht_api_get_cell_expire;
