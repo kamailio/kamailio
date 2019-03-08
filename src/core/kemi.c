@@ -1066,6 +1066,25 @@ static int sr_kemi_core_is_af_ipv6(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_src_port(sip_msg_t *msg, int vport)
+{
+	return (vport == (int)msg->rcv.src_port)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_dst_port(sip_msg_t *msg, int vport)
+{
+	if(msg==NULL || msg->rcv.bind_address==NULL) {
+		return SR_KEMI_FALSE;
+	}
+	return (vport == (int)msg->rcv.bind_address->port_no)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
@@ -1619,6 +1638,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("is_IPv6"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_af_ipv6,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_src_port"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_src_port,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_dst_port"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_dst_port,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
