@@ -44,6 +44,10 @@ enum rtpe_operation {
         OP_UNBLOCK_MEDIA,
         OP_START_FORWARDING,
         OP_STOP_FORWARDING,
+        OP_PLAY_MEDIA,
+        OP_STOP_MEDIA,
+
+        OP_ANY,
 };
 
 struct rtpp_node {

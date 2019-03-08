@@ -135,6 +135,8 @@ static const char *command_strings[] = {
 	[OP_UNBLOCK_MEDIA]	= "unblock media",
 	[OP_START_FORWARDING]	= "start forwarding",
 	[OP_STOP_FORWARDING]	= "stop forwarding",
+	[OP_PLAY_MEDIA]		= "play media",
+	[OP_STOP_MEDIA]		= "stop media",
 };
 
 struct minmax_mos_stats {
@@ -192,6 +194,8 @@ static int block_media_f(struct sip_msg *, char *, char *);
 static int unblock_media_f(struct sip_msg *, char *, char *);
 static int start_forwarding_f(struct sip_msg *, char *, char *);
 static int stop_forwarding_f(struct sip_msg *, char *, char *);
+static int play_media_f(struct sip_msg *, char *, char *);
+static int stop_media_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -276,6 +280,9 @@ static pv_spec_t *write_sdp_pvar = NULL;
 static str read_sdp_pvar_str = {NULL, 0};
 static pv_spec_t *read_sdp_pvar = NULL;
 
+static str media_duration_pvar_str = {NULL, 0};
+static pv_spec_t *media_duration_pvar = NULL;
+
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
 
@@ -354,6 +361,15 @@ static cmd_export_t cmds[] = {
 	{"stop_forwarding",	(cmd_function)stop_forwarding_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"play_media",		(cmd_function)play_media_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"stop_media",		(cmd_function)stop_media_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"stop_media",		(cmd_function)stop_media_f, 		0,
+		0, 0,
+		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
 		ANY_ROUTE},
@@ -424,6 +440,7 @@ static param_export_t params[] = {
 	{"hash_table_tout",       INT_PARAM, &hash_table_tout        },
 	{"hash_table_size",       INT_PARAM, &hash_table_size        },
 	{"setid_default",         INT_PARAM, &setid_default          },
+	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
 
 	/* MOS stats output */
 	/* global averages */
@@ -1656,6 +1673,16 @@ mod_init(void)
 		}
 	}
 
+	if (media_duration_pvar_str.len > 0) {
+		media_duration_pvar = pv_cache_get(&media_duration_pvar_str);
+		if (media_duration_pvar == NULL
+			|| (media_duration_pvar->type != PVT_AVP && media_duration_pvar->type != PVT_SCRIPTVAR) ) {
+			LM_ERR("media_duration_pv: not a valid AVP or VAR definition <%.*s>\n",
+				media_duration_pvar_str.len, media_duration_pvar_str.s);
+			return -1;
+		}
+	}
+
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
@@ -2454,7 +2481,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	}
 	else if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
-		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER))
+		|| (msg->first_line.type == SIP_REPLY && op == OP_ANSWER)
+		|| ng_flags.directional) /* set if from-tag was set manually */
 	{
 		bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
 		if (ng_flags.to && ng_flags.to_tag.s && ng_flags.to_tag.len)
@@ -2622,13 +2650,26 @@ error:
 static int rtpp_function_call_simple(struct sip_msg *msg, enum rtpe_operation op, const char *flags_str)
 {
 	bencode_buffer_t bencbuf;
+	bencode_item_t *ret;
 
-	if (!rtpp_function_call(&bencbuf, msg, op, flags_str, NULL))
+	ret = rtpp_function_call(&bencbuf, msg, op, flags_str, NULL);
+	if (!ret)
 		return -1;
+
+	if (bencode_dictionary_get_strcmp(ret, "result", "ok")) {
+		LM_ERR("proxy didn't return \"ok\" result\n");
+		bencode_buffer_free(&bencbuf);
+		return -1;
+	}
 
 	bencode_buffer_free(&bencbuf);
 	return 1;
 }
+
+static int rtpengine_simple_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
+	return rtpp_function_call_simple(msg, op, d);
+}
+
 
 static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf, struct sip_msg *msg,
 		enum rtpe_operation op, const char *flags_str, str *body)
@@ -3334,8 +3375,9 @@ static int rtpengine_query(struct sip_msg *msg, const char *flags) {
 	return 1;
 }
 
-static int rtpengine_rtpp_set_wrap(struct sip_msg *msg, int (*func)(struct sip_msg *msg, void *, int),
-		void *data, int direction)
+static int rtpengine_rtpp_set_wrap(struct sip_msg *msg, int (*func)(struct sip_msg *msg, void *, int,
+			enum rtpe_operation),
+		void *data, int direction, enum rtpe_operation op)
 {
 	int ret, more;
 
@@ -3348,7 +3390,7 @@ static int rtpengine_rtpp_set_wrap(struct sip_msg *msg, int (*func)(struct sip_m
 	if (!selected_rtpp_set_2 || selected_rtpp_set_2 == selected_rtpp_set_1)
 		more = 0;
 
-	ret = func(msg, data, more);
+	ret = func(msg, data, more, op);
 	if (ret < 0)
 		return ret;
 
@@ -3359,17 +3401,18 @@ static int rtpengine_rtpp_set_wrap(struct sip_msg *msg, int (*func)(struct sip_m
 	if (set_rtpengine_set_from_avp(msg, direction) == -1)
 		return -1;
 
-	ret = func(msg, data, 0);
+	ret = func(msg, data, 0, op);
 	body_intermediate.s = NULL;
 	return ret;
 }
 
-static int rtpengine_delete_wrap(struct sip_msg *msg, void *d, int more) {
+static int rtpengine_delete_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	return rtpengine_delete(msg, d);
 }
 
-static int
-rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
+static int rtpengine_rtpp_set_wrap_fparam(struct sip_msg *msg, int (*func)(struct sip_msg *msg, void *, int,
+			enum rtpe_operation),
+		char *str1, int direction, enum rtpe_operation op)
 {
 	str flags;
 
@@ -3381,27 +3424,23 @@ rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags.s, 1);
+	return rtpengine_rtpp_set_wrap(msg, func, flags.s, direction, op);
 }
 
-static int rtpengine_query_wrap(struct sip_msg *msg, void *d, int more) {
+static int
+rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_delete_wrap, str1, 1, OP_DELETE);
+}
+
+static int rtpengine_query_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	return rtpengine_query(msg, d);
 }
 
 static int
 rtpengine_query1_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str flags;
-
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags.s, 1);
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_query_wrap, str1, 1, OP_QUERY);
 }
 
 
@@ -3547,88 +3586,45 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 	return -1;
 }
 
-static int rtpengine_manage_wrap(struct sip_msg *msg, void *d, int more) {
+static int rtpengine_manage_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	return rtpengine_manage(msg, d);
 }
 
 static int
 rtpengine_manage1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	str flags;
-
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, flags.s, 1);
-}
-
-static int rtpengine_info_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_OFFER, d);
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_manage_wrap, str1, 1, OP_ANY);
 }
 
 static int
 rtpengine_info1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	str flags;
-
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_info_wrap, flags.s, 1);
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_simple_wrap, str1, 1, OP_OFFER);
 }
 
-static int rtpengine_offer_wrap(struct sip_msg *msg, void *d, int more) {
+static int rtpengine_offer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	return rtpengine_offer_answer(msg, d, OP_OFFER, more);
 }
 
 static int
 rtpengine_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	str flags;
-
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags.s, 1);
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_offer_wrap, str1, 1, OP_OFFER);
 }
 
-static int rtpengine_answer_wrap(struct sip_msg *msg, void *d, int more) {
+static int rtpengine_answer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	return rtpengine_offer_answer(msg, d, OP_ANSWER, more);
 }
 
 static int
 rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	str flags;
 
 	if (msg->first_line.type == SIP_REQUEST)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags.s, 2);
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_answer_wrap, str1, 2, OP_ANSWER);
 }
 
 static int
@@ -3702,160 +3698,102 @@ error:
 }
 
 
-static int rtpengine_start_recording_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_START_RECORDING, d);
-}
-
-static int rtpengine_stop_recording_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_STOP_RECORDING, d);
+static int
+rtpengine_generic_f(struct sip_msg* msg, char *str1, enum rtpe_operation op)
+{
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_simple_wrap, str1, 1, op);
 }
 
 static int
 start_recording_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, flags.s, 1);
+	return rtpengine_generic_f(msg, str1, OP_START_RECORDING);
 }
 
 static int
 stop_recording_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, flags.s, 1);
-}
-
-
-static int rtpengine_block_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_BLOCK_DTMF, d);
-}
-
-static int rtpengine_unblock_dtmf_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_UNBLOCK_DTMF, d);
+	return rtpengine_generic_f(msg, str1, OP_STOP_RECORDING);
 }
 
 static int
 block_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_dtmf_wrap, flags.s, 1);
+	return rtpengine_generic_f(msg, str1, OP_BLOCK_DTMF);
 }
 
 static int
 unblock_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_dtmf_wrap, flags.s, 1);
-}
-
-static int rtpengine_block_media_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_BLOCK_MEDIA, d);
-}
-
-static int rtpengine_unblock_media_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_UNBLOCK_MEDIA, d);
+	return rtpengine_generic_f(msg, str1, OP_UNBLOCK_DTMF);
 }
 
 static int
 block_media_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_block_media_wrap, flags.s, 1);
+	return rtpengine_generic_f(msg, str1, OP_BLOCK_MEDIA);
 }
 
 static int
 unblock_media_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
+	return rtpengine_generic_f(msg, str1, OP_UNBLOCK_MEDIA);
+}
+
+static int rtpengine_play_media(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
+	bencode_buffer_t bencbuf;
+	long long duration;
+	bencode_item_t *ret;
+	char intbuf[32];
+	pv_value_t val;
+	int retval = 1;
+
+	ret = rtpp_function_call_ok(&bencbuf, msg, OP_PLAY_MEDIA, d, NULL);
+	if (!ret)
+		return -1;
+	if (media_duration_pvar) {
+		duration = bencode_dictionary_get_integer(ret, "duration", -1);
+		snprintf(intbuf, sizeof(intbuf), "%lli", duration);
+		memset(&val, 0, sizeof(val));
+		val.flags = PV_VAL_STR;
+		val.rs.s = intbuf;
+		val.rs.len = strlen(intbuf);
+		if (media_duration_pvar->setf(msg, &media_duration_pvar->pvp, (int)EQ_T, &val) < 0)
+		{
+			LM_ERR("error setting pvar <%.*s>\n", media_duration_pvar_str.len, media_duration_pvar_str.s);
+			retval = -1;
 		}
 	}
 
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_unblock_media_wrap, flags.s, 1);
+	bencode_buffer_free(&bencbuf);
+	return retval;
 }
 
-static int rtpengine_start_forwarding_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_START_FORWARDING, d);
+static int
+play_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_play_media, str1, 1, OP_PLAY_MEDIA);
 }
 
-static int rtpengine_stop_forwarding_wrap(struct sip_msg *msg, void *d, int more) {
-	return rtpp_function_call_simple(msg, OP_STOP_FORWARDING, d);
+static int
+stop_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_generic_f(msg, str1, OP_STOP_MEDIA);
 }
 
 static int
 start_forwarding_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_forwarding_wrap, flags.s, 1);
+	return rtpengine_generic_f(msg, str1, OP_START_FORWARDING);
 }
 
 static int
 stop_forwarding_f(struct sip_msg* msg, char *str1, char *str2)
 {
-	str flags;
-	flags.s = NULL;
-	if (str1) {
-		if (get_str_fparam(&flags, msg, (fparam_t *) str1)) {
-			LM_ERR("Error getting string parameter\n");
-			return -1;
-		}
-	}
-
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_forwarding_wrap, flags.s, 1);
+	return rtpengine_generic_f(msg, str1, OP_STOP_FORWARDING);
 }
 
-static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more) {
+static int rtpengine_rtpstat_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	void **parms;
 	pv_param_t *param;
 	pv_value_t *res;
@@ -3909,7 +3847,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	parms[0] = param;
 	parms[1] = res;
 
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1, OP_ANY);
 }
 
 static int
@@ -3934,64 +3872,65 @@ set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
  *
  */
 static int ki_rtpengine_manage0(sip_msg_t *msg) {
-    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, NULL, 1);
+    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, NULL, 1, OP_ANY);
 }
 
 /**
  *
  */
 static int ki_rtpengine_manage(sip_msg_t *msg, str *flags) {
-    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, ((flags && flags->len > 0) ? flags->s : NULL), 1);
+    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, ((flags && flags->len > 0) ? flags->s : NULL), 1,
+		    OP_ANY);
 }
 
 static int ki_rtpengine_offer0(sip_msg_t *msg)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, 0, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, 0, 1, OP_ANY);
 }
 
 static int ki_rtpengine_offer(sip_msg_t *msg, str *flags)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags->s, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags->s, 1, OP_ANY);
 }
 
 static int ki_rtpengine_answer0(sip_msg_t *msg)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, NULL, 2);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, NULL, 2, OP_ANY);
 }
 
 static int ki_rtpengine_answer(sip_msg_t *msg, str *flags)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags->s, 2);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags->s, 2, OP_ANY);
 }
 
 static int ki_rtpengine_delete0(sip_msg_t *msg)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, NULL, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, NULL, 1, OP_ANY);
 }
 
 static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags->s, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags->s, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query0(sip_msg_t *msg)
 {       
-        return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, NULL, 1);
+        return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, NULL, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query(sip_msg_t *msg, str *flags)
 {       
-        return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags->s, 1);
+        return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags->s, 1, OP_ANY);
 }
 
 static int ki_start_recording(sip_msg_t *msg)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_start_recording_wrap, NULL, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_START_RECORDING);
 }
 
 static int ki_stop_recording(sip_msg_t *msg)
 {
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_stop_recording_wrap, NULL, 1);
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_STOP_RECORDING);
 }
 
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
