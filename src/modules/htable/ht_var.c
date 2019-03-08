@@ -24,7 +24,7 @@
 #include "ht_dmq.h"
 
 /* pkg copy */
-ht_cell_t *_htc_local=NULL;
+static ht_cell_t *_htc_local=NULL;
 extern ht_cell_t *ht_expired_cell;
 
 int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
