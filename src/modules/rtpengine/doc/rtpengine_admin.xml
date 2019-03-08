@@ -699,6 +699,28 @@ modparam("rtpengine", "setid_default", 11)
 	</section>
 
 
+	<section id="rtpengine.p.media_duration">
+		<title><varname>media_duration</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the length of the
+			media being played back after a call to <quote>play_media</quote>,
+			expressed in milliseconds. It's set to -1 if the length of the media
+			could not be determined.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>media_duration</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.mos_min_pv">
 		<title><varname>mos_min_pv</varname> (string)</title>
 		<para>
@@ -2788,6 +2810,54 @@ start_forwarding("address=192.168.42.42");
 ...
 stop_forwarding();
 stop_forwarding("all");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.play_media">
+		<title>
+		<function moreinfo="none">play_media([flags])</function>
+		</title>
+		<para>
+		Instructs rtpengine to play a prerecorded announcement to the selected
+		call participant, either from a local file or from a file stored in a
+		database. The participant must be selected using the same flags as are
+		described under the <quote>block_dtmf</quote> function. If none of these
+		flags are given, then the <quote>From</quote> tag from the current &sip;
+		message context is used.
+		</para>
+		<para>
+		If successful, the <quote>media_duration</quote> pseudovariable is filled
+		in with the duration of the media being played, expressed in milliseconds.
+		If the length of the media could not be determined, it's set to -1.
+		</para>
+		<example>
+		<title><function>play_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+play_media("file=/use/share/media/hello.wav");
+play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.stop_media">
+		<title>
+		<function moreinfo="none">stop_media([flags])</function>
+		</title>
+		<para>
+		Stops the playback of media previously started by <quote>play_media</quote>.
+		Media playback is automatically stopped when the end of the media file is reached,
+		so this function is only useful to prematurely stop playback.
+		</para>
+		<example>
+		<title><function>stop_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+stop_media();
+stop_media("from-tag=5yqaeriguhxcikxj");
 ...
 		</programlisting>
 		</example>
