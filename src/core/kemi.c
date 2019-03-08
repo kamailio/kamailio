@@ -1044,6 +1044,28 @@ static int sr_kemi_core_is_proto_sctp(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_af_ipv4(sip_msg_t *msg)
+{
+	if(msg==NULL || msg->rcv.bind_address==NULL) {
+		return SR_KEMI_FALSE;
+	}
+	return (msg->rcv.bind_address->address.af==AF_INET)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_af_ipv6(sip_msg_t *msg)
+{
+	if(msg==NULL || msg->rcv.bind_address==NULL) {
+		return SR_KEMI_FALSE;
+	}
+	return (msg->rcv.bind_address->address.af==AF_INET6)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_forward_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
@@ -1586,6 +1608,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_SCTP"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_proto_sctp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_IPv4"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_af_ipv4,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_IPv6"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_af_ipv6,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
