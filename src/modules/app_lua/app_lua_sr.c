@@ -1921,9 +1921,33 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 {
 	sr_kemi_t *ket;
+	int ret;
+	unsigned int ms = 0;
+	lua_Debug dinfo;
 
 	ket = sr_kemi_lua_export_get(eidx);
-	return sr_kemi_lua_exec_func_ex(L, ket, 0);
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+			ms = TICKS_TO_MS(get_ticks_raw());
+	}
+
+	ret = sr_kemi_lua_exec_func_ex(L, ket, 0);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
+		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
+				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+			lua_getinfo(L, "nSl", &dinfo);
+			LOG(cfg_get(core, core_cfg, latency_log),
+					"alert - action KSR.%s%s%s(...)"
+					" took too long [%u ms] (%s:%d - %s [%s])\n",
+					(ket->mname.len>0)?ket->mname.s:"",
+					(ket->mname.len>0)?".":"", ket->fname.s, ms,
+					dinfo.short_src, dinfo.currentline,
+					(dinfo.name?dinfo.name:"<unknown>"), dinfo.what);
+		}
+	}
+
+	return ret;
 }
 
 /**
