@@ -1668,6 +1668,31 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_remove_doc[2] = {
+		"Remove a destination address from memory", 0};
+
+
+/*
+ * RPC command to remove a destination address from memory
+ */
+static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
+{
+	int group;
+	str dest;
+
+	if(rpc->scan(ctx, "dS", &group, &dest) < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if(ds_remove_dst(group, &dest) != 0) {
+		rpc->fault(ctx, 500, "Removing dispatcher dst failed");
+		return;
+	}
+
+	return;
+}
+
 /* clang-format off */
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
@@ -1680,6 +1705,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_ping_active_doc, 0},
 	{"dispatcher.add",   dispatcher_rpc_add,
 		dispatcher_rpc_add_doc, 0},
+	{"dispatcher.remove",   dispatcher_rpc_remove,
+		dispatcher_rpc_remove_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */

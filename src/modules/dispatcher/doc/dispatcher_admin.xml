@@ -1833,6 +1833,39 @@ DEST: {
 ...
 </programlisting>
     </section>
+		<section id="dispatcher.r.remove">
+		<title>
+		<function moreinfo="none">dispatcher.remove</function>
+		</title>
+		<para>
+		Remove a destination address from the in-memory dispatcher list. Reloading
+		the dispatcher from file or database will re-add destinations that are
+		removed using this command.
+		</para>
+		<para>
+		This command will remove all entries that match the group and address.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.remove</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+
+			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &sercmd; dispatcher.remove _group_ _address_
+&sercmd; dispatcher.remove 2 sip:127.0.0.1:5080
+&sercmd; dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
+...
+</programlisting>
+    </section>
 
    </section>
 
