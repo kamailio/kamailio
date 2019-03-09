@@ -1265,7 +1265,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	 * not relayed because it's not an INVITE transaction;
 	 * >= 300 are not relayed because 200 was already sent out
 	*/
-	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n", Trans->uas.status,new_code);
 	inv_through=new_code>=200 && new_code<300 && is_invite(Trans);
 	/* if final response sent out, allow only INVITE 2xx  */
 	if ( Trans->uas.status >= 200 ) {
@@ -1275,6 +1275,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			Trans->uac[branch].last_received=new_code;
 			*should_relay=branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
+		} else {
+			LM_DBG("final reply already sent\n");
 		}
 		/* except the exception above, too late  messages will be discarded */
 		goto discard;
@@ -1327,8 +1329,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			picked_branch = branch;
 			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
 									new_code, extra_flags);
-		 	/* Don't do reset the reply if we are in a resume route, 
-		  	 * we need to free it at the end of the continue processing */
+			/* Don't do reset the reply if we are in a resume route,
+			 * we need to free it at the end of the continue processing */
 			if (!(Trans->flags&T_ASYNC_CONTINUE))
 				Trans->uac[branch].reply = 0;
 		}
@@ -1350,6 +1352,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 #endif /* CANCEL_REASON_SUPPORT */
 				}
 			}
+			LM_DBG("store - other branches still active\n");
 			return RPS_STORE;
 		}
 		if (picked_branch==-1) {
@@ -1413,8 +1416,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		/* now reset it; after the failure logic, the reply may
 		 * not be stored any more and we don't want to keep into
-		 * transaction some broken reference. Don't do it if we                     
-		 * are in a resume route, we need to free it at the end 
+		 * transaction some broken reference. Don't do it if we
+		 * are in a resume route, we need to free it at the end
 		 * of the continue processing */
 		if (!(Trans->flags&T_ASYNC_CONTINUE))
 			Trans->uac[branch].reply = 0;
@@ -1433,6 +1436,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			 * put it on wait again; perhaps splitting put_on_wait
 			 * from send_reply or a new RPS_ code would be healthy
 			*/
+			LM_DBG("rps completed - uas status: %d\n", Trans->uas.status);
 			return RPS_COMPLETED;
 		}
 		/* look if the callback/failure_route introduced new branches ... */
@@ -1452,6 +1456,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 					if (new_branch==-2) { /* branches open yet */
 						*should_store=1;
 						*should_relay=-1;
+						LM_DBG("rps store - uas status: %d\n", Trans->uas.status);
 						return RPS_STORE;
 					}
 					/* error, use the old picked_branch */
@@ -1460,6 +1465,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						/* we are not allowed to relay the reply */
 						*should_store=0;
 						*should_relay=-1;
+						LM_DBG("rps discarded - uas status: %d\n", Trans->uas.status);
 						return RPS_DISCARDED;
 					} else {
 						/* There are no open branches,
@@ -1487,6 +1493,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* we dont need 'prepare_to_cancel' here -- all branches
 		 * known to have completed */
 		/* prepare_to_cancel( Trans, cancel_bitmap, 0 ); */
+		LM_DBG("rps completed - uas status: %d branch: %d\n",
+				Trans->uas.status, picked_branch);
 		return RPS_COMPLETED;
 	}
 
@@ -1508,17 +1516,22 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 #ifdef CANCEL_REASON_SUPPORT
 			cancel_data->reason.cause=new_code;
 #endif /* CANCEL_REASON_SUPPORT */
+			LM_DBG("rps completed - uas status: %d\n", Trans->uas.status);
 			return RPS_COMPLETED;
-		} else return RPS_PROVISIONAL;
+		} else {
+			LM_DBG("rps provisional - uas status: %d\n", Trans->uas.status);
+			return RPS_PROVISIONAL;
+		}
 	}
 
 error:
 	/* reply_status didn't match -- it must be something weird */
-	LM_CRIT("error - oh my gooosh! We don't know whether to relay %d\n",
+	LM_CRIT("error - unable to decide whether to relay %d\n",
 		new_code);
 discard:
 	*should_store=0;
 	*should_relay=-1;
+	LM_DBG("finished with rps discarded - uas status: %d\n", Trans->uas.status);
 	return RPS_DISCARDED;
 
 branches_failed:
@@ -1535,6 +1548,7 @@ branches_failed:
 			LM_ERR("reply generation failed\n");
 		}
 	}
+	LM_DBG("finished with rps completed - uas status: %d\n", Trans->uas.status);
 	return RPS_COMPLETED;
 }
 
@@ -1785,8 +1799,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch,
 		&save_clone, &relay, cancel_data, p_msg );
-	LM_DBG("branch=%d, save=%d, relay=%d icode=%d msg status=%u\n",
-		branch, save_clone, relay, t->uac[branch].icode, msg_status);
+	LM_DBG("reply status=%d branch=%d, save=%d, relay=%d icode=%d msg status=%u\n",
+		reply_status, branch, save_clone, relay, t->uac[branch].icode, msg_status);
 
 	/* store the message if needed */
 	if (save_clone) {
