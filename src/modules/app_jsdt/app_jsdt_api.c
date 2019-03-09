@@ -1346,9 +1346,34 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 int sr_kemi_jsdt_exec_func(duk_context *J, int eidx)
 {
 	sr_kemi_t *ket;
+	int ret;
+	unsigned int ms = 0;
+	int sline = 0;
 
 	ket = sr_kemi_jsdt_export_get(eidx);
-	return sr_kemi_jsdt_exec_func_ex(J, ket);
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+			ms = TICKS_TO_MS(get_ticks_raw());
+	}
+
+	ret = sr_kemi_jsdt_exec_func_ex(J, ket);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
+		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
+				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+			duk_inspect_callstack_entry(J, -1);
+			duk_get_prop_string(J, -1, "lineNumber");
+			sline = (int)duk_to_int(J, -1);
+			duk_pop_2(J);
+			LOG(cfg_get(core, core_cfg, latency_log),
+					"alert - action KSR.%s%s%s(...)"
+					" took too long [%u ms] (line: %d)\n",
+					(ket->mname.len>0)?ket->mname.s:"",
+					(ket->mname.len>0)?".":"", ket->fname.s, ms, sline);
+		}
+	}
+
+	return ret;
 }
 
 /**
