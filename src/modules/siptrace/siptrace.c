@@ -1166,11 +1166,23 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 			return;
 		}
 	}
+
+	/* for incoming cancel this is the only play(i've found) where I have the CANCEL transaction
+	 * and can register a callback for the reply */
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
-	if(traced_user_avp.n != 0)
-		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
-				&sto.avp_value, &sto.state);
+	if (unlikely(type == TMCB_E2ECANCEL_IN)) {
+		msg->msg_flags |= FL_SIPTRACE;
+		if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_READY, trace_onreply_out, *ps->param, 0)
+					<= 0) {
+			LM_ERR("can't register trace_onreply_out\n");
+			return;
+		}
+	} else {
+		if(traced_user_avp.n != 0)
+			sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
+					&sto.avp_value, &sto.state);
+	}
 
 	if((sto.avp == NULL) && trace_is_off(msg)) {
 		LM_DBG("trace off...\n");
@@ -1180,11 +1192,16 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	if(sip_trace_prepare(msg) < 0)
 		return;
 
-	if(ps->send_buf.len > 0) {
-		sto.body = ps->send_buf;
+	if (unlikely(type == TMCB_E2ECANCEL_IN)) {
+		sto.body.s = msg->buf;
+		sto.body.len = msg->len;
 	} else {
-		sto.body.s = "No request buffer";
-		sto.body.len = sizeof("No request buffer") - 1;
+		if(ps->send_buf.len > 0) {
+			sto.body = ps->send_buf;
+		} else {
+			sto.body.s = "No request buffer";
+			sto.body.len = sizeof("No request buffer") - 1;
+		}
 	}
 
 	sto.callid = msg->callid->body;
@@ -1245,7 +1262,16 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		}
 	}
 
-	sto.dir = "out";
+	/* FIXME the callback is designed for outgoing requests but this along with
+	 * the callback registration at the begining of the function it's for a special
+	 * case - incoming CANCEL transactions; they were not traced before; TMCB_E2ECANCEL_IN
+	 * will throw the incoming request through this function and the callback in the beginning
+	 * will make sure the reply for this cancel is caught */
+	if (unlikely(type == TMCB_E2ECANCEL_IN)) {
+		sto.dir = "in";
+	} else {
+		sto.dir = "out";
+	}
 
 	sto.fromtag = get_from(msg)->tag_value;
 	sto.totag = get_to(msg)->tag_value;
@@ -1361,13 +1387,18 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 	memset(&sto, 0, sizeof(siptrace_data_t));
-	if(traced_user_avp.n != 0)
-		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
-				&sto.avp_value, &sto.state);
 
-	if((sto.avp == NULL) && trace_is_off(t->uas.request)) {
-		LM_DBG("trace off...\n");
-		return;
+	/* can't(don't know) set FL_SIPTRACE flag from trace_onreq_out because
+	 * there no access to CANCEL transaction there */
+	if (likely(type != TMCB_RESPONSE_READY)) {
+		if(traced_user_avp.n != 0)
+			sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
+					&sto.avp_value, &sto.state);
+
+		if((sto.avp == NULL) && trace_is_off(t->uas.request)) {
+			LM_DBG("trace off...\n");
+			return;
+		}
 	}
 
 	req = ps->req;
@@ -1463,7 +1494,6 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps)
 {
 	LM_DBG("storing negative ack...\n");
-
 	/* this condition should not exist but there seems to be a BUG in kamailio
 	 * letting requests other than the ACK inside */
 	if (ps->req->first_line.u.request.method_value != METHOD_ACK) {
@@ -1620,6 +1650,11 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int registe
 	/* check the following callbacks: TMCB_REQUEST_PENDING, TMCB_RESPONSE_READY, TMCB_ACK_NEG_IN */
 	/* trace reply on in */
 	if(tmb.register_tmcb(msg, 0, TMCB_ACK_NEG_IN, trace_tm_neg_ack_in, info, 0) <= 0) {
+		LM_ERR("can't register trace_onreply_in\n");
+		return;
+	}
+
+	if(tmb.register_tmcb(msg, 0, TMCB_E2ECANCEL_IN, trace_onreq_out, info, 0) <= 0) {
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
