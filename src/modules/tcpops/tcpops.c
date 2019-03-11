@@ -260,7 +260,12 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 		} else {
 			evname = &tcpops_evrt_closed;
 		}
-		sr_kemi_route(keng, fmsg, EVENT_ROUTE, &tcpops_event_callback, evname);
+		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &tcpops_event_callback,
+					evname)<0) {
+			LM_ERR("error running event route kemi callback [%.*s - %.*s]\n",
+						tcpops_event_callback.len, tcpops_event_callback.s,
+						evname->len, evname->s);
+		}
 	}
 	set_route_type(backup_rt);
 }
