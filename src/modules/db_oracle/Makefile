@@ -5,9 +5,9 @@ include ../../Makefile.defs
 auto_gen=
 NAME=db_oracle.so
 
-# default path for oracle 12.2 client
-DEFS +=-I/usr/include/oracle/12.2/client64
-LIBS +=-locci -lclntsh -L/usr/lib/oracle/12.2/client64/lib
+# default path for oracle 18.3 client
+DEFS +=-I/usr/include/oracle/18.3/client64
+LIBS +=-locci -lclntsh -L/usr/lib/oracle/18.3/client64/lib
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
