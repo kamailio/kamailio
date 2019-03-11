@@ -1,3 +1,1000 @@
+===================== 2019-03-11 Version 5.2.2 Released =====================
+
+===================== Changes Since Version 5.2.1 ===========================
+
+commit 22e81f47c3d8cf3e30bebf81b3f5f64382696c50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 12:19:43 2019 +0100
+
+    Makefile.defs: version set to 5.2.2
+
+commit 81102f7499a2a4822a764f2279bd3966054a21fa
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Mar 11 11:25:42 2019 +0100
+
+    pkg/kamailio/deb: version set to 5.2.2
+
+commit 6e2251df9dcc006a9ad3427c747364d47e1c7410
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 10:26:20 2019 +0100
+
+    pkg: version set to 5.2.2 for obs, rpms and apkbuild
+
+commit 77eebed8be1930fdb03f4fce0a1caac1bd45c583
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 09:57:57 2019 +0100
+
+    topoh: check returned pointer when decoding call-id
+    
+    (cherry picked from commit b5ce9d8f9a1b1fd705ad4b533e7cbc9166a3f577)
+
+commit 3f9d2b733b454ce27e21c3dbddb9953f079f47d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 10 10:56:03 2019 +0100
+
+    app_python: execution log message based on core latency_limit_action
+    
+    (cherry picked from commit a2915a9fc3d974e85829ccb6ea22d655124d4463)
+
+commit f10181b47b4365e8b873d2c8e09f844be25eb865
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 9 09:55:04 2019 +0100
+
+    app_jsdt: execution log message based on core latency_limit_action
+    
+    (cherry picked from commit 4d5622b25039a0b35ae3e6d447843d3fb33af334)
+
+commit 56802275b4b4cc77b85b7ef9460134265974e455
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 9 09:40:59 2019 +0100
+
+    tm: more debug to track decision to relay reply or not
+    
+    (cherry picked from commit b292adb668528340fca381925724540afc7f13e8)
+
+commit 3d9eb0612aa2eec11b75621a3ed630de4a63bf66
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 20:51:29 2019 +0100
+
+    app_lua: execution log message based on core latency_limit_action
+    
+    (cherry picked from commit b72996c7b1ad95b89f1b34e849c713bfe3fb50a9)
+
+commit efbf7aa7b8b3af03be43d926c6e0fc23c2349e87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 18:40:45 2019 +0100
+
+    core: tcp - more details in debug messages
+    
+    (cherry picked from commit 60f7ff60a95ab5dd8192391f50f760e802d11e07)
+
+commit b45c9f2525e926a07d9c7fe2e212675327197990
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 18:37:38 2019 +0100
+
+    core: kemi - exported functions for equivalent tests of src_port and dst_port
+    
+    (cherry picked from commit 235a10bc7316f3b91ae6ab51960702a07f69f27a)
+
+commit 6129c28f8c5957ca409a8e51737e4d9fbd860652
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 08:40:09 2019 +0100
+
+    core: kemi - corresponding functions to check af==ipv4/ipv6
+    
+    (cherry picked from commit 61795123af0a2d2cb261c36ac78a4833f03a3321)
+
+commit fc09321222889dac8138d31d2b19247c02041687
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 7 16:24:24 2019 +0100
+
+    core: exported functions to check incoming protocol
+    
+    - corresponding to proto==UDP/TCP/TLS/...
+    
+    (cherry picked from commit d33d60e08b5081a605149b3bff2a0397c0952e9b)
+
+commit 0b511b49a7c7327cef7bd5cec63b1c5fddb0750c
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Mar 5 10:29:39 2019 +0000
+
+    pv: use parsed uri to compute tosocket
+    
+    (cherry picked from commit dc9531affae6336ea3771792a80385de56205ff0)
+
+commit cfd4947edd6363b31c31706c7c352c5789642ddc
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Mar 5 10:33:08 2019 +0000
+
+    core: free resources in xavp_clone_level_nodata
+    
+    (cherry picked from commit 0c93efec739551f3e74e119d4b789d0bb6e766d6)
+
+commit e244d6d5e8138b97f3c3aaa55970835576f9cc3e
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Tue Mar 5 10:35:01 2019 +0000
+
+    core: increase max_defines from 256 to 512
+    
+    (cherry picked from commit b4696169e8b464da01774b1e40af677f941c803b)
+
+commit 60cf0c4e4042ce858460193cad64b3aad2ecfd53
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Mar 6 09:01:46 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f3e02e66beb2f461905d33157ae2aa1e09a74c54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 6 08:16:29 2019 +0100
+
+    rtjson: reuse r-uri if not given in the rtjson field
+    
+    (cherry picked from commit b6b91a6d517675e9891e83b57dcdf90d7db0673d)
+
+commit 18b8cf91fd370523ec3da5f34b86eb8cc99fc39a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 5 22:40:27 2019 +0100
+
+    rtjson: more debug messages when getting routes from json
+    
+    (cherry picked from commit 649687fd8dd5a3d9b6b04d75d4e0d129f14e91d6)
+
+commit 24a739225f29650c3b4eef7fb46cce6c81e97e53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 4 20:30:25 2019 +0100
+
+    rtjson: user wrapper functions for kemi exports
+    
+    (cherry picked from commit 138172a388bc8b23035a7a422b97fc0276ed1462)
+
+commit 544d1ccab56ddc3b58c5301ade5c241c4c5b4433
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 2 13:40:47 2019 +0100
+
+    topoh: detect when via param is shorter than expected prefix
+    
+    (cherry picked from commit e6950ffb1985493e717e3d774eddad779aed1514)
+
+commit b30881d5d7cd9f8896ea07bf5852649abf38cbd7
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Mar 4 00:15:19 2019 +0100
+
+    tcpops: Fix minor typo: tcp_init_evroutes => tcpops_init_evroutes
+    
+    (cherry picked from commit cbadbca348c5deb97522afe440dc6055475ea72c)
+
+commit e1116aca38ad55305593c8936fcacff0d00cf668
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 15:43:16 2019 +0100
+
+    dialplan: docs - note about limiting to max 1 rpc reload in 5 seconds
+    
+    (cherry picked from commit 34f928427ecf315f638cd59fa512d59f4c64f22e)
+
+commit 567c5b91ff0de3237d4dc98138675f19e152bcf5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 10:51:29 2019 +0100
+
+    dialplan: basic safety for concurent rpc reload
+    
+    - reported by GH #1874
+    
+    (cherry picked from commit 99d5da8d595961063249f871a5d150474fa6f317)
+
+commit 2e3e72cfe906bf08b0c940d4e461890dd54b30c6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 28 20:15:36 2019 +0100
+
+    tm: put back t in wait timer if still referenced more than once
+    
+    - have a safety upper limit for putting back in wait timer
+    - special credits to Yufei Tao for testing and helping to troubleshoot
+    
+    (cherry picked from commit 814d5cc1f4f5b1e4b95737108dffc1e7d7bd566f)
+
+commit faed5b294d15ba642e2b58a7577bbaa783745aab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 28 08:42:51 2019 +0100
+
+    tcpops: docs for event_callback parameter
+    
+    (cherry picked from commit aab836d84d1121f9c8dd3b0fb090d6767b4e05a8)
+
+commit 209dd6fcba96f3ff436298ebe5d17105782e0a2d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 28 08:35:53 2019 +0100
+
+    tcpops: event routes executed via kemi framework
+    
+    - fixed missing compatibility with kemi execution
+    - event_callback parameter allows setting the name of kemi function
+    
+    (cherry picked from commit d36cde90f345621cdab557e9f46bc8490e221004)
+
+commit 8421a744736bf2bfd6ee007a026e75eae9357a6f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:26:50 2019 +0100
+
+    dialog: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit d4f4a8ad572c0335ddc28231bf02cc65ede181f0)
+
+commit 8b57c0b4be65be758b1d0b6b8cf893549948f5df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:26:38 2019 +0100
+
+    dispatcher: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit ea9c1f5d8f074a057c53c5d3f6f1f32bce998143)
+
+commit 5fe4eaea8afc87bdbfaf0b507de045fbabbd8940
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:26:19 2019 +0100
+
+    evapi: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 8c930c09dcf20263fa34cd2568f2600785440da2)
+
+commit 77be3404cce56e00d5cf652b6522ebf823cf8999
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:25:51 2019 +0100
+
+    http_async_client: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 30533678a1132951bc0e354c1503325b8325474f)
+
+commit ebef67b51d532c121b47238dfde16b82767a39bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:25:36 2019 +0100
+
+    msrp: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 3c2cf7c3aad2670b1feff5b5fde9a49ba9aeb295)
+
+commit 82c7616e86678a4ef79ad7f07791ee5f2690543b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:25:25 2019 +0100
+
+    registrar: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit c3ed3d9a531c403fc850d229252eb4bcd4cc473e)
+
+commit e2a48d84090960f6c3f33db3595435a752b71f17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:25:12 2019 +0100
+
+    sipcapture: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 1b45419212f72d51dbe99d42087e119bb9dd15de)
+
+commit 4caec075eeb6585bd52e05a882b59fbbd26f1eff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:24:51 2019 +0100
+
+    timer: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit f66bbf48d04fc94cb3849cc977990ded935dffff)
+
+commit d4f63e8cd2ec5c87818fdaf29c852446e7a59f8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:24:32 2019 +0100
+
+    tls: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit eb653f02cfe25a2c3b6388d5c581a37139707e77)
+
+commit 8a9c35f92afb33179e4d8a06024abf06a19a557c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:24:12 2019 +0100
+
+    topoh: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 2f421594c3d34a02f38283f64e739860acc142bc)
+
+commit 403da8e8dcc2e4986595f183f0ac37a6bb41ab86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:23:57 2019 +0100
+
+    topos: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 53786f5223260c1a5c03685ca26ad73774c75bc0)
+
+commit ef0a63249fdf35695f5483d6bba3883e8873b1be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:23:31 2019 +0100
+
+    websocket: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 9e1c17d3c9e7c323bda8f99bfc27a8113ebd55ba)
+
+commit dbcc4b611d7eee0f97d96208d1dce9767786f5ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:23:13 2019 +0100
+
+    xhttp: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 6497efe137afb3da632eb278fc69079a7e77215d)
+
+commit a37df2461ee6a21d0bef093102f0dbee67064aee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 27 09:23:00 2019 +0100
+
+    xmlrpc: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 9446ed393d515255da7a04c881c92169e78c491d)
+
+commit af9d741f3ef8a2e814bd1edb9a3cdcf00ec7e01f
+Author: denyspozniak <denys.pozniak@gmail.com>
+Date:   Wed Feb 27 09:05:03 2019 +0100
+
+    dispatcher: more details for use_default param with dispatcher.list file
+    
+    (cherry picked from commit a70fd487a7509be41e558a9f54efaa7f038fd3e2)
+
+commit 6384256c3df3770e66989511b2019f7d4fb0d697
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 19:09:44 2019 +0100
+
+    htable: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit e5bffb306c45f7a0f0f672368884f430d63c09ba)
+
+commit 6600c2426d067cc57b10b346ee2f9dbbace99a8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 19:01:28 2019 +0100
+
+    rtimer: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 3008874c1971d09cb71cf8560fc280cfc305dadc)
+
+commit 67ff7d2ab011214aa24fa40a2c62c576e6e7b96f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 18:59:16 2019 +0100
+
+    tm: use kemi wrapper to execute routing functions
+    
+    (cherry picked from commit 31586e9e4eb0c43e1e34ad3ac730ba5f0942e838)
+
+commit d269ebd0c817e40a0c7055f2e246d2c33aebf352
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 18:37:30 2019 +0100
+
+    core: use kemi exec route wrapper for onsend_route and child one init event
+    
+    (cherry picked from commit 23b65718462a6bbc860fe7b4159d3c7aac34d3b8)
+
+commit 5b1f5ac651363c725e92d2bff21ea5067fd1a0e5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 18:22:38 2019 +0100
+
+    core: receive - use kemi wrapper to execute top keng routes
+    
+    - reset the select static buffer
+    - GH #1829
+    
+    (cherry picked from commit 48686943aa37747a9a7581a5eb8c69098ce324d7)
+
+commit 4f378b23d18da266e8c443fef1061cc373d787c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 18:19:00 2019 +0100
+
+    core: kemi - wraper to execute top routing function
+    
+    - reset the static buffer for selects and script flags
+    
+    (cherry picked from commit 6be53f64755358334e9f1c0971ce886a5e299efb)
+
+commit acbbd03e2dbb8f6c96d4bd0815364ebdf816107b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 12:08:18 2019 +0100
+
+    core: return the correct position in out buffer for decode base58
+    
+    - GH #1868
+    
+    (cherry picked from commit 8a9161b321035d805083316d3eb707c6c1b56652)
+
+commit 08c683bfa8f2f05b02a878c861af3458d5380869
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 08:03:01 2019 +0100
+
+    tm: use msg_ctx_id_t to detect same msg/transaction processing
+    
+    - relies on msg id and pid, not only msg id (which is incremeted by
+    each process and has potential conflicts with failure routing)
+    
+    (cherry picked from commit 95ea56b79192af60f53b9be1bde4450abdd73dd0)
+
+commit 7648648fc95cc2a9de752ebefee11c39f0dfe268
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 07:57:49 2019 +0100
+
+    cdp: proper check not to go over allocated size of apps ids
+    
+    - GH #1851
+    
+    (cherry picked from commit f4b803183e71e0356eedadaca3801bbae26cf6fb)
+
+commit 58261d83f454e9f3ad259532d35ca2ca150d2076
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 26 07:57:12 2019 +0100
+
+    core: set msg->pid when building local sip_msg_t from buf
+    
+    (cherry picked from commit b5f3a21d919f44f8842c2d85fb9447072b0f1889)
+
+commit a85da2a8399643ca4686564c7d78c9ed094ccf84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 09:20:47 2019 +0100
+
+    app_python3: exported exec function to KEMI also as execx
+    
+    (cherry picked from commit 49120624eab8eb1a9e69c00eba3216e1417d526e)
+
+commit 44a70e5c60d11e3240205e353002dbfb72128a10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 09:19:34 2019 +0100
+
+    app_python: exported exec function to KEMI also as execx
+    
+    (cherry picked from commit d77cff5f89889d8fae704b247fc9cc954182062d)
+
+commit 23591999287a38517b942d8f40be6b95154d3b77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 09:05:07 2019 +0100
+
+    ndb_mongodb: exported exec function to KEMI also as execx
+    
+    (cherry picked from commit 64a17f5587f95145365345de474810de151acdd6)
+
+commit 71a718d9f541d16e98a3fb592678777e5c7bc963
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 25 08:35:37 2019 +0100
+
+    jsonrpcs: exported exec function to KEMI also as execx
+    
+    - exec is a builtin in older versions of python and results in error
+    if used as a member of an object
+    - alternative:
+      jsonrpcs_exec = getattr(KSR.jsonrpc, "exec")
+      jsonrpcs_exec("...")
+    
+    (cherry picked from commit 4952da77e3e72933ab0301d9362f7d105ae3b4cf)
+
+commit a0f8a03be9d9b28bd29eac6dfc275fb97491e3a8
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Feb 21 18:48:55 2019 -0500
+
+    siputils: fix debug logging
+    
+    (cherry picked from commit 83a31b81740ac57ca8a82e5e4a9509484e740ae7)
+
+commit 198442f53181f588b2a829892baa8c26bc7f0471
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Feb 21 18:47:34 2019 -0500
+
+    Revert "siputils: fix debug logging"
+    
+    This reverts commit 91b2c5da34ba7064f858b13bf0a1d27da74336d4.
+    
+    (cherry picked from commit 14b89ca98fbcd355e822115c126f23cba1649ca2)
+
+commit 4b08c9b7f14f8eec3f8b0a3e7dd940ab5925ffcd
+Author: root <root@livepbx-nit-syd-kam-01.livepbx.com.au>
+Date:   Thu Feb 21 07:11:25 2019 +1100
+
+    siputils: fix debug logging
+    
+    (cherry picked from commit 91b2c5da34ba7064f858b13bf0a1d27da74336d4)
+
+commit b7cf46a00168fcbd322e8969e61f2a8ce7403d05
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 19 17:37:40 2019 +0100
+
+    kamailio.cfg: explicitely set the tcp/tls connections upper limits
+    
+    - notes about tcp_children and relation with children parameter
+    
+    (cherry picked from commit 409cb202057c89e87d910a1877ce719c6335ebdb)
+
+commit e5312652699b280e3f7f6e342db82dab1a506698
+Author: Sergey Basov <sergey.v.basov@gmail.com>
+Date:   Tue Jan 15 13:54:13 2019 +0200
+
+    sipt: $sipt(redirection_number) evaluates the value as a numerical value
+    
+    sipt: $sipt(redirection_number) evaluates the value as a numerical value
+    (cherry picked from commit 34fb47f28948e701c3ea98c673c8fb324b2f790e)
+
+commit 88d4e86bccd252717329e75924a44dd5c2cc7955
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 13 09:42:08 2019 +0100
+
+    core: log printed size, current token size and buffer size for pv printf overflow
+    
+    (cherry picked from commit 44e48809a608d4de46d61198137cd669c6a4763f)
+
+commit 6202cc8fb4dd8949584b92f6083b03aa375bb561
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 12 23:49:08 2019 +0100
+
+    topos: fix typos in the debug messages
+    
+    (cherry picked from commit a21ae6ea14de0f7db2a66d806ecab4888dec0093)
+
+commit a06423e2de3b4dd293ce92535d33e253b854fac4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 11 23:23:56 2019 +0100
+
+    topos_redis: print expires value in log messages
+    
+    (cherry picked from commit f60b6e45d2b2f14a89e51eebe56e2ae857481c90)
+
+commit a909e7d9213ee071917c785f10d883ea6a06fc39
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 10 16:16:29 2019 +0100
+
+    tm: debug message when matching a skip method for transaction lookup
+    
+    (cherry picked from commit 0374a573604dfac337d69f8db38cca0e3ef30300)
+
+commit 5e3cdf062b1f1e1a9aae34f4804cf4aad5989630
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 8 20:11:40 2019 +0100
+
+    app_lua: docs - added note about KSR KEMI exports for register parameter
+    
+    - mention that old 'sr' Lua module might be obsoleted soon
+    
+    (cherry picked from commit bf13f41a642752602c49d090a06a615a19f84ee5)
+
+commit 440b6e6e8cdc8c75c862a9e3fe0fac38d2d082d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 4 20:07:25 2019 +0100
+
+    corex: removed svn id headers
+    
+    (cherry picked from commit f36cb4cff6fb7e373557c055d7ae0ad5aa28d4ca)
+
+commit ea53255bc17d0c0fbcec2f1c9f15bda6e6e138cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 4 20:04:20 2019 +0100
+
+    gzcompress: removed svn id line
+    
+    (cherry picked from commit f29b55f62513544e1481db5fd763204bd6bf1a4d)
+
+commit 3073b9609258446f141dc0405e96cd7e119e6829
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 7 15:55:59 2019 +0100
+
+    rtjson: mark for new branching after setting ruri or duri
+    
+    (cherry picked from commit dfc893140a860f9ece20ddf7743541dbbc260c6c)
+
+commit 68b0d916ab9f994918ab83cba6903939d9457e54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 6 15:23:20 2019 +0100
+
+    uac: error message made warning for loading uac api
+    
+    - some modules have optional use of uac
+    
+    (cherry picked from commit e54530901c92f2578dc149ac780867d318c54912)
+
+commit cc782576b769d6a66c04749658e263207a40c0fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 5 22:19:34 2019 +0100
+
+    core: removed return never executed
+    
+    (cherry picked from commit fb2ac639037cb911162bb61a541976899fa1bdab)
+
+commit 7c64052b4b101846c9334ea4193a0df63fae49d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 4 00:09:47 2019 +0100
+
+    mqueue: added missing license header, removed svn ids
+    
+    (cherry picked from commit 065b1d64453d8b5709069f50cfd705901206feb3)
+
+commit f57924dafe81d8a993f59bcaf659557b90f1e255
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 2 07:35:08 2019 +0100
+
+    misc/examples: exec.cfg updated for latest releases
+    
+    (cherry picked from commit 25173335dda3142e01243f209d24ba571d61578d)
+
+commit 8f130b456f2019d6a100e26c0a69692449d12cd9
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Fri Jan 11 16:39:02 2019 +0100
+
+    rr: Add new return value for preloaded route set to loose_route()
+    
+    Instead of returning just -1 (error), return a dedicated value. Now it is
+    possible to detect from the script if a preloaded Route header was removed
+    that pointed at the local proxy.
+    
+    The new return code is kept negative, so all code checking for failure response
+    keeps working.
+    
+    (cherry picked from commit c5b8e5b3a82ac0f61a059f69921866952405ffe5)
+
+commit 55540fdf63a6b057d546dea9016af6582fff7b3d
+Author: Yasin CANER <caner_yaso@hotmail.com>
+Date:   Fri Feb 1 21:23:56 2019 +0300
+
+    src/Makefile: added target to install files for systemd on Centos 7 (#1831)
+    
+    * src/Makefile: added target to install files for systemd on Centos 7
+    
+    added target to install systemd and sysconfig files for systemd service
+    installation method :  make install-systemd-centos
+    
+    * src/makefile : add --system parameter for user
+    
+    src/makefile : add --system parameter for user
+    after rebooting , /run/kamailio folder is survived.
+    
+    (cherry picked from commit 9f9ec197e029dca44ac57575b214a32916c838cb)
+
+commit ae05d4c40611bf800375d128655ee31c51d52171
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 31 16:05:13 2019 +0100
+
+    dispatcher: docs - fixed typos
+    
+    (cherry picked from commit bcb92740f043dce7c5145070cb298de5f7d02c6e)
+
+commit b310509c7eed3b057a4e126538ed646f39af0351
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 29 14:24:34 2019 +0100
+
+    pike: init head list and safety check
+    
+    - related to GH #1822
+    
+    (cherry picked from commit a055214404b86d6418b7b6797e789773f1f42adb)
+
+commit 89c9da58ec864c90b4cc4afdfda12823e7e46d68
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 25 09:28:32 2019 +0100
+
+    app_python: print script name in error message
+    
+    (cherry picked from commit 18db511c6ab8d97daed37582379cd2ba865abde4)
+
+commit 07c0b560fa66c51b5fa00aca3746d35cce5cb773
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Jan 15 13:23:25 2019 +0100
+
+    pipelimit: Cleanup unused pipes
+    
+    when pipes are unused by a configurable number of timer intervals,
+    remove them, freeing memory.
+    
+    (cherry picked from commit 048c928ec68dc82bd628f27bfc9f7901e4c4e9d2)
+
+commit 705cb9dfc4a9d3b4ddc59aa6a807cefe87b0cf61
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Jan 22 15:04:07 2019 +0100
+
+    pipelimit: Fix memleak on shutdown
+    
+    (cherry picked from commit ffdec6d38d0935d8af2633e3d3ded8a985ddfcca)
+
+commit a7e227ffe1675d1f47f2209541c15a395d9d6474
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 24 11:02:16 2019 +0100
+
+    presence_mwi: small improvement to error log message
+    
+    (cherry picked from commit 91c0e1434d743b8af7bcaa7d993029b6a3c15cb8)
+
+commit 95a9bf10c235bdbd13e5898d827ec606422d61d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 23 22:58:15 2019 +0100
+
+    jsonrpcs: enable http transport in example
+    
+    (cherry picked from commit 7d2e1c83861214489b786bb31b03991588733937)
+
+commit 80b6b69d8e7aa16bc572b275e3ea31535426de6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 21 10:11:20 2019 +0100
+
+    dialog: docs - small addition to early_timeout param
+    
+    (cherry picked from commit bdc4d3c7dea73e10353d37655f31d6e36c87126b)
+
+commit 75786d1a4f589111e677f03a019ea11216485baa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 20 18:08:56 2019 +0100
+
+    dialog: clean very old dialogs for both unconfirmed and early state
+    
+    - it was done only for unconfirmed state
+    
+    (cherry picked from commit 8fd514f9bb9e819fa6e5880dc229955cafd72494)
+
+commit d44cf2168b45ec24926ca9a4bc5d2558b2b85f8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 15 13:02:08 2019 +0100
+
+    doc/tutorials/tcp_tunning: note about network buffers size
+    
+    - they may need tunning when dealing with large data
+    
+    (cherry picked from commit 38a696fff66f0a453e54c92c93e8c459a1b4e77d)
+
+commit cb58a13f3a7594e721c08ef9aff458108e05db57
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Thu Feb 21 19:27:32 2019 +0000
+
+    htable: fix infinite loop during dmq sync of large tables
+    
+    - reported by Enrico Bandiera (GH #1863)
+    
+    (cherry picked from commit a176ad4fb4167e21b01974e6a5caba330b1d7e14)
+
+commit e3bc58842483f84ed0c401d2711577c92a4aca78
+Author: Sean Bright <sean.bright@gmail.com>
+Date:   Wed Feb 27 15:35:53 2019 -0500
+
+    utils: Fix copy/paste of 'database port'
+    
+    (cherry picked from commit 21ae69c83759f344492078db756a08cd554bf04c)
+
+commit be7c71627b72ac6617c356900b4f7d28341b0e83
+Author: Sean Bright <sean.bright@gmail.com>
+Date:   Wed Feb 27 15:35:31 2019 -0500
+
+    tls: Minor spelling fix in workaround message
+    
+    (cherry picked from commit 09f851982511353599d0f7f76c0a645f95d43997)
+
+commit 55f5c820655c3b53863043569f05b97ad615abbc
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Mon Feb 25 16:45:42 2019 +0100
+
+    topoh: improve checks for contact header processing
+    
+    (cherry picked from commit 101670ac2c120cf0008a860b6a766aaa529e578d)
+
+commit bf4a0f3ef34b5d52464b86a456b435d865c583f2
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Sun Feb 24 21:25:25 2019 +0100
+
+    topoh: improve checks for via header processing
+    
+    (cherry picked from commit 78ccdb7ff1ebc34748092fe01ff249f5eeb661c8)
+
+commit 69ec6f2248dfda10c1c38df3a8a1c3c432b7d0d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 20 12:14:13 2019 +0100
+
+    kamctl: updates to trap command to work with pretty printed jsonrpc
+    
+    (cherry picked from commit 4349c4f9bdd82ae099aadb5b626366deb7ef1109)
+
+commit cd3bf5c2721385f80e5343f32d576b8fc9a0c672
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 20 11:32:49 2019 +0100
+
+    kamctl: also shift only on params when printing rpc command
+    
+    (cherry picked from commit 6de8d942b626b05dff8dd5a4f20776db632eba19)
+
+commit c8b65f5f562db763b013ab945cba7caadb9f6535
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 20 11:30:26 2019 +0100
+
+    kamctl: shift only when expecting more parameters for rpc command
+    
+    (cherry picked from commit 8b1458e97270a4094085226dce1108d8ea5ca7af)
+
+commit dbbced1eb31dc984d9d215cea8600aa4f8d1caea
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Feb 17 16:55:22 2019 +0300
+
+    pkg/docker: Updated submodule
+
+commit 2611968a3b095351559f646e86d8fe31bfaa67ad
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Nov 9 13:01:31 2018 +0000
+
+    pkg/docker: Alpine switched to use openssl. Updated rules for alpine docker container
+    
+    (cherry picked from commit 37bff4588803a70873babdb483804e3734b42900)
+
+commit b7945ade8190b4f2f3d14c38e397ce8ac6ce2fc2
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Nov 9 14:11:20 2018 +0000
+
+    pkg/kamailio/alpine: Update APKBUILD
+    
+    (cherry picked from commit 6aca6c0ddc201882d1ab75e662299450f578aa32)
+
+commit 6cd4e5d59f90d4a6046ca8f4b2110fa3e358a9ae
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Feb 17 16:36:47 2019 +0300
+
+    Revert "pkg/kamailio/alpine: Fixed docker image build for 5.2 branch"
+    
+    This reverts commit e5bc89e1dffc548e3d309f45b291c87c39f6fb4b.
+
+commit c07e85a8031f771690f4da7f28ff31e265c98a60
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Mon Feb 18 20:59:05 2019 +0100
+
+    kamdbctl: warn that drop cmd will drop existing DB, ask for confirmation (GH #1858)
+    
+        - warn that the drop command will drop existing DB, ask for confirmation
+        - manually merge pull request GH #1858 from fredposner, fred at qxork dot com
+
+commit d0ee6bcd902bf95486ed02ea21b234bcc978894a
+Author: Fred Posner <fred@palner.com>
+Date:   Sun Feb 17 13:38:33 2019 -0500
+
+     kamdbctl: added verification before reinit  (#1852)
+    
+    kamdbctl: added verification before reinit command (GH #1852)
+    - add get_answer and warning that reinit command will drop existing database
+    - even seasoned users forget and ther is no backing out, results in data loss
+    
+    (cherry picked from commit 39756fff5776bb1bf38215e90bd19a859a287b93)
+
+commit b61fc371f8057d3a4a688507c9e43d89719cedc4
+Author: Jan Janak <jan@janakj.org>
+Date:   Sun Feb 17 15:00:47 2019 -0500
+
+    imc: fix a chat room related crash and DB reload problems (GH #1855)
+    
+    - Avoid crash in case a chat room has no members.
+      The imc module may encounter chat rooms that, for one reason or another,
+      have no members. In that case, we cannot use the URI of the first member
+      as the owner URI. This happens, for example, when the destroy function
+      fails to save chat room members into the database.
+    - When storing data in database, use replace instead of insert.
+      The insert statement would fail with an index violation if the
+      database already contains a matching record. That would happen, for
+      example, if some of the records being saved in mod_destroy were
+      re-loaded from the database on server start.
+    
+    (cherry picked from commit 669bb9a07773399a1305ee6b977529b39f0932aa)
+
+commit e2b5fcb60ab633715524d44698a09abc9b126537
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Fri Feb 8 14:39:03 2019 +0000
+
+    registrar : check xavp clone result
+    
+    (cherry picked from commit adc4493fa6861895bdcf8b459e5fbc76e80d0f1f)
+
+commit 28b00bd2a8cb0e894475ff78fdd45cca40f63a08
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Thu Feb 7 21:26:27 2019 +0100
+
+    core: fix crashes and logical errors for cmd line parsing, reported from Thuan Pham
+    
+    - fix a bunch of crashes and logical errors for command line parsing
+    - do not parse tcp, tls and sctp in listen statement if TCP or SCTP is disabled
+    - this will later crash during module startup (e.g. in tm)
+    - do not allow to config TCP and SCTP children count if TCP or SCTP is disabled
+    - report error messages in this cases to help users detect it
+    - reported from Thuan Pham, Thuan.Pham at monash dot edu
+    
+    (cherry picked from commit f0290969fdcbbeede62091a649597c23617571a9)
+
+commit f247933aac6ada6147ce83943cca87b24805e96f
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Thu Feb 7 09:23:01 2019 +0100
+
+    jsonrpcs: fix double free crash
+    
+    (cherry picked from commit 9dc5cbaa4f078adee0a061885965494a9364e5d0)
+
+commit cd797dbfdc0c8a27cde66f096c5d592d880d65d8
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Thu Sep 20 22:28:02 2018 +0200
+
+    dispatcher: Fix memleak in destination attributes
+    
+    (cherry picked from commit 614b6b05028ea8d364f7acb95a6367f7c9ea1a6d)
+
+commit 1caa08e1a3052ed08ec5dc4cf32c14f292e1a823
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Nov 5 10:13:16 2018 +0100
+
+    dispatcher: Stop searching if entry is found
+    
+    (cherry picked from commit 7a66f44506e4897fef68b5ff927cf276678d3473)
+
+commit 548955b101a1752b8525e8101014ab4e5576dc36
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Thu Mar 8 18:59:26 2018 +0100
+
+    jansson: Fix reverse logic for JSON boolean
+    
+    (cherry picked from commit 0125c1c8d8c1179670def9dc4b3e66d6a8e58360)
+
+commit ac37b2faf754548d0f3c6cfb14bc1e547eed03ed
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Fri Dec 15 08:52:23 2017 +0100
+
+    siputils: Return true if options_reply() succeeds
+    
+    (cherry picked from commit 73d29ddde2b38cfea2c9ca4a84f4b8a246b7da50)
+
+commit c5f1ac9be0fe28ab3967f4f0ed085d4a272c7437
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Mon Nov 13 16:35:46 2017 +0100
+
+    dispatcher: Don't take modulus of hash twice
+    
+    (cherry picked from commit 5b23ce265b43adda75731a90fdf1a3a47daa3a51)
+
+commit c3065e717f686cc11ceadd8a95fd3d98c2ffe2c7
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Thu Sep 20 17:34:49 2018 +0200
+
+    jansson: Log column on parse error
+    
+    (cherry picked from commit 4038a6046bc34c92313817549c93a9f16e993032)
+
+commit 534a5233a025af26b1b4ddcb504d21902fdc5094
+Author: Alex Hermann <alex@hexla.nl>
+Date:   Thu Sep 20 18:03:48 2018 +0200
+
+    jsonrpcs: Fix memleak with srjson_doc_t
+    
+    (cherry picked from commit 8e5742ff1657bdb2adce357fc6f1a2e04fd913c6)
+
+commit 9ead1778f6df817192b9cbf805169895bb647035
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 31 20:01:28 2019 +0100
+
+    src/Makefile: added target to install files for systemd on debian
+    
+    * make install-systemd-debian
+    
+    (cherry picked from commit ddbf18352f189b8aa1ae5e5f1d83d42db6fcc0d2)
+
+commit b3567878dd8b43f22bd7ce88db7611cf6ca029ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 31 09:25:28 2019 +0100
+
+    websocket: put the ws connection after keepalive
+    
+    - c&p error of last commits resulted in doing get op instead
+    
+    (cherry picked from commit a975bca1702ea2f3db47f834f7e4da2786ced201)
+
+commit cd25830eb881b1dd667544f68a94efdf195a7cea
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 28 21:01:40 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit bb9661c595201ab6ce69e34e6084630be7faa307
+Author: Federico Cabiddu <fcabiddu@libon.com>
+Date:   Mon Jan 28 20:56:55 2019 +0100
+
+    tsilo: fixed ts_append example in the doc
+    
+    (cherry picked from commit 18ef9da4c029fefd5089aed484cd8f32ddb0fb17)
+
+commit b71938952e1fc7543fa5bf7ba2abed6e39167150
+Author: Federico Cabiddu <fcabiddu@libon.com>
+Date:   Wed Jan 16 16:35:15 2019 +0100
+
+    siptrace: don't calculate message source socket if already set
+    
+    (cherry picked from commit 929a24f08aeef6b72999ac9b188ffeded40759a9)
+
+
 ===================== 2019-01-16 Version 5.2.1 Released =====================
 
 ===================== Changes Since Version 5.2.0 ===========================
