@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Julien Chavanton jchavanton@gmail.com
+ * Copyright (C) 2017-2019 Julien Chavanton jchavanton@gmail.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -20,7 +20,7 @@
 
 #include "rtp_media_server.h"
 extern rms_session_info_t *rms_session_list;
-
+extern int in_rms_process;
 
 static void rms_action_free(rms_session_info_t *si)
 {
@@ -94,16 +94,24 @@ rms_session_info_t *rms_session_search_sync(struct sip_msg *msg)
 
 void rms_session_add(rms_session_info_t *si)
 {
-	lock(&session_list_mutex);
-	clist_append(rms_session_list, si, next, prev);
-	unlock(&session_list_mutex);
+	if (in_rms_process) {
+		clist_append(rms_session_list, si, next, prev);
+	} else {
+		lock(&session_list_mutex);
+		clist_append(rms_session_list, si, next, prev);
+		unlock(&session_list_mutex);
+	}
 }
 
 void rms_session_rm(rms_session_info_t *si)
 {
-	lock(&session_list_mutex);
-	clist_rm(si, next, prev);
-	unlock(&session_list_mutex);
+	if (in_rms_process) {
+		clist_append(rms_session_list, si, next, prev);
+	} else {
+		lock(&session_list_mutex);
+		clist_rm(si, next, prev);
+		unlock(&session_list_mutex);
+	}
 }
 
 int rms_session_free(rms_session_info_t *si)
@@ -112,10 +120,7 @@ int rms_session_free(rms_session_info_t *si)
 	rms_sdp_info_free(&si->sdp_info_offer);
 	rms_sdp_info_free(&si->sdp_info_answer);
 	if(si->media.pt) {
-		// payload_type_destroy(si->media.pt);
-		shm_free(
-				si->media
-						.pt); // TODO: should be destroyed in  compatible way from MS manager process
+		shm_free(si->media.pt); // TODO: should be destroyed in  compatible way from MS manager process
 		si->media.pt = NULL;
 	}
 	if(si->callid.s) {
@@ -150,6 +155,36 @@ int rms_check_msg(struct sip_msg *msg)
 		return -1;
 	}
 	return 1;
+}
+
+rms_session_info_t *rms_session_new_bleg(struct sip_msg *msg)
+{
+	if(!rms_check_msg(msg))
+		return NULL;
+	rms_session_info_t *si = shm_malloc(sizeof(rms_session_info_t));
+	if(!si) {
+		LM_ERR("can not allocate session info !\n");
+		goto error;
+	}
+	memset(si, 0, sizeof(rms_session_info_t));
+
+	if(!rms_str_dup(&si->callid, &msg->callid->body, 1)) {
+		LM_ERR("can not get callid .\n");
+		goto error;
+	}
+	if(!rms_str_dup(&si->remote_uri, &msg->from->body, 1))
+		goto error;
+	str ip;
+	ip.s = ip_addr2a(&msg->rcv.dst_ip);
+	ip.len = strlen(ip.s);
+	if(!rms_str_dup(&si->local_ip, &ip, 1))
+		goto error;
+	clist_init(&si->action, next, prev);
+	return si;
+error:
+	LM_ERR("can not create session.\n");
+	rms_session_free(si);
+	return NULL;
 }
 
 rms_session_info_t *rms_session_new(struct sip_msg *msg)

@@ -99,6 +99,8 @@ void rms_media_destroy(call_leg_media_t *m)
 
 int create_call_leg_media(call_leg_media_t *m)
 {
+//	if (m->ms_factory) return 0;
+	if (m) rms_stop_media(m);
 	m->ms_factory = rms_create_factory();
 	// create caller RTP session
 	LM_INFO("RTP session [%s:%d]<>[%s:%d]\n", m->local_ip.s, m->local_port,
@@ -175,6 +177,9 @@ int rms_start_media(call_leg_media_t *m, char *file_name)
 	MSConnectionHelper h;
 	int channels = 1;
 	int file_sample_rate = 8000;
+
+	if (m) rms_stop_media(m);
+
 	m->ms_ticker = rms_create_ticker(NULL);
 	if(!m->ms_ticker)
 		goto error;

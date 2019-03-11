@@ -41,6 +41,8 @@
 
 ser_lock_t session_list_mutex;
 
+
+
 typedef struct rms
 {
 	int udp_start_port;

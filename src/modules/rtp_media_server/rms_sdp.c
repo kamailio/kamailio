@@ -118,18 +118,6 @@ void rms_sdp_info_init(rms_sdp_info_t *sdp_info)
 	memset(sdp_info, 0, sizeof(rms_sdp_info_t));
 }
 
-int rms_sdp_info_clone(rms_sdp_info_t *dst, rms_sdp_info_t *src)
-{
-	rms_sdp_info_init(dst);
-	if(!rms_str_dup(&dst->remote_ip, &src->remote_ip, 1))
-		return 0;
-	if(!rms_str_dup(&dst->payloads, &src->payloads, 1))
-		return 0;
-	if(!rms_str_dup(&dst->new_body, &src->new_body, 1))
-		return 0;
-	return 1;
-}
-
 void rms_sdp_info_free(rms_sdp_info_t *sdp_info)
 {
 	if(sdp_info->remote_ip.s) {

@@ -29,14 +29,13 @@ static void mod_destroy(void);
 static int child_init(int);
 str playback_fn = {0, 0};
 str log_fn = {0, 0};
-
 static char *rms_bridge_default_route = "rms:bridged";
 static char *rms_answer_default_route = "rms:start";
 
+int in_rms_process;
+rms_t *rms;
 
-static rms_t rms;
-
-static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si);
+static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si, struct sip_msg *msg);
 static int fixup_rms_action_play(void **param, int param_no);
 static int fixup_rms_bridge(void **param, int param_no);
 static int fixup_rms_answer(void **param, int param_no);
@@ -51,9 +50,8 @@ static int rms_session_check_f(struct sip_msg *);
 static int rms_hangup_f(struct sip_msg *);
 static int rms_bridge_f(struct sip_msg *, char *, char *);
 
-static int rms_update_call_sdp(struct sip_msg *msg,
-		const rms_session_info_t *si, call_leg_media_t *m,
-		rms_sdp_info_t *sdp_info);
+static int rms_update_media_sockets(struct sip_msg *msg,
+		rms_session_info_t *si, rms_sdp_info_t *sdp_info);
 
 static cmd_export_t cmds[] = {
 		{"rms_answer", (cmd_function)rms_answer_f, 1, fixup_rms_answer, 0, EVENT_ROUTE},
@@ -166,10 +164,12 @@ static int fixup_rms_action_play(void **param, int param_no)
 static int mod_init(void)
 {
 	LM_INFO("RTP media server module init\n");
-	rms.udp_start_port = 50000;
+
+	rms = shm_malloc(sizeof(rms_t));
+	rms->udp_start_port = 50000;
 	LM_INFO("RTP media server module init\n");
-	rms.udp_end_port = 60000;
-	rms.udp_last_port = 50000 + rand() % 10000;
+	rms->udp_end_port = 60000;
+	rms->udp_last_port = 50000 + rand() % 10000;
 	rms_media_init();
 
 	if(!init_rms_session_list()) {
@@ -233,8 +233,13 @@ static rms_session_info_t *rms_stop(rms_session_info_t *si)
 static rms_session_info_t *rms_session_action_check(rms_session_info_t *si)
 {
 	rms_action_t *a;
+		if (!si)
+			LM_ERR("session  NULL\n");
 	clist_foreach(&si->action, a, next)
 	{
+		if (!a)
+			LM_ERR("session action NULL\n");
+
 		if(a->type == RMS_HANGUP) {
 			LM_INFO("session action RMS_HANGUP [%s]\n", si->callid.s);
 			rms_hangup_call(si);
@@ -243,8 +248,7 @@ static rms_session_info_t *rms_session_action_check(rms_session_info_t *si)
 			a->type = RMS_STOP;
 			return si;
 		} else if(a->type == RMS_BRIDGING) {
-			LM_INFO("session action RMS_BRIDGING [%s][%p]\n", si->callid.s,
-					a->cell->uas.request);
+			LM_INFO("session action RMS_BRIDGING [%s]\n", si->callid.s);
 			rms_bridging_call(si, a);
 			a->type = RMS_NONE;
 			shm_free(a->param.s);
@@ -282,11 +286,16 @@ static rms_session_info_t *rms_session_action_check(rms_session_info_t *si)
 			}
 			return si;
 		} else if(a->type == RMS_START) {
+			LM_INFO("session action RMS_START\n");
 			create_call_leg_media(&si->media);
 			LM_INFO("session action RMS_START [%s]\n", si->callid.s);
+			rms_action_t *tmp = a->prev;
+			clist_rm(a, next, prev);
 			rms_start_media(&si->media, a->param.s);
 			run_action_route(si, a->route.s);
-			a->type = RMS_NONE;
+			shm_free(a);
+			a = tmp;
+			LM_INFO("session action RMS_START[done]\n");
 			return si;
 		}
 	}
@@ -300,12 +309,14 @@ static rms_session_info_t *rms_session_action_check(rms_session_info_t *si)
  */
 static void rms_session_manage_loop()
 {
+	in_rms_process = 1;
 	while(1) {
 		lock(&session_list_mutex);
 		rms_session_info_t *si;
 		clist_foreach(rms_session_list, si, next)
 		{
 			si = rms_session_action_check(si);
+			//LM_INFO("next ... si[%p]\n", si);
 		}
 		unlock(&session_list_mutex);
 		usleep(10000);
@@ -354,6 +365,9 @@ static int parse_from(struct sip_msg *msg, rms_session_info_t *si)
 static int rms_sip_reply(
 		struct cell *cell, rms_session_info_t *si, int code, char *_reason)
 {
+	if (si->state == RMS_ST_CONNECTED) {
+		return 1;
+	}
 	str reason = str_init(_reason);
 	if(si->remote_tag.len == 0) {
 		LM_ERR("can not find from tag\n");
@@ -381,6 +395,9 @@ static int rms_answer_call(
 	char buffer[128];
 	str reason = str_init("OK");
 	str contact_hdr;
+	if (si->state == RMS_ST_CONNECTED) {
+		return 1;
+	}
 
 	LM_INFO("[%s][%d]\n", sdp_info->new_body.s, sdp_info->udp_local_port);
 
@@ -518,7 +535,7 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 		goto error;
 	}
 	si->media.pt = rms_sdp_check_payload(sdp_info);
-	rms_update_call_sdp(pcbp->rpl, si, &si->media, sdp_info);
+	rms_update_media_sockets(pcbp->rpl, si, &si->sdp_info_answer);
 	LM_INFO("[%p][%s:%d]\n", si, sdp_info->local_ip.s,
 			sdp_info->udp_local_port);
 	a->type = RMS_BRIDGED;
@@ -589,7 +606,7 @@ static int rms_bridging_call(rms_session_info_t *si, rms_action_t *a)
 	}
 	dialog->rem_target.s = param_uri->s;
 	dialog->rem_target.len = param_uri->len - 1;
-	rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
+	rms_sdp_info_t *sdp_info = &si->bridged_si->sdp_info_offer;
 
 	set_uac_req(&uac_r, &method_invite, &headers, &sdp_info->new_body, dialog,
 			TMCB_LOCAL_COMPLETED | TMCB_LOCAL_RESPONSE_IN | TMCB_ON_FAILURE, bridge_cb, a);
@@ -647,11 +664,11 @@ static int rms_hangup_call(rms_session_info_t *si)
 /*
  * Create a new session info that will be used for bridging
  */
-static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si)
+static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si, struct sip_msg *msg)
 {
 	if(!si)
 		return NULL;
-	si->bridged_si = shm_malloc(sizeof(rms_session_info_t));
+	si->bridged_si = rms_session_new_bleg(msg);
 	if(!si->bridged_si) {
 		LM_ERR("can not allocate session info !\n");
 		goto error;
@@ -667,8 +684,8 @@ static rms_session_info_t *rms_session_create_leg(rms_session_info_t *si)
 	if(!rms_str_dup(&si->bridged_si->local_ip, &si->local_ip, 1))
 		goto error;
 
-	si->bridged_si->sdp_info_offer.remote_port = 0;
-	si->bridged_si->sdp_info_offer.udp_local_port = 0;
+	rms_update_media_sockets(msg, si->bridged_si, &si->bridged_si->sdp_info_offer);
+	rms_sdp_prepare_new_body(&si->bridged_si->sdp_info_offer, si->media.pt->type);
 	clist_init(&si->bridged_si->action, next, prev);
 	return si->bridged_si;
 error:
@@ -680,17 +697,19 @@ error:
 static int rms_get_udp_port(void)
 {
 	// RTP UDP port
-	rms.udp_last_port += 3;
-	if(rms.udp_last_port > rms.udp_end_port)
-		rms.udp_last_port = rms.udp_start_port;
-	LM_INFO("port[%d]\n", rms.udp_last_port);
-	return rms.udp_last_port;
+	rms->udp_last_port += 3;
+	if(rms->udp_last_port > rms->udp_end_port)
+		rms->udp_last_port = rms->udp_start_port;
+	LM_INFO("port[%d]\n", rms->udp_last_port);
+	return rms->udp_last_port;
 }
 
-static int rms_update_call_sdp(struct sip_msg *msg,
-		const rms_session_info_t *si, call_leg_media_t *m,
-		rms_sdp_info_t *sdp_info)
+
+
+// update media IP and port
+static int rms_update_media_sockets(struct sip_msg *msg, rms_session_info_t *si, rms_sdp_info_t *sdp_info)
 {
+	call_leg_media_t *m = &si->media;
 	if(!m->local_port)
 		m->local_port = rms_get_udp_port();
 	sdp_info->udp_local_port = m->local_port;
@@ -703,9 +722,9 @@ static int rms_update_call_sdp(struct sip_msg *msg,
 	m->remote_ip.len = sdp_info->remote_ip.len;
 	m->si = si;
 
-	LM_INFO("remote_socket[%s:%d] local_socket[%s:%d] pt[%s]\n",
+	LM_INFO("remote_socket[%s:%d] local_socket[%s:%d]\n",
 			sdp_info->remote_ip.s, sdp_info->remote_port, m->local_ip.s,
-			m->local_port, si->media.pt->mime_type);
+			m->local_port);
 	return 1;
 }
 
@@ -810,7 +829,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 		if (si->state == RMS_ST_CONNECTED) {
 			LM_INFO("already connected, bridging\n");
 		} else {
-			LM_ERR("bridging an existing session that is not connected.\n");
+			LM_ERR("Can not bridge an existing call leg that is not connected.\n");
 			return -1;
 		}
 	} else {
@@ -821,8 +840,10 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 		si = rms_session_new(msg);
 		if(!si)
 			return -1;
+		si->local_port = msg->rcv.dst_port;
 	}
 
+	// parameter 1 : target URI
 	if(get_str_fparam(&target, msg, (gparam_p)_target) != 0) {
 		if (si->state != RMS_ST_CONNECTED) {
 			LM_ERR("rms_bridge: missing target\n");
@@ -830,6 +851,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 		}
 		return -1;
 	}
+	// parameter 2 : route call-back
 	if(get_str_fparam(&route, msg, (gparam_p)_route) != 0) {
 		route.len = strlen(rms_bridge_default_route);
 		route.s = rms_bridge_default_route;
@@ -837,31 +859,28 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 
 	LM_NOTICE("rms_bridge[%s][%d]\n", target.s, target.len);
 
-	str to_tag;
-	{
+	if (si->state == RMS_ST_DEFAULT) {
+		str to_tag;
 		parse_from(msg, si);
 		tmb.t_get_reply_totag(msg, &to_tag);
 		rms_str_dup(&si->local_tag, &to_tag, 1);
 		LM_INFO("local_uri[%s]local_tag[%s]\n", si->local_uri.s,
 				si->local_tag.s);
-		//
-		rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
-		rms_update_call_sdp(msg, si, &si->media, sdp_info);
-		// create b_leg
-		si->bridged_si = rms_session_create_leg(si);
-		if(!si->bridged_si) {
-			LM_ERR("can not create session b_leg !\n");
-			goto error;
-		}
-		si->bridged_si->media.local_port = rms_get_udp_port();
-		sdp_info->udp_local_port = si->bridged_si->media.local_port;
-		rms_sdp_prepare_new_body(sdp_info, si->media.pt->type);
-		LM_NOTICE("payload[%d]\n", si->media.pt->type);
+		rms_update_media_sockets(msg, si, &si->sdp_info_offer);
+	}
+	// Prepare the body of the SDP offer for the current Payload type
+	// Both call legs will have the same offer.
+	LM_NOTICE("payload[%d]\n", si->media.pt->type);
+	rms_sdp_prepare_new_body(&si->sdp_info_offer, si->media.pt->type);
+
+	// create b_leg
+	si->bridged_si = rms_session_create_leg(si, msg);
+
+	if(!si->bridged_si) {
+		LM_ERR("can not create session b_leg !\n");
+		goto error;
 	}
 
-
-
-	si->local_port = msg->rcv.dst_port;
 	rms_action_t *a = rms_action_new(RMS_BRIDGING);
 	if(!a)
 		return -1;
@@ -881,19 +900,18 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 			LM_ERR("t_suspend() failed\n");
 			goto error;
 		}
+		LM_INFO("transaction request[%p]\n", a->cell->uas.request);
+	} else {
+		a->cell = NULL;
 	}
-
-	LM_INFO("transaction request[%p]\n", a->cell->uas.request);
+	LM_INFO("adding action\n");
 	rms_action_add(si, a);
 
-	if(!rms_sdp_info_clone(
-			   &si->bridged_si->sdp_info_offer, &si->sdp_info_offer)) {
-		LM_ERR("rms_sdp_info_clone\n");
-		goto error;
-	}
+	LM_INFO("adding b_leg session\n");
 	rms_session_add(si->bridged_si);
 	LM_INFO("si_1[%p]si_2[%p]\n", si, si->bridged_si);
-	rms_session_add(si);
+	if (si->state != RMS_ST_CONNECTED)
+		rms_session_add(si);
 	return 0;
 error:
 	rms_session_rm(si);
@@ -1081,19 +1099,16 @@ static int rms_answer_f(struct sip_msg *msg, char * _route)
 	if(!si)
 		return -1;
 	rms_session_add(si);
-	rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
-	rms_update_call_sdp(msg, si, &si->media, sdp_info);
-
-	//
+	rms_update_media_sockets(msg, si, &si->sdp_info_offer);
 	parse_from(msg, si);
 	tmb.t_get_reply_totag(msg, &to_tag);
 	rms_str_dup(&si->local_tag, &to_tag, 1);
 	LM_INFO("local_uri[%s]local_tag[%s]\n", si->local_uri.s, si->local_tag.s);
-	if(!rms_sdp_prepare_new_body(sdp_info, si->media.pt->type)) {
+	if(!rms_sdp_prepare_new_body(&si->sdp_info_offer, si->media.pt->type)) {
 		LM_ERR("error preparing SDP body\n");
 		goto error;
 	}
-	//
+
 	si->local_port = msg->rcv.dst_port;
 	if(rms_answer_call(NULL, si, &si->sdp_info_offer) < 1) {
 		goto error;

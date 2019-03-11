@@ -65,6 +65,7 @@ void rms_session_add(rms_session_info_t *si);
 void rms_session_rm(rms_session_info_t *si);
 int rms_session_free(rms_session_info_t *si);
 rms_session_info_t *rms_session_new(struct sip_msg *msg);
+rms_session_info_t *rms_session_new_bleg(struct sip_msg *msg);
 int rms_sessions_dump_f(struct sip_msg *msg, char *param1, char *param2);
 rms_session_info_t *rms_get_session_list(void);
 
