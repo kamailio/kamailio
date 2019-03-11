@@ -130,6 +130,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_add_dst(int group, str *address, int flags);
+int ds_remove_dst(int group, str *address);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
 int ds_reinit_state(int group, str *address, int state);
 int ds_reinit_state_all(int group, int state);
@@ -227,6 +228,12 @@ typedef struct _ds_select_state {
 	int emode;  /* output: update operation was executed or not */
 	sr_xavp_t *lxavp;
 } ds_select_state_t;
+
+struct ds_filter_dest_cb_arg {
+	int setid;
+	ds_dest_t *dest;
+	int *setn;
+};
 
 /* clang-format on */
 
