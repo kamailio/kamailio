@@ -541,6 +541,10 @@ int th_unmask_callid_str(str *icallid, str *ocallid)
 	}
 	out.s = th_mask_decode(icallid->s, icallid->len,
 					&th_callid_prefix, 0, &out.len);
+	if(out.s == NULL) {
+		LM_ERR("failed to decode call-id\n");
+		return -2;
+	}
 	if(out.len>=TH_CALLID_SIZE) {
 		pkg_free(out.s);
 		LM_ERR("not enough callid buf size (needed %d)\n", out.len);
