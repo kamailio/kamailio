@@ -381,7 +381,9 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 					evr_name.len, evr_name.s);
 		}
 	} else {
-		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &evr_name, &evr_data)<0) {
+		if(keng!=NULL
+				&& sr_kemi_route(keng, fmsg, EVENT_ROUTE, &evr_name,
+						&evr_data)<0) {
 			LM_ERR("error running event route kemi callback\n");
 		}
 	}
