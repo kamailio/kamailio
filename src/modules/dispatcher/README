@@ -125,6 +125,7 @@ Julien Chavanton
               5.3. dispatcher.reload
               5.4. dispatcher.ping_active
               5.5. dispatcher.add
+              5.6. dispatcher.remove
 
         6. Installation and Running
 
@@ -269,6 +270,7 @@ Chapter 1. Admin Guide
         5.3. dispatcher.reload
         5.4. dispatcher.ping_active
         5.5. dispatcher.add
+        5.6. dispatcher.remove
 
    6. Installation and Running
 
@@ -1378,6 +1380,7 @@ onreply_route {
    5.3. dispatcher.reload
    5.4. dispatcher.ping_active
    5.5. dispatcher.add
+   5.6. dispatcher.remove
 
 5.1.  dispatcher.set_state
 
@@ -1483,6 +1486,27 @@ kamcmd dispatcher.ping_active 0
 # prototype: kamcmd dispatcher.add _group_ _address_ _flags_
 kamcmd dispatcher.add 2 sip:127.0.0.1:5080
 kamcmd dispatcher.add 3 sip:127.0.0.1:5075 8
+...
+
+5.6.  dispatcher.remove
+
+   Remove a destination address from the in-memory dispatcher list.
+   Reloading the dispatcher from file or database will re-add destinations
+   that are removed using this command.
+
+   This command will remove all entries that match the group and address.
+
+   Name: dispatcher.remove
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+
+   Example:
+...
+# prototype: kamcmd dispatcher.remove _group_ _address_
+kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
+kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 
 6. Installation and Running
