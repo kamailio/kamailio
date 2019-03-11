@@ -123,7 +123,7 @@ void pkg_print_manager(void);
 #define PKG_MEM_ERROR_FMT(...) LM_ERR("could not allocate private memory from sys pool" __VA_ARGS__)
 #define PKG_MEM_CRITICAL_FMT(...) LM_CRIT("could not allocate private memory from sys pool" __VA_ARGS__)
 #else
-#define PKG_MEM_ERROR_FMT(fmt, args...) LM_ERROR("could not allocate private memory from sys pool - " fmt , ## args)
+#define PKG_MEM_ERROR_FMT(fmt, args...) LM_ERR("could not allocate private memory from sys pool - " fmt , ## args)
 #define PKG_MEM_CRITICAL_FMT(fmt, args...) LM_CRIT("could not allocate private memory from sys pool - " fmt , ## args)
 #endif
 
