@@ -609,6 +609,26 @@
        </example>
      </section>
 
+	<section id="secfilter.r.stats">
+       <title>
+		<function moreinfo="none">secfilter.stats</function>
+	  </title>
+ 
+ 		<para> 
+		Print statistics of blocked and allowed messages.
+ 		</para> 
+ 
+ 		<example>
+         <title><function>secfilter.stats</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; secfilter.stats
+		...
+		</programlisting>
+       </example>
+     </section>
+
 	<section id="secfilter.r.add_dst">
        <title>
 		<function moreinfo="none">secfilter.add_dst</function>
@@ -758,6 +778,95 @@
 		<listitem>4 (user)</listitem>
 		</itemizedlist>
 		</para>
+     </section>
+	</section>
+
+ 	<section>
+     <title>Some examples</title>
+ 
+	<section>
+       <title>Print data</title>
+ 
+       <example>
+         <title>kamcmd secfilter.print ua</title>
+ 
+         <programlisting format="linespecific">
+		...
+User-agent
+==========
+[+] Blacklisted
+    -----------
+    0001 -> friendly-scanner
+    0002 -> pplsip
+    0003 -> sipcli
+    0004 -> sundayddr
+    0005 -> iWar
+    0006 -> sipsak
+    0007 -> VaxSIPUserAgent
+    0008 -> SimpleSIP
+    0009 -> SIP Call
+    0010 -> Ozeki
+    0011 -> VoIPSec
+    0012 -> SIPScan
+    0013 -> Conaito
+    0014 -> UsaAirport
+    0015 -> PortSIP VoIP SDK
+    0016 -> zxcvfdf11
+    0017 -> fdgddfg546df4g8d5f
+
+[+] Whitelisted
+    -----------
+    0001 -> my custom ua
+		...
+		</programlisting>
+ </example>
+     </section>
+
+	<section>
+       <title>Statistics</title>
+ 
+       <example>
+         <title>kamcmd secfilter.stats</title>
+ 
+         <programlisting format="linespecific">
+		...
+Blocked messages (blacklist)
+============================
+[+] By user-agent    : 1256
+[+] By country       : 45
+[+] By from domain   : 0
+[+] By to domain     : 0
+[+] By contact domain: 1
+[+] By IP address    : 2552
+[+] By from name     : 0
+[+] By to name       : 0
+[+] By contact name  : 0
+[+] By from user     : 316
+[+] By to user       : 134
+[+] By contact user  : 0
+
+Allowed messages (whitelist)
+============================
+[+] By user-agent    : 0
+[+] By country       : 478
+[+] By from domain   : 0
+[+] By to domain     : 0
+[+] By contact domain: 0
+[+] By IP address    : 0
+[+] By from name     : 0
+[+] By to name       : 0
+[+] By contact name  : 0
+[+] By from user     : 0
+[+] By to user       : 0
+[+] By contact user  : 0
+
+Other blocked messages
+======================
+[+] Destinations   : 0
+[+] SQL injection  : 213
+		...
+		</programlisting>
+ </example>
      </section>
 	</section>
 </chapter>
