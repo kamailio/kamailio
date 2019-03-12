@@ -424,6 +424,10 @@ static int check_user(struct sip_msg *msg, int type)
 	if(res != 0) {
 		return res;
 	}
+	
+	if (user.s == NULL || domain.s == NULL) {
+		return -1;
+	}
 
 	nlen = name.len;
 	ulen = user.len;
@@ -434,9 +438,11 @@ static int check_user(struct sip_msg *msg, int type)
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
-		res = cmpi_str(&list->s, &name);
-		if(res == 0) {
-			return 4;
+		if (name.s != NULL) {
+			res = cmpi_str(&list->s, &name);
+			if(res == 0) {
+				return 4;
+			}
 		}
 		if(user.len > list->s.len)
 			user.len = list->s.len;
@@ -453,9 +459,11 @@ static int check_user(struct sip_msg *msg, int type)
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
-		res = cmpi_str(&list->s, &name);
-		if(res == 0) {
-			return -4;
+		if (name.s != NULL) {
+			res = cmpi_str(&list->s, &name);
+			if(res == 0) {
+				return -4;
+			}
 		}
 		if(user.len > list->s.len)
 			user.len = list->s.len;
