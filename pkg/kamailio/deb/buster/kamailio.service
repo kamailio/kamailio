@@ -4,7 +4,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=forking
+Type=simple
 User=kamailio
 Group=kamailio
 Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
@@ -12,10 +12,8 @@ Environment='SHM_MEMORY=64'
 Environment='PKG_MEMORY=8'
 EnvironmentFile=-/etc/default/kamailio
 EnvironmentFile=-/etc/default/kamailio.d/*
-# PIDFile requires a full absolute path
-PIDFile=/var/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
-ExecStart=/usr/sbin/kamailio -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
+ExecStart=/usr/sbin/kamailio -DD -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
 Restart=on-failure
 # /var/run/kamailio in tmpfs
 RuntimeDirectory=kamailio
