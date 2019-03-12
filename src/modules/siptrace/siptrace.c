@@ -352,14 +352,6 @@ static int mod_init(void)
 		}
 	}
 
-#if 0
-	else if(tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0)
-			  <= 0) {
-		LM_ERR("can't register trace_onreq_in\n");
-		return -1;
-	}
-#endif
-
 	/* bind the SL API */
 	if(sl_load_api(&slb) != 0) {
 		LM_WARN("cannot bind to SL API. Will not install sl callbacks.\n");
@@ -712,9 +704,8 @@ enum siptrace_type_t parse_siptrace_flag(str* sflags)
 			case '\t':
 				break;
 			default:
-				LM_ERR("idx %d %d\n", idx, sflags->len);
-				LM_ERR("Invalid character <%c> in <%.*s>!\n", sflags->s[idx],
-						sflags->len, sflags->s);
+				LM_ERR("Invalid character <%c> in <%.*s> at position <%d>!\n", sflags->s[idx],
+						sflags->len, sflags->s, idx);
 				return SIPTRACE_NONE;
 		}
 	}
@@ -727,7 +718,6 @@ static int fixup_siptrace(void **param, int param_no)
 	str sflags;
 	enum siptrace_type_t trace_type;
 
-	LM_ERR("fixup function aaa\n");
 	if(param_no < 1 || param_no > 3) {
 		LM_DBG("params:%s\n", (char *)*param);
 		return 0;
@@ -738,8 +728,8 @@ static int fixup_siptrace(void **param, int param_no)
 		return fixup_spve_spve(param, param_no);
 	} else if (param_no == 3) {
 		/* tracing type; string only */
-		sflags.s = *param;
-		sflags.len = strlen(*param);
+		sflags.s = (char *)*param;
+		sflags.len = strlen(sflags.s);
 
 		trace_type = parse_siptrace_flag(&sflags);
 		if (trace_type == SIPTRACE_NONE) {
@@ -960,7 +950,8 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		} else if (trace_type == SIPTRACE_DIALOG) {
 			trace_transaction(msg, info, 1);
 			if (unlikely(dlgb.set_dlg_var == NULL)) {
-				LM_ERR("Dialog api not loaded! will trace only current transaction!\n");
+				/* FIXME should we abort tracing here? */
+				LM_WARN("Dialog api not loaded! will trace only current transaction!\n");
 			} else {
 				/* serialize what's in info */
 				/* save correlation id in siptrace_info avp
@@ -1626,7 +1617,6 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int registe
 	/* trace current message on out */
 	msg->msg_flags |= FL_SIPTRACE;
 
-	LM_ERR("trace request out registration\n");
 	if(tmb.register_tmcb(msg, 0, TMCB_REQUEST_SENT, trace_onreq_out, info, 0) <= 0) {
 		LM_ERR("can't register trace_onreq_out\n");
 		return;
@@ -1639,7 +1629,6 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int registe
 	}
 
 	/* trace reply on out */
-	LM_CRIT("trace resp sent!\n");
 	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info, register_free_func ? free_trace_info : 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_out\n");
@@ -1665,8 +1654,6 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 {
 	int_str avp_value;
 	struct usr_avp* avp = NULL;
-
-	LM_ERR("TRACING THIS DIALOGHES!\n");
 
 	if (!dlgb.get_dlg) {
 		LM_ERR("Dialog API not loaded! Trace off...\n");
@@ -1709,11 +1696,6 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 		return;
 	}
 
-	/* flag for stateless replies?? */
-
-	/* trace negative ACKS? */
-	/* trace 180? */
-	/* trace CANCEL and BYE transactions */
 	return;
 }
 
