@@ -305,3 +305,9 @@ void secf_rpc_stats(rpc_t *rpc, void *ctx)
 	rpc->rpl_printf(ctx, "");
 }
 
+/* Reset stats */
+void secf_rpc_stats_reset(rpc_t *rpc, void *ctx)
+{
+	secf_reset_stats();
+	rpc->rpl_printf(ctx, "The statistics has been reset");
+}

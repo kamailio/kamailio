@@ -629,6 +629,26 @@
        </example>
      </section>
 
+	<section id="secfilter.r.stats_reset">
+       <title>
+		<function moreinfo="none">secfilter.stats_reset</function>
+	  </title>
+ 
+ 		<para> 
+		Reset all statistics.
+ 		</para> 
+ 
+ 		<example>
+         <title><function>secfilter.stats_reset</function> usage</title>
+ 
+         <programlisting format="linespecific">
+		...
+		&kamcmd; secfilter.stats_reset
+		...
+		</programlisting>
+       </example>
+     </section>
+
 	<section id="secfilter.r.add_dst">
        <title>
 		<function moreinfo="none">secfilter.add_dst</function>

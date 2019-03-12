@@ -52,8 +52,8 @@ typedef struct _secf_data
 
 extern secf_data_p secf_data;
 
-//extern int secf_stats[22];
 extern int *secf_stats;
+void secf_reset_stats(void);
 
 int secf_append_rule(int action, int type, str *value);
 
@@ -81,6 +81,7 @@ extern int secf_dst_exact_match;
 void secf_rpc_reload(rpc_t *rpc, void *ctx);
 void secf_rpc_print(rpc_t *rpc, void *ctx);
 void secf_rpc_stats(rpc_t *rpc, void *ctx);
+void secf_rpc_stats_reset(rpc_t *rpc, void *ctx);
 void secf_rpc_add_dst(rpc_t *rpc, void *ctx);
 void secf_rpc_add_bl(rpc_t *rpc, void *ctx);
 void secf_rpc_add_wl(rpc_t *rpc, void *ctx);
