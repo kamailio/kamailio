@@ -76,9 +76,7 @@ inline static int sbufq_add(struct sbuffer_queue* q, const void* data,
 	unsigned int last_free;
 	unsigned int b_size;
 	unsigned int crt_size;
-	
-	get_ticks_raw();
-	
+
 	if (likely(q->last==0)) {
 		b_size=MAX_unsigned(min_buf_size, size);
 		b=shm_malloc(sizeof(*b)+b_size-sizeof(b->buf));
@@ -97,7 +95,7 @@ inline static int sbufq_add(struct sbuffer_queue* q, const void* data,
 	}else{
 		b=q->last;
 	}
-	
+
 	while(size){
 		last_free=b->b_size-q->last_used;
 		if (last_free==0){
