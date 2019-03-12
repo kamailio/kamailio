@@ -261,3 +261,47 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 
 	rpc->rpl_printf(ctx, "");
 }
+
+/* Print stats */
+void secf_rpc_stats(rpc_t *rpc, void *ctx)
+{
+	rpc->rpl_printf(ctx, "");
+	rpc->rpl_printf(ctx, "Blocked messages (blacklist)");
+	rpc->rpl_printf(ctx, "============================");
+	rpc->rpl_printf(ctx, "[+] By user-agent    : %d", secf_stats[BL_UA]);
+	rpc->rpl_printf(ctx, "[+] By country       : %d", secf_stats[BL_COUNTRY]);
+	rpc->rpl_printf(ctx, "[+] By from domain   : %d", secf_stats[BL_FDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By to domain     : %d", secf_stats[BL_TDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By contact domain: %d", secf_stats[BL_CDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By IP address    : %d", secf_stats[BL_IP]);
+	rpc->rpl_printf(ctx, "[+] By from name     : %d", secf_stats[BL_FNAME]);
+	rpc->rpl_printf(ctx, "[+] By to name       : %d", secf_stats[BL_TNAME]);
+	rpc->rpl_printf(ctx, "[+] By contact name  : %d", secf_stats[BL_CNAME]);
+	rpc->rpl_printf(ctx, "[+] By from user     : %d", secf_stats[BL_FUSER]);
+	rpc->rpl_printf(ctx, "[+] By to user       : %d", secf_stats[BL_TUSER]);
+	rpc->rpl_printf(ctx, "[+] By contact user  : %d", secf_stats[BL_CUSER]);
+
+	rpc->rpl_printf(ctx, "");
+	rpc->rpl_printf(ctx, "Allowed messages (whitelist)");
+	rpc->rpl_printf(ctx, "============================");
+	rpc->rpl_printf(ctx, "[+] By user-agent    : %d", secf_stats[WL_UA]);
+	rpc->rpl_printf(ctx, "[+] By country       : %d", secf_stats[WL_COUNTRY]);
+	rpc->rpl_printf(ctx, "[+] By from domain   : %d", secf_stats[WL_FDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By to domain     : %d", secf_stats[WL_TDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By contact domain: %d", secf_stats[WL_CDOMAIN]);
+	rpc->rpl_printf(ctx, "[+] By IP address    : %d", secf_stats[WL_IP]);
+	rpc->rpl_printf(ctx, "[+] By from name     : %d", secf_stats[WL_FNAME]);
+	rpc->rpl_printf(ctx, "[+] By to name       : %d", secf_stats[WL_TNAME]);
+	rpc->rpl_printf(ctx, "[+] By contact name  : %d", secf_stats[WL_CNAME]);
+	rpc->rpl_printf(ctx, "[+] By from user     : %d", secf_stats[WL_FUSER]);
+	rpc->rpl_printf(ctx, "[+] By to user       : %d", secf_stats[WL_TUSER]);
+	rpc->rpl_printf(ctx, "[+] By contact user  : %d", secf_stats[WL_CUSER]);
+
+	rpc->rpl_printf(ctx, "");
+	rpc->rpl_printf(ctx, "Other blocked messages");
+	rpc->rpl_printf(ctx, "======================");
+	rpc->rpl_printf(ctx, "[+] Destinations   : %d", secf_stats[BL_DST]);
+	rpc->rpl_printf(ctx, "[+] SQL injection  : %d", secf_stats[BL_SQL]);
+	rpc->rpl_printf(ctx, "");
+}
+
