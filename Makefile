@@ -10,6 +10,9 @@ KSR_DIR ?= src/
 # default target for makefile
 .DEFAULT_GOAL := default
 
+ifneq ($(wildcard modules),)
+$(warning "old Kamailio modules directory found, you should clean that")
+endif
 
 # strip the src/ from the path to modules
 SMODPARAM=
