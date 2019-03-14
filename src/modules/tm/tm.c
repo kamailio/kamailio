@@ -2793,6 +2793,71 @@ static int ki_t_relay(sip_msg_t *msg)
 /**
  *
  */
+static int ki_t_relay_to_proxy_flags(sip_msg_t *msg, str *sproxy, int rflags)
+{
+	proxy_l_t *proxy = NULL;
+	int ret = -1;
+	int proto;
+	str host;
+	int port;
+
+	if (sproxy != NULL && sproxy->s != NULL && sproxy->len > 0) {
+		if (parse_phostport(sproxy->s, &host.s, &host.len, &port, &proto)!=0) {
+			LM_CRIT("invalid proxy addr parameter <%s>\n", sproxy->s);
+			return E_UNSPEC;
+		}
+
+		proxy = mk_proxy(&host, port, proto);
+		if (proxy==0) {
+			LM_ERR("failed to build proxy structure for <%.*s>\n",
+				sproxy->len, sproxy->s );
+			return E_UNSPEC;
+		}
+	}
+	if(rflags!=0) {
+		/* no auto 100 trying */
+		if(rflags&1) {
+			t_set_auto_inv_100(msg, 0);
+		}
+		/* no auto negative reply */
+		if(rflags&2) {
+			t_set_disable_internal_reply(msg, 1);
+		}
+		/* no dns failover */
+		if(rflags&4) {
+			t_set_disable_failover(msg, 1);
+		}
+	}
+
+	ret = _w_t_relay_to(msg, proxy, PROTO_NONE);
+
+	if(proxy != NULL) {
+		free_proxy(proxy);
+		pkg_free(proxy);
+	}
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int ki_t_relay_to_proxy(sip_msg_t *msg, str *sproxy)
+{
+	return ki_t_relay_to_proxy_flags(msg, sproxy, 0);
+}
+
+/**
+ *
+ */
+static int ki_t_relay_to_flags(sip_msg_t *msg, int rflags)
+{
+	return ki_t_relay_to_proxy_flags(msg, NULL, rflags);
+}
+
+/**
+ *
+ */
 static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_relay"),
 		SR_KEMIP_INT, ki_t_relay,
@@ -3017,6 +3082,21 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_set_disable_internal_reply"),
 		SR_KEMIP_INT, t_set_disable_internal_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_relay_to_proxy"),
+		SR_KEMIP_INT, ki_t_relay_to_proxy,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_relay_to_flags"),
+		SR_KEMIP_INT, ki_t_relay_to_flags,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_relay_to_proxy_flags"),
+		SR_KEMIP_INT, ki_t_relay_to_proxy_flags,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
