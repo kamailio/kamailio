@@ -882,7 +882,7 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		return;
 	}
 
-	LM_DBG("Replace [%.*s] eith [%.*s]\n", old_uri.len, old_uri.s,
+	LM_DBG("Replace [%.*s] with [%.*s]\n", old_uri.len, old_uri.s,
 			new_uri->len, new_uri->s);
 
 	/* duplicate the decoded value */
