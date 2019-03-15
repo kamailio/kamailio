@@ -374,6 +374,8 @@ static int mod_init( void )
 			LM_ERR("unable to parse acc table name [%.*s]\n",
 					db_table_acc.len, db_table_acc.s);
 			return -1;
+		} else {
+			LM_DBG("acc db table initialized to: %s\n", db_table_acc.s);
 		}
 	}
 	if(db_table_mc.len!=12 || strncmp(db_table_mc.s, "missed_calls", 12)!=0)
@@ -384,6 +386,8 @@ static int mod_init( void )
 			LM_ERR("unable to parse mc table name [%.*s]\n",
 					db_table_mc.len, db_table_mc.s);
 			return -1;
+		} else {
+			LM_DBG("missed calls db table initialized to: %s\n", db_table_mc.s);
 		}
 	}
 
