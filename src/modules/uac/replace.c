@@ -326,6 +326,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		/* some new display to set? */
 		if (display->len)
 		{
+			LM_DBG("adding new display [%.*s]\n", display->len, display->s);
 			/* add the new display exactly over the deleted one */
 			buf.s = pkg_malloc( display->len + 2 );
 			if (buf.s==0)
