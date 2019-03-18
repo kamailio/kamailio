@@ -56,8 +56,8 @@ extern unsigned short restore_to_avp_type;
 extern int_str restore_to_avp_name;
 
 extern struct dlg_binds dlg_api;
-static str from_dlgvar[] = {str_init("_uac_fu"), str_init("_uac_funew")};
-static str to_dlgvar[] = {str_init("_uac_to"), str_init("_uac_tonew") };
+static str from_dlgvar[] = {str_init("_uac_fu"), str_init("_uac_funew"), str_init("_uac_fdp"), str_init("_uac_fdpnew")};
+static str to_dlgvar[] = {str_init("_uac_to"), str_init("_uac_tonew"), str_init("_uac_tdp"), str_init("_uac_tdpnew")};
 
 static char enc_table64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"abcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -257,6 +257,8 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 	int_str avp_value;
 	struct dlg_cell* dlg = 0;
 	str * dlgvar_names;
+	str display_tmp;
+	str undefined_display = str_init("");
 
 	uac_flag = (hdr==msg->from)?FL_USE_UAC_FROM:FL_USE_UAC_TO;
 	if(get_route_type()==REQUEST_ROUTE) {
@@ -339,6 +341,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 			if (l==0 && (l=get_display_anchor(msg,hdr,body,&buf))==0)
 			{
 				LM_ERR("failed to insert anchor\n");
+				pkg_free(buf.s);
 				goto error;
 			}
 			if (insert_new_lump_after( l, buf.s, buf.len, 0)==0)
@@ -403,7 +406,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		}
 		else {
 			/* the first time uac_replace is called for this dialog */
-
+			/* store old URI value */
 			if (dlg_api.set_dlg_var(dlg, &dlgvar_names[0], &body->uri) < 0) {
 				LM_ERR("cannot store value\n");
 				dlg_api.release_dlg(dlg);
@@ -422,6 +425,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 				goto error;
 			}
 		}
+		/* store new URI value */
 		if (dlg_api.set_dlg_var(dlg, &dlgvar_names[1], uri) < 0) {
 			LM_ERR("cannot store new uri value\n");
 			dlg_api.release_dlg(dlg);
@@ -429,6 +433,35 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		}
 		LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
 				dlgvar_names[1].len, dlgvar_names[1].s, uri->len, uri->s);
+
+		/* store the display name as well */
+		if (body->display.s && body->display.len >0) {
+			display_tmp = body->display;
+		} else {
+			display_tmp = undefined_display;
+		}
+		if (dlg_api.set_dlg_var(dlg, &dlgvar_names[2], &display_tmp) < 0) {
+			LM_ERR("cannot store display value\n");
+			dlg_api.release_dlg(dlg);
+			goto error;
+		}
+		LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
+				dlgvar_names[1].len, dlgvar_names[2].s, display_tmp.len, display_tmp.s);
+
+		if (display && display->s && display->len > 0) {
+			display_tmp.s=display->s;
+			display_tmp.len=display->len;
+		} else {
+			display_tmp = undefined_display;
+		}
+		if (dlg_api.set_dlg_var(dlg, &dlgvar_names[3], &display_tmp) < 0) {
+			LM_ERR("cannot store new display value\n");
+			dlg_api.release_dlg(dlg);
+			goto error;
+		}
+		LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
+				dlgvar_names[1].len, dlgvar_names[3].s, display_tmp.len, display_tmp.s);
+
 		dlg_api.release_dlg(dlg);
 	} else {
 		if (!uac_rrb.append_fromtag) {
@@ -741,7 +774,6 @@ static inline int restore_uri_reply(struct sip_msg *rpl,
 	memcpy( new_val.s, p, len);
 	new_val.len = len;
 
-
 	body = (struct to_body*)rpl_hdr->parsed;
 
 	/* catch whitespace characters after uri */
@@ -802,7 +834,6 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 		}
 
 	}
-
 	if (req->msg_flags & FL_USE_UAC_TO ) {
 
 		/* parse TO in reply */
@@ -831,18 +862,22 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 {
 	struct lump* l;
 	struct sip_msg *msg;
+	struct hdr_field *hdr;
+	struct to_body *body;
 	str old_uri;
 	str* new_uri;
+	str* new_display;
+	str buf;
 	char *p;
 	unsigned int uac_flag;
 	int dlgvar_index = 0;
+	int dlgvar_dpindex = 0;
 	str* dlgvar_names;
 
 	if (!dlg || !_params || _params->direction == DLG_DIR_NONE || !_params->req)
 		return;
 
 	uac_flag = (unsigned int)(unsigned long)*(_params->param);
-
 	msg = _params->req;
 	if(msg->msg_flags & uac_flag)
 		return;
@@ -859,6 +894,8 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 			return;
 		}
 		old_uri = ((struct to_body*)msg->to->parsed)->uri;
+		hdr = (struct hdr_field*)msg->to;
+		body = ((struct to_body*)msg->to->parsed);
 	} else {
 		/* replace the FROM URI */
 		if ( parse_from_header(msg)<0 ) {
@@ -866,13 +903,18 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 			return;
 		}
 		old_uri = ((struct to_body*)msg->from->parsed)->uri;
+		hdr = (struct hdr_field*)msg->from;
+		body = (struct to_body*)msg->from->parsed;
 	}
 
 	if (_params->direction == DLG_DIR_DOWNSTREAM) {
 		dlgvar_index = 1;
+		dlgvar_dpindex = 3;
 		LM_DBG("DOWNSTREAM direction detected - replacing uri"
 				" with the new uri\n");
 	} else {
+		dlgvar_index = 0;
+		dlgvar_dpindex = 2;
 		LM_DBG("UPSTREAM direction detected - replacing uri"
 				" with the original uri\n");
 	}
@@ -882,8 +924,14 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 				dlgvar_names[dlgvar_index].s);
 		return;
 	}
+	if ((new_display = dlg_api.get_dlg_var(dlg, &dlgvar_names[dlgvar_dpindex])) == 0) {
+		LM_DBG("<%.*s> param not found\n", dlgvar_names[dlgvar_dpindex].len,
+				dlgvar_names[dlgvar_dpindex].s);
+		return;
+	}
 
-	LM_DBG("Replace [%.*s] with [%.*s]\n", old_uri.len, old_uri.s,
+	LM_DBG("Replace [%.*s %.*s] with [%.*s %.*s]\n", body->display.len, body->display.s,
+			old_uri.len, old_uri.s, new_display->len, new_display->s,
 			new_uri->len, new_uri->s);
 
 	/* duplicate the decoded value */
@@ -906,6 +954,40 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		goto free;
 	}
 
+	/* deal with display name */
+	l = 0;
+	/* first remove the existing display */
+	if (body->display.s && body->display.len > 0) {
+		LM_DBG("removing display [%.*s]\n",
+				body->display.len, body->display.s);
+		/* build del lump */
+		l = del_lump(msg, body->display.s-msg->buf, body->display.len, 0);
+		if (l==0) {
+			LM_ERR("display del lump failed\n");
+			goto free;
+			}
+	}
+	if (new_display->s && new_display->len > 0) {
+		LM_DBG("inserting display [%.*s]\n",
+				new_display->len, new_display->s);
+		/* add the new display exactly over the deleted one */
+		buf.s = pkg_malloc(new_display->len + 2);
+		if (buf.s==0) {
+			LM_ERR("no more pkg mem\n");
+			goto free;
+		}
+		memcpy( buf.s, new_display->s, new_display->len);
+		buf.len = new_display->len;
+		if (l==0 && (l=get_display_anchor(msg, hdr, body, &buf)) == 0) {
+			LM_ERR("failed to insert anchor\n");
+			goto free2;
+		}
+		if (insert_new_lump_after(l, buf.s, buf.len, 0) == 0) {
+			LM_ERR("insert new display lump failed\n");
+			goto free2;
+		}
+	}
+
 	/* register tm callback to change replies,
 	 * but only if not registered earlier */
 	if (!(msg->msg_flags & (FL_USE_UAC_FROM|FL_USE_UAC_TO)) &&
@@ -917,6 +999,9 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	msg->msg_flags |= uac_flag;
 
 	return;
+
+free2:
+	pkg_free(buf.s);
 
 free:
 	pkg_free(p);
