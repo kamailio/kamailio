@@ -899,7 +899,7 @@ modparam("usrloc", "preload", "location")
 	</section>
 
 	<section id="usrloc.p.db_update_as_insert">
-		<title><varname>db_update_as_insert</varname> (string)</title>
+		<title><varname>db_update_as_insert</varname> (int)</title>
 		<para>
 			Set this parameter if you want to do INSERT DB operations
 			instead of UPDATE DB operations. It is recommended to set this parameter
@@ -921,7 +921,7 @@ modparam("usrloc", "db_update_as_insert", 1)
 	</section>
 
 	<section id="usrloc.p.db_check_update">
-		<title><varname>db_check_update</varname> (string)</title>
+		<title><varname>db_check_update</varname> (int)</title>
 		<para>
 			Set this parameter to 1 if you want to do DB INSERT if the number
 			of affected rows by contact DB UPDATE operation is 0. The
@@ -945,7 +945,7 @@ modparam("usrloc", "db_check_update", 1)
 	</section>
 
 	<section id="usrloc.p.timer_procs">
-		<title><varname>timer_procs</varname> (string)</title>
+		<title><varname>timer_procs</varname> (int)</title>
 		<para>
 			Number of timer processes to be started by module. Timer processes
 			take care of checking expired records and synchronization with
