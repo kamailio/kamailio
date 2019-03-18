@@ -35,7 +35,7 @@
 MODULE_VERSION
 
 secf_data_p secf_data = NULL;
-static gen_lock_t *lock = NULL;
+static gen_lock_t *secf_lock = NULL;
 int *secf_stats;
 int total_data = 26;
 
@@ -276,9 +276,9 @@ static int w_check_sqli(str val)
 			|| strstr(cval, "%27") || strstr(cval, "%24")
 			|| strstr(cval, "%60")) {
 		/* Illegal characters found */
-		lock_get(lock);
+		lock_get(secf_lock);
 		secf_stats[BL_SQL]++;
-		lock_release(lock);
+		lock_release(secf_lock);
 		res = -1;
 		goto end;
 	}
@@ -310,9 +310,9 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 			/* Exact match */
 			if(list->s.len == dst.len) {
 				if(cmpi_str(&list->s, &dst) == 0) {
-					lock_get(lock);
+					lock_get(secf_lock);
 					secf_stats[BL_DST]++;
-					lock_release(lock);
+					lock_release(secf_lock);
 					return -2;
 				}
 			}
@@ -321,9 +321,9 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 			if(dst.len > list->s.len)
 				dst.len = list->s.len;
 			if(cmpi_str(&list->s, &dst) == 0) {
-				lock_get(lock);
+				lock_get(secf_lock);
 				secf_stats[BL_DST]++;
-				lock_release(lock);
+				lock_release(secf_lock);
 				return -2;
 			}
 		}
@@ -360,9 +360,9 @@ static int w_check_ua(struct sip_msg *msg)
 			ua.len = list->s.len;
 		res = cmpi_str(&list->s, &ua);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[WL_UA]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return 2;
 		}
 		list = list->next;
@@ -376,9 +376,9 @@ static int w_check_ua(struct sip_msg *msg)
 			ua.len = list->s.len;
 		res = cmpi_str(&list->s, &ua);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[BL_UA]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return -2;
 		}
 		list = list->next;
@@ -464,7 +464,7 @@ static int check_user(struct sip_msg *msg, int type)
 		if (name.s != NULL) {
 			res = cmpi_str(&list->s, &name);
 			if(res == 0) {
-				lock_get(lock);
+				lock_get(secf_lock);
 				switch(type) {
 					case 1:
 						secf_stats[WL_FNAME]++;
@@ -476,7 +476,7 @@ static int check_user(struct sip_msg *msg, int type)
 						secf_stats[WL_CNAME]++;
 						break;
 				}
-				lock_release(lock);
+				lock_release(secf_lock);
 				return 4;
 			}
 		}
@@ -484,7 +484,7 @@ static int check_user(struct sip_msg *msg, int type)
 			user.len = list->s.len;
 		res = cmpi_str(&list->s, &user);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			switch(type) {
 				case 1:
 					secf_stats[WL_FUSER]++;
@@ -496,7 +496,7 @@ static int check_user(struct sip_msg *msg, int type)
 					secf_stats[WL_CUSER]++;
 					break;
 			}
-			lock_release(lock);
+			lock_release(secf_lock);
 			return 2;
 		}
 		list = list->next;
@@ -511,7 +511,7 @@ static int check_user(struct sip_msg *msg, int type)
 		if (name.s != NULL) {
 			res = cmpi_str(&list->s, &name);
 			if(res == 0) {
-				lock_get(lock);
+				lock_get(secf_lock);
 				switch(type) {
 					case 1:
 						secf_stats[BL_FNAME]++;
@@ -523,7 +523,7 @@ static int check_user(struct sip_msg *msg, int type)
 						secf_stats[BL_CNAME]++;
 						break;
 				}
-				lock_release(lock);
+				lock_release(secf_lock);
 				return -4;
 			}
 		}
@@ -531,7 +531,7 @@ static int check_user(struct sip_msg *msg, int type)
 			user.len = list->s.len;
 		res = cmpi_str(&list->s, &user);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			switch(type) {
 				case 1:
 					secf_stats[BL_FUSER]++;
@@ -543,7 +543,7 @@ static int check_user(struct sip_msg *msg, int type)
 					secf_stats[BL_CUSER]++;
 					break;
 			}
-			lock_release(lock);
+			lock_release(secf_lock);
 			return -2;
 		}
 		list = list->next;
@@ -558,7 +558,7 @@ static int check_user(struct sip_msg *msg, int type)
 			domain.len = list->s.len;
 		res = cmpi_str(&list->s, &domain);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			switch(type) {
 				case 1:
 					secf_stats[WL_FDOMAIN]++;
@@ -570,7 +570,7 @@ static int check_user(struct sip_msg *msg, int type)
 					secf_stats[WL_CDOMAIN]++;
 					break;
 			}
-			lock_release(lock);
+			lock_release(secf_lock);
 			return 3;
 		}
 		list = list->next;
@@ -583,7 +583,7 @@ static int check_user(struct sip_msg *msg, int type)
 			domain.len = list->s.len;
 		res = cmpi_str(&list->s, &domain);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			switch(type) {
 				case 1:
 					secf_stats[BL_FDOMAIN]++;
@@ -595,7 +595,7 @@ static int check_user(struct sip_msg *msg, int type)
 					secf_stats[BL_CDOMAIN]++;
 					break;
 			}
-			lock_release(lock);
+			lock_release(secf_lock);
 			return -3;
 		}
 		list = list->next;
@@ -635,9 +635,9 @@ static int w_check_ip(struct sip_msg *msg)
 			ip.len = list->s.len;
 		res = cmpi_str(&list->s, &ip);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[WL_IP]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return 2;
 		}
 		list = list->next;
@@ -650,9 +650,9 @@ static int w_check_ip(struct sip_msg *msg)
 			ip.len = list->s.len;
 		res = cmpi_str(&list->s, &ip);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[BL_IP]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return -2;
 		}
 		list = list->next;
@@ -688,9 +688,9 @@ static int w_check_country(struct sip_msg *msg, char *val)
 			country.len = list->s.len;
 		res = cmpi_str(&list->s, &country);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[WL_COUNTRY]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return 2;
 		}
 		list = list->next;
@@ -703,9 +703,9 @@ static int w_check_country(struct sip_msg *msg, char *val)
 			country.len = list->s.len;
 		res = cmpi_str(&list->s, &country);
 		if(res == 0) {
-			lock_get(lock);
+			lock_get(secf_lock);
 			secf_stats[BL_COUNTRY]++;
-			lock_release(lock);
+			lock_release(secf_lock);
 			return -2;
 		}
 		list = list->next;
@@ -718,9 +718,9 @@ static int w_check_country(struct sip_msg *msg, char *val)
 
 void secf_reset_stats(void)
 {
-	lock_get(lock);
+	lock_get(secf_lock);
 	memset(secf_stats, 0, total_data * sizeof(int));
-	lock_release(lock);
+	lock_release(secf_lock);
 }
 
 
@@ -763,12 +763,12 @@ static int mod_init(void)
 		LM_CRIT("cannot initialize lock.\n");
 		return -1;
 	}
-	lock = lock_alloc();
-	if (!lock) {
+	secf_lock = lock_alloc();
+	if (!secf_lock) {
 		LM_CRIT("cannot allocate memory for lock.\n");
 		return -1;
 	}
-	if (lock_init(lock) == 0) {
+	if (lock_init(secf_lock) == 0) {
 		LM_CRIT("cannot initialize lock.\n");
 		return -1;
 	}
@@ -801,6 +801,7 @@ static void mod_destroy(void)
 	LM_DBG("SECFILTER module destroy\n");
 	if(!secf_data)
 		return;
+
 	/* Free shared data */
 	secf_free_data();
 	/* Destroy lock */
@@ -808,11 +809,10 @@ static void mod_destroy(void)
 	shm_free(secf_data);
 	secf_data = NULL;
 
-	lock_release(&secf_data->lock);
-	if (lock) {
-		lock_destroy(lock);
-		lock_dealloc((void *)lock);
-		lock = NULL;
+	if (secf_lock) {
+		lock_destroy(secf_lock);
+		lock_dealloc((void *)secf_lock);
+		secf_lock = NULL;
 	}
 }
 
@@ -874,6 +874,6 @@ void secf_free_data(void)
 	free_sec_info(&secf_data->bl);
 	memset(&secf_data->bl_last, 0, sizeof(secf_info_t));
 	LM_DBG("so, ua[%p] should be NULL\n", secf_data->bl.ua);
-	
-	shm_free(lock);
+
+	lock_release(&secf_data->lock);
 }
