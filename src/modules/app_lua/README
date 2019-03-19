@@ -33,7 +33,7 @@ Daniel-Constantin Mierla
 
               4.1. lua_dofile(path)
               4.2. lua_dostring(script)
-              4.3. lua_run(function, params)
+              4.3. lua_run(func [, params])
               4.4. lua_runstring(script)
 
         5. RPC Commands
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 
         4.1. lua_dofile(path)
         4.2. lua_dostring(script)
-        4.3. lua_run(function, params)
+        4.3. lua_run(func [, params])
         4.4. lua_runstring(script)
 
    5. RPC Commands
@@ -154,7 +154,14 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
 3.2. register (string)
 
-   Use this function to register optional SIP Router submodules to Lua.
+   NOTE: Since Kamailio v5.0, KEMI exports are available in Lua script
+   under KSR module. These exports cover most of the modules, a lot more
+   that those listed next. The KEMI exports are the recommended to be
+   used, the old 'sr' module might be obsoleted soon. To read more about
+   KEMI exports and available KSR submodules, see:
+     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
+
+   Use this parameter to register optional Kamailio submodules to Lua.
    Available submodules are:
      * alias_db - register functions from alias_db module under
        'sr.alias_db'.
@@ -212,7 +219,7 @@ modparam("app_lua", "reload", 1)
 
    4.1. lua_dofile(path)
    4.2. lua_dostring(script)
-   4.3. lua_run(function, params)
+   4.3. lua_run(func [, params])
    4.4. lua_runstring(script)
 
 4.1.  lua_dofile(path)
@@ -238,21 +245,24 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 }
 ...
 
-4.3.  lua_run(function, params)
+4.3.  lua_run(func [, params])
 
-   Execute the Lua function 'func' giving params as parameters. There can
-   be up to 3 string parameters. The function must exist in the script
+   Execute the Lua function 'func' giving 'params' as parameters. There
+   can be up to 3 string parameters after 'func' (overall, max 4 params,
+   first is the function). The function must exist in the Lua script
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
    Example 1.7. lua_run usage
 ...
-if(!lua_run("sr_append_fu_to_reply"))
-{
+if(!lua_run("sr_append_fu_to_reply")) {
     xdbg("SCRIPT: failed to execute lua function!\n");
 }
 ...
-lua_run("lua_funcx", "$rU", "2");
+lua_run("lua_func0");
+lua_run("lua_func1", "$rU");
+lua_run("lua_func2", "$rU", "2");
+lua_run("lua_func3", "$rU", "2", "$si");
 ...
 
 4.4.  lua_runstring(script)

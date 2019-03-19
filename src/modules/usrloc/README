@@ -77,9 +77,9 @@ Carsten Bock
               3.31. fetch_rows (integer)
               3.32. hash_size (integer)
               3.33. preload (string)
-              3.34. db_update_as_insert (string)
-              3.35. db_check_update (string)
-              3.36. timer_procs (string)
+              3.34. db_update_as_insert (int)
+              3.35. db_check_update (int)
+              3.36. timer_procs (int)
               3.37. xavp_contact (string)
               3.38. db_ops_ruid (int)
               3.39. handle_lost_tcp (int)
@@ -89,6 +89,7 @@ Carsten Bock
               3.43. db_insert_null (int)
               3.44. skip_remote_socket (int)
               3.45. db_timer_clean (int)
+              3.46. server_id_filter (int)
 
         4. RPC Commands
 
@@ -181,6 +182,7 @@ Carsten Bock
    1.43. Set db_insert_null parameter
    1.44. Set skip_remote_socket parameter
    1.45. Set db_timer_clean parameter
+   1.46. Set server_id_filter parameter
 
 Chapter 1. Admin Guide
 
@@ -230,9 +232,9 @@ Chapter 1. Admin Guide
         3.31. fetch_rows (integer)
         3.32. hash_size (integer)
         3.33. preload (string)
-        3.34. db_update_as_insert (string)
-        3.35. db_check_update (string)
-        3.36. timer_procs (string)
+        3.34. db_update_as_insert (int)
+        3.35. db_check_update (int)
+        3.36. timer_procs (int)
         3.37. xavp_contact (string)
         3.38. db_ops_ruid (int)
         3.39. handle_lost_tcp (int)
@@ -242,6 +244,7 @@ Chapter 1. Admin Guide
         3.43. db_insert_null (int)
         3.44. skip_remote_socket (int)
         3.45. db_timer_clean (int)
+        3.46. server_id_filter (int)
 
    4. RPC Commands
 
@@ -355,9 +358,9 @@ Chapter 1. Admin Guide
    3.31. fetch_rows (integer)
    3.32. hash_size (integer)
    3.33. preload (string)
-   3.34. db_update_as_insert (string)
-   3.35. db_check_update (string)
-   3.36. timer_procs (string)
+   3.34. db_update_as_insert (int)
+   3.35. db_check_update (int)
+   3.36. timer_procs (int)
    3.37. xavp_contact (string)
    3.38. db_ops_ruid (int)
    3.39. handle_lost_tcp (int)
@@ -367,6 +370,7 @@ Chapter 1. Admin Guide
    3.43. db_insert_null (int)
    3.44. skip_remote_socket (int)
    3.45. db_timer_clean (int)
+   3.46. server_id_filter (int)
 
 3.1. nat_bflag (integer)
 
@@ -812,7 +816,7 @@ modparam("usrloc", "hash_size", 12)
 modparam("usrloc", "preload", "location")
 ...
 
-3.34. db_update_as_insert (string)
+3.34. db_update_as_insert (int)
 
    Set this parameter if you want to do INSERT DB operations instead of
    UPDATE DB operations. It is recommended to set this parameter if you
@@ -825,7 +829,7 @@ modparam("usrloc", "preload", "location")
 modparam("usrloc", "db_update_as_insert", 1)
 ...
 
-3.35. db_check_update (string)
+3.35. db_check_update (int)
 
    Set this parameter to 1 if you want to do DB INSERT if the number of
    affected rows by contact DB UPDATE operation is 0. The database module
@@ -840,7 +844,7 @@ modparam("usrloc", "db_update_as_insert", 1)
 modparam("usrloc", "db_check_update", 1)
 ...
 
-3.36. timer_procs (string)
+3.36. timer_procs (int)
 
    Number of timer processes to be started by module. Timer processes take
    care of checking expired records and syncronization with database. If
@@ -978,6 +982,17 @@ modparam("usrloc", "skip_remote_socket", 1)
    Example 1.45. Set db_timer_clean parameter
 ...
 modparam("usrloc", "db_timer_clean", 1)
+...
+
+3.46. server_id_filter (int)
+
+   Enable (1) or disable (0) filter records by server_id on load.
+
+   Default value is “0”.
+
+   Example 1.46. Set server_id_filter parameter
+...
+modparam("usrloc", "server_id_filter", 1)
 ...
 
 4. RPC Commands

@@ -634,8 +634,8 @@ modparam("dialog", "default_timeout", 21600)
 
 6.7. early_timeout (integer)
 
-   The timeout (in seconds) after which the dialogs in early state (no
-   final response received) are destroyed.
+   The timeout (in seconds) after which the dialogs in unconfirmed or
+   early state (no final response received) are destroyed.
 
    Default value is “300 (5 minutes)”.
 
