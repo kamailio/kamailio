@@ -30,7 +30,7 @@
 	<section>
 	<title>Parameters</title>
 
-	<section id="route">
+	<section id="xmlrpc.p.route">
 	<title><varname>route</varname> (string)</title>
 	<para>
 		Name of the route called for XMLRPC messages.
@@ -57,7 +57,7 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
 	</example>
 	</section>
 
-	<section id="autoconversion">
+	<section id="xmlrpc.p.autoconversion">
 	<title><varname>autoconversion</varname> (string)</title>
 	<para>
 		Enable or disable automatic parameter type conversion globally,
@@ -83,7 +83,7 @@ modparam("xmlrpc", "autoconversion", 1)
 	</example>
 	</section>
 
-	<section id="escape_cr">
+	<section id="xmlrpc.p.escape_cr">
 	<title><varname>escape_cr</varname> (integer)</title>
 	<para>
 		Enable CR ('\r') escaping in replies. If enabled each '\r' in the
@@ -105,7 +105,7 @@ modparam("xmlrpc", "escape_cr", 1)
 	</example>
 	</section>
 
-	<section id="double_lf_to_crlf">
+	<section id="xmlrpc.p.double_lf_to_crlf">
 	<title><varname>double_lf_to_crlf</varname> (integer)</title>
 	<para>
 		When enabled double LFs ('\n\n') in the input xmlrpc strings
@@ -132,7 +132,7 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 	</example>
 	</section>
 
-	<section id="param_mode">
+	<section id="xmlrpc.p.mode">
 	<title><varname>mode</varname> (integer)</title>
 	<para>
 		When set to 1, the xmlrpc module does not register to core the callback
@@ -150,7 +150,7 @@ modparam("xmlrpc", "mode", 1)
 		</programlisting>
 	</example>
 	</section>
-	<section>
+	<section id="xmlrpc.p.url_skip">
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is a match,
@@ -170,7 +170,7 @@ modparam("xmlrpc", "url_skip", "^/sip")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="xmlrpc.p.url_match">
 		<title><varname>url_match</varname> (str)</title>
 		<para>
 			Regular expression to match the HTTP URL. If there is no match,
@@ -192,7 +192,7 @@ modparam("xmlrpc", "url_match", "^/RPC2")
 </programlisting>
 		</example>
 	</section>
-	<section id="event_callback">
+	<section id="xmlrpc.pevent_callback">
 		<title><varname>event_callback</varname> (string)</title>
 		<para>
 		The name of the function in the kemi configuration file (embedded
@@ -236,7 +236,7 @@ end
 
 	<title>Functions</title>
 
-	<section id="xmlrpc.dispatch_rpc">
+	<section id="xmlrpc.f.dispatch_rpc">
 	<title>
 		<function>dispatch_rpc()</function>
 	</title>
@@ -274,7 +274,7 @@ route[XMLRPC]{
 	</example>
 	</section>
 
-	<section id="xmlrpc.xmlrpc_reply">
+	<section id="xmlrpc.f.xmlrpc_reply">
 	<title>
 		<function>xmlrpc_reply(code, reason)</function>
 	</title>
