@@ -56,13 +56,15 @@ typedef struct _siptrace_data
 #endif
 } siptrace_data_t;
 
-/*
- * even though there's only one member in this structure keep it
- * first implementation was with 2 members and it can be removed
- * but leaving it like this will allow easy extension in the future
- * */
+enum UriState { STRACE_UNUSED_URI = 0, STRACE_RAW_URI = 1, STRACE_PARSED_URI = 2};
+
 typedef struct {
-	str* correlation_id;
+	str correlation_id;
+	union {
+		str dup_uri;
+		dest_info_t dest_info;
+	} u;
+	enum UriState uriState;
 } siptrace_info_t;
 
 
