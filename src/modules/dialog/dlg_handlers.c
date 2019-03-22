@@ -435,6 +435,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	if(dlg==0)
 		return;
 
+	if (rpl != FAKED_REPLY) {
+		if(parse_headers(rpl, HDR_EOH_F, 0) < 0) {
+			LM_ERR("failed to parse the reply headers\n");
+			goto done_early;
+		}
+	}
+
 	unref = 0;
 	if (type & (TMCB_RESPONSE_IN|TMCB_ON_FAILURE)) {
 		/* Set the dialog context so it is available in onreply_route and failure_route*/
