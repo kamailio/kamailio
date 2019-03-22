@@ -849,6 +849,11 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	if(req->first_line.u.request.method_value != METHOD_INVITE)
 		return -1;
 
+	if(parse_headers(req, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse the request headers\n");
+		return -1;
+	}
+
     if(pre_match_parse( req, &callid, &ftag, &ttag, 0)<0) {
         LM_WARN("pre-matching failed\n");
         return -1;

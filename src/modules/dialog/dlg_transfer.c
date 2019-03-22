@@ -252,6 +252,10 @@ void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 	/* 2xx - build dialog/send refer */
 	msg = ps->rpl;
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse the reply headers\n");
+		goto error;
+	}
 	if((msg->cseq==NULL || parse_headers(msg,HDR_CSEQ_F,0)<0)
 			|| msg->cseq==NULL || msg->cseq->parsed==NULL)
 	{
