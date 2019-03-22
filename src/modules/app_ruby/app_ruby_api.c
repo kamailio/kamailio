@@ -95,15 +95,20 @@ int ruby_sr_init_mod(void)
 	return 0;
 }
 
-static void app_ruby_print_last_exception()
+static int app_ruby_print_last_exception()
 {
 	VALUE rException, rExceptStr;
 
 	rException = rb_errinfo();         /* get last exception */
 	rb_set_errinfo(Qnil);              /* clear last exception */
 	rExceptStr = rb_funcall(rException, rb_intern("to_s"), 0, Qnil);
-	LM_ERR("exception: %s\n", StringValuePtr(rExceptStr));
-	return;
+	if(RSTRING_LEN(rExceptStr)!=4
+			|| strncmp(RSTRING_PTR(rExceptStr), "exit", 4)!=0) {
+		LM_ERR("exception: %.*s\n", (int)RSTRING_LEN(rExceptStr),
+				RSTRING_PTR(rExceptStr));
+		return 0;
+	}
+	return 1;
 }
 
 /**
@@ -1073,10 +1078,11 @@ int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	_sr_R_env.msg = bmsg;
 
 	if (rberr) {
-		app_ruby_print_last_exception();
-		LM_ERR("ruby exception (%d) on callback for: %s (res type: %d)\n",
-				rberr, func, TYPE(rbres));
-		return -1;
+		if(app_ruby_print_last_exception()==0) {
+			LM_ERR("ruby exception (%d) on callback for: %s (res type: %d)\n",
+					rberr, func, TYPE(rbres));
+			return -1;
+		}
 	}
 
 	return 1;
