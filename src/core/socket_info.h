@@ -41,6 +41,9 @@
 #define MAX_SOCKET_STR (sizeof("unknown") - 1 + IP_ADDR_MAX_STR_SIZE + \
 	INT2STR_MAX_LEN + 2 + 2)
 
+/* Maximum lenght for advertise string of listen socket */
+#define MAX_SOCKET_ADVERTISE_STR	511
+
 int socket2str(char* s, int* len, struct socket_info* si);
 int socketinfo2str(char* s, int* len, struct socket_info* si, int mode);
 

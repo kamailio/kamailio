@@ -431,7 +431,7 @@ static int fix_sock_str(struct socket_info* si)
 	si->sock_str.len = len;
 	if(si->useinfo.name.s!=NULL)
 	{
-		len = MAX_SOCKET_STR;
+		len = MAX_SOCKET_ADVERTISE_STR;
 
 		if (si->useinfo.sock_str.s) pkg_free(si->useinfo.sock_str.s);
 
