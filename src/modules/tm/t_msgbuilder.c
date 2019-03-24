@@ -1104,7 +1104,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	 * into the same allocated chunk of memory (retr. buffer first, string
 	 * buffer follows).In this case, the 'len' param is used as in-out
 	 * parameter: 'in' to give the extra space needed by the retr. buffer,
-	 * 'out' to return the lenght of the allocated string buffer.
+	 * 'out' to return the length of the allocated string buffer.
 	 */
 	unsigned offset = *len;
 #endif
