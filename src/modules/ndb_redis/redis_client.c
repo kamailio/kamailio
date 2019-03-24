@@ -1019,12 +1019,12 @@ error:
 
 /**
  * Executes a redis command.
- * Command is coded using a vector of strings, and a vector of lenghts.
+ * Command is coded using a vector of strings, and a vector of lengths.
  *
  * @param rsrv Pointer to a redis_server_t structure.
  * @param argc number of elements in the command vector.
  * @param argv vector of zero terminated strings forming the command.
- * @param argvlen vector of command string lenghts or NULL.
+ * @param argvlen vector of command string lengths or NULL.
  * @return redisReply structure or NULL if there was an error.
  */
 redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
