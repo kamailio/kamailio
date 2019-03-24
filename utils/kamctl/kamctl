@@ -2333,6 +2333,44 @@ $SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
 } # end speed_dial()
 
 #
+##### ------------------------------------------------ #####
+### acc management
+#
+acc() {
+	if [ "$#" -lt 2 ] ; then
+		merr "acc - too few parameters"
+		usage_acc
+		exit 1
+	fi
+	shift;
+	require_dbengine
+	case $1 in
+		showdb)
+			QUERY="select * FROM $ACC_TABLE ;"
+			$DBROCMD "$QUERY"
+			;;
+
+		recent)
+			TIMENOW=`date +"%s"`
+			if [ $# -eq 2 ] ; then
+				CLAUSE=" WHERE time>=$TIMENOW - $2 "
+			else
+				CLAUSE=" WHERE time>=$TIMENOW - 300 "
+			fi
+			QUERY="select * FROM $ACC_TABLE $CLAUSE ; "
+			$DBROCMD "$QUERY"
+			;;
+
+
+		*)
+			usage_acc
+			exit 1
+			;;
+	esac
+} # end acc()
+
+
+#
 ##### ================================================ #####
 ### subscriber management
 #
@@ -3046,6 +3084,10 @@ case $1 in
 
 	speeddial|speed_dial)
 		speeddial "$@"
+		;;
+
+	acc)
+		acc "$@"
 		;;
 
 	tls)

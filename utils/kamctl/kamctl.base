@@ -353,6 +353,11 @@ DIALPLAN_SUBST_EXP_COLUMN=subst_exp
 DIALPLAN_REPL_EXP_COLUMN=repl_exp
 DIALPLAN_ATTRS_COLUMN=attrs
 
+# ACC table
+if [ -z "$ACC_TABLE" ] ; then
+	ACC_TABLE=acc
+fi
+
 #
 ##### ------------------------------------------------ #####
 ### usage functions
@@ -566,6 +571,17 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_mtree"
+
+usage_acc() {
+	echo
+	mecho " -- command 'acc' - manage accounding records"
+	echo
+cat <<EOF
+ acc showdb .................. show content of acc table
+ recent [<secs>] ............. show most recent records in acc (default 300s)
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_acc"
 
 
 ##### ----------------------------------------------- #####
