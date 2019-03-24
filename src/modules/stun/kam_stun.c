@@ -227,7 +227,7 @@ static int stun_parse_body(
 	buf = &req->msg.buf.s[sizeof(struct stun_hdr)];
 	
 	/* 
-	 * Mark the body lenght as unparsed.
+	 * Mark the body length as unparsed.
 	 */
 	not_parsed = req->msg.buf.len - sizeof(struct stun_hdr);
 	
