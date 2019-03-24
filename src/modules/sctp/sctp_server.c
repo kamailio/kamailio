@@ -2538,7 +2538,7 @@ error:
 /** low level sctp non-blocking send.
  * @param socket - sctp socket to send on.
  * @param buf   - data.
- * @param len   - lenght of the data.
+ * @param len   - length of the data.
  * @param to    - destination in ser sockaddr_union format.
  * @param sndrcv_info - sctp_sndrcvinfo structure pointer, pre-filled.
  * @param flags - can have one of the following values (or'ed):
