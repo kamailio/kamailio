@@ -138,7 +138,7 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 
 /** Creates str string from zero terminated string without copying.
  * This function initializes members of a temporary str structure
- * with the pointer and lenght of the string from s parameter.
+ * with the pointer and length of the string from s parameter.
  *
  * @param str A pointer to temporary str structure.
  * @param s   A zero terminated string.
