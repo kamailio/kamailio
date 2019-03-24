@@ -210,7 +210,7 @@ int check_contacts(struct sip_msg* _m, int* _s) {
 					rerrno = R_STAR_CONT;
 					return 1;
 				}
-				/* check also the lenght of all contacts */
+				/* check also the length of all contacts */
 				for (c = ((contact_body_t*) p->parsed)->contacts; c;
 						c = c->next) {
 					if (c->uri.len > CONTACT_MAX_SIZE
