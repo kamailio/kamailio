@@ -323,7 +323,7 @@ int dlg_cseq_msg_received(sr_event_param_t *evp)
 	LM_DBG("via cseq cookie [%.*s] val [%.*s]\n", vcseq.len, vcseq.s,
 			vcseq.len-3, vcseq.s+3);
 	if(vcseq.len-3>get_cseq(&msg)->number.len) {
-		/* higher lenght to update - wrong */
+		/* higher length to update - wrong */
 		LM_DBG("cseq in message (%d) shorter than in via (%d)\n",
 				get_cseq(&msg)->number.len, vcseq.len-3);
 		goto done;
