@@ -112,8 +112,8 @@ fi
 if [ -z "$DIR" ] ; then
 	DIR=`dirname $0`
 fi
-if [ -z "$OSERBIN" ] ; then
-	OSERBIN=$DIR/kamailio
+if [ -z "$KAMBIN" ] ; then
+	KAMBIN=$DIR/kamailio
 fi
 
 ##### ------------------------------------------------ #####

@@ -1982,16 +1982,16 @@ kamailio_start() {
 		exit 1
 	fi
 
-	if [ ! -x "$OSERBIN" ] ; then
+	if [ ! -x "$KAMBIN" ] ; then
 		echo
-		merr "Kamailio binaries not found at $OSERBIN"
-		merr "set OSERBIN to the path of kamailio in $0 or ~/.kamctlrc"
+		merr "Kamailio binaries not found at $KAMBIN"
+		merr "set KAMBIN to the path of kamailio in $0 or ~/.kamctlrc"
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then
-		$OSERBIN -P $PID_FILE  -f $ETCDIR/kamailio.cfg $STARTOPTIONS 1>/dev/null 2>/dev/null
+		$KAMBIN -P $PID_FILE  -f $ETCDIR/kamailio.cfg $STARTOPTIONS 1>/dev/null 2>/dev/null
 	else
-		$OSERBIN -P $PID_FILE -E  -f $ETCDIR/kamailio.cfg $STARTOPTIONS
+		$KAMBIN -P $PID_FILE -E  -f $ETCDIR/kamailio.cfg $STARTOPTIONS
 	fi
 	sleep 3
 	if [ ! -s $PID_FILE ] ; then
