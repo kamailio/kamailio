@@ -39,6 +39,7 @@
  */
 typedef enum auth_cfg_result {
 	AUTH_USER_MISMATCH = -8,    /*!< Auth user != From/To user */
+	AUTH_USERNAME_EXPIRED = -7, /*!< Ephemeral auth username expired */
 	AUTH_NONCE_REUSED = -6,     /*!< Returned if nonce is used more than once */
 	AUTH_NO_CREDENTIALS = -5,   /*!< Credentials missing */
 	AUTH_STALE_NONCE = -4,      /*!< Stale nonce */

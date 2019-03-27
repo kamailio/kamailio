@@ -203,7 +203,7 @@ int autheph_verify_timestamp(str *_username)
 	if (cur_time > expires)
 	{
 		LM_WARN("username has expired\n");
-		return -1;
+		return AUTH_USERNAME_EXPIRED;
 	}
 
 	return 0;
@@ -255,10 +255,16 @@ static inline int digest_authenticate(struct sip_msg *_m, str *_realm,
 	username = ((auth_body_t *) h->parsed)->digest.username.whole;
 	LM_DBG("username: %.*s\n", username.len, username.s);
 
-	if (autheph_verify_timestamp(&username) < 0)
+	int res = autheph_verify_timestamp(&username);
+	if (res < 0)
 	{
-		LM_ERR("invalid timestamp in username\n");
-		return AUTH_ERROR;
+		if (res == -1)
+		{
+			LM_ERR("invalid timestamp in username\n");
+			return AUTH_ERROR;
+		} else {
+			return AUTH_USERNAME_EXPIRED;
+		}
 	}
 
 	SECRET_LOCK;
@@ -489,10 +495,16 @@ int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword)
 		return AUTH_ERROR;
 	}
 
-	if (autheph_verify_timestamp(susername) < 0)
+	int res = autheph_verify_timestamp(susername);
+	if (res < 0)
 	{
-		LM_ERR("invalid timestamp in username\n");
-		return AUTH_ERROR;
+		if (res == -1)
+		{
+			LM_ERR("invalid timestamp in username\n");
+			return AUTH_ERROR;
+		} else {
+			return AUTH_USERNAME_EXPIRED;
+		}
 	}
 
 	LM_DBG("username: %.*s\n", susername->len, susername->s);
