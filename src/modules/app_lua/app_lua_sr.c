@@ -1936,14 +1936,25 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
 		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
 				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
-			lua_getinfo(L, "nSl", &dinfo);
-			LOG(cfg_get(core, core_cfg, latency_log),
-					"alert - action KSR.%s%s%s(...)"
-					" took too long [%u ms] (%s:%d - %s [%s])\n",
-					(ket->mname.len>0)?ket->mname.s:"",
-					(ket->mname.len>0)?".":"", ket->fname.s, ms,
-					dinfo.short_src, dinfo.currentline,
-					(dinfo.name?dinfo.name:"<unknown>"), dinfo.what);
+			memset(&dinfo, 0, sizeof(lua_Debug));
+			if(lua_getstack(L, 0, &dinfo)==0
+						&& lua_getinfo(L, "nSl", &dinfo)==0) {
+				LOG(cfg_get(core, core_cfg, latency_log),
+						"alert - action KSR.%s%s%s(...)"
+						" took too long [%u ms] (%s:%d - %s [%s])\n",
+						(ket->mname.len>0)?ket->mname.s:"",
+						(ket->mname.len>0)?".":"", ket->fname.s, ms,
+						(dinfo.short_src[0])?dinfo.short_src:"<unknown>",
+						dinfo.currentline,
+						(dinfo.name)?dinfo.name:"<unknown>",
+						(dinfo.what)?dinfo.what:"<unknown>");
+			} else {
+				LOG(cfg_get(core, core_cfg, latency_log),
+						"alert - action KSR.%s%s%s(...)"
+						" took too long [%u ms]\n",
+						(ket->mname.len>0)?ket->mname.s:"",
+						(ket->mname.len>0)?".":"", ket->fname.s, ms);
+			}
 		}
 	}
 
