@@ -45,7 +45,7 @@ static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xc0a80000,  "PRIVATE",    0xffff0000 },  // 192.168/16
         { 0xa9fe0000,  "LINK-LOCAL", 0xffff0000 },  // 169.254/16
         { 0xc6120000,  "RESERVED",   0xfffe0000 },  // 198.18/15
-        { 0xac100000,  "PRIVATE",    0xfffe0000 },  // 172.16/12
+        { 0xac100000,  "PRIVATE",    0xfff00000 },  // 172.16/12
         { 0x64400000,  "SHARED",     0xffc00000 },  // 100.64/10
         { 0x7f000000,  "LOOPBACK",   0xff000000 },  // 127.0/8
         { 0x0a000000,  "PRIVATE",    0xff000000 },  // 10/8
