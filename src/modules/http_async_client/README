@@ -425,7 +425,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * method: sets the HTTP method: either "GET", "POST", "PUT" or
        "DELETE" (these are the supported methods). (Note: if the method is
        not set, curl will use GET, or POST if a body is specified)
-     * timeout: sets the HTTP timeout (Note, this timeout should be normally less, than tm.fr_timer timeout, cause transaction timeout has a higher priority over HTTP timeout)
+     * timeout: sets the HTTP timeout
      * tls_client_cert: sets the client certificate to use
      * tls_client_key: sets the client certificate key to use
      * tls_ca_path: sets the CA certificate path to use
