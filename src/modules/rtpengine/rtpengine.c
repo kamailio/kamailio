@@ -79,6 +79,7 @@
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../modules/crypto/api.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
@@ -304,6 +305,7 @@ static struct minmax_mos_label_stats global_mos_stats,
 				     side_A_mos_stats,
 				     side_B_mos_stats;
 int got_any_mos_pvs;
+struct crypto_binds rtpengine_cb;
 
 
 static cmd_export_t cmds[] = {
@@ -1722,6 +1724,10 @@ mod_init(void)
         return -1;
     }
 
+	if (load_crypto_api(&rtpengine_cb) != 0) {
+		LM_WARN("Crypto module not loaded! Won't use SHA1 hashing! Distribution "
+				"algorithm might not perform well under heavy load!\n");
+	}
 
 	return 0;
 }
@@ -2904,11 +2910,24 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	unsigned i, sum, sumcut, weight_sum;
 	int was_forced = 0;
 
+	str hash_data;
+
+	if (rtpengine_cb.SHA1 == NULL) {
+		hash_data = callid;
+	} else {
+		if (rtpengine_cb.SHA1(&callid, &hash_data) < 0) {
+			LM_ERR("SHA1 hash in crypto module failed!\n");
+			return NULL;
+		}
+	}
+
 	/* XXX Use quick-and-dirty hashing algo */
 	sum = 0;
-	for(i = 0; i < callid.len; i++)
-		sum += callid.s[i];
-	sum &= 0xff;
+	for(i = 0; i < hash_data.len; i++)
+		sum += hash_data.s[i];
+
+	/* FIXME this seems to affect the algorithm in a negative way */
+	//	sum &= 0xff;
 
 retry:
 	weight_sum = 0;
@@ -3914,12 +3933,12 @@ static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
 }
 
 static int ki_rtpengine_query0(sip_msg_t *msg)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, NULL, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query(sip_msg_t *msg, str *flags)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags->s, 1, OP_ANY);
 }
 
