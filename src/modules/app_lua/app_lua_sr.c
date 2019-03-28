@@ -1942,7 +1942,7 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 				   + (tve.tv_usec - tvb.tv_usec);
 		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			memset(&dinfo, 0, sizeof(lua_Debug));
-			if(lua_getstack(L, 0, &dinfo)>0
+			if(lua_getstack(L, 1, &dinfo)>0
 						&& lua_getinfo(L, "nSl", &dinfo)>0) {
 				LOG(cfg_get(core, core_cfg, latency_log),
 						"alert - action KSR.%s%s%s(...)"
