@@ -2345,6 +2345,32 @@ acc() {
 	shift;
 	require_dbengine
 	case $1 in
+		initdb)
+			QUERY=$(cat <<-END
+ALTER TABLE acc ADD COLUMN src_user VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE acc ADD COLUMN src_domain VARCHAR(128) NOT NULL DEFAULT '';
+ALTER TABLE acc ADD COLUMN src_ip varchar(64) NOT NULL default '';
+ALTER TABLE acc ADD COLUMN dst_ouser VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE acc ADD COLUMN dst_user VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE acc ADD COLUMN dst_domain VARCHAR(128) NOT NULL DEFAULT '';
+ALTER TABLE missed_calls ADD COLUMN src_user VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE missed_calls ADD COLUMN src_domain VARCHAR(128) NOT NULL DEFAULT '';
+ALTER TABLE missed_calls ADD COLUMN src_ip varchar(64) NOT NULL default '';
+ALTER TABLE missed_calls ADD COLUMN dst_ouser VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE missed_calls ADD COLUMN dst_user VARCHAR(64) NOT NULL DEFAULT '';
+ALTER TABLE missed_calls ADD COLUMN dst_domain VARCHAR(128) NOT NULL DEFAULT '';
+END
+)
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "error - acc db init"
+				exit 1
+			fi
+
+			mecho "ok - acc db init"
+
+			;;
+
 		showdb)
 			QUERY="select * FROM $ACC_TABLE ;"
 			$DBROCMD "$QUERY"
