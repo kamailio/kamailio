@@ -432,7 +432,7 @@ int rule_translate(sip_msg_t *msg, str *instr, dpl_node_t *rule,
 		/*search for the pattern from the compiled subst_exp*/
 		if (pcre_exec(subst_comp, NULL, instr->s, instr->len,
 					0, 0, ovector, 3 * (MAX_REPLACE_WITH + 1)) <= 0) {
-			LM_ERR("the string %.*s matched "
+			LM_DBG("the string %.*s matched "
 					"the match_exp %.*s but not the subst_exp %.*s!\n",
 					instr->len, instr->s,
 					rule->match_exp.len, rule->match_exp.s,
@@ -721,6 +721,13 @@ repl:
 			pkg_free(re_list);
 			re_list = rt;
 		} while(re_list);
+		if(rez<0) {
+			LM_ERR("the string %.*s matched "
+				"the match_exp %.*s but not the subst_exp %.*s!\n",
+				input->len, input->s,
+				rulep->match_exp.len, rulep->match_exp.s,
+				rulep->subst_exp.len, rulep->subst_exp.s);
+		}
 	}
 	else {
 		if(rule_translate(msg, input, rulep, rulep->subst_comp, output)!=0){
