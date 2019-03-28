@@ -435,7 +435,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header. N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
 		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
 		<listitem><para><emphasis>method</emphasis>: sets the HTTP method: either "GET", "POST", "PUT" or "DELETE" (these are the supported methods). (Note: if the method is not set, curl will use GET, or POST if a body is specified)</para></listitem>
-		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout. (Note, this timeout should be normally less, than <literal>tm.fr_timer</literal> timeout, cause transaction timeout has a higher priority over HTTP timeout)</para></listitem>
+		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout. (Note, this timeout should be normally less than <literal>tm.fr_timer</literal> timeout, because transaction timeout has a higher priority over HTTP timeout)</para></listitem>
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use</para></listitem>
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use</para></listitem>
 		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use</para></listitem>
