@@ -440,7 +440,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use</para></listitem>
 		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use</para></listitem>
 		<listitem><para><emphasis>authmethod</emphasis>: 
-			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap<literal>
+			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap
                         and multiple methods can be used. Note that in this case, the CURL library will make an
                         extra request to discover server-supported authentication methods. You may want to use
                         a specific value.
