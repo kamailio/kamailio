@@ -1932,28 +1932,34 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	unsigned int ms = 0;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 	lua_Debug dinfo;
 
 	ket = sr_kemi_lua_export_get(eidx);
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-			ms = TICKS_TO_MS(get_ticks_raw());
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
 	}
 
 	ret = sr_kemi_lua_exec_func_ex(L, ket, 0);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
-				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+				   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			memset(&dinfo, 0, sizeof(lua_Debug));
-			if(lua_getstack(L, 0, &dinfo)==0
-						&& lua_getinfo(L, "nSl", &dinfo)==0) {
+			if(lua_getstack(L, 0, &dinfo)>0
+						&& lua_getinfo(L, "nSl", &dinfo)>0) {
 				LOG(cfg_get(core, core_cfg, latency_log),
 						"alert - action KSR.%s%s%s(...)"
 						" took too long [%u ms] (%s:%d - %s [%s])\n",
 						(ket->mname.len>0)?ket->mname.s:"",
-						(ket->mname.len>0)?".":"", ket->fname.s, ms,
+						(ket->mname.len>0)?".":"", ket->fname.s,
+						tdiff,
 						(dinfo.short_src[0])?dinfo.short_src:"<unknown>",
 						dinfo.currentline,
 						(dinfo.name)?dinfo.name:"<unknown>",
@@ -1963,7 +1969,8 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 						"alert - action KSR.%s%s%s(...)"
 						" took too long [%u ms]\n",
 						(ket->mname.len>0)?ket->mname.s:"",
-						(ket->mname.len>0)?".":"", ket->fname.s, ms);
+						(ket->mname.len>0)?".":"", ket->fname.s,
+						tdiff);
 			}
 		}
 	}
