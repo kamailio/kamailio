@@ -700,7 +700,7 @@ repl:
 		}
 	}
 	if(rulep->tflags&DP_TFLAGS_PV_SUBST) {
-		re_list = dpl_dynamic_pcre_list(msg, &rulep->match_exp);
+		re_list = dpl_dynamic_pcre_list(msg, &rulep->subst_exp);
 		if(re_list==NULL) {
 			/* failed to compile dynamic pcre -- ignore */
 			LM_DBG("failed to compile dynamic pcre[%.*s]\n",
