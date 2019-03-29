@@ -1946,7 +1946,7 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 						&& lua_getinfo(L, "nSl", &dinfo)>0) {
 				LOG(cfg_get(core, core_cfg, latency_log),
 						"alert - action KSR.%s%s%s(...)"
-						" took too long [%u ms] (%s:%d - %s [%s])\n",
+						" took too long [%u us] (%s:%d - %s [%s])\n",
 						(ket->mname.len>0)?ket->mname.s:"",
 						(ket->mname.len>0)?".":"", ket->fname.s,
 						tdiff,
@@ -1957,7 +1957,7 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 			} else {
 				LOG(cfg_get(core, core_cfg, latency_log),
 						"alert - action KSR.%s%s%s(...)"
-						" took too long [%u ms]\n",
+						" took too long [%u us]\n",
 						(ket->mname.len>0)?ket->mname.s:"",
 						(ket->mname.len>0)?".":"", ket->fname.s,
 						tdiff);
