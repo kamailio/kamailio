@@ -15,6 +15,14 @@
     <path project="openSUSE:Leap:42.2:Update" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
+  <repository name="openSUSE_Leap_15.1">
+    <path project="openSUSE:Leap:15.1" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
+  <repository name="openSUSE_Leap_15.0">
+    <path project="openSUSE:Leap:15.0" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
   <repository name="RHEL_7">
     <path project="Fedora:EPEL:7" repository="RHEL"/>
     <arch>x86_64</arch>
