@@ -32,7 +32,6 @@
 #include "dprint.h"
 
 #include "ppcfg.h"
-#include "fmsg.h"
 
 typedef struct _pp_subst_rule {
 	char *indata;
@@ -185,8 +184,7 @@ int pp_subst_run(char **data)
 	i = 0;
 	while(pr)
 	{
-		sip_msg_t *fmsg = faked_msg_get_next();
-		result=subst_str(*data, fmsg,
+		result=subst_str(*data, 0,
 				(struct subst_expr*)pr->ppdata, 0); /* pkg malloc'ed result */
 		if(result!=NULL)
 		{
