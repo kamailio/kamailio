@@ -358,7 +358,7 @@ static VALUE app_ruby_pv_seti(int argc, VALUE* argv, VALUE self)
 		return Qfalse;
 	}
 
-	if(!RB_TYPE_P(argv[2], T_FIXNUM)) {
+	if(!RB_TYPE_P(argv[1], T_FIXNUM)) {
 		LM_ERR("invalid pv val parameter type\n");
 		return Qfalse;
 	}
@@ -415,7 +415,7 @@ static VALUE app_ruby_pv_sets(int argc, VALUE* argv, VALUE self)
 		return Qfalse;
 	}
 
-	if(!RB_TYPE_P(argv[2], T_FIXNUM)) {
+	if(!RB_TYPE_P(argv[1], T_STRING)) {
 		LM_ERR("invalid pv val parameter type\n");
 		return Qfalse;
 	}
@@ -605,11 +605,11 @@ static VALUE app_ruby_sr_modf(int argc, VALUE* argv, VALUE self)
 	}
 	/* first is function name, then parameters */
 	for(i=0; i<argc; i++) {
-		if(!RB_TYPE_P(argv[0], T_STRING)) {
+		if(!RB_TYPE_P(argv[i], T_STRING)) {
 			LM_ERR("invalid parameter type (%d)\n", i);
 			return INT2NUM(-1);
 		}
-		rbv[i] = (char*)StringValuePtr(argv[0]);
+		rbv[i] = (char*)StringValuePtr(argv[i]);
 	}
 	LM_ERR("request to execute cfg function '%s'\n", rbv[0]);
 	/* pkg copy only parameters */
