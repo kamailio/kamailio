@@ -71,6 +71,29 @@
 %bcond_without xmlrpc
 %endif
 
+%if 0%{?fedora} == 30
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without ims
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without mongodb
+%bcond_without perl
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without ruby
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
 %if 0%{?centos_ver} == 6
 %define dist_name centos
 %define dist_version %{?centos}
@@ -2071,7 +2094,7 @@ fi
 
 %changelog
 * Sat Mar 30 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
-  - Added support of openSUSE:Leap:15.0, openSUSE:Leap:15.1 dists
+  - Added support of openSUSE:Leap:15.0, openSUSE:Leap:15.1 and Fedora 30 dists
 * Tue Dec 11 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-1
   - Added Ruby package
 * Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-0
