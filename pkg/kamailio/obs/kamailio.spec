@@ -2085,7 +2085,7 @@ fi
 
 
 %changelog
-* Tue Feb 21 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
+* Thu Feb 21 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
   - Added secfilter package
 * Tue Dec 11 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-1
   - Added Ruby package
