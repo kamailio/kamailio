@@ -1004,6 +1004,7 @@ ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
 ln -s ../obs pkg/kamailio/opensuse/1315
 ln -s ../obs pkg/kamailio/opensuse/1330
+ln -s ../obs pkg/kamailio/opensuse/1500
 ln -s ../obs pkg/kamailio/opensuse/1550
 ln -s ../obs pkg/kamailio/centos/6
 ln -s ../obs pkg/kamailio/centos/7
@@ -2069,6 +2070,8 @@ fi
 
 
 %changelog
+* Sat Mar 30 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
+  - Added support of openSUSE:Leap:15.0, openSUSE:Leap:15.1 dists
 * Tue Dec 11 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-1
   - Added Ruby package
 * Sun Nov 04 2018 Sergey Safarov <s.safarov@gmail.com> 5.2.0-0
