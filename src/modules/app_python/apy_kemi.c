@@ -677,24 +677,29 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 {
 	sr_kemi_t *ket = NULL;
 	PyObject *ret = NULL;
-	unsigned int ms = 0;
 	PyThreadState *pstate = NULL;
 	PyFrameObject *pframe = NULL;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 
 	ket = sr_apy_kemi_export_get(idx);
 	if(ket==NULL) {
 		return sr_kemi_apy_return_false();
 	}
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-			ms = TICKS_TO_MS(get_ticks_raw());
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
 	}
 
 	ret = sr_apy_kemi_exec_func_ex(ket, self, args, idx);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
-				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+				   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			pstate = PyThreadState_GET();
 			if (pstate != NULL && pstate->frame != NULL) {
 				pframe = pstate->frame;
@@ -702,9 +707,9 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 
 			LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - action KSR.%s%s%s(...)"
-					" took too long [%u ms] (file:%s func:%s line:%d)\n",
+					" took too long [%u us] (file:%s func:%s line:%d)\n",
 					(ket->mname.len>0)?ket->mname.s:"",
-					(ket->mname.len>0)?".":"", ket->fname.s, ms,
+					(ket->mname.len>0)?".":"", ket->fname.s, tdiff,
 					(pframe)?PyString_AsString(pframe->f_code->co_filename):"",
 					(pframe)?PyString_AsString(pframe->f_code->co_name):"",
 					(pframe)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
