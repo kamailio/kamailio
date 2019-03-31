@@ -1527,7 +1527,9 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
 	int ret;
-	unsigned int ms = 0;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
@@ -1555,8 +1557,11 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	}
 
 	for (t=a; t!=0; t=t->next){
-		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
-			ms = TICKS_TO_MS(get_ticks_raw());
+
+		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+			gettimeofday(&tvb, &tz);
+		}
 		_cfg_crt_action = t;
 		if(unlikely(log_prefix_mode==1)) {
 			log_prefix_set(msg);
@@ -1566,16 +1571,19 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		if(unlikely(log_prefix_mode==1)) {
 			log_prefix_set(msg);
 		}
-		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-			ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-			if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {
+		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+			gettimeofday(&tve, &tz);
+			tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+					   + (tve.tv_usec - tvb.tv_usec);
+			if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 				LOG(cfg_get(core, core_cfg, latency_log),
 						"alert - action [%s (%d)]"
-						" cfg [%s:%d] took too long [%u ms]\n",
+						" cfg [%s:%d] took too long [%u us]\n",
 						is_mod_func(t) ?
 							((cmd_export_t*)(t->val[0].u.data))->name
 							: "corefunc",
-						t->type, (t->cfile)?t->cfile:"", t->cline, ms);
+						t->type, (t->cfile)?t->cfile:"", t->cline, tdiff);
 			}
 		}
 		/* break, return or drop/exit stop execution of the current
