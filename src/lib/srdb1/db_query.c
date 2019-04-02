@@ -47,14 +47,14 @@ static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
 	int ret;
 	unsigned int ms = 0;
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0))
 		ms = TICKS_TO_MS(get_ticks_raw());
 
 	ret = submit_query(_h, _query);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0)) {
 		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {
+		if(ms >= cfg_get(core, core_cfg, latency_limit_db)) {
 				LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - query execution too long [%u ms] for [%.*s]\n",
 				   ms, _query->len<50?_query->len:50, _query->s);
