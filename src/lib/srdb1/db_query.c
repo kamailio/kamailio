@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "../../core/dprint.h"
 #include "db_ut.h"
 #include "db_query.h"
@@ -45,19 +46,26 @@ static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
 		int (*submit_query)(const db1_con_t*, const str*))
 {
 	int ret;
-	unsigned int ms = 0;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0))
-		ms = TICKS_TO_MS(get_ticks_raw());
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
+	}
 
 	ret = submit_query(_h, _query);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0)) {
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if(ms >= cfg_get(core, core_cfg, latency_limit_db)) {
-				LOG(cfg_get(core, core_cfg, latency_log),
-					"alert - query execution too long [%u ms] for [%.*s]\n",
-				   ms, _query->len<50?_query->len:50, _query->s);
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_db)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+					   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_db)) {
+			LOG(cfg_get(core, core_cfg, latency_log),
+					"alert - query execution too long [%u us] for [%.*s]\n",
+				   tdiff, _query->len<100?_query->len:100, _query->s);
 		}
 	}
 
