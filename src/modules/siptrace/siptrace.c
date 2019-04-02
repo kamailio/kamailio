@@ -63,6 +63,10 @@ MODULE_VERSION
 #define SIPTRACE_ANYADDR "any:255.255.255.255:5060"
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
+#define trace_is_off(_msg)                        \
+	 ((((_msg)->msg_flags & FL_SIPTRACE) == 0) \
+		|| ((_msg->flags & trace_flag) == 0))
+
 struct tm_binds tmb;
 struct dlg_binds dlgb;
 
@@ -984,6 +988,11 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		}
 	}
 
+	if(trace_is_off(msg)) {
+		LM_DBG("trace off...\n");
+		return 1;
+	}
+
 trace_current:
 	return sip_trace(msg, &dest_info, &correlation_id_str, NULL);
 }
@@ -1129,10 +1138,6 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 #endif
 	return sip_trace_store(&sto, dst, correlation_id_str);
 }
-
-#define trace_is_off(_msg)                        \
-	 ((((_msg)->msg_flags & FL_SIPTRACE) == 0) \
-		|| ((_msg->flags & trace_flag) == 0))
 
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 {
