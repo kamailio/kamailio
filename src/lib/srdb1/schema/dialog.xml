@@ -67,7 +67,7 @@
 	<column>
 		<name>from_tag</name>
 		<type>string</type>
-		<size>&user_len;</size>
+		<size>&from_tag_len;</size>
 		<description>The tag parameter serves as a general mechanism to 
 		identify a dialog, which is the combination of the Call-ID along 
 		with two tags, one from participant in the dialog.</description>
@@ -83,7 +83,7 @@
 	<column>
 		<name>to_tag</name>
 		<type>string</type>
-		<size>&user_len;</size>
+		<size>&to_tag_len;</size>
 		<description>The tag parameter serves as a general mechanism to 
 		identify a dialog, which is the combination of the Call-ID along 
 		with two tags, one from participant in the dialog.</description>
