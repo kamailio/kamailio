@@ -208,6 +208,13 @@ Chapter 1. Admin Guide
      * The “uac_replace_*” functions can only be run once on the same SIP
        request. Try to save needed changes in a pseudovariable and apply
        them once.
+       There is also a limitation regarding the use of the
+       “msg_apply_changes()” function together with the “uac_replace_*”
+       functions for messages that are loose-routed (e.g. Re-INVITE
+       requests). In this case you need to call the “loose_route()”
+       function after the replace and msg_apply_changes. Otherwise
+       Kamailio can create replies with wrong From/To headers (e.g. for
+       the 100 - Trying reply in the Re-INVITE example).
 
 2. Dependencies
 
