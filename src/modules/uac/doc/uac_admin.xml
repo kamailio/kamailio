@@ -54,6 +54,16 @@
 				SIP request. Try to save needed changes in a pseudovariable and
 				apply them once.
 			</para>
+			<para>
+				There is also a limitation regarding the use of the
+				<quote>msg_apply_changes()</quote> function together with the
+				<quote>uac_replace_*</quote> functions for messages that are
+				loose-routed (e.g. Re-INVITE requests). In this case you need
+				to call the <quote>loose_route()</quote> function after the
+				replace and msg_apply_changes. Otherwise Kamailio can create
+				replies with wrong From/To headers (e.g. for the 100 - Trying
+				reply in the Re-INVITE example).
+			</para>
 			</listitem>
 		</itemizedlist>
 	</section>
