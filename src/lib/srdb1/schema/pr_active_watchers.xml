@@ -88,14 +88,14 @@
     <column id="to_tag">
         <name>to_tag</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&to_tag_len;</size>
         <description>TO tag</description>
     </column>
 
     <column id="from_tag">
         <name>from_tag</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&from_tag_len;</size>
         <description>From tag</description>
     </column>
 

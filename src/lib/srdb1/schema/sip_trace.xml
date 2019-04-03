@@ -107,7 +107,7 @@
     <column>
         <name>fromtag</name>
         <type>string</type>
-        <size>&id_len;</size>
+        <size>&from_tag_len;</size>
         <default/>
         <description>From tag</description>
     </column>
@@ -115,7 +115,7 @@
     <column>
         <name>totag</name>
         <type>string</type>
-        <size>&id_len;</size>
+        <size>&to_tag_len;</size>
         <default/>
         <description>To tag</description>
     </column>
