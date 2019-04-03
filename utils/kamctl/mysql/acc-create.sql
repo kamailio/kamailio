@@ -1,8 +1,8 @@
 CREATE TABLE `acc` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `method` VARCHAR(16) DEFAULT '' NOT NULL,
-    `from_tag` VARCHAR(64) DEFAULT '' NOT NULL,
-    `to_tag` VARCHAR(64) DEFAULT '' NOT NULL,
+    `from_tag` VARCHAR(128) DEFAULT '' NOT NULL,
+    `to_tag` VARCHAR(128) DEFAULT '' NOT NULL,
     `callid` VARCHAR(255) DEFAULT '' NOT NULL,
     `sip_code` VARCHAR(3) DEFAULT '' NOT NULL,
     `sip_reason` VARCHAR(128) DEFAULT '' NOT NULL,
@@ -27,8 +27,8 @@ INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
 CREATE TABLE `missed_calls` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `method` VARCHAR(16) DEFAULT '' NOT NULL,
-    `from_tag` VARCHAR(64) DEFAULT '' NOT NULL,
-    `to_tag` VARCHAR(64) DEFAULT '' NOT NULL,
+    `from_tag` VARCHAR(128) DEFAULT '' NOT NULL,
+    `to_tag` VARCHAR(128) DEFAULT '' NOT NULL,
     `callid` VARCHAR(255) DEFAULT '' NOT NULL,
     `sip_code` VARCHAR(3) DEFAULT '' NOT NULL,
     `sip_reason` VARCHAR(128) DEFAULT '' NOT NULL,

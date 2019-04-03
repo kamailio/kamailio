@@ -9,8 +9,8 @@ CREATE TABLE sip_trace (
     status VARCHAR2(128) DEFAULT '',
     fromip VARCHAR2(50) DEFAULT '',
     toip VARCHAR2(50) DEFAULT '',
-    fromtag VARCHAR2(64) DEFAULT '',
-    totag VARCHAR2(64) DEFAULT '',
+    fromtag VARCHAR2(128) DEFAULT '',
+    totag VARCHAR2(128) DEFAULT '',
     direction VARCHAR2(4) DEFAULT ''
 );
 
