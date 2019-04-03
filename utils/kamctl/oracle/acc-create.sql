@@ -1,8 +1,8 @@
 CREATE TABLE acc (
     id NUMBER(10) PRIMARY KEY,
     method VARCHAR2(16) DEFAULT '',
-    from_tag VARCHAR2(64) DEFAULT '',
-    to_tag VARCHAR2(64) DEFAULT '',
+    from_tag VARCHAR2(128) DEFAULT '',
+    to_tag VARCHAR2(128) DEFAULT '',
     callid VARCHAR2(255) DEFAULT '',
     sip_code VARCHAR2(3) DEFAULT '',
     sip_reason VARCHAR2(128) DEFAULT '',
@@ -43,8 +43,8 @@ INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
 CREATE TABLE missed_calls (
     id NUMBER(10) PRIMARY KEY,
     method VARCHAR2(16) DEFAULT '',
-    from_tag VARCHAR2(64) DEFAULT '',
-    to_tag VARCHAR2(64) DEFAULT '',
+    from_tag VARCHAR2(128) DEFAULT '',
+    to_tag VARCHAR2(128) DEFAULT '',
     callid VARCHAR2(255) DEFAULT '',
     sip_code VARCHAR2(3) DEFAULT '',
     sip_reason VARCHAR2(128) DEFAULT '',
