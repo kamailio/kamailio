@@ -289,13 +289,15 @@ int pv_get_timeb(struct sip_msg *msg, pv_param_t *param,
 }
 
 static struct timeval _timeval_ts = {0};
-static char _timeval_ts_buf[32];
+static char _timeval_ts_buf[64];
 
 int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct timeval tv;
 	str s;
+	struct tm lt;
+	char lbuf[64];
 
 	if(msg==NULL || param==NULL)
 		return -1;
@@ -320,12 +322,29 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 				LM_ERR("unable to get time val attributes\n");
 				return pv_get_null(msg, param, res);
 			}
-			s.len = snprintf(_timeval_ts_buf, 32, "%u.%06u",
+			s.len = snprintf(_timeval_ts_buf, 64, "%u.%06u",
 					(unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
 			if(s.len<0)
 				return pv_get_null(msg, param, res);
 			s.s = _timeval_ts_buf;
 			return pv_get_strval(msg, param, res, &s);
+		case 5:
+			if(gettimeofday(&tv, NULL)!=0) {
+				LM_ERR("unable to get time val attributes\n");
+				return pv_get_null(msg, param, res);
+			}
+			(void)localtime_r(&tv.tv_sec, &lt);
+			if (strftime(lbuf, sizeof(lbuf), "%Y-%m-%d %H:%M:%S", &lt) == 0) {
+				LM_ERR("failed to format current time\n");
+				return pv_get_null(msg, param, res);
+			}
+			s.len = snprintf(_timeval_ts_buf, 64, "%s.%06u",
+					lbuf, (unsigned int)tv.tv_usec);
+			if(s.len<0)
+				return pv_get_null(msg, param, res);
+			s.s = _timeval_ts_buf;
+			return pv_get_strval(msg, param, res, &s);
+
 		default:
 			msg_set_time(msg);
 			return pv_get_uintval(msg, param, res, (unsigned int)msg->tval.tv_sec);
@@ -353,6 +372,8 @@ int pv_parse_timeval_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else if(strncmp(in->s, "Sn", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "Fn", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
 		break;
 		default:
