@@ -67,6 +67,9 @@ MODULE_VERSION
 	 ((((_msg)->msg_flags & FL_SIPTRACE) == 0) \
 		|| ((_msg->flags & trace_flag) == 0))
 
+#define is_null_pv(_str) \
+	(!str_strcmp(&_str, &null_pv_value_str))
+
 struct tm_binds tmb;
 struct dlg_binds dlgb;
 
@@ -132,6 +135,8 @@ static str totag_column = str_init("totag");			 /* 11 */
 
 static str siptrace_info_dlgkey = str_init("__siptrace_info_dlg_key__");
 static str siptrace_info_avp_str = str_init("$avp(__siptrace_info_avp__)");
+
+static str null_pv_value_str = str_init("<null>");
 
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
@@ -732,7 +737,7 @@ static int fixup_siptrace(void **param, int param_no)
 
 	if (param_no == 1 || param_no == 2) {
 		/* correlation id */
-		return fixup_spve_spve(param, param_no);
+		return fixup_spve_all(param, param_no);
 	} else if (param_no == 3) {
 		/* tracing type; string only */
 		sflags.s = (char *)*param;
@@ -884,21 +889,30 @@ static int w_sip_trace2(sip_msg_t *msg, char *dest, char *correlation_id)
 
 static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *trace_type_p)
 {
-	str dup_uri_str = {0, 0};
+	str dup_uri_param_str = {0, 0};
 	str correlation_id_str = {0, 0};
 	dest_info_t dest_info;
 	enum siptrace_type_t trace_type;
 	siptrace_info_t* info;
 
 	if (dest) {
-		if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_str) != 0) {
+		if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_param_str) != 0) {
 			LM_ERR("unable to parse the dest URI string\n");
 			return -1;
 		}
 	}
 
-	/* if arg dest uri is null  dup_uri_str will have length 0 and global dup_uri will be used */
-	if (parse_siptrace_uri(&dup_uri_str, &dest_info) < 0) {
+	if (dup_uri_param_str.s == 0 || (is_null_pv(dup_uri_param_str))) {
+		if (dup_uri_str.s == 0 || dup_uri_str.len == 0) {
+			LM_ERR("no duplicate_uri modparam nor duplicate uri sip_trace() argument provided!\n");
+			return -1;
+		}
+
+		dup_uri_param_str = dup_uri_str;
+	}
+
+	/* if arg dest uri is null  dup_uri_param_str will have length 0 and global dup_uri will be used */
+	if (parse_siptrace_uri(&dup_uri_param_str, &dest_info) < 0) {
 		LM_ERR("failed to parse uri!\n");
 		return -1;
 	}
