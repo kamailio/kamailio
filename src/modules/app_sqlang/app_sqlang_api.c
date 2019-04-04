@@ -1448,9 +1448,36 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 int sr_kemi_sqlang_exec_func(HSQUIRRELVM J, int eidx)
 {
 	sr_kemi_t *ket;
+	int ret;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 
 	ket = sr_kemi_sqlang_export_get(eidx);
-	return sr_kemi_sqlang_exec_func_ex(J, ket);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
+	}
+
+	ret = sr_kemi_sqlang_exec_func_ex(J, ket);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+				   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
+			LOG(cfg_get(core, core_cfg, latency_log),
+						"alert - action KSR.%s%s%s(...)"
+						" took too long [%u us]\n",
+						(ket->mname.len>0)?ket->mname.s:"",
+						(ket->mname.len>0)?".":"", ket->fname.s,
+						tdiff);
+		}
+	}
+
+	return ret;
 }
 
 /**
