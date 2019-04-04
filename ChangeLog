@@ -2,6 +2,32 @@
 
 ===================== Changes Since Version 5.0.7 ===========================
 
+commit 17dab52919e161e0820a835771ee63ffd20cf57c (HEAD -> 5.0)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 22 04:34:26 2019 +0100
+
+    dialog: parse headers for request and transfer reply for errors
+
+    (cherry picked from commit 4e1ebc6b446e6264f91c96deaed0548de353d731)
+    (cherry picked from commit b4df4fc4b0401b522b7fce516e286aec85d4ad96)
+    (cherry picked from commit 5e7201ef86ab6152034989728272204ef02a4685)
+
+commit a32b6da224872bb831ff3014ad553336c7d295cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 22 04:17:23 2019 +0100
+
+    dialog: parse tm callback reply in early phase to detect broken format
+
+    (cherry picked from commit 6b9837c30f9d2a2ca937d7e6d8c1c496fe4d7d30)
+    (cherry picked from commit c2995f731ab3a94f302af63bdad9c3bf61d4e995)
+    (cherry picked from commit a9fb58a83ec8738a371d6be995d457b88e16a2f4)
+
+commit 56696a65fb69940ffe9f8aeff6a90b37826393e7 (origin/5.0)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 4 12:10:06 2019 +0200
+
+    ChangeLog: content updated for v5.0.8
+
 commit 36a7fc87e3523de23d3af3523fb08c41596543c2
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Apr 4 12:07:25 2019 +0200
