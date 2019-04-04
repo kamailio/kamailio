@@ -10,6 +10,12 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
+Edited by
+
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
    Copyright © 2005-2014 Juha Heinanen
      __________________________________________________________________
 
@@ -1234,9 +1240,13 @@ if (to_any_gw("192.55.66.2", 1)) {
 5.3. lcr.dump_rules
 
    Causes lcr module to dump the contents of its in-memory lcr_rule and
-   lcr_rule_target tables.
+   lcr_rule_target tables. Rules can be filetered by lcr_id or lcr_id and
+   prefix. The filters are passed as optional parameters.
 
-   Parameters: none
+   Parameters:
+     * lcr_id filter rules based on lcr_id.
+     * prefix filter rules based on prefix (prefixes shorter or equal to
+       the give prefix) in addition to the previous lcr_id parameter.
 
    Example 1.60. lcr.dump_rules RPC example
                 $ kamcmd lcr.dump_rules
