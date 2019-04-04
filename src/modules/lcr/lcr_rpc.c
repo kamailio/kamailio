@@ -126,18 +126,36 @@ static const char *dump_rules_doc[2] = {
 static void dump_rules(rpc_t *rpc, void *c)
 {
 	int i, j;
+	int _filter_by_prefix = 0;
+	int _lcr_id = 0;
+	str _prefix = {NULL,0};
 	struct rule_info **rules, *rule;
 	struct target *t;
 	void *st;
 	str prefix, from_uri, request_uri;
 
+	if (rpc->scan(c, "d", &_lcr_id)>0) {
+		if (rpc->scan(c, ".S", &_prefix)>0) {
+			_filter_by_prefix = 1;
+		}
+	}
+
 	for(j = 1; j <= lcr_count_param; j++) {
+
+		if (_lcr_id && _lcr_id!=j) continue;
 
 		rules = rule_pt[j];
 
 		for(i = 0; i < lcr_rule_hash_size_param; i++) {
 			rule = rules[i];
 			while(rule) {
+				if (_filter_by_prefix && _prefix.len && _prefix.s) {
+					if (_prefix.len < rule->prefix_len ||
+						strncmp(_prefix.s, rule->prefix,  rule->prefix_len)!=0) {
+						rule = rule->next;
+						continue;
+					}
+				}
 				if(rpc->add(c, "{", &st) < 0)
 					return;
 				prefix.s = rule->prefix;
@@ -160,6 +178,8 @@ static void dump_rules(rpc_t *rpc, void *c)
 				rule = rule->next;
 			}
 		}
+		if (_filter_by_prefix)
+			continue;
 		rule = rules[lcr_rule_hash_size_param];
 		while(rule) {
 			rpc->add(c, "d", rule->prefix_len);

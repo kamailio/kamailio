@@ -1641,8 +1641,20 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<para>
 			Causes lcr module to dump the contents of its
 			in-memory lcr_rule and lcr_rule_target tables.
+			Rules can be filetered by lcr_id or lcr_id and prefix.
+			The filters are passed as optional parameters.
 		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>lcr_id</emphasis> filter rules based on lcr_id.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>prefix</emphasis> filter rules based on prefix
+			(prefixes shorter or equal to the give prefix) in addition
+			to the previous lcr_id parameter.
+			</para></listitem>
+		</itemizedlist>
  		<example>
 		<title><function>lcr.dump_rules</function> RPC example</title>
         <programlisting  format="linespecific">
