@@ -969,7 +969,7 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		info->correlation_id = correlation_id_str;
 		if (dest) {
 			info->uriState = STRACE_RAW_URI;
-			info->u.dup_uri = dup_uri_str;
+			info->u.dup_uri = dup_uri_param_str;
 		} else {
 			info->uriState = STRACE_UNUSED_URI;
 		}
