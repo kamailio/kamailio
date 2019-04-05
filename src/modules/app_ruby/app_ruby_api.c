@@ -745,23 +745,19 @@ static VALUE ksr_ruby_exec_callback(VALUE ptr)
 }
 
 /**
- * 
+ *
  */
-VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
+VALUE sr_kemi_ruby_exec_func_ex(ksr_ruby_context_t *R, sr_kemi_t *ket, int argc,
 		VALUE* argv, VALUE self)
 {
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
 	sr_ruby_env_t *env_R;
-	sr_kemi_t *ket;
 	str *fname;
 	str *mname;
 	int i;
 	int ret = -1;
 
 	env_R = app_ruby_sr_env_get();
-	ket = sr_kemi_ruby_export_get(eidx);
-
-	LM_DBG("executing %p eidx %d\n", ket, eidx);
 	if(env_R==NULL || env_R->msg==NULL || ket==NULL) {
 		LM_ERR("invalid ruby environment attributes or parameters\n");
 		return Qfalse;
@@ -1033,6 +1029,47 @@ VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
 					fname->len, fname->s);
 			return Qfalse;
 	}
+}
+
+/**
+ *
+ */
+VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
+		VALUE* argv, VALUE self)
+{
+	sr_kemi_t *ket;
+	int ret;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
+
+	ket = sr_kemi_ruby_export_get(eidx);
+
+	LM_DBG("executing %p eidx %d\n", ket, eidx);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
+	}
+
+	ret = sr_kemi_ruby_exec_func_ex(R, ket, argc, argv, self);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+				   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
+			LOG(cfg_get(core, core_cfg, latency_log),
+						"alert - action KSR.%s%s%s(...)"
+						" took too long [%u us]\n",
+						(ket->mname.len>0)?ket->mname.s:"",
+						(ket->mname.len>0)?".":"", ket->fname.s,
+						tdiff);
+		}
+	}
+
+	return ret;
 }
 
 /**
