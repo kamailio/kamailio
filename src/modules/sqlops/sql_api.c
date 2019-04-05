@@ -161,7 +161,7 @@ int sql_connect(int mode)
 		sc->dbh = sc->dbf.init(&sc->db_url);
 		if (sc->dbh==NULL)
 		{
-			if(mode) {
+			if(!mode) {
 				LM_ERR("failed to connect to the database [%.*s]\n",
 						sc->name.len, sc->name.s);
 				return -1;
