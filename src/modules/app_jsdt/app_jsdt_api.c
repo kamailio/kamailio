@@ -1337,29 +1337,34 @@ int sr_kemi_jsdt_exec_func(duk_context *J, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	unsigned int ms = 0;
+	struct timeval tvb, tve;
+	struct timezone tz;
+	unsigned int tdiff;
 	int sline = 0;
 
 	ket = sr_kemi_jsdt_export_get(eidx);
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-			ms = TICKS_TO_MS(get_ticks_raw());
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tvb, &tz);
 	}
 
 	ret = sr_kemi_jsdt_exec_func_ex(J, ket);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if(ms >= cfg_get(core, core_cfg, latency_limit_action)
-				&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
+		gettimeofday(&tve, &tz);
+		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
+				   + (tve.tv_usec - tvb.tv_usec);
+		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			duk_inspect_callstack_entry(J, -1);
 			duk_get_prop_string(J, -1, "lineNumber");
 			sline = (int)duk_to_int(J, -1);
 			duk_pop_2(J);
 			LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - action KSR.%s%s%s(...)"
-					" took too long [%u ms] (line: %d)\n",
+					" took too long [%u us] (line: %d)\n",
 					(ket->mname.len>0)?ket->mname.s:"",
-					(ket->mname.len>0)?".":"", ket->fname.s, ms, sline);
+					(ket->mname.len>0)?".":"", ket->fname.s, tdiff, sline);
 		}
 	}
 
