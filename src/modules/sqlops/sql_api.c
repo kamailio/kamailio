@@ -143,6 +143,7 @@ int sql_connect(int mode)
 {
 	sql_con_t *sc;
 	sc = _sql_con_root;
+	LM_DBG("trying to connect to database with mode %d\n", mode);
 	while(sc)
 	{
 		if (db_bind_mod(&sc->db_url, &sc->dbf))
