@@ -268,14 +268,13 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 
 	/* either modparam dup_uri or siptrace param dst2 */
 	if((dup_uri_str.s == 0 || dup_uri == NULL) && (dst2 == NULL)) {
-		LM_INFO("XXX: here s where we've got problems!\n");
+		LM_WARN("Neither dup_uri modparam or siptrace destination uri param used!\n");
 		return 0;
 	}
 
 	init_dest_info(&dst);
 
 	if(!dst2) {
-		LM_INFO("XXX: using default dup uri!\n");
 		/* create a temporary proxy from dst param */
 		dst.proto = PROTO_UDP;
 		p = mk_proxy(&dup_uri->host,
