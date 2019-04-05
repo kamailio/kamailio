@@ -750,6 +750,10 @@ static int fixup_siptrace(void **param, int param_no)
 		}
 
 		*param = pkg_malloc(sizeof(trace_type));
+		if (*param == NULL) {
+			LM_ERR("no more pkg memory!\n");
+			return -1;
+		}
 		memcpy(*param, &trace_type, sizeof(trace_type));
 	}
 
@@ -758,11 +762,9 @@ static int fixup_siptrace(void **param, int param_no)
 
 
 /**
- * TODO TODO TODO:
  *
  * parse_siptrace_uri (to replace siptrace_fixup and ki_sip_trace_dst_cid beginning)
  * parse_siptrace_type
- *
  *
  */
 
@@ -1535,7 +1537,6 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 
 	if (info->uriState == STRACE_RAW_URI) {
 		LM_BUG("uriState must be either UNUSED or PARSED here! must be a bug! Message won't be traced!\n");
-		abort();
 		return;
 	}
 
