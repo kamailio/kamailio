@@ -583,15 +583,16 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
 			</para>
 		<example>
 		<title><function>sdp_get_address_family</function>usage</title>
-		<programlisting format="linespecific">
-	...
-	if(is_method("INVITE") && has_body("application/sdp")){
-
-		$avp(af) = sdp_get_address_family();
-		xlog("L_INFO","ADDRESS FAMILY OF SDP C line $avp(af) ");
-	}
-	...
-	</programlisting>
+		<programlisting>
+<![CDATA[
+...
+if(is_method("INVITE") && has_body("application/sdp")){
+	$avp(af) = sdp_get_address_family();
+	xlog("L_INFO","ADDRESS FAMILY OF SDP C line $avp(af) ");
+}
+...
+]]>
+		</programlisting>
 			</example>
 	</section>
 
