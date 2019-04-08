@@ -812,6 +812,14 @@ void ws_keepalive(unsigned int ticks, void *param)
 			if(wsc->state == WS_S_CLOSING || wsc->awaiting_pong) {
 				LM_WARN("forcibly closing connection\n");
 				wsconn_close_now(wsc);
+			} else if (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_CONCHECK) {
+				tcp_connection_t *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+				if(con==NULL) {
+					LM_INFO("tcp connection has been lost\n");
+					wsc->state = WS_S_CLOSING;
+				} else {
+					tcpconn_put(con);
+				}
 			} else {
 				int opcode = (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
 								 ? OPCODE_PING
