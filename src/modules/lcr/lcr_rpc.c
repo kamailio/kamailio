@@ -131,7 +131,9 @@ static void dump_rules(rpc_t *rpc, void *c)
 	str _prefix = {NULL,0};
 	struct rule_info **rules, *rule;
 	struct target *t;
-	void *st;
+	void *rec = NULL;
+	void *srec = NULL;
+	void *st, *sst, *ssst;
 	str prefix, from_uri, request_uri;
 
 	if (rpc->scan(c, "d", &_lcr_id)>0) {
@@ -156,7 +158,14 @@ static void dump_rules(rpc_t *rpc, void *c)
 						continue;
 					}
 				}
-				if(rpc->add(c, "{", &st) < 0)
+				if (srec==NULL) {
+					/* We create one array per lcr_id */
+					if(rpc->add(c, "{", &rec) < 0)
+						return;
+					if(rpc->struct_add(rec, "[", "rule", &srec) < 0)
+						return;
+				}
+				if(rpc->array_add(srec, "{", &st) < 0)
 					return;
 				prefix.s = rule->prefix;
 				prefix.len = rule->prefix_len;
@@ -168,24 +177,37 @@ static void dump_rules(rpc_t *rpc, void *c)
 						rule->rule_id, "prefix", &prefix, "from_uri", &from_uri,
 						"request_uri", &request_uri, "stopper", rule->stopper);
 				t = rule->targets;
-				while(t) {
-					if(rpc->add(c, "{", &st) < 0)
+				if (t) {
+					if (rpc->struct_add(st, "[", "gw", &sst) < 0)
 						return;
-					rpc->struct_add(st, "ddd", "gw_index", t->gw_index,
-							"priority", t->priority, "weight", t->weight);
-					t = t->next;
+					while(t) {
+						if (rpc->array_add(sst, "{", &ssst) < 0)
+							return;
+						rpc->struct_add(ssst, "ddd", "gw_index", t->gw_index,
+								"priority", t->priority, "weight", t->weight);
+						t = t->next;
+					}
 				}
 				rule = rule->next;
 			}
 		}
+
+		/* Mark the end of rule array */
+		srec = NULL;
+
 		if (_filter_by_prefix)
 			continue;
 		rule = rules[lcr_rule_hash_size_param];
-		while(rule) {
-			rpc->add(c, "d", rule->prefix_len);
-			rule = rule->next;
+		if (rule) {
+			if(rpc->struct_add(rec, "[", "prefix_len", &st) < 0)
+				return;
+			while(rule) {
+				rpc->array_add(st, "d", rule->prefix_len);
+				rule = rule->next;
+			}
 		}
 	}
+	if (rec==NULL) rpc->fault(c, 404, "Empty reply");
 }
 
 
