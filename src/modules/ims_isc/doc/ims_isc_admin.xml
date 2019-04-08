@@ -163,6 +163,14 @@ modparam("ims_isc", "add_p_served_user", 1)
       <para>A positive return code (1) means that the REGISTER message has 
       matched to Initial Filter Criteria and is armed for routing.</para>
 
+      <para>This function handles also the Service Info (if sent by the
+      HSS), the InsertRegisterRequest flag (if sent by the HSS) or the
+      InsertRegisterResponse flag (if sent by the HSS). Either the Service
+      Info OR the original REGISTER request OR the original REGISTER
+      response is added to the body of the REGISTER message, before it is
+      forwarded to the relevant Application Server. Multipart body is not
+      supported in this case.</para>
+ 
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
