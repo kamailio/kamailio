@@ -1678,3 +1678,13 @@ int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
 	setsflagsval(sfbk);
 	return ret;
 }
+
+/**
+ *
+ */
+int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
+		int rtype, str *ename, str *edata)
+{
+	sr_kemi_act_ctx_set(ctx);
+	return sr_kemi_route(keng, msg, rtype, ename, edata);
+}
