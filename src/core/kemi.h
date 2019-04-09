@@ -146,5 +146,7 @@ int sr_kemi_core_set_drop(sip_msg_t *msg);
 
 int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
 		str *ename, str *edata);
+int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
+		int rtype, str *ename, str *edata);
 
 #endif
