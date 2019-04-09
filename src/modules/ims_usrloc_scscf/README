@@ -1,0 +1,436 @@
+IMS Usrloc SCSCF Module
+
+Jason Penton
+
+   Smile Communications
+
+Edited by
+
+Richard Good
+
+   Smile Communications
+
+Edited by
+
+Yasin Caner
+
+   Copyright © 2012 Smile Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. db_mode (string)
+              3.3. maxcontact (int)
+              3.4. maxcontact_3gpp (int)
+              3.5. maxcontact_behaviour (int)
+              3.6. max_subscribes(int)
+              3.7. sub_dialog_hash_size(int)
+              3.8. timer_procs(int)
+              3.9. timer_interval (int)
+              3.10. desc_time_order (int)
+              3.11. matching_mode (int)
+              3.12. cseq_delay (int)
+              3.13. fetch_rows(int)
+              3.14. hash_size (string)
+              3.15. subs_hash_size (int)
+              3.16. contacts_hash_size (integer)
+              3.17. nat_bflag (integer)
+              3.18. contact_delete_delay (int)
+              3.19. support_wildcardPSI (int)
+              3.20. unreg_validity (int)
+              3.21. user_data_xsd (string)
+
+        4. RPC Commands
+
+              4.1. ulscscf.status
+              4.2. ulscscf.showimpu
+              4.3. ulscscf.snapshot
+
+   2. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set db_urlparameter
+   1.2. Set db_mode(int)
+   1.3. Set maxcontactparameter
+   1.4. Set maxcontact_3gppparameter
+   1.5. Set maxcontact_behaviour parameter
+   1.6. Set subscription_expires_rangeparameter
+   1.7. Setsub_dialog_hash_sizeparameter
+   1.8. Settimer_procsparameter
+   1.9. Set timer_intervalparameter
+   1.10. Set desc_time_orderparameter
+   1.11. Set matching_modeparameter
+   1.12. Set scscf_nameparameter
+   1.13. Set fetch_rowsparameter
+   1.14. Set hash_sizeparameter
+   1.15. Set subs_hash_sizeparameter
+   1.16. Set contacts_hash_sizeparameter
+   1.17. Set nat_bflagparameter
+   1.18. Set contact_delete_delayparameter
+   1.19. Set support_wildcardPSI parameter
+   1.20. Set unreg_validity parameter
+   1.21. Set unreg_validity parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. db_mode (string)
+        3.3. maxcontact (int)
+        3.4. maxcontact_3gpp (int)
+        3.5. maxcontact_behaviour (int)
+        3.6. max_subscribes(int)
+        3.7. sub_dialog_hash_size(int)
+        3.8. timer_procs(int)
+        3.9. timer_interval (int)
+        3.10. desc_time_order (int)
+        3.11. matching_mode (int)
+        3.12. cseq_delay (int)
+        3.13. fetch_rows(int)
+        3.14. hash_size (string)
+        3.15. subs_hash_size (int)
+        3.16. contacts_hash_size (integer)
+        3.17. nat_bflag (integer)
+        3.18. contact_delete_delay (int)
+        3.19. support_wildcardPSI (int)
+        3.20. unreg_validity (int)
+        3.21. user_data_xsd (string)
+
+   4. RPC Commands
+
+        4.1. ulscscf.status
+        4.2. ulscscf.showimpu
+        4.3. ulscscf.snapshot
+
+1. Overview
+
+   This module serves as a storage engine for SCSCF contacts, much like
+   the standard Kamailio module that is usrloc, is a storage engine for
+   standard SIP contacts.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * TM
+     * Presence
+     * IMS dialog
+
+3. Parameters
+
+   3.1. db_url (string)
+   3.2. db_mode (string)
+   3.3. maxcontact (int)
+   3.4. maxcontact_3gpp (int)
+   3.5. maxcontact_behaviour (int)
+   3.6. max_subscribes(int)
+   3.7. sub_dialog_hash_size(int)
+   3.8. timer_procs(int)
+   3.9. timer_interval (int)
+   3.10. desc_time_order (int)
+   3.11. matching_mode (int)
+   3.12. cseq_delay (int)
+   3.13. fetch_rows(int)
+   3.14. hash_size (string)
+   3.15. subs_hash_size (int)
+   3.16. contacts_hash_size (integer)
+   3.17. nat_bflag (integer)
+   3.18. contact_delete_delay (int)
+   3.19. support_wildcardPSI (int)
+   3.20. unreg_validity (int)
+   3.21. user_data_xsd (string)
+
+3.1. db_url (string)
+
+   database URL for storing impu/contacts records
+
+   Example 1.1. Set db_urlparameter
+        modparam("ims_usrloc_scscf", "db_url", "mysql//username:password@localho
+st/scscf")
+
+3.2. db_mode (string)
+
+   This is the database mode to be used for the SCSCF usrloc data
+   persistent storage. Currently this module supports the Write-Back
+   scheme only.
+     * 0 - This disables database completely. Only memory will be used.
+       Contacts will not survive restart.
+     * 1 - Write-Backend scheme. All changes are made to memory and
+       database synchronization is done in the timer
+
+   Default value is 0.
+
+   Example 1.2. Set db_mode(int)
+...
+        modparam("ims_usrloc_scscf", "db_mode", 1)
+
+3.3. maxcontact (int)
+
+   The parameter can be used to limit the number of contact for each impu
+
+   Default value is 0(max)
+
+   Example 1.3. Set maxcontactparameter
+...
+        modparam("ims_usrloc_scscf", "maxcontact", 10)
+
+3.4. maxcontact_3gpp (int)
+
+   The parameter can be used to limit the number of 3GPP contact for each
+   impu
+
+   Default value is 0.(max)
+
+   Example 1.4. Set maxcontact_3gppparameter
+...
+        modparam("ims_usrloc_scscf", "maxcontact_3gpp", 0)
+
+3.5. maxcontact_behaviour (int)
+
+   Behaviour of usrloc , after impu reach max contacts limit.
+     * 0 - Disabled
+     * 1 - Reject after reaching limit.
+     * 2 - Overwrite
+
+   Default value is 0.
+
+   Example 1.5. Set maxcontact_behaviour parameter
+...
+        modparam("ims_usrloc_scscf", "maxcontact_behaviour", 2)
+
+3.6. max_subscribes(int)
+
+   Max number of subscribes allowed per watcher for each IMPU
+
+   Default value is 0.
+
+   Example 1.6. Set subscription_expires_rangeparameter
+...
+        modparam("ims_usrloc_scscf", "max_subscribes", 2)
+
+3.7. sub_dialog_hash_size(int)
+
+   Subscriber dialog hash table size
+
+   Default value is 10.
+
+   Example 1.7. Setsub_dialog_hash_sizeparameter
+...
+        modparam("ims_usrloc_scscf", "sub_dialog_hash_size", 512)
+
+3.8. timer_procs(int)
+
+   process number of handling registeration
+
+   Default value is 0
+
+   Example 1.8. Settimer_procsparameter
+...
+        modparam("ims_usrloc_scscf", "timer_procs", 5)
+
+3.9. timer_interval (int)
+
+   Number of seconds between two timer runs. The module uses a timer to
+   delete expired contacts, synchronize with database and other tasks,
+   that need to be run periodically
+
+   Default value is 90
+
+   Example 1.9. Set timer_intervalparameter
+...
+        modparam("ims_usrloc_scscf", "timer_interval", 120)
+
+3.10. desc_time_order (int)
+
+   If the user's contacts should be kept timestamp ordered; otherwise the
+   contact will be ordered based on q value. Non 0 value means true.
+
+   Default value is timestamp ordering not enabled
+
+   Example 1.10. Set desc_time_orderparameter
+...
+        modparam("ims_usrloc_scscf", "desc_time_order", 1)
+
+3.11. matching_mode (int)
+
+   What contact matching algorithm to be used.
+     * 0 - Contact Only matching
+     * 1 - Contact and Callid Matching
+     * 2 - Contact and Path header matching
+     * 3 - Only contact IP and Port Matching
+
+   Default value is 0.
+
+   Example 1.11. Set matching_modeparameter
+...
+        modparam("ims_usrloc_scscf", "matching_mode", 0)
+
+3.12. cseq_delay (int)
+
+   Delay (in seconds) for accepting as retransmissions register requests
+   with same Call-ID and Cseq.
+
+   Default value is 20.
+
+   Example 1.12. Set scscf_nameparameter
+...
+        modparam("ims_usrloc_scscf", "cseq_delay", 20)
+
+3.13. fetch_rows(int)
+
+   The number of the rows to be fetched at once from database when loading
+   the location records.
+
+   Default value is 2000.
+
+   Example 1.13. Set fetch_rowsparameter
+...
+        modparam("ims_usrloc_scscf", "fetch_rows", 3000)
+
+3.14. hash_size (string)
+
+   The number of entries of the hash table used by usrloc
+
+   Default value 512
+
+   Example 1.14. Set hash_sizeparameter
+...
+        modparam("ims_usrloc_scscf", "hash_size", 512)
+
+3.15. subs_hash_size (int)
+
+   The number of entries of the hash table used by usrloc to store the ims
+   subscribe records
+
+   Default value 512
+
+   Example 1.15. Set subs_hash_sizeparameter
+...
+        modparam("ims_usrloc_scscf", "subs_hash_size", 512)
+
+3.16. contacts_hash_size (integer)
+
+   The number of entries of the hash table used by usrloc to store the
+   contact records
+
+   Default value is 512
+
+   Example 1.16. Set contacts_hash_sizeparameter
+...
+        modparam("ims_usrloc_scscf", "contacts_hash_size", 512)
+
+3.17. nat_bflag (integer)
+
+   NAT marker to handle natted registration
+
+   Default value is 0
+
+   Example 1.17. Set nat_bflagparameter
+        modparam("ims_usrloc_scscf", "nat_bflag", 3)
+
+3.18. contact_delete_delay (int)
+
+   If contact is put into delay delete state ,this is how long we delay
+   before deleting
+
+   Default value is 30
+
+   Example 1.18. Set contact_delete_delayparameter
+        modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
+
+3.19. support_wildcardPSI (int)
+
+   Wildcard Public-Service-Identity (RFC5002). it will be actived by
+   setting 1
+
+   Default value is 0.(disabled)
+
+   Example 1.19. Set support_wildcardPSI parameter
+        modparam("ims_usrloc_scscf", "support_wildcardPSI", 0)
+
+3.20. unreg_validity (int)
+
+   Default validity time in seconds for unregister assignment to SCSCF
+
+   Default value is 1800
+
+   Example 1.20. Set unreg_validity parameter
+        modparam("ims_usrloc_scscf", "unreg_validity", 0)
+
+3.21. user_data_xsd (string)
+
+   Default value is 1800
+
+   Example 1.21. Set unreg_validity parameter
+        modparam("ims_usrloc_scscf", "user_data_xsd", "/usr/local/etc/kamailio/C
+xDataType_Rel6.xsd")
+
+4. RPC Commands
+
+   4.1. ulscscf.status
+   4.2. ulscscf.showimpu
+   4.3. ulscscf.snapshot
+
+   Exported RPC commands.
+
+4.1. ulscscf.status
+
+4.2. ulscscf.showimpu
+
+4.3. ulscscf.snapshot
+
+Chapter 2. Frequently Asked Questions
+
+   2.1. Where can I find more about Kamailio?
+   2.2. Where can I post a question about this module?
+   2.3. How can I report a bug?
+
+   2.1.
+
+       Where can I find more about Kamailio?
+
+       Take a look at https://www.kamailio.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.kamailio.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.kamailio.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       https://github.com/kamailio/kamailio/issues.
