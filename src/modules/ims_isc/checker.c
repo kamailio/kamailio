@@ -393,6 +393,8 @@ static inline isc_match* isc_new_match(ims_filter_criteria *fc, int index) {
 				fc->application_server.service_info.len);
 	}
 	r->index = index;
+	r->include_register_request = fc->application_server.include_register_request;
+	r->include_register_response = fc->application_server.include_register_response;
 	return r;
 }
 

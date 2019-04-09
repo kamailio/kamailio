@@ -63,6 +63,20 @@ extern int isc_expires_grace; 		/**< expires value to add to the expires in the 
  	 	 	 	 	 	 	 	 	 to prevent expiration in AS */
 extern struct tm_binds isc_tmb; 	/**< Structure with pointers to tm funcs 		*/
 
+
+#define CT_NONE 0
+#define CT_SERVICE_INFO 1
+#define CT_REGISTER_REQ 2
+#define CT_REGISTER_RESP 3
+
+/** one (part of a) body for the reg event notification structure */
+/** Currently we restrict the usage of multipart bodies */
+typedef struct body {
+	char content_type;		/* Content-Type header for (one part of the) body*/
+	str content;			/* Content of (one part of the) body */
+} body_t;
+
+
 /** reg event notification structure */
 typedef struct _r_third_party_reg {
 	str req_uri;                    /* AS sip uri:  	*/
@@ -71,8 +85,8 @@ typedef struct _r_third_party_reg {
 	str pvni; 			/* Visited network id 	*/
 	str pani; 			/* Access Network info 	*/
 	str cv; 			/* Charging vector 	*/
-	str service_info;               /* Service info body */
-    str path;                       /* Path header  */
+	body_t body;			/* The body */
+	str path;                       /* Path header  */
 } r_third_party_registration;
 
 int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark, udomain_t* d);
