@@ -521,7 +521,7 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 		run_top_route(event_rt.rlist[evidx], (msg)?msg:fmsg, &ctx);
 	} else {
 		if(keng!=NULL) {
-			if(sr_kemi_route(keng, (msg)?msg:fmsg, EVENT_ROUTE,
+			if(sr_kemi_ctx_route(keng, &ctx, (msg)?msg:fmsg, EVENT_ROUTE,
 						&_tps_eventrt_callback, evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend=NULL;
