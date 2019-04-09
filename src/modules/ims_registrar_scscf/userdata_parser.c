@@ -203,6 +203,35 @@ static inline void space_trim_dup(str *dest, char *src)
 }
 
 /**
+ *      Parse a Application Server Extension.
+ * @param doc - the XML document
+ * @param node - the current node
+ * @param as - structure to fill
+ * @returns 1 on success, 0 on failure
+ */
+static int parse_application_server_extension(xmlDocPtr doc,xmlNodePtr node,ims_application_server *as)
+{
+        xmlNodePtr child;
+
+        for(child=node->children ; child ; child=child->next)
+                if (child->type==XML_ELEMENT_NODE)
+                        switch (child->name[0]) {
+                                case 'I':case 'i':      {//IncludeRegisterRequest / IncludeRegisterResponse
+                                        switch (child->name[17]) {
+                                                case 'Q':case 'q':  //IncludeRegisterRequest
+                                                        as->include_register_request = 1;
+                                                        break;
+                                                case 'S':case 's':  //IncludeRegisterResponse
+                                                        as->include_register_response = 1;
+                                                        break;
+                                        }
+                                        break;
+                                }
+                        }
+        return 1;
+}
+
+/**
  *	Parse a Application Server.
  * @param doc - the XML document
  * @param node - the current node
@@ -216,6 +245,8 @@ static int parse_application_server(xmlDocPtr doc,xmlNodePtr node,ims_applicatio
 	as->server_name.s=NULL;as->server_name.len=0;
 	as->default_handling=IFC_NO_DEFAULT_HANDLING;
 	as->service_info.s=NULL;as->service_info.len=0;
+	as->include_register_request = 0;
+	as->include_register_response = 0;
 
 	for(child=node->children ; child ; child=child->next)
 		if (child->type==XML_ELEMENT_NODE)
@@ -240,10 +271,12 @@ static int parse_application_server(xmlDocPtr doc,xmlNodePtr node,ims_applicatio
 					as->default_handling=ifc_tDefaultHandling2char(x);
 					xmlFree(x);
 					break;
+				case 'E':case 'e': //Extension
+					parse_application_server_extension(doc,child,as);
+					break;
 			}
 	return 1;
 }
-
 
 /**
  *	Parse SPT for SIP Header.
