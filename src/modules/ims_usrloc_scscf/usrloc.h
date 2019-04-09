@@ -201,6 +201,8 @@ typedef struct _ims_application_server {
     str server_name; /**< SIP URL of the app server                      */
     char default_handling; /**< enum SESSION_CONTINUED SESSION_TERMINATED 0..1 */
     str service_info; /**< optional info to be sent to AS 0..1            */
+    int include_register_request;
+    int include_register_response;
 } ims_application_server;
 
 /** Public Identity Structure */
