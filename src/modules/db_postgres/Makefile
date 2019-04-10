@@ -10,6 +10,19 @@ NAME=db_postgres.so
 # CROSS_COMPILE=true
 
 ifeq ($(CROSS_COMPILE),)
+LIBPQ_BUILDER = $(shell \
+	if pkg-config --exists libpq; then \
+		echo 'pkg-config libpq'; \
+	fi)
+ifneq ($(LIBPQ_BUILDER),)
+	DEFS += $(shell $(LIBPQ_BUILDER) --cflags)
+	LIBS += $(shell $(LIBPQ_BUILDER) --libs)
+endif
+endif
+
+ifeq ($(LIBPQ_BUILDER),)
+
+ifeq ($(CROSS_COMPILE),)
 PGCFG=$(shell which pg_config)
 endif
 
@@ -25,6 +38,8 @@ else
 		-I$(SYSBASE)/include/postgresql/8.0
 	LIBS +=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib \
 		-L$(LOCALBASE)/lib/pgsql -lpq
+endif
+
 endif
 
 #DEFS += -DPG_TEST
