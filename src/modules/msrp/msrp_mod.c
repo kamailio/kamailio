@@ -531,16 +531,13 @@ static int msrp_frame_received(sr_event_param_t *evp)
 		fmsg->rcv = *tev->rcv;
 	rtb = get_route_type();
 	set_route_type(EVENT_ROUTE);
+	init_run_actions_ctx(&ctx);
 	if(msrp_event_callback.s == NULL || msrp_event_callback.len <= 0) {
 		/* native cfg script execution */
 		rt = route_get(&event_rt, evname.s);
 		LM_DBG("executing event_route[msrp:frame-in] (%d)\n", rt);
 		if(rt >= 0 && event_rt.rlist[rt] != NULL) {
-			init_run_actions_ctx(&ctx);
 			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
-			if(ctx.run_flags & DROP_R_F) {
-				LM_DBG("exit due to 'drop' in event route\n");
-			}
 		} else {
 			LM_ERR("empty event route block for msrp handling\n");
 		}
@@ -551,11 +548,14 @@ static int msrp_frame_received(sr_event_param_t *evp)
 			LM_ERR("event callback (%s) set, but no cfg engine\n",
 					msrp_event_callback.s);
 		} else {
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
 						&msrp_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
+	}
+	if(ctx.run_flags & DROP_R_F) {
+		LM_DBG("exit due to 'drop' in event route\n");
 	}
 	set_route_type(rtb);
 	if(fmsg != NULL)
