@@ -2429,6 +2429,12 @@ int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
 int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
 		int rtype, str *ename, str *edata)
 {
+	run_act_ctx_t *bctx;
+	int ret;
+
+	bctx = sr_kemi_act_ctx_get();
 	sr_kemi_act_ctx_set(ctx);
-	return sr_kemi_route(keng, msg, rtype, ename, edata);
+	ret = sr_kemi_route(keng, msg, rtype, ename, edata);
+	sr_kemi_act_ctx_set(bctx);
+	return ret;
 }
