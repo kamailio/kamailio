@@ -495,10 +495,10 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
 	if(_tps_eventrt_outgoing>=0) {
-		run_top_route(event_rt.rlist[_tps_eventrt_outgoing], fmsg, &ctx);
+		run_top_route(event_rt.rlist[_tps_eventrt_outgoing], (msg)?msg:fmsg, &ctx);
 	} else {
 		if(keng!=NULL) {
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_ctx_route(keng, &ctx, (msg)?msg:fmsg, EVENT_ROUTE,
 						&_tps_eventrt_callback, &_tps_eventrt_name)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend=NULL;
