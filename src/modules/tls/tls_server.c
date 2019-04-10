@@ -1477,7 +1477,7 @@ int tls_run_event_routes(struct tcp_connection *c)
 	} else {
 		keng = sr_kemi_eng_get();
 		if(keng!=NULL) {
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
 						&sr_tls_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				return -1;
