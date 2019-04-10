@@ -556,7 +556,7 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 		run_top_route(event_rt.rlist[_th_eventrt_outgoing], fmsg, &ctx);
 	} else {
 		if(keng!=NULL) {
-			if(keng->froute(fmsg, EVENT_ROUTE,
+			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
 						&_th_eventrt_callback, &_th_eventrt_name)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend=NULL;
