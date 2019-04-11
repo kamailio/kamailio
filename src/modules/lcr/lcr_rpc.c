@@ -51,6 +51,8 @@ static const char *dump_gws_doc[2] = {"Dump the contents of lcr_gws table.", 0};
 static void dump_gws(rpc_t *rpc, void *c)
 {
 	void *st;
+	void *rec = NULL;
+	void *srec = NULL;
 	unsigned int i, j;
 	str scheme, gw_name, hostname, params, transport;
 	str prefix, tag;
@@ -63,7 +65,14 @@ static void dump_gws(rpc_t *rpc, void *c)
 		gws = gw_pt[j];
 
 		for(i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
-			if(rpc->add(c, "{", &st) < 0)
+			if (srec==NULL) {
+				/* We create one array per lcr_id */
+				if(rpc->add(c, "{", &rec) < 0)
+					return;
+				if(rpc->struct_add(rec, "[", "gw", &srec) < 0)
+					return;
+			}
+			if(rpc->array_add(srec, "{", &st) < 0)
 				return;
 			rpc->struct_add(st, "d", "lcr_id", j);
 			rpc->struct_add(st, "d", "gw_id", gws[i].gw_id);
