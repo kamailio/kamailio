@@ -288,14 +288,14 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_
 
 	/* extra checks */
 	if (offset>msg->len){
-		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+		LM_CRIT("offset exceeds message size (%d > %d)\n",
 					offset, msg->len);
-		abort();
+		return 0;
 	}
 	if (offset+len>msg->len){
 		LM_CRIT("offset + len exceeds message size (%d + %d > %d)\n",
 					offset, len,  msg->len);
-		abort();
+		return 0;
 	}
 	if (len==0){
 		LM_WARN("0 len (offset=%d)\n", offset);
@@ -344,9 +344,9 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_typ
 	
 	/* extra checks */
 	if (offset>msg->len){
-		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+		LM_CRIT("offset exceeds message size (%d > %d)\n",
 					offset, msg->len);
-		abort();
+		return 0;
 	}
 	if (len){
 		LM_WARN("len !=0 (%d)\n", len);
@@ -404,9 +404,9 @@ struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len, enum _hdr_ty
 	
 	/* extra checks */
 	if (offset>msg->len){
-		LM_CRIT("offset exceeds message size (%d > %d) aborting...\n",
+		LM_CRIT("offset exceeds message size (%d > %d)\n",
 					offset, msg->len);
-		abort();
+		return 0;
 	}
 	if (len){
 		LM_WARN("len !=0 (%d)\n", len);
