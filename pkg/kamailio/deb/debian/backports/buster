@@ -26,7 +26,7 @@ sed -i -e 's/ java[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
 
 # no libssl-dev 1.0
-sed -i -e 's/libssl-dev (<1.1)/libssl-dev/' ${DIST}/control
+sed -i -e 's/libssl-dev (<<1.1)/libssl-dev/' ${DIST}/control
 
 wrap-and-sort -sat -d ${DIST}
 
