@@ -25,6 +25,9 @@ sed -i -e '/^export JAVA_HOME/d' ${DIST}/rules
 sed -i -e 's/ java[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
 
+# use libssl1.0-dev
+sed -i -e 's/libssl-dev (<1.1)/libssl1.0-dev/' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

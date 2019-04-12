@@ -22,6 +22,9 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
 sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
 	${DIST}/control
 
+# use libssl1.0-dev
+sed -i -e 's/libssl-dev (<1.1)/libssl1.0-dev/' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
