@@ -933,7 +933,7 @@ int init_cdr_generation( void)
 
 	if( dlgb.register_dlgcb( 0, DLGCB_LOADED, cdr_on_load, 0, 0) != 0)
 	{
-		LM_ERR("can't register create callback\n");
+		LM_ERR("can't register on load callback\n");
 		return -1;
 	}
 
