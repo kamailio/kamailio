@@ -41,5 +41,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 /* RR callback functions */
 void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param);
 
+/* init dlg module */
+int uac_init_dlg(void);
 
 #endif
