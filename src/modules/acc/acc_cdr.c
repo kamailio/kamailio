@@ -809,7 +809,7 @@ static void cdr_on_create( struct dlg_cell* dialog,
 	}
 }
 
-/* callback for loading a dialog frm database */
+/* callback for loading a dialog from database */
 static void cdr_on_load( struct dlg_cell* dialog,
 		int type,
 		struct dlg_cb_params* params)
@@ -863,7 +863,7 @@ static void cdr_on_load( struct dlg_cell* dialog,
 		return;
 	}
 
-	LM_DBG("dialog '%p' loaded!", dialog);
+	LM_DBG("dialog '%p' loaded and callbacks registered\n", dialog);
 
 }
 
@@ -933,7 +933,7 @@ int init_cdr_generation( void)
 
 	if( dlgb.register_dlgcb( 0, DLGCB_LOADED, cdr_on_load, 0, 0) != 0)
 	{
-		LM_ERR("can't register on load callback\n");
+		LM_ERR("can't register create callback\n");
 		return -1;
 	}
 
