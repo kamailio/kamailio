@@ -295,14 +295,17 @@ static int mod_init(void)
 			/* we need the append_fromtag on in RR */
 
 			memset(&dlg_api, 0, sizeof(struct dlg_binds));
-			if (uac_restore_dlg==0 || load_dlg_api(&dlg_api)!=0) {
+			if (uac_restore_dlg==0) {
 				if (!uac_rrb.append_fromtag) {
 					LM_ERR("'append_fromtag' RR param is not enabled!"
 							" - required by AUTO restore mode\n");
 					goto error;
 				}
-				if (uac_restore_dlg!=0)
-					LM_DBG("failed to find dialog API - is dialog module loaded?\n");
+			} else {
+				if (load_dlg_api(&dlg_api)!=0) {
+					LM_ERR("failed to find dialog API - is dialog module loaded?\n");
+					goto error;
+				}
 			}
 
 			/* get all requests doing loose route */
