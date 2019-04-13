@@ -55,7 +55,7 @@ extern int_str restore_from_avp_name;
 extern unsigned short restore_to_avp_type;
 extern int_str restore_to_avp_name;
 
-extern struct dlg_binds dlg_api;
+struct dlg_binds dlg_api;
 static str from_dlgvar[] = {str_init("_uac_fu"), str_init("_uac_funew"), str_init("_uac_fdp"), str_init("_uac_fdpnew")};
 static str to_dlgvar[] = {str_init("_uac_to"), str_init("_uac_tonew"), str_init("_uac_tdp"), str_init("_uac_tdpnew")};
 
@@ -1005,4 +1005,77 @@ free2:
 
 free:
 	pkg_free(p);
+}
+
+
+/* helper function to avoid code duplication */
+static inline int uac_load_callback_helper(struct dlg_cell* dialog, unsigned int uac_flag) {
+
+	if( dlg_api.register_dlgcb(dialog, DLGCB_REQ_WITHIN,
+			(void*)(unsigned long)replace_callback, (void*)(unsigned long)uac_flag, 0) != 0) {
+		LM_ERR("can't register create dialog REQ_WITHIN callback\n");
+		return -1;
+	}
+
+	if( dlg_api.register_dlgcb(dialog, DLGCB_CONFIRMED,
+			(void*)(unsigned long)replace_callback, (void*)(unsigned long)uac_flag, 0) != 0) {
+		LM_ERR("can't register create dialog CONFIRM callback\n");
+		return -1;
+	}
+
+	if( dlg_api.register_dlgcb(dialog, DLGCB_TERMINATED,
+			(void*)(unsigned long)replace_callback, (void*)(unsigned long)uac_flag, 0) != 0) {
+		LM_ERR("can't register create dialog TERMINATED callback\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+/* callback for loading a dialog from database */
+static void uac_on_load_callback(struct dlg_cell* dialog, int type, struct dlg_cb_params* params) {
+
+	if(!dialog) {
+		LM_ERR("invalid values\n!");
+		return;
+	}
+
+	/* Note:
+	 * We don't have a way to access the real uac flags from the uac_replace_*
+	 * method call at this point in time anymore. Therefore we just install a
+	 * callback for both FROM and TO replace cases. This might be a bit
+	 * inefficient in cases where only one of the functions is used. But as
+	 * this applies only e.g. to a proxy restart with runnning dialogs, it
+	 * does not matter. The replace_callback function will just not find a
+	 * an entry in the dialog variables table and log an error.
+	 */
+	if(uac_load_callback_helper(dialog, FL_USE_UAC_FROM) != 0) {
+		LM_ERR("can't register create callbacks for UAC FROM\n");
+		return;
+	}
+	if(uac_load_callback_helper(dialog, FL_USE_UAC_TO) != 0) {
+		LM_ERR("can't register create callbacks for UAC TO\n");
+		return;
+	}
+
+	LM_DBG("dialog '%p' loaded and callbacks registered\n", dialog);
+}
+
+
+/* initialization of all necessary callbacks to track a dialog */
+int uac_init_dlg(void) {
+
+	memset(&dlg_api, 0, sizeof(struct dlg_binds));
+
+	if( load_dlg_api(&dlg_api) != 0) {
+		LM_ERR("can't load dialog API\n");
+		return -1;
+	}
+
+	if( dlg_api.register_dlgcb( 0, DLGCB_LOADED, uac_on_load_callback, 0, 0) != 0) {
+		LM_ERR("can't register on load callback\n");
+		return -1;
+	}
+	LM_DBG("loaded dialog API and registered on load callback\n");
+	return 0;
 }
