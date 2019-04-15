@@ -999,6 +999,44 @@ end
         </programlisting>
 		</example>
 	</section>
+	<section id="registrar.p.lookup_filter_mode">
+		<title><varname>lookup_filter_mode</varname> (int)</title>
+		<para>
+			Control what filters should be applied to lookup(...) operations.
+			It can be a combination (sum) of the next values:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>1</emphasis> - apply the branch flags filter - return
+				only contact records with branch flags matching at least one set
+				inside xavp specified by xavp_cfg parameter with inner name
+				rlf_bflags - e.g., $xavp(reg=&gt;rlf_bflags).
+			</para>
+		</listitem>
+	</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_cfg</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "xavp_cfg", "reg")
+modparam("registrar", "lookup_filter_mode", 1)
+...
+request_route {
+    ...
+    $xavp(reg=&gt;rlf_bflags) = 8;
+    if(lookup("location")) { ... }
+    ...
+}
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	
