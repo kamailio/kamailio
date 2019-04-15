@@ -34,6 +34,11 @@ For Debian packing, the location is like:
 /usr/lib/x86_64-linux-gnu/kamailio/openssl_mutex_shared/openssl_mutex_shared.so
 ```
 
+Note: there is no dependency on Kamailio source code, this shared object can
+be compiled and used ouside of Kamailio source tree. It uses only Kamailio's
+Makefile system to install in the same directory like the other shared objects
+installed by Kamailio.
+
 ## Usage ##
 
 Use LD_PRELOAD to tell the linker to preload this shared object before starting
