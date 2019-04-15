@@ -122,6 +122,11 @@ request_route {
 			options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
+			For OpenSSL (libssl) v1.1.x, it is required to preload
+			'openssl_mutex_shared' library shipped by &kamailio;. For more details
+			see 'src/modules/tls/openssl_mutex_shared/README.md'.
+		</para>
+		<para>
 			This module includes several workarounds for various Openssl bugs
 			(like compression and Kerberos using the wrong memory allocations
 			functions, low memory problems a.s.o). On startup it will try to enable 
