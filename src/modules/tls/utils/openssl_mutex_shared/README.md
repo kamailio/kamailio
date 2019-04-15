@@ -47,7 +47,7 @@ Kamailio.
 Example, when Kamailio was installed from sources:
 
 ```
-LD_PRELOAD=/usr/local/lib64/kamailio/openssl_mutex_shared/openssl_mutex_shared.so; \
+LD_PRELOAD=/usr/local/lib64/kamailio/openssl_mutex_shared/openssl_mutex_shared.so \
   /usr/local/sbin/kamailio -f /usr/local/etc/kamailio/kamailio.cfg
 ```
 
