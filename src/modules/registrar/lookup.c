@@ -45,6 +45,54 @@
 #include "lookup.h"
 #include "config.h"
 
+
+extern int reg_lookup_filter_mode;
+
+typedef struct reg_lookup_filter {
+	uint32_t factive;
+	uint32_t bflags;
+} reg_lookup_filter_t;
+
+static reg_lookup_filter_t _reg_lookup_filter;
+
+static void reg_lookup_filter_init(void)
+{
+	str filter_bflags = str_init("rlf_bflags");
+	sr_xavp_t *vavp = NULL;
+
+	if(reg_lookup_filter_mode==0 || reg_xavp_cfg.s==NULL) {
+		return;
+	}
+	memset(&_reg_lookup_filter, 0, sizeof(reg_lookup_filter_t));
+
+	if((reg_lookup_filter_mode & 1)
+			&& (vavp = xavp_get_child_with_ival(&reg_xavp_cfg,
+					&filter_bflags)) != NULL) {
+		if(vavp->val.v.i != 0) {
+			_reg_lookup_filter.bflags = (uint32_t)vavp->val.v.i;
+			_reg_lookup_filter.factive = 1;
+		}
+	}
+	return;
+}
+
+static int reg_lookup_filter_match(ucontact_t* ptr)
+{
+	if(reg_lookup_filter_mode==0 || reg_xavp_cfg.s==NULL) {
+		return 1;
+	}
+	if(_reg_lookup_filter.factive==0) {
+		return 1;
+	}
+	if(_reg_lookup_filter.bflags!=0) {
+		if((_reg_lookup_filter.bflags & ptr->cflags)==0) {
+			return 0;
+		}
+	}
+	return 1;
+
+}
+
 static int has_to_tag(struct sip_msg* msg)
 {
 	if (parse_to_header(msg) < 0) return 0;
@@ -223,6 +271,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	}
 
 	get_act_time();
+	reg_lookup_filter_init();
 
 	if(puri.gr.s==NULL || puri.gr_val.len>0)
 	{
@@ -251,10 +300,12 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 							break;
 						}
 					} else {
-						/* no-gruu - found by address */
-						LM_DBG("contact for [%.*s] found by address\n",
-								aor.len, ZSW(aor.s));
-						break;
+						if(reg_lookup_filter_match(ptr)) {
+							/* no-gruu - found by address */
+							LM_DBG("contact for [%.*s] found by address\n",
+									aor.len, ZSW(aor.s));
+							break;
+						}
 					}
 				} else {
 					LM_DBG("contact for [%.*s] cannot handle the SIP method\n",
@@ -417,7 +468,8 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	if (!cfg_get(registrar, registrar_cfg, append_branches)) goto done;
 
 	for( ; ptr ; ptr = ptr->next ) {
-		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
+		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)
+				&& reg_lookup_filter_match(ptr)) {
 			path_dst.len = 0;
 			if(ptr->path.s && ptr->path.len) {
 				path_str = ptr->path;

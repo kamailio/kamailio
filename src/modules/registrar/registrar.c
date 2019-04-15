@@ -135,6 +135,8 @@ str sock_hdr_name = {0,0};
 int reg_expire_event_rt = -1; /* default disabled */
 str reg_event_callback = STR_NULL;
 
+int reg_lookup_filter_mode = 0;
+
 sr_kemi_eng_t *keng = NULL;
 
 #define RCV_NAME "received"
@@ -239,6 +241,7 @@ static param_export_t params[] = {
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
 	{"contact_max_size",   INT_PARAM, &contact_max_size					},
 	{"event_callback",     PARAM_STR, &reg_event_callback				},
+	{"lookup_filter_mode", INT_PARAM, &reg_lookup_filter_mode			},
 	{0, 0, 0}
 };
 
