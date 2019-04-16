@@ -108,6 +108,8 @@ sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
 int xavp_serialize_fields(str *rname, char *obuf, int olen);
 
+int xavp_set_child_ival(str *rname, str *cname, int ival);
+int xavp_set_child_sval(str *rname, str *cname, str *sval);
 #endif
 
 #endif

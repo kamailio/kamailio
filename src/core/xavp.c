@@ -896,6 +896,77 @@ sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname)
 	return vavp;
 }
 
+/**
+ * Set the value of the first xavp rname with first child xavp cname
+ * - replace if it exits; add if it doesn't exist
+ * - config operations:
+ *   $xavp(rxname=>cname) = xval;
+ *     or:
+ *   $xavp(rxname[0]=>cname[0]) = xval;
+ */
+int xavp_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
+{
+	sr_xavp_t *ravp=NULL;
+	sr_xavp_t *cavp=NULL;
+
+	ravp = xavp_get(rname, NULL);
+	if(ravp) {
+		if(ravp->val.type != SR_XTYPE_XAVP) {
+			/* first root xavp does not have xavp list value - remove it */
+			xavp_rm(ravp, NULL);
+			/* add a new xavp in the root list with a child */
+			if(xavp_add_xavp_value(rname, cname, xval, NULL)==NULL) {
+				return -1;
+			}
+		} else {
+			/* first root xavp has an xavp list value */
+			cavp = xavp_get(cname, ravp->val.v.xavp);
+			if(cavp) {
+				/* child xavp with same name - remove it */
+				/* todo: update in place for int or if allocated size fits */
+				xavp_rm(cavp, &ravp->val.v.xavp);
+			}
+			if(xavp_add_value(cname, xval, &ravp->val.v.xavp)==NULL) {
+				return -1;
+			}
+		}
+	} else {
+		/* no xavp with rname in root list found */
+		if(xavp_add_xavp_value(rname, cname, xval, NULL)==NULL) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int xavp_set_child_ival(str *rname, str *cname, int ival)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = ival;
+
+	return xavp_set_child_xval(rname, cname, &xval);
+}
+
+/**
+ *
+ */
+int xavp_set_child_sval(str *rname, str *cname, str *sval)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = *sval;
+
+	return xavp_set_child_xval(rname, cname, &xval);
+}
 
 /**
  * serialize the values in subfields of an xavp in name=value; format
