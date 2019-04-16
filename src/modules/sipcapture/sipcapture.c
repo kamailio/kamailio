@@ -2969,11 +2969,8 @@ static int nosip_hep_msg(sr_event_param_t *evp)
 			return 0;
 		}
 
-		buf = msg->buf + len;
-		len = msg->len - len;
-
-		msg->buf = buf;
-		msg->len = len;
+		buf = msg->buf;
+		len = msg->len;
 	} else {
 		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version "
 				"or bad length: v:[%d] l:[%d]\n",
