@@ -105,7 +105,7 @@ static int rpc_mod_print(rpc_t *rpc, void *ctx, const char *mname,
 
 	while (iter) {
 		if (strcmp(mname, iter->mname) == 0) {
-			sprintf(buff, "%s(%ld)", iter->func, iter->line);
+			snprintf(buff, 128, "%s(%ld)", iter->func, iter->line);
 			if (rpc->struct_add(stats_th, "d", buff, iter->size) < 0) {
 				rpc->fault(ctx, 500, "Internal error adding to struct rpc");
 				return -1;
