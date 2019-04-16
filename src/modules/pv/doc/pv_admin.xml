@@ -327,6 +327,58 @@ xavp_params_implode("x", "$var(out)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_set_child_ival">
+			<title>
+				<function moreinfo="none">xavp_set_child_ival(rname, cname, ival)</function>
+			</title>
+			<para>
+				Set the value of $xavp(rname=&gt;cname) to integer value ival.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+				The second parameter name of child XAVP. The third parameter
+				can be an integer number or a variable holding an integer.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_set_child_ival</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(n) = 10;
+xavp_set_child_ival("x", "y", "$var(n)");
+# results in: $xavp(x=&gt;y) is 10
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavp_set_child_sval">
+			<title>
+				<function moreinfo="none">xavp_set_child_sval(rname, cname, sval)</function>
+			</title>
+			<para>
+				Set the value of $xavp(rname=&gt;cname) to string value sval.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+				The second parameter name of child XAVP. The third parameter
+				can be a static or dynamic (with variables) string.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_set_child_sval</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(n) = 10;
+xavp_set_child_sval("x", "y", "Count: $var(n)");
+# results in: $xavp(x=&gt;y) is "Count: 10"
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.sbranch_set_ruri">
 			<title>
 				<function moreinfo="none">sbranch_set_ruri()</function>
