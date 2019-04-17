@@ -778,7 +778,7 @@ static int sr_mono_hdr_append (MonoString *hv)
 	hdr[txt.len] = '\0';
 	anchor = anchor_lump(env_M->msg,
 				hf->name.s + hf->len - env_M->msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt.len, 0) == 0)
+	if((anchor==NULL) || (insert_new_lump_before(anchor, hdr, txt.len, 0) == 0))
 	{
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
@@ -873,7 +873,7 @@ static int sr_mono_hdr_insert (MonoString *hv)
 	hdr[txt.len] = '\0';
 	anchor = anchor_lump(env_M->msg,
 				hf->name.s + hf->len - env_M->msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt.len, 0) == 0)
+	if((anchor==NULL) || (insert_new_lump_before(anchor, hdr, txt.len, 0) == 0))
 	{
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
