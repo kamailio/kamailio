@@ -42,9 +42,10 @@
 #include "mod_stats.h"
 
 
-#define DBG_MOD_PKG_FLAG		0
-#define DBG_MOD_SHM_FLAG		1
-#define DBG_MOD_ALL_FLAG		2
+#define DBG_MOD_PKG_FLAG		1 /* 1<<0 - print pkg memory stats */
+#define DBG_MOD_SHM_FLAG		2 /* 1<<1 - print shm memory stats */
+#define DBG_MOD_ALL_FLAG		3 /* 1|2  - print pkg+shm (1+2) memory stats */
+#define DBG_MOD_INF_FLAG		4 /* 1<<2 - print more info in the stats */
 
 /**
  *
@@ -65,8 +66,16 @@ int mod_stats_destroy(void)
 /**
  *
  */
-static const char* rpc_mod_stats_doc[2] = {
-	"Per module memory statistics",
+static const char* rpc_mod_mem_stats_doc[2] = {
+	"Per module memory usage statistics",
+	0
+};
+
+/**
+ *
+ */
+static const char* rpc_mod_mem_statsx_doc[2] = {
+	"Per module memory use statistics with more details",
 	0
 };
 
@@ -86,9 +95,10 @@ static int rpc_mod_is_printed_one(mem_counter *stats, mem_counter *current) {
 
 /* print memory info for a specific module in a specific stats list */
 static int rpc_mod_print(rpc_t *rpc, void *ctx, const char *mname,
-	mem_counter *stats)
+	mem_counter *stats, int flag)
 {
-	char buff[128];
+	char nbuf[128];
+	char vbuf[128];
 	const char *total_str= "Total";
 	void *stats_th = NULL;
 	int total = 0;
@@ -105,10 +115,20 @@ static int rpc_mod_print(rpc_t *rpc, void *ctx, const char *mname,
 
 	while (iter) {
 		if (strcmp(mname, iter->mname) == 0) {
-			snprintf(buff, 128, "%s(%ld)", iter->func, iter->line);
-			if (rpc->struct_add(stats_th, "d", buff, iter->size) < 0) {
-				rpc->fault(ctx, 500, "Internal error adding to struct rpc");
-				return -1;
+			snprintf(nbuf, 128, "%s(%ld)", iter->func, iter->line);
+			if(flag & DBG_MOD_INF_FLAG) {
+				/* more info in the value */
+				snprintf(vbuf, 128, "%lu (%d)", iter->size, iter->count);
+				if (rpc->struct_add(stats_th, "s", nbuf, vbuf) < 0) {
+					rpc->fault(ctx, 500, "Internal error adding to struct rpc");
+					return -1;
+				}
+			} else {
+				/* only allocated size in the value */
+				if (rpc->struct_add(stats_th, "d", nbuf, (int)iter->size) < 0) {
+					rpc->fault(ctx, 500, "Internal error adding to struct rpc");
+					return -1;
+				}
 			}
 			total += iter->size;
 		}
@@ -132,21 +152,11 @@ static int rpc_mod_print_one(rpc_t *rpc, void *ctx, const char *mname,
 		return -1;
 	}
 
-	switch (flag){
-		case DBG_MOD_PKG_FLAG:
-			rpc_mod_print(rpc, ctx, mname, pkg_stats);
-			break;
-		case DBG_MOD_SHM_FLAG:
-			rpc_mod_print(rpc, ctx, mname, shm_stats);
-			break;
-		case DBG_MOD_ALL_FLAG:
-			rpc_mod_print(rpc, ctx, mname, pkg_stats);
-			rpc_mod_print(rpc, ctx, mname, shm_stats);
-			break;
-		default:
-			rpc_mod_print(rpc, ctx, mname, pkg_stats);
-			rpc_mod_print(rpc, ctx, mname, shm_stats);
-			break;
+	if (flag & DBG_MOD_PKG_FLAG) {
+		rpc_mod_print(rpc, ctx, mname, pkg_stats, flag);
+	}
+	if (flag & DBG_MOD_SHM_FLAG) {
+		rpc_mod_print(rpc, ctx, mname, shm_stats, flag);
 	}
 
 	if (rpc->rpl_printf(ctx, "") < 0) {
@@ -188,9 +198,9 @@ static int rpc_mod_print_all(rpc_t *rpc, void *ctx,
 /**
  *
  */
-static void rpc_mod_stats(rpc_t *rpc, void *ctx)
+static void rpc_mod_mem_stats_mode(rpc_t *rpc, void *ctx, int fmode)
 {
-	int flag = DBG_MOD_ALL_FLAG;
+	int flag = 0;
 	str mname = STR_NULL;
 	str mtype = STR_NULL;
 
@@ -207,12 +217,14 @@ static void rpc_mod_stats(rpc_t *rpc, void *ctx)
 		return;
 	}
 
+	flag |= fmode;
+
 	if (strcmp(mtype.s, "pkg") == 0) {
-		flag = DBG_MOD_PKG_FLAG;
+		flag |= DBG_MOD_PKG_FLAG;
 	} else if (strcmp(mtype.s, "shm") == 0) {
-		flag = DBG_MOD_SHM_FLAG;
+		flag |= DBG_MOD_SHM_FLAG;
 	} else if (strcmp(mtype.s, "all") == 0) {
-		flag = DBG_MOD_ALL_FLAG;
+		flag |= DBG_MOD_ALL_FLAG;
 	}
 
 	pkg_mod_get_stats((void **)&pkg_mod_stats_list);
@@ -234,8 +246,27 @@ static void rpc_mod_stats(rpc_t *rpc, void *ctx)
 /**
  *
  */
+static void rpc_mod_mem_stats(rpc_t *rpc, void *ctx)
+{
+	 rpc_mod_mem_stats_mode(rpc, ctx, 0);
+}
+
+/**
+ *
+ */
+static void rpc_mod_mem_statsx(rpc_t *rpc, void *ctx)
+{
+	 rpc_mod_mem_stats_mode(rpc, ctx, DBG_MOD_INF_FLAG);
+}
+
+
+/**
+ *
+ */
 rpc_export_t kex_mod_rpc[] = {
-	{"mod.stats", rpc_mod_stats,  rpc_mod_stats_doc,	   RET_ARRAY},
+	{"mod.stats", rpc_mod_mem_stats, rpc_mod_mem_stats_doc, RET_ARRAY},
+	{"mod.mem_stats", rpc_mod_mem_stats, rpc_mod_mem_stats_doc, RET_ARRAY},
+	{"mod.mem_statsx", rpc_mod_mem_statsx, rpc_mod_mem_statsx_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
