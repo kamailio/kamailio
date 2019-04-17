@@ -2421,8 +2421,10 @@ int reply_received( struct sip_msg  *p_msg )
 			bctx = sr_kemi_act_ctx_get();
 			init_run_actions_ctx(&ctx);
 			sr_kemi_act_ctx_set(&ctx);
-			sr_kemi_route(keng, p_msg, TM_ONREPLY_ROUTE,
-					sr_kemi_cbname_lookup_idx(onreply_route), NULL);
+			if(sr_kemi_route(keng, p_msg, TM_ONREPLY_ROUTE,
+						sr_kemi_cbname_lookup_idx(onreply_route), NULL)<0) {
+				LM_DBG("negative return from on-reply kemi callback\n");
+			}
 			sr_kemi_act_ctx_set(bctx);
 		} else {
 			run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
