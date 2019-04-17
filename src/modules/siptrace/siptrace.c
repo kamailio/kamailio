@@ -1844,6 +1844,11 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 
 static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info)
 {
+	if(msg == NULL) {
+		LM_DBG("nothing to trace\n");
+		return;
+	}
+
 	/* trace current message on out */
 	msg->msg_flags |= FL_SIPTRACE;
 	if (info->uriState == STRACE_RAW_URI) {
