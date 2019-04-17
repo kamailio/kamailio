@@ -800,7 +800,6 @@ static int parse_siptrace_uri(str* duri, dest_info_t* dst)
 	p = mk_proxy(&uri.host, (uri.port_no) ? uri.port_no : SIP_PORT, dst->proto);
 	if(p == 0) {
 		LM_ERR("bad host name in uri\n");
-		pkg_free(dst);
 		return -1;
 	}
 
