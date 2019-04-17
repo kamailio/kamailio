@@ -847,9 +847,9 @@ resetdebug();
 		</para>
 	</section>
 
-	<section id="kex.r.mod.stats">
+	<section id="kex.r.mod.mem_stats">
 		<title>
-		<function moreinfo="none">mod.stats module_name/all pkg/shm/all</function>
+		<function moreinfo="none">mod.mem_stats</function>
 		</title>
 		<para>
 			Print private(pkg) or shared(shm) memory currently allocated a given module or by all modules.
@@ -923,6 +923,27 @@ Module: kex
 }
 		</programlisting>
     </section>
+	<section id="kex.r.mod.stats">
+		<title>
+		<function moreinfo="none">mod.stats</function>
+		</title>
+		<para>
+			Same as RPC command "mod.mem_stats", this is an alias command to
+			preserve backward compatibility.
+		</para>
+	</section>
+	<section id="kex.r.mod.mem_statsx">
+		<title>
+		<function moreinfo="none">mod.mem_statsx</function>
+		</title>
+		<para>
+			Similar to RPC command "mod.mem_stats", but the output has an
+			extended format, printing info that includes the allocated size
+			and the count of allocated chunks in a combined string value. The
+			parameters are the same like for "mod.mem_stats".
+		</para>
+    </section>
+
     </section>
 </chapter>
 
