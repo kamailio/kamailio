@@ -1679,7 +1679,8 @@ static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
 	memcpy(hdr, txt->s, txt->len);
 	/* anchor after last header */
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+	if((anchor==NULL)
+			|| (insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
@@ -1744,13 +1745,15 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 		anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
 	}
 
-	LM_DBG("append after [%.*s] the hf: [%.*s]\n", hname->len, hname->s,
-			txt->len, txt->s);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+	if((anchor==NULL)
+			|| (insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
 	}
+	LM_DBG("appended after [%.*s] the hf: [%.*s]\n", hname->len, hname->s,
+			txt->len, txt->s);
+
 	return 1;
 }
 
@@ -1871,7 +1874,8 @@ static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
 	memcpy(hdr, txt->s, txt->len);
 	/* anchor before first header */
 	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+	if((anchor==NULL)
+			|| (insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
@@ -1934,13 +1938,15 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 	} else { /* before hf */
 		anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
 	}
-	LM_DBG("insert before [%.*s] the hf: %.*s\n", hname->len, hname->s,
-			txt->len, txt->s);
-	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+	if((anchor==NULL)
+			|| (insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)) {
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
 		return -1;
 	}
+	LM_DBG("inserted before [%.*s] the hf: %.*s\n", hname->len, hname->s,
+			txt->len, txt->s);
+
 	return 1;
 }
 
