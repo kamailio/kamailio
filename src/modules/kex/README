@@ -84,7 +84,9 @@ Ovidiu Sas
               4.27. system.listMethods
               4.28. system.methodHelp
               4.29. system.methodSignature
-              4.30. mod.stats module_name/all pkg/shm/all
+              4.30. mod.mem_stats
+              4.31. mod.stats
+              4.32. mod.mem_statsx
 
    List of Examples
 
@@ -160,7 +162,9 @@ Chapter 1. Admin Guide
         4.27. system.listMethods
         4.28. system.methodHelp
         4.29. system.methodSignature
-        4.30. mod.stats module_name/all pkg/shm/all
+        4.30. mod.mem_stats
+        4.31. mod.stats
+        4.32. mod.mem_statsx
 
 1. Overview
 
@@ -460,7 +464,9 @@ resetdebug();
    4.27. system.listMethods
    4.28. system.methodHelp
    4.29. system.methodSignature
-   4.30. mod.stats module_name/all pkg/shm/all
+   4.30. mod.mem_stats
+   4.31. mod.stats
+   4.32. mod.mem_statsx
 
 4.1.  core.aliases_list
 
@@ -716,7 +722,7 @@ kamcmd system.listMethods
 
    Returns signature of given method.
 
-4.30.  mod.stats module_name/all pkg/shm/all
+4.30.  mod.mem_stats
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
@@ -760,3 +766,15 @@ loc
     pkg_proc_stats_init(79): 864
     Total: 864
 }
+
+4.31.  mod.stats
+
+   Same as RPC command "mod.mem_stats", this is an alias command to
+   preserve backward compatibility.
+
+4.32.  mod.mem_statsx
+
+   Similar to RPC command "mod.mem_stats", but the output has an extended
+   format, printing info that includes the allocated size and the count of
+   allocated chunks in a combined string value. The parameters are the
+   same like for "mod.mem_stats".
