@@ -1090,7 +1090,7 @@ static rpc_export_t core_rpc_methods[] = {
 #endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
-	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc,0},
+	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc, RET_ARRAY},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
