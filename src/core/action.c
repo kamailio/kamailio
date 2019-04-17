@@ -1527,7 +1527,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 
