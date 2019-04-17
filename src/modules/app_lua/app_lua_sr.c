@@ -835,7 +835,7 @@ static int lua_sr_hdr_insert (lua_State *L)
 	memcpy(hdr, txt, len);
 	anchor = anchor_lump(env_L->msg,
 				hf->name.s + hf->len - env_L->msg->buf, 0, 0);
-	if(insert_new_lump_before(anchor, hdr, len, 0) == 0)
+	if((anchor==NULL) || (insert_new_lump_before(anchor, hdr, len, 0) == 0))
 	{
 		LM_ERR("can't insert lump\n");
 		pkg_free(hdr);
