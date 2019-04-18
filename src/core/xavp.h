@@ -88,6 +88,7 @@ sr_xavp_t *xavp_get_last(str *xname, sr_xavp_t **list);
 int xavp_rm_by_name(str *name, int all, sr_xavp_t **head);
 int xavp_rm_by_index(str *name, int idx, sr_xavp_t **head);
 int xavp_rm(sr_xavp_t *xa, sr_xavp_t **head);
+int xavp_rm_child_by_index(str *rname, str *cname, int idx);
 int xavp_count(str *name, sr_xavp_t **start);
 void xavp_destroy_list_unsafe(sr_xavp_t **head);
 void xavp_destroy_list(sr_xavp_t **head);

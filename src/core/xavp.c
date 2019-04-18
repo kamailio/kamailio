@@ -447,6 +447,20 @@ int xavp_rm_by_index(str *name, int idx, sr_xavp_t **head)
 	return xavp_rm_internal(name, head, idx);
 }
 
+int xavp_rm_child_by_index(str *rname, str *cname, int idx)
+{
+	sr_xavp_t *avp=NULL;
+
+	if (idx<0) {
+		return 0;
+	}
+	avp = xavp_get(rname, NULL);
+
+	if(avp == NULL || avp->val.type!=SR_XTYPE_XAVP) {
+		return 0;
+	}
+	return xavp_rm_internal(cname, &avp->val.v.xavp, idx);
+}
 
 int xavp_count(str *name, sr_xavp_t **start)
 {
