@@ -40,9 +40,7 @@
 #include "pv_time.h"
 #include "pv_trans.h"
 #include "pv_select.h"
-#ifdef WITH_XAVP
 #include "pv_xavp.h"
-#endif
 #include "pv_api.h"
 
 MODULE_VERSION
@@ -92,12 +90,9 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_snd_name, 0, 0, 0 },
 	{ {"rcv", (sizeof("rcv")-1)}, PVT_OTHER, pv_get_rcv, 0,
 		pv_parse_rcv_name, 0, 0, 0 },
-#ifdef WITH_XAVP
 	{ {"xavp", sizeof("xavp")-1}, /* xavp */
 		PVT_XAVP, pv_get_xavp, pv_set_xavp,
 		pv_parse_xavp_name, 0, 0, 0 },
-#endif
-
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
 	{{"hdr", (sizeof("hdr")-1)}, PVT_HDR, pv_get_hdr, 0, pv_parse_hdr_name,
@@ -565,14 +560,12 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"pv_unset",  (cmd_function)pv_unset,  1, fixup_pvar_null, 0,
 		ANY_ROUTE },
-#ifdef WITH_XAVP
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0,
 		ANY_ROUTE },
 	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE },
 	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE },
-#endif
 	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
 		ANY_ROUTE},
 	{"typeof", (cmd_function)pv_typeof,       2, fixup_pvar_none,

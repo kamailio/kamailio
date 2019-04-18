@@ -13,11 +13,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 #ifndef _PV_XAVP_H_
 #define _PV_XAVP_H_
-
-#ifdef WITH_XAVP
 
 #include "../../core/pvar.h"
 #include "pv_svar.h"
@@ -35,5 +33,4 @@ int xavp_params_explode(str *params, str *xname);
 int pv_var_to_xavp(str *varname, str *xname);
 int pv_xavp_to_var(str *xname);
 
-#endif
 #endif

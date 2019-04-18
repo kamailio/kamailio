@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com) 
+ * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifdef WITH_XAVP
 
 #include <stdio.h>
 
@@ -753,4 +751,3 @@ int pv_xavp_to_var(str *xname) {
 	} while(xavp);
 	return 1;
 }
-#endif
