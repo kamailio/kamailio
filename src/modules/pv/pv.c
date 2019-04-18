@@ -543,6 +543,8 @@ static int w_xavp_set_child_ival(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
 static int w_xavp_set_child_sval(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
+static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2);
+static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname);
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
@@ -590,6 +592,12 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavp_set_child_sval", (cmd_function)w_xavp_set_child_sval,
 		3, fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
+	{"xavp_rm", (cmd_function)w_xavp_rm,
+		1, fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"xavp_rm_child", (cmd_function)w_xavp_rm_child,
+		2, fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
 		ANY_ROUTE },
@@ -1004,6 +1012,65 @@ static int fixup_free_xavp_set_child_ival(void** param, int param_no)
 /**
  *
  */
+static int ki_xavp_rm(sip_msg_t *msg, str *rname)
+{
+	int ret;
+
+	ret = xavp_rm_by_index(rname, 0, NULL);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2)
+{
+	str rname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prname, &rname)<0) {
+		LM_ERR("failed to get root xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_rm(msg, &rname);
+}
+
+/**
+ *
+ */
+static int ki_xavp_rm_child(sip_msg_t *msg, str *rname, str *cname)
+{
+	int ret;
+
+	ret = xavp_rm_child_by_index(rname, cname, 0);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname)
+{
+	str rname;
+	str cname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prname, &rname)<0) {
+		LM_ERR("failed to get root xavp name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pcname, &cname)<0) {
+		LM_ERR("failed to get child xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_rm_child(msg, &rname, &cname);
+}
+
+/**
+ *
+ */
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2)
 {
 	if(sbranch_set_ruri(msg)<0)
@@ -1256,6 +1323,16 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("xavp_set_child_sval"),
 		SR_KEMIP_INT, ki_xavp_set_child_sval,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_rm"),
+		SR_KEMIP_INT, ki_xavp_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_rm_child"),
+		SR_KEMIP_INT, ki_xavp_rm_child,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pvx"), str_init("evalx"),
