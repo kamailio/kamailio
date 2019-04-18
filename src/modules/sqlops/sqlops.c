@@ -62,9 +62,7 @@ static int sql_check_connection(sql_con_t*);
 static int sql_query(struct sip_msg*, char*, char*, char*);
 static int sql_query2(struct sip_msg*, char*, char*);
 static int sql_query_async(struct sip_msg*, char*, char*);
-#ifdef WITH_XAVP
 static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res);
-#endif
 static int sql_pvquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 static int sql_rfree(struct sip_msg*, char*, char*);
 static int mod_init(void);
@@ -72,9 +70,7 @@ static int child_init(int rank);
 static void destroy(void);
 
 static int fixup_sql_query(void** param, int param_no);
-#ifdef WITH_XAVP
 static int fixup_sql_xquery(void** param, int param_no);
-#endif
 static int fixup_sql_pvquery(void** param, int param_no);
 static int fixup_sql_rfree(void** param, int param_no);
 
@@ -100,10 +96,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sql_query_async",  (cmd_function)sql_query_async, 2, fixup_sql_query, 0,
 		ANY_ROUTE},
-#ifdef WITH_XAVP
 	{"sql_xquery",  (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0,
 		ANY_ROUTE},
-#endif
 	{"sql_pvquery",  (cmd_function)sql_pvquery, 3, fixup_sql_pvquery, 0,
 		ANY_ROUTE},
 	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0,
@@ -276,7 +270,6 @@ static int sql_query_async(struct sip_msg *msg, char *dbl, char *query)
 }
 
 
-#ifdef WITH_XAVP
 /**
  *
  */
@@ -288,7 +281,6 @@ static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 	}
 	return sql_do_xquery(msg, (sql_con_t*)dbl, (pv_elem_t*)query, (pv_elem_t*)res);
 }
-#endif
 
 /**
  *
@@ -351,7 +343,6 @@ static int fixup_sql_query(void** param, int param_no)
 	return 0;
 }
 
-#ifdef WITH_XAVP
 /**
  *
  */
@@ -389,7 +380,6 @@ static int fixup_sql_xquery(void** param, int param_no)
 	}
 	return 0;
 }
-#endif
 
 /**
  *

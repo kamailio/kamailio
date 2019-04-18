@@ -31,9 +31,7 @@
 #include "../../core/hashes.h"
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db_ut.h"
-#ifdef WITH_XAVP
 #include "../../core/xavp.h"
-#endif
 
 #include "sql_api.h"
 
@@ -461,7 +459,6 @@ int sql_do_query_async(sql_con_t *con, str *query)
 	return 1;
 }
 
-#ifdef WITH_XAVP
 int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 		str *xavp)
 {
@@ -560,6 +557,7 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 	return 1;
 }
 
+
 int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 		pv_elem_t *res)
 {
@@ -582,8 +580,6 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 	}
 	return sql_exec_xquery(msg, con, &sv, &xavp);
 }
-
-#endif
 
 
 int sql_do_pvquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
