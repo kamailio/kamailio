@@ -144,7 +144,7 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	/* it locks the udomain on success */
 	if (dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor),
 				&ci->ruid, &r, &c) != 0) {
-		LM_WARN("AOR/Contact not found\n");
+		LM_WARN("AOR/Contact ['%.*s'] not found\n", aor.len, aor.s);
 		return -1;
 	}
 	if (dmq_ul.delete_ucontact(r, c) != 0) {
