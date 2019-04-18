@@ -46,9 +46,7 @@
 #include "dset.h"
 #include "fmsg.h"
 #include "usr_avp.h"
-#ifdef WITH_XAVP
 #include "xavp.h"
-#endif
 #include "select_buf.h"
 
 #include "tcp_server.h"  /* for tcpconn_add_alias */
@@ -583,7 +581,5 @@ error00:
 void ksr_msg_env_reset(void)
 {
 	reset_avps();
-#ifdef WITH_XAVP
 	xavp_reset_list();
-#endif
 }

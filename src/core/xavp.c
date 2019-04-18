@@ -20,8 +20,6 @@
  * Module: \ref core
  */
 
-#ifdef WITH_XAVP
-
 #include <stdio.h>
 #include <string.h>
 
@@ -1041,4 +1039,3 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 	}
 	return rlen;
 }
-#endif
