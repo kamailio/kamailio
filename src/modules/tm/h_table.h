@@ -48,9 +48,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/md5utils.h"
 #include "../../core/usr_avp.h"
-#ifdef WITH_XAVP
 #include "../../core/xavp.h"
-#endif
 #include "../../core/timer.h"
 #include "../../core/flags.h"
 #include "../../core/atomic_ops.h"
@@ -327,9 +325,7 @@ typedef struct tm_xdata
 	struct usr_avp *user_avps_to;
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
-#ifdef WITH_XAVP
 	sr_xavp_t *xavps_list;
-#endif
 } tm_xdata_t;
 
 
@@ -345,9 +341,7 @@ typedef struct tm_xlinks
 	struct usr_avp **user_avps_to;
 	struct usr_avp **domain_avps_from;
 	struct usr_avp **domain_avps_to;
-#ifdef WITH_XAVP
 	sr_xavp_t **xavps_list;
-#endif
 } tm_xlinks_t;
 
 
@@ -435,9 +429,7 @@ typedef struct cell
 	struct usr_avp *user_avps_to;
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
-#ifdef WITH_XAVP
 	sr_xavp_t *xavps_list;
-#endif
 
 	/* protection against concurrent reply processing */
 	ser_lock_t reply_mutex;

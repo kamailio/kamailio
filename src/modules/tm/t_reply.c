@@ -46,9 +46,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/usr_avp.h"
-#ifdef WITH_XAVP
 #include "../../core/usr_avp.h"
-#endif
 #include "../../core/atomic_ops.h" /* membar_write() */
 #include "../../core/compiler_opt.h"
 #ifdef USE_DST_BLACKLIST
@@ -678,9 +676,7 @@ typedef struct tm_faked_env {
 	avp_list_t* backup_domain_to;
 	avp_list_t* backup_uri_from;
 	avp_list_t* backup_uri_to;
-#ifdef WITH_XAVP
 	sr_xavp_t **backup_xavps;
-#endif
 	struct socket_info* backup_si;
 	struct lump *backup_add_rm;
 	struct lump *backup_body_lumps;
@@ -768,10 +764,8 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 		_tm_faked_env[_tm_faked_env_idx].backup_domain_to
 				= set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN,
 					&t->domain_avps_to);
-#ifdef WITH_XAVP
 		_tm_faked_env[_tm_faked_env_idx].backup_xavps
 				= xavp_set_list(&t->xavps_list);
-#endif
 		/* set default send address to the saved value */
 		_tm_faked_env[_tm_faked_env_idx].backup_si = bind_address;
 		bind_address = t->uac[0].request.dst.send_sock;
@@ -806,9 +800,7 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 				_tm_faked_env[_tm_faked_env_idx].backup_uri_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,
 				_tm_faked_env[_tm_faked_env_idx].backup_uri_to);
-#ifdef WITH_XAVP
 		xavp_set_list(_tm_faked_env[_tm_faked_env_idx].backup_xavps);
-#endif
 		bind_address = _tm_faked_env[_tm_faked_env_idx].backup_si;
 		/* restore lump lists */
 		t->uas.request->add_rm
@@ -2205,9 +2197,7 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
-#ifdef WITH_XAVP
 	sr_xavp_t **backup_xavps;
-#endif
 	int replies_locked = 0;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
@@ -2401,9 +2391,7 @@ int reply_received( struct sip_msg  *p_msg )
 				&t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN,
 				&t->domain_avps_to );
-#ifdef WITH_XAVP
 		backup_xavps = xavp_set_list(&t->xavps_list);
-#endif
 		setbflagsval(0, uac->branch_flags);
 		if(msg_status>last_uac_status) {
 			/* current response (msg) status is higher that the last received
@@ -2447,9 +2435,7 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
-#ifdef WITH_XAVP
 		xavp_set_list(backup_xavps);
-#endif
 		/* handle a possible DROP in the script, but only if this
 		 * is not a final reply (final replies already stop the timers
 		 * and droping them might leave a transaction living forever) */
