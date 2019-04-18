@@ -379,6 +379,56 @@ xavp_set_child_sval("x", "y", "Count: $var(n)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_rm">
+			<title>
+				<function moreinfo="none">xavp_rm(rname)</function>
+			</title>
+			<para>
+				Remove the value of $xavp(rname).
+			</para>
+			<para>
+				The parameter has to be the name of XAVP in the root list.
+				It can be static or dynamic string (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_rm</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_rm_child_sval("x");
+# same result as: $xavp(x) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="pv.f.xavp_rm_child">
+			<title>
+				<function moreinfo="none">xavp_rm_child(rname, cname)</function>
+			</title>
+			<para>
+				Remove the value of $xavp(rname=&gt;cname).
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+				The second parameter name of child XAVP. Both parameters can be
+				static or dynamic strings (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_rm_child</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_rm_child_sval("x", "y");
+# same result as: $xavp(x=&gt;y) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.sbranch_set_ruri">
 			<title>
 				<function moreinfo="none">sbranch_set_ruri()</function>
