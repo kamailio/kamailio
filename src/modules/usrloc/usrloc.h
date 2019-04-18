@@ -30,9 +30,7 @@
 #include "ul_callback.h"
 #include "../../core/qvalue.h"
 #include "../../core/str.h"
-#ifdef WITH_XAVP
 #include "../../core/xavp.h"
-#endif
 
 #define NO_DB         0
 #define WRITE_THROUGH 1
@@ -96,9 +94,7 @@ typedef struct ucontact {
 	int server_id;          /*!< server id */
 	int tcpconn_id;         /*!< unique tcp connection id */
 	int keepalive;          /*!< keepalive */
-#ifdef WITH_XAVP
 	sr_xavp_t * xavp;       /*!< per contact xavps */
-#endif
 	struct ucontact* next;  /*!< Next contact in the linked list */
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
 } ucontact_t;
@@ -124,9 +120,7 @@ typedef struct ucontact_info {
 	int server_id;            /*!< server id */
 	int tcpconn_id;           /*!< connection id */
 	int keepalive;            /*!< keepalive */
-#ifdef WITH_XAVP
 	sr_xavp_t * xavp;         /*!< per contact xavps */
-#endif
 	time_t last_modified;     /*!< last modified */
 } ucontact_info_t;
 

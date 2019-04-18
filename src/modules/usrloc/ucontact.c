@@ -50,7 +50,6 @@ void ul_set_xavp_contact_clone(int v)
 	ul_xavp_contact_clone = v;
 }
 
-#ifdef WITH_XAVP
 /*!
  * \brief Store xavp list per contact
  * \param _c contact structure
@@ -74,7 +73,6 @@ void ucontact_xavp_store(ucontact_t *_c)
 	_c->xavp = xavp_clone_level_nodata(xavp);
 	return;
 }
-#endif
 
 int uldb_delete_attrs_ruid(str* _dname, str *_ruid);
 
@@ -135,9 +133,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->tcpconn_id = _ci->tcpconn_id;
 	c->server_id = _ci->server_id;
 	c->keepalive = (_ci->cflags & nat_bflag)?1:0;
-#ifdef WITH_XAVP
 	ucontact_xavp_store(c);
-#endif
 
 
 	return c;
@@ -150,9 +146,7 @@ error:
 	if (c->c.s) shm_free(c->c.s);
 	if (c->ruid.s) shm_free(c->ruid.s);
 	if (c->instance.s) shm_free(c->instance.s);
-#ifdef WITH_XAVP
 	if (c->xavp) xavp_destroy_list(&c->xavp);
-#endif
 	shm_free(c);
 	return 0;
 }
@@ -173,9 +167,7 @@ void free_ucontact(ucontact_t* _c)
 	if (_c->c.s) shm_free(_c->c.s);
 	if (_c->ruid.s) shm_free(_c->ruid.s);
 	if (_c->instance.s) shm_free(_c->instance.s);
-#ifdef WITH_XAVP
 	if (_c->xavp) xavp_destroy_list(&_c->xavp);
-#endif
 	shm_free( _c );
 }
 
@@ -286,7 +278,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		_c->received.s = 0;
 		_c->received.len = 0;
 	}
-	
+
 	if (_ci->path) {
 		update_str( &_c->path, _ci->path);
 	} else {
@@ -295,9 +287,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		_c->path.len = 0;
 	}
 
-#ifdef WITH_XAVP
 	ucontact_xavp_store(_c);
-#endif
 
 	_c->sock = _ci->sock;
 	_c->expires = _ci->expires;
