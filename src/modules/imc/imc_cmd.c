@@ -991,9 +991,9 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	p = imc_body_buf;
 	left = IMC_BUF_SIZE;
 
-	memcpy(p, "Rooms:\n", 9);
-	p += 9;
-	left -= 9;
+	memcpy(p, "Rooms:\n", 7);
+	p += 7;
+	left -= 7;
 
 	for (i = 0; i < imc_hash_size; i++) {
 		lock_get(&_imc_htable[i].lock);
