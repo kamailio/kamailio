@@ -2214,7 +2214,7 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 	},
 	{ str_init("siptrace"), str_init("sip_trace_dst_cid_type"),
 		SR_KEMIP_INT, ki_sip_trace_dst_cid_flag,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siptrace"), str_init("hlog"),
