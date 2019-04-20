@@ -38,6 +38,9 @@
 #include "imc.h"
 #include "imc_cmd.h"
 
+#define ROOMS "Rooms:\n"
+#define MEMBERS "Members:\n"
+
 #define PREFIX "*** "
 
 #define IMC_BUF_SIZE 32768
@@ -443,11 +446,17 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("Added [%.*s] as member to room [%.*s]\n", STR_FMT(&member->uri), STR_FMT(&rm->uri));
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 done:
@@ -519,19 +528,24 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 			goto error;
 		}
 
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(src->uri)));
+		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(src->uri)));
 	} else {
 		LM_DBG("Attept to join private room [%.*s] by [%.*s]\n",
 			STR_FMT(&rm->uri), STR_FMT(&src->uri));
 
-		body.len = snprintf(body.s, IMC_BUF_SIZE, msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
+		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
 		imc_send_message(&rm->uri, &src->uri, build_headers(msg), &msg_join_attempt_ucast);
+	}
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
 	}
 
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 done:
@@ -606,13 +620,18 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invite.s, STR_FMT(format_uri(src->uri)),
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_invite.s, STR_FMT(format_uri(src->uri)),
 		STR_FMT(&imc_cmd_start_str), STR_FMT(&imc_cmd_start_str));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
 
 	LM_DBG("to=[%.*s]\nfrom=[%.*s]\nbody=[%.*s]\n",
 	       STR_FMT(&member->uri), STR_FMT(&rm->uri), STR_FMT(&body));
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 	if ((cback_param = (del_member_t*)shm_malloc(sizeof(del_member_t))) == NULL) {
@@ -706,11 +725,17 @@ int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 done:
@@ -753,11 +778,17 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	member->flags &= ~IMC_MEMBER_INVITED;
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 	rv = 0;
@@ -830,11 +861,17 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	imc_del_member(rm, &user.parsed.user, &user.parsed.host);
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_left.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
 
-	if (body.len >= IMC_BUF_SIZE)
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 	rv = 0;
@@ -874,7 +911,7 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 
 #if 0
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_rejected.s, STR_FMT(format_uri(src->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_rejected.s, STR_FMT(format_uri(src->uri)));
 	if (body.len > 0)
 	    imc_send_message(&rm->uri, &member->uri, build_headers(msg), &body);
 #endif
@@ -923,11 +960,11 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	p = imc_body_buf;
-	left = IMC_BUF_SIZE;
+	left = sizeof(imc_body_buf);
 
-	memcpy(p, "Members:\n", 9);
-	p += 9;
-	left -= 9;
+	memcpy(p, MEMBERS, sizeof(MEMBERS) - 1);
+	p += sizeof(MEMBERS) - 1;
+	left -= sizeof(MEMBERS) - 1;
 
 	imp = rm->members;
 	while (imp) {
@@ -989,11 +1026,11 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	size_t left;
 
 	p = imc_body_buf;
-	left = IMC_BUF_SIZE;
+	left = sizeof(imc_body_buf);
 
-	memcpy(p, "Rooms:\n", 7);
-	p += 7;
-	left -= 7;
+	memcpy(p, ROOMS, sizeof(ROOMS) - 1);
+	p += sizeof(ROOMS) - 1;
+	left -= sizeof(ROOMS) - 1;
 
 	for (i = 0; i < imc_hash_size; i++) {
 		lock_get(&_imc_htable[i].lock);
@@ -1067,10 +1104,17 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
     }
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_user_left.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_left.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
 	if (body.len > 0)
 		imc_room_broadcast(rm, build_headers(msg), &body);
-	if (body.len >= IMC_BUF_SIZE)
+
+	if (body.len >= sizeof(imc_body_buf))
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 	member->flags |= IMC_MEMBER_DELETED;
@@ -1161,10 +1205,10 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, struct imc_uri *src,
 	uac_req_t uac_r;
 
 	body.s   = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, msg_invalid_command.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_invalid_command.s,
 		STR_FMT(&cmd->name), STR_FMT(&imc_cmd_start_str));
 
-	if (body.len < 0 || body.len >= IMC_BUF_SIZE) {
+	if (body.len < 0 || body.len >= sizeof(imc_body_buf)) {
 		LM_ERR("Unable to print message\n");
 		return -1;
 	}
@@ -1207,8 +1251,14 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	user = format_uri(member->uri);
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, "%.*s: %.*s", STR_FMT(user), STR_FMT(msgbody));
-	if (body.len >= IMC_BUF_SIZE) {
+	body.len = snprintf(body.s, sizeof(imc_body_buf), "%.*s: %.*s", STR_FMT(user), STR_FMT(msgbody));
+
+	if (body.len < 0) {
+		LM_ERR("Error while printing message\n");
+		goto error;
+	}
+
+	if (body.len >= sizeof(imc_body_buf)) {
 		LM_ERR("Buffer too small for message '%.*s'\n", STR_FMT(&body));
 		goto error;
 	}
