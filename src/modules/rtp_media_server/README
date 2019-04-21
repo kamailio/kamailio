@@ -38,7 +38,7 @@ Julien Chavanton
               4.1. rms_answer (event_route)
               4.2. rms_hangup ()
               4.3. rms_bridge (target URI, event_route)
-              4.4. rms_session_check ()
+              4.4. rms_dialog_check ()
               4.5. rms_sip_request ()
               4.6. rms_play (file, event_route)
 
@@ -48,7 +48,7 @@ Julien Chavanton
    1.2. rms_answer usage example
    1.3. rms_hangup usage example
    1.4. rms_bridge usage example
-   1.5. rms_session_check usage example
+   1.5. rms_dialog_check usage example
    1.6. rms_sip_request usage example
    1.7. rms_play usage example
 
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
         4.1. rms_answer (event_route)
         4.2. rms_hangup ()
         4.3. rms_bridge (target URI, event_route)
-        4.4. rms_session_check ()
+        4.4. rms_dialog_check ()
         4.5. rms_sip_request ()
         4.6. rms_play (file, event_route)
 
@@ -142,13 +142,14 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
    4.1. rms_answer (event_route)
    4.2. rms_hangup ()
    4.3. rms_bridge (target URI, event_route)
-   4.4. rms_session_check ()
+   4.4. rms_dialog_check ()
    4.5. rms_sip_request ()
    4.6. rms_play (file, event_route)
 
 4.1. rms_answer (event_route)
 
-   Create a session and a call leg and call the event_route
+   Create a call leg : with a SIP dialog and an RTP session call the
+   event_route
 
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
@@ -217,12 +218,12 @@ route {
                         t_reply("503", "server error");
                 }
         }
-        if(rms_session_check()) // If the dialog is managed by the RMS module, t
-he in-dialog request needs to be handled by it.
+        if(rms_dialog_check()) // If the dialog is managed by the RMS module, th
+e in-dialog request needs to be handled by it.
                 rms_sip_request();
 ...
 
-4.4. rms_session_check ()
+4.4. rms_dialog_check ()
 
    Returns true if the current SIP message it handled/known by the RMS
    module, else it may be handle in any other way by Kamailio.
@@ -230,10 +231,10 @@ he in-dialog request needs to be handled by it.
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.5. rms_session_check usage example
+   Example 1.5. rms_dialog_check usage example
 ...
-        if (rms_session_check()) {
-                xnotice("This session is handled by the RMS module\n");
+        if (rms_dialog_check()) {
+                xnotice("This dialog is handled by the RMS module\n");
                 rms_sip_request();
         }
 ...
@@ -244,15 +245,15 @@ he in-dialog request needs to be handled by it.
    forwarded behaving as a B2BUA, the transaction will be suspended until
    the second leg replies.
 
-   If the SIP session is not found "481 Call/Transaction Does Not Exist"
-   is returned.
+   If the SIP dialog is not found "481 Call/Transaction Does Not Exist" is
+   returned.
 
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
    Example 1.6. rms_sip_request usage example
 ...
-        if (rms_session_check()) {
+        if (rms_dialog_check()) {
                 rms_sip_request();
         }
 ...
