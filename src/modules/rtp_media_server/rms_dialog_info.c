@@ -19,10 +19,10 @@
  */
 
 #include "rtp_media_server.h"
-extern rms_session_info_t *rms_session_list;
+extern rms_dialog_info_t *rms_dialog_list;
 extern int in_rms_process;
 
-static void rms_action_free(rms_session_info_t *si)
+static void rms_action_free(rms_dialog_info_t *si)
 {
 	rms_action_t *a, *tmp;
 	clist_foreach(&si->action, a, next)
@@ -44,25 +44,25 @@ rms_action_t *rms_action_new(rms_action_type_t t)
 	return a;
 }
 
-int init_rms_session_list()
+int init_rms_dialog_list()
 {
-	rms_session_list = shm_malloc(sizeof(rms_session_info_t));
-	if(!rms_session_list)
+	rms_dialog_list = shm_malloc(sizeof(rms_dialog_info_t));
+	if(!rms_dialog_list)
 		return 0;
-	clist_init(rms_session_list, next, prev);
+	clist_init(rms_dialog_list, next, prev);
 	return 1;
 }
 
-rms_session_info_t *rms_session_search(struct sip_msg *msg) // str *from_tag)
+rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg) // str *from_tag)
 {
-	rms_session_info_t *si;
+	rms_dialog_info_t *si;
 	str callid = msg->callid->body;
 	if(parse_from_header(msg) < 0) {
 		LM_ERR("can not parse from header!\n");
 		return NULL;
 	}
 	struct to_body *from = get_from(msg);
-	clist_foreach(rms_session_list, si, next)
+	clist_foreach(rms_dialog_list, si, next)
 	{
 		if(strncmp(callid.s, si->callid.s, callid.len) == 0) {
 			LM_NOTICE("call-id[%s]tag[%s][%s]\n", si->callid.s, si->local_tag.s,
@@ -84,37 +84,37 @@ rms_session_info_t *rms_session_search(struct sip_msg *msg) // str *from_tag)
 	return NULL;
 }
 
-rms_session_info_t *rms_session_search_sync(struct sip_msg *msg)
+rms_dialog_info_t *rms_dialog_search_sync(struct sip_msg *msg)
 {
-	lock(&session_list_mutex);
-	rms_session_info_t *si = rms_session_search(msg);
-	unlock(&session_list_mutex);
+	lock(&dialog_list_mutex);
+	rms_dialog_info_t *si = rms_dialog_search(msg);
+	unlock(&dialog_list_mutex);
 	return si;
 }
 
-void rms_session_add(rms_session_info_t *si)
+void rms_dialog_add(rms_dialog_info_t *si)
 {
 	if (in_rms_process) {
-		clist_append(rms_session_list, si, next, prev);
+		clist_append(rms_dialog_list, si, next, prev);
 	} else {
-		lock(&session_list_mutex);
-		clist_append(rms_session_list, si, next, prev);
-		unlock(&session_list_mutex);
+		lock(&dialog_list_mutex);
+		clist_append(rms_dialog_list, si, next, prev);
+		unlock(&dialog_list_mutex);
 	}
 }
 
-void rms_session_rm(rms_session_info_t *si)
+void rms_dialog_rm(rms_dialog_info_t *si)
 {
 	if (in_rms_process) {
-		clist_append(rms_session_list, si, next, prev);
+		clist_append(rms_dialog_list, si, next, prev);
 	} else {
-		lock(&session_list_mutex);
+		lock(&dialog_list_mutex);
 		clist_rm(si, next, prev);
-		unlock(&session_list_mutex);
+		unlock(&dialog_list_mutex);
 	}
 }
 
-int rms_session_free(rms_session_info_t *si)
+int rms_dialog_free(rms_dialog_info_t *si)
 {
 	rms_action_free(si);
 	rms_sdp_info_free(&si->sdp_info_offer);
@@ -157,16 +157,16 @@ int rms_check_msg(struct sip_msg *msg)
 	return 1;
 }
 
-rms_session_info_t *rms_session_new_bleg(struct sip_msg *msg)
+rms_dialog_info_t *rms_dialog_new_bleg(struct sip_msg *msg)
 {
 	if(!rms_check_msg(msg))
 		return NULL;
-	rms_session_info_t *si = shm_malloc(sizeof(rms_session_info_t));
+	rms_dialog_info_t *si = shm_malloc(sizeof(rms_dialog_info_t));
 	if(!si) {
-		LM_ERR("can not allocate session info !\n");
+		LM_ERR("can not allocate dialog info !\n");
 		goto error;
 	}
-	memset(si, 0, sizeof(rms_session_info_t));
+	memset(si, 0, sizeof(rms_dialog_info_t));
 
 	if(!rms_str_dup(&si->callid, &msg->callid->body, 1)) {
 		LM_ERR("can not get callid .\n");
@@ -182,23 +182,23 @@ rms_session_info_t *rms_session_new_bleg(struct sip_msg *msg)
 	clist_init(&si->action, next, prev);
 	return si;
 error:
-	LM_ERR("can not create session.\n");
-	rms_session_free(si);
+	LM_ERR("can not create dialog info.\n");
+	rms_dialog_free(si);
 	return NULL;
 }
 
-rms_session_info_t *rms_session_new(struct sip_msg *msg)
+rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 {
 	struct hdr_field *hdr = NULL;
 
 	if(!rms_check_msg(msg))
 		return NULL;
-	rms_session_info_t *si = shm_malloc(sizeof(rms_session_info_t));
+	rms_dialog_info_t *si = shm_malloc(sizeof(rms_dialog_info_t));
 	if(!si) {
-		LM_ERR("can not allocate session info !\n");
+		LM_ERR("can not allocate dialog info !\n");
 		goto error;
 	}
-	memset(si, 0, sizeof(rms_session_info_t));
+	memset(si, 0, sizeof(rms_dialog_info_t));
 
 	if(!rms_str_dup(&si->callid, &msg->callid->body, 1)) {
 		LM_ERR("can not get callid .\n");
@@ -233,19 +233,19 @@ rms_session_info_t *rms_session_new(struct sip_msg *msg)
 	clist_init(&si->action, next, prev);
 	return si;
 error:
-	LM_ERR("can not create session.\n");
-	rms_session_free(si);
+	LM_ERR("can not create dialog info.\n");
+	rms_dialog_free(si);
 	return NULL;
 }
 
-int rms_sessions_dump_f(struct sip_msg *msg, char *param1, char *param2)
+int rms_dialogs_dump_f(struct sip_msg *msg, char *param1, char *param2)
 {
 	int x = 1;
-	rms_session_info_t *si;
-	clist_foreach(rms_session_list, si, next)
+	rms_dialog_info_t *di;
+	clist_foreach(rms_dialog_list, di, next)
 	{
 		LM_INFO("[%d]callid[%s]remote_tag[%s]local_tag[%s]cseq[%d]\n", x,
-				si->callid.s, si->remote_tag.s, si->local_tag.s, si->cseq);
+				di->callid.s, di->remote_tag.s, di->local_tag.s, di->cseq);
 		x++;
 	}
 	return 1;

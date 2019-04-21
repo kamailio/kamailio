@@ -37,9 +37,9 @@
 #include "rms_util.h"
 #include "rms_sdp.h"
 #include "rms_media.h"
-#include "rms_session_info.h"
+#include "rms_dialog_info.h"
 
-ser_lock_t session_list_mutex;
+ser_lock_t dialog_list_mutex;
 
 
 

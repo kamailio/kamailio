@@ -2,7 +2,7 @@
 
 
 |rms_bridge_f| >> create a_leg and b_leg
-               >> link them and add them to the sessions
+               >> link them and add them to the dialogs
                >> suspend a_leg connection
                ---------------------------
                | caller-leg | callee-leg |

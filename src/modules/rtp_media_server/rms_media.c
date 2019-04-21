@@ -194,7 +194,7 @@ int rms_start_media(call_leg_media_t *m, char *file_name)
 	m->ms_voidsink = ms_factory_create_filter(m->ms_factory, MS_VOID_SINK_ID);
 	if(!m->ms_voidsink)
 		goto error;
-	LM_INFO("m[%p]call-id[%p]\n", m, m->si->callid.s);
+	LM_INFO("m[%p]call-id[%p]\n", m, m->di->callid.s);
 
 	ms_filter_call_method(
 			m->ms_player, MS_FILTER_SET_OUTPUT_NCHANNELS, &channels);

@@ -109,7 +109,7 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 	<section id="rtp_media_server.f.rms_answer">
 		<title><varname>rms_answer</varname> (event_route)</title>
 		<para>
-		Create a session and a call leg and call the event_route
+		Create a call leg : with a SIP dialog and an RTP session call the event_route
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
@@ -191,15 +191,15 @@ route {
 			t_reply("503", "server error");
 		}
 	}
-	if(rms_session_check()) // If the dialog is managed by the RMS module, the in-dialog request needs to be handled by it.
+	if(rms_dialog_check()) // If the dialog is managed by the RMS module, the in-dialog request needs to be handled by it.
 		rms_sip_request();
 ...
 		</programlisting></example>
 	</section>
 
 
-	<section id="rtp_media_server.f.rms_session_check">
-		<title><varname>rms_session_check</varname> ()</title>
+	<section id="rtp_media_server.f.rms_dialog_check">
+		<title><varname>rms_dialog_check</varname> ()</title>
 		<para>
 		Returns true if the current SIP message it handled/known by
 		the RMS module, else it may be handle in any other way by
@@ -209,11 +209,11 @@ route {
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
 		</para>
 		<example>
-		<title>rms_session_check usage example</title>
+		<title>rms_dialog_check usage example</title>
 		<programlisting format="linespecific">
 ...
-	if (rms_session_check()) {
-		xnotice("This session is handled by the RMS module\n");
+	if (rms_dialog_check()) {
+		xnotice("This dialog is handled by the RMS module\n");
 		rms_sip_request();
 	}
 ...
@@ -228,7 +228,7 @@ route {
 		will be suspended until the second leg replies.
 		</para>
 		<para>
-		If the SIP session is not found "481 Call/Transaction Does Not Exist"
+		If the SIP dialog is not found "481 Call/Transaction Does Not Exist"
 		is returned.
 		</para>
 		<para>
@@ -238,7 +238,7 @@ route {
 		<title>rms_sip_request usage example</title>
 		<programlisting format="linespecific">
 ...
-	if (rms_session_check()) {
+	if (rms_dialog_check()) {
 		rms_sip_request();
 	}
 ...
