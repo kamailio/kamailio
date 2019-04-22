@@ -151,4 +151,6 @@ typedef struct _sr_phostp {
 struct socket_info* lookup_local_socket(str *phostp);
 int parse_protohostport(str* ins, sr_phostp_t *r);
 
+unsigned int ipv6_get_netif_scope(const char *ipval);
+
 #endif
