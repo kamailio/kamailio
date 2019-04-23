@@ -584,7 +584,13 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 
 	/* contact */
 	dlg->contact[leg].len = contact->len;
-	memcpy(dlg->contact[leg].s, contact->s, contact->len);
+	if(contact->s) {
+		memcpy(dlg->contact[leg].s, contact->s, contact->len);
+	} else {
+		if(contact->len>0) {
+			memset(dlg->contact[leg].s, 0, contact->len);
+		}
+	}
 	/* cseq */
 	dlg->cseq[leg].len = cs.len;
 	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
