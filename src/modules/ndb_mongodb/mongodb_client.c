@@ -53,6 +53,7 @@ int mongodbc_init(void)
 		return -1;
 	}
 
+	mongoc_init();
 	for(rsrv=_mongodbc_srv_list; rsrv; rsrv=rsrv->next)
 	{
 		if(rsrv->uri==NULL || rsrv->uri->len<=0) {
