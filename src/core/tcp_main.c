@@ -50,6 +50,7 @@
 #include <sys/uio.h>  /* writev*/
 #include <netdb.h>
 #include <stdlib.h> /*exit() */
+#include <stdint.h> /* UINT32_MAX */
 
 #include <unistd.h>
 
