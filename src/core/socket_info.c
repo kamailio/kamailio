@@ -105,7 +105,7 @@
  * return the scope for IPv6 interface matching the ipval parameter
  * - needed for binding to link local IPv6 addresses
  */
-unsigned int ipv6_get_netif_scope(const char *ipval)
+unsigned int ipv6_get_netif_scope(char *ipval)
 {
 	struct ifaddrs *netiflist = NULL;
 	struct ifaddrs *netif = NULL;
@@ -113,6 +113,20 @@ unsigned int ipv6_get_netif_scope(const char *ipval)
 	unsigned int iscope = 0;
 	int i = 0;
 	int r = 0;
+	ip_addr_t *ipa = NULL;
+	ip_addr_t vaddr;
+	str ips;
+
+	ips.s = ipval;
+	ips.len = strlen(ipval);
+
+	ipa = str2ip6(&ips);
+	if(ipa==NULL) {
+		LM_ERR("could not parse ipv6 address: %s\n", ipval);
+		return 0;
+	}
+	memcpy(&vaddr, ipa, sizeof(ip_addr_t));
+	ipa = NULL;
 
 	/* walk over the list of all network interface addresses */
 	if(getifaddrs(&netiflist)!=0) {
@@ -136,10 +150,15 @@ unsigned int ipv6_get_netif_scope(const char *ipval)
 					break;
 				}
 			}
-			/* if the ips matche, get scope index from interface name */
-			if(strcmp(ipaddr, ipval)==0){
-				iscope=if_nametoindex(netif->ifa_name);
-				goto done;
+			ips.s = ipaddr;
+			ips.len = strlen(ipaddr);
+			ipa = str2ip6(&ips);
+			if(ipa!=NULL) {
+				/* if the ips match, get scope index from interface name */
+				if(ip_addr_cmp(&vaddr, ipa)) {
+					iscope=if_nametoindex(netif->ifa_name);
+					goto done;
+				}
 			}
 		}
 	}
