@@ -329,6 +329,7 @@ DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 DNS_CACHE_REC_PREF	dns_cache_rec_pref
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
+BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
 /* blacklist */
 DST_BLST_INIT	dst_blacklist_init
 USE_DST_BLST		use_dst_blacklist
@@ -763,6 +764,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_REC_PREF; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
+<INITIAL>{BIND_IPV6_LINK_LOCAL}	{ count(); yylval.strval=yytext;
+								return BIND_IPV6_LINK_LOCAL; }
 <INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
 								return DST_BLST_INIT; }
 <INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;

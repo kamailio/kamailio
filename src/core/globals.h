@@ -140,6 +140,7 @@ extern char* mcast;
 #endif /* USE_MCAST */
 
 extern int auto_bind_ipv6;
+extern int sr_bind_ipv6_link_local;
 
 extern int tos;
 extern int pmtu_discovery;

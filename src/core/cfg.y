@@ -357,6 +357,7 @@ extern char *default_routename;
 
 /* ipv6 auto bind */
 %token AUTO_BIND_IPV6
+%token BIND_IPV6_LINK_LOCAL
 
 /*blacklist*/
 %token DST_BLST_INIT
@@ -867,6 +868,8 @@ assign_stm:
 	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
+	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}
+	| BIND_IPV6_LINK_LOCAL error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER {

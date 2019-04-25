@@ -426,6 +426,7 @@ int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;
 
 int auto_bind_ipv6 = 0;
+int sr_bind_ipv6_link_local = 0;
 
 struct socket_info* udp_listen=0;
 #ifdef USE_TCP
