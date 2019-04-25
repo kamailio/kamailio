@@ -2091,11 +2091,11 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 
 
 /*
- * Loads ids matching GWs in priority order into gw_ids array.
+ * Loads ids matching GWs in priority order into gw_indexes array.
  * Returns the number of entries in the array.
  */
 int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
-		unsigned int *gw_ids)
+		unsigned int *gw_indexes)
 {
 	int i, j;
 	unsigned int gw_index, now, dex;
@@ -2235,7 +2235,7 @@ done:
 	for(i = gw_index - 1; i >= 0; i--) {
 		if(matched_gws[i].duplicate == 1)
 			continue;
-		gw_ids[j] = gws[matched_gws[i].gw_index].gw_id;
+		gw_indexes[j] = matched_gws[i].gw_index;
 		j++;
 	}
 

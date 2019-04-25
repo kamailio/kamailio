@@ -146,7 +146,7 @@ extern struct rule_info ***rule_pt;
 extern struct rule_id_info **rule_id_hash_table;
 
 extern int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri,
-		str *request_uri, unsigned int *gw_ids);
+		str *request_uri, unsigned int *gw_indexes);
 extern int reload_tables();
 extern int rpc_defunct_gw(unsigned int, unsigned int, unsigned int);
 
