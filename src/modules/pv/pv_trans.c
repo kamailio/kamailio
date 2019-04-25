@@ -614,6 +614,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				val->rs.s += i;
 				val->rs.len = j;
+				tr_string_clone_result;
 				break;
 			}
 			i = -i;
