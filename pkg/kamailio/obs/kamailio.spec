@@ -219,6 +219,11 @@
 %bcond_without xmlrpc
 %endif
 
+# Defining missing macros on RHEL/CentOS 6
+%if 0%{?rhel} == 6
+%define _rundir %{_localstatedir}/run
+%endif
+
 # redefine buggy openSUSE Leap _sharedstatedir macro. More info at https://bugzilla.redhat.com/show_bug.cgi?id=183370
 %if 0%{?suse_version} == 1315
 %define _sharedstatedir /var/lib
