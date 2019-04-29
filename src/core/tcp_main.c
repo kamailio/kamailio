@@ -3041,6 +3041,11 @@ int tcp_init(struct socket_info* sock_info)
 			LM_WARN("setsockopt v6 tos: %s (%d)\n", strerror(errno), tos);
 			/* continue since this is not critical */
 		}
+		if(sr_bind_ipv6_link_local!=0) {
+			LM_INFO("setting scope of %s\n", sock_info->address_str.s);
+			addr->sin6.sin6_scope_id =
+				ipv6_get_netif_scope(sock_info->address_str.s);
+		}
 	}
 
 #if defined(IP_FREEBIND)
