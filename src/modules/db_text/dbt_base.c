@@ -296,6 +296,11 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		}
 		_drp = _drp->next;
 	}
+	if (_drp && counter == _db_text_max_result_rows)
+	{
+		LM_ERR("Truncated table at [%d] rows. Please increase 'max_result_rows' param!\n", counter);
+		goto error;
+	}
 
 	if (_o_l)
 	{
