@@ -1187,8 +1187,11 @@ static int build_iface_list(void)
 				}
 			}
 			if(is_link_local) {
-				pkg_free(entry);
-				continue;    /* link local addresses are not bindable */
+				if(sr_bind_ipv6_link_local==0) {
+					/* skip - link local addresses are not bindable without scope */
+					pkg_free(entry);
+					continue;
+				}
 			}
 
 			if(strlen(ifaces[index].name)==0)
