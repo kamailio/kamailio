@@ -701,8 +701,8 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 					&& ket->ptypes[2]==SR_KEMIP_INT
 					&& ket->ptypes[3]==SR_KEMIP_INT
 					&& ket->ptypes[4]==SR_KEMIP_STR) {
-				/* sssss */
-				ret = ((sr_kemi_fmsssss_f)(ket->func))(lmsg,
+				/* ssnns */
+				ret = ((sr_kemi_fmssnns_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n,
 						&vps[4].s);
 				return sr_kemi_apy_return_int(ket, ret);
