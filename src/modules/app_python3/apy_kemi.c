@@ -416,10 +416,10 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 				vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s,
 				vps[3].s.len, vps[3].s.s, vps[4].s.len, vps[4].s.s);
 		} else if(ket->ptypes[0]==SR_KEMIP_STR
-				|| ket->ptypes[1]==SR_KEMIP_STR
-				|| ket->ptypes[2]==SR_KEMIP_INT
-				|| ket->ptypes[3]==SR_KEMIP_INT
-				|| ket->ptypes[4]==SR_KEMIP_STR) {
+				&& ket->ptypes[1]==SR_KEMIP_STR
+				&& ket->ptypes[2]==SR_KEMIP_INT
+				&& ket->ptypes[3]==SR_KEMIP_INT
+				&& ket->ptypes[4]==SR_KEMIP_STR) {
 			if(!PyArg_ParseTuple(args, "ssiis:kemi-param-ssnns",
 						&vps[0].s.s, &vps[1].s.s, &vps[2].n, &vps[3].n,
 						&vps[4].s.s)) {
