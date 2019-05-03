@@ -511,8 +511,9 @@ int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword)
 		{
 			LM_DBG("generated password: %.*s\n",
 				sgenerated_password.len, sgenerated_password.s);
-			if (strncmp(spassword->s, sgenerated_password.s,
-					spassword->len) == 0)
+			if (spassword->len == sgenerated_password.len
+					&& strncmp(spassword->s, sgenerated_password.s,
+						spassword->len) == 0)
 			{
 				SECRET_UNLOCK;
 				return AUTH_OK;
