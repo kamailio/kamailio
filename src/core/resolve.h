@@ -467,6 +467,9 @@ int register_resolv_reinit_cb(on_resolv_reinit cb);
 int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
 						char* proto);
 
+unsigned int get_af_from_char_buf(char const * const addr);
+unsigned int get_af_from_str(str ip_addr);
+int str2ip_addr(str ip_addr, struct ip_addr * result);
 
 
 /* wrappers */

@@ -31,6 +31,7 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <string.h>
+#include <arpa/inet.h>  /* for inet_pton() */
 
 #include "resolve.h"
 #include "compiler_opt.h"
@@ -1707,4 +1708,141 @@ int sip_hostport2su(union sockaddr_union* su, str* name, unsigned short port,
 	return 0;
 error:
 	return -1;
+}
+
+/* For IPv6 some addresses begin and end with square brackets '[ipv6]' and that is a problem for the current search algorithm.
+ * This method return a new ip without square brackets and without modification of the origin one.
+ * Works properly for IPv4 too
+ * @ip - the origin IP address
+ * @new_ip - the new IP address
+ * @return 0 if fails, new IP size if succeed
+*/
+static int ip_trim(str const * const ip, char * new_ip)
+{
+	str addr;
+
+	if(ip == 0 || new_ip == 0){
+		return 0;
+	}
+
+	addr=*ip;
+	if ((addr.len>2)&&((*addr.s)=='[')&&(addr.s[addr.len-1]==']')){
+		/* ipv6 reference, skip [] */
+		addr.s++;
+		addr.len-=2;
+	}
+
+	memcpy(new_ip, addr.s, addr.len);
+
+  return addr.len;
+}
+
+/* Returns address family of the address
+ * @addr - ip address to inspect
+ * @return AF_UNSPEC if fails, address family if succeed
+*/
+unsigned int get_af_from_char_buf(char const * const addr)
+{
+	char buf[16];
+
+	if(inet_pton(AF_INET, addr, buf)){
+		return AF_INET;
+	}else if(inet_pton(AF_INET6, addr, buf)){
+		return AF_INET6;
+  }
+
+  return AF_UNSPEC;
+}
+
+/* Gets AF from ip string
+ * @ip_addr - ip address in string format
+ * @return AF_UNSPEC if fails, address family if succeed
+*/
+unsigned int get_af_from_str(str ip_addr)
+{
+  char    buf[16];
+	char* 	ip_char_buf = NULL;
+  int     af          = AF_UNSPEC;
+
+	// Allocate dynamically memory in order to avoid buffer overflows
+	if((ip_char_buf = pkg_malloc(ip_addr.len + 1)) == NULL){
+		LM_CRIT("Error allocating memory\n");
+		return af;
+	}
+
+  memset(ip_char_buf, 0, ip_addr.len + 1);
+
+	int new_len = ip_trim(&ip_addr, ip_char_buf);
+	if(!new_len){
+		LM_CRIT("Error cleaning IP address\n");
+		pkg_free(ip_char_buf);
+		return af;
+	}
+
+	if(inet_pton(AF_INET, ip_char_buf, buf)){
+		af = AF_INET;
+	}else if(inet_pton(AF_INET6, ip_char_buf, buf)){
+  	af = AF_INET6;
+  }else{
+		LM_CRIT("Address family determination error\n");
+  }
+
+  pkg_free(ip_char_buf);
+  return af;
+}
+
+/* Convert ip address from string to ip address struct
+ * @ip_addr - ip address in string format
+ * @result - ip address in struct
+ * @return AF_UNSPEC if fails, address family if succeed
+*/
+int str2ip_addr(str ip_addr, struct ip_addr * result)
+{
+	char* ipaddr_char_buf	= NULL;
+	int		err							= 0;
+
+	memset(result, 0, sizeof(struct ip_addr));
+
+	// Allocate dynamically memory in order to avoid buffer overflows
+	if((ipaddr_char_buf = pkg_malloc(ip_addr.len + 1)) == NULL){
+			LM_CRIT("Error allocating memory\n");
+			return AF_UNSPEC;
+	}
+
+  memset(ipaddr_char_buf, 0, ip_addr.len + 1);
+
+	int new_len = ip_trim(&ip_addr, ipaddr_char_buf);
+	if(!new_len){
+		LM_CRIT("Error cleaning IP address\n");
+		pkg_free(ipaddr_char_buf);
+		return AF_UNSPEC;
+	}
+
+	result->af = get_af_from_char_buf(ipaddr_char_buf);
+	if(result->af == AF_UNSPEC){
+		LM_CRIT("Address family determination error\n");
+		pkg_free(ipaddr_char_buf);
+		return AF_UNSPEC;
+	}
+
+  if((err = inet_pton(result->af, ipaddr_char_buf, &result->u.addr)) != 1){
+    if(err == 0){
+      LM_ERR("Error converting IP address. Bad format %.*s\n", ip_addr.len, ip_addr.s);
+    }else{
+      LM_ERR("Error converting IP address: %s\n", strerror(errno));
+    }
+
+    pkg_free(ipaddr_char_buf);
+		return AF_UNSPEC;
+  }
+
+  // Set len by address family
+  if(result->af == AF_INET6){
+    result->len = 16;
+  }else{
+    result->len = 4;
+  }
+
+  pkg_free(ipaddr_char_buf);
+  return result->af;
 }

@@ -673,6 +673,8 @@ retry:
 /* not_found: */
 	return 0;
 found:
+	LM_DBG("found it: host=us: [%.*s] = [%.*s]\n", hname.len, hname.s, si->name.len, si->name.s);
+	LM_DBG("found it: port %d (advertise %d) matches port %d\n", si->port_no, si->useinfo.port_no, port);
 	return si;
 }
 
