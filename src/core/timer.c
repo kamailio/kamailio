@@ -422,7 +422,7 @@ inline static void adjust_ticks(void)
 			diff_time_ticks=(ticks_t)((diff_time*TIMER_TICKS_HZ)/1000000LL);
 			delta=(s_ticks_t)(diff_time_ticks-diff_ticks_raw);
 			if (delta<-1){
-				LM_WARN("our timer runs faster then real-time"
+				LM_WARN("our timer runs faster than real-time"
 						" (%lu ms / %u ticks our time .->"
 						" %lu ms / %u ticks real time)\n",
 						(unsigned long)(diff_ticks_raw*1000L/TIMER_TICKS_HZ),
