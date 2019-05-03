@@ -1041,7 +1041,7 @@ static int ki_ht_setxs(sip_msg_t *msg, str *htname, str *itname, str *itval,
 		}
 	}
 	isval.s = *itval;
-	if(ht_set_cell(ht, itname, AVP_VAL_STR, &isval, 1)!=0) {
+	if(ht_set_cell_ex(ht, itname, AVP_VAL_STR, &isval, 1, exval)!=0) {
 		LM_ERR("cannot set hash table: %.*s key: %.*s\n", htname->len, htname->s,
 				itname->len, itname->s);
 		return -1;
