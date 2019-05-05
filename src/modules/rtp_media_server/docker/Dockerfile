@@ -17,9 +17,16 @@ ENV COMMIT_MEDIASTREAMER2=d935123fc497d19a24019c6e7ae4fe0c5f19d55a
 
 RUN echo "building Kamailio with RTP Media Server" \
 	&& apt-get update && apt-get -y install ${DEB_PKG} ${DEB_PKG_TMP} \
+	&& apt-get install -y libopus-dev opus-tools \
 	&& mkdir -p /git && cd /git
 
 RUN apt-get install -y automake autogen autoconf libtool pkg-config
+
+# RUN echo "building Opus" \
+# 	&& mkdir -p /git && cd /git \
+# 	&& git clone https://github.com/xiph/opus.git \
+# 	&& ./configure \
+# 	&& make && make install
 
 RUN echo "building bcunit" \
 	&& mkdir -p /git && cd /git \

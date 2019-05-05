@@ -42,6 +42,7 @@ typedef struct call_leg_media
 {
 	MSFactory *ms_factory;
 	RtpSession *rtps;
+	RtpProfile *rtp_profile;
 	PayloadType *pt;
 	MSTicker *ms_ticker;
 	MSFilter *ms_encoder;
@@ -63,6 +64,7 @@ typedef struct call_leg_media
 } call_leg_media_t;
 
 int create_call_leg_media(call_leg_media_t *m);
+int create_session_payload(call_leg_media_t *m);
 
 int rms_media_init();
 void rms_media_destroy();

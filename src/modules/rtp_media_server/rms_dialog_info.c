@@ -231,6 +231,7 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 		tmb.t_reply(msg, 488, "incompatible media format");
 		goto error;
 	}
+	//if(!create_session_payload(&si->media)) goto error;
 	clist_init(&si->action, next, prev);
 	return si;
 error:
