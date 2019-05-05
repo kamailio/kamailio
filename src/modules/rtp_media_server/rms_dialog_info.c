@@ -25,6 +25,7 @@ extern int in_rms_process;
 static void rms_action_free(rms_dialog_info_t *si)
 {
 	rms_action_t *a, *tmp;
+	if (!si->action.prev) return;
 	clist_foreach(&si->action, a, next)
 	{
 		tmp = a;

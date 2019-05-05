@@ -186,7 +186,7 @@ PayloadType *rms_sdp_check_payload(rms_sdp_info_t *sdp)
 	char *payloads = sdp->payloads.s;
 	char *payload_type_number = strtok(payloads, " ");
 	if(!payload_type_number) {
-		payload_type_destroy(pt);
+		shm_free(pt); // payload_type_destroy(pt);
 		return NULL;
 	}
 	pt->type = atoi(payload_type_number);
@@ -225,7 +225,7 @@ PayloadType *rms_sdp_check_payload(rms_sdp_info_t *sdp)
 			break;
 		payload_type_number = strtok(NULL, " ");
 		if(!payload_type_number) {
-			payload_type_destroy(pt);
+			shm_free(pt); // payload_type_destroy(pt);
 			return NULL;
 		}
 		pt->type = atoi(payload_type_number);
