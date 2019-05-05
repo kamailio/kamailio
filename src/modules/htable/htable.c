@@ -551,6 +551,11 @@ static int ht_reset_by_name(str *hname)
 
 }
 
+static int ki_ht_reset_by_name(sip_msg_t* msg, str *hname)
+{
+	return ht_reset_by_name(hname);
+}
+
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
 {
 	str sname;
@@ -1304,7 +1309,7 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("htable"), str_init("sht_reset"),
-		SR_KEMIP_INT, ht_reset_by_name,
+		SR_KEMIP_INT, ki_ht_reset_by_name,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
