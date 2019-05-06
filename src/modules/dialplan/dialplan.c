@@ -87,6 +87,7 @@ dp_param_p default_par2 = NULL;
 int dp_fetch_rows = 1000;
 int dp_match_dynamic = 0;
 int dp_append_branch = 1;
+int dp_reload_delta = 5;
 
 static time_t *dp_rpc_reload_time = NULL;
 
@@ -105,6 +106,7 @@ static param_export_t mod_params[]={
 	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
 	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
 	{ "append_branch",	PARAM_INT,	&dp_append_branch },
+	{ "reload_delta",	PARAM_INT,	&dp_reload_delta },
 	{0,0,0}
 };
 
@@ -181,6 +183,9 @@ static int mod_init(void)
 
 	if(dp_fetch_rows<=0)
 		dp_fetch_rows = 1000;
+
+	if(dp_reload_delta<0)
+		dp_reload_delta = 5;
 
 	if(init_data() != 0) {
 		LM_ERR("could not initialize data\n");
@@ -619,7 +624,7 @@ static void dialplan_rpc_reload(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return;
 	}
-	if(*dp_rpc_reload_time!=0 && *dp_rpc_reload_time > time(NULL) - 5) {
+	if(*dp_rpc_reload_time!=0 && *dp_rpc_reload_time > time(NULL) - dp_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "ongoing reload");
 		return;
