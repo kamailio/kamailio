@@ -1019,7 +1019,7 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
 				LM_ERR("inserting contact failed\n");
-				free_ucontact(c);
+				release_urecord(r);
 				unlock_udomain(_d, &user);
 				goto error;
 			}
@@ -1029,7 +1029,7 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 				run_ul_callbacks( UL_CONTACT_EXPIRE, c);
 			}
 			c->state = CS_SYNC;
-			free_ucontact(c);
+			release_urecord(r);
 			unlock_udomain(_d, &user);
 		}
 
