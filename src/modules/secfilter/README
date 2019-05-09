@@ -341,11 +341,11 @@ klisted");
 
    Example 1.9. secf_check_country usage
                 ...
-        if (geoip_match("$si", "src")) {
-                secf_check_country($gip(src=>cc));
+        if (geoip2_match("$si", "src")) {
+                secf_check_country($gip2(src=>cc));
                 if ($avp(secfilter) == -2) {
                         xlog("L_ALERT", "$rm from $si blocked because Country '$
-gip(src=>cc)' is blacklisted");
+gip2(src=>cc)' is blacklisted");
                         exit;
                 }
         }
