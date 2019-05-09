@@ -526,6 +526,8 @@ static inline str *siptrace_get_table(void)
 static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 		str *correlation_id_str)
 {
+	int ret = 1;
+
 	if(sto == NULL) {
 		LM_DBG("invalid parameter\n");
 		return -1;
@@ -535,16 +537,20 @@ static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 
 	if(sip_trace_xheaders_read(sto) != 0)
 		return -1;
-	int ret = sip_trace_store_db(sto);
+
+	ret = sip_trace_store_db(sto);
 
 	if(sip_trace_xheaders_write(sto) != 0)
 		return -1;
 
-	if(hep_mode_on)
+	if(hep_mode_on) {
 		trace_send_hep_duplicate(
 				&sto->body, &sto->fromip, &sto->toip, dst, correlation_id_str);
-	else
-		trace_send_duplicate(sto->body.s, sto->body.len, dst);
+	} else {
+		if(dst) {
+			trace_send_duplicate(sto->body.s, sto->body.len, dst);
+		}
+	}
 
 	if(sip_trace_xheaders_free(sto) != 0)
 		return -1;
@@ -901,21 +907,23 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 			LM_ERR("unable to parse the dest URI string\n");
 			return -1;
 		}
-	}
 
-	if (dup_uri_param_str.s == 0 || (is_null_pv(dup_uri_param_str))) {
-		if (dup_uri_str.s == 0 || dup_uri_str.len == 0) {
-			LM_ERR("no duplicate_uri modparam nor duplicate uri sip_trace() argument provided!\n");
-			return -1;
+		if (dup_uri_param_str.s == 0 || (is_null_pv(dup_uri_param_str))) {
+			if (dup_uri_str.s == 0 || dup_uri_str.len == 0) {
+				LM_ERR("no duplicate_uri modparam nor duplicate uri sip_trace() argument provided!\n");
+				return -1;
+			}
+
+			dup_uri_param_str = dup_uri_str;
 		}
 
-		dup_uri_param_str = dup_uri_str;
-	}
-
-	/* if arg dest uri is null  dup_uri_param_str will have length 0 and global dup_uri will be used */
-	if (parse_siptrace_uri(&dup_uri_param_str, &dest_info) < 0) {
-		LM_ERR("failed to parse uri!\n");
-		return -1;
+		/* if arg dest uri is null  dup_uri_param_str will have length 0 and global dup_uri will be used */
+		if (parse_siptrace_uri(&dup_uri_param_str, &dest_info) < 0) {
+			LM_ERR("failed to parse uri!\n");
+			return -1;
+		}
+	} else {
+		memset(&dest_info, 0, sizeof(dest_info_t));
 	}
 
 	if (correlation_id) {
@@ -1009,7 +1017,7 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 	}
 
 trace_current:
-	return sip_trace(msg, &dest_info, &correlation_id_str, NULL);
+	return sip_trace(msg, ((dest)?&dest_info:NULL), &correlation_id_str, NULL);
 }
 
 static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
