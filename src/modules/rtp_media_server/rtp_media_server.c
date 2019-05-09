@@ -534,7 +534,7 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 		LM_ERR("can not get SDP information\n");
 		goto error;
 	}
-	di->media.pt = rms_sdp_check_payload(sdp_info);
+	di->media.pt = rms_sdp_select_payload(sdp_info);
 	rms_update_media_sockets(pcbp->rpl, di, &di->sdp_info_answer);
 	LM_INFO("[%p][%s:%d]\n", di, sdp_info->local_ip.s,
 			sdp_info->udp_local_port);
@@ -554,7 +554,7 @@ static int rms_bridged_call(rms_dialog_info_t *di, rms_action_t *a)
 	sdp_info->local_ip.s = di->local_ip.s;
 	sdp_info->local_ip.len = di->local_ip.len;
 
-	rms_sdp_prepare_new_body(sdp_info, di->bridged_di->media.pt->type);
+	rms_sdp_prepare_new_body(sdp_info, di->bridged_di->media.pt);
 	rms_answer_call(a->cell, di, sdp_info);
 	LM_NOTICE("si_1[%p] si_2[%p]\n", di, di->bridged_di);
 	create_call_leg_media(&di->media);
@@ -685,7 +685,7 @@ static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct si
 		goto error;
 
 	rms_update_media_sockets(msg, di->bridged_di, &di->bridged_di->sdp_info_offer);
-	rms_sdp_prepare_new_body(&di->bridged_di->sdp_info_offer, di->media.pt->type);
+	rms_sdp_prepare_new_body(&di->bridged_di->sdp_info_offer, di->media.pt);
 	clist_init(&di->bridged_di->action, next, prev);
 	return di->bridged_di;
 error:
@@ -871,7 +871,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 	// Prepare the body of the SDP offer for the current Payload type
 	// Both call legs will have the same offer.
 	LM_NOTICE("payload[%d]\n", di->media.pt->type);
-	rms_sdp_prepare_new_body(&di->sdp_info_offer, di->media.pt->type);
+	rms_sdp_prepare_new_body(&di->sdp_info_offer, di->media.pt);
 
 	// create b_leg
 	di->bridged_di = rms_dialog_create_leg(di, msg);
@@ -1104,7 +1104,7 @@ static int rms_answer_f(struct sip_msg *msg, char * _route)
 	tmb.t_get_reply_totag(msg, &to_tag);
 	rms_str_dup(&di->local_tag, &to_tag, 1);
 	LM_INFO("local_uri[%s]local_tag[%s]\n", di->local_uri.s, di->local_tag.s);
-	if(!rms_sdp_prepare_new_body(&di->sdp_info_offer, di->media.pt->type)) {
+	if(!rms_sdp_prepare_new_body(&di->sdp_info_offer, di->media.pt)) {
 		LM_ERR("error preparing SDP body\n");
 		goto error;
 	}

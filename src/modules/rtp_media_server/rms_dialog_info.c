@@ -226,12 +226,11 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 	rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
 	if(!rms_get_sdp_info(sdp_info, msg))
 		goto error;
-	si->media.pt = rms_sdp_check_payload(sdp_info);
+	si->media.pt = rms_sdp_select_payload(sdp_info);
 	if(!si->media.pt) {
 		tmb.t_reply(msg, 488, "incompatible media format");
 		goto error;
 	}
-	//if(!create_session_payload(&si->media)) goto error;
 	clist_init(&si->action, next, prev);
 	return si;
 error:
