@@ -1717,12 +1717,13 @@ static int build_rtpp_socks(int lmode, int rtest) {
 	}
 
 	rtpp_socks_size = current_rtpp_no;
-	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size));
+	/* allocate one more to have a safety end place holder */
+	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size+1));
 	if (!rtpp_socks) {
 		LM_ERR("no more pkg memory for rtpp_socks\n");
 		return -1;
 	}
-	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
+	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size+1));
 
 	rtpe_reload_lock_get(rtpp_set_list->rset_head_lock);
 	_rtpe_list_vernum_local = _rtpe_list_version->vernum;
