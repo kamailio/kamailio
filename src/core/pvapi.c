@@ -287,6 +287,7 @@ int pv_cache_drop(void)
 					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
 				}
 				pkg_free(pvi);
+				_pv_cache_counter--;
 				return 1;
 			}
 			pvp = pvi;
@@ -309,6 +310,7 @@ int pv_cache_drop(void)
 					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
 				}
 				pkg_free(pvi);
+				_pv_cache_counter--;
 				return 1;
 			}
 			pvp = pvi;
@@ -364,6 +366,7 @@ pv_spec_t* pv_cache_add(str *name)
 	pvn->pvid = pvid;
 	pvn->next = _pv_cache[pvid%PV_CACHE_SIZE];
 	_pv_cache[pvid%PV_CACHE_SIZE] = pvn;
+	_pv_cache_counter++;
 
 	LM_DBG("pvar [%.*s] added in cache\n", name->len, name->s);
 	return &pvn->spec;
