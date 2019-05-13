@@ -49,6 +49,7 @@
 #include "xavp.h"
 #endif
 #include "select_buf.h"
+#include "locking.h"
 
 #include "tcp_server.h"  /* for tcpconn_add_alias */
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
@@ -78,7 +79,7 @@ int ksr_route_locks_set_init(void)
 		return 0;
 
 	ksr_route_locks_set = rec_lock_set_alloc(ksr_route_locks_size);
-	if(ksr_route_locks_set) {
+	if(ksr_route_locks_set==NULL) {
 		LM_ERR("failed to allocate route locks set\n");
 		return -1;
 	}
