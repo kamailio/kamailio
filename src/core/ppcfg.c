@@ -163,7 +163,7 @@ found_repl:
 	return 0;
 
 error:
-	return 1;
+	return -1;
 }
 
 int pp_subst_run(char **data)
