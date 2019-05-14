@@ -204,7 +204,8 @@ Options:\n\
 #ifdef STATS
 "    -s file     File where to write internal statistics on SIGUSR1\n"
 #endif
-"    --substdef=exp set a substdef preprocessor directive\n\
+"    --subst=exp set a subst preprocessor directive\n\
+    --substdef=exp set a substdef preprocessor directive\n\
     --substdefs=exp set a substdefs preprocessor directive\n"
 #ifdef USE_SCTP
 "    -S           disable sctp\n"
@@ -1902,8 +1903,9 @@ int main(int argc, char** argv)
 		{"version",  no_argument, 0, 'v'},
 		/* long options without short variant */
 		{"alias",       required_argument, 0, KARGOPTVAL},
-		{"substdef",    required_argument, 0, KARGOPTVAL + 1},
-		{"substdefs",   required_argument, 0, KARGOPTVAL + 2},
+		{"subst",       required_argument, 0, KARGOPTVAL + 1},
+		{"substdef",    required_argument, 0, KARGOPTVAL + 2},
+		{"substdefs",   required_argument, 0, KARGOPTVAL + 3},
 		{0, 0, 0, 0 }
 	};
 
@@ -2138,14 +2140,20 @@ int main(int argc, char** argv)
 					}
 					break;
 			case KARGOPTVAL+1:
-					if(pp_substdef_add(optarg, 0)<0) {
-						LM_ERR("failed to add substdef: %s\n", optarg);
+					if(pp_subst_add(optarg)<0) {
+						LM_ERR("failed to add subst expression: %s\n", optarg);
 						goto error;
 					}
 					break;
 			case KARGOPTVAL+2:
+					if(pp_substdef_add(optarg, 0)<0) {
+						LM_ERR("failed to add substdef expression: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+3:
 					if(pp_substdef_add(optarg, 1)<0) {
-						LM_ERR("failed to add substdefs: %s\n", optarg);
+						LM_ERR("failed to add substdefs expression: %s\n", optarg);
 						goto error;
 					}
 					break;
