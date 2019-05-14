@@ -1011,7 +1011,7 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		}
 	}
 
-	if(trace_is_off(msg)) {
+	if(trace_type != SIPTRACE_MESSAGE && trace_is_off(msg)) {
 		LM_DBG("trace off...\n");
 		return 1;
 	}
