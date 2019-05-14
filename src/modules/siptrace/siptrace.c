@@ -68,7 +68,7 @@ MODULE_VERSION
 		|| ((_msg->flags & trace_flag) == 0))
 
 #define is_null_pv(_str) \
-	(!str_strcmp(&_str, &null_pv_value_str))
+	(!str_strcmp(&_str, pv_get_null_str()))
 
 struct tm_binds tmb;
 struct dlg_binds dlgb;
@@ -135,8 +135,6 @@ static str totag_column = str_init("totag");			 /* 11 */
 
 static str siptrace_info_dlgkey = str_init("__siptrace_info_dlg_key__");
 static str siptrace_info_avp_str = str_init("$avp(__siptrace_info_avp__)");
-
-static str null_pv_value_str = str_init("<null>");
 
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
