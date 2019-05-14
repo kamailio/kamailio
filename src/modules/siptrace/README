@@ -499,6 +499,10 @@ sip_trace("sip:10.1.1.2:5085");
 ...
 sip_trace("sip:10.1.1.2:5085", "$ci-abc");
 ...
+/* trace current dialog; needs to be done on initial INVITE and dialog has to be
+ loaded */
+sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
+...
 
 4.2.  hlog([correlation_id,] message)
 
