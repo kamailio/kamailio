@@ -495,13 +495,16 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	if(trace_to_database_flag != NULL && *trace_to_database_flag != 0) {
-		if(db_con != NULL)
+	if(trace_to_database_flag != NULL) {
+		if(db_con != NULL) {
 			db_funcs.close(db_con);
+		}
+		shm_free(trace_to_database_flag);
 	}
 
-	if(trace_on_flag)
+	if(trace_on_flag) {
 		shm_free(trace_on_flag);
+	}
 }
 
 static inline str *siptrace_get_table(void)
