@@ -68,6 +68,7 @@ typedef struct {
 } siptrace_info_t;
 
 
-enum siptrace_type_t {SIPTRACE_NONE=0, SIPTRACE_MESSAGE = 'm', SIPTRACE_TRANSACTION = 't', SIPTRACE_DIALOG = 'd'};
+enum siptrace_type_t {SIPTRACE_NONE=0, SIPTRACE_MESSAGE = 'm',
+	SIPTRACE_TRANSACTION = 't', SIPTRACE_DIALOG = 'd'};
 
 #endif

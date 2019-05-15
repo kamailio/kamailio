@@ -83,7 +83,7 @@ static int child_init(int rank);
 static void destroy(void);
 static int sip_trace(sip_msg_t *msg, dest_info_t *, str *, char *);
 static int w_sip_trace0(struct sip_msg *, char *p1, char *p2);
-static int w_sip_trace1(struct sip_msg *, char *dest);
+static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
 static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char *trace_type);
 static int fixup_siptrace(void **param, int param_no);
@@ -822,6 +822,96 @@ static int parse_siptrace_uri(str* duri, dest_info_t* dst)
 }
 
 /**
+ *
+ */
+static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
+		str *corid, char *dir, enum siptrace_type_t trace_type)
+{
+	siptrace_info_t* info = NULL;
+
+	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
+		/*
+		 * for each type check that conditions are created
+		 * transaction: it's a request starting a transaction; tm module loaded
+		 * dialog: it's an INVITE; dialog module is loaded
+		 *
+		 * */
+		if (tmb.t_gett == NULL) {
+			LM_WARN("TM module not loaded! Tracing only current message!\n");
+			goto trace_current;
+		}
+
+		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
+			LM_WARN("DIALOG module not loaded! Tracing only current message!\n");
+			goto trace_current;
+		}
+
+		if (msg->first_line.type != SIP_REQUEST ||
+				(trace_type == SIPTRACE_DIALOG && msg->first_line.u.request.method_value != METHOD_INVITE)) {
+			LM_WARN("When tracing a %s sip_trace() has to be initiated on the %s\n",
+					trace_type == SIPTRACE_TRANSACTION ? "transaction" : "dialog",
+					trace_type == SIPTRACE_TRANSACTION ? "request message" : "initial invite");
+			return -1;
+		}
+
+		info = shm_malloc(sizeof(siptrace_info_t));
+		if (info == NULL) {
+			LM_ERR("No more shm!\n");
+			return -1;
+		}
+		memset(info, 0, sizeof(siptrace_info_t));
+
+		/* could use the dest_info we've already parsed but there's no way to pass
+		 * it to DLGCB_CREATED callback so the only thing to do is keep
+		 * it as uri, serialize in a dlg_var and parse again in DLGCB_CREATED */
+		if(corid) {
+			info->correlation_id = *corid;
+		}
+		if (duri) {
+			info->uriState = STRACE_RAW_URI;
+			info->u.dup_uri = *duri;
+		} else {
+			info->uriState = STRACE_UNUSED_URI;
+		}
+
+		if (trace_type == SIPTRACE_TRANSACTION) {
+			trace_transaction(msg, info);
+		} else if (trace_type == SIPTRACE_DIALOG) {
+			if (unlikely(dlgb.set_dlg_var == NULL)) {
+				/* FIXME should we abort tracing here? */
+				LM_WARN("Dialog api not loaded! will trace only current transaction!\n");
+			} else {
+				/* serialize what's in info */
+				/* save correlation id in siptrace_info avp
+				 * we want to have traced user avp value at the moment of sip_trace function call*/
+				if (add_serial_info_avp(info) < 0) {
+					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
+					return -1;
+				} else {
+					msg->msg_flags |= FL_SIPTRACE;
+				}
+			}
+
+			/**
+			 * WARNING: don't move trace_transaction before  add_serial_info_avp()
+			 * add_serial_info_avp() expects the URI in RAW format, unparsed
+			 * trace_transaction() parses the URI if it finds it in raw format;
+			 * a BUG will be thrown if this happens
+			 */
+			trace_transaction(msg, info);
+		}
+	}
+
+	if(trace_type != SIPTRACE_MESSAGE && trace_is_off(msg)) {
+		LM_DBG("trace off...\n");
+		return 1;
+	}
+
+trace_current:
+	return sip_trace(msg, dst, corid, dir);
+}
+
+/**
  * Send sip trace with destination and correlation id and specify what messages to be traced
  */
 static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* sflag)
@@ -829,9 +919,11 @@ static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* s
 	dest_info_t dst;
 	enum siptrace_type_t trace_type;
 
-	if (parse_siptrace_uri(duri, &dst) < 0) {
-		LM_ERR("failed to parse siptrace uri!\n");
-		return -1;
+	if(duri) {
+		if (parse_siptrace_uri(duri, &dst) < 0) {
+			LM_ERR("failed to parse siptrace uri!\n");
+			return -1;
+		}
 	}
 
 	if (sflag) {
@@ -843,7 +935,7 @@ static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* s
 		trace_type = SIPTRACE_MESSAGE;
 	}
 
-	return sip_trace(msg, &dst, cid,  NULL);
+	return sip_trace_helper(msg, (duri)?&dst:NULL, duri, cid, NULL, trace_type);
 }
 
 /**
@@ -881,7 +973,7 @@ static int w_sip_trace0(sip_msg_t *msg, char *dest, char *correlation_id)
 /**
  *
  */
-static int w_sip_trace1(sip_msg_t *msg, char *dest)
+static int w_sip_trace1(sip_msg_t *msg, char *dest, char *p2)
 {
 	return w_sip_trace3(msg, dest, NULL, NULL);
 }
@@ -901,7 +993,6 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 	str correlation_id_str = {0, 0};
 	dest_info_t dest_info;
 	enum siptrace_type_t trace_type;
-	siptrace_info_t* info;
 
 	if (dest) {
 		if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_param_str) != 0) {
@@ -942,83 +1033,9 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		trace_type = SIPTRACE_MESSAGE;
 	}
 
-	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
-		/*
-		 * for each type check that conditions are created
-		 * transaction: it's a request starting a transaction; tm module loaded
-		 * dialog: it's an INVITE; dialog module is loaded
-		 *
-		 * */
-		if (tmb.t_gett == NULL) {
-			LM_WARN("TM module not loaded! Tracing only current message!\n");
-			goto trace_current;
-		}
-
-		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
-			LM_WARN("DIALOG module not loaded! Tracing only current message!\n");
-			goto trace_current;
-		}
-
-		if (msg->first_line.type != SIP_REQUEST ||
-				(trace_type == SIPTRACE_DIALOG && msg->first_line.u.request.method_value != METHOD_INVITE)) {
-			LM_WARN("When tracing a %s sip_trace() has to be initiated on the %s\n",
-					trace_type == SIPTRACE_TRANSACTION ? "transaction" : "dialog",
-					trace_type == SIPTRACE_TRANSACTION ? "request message" : "initial invite");
-			return -1;
-		}
-
-		info = shm_malloc(sizeof(siptrace_info_t));
-		if (info == NULL) {
-			LM_ERR("No more shm!\n");
-			return -1;
-		}
-
-		/* could use the dest_info we've already parsed but there's no way to pass
-		 * it to DLGCB_CREATED callback so the only thing to do is keep
-		 * it as uri, serialize in a dlg_var and parse again in DLGCB_CREATED */
-		info->correlation_id = correlation_id_str;
-		if (dest) {
-			info->uriState = STRACE_RAW_URI;
-			info->u.dup_uri = dup_uri_param_str;
-		} else {
-			info->uriState = STRACE_UNUSED_URI;
-		}
-
-		if (trace_type == SIPTRACE_TRANSACTION) {
-			trace_transaction(msg, info);
-		} else if (trace_type == SIPTRACE_DIALOG) {
-			if (unlikely(dlgb.set_dlg_var == NULL)) {
-				/* FIXME should we abort tracing here? */
-				LM_WARN("Dialog api not loaded! will trace only current transaction!\n");
-			} else {
-				/* serialize what's in info */
-				/* save correlation id in siptrace_info avp
-				 * we want to have traced user avp value at the moment of sip_trace function call*/
-				if (add_serial_info_avp(info) < 0) {
-					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
-					return -1;
-				} else {
-					msg->msg_flags |= FL_SIPTRACE;
-				}
-			}
-
-			/**
-			 * WARNING: don't move trace_transaction before  add_serial_info_avp()
-			 * add_serial_info_avp() expects the URI in RAW format, unparsed
-			 * trace_transaction() parses the URI if it finds it in raw format;
-			 * a BUG will be thrown if this happens
-			 */
-			trace_transaction(msg, info);
-		}
-	}
-
-	if(trace_type != SIPTRACE_MESSAGE && trace_is_off(msg)) {
-		LM_DBG("trace off...\n");
-		return 1;
-	}
-
-trace_current:
-	return sip_trace(msg, ((dest)?&dest_info:NULL), &correlation_id_str, NULL);
+	return sip_trace_helper(msg, (dest)?&dest_info:NULL,
+			(dest)?&dup_uri_param_str:NULL,
+			(correlation_id)?&correlation_id_str:NULL, NULL, trace_type);
 }
 
 static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
@@ -1572,7 +1589,8 @@ static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps
 		return;
 	}
 
-	sip_trace(ps->req, info->uriState == STRACE_PARSED_URI ? &info->u.dest_info : NULL , NULL, NULL);
+	sip_trace(ps->req, (info->uriState == STRACE_PARSED_URI) ? &info->u.dest_info : NULL,
+			NULL, NULL);
 }
 
 /**
