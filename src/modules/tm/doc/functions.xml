@@ -1849,4 +1849,22 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.f.t_get_status_code">
+	<title>
+	    <function>t_get_status_code()</function>
+	</title>
+	<para>
+	Return the status code for transaction - the most relevant SIP reply status
+	code, or -1 in case of error or no status code was set.
+	</para>
+	<example>
+	    <title><function>t_get_status_code</function> usage</title>
+	    <programlisting>
+...
+$var(ts) = t_get_status_code();
+if($var(ts) == 500) { ... }
+...
+	    </programlisting>
+	</example>
+    </section>
     </section>
