@@ -709,6 +709,7 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 	dest_info_t *dst = NULL;
 	sip_uri_t uri;
 	proxy_l_t *p = NULL;
+	int ret = 1;
 
 	// If the dest is empty, use the module parameter, if set
 	if(duri == NULL || duri->len <= 0) {
@@ -750,7 +751,11 @@ static int ki_sip_trace_dst_cid(sip_msg_t *msg, str *duri, str *cid)
 		pkg_free(p);
 	}
 
-	return sip_trace(msg, dst, ((cid!=NULL && cid->len>0)?cid:NULL), NULL);
+	ret = sip_trace(msg, dst, ((cid!=NULL && cid->len>0)?cid:NULL), NULL);
+
+	pkg_free(dst);
+
+	return ret;
 }
 
 /**
