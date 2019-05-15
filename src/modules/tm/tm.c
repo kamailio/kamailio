@@ -210,6 +210,7 @@ static int w_t_is_set(struct sip_msg* msg, char* target, char* bar);
 static int w_t_use_uac_headers(sip_msg_t* msg, char* foo, char* bar);
 static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 		char* pnexthop, char* psock, char *phdrs, char* pbody);
+static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -404,6 +405,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"t_uac_send", (cmd_function)w_t_uac_send, 6, fixup_spve_all, 0,
 		ANY_ROUTE },
+	{"t_get_status_code", w_t_get_status_code,      0, 0, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
@@ -854,6 +857,74 @@ static int child_init(int rank)
 
 
 /**************************** wrapper functions ***************************/
+
+static int ki_t_get_status_code(sip_msg_t* msg)
+{
+	int scode = -1;
+	int ret;
+	tm_cell_t *t = NULL;
+
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
+		LM_ERR("cannot check status for a reply"
+				" which has no T-state established\n");
+		goto error;
+	}
+
+	switch(get_route_type()) {
+		case REQUEST_ROUTE:
+			/* use the status of the last sent reply */
+			scode = t->uas.status;
+			break;
+
+		case TM_ONREPLY_ROUTE:
+		case CORE_ONREPLY_ROUTE:
+			/* use the status of the current reply */
+			scode = (int)msg->first_line.u.reply.statuscode;
+			break;
+
+		case FAILURE_ROUTE:
+			/* use the status of the winning reply */
+			ret = t_pick_branch( -1, 0, t, &scode);
+			if (ret == -1) {
+				/* t_pick_branch() retuns error also when there are only
+				 * blind UACs. Let us give it another chance including the
+				 * blind branches. */
+				LM_DBG("t_pick_branch returned error,"
+						" trying t_pick_branch_blind\n");
+				ret = t_pick_branch_blind(t, &scode);
+			}
+			if (ret < 0) {
+				LM_CRIT("BUG: t_pick_branch failed to get"
+						" a final response in FAILURE_ROUTE\n");
+				goto error;
+			}
+			break;
+
+		case BRANCH_FAILURE_ROUTE:
+			scode = t->uac[get_t_branch()].last_received;
+			break;
+
+		default:
+			LM_ERR("unsupported route type %d\n",
+					get_route_type());
+			goto error;
+	}
+
+	LM_DBG("t status code is <%d>\n", scode);
+
+	return (scode!=0)?scode:-1;
+
+error:
+	return -1;
+}
+
+static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2)
+{
+	return ki_t_get_status_code(msg);
+}
+
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
 	regmatch_t pmatch;
@@ -3099,7 +3170,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("tm"), str_init("t_get_status_code"),
+		SR_KEMIP_INT, ki_t_get_status_code,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
