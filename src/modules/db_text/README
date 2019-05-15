@@ -45,6 +45,7 @@ Olle E. Johansson
               4.1. db_mode (integer)
               4.2. emptystring (integer)
               4.3. file_buffer_size (integer)
+              4.4. max_result_rows (integer)
 
         5. Exported RPC Functions
 
@@ -64,11 +65,12 @@ Olle E. Johansson
    1.4. Set db_mode parameter
    1.5. Set emptystring parameter
    1.6. Set file_buffer_size parameter
-   1.7. Load the dbtext module
-   1.8. Definition of 'subscriber' table (one line)
-   1.9. Definition of 'location' and 'aliases' tables (one line)
-   1.10. Definition of 'version' table and sample records
-   1.11. Configuration file
+   1.7. Set max_result_rows parameter
+   1.8. Load the dbtext module
+   1.9. Definition of 'subscriber' table (one line)
+   1.10. Definition of 'location' and 'aliases' tables (one line)
+   1.11. Definition of 'version' table and sample records
+   1.12. Configuration file
 
 Chapter 1. Admin Guide
 
@@ -90,6 +92,7 @@ Chapter 1. Admin Guide
         4.1. db_mode (integer)
         4.2. emptystring (integer)
         4.3. file_buffer_size (integer)
+        4.4. max_result_rows (integer)
 
    5. Exported RPC Functions
 
@@ -214,6 +217,7 @@ suser:supasswd:xxx:alpha.org:xxx
    4.1. db_mode (integer)
    4.2. emptystring (integer)
    4.3. file_buffer_size (integer)
+   4.4. max_result_rows (integer)
 
 4.1. db_mode (integer)
 
@@ -248,11 +252,22 @@ modparam("db_text", "emptystring", 1)
    size of the buffer used to read the text file. Some presence tables
    have columns with large content.
 
-   Default value is “16384” (off).
+   Default value is “16384”.
 
    Example 1.6. Set file_buffer_size parameter
 ...
 modparam("db_text", "file_buffer_size", 8192)
+...
+
+4.4. max_result_rows (integer)
+
+   number of rows to read from the text file.
+
+   Default value is “100000”.
+
+   Example 1.7. Set max_result_rows parameter
+...
+modparam("db_text", "max_result_rows", 1000000)
 ...
 
 5. Exported RPC Functions
@@ -283,7 +298,7 @@ modparam("db_text", "file_buffer_size", 8192)
    database path. So, either you provide an absolute path to database
    directory or a relative one to “CFG_DIR” directory.
 
-   Example 1.7. Load the dbtext module
+   Example 1.8. Load the dbtext module
 ...
 loadmodule "/path/to/kamailio/modules_k/db_text.so"
 ...
@@ -302,7 +317,7 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
    in order to have authentication. To use with the given configuration
    file, the table files must be placed in the '/tmp/serdb' directory.
 
-   Example 1.8. Definition of 'subscriber' table (one line)
+   Example 1.9. Definition of 'subscriber' table (one line)
 ...
 username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
 ) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
@@ -310,14 +325,14 @@ tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
 allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
-   Example 1.9. Definition of 'location' and 'aliases' tables (one line)
+   Example 1.10. Definition of 'location' and 'aliases' tables (one line)
 ...
 username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
  q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
 er_agent(str) socket(str)
 ...
 
-   Example 1.10. Definition of 'version' table and sample records
+   Example 1.11. Definition of 'version' table and sample records
 ...
 table_name(str) table_version(int)
 subscriber:3
@@ -325,17 +340,16 @@ location:6
 aliases:6
 ...
 
-   Example 1.11. Configuration file
+   Example 1.12. Configuration file
 ...
 #
-# $Id$
 #
 # simple quick-start config script with dbtext
 #
 
 # ----------- global configuration parameters ------------------------
 
-#debug=9         # debug level (cmd line: -dddddddddd)
+#debug=3         # debug level (cmd line: -ddd)
 #fork=yes
 #log_stderror=no        # (cmd line: -E)
 
@@ -359,7 +373,7 @@ loadmodule "modules/maxfwd/maxfwd.so"
 loadmodule "modules/usrloc/usrloc.so"
 loadmodule "modules/registrar/registrar.so"
 loadmodule "modules/textops/textops.so"
-loadmodule "modules/textops/mi_fifo.so"
+loadmodule "modules/jonrpcs/jsonrpcs.so"
 
 # modules for digest authentication
 loadmodule "modules/auth/auth.so"
@@ -367,15 +381,11 @@ loadmodule "modules/auth_db/auth_db.so"
 
 # ----------------- setting module-specific parameters ---------------
 
-# -- mi_fifo params --
-
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
-
 # -- usrloc params --
 
 # use dbtext database for persistent storage
 modparam("usrloc", "db_mode", 2)
-modparam("usrloc|auth_db", "db_url", "dbtext:///tmp/openserdb")
+modparam("usrloc|auth_db", "db_url", "db_text:///tmp/kamailiodb")
 
 # -- auth params --
 #
