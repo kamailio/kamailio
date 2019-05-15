@@ -476,8 +476,9 @@ static int dp_replace_helper(sip_msg_t *msg, int dpid, str *input,
 		pv_spec_t *pvd)
 {
 	dpl_id_p idp;
-	str output = STR_NULL;
+	str tmp = STR_NULL;
 	str attrs = STR_NULL;
+	str *output = NULL;
 	str *outattrs = NULL;
 
 	if ((idp = select_dpid(dpid)) ==0) {
@@ -486,16 +487,19 @@ static int dp_replace_helper(sip_msg_t *msg, int dpid, str *input,
 	}
 
 	outattrs = (!attr_pvar)?NULL:&attrs;
-	if (dp_translate_helper(msg, input, &output, idp, outattrs)!=0) {
+	output = (!pvd)?NULL:&tmp;
+	if (dp_translate_helper(msg, input, output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
 				"with dpid %i\n", input->len, input->s, idp->dp_id);
 		return -1;
 	}
-	LM_DBG("input %.*s with dpid %i => output %.*s\n",
-			input->len, input->s, idp->dp_id, output.len, output.s);
+	if (output) {
+		LM_DBG("input %.*s with dpid %i => output %.*s\n",
+				input->len, input->s, idp->dp_id, output->len, output->s);
+	}
 
 	/* set the output */
-	if (dp_update(msg, pvd, &output, outattrs) !=0){
+	if (dp_update(msg, pvd, output, outattrs) !=0){
 		LM_ERR("cannot set the output\n");
 		return -1;
 	}

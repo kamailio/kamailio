@@ -699,6 +699,9 @@ repl:
 					attrs->len, attrs->s);
 		}
 	}
+	if(!output) {
+		return 0;
+	}
 	if(rulep->tflags&DP_TFLAGS_PV_SUBST) {
 		re_list = dpl_dynamic_pcre_list(msg, &rulep->match_exp);
 		if(re_list==NULL) {
