@@ -342,9 +342,7 @@ int parse_keep_alive_param(modparam_t type, void* val)
 		return -1;
 	}
 	jsonrpc_keep_alive = (int)(long)val;
-	if (jsonrpc_keep_alive < 0) {
-		jsonrpc_keep_alive = 0;
-	}
+
 	INFO("jsonrpc_keep_alive set to %d\n", jsonrpc_keep_alive);
 	return 0;
 }
