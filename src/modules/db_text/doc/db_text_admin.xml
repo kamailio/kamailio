@@ -342,7 +342,7 @@ modparam("db_text", "emptystring", 1)
 
 			<para>
 			<emphasis>
-				Default value is <quote>16384</quote> (off).
+				Default value is <quote>16384</quote>.
 			</emphasis>
 			</para>
 			<example>
@@ -350,6 +350,26 @@ modparam("db_text", "emptystring", 1)
 		<programlisting format="linespecific">
 ...
 modparam("db_text", "file_buffer_size", 8192)
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>max_result_rows</varname> (integer)</title>
+			<para>
+			number of rows to read from the text file.
+			</para>
+
+			<para>
+			<emphasis>
+				Default value is <quote>100000</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>max_result_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_text", "max_result_rows", 1000000)
 ...
 </programlisting>
 			</example>
