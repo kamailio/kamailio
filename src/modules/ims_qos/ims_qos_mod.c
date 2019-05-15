@@ -153,9 +153,9 @@ struct _pv_req_data {
 		struct cell *T;
 		struct sip_msg msg;
 		struct sip_msg *tmsgp;
-		unsigned int id;
 		char *buf;
 		int buf_size;
+  msg_ctx_id_t msg_ctx;
 };
 
 static struct _pv_req_data _pv_treq;
@@ -736,8 +736,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 			(which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to 
 			make a private copy of the message and free it when we are done 
 		 */
-		if ((_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp)
-				&& t->uas.request->id != _pv_treq.id) {
+		if (msg_ctx_id_match(t->uas.request, &_pv_treq.msg_ctx) != 1) {
 
 				/* make a copy */
 				if (_pv_treq.buf == NULL || _pv_treq.buf_size < t->uas.request->len + 1) {
@@ -746,7 +745,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						if (_pv_treq.tmsgp)
 								free_sip_msg(&_pv_treq.msg);
 						_pv_treq.tmsgp = NULL;
-						_pv_treq.id = 0;
+                                                _pv_treq.msg_ctx.msgid=0;
+                                                _pv_treq.msg_ctx.pid=0;
 						_pv_treq.T = NULL;
 						_pv_treq.buf_size = t->uas.request->len + 1;
 						_pv_treq.buf = (char*) pkg_malloc(_pv_treq.buf_size * sizeof(char));
@@ -764,7 +764,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 				_pv_treq.msg.len = t->uas.request->len;
 				_pv_treq.msg.buf = _pv_treq.buf;
 				_pv_treq.tmsgp = t->uas.request;
-				_pv_treq.id = t->uas.request->id;
+                                msg_ctx_id_set(t->uas.request, &_pv_treq.msg_ctx);
 				_pv_treq.T = t;
 
 
