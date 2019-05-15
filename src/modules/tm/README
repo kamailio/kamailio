@@ -134,6 +134,8 @@ Daniel-Constantin Mierla
               4.53. t_uac_send(method, ruri, nexthop, socket, headers,
                       body)
 
+              4.54. t_get_status_code()
+
         5. RPC Commands
 
               5.1. tm.list
@@ -266,8 +268,9 @@ Daniel-Constantin Mierla
    1.93. t_use_uac_headers usage
    1.94. t_is_retr_async_reply usage
    1.95. t_uac_send usage
-   1.96. event_route[tm:branch-failure] usage
-   1.97. event_route[tm:local-response] usage
+   1.96. t_get_status_code usage
+   1.97. event_route[tm:branch-failure] usage
+   1.98. event_route[tm:local-response] usage
 
 Chapter 1. Admin Guide
 
@@ -382,6 +385,7 @@ Chapter 1. Admin Guide
         4.51. t_use_uac_headers()
         4.52. t_is_retr_async_reply()
         4.53. t_uac_send(method, ruri, nexthop, socket, headers, body)
+        4.54. t_get_status_code()
 
    5. RPC Commands
 
@@ -1724,6 +1728,7 @@ modparam("tm", "rich_redirect", 3)
    4.51. t_use_uac_headers()
    4.52. t_is_retr_async_reply()
    4.53. t_uac_send(method, ruri, nexthop, socket, headers, body)
+   4.54. t_get_status_code()
 
 4.1.  t_relay([host, port])
 
@@ -2865,6 +2870,17 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
     "From: bob@kamailio.org;tag=2w3e\r\nTo: bob@kamailio.org", "");
 ...
 
+4.54.  t_get_status_code()
+
+   Return the status code for transaction - the most relevant SIP reply
+   status code, or -1 in case of error or no status code was set.
+
+   Example 1.96. t_get_status_code usage
+...
+$var(ts) = t_get_status_code();
+if($var(ts) == 500) { ... }
+...
+
 5. RPC Commands
 
    5.1. tm.list
@@ -2977,7 +2993,7 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.96. event_route[tm:branch-failure] usage
+   Example 1.97. event_route[tm:branch-failure] usage
 ...
 request_route {
     ...
@@ -2995,7 +3011,7 @@ event_route[tm:branch-failure:myroute] {
    Executed after the tm module has sent a local generated, transaction
    stateful response.
 
-   Example 1.97. event_route[tm:local-response] usage
+   Example 1.98. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
