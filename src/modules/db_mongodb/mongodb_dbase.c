@@ -504,13 +504,18 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 
+			case BSON_TYPE_NULL:
+				/* 'null' value - default to type DB1_STRING */
+				LM_DBG("BSON_TYPE_NULL - use DB1_STRING result type\n");
+				RES_TYPES(_r)[col] = DB1_STRING;
+				break;
+
 #if 0
 			case BSON_TYPE_EOD:
 			case BSON_TYPE_DOCUMENT:
 			case BSON_TYPE_ARRAY:
 			case BSON_TYPE_UNDEFINED:
 			case BSON_TYPE_OID:
-			case BSON_TYPE_NULL:
 			case BSON_TYPE_REGEX:
 			case BSON_TYPE_DBPOINTER:
 			case BSON_TYPE_CODE:
