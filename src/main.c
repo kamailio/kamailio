@@ -204,7 +204,8 @@ Options:\n\
 #ifdef STATS
 "    -s file     File where to write internal statistics on SIGUSR1\n"
 #endif
-"    --subst=exp set a subst preprocessor directive\n\
+"    --server-id=num set the value for server_id\n\
+    --subst=exp set a subst preprocessor directive\n\
     --substdef=exp set a substdef preprocessor directive\n\
     --substdefs=exp set a substdefs preprocessor directive\n"
 #ifdef USE_SCTP
@@ -1906,6 +1907,7 @@ int main(int argc, char** argv)
 		{"subst",       required_argument, 0, KARGOPTVAL + 1},
 		{"substdef",    required_argument, 0, KARGOPTVAL + 2},
 		{"substdefs",   required_argument, 0, KARGOPTVAL + 3},
+		{"server-id",   required_argument, 0, KARGOPTVAL + 4},
 		{0, 0, 0, 0 }
 	};
 
@@ -2154,6 +2156,13 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+3:
 					if(pp_substdef_add(optarg, 1)<0) {
 						LM_ERR("failed to add substdefs expression: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+4:
+					server_id=(int)strtol(optarg, &tmp, 10);
+					if ((tmp==0) || (*tmp)){
+						LM_ERR("bad server_id value: %s\n", optarg);
 						goto error;
 					}
 					break;
