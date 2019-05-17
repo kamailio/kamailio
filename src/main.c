@@ -177,11 +177,14 @@ Options:\n\
     -I           Print more internal compile flags and options\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-                  mean listening on more addresses).  The address format is\n\
-                  [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
-                  addr_lst= addr|(addr, addr_lst) and \n\
-                  addr= host|ip_address|interface_name. \n\
+                  mean listening on more addresses). The address format is\n\
+                  [proto:]addr_lst[:port][/advaddr], \n\
+                  where proto=udp|tcp|tls|sctp, \n\
+                  addr_lst= addr|(addr, addr_lst), \n\
+                  addr=host|ip_address|interface_name and \n\
+                  advaddr=addr[:port] (advertised address). \n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
+                  -l udp:127.0.0.1:5080/1.2.3.4:5060,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
@@ -1885,6 +1888,8 @@ int main(int argc, char** argv)
 	int tmp_len;
 	int port;
 	int proto;
+	char *ahost = NULL;
+	int aport = 0;
 	char *options;
 	int ret;
 	unsigned int seed;
@@ -1894,6 +1899,9 @@ int main(int argc, char** argv)
 	struct name_lst* n_lst;
 	char *p;
 	struct stat st = {0};
+
+#define KSR_TBUF_SIZE 512
+	char tbuf[KSR_TBUF_SIZE];
 
 	int option_index = 0;
 
@@ -2321,7 +2329,38 @@ try_again:
 				#endif
 					break;
 			case 'l':
-					if ((n_lst=parse_phostport_mh(optarg, &tmp, &tmp_len,
+					p = strrchr(optarg, '/');
+					if(p==NULL) {
+						p = optarg;
+					} else {
+						if(strlen(optarg)>=KSR_TBUF_SIZE-1) {
+							fprintf(stderr, "listen value too long: %s\n",
+									optarg);
+							goto error;
+						}
+						strcpy(tbuf, optarg);
+						p = strrchr(tbuf, '/');
+						if(p==NULL) {
+							fprintf(stderr, "unexpected bug for listen: %s\n",
+									optarg);
+							goto error;
+						}
+						*p = '\0';
+						p++;
+						tmp_len = 0;
+						if(parse_phostport(p, &ahost, &tmp_len, &aport,
+									&proto)<0)
+						{
+							fprintf(stderr, "listen value with invalid advertise: %s\n",
+									optarg);
+							goto error;
+						}
+						if(ahost) {
+							ahost[tmp_len] = '\0';
+						}
+						p = tbuf;
+					}
+					if ((n_lst=parse_phostport_mh(p, &tmp, &tmp_len,
 											&port, &proto))==0){
 						fprintf(stderr, "bad -l address specifier: %s\n"
 											"Check disabled protocols\n",
@@ -2329,9 +2368,10 @@ try_again:
 						goto error;
 					}
 					/* add a new addr. to our address list */
-					if (add_listen_iface(n_lst->name, n_lst->next,  port,
-											proto, n_lst->flags)!=0){
-						fprintf(stderr, "failed to add new listen address\n");
+					if (add_listen_advertise_iface(n_lst->name, n_lst->next,  port,
+											proto, ahost, aport, n_lst->flags)!=0){
+						fprintf(stderr, "failed to add new listen address: %s\n",
+								optarg);
 						free_name_lst(n_lst);
 						goto error;
 					}
