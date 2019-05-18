@@ -18,6 +18,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -42,6 +43,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -66,6 +68,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -90,6 +93,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -114,6 +118,7 @@
 %bcond_with mongodb
 %bcond_without perl
 %bcond_with phonenum
+%bcond_with python3
 %bcond_with rabbitmq
 %bcond_with redis
 %bcond_with ruby
@@ -139,6 +144,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -163,6 +169,7 @@
 %bcond_with mongodb
 %bcond_without perl
 %bcond_with phonenum
+%bcond_without python3
 %bcond_with rabbitmq
 %bcond_without redis
 %bcond_without ruby
@@ -187,6 +194,7 @@
 %bcond_with mongodb
 %bcond_with perl
 %bcond_with phonenum
+%bcond_with python3
 %bcond_with rabbitmq
 %bcond_with redis
 %bcond_with ruby
@@ -211,6 +219,7 @@
 %bcond_without mongodb
 %bcond_without perl
 %bcond_with phonenum
+%bcond_with python3
 %bcond_with rabbitmq
 %bcond_without redis
 %bcond_with ruby
@@ -282,15 +291,6 @@ BuildRequires:  bison, flex
 %if 0%{?suse_version}
 Requires:  filesystem
 BuildRequires:  systemd-mini, shadow
-%endif
-%if 0%{?fedora} == 27
-BuildRequires:  python3-devel
-%endif
-%if 0%{?fedora} == 28
-BuildRequires:  python3-devel
-%endif
-%if 0%{?fedora} == 30
-BuildRequires:  python3-devel
 %endif
 
 
@@ -737,6 +737,15 @@ Summary:    Python extensions for Kamailio
 Group:      %{PKGGROUP}
 Requires:   python, kamailio = %ver
 BuildRequires:  python, python-devel
+%if %{with python3}
+%if 0%{?rhel} == 7
+Requires:   python36, kamailio = %ver
+BuildRequires:  python36, python36-devel
+%else
+Requires:   python3, kamailio = %ver
+BuildRequires:  python3, python3-devel
+%endif
+%endif
 
 %description    python
 Python extensions for Kamailio.
@@ -1136,7 +1145,11 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with phonenum}
     kphonenum \
 %endif
-    kpostgres kpresence kpython kradius \
+    kpostgres kpresence kpython \
+%if %{with python3}
+    kpython3 \
+%endif
+    kradius \
 %if %{with redis}
     kredis \
 %endif
@@ -1216,7 +1229,11 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with phonenum}
     kphonenum \
 %endif
-    kpostgres kpresence kpython kradius \
+    kpostgres kpresence kpython \
+%if %{with python3}
+    kpython3 \
+%endif
+    kradius \
 %if %{with redis}
     kredis \
 %endif
@@ -1952,6 +1969,10 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_python
 %{_libdir}/kamailio/modules/app_python.so
+%if %{with python3}
+%doc %{_docdir}/kamailio/modules/README.app_python3
+%{_libdir}/kamailio/modules/app_python3.so
+%endif
 
 
 %if %{with rabbitmq}
