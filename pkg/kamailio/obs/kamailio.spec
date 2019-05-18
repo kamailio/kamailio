@@ -289,6 +289,10 @@ BuildRequires:  python3-devel
 %if 0%{?fedora} == 28
 BuildRequires:  python3-devel
 %endif
+%if 0%{?fedora} == 30
+BuildRequires:  python3-devel
+%endif
+
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -393,7 +397,7 @@ Module which provides a mechanism to limit call duration based on credit informa
 %package    cpl
 Summary:    CPL (Call Processing Language) interpreter for Kamailio
 Group:      %{PKGGROUP}
-Requires:   libxml2, kamailio = %ver
+Requires:   which, libxml2, kamailio = %ver
 BuildRequires:  libxml2-devel
 
 %description    cpl
@@ -1047,9 +1051,14 @@ UUID module for Kamailio.
 %prep
 %setup -n %{name}-%{ver}
 
+%if "%{__python2}" != ""
+    sed -i -e 's:#!/usr/bin/python:#!%{__python2}:' utils/kamctl/dbtextdb/dbtextdb.py
+%endif
+
 ln -s ../obs pkg/kamailio/fedora/27
 ln -s ../obs pkg/kamailio/fedora/28
 ln -s ../obs pkg/kamailio/fedora/29
+ln -s ../obs pkg/kamailio/fedora/30
 ln -s ../obs pkg/kamailio/rhel/6
 ln -s ../obs pkg/kamailio/rhel/7
 ln -s ../obs pkg/kamailio/opensuse/1315
@@ -1739,6 +1748,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
 %doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
 %doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
+%doc %{_docdir}/kamailio/modules/README.ims_usrloc_scscf
 %{_libdir}/kamailio/modules/cdp.so
 %{_libdir}/kamailio/modules/cdp_avp.so
 %{_libdir}/kamailio/modules/ims_auth.so
