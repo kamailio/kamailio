@@ -2096,6 +2096,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
+%dir %{_libdir}/kamailio/openssl_mutex_shared
+%{_libdir}/kamailio/openssl_mutex_shared/openssl_mutex_shared.so
 
 
 %files      tcpops
