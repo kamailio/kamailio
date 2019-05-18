@@ -178,17 +178,17 @@ _mod_list_sqlite="db_sqlite"
 _mod_list_oracle="db_oracle"
 
 # - modules depending on json library
-_mod_list_json="json jsonrpcc jsonrpcs"
+_mod_list_json="json jsonrpcc jsonrpcs pua_json"
 
 # - modules depending on redis library
-_mod_list_redis="ndb_redis topos_redis"
+_mod_list_redis="db_redis ndb_redis topos_redis"
 
 # - modules depending on mono library
 _mod_list_mono="app_mono"
 
 # - modules related to IMS extensions
 _mod_list_ims="cdp cdp_avp ims_dialog ims_diameter_server ims_auth ims_isc ims_icscf ims_qos \
-		ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
+		ims_ocs ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
 		ims_usrloc_scscf ims_charging"
 
 # - modules depending on osp toolkit library
@@ -216,7 +216,7 @@ _mod_list_kazoo="kazoo"
 _mod_list_mongodb="db_mongodb ndb_mongodb"
 
 # - modules depending on jansson library
-_mod_list_jansson="jansson janssonrpcc"
+_mod_list_jansson="acc_json jansson janssonrpcc"
 
 # - modules depending on libm
 _mod_list_jsdt="app_jsdt"
