@@ -951,7 +951,7 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 
    If set to 0, no rate limit is configured. Note carefully: use this
    configuration only in tests environments because executing many RPC
-   reload commandss at the same time can cause unexpected behavior.
+   reload commands at the same time can cause unexpected behavior.
 
    Default value is “5”.
 
