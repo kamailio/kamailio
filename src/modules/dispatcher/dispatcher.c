@@ -141,6 +141,9 @@ str ds_event_callback = STR_NULL;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 
+static int ds_reload_delta = 5;
+static time_t *ds_rpc_reload_time = NULL;
+
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -271,6 +274,7 @@ static param_export_t params[]={
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
+	{"reload_delta",       PARAM_INT, &ds_reload_delta },
 	{0,0,0}
 };
 
@@ -451,6 +455,14 @@ static int mod_init(void)
 		LM_ERR("invalid ds_latency_estimator_alpha must be between 0 and 1000,"
 				" using default[%.3f]\n", ds_latency_estimator_alpha);
 	}
+
+	ds_rpc_reload_time = shm_malloc(sizeof(time_t));
+	if(ds_rpc_reload_time == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	*ds_rpc_reload_time = 0;
+
 	return 0;
 }
 
@@ -477,6 +489,10 @@ static void destroy(void)
 		shm_free(ds_ping_reply_codes);
 	if(ds_ping_reply_codes_cnt)
 		shm_free(ds_ping_reply_codes_cnt);
+	if(ds_rpc_reload_time!=NULL) {
+		shm_free(ds_rpc_reload_time);
+		ds_rpc_reload_time = 0;
+	}
 }
 
 #define GET_VALUE(param_name, param, i_value, s_value, value_flags)        \
@@ -1373,6 +1389,19 @@ static const char *dispatcher_rpc_reload_doc[2] = {
  */
 static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 {
+
+	if(ds_rpc_reload_time==NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return;
+	}
+	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "Ongoing reload");
+		return;
+	}
+	*ds_rpc_reload_time = time(NULL);
+
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
 			rpc->fault(ctx, 500, "Reload Failed");
