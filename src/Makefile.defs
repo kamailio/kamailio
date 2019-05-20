@@ -321,7 +321,8 @@ ppc64_macros= __ppc64__ _ARCH_PPC64
 
 mips_macros= __mips__ __mips _MIPS_ARCH_MIPS1
 mips2_macros= _MIPS_ISA_MIPS2 _MIPS_ISA_MIPS3 _MIPS_ISA_MIPS4 \
-			_MIPS_ARCH_MIPS2 _MIPS_ARCH_MIPS3 _MIPS_ARCH_MIPS4
+			_MIPS_ARCH_MIPS2 _MIPS_ARCH_MIPS3 _MIPS_ARCH_MIPS4 \
+			_MIPS_ISA_MIPS32
 mips64_macros= _MIPS_ISA_MIPS64 _MIPS_ARCH_MIPS64
 
 alpha_macros= __alpha__ __alpha _M_ALPHA_
@@ -1344,7 +1345,7 @@ ifeq	($(ARCH), mips2)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips2 $(CC_OPT) -funroll-loops $(PROFILE)
+				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
@@ -1390,7 +1391,7 @@ ifeq	($(ARCH), mips64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips64 $(CC_OPT) -funroll-loops $(PROFILE)
+				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
