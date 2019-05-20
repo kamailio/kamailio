@@ -1539,7 +1539,7 @@ static str xml_start = {"<?xml version=\"1.0\"?>\n", 22};
 
 static str r_full = {"full", 4};
 static str r_partial = {"partial", 7};
-static str r_reginfo_s = {"<reginfo xmlns=\"urn:ietf:params:xml:ns:reginfo\" version=\"%s\" state=\"%.*s\">\n", 74};
+static str r_reginfo_s = {"<reginfo xmlns=\"urn:ietf:params:xml:ns:reginfo\" version=\"%d\" state=\"%.*s\">\n", 74};
 static str r_reginfo_e = {"</reginfo>\n", 11};
 
 static str r_active = {"active", 6};
@@ -1659,7 +1659,7 @@ static void process_xml_for_contact(str* buf, str* pad, ucontact_t* ptr) {
  * @returns the str with the XML content
  * if its a new subscription we do things like subscribe to updates on IMPU, etc
  */
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *explit_dereg_contact, int num_explit_dereg_contact) {
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *explit_dereg_contact, int num_explit_dereg_contact, unsigned int reginfo_version) {
     str x = {0, 0};
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
@@ -1679,7 +1679,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
     LM_DBG("Getting reginfo_full");
 
     STR_APPEND(buf, xml_start);
-    sprintf(pad.s, r_reginfo_s.s, "%d", r_full.len, r_full.s);
+    sprintf(pad.s, r_reginfo_s.s, reginfo_version, r_full.len, r_full.s);
     pad.len = strlen(pad.s);
     STR_APPEND(buf, pad);
 
@@ -1786,7 +1786,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
  * @returns the str with the XML content
  */
 
-str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
+str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned int reginfo_version) {
     str x = {0, 0};
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
@@ -1803,7 +1803,7 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
     pad.len = 0;
 
     STR_APPEND(buf, xml_start);
-    sprintf(pad.s, r_reginfo_s.s, "%d", r_partial.len, r_partial.s);
+    sprintf(pad.s, r_reginfo_s.s, reginfo_version, r_partial.len, r_partial.s);
     pad.len = strlen(pad.s);
     STR_APPEND(buf, pad);
 
@@ -1959,7 +1959,7 @@ void send_notification(reg_notification * n) {
     LM_DBG("Have a notification to send for the following IMPUs using domain [%.*s]\n", domain->name->len, domain->name->s);
 
 
-    content = generate_reginfo_full(domain, n->impus, n->num_impus, n->explit_dereg_contact, n->num_explit_dereg_contact);
+    content = generate_reginfo_full(domain, n->impus, n->num_impus, n->explit_dereg_contact, n->num_explit_dereg_contact, n->reginfo_s_version);
 
     if (content.len > MAX_REGINFO_SIZE) {
         LM_ERR("content size (%d) exceeds MAX_REGINFO_SIZE (%d)!\n", content.len, MAX_REGINFO_SIZE);
@@ -1969,7 +1969,9 @@ void send_notification(reg_notification * n) {
         return;
     }
 
-    sprintf(bufc, content.s, n->reginfo_s_version);
+    memset(bufc, 0, sizeof(bufc));
+    memcpy(bufc, content.s, content.len);
+
     buf.s = bufc;
     buf.len = strlen(bufc);
 
