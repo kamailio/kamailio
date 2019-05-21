@@ -30,7 +30,8 @@
 #define SR_KEMIP_INT	(1<<0)	/* type integer */
 #define SR_KEMIP_STR	(1<<1)	/* type str* */
 #define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
-#define SR_KEMIP_INTSTR	(1<<3)	/* type integer or str* */
+#define SR_KEMIP_XVAL	(1<<3)	/* type extended value (integer, str*, ...) */
+#define SR_KEMIP_NULL	(1<<4)	/* type NULL */
 
 #define SR_KEMI_FALSE	0
 #define SR_KEMI_TRUE	1
@@ -64,6 +65,14 @@ typedef union {
 	int n;
 	str s;
 } sr_kemi_val_t;
+
+typedef struct sr_kemi_xval {
+	int vtype;
+	union {
+		int n;
+		str *s;
+	} v;
+} sr_kemi_xval_t;
 
 /* only sip_msg_t */
 typedef int (*sr_kemi_fm_f)(sip_msg_t*);
