@@ -70,7 +70,7 @@ typedef struct sr_kemi_xval {
 	int vtype;
 	union {
 		int n;
-		str *s;
+		str s;
 	} v;
 } sr_kemi_xval_t;
 
@@ -188,5 +188,7 @@ int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
 		str *ename, str *edata);
 int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
 		int rtype, str *ename, str *edata);
+
+sr_kemi_t* sr_kemi_exports_get_pv(void);
 
 #endif
