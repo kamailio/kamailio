@@ -1155,6 +1155,7 @@ static int build_iface_list(void)
 			entry->ifa_flags = ifi->ifa_flags;
             is_link_local = 0;
 
+			name[0] = '\0';
 			for(;RTA_OK(rtap, rtl);rtap=RTA_NEXT(rtap,rtl)){
 				switch(rtap->rta_type){
 					case IFA_ADDRESS:
@@ -1194,8 +1195,9 @@ static int build_iface_list(void)
 				}
 			}
 
-			if(strlen(ifaces[index].name)==0)
+			if(strlen(ifaces[index].name)==0 && strlen(name)>0) {
 				strncpy(ifaces[index].name, name, MAX_IF_LEN-1);
+			}
 
 			ifaces[index].index = index;
 
