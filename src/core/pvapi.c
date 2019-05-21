@@ -698,6 +698,14 @@ str *pv_get_null_str(void)
 /**
  *
  */
+str *pv_get_empty_str(void)
+{
+	return &pv_str_empty;
+}
+
+/**
+ *
+ */
 int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(res==NULL)
