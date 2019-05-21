@@ -48,7 +48,7 @@ static void reload(rpc_t *rpc, void *c)
 static const char *dump_gws_doc[2] = {"Dump the contents of lcr_gws table.", 0};
 
 
-static void dump_gw(rpc_t *rpc, void *st, struct gw_info gw, unsigned int gw_index, unsigned int lcr_id)
+static void dump_gw(rpc_t *rpc, void *st, struct gw_info *gw, unsigned int gw_index, unsigned int lcr_id)
 {
 	str scheme, gw_name, hostname, params, transport;
 	str prefix, tag;
@@ -57,53 +57,53 @@ static void dump_gw(rpc_t *rpc, void *st, struct gw_info gw, unsigned int gw_ind
 
 	rpc->struct_add(st, "d", "lcr_id", lcr_id);
 	rpc->struct_add(st, "d", "gw_index", gw_index);
-	rpc->struct_add(st, "d", "gw_id", gw.gw_id);
-	gw_name.s = gw.gw_name;
-	gw_name.len = gw.gw_name_len;
+	rpc->struct_add(st, "d", "gw_id", gw->gw_id);
+	gw_name.s = gw->gw_name;
+	gw_name.len = gw->gw_name_len;
 	rpc->struct_add(st, "S", "gw_name", &gw_name);
-	scheme.s = gw.scheme;
-	scheme.len = gw.scheme_len;
+	scheme.s = gw->scheme;
+	scheme.len = gw->scheme_len;
 	rpc->struct_add(st, "S", "scheme", &scheme);
-	switch(gw.ip_addr.af) {
+	switch(gw->ip_addr.af) {
 		case AF_INET:
 			rpc->struct_printf(st, "ip_addr", "%d.%d.%d.%d",
-					gw.ip_addr.u.addr[0], gw.ip_addr.u.addr[1],
-					gw.ip_addr.u.addr[2], gw.ip_addr.u.addr[3]);
+					gw->ip_addr.u.addr[0], gw->ip_addr.u.addr[1],
+					gw->ip_addr.u.addr[2], gw->ip_addr.u.addr[3]);
 			break;
 		case AF_INET6:
 			rpc->struct_printf(st, "ip_addr", "%x:%x:%x:%x:%x:%x:%x:%x",
-					gw.ip_addr.u.addr16[0],
-					gw.ip_addr.u.addr16[1],
-					gw.ip_addr.u.addr16[2],
-					gw.ip_addr.u.addr16[3],
-					gw.ip_addr.u.addr16[4],
-					gw.ip_addr.u.addr16[5],
-					gw.ip_addr.u.addr16[6],
-					gw.ip_addr.u.addr16[7]);
+					gw->ip_addr.u.addr16[0],
+					gw->ip_addr.u.addr16[1],
+					gw->ip_addr.u.addr16[2],
+					gw->ip_addr.u.addr16[3],
+					gw->ip_addr.u.addr16[4],
+					gw->ip_addr.u.addr16[5],
+					gw->ip_addr.u.addr16[6],
+					gw->ip_addr.u.addr16[7]);
 			break;
 		case 0:
 			rpc->struct_add(st, "s", "ip_addr", "0.0.0.0");
 			break;
 	}
-	hostname.s = gw.hostname;
-	hostname.len = gw.hostname_len;
+	hostname.s = gw->hostname;
+	hostname.len = gw->hostname_len;
 	rpc->struct_add(st, "S", "hostname", &hostname);
-	rpc->struct_add(st, "d", "port", gw.port);
-	params.s = gw.params;
-	params.len = gw.params_len;
+	rpc->struct_add(st, "d", "port", gw->port);
+	params.s = gw->params;
+	params.len = gw->params_len;
 	rpc->struct_add(st, "S", "params", &params);
-	transport.s = gw.transport;
-	transport.len = gw.transport_len;
+	transport.s = gw->transport;
+	transport.len = gw->transport_len;
 	rpc->struct_add(st, "S", "transport", &transport);
-	prefix.s = gw.prefix;
-	prefix.len = gw.prefix_len;
-	tag.s = gw.tag;
-	tag.len = gw.tag_len;
+	prefix.s = gw->prefix;
+	prefix.len = gw->prefix_len;
+	tag.s = gw->tag;
+	tag.len = gw->tag_len;
 	start = int2strbuf(
-			gw.defunct_until, &(buf[0]), INT2STR_MAX_LEN, &len);
-	rpc->struct_add(st, "dSSdds", "strip", gw.strip, "prefix",
-			&prefix, "tag", &tag, "flags", gw.flags, "state",
-			gw.state, "defunct_until", start);
+			gw->defunct_until, &(buf[0]), INT2STR_MAX_LEN, &len);
+	rpc->struct_add(st, "dSSdds", "strip", gw->strip, "prefix",
+			&prefix, "tag", &tag, "flags", gw->flags, "state",
+			gw->state, "defunct_until", start);
 }
 
 static void dump_gws(rpc_t *rpc, void *c)
@@ -128,7 +128,7 @@ static void dump_gws(rpc_t *rpc, void *c)
 			}
 			if(rpc->array_add(srec, "{", &st) < 0)
 				return;
-			dump_gw(rpc, st, gws[i], i, j);
+			dump_gw(rpc, st, &gws[i], i, j);
 		}
 	}
 }
@@ -296,7 +296,7 @@ static void load_gws(rpc_t *rpc, void *c)
 		if(rpc->array_add(rec, "{", &st) < 0)
 			return;
 		i = gw_indexes[j];
-		dump_gw(rpc, st, gws[i], i, lcr_id);
+		dump_gw(rpc, st, &gws[i], i, lcr_id);
 	}
 
 	return;
