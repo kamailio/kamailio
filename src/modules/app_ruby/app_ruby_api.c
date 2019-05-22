@@ -1557,6 +1557,10 @@ int app_ruby_kemi_export_libs(void)
 	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
+			if(emods[k].kexp == sr_kemi_exports_get_pv()) {
+				LM_DBG("skip registering the core KSR.pv module\n");
+				continue;
+			}
 			n++;
 			_sr_crt_R_KSRMethods = _sr_R_KSRMethods + n;
 			ksr_app_ruby_toupper(emods[k].kexp[0].mname.s, rmname);
