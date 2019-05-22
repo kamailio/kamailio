@@ -2389,6 +2389,10 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 		_sr_kemi_modules[_sr_kemi_modules_size].mname = _sr_kemi_core[0].mname;
 		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_core;
 		_sr_kemi_modules_size++;
+		LM_DBG("adding pv module\n");
+		_sr_kemi_modules[_sr_kemi_modules_size].mname = _sr_kemi_pv[0].mname;
+		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_pv;
+		_sr_kemi_modules_size++;
 		LM_DBG("adding hdr module\n");
 		_sr_kemi_modules[_sr_kemi_modules_size].mname = _sr_kemi_hdr[0].mname;
 		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_hdr;
