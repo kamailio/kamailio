@@ -105,13 +105,12 @@ static void trace_sl_ack_in(sl_cbp_t *slcb);
 
 
 
-static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info);
+static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tran);
 static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
 static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
 static void free_trace_info(void* trace_info);
-static int  add_serial_info_avp(siptrace_info_t* info);
+static int  add_info_xavp(siptrace_info_t* info);
 static inline int parse_raw_uri(siptrace_info_t* info);
-static int deserialize_siptrace_info(str* serial_data, siptrace_info_t* info);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
 int siptrace_net_data_send(sr_event_param_t *evp);
@@ -133,8 +132,8 @@ static str direction_column = str_init("direction");	 /* 09 */
 static str time_us_column = str_init("time_us");		 /* 10 */
 static str totag_column = str_init("totag");			 /* 11 */
 
-static str siptrace_info_dlgkey = str_init("__siptrace_info_dlg_key__");
-static str siptrace_info_avp_str = str_init("$avp(__siptrace_info_avp__)");
+#define XAVP_TRACE_INFO_NAME "trace_info"
+static str xavp_trace_info_name_s = str_init(XAVP_TRACE_INFO_NAME);
 
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
@@ -174,9 +173,6 @@ static str traced_user_avp_str = {NULL, 0};
 static unsigned short trace_table_avp_type = 0;
 static int_str trace_table_avp;
 static str trace_table_avp_str = {NULL, 0};
-
-static unsigned short siptrace_info_avp_type = 0;
-static int_str siptrace_info_avp;
 
 static str trace_local_ip = {NULL, 0};
 
@@ -344,21 +340,6 @@ static int mod_init(void)
 	else {
 		if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, trace_dialog, NULL, NULL) != 0) {
 			LM_ERR("failed to register dialog callbacks! Tracing dialogs won't be available\n");
-		}
-
-		if(pv_parse_spec(&siptrace_info_avp_str, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					siptrace_info_avp_str.len, siptrace_info_avp_str.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(
-				   0, &avp_spec.pvp, &siptrace_info_avp, &siptrace_info_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s] - invalid AVP definition\n", siptrace_info_avp_str.len,
-					siptrace_info_avp_str.s);
-			return -1;
 		}
 	}
 
@@ -830,6 +811,8 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 	siptrace_info_t* info = NULL;
 
 	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
+		int alloc_size = sizeof(siptrace_info_t);
+
 		/*
 		 * for each type check that conditions are created
 		 * transaction: it's a request starting a transaction; tm module loaded
@@ -854,28 +837,40 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			return -1;
 		}
 
-		info = shm_malloc(sizeof(siptrace_info_t));
+		if (corid) {
+			alloc_size += corid->len;
+		}
+
+		if (duri) {
+			alloc_size += duri->len;
+		}
+
+		info = shm_malloc(alloc_size);
 		if (info == NULL) {
 			LM_ERR("No more shm!\n");
 			return -1;
 		}
-		memset(info, 0, sizeof(siptrace_info_t));
+		memset(info, 0, alloc_size);
 
 		/* could use the dest_info we've already parsed but there's no way to pass
 		 * it to DLGCB_CREATED callback so the only thing to do is keep
 		 * it as uri, serialize in a dlg_var and parse again in DLGCB_CREATED */
 		if(corid) {
-			info->correlation_id = *corid;
+			info->correlation_id.s = (char *)(info + 1);
+			info->correlation_id.len = corid->len;
+			memcpy(info->correlation_id.s, corid->s, corid->len);
 		}
 		if (duri) {
 			info->uriState = STRACE_RAW_URI;
-			info->u.dup_uri = *duri;
+			info->u.dup_uri.s = (char *)info->correlation_id.s + info->correlation_id.len;
+			memcpy(info->u.dup_uri.s, duri->s, duri->len);
+			info->u.dup_uri.len = duri->len;
 		} else {
 			info->uriState = STRACE_UNUSED_URI;
 		}
 
 		if (trace_type == SIPTRACE_TRANSACTION) {
-			trace_transaction(msg, info);
+			trace_transaction(msg, info, 0);
 		} else if (trace_type == SIPTRACE_DIALOG) {
 			if (unlikely(dlgb.set_dlg_var == NULL)) {
 				/* FIXME should we abort tracing here? */
@@ -884,7 +879,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 				/* serialize what's in info */
 				/* save correlation id in siptrace_info avp
 				 * we want to have traced user avp value at the moment of sip_trace function call*/
-				if (add_serial_info_avp(info) < 0) {
+				if (add_info_xavp(info) < 0) {
 					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
 					return -1;
 				} else {
@@ -893,12 +888,12 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			}
 
 			/**
-			 * WARNING: don't move trace_transaction before  add_serial_info_avp()
-			 * add_serial_info_avp() expects the URI in RAW format, unparsed
+			 * WARNING: don't move trace_transaction before  add_info_xavp()
+			 * add_info_xavp() expects the URI in RAW format, unparsed
 			 * trace_transaction() parses the URI if it finds it in raw format;
 			 * a BUG will be thrown if this happens
 			 */
-			trace_transaction(msg, info);
+			trace_transaction(msg, info, 1);
 		}
 	}
 
@@ -1605,12 +1600,9 @@ static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps
  * params marked with * are optional
  *
  */
-static int add_serial_info_avp(siptrace_info_t* info)
+static int add_info_xavp(siptrace_info_t* info)
 {
-	short int offset;
-	short int len;
-
-	avp_value_t avp_val;
+	sr_xval_t xval;
 
 	if (info == NULL) {
 		LM_ERR("Nothing to serialize!\n");
@@ -1622,64 +1614,16 @@ static int add_serial_info_avp(siptrace_info_t* info)
 		return -1;
 	}
 
-	len = sizeof(short int) +
-		(info->u.dup_uri.len ?
-			(sizeof(short int) + info->u.dup_uri.len) : sizeof(short int)) +
-		(info->correlation_id.len ?
-		 	(sizeof(short int) + info->correlation_id.len) : sizeof(short int));
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_VPTR;
+	xval.v.vptr = (void *)info;
 
-	avp_val.s.s = pkg_malloc(len);
-	if (avp_val.s.s == NULL) {
-		LM_ERR("no more shared memory!\n");
+	/* save data into avp */
+	if (xavp_add_value(&xavp_trace_info_name_s, &xval, NULL) == NULL) {
+		shm_free(info);
+		LM_ERR("Failed to add xavp!\n");
 		return -1;
 	}
-
-	offset = 0;
-
-	/* negate this val to avoid having 0 bytes
-	 * if we have any 0 byte dialog won't let use save this value
-	 * dirty hack :)
-	 * FIXME ideally would be a 2s compliment here  */
-	len = ~len;
-	memcpy((char *)avp_val.s.s, &len, sizeof(short int));
-	offset += sizeof(short int);
-
-	/* if total length is 0 data has only 2 bytes */
-	if (info->u.dup_uri.len && info->correlation_id.len == 0)
-		goto out;
-
-	/* same dirty hack */
-	len = ~info->u.dup_uri.len;
-	memcpy((char *)avp_val.s.s + offset, &len, sizeof(short int));
-	offset += sizeof(short int);
-
-	if (info->u.dup_uri.len) {
-		memcpy((char *)avp_val.s.s + offset, info->u.dup_uri.s, info->u.dup_uri.len);
-		offset += info->u.dup_uri.len;
-	}
-
-	/* same dirty hack */
-	len = ~info->u.dup_uri.len;
-	memcpy((char *)avp_val.s.s + offset, &len, sizeof(short int));
-	offset += sizeof(short int);
-
-	if (info->correlation_id.len) {
-		memcpy((char *)avp_val.s.s + offset, info->correlation_id.s, info->correlation_id.len);
-		offset += info->correlation_id.len;
-	}
-
-out:
-	avp_val.s.len = offset;
-
-	/* save serialized data into an avp */
-	if (add_avp(siptrace_info_avp_type | AVP_VAL_STR,
-				siptrace_info_avp, avp_val) < 0) {
-		LM_ERR("Failed to add <%.*s> avp value\n",
-				siptrace_info_avp_str.len, siptrace_info_avp_str.s);
-		return -1;
-	}
-
-	pkg_free(avp_val.s.s);
 
 	return 0;
 }
@@ -1706,70 +1650,6 @@ static inline int parse_raw_uri(siptrace_info_t* info)
 
 	info->u.dest_info = dest_info;
 	info->uriState = STRACE_PARSED_URI;
-
-	return 0;
-}
-
-static int deserialize_siptrace_info(str* serial_data, siptrace_info_t* info)
-{
-	short int len;
-	short int offset;
-
-	if (serial_data == NULL || serial_data->len == 0) {
-		LM_ERR("invalid input!\n");
-		return -1;
-	}
-
-	if (info == NULL) {
-		LM_ERR("invalid output destination!\n");
-		return -1;
-	}
-
-	memcpy(&len, serial_data->s, sizeof(short int));
-	offset = sizeof(short int);
-	len = ~len;
-
-	/* revert the hack made in add_serial_info_avp */
-	if (len == 0) {
-		LM_DBG("no info found in dlg value! Continuing...\n");
-
-		/* this should be already made but just to be sure */
-		memset(info, 0, sizeof(siptrace_info_t));
-
-		return 0;
-	}
-
-	memcpy(&len, serial_data->s + offset, sizeof(short int));
-	offset += sizeof(short int);
-
-	/* revert the hack made in add_serial_info_avp */
-	info->u.dup_uri.len = ~len;
-
-	/**
-	 * FIXME: AFAIK the string in serial_data(from dlg val) is alive as
-	 * long as the dialog structure is alive; therefore there's no need
-	 * to allocate new pointers, just use the ones to this dlg value
-	 */
-	if (info->u.dup_uri.len > 0) {
-		info->u.dup_uri.s = (char *)serial_data->s + offset;
-		offset += info->u.dup_uri.len;
-
-		info->uriState = STRACE_RAW_URI;
-		if (parse_raw_uri(info) < 0) {
-			LM_ERR("failed to parse trace destination uri!\n");
-			return -1;
-		}
-	}
-
-	memcpy(&len, serial_data->s + offset, sizeof(short int));
-	offset += sizeof(short int);
-
-	/* revert the hack made in add_serial_info_avp */
-	info->correlation_id.len = ~len;
-
-	if (info->correlation_id.len > 0) {
-		info->correlation_id.s = (char *)serial_data->s + offset;
-	}
 
 	return 0;
 }
@@ -1868,7 +1748,7 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	return;
 }
 
-static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info)
+static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tran)
 {
 	if(msg == NULL) {
 		LM_DBG("nothing to trace\n");
@@ -1896,7 +1776,8 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info)
 	}
 
 	/* trace reply on out */
-	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info, free_trace_info)
+	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info,
+							dlg_tran ? 0 : free_trace_info)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_out\n");
 		return;
@@ -1919,8 +1800,7 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info)
 //static void trace_dialog(sip_msg_t* msg, siptrace_info_t* info)
 static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *params)
 {
-	int_str avp_value;
-	struct usr_avp* avp = NULL;
+	sr_xavp_t* xavp;
 
 	if (!dlgb.get_dlg) {
 		LM_ERR("Dialog API not loaded! Trace off...\n");
@@ -1938,27 +1818,21 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 		return;
 	}
 
-	avp = search_first_avp(siptrace_info_avp_type, siptrace_info_avp, &avp_value, 0);
-	if (avp == NULL) {
-		LM_ERR("Siptrace info avp not set!\n");
-		return;
-	}
-
-	if (dlgb.set_dlg_var(dlg,
-				&siptrace_info_dlgkey,
-				&avp_value.s) != 0) {
-		LM_ERR("failed to set siptrace info dlgkey\n");
+	xavp = xavp_get(&xavp_trace_info_name_s, NULL);
+	if (!xavp) {
+		LM_ERR("%.*s xavp not registered\n", xavp_trace_info_name_s.len,
+				xavp_trace_info_name_s.s);
 		return;
 	}
 
 	if(dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN,
-				trace_dialog_transaction, 0, 0) != 0) {
+				trace_dialog_transaction, xavp->val.v.vptr, 0) != 0) {
 		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
 		return;
 	}
 
 	if(dlgb.register_dlgcb(dlg, DLGCB_TERMINATED,
-				trace_dialog_transaction, 0, 0) != 0) {
+				trace_dialog_transaction, xavp->val.v.vptr, free_trace_info) != 0) {
 		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
 		return;
 	}
@@ -1971,21 +1845,9 @@ static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_
 {
 	siptrace_info_t* info;
 
-	info = shm_malloc(sizeof(siptrace_info_t));
-	if (info == NULL) {
-		LM_ERR("no more shared memory! trace dialog transaction cancelled...\n");
-		return;
-	}
-
-	memset(info, 0, sizeof(siptrace_info_t));
-	if (deserialize_siptrace_info(dlgb.get_dlg_var(dlg, &siptrace_info_dlgkey), info)) {
-		LM_ERR("failed to parse data from dialog key\n");
-		return;
-	}
-
 	/* coverity fix - there shouldn't be a scenario for this to happen */
-	if (params == NULL) {
-		LM_ERR("NULL tm params!\n");
+	if (params == NULL || params->param == NULL) {
+		LM_ERR("NULL dialog params!\n");
 		return;
 	}
 
@@ -1999,15 +1861,15 @@ static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_
 		LM_DBG("dual bye!\n");
 		return;
 	}
+	info = (siptrace_info_t *)*params->param;
 
-	trace_transaction(params->req, info);
+	trace_transaction(params->req, info, 1);
 
 	sip_trace(params->req, &info->u.dest_info, &info->correlation_id, NULL);
 }
 
 static void free_trace_info(void* trace_info)
 {
-	LM_DBG("free trace info!\n");
 	if (!trace_info) return;
 
 	shm_free(trace_info);
