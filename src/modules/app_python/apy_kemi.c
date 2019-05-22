@@ -2306,6 +2306,10 @@ int sr_apy_init_ksr(void)
 
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
+			if(emods[k].kexp == sr_kemi_exports_get_pv()) {
+				LM_DBG("skip registering the core KSR.pv module\n");
+				continue;
+			}
 			n++;
 			_sr_crt_KSRMethods = _sr_KSRMethods + n;
 			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
