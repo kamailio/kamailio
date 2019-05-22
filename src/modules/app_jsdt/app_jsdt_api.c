@@ -1750,6 +1750,10 @@ duk_ret_t dukopen_KSR(duk_context *J)
 	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
+			if(emods[k].kexp == sr_kemi_exports_get_pv()) {
+				LM_DBG("skip registering the core KSR.pv module\n");
+				continue;
+			}
 			n++;
 			_sr_crt_J_KSRMethods = _sr_J_KSRMethods + n;
 			snprintf(mname, 128, "KSR_%s", emods[k].kexp[0].mname.s);
