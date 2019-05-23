@@ -1814,13 +1814,18 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 	}
 
 	if (!(params->req->msg_flags & FL_SIPTRACE)) {
-		LM_ERR("Trace is off for this request...\n");
+		LM_DBG("Trace is off for this request...\n");
 		return;
 	}
 
 	xavp = xavp_get(&xavp_trace_info_name_s, NULL);
 	if (!xavp) {
-		LM_ERR("%.*s xavp not registered\n", xavp_trace_info_name_s.len,
+		/* this actually happens when only the transaction is traced
+		 * FL_SIPTRACE is set from trace_onreq_out
+		 * but xavp is set only for dialogs so this will avoid
+		 * registering dialog callbacks which is the desired behavior */
+		LM_DBG("%.*s xavp not registered! "
+				"Probably incoming E2E CANCEL!\n", xavp_trace_info_name_s.len,
 				xavp_trace_info_name_s.s);
 		return;
 	}
