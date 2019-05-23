@@ -171,6 +171,9 @@ int sr_lua_reload_module(unsigned int reload)
 	if(reload!=0) {
 		_app_lua_sr_reload = 1;
 		LM_DBG("reload param activated!\n");
+	} else {
+		_app_lua_sr_reload = 0;
+		LM_DBG("reload param inactivated!\n");
 	}
 	return 0;
 }
