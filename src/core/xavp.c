@@ -57,6 +57,10 @@ void xavp_free(sr_xavp_t *xa)
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free);
 			shm_free(xa->val.v.data);
 		}
+	} else if(xa->val.type == SR_XTYPE_SPTR) {
+		if(xa->val.v.vptr) {
+			shm_free(xa->val.v.vptr);
+		}
 	} else if(xa->val.type == SR_XTYPE_XAVP) {
 		xavp_destroy_list(&xa->val.v.xavp);
 	}
@@ -69,6 +73,10 @@ void xavp_free_unsafe(sr_xavp_t *xa)
 		if(xa->val.v.data!=NULL && xa->val.v.data->pfree!=NULL) {
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free_unsafe);
 			shm_free_unsafe(xa->val.v.data);
+		}
+	} else if(xa->val.type == SR_XTYPE_SPTR) {
+		if(xa->val.v.vptr) {
+			shm_free_unsafe(xa->val.v.vptr);
 		}
 	} else if(xa->val.type == SR_XTYPE_XAVP) {
 		xavp_destroy_list_unsafe(&xa->val.v.xavp);
@@ -588,6 +596,9 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 			case SR_XTYPE_VPTR:
 				LM_INFO("     XAVP value: <vptr:%p>\n", avp->val.v.vptr);
 			break;
+			case SR_XTYPE_SPTR:
+				LM_INFO("     XAVP value: <sptr:%p>\n", avp->val.v.vptr);
+			break;
 			case SR_XTYPE_DATA:
 				LM_INFO("     XAVP value: <data:%p>\n", avp->val.v.data);
 			break;
@@ -697,7 +708,7 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	{
 		return NULL;
 	}
-	if(xold->val.type==SR_XTYPE_DATA)
+	if(xold->val.type==SR_XTYPE_DATA || xold->val.type==SR_XTYPE_SPTR)
 	{
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
 		return NULL;
@@ -720,7 +731,8 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 
 	while(oavp)
 	{
-		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP)
+		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP
+				&& oavp->val.type!=SR_XTYPE_SPTR)
 		{
 			navp =  xavp_new_value(&oavp->name, &oavp->val);
 			if(navp==NULL)

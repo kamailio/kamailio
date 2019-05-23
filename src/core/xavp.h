@@ -33,7 +33,8 @@ typedef enum {
 	SR_XTYPE_LONG,    /* long value */
 	SR_XTYPE_LLONG,   /* long long value */
 	SR_XTYPE_XAVP,    /* xavp value */
-	SR_XTYPE_VPTR,    /* void pointer value */
+	SR_XTYPE_VPTR,    /* void pointer value (no free on destroy) */
+	SR_XTYPE_SPTR,    /* void pointer value (shm free on destroy) */
 	SR_XTYPE_DATA     /* custom data value */
 } sr_xtype_t;
 
