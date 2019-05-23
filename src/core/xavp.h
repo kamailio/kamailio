@@ -57,7 +57,7 @@ typedef struct _sr_xval {
 		long l;
 		long long ll;
 		struct _sr_xavp *xavp; /* must be given in shm (not cloned) */
-		void *vptr;            /* void pointer - address copied, not freed */
+		void *vptr;            /* void pointer - see SR_XTYPE_VPTR, SR_XTYPE_SPTR */
 		sr_data_t *data;       /* must be given in shm (not cloned) */
 	} v;
 } sr_xval_t;
