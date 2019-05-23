@@ -35,7 +35,8 @@ usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
 struct tm_binds tmb;					/**!< TM API structure */
 
 
-str ipsec_listen_addr = str_init("127.0.0.1");
+str ipsec_listen_addr = STR_NULL;
+str ipsec_listen_addr6 = STR_NULL;
 int ipsec_client_port =  5062;
 int ipsec_server_port =  5063;
 int spi_id_start = 100;
@@ -68,7 +69,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ipsec_listen_addr",   PARAM_STR, &ipsec_listen_addr   },
+	{"ipsec_listen_addr",  PARAM_STR, &ipsec_listen_addr   },
+	{"ipsec_listen_addr6",  PARAM_STR, &ipsec_listen_addr6   },
 	{"ipsec_client_port",	INT_PARAM, &ipsec_client_port   },
 	{"ipsec_server_port",	INT_PARAM, &ipsec_server_port   },
 	{"ipsec_spi_id_start",	INT_PARAM, &spi_id_start},
@@ -97,13 +99,8 @@ struct module_exports exports = {
  * Initialize parent
  */
 static int mod_init(void) {
-    char addr[128];
-    if(ipsec_listen_addr.len > sizeof(addr)-1) {
-        LM_ERR("Bad value for ipsec listen address: %.*s\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
-        return -1;
-    }
-    memset(addr, 0, sizeof(addr));
-    memcpy(addr, ipsec_listen_addr.s, ipsec_listen_addr.len);
+    char addr4[128];
+	char addr6[128];
 
 	bind_usrloc_t bind_usrloc;
 
@@ -116,36 +113,76 @@ static int mod_init(void) {
 	if (bind_usrloc(&ul) < 0) {
 		return -1;
 	}
-	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
+	LM_INFO("Successfully bound to PCSCF Usrloc module\n");
 
 	/* load the TM API */
 	if (load_tm_api(&tmb) != 0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
 	}
-	LM_DBG("Successfully bound to TM module\n");
+	LM_INFO("Successfully bound to TM module\n");
 
+	if(ipsec_listen_addr.len) {
+		if(ipsec_listen_addr.len > sizeof(addr4)-1) {
+        	LM_ERR("Bad value for ipsec listen address IPv4: %.*s\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
+        	return -1;
+    	}
 
-    //add listen interfaces
-    if(add_listen_iface(addr, NULL, ipsec_client_port, PROTO_TCP, 0) != 0) {
-        LM_ERR("Error adding listen ipsec client interface\n");
-        return -1;
-    }
+	    memset(addr4, 0, sizeof(addr4));
+	    memcpy(addr4, ipsec_listen_addr.s, ipsec_listen_addr.len);
 
-    if(add_listen_iface(addr, NULL, ipsec_server_port, PROTO_TCP, 0) != 0) {
-        LM_ERR("Error adding listen ipsec server interface\n");
-        return -1;
-    }
+		//add listen interfaces for IPv4
+		if(add_listen_iface(addr4, NULL, ipsec_client_port, PROTO_TCP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec client TCP interface for IPv4\n");
+			return -1;
+		}
 
-    if(add_listen_iface(addr, NULL, ipsec_client_port, PROTO_UDP, 0) != 0) {
-        LM_ERR("Error adding listen ipsec client interface\n");
-        return -1;
-    }
+		if(add_listen_iface(addr4, NULL, ipsec_server_port, PROTO_TCP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec server TCP interface for IPv4\n");
+			return -1;
+		}
 
-    if(add_listen_iface(addr, NULL, ipsec_server_port, PROTO_UDP, 0) != 0) {
-        LM_ERR("Error adding listen ipsec server interface\n");
-        return -1;
-    }
+		if(add_listen_iface(addr4, NULL, ipsec_client_port, PROTO_UDP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec client UDP interface for IPv4\n");
+			return -1;
+		}
+
+		if(add_listen_iface(addr4, NULL, ipsec_server_port, PROTO_UDP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec server UDP interface for IPv4\n");
+			return -1;
+		}
+	}
+
+	if(ipsec_listen_addr6.len) {
+		if(ipsec_listen_addr6.len > sizeof(addr6)-1) {
+			LM_ERR("Bad value for ipsec listen address IPv6: %.*s\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
+        	return -1;
+		}
+
+		memset(addr6, 0, sizeof(addr6));
+    	memcpy(addr6, ipsec_listen_addr6.s, ipsec_listen_addr6.len);
+
+		//add listen interfaces for IPv6
+		if(add_listen_iface(addr6, NULL, ipsec_client_port, PROTO_TCP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec client TCP interface for IPv6\n");
+			return -1;
+		}
+
+		if(add_listen_iface(addr6, NULL, ipsec_server_port, PROTO_TCP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec server TCP interface for IPv6\n");
+			return -1;
+		}
+
+		if(add_listen_iface(addr6, NULL, ipsec_client_port, PROTO_UDP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec client UDP interface for IPv6\n");
+			return -1;
+		}
+
+		if(add_listen_iface(addr6, NULL, ipsec_server_port, PROTO_UDP, 0) != 0) {
+			LM_ERR("Error adding listen ipsec server UDP interface for IPv6\n");
+			return -1;
+		}
+	}
 
     if(fix_all_socket_lists() != 0) {
         LM_ERR("Error calling fix_all_socket_lists() during module initialisation\n");

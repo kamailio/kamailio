@@ -42,7 +42,7 @@ void close_mnl_socket(struct mnl_socket* sock);
 unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto);
 
 
-int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik);
+int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik, str r_alg);
 int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id);
 
 int add_policy(struct mnl_socket* mnl_socket, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir);
