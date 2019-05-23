@@ -173,6 +173,41 @@ static int jsdt_sr_return_pv_null(duk_context *J, int rmode)
 /**
  *
  */
+int sr_kemi_jsdt_return_xval(duk_context *J, sr_kemi_t *ket, sr_kemi_xval_t *rx)
+{
+	switch(rx->vtype) {
+		case SR_KEMIP_NONE:
+			return 0;
+		case SR_KEMIP_INT:
+			duk_push_int(J, rx->v.n);
+			return 1;
+		case SR_KEMIP_STR:
+			duk_push_lstring(J, rx->v.s.s, rx->v.s.len);
+			return 1;
+		case SR_KEMIP_BOOL:
+			if(rx->v.n!=SR_KEMI_FALSE) {
+				duk_push_boolean(J, SRJSDT_TRUE);
+			} else {
+				duk_push_boolean(J, SRJSDT_FALSE);
+			}
+			return 1;
+		case SR_KEMIP_XVAL:
+			/* unknown content - return false */
+			duk_push_boolean(J, SRJSDT_FALSE);
+			return 1;
+		case SR_KEMIP_NULL:
+			duk_push_string(J, NULL);
+			return 1;
+		default:
+			/* unknown type - return false */
+			duk_push_boolean(J, SRJSDT_FALSE);
+			return 1;
+	}
+}
+
+/**
+ *
+ */
 static int jsdt_sr_pv_get_mode(duk_context *J, int rmode)
 {
 	str pvn;
@@ -1056,6 +1091,7 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 	int i;
 	int argc;
 	int ret;
+	sr_kemi_xval_t *xret;
 	str *fname;
 	str *mname;
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
@@ -1073,8 +1109,13 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 
 	argc = duk_get_top(J);
 	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
-		ret = ((sr_kemi_fm_f)(ket->func))(env_J->msg);
-		return sr_kemi_jsdt_return_int(J, ket, ret);
+		if(ket->rtype==SR_KEMIP_XVAL) {
+			xret = ((sr_kemi_xfm_f)(ket->func))(env_J->msg);
+			return sr_kemi_jsdt_return_xval(J, ket, xret);
+		} else {
+			ret = ((sr_kemi_fm_f)(ket->func))(env_J->msg);
+			return sr_kemi_jsdt_return_int(J, ket, ret);
+		}
 	}
 	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
 		LM_ERR("invalid number of parameters for: %.*s.%.*s\n",
@@ -1110,11 +1151,21 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 	switch(i) {
 		case 1:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
-				ret = ((sr_kemi_fmn_f)(ket->func))(env_J->msg, vps[0].n);
-				return sr_kemi_jsdt_return_int(J, ket, ret);
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmn_f)(ket->func))(env_J->msg, vps[0].n);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmn_f)(ket->func))(env_J->msg, vps[0].n);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
-				ret = ((sr_kemi_fms_f)(ket->func))(env_J->msg, &vps[0].s);
-				return sr_kemi_jsdt_return_int(J, ket, ret);
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfms_f)(ket->func))(env_J->msg, &vps[0].s);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fms_f)(ket->func))(env_J->msg, &vps[0].s);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname->len, fname->s);
@@ -1124,11 +1175,21 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 		case 2:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					ret = ((sr_kemi_fmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
-					return sr_kemi_jsdt_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
+						return sr_kemi_jsdt_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
+						return sr_kemi_jsdt_return_int(J, ket, ret);
+					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					ret = ((sr_kemi_fmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
-					return sr_kemi_jsdt_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
+						return sr_kemi_jsdt_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
+						return sr_kemi_jsdt_return_int(J, ket, ret);
+					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname->len, fname->s);
@@ -1136,11 +1197,21 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					ret = ((sr_kemi_fmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
-					return sr_kemi_jsdt_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
+						return sr_kemi_jsdt_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
+						return sr_kemi_jsdt_return_int(J, ket, ret);
+					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					ret = ((sr_kemi_fmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
-					return sr_kemi_jsdt_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
+						return sr_kemi_jsdt_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
+						return sr_kemi_jsdt_return_int(J, ket, ret);
+					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname->len, fname->s);
