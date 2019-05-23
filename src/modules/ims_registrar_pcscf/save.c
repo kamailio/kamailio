@@ -291,7 +291,8 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		LM_DBG("not doing pending reg on de-registration\n");
 		return 1;
 	}
-        LM_DBG("Save Pending");
+
+	LM_DBG("Save pending contact with AOR [%.*s], proto %d, port %d\n", c->uri.len, c->uri.s, proto, port);
 	LM_DBG("contact requesting to expire in %d seconds\n", expires-local_time_now);
 
 	/*populate CI with bare minimum*/
@@ -338,6 +339,21 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
     if((sec_params = cscf_get_security(_m)) == NULL) {
         LM_ERR("Will save pending contact without security parameters\n");
     }
+
+	// Parse security-verify parameters
+    security_t* sec_verify_params = NULL;
+    if((sec_verify_params = cscf_get_security_verify(_m)) == NULL){
+        LM_ERR("Will save pending contact without security-verify parameters\n");
+    }else{
+		if(sec_params){
+			// for REGISTER request try to set spi pc and spi ps from security-verify header
+			sec_params->data.ipsec->spi_ps = sec_verify_params->data.ipsec->spi_us;
+			sec_params->data.ipsec->spi_pc = sec_verify_params->data.ipsec->spi_uc;
+
+			LM_DBG("Will save pending contact with security-verify parameters, spc_ps %u, spi_pc %u\n",
+					sec_params->data.ipsec->spi_ps, sec_params->data.ipsec->spi_pc);
+		}
+	}
 
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
@@ -427,6 +443,12 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 	
 	cscf_get_p_associated_uri(_m, &public_ids, &num_public_ids, 1);
 	service_routes = cscf_get_service_route(_m, &num_service_routes, 1);
+
+	{
+		struct via_body* vb = cscf_get_ue_via(_m);
+		LM_DBG("Save contact with AOR(uri) [%.*s], proto %d, port %d\n",
+		cb->contacts->uri.len, cb->contacts->uri.s, vb->proto, vb->port?vb->port:5060);
+	}
 
 	//update contacts
 	if (!update_contacts(req, _m, _d, cb->star, expires_hdr, public_ids, num_public_ids, service_routes, num_service_routes, 0)) {
