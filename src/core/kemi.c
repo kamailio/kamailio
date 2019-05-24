@@ -2016,7 +2016,7 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 /**
  *
  */
-static void sr_kemi_xval_pv_null(sr_kemi_xval_t *xval, int rmode)
+void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 {
 	if(rmode==1) {
 		xval->vtype = SR_KEMIP_STR;
@@ -2051,24 +2051,24 @@ static sr_kemi_xval_t* sr_kemi_pv_get_mode(sip_msg_t *msg, str *pvn, int rmode)
 	pl = pv_locate_name(pvn);
 	if(pl != pvn->len) {
 		LM_ERR("invalid pv [%.*s] (%d/%d)\n", pvn->len, pvn->s, pl, pvn->len);
-		sr_kemi_xval_pv_null(&_sr_kemi_xval, rmode);
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 	pvs = pv_cache_get(pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%.*s]\n", pvn->len, pvn->s);
-		sr_kemi_xval_pv_null(&_sr_kemi_xval, rmode);
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(msg, pvs, &val) != 0) {
 		LM_ERR("unable to get pv value for [%.*s]\n", pvn->len, pvn->s);
-		sr_kemi_xval_pv_null(&_sr_kemi_xval, rmode);
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 	if(val.flags&PV_VAL_NULL) {
-		sr_kemi_xval_pv_null(&_sr_kemi_xval, rmode);
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 	if(val.flags&PV_TYPE_INT) {
