@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module collects extensions and functions to be used with KEMI
+		SIP routing scripting. The target is to implement alternatives to
+		specific concepts designed for the native scripting language (e.g.,
+		core keywords and core conditions) without pushing code in the core
+		of the application.
+	</para>
+	<para>
+		It does not provide functions for the native &kamailio;.cfg.
+	</para>
+	<para>
+		To see the KEMI functions exported by this module, see:
+		<itemizedlist>
+			<listitem>
+			<para>
+				<ulink url="http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">
+					http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+			</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+</chapter>
+
