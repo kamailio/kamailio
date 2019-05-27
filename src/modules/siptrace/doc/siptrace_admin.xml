@@ -662,6 +662,11 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	case of internal timeouts) won't be traced. At the moment kamailio offers
 	no posibility to trace those messages.
 	</para>
+	<para>
+		<emphasis>Trace_info</emphasis> xavp name is reserved by this module.
+		Any use of xavp with this name will result in overlapping internal
+		avp used by the module therefore causing unknown consequences.
+	</para>
 	<example>
 	<title>Send relayed ACK message</title>
 	<programlisting format="linespecific">
