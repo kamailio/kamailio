@@ -28,6 +28,8 @@
 #include "../../core/dprint.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 MODULE_VERSION
 
@@ -86,10 +88,114 @@ static sr_kemi_xval_t* ki_kx_get_ruri(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_ouri(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(msg->first_line.type == SIP_REPLY) {
+		/* REPLY doesnt have a ruri */
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse the R-URI\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->first_line.u.request.uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_furi(sip_msg_t *msg)
+{
+	to_body_t *xto = NULL;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+	if(parse_from_header(msg)<0) {
+		LM_ERR("cannot parse From header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->from==NULL || get_from(msg)==NULL) {
+		LM_DBG("no From header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+
+	xto = get_from(msg);
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = xto->uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_turi(sip_msg_t *msg)
+{
+	to_body_t *xto = NULL;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+	if(parse_to_header(msg)<0) {
+		LM_ERR("cannot parse To header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->to==NULL || get_to(msg)==NULL) {
+		LM_DBG("no To header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
+		return &_sr_kemi_kx_xval;
+	}
+
+	xto = get_to(msg);
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = xto->uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
 		SR_KEMIP_XVAL, ki_kx_get_ruri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_ouri"),
+		SR_KEMIP_XVAL, ki_kx_get_ouri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_furi"),
+		SR_KEMIP_XVAL, ki_kx_get_furi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_turi"),
+		SR_KEMIP_XVAL, ki_kx_get_turi,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
