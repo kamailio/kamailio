@@ -169,4 +169,11 @@ int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid);
  */
 int uldb_insert_attrs(str *_dname, str *_user, str *_domain,
         str *_ruid, sr_xavp_t *_xhead);
+
+/*!
+ * \brief Set the value for cloning the xavp list to contact structure
+ * \param v - the value to be set
+ */
+void ul_set_xavp_contact_clone(int v);
+
 #endif
