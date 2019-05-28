@@ -177,6 +177,88 @@ static sr_kemi_xval_t* ki_kx_get_turi(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_xuri_attr(sip_msg_t *msg, sip_uri_t *puri,
+		int iattr, int xmode)
+{
+	if(iattr==1) {
+		/* username */
+		if(puri->user.s==NULL || puri->user.len<=0) {
+			sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+			return &_sr_kemi_kx_xval;
+		}
+		_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_kx_xval.v.s = puri->user;
+		return &_sr_kemi_kx_xval;
+	} else if(iattr==2) {
+		/* domain */
+		if(puri->host.s==NULL || puri->host.len<=0) {
+			sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+			return &_sr_kemi_kx_xval;
+		}
+		_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_kx_xval.v.s = puri->host;
+		return &_sr_kemi_kx_xval;
+	}
+	LM_ERR("unknown attribute id: %d\n", iattr);
+	sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_ruri_attr(sip_msg_t *msg, int iattr, int xmode)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL || msg->first_line.type == SIP_REPLY) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse the R-URI\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+	return ki_kx_get_xuri_attr(msg, &(msg->parsed_uri), iattr, xmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_ruser(sip_msg_t *msg)
+{
+	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_ruserx(sip_msg_t *msg, int xmode)
+{
+	return ki_kx_get_ruri_attr(msg, 1, xmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_rhost(sip_msg_t *msg)
+{
+	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_rhostx(sip_msg_t *msg, int xmode)
+{
+	return ki_kx_get_ruri_attr(msg, 2, xmode);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -199,6 +281,27 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_ruser"),
+		SR_KEMIP_XVAL, ki_kx_get_ruser,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_ruserx"),
+		SR_KEMIP_XVAL, ki_kx_get_ruserx,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_rhost"),
+		SR_KEMIP_XVAL, ki_kx_get_rhost,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_rhostx"),
+		SR_KEMIP_XVAL, ki_kx_get_rhostx,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
