@@ -565,6 +565,10 @@ kamcmd siptrace.status check
    case of internal timeouts) won't be traced. At the moment kamailio
    offers no posibility to trace those messages.
 
+   Trace_info xavp name is reserved by this module. Any use of xavp with
+   this name will result in overlapping internal avp used by the module
+   therefore causing unknown consequences.
+
    Example 1.22. Send relayed ACK message
 ...
 onsend_route {
