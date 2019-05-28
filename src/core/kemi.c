@@ -2018,10 +2018,10 @@ static sr_kemi_t _sr_kemi_hdr[] = {
  */
 void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 {
-	if(rmode==1) {
+	if(rmode==SR_KEMI_XVAL_NULL_PRINT) {
 		xval->vtype = SR_KEMIP_STR;
 		xval->v.s = *pv_get_null_str();
-	} else if(rmode==2) {
+	} else if(rmode==SR_KEMI_XVAL_NULL_EMPTY) {
 		xval->vtype = SR_KEMIP_STR;
 		xval->v.s = *pv_get_empty_str();
 	} else {
@@ -2086,7 +2086,7 @@ static sr_kemi_xval_t* sr_kemi_pv_get_mode(sip_msg_t *msg, str *pvn, int rmode)
  */
 static sr_kemi_xval_t* sr_kemi_pv_get(sip_msg_t *msg, str *pvn)
 {
-	return sr_kemi_pv_get_mode(msg, pvn, 0);
+	return sr_kemi_pv_get_mode(msg, pvn, SR_KEMI_XVAL_NULL_NONE);
 }
 
 /**
@@ -2094,7 +2094,7 @@ static sr_kemi_xval_t* sr_kemi_pv_get(sip_msg_t *msg, str *pvn)
  */
 static sr_kemi_xval_t* sr_kemi_pv_getw(sip_msg_t *msg, str *pvn)
 {
-	return sr_kemi_pv_get_mode(msg, pvn, 1);
+	return sr_kemi_pv_get_mode(msg, pvn, SR_KEMI_XVAL_NULL_PRINT);
 }
 
 /**
@@ -2102,7 +2102,7 @@ static sr_kemi_xval_t* sr_kemi_pv_getw(sip_msg_t *msg, str *pvn)
  */
 static sr_kemi_xval_t* sr_kemi_pv_gete(sip_msg_t *msg, str *pvn)
 {
-	return sr_kemi_pv_get_mode(msg, pvn, 2);
+	return sr_kemi_pv_get_mode(msg, pvn, SR_KEMI_XVAL_NULL_EMPTY);
 }
 
 /**

@@ -204,6 +204,9 @@ int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
 
 sr_kemi_t* sr_kemi_exports_get_pv(void);
 
+#define SR_KEMI_XVAL_NULL_NONE 0
+#define SR_KEMI_XVAL_NULL_PRINT 1
+#define SR_KEMI_XVAL_NULL_EMPTY 2
 void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode);
 
 #endif
