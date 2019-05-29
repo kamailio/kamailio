@@ -26,9 +26,8 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. load (string)
-              3.2. register (string)
-              3.3. reload (boolean)
-              3.4. log_mode (int)
+              3.2. reload (boolean)
+              3.3. log_mode (int)
 
         4. Functions
 
@@ -49,13 +48,12 @@ Daniel-Constantin Mierla
 
    1.1. Build against LuaJIT libraries
    1.2. Set load parameter
-   1.3. Set register parameter
-   1.4. Set reload parameter
-   1.5. Set log_mode parameter
-   1.6. lua_dofile usage
-   1.7. lua_dostring usage
-   1.8. lua_run usage
-   1.9. lua_runstring usage
+   1.3. Set reload parameter
+   1.4. Set log_mode parameter
+   1.5. lua_dofile usage
+   1.6. lua_dostring usage
+   1.7. lua_run usage
+   1.8. lua_runstring usage
 
 Chapter 1. Admin Guide
 
@@ -70,9 +68,8 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. load (string)
-        3.2. register (string)
-        3.3. reload (boolean)
-        3.4. log_mode (int)
+        3.2. reload (boolean)
+        3.3. log_mode (int)
 
    4. Functions
 
@@ -91,9 +88,11 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module allows executing Lua scripts from config file. It exports a
-   set of functions to Lua in order to access the current processed SIP
-   message. These functions are within Lua module 'sr'.
+   This module allows executing Lua scripts from config file, implementing
+   the KEMI framework and exporting Lua module 'KSR'.
+
+   To read more about KEMI exports and available KSR submodules, see:
+     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
 
    Lua (http://www.lua.org) is a fast and easy to embed scripting
    language. Exported API from SIP router to Lua is documented in the
@@ -106,7 +105,7 @@ Chapter 1. Admin Guide
        via lua_dofile() in config. This is kind of caching mode, avoiding
        reading file every time, but you must be sure you do not have
        something that is executed by default and requires access to SIP
-       message.
+       message. This is also the context used with KEMI framework.
 
 2. Dependencies
 
@@ -139,9 +138,8 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. load (string)
-   3.2. register (string)
-   3.3. reload (boolean)
-   3.4. log_mode (int)
+   3.2. reload (boolean)
+   3.3. log_mode (int)
 
 3.1. load (string)
 
@@ -156,58 +154,7 @@ Chapter 1. Admin Guide
 modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
 
-3.2. register (string)
-
-   NOTE: Since Kamailio v5.0, KEMI exports are available in Lua script
-   under KSR module. These exports cover most of the modules, a lot more
-   that those listed next. The KEMI exports are the recommended to be
-   used, the old 'sr' module might be obsoleted soon. To read more about
-   KEMI exports and available KSR submodules, see:
-     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
-
-   Use this parameter to register optional Kamailio submodules to Lua.
-   Available submodules are:
-     * alias_db - register functions from alias_db module under
-       'sr.alias_db'.
-     * auth - register functions from auth module under 'sr.auth'.
-     * auth_db - register functions from auth_db module under
-       'sr.auth_db'.
-     * dispatcher - register functions from dispatcher module under
-       'sr.dispatcher'.
-     * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
-     * msilo - register functions from msilo module under 'sr.msilo'.
-     * presence - register functions from presence module under
-       'sr.presence'.
-     * presence_xml - register functions from presence_xml module under
-       'sr.presence_xml'.
-     * pua_usrloc - register functions from pua_usrloc module under
-       'sr.pua_usrloc'.
-     * registrar - register functions from registrar module under
-       'sr.registrar'.
-     * rls - register functions from rls module under 'sr.rls'.
-     * rr - register functions from rr module under 'sr.rr'.
-     * sanity - register functions from sanity module under 'sr.sanity'.
-     * sdpops - register functions from sdpops module under 'sr.sdpops'.
-     * siputils - register functions from siputils module under
-       'sr.siputils'.
-     * sl - register functions from sl module under 'sr.sl'.
-     * sqlops - register functions from sqlops module under 'sr.sqlops'.
-     * textops - register functions from textops module under
-       'sr.textops'.
-     * tm - register functions from tm module under 'sr.tm'.
-     * xhttp - register functions from xhttp module under 'sr.xhttp'.
-
-   Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
-   Lua.
-
-   Default value is “null”.
-
-   Example 1.3. Set register parameter
-...
-modparam("app_lua", "register", "sl")
-...
-
-3.3. reload (boolean)
+3.2. reload (boolean)
 
    If reload is 1 enables the ability to reload the scripts using the RPC
    app_lua.reload command. To disable reload feature, set this parameter
@@ -215,19 +162,19 @@ modparam("app_lua", "register", "sl")
 
    Default value is “1 (on)”.
 
-   Example 1.4. Set reload parameter
+   Example 1.3. Set reload parameter
 ...
 modparam("app_lua", "reload", 0)
 ...
 
-3.4. log_mode (int)
+3.3. log_mode (int)
 
    Control what is printed in log messages. If bit 1 is set, then the
    module prints debug messages for each KEMI export.
 
    Default value is “0”.
 
-   Example 1.5. Set log_mode parameter
+   Example 1.4. Set log_mode parameter
 ...
 modparam("app_lua", "log_mode", 1)
 ...
@@ -244,7 +191,7 @@ modparam("app_lua", "log_mode", 1)
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
 
-   Example 1.6. lua_dofile usage
+   Example 1.5. lua_dofile usage
 ...
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
@@ -254,7 +201,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
 
-   Example 1.7. lua_dostring usage
+   Example 1.6. lua_dostring usage
 ...
 if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
@@ -270,7 +217,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.8. lua_run usage
+   Example 1.7. lua_run usage
 ...
 if(!lua_run("sr_append_fu_to_reply")) {
     xdbg("SCRIPT: failed to execute lua function!\n");
@@ -288,7 +235,7 @@ lua_run("lua_func3", "$rU", "2", "$si");
    string with pseudo-variables. The script is executed in Lua context
    specific to loaded Lua files at startup.
 
-   Example 1.9. lua_runstring usage
+   Example 1.8. lua_runstring usage
 ...
 if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
