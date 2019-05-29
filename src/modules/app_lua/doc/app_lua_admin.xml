@@ -17,9 +17,18 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows executing Lua scripts from config file. It exports
-		a set of functions to Lua in order to access the current processed
-		SIP message. These functions are within Lua module 'sr'.
+		This module allows executing Lua scripts from config file, implementing
+		the KEMI framework and exporting Lua module 'KSR'.
+	</para>
+	<para>
+		To read more about KEMI exports and available KSR submodules, see:
+    	<itemizedlist>
+		    <listitem>
+			<para>
+				<ulink url="http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+			</para>
+		    </listitem>
+    	</itemizedlist>
 	</para>
 	<para>
 		Lua (http://www.lua.org) is a fast and easy to embed scripting
@@ -42,7 +51,8 @@
 			from scripts loaded via lua_dofile() in config. This is kind of
 			caching mode, avoiding reading file every time, but you must be sure
 			you do not have something that is executed by default and requires
-			access to SIP message.
+			access to SIP message. This is also the context used with KEMI
+			framework.
 		</para>
 	    </listitem>
     	</itemizedlist>
@@ -115,167 +125,6 @@
 		<programlisting format="linespecific">
 ...
 modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section id="app_lua.p.register">
-	    <title><varname>register</varname> (string)</title>
-	    <para>
-	    NOTE: Since &kamailio; v5.0, KEMI exports are available in Lua script
-		under KSR module. These exports cover most of the modules, a lot more
-		that those listed next. The KEMI exports are the recommended to
-		be used, the old 'sr' module might be obsoleted soon. To read more about
-		KEMI exports and available KSR submodules, see:
-    	<itemizedlist>
-		    <listitem>
-			<para>
-				<ulink url="http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
-			</para>
-		    </listitem>
-    	</itemizedlist>
-		</para>
-	    <para>
-			Use this parameter to register optional &kamailio; submodules
-			to Lua. Available submodules are:
-	    </para>
-	    	<itemizedlist>
-		    <listitem>
-			<para>
-				<emphasis>alias_db</emphasis> - register functions from
-				alias_db module under 'sr.alias_db'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>auth</emphasis> - register functions from auth module
-				under 'sr.auth'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>auth_db</emphasis> - register functions from auth_db
-				module under 'sr.auth_db'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>dispatcher</emphasis> - register functions from
-				dispatcher module under 'sr.dispatcher'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>maxfwd</emphasis> - register functions from maxfwd
-				module under 'sr.maxfwd'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>msilo</emphasis> - register functions from
-				msilo module under 'sr.msilo'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>presence</emphasis> - register functions from
-				presence module under 'sr.presence'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>presence_xml</emphasis> - register functions from
-				presence_xml module under 'sr.presence_xml'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>pua_usrloc</emphasis> - register functions from
-				pua_usrloc module under 'sr.pua_usrloc'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>registrar</emphasis> - register functions from
-				registrar module under 'sr.registrar'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>rls</emphasis> - register functions from
-				rls module under 'sr.rls'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>rr</emphasis> - register functions from rr module
-				under 'sr.rr'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>sanity</emphasis> - register functions from sanity
-				module under 'sr.sanity'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>sdpops</emphasis> - register functions from
-				sdpops module under 'sr.sdpops'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>siputils</emphasis> - register functions from
-				siputils module under 'sr.siputils'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>sl</emphasis> - register functions from sl module
-				under 'sr.sl'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>sqlops</emphasis> - register functions from sqlops
-				module under 'sr.sqlops'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>textops</emphasis> - register functions from
-				textops module under 'sr.textops'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>tm</emphasis> - register functions from tm module
-				under 'sr.tm'.
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-				<emphasis>xhttp</emphasis> - register functions from xhttp
-				module under 'sr.xhttp'.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    <para>
-			Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered
-			to Lua.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>null</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>register</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("app_lua", "register", "sl")
 ...
 </programlisting>
 	    </example>
