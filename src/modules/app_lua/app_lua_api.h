@@ -27,6 +27,7 @@
 #include <lualib.h>
 
 #include "../../core/parser/msg_parser.h"
+#include "../../core/kemi.h"
 
 /**
  * version variable stores a version counter for each script loaded.
@@ -54,6 +55,10 @@ typedef struct _sr_lua_load
 	struct _sr_lua_load *next;
 } sr_lua_load_t;
 
+typedef void (*app_lua_openlibs_f)(lua_State *L);
+
+int app_lua_openlibs_register(app_lua_openlibs_f rfunc);
+
 sr_lua_env_t *sr_lua_env_get(void);
 
 int lua_sr_initialized(void);
@@ -66,7 +71,6 @@ int lua_sr_list_script(sr_lua_load_t **list);
 
 int sr_lua_load_script(char *script);
 int sr_lua_reload_script(void);
-int sr_lua_register_module(char *mname);
 int sr_lua_reload_module(unsigned int reload);
 
 int app_lua_dostring(struct sip_msg *msg, char *script);
@@ -88,6 +92,10 @@ int app_lua_return_error(lua_State *L);
 void app_lua_dump_stack(lua_State *L);
 
 str* sr_kemi_lua_exit_string_get(void);
+
+int sr_kemi_lua_exec_func(lua_State* L, int eidx);
+
+int app_lua_init_rpc(void);
 
 #endif
 
