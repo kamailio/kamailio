@@ -1,0 +1,146 @@
+app_lua_sr Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010-2019 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. register (string)
+
+   List of Examples
+
+   1.1. Build against LuaJIT libraries
+   1.2. Set register parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. register (string)
+
+1. Overview
+
+   This module exports the Lua module 'sr', the old API existing before
+   the KEMI framework. The module requires 'app_lua' module.
+
+   IMPORTANT: this module is kept to allow a smooth migration of the
+   scripts using 'sr' module in Lua to KEMI framework and the 'KSR'
+   module. It will be marked as obsolete in the near future and removed
+   afterwards. If you find any function exported to Lua via 'sr' that has
+   no alternative in Lua 'KSR' module, report it to sr-dev mailing list.
+
+   Lua (http://www.lua.org) is a fast and easy to embed scripting
+   language. Exported API from Kamailio to Lua is documented in the
+   dokuwiki.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * app_lua - the Lua interpreter module.
+     * various - the modules specified by the 'register' modparam.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * liblua5.1-dev - Lua devel library.
+
+   This module can be compiled against LuaJIT compiler (instead of
+   standard Lua). Then this library is needed:
+     * libluajit-5.1-dev - LuaJIT devel library.
+
+   To enable that, LUAJIT variable has to be set.
+
+   Example 1.1. Build against LuaJIT libraries
+   E.g: $ LUAJIT="yes" make modules modules=modules/app_lua_sr
+
+   (Warning: LuaJIT version is 5.1, so scripts prepared for higher Lua
+   versions may not work with LuaJIT)
+
+3. Parameters
+
+   3.1. register (string)
+
+3.1. register (string)
+
+   NOTE: Since Kamailio v5.0, KEMI exports are available in Lua script
+   under KSR module exposed by 'app_lua'. These exports cover most of the
+   modules, a lot more that those listed next. The KEMI exports are the
+   recommended to be used, the old 'sr' module might be obsoleted soon. To
+   read more about KEMI exports and available KSR submodules, see:
+     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
+
+   Use this parameter to register optional Kamailio submodules to Lua.
+   Available submodules are:
+     * alias_db - register functions from alias_db module under
+       'sr.alias_db'.
+     * auth - register functions from auth module under 'sr.auth'.
+     * auth_db - register functions from auth_db module under
+       'sr.auth_db'.
+     * dispatcher - register functions from dispatcher module under
+       'sr.dispatcher'.
+     * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
+     * msilo - register functions from msilo module under 'sr.msilo'.
+     * presence - register functions from presence module under
+       'sr.presence'.
+     * presence_xml - register functions from presence_xml module under
+       'sr.presence_xml'.
+     * pua_usrloc - register functions from pua_usrloc module under
+       'sr.pua_usrloc'.
+     * registrar - register functions from registrar module under
+       'sr.registrar'.
+     * rls - register functions from rls module under 'sr.rls'.
+     * rr - register functions from rr module under 'sr.rr'.
+     * sanity - register functions from sanity module under 'sr.sanity'.
+     * sdpops - register functions from sdpops module under 'sr.sdpops'.
+     * siputils - register functions from siputils module under
+       'sr.siputils'.
+     * sl - register functions from sl module under 'sr.sl'.
+     * sqlops - register functions from sqlops module under 'sr.sqlops'.
+     * textops - register functions from textops module under
+       'sr.textops'.
+     * tm - register functions from tm module under 'sr.tm'.
+     * xhttp - register functions from xhttp module under 'sr.xhttp'.
+
+   Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
+   Lua.
+
+   Default value is "null".
+
+   Example 1.2. Set register parameter
+...
+modparam("app_lua_sr", "register", "sl")
+...
