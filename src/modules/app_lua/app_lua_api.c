@@ -2016,3 +2016,17 @@ int app_lua_init_rpc(void)
 	}
 	return 0;
 }
+
+/**
+ *
+ */
+int bind_app_lua(app_lua_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->env_get_f = sr_lua_env_get;
+	api->openlibs_register_f = app_lua_openlibs_register;
+	return 0;
+}

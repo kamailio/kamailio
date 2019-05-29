@@ -84,6 +84,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"lua_run", (cmd_function)w_app_lua_run3, 4, fixup_lua_run,
 		0, ANY_ROUTE},
+	{"bind_app_lua", (cmd_function)bind_app_lua, 0, 0, 0,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 

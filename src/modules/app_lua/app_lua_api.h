@@ -29,6 +29,8 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/kemi.h"
 
+#include "modapi.h"
+
 /**
  * version variable stores a version counter for each script loaded.
  * This counter will be updated via RPC.
@@ -39,23 +41,12 @@ typedef struct _sr_lua_script_ver
 	unsigned int len; /* length of version array */
 } sr_lua_script_ver_t;
 
-typedef struct _sr_lua_env
-{
-	lua_State *L;
-	lua_State *LL;
-	struct sip_msg *msg;
-	unsigned int flags;
-	unsigned int nload; /* number of scripts loaded */
-} sr_lua_env_t;
-
 typedef struct _sr_lua_load
 {
 	char *script;
 	int version; /* child loaded version */
 	struct _sr_lua_load *next;
 } sr_lua_load_t;
-
-typedef void (*app_lua_openlibs_f)(lua_State *L);
 
 int app_lua_openlibs_register(app_lua_openlibs_f rfunc);
 
@@ -65,12 +56,8 @@ int lua_sr_initialized(void);
 int lua_sr_init_mod(void);
 int lua_sr_init_child(void);
 void lua_sr_destroy(void);
-int lua_sr_init_probe(void);
-int lua_sr_reload_script(int pos);
-int lua_sr_list_script(sr_lua_load_t **list);
 
 int sr_lua_load_script(char *script);
-int sr_lua_reload_script(void);
 int sr_lua_reload_module(unsigned int reload);
 
 int app_lua_dostring(struct sip_msg *msg, char *script);
@@ -81,21 +68,10 @@ int app_lua_run(sip_msg_t *msg, char *func, char *p1, char *p2,
 int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3, int emode);
 
-#define SRLUA_FALSE	0
-#define SRLUA_TRUE	1
-int app_lua_return_boolean(lua_State *L, int b);
-int app_lua_return_false(lua_State *L);
-int app_lua_return_true(lua_State *L);
-int app_lua_return_int(lua_State *L, int v);
-int app_lua_return_error(lua_State *L);
-
-void app_lua_dump_stack(lua_State *L);
-
-str* sr_kemi_lua_exit_string_get(void);
-
 int sr_kemi_lua_exec_func(lua_State* L, int eidx);
 
 int app_lua_init_rpc(void);
+int bind_app_lua(app_lua_api_t* api);
 
 #endif
 
