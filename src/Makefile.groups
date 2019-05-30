@@ -115,7 +115,7 @@ mod_list_presence=presence presence_conference presence_dialoginfo \
 
 
 # - modules depending on lua library
-mod_list_lua=app_lua
+mod_list_lua=app_lua app_lua_sr
 
 # - modules depending on perl library
 mod_list_perldeps=app_perl db_perlvdb
