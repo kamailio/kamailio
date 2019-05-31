@@ -2,12 +2,12 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 # to generate readme file on a system without java, use DOCBUILD=yes in make command
-
+# compatibility changes for buster debian and openjdk 11
 include ../../Makefile.defs
 auto_gen=
 NAME=app_java.so
 
-USE_GCJ ?= yes
+USE_GCJ ?= no
 
 #DEFS += -DEXTRA_DEBUG
 
@@ -28,9 +28,9 @@ ATYPE=i386
 else ifeq ($(ARCH),x86_64)
 ATYPE=amd64
 endif
-JAVA_HOME ?= /usr/lib/jvm/java
-DEFS += -I$(JAVA_HOME)/include
-LIBS += -L$(JAVA_HOME)/jre/lib/$(ATYPE)/server -ljvm
+JAVA_HOME = /usr/lib/jvm/java
+DEFS += -I/usr/lib/jvm/java-11-openjdk-amd64/include
+LIBS += -L/usr/lib/jvm/java-11-openjdk-amd64/server -ljvm
 endif
 
 # On Debian 7.5 there is a bug with JAVA_HOME detection.
@@ -41,13 +41,17 @@ endif
 ifeq ($(USE_GCJ),yes)
 ifeq ($(shell [ -d "${JAVA_HOME}" -a -f "$(JAVA_HOME)/include/jni.h" -a -f "$(JAVA_HOME)/lib/libjvm.so" ] && echo 1 || echo 0),0)
 ifneq ($(DOCBUILD),yes)
-$(error Cannot locate Java Development Kit. You have to specify environment JAVA_HOME to build app_java)
+JAVA_HOME = /usr/lib/jvm/java
+DEFS += -I/usr/lib/jvm/java-11-openjdk-amd64/include -I/usr/lib/jvm/java-11-openjdk-amd64/include -I/usr/lib/jvm/java-11-openjdk-amd64/include/linux
+LIBS += -L/usr/lib/jvm/java-11-openjdk-amd64/server -ljvm
 endif
 endif
 else
 ifeq ($(shell [ -d "${JAVA_HOME}" -a -f "$(JAVA_HOME)/include/jni.h" -a -f "$(JAVA_HOME)/jre/lib/$(ATYPE)/server/libjvm.so" ] && echo 1 || echo 0),0)
 ifneq ($(DOCBUILD),yes)
-$(error Cannot locate Java Development Kit. You have to specify environment JAVA_HOME to build app_java)
+JAVA_HOME = /usr/lib/jvm/java
+DEFS += -I/usr/lib/jvm/java-11-openjdk-amd64/include -I/usr/lib/jvm/java-11-openjdk-amd64/include/linux
+LIBS += -L/usr/lib/jvm/java-11-openjdk-amd64/server -ljvm
 endif
 endif
 endif
@@ -56,7 +60,7 @@ ifeq ($(OS), freebsd)
 LIBS+=-pthread
 endif
 ifeq ($(OS), linux)
-DEFS += -I$(JAVA_HOME)/include/linux
+DEFS += -I/usr/lib/jvm/java-11-openjdk-amd64/include -I /usr/lib/jvm/java-11-openjdk-amd64/include/linux
 endif
 endif
 
@@ -67,4 +71,3 @@ INCLUDES += -O0 -g
 endif
 
 include ../../Makefile.modules
-
