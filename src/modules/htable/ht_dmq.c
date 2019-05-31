@@ -588,11 +588,11 @@ int ht_dmq_handle_sync(srjson_doc_t* jdoc) {
 			if(ht==NULL) {
 				LM_WARN("unable to get table %.*s\n",
 						htname.len, (htname.s)?htname.s:"");
-			}
-
-			if (ht_set_cell_ex(ht, &cname, type, &val, 0, expire - now) < 0) {
-				LM_WARN("unable to set cell %.*s in table %.*s\n",
-						cname.len, cname.s, ht->name.len, ht->name.s);
+			} else {
+				if (ht_set_cell_ex(ht, &cname, type, &val, 0, expire - now) < 0) {
+					LM_WARN("unable to set cell %.*s in table %.*s\n",
+							cname.len, cname.s, ht->name.len, ht->name.s);
+				}
 			}
 		}
 
