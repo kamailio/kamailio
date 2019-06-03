@@ -507,61 +507,101 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
             LM_DBG("  contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
 		LM_DBG("contact received [%d:%.*s:%d]\n", c->received_proto, c->received_host.len, c->received_host.s, c->received_port);
 
-		if ((c->aorhash == aorhash) && 
-				(((c->contact_host.len == contact_info->via_host.len) 
-				&& (memcmp(contact_info->via_host.s, c->contact_host.s, c->contact_host.len) == 0) 
-				&& (c->contact_port == contact_info->via_port)
-				&& !(contact_info->searchflag & SEARCH_RECEIVED)) 
-		|| ((contact_info->searchflag & SEARCH_RECEIVED)
-				&& ((c->received_host.len == contact_info->received_host.len) && (memcmp(c->received_host.s, contact_info->received_host.s, contact_info->received_host.len) == 0))
-				&& ((c->received_port == contact_info->received_port) || (c->contact_port == contact_info->received_port))))) { /*volte comes from a different port.... typically uses 4060*/
-			LM_DBG("found contact with URI [%.*s]\n", c->aor.len, c->aor.s);
-			if (has_rinstance) {
-				LM_DBG("confirming rinstance is the same - search has [%.*s] and proposed found contact has [%.*s]",
-						rinstance.len, rinstance.s,
-						c->rinstance.len, c->rinstance.s);
-				if ((rinstance.len == c->rinstance.len) && memcmp(rinstance.s, c->rinstance.s, rinstance.len) != 0) {
-					LM_DBG("rinstance does not match - no match here...\n");
-					c = c->next;
-					continue;
+		if(c->aorhash == aorhash){
+			int check1_passed = 0;
+			int check2_passed = 0;
+			ip_addr_t c_ip_addr;
+			ip_addr_t ci_ip_addr;
+
+			// convert 'contact->contact host' ip string to ip_addr_t
+			if (str2ipxbuf(&c->contact_host, &c_ip_addr) < 0){
+				LM_ERR("Unable to convert c->contact_host [%.*s]\n", c->contact_host.len, c->contact_host.s);
+				return 1;
+			}
+
+			// convert 'contact info->via host' ip string to ip_addr_t
+			if(str2ipxbuf(&contact_info->via_host, &ci_ip_addr) < 0){
+				LM_ERR("Unable to convert contact_info->via_host [%.*s]\n", contact_info->via_host.len, contact_info->via_host.s);
+				return 1;
+			}
+
+			// compare 'contact->contact host' and 'contact info->via host'
+			if(ip_addr_cmp(&c_ip_addr, &ci_ip_addr) &&
+				(c->contact_port == contact_info->via_port) &&
+				!(contact_info->searchflag & SEARCH_RECEIVED))
+			{
+				check1_passed = 1;
+			}
+
+			if(contact_info->searchflag & SEARCH_RECEIVED){
+				// convert 'contact->received host' ip string to ip_addr_t
+				if (str2ipxbuf(&c->received_host, &c_ip_addr) < 0){
+					LM_ERR("Unable to convert c->received_host [%.*s]\n", c->received_host.len, c->received_host.s);
+					return 1;
+				}
+
+				// convert 'contact info->received host' ip string to ip_addr_t
+				if(str2ipxbuf(&contact_info->received_host, &ci_ip_addr) < 0){
+					LM_ERR("Unable to convert contact_info->received_host [%.*s]\n", contact_info->received_host.len, contact_info->received_host.s);
+					return 1;
+				}
+
+				// compare 'contact->received host' and 'contact info->received host'
+				if(ip_addr_cmp(&c_ip_addr, &ci_ip_addr) &&
+					((c->received_port == contact_info->received_port) ||
+					 (c->contact_port == contact_info->received_port))){ /*volte comes from a different port.... typically uses 4060*/
+					check2_passed = 1;
 				}
 			}
-			
-			if ((contact_info->extra_search_criteria & SEARCH_SERVICE_ROUTES) && contact_info->num_service_routes > 0) {
-				LM_DBG("have %d service routes to search for\n", contact_info->num_service_routes);
-				if (contact_info->num_service_routes != c->num_service_routes) {
-					c = c->next;
-					LM_DBG("number of service routes do not match - failing\n");
-					continue;
-				} 
-				
-				serviceroutematch = 1;
-				for (j=0; j<contact_info->num_service_routes; j++) {
-					if (contact_info->service_routes[j].len != c->service_routes[j].len || memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
-						LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing to next contact check\n", 
-							j,
-							contact_info->service_routes[j].len, contact_info->service_routes[j].s,
-							c->service_routes[j].len, c->service_routes[j].s);
-						serviceroutematch = 0;
-						break;
+
+			if(check1_passed || check2_passed){
+				LM_DBG("found contact with URI [%.*s]\n", c->aor.len, c->aor.s);
+				if (has_rinstance) {
+					LM_DBG("confirming rinstance is the same - search has [%.*s] and proposed found contact has [%.*s]",
+							rinstance.len, rinstance.s,
+							c->rinstance.len, c->rinstance.s);
+					if ((rinstance.len == c->rinstance.len) && memcmp(rinstance.s, c->rinstance.s, rinstance.len) != 0) {
+						LM_DBG("rinstance does not match - no match here...\n");
+						c = c->next;
+						continue;
 					}
 				}
-				if (serviceroutematch == 0) {
+			
+				if ((contact_info->extra_search_criteria & SEARCH_SERVICE_ROUTES) && contact_info->num_service_routes > 0) {
+					LM_DBG("have %d service routes to search for\n", contact_info->num_service_routes);
+					if (contact_info->num_service_routes != c->num_service_routes) {
+						c = c->next;
+						LM_DBG("number of service routes do not match - failing\n");
+						continue;
+					} 
+				
+					serviceroutematch = 1;
+					for (j=0; j<contact_info->num_service_routes; j++) {
+						if (contact_info->service_routes[j].len != c->service_routes[j].len || memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
+							LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing to next contact check\n", 
+							    j,
+								contact_info->service_routes[j].len, contact_info->service_routes[j].s,
+								c->service_routes[j].len, c->service_routes[j].s);
+							serviceroutematch = 0;
+							break;
+						}
+					}
+					if (serviceroutematch == 0) {
+						c = c->next;
+						continue;
+					}
+				}
+			
+				//finally check state being searched for
+				if ( (contact_info->reg_state != PCONTACT_ANY) && ((contact_info->reg_state & c->reg_state) == 0)) {
+					LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info->reg_state, c->reg_state);
 					c = c->next;
 					continue;
 				}
+				*_c = c;
+				return 0;
 			}
-			
-			//finally check state being searched for
-			if ( (contact_info->reg_state != PCONTACT_ANY) && ((contact_info->reg_state & c->reg_state) == 0)) {
-				LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info->reg_state, c->reg_state);
-				c = c->next;
-				continue;
-			}
-			*_c = c;
-			return 0;
 		}
-		
 		c = c->next;
 	}
         
