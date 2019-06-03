@@ -1827,21 +1827,6 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
 /**
  *
  */
-PyObject *sr_apy_kemi_return_none_mode(int rmode)
-{
-	if(rmode==1) {
-		return sr_apy_kemi_return_str(NULL, "<<null>>", 8);
-	} else if(rmode==2) {
-		return sr_apy_kemi_return_str(NULL, "", 0);
-	} else {
-		return sr_apy_kemi_return_none();
-	}
-}
-
-
-/**
- *
- */
 static PyMethodDef _sr_apy_kemi_x_Methods[] = {
 	{"modf", (PyCFunction)msg_call_function, METH_VARARGS,
 		"Invoke function exported by the other module."},
