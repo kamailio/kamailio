@@ -275,291 +275,6 @@ static int sqlang_gettype(HSQUIRRELVM J, int idx)
 /**
  *
  */
-static SQInteger sqlang_sr_get_str_null(HSQUIRRELVM J, int rmode)
-{
-	if(rmode==1) {
-		sqlang_pushlstring(J, "<<null>>", 8);
-		return 1;
-	} else if(rmode==2) {
-		sqlang_pushlstring(J, "", 0);
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_get_mode(HSQUIRRELVM J, int rmode)
-{
-	str pvn;
-	pv_spec_t *pvs;
-	pv_value_t val;
-	sr_sqlang_env_t *env_J;
-	int pl;
-
-	env_J = sqlang_sr_env_get();
-
-	pvn.s = (char*)sqlang_to_string(J, 0);
-	if(pvn.s==NULL || env_J->msg==NULL)
-		return sqlang_sr_get_str_null(J, rmode);
-
-	pvn.len = strlen(pvn.s);
-	LM_DBG("pv get: %s\n", pvn.s);
-	pl = pv_locate_name(&pvn);
-	if(pl != pvn.len) {
-		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sqlang_sr_get_str_null(J, rmode);
-	}
-	pvs = pv_cache_get(&pvn);
-	if(pvs==NULL) {
-		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sqlang_sr_get_str_null(J, rmode);
-	}
-	memset(&val, 0, sizeof(pv_value_t));
-	if(pv_get_spec_value(env_J->msg, pvs, &val) != 0) {
-		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		return sqlang_sr_get_str_null(J, rmode);
-	}
-	if(val.flags&PV_VAL_NULL) {
-		sqlang_pushstring(J, NULL);
-		return 1;
-	}
-	if(val.flags&PV_TYPE_INT) {
-		sq_pushinteger(J, (SQInteger)val.ri);
-		return 1;
-	}
-	sqlang_pushlstring(J, val.rs.s, val.rs.len);
-	return 1;
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_get(HSQUIRRELVM J)
-{
-	return sqlang_sr_pv_get_mode(J, 0);
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_getw(HSQUIRRELVM J)
-{
-	return sqlang_sr_pv_get_mode(J, 1);
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_gete(HSQUIRRELVM J)
-{
-	return sqlang_sr_pv_get_mode(J, 2);
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_seti (HSQUIRRELVM J)
-{
-	str pvn;
-	pv_spec_t *pvs;
-	pv_value_t val;
-	sr_sqlang_env_t *env_J;
-	int pl;
-
-	env_J = sqlang_sr_env_get();
-
-	if(sqlang_gettop(J)<2) {
-		LM_ERR("too few parameters [%d]\n", sqlang_gettop(J));
-		return 0;
-	}
-	if(!sqlang_isnumber(J, 1)) {
-		LM_ERR("invalid int parameter\n");
-		return 0;
-	}
-
-	pvn.s = (char*)sqlang_to_string(J, 0);
-	if(pvn.s==NULL || env_J->msg==NULL)
-		return 0;
-
-	pvn.len = strlen(pvn.s);
-	LM_DBG("pv get: %s\n", pvn.s);
-	pl = pv_locate_name(&pvn);
-	if(pl != pvn.len) {
-		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return 0;
-	}
-	pvs = pv_cache_get(&pvn);
-	if(pvs==NULL) {
-		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return 0;
-	}
-
-	memset(&val, 0, sizeof(pv_value_t));
-	val.ri = sqlang_to_int(J, 1);
-	val.flags |= PV_TYPE_INT|PV_VAL_INT;
-
-	if(pv_set_spec_value(env_J->msg, pvs, 0, &val)<0) {
-		LM_ERR("unable to set pv [%s]\n", pvn.s);
-		return 0;
-	}
-
-	return 0;
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_sets (HSQUIRRELVM J)
-{
-	str pvn;
-	pv_spec_t *pvs;
-	pv_value_t val;
-	sr_sqlang_env_t *env_J;
-	int pl;
-
-	env_J = sqlang_sr_env_get();
-
-	if(sqlang_gettop(J)<2) {
-		LM_ERR("too few parameters [%d]\n", sqlang_gettop(J));
-		return 0;
-	}
-
-	if(!sqlang_isstring(J, 1)) {
-		LM_ERR("invalid str parameter\n");
-		return 0;
-	}
-
-	pvn.s = (char*)sqlang_to_string(J, 0);
-	if(pvn.s==NULL || env_J->msg==NULL)
-		return 0;
-
-	memset(&val, 0, sizeof(pv_value_t));
-	val.rs.s = (char*)sqlang_to_string(J, 1);
-	val.rs.len = strlen(val.rs.s);
-	val.flags |= PV_VAL_STR;
-
-	pvn.len = strlen(pvn.s);
-	LM_DBG("pv set: %s\n", pvn.s);
-	pl = pv_locate_name(&pvn);
-	if(pl != pvn.len) {
-		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return 0;
-	}
-	pvs = pv_cache_get(&pvn);
-	if(pvs==NULL) {
-		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return 0;
-	}
-	if(pv_set_spec_value(env_J->msg, pvs, 0, &val)<0) {
-		LM_ERR("unable to set pv [%s]\n", pvn.s);
-		return 0;
-	}
-
-	return 0;
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_unset (HSQUIRRELVM J)
-{
-	str pvn;
-	pv_spec_t *pvs;
-	pv_value_t val;
-	sr_sqlang_env_t *env_J;
-	int pl;
-
-	env_J = sqlang_sr_env_get();
-
-	pvn.s = (char*)sqlang_to_string(J, 0);
-	if(pvn.s==NULL || env_J->msg==NULL)
-		return 0;
-
-	pvn.len = strlen(pvn.s);
-	LM_DBG("pv unset: %s\n", pvn.s);
-	pl = pv_locate_name(&pvn);
-	if(pl != pvn.len) {
-		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return 0;
-	}
-	pvs = pv_cache_get(&pvn);
-	if(pvs==NULL)
-	{
-		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return 0;
-	}
-	memset(&val, 0, sizeof(pv_value_t));
-	val.flags |= PV_VAL_NULL;
-	if(pv_set_spec_value(env_J->msg, pvs, 0, &val)<0)
-	{
-		LM_ERR("unable to unset pv [%s]\n", pvn.s);
-		return 0;
-	}
-
-	return 0;
-}
-
-/**
- *
- */
-static SQInteger sqlang_sr_pv_is_null (HSQUIRRELVM J)
-{
-	str pvn;
-	pv_spec_t *pvs;
-	pv_value_t val;
-	sr_sqlang_env_t *env_J;
-	int pl;
-
-	env_J = sqlang_sr_env_get();
-
-	pvn.s = (char*)sqlang_to_string(J, 0);
-	if(pvn.s==NULL || env_J->msg==NULL)
-		return 0;
-
-	pvn.len = strlen(pvn.s);
-	LM_DBG("pv is null test: %s\n", pvn.s);
-	pl = pv_locate_name(&pvn);
-	if(pl != pvn.len) {
-		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return 0;
-	}
-	pvs = pv_cache_get(&pvn);
-	if(pvs==NULL) {
-		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return 0;
-	}
-	memset(&val, 0, sizeof(pv_value_t));
-	if(pv_get_spec_value(env_J->msg, pvs, &val) != 0) {
-		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
-		sq_pushbool(J, 1);
-		return 1;
-	}
-	if(val.flags&PV_VAL_NULL) {
-		sq_pushbool(J, 1);
-	} else {
-		sq_pushbool(J, 0);
-	}
-	return 1;
-}
-
-
-const SQRegFunction _sr_kemi_pv_J_Map[] = {
-	{ "get", sqlang_sr_pv_get, 2 /* 1 args */, NULL },
-	{ "getw", sqlang_sr_pv_getw, 2 /* 1 args */, NULL },
-	{ "gete", sqlang_sr_pv_gete, 2 /* 1 args */, NULL },
-	{ "seti", sqlang_sr_pv_seti, 3 /* 2 args */, NULL },
-	{ "sets", sqlang_sr_pv_sets, 4 /* 2 args */, NULL },
-	{ "unset", sqlang_sr_pv_unset, 2 /* 1 args */, NULL },
-	{ "is_null", sqlang_sr_pv_is_null, 2 /* 1 args */, NULL },
-	{ NULL, NULL, 0 }
-};
-
-/**
- *
- */
 static SQInteger sqlang_sr_exit (HSQUIRRELVM J)
 {
 	if(_sr_J_env.JJ==J) {
@@ -1163,6 +878,41 @@ int app_sqlang_dofile(sip_msg_t *msg, char *script)
 /**
  *
  */
+int sr_kemi_sqlang_return_xval(HSQUIRRELVM J, sr_kemi_t *ket, sr_kemi_xval_t *rx)
+{
+	switch(rx->vtype) {
+		case SR_KEMIP_NONE:
+			return 0;
+		case SR_KEMIP_INT:
+			sq_pushinteger(J, (SQInteger)rx->v.n);
+			return 1;
+		case SR_KEMIP_STR:
+			sqlang_pushlstring(J, rx->v.s.s, rx->v.s.len);
+			return 1;
+		case SR_KEMIP_BOOL:
+			if(rx->v.n!=SR_KEMI_FALSE) {
+				sq_pushbool(J, SRSQLANG_TRUE);
+			} else {
+				sq_pushbool(J, SRSQLANG_FALSE);
+			}
+			return 1;
+		case SR_KEMIP_XVAL:
+			/* unknown content - return false */
+			sq_pushbool(J, SRSQLANG_FALSE);
+			return 1;
+		case SR_KEMIP_NULL:
+			sqlang_pushstring(J, NULL);
+			return 1;
+		default:
+			/* unknown type - return false */
+			sq_pushbool(J, SRSQLANG_FALSE);
+			return 1;
+	}
+}
+
+/**
+ *
+ */
 int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 {
 	int i;
@@ -1172,6 +922,7 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 	str *mname;
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
 	sr_sqlang_env_t *env_J;
+	sr_kemi_xval_t *xret;
 
 	env_J = sqlang_sr_env_get();
 
@@ -1185,8 +936,13 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 
 	argc = sqlang_gettop(J);
 	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
-		ret = ((sr_kemi_fm_f)(ket->func))(env_J->msg);
-		return sr_kemi_sqlang_return_int(J, ket, ret);
+		if(ket->rtype==SR_KEMIP_XVAL) {
+			xret = ((sr_kemi_xfm_f)(ket->func))(env_J->msg);
+			return sr_kemi_sqlang_return_xval(J, ket, xret);
+		} else {
+			ret = ((sr_kemi_fm_f)(ket->func))(env_J->msg);
+			return sr_kemi_sqlang_return_int(J, ket, ret);
+		}
 	}
 	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
 		LM_ERR("invalid number of parameters for: %.*s.%.*s\n",
@@ -1222,11 +978,21 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 	switch(i) {
 		case 1:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
-				ret = ((sr_kemi_fmn_f)(ket->func))(env_J->msg, vps[0].n);
-				return sr_kemi_sqlang_return_int(J, ket, ret);
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmn_f)(ket->func))(env_J->msg, vps[0].n);
+					return sr_kemi_sqlang_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmn_f)(ket->func))(env_J->msg, vps[0].n);
+					return sr_kemi_sqlang_return_int(J, ket, ret);
+				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
-				ret = ((sr_kemi_fms_f)(ket->func))(env_J->msg, &vps[0].s);
-				return sr_kemi_sqlang_return_int(J, ket, ret);
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfms_f)(ket->func))(env_J->msg, &vps[0].s);
+					return sr_kemi_sqlang_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fms_f)(ket->func))(env_J->msg, &vps[0].s);
+					return sr_kemi_sqlang_return_int(J, ket, ret);
+				}
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname->len, fname->s);
@@ -1236,11 +1002,21 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 		case 2:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					ret = ((sr_kemi_fmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
-					return sr_kemi_sqlang_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
+						return sr_kemi_sqlang_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmnn_f)(ket->func))(env_J->msg, vps[0].n, vps[1].n);
+						return sr_kemi_sqlang_return_int(J, ket, ret);
+					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					ret = ((sr_kemi_fmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
-					return sr_kemi_sqlang_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
+						return sr_kemi_sqlang_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmns_f)(ket->func))(env_J->msg, vps[0].n, &vps[1].s);
+						return sr_kemi_sqlang_return_int(J, ket, ret);
+					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname->len, fname->s);
@@ -1248,11 +1024,21 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					ret = ((sr_kemi_fmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
-					return sr_kemi_sqlang_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
+						return sr_kemi_sqlang_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmsn_f)(ket->func))(env_J->msg, &vps[0].s, vps[1].n);
+						return sr_kemi_sqlang_return_int(J, ket, ret);
+					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					ret = ((sr_kemi_fmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
-					return sr_kemi_sqlang_return_int(J, ket, ret);
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
+						return sr_kemi_sqlang_return_xval(J, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmss_f)(ket->func))(env_J->msg, &vps[0].s, &vps[1].s);
+						return sr_kemi_sqlang_return_int(J, ket, ret);
+					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname->len, fname->s);
@@ -1852,16 +1638,7 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 		n++;
 	}
 
-	/* special modules - pv.get(...) can return int or str */
-	sq_pushstring(J, "pv", -1);  /* stack[4] */
-	sq_newtable(J);  /* stack[5] */
-	i=0;
-	while(_sr_kemi_pv_J_Map[i].name!=0) {
-		snprintf(malias, 254, "%s", _sr_kemi_pv_J_Map[i].name);
-		sqlang_register_global_func(J, _sr_kemi_pv_J_Map[i].f, malias);
-		i++;
-	}
-    sq_newslot(J, -3, SQFalse);
+	/* special modules */
 	sq_pushstring(J, "x", -1);  /* stack[4] */
 	sq_newtable(J);  /* stack[5] */
 	i=0;
@@ -1875,10 +1652,6 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
-			if(emods[k].kexp == sr_kemi_exports_get_pv()) {
-				LM_DBG("skip registering the core KSR.pv module\n");
-				continue;
-			}
 			n++;
 			_sr_crt_J_KSRMethods = _sr_J_KSRMethods + n;
 			snprintf(mname, 128, "%s", emods[k].kexp[0].mname.s);
