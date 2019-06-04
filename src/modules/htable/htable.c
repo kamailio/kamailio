@@ -920,6 +920,83 @@ error:
 /**
  *
  */
+static sr_kemi_xval_t _sr_kemi_htable_xval = {0};
+
+/* pkg copy */
+static ht_cell_t *_htc_kemi_local=NULL;
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_ht_get_mode(sip_msg_t *msg, str *htname, str *itname,
+		int rmode)
+{
+	ht_t *ht = NULL;
+	ht_cell_t *htc=NULL;
+
+	/* Find the htable */
+	ht = ht_get_table(htname);
+	if (!ht) {
+		LM_ERR("No such htable: %.*s\n", htname->len, htname->s);
+		sr_kemi_xval_null(&_sr_kemi_htable_xval, rmode);
+		return &_sr_kemi_htable_xval;
+	}
+
+	htc = ht_cell_pkg_copy(ht, itname, _htc_kemi_local);
+	if(_htc_kemi_local!=htc) {
+		ht_cell_pkg_free(_htc_kemi_local);
+		_htc_kemi_local=htc;
+	}
+	if(htc==NULL) {
+		if(ht->flags==PV_VAL_INT) {
+			_sr_kemi_htable_xval.vtype = SR_KEMIP_INT;
+			_sr_kemi_htable_xval.v.n = ht->initval.n;
+			return &_sr_kemi_htable_xval;
+		}
+		sr_kemi_xval_null(&_sr_kemi_htable_xval, rmode);
+		return &_sr_kemi_htable_xval;
+	}
+
+	if(htc->flags&AVP_VAL_STR) {
+		_sr_kemi_htable_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_htable_xval.v.s = htc->value.s;
+		return &_sr_kemi_htable_xval;
+	}
+
+	/* integer */
+	_sr_kemi_htable_xval.vtype = SR_KEMIP_INT;
+	_sr_kemi_htable_xval.v.n = htc->value.n;
+	return &_sr_kemi_htable_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_ht_get(sip_msg_t *msg, str *htname, str *itname)
+{
+	return ki_ht_get_mode(msg, htname, itname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_ht_gete(sip_msg_t *msg, str *htname, str *itname)
+{
+	return ki_ht_get_mode(msg, htname, itname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_ht_getw(sip_msg_t *msg, str *htname, str *itname)
+{
+	return ki_ht_get_mode(msg, htname, itname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+
+/**
+ *
+ */
 static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 {
 	int_str isvalue;
@@ -1692,6 +1769,21 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_has_str_value"),
 		SR_KEMIP_INT, ki_ht_has_str_value,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_get"),
+		SR_KEMIP_XVAL, ki_ht_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_gete"),
+		SR_KEMIP_XVAL, ki_ht_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_getw"),
+		SR_KEMIP_XVAL, ki_ht_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("htable"), str_init("sht_sets"),
