@@ -67,7 +67,7 @@ static str mi_ul_path = str_init("dummypath");
 static inline udomain_t* mi_find_domain(str* table)
 {
 
-	LM_ERR("not available in sp-ul_db mode");
+	LM_ERR("not available in p_usrloc mode\n");
 	return 0;
 }
 
@@ -369,7 +369,7 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
  */
 struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param)
 {
-	LM_ERR("not available in sp-ul_db mode");
+	LM_ERR("not available in p_usrloc mode\n");
 	return 0;
 }
 

@@ -347,7 +347,7 @@ static int mod_init(void)
 	}
 
 	if (db_mode != DB_ONLY) {
-		LM_ERR("DB_ONLY is the only mode possible for partitioned usrloc. Please set db_mode to 3");
+		LM_ERR("DB_ONLY is the only mode possible for partitioned usrloc. Please set db_mode to 3\n");
 		return  -1;
 	}
 

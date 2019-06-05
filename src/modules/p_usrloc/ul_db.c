@@ -69,7 +69,7 @@ int ul_db_init(void) {
 			LM_ERR("db api of write db doesn't support required operation.\n");
 			return -1;
 		}
-		LM_INFO("write db initialized");
+		LM_INFO("write db initialized\n");
 	}
 	
 	if(db_bind_mod(mdb.read.url, &mdb.read.dbf) < 0) {
@@ -80,7 +80,7 @@ int ul_db_init(void) {
 		LM_ERR("db api of read db doesn't support required operation.\n");
 		return -1;
 	}
-	LM_INFO("read db initialized");
+	LM_INFO("read db initialized\n");
 	return 0;
 }
 
@@ -97,7 +97,7 @@ int ul_db_child_init(void) {
 		LM_ERR("could not connect to sip master db (read).\n");
 		return -1;
 	}
-	LM_INFO("read db connection for children initialized");
+	LM_INFO("read db connection for children initialized\n");
 	
 	if(ul_db_child_locnr_init() == -1) return -1;
 	
@@ -109,7 +109,7 @@ int ul_db_child_init(void) {
 			lock_release(&write_on_master_db_shared->lock);
 			return -1;
 		}
-		LM_INFO("write db connection for children initialized");
+		LM_INFO("write db connection for children initialized\n");
 	}
 	lock_release(&write_on_master_db_shared->lock);
 	return 0;
@@ -117,7 +117,7 @@ int ul_db_child_init(void) {
 
 int ul_db_child_locnr_init(void) {
 	if(!mdb.read.dbh){
-		LM_ERR("Sip master DB connection(read) is down");
+		LM_ERR("Sip master DB connection(read) is down\n");
 		return -1;
 	}
 	if(load_location_number(&mdb.read.dbf, mdb.read.dbh, &max_loc_nr) != 0){
@@ -208,7 +208,7 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 		    "errors occurred: %i, threshold: %i\n",
 		handle->id, db->no, db->errors, cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold));
 	if(db->errors >= cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
-		LM_DBG("db_handle_error: now doing failover");
+		LM_DBG("db_handle_error: now doing failover\n");
 		if((db_failover(&mdb.write.dbf, mdb.write.dbh, handle, no)) < 0) {
 			LM_ERR("error in doing failover.\n");
 			return -1;
