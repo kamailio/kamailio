@@ -1828,7 +1828,7 @@ static int w_t_replicate_uri(struct sip_msg  *msg ,
 
 	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
 	{
-		LM_ERR("invalid replicate uri parameter");
+		LM_ERR("invalid replicate uri parameter\n");
 		return -1;
 	}
 	return t_replicate_uri(msg, &suri);
@@ -2651,27 +2651,27 @@ static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 	str body = STR_NULL;
 
 	if(fixup_get_svalue(msg, (gparam_t*)pmethod, &method)!=0) {
-		LM_ERR("invalid method parameter");
+		LM_ERR("invalid method parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)pruri, &ruri)!=0) {
-		LM_ERR("invalid ruri parameter");
+		LM_ERR("invalid ruri parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)pnexthop, &nexthop)!=0) {
-		LM_ERR("invalid nexthop parameter");
+		LM_ERR("invalid nexthop parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)psock, &send_socket)!=0) {
-		LM_ERR("invalid send socket parameter");
+		LM_ERR("invalid send socket parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)phdrs, &headers)!=0) {
-		LM_ERR("invalid headers parameter");
+		LM_ERR("invalid headers parameter\n");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_t*)pbody, &body)!=0) {
-		LM_ERR("invalid body parameter");
+		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
 

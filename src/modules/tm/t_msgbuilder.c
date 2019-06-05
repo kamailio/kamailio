@@ -680,7 +680,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 				 * rte list is evaluated => must do a copy of it */
 				if (duplicate_rr(&new_p, p) < 0) {
 					pkg_free(t);
-					LM_ERR("failed to duplicate RR");
+					LM_ERR("failed to duplicate RR\n");
 					goto err;
 				}
 				t->ptr = new_p;

@@ -1220,7 +1220,7 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 			if (unlikely(code_len==0)) {
 				shm_free(cr);
 				cr = 0;
-				LM_CRIT("not enough space to write reason code");
+				LM_CRIT("not enough space to write reason code\n");
 				goto error;
 			}
 			d+=code_len;

@@ -407,7 +407,7 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
 
-		LM_DBG("restoring previous environment");
+		LM_DBG("restoring previous environment\n");
 		faked_env( t, 0, 1);
 
 		/*lock transaction replies - will be unlocked when reply is relayed*/

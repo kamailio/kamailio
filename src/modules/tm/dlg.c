@@ -117,7 +117,7 @@ int register_dlg_tmcb(int types, dlg_t *dlg, transaction_cb f, void *param)
 		return E_BUG;
 	}
 	if(f == 0) {
-		LM_CRIT("null callback function");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 	return insert_tmcb(&dlg->dlg_callbacks, types, f, param, NULL);

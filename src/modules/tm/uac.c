@@ -240,7 +240,7 @@ static inline int t_run_local_req(
 		return -1;
 	}
 	if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
-		LM_ERR("failed to set dst_uri");
+		LM_ERR("failed to set dst_uri\n");
 		free_sip_msg(&lreq);
 		return -1;
 	}
@@ -835,7 +835,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 
 	if (! (local_ack = local_ack_rb(trans->uac[0].reply, trans, /*branch*/0,
 			hdrs, body))) {
-		LM_ERR("failed to build ACK retransmission buffer");
+		LM_ERR("failed to build ACK retransmission buffer\n");
 		RET_INVALID;
 	} else {
 		/* set the new buffer, but only if not already set (conc. invok.) */
