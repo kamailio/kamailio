@@ -275,6 +275,51 @@ static sr_kemi_xval_t* ki_kx_get_rhoste(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_ua_mode(sip_msg_t *msg, int rmode)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
+			|| (msg->user_agent==NULL))) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->user_agent->body;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_ua(sip_msg_t *msg)
+{
+	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_ua(sip_msg_t *msg)
+{
+	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_ua(sip_msg_t *msg)
+{
+	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -324,6 +369,21 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_rhoste"),
 		SR_KEMIP_XVAL, ki_kx_get_rhoste,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_ua"),
+		SR_KEMIP_XVAL, ki_kx_get_ua,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_ua"),
+		SR_KEMIP_XVAL, ki_kx_gete_ua,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_ua"),
+		SR_KEMIP_XVAL, ki_kx_getw_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
