@@ -49,14 +49,31 @@
       <title><varname>ipsec_listen_addr</varname> (string)</title>
 
       <para>IP address which the Proxy-CSCF will use for incoming/outgoing SIP traffic over IPSec.</para>
-      <para><emphasis>Default value is "127.0.0.1"</emphasis></para>
+      <para><emphasis>Default value is empty string (null) - IPv4 listen interface will not be added</emphasis></para>
 
       <example>
         <title><varname>ipsec_listen_addr</varname> parameter usage</title>
 
         <programlisting format="linespecific">
 ...
-modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "127.0.0.1")
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_listen_addr6</varname> (string)</title>
+
+      <para>IPv6 address which the Proxy-CSCF will use for incoming/outgoing SIP traffic over IPSec.</para>
+      <para><emphasis>Default value is empty string (null) - IPv6 listen interface will not be added</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_listen_addr6</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
 ...
         </programlisting>
       </example>

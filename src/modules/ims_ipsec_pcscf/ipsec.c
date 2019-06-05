@@ -109,7 +109,7 @@ unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto)
     };
 }
 
-int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik)
+int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik, str r_alg)
 {
     char l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
     char l_auth_algo_buf[XFRM_TMPLS_BUF_SIZE];
@@ -187,7 +187,17 @@ int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_add
     // The point is to provide a continuous chunk of memory with the key in it
     l_auth_algo = (struct xfrm_algo *)l_auth_algo_buf;
 
-    strcpy(l_auth_algo->alg_name,"md5");
+    // Set the proper algorithm by r_alg str
+    if(strncasecmp(r_alg.s, "hmac-md5-96", r_alg.len) == 0) {
+        strcpy(l_auth_algo->alg_name,"md5");
+    }
+    else if(strncasecmp(r_alg.s, "hmac-sha1-96", r_alg.len) == 0) {
+        strcpy(l_auth_algo->alg_name,"sha1");
+    } else {
+        // set default algorithm to sha1
+        strcpy(l_auth_algo->alg_name,"sha1");
+    }
+
     l_auth_algo->alg_key_len = ik.len * 4;
     string_to_key(l_auth_algo->alg_key, ik);
 
