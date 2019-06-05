@@ -523,7 +523,7 @@ error:
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	if(!pg_alloc_buffer()) {
-		LM_ERR("failed too allocate buffer");
+		LM_ERR("failed too allocate buffer\n");
 		return -1;
 	}
 	if(db_api_init() < 0)

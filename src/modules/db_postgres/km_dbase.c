@@ -606,7 +606,7 @@ int db_postgres_insert(const db1_con_t *_h, const db_key_t *_k,
 	int tmp = db_postgres_store_result(_h, &_r);
 
 	if(tmp < 0) {
-		LM_WARN("unexpected result returned");
+		LM_WARN("unexpected result returned\n");
 		ret = tmp;
 	}
 
@@ -635,7 +635,7 @@ int db_postgres_delete(const db1_con_t *_h, const db_key_t *_k,
 	int tmp = db_postgres_store_result(_h, &_r);
 
 	if(tmp < 0) {
-		LM_WARN("unexpected result returned");
+		LM_WARN("unexpected result returned\n");
 		ret = tmp;
 	}
 
@@ -914,7 +914,7 @@ int db_postgres_update(const db1_con_t *_h, const db_key_t *_k,
 	int tmp = db_postgres_store_result(_h, &_r);
 
 	if(tmp < 0) {
-		LM_WARN("unexpected result returned");
+		LM_WARN("unexpected result returned\n");
 		ret = tmp;
 	}
 
