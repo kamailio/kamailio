@@ -1158,6 +1158,22 @@ static sr_kemi_xval_t* ki_xavp_get(sip_msg_t *msg, str *rname)
 /**
  *
  */
+static sr_kemi_xval_t* ki_xavp_gete(sip_msg_t *msg, str *rname)
+{
+	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_getw(sip_msg_t *msg, str *rname)
+{
+	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_xavp_get_child_mode(sip_msg_t *msg, str *rname,
 		str *cname, int rmode)
 {
@@ -1191,6 +1207,24 @@ static sr_kemi_xval_t* ki_xavp_get_child_mode(sip_msg_t *msg, str *rname,
 static sr_kemi_xval_t* ki_xavp_get_child(sip_msg_t *msg, str *rname, str *cname)
 {
 	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_gete_child(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_getw_child(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
 }
 
 /**
@@ -1465,8 +1499,28 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("xavp_gete"),
+		SR_KEMIP_XVAL, ki_xavp_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getw"),
+		SR_KEMIP_XVAL, ki_xavp_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("xavp_get_child"),
 		SR_KEMIP_XVAL, ki_xavp_get_child,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_gete_child"),
+		SR_KEMIP_XVAL, ki_xavp_gete_child,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getw_child"),
+		SR_KEMIP_XVAL, ki_xavp_getw_child,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
