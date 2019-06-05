@@ -235,7 +235,7 @@ static sr_kemi_xval_t* ki_kx_get_ruser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ruserw(sip_msg_t *msg)
+static sr_kemi_xval_t* ki_kx_getw_ruser(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -243,7 +243,7 @@ static sr_kemi_xval_t* ki_kx_get_ruserw(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rusere(sip_msg_t *msg)
+static sr_kemi_xval_t* ki_kx_gete_ruser(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -259,7 +259,7 @@ static sr_kemi_xval_t* ki_kx_get_rhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rhostw(sip_msg_t *msg)
+static sr_kemi_xval_t* ki_kx_getw_rhost(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -267,7 +267,7 @@ static sr_kemi_xval_t* ki_kx_get_rhostw(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rhoste(sip_msg_t *msg)
+static sr_kemi_xval_t* ki_kx_gete_rhost(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -347,13 +347,13 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("kx"), str_init("get_ruserw"),
-		SR_KEMIP_XVAL, ki_kx_get_ruserw,
+	{ str_init("kx"), str_init("getw_ruser"),
+		SR_KEMIP_XVAL, ki_kx_getw_ruser,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("kx"), str_init("get_rusere"),
-		SR_KEMIP_XVAL, ki_kx_get_rusere,
+	{ str_init("kx"), str_init("gete_ruser"),
+		SR_KEMIP_XVAL, ki_kx_gete_ruser,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -362,13 +362,13 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("kx"), str_init("get_rhostw"),
-		SR_KEMIP_XVAL, ki_kx_get_rhostw,
+	{ str_init("kx"), str_init("getw_rhost"),
+		SR_KEMIP_XVAL, ki_kx_getw_rhost,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("kx"), str_init("get_rhoste"),
-		SR_KEMIP_XVAL, ki_kx_get_rhoste,
+	{ str_init("kx"), str_init("gete_rhost"),
+		SR_KEMIP_XVAL, ki_kx_gete_rhost,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
