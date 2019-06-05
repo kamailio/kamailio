@@ -52,6 +52,11 @@ str kemi_event_route_callback = str_init("");
 /**
  *
  */
+static sr_kemi_xval_t _sr_kemi_xval = {0};
+
+/**
+ *
+ */
 static run_act_ctx_t *_sr_kemi_act_ctx = NULL;
 
 /**
@@ -1972,6 +1977,92 @@ static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int rmode)
+{
+	char hbuf[256];
+	str s;
+	hdr_field_t shdr;
+	hdr_field_t *ihdr;
+
+	memset(&_sr_kemi_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+		return &_sr_kemi_xval;
+	}
+	/* we need to be sure we have parsed all headers */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error parsing headers\n");
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+		return &_sr_kemi_xval;
+	}
+	if(hname->len>=252) {
+		LM_ERR("header name too long\n");
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+		return &_sr_kemi_xval;
+	}
+
+	memcpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+	s.s = hbuf;
+	s.len = hname->len + 1;
+
+	if (parse_hname2_short(s.s, s.s + s.len, &shdr)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+		return &_sr_kemi_xval;
+	}
+	for (ihdr=msg->headers; ihdr; ihdr=ihdr->next) {
+		if (shdr.type!=HDR_OTHER_T && shdr.type!=HDR_ERROR_T) {
+			/* find by type */
+			if (shdr.type==ihdr->type) {
+				break;
+			}
+		} else {
+			/* find by name */
+			if (cmp_hdrname_str(&ihdr->name, hname)==0) {
+				break;
+			}
+		}
+	}
+	if(ihdr==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+		return &_sr_kemi_xval;
+	}
+
+	_sr_kemi_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_xval.v.s = ihdr->body;
+	return &_sr_kemi_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_get(sip_msg_t *msg, str *hname)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_gete(sip_msg_t *msg, str *hname)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_getw(sip_msg_t *msg, str *hname)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_hdr[] = {
 	{ str_init("hdr"), str_init("append"),
 		SR_KEMIP_INT, sr_kemi_hdr_append,
@@ -2008,6 +2099,21 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("hdr"), str_init("get"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("gete"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("getw"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
@@ -2030,11 +2136,6 @@ void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 		xval->v.s.len = 0;
 	}
 }
-
-/**
- *
- */
-static sr_kemi_xval_t _sr_kemi_xval = {0};
 
 /**
  *
