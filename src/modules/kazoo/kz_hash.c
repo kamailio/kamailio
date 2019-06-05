@@ -45,7 +45,7 @@ int kz_hash_init()
 
 	if(kz_cmd_htable)
 	{
-		LM_ERR("already initialized");
+		LM_ERR("already initialized\n");
 		return 1;
 	}
 	
@@ -53,7 +53,7 @@ int kz_hash_init()
 	kz_cmd_htable = (kz_amqp_cmd_table_ptr)shm_malloc(dbk_command_table_size* sizeof(kz_amqp_cmd_table));
 	if(kz_cmd_htable == NULL)
 	{
-		LM_ERR("memory error allocating command table");
+		SHM_MEM_ERROR_FMT("command table\n");
 		return 0;
 	}
 	memset(kz_cmd_htable, 0, dbk_command_table_size* sizeof(kz_amqp_cmd_table));
@@ -68,7 +68,7 @@ int kz_hash_init()
 		kz_cmd_htable[i].entries= (kz_amqp_cmd_entry_ptr)shm_malloc(sizeof(kz_amqp_cmd_entry));
 		if(kz_cmd_htable[i].entries== NULL)
 		{
-			LM_ERR("memory error allocating command entry");
+			SHM_MEM_ERROR_FMT("command entry\n");
 			return 0;
 		}
 		memset(kz_cmd_htable[i].entries, 0, sizeof(kz_amqp_cmd_entry));
@@ -154,7 +154,7 @@ int kz_cmd_store(kz_amqp_cmd_ptr cmd)
 	if(p== NULL)
 	{
 		lock_release(&kz_cmd_htable[hash_code].lock);
-		LM_ERR("memory error allocation command pointer\n");
+		SHM_MEM_ERROR_FMT("command pointer\n");
 		return 0;
 	}
 	memset(p, 0, sizeof(kz_amqp_cmd_entry));
