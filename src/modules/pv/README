@@ -43,10 +43,10 @@ Daniel-Constantin Mierla
               4.5. not_empty(pvar)
               4.6. xavp_params_explode(sparams, xname)
               4.7. xavp_params_implode(xname, pvname)
-              4.8. xavp_set_child_ival(rname, cname, ival)
-              4.9. xavp_set_child_sval(rname, cname, sval)
+              4.8. xavp_child_seti(rname, cname, ival)
+              4.9. xavp_child_sets(rname, cname, sval)
               4.10. xavp_rm(rname)
-              4.11. xavp_rm_child(rname, cname)
+              4.11. xavp_child_rm(rname, cname)
               4.12. sbranch_set_ruri()
               4.13. sbranch_append()
               4.14. sbranch_reset()
@@ -72,10 +72,10 @@ Daniel-Constantin Mierla
    1.8. not_empty() usage
    1.9. xavp_params_explode usage
    1.10. xavp_params_implode usage
-   1.11. xavp_set_child_ival usage
-   1.12. xavp_set_child_sval usage
+   1.11. xavp_child_seti usage
+   1.12. xavp_child_sets usage
    1.13. xavp_rm usage
-   1.14. xavp_rm_child usage
+   1.14. xavp_child_rm usage
    1.15. sbranch_set_ruri() usage
    1.16. sbranch_append() usage
    1.17. sbranch_append() usage
@@ -111,10 +111,10 @@ Chapter 1. Admin Guide
         4.5. not_empty(pvar)
         4.6. xavp_params_explode(sparams, xname)
         4.7. xavp_params_implode(xname, pvname)
-        4.8. xavp_set_child_ival(rname, cname, ival)
-        4.9. xavp_set_child_sval(rname, cname, sval)
+        4.8. xavp_child_seti(rname, cname, ival)
+        4.9. xavp_child_sets(rname, cname, sval)
         4.10. xavp_rm(rname)
-        4.11. xavp_rm_child(rname, cname)
+        4.11. xavp_child_rm(rname, cname)
         4.12. sbranch_set_ruri()
         4.13. sbranch_append()
         4.14. sbranch_reset()
@@ -218,10 +218,10 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.5. not_empty(pvar)
    4.6. xavp_params_explode(sparams, xname)
    4.7. xavp_params_implode(xname, pvname)
-   4.8. xavp_set_child_ival(rname, cname, ival)
-   4.9. xavp_set_child_sval(rname, cname, sval)
+   4.8. xavp_child_seti(rname, cname, ival)
+   4.9. xavp_child_sets(rname, cname, sval)
    4.10. xavp_rm(rname)
-   4.11. xavp_rm_child(rname, cname)
+   4.11. xavp_child_rm(rname, cname)
    4.12. sbranch_set_ruri()
    4.13. sbranch_append()
    4.14. sbranch_reset()
@@ -346,7 +346,7 @@ xavp_params_implode("x", "$var(out)");
 # results in: $var(out) is "a=b;c=d;e=f;"
 ...
 
-4.8.  xavp_set_child_ival(rname, cname, ival)
+4.8.  xavp_child_seti(rname, cname, ival)
 
    Set the value of $xavp(rname=>cname) to integer value ival.
 
@@ -356,14 +356,14 @@ xavp_params_implode("x", "$var(out)");
 
    Function can be used from ANY ROUTE.
 
-   Example 1.11. xavp_set_child_ival usage
+   Example 1.11. xavp_child_seti usage
 ...
 $var(n) = 10;
-xavp_set_child_ival("x", "y", "$var(n)");
+xavp_child_seti("x", "y", "$var(n)");
 # results in: $xavp(x=>y) is 10
 ...
 
-4.9.  xavp_set_child_sval(rname, cname, sval)
+4.9.  xavp_child_sets(rname, cname, sval)
 
    Set the value of $xavp(rname=>cname) to string value sval.
 
@@ -373,10 +373,10 @@ xavp_set_child_ival("x", "y", "$var(n)");
 
    Function can be used from ANY ROUTE.
 
-   Example 1.12. xavp_set_child_sval usage
+   Example 1.12. xavp_child_sets usage
 ...
 $var(n) = 10;
-xavp_set_child_sval("x", "y", "Count: $var(n)");
+xavp_child_sets("x", "y", "Count: $var(n)");
 # results in: $xavp(x=>y) is "Count: 10"
 ...
 
@@ -391,11 +391,11 @@ xavp_set_child_sval("x", "y", "Count: $var(n)");
 
    Example 1.13. xavp_rm usage
 ...
-xavp_rm_child_sval("x");
+xavp_rm("x");
 # same result as: $xavp(x) = $null;
 ...
 
-4.11.  xavp_rm_child(rname, cname)
+4.11.  xavp_child_rm(rname, cname)
 
    Remove the value of $xavp(rname=>cname).
 
@@ -405,9 +405,9 @@ xavp_rm_child_sval("x");
 
    Function can be used from ANY ROUTE.
 
-   Example 1.14. xavp_rm_child usage
+   Example 1.14. xavp_child_rm usage
 ...
-xavp_rm_child_sval("x", "y");
+xavp_child_rm("x", "y");
 # same result as: $xavp(x=>y) = $null;
 ...
 
