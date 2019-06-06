@@ -1428,6 +1428,154 @@ static int pv_init_rpc(void)
 	return 0;
 }
 
+/**
+ *
+ */
+static int ki_avp_seti(sip_msg_t *msg, str *xname, int vn)
+{
+	unsigned short atype;
+	int_str aname;
+	int_str avalue;
+
+	memset(&aname, 0, sizeof(int_str));
+
+	atype = AVP_NAME_STR;
+	aname.s = *xname;
+
+	avalue.n = vn;
+
+	if (add_avp(atype, aname, avalue)<0) {
+		LM_ERR("error - cannot add AVP\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_avp_sets(sip_msg_t *msg, str *xname, str *vs)
+{
+	unsigned short atype;
+	int_str aname;
+	int_str avalue;
+
+	memset(&aname, 0, sizeof(int_str));
+
+	atype = AVP_NAME_STR;
+	aname.s = *xname;
+
+	avalue.s = *vs;
+	atype |= AVP_VAL_STR;
+
+	if (add_avp(atype, aname, avalue)<0) {
+		LM_ERR("error - cannot add AVP\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_avp_rm(sip_msg_t *msg, str *xname)
+{
+	unsigned short atype;
+	int_str aname;
+
+	memset(&aname, 0, sizeof(int_str));
+
+	atype = AVP_NAME_STR;
+	aname.s = *xname;
+
+	destroy_avps(atype, aname, 0);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_avp_is_null(sip_msg_t *msg, str *xname)
+{
+	unsigned short atype;
+	int_str aname;
+	int_str avalue;
+	avp_search_state_t astate;
+
+	memset(&astate, 0, sizeof(avp_search_state_t));
+	memset(&aname, 0, sizeof(int_str));
+
+	atype = AVP_NAME_STR;
+	aname.s = *xname;
+
+	destroy_avps(atype, aname, 0);
+
+	if (search_first_avp(atype, aname, &avalue, &astate)==0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_avp_get_mode(sip_msg_t *msg, str *xname, int rmode)
+{
+	avp_t *avp = NULL;
+	avp_search_state_t astate;
+	unsigned short atype;
+	int_str aname;
+	int_str avalue;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+	memset(&astate, 0, sizeof(avp_search_state_t));
+	memset(&aname, 0, sizeof(int_str));
+
+	atype = AVP_NAME_STR;
+	aname.s = *xname;
+
+	if ((avp=search_first_avp(atype, aname, &avalue, &astate))==0) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+	if(avp->flags & AVP_VAL_STR) {
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_pv_xval.v.s = avalue.s;
+		return &_sr_kemi_pv_xval;
+	} else {
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_pv_xval.v.n = avalue.n;
+		return &_sr_kemi_pv_xval;
+	}
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_avp_get(sip_msg_t *msg, str *xname)
+{
+	return ki_avp_get_mode(msg, xname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_avp_gete(sip_msg_t *msg, str *xname)
+{
+	return ki_avp_get_mode(msg, xname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_avp_getw(sip_msg_t *msg, str *xname)
+{
+	return ki_avp_get_mode(msg, xname, SR_KEMI_XVAL_NULL_PRINT);
+}
 
 /**
  *
@@ -1527,6 +1675,41 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("evalx"),
 		SR_KEMIP_INT, ki_pv_evalx,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_seti"),
+		SR_KEMIP_INT, ki_avp_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_sets"),
+		SR_KEMIP_INT, ki_avp_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_get"),
+		SR_KEMIP_XVAL, ki_avp_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_gete"),
+		SR_KEMIP_XVAL, ki_avp_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_getw"),
+		SR_KEMIP_XVAL, ki_avp_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_rm"),
+		SR_KEMIP_INT, ki_avp_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("avp_is_null"),
+		SR_KEMIP_INT, ki_avp_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
