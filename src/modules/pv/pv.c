@@ -534,12 +534,12 @@ static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
-static int w_xavp_set_child_ival(sip_msg_t *msg, char *prname, char *pcname,
+static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
-static int w_xavp_set_child_sval(sip_msg_t *msg, char *prname, char *pcname,
+static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
 static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2);
-static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname);
+static int w_xavp_child_rm(sip_msg_t *msg, char *prname, char *pcname);
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
@@ -549,8 +549,8 @@ static int w_xavp_to_var(sip_msg_t *msg, char *p1);
 int pv_evalx_fixup(void** param, int param_no);
 int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt);
 
-static int fixup_xavp_set_child_ival(void** param, int param_no);
-static int fixup_free_xavp_set_child_ival(void** param, int param_no);
+static int fixup_xavp_child_seti(void** param, int param_no);
+static int fixup_free_xavp_child_seti(void** param, int param_no);
 
 static int pv_init_rpc(void);
 int pv_register_api(pv_api_t*);
@@ -580,16 +580,16 @@ static cmd_export_t cmds[]={
 	{"xavp_params_implode", (cmd_function)w_xavp_params_implode,
 		2, fixup_spve_str, fixup_free_spve_str,
 		ANY_ROUTE},
-	{"xavp_set_child_ival", (cmd_function)w_xavp_set_child_ival,
-		3, fixup_xavp_set_child_ival, fixup_free_xavp_set_child_ival,
+	{"xavp_child_seti", (cmd_function)w_xavp_child_seti,
+		3, fixup_xavp_child_seti, fixup_free_xavp_child_seti,
 		ANY_ROUTE},
-	{"xavp_set_child_sval", (cmd_function)w_xavp_set_child_sval,
+	{"xavp_child_sets", (cmd_function)w_xavp_child_sets,
 		3, fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"xavp_rm", (cmd_function)w_xavp_rm,
 		1, fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
-	{"xavp_rm_child", (cmd_function)w_xavp_rm_child,
+	{"xavp_child_rm", (cmd_function)w_xavp_child_rm,
 		2, fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
@@ -902,7 +902,7 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 /**
  *
  */
-static int ki_xavp_set_child_ival(sip_msg_t *msg, str *rname, str *cname,
+static int ki_xavp_child_seti(sip_msg_t *msg, str *rname, str *cname,
 		int ival)
 {
 	int ret;
@@ -915,7 +915,7 @@ static int ki_xavp_set_child_ival(sip_msg_t *msg, str *rname, str *cname,
 /**
  *
  */
-static int w_xavp_set_child_ival(sip_msg_t *msg, char *prname, char *pcname,
+static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval)
 {
 	str rname = STR_NULL;
@@ -935,13 +935,13 @@ static int w_xavp_set_child_ival(sip_msg_t *msg, char *prname, char *pcname,
 		return -1;
 	}
 
-	return ki_xavp_set_child_ival(msg, &rname, &cname, ival);
+	return ki_xavp_child_seti(msg, &rname, &cname, ival);
 }
 
 /**
  *
  */
-static int ki_xavp_set_child_sval(sip_msg_t *msg, str *rname, str *cname,
+static int ki_xavp_child_sets(sip_msg_t *msg, str *rname, str *cname,
 		str *sval)
 {
 	int ret;
@@ -954,7 +954,7 @@ static int ki_xavp_set_child_sval(sip_msg_t *msg, str *rname, str *cname,
 /**
  *
  */
-static int w_xavp_set_child_sval(sip_msg_t *msg, char *prname, char *pcname,
+static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval)
 {
 	str rname;
@@ -974,13 +974,13 @@ static int w_xavp_set_child_sval(sip_msg_t *msg, char *prname, char *pcname,
 		return -1;
 	}
 
-	return ki_xavp_set_child_sval(msg, &rname, &cname, &sval);
+	return ki_xavp_child_sets(msg, &rname, &cname, &sval);
 }
 
 /**
  *
  */
-static int fixup_xavp_set_child_ival(void** param, int param_no)
+static int fixup_xavp_child_seti(void** param, int param_no)
 {
 	if(param_no==1 || param_no==2)
 		return fixup_spve_all(param, param_no);
@@ -992,7 +992,7 @@ static int fixup_xavp_set_child_ival(void** param, int param_no)
 /**
  *
  */
-static int fixup_free_xavp_set_child_ival(void** param, int param_no)
+static int fixup_free_xavp_child_seti(void** param, int param_no)
 {
 	if(param_no==1 || param_no==2)
 		return fixup_free_spve_all(param, param_no);
@@ -1032,7 +1032,7 @@ static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2)
 /**
  *
  */
-static int ki_xavp_rm_child(sip_msg_t *msg, str *rname, str *cname)
+static int ki_xavp_child_rm(sip_msg_t *msg, str *rname, str *cname)
 {
 	int ret;
 
@@ -1044,7 +1044,7 @@ static int ki_xavp_rm_child(sip_msg_t *msg, str *rname, str *cname)
 /**
  *
  */
-static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname)
+static int w_xavp_child_rm(sip_msg_t *msg, char *prname, char *pcname)
 {
 	str rname;
 	str cname;
@@ -1058,7 +1058,7 @@ static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname)
 		return -1;
 	}
 
-	return ki_xavp_rm_child(msg, &rname, &cname);
+	return ki_xavp_child_rm(msg, &rname, &cname);
 }
 
 /**
@@ -1215,7 +1215,7 @@ static int ki_xavp_child_is_null(sip_msg_t *msg, str *rname, str *cname)
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_get_child_mode(sip_msg_t *msg, str *rname,
+static sr_kemi_xval_t* ki_xavp_child_get_mode(sip_msg_t *msg, str *rname,
 		str *cname, int rmode)
 {
 	sr_xavp_t *xavp=NULL;
@@ -1245,27 +1245,27 @@ static sr_kemi_xval_t* ki_xavp_get_child_mode(sip_msg_t *msg, str *rname,
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_get_child(sip_msg_t *msg, str *rname, str *cname)
+static sr_kemi_xval_t* ki_xavp_child_get(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
+	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
 }
 
 
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_gete_child(sip_msg_t *msg, str *rname, str *cname)
+static sr_kemi_xval_t* ki_xavp_child_gete(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
+	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
 }
 
 
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_getw_child(sip_msg_t *msg, str *rname, str *cname)
+static sr_kemi_xval_t* ki_xavp_child_getw(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_get_child_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
+	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
 }
 
 /**
@@ -1438,35 +1438,6 @@ int ki_pv_evalx(sip_msg_t *msg, str *dst, str *fmt)
 	return 1;
 error:
 	return -1;
-}
-
-/**
- *
- */
-static const char* rpc_shv_set_doc[2] = {
-	"Set a shared variable (args: name type value)",
-	0
-};
-
-static const char* rpc_shv_get_doc[2] = {
-	"Get the value of a shared variable. If no argument, dumps all",
-	0
-};
-
-rpc_export_t pv_rpc[] = {
-	{"pv.shvSet", rpc_shv_set, rpc_shv_set_doc, 0},
-	{"pv.shvGet", rpc_shv_get, rpc_shv_get_doc, 0},
-	{0, 0, 0, 0}
-};
-
-static int pv_init_rpc(void)
-{
-	if (rpc_register_array(pv_rpc)!=0)
-	{
-		LM_ERR("failed to register RPC commands\n");
-		return -1;
-	}
-	return 0;
 }
 
 /**
@@ -1663,36 +1634,6 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("pvx"), str_init("xavp_set_child_ival"),
-		SR_KEMIP_INT, ki_xavp_set_child_ival,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("pvx"), str_init("xavp_set_child_sval"),
-		SR_KEMIP_INT, ki_xavp_set_child_sval,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("pvx"), str_init("xavp_rm"),
-		SR_KEMIP_INT, ki_xavp_rm,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("pvx"), str_init("xavp_is_null"),
-		SR_KEMIP_INT, ki_xavp_is_null,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("pvx"), str_init("xavp_rm_child"),
-		SR_KEMIP_INT, ki_xavp_rm_child,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("pvx"), str_init("xavp_child_is_null"),
-		SR_KEMIP_INT, ki_xavp_child_is_null,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
 	{ str_init("pvx"), str_init("xavp_get"),
 		SR_KEMIP_XVAL, ki_xavp_get,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1708,18 +1649,48 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("pvx"), str_init("xavp_get_child"),
-		SR_KEMIP_XVAL, ki_xavp_get_child,
+	{ str_init("pvx"), str_init("xavp_rm"),
+		SR_KEMIP_INT, ki_xavp_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_is_null"),
+		SR_KEMIP_INT, ki_xavp_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_seti"),
+		SR_KEMIP_INT, ki_xavp_child_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_sets"),
+		SR_KEMIP_INT, ki_xavp_child_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_rm"),
+		SR_KEMIP_INT, ki_xavp_child_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("pvx"), str_init("xavp_gete_child"),
-		SR_KEMIP_XVAL, ki_xavp_gete_child,
+	{ str_init("pvx"), str_init("xavp_child_is_null"),
+		SR_KEMIP_INT, ki_xavp_child_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("pvx"), str_init("xavp_getw_child"),
-		SR_KEMIP_XVAL, ki_xavp_getw_child,
+	{ str_init("pvx"), str_init("xavp_child_get"),
+		SR_KEMIP_XVAL, ki_xavp_child_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_gete"),
+		SR_KEMIP_XVAL, ki_xavp_child_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_getw"),
+		SR_KEMIP_XVAL, ki_xavp_child_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1767,6 +1738,35 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+/**
+ *
+ */
+static const char* rpc_shv_set_doc[2] = {
+	"Set a shared variable (args: name type value)",
+	0
+};
+
+static const char* rpc_shv_get_doc[2] = {
+	"Get the value of a shared variable. If no argument, dumps all",
+	0
+};
+
+rpc_export_t pv_rpc[] = {
+	{"pv.shvSet", rpc_shv_set, rpc_shv_set_doc, 0},
+	{"pv.shvGet", rpc_shv_get, rpc_shv_get_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int pv_init_rpc(void)
+{
+	if (rpc_register_array(pv_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
 
 /**
  *
