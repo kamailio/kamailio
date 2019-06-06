@@ -327,9 +327,9 @@ xavp_params_implode("x", "$var(out)");
 				</programlisting>
 			</example>
 		</section>
-		<section id="pv.f.xavp_set_child_ival">
+		<section id="pv.f.xavp_child_seti">
 			<title>
-				<function moreinfo="none">xavp_set_child_ival(rname, cname, ival)</function>
+				<function moreinfo="none">xavp_child_seti(rname, cname, ival)</function>
 			</title>
 			<para>
 				Set the value of $xavp(rname=&gt;cname) to integer value ival.
@@ -343,19 +343,19 @@ xavp_params_implode("x", "$var(out)");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_set_child_ival</function> usage</title>
+				<title><function>xavp_child_seti</function> usage</title>
 				<programlisting format="linespecific">
 ...
 $var(n) = 10;
-xavp_set_child_ival("x", "y", "$var(n)");
+xavp_child_seti("x", "y", "$var(n)");
 # results in: $xavp(x=&gt;y) is 10
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="pv.f.xavp_set_child_sval">
+		<section id="pv.f.xavp_child_sets">
 			<title>
-				<function moreinfo="none">xavp_set_child_sval(rname, cname, sval)</function>
+				<function moreinfo="none">xavp_child_sets(rname, cname, sval)</function>
 			</title>
 			<para>
 				Set the value of $xavp(rname=&gt;cname) to string value sval.
@@ -369,11 +369,11 @@ xavp_set_child_ival("x", "y", "$var(n)");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_set_child_sval</function> usage</title>
+				<title><function>xavp_child_sets</function> usage</title>
 				<programlisting format="linespecific">
 ...
 $var(n) = 10;
-xavp_set_child_sval("x", "y", "Count: $var(n)");
+xavp_child_sets("x", "y", "Count: $var(n)");
 # results in: $xavp(x=&gt;y) is "Count: 10"
 ...
 				</programlisting>
@@ -397,16 +397,16 @@ xavp_set_child_sval("x", "y", "Count: $var(n)");
 				<title><function>xavp_rm</function> usage</title>
 				<programlisting format="linespecific">
 ...
-xavp_rm_child_sval("x");
+xavp_rm("x");
 # same result as: $xavp(x) = $null;
 ...
 				</programlisting>
 			</example>
 		</section>
 
-		<section id="pv.f.xavp_rm_child">
+		<section id="pv.f.xavp_child_rm">
 			<title>
-				<function moreinfo="none">xavp_rm_child(rname, cname)</function>
+				<function moreinfo="none">xavp_child_rm(rname, cname)</function>
 			</title>
 			<para>
 				Remove the value of $xavp(rname=&gt;cname).
@@ -420,10 +420,10 @@ xavp_rm_child_sval("x");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_rm_child</function> usage</title>
+				<title><function>xavp_child_rm</function> usage</title>
 				<programlisting format="linespecific">
 ...
-xavp_rm_child_sval("x", "y");
+xavp_child_rm("x", "y");
 # same result as: $xavp(x=&gt;y) = $null;
 ...
 				</programlisting>
