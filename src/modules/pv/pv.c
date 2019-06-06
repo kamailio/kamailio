@@ -1064,6 +1064,23 @@ static int w_xavp_rm_child(sip_msg_t *msg, char *prname, char *pcname)
 /**
  *
  */
+static int ki_xavp_is_null(sip_msg_t *msg, str *rname)
+{
+	sr_xavp_t *xavp=NULL;
+
+	xavp = xavp_get_by_index(rname, 0, NULL);
+	if(xavp==NULL) {
+		return 1;
+	}
+	if(xavp->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t _sr_kemi_pv_xval = {0};
 
 /**
@@ -1169,6 +1186,30 @@ static sr_kemi_xval_t* ki_xavp_gete(sip_msg_t *msg, str *rname)
 static sr_kemi_xval_t* ki_xavp_getw(sip_msg_t *msg, str *rname)
 {
 	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static int ki_xavp_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+{
+	sr_xavp_t *xavp=NULL;
+
+	xavp = xavp_get_by_index(rname, 0, NULL);
+	if(xavp==NULL) {
+		return 1;
+	}
+	if(xavp->val.type != SR_XTYPE_XAVP) {
+		return 1;
+	}
+	xavp = xavp_get_by_index(cname, 0, &xavp->val.v.xavp);
+	if(xavp==NULL) {
+		return 1;
+	}
+	if(xavp->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
 }
 
 /**
@@ -1637,8 +1678,18 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("xavp_is_null"),
+		SR_KEMIP_INT, ki_xavp_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("xavp_rm_child"),
 		SR_KEMIP_INT, ki_xavp_rm_child,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_child_is_null"),
+		SR_KEMIP_INT, ki_xavp_child_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
