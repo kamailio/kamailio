@@ -35,39 +35,6 @@
 
 #include "mqueue_api.h"
 
-/**
- *
- */
-typedef struct _mq_item
-{
-	str key;
-	str val;
-	struct _mq_item *next;
-} mq_item_t;
-
-/**
- *
- */
-typedef struct _mq_head
-{
-	str name;
-	int msize;
-	int csize;
-	gen_lock_t lock;
-	mq_item_t *ifirst;
-	mq_item_t *ilast;
-	struct _mq_head *next;
-} mq_head_t;
-
-/**
- *
- */
-typedef struct _mq_pv
-{
-	str *name;
-	mq_item_t *item;
-	struct _mq_pv *next;
-} mq_pv_t;
 
 /**
  *
