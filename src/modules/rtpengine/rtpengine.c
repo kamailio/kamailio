@@ -290,6 +290,10 @@ static pv_spec_t *media_duration_pvar = NULL;
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
 
+
+
+static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
+
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
@@ -443,6 +447,7 @@ static param_export_t params[] = {
 	{"hash_table_size",       INT_PARAM, &hash_table_size        },
 	{"setid_default",         INT_PARAM, &setid_default          },
 	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
+	{"hash_algo",             INT_PARAM, &hash_algo},
 
 	/* MOS stats output */
 	/* global averages */
@@ -1724,9 +1729,11 @@ mod_init(void)
         return -1;
     }
 
-	if (load_crypto_api(&rtpengine_cb) != 0) {
-		LM_WARN("Crypto module not loaded! Won't use SHA1 hashing! Distribution "
-				"algorithm might not perform well under heavy load!\n");
+	if (hash_algo == RTP_HASH_SHA1_CALLID) {
+		if (load_crypto_api(&rtpengine_cb) != 0) {
+			LM_ERR("Crypto module required in order to have SHA1 hashing!\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -2912,13 +2919,27 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 
 	str hash_data;
 
-	if (rtpengine_cb.SHA1 == NULL) {
-		hash_data = callid;
-	} else {
-		if (rtpengine_cb.SHA1(&callid, &hash_data) < 0) {
-			LM_ERR("SHA1 hash in crypto module failed!\n");
+	switch (hash_algo) {
+		case RTP_HASH_CALLID:
+			hash_data = callid;
+
+			break;
+		case RTP_HASH_SHA1_CALLID:
+			if (rtpengine_cb.SHA1 == NULL) {
+				/* don't throw warning here; there is already a warni*/
+				LM_BUG("SHA1 algo set but crypto not loaded! Program shouldn't have started!");
+				return NULL;
+			}
+
+			if (rtpengine_cb.SHA1(&callid, &hash_data) < 0) {
+				LM_ERR("SHA1 hash in crypto module failed!\n");
+				return NULL;
+			}
+
+			break;
+		default:
+			LM_ERR("unknown hashing algo %d\n", hash_algo);
 			return NULL;
-		}
 	}
 
 	/* XXX Use quick-and-dirty hashing algo */
@@ -2926,8 +2947,11 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	for(i = 0; i < hash_data.len; i++)
 		sum += hash_data.s[i];
 
-	/* FIXME this seems to affect the algorithm in a negative way */
-	//	sum &= 0xff;
+	/* FIXME this seems to affect the algorithm in a negative way
+	 * legacy code uses it; disable it for other algos */
+	if (hash_algo == RTP_HASH_CALLID) {
+		sum &= 0xff;
+	}
 
 retry:
 	weight_sum = 0;
