@@ -589,7 +589,8 @@ error2:
 	if (is_ack) {
 		free_cell(new_cell);
 	} else {
-		if(atomic_get_int(&new_cell->ref_count)==0) {
+		if((new_cell->next_c == 0 && new_cell->prev_c == 0)
+				|| (atomic_get_int(&new_cell->ref_count)==0)) {
 			free_cell(new_cell);
 		} else {
 			UNREF_FREE(new_cell, 0);
