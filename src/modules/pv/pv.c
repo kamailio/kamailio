@@ -902,6 +902,40 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 /**
  *
  */
+static int ki_xavp_seti(sip_msg_t *msg, str *rname, int ival)
+{
+	sr_xavp_t *xavp = NULL;
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = ival;
+
+	xavp = xavp_add_value(rname, &xval, NULL);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_sets(sip_msg_t *msg, str *rname, str *sval)
+{
+	sr_xavp_t *xavp = NULL;
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = *sval;
+
+	xavp = xavp_add_value(rname, &xval, NULL);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
 static int ki_xavp_child_seti(sip_msg_t *msg, str *rname, str *cname,
 		int ival)
 {
@@ -1631,6 +1665,16 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("xavp_params_implode"),
 		SR_KEMIP_INT, ki_xavp_params_implode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_seti"),
+		SR_KEMIP_INT, ki_xavp_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_sets"),
+		SR_KEMIP_INT, ki_xavp_sets,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
