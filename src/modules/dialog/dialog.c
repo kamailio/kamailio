@@ -1857,6 +1857,65 @@ static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
+{
+	dlg_cell_t *dlg;
+	int ret;
+
+	dlg = dlg_get_msg_dialog(msg);
+	ret = set_dlg_variable_unsafe(dlg, name, val);
+	if(dlg) {
+		dlg_release(dlg);
+	}
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
+{
+	dlg_cell_t *dlg;
+	str *pval;
+
+	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
+
+	dlg = dlg_get_msg_dialog(msg);
+	if(dlg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
+		return &_sr_kemi_dialog_xval;
+	}
+	pval = get_dlg_variable(dlg, name);
+	if(pval==NULL || pval->s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
+		goto done;
+	}
+
+	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_dialog_xval.v.s = *pval;
+
+done:
+	dlg_release(dlg);
+	return &_sr_kemi_dialog_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_get(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -1957,6 +2016,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_db_load_extra"),
 		SR_KEMIP_INT, ki_dlg_db_load_extra,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_sets"),
+		SR_KEMIP_INT, ki_dlg_var_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_get"),
+		SR_KEMIP_XVAL, ki_dlg_var_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
