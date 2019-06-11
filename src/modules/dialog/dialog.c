@@ -1916,6 +1916,21 @@ static sr_kemi_xval_t* ki_dlg_var_get(sip_msg_t *msg, str *name)
 /**
  *
  */
+static sr_kemi_xval_t* ki_dlg_var_gete(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_EMPTY);
+}
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_getw(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -2025,6 +2040,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("var_get"),
 		SR_KEMIP_XVAL, ki_dlg_var_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_gete"),
+		SR_KEMIP_XVAL, ki_dlg_var_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_getw"),
+		SR_KEMIP_XVAL, ki_dlg_var_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
