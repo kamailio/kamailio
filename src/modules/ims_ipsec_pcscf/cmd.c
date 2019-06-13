@@ -571,7 +571,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d)
         struct cell *t = tmb.t_gett();
         if (!t) {
             LM_ERR("Error getting transaction\n");
-            goto cleanup;
+            return ret;
         }
 
         req = t->uas.request;
@@ -662,7 +662,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d)
     struct socket_info * client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6, src_port, dst_proto);
     if(!client_sock) {
         LM_ERR("Error calling grep_sock_info() for ipsec client port\n");
-        return -1;
+        goto cleanup;
     }
     m->force_send_socket = client_sock;
 
