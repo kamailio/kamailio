@@ -444,12 +444,6 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 	cscf_get_p_associated_uri(_m, &public_ids, &num_public_ids, 1);
 	service_routes = cscf_get_service_route(_m, &num_service_routes, 1);
 
-	{
-		struct via_body* vb = cscf_get_ue_via(_m);
-		LM_DBG("Save contact with AOR(uri) [%.*s], proto %d, port %d\n",
-		cb->contacts->uri.len, cb->contacts->uri.s, vb->proto, vb->port?vb->port:5060);
-	}
-
 	//update contacts
 	if (!update_contacts(req, _m, _d, cb->star, expires_hdr, public_ids, num_public_ids, service_routes, num_service_routes, 0)) {
 		LM_ERR("failed to update pcontact\n");
