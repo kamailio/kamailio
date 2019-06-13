@@ -311,6 +311,8 @@ like Asterisk™, FreeSWITCH™ or SEMS.
 %package    acc_json
 Summary:    Account transaction information in a JSON dictionary
 Group:      %{PKGGROUP}
+Requires:   libevent, kamailio = %ver
+BuildRequires:  libevent-devel
 %if 0%{?suse_version}
 Requires:   libjansson
 BuildRequires:  libjansson-devel
@@ -533,6 +535,7 @@ IMS modules and extensions module for Kamailio.
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      %{PKGGROUP}
 Requires:   libevent, kamailio = %ver
+BuildRequires:  libevent-devel
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
@@ -746,6 +749,7 @@ Requires:   python3, kamailio = %ver
 BuildRequires:  python3, python3-devel
 %endif
 %endif
+
 
 %description    python
 Python extensions for Kamailio.
