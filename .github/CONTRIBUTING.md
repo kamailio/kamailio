@@ -137,6 +137,9 @@ dialplan: basic safety for concurrent rpc reload
 ```
 ...: fix for http://private-tracker.lab/1234
 ```
+  * do not mention any developer name or yourself when fixing an issue introduced
+  by an old commit done by that developer or you. That commit can be referenced
+  by hash id.
 
 #### Commit Message Examples ####
 
