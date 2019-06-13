@@ -108,12 +108,12 @@
 %bcond_with cnxcc
 %bcond_without dnssec
 %bcond_without geoip
-%bcond_with http_async_client
+%bcond_without http_async_client
 %bcond_without ims
-%bcond_with jansson
-%bcond_with json
+%bcond_without jansson
+%bcond_without json
 %bcond_without lua
-%bcond_with kazoo
+%bcond_without kazoo
 %bcond_without memcached
 %bcond_with mongodb
 %bcond_without perl
@@ -311,8 +311,14 @@ like Asterisk™, FreeSWITCH™ or SEMS.
 %package    acc_json
 Summary:    Account transaction information in a JSON dictionary
 Group:      %{PKGGROUP}
-Requires:   libevent, kamailio = %ver
+Requires:   kamailio = %ver
+%if 0%{?rhel} == 6
+Requires:   libevent2
+BuildRequires:  libevent2-devel
+%else
+Requires:   libevent
 BuildRequires:  libevent-devel
+%endif
 %if 0%{?suse_version}
 Requires:   libjansson
 BuildRequires:  libjansson-devel
@@ -488,8 +494,14 @@ Compressed body (SIP and HTTP) handling for kamailio.
 %package    http_async_client
 Summary:    Async HTTP client module for Kamailio
 Group:      %{PKGGROUP}
-Requires:   libevent, kamailio = %ver
-BuildRequires: libevent-devel
+Requires:   kamailio = %ver
+%if 0%{?rhel} == 6
+Requires:   libevent2
+BuildRequires:  libevent2-devel
+%else
+Requires:   libevent
+BuildRequires:  libevent-devel
+%endif
 %if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
@@ -534,8 +546,14 @@ IMS modules and extensions module for Kamailio.
 %package    jansson
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      %{PKGGROUP}
-Requires:   libevent, kamailio = %ver
+Requires:   kamailio = %ver
+%if 0%{?rhel} == 6
+Requires:   libevent2
+BuildRequires:  libevent2-devel
+%else
+Requires:   libevent
 BuildRequires:  libevent-devel
+%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
@@ -553,8 +571,14 @@ JSON string handling and RPC modules for Kamailio using JANSSON library.
 %package    json
 Summary:    JSON string handling and RPC modules for Kamailio
 Group:      %{PKGGROUP}
-Requires:   libevent, kamailio = %ver
+Requires:   kamailio = %ver
+%if 0%{?rhel} == 6
+Requires:   libevent2
+BuildRequires:  libevent2-devel
+%else
+Requires:   libevent
 BuildRequires:  libevent-devel
+%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjson-c-devel
@@ -572,8 +596,15 @@ JSON string handling and RPC modules for Kamailio.
 %package    kazoo
 Summary:    Kazoo middle layer connector support for Kamailio
 Group:      %{PKGGROUP}
-Requires:   libuuid, librabbitmq, json-c, libevent, kamailio = %ver
-BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel, libevent-devel
+Requires:   libuuid, librabbitmq, json-c, kamailio = %ver
+BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel
+%if 0%{?rhel} == 6
+Requires:   libevent2
+BuildRequires:  libevent2-devel
+%else
+Requires:   libevent
+BuildRequires:  libevent-devel
+%endif
 
 %description    kazoo
 Kazoo module for Kamailio.
