@@ -2085,12 +2085,12 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("var_rm"),
-		SR_KEMIP_XVAL, ki_dlg_var_rm,
+		SR_KEMIP_INT, ki_dlg_var_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("var_is_null"),
-		SR_KEMIP_XVAL, ki_dlg_var_is_null,
+		SR_KEMIP_INT, ki_dlg_var_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
