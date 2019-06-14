@@ -71,6 +71,7 @@ cat <<EOF
  ul add <username> <uri> ............... introduce a permanent usrloc entry
  ul add <username> <uri> <expires> ..... introduce a temporary usrloc entry
  ul add <user> <uri> <expires> <path> .. introduce a temporary usrloc entry
+ ul dbclean [<secs>].................... remove older expired records from db table
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_usrloc"

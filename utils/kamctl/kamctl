@@ -2717,6 +2717,18 @@ usrloc() {
 			fi
 			;;
 
+		dbclean)
+			require_dbengine
+			KSR_CLEAN_VAL=3600
+			if [ $# -eq 2 ] ; then
+				KSR_CLEAN_VAL=$2
+			fi
+			QUERY="delete from $USRLOC_TABLE where expires < SUBDATE(NOW(), INTERVAL $KSR_CLEAN_VAL SECOND);"
+			$DBCMD "$QUERY"
+
+			exit $?
+			;;
+
 		*)
 			usage_usrloc
 			exit 1
