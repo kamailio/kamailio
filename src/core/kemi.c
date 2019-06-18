@@ -1973,6 +1973,21 @@ static int sr_kemi_hdr_rmappend(sip_msg_t *msg, str *hrm, str *hadd)
 /**
  *
  */
+static int sr_kemi_hdr_rminsert(sip_msg_t *msg, str *hrm, str *hadd)
+{
+	int ret;
+
+	ret = sr_kemi_hdr_remove(msg, hrm);
+	if(ret<0) {
+		return ret;
+	}
+	return sr_kemi_hdr_insert(msg, hadd);
+}
+
+
+/**
+ *
+ */
 static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 {
 	if(txt==NULL || txt->s==NULL || msg==NULL)
@@ -2105,6 +2120,11 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 	},
 	{ str_init("hdr"), str_init("rmappend"),
 		SR_KEMIP_INT, sr_kemi_hdr_rmappend,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("rminsert"),
+		SR_KEMIP_INT, sr_kemi_hdr_rminsert,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
