@@ -148,9 +148,13 @@ static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg) {
     char buf[PAYLOADSIZE * 3 + 1];
     char *ptr = buf;
 
-    for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
-        ptr += sprintf(ptr,"%02X ", msg.bdy.payload[i]);
-    }
+	if(msg.hdr.length > sizeof(msg.hdr)) {
+		for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
+			ptr += sprintf(ptr, "%02X ", msg.bdy.payload[i]);
+		}
+	} else {
+		*ptr = '\0';
+	}
 
     LM_DBG("%s\n"
            "version = %d\ntype = %d\ncode = %d\nid = %d\nlen = %d\n"
