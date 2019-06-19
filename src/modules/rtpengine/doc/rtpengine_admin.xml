@@ -2008,6 +2008,31 @@ modparam("rtpengine", "control_cmd_tos", "144")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.hash_algo">
+		<title><varname>hash_algo</varname> (integer)</title>
+		<para>
+			Hashing algorithm to be used in node selection algorithm. Now there are 2 possibilities: legacy
+			alogrithm - 0(very basic hash over callid) or SHA1 - 1(apply sha1 over the callid and calculate hash).
+		</para>
+		<para>
+			Default value is 0, legacy algorithm.
+		</para>
+		<para>
+			The values not falling into the range <quote>0-1</quote> .
+		</para>
+		<example>
+		<title>Set <varname>control_cmd_tos</varname> parameter</title>
+<programlisting format="linespecific">
+...
+### use SHA1 instead of legacy algorithm
+modparam("rtpengine", "hash_algo", "1")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
 	</section>
 
 
