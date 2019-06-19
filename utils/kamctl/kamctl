@@ -1791,6 +1791,11 @@ ksr_srv() {
 			mecho "list server rpc commands"
 			ctl_cmd_run system.listMethods
 			;;
+		rpclist)
+			require_ctlengine
+			mecho "list server version"
+			ctl_cmd_run core.version
+			;;
 		*)
 			usage_ksr_srv
 			exit 1
