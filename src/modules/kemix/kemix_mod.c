@@ -275,6 +275,71 @@ static sr_kemi_xval_t* ki_kx_gete_rhost(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_furi_attr(sip_msg_t *msg, int iattr, int xmode)
+{
+	sip_uri_t *uri;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	uri=parse_from_uri(msg);
+	if(uri==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	return ki_kx_get_xuri_attr(msg, uri, iattr, xmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_fuser(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_fuser(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_fuser(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_fhost(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_fhost(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_fhost(sip_msg_t *msg)
+{
+	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_ua_mode(sip_msg_t *msg, int rmode)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
