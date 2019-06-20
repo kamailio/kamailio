@@ -1283,7 +1283,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
+				<para><emphasis>presence:notify-reply</emphasis> - after notify is sent
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -1410,7 +1410,7 @@ if(handle_subscription())
 				It must be used in the following events.
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
+				<para><emphasis>presence:notify-reply</emphasis> - after notify is sent
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -1436,7 +1436,7 @@ event_route[presence:notify-reply]
 <section>
 	<title>Events</title>
 		<section>
-			<title><varname>present:notify-reply</varname></title>
+			<title><varname>presence:notify-reply</varname></title>
 			<para>
 				Fired after notify reply is received or timeout.
 			</para>
