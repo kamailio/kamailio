@@ -97,10 +97,10 @@
 
 		</section>
 	</section>
-	
+
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="rls.p.db_url">
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database url.
@@ -119,7 +119,7 @@ modparam("rls", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.rlpres_db_url">
 		<title><varname>rlpres_db_url</varname>(str)</title>
 		<para>
 		The rlpres (rls_presentity table) database url.
@@ -145,7 +145,7 @@ modparam("rls", "rlpres_db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.xcap_db_url">
 		<title><varname>xcap_db_url</varname>(str)</title>
 		<para>
 		The xcap database url.
@@ -166,7 +166,7 @@ modparam("rls", "xcap_db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.db_mode">
 		<title><varname>db_mode</varname>(int)</title>
 		<para>
 		The module supports 2 modes of operation, high speed memory
@@ -188,7 +188,7 @@ modparam("rls", "db_mode", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.xcap_table">
 		<title><varname>xcap_table</varname>(str)</title>
 		<para>
 		The name of the xcap table in which the integrated server
@@ -209,7 +209,7 @@ modparam("rls", "xcap_table", "xcaps");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rls.p.rlsubs_table">
 		<title><varname>rlsubs_table</varname>(str)</title>
 		<para>
 		The name of the db table where resource lists subscription 
@@ -229,7 +229,7 @@ modparam("rls", "rlsubs_table", "rls_subscriptions")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.rlpres_table">
 		<title><varname>rlpres_table</varname>(str)</title>
 		<para>
 		The name of the db table where notified event specific
@@ -249,7 +249,7 @@ modparam("rls", "rlpres_table", "rls_notify")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.clean_period">
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
 		The period at which to check for expired information.
@@ -269,7 +269,7 @@ modparam("rls", "clean_period", 100)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.rlpres_clean_period">
 		<title><varname>rlpres_clean_period</varname> (int)</title>
 		<para>
 		The period at which to check for expired rls_presentity information.
@@ -293,7 +293,7 @@ modparam("rls", "rlpres_clean_period", 100)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.waitn_time">
 		<title><varname>waitn_time</varname> (int)</title>
 		<para>
 		The maximum time period that RLS NOTIFY requests will
@@ -316,7 +316,7 @@ modparam("rls", "waitn_time", 10)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.notifier_poll_rate">
 		<title><varname>notifier_poll_rate</varname> (int)</title>
 		<para>
 		The number of times per second that the notifier processes
@@ -342,7 +342,7 @@ modparam("rls", "notifier_poll_rate", 20)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.notifier_processes">
 		<title><varname>notifier_processes</varname> (int)</title>
 		<para>
 		The number of notifier processes that should be started.
@@ -365,7 +365,7 @@ modparam("rls", "notifier_processes", 2)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.max_expires">
 		<title><varname>max_expires</varname> (int)</title>
 		<para>
 		The maximum accepted expires for a subscription to a list. 
@@ -384,7 +384,7 @@ modparam("rls", "max_expires", 10800)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.expires_offset">
 		<title><varname>expires_offset</varname> (int)</title>
 		<para>
 		This parameter only has an effect when the db_mode is DB_ONLY (mode 2).
@@ -410,7 +410,7 @@ modparam("rls", "expires_offset", 0)
 		</example>
 	</section>
  	
-	<section>
+	<section id="rls.p.hash_size">
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
         The dimension of the hash table used to store subscription to a list.
@@ -430,7 +430,7 @@ modparam("rls", "hash_size", 11)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.xcap_root">
 		<title><varname>xcap_root</varname> (str)</title>
 		<para>
 		The address of the xcap server.
@@ -449,7 +449,7 @@ modparam("rls", "xcap_root", "http://192.168.2.132/xcap-root:800")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.integrated_xcap_server">
 		<title><varname>integrated_xcap_server</varname> (int)</title>
 		<para>
 		This parameter should be set if only integrated xcap servers
@@ -469,7 +469,7 @@ modparam("rls", "integrated_xcap_server", 1)
 		</example>
 	</section>
 	
-	<section>
+	<section id="rls.p.to_presence_code">
 		<title><varname>to_presence_code</varname> (int)</title>
 		<para>
 		The code to be returned by rls_handle_subscribe function 
@@ -492,7 +492,7 @@ modparam("rls", "to_presence_code", 10)
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.rls_event">
 		<title><varname>rls_event</varname> (str)</title>
 		<para>
 		The default event that RLS handles is presence. If some other
@@ -513,7 +513,7 @@ modparam("rls", "rls_event", "dialog;sla")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.outbound_proxy">
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
 		The SIP address where to send RLS subscriptions (outbound
@@ -533,7 +533,7 @@ modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.server_address">
 		<title><varname>server_address</varname> (str)</title>
 		<para>
 			The address of the server that will be used as a contact in sent
@@ -550,7 +550,7 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.p.max_notify_body_length">
 		<title><varname>max_notify_body_length</varname> (int)</title>
 		<para>
 			The maximum size that the body of a NOTIFY message may be. 
@@ -566,7 +566,7 @@ modparam("rls", "max_notify_body_length", 32000)
 		</programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rls.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
 		Number of rows to be loaded in one step from database.
@@ -585,7 +585,7 @@ modparam("rls", "fetch_rows", 1000)
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="rls.p.disable_remote_presence">
 	    <title><varname>disable_remote_presence</varname> (integer)</title>
 	    <para>
 		When set to a non-zero value RLS will not perform back-end SUBSCRIBEs
@@ -611,7 +611,7 @@ modparam("rls", "disable_remote_presence", 1)
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="rls.p.max_backend_subs">
 	    <title><varname>max_backend_subs</varname> (integer)</title>
 	    <para>
 		When set to a non-zero value RLS will limit the number of back-end
@@ -640,7 +640,7 @@ modparam("rls", "max_backend_subs", 30)
 
 <section>
 	<title>Functions</title>
-	<section>
+	<section id="rls.f.rls_handle_subscribe">
 		<title>
 		<function moreinfo="none">rls_handle_subscribe([watcher_uri])</function>
 		</title>
@@ -688,12 +688,12 @@ For rls only:
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.f.rls_handle_notify">
 		<title>
 		<function moreinfo="none">rls_handle_notify()</function>
 		</title>
 		<para>
-			
+		Handle NOTIFY requests.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -709,7 +709,7 @@ if(method=="NOTIFY")
 		</example>
 	</section>
 
-	<section>
+	<section id="rls.f.rls_update_subs">
 		<title>
 		<function moreinfo="none">rls_update_subs(uri, event)</function>
 		</title>
