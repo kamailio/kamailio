@@ -115,7 +115,6 @@ int pres_watcher_allowed(subs_t *subs)
 	}
 	if(strncmp((char *)sub_handling, "block", 5) == 0) {
 		subs->status = TERMINATED_STATUS;
-		;
 		subs->reason.s = "rejected";
 		subs->reason.len = 8;
 	} else if(strncmp((char *)sub_handling, "confirm", 7) == 0) {
