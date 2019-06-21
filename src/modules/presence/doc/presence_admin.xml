@@ -192,10 +192,10 @@ modparam("presence", "clean_period", 100)
         <example>
             <title>Set <varname>cseq_offset</varname> parameter</title>
             <programlisting format="linespecific">
-                ...
-                modparam("presence", "cseq_offset", 1)
-                ...
-            </programlisting>
+...
+modparam("presence", "cseq_offset", 1)
+...
+</programlisting>
         </example>
     </section>
     <section id="presence.p.db_update_period">
@@ -422,10 +422,10 @@ modparam("presence", "max_expires", 3600)
     <example>
         <title>Set <varname>min_expires</varname> parameter</title>
         <programlisting format="linespecific">
-            ...
-            modparam("presence", "min_expires", 1800)
-            ...
-        </programlisting>
+...
+modparam("presence", "min_expires", 1800)
+...
+</programlisting>
     </example>
 </section>
 
@@ -895,10 +895,10 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
     <example>
         <title>Set <varname>sip_uri_match</varname> parameter</title>
         <programlisting format="linespecific">
-            ...
-            modparam("presence", "sip_uri_match", 1)
-            ...
-        </programlisting>
+...
+modparam("presence", "sip_uri_match", 1)
+...
+</programlisting>
     </example>
 </section>
 
@@ -922,10 +922,10 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 	<example>
 		<title>Set <varname>enable_dmq</varname> parameter</title>
 		<programlisting format="linespecific">
-			...
-			modparam("presence", "enable_dmq", 1)
-			...
-		</programlisting>
+...
+modparam("presence", "enable_dmq", 1)
+...
+</programlisting>
 	</example>
 </section>
 
@@ -1087,11 +1087,11 @@ if (method=="MESSAGE") {
     <example>
         <title><function>pres_has_subscribers</function> usage</title>
         <programlisting format="linespecific">
-            ...
-            if(pres_has_subscribers($var(uri), "message-summary"))
-            do something...;
-            ...
-        </programlisting>
+...
+if(pres_has_subscribers($var(uri), "message-summary"))
+    # do something...;
+...
+</programlisting>
     </example>
 </section>
 
@@ -1208,7 +1208,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 &kamcmd; presence.cleanup
 ...
-	  </programlisting>
+</programlisting>
     </section>
 	<section id="presence.r.refreshWatchers">
 		<title>presence.refreshWatchers</title>
@@ -1264,7 +1264,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 &kamcmd; presence.refreshWatchers sip:test@kamailio.org presence 1
 ...
-		</programlisting>
+</programlisting>
 	</section>
 </section>
 
@@ -1399,7 +1399,7 @@ if(handle_subscription())
   xlog("presentity=$subs(uri)\n");
 }
 ...
-				 </programlisting>
+</programlisting>
 			</example>
 		</section>
 
@@ -1428,7 +1428,7 @@ event_route[presence:notify-reply]
   xlog("received message = $notify_reply($mb)\n");
 }
 ...
-				 </programlisting>
+</programlisting>
 			</example>
 		</section>
 </section>
@@ -1450,7 +1450,7 @@ event_route[presence:notify-reply]
   xlog("received message = $notify_reply($mb)\n");
 }
 ...
-				 </programlisting>
+</programlisting>
 			</example>
 		</section>
 </section>
