@@ -12,8 +12,6 @@ Edited by
 
 Anca-Maria Vamanu
 
-Edited by
-
 Juha Heinanen
 
    Copyright © 2006 Voice Sistem SRL
@@ -92,7 +90,7 @@ Juha Heinanen
 
         7. Events
 
-              7.1. present:notify-reply
+              7.1. presence:notify-reply
 
         8. Installation
 
@@ -234,7 +232,7 @@ Chapter 1. Admin Guide
 
    7. Events
 
-        7.1. present:notify-reply
+        7.1. presence:notify-reply
 
    8. Installation
 
@@ -388,9 +386,9 @@ modparam("presence", "clean_period", 100)
    Default value is “0”.
 
    Example 1.6. Set cseq_offset parameter
-                ...
-                modparam("presence", "cseq_offset", 1)
-                ...
+...
+modparam("presence", "cseq_offset", 1)
+...
 
 3.7. db_update_period (int)
 
@@ -535,9 +533,9 @@ modparam("presence", "max_expires", 3600)
    Default value is “0”.
 
    Example 1.16. Set min_expires parameter
-            ...
-            modparam("presence", "min_expires", 1800)
-            ...
+...
+modparam("presence", "min_expires", 1800)
+...
 
 3.17. min_expires_action (int)
 
@@ -831,9 +829,9 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
    Default value is “0”.
 
    Example 1.34. Set sip_uri_match parameter
-            ...
-            modparam("presence", "sip_uri_match", 1)
-            ...
+...
+modparam("presence", "sip_uri_match", 1)
+...
 
 3.35. enable_dmq (integer)
 
@@ -848,9 +846,9 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
    Default value is 0.
 
    Example 1.35. Set enable_dmq parameter
-                        ...
-                        modparam("presence", "enable_dmq", 1)
-                        ...
+...
+modparam("presence", "enable_dmq", 1)
+...
 
 4. Functions
 
@@ -950,10 +948,10 @@ if (method=="MESSAGE") {
    This function can be used from ANY_ROUTE.
 
    Example 1.39. pres_has_subscribers usage
-            ...
-            if(pres_has_subscribers($var(uri), "message-summary"))
-            do something...;
-            ...
+...
+if(pres_has_subscribers($var(uri), "message-summary"))
+    # do something...;
+...
 
 4.5.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
@@ -1060,7 +1058,7 @@ kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
    Access the attributes of handled subscription. It must be used after a
    successful call of “handle_subscription()” or in the following events.
      * tm:local-request - before notify is sent
-     * present:notify-reply - after notify is sent
+     * presence:notify-reply - after notify is sent
 
    The “attr” can be:
      * uri - subscription presentity uri
@@ -1100,7 +1098,7 @@ if(handle_subscription())
 
    Access the reply message received when notifying subscriber. It must be
    used in the following events.
-     * present:notify-reply - after notify is sent
+     * presence:notify-reply - after notify is sent
 
    The “attr” can be any pseudo var that accesses attributes of msg
 
@@ -1114,9 +1112,9 @@ event_route[presence:notify-reply]
 
 7. Events
 
-   7.1. present:notify-reply
+   7.1. presence:notify-reply
 
-7.1. present:notify-reply
+7.1. presence:notify-reply
 
    Fired after notify reply is received or timeout.
 
