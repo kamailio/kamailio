@@ -10,6 +10,12 @@ NAME=rls.so
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
+ifeq ($(OS), darwin)
+ICU_BUILDER = $(shell \
+	if pkg-config --exists icu-uc; then \
+		echo 'pkg-config icu-uc'; \
+	fi)
+endif
 endif
 
 ifneq ($(XML2CFG),)
@@ -19,6 +25,11 @@ else
 	DEFS+=-I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
+endif
+
+ifneq ($(ICU_BUILDER),)
+	DEFS += $(shell $(ICU_BUILDER) --cflags )
+	LIBS += $(shell $(ICU_BUILDER) --libs)
 endif
 
 DEFS+=
