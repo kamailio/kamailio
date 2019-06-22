@@ -195,3 +195,37 @@ int crypto_register_callid_func(void)
 	}
 	return 0;
 }
+
+
+/**
+ * \brief generate SHA1 hash over a given input string
+ * \param str to apply hash over
+ * \param SHA1 hash
+ */
+int crypto_generate_SHA1(str* in, str* hash)
+{
+	static unsigned char crypto_buf[SHA_DIGEST_LENGTH];
+
+	if (in == NULL || in->s == NULL) {
+		LM_ERR("Invalid input string!\n");
+		return -1;
+	}
+
+	if (hash == NULL) {
+		LM_ERR("Invalid output hash str!\n");
+		return -1;
+	}
+
+	void* ret;
+	if ((ret=SHA1((unsigned char *)in->s, in->len, crypto_buf)) != crypto_buf) {
+		LM_ERR("SHA1 algo failed!\n");
+		/* FIXME remove LM_BUG */
+		LM_BUG("Pointer value %p\n", ret);
+		return -1;
+	}
+
+	hash->s = (char *)crypto_buf;
+	hash->len = sizeof(crypto_buf);
+
+	return 0;
+}

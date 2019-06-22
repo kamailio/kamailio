@@ -103,5 +103,6 @@ extern str rtpp_url_col;
 extern str rtpp_weight_col;
 extern str rtpp_disabled_col;
 
+enum hash_algo_t { RTP_HASH_CALLID, RTP_HASH_SHA1_CALLID};
 
 #endif

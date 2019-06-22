@@ -79,6 +79,7 @@
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../modules/crypto/api.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
@@ -289,6 +290,10 @@ static pv_spec_t *media_duration_pvar = NULL;
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
 
+
+
+static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
+
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
@@ -304,6 +309,7 @@ static struct minmax_mos_label_stats global_mos_stats,
 				     side_A_mos_stats,
 				     side_B_mos_stats;
 int got_any_mos_pvs;
+struct crypto_binds rtpengine_cb;
 
 
 static cmd_export_t cmds[] = {
@@ -441,6 +447,7 @@ static param_export_t params[] = {
 	{"hash_table_size",       INT_PARAM, &hash_table_size        },
 	{"setid_default",         INT_PARAM, &setid_default          },
 	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
+	{"hash_algo",             INT_PARAM, &hash_algo},
 
 	/* MOS stats output */
 	/* global averages */
@@ -1722,6 +1729,12 @@ mod_init(void)
         return -1;
     }
 
+	if (hash_algo == RTP_HASH_SHA1_CALLID) {
+		if (load_crypto_api(&rtpengine_cb) != 0) {
+			LM_ERR("Crypto module required in order to have SHA1 hashing!\n");
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -2905,11 +2918,41 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	unsigned i, sum, sumcut, weight_sum;
 	int was_forced = 0;
 
+	str hash_data;
+
+	switch (hash_algo) {
+		case RTP_HASH_CALLID:
+			hash_data = callid;
+
+			break;
+		case RTP_HASH_SHA1_CALLID:
+			if (rtpengine_cb.SHA1 == NULL) {
+				/* don't throw warning here; there is already a warni*/
+				LM_BUG("SHA1 algo set but crypto not loaded! Program shouldn't have started!");
+				return NULL;
+			}
+
+			if (rtpengine_cb.SHA1(&callid, &hash_data) < 0) {
+				LM_ERR("SHA1 hash in crypto module failed!\n");
+				return NULL;
+			}
+
+			break;
+		default:
+			LM_ERR("unknown hashing algo %d\n", hash_algo);
+			return NULL;
+	}
+
 	/* XXX Use quick-and-dirty hashing algo */
 	sum = 0;
-	for(i = 0; i < callid.len; i++)
-		sum += callid.s[i];
-	sum &= 0xff;
+	for(i = 0; i < hash_data.len; i++)
+		sum += hash_data.s[i];
+
+	/* FIXME this seems to affect the algorithm in a negative way
+	 * legacy code uses it; disable it for other algos */
+	if (hash_algo == RTP_HASH_CALLID) {
+		sum &= 0xff;
+	}
 
 retry:
 	weight_sum = 0;
@@ -3915,12 +3958,12 @@ static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
 }
 
 static int ki_rtpengine_query0(sip_msg_t *msg)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, NULL, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query(sip_msg_t *msg, str *flags)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags->s, 1, OP_ANY);
 }
 
