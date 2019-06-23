@@ -1728,6 +1728,49 @@ void rpc_presence_refresh_watchers(rpc_t *rpc, void *ctx)
 static const char *rpc_presence_refresh_watchers_doc[2] = {
 		"Trigger refresh of watchers", 0};
 
+/*! \brief
+ *  rpc cmd: presence.updateWatchers
+ *			\<presentity_uri>
+ *			\<event>
+ *		* */
+void rpc_presence_update_watchers(rpc_t *rpc, void *ctx)
+{
+	str pres_uri = {0, 0};
+	str event = {0, 0};
+	int pn;
+
+	LM_DBG("init update of watchers\n");
+
+	pn = rpc->scan(ctx, "SS", &pres_uri, &event);
+	if(pn < 2) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+
+	if(pres_uri.s == NULL || pres_uri.len == 0) {
+		LM_ERR("empty uri\n");
+		rpc->fault(ctx, 500, "Empty presentity URI");
+		return;
+	}
+
+	if(event.s == NULL || event.len == 0) {
+		LM_ERR("empty event parameter\n");
+		rpc->fault(ctx, 500, "Empty event parameter");
+		return;
+	}
+	LM_DBG("uri '%.*s' - event '%.*s'\n", pres_uri.len, pres_uri.s,
+			event.len, event.s);
+
+	if(ki_pres_update_watchers(NULL, &pres_uri, &event)<0) {
+		rpc->fault(ctx, 500, "Processing error");
+		return;
+	}
+}
+
+static const char *rpc_presence_update_watchers_doc[2] = {
+		"Trigger update of watchers", 0};
+
+
 void rpc_presence_cleanup(rpc_t *rpc, void *c)
 {
 	LM_DBG("rpc_presence_cleanup:start\n");
@@ -1749,6 +1792,8 @@ rpc_export_t presence_rpc[] = {
 		{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
 		{"presence.refreshWatchers", rpc_presence_refresh_watchers,
 				rpc_presence_refresh_watchers_doc, 0},
+		{"presence.updateWatchers", rpc_presence_update_watchers,
+				rpc_presence_update_watchers_doc, 0},
 		{0, 0, 0, 0}};
 
 static int presence_init_rpc(void)
