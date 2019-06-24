@@ -788,7 +788,7 @@ static char *db_postgres_constraint_get(const db1_con_t *_h)
 	rows = RES_ROWS(res);
 	for(x = 0; x < RES_ROW_N(res); x++) {
 		val = (ROW_VALUES(&rows[x])[0]).val.string_val;
-		type = (ROW_VALUES(&rows[x])[0]).val.string_val;
+		type = (ROW_VALUES(&rows[x])[1]).val.string_val;
 		LM_DBG("name[%s]type[%s]\n", val, type);
 		if(type[0] == 'u')
 			break; // always favor unique constraint over primary key constraint
