@@ -28,7 +28,7 @@ int call_obj_end = 0;
 
 /* module commands */
 static cmd_export_t cmds[] = {
-	{"call_obj_get", (cmd_function)w_call_obj_get, 1, fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+	{"call_obj_get", (cmd_function)w_call_obj_get, 1, fixup_pvar_null, 0, ANY_ROUTE},
 	{"call_obj_free", (cmd_function)w_call_obj_free, 1, fixup_var_str_1, 0, ANY_ROUTE},
 	{ 0, 0, 0, 0, 0, 0}
 };
