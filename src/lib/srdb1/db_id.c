@@ -107,10 +107,11 @@ static int parse_db_url(struct db_id* id, const str* url)
 	};
 
 	enum state st;
-	unsigned int len, i, j, a;
+	unsigned int len, i, j, a,foundanother;
 	const char* begin;
 	char* prev_token;
 
+	foundanother = 0;
 	prev_token = 0;
 
 	if (!id || !url || !url->s) {
