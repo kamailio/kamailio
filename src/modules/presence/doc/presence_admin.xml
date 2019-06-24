@@ -1266,6 +1266,35 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 </programlisting>
 	</section>
+	<section id="presence.rpc.updateWatchers">
+	  <title>presence.updateWatchers</title>
+	  <para>
+		Manually triggers updates to watchers (for example,
+		after the contents of XCAP docs has been updated).
+	  </para>
+	  <para>
+		Name: <emphasis>presence.updateWatchers</emphasis>
+	  </para>
+	  <para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>uri - the uri of the user who made the changes
+				and whose watchers should be updated.</para>
+			</listitem>
+			<listitem>
+				<para>event - the event package (e.g. presence).
+				</para>
+			</listitem>
+		</itemizedlist>
+	  <para>
+		RPC Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+...
+&kamcmd; presence.updateWatchers sip:alice@domain.com presence
+...
+	  </programlisting>
+	</section>
 </section>
 
 <section>
