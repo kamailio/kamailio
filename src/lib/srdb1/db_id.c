@@ -164,6 +164,19 @@ static int parse_db_url(struct db_id* id, const str* url)
 		case ST_USER_HOST:
 			switch(url->s[i]) {
 			case '@':
+                                /* Look for another @ symbol */
+				if (foundanother == 0) {
+                                        for (j=i+1; j < url->len; j++) {
+                                                if (url->s[j] == '@') {
+                                                /* This means that the current @ is part of the username */ 
+                                                foundanother = 1;
+                                                st = ST_USER_HOST;
+                                                break;
+                                                }
+                                        }
+                                        break;
+                                }
+				
 				st = ST_HOST;
 				if (dupl_string(&id->username, begin, url->s + i) < 0) goto err;
 				begin = url->s + i + 1;
