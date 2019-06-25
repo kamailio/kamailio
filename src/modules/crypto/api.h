@@ -49,12 +49,12 @@ inline static int load_crypto_api( struct crypto_binds *cb )
 {
 	load_crypto_f load_crypto_v;
 
-	/* import the RR auto-loading function */
+	/* import the crypto auto-loading function */
 	if ( !(load_crypto_v=(load_crypto_f)find_export("load_crypto", 0, 0))) {
 		LM_ERR("failed to import load_crypto\n");
 		return -1;
 	}
-	/* let the auto-loading function load all RR stuff */
+	/* let the auto-loading function load all crypto stuff */
 	load_crypto_v( cb );
 
 	return 0;
