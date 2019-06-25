@@ -9,6 +9,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/trim.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -362,4 +363,83 @@ static int w_call_obj_free(struct sip_msg* msg, char* num_obj)
 	}
 
 	return 1;
+}
+
+/**
+ * Get a free object.
+ *
+ * /return -1 on error.
+ * /return number of free object on success.
+ */
+static int ki_call_obj_get(sip_msg_t *msg)
+{
+	str call_id;
+	if (get_call_id(msg, &call_id)) {
+		LM_ERR("Cannot get callid header\n");
+		goto error;
+	}
+	LM_DBG("CallId: %.*s\n", call_id.len, call_id.s);
+
+	uint64_t current_ts;
+	if (get_timestamp(&current_ts)) {
+		LM_ERR("error getting timestamp");
+		goto error;
+	}
+
+	int obj = cobj_get(current_ts, &call_id);
+	if (obj == -1) {
+		LM_ERR("Getting object\n");
+		goto error;
+	}
+	/* obj >= 0 */
+
+	return obj;
+
+error:
+	return -1;
+}
+
+/**
+ * Free an object.
+ *
+ * /param num_obj number of the object to free.
+ * /return 1 on success.
+ * /return 0 on error.
+ */
+static int ki_call_obj_free(sip_msg_t *msg, int num_obj)
+{
+	if (cobj_free(num_obj)) {
+		LM_ERR("Freeing object: %d\n", num_obj);
+		return 0;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_call_obj_exports[] = {
+	{ str_init("call_obj"), str_init("get"),
+		SR_KEMIP_INT, ki_call_obj_get,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("call_obj"), str_init("free"),
+	    SR_KEMIP_INT, ki_call_obj_free,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_call_obj_exports);
+	return 0;
 }
