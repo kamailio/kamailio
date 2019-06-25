@@ -690,6 +690,10 @@ int check_proxy_require(struct sip_msg* _msg) {
 				LM_DBG("checking proxy require failed\n");
 #endif
 				if (u) pkg_free(u);
+				if (msg->proxy_require->parsed) {
+					free_str_list(msg->proxy_require->parsed);
+					msg->proxy_require->parsed = NULL;
+				}
 				return SANITY_CHECK_FAILED;
 			}
 			else {
