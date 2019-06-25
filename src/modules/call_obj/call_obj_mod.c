@@ -105,7 +105,7 @@ static void rpc_call_obj_list(rpc_t *rpc, void *ctx)
 	cobj_elem_t *list = NULL;
 
 	int rc = rpc->scan(ctx, "d*d", &duration, &limit);
-	if (rc != -1 && rc != 2) {
+	if (rc != 1 && rc != 2) {
 		rpc->fault(ctx, 400, "requires arguments for duration number (and optionally limit)");
 		goto clean;
 	}
