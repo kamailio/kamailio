@@ -105,21 +105,22 @@ static int parse_db_url(struct db_id* id, const str* url)
 	};
 
 	enum state st;
-	unsigned int len, i, j, a;
+	unsigned int len, i, j, a, foundanother;
 	const char* begin;
 	char* prev_token;
 
+	foundanother = 0;
 	prev_token = 0;
 
 	if (!id || !url || !url->s) {
 		goto err;
 	}
-	
+
 	len = url->len;
 	if (len < SHORTEST_DB_URL_LEN) {
 		goto err;
 	}
-	
+
 	/* Initialize all attributes to 0 */
 	memset(id, 0, sizeof(struct db_id));
 	st = ST_SCHEME;
@@ -153,7 +154,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 				st = ST_USER_HOST;
 				begin = url->s + i + 1;
 				break;
-				
+
 			default:
 				goto err;
 			}
@@ -162,6 +163,20 @@ static int parse_db_url(struct db_id* id, const str* url)
 		case ST_USER_HOST:
 			switch(url->s[i]) {
 			case '@':
+				/* look for another @ to cope with username@domain user id */
+				if (foundanother == 0) {
+					for (j = i + 1; j < url->len; j++) {
+						if (url->s[j] == '@') {
+							foundanother = 1;
+							break;
+						}
+					}
+					if (foundanother == 1) {
+						/* keep the current @ in the username */
+						st = ST_USER_HOST;
+						break;
+					}
+				}
 				st = ST_HOST;
 				if (dupl_string(&id->username, begin, url->s + i) < 0) goto err;
 				begin = url->s + i + 1;
@@ -230,7 +245,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 				return 0;
 			}
 			break;
-			
+
 		case ST_DB:
 			break;
 		}
