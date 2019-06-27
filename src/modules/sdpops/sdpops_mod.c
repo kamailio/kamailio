@@ -2187,6 +2187,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sdpops"), str_init("sdp_with_codecs_by_id"),
+		SR_KEMIP_INT, sdp_with_codecs_by_id,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_codecs_by_name"),
+		SR_KEMIP_INT, sdp_with_codecs_by_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("sdpops"), str_init("sdp_get"),
 		SR_KEMIP_INT, ki_sdp_get,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
