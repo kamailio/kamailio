@@ -150,6 +150,8 @@ int spi_in_list(spi_list_t* list, uint32_t id)
     while(n) {
         if (n->id == id)
             return 1;
+        
+        n = n->next;
     }
 
     return 0;

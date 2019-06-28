@@ -82,9 +82,9 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
     <section>
       <title><varname>ipsec_client_port</varname> (int)</title>
 
-      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
 
-      <para><emphasis>Default value is 5963.</emphasis></para>
+      <para><emphasis>Default value is 5062.</emphasis></para>
 
       <example>
         <title><varname>ipsec_client_port</varname> parameter usage</title>
@@ -100,7 +100,7 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
     <section>
       <title><varname>ipsec_server_port</varname> (int)</title>
 
-      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
 
       <para><emphasis>Default value is 5063.</emphasis></para>
 
@@ -110,6 +110,26 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
         <programlisting format="linespecific">
 ...
 modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_max_connections</varname> (int)</title>
+
+      <para>Maximum IPSec connections for the process. E.g. if ipsec_client_port=5100, ipsec_server_port=6100 and
+      ipsec_max_connections=10, all client ports between 5100 and 5109 and all server ports between 6100 and 6109
+      will be used for maximum to 10 IPSec connections.</para>
+
+      <para><emphasis>Default value is 2.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_max_connections</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 ...
         </programlisting>
       </example>
@@ -227,7 +247,7 @@ ipsec_forward("location");
         </listitem>
 		  </itemizedlist>
       <example>
-        <title>ipsec_forward</title>
+        <title>ipsec_destroy</title>
 
         <programlisting format="linespecific">
 ...
