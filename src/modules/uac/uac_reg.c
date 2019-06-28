@@ -579,6 +579,8 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_ht_add_byuuid(nr);
 	counter_inc(regtotal);
 
+	LM_DBG("added uuid: %.*s - l_user: %.*s\n", nr->l_uuid.len, nr->l_uuid.s,
+			nr->l_username.len, nr->l_username.s);
 	return 0;
 }
 

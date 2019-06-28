@@ -382,6 +382,7 @@ static int child_init(int rank)
 
 		kam_srand(getpid() * 17 +  time(0));
 		uac_reg_load_db();
+		LM_DBG("run initial uac registration routine\n");
 		uac_reg_timer(0);
 		for(;;){
 			/* update the local config framework structures */
