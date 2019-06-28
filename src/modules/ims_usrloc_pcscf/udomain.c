@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -692,6 +693,106 @@ int delete_pcontact(udomain_t* _d, /*str* _aor, str* _received_host, int _receiv
 	}
 
 	mem_delete_pcontact(_d, _c);
+
+	return 0;
+}
+
+int unreg_pending_contacts_cb(udomain_t* _d, pcontact_t* _c, int type)
+{
+	pcontact_t*		c;
+	pcontact_info_t	contact_info;
+	unsigned int	aorhash, sl, i;
+
+	contact_info.via_host = _c->via_host;
+	contact_info.via_port = SIP_PORT;
+	contact_info.via_prot = _c->via_proto;
+	contact_info.reg_state = PCONTACT_ANY;
+
+	LM_DBG("Searching for contact in P-CSCF usrloc based on VIA [%d://%.*s:%d], reg state 0x%02X\n",
+			contact_info.via_prot, contact_info.via_host.len, contact_info.via_host.s, contact_info.via_port, contact_info.reg_state);
+	
+	aorhash = get_aor_hash(_d, &contact_info.via_host, contact_info.via_port, contact_info.via_prot);
+	sl = aorhash & (_d->size - 1);
+        
+    LM_DBG("get_pcontact slot is [%d]\n", sl);
+	c = _d->table[sl].first;
+
+	for(i = 0; i < _d->table[sl].n; i++){
+		LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
+		LM_DBG("contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
+
+		if(c->aorhash == aorhash){
+			ip_addr_t c_ip_addr;
+			ip_addr_t ci_ip_addr;
+
+			// convert 'contact->contact host' ip string to ip_addr_t
+			if (str2ipxbuf(&c->contact_host, &c_ip_addr) < 0){
+				LM_ERR("Unable to convert c->contact_host [%.*s]\n", c->contact_host.len, c->contact_host.s);
+				return 1;
+			}
+
+			// convert 'contact info->via host' ip string to ip_addr_t
+			if(str2ipxbuf(&contact_info.via_host, &ci_ip_addr) < 0){
+				LM_ERR("Unable to convert contact_info.via_host [%.*s]\n", contact_info.via_host.len, contact_info.via_host.s);
+				return 1;
+			}
+
+			// compare 'contact->contact host' and 'contact info->via host'
+			if(ip_addr_cmp(&c_ip_addr, &ci_ip_addr) && (c->contact_port == contact_info.via_port)){
+				LM_DBG("found contact with URI [%.*s]\n", c->aor.len, c->aor.s);
+
+				// finally check state being searched for
+				if((contact_info.reg_state != PCONTACT_ANY) && ((contact_info.reg_state & c->reg_state) == 0)){
+					LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info.reg_state, c->reg_state);
+					c = c->next;
+					continue;
+				}
+
+				// check for equal ipsec parameters
+				if(c->security_temp == NULL || _c->security_temp == NULL){
+					LM_DBG("Invalid temp security\n");
+					c = c->next;
+					continue;
+				}
+
+				if(c->security_temp->type != SECURITY_IPSEC){
+					LM_DBG("Invalid temp security type\n");
+					c = c->next;
+					continue;
+				}
+
+				if(c->security_temp->data.ipsec == NULL || _c->security_temp->data.ipsec == NULL){
+					LM_DBG("Invalid ipsec\n");
+					c = c->next;
+					continue;
+				}
+
+				LM_DBG("=========== c->reg_state 0x%02X, %u-%u | %u-%u | %u-%u | %u-%u | %u-%u | %u-%u | %u-%u | %u-%u |",
+					c->reg_state,
+					c->security_temp->data.ipsec->port_pc, _c->security_temp->data.ipsec->port_pc,
+				    c->security_temp->data.ipsec->port_ps, _c->security_temp->data.ipsec->port_ps,
+				    c->security_temp->data.ipsec->port_uc, _c->security_temp->data.ipsec->port_uc,
+				    c->security_temp->data.ipsec->port_us, _c->security_temp->data.ipsec->port_us,
+				    c->security_temp->data.ipsec->spi_pc, _c->security_temp->data.ipsec->spi_pc,
+				    c->security_temp->data.ipsec->spi_ps, _c->security_temp->data.ipsec->spi_ps,
+				    c->security_temp->data.ipsec->spi_uc, _c->security_temp->data.ipsec->spi_uc,
+				    c->security_temp->data.ipsec->spi_us, _c->security_temp->data.ipsec->spi_us);
+
+				if(c->security_temp->data.ipsec->port_pc == _c->security_temp->data.ipsec->port_pc &&
+				   c->security_temp->data.ipsec->port_ps == _c->security_temp->data.ipsec->port_ps &&
+				   c->security_temp->data.ipsec->port_uc == _c->security_temp->data.ipsec->port_uc &&
+				   c->security_temp->data.ipsec->port_us == _c->security_temp->data.ipsec->port_us &&
+				   c->security_temp->data.ipsec->spi_pc == _c->security_temp->data.ipsec->spi_pc &&
+				   c->security_temp->data.ipsec->spi_ps == _c->security_temp->data.ipsec->spi_ps &&
+				   c->security_temp->data.ipsec->spi_uc == _c->security_temp->data.ipsec->spi_uc &&
+				   c->security_temp->data.ipsec->spi_us == _c->security_temp->data.ipsec->spi_us){
+					// deregister user callback only for contacts with exact sec parameters like registerd contact
+					delete_ulcb(c, type);
+				}
+			}
+		}
+		c = c->next;
+	}
 
 	return 0;
 }

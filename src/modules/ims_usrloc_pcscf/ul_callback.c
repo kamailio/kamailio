@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -136,6 +137,49 @@ int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param )
 	}
 
 	return 1;
+}
+
+void delete_ulcb(struct pcontact* c, int type)
+{
+	struct ul_callback* cur;
+	struct ul_callback* prev;
+
+	if(c->cbs.first == 0 || ((c->cbs.reg_types) & type) == 0){
+		return;
+	}
+
+	// if the target is the first callback
+	cur = c->cbs.first;
+	if(cur->types & type){
+		if(cur->param){
+			if(*((unsigned short*)cur->param) == c->received_port){
+				LM_DBG("Removed ulcb from the head for contact: aor[%.*s], via port %u, received port %u, types 0x%02X\n", c->aor.len, c->aor.s, c->via_port, c->received_port, cur->types);
+				c->cbs.first = cur->next;
+				shm_free(cur);
+				return;
+			}
+		}
+	}
+
+	prev = c->cbs.first;
+	cur = c->cbs.first->next;
+	while(cur){
+		if(cur->types & type){
+			if(cur->param){
+				if(*((unsigned short*)cur->param) == c->received_port){
+					prev->next = cur->next;
+					LM_DBG("Removed ulcb for contact: aor[%.*s], via port %u, received port %u, types 0x%02X\n", c->aor.len, c->aor.s, c->via_port, c->received_port, cur->types);
+					shm_free(cur);
+					return;
+				}
+			}
+		}
+
+		prev = cur;
+		cur = cur->next;
+	}
+
+	LM_DBG("No ulcb has been deleted for contact: aor[%.*s], via port %u, received port %u\n", c->aor.len, c->aor.s, c->via_port, c->received_port);
 }
 
 /*! \brief run all transaction callbacks for an event type */
