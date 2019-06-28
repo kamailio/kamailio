@@ -82,6 +82,7 @@ Juha Heinanen
 
               5.1. presence.cleanup
               5.2. presence.refreshWatchers
+              5.3. presence.updateWatchers
 
         6. Exported Variables
 
@@ -224,6 +225,7 @@ Chapter 1. Admin Guide
 
         5.1. presence.cleanup
         5.2. presence.refreshWatchers
+        5.3. presence.updateWatchers
 
    6. Exported Variables
 
@@ -1004,6 +1006,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
    5.1. presence.cleanup
    5.2. presence.refreshWatchers
+   5.3. presence.updateWatchers
 
 5.1. presence.cleanup
 
@@ -1046,6 +1049,23 @@ kamcmd presence.cleanup
    RPC Command Format:
 ...
 kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
+...
+
+5.3. presence.updateWatchers
+
+   Manually triggers updates to watchers (for example, after the contents
+   of XCAP docs has been updated).
+
+   Name: presence.updateWatchers
+
+   Parameters:
+     * uri - the uri of the user who made the changes and whose watchers
+       should be updated.
+     * event - the event package (e.g. presence).
+
+   RPC Command Format:
+...
+kamcmd presence.updateWatchers sip:alice@domain.com presence
 ...
 
 6. Exported Variables

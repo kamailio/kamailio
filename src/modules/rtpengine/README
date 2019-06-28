@@ -12,25 +12,15 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Juha Heinanen
 
-Edited by
-
 Sas Ovidiu
-
-Edited by
 
 Carsten Bock
 
    ng-voice GmbH
-
-Edited by
 
 Richard Fuchs
 
@@ -131,6 +121,7 @@ Richard Fuchs
               4.69. mos_average_roundtrip_B_pv (string)
               4.70. mos_average_samples_B_pv (string)
               4.71. control_cmd_tos (integer)
+              4.72. hash_algo (integer)
 
         5. Functions
 
@@ -240,29 +231,30 @@ Richard Fuchs
    1.70. Set mos_average_roundtrip_B_pv parameter
    1.71. Set mos_average_samples_B_pv parameter
    1.72. Set control_cmd_tos parameter
-   1.73. set_rtpengine_set usage
-   1.74. rtpengine_offer usage
-   1.75. rtpengine_answer usage
-   1.76. rtpengine_info usage
-   1.77. rtpengine_delete usage
-   1.78. rtpengine_query usage
-   1.79. rtpengine_manage usage
-   1.80. start_recording usage
-   1.81. stop_recording usage
-   1.82. block_dtmf usage
-   1.83. unblock_dtmf usage
-   1.84. block_media usage
-   1.85. unblock_media usage
-   1.86. start_forwarding usage
-   1.87. stop_forwarding usage
-   1.88. play_media usage
-   1.89. stop_media usage
-   1.90. $rtpstat Usage
-   1.91. rtpengine.reload usage
-   1.92. rtpengine.enable usage
-   1.93. rtpengine.show usage
-   1.94. rtpengine.ping usage
-   1.95. rtpengine.get_hash_total usage
+   1.73. Set control_cmd_tos parameter
+   1.74. set_rtpengine_set usage
+   1.75. rtpengine_offer usage
+   1.76. rtpengine_answer usage
+   1.77. rtpengine_info usage
+   1.78. rtpengine_delete usage
+   1.79. rtpengine_query usage
+   1.80. rtpengine_manage usage
+   1.81. start_recording usage
+   1.82. stop_recording usage
+   1.83. block_dtmf usage
+   1.84. unblock_dtmf usage
+   1.85. block_media usage
+   1.86. unblock_media usage
+   1.87. start_forwarding usage
+   1.88. stop_forwarding usage
+   1.89. play_media usage
+   1.90. stop_media usage
+   1.91. $rtpstat Usage
+   1.92. rtpengine.reload usage
+   1.93. rtpengine.enable usage
+   1.94. rtpengine.show usage
+   1.95. rtpengine.ping usage
+   1.96. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -348,6 +340,7 @@ Chapter 1. Admin Guide
         4.69. mos_average_roundtrip_B_pv (string)
         4.70. mos_average_samples_B_pv (string)
         4.71. control_cmd_tos (integer)
+        4.72. hash_algo (integer)
 
    5. Functions
 
@@ -540,6 +533,7 @@ Chapter 1. Admin Guide
    4.69. mos_average_roundtrip_B_pv (string)
    4.70. mos_average_samples_B_pv (string)
    4.71. control_cmd_tos (integer)
+   4.72. hash_algo (integer)
 
 4.1. rtpengine_sock (string)
 
@@ -1799,6 +1793,22 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 modparam("rtpengine", "control_cmd_tos", "144")
 ...
 
+4.72. hash_algo (integer)
+
+   Hashing algorithm to be used in node selection algorithm. Now there are
+   2 possibilities: legacy alogrithm - 0(very basic hash over callid) or
+   SHA1 - 1(apply sha1 over the callid and calculate hash).
+
+   Default value is 0, legacy algorithm.
+
+   The values not falling into the range “0-1” .
+
+   Example 1.73. Set control_cmd_tos parameter
+...
+### use SHA1 instead of legacy algorithm
+modparam("rtpengine", "hash_algo", "1")
+...
+
 5. Functions
 
    5.1. set_rtpengine_set(setid[, setid])
@@ -1841,7 +1851,7 @@ modparam("rtpengine", "control_cmd_tos", "144")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.73. set_rtpengine_set usage
+   Example 1.74. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -2086,7 +2096,7 @@ rtpengine_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.74. rtpengine_offer usage
+   Example 1.75. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -2138,7 +2148,7 @@ ranscode=PCMA"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.75. rtpengine_answer usage
+   Example 1.76. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -2156,7 +2166,7 @@ ranscode=PCMA"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.76. rtpengine_info usage
+   Example 1.77. rtpengine_info usage
 ...
 rtpengine_info();
 ...
@@ -2171,7 +2181,7 @@ rtpengine_info();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.77. rtpengine_delete usage
+   Example 1.78. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -2187,7 +2197,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.78. rtpengine_query usage
+   Example 1.79. rtpengine_query usage
 ...
 rtpengine_query();
 ...
@@ -2221,7 +2231,7 @@ rtpengine_query();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.79. rtpengine_manage usage
+   Example 1.80. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -2240,7 +2250,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.80. start_recording usage
+   Example 1.81. start_recording usage
 ...
 start_recording();
 ...
@@ -2259,7 +2269,7 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.81. stop_recording usage
+   Example 1.82. stop_recording usage
 ...
 stop_recording();
 ...
@@ -2283,7 +2293,7 @@ stop_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.82. block_dtmf usage
+   Example 1.83. block_dtmf usage
 ...
 block_dtmf();
 block_dtmf("directional");
@@ -2299,7 +2309,7 @@ block_dtmf("address=192.168.42.42");
    unblocking DTMF events for the entire call (i.e. no flags given) will
    not remove these blocks. The flag “all” can be used to achieve this.
 
-   Example 1.83. unblock_dtmf usage
+   Example 1.84. unblock_dtmf usage
 ...
 unblock_dtmf();
 unblock_dtmf("all");
@@ -2313,7 +2323,7 @@ unblock_dtmf("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.84. block_media usage
+   Example 1.85. block_media usage
 ...
 block_media();
 block_media("directional");
@@ -2327,7 +2337,7 @@ block_media("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.85. unblock_media usage
+   Example 1.86. unblock_media usage
 ...
 unblock_media();
 unblock_media("all");
@@ -2342,7 +2352,7 @@ unblock_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.86. start_forwarding usage
+   Example 1.87. start_forwarding usage
 ...
 start_forwarding();
 start_forwarding("directional");
@@ -2356,7 +2366,7 @@ start_forwarding("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.87. stop_forwarding usage
+   Example 1.88. stop_forwarding usage
 ...
 stop_forwarding();
 stop_forwarding("all");
@@ -2375,7 +2385,7 @@ stop_forwarding("all");
    the duration of the media being played, expressed in milliseconds. If
    the length of the media could not be determined, it's set to -1.
 
-   Example 1.88. play_media usage
+   Example 1.89. play_media usage
 ...
 play_media("file=/use/share/media/hello.wav");
 play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
@@ -2387,7 +2397,7 @@ play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
    playback is automatically stopped when the end of the media file is
    reached, so this function is only useful to prematurely stop playback.
 
-   Example 1.89. stop_media usage
+   Example 1.90. stop_media usage
 ...
 stop_media();
 stop_media("from-tag=5yqaeriguhxcikxj");
@@ -2404,7 +2414,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.90. $rtpstat Usage
+   Example 1.91. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2427,7 +2437,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.91.  rtpengine.reload usage
+   Example 1.92.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2458,7 +2468,7 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.92.  rtpengine.enable usage
+   Example 1.93.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2481,7 +2491,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.93.  rtpengine.show usage
+   Example 1.94.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2501,7 +2511,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.94.  rtpengine.ping usage
+   Example 1.95.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2513,7 +2523,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.95.  rtpengine.get_hash_total usage
+   Example 1.96.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...
