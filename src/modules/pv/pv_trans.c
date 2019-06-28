@@ -1232,6 +1232,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 	str sproto;
+	int dlen = 0;
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
@@ -1266,8 +1267,11 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			free_params(_tr_uri_params);
 			_tr_uri_params = 0;
 		}
+		if(_tr_uri.len>4 && _tr_uri.s[_tr_uri.len-1]==';') {
+			dlen = 1;
+		}
 		/* parse uri -- params only when requested */
-		if(parse_uri(_tr_uri.s, _tr_uri.len, &_tr_parsed_uri)!=0)
+		if(parse_uri(_tr_uri.s, _tr_uri.len - dlen, &_tr_parsed_uri)!=0)
 		{
 			LM_ERR("invalid uri [%.*s]\n", val->rs.len,
 					val->rs.s);
@@ -1505,6 +1509,9 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 		/* parse params */
 		sv = _tr_params_str;
+		if(sv.len>1 && sv.s[sv.len - 1] == _tr_params_separator) {
+			sv.len--;
+		}
 		if (parse_params2(&sv, CLASS_ANY, &phooks, &_tr_params_list,
 					_tr_params_separator)<0)
 			return -1;
