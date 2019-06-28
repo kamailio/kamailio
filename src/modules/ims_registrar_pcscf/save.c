@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -50,6 +51,7 @@
 #include "subscribe.h"
 
 #include "../pua/pua_bind.h"
+#include "../ims_ipsec_pcscf/cmd.h"
 #include "sec_agree.h"
 
 extern struct tm_binds tmb;
@@ -59,6 +61,7 @@ extern unsigned int pending_reg_expires;
 extern int subscribe_to_reginfo;
 extern int subscription_expires;
 extern pua_api_t pua;
+extern ipsec_pcscf_api_t ipsec_pcscf;
 
 struct sip_msg* get_request_from_reply(struct sip_msg* reply)
 {
@@ -228,7 +231,17 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 								expires-local_time_now);
 						ci.reg_state = PCONTACT_REGISTERED;
 						if (ul.update_pcontact(_d, &ci, pcontact) != 0) {
-							LM_ERR("failed to update pcscf contact\n");
+							LM_DBG("failed to update pcscf contact\n");
+						}else{
+							// Register callback to destroy related tunnels to this contact.
+							// The registration should be exact here, after the successfuly registration of the UE
+							LM_DBG("ul.register_ulcb(pcontact, PCSCF_CONTACT_EXPIRE|PCSCF_CONTACT_DELETE...)\n");
+							if(ul.register_ulcb(pcontact, PCSCF_CONTACT_EXPIRE|PCSCF_CONTACT_DELETE, ipsec_pcscf.ipsec_on_expire, NULL) != 1){
+								LM_DBG("Error subscribing for contact\n");
+							}
+
+							// After successful registration try to unregister all callbacks for pending contacts ralated to this contact.
+							ul.unreg_pending_contacts_cb(_d, pcontact, PCSCF_CONTACT_EXPIRE);
 						}
 						pcontact->expires = expires;
 					}
@@ -337,21 +350,25 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
     // Parse security parameters
     security_t* sec_params = NULL;
     if((sec_params = cscf_get_security(_m)) == NULL) {
-        LM_ERR("Will save pending contact without security parameters\n");
+        LM_DBG("Will save pending contact without security parameters\n");
     }
 
 	// Parse security-verify parameters
     security_t* sec_verify_params = NULL;
     if((sec_verify_params = cscf_get_security_verify(_m)) == NULL){
-        LM_ERR("Will save pending contact without security-verify parameters\n");
+        LM_DBG("Will save pending contact without security-verify parameters\n");
     }else{
 		if(sec_params){
 			// for REGISTER request try to set spi pc and spi ps from security-verify header
 			sec_params->data.ipsec->spi_ps = sec_verify_params->data.ipsec->spi_us;
 			sec_params->data.ipsec->spi_pc = sec_verify_params->data.ipsec->spi_uc;
 
-			LM_DBG("Will save pending contact with security-verify parameters, spc_ps %u, spi_pc %u\n",
-					sec_params->data.ipsec->spi_ps, sec_params->data.ipsec->spi_pc);
+			// Get from verify header pcscf server and client ports
+			sec_params->data.ipsec->port_ps = sec_verify_params->data.ipsec->port_us;
+			sec_params->data.ipsec->port_pc = sec_verify_params->data.ipsec->port_uc;
+
+			LM_DBG("Will save pending contact with security-verify parameters, spc_ps %u, spi_pc %u, port_ps %u, port_pc %u\n",
+					sec_params->data.ipsec->spi_ps, sec_params->data.ipsec->spi_pc, sec_params->data.ipsec->port_ps, sec_params->data.ipsec->port_pc);
 		}
 	}
 
@@ -364,18 +381,17 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		} else {
 			LM_DBG("registering for UL callback\n");
 			ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_UPDATE, callback_pcscf_contact_cb, NULL);
+
+			// Update security parameters only for the pending contacts
+			if(sec_params){
+				if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0){
+					LM_ERR("Error updating temp security\n");
+				}
+			}
 		}
 	} else { //contact already exists - update
         LM_DBG("Contact already exists - not doing anything for now\n");
 	}
-
-    // Update security parameters
-    if(sec_params) {
-        if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0)
-        {
-            LM_ERR("Error updating temp security\n");
-        }
-    }
 
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 

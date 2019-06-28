@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -57,6 +58,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../ims_ipsec_pcscf/cmd.h"
 
 /* Bindings to PUA */
 #include "../pua/pua_bind.h"
@@ -73,6 +75,7 @@ usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
 sl_api_t slb;							/**!< SL API structure */
 struct tm_binds tmb;					/**!< TM API structure */
 pua_api_t pua; 							/**!< PUA API structure */
+ipsec_pcscf_api_t ipsec_pcscf;			/**!< Structure containing pointers to ipsec pcscf functions*/
 
 int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
@@ -228,6 +231,7 @@ int fix_parameters() {
 static int mod_init(void) {
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
+	bind_ipsec_pcscf_t bind_ipsec_pcscf;
 
 	/*register space for event processor*/
 	register_procs(1);
@@ -258,6 +262,17 @@ static int mod_init(void) {
 		return -1;
 	}
 	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
+
+	bind_ipsec_pcscf = (bind_ipsec_pcscf_t) find_export("bind_ims_ipsec_pcscf", 1, 0);
+	if (!bind_ipsec_pcscf) {
+		LM_ERR("can't bind ims_ipsec_pcscf\n");
+		return -1;
+	}
+
+	if (bind_ipsec_pcscf(&ipsec_pcscf) < 0) {
+		return -1;
+	}
+	LM_INFO("Successfully bound to PCSCF IPSEC module\n");
 
        if(subscribe_to_reginfo == 1){
                /* Bind to PUA: */
