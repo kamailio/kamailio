@@ -421,6 +421,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 
 	if (rpc->add(ctx, "{", &th) < 0)
 	{
+		release_urecord(rec);
 		unlock_udomain(dom, &aor);
 		rpc->fault(ctx, 500, "Internal error creating outer rpc");
 		return;
@@ -429,6 +430,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 				"AoR", &aor,
 				"Contacts", &ih)<0)
 	{
+		release_urecord(rec);
 		unlock_udomain(dom, &aor);
 		rpc->fault(ctx, 500, "Internal error creating aor struct");
 		return;
@@ -439,12 +441,13 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 		if (VALID_CONTACT( con, act_time)) {
 			rpl_tree++;
 			if (rpc_dump_contact(rpc, ctx, ih, con) == -1) {
+				release_urecord(rec);
 				unlock_udomain(dom, &aor);
 				return;
 			}
 		}
 	}
-
+	release_urecord(rec);
 	unlock_udomain( dom, &aor);
 
 	if (rpl_tree==0) {
@@ -533,17 +536,20 @@ static void ul_rpc_rm_contact(rpc_t* rpc, void* ctx)
 
 	ret = get_ucontact( rec, &contact, &rpc_ul_cid, &rpc_ul_path, RPC_UL_CSEQ+1, &con);
 	if (ret < 0) {
+		release_urecord(rec);
 		unlock_udomain( dom, &aor);
 		rpc->fault(ctx, 500, "Internal error (can't get contact)");
 		return;
 	}
 	if (ret > 0) {
+		release_urecord(rec);
 		unlock_udomain( dom, &aor);
 		rpc->fault(ctx, 404, "Contact not found");
 		return;
 	}
 
 	if (delete_ucontact(rec, con) < 0) {
+		release_urecord(rec);
 		unlock_udomain( dom, &aor);
 		rpc->fault(ctx, 500, "Internal error (can't delete contact)");
 		return;
