@@ -45,6 +45,15 @@
         </listitem>
         <listitem>
           <para>
+            At the moment the callcontrol application only supports the old
+            <quote>MI</quote> interface for communication with Kamailio. This
+            interface is unfortunately not available anymore in Kamailio. So
+            this application can't be used right now together with the
+            call_control module.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
             A rating engine that is used to calculate the time limit based on
             the caller's credit and the destination price and to debit the
             caller's balance after a call ends. This is available as part of
