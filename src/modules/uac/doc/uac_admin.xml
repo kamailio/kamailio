@@ -1113,6 +1113,7 @@ event_route[uac:reply] {
 			<programlisting format="linespecific">
 ...
    kamcmd uac.reg_info l_uuid account123
+   kamcmd uac.reg_info l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1134,6 +1135,7 @@ event_route[uac:reply] {
 			<programlisting format="linespecific">
 ...
    kamcmd uac.reg_enable l_uuid account123
+   kamcmd uac.reg_enable l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1155,6 +1157,7 @@ event_route[uac:reply] {
 			<programlisting format="linespecific">
 ...
    kamcmd uac.reg_disable l_uuid account123
+   kamcmd uac.reg_disable l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1191,6 +1194,7 @@ event_route[uac:reply] {
 			<programlisting format="linespecific">
 ...
    kamcmd uac.reg_refresh account123
+   kamcmd uac.reg_refresh s:12345678
 ...
 			</programlisting>
 		</example>
