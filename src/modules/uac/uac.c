@@ -107,6 +107,7 @@ static void mod_destroy(void);
 static int child_init(int rank);
 
 extern int reg_timer_interval;
+extern int _uac_reg_gc_interval;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -170,6 +171,7 @@ static param_export_t params[] = {
 	{"reg_keep_callid",	INT_PARAM,			&reg_keep_callid       },
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
+	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
 	{0, 0, 0}
 };
 

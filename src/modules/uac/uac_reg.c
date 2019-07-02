@@ -58,8 +58,9 @@
 #define UAC_REG_INIT		(1<<4) /* registration initialized */
 
 #define MAX_UACH_SIZE 2048
-#define UAC_REG_GC_INTERVAL	150
 #define UAC_REG_TM_CALLID_SIZE 90
+
+int _uac_reg_gc_interval = 150;
 
 typedef struct _reg_uac
 {
@@ -423,9 +424,10 @@ int uac_reg_ht_shift(void)
 	tn = time(NULL);
 
 	lock_get(_reg_htable_gc_lock);
-	if(_reg_htable_gc->stime > tn-UAC_REG_GC_INTERVAL) {
+	if(_reg_htable_gc->stime > tn - _uac_reg_gc_interval) {
 		lock_release(_reg_htable_gc_lock);
-		LM_ERR("shifting the memory table is not possible in less than %d secs\n", UAC_REG_GC_INTERVAL);
+		LM_ERR("shifting in-memory table is not possible in less than %d secs\n",
+				_uac_reg_gc_interval);
 		return -1;
 	}
 	uac_reg_reset_ht_gc();
@@ -1224,7 +1226,7 @@ void uac_reg_timer(unsigned int ticks)
 	{
 		lock_get(_reg_htable_gc_lock);
 		if(_reg_htable_gc->stime!=0
-				&& _reg_htable_gc->stime < tn - UAC_REG_GC_INTERVAL)
+				&& _reg_htable_gc->stime < tn - _uac_reg_gc_interval)
 			uac_reg_reset_ht_gc();
 		lock_release(_reg_htable_gc_lock);
 	}
