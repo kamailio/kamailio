@@ -537,6 +537,31 @@ modparam("uac", "reg_active", 0)
 			</example>
 		</section>
 
+		<section id="uac.p.reg_gc_interval">
+			<title><varname>reg_gc_interval</varname> (int)</title>
+			<para>
+			Timer interval (in seconds) at which remote registrations are cleaned
+			up in case of failure or removed. When setting it take in consideration
+			the maximum value for retransmission timeout, this param should be greater
+			than it. This value also impacts how ofter the reload for remote
+			registrations table can be executed -- the RPC command will fail if
+			executed in less than reg_gc_interval value since the last reload.
+			</para>
+			<para>
+				<emphasis>
+				The default value is 150 seconds.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set <varname>reg_gc_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_gc_interval", 60)
+...
+				</programlisting>
+			</example>
+		</section>
 
 	</section>
 
