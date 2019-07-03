@@ -688,6 +688,14 @@ modparam("acc", "log_flag", 2)
 		<title><varname>log_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed calls via syslog.
+		This can be used to e.g. account failures during the call setup phase
+		from the callee side, for example if you do forking to several
+		destinations.
+		</para>
+		<para>
+		Keep in mind that this flag is reset after processing. Therefore it is
+		necessary to set it again e.g. in a failure_route if you do serial
+		forking and want to log all attempts.
 		</para>
 		<para>
 		Default value is not-set (no flag).
