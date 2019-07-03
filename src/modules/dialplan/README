@@ -8,15 +8,9 @@ Edited by
 
 Andreea-Ancuta Onofrei
 
-Edited by
-
 Juha Heinanen
 
-Edited by
-
 Olle E. Johansson
-
-Edited by
 
 Luis Martin
 
@@ -556,7 +550,9 @@ xlog("translated to var $var(y) \n");
 
 7.2. dialplan.reload
 
-   Forces an update of the translation rules from the database.
+   Perform a reload of the translation rules from the database. Note that
+   there is a rate limiting defined by 'reload_delta' paramenter. By
+   default is allowed maximum one reload in five seconds.
 
    Name: dialplan.reload
 

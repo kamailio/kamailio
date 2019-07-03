@@ -92,6 +92,11 @@ Chapter 1. Admin Guide
        also instruct the rating engine to debit the balance for the caller
        with the consumed amount. The callcontrol application is available
        from http://callcontrol.ag-projects.com/
+     * At the moment the callcontrol application only supports the old
+       “MI” interface for communication with Kamailio. This interface is
+       unfortunately not available anymore in Kamailio. So this
+       application can't be used right now together with the call_control
+       module.
      * A rating engine that is used to calculate the time limit based on
        the caller's credit and the destination price and to debit the
        caller's balance after a call ends. This is available as part of
