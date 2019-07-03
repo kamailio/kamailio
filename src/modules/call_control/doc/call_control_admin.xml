@@ -45,11 +45,14 @@
         </listitem>
         <listitem>
           <para>
-            At the moment the callcontrol application only supports the old
-            <quote>MI</quote> interface for communication with Kamailio. This
-            interface is unfortunately not available anymore in Kamailio. So
-            this application can't be used right now together with the
-            call_control module.
+			NOTE: At the moment the callcontrol application only supports the old
+			<quote>MI</quote> interface for communication with &kamailio;. This
+			interface is unfortunately not available anymore in &kamailio;. So
+			this application cannot be used right now out of the box together
+			with the call_control module. See the next link for possible
+			solutions:
+			<ulink url="https://lists.kamailio.org/pipermail/sr-users/2019-June/106056.html">
+				https://lists.kamailio.org/pipermail/sr-users/2019-June/106056.html</ulink>.
           </para>
         </listitem>
         <listitem>
