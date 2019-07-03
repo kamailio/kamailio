@@ -642,7 +642,7 @@ xlog("translated to var $var(y) \n");
 
 	</section>
 
-	<section id="dispatcher.f.dp_reload">
+	<section id="dialplan.f.dp_reload">
 		<title>
 		<function moreinfo="none">dp_reload()</function>
 		</title>
@@ -685,7 +685,9 @@ xlog("translated to var $var(y) \n");
 		<section id="dialplan.r.dp.reload">
 			<title><varname>dialplan.reload</varname></title>
 			<para>
-			Forces an update of the translation rules from the database.
+			Perform a reload of the translation rules from the database.
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 			</para>
 			<para>
 			Name: <emphasis>dialplan.reload</emphasis>
