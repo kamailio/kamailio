@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','6');
+INSERT INTO version (table_name, table_version) values ('location','7');
 CREATE TABLE `location` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `domain` varchar(64) NOT NULL,
@@ -23,6 +23,8 @@ CREATE TABLE `location` (
   `ik` varchar(100) DEFAULT NULL,
   `ealg` char(20) DEFAULT NULL,
   `ialg` char(20) DEFAULT NULL,
+  `port_pc` int(11) unsigned DEFAULT NULL,
+  `port_ps` int(11) unsigned DEFAULT NULL,
   `port_uc` int(11) unsigned DEFAULT NULL,
   `port_us` int(11) unsigned DEFAULT NULL,
   `spi_pc` int(11) unsigned DEFAULT NULL,
@@ -30,6 +32,8 @@ CREATE TABLE `location` (
   `spi_uc` int(11) unsigned DEFAULT NULL,
   `spi_us` int(11) unsigned DEFAULT NULL,
   `t_security_type` int(11) DEFAULT NULL,
+  `t_port_pc` int(11) unsigned DEFAULT NULL,
+  `t_port_ps` int(11) unsigned DEFAULT NULL,
   `t_port_uc` int(11) unsigned DEFAULT NULL,
   `t_port_us` int(11) unsigned DEFAULT NULL,
   `t_spi_pc` int(11) unsigned DEFAULT NULL,
