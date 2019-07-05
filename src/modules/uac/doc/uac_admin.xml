@@ -1193,7 +1193,10 @@ event_route[uac:reply] {
 				<function moreinfo="none">uac.reg_reload</function>
 			</title>
 		<para>
-			Reload the records from database for remote registrations.
+			Reload the records from database for remote registrations. There is
+			a limit of how often the reload command can be executed, by default
+			is 150 seconds between reloads -- see the reg_gc_interval parameter
+			for more details.
 		</para>
 		<example>
 		<title><function>uac.reg_reload</function> usage</title>
