@@ -20,7 +20,7 @@
 		provides access to the table for  other modules. The module exports no
 		functions that can  be used directly from routing scripts.
 	</para>
-		<section id="contact-matching-algs">
+		<section id="usrloc.o.contact-matching-algs">
 		<title>Contact matching</title>
 		<para>
 		How the contacts are matched (for the same AOR - Address of Record) is an
@@ -112,7 +112,7 @@
 	<section>
 	<title>Parameters</title>
 	<section id="usrloc.p.nat_bflag">
-		<title><varname>nat_bflag</varname> (integer)</title>
+		<title><varname>nat_bflag</varname> (int)</title>
 		<para>
 		The index of the branch flag to be used as NAT marker (if the contact
 		is or not natted). This is a branch flag and it will be imported and
@@ -537,7 +537,7 @@ modparam("usrloc", "partition_column", "part")
 	</section>
 
 	<section id="usrloc.p.use_domain">
-		<title><varname>use_domain</varname> (integer)</title>
+		<title><varname>use_domain</varname> (int)</title>
 		<para>
 		If the domain part of the user should be also saved and used for
 		identifying the user (along with the username part). Useful in
@@ -559,7 +559,7 @@ modparam("usrloc", "use_domain", 1)
 	</section>
 
 	<section id="usrloc.p.desc_time_order">
-		<title><varname>desc_time_order</varname> (integer)</title>
+		<title><varname>desc_time_order</varname> (int)</title>
 		<para>
 		If the user's contacts should be kept timestamp ordered; otherwise the
 		contact will be ordered based on q value.
@@ -581,7 +581,7 @@ modparam("usrloc", "desc_time_order", 1)
 	</section>
 
 	<section id="usrloc.p.timer_interval">
-		<title><varname>timer_interval</varname> (integer)</title>
+		<title><varname>timer_interval</varname> (int)</title>
 		<para>
 		Number of seconds between two timer runs. The module uses a timer to
 		delete expired contacts, synchronize with database and other tasks,
@@ -623,7 +623,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 	</section>
 
 	<section id="usrloc.p.db_mode">
-		<title><varname>db_mode</varname> (integer)</title>
+		<title><varname>db_mode</varname> (int)</title>
 		<para>
 		The usrloc module can utilize a database for persistent contact storage.
 		If a database is used, the location database (contacts)  will survive
@@ -708,7 +708,7 @@ modparam("usrloc", "db_mode", 2)
 	</section>
 
 	<section id="usrloc.p.db_load">
-		<title><varname>db_load</varname> (integer)</title>
+		<title><varname>db_load</varname> (int)</title>
 		<para>
 		Determine if the usrloc module should load contacts from the database storage during module initialization
 		A value of 0 disable the loading from the database, this parameter is ignored if db_mode 4 is set
@@ -722,14 +722,14 @@ modparam("usrloc", "db_mode", 2)
 		<title>Set <varname>db_load</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "db_load", "0")
+modparam("usrloc", "db_load", 0)
 ...
 		</programlisting>
 		</example>
 	</section>
 
 	<section id="usrloc.p.db_insert_update">
-		<title><varname>db_insert_update</varname> (integer)</title>
+		<title><varname>db_insert_update</varname> (int)</title>
 		<para>
 		Determine if the usrloc module should do an update when a duplicate key is found while inserting
 		A value of 1 will activate update on duplicate key
@@ -743,14 +743,14 @@ modparam("usrloc", "db_load", "0")
 		<title>Set <varname>db_insert_update</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "db_insert_update", "1")
+modparam("usrloc", "db_insert_update", 1)
 ...
 		</programlisting>
 		</example>
 	</section>
 
 	<section id="usrloc.p.matching_mode">
-		<title><varname>matching_mode</varname> (integer)</title>
+		<title><varname>matching_mode</varname> (int)</title>
 		<para>
 		What contact matching algorithm to be used. Refer to section
 		<xref linkend="contact-matching-algs"/> for the description of the
@@ -800,7 +800,7 @@ modparam("usrloc", "matching_mode", 1)
 	</section>
 
 	<section id="usrloc.p.cseq_delay">
-		<title><varname>cseq_delay</varname> (integer)</title>
+		<title><varname>cseq_delay</varname> (int)</title>
 		<para>
 		Delay (in seconds) for accepting as retransmissions register requests
 		with same Call-ID and Cseq. The delay is calculated starting from the
@@ -830,7 +830,7 @@ modparam("usrloc", "cseq_delay", 5)
 	</section>
 
 	<section id="usrloc.p.fetch_rows">
-		<title><varname>fetch_rows</varname> (integer)</title>
+		<title><varname>fetch_rows</varname> (int)</title>
 		<para>
 		The number of the rows to be fetched at once from database
 		when loading the location records. This value can be used
@@ -854,7 +854,7 @@ modparam("usrloc", "fetch_rows", 3000)
 	</section>
 
 	<section id="usrloc.p.hash_size">
-		<title><varname>hash_size</varname> (integer)</title>
+		<title><varname>hash_size</varname> (int)</title>
 		<para>
 		The number of entries of the hash table used by usrloc to store the
 		location records is 2^hash_size. For hash_size=4, the number of slots
@@ -1221,7 +1221,7 @@ modparam("usrloc", "server_id_filter", 1)
 	</section>
 
 	<section id="usrloc.p.version_table">
-		<title><varname>version_table</varname> (integer)</title>
+		<title><varname>version_table</varname> (int)</title>
 		<para>
 		If set to 0, the module will skip checking the version
 		for location table.
