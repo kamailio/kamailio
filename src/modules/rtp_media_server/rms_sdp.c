@@ -240,9 +240,7 @@ PayloadType *rms_sdp_check_payload_type(PayloadType *pt, rms_sdp_info_t *sdp)
 	//	} else if (pt->type == 18) {
 	//		pt->mime_type=rms_char_dup("g729", 1);
 	//	}
-	if (pt->mime_type)
-		return pt;
-	return NULL;
+	return pt;
 }
 
 PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
@@ -256,7 +254,7 @@ PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 	while (payload_type_number) {
 		pt->type = atoi(payload_type_number);
 		pt = rms_sdp_check_payload_type(pt, sdp);
-		if (pt) return pt;
+		if (pt->mime_type) return pt;
 		payload_type_number = strtok(NULL, " ");
 	}
 	if (!pt->mime_type) {
