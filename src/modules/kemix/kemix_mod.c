@@ -453,6 +453,38 @@ static sr_kemi_xval_t* ki_kx_get_rcvport(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_proto(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &_sr_kemi_kx_xval.v.s)<0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+	}
+
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static int ki_kx_get_protoid(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		return -1;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	return (int)msg->rcv.proto;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -567,6 +599,16 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_rcvport"),
 		SR_KEMIP_XVAL, ki_kx_get_rcvport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_proto"),
+		SR_KEMIP_XVAL, ki_kx_get_proto,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_protoid"),
+		SR_KEMIP_INT, ki_kx_get_protoid,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
