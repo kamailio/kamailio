@@ -1072,7 +1072,15 @@ static int rms_sip_request_f(struct sip_msg *msg)
 		LM_NOTICE("initial INVITE\n");
 		return 1;
 	} else {
-		LM_NOTICE("in dialog message\n");
+		LM_NOTICE("in dialog message, state [%d]\n", di->state);
+		if (di->state == RMS_ST_DISCONNECTING) {
+			return -1; // ignore in dialog message in this state
+		} else if (di->state == RMS_ST_DISCONNECTED) {
+			rms_create_trans(msg);
+			if (!tmb.t_reply(msg, 481, "Call/Transaction Does Not Exist"))
+				return -1;
+			return 1;
+		}
 	}
 
 	rms_sip_forward(di, msg, method);
