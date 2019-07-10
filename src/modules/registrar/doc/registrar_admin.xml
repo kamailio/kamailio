@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="rergistrar.overview">
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic. The actual location
@@ -1509,6 +1509,30 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 		<programlisting format="linespecific">
 ...
 reg_free_contacts("callee");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="registrar.f.reg_send_reply">
+		<title>
+		<function moreinfo="none">reg_send_reply()</function>
+		</title>
+		<para>
+			The function sends the SIP reply that is normally sent by
+			save(...), but that was skipped due to flag 0x2. It must be used
+			after save(..., "0x2"). Practically it allows saving registration
+			to location table, do other operations and then send the reply.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>reg_send_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+save("location", "0x2");
+...
+reg_send_reply();
 ...
 </programlisting>
 		</example>
