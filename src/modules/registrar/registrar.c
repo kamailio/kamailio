@@ -76,6 +76,7 @@ static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
 static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
 		char* _actionflags);
+static int w_reg_send_reply(sip_msg_t* _m, char* _p1, char* _p2);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -201,6 +202,8 @@ static cmd_export_t cmds[] = {
 			fixup_str_null, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"lookup_branches",  (cmd_function)w_lookup_branches, 1,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"reg_send_reply",   (cmd_function)w_reg_send_reply,  0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"bind_registrar",  (cmd_function)bind_registrar,  0,
 		0, 0, 0},
@@ -674,6 +677,24 @@ static int ki_unregister_ruid(sip_msg_t* _m, str* _dtable, str* _uri, str *_ruid
 	return unregister(_m, d, _uri, _ruid);
 }
 
+/*!
+ *
+ */
+static int ki_reg_send_reply(sip_msg_t* _m)
+{
+	int ret;
+	ret = reg_send_reply(_m);
+	return (ret==0)?1:ret;
+}
+
+/*!
+ *
+ */
+static int w_reg_send_reply(sip_msg_t* _m, char* _p1, char* _p2)
+{
+	return ki_reg_send_reply(_m);
+}
+
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
  */
@@ -969,6 +990,11 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 	{ str_init("registrar"), str_init("reg_free_contacts"),
 		SR_KEMIP_INT, ki_reg_free_contacts,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("reg_send_reply"),
+		SR_KEMIP_INT, ki_reg_send_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
