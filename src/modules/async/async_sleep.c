@@ -60,8 +60,7 @@ typedef struct async_item {
 } async_item_t;
 
 typedef struct async_ms_item {
-	async_task_t at;
-	async_task_param_t atp;
+	async_task_t *at;
 	struct timeval due;
 	struct async_ms_item *next;
 } async_ms_item_t;
@@ -306,8 +305,8 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 	for (aip = _async_ms_list->lstart; aip; aip = aip->next) {
 		if (timercmp(&now, &aip->due, >=)) {
 			_async_ms_list->lstart = aip->next;
-			if (async_task_push(&aip->at)<0) {
-		                shm_free(aip);
+			if (async_task_push(aip->at)<0) {
+		                shm_free(aip->at);
 			}
 			continue;
 		}
@@ -353,6 +352,7 @@ void async_exec_task(void *param)
 int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbname)
 {
 	async_ms_item_t *ai;
+	int dsize;
 	tm_cell_t *t = 0;
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -371,13 +371,18 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
+	dsize = sizeof(async_task_t) + sizeof(async_task_param_t) + sizeof(async_ms_item_t);
 
-	ai = (async_ms_item_t *)shm_malloc(sizeof(async_item_t));
-	if(ai == NULL) {
+	at = (async_task_t *)shm_malloc(dsize);
+	if(at == NULL) {
 		LM_ERR("no more shm memory\n");
 		return -1;
 	}
-	memset(ai, 0, sizeof(async_item_t));
+	memset(at, 0, dsize);
+	at->param = (char *)at + sizeof(async_task_t);
+	atp = (async_task_param_t *)at->param;
+	ai = (async_ms_item_t *) ((char *)at +  sizeof(async_task_t) + sizeof(async_task_param_t));
+	ai->at = at;
 
 	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
@@ -396,8 +401,6 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 			return -1;
 		}
 	}
-	at = &ai->at;
-	atp = &ai->atp;
 	
 	if(tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
 		LM_ERR("failed to suspend the processing\n");
