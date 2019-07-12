@@ -48,6 +48,8 @@ static void mod_destroy(void);
 
 static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2);
 static int fixup_async_sleep(void **param, int param_no);
+static int w_async_ms_sleep(sip_msg_t *msg, char *sec, char *str2);
+static int fixup_async_ms_sleep(void **param, int param_no);
 static int w_async_route(sip_msg_t *msg, char *rt, char *sec);
 static int fixup_async_route(void **param, int param_no);
 static int w_async_task_route(sip_msg_t *msg, char *rt, char *p2);
@@ -61,6 +63,8 @@ static cmd_export_t cmds[]={
 	{"async_route", (cmd_function)w_async_route, 2, fixup_async_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_sleep", (cmd_function)w_async_sleep, 1, fixup_async_sleep,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"async_ms_sleep", (cmd_function)w_async_ms_sleep, 1, fixup_async_ms_sleep,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_task_route", (cmd_function)w_async_task_route, 1, fixup_async_task_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -101,6 +105,11 @@ static int mod_init(void)
 		return 0;
 
 	if(async_init_timer_list() < 0) {
+		LM_ERR("cannot initialize internal structure\n");
+		return -1;
+	}
+
+	if(async_init_ms_timer_list() < 0) {
 		LM_ERR("cannot initialize internal structure\n");
 		return -1;
 	}
@@ -147,6 +156,7 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	async_destroy_timer_list();
+	async_destroy_ms_timer_list();
 }
 
 /**
@@ -192,7 +202,71 @@ static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2)
 /**
  *
  */
+static int w_async_ms_sleep(sip_msg_t *msg, char *sec, char *str2)
+{
+	int s;
+	async_param_t *ap;
+
+	if(msg == NULL)
+		return -1;
+
+	if(faked_msg_match(msg)) {
+		LM_ERR("invalid usage for faked message\n");
+		return -1;
+	}
+
+	if(async_workers <= 0) {
+		LM_ERR("no async mod timer workers (modparam missing?)\n");
+		return -1;
+	}
+
+	ap = (async_param_t *)sec;
+	if(fixup_get_ivalue(msg, ap->pinterval, &s) != 0) {
+		LM_ERR("no async sleep time value\n");
+		return -1;
+	}
+	if(ap->type == 0) {
+		if(ap->u.paction == NULL || ap->u.paction->next == NULL) {
+			LM_ERR("cannot be executed as last action in a route block\n");
+			return -1;
+		}
+		if(async_ms_sleep(msg, s, ap->u.paction->next, NULL) < 0)
+			return -1;
+		/* force exit in config */
+		return 0;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
 static int fixup_async_sleep(void **param, int param_no)
+{
+	async_param_t *ap;
+	if(param_no != 1)
+		return 0;
+	ap = (async_param_t *)pkg_malloc(sizeof(async_param_t));
+	if(ap == NULL) {
+		LM_ERR("no more pkg memory available\n");
+		return -1;
+	}
+	memset(ap, 0, sizeof(async_param_t));
+	ap->u.paction = get_action_from_param(param, param_no);
+	if(fixup_igp_null(param, param_no) < 0) {
+		pkg_free(ap);
+		return -1;
+	}
+	ap->pinterval = (gparam_t *)(*param);
+	*param = (void *)ap;
+	return 0;
+}
+
+/**
+ *
+ */
+static int fixup_async_ms_sleep(void **param, int param_no)
 {
 	async_param_t *ap;
 	if(param_no != 1)
