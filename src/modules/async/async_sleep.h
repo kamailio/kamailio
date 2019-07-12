@@ -45,6 +45,7 @@ int async_destroy_timer_list(void);
 int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname);
 
 void async_timer_exec(unsigned int ticks, void *param);
+void async_mstimer_exec(unsigned int ticks, void *param);
 
 int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname);
 

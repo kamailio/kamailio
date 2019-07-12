@@ -41,6 +41,14 @@
 extern struct tm_binds tmb;
 
 /* clang-format off */
+typedef struct async_task_param {
+	unsigned int tindex;
+	unsigned int tlabel;
+	cfg_action_t *ract;
+	char cbname[ASYNC_CBNAME_SIZE];
+	int cbname_len;
+} async_task_param_t;
+
 typedef struct async_item {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -51,6 +59,13 @@ typedef struct async_item {
 	struct async_item *next;
 } async_item_t;
 
+typedef struct async_ms_item {
+	async_task_t at;
+	async_task_param_t atp;
+	struct timeval due;
+	struct async_ms_item *next;
+} async_ms_item_t;
+
 typedef struct async_slot {
 	async_item_t *lstart;
 	async_item_t *lend;
@@ -58,6 +73,13 @@ typedef struct async_slot {
 } async_slot_t;
 
 #define ASYNC_RING_SIZE	100
+#define MAX_MS_SLEEP 30*1000
+
+static struct async_ms_list {
+	async_ms_item_t *lstart;
+	async_ms_item_t *lend;
+	gen_lock_t lock;
+} *_async_ms_list = NULL;
 
 static struct async_list_head {
 	async_slot_t ring[ASYNC_RING_SIZE];
@@ -95,6 +117,32 @@ int async_init_timer_list(void)
 	return 0;
 }
 
+int async_init_ms_timer_list(void)
+{
+	_async_ms_list = (struct async_ms_list *)shm_malloc(
+			sizeof(struct async_ms_list));
+	if(_async_ms_list == NULL) {
+		LM_ERR("no more shm\n");
+		return -1;
+	}
+	memset(_async_ms_list, 0, sizeof(struct async_ms_list));
+	if(lock_init(&_async_ms_list->lock) == 0) {
+		LM_ERR("cannot init lock \n");
+		shm_free(_async_ms_list);
+		_async_ms_list = 0;
+		return -1;
+	}
+	return 0;
+}
+
+int async_destroy_ms_timer_list(void)
+{	
+	if (_async_ms_list) {
+		lock_destroy(&_async_ms_list->lock);
+	}
+	return 0;
+}
+
 int async_destroy_timer_list(void)
 {
 	int i;
@@ -108,6 +156,42 @@ int async_destroy_timer_list(void)
 	_async_list_head = 0;
 	return 0;
 }
+
+int async_insert_item(async_ms_item_t *ai) 
+{
+	struct timeval *due = &ai->due;
+	
+	if (unlikely(_async_ms_list == NULL))
+		return -1;
+	lock_get(&_async_ms_list->lock);
+	
+	// check if we want to insert in front
+	if (_async_ms_list->lstart == NULL || timercmp(due, &_async_ms_list->lstart->due, <=)) {
+		ai->next = _async_ms_list->lstart;
+		_async_ms_list->lstart = ai;
+		
+	} else {
+		// check if we want to add to the tail
+		if (timercmp(due, &_async_ms_list->lend->due, >)) {
+			_async_ms_list->lend->next = ai;
+			_async_ms_list->lend = ai;
+		} else {
+			async_ms_item_t *aip;
+			//find the place to insert into a sorted timer list
+			//most likely head && tail scanarios are covered above
+			for (aip = _async_ms_list->lstart; aip->next; aip = aip->next) {
+				if (timercmp(due, &aip->next->due, <=)) {
+					ai->next = aip->next->next;
+					aip->next = ai;
+				}
+			}
+		}
+	}
+	lock_release(&_async_ms_list->lock);
+	return 0;	
+}
+
+
 
 int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 {
@@ -209,13 +293,33 @@ void async_timer_exec(unsigned int ticks, void *param)
 	}
 }
 
-typedef struct async_task_param {
-	unsigned int tindex;
-	unsigned int tlabel;
-	cfg_action_t *ract;
-	char cbname[ASYNC_CBNAME_SIZE];
-	int cbname_len;
-} async_task_param_t;
+void async_mstimer_exec(unsigned int ticks, void *param)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+
+	if (_async_ms_list == NULL)
+		return;
+	lock_get(&_async_ms_list->lock);
+	
+	async_ms_item_t *aip;
+	for (aip = _async_ms_list->lstart; aip; aip = aip->next) {
+		if (timercmp(&now, &aip->due, >=)) {
+			_async_ms_list->lstart = aip->next;
+			if (async_task_push(&aip->at)<0) {
+		                shm_free(aip);
+			}
+			continue;
+		}
+		break;
+	}
+
+	lock_release(&_async_ms_list->lock);
+	
+	return;
+
+}
+
 
 /**
  *
@@ -244,6 +348,81 @@ void async_exec_task(void *param)
 		}
 	}
 	/* param is freed along with the async task strucutre in core */
+}
+
+int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbname)
+{
+	async_ms_item_t *ai;
+	tm_cell_t *t = 0;
+	unsigned int tindex;
+	unsigned int tlabel;
+	async_task_param_t *atp;
+	async_task_t *at;
+
+	if(milliseconds <= 0) {
+		LM_ERR("negative or zero sleep time (%d)\n", milliseconds);
+		return -1;
+	}
+	if(milliseconds >= MAX_MS_SLEEP) {
+		LM_ERR("max sleep time is %d msec\n", MAX_MS_SLEEP);
+		return -1;
+	}
+	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
+		return -1;
+	}
+
+	ai = (async_ms_item_t *)shm_malloc(sizeof(async_item_t));
+	if(ai == NULL) {
+		LM_ERR("no more shm memory\n");
+		return -1;
+	}
+	memset(ai, 0, sizeof(async_item_t));
+
+	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if(t == NULL || t == T_UNDEFINED) {
+		if(tmb.t_newtran(msg) < 0) {
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if(t == NULL || t == T_UNDEFINED) {
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	at = &ai->at;
+	atp = &ai->atp;
+	
+	if(tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
+		LM_ERR("failed to suspend the processing\n");
+		shm_free(ai);
+		return -1;
+	}
+	at->exec = async_exec_task;
+	at->param = atp;
+	atp->ract = act;
+	atp->tindex = tindex;
+	atp->tlabel = tlabel;
+	if(cbname && cbname->len>0) {
+		memcpy(atp->cbname, cbname->s, cbname->len);
+		atp->cbname[cbname->len] = '\0';
+		atp->cbname_len = cbname->len;
+	}
+	
+	struct timeval now, upause;
+	gettimeofday(&now, NULL);
+	upause.tv_sec = 0;
+	upause.tv_usec = milliseconds * 1000;
+	timeradd(&now, &upause, &ai->due);	
+	async_insert_item(ai);
+
+	return 0;
 }
 
 /**
