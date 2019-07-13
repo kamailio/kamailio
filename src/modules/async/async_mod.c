@@ -114,7 +114,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	register_basic_timers(async_workers);
+	register_basic_timers(async_workers + 1);
 
 	return 0;
 }
@@ -140,6 +140,7 @@ static int child_init(int rank)
 			return -1; /* error */
 		}
 	}
+	
 	if(fork_basic_utimer(PROC_TIMER, "ASYNC MOD MILLI TIMER SINGLETON", 1 /*socks flag*/,
 			   async_mstimer_exec, NULL, 1000 /*1 millisecond*/)
 			< 0) {
