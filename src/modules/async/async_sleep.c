@@ -73,10 +73,12 @@ typedef struct async_slot {
 
 #define ASYNC_RING_SIZE	100
 #define MAX_MS_SLEEP 30*1000
+#define MAX_MS_SLEEP_QUEUE 10000
 
 static struct async_ms_list {
 	async_ms_item_t *lstart;
 	async_ms_item_t *lend;
+	int	len;
 	gen_lock_t lock;
 } *_async_ms_list = NULL;
 
@@ -163,31 +165,32 @@ int async_insert_item(async_ms_item_t *ai)
 	if (unlikely(_async_ms_list == NULL))
 		return -1;
 	lock_get(&_async_ms_list->lock);
-	
-	// check if we want to insert in front
+	// Check if we want to insert in front
 	if (_async_ms_list->lstart == NULL || timercmp(due, &_async_ms_list->lstart->due, <=)) {
 		ai->next = _async_ms_list->lstart;
 		_async_ms_list->lstart = ai;
 		if (_async_ms_list->lend == NULL)
 			_async_ms_list->lend = ai;
 	} else {
-		// check if we want to add to the tail
+		// Check if we want to add to the tail
 		if (_async_ms_list->lend && timercmp(due, &_async_ms_list->lend->due, >)) {
 			_async_ms_list->lend->next = ai;
 			_async_ms_list->lend = ai;
 		} else {
 			async_ms_item_t *aip;
-			//find the place to insert into a sorted timer list
-			//most likely head && tail scanarios are covered above
-			for (aip = _async_ms_list->lstart; aip->next; aip = aip->next) {
+			// Find the place to insert into a sorted timer list
+			// Most likely head && tail scanarios are covered above
+			int i = 1;
+			for (aip = _async_ms_list->lstart; aip->next; aip = aip->next, i++) {
 				if (timercmp(due, &aip->next->due, <=)) {
-					ai->next = aip->next->next;
+					ai->next = aip->next;
 					aip->next = ai;
 					break;
 				}
 			}
 		}
 	}
+	_async_ms_list->len++;
 	lock_release(&_async_ms_list->lock);
 	return 0;	
 }
@@ -313,6 +316,7 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 			if (async_task_push(aip->at)<0) {
 		                shm_free(aip->at);
 			}
+			_async_ms_list->len--;
 			continue;
 		}
 		break;
@@ -370,6 +374,10 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	}
 	if(milliseconds >= MAX_MS_SLEEP) {
 		LM_ERR("max sleep time is %d msec\n", MAX_MS_SLEEP);
+		return -1;
+	}
+	if(_async_ms_list->len >= MAX_MS_SLEEP_QUEUE) {
+		LM_ERR("max sleep queue length exceeded (%d) \n", MAX_MS_SLEEP_QUEUE);
 		return -1;
 	}
 	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
