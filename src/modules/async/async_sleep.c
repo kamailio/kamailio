@@ -170,13 +170,11 @@ int async_insert_item(async_ms_item_t *ai)
 		_async_ms_list->lstart = ai;
 		if (_async_ms_list->lend == NULL)
 			_async_ms_list->lend = ai;
-		LM_WARN("HEAD INSERT");
 	} else {
 		// check if we want to add to the tail
 		if (_async_ms_list->lend && timercmp(due, &_async_ms_list->lend->due, >)) {
 			_async_ms_list->lend->next = ai;
 			_async_ms_list->lend = ai;
-			LM_WARN("TAIL INSERT");
 		} else {
 			async_ms_item_t *aip;
 			//find the place to insert into a sorted timer list
@@ -185,7 +183,6 @@ int async_insert_item(async_ms_item_t *ai)
 				if (timercmp(due, &aip->next->due, <=)) {
 					ai->next = aip->next->next;
 					aip->next = ai;
-					LM_WARN("MID INSERT");
 					break;
 				}
 			}
@@ -306,12 +303,13 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 		return;
 	lock_get(&_async_ms_list->lock);
 	
-	async_ms_item_t *aip;
-	for (aip = _async_ms_list->lstart; aip; aip = aip->next) {
+	async_ms_item_t *aip, *next;
+	int i = 0;
+	for (aip = _async_ms_list->lstart; aip; aip = next, i++) {
+		next = aip->next;
 		if (timercmp(&now, &aip->due, >=)) {
-			if ((_async_ms_list->lstart = aip->next) == NULL) 
+			if ((_async_ms_list->lstart = next) == NULL) 
 				_async_ms_list->lend = NULL;
-			
 			if (async_task_push(aip->at)<0) {
 		                shm_free(aip->at);
 			}
@@ -427,8 +425,9 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	
 	struct timeval now, upause;
 	gettimeofday(&now, NULL);
-	upause.tv_sec = 0;
-	upause.tv_usec = milliseconds * 1000;
+	upause.tv_sec = milliseconds / 1000; 
+	upause.tv_usec = (milliseconds * 1000) % 1000000;
+	
 	timeradd(&now, &upause, &ai->due);	
 	async_insert_item(ai);
 
