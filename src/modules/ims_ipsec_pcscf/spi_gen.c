@@ -76,7 +76,8 @@ uint32_t acquire_spi()
         }
 
         if(spi_val == initial_val) { //there are no free SPIs
-            break;
+            pthread_mutex_unlock(&spis_mut);
+            return ret;
         }
 
     }

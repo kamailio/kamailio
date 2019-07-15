@@ -70,6 +70,7 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->unlock_udomain = unlock_udomain;
 	api->insert_pcontact = insert_pcontact;
 	api->delete_pcontact = delete_pcontact;
+    api->unreg_pending_contacts_cb = unreg_pending_contacts_cb;
 	api->get_pcontact = get_pcontact;
 	api->assert_identity = assert_identity;
 	api->update_pcontact = update_pcontact;

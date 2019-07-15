@@ -27,14 +27,13 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/pkg.h"
 #include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 
 #include <errno.h>
 #include <arpa/inet.h>
 #include <libmnl/libmnl.h>
 #include <linux/xfrm.h>
 #include <time.h>
-//#include <stdio.h>
-//#include <string.h>
 
 
 #define XFRM_TMPLS_BUF_SIZE 1024
@@ -43,8 +42,6 @@
 
 
 extern int xfrm_user_selector;
-extern int spi_id_start;
-extern int spi_id_range;
 
 struct xfrm_buffer {
     char buf[NLMSG_DELETEALL_BUF_SIZE];
@@ -91,25 +88,25 @@ static void string_to_key(char* dst, const str key_string)
 }
 
 // Converts the protocol enum used in Kamailio to the constants used in Linux
-unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto)
-{
-    switch(kamailio_proto) {
-        case PROTO_UDP:
-            return IPPROTO_UDP;
-        case PROTO_TCP:
-            return IPPROTO_TCP;
-        case PROTO_NONE:
-        case PROTO_TLS:
-        case PROTO_SCTP:
-	    case PROTO_WS:
-        case PROTO_WSS:
-        case PROTO_OTHER:
-        default:
-            return IPPROTO_MAX;
-    };
-}
+// unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto)
+// {
+//     switch(kamailio_proto) {
+//         case PROTO_UDP:
+//             return IPPROTO_UDP;
+//         case PROTO_TCP:
+//             return IPPROTO_TCP;
+//         case PROTO_NONE:
+//         case PROTO_TLS:
+//         case PROTO_SCTP:
+// 	    case PROTO_WS:
+//         case PROTO_WSS:
+//         case PROTO_OTHER:
+//         default:
+//             return IPPROTO_MAX;
+//     };
+// }
 
-int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik, str r_alg)
+int add_sa(struct mnl_socket* nl_sock, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik, str r_alg)
 {
     char l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
     char l_auth_algo_buf[XFRM_TMPLS_BUF_SIZE];
@@ -125,11 +122,11 @@ int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_add
     memset(l_auth_algo_buf, 0, sizeof(l_auth_algo_buf));
     memset(l_enc_algo_buf, 0, sizeof(l_enc_algo_buf));
 
-    unsigned sel_proto = 0;
-    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
-        LM_ERR("Invalid port was passed to the function: %d\n", proto);
-        return -1;
-    }
+    // unsigned sel_proto = 0;
+    // if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+    //     LM_ERR("Invalid port was passed to the function: %d\n", proto);
+    //     return -1;
+    // }
 
     // nlmsghdr initialization
     l_nlh = mnl_nlmsg_put_header(l_msg_buf);
@@ -220,7 +217,7 @@ int add_sa(struct mnl_socket* nl_sock, unsigned short proto, const struct ip_add
 }
 
 
-int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id)
+int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, unsigned int af)
 {
     char* src_addr = NULL;
     char* dest_addr = NULL;
@@ -243,26 +240,47 @@ int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_para
     memcpy(src_addr, src_addr_param.s, src_addr_param.len);
     memcpy(dest_addr, dest_addr_param.s, dest_addr_param.len);
 
-
     struct {
         struct nlmsghdr n;
         struct xfrm_usersa_id   xsid;
         char buf[XFRM_TMPLS_BUF_SIZE];
 
     } req = {
-        .n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xsid)),
-        .n.nlmsg_flags = NLM_F_REQUEST,
-        .n.nlmsg_type = XFRM_MSG_DELSA,
-        .xsid.spi = htonl(id),
-        .xsid.family = AF_INET,
-        .xsid.proto = IPPROTO_ESP,
-        .xsid.daddr.a4 = inet_addr(dest_addr)
+        .n.nlmsg_len    = NLMSG_LENGTH(sizeof(req.xsid)),
+        .n.nlmsg_flags  = NLM_F_REQUEST,
+        .n.nlmsg_type   = XFRM_MSG_DELSA,
+        .n.nlmsg_pid    = id,
+        .xsid.spi       = htonl(id),
+        .xsid.family    = af,
+        .xsid.proto     = IPPROTO_ESP
     };
 
-    // SADDR
     xfrm_address_t saddr;
     memset(&saddr, 0, sizeof(saddr));
-    saddr.a4 = inet_addr(src_addr);
+
+    if(af == AF_INET6){
+        ip_addr_t ip_addr;
+
+        if(str2ipxbuf(&dest_addr_param, &ip_addr) < 0){
+            LM_ERR("Unable to convert dest address [%.*s]\n", dest_addr_param.len, dest_addr_param.s);
+            pkg_free(src_addr);
+            pkg_free(dest_addr);
+            return -1;
+        }
+        memcpy(req.xsid.daddr.a6, ip_addr.u.addr32, sizeof(req.xsid.daddr.a6));
+
+        memset(&ip_addr, 0, sizeof(ip_addr_t));
+        if(str2ipxbuf(&src_addr_param, &ip_addr) < 0){
+            LM_ERR("Unable to convert src address [%.*s]\n", src_addr_param.len, src_addr_param.s);
+            pkg_free(src_addr);
+            pkg_free(dest_addr);
+            return -1;
+        }
+        memcpy(saddr.a6, ip_addr.u.addr32, sizeof(saddr.a6));
+    }else{
+        req.xsid.daddr.a4   = inet_addr(dest_addr);
+        saddr.a4            = inet_addr(src_addr);
+    }
 
     mnl_attr_put(&req.n, XFRMA_SRCADDR, sizeof(saddr), (void *)&saddr);
 
@@ -281,18 +299,18 @@ int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_para
 }
 
 
-int add_policy(struct mnl_socket* mnl_socket, unsigned short proto, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
+int add_policy(struct mnl_socket* mnl_socket, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
 {
     char                            l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
     char                            l_tmpls_buf[XFRM_TMPLS_BUF_SIZE];
     struct nlmsghdr*                l_nlh;
     struct xfrm_userpolicy_info*    l_xpinfo;
 
-    unsigned sel_proto = 0;
-    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
-        LM_ERR("Invalid port was passed to the function: %d\n", proto);
-        return -1;
-    }
+    // unsigned sel_proto = 0;
+    // if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+    //     LM_ERR("Invalid port was passed to the function: %d\n", proto);
+    //     return -1;
+    // }
 
     memset(l_msg_buf, 0, sizeof(l_msg_buf));
     memset(l_tmpls_buf, 0, sizeof(l_tmpls_buf));
@@ -375,14 +393,13 @@ int add_policy(struct mnl_socket* mnl_socket, unsigned short proto, const struct
     return 0;
 }
 
-int remove_policy(struct mnl_socket* mnl_socket, unsigned short proto, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, enum ipsec_policy_direction dir)
+int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_addr_param, int src_port, int dst_port, int long p_id, unsigned int af, enum ipsec_policy_direction dir)
 {
-    unsigned sel_proto = 0;
-    if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
-        LM_ERR("Invalid port was passed to the function: %d\n", proto);
-        return -1;
-    }
-
+    // unsigned sel_proto = 0;
+    // if((sel_proto = kamailio_to_linux_proto(proto)) == IPPROTO_MAX) {
+    //     LM_ERR("Invalid port was passed to the function: %d\n", proto);
+    //     return -1;
+    // }
     unsigned char policy_dir = 0;
 
     if(dir == IPSEC_POLICY_DIRECTION_IN) {
@@ -392,7 +409,7 @@ int remove_policy(struct mnl_socket* mnl_socket, unsigned short proto, str src_a
          policy_dir = XFRM_POLICY_OUT;
     }
     else {
-        LM_ERR("Invalid direction parameter passed to add_policy: %d\n", dir);
+        LM_ERR("Invalid direction parameter passed to remove_policy: %d\n", dir);
         return -1;
     }
 
@@ -422,21 +439,48 @@ int remove_policy(struct mnl_socket* mnl_socket, unsigned short proto, str src_a
         struct xfrm_userpolicy_id xpid;
         char buf[XFRM_TMPLS_BUF_SIZE];
     } req = {
-        .n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xpid)),
-        .n.nlmsg_flags = NLM_F_REQUEST,
-        .n.nlmsg_type = XFRM_MSG_DELPOLICY,
+        .n.nlmsg_len            = NLMSG_LENGTH(sizeof(req.xpid)),
+        .n.nlmsg_flags          = NLM_F_REQUEST,
+        .n.nlmsg_type           = XFRM_MSG_DELPOLICY,
+        .n.nlmsg_pid            = p_id,
         .xpid.dir               = policy_dir,
-        .xpid.sel.family        = AF_INET,
-        .xpid.sel.daddr.a4      = inet_addr(dest_addr),
-        .xpid.sel.saddr.a4      = inet_addr(src_addr),
+        .xpid.sel.family        = af,
         .xpid.sel.dport         = htons(dst_port),
         .xpid.sel.dport_mask    = 0xFFFF,
-        .xpid.sel.prefixlen_d   = 32,
         .xpid.sel.sport         = htons(src_port),
         .xpid.sel.sport_mask    = 0xFFFF,
-        .xpid.sel.prefixlen_s   = 32//,
+        .xpid.sel.user          = htonl(xfrm_user_selector)
         //.xpid.sel.proto         = sel_proto
     };
+
+    if(af == AF_INET6){
+        ip_addr_t ip_addr;
+
+        if(str2ipxbuf(&dest_addr_param, &ip_addr) < 0){
+            LM_ERR("Unable to convert dest address [%.*s]\n", dest_addr_param.len, dest_addr_param.s);
+            pkg_free(src_addr);
+            pkg_free(dest_addr);
+            return -1;
+        }
+        memcpy(req.xpid.sel.daddr.a6, ip_addr.u.addr32, sizeof(req.xpid.sel.daddr.a6));
+
+        if(str2ipxbuf(&src_addr_param, &ip_addr) < 0){
+            LM_ERR("Unable to convert src address [%.*s]\n", src_addr_param.len, src_addr_param.s);
+            pkg_free(src_addr);
+            pkg_free(dest_addr);
+            return -1;
+        }
+        memcpy(req.xpid.sel.saddr.a6, ip_addr.u.addr32, sizeof(req.xpid.sel.saddr.a6));
+
+        req.xpid.sel.prefixlen_d = 128;
+        req.xpid.sel.prefixlen_s = 128;
+    }else{
+        req.xpid.sel.daddr.a4       = inet_addr(dest_addr);
+        req.xpid.sel.saddr.a4       = inet_addr(src_addr);
+
+        req.xpid.sel.prefixlen_d    = 32;
+        req.xpid.sel.prefixlen_s    = 32;
+    }
 
     if(mnl_socket_sendto(mnl_socket, &req.n, req.n.nlmsg_len) < 0)
     {

@@ -107,6 +107,8 @@ typedef struct ipsec {
     unsigned int spi_ps; /**< SPI Server to use					*/
     unsigned short port_uc; /**< Port UE Client						*/
     unsigned short port_us; /**< Port UE Server						*/
+    unsigned short port_pc; /**< Port Proxy Client		*/
+    unsigned short port_ps; /**< Port Proxy Server      */
 
     str ealg; /**< Cypher Algorithm - ESP				*/
     str r_ealg; /**< received Cypher Algorithm - ESP	*/
@@ -241,6 +243,7 @@ typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short
 
 typedef int (*insert_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact_info* ci, struct pcontact** _c);
 typedef int (*delete_pcontact_t)(struct udomain* _d, struct pcontact* _c);
+typedef int (*unreg_pending_contacts_cb_t)(struct udomain* _d, struct pcontact* _c, int type);
 typedef int (*update_pcontact_t)(struct udomain* _d, struct pcontact_info* ci, struct pcontact* _c);
 typedef int (*update_rx_regsession_t)(struct udomain* _d, str* session_id, struct pcontact* _c);
 
@@ -266,6 +269,7 @@ typedef struct usrloc_api {
 
     insert_pcontact_t insert_pcontact;
     delete_pcontact_t delete_pcontact;
+    unreg_pending_contacts_cb_t unreg_pending_contacts_cb;
     get_pcontact_t get_pcontact;
     assert_identity_t assert_identity;
 

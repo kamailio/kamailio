@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -46,6 +47,16 @@
 #ifndef IPSEC_CMD_H
 #define IPSEC_CMD_H
 
+typedef void (*contact_expired_t)(pcontact_t* c, int type, void* param);
+
+/*! ipsec pcscf API export structure */
+typedef struct ipsec_pcscf_api {
+    contact_expired_t ipsec_on_expire;
+} ipsec_pcscf_api_t;
+
+/*! ipsec pcscf API export bind function */
+typedef int (*bind_ipsec_pcscf_t)(ipsec_pcscf_api_t* api);
+
 struct sip_msg;
 struct udomain_t;
 
@@ -53,5 +64,6 @@ int ipsec_create(struct sip_msg* m, udomain_t* d);
 int ipsec_forward(struct sip_msg* m, udomain_t* d);
 int ipsec_destroy(struct sip_msg* m, udomain_t* d);
 int ipsec_cleanall();
+void ipsec_on_expire(pcontact_t* c, int type, void* param);
 
 #endif /* IPSEC_CMD_H */
