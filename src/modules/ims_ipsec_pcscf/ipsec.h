@@ -39,7 +39,6 @@ enum ipsec_policy_direction {
 
 struct mnl_socket* init_mnl_socket();
 void close_mnl_socket(struct mnl_socket* sock);
-//unsigned short kamailio_to_linux_proto(const unsigned short kamailio_proto);
 
 int add_sa(struct mnl_socket* nl_sock, const struct ip_addr *src_addr_param, const struct ip_addr *dest_addr_param, int s_port, int d_port, int long id, str ck, str ik, str r_alg);
 int remove_sa(struct mnl_socket* nl_sock, str src_addr_param, str dest_addr_param, int s_port, int d_port, int long id, unsigned int af);

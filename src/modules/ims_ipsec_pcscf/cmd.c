@@ -618,16 +618,6 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
             goto cleanup;
         }
 
-        // if (ul.update_pcontact(d, &ci, pcontact) != 0){
-        //     LM_ERR("Error updating contact\n");
-        //     goto cleanup;
-        // }
-
-        // // Update temp security parameters
-        // if(ul.update_temp_security(d, req_sec_params->type, req_sec_params, pcontact) != 0){
-        //     LM_ERR("Error updating temp security\n");
-        // }
-
         if(add_supported_secagree_header(m) != 0) {
             goto cleanup;
         }
