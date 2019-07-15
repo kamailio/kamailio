@@ -204,18 +204,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
 						goto next_contact;
 					} 
-				    
-                                        LM_DBG("We don't add contact from the 200OK that did not go through us (ie, not present in explicit REGISTER that went through us\n");
-//					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
-//					ci.reg_state = PCONTACT_REGISTERED;
-//					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
-//						LM_ERR("Failed inserting new pcontact\n");
-//					} else {
-//						//register for callbacks on this contact so we can send PUBLISH to SCSCF should status change
-//						LM_DBG("registering for UL callback\n");
-//						ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE, callback_pcscf_contact_cb, NULL);
-//						//we also need to subscribe to reg event of this contact at SCSCF
-//					}
+					LM_DBG("We don't add contact from the 200OK that did not go through us (ie, not present in explicit REGISTER that went through us\n");
 				} else { //contact already exists - update
 					LM_DBG("contact already exists and is in state (%d) : [%s]\n",pcontact->reg_state, reg_state_to_string(pcontact->reg_state));
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
