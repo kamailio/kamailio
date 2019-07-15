@@ -41,7 +41,7 @@ static str opt_200_rpl = str_init("OK");
 static str opt_500_rpl = str_init("Server internal error");
 
 
-int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
+int ki_opt_reply(struct sip_msg* _msg) {
 	str rpl_hf;
 	int offset = 0;
 
@@ -127,3 +127,6 @@ error:
 		return 1;
 }
 
+int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
+	return ki_opt_reply(_msg);
+}
