@@ -47,7 +47,8 @@ int ki_opt_reply(struct sip_msg* _msg) {
 
 	/* check if it is called for an OPTIONS request */
 	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
-		LM_ERR("called for non-OPTIONS request\n");
+		LM_ERR("called for non-OPTIONS request (%d!=%d)\n",
+				_msg->REQ_METHOD, METHOD_OPTIONS);
 		return -1;
 	}
 	if(_msg->parsed_uri_ok==0 && parse_sip_msg_uri(_msg)<0)
