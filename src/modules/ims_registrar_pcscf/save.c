@@ -65,7 +65,7 @@ extern ipsec_pcscf_api_t ipsec_pcscf;
 
 struct sip_msg* get_request_from_reply(struct sip_msg* reply)
 {
-    struct cell *t;
+	struct cell *t;
 	t = tmb.t_gett();
 	if (!t || t == (void*) -1) {
 		LM_ERR("Reply without transaction\n");
@@ -91,7 +91,7 @@ struct sip_msg* get_request_from_reply(struct sip_msg* reply)
  */
 static inline int calc_contact_expires(contact_t *c,int expires_hdr, int local_time_now)
 {
-    unsigned int r = 0;
+	unsigned int r = 0;
 	if (expires_hdr >= 0)
 		r = expires_hdr;
 
@@ -264,17 +264,17 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	pcontact_t* pcontact;
 	contact_t* c;
 	struct pcontact_info ci;
-        struct via_body* vb;
-        unsigned short port, proto;
+	struct via_body* vb;
+	unsigned short port, proto;
 	int_str val;
 	struct sip_uri parsed_received;
 	char srcip[50];
 
 	memset(&ci, 0, sizeof(struct pcontact_info));
         
-        vb = cscf_get_ue_via(_m);
-        port = vb->port?vb->port:5060;
-        proto = vb->proto;
+	vb = cscf_get_ue_via(_m);
+	port = vb->port?vb->port:5060;
+	proto = vb->proto;
 
 	cb = cscf_parse_contacts(_m);
 	if (!cb || (!cb->contacts)) {
@@ -282,7 +282,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		goto error;
 	}
         
-        c = cb->contacts;
+	c = cb->contacts;
 	//TODO: need support for multiple contacts - currently assume one contact
 	//make sure this is not a de-registration
 	int expires_hdr = cscf_get_expires_hdr(_m, 0);
@@ -309,15 +309,15 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	LM_DBG("contact requesting to expire in %d seconds\n", expires-local_time_now);
 
 	/*populate CI with bare minimum*/
-        ci.via_host = vb->host;
-        ci.via_port = port;
-        ci.via_prot = proto;
-        ci.aor = c->uri;
+	ci.via_host = vb->host;
+	ci.via_port = port;
+	ci.via_prot = proto;
+	ci.aor = c->uri;
 	ci.num_public_ids=0;
 	ci.num_service_routes=0;
 	ci.expires=local_time_now + pending_reg_expires;
 	ci.reg_state=PCONTACT_ANY;
-        ci.searchflag=SEARCH_RECEIVED;  //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
+	ci.searchflag=SEARCH_RECEIVED;  //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
 
 	// Received Info: First try AVP, otherwise simply take the source of the request:
 	memset(&val, 0, sizeof(int_str));
@@ -347,17 +347,17 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	if (ci.received_port == 0)
 		ci.received_port = 5060;
 
-    // Parse security parameters
-    security_t* sec_params = NULL;
-    if((sec_params = cscf_get_security(_m)) == NULL) {
-        LM_DBG("Will save pending contact without security parameters\n");
-    }
+	// Parse security parameters
+	security_t* sec_params = NULL;
+	if((sec_params = cscf_get_security(_m)) == NULL) {
+		LM_DBG("Will save pending contact without security parameters\n");
+	}
 
 	// Parse security-verify parameters
-    security_t* sec_verify_params = NULL;
-    if((sec_verify_params = cscf_get_security_verify(_m)) == NULL){
-        LM_DBG("Will save pending contact without security-verify parameters\n");
-    }else{
+	security_t* sec_verify_params = NULL;
+	if((sec_verify_params = cscf_get_security_verify(_m)) == NULL){
+		LM_DBG("Will save pending contact without security-verify parameters\n");
+	}else{
 		if(sec_params){
 			// for REGISTER request try to set spi pc and spi ps from security-verify header
 			sec_params->data.ipsec->spi_ps = sec_verify_params->data.ipsec->spi_us;
