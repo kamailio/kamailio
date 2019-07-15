@@ -93,13 +93,13 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"ims_ipsec_pcscf",
 	DEFAULT_DLFLAGS,/* dlopen flags */
-	cmds,		/* exported functions */
-	params,		/* exported params */
-	0,		/*·exported·RPC·methods·*/
-	0,		/* exported pseudo-variables */
-	0,		/*·response·function·*/
-	mod_init,	/* module initialization function */
-	child_init,	/* Per-child init function */
+	cmds,			/* exported functions */
+	params,			/* exported params */
+	0,				/*·exported·RPC·methods·*/
+	0,				/* exported pseudo-variables */
+	0,				/*·response·function·*/
+	mod_init,		/* module initialization function */
+	child_init,		/* Per-child init function */
 	mod_destroy,	/* destroy function */
 };
 
@@ -111,139 +111,139 @@ static void ipsec_print_all_socket_lists()
 	struct addr_info* ai;
 	unsigned short proto;
 
-    LM_INFO("Listening on:\n");
+	LM_INFO("Listening on:\n");
 
 	proto=PROTO_UDP;
 	do{
 		list=get_sock_info_list(proto);
 		for(si=list?*list:0; si; si=si->next){
-            char buf[1024];
-            int cnt=0;
+			char buf[1024];
+			int cnt=0;
 
-            memset(buf, 0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 
 			if(si->addr_info_lst){
-                sprintf(buf, "%s: (%s", get_valid_proto_name(proto), si->address_str.s);
-                cnt = strlen(buf);
+				sprintf(buf, "%s: (%s", get_valid_proto_name(proto), si->address_str.s);
+				cnt = strlen(buf);
 
 				for(ai=si->addr_info_lst; ai; ai=ai->next){
-                    sprintf(buf + cnt, ", %s", ai->address_str.s);
-                    cnt = strlen(buf);
+					sprintf(buf + cnt, ", %s", ai->address_str.s);
+					cnt = strlen(buf);
 				}
 
-                if(si->port_no_str.s){
-				    sprintf(buf + cnt, "):%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
-                }else{
-                    sprintf(buf + cnt, "):%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
-                }
-                cnt = strlen(buf);
+				if(si->port_no_str.s){
+					sprintf(buf + cnt, "):%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+				}else{
+					sprintf(buf + cnt, "):%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+				}
+				cnt = strlen(buf);
 			}else{
 				sprintf(buf, "%s: %s", get_valid_proto_name(proto), si->name.s);
-                cnt = strlen(buf);
+				cnt = strlen(buf);
 
 				if(!(si->flags & SI_IS_IP)){
-                    if(si->address_str.s){
-					    sprintf(buf + cnt, " [%s]", si->address_str.s);
-                        cnt = strlen(buf);
-                    }
+					if(si->address_str.s){
+						sprintf(buf + cnt, " [%s]", si->address_str.s);
+						cnt = strlen(buf);
+					}
 				}
 
-                if(si->port_no_str.s){
-				    sprintf(buf + cnt, ":%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
-                }else{
-                    sprintf(buf + cnt, ":%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
-                }
-                cnt = strlen(buf);
+				if(si->port_no_str.s){
+					sprintf(buf + cnt, ":%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+				}else{
+					sprintf(buf + cnt, ":%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+				}
+				cnt = strlen(buf);
 
 				if(si->useinfo.name.s){
 					printf(buf + cnt, " advertise %s:%d", si->useinfo.name.s, si->useinfo.port_no);
-                    cnt = strlen(buf);
+					cnt = strlen(buf);
 				}
 			}
 
-            LM_INFO("%s\n", buf);
+			LM_INFO("%s\n", buf);
 		}
 	}while((proto=next_proto(proto)));
 }
 
 static int ipsec_add_listen_ifaces()
 {
-    char addr4[128];
+	char addr4[128];
 	char addr6[128];
-    int i;
+	int i;
 
-    for(i = 0; i < ipsec_max_connections; ++i){
-        if(ipsec_listen_addr.len) {
-            if(ipsec_listen_addr.len > sizeof(addr4)-1) {
-                LM_ERR("Bad value for ipsec listen address IPv4: %.*s\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
-                return -1;
-            }
+	for(i = 0; i < ipsec_max_connections; ++i){
+		if(ipsec_listen_addr.len) {
+			if(ipsec_listen_addr.len > sizeof(addr4)-1) {
+				LM_ERR("Bad value for ipsec listen address IPv4: %.*s\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
+				return -1;
+			}
 
-            memset(addr4, 0, sizeof(addr4));
-            memcpy(addr4, ipsec_listen_addr.s, ipsec_listen_addr.len);
+			memset(addr4, 0, sizeof(addr4));
+			memcpy(addr4, ipsec_listen_addr.s, ipsec_listen_addr.len);
 
-            //add listen interfaces for IPv4
-            if(add_listen_iface(addr4, NULL, ipsec_client_port + i, PROTO_TCP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec client TCP interface for IPv4\n");
-                return -1;
-            }
+			//add listen interfaces for IPv4
+			if(add_listen_iface(addr4, NULL, ipsec_client_port + i, PROTO_TCP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec client TCP interface for IPv4\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr4, NULL, ipsec_server_port + i, PROTO_TCP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec server TCP interface for IPv4\n");
-                return -1;
-            }
+			if(add_listen_iface(addr4, NULL, ipsec_server_port + i, PROTO_TCP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec server TCP interface for IPv4\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr4, NULL, ipsec_client_port + i, PROTO_UDP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec client UDP interface for IPv4\n");
-                return -1;
-            }
+			if(add_listen_iface(addr4, NULL, ipsec_client_port + i, PROTO_UDP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec client UDP interface for IPv4\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr4, NULL, ipsec_server_port + i, PROTO_UDP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec server UDP interface for IPv4\n");
-                return -1;
-            }
-        }
+			if(add_listen_iface(addr4, NULL, ipsec_server_port + i, PROTO_UDP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec server UDP interface for IPv4\n");
+				return -1;
+			}
+		}
 
-        if(ipsec_listen_addr6.len) {
-            if(ipsec_listen_addr6.len > sizeof(addr6)-1) {
-                LM_ERR("Bad value for ipsec listen address IPv6: %.*s\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
-                return -1;
-            }
+		if(ipsec_listen_addr6.len) {
+			if(ipsec_listen_addr6.len > sizeof(addr6)-1) {
+				LM_ERR("Bad value for ipsec listen address IPv6: %.*s\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
+				return -1;
+			}
 
-            memset(addr6, 0, sizeof(addr6));
-            memcpy(addr6, ipsec_listen_addr6.s, ipsec_listen_addr6.len);
+			memset(addr6, 0, sizeof(addr6));
+			memcpy(addr6, ipsec_listen_addr6.s, ipsec_listen_addr6.len);
 
-            //add listen interfaces for IPv6
-            if(add_listen_iface(addr6, NULL, ipsec_client_port + i, PROTO_TCP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec client TCP interface for IPv6\n");
-                return -1;
-            }
+			//add listen interfaces for IPv6
+			if(add_listen_iface(addr6, NULL, ipsec_client_port + i, PROTO_TCP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec client TCP interface for IPv6\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr6, NULL, ipsec_server_port + i, PROTO_TCP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec server TCP interface for IPv6\n");
-                return -1;
-            }
+			if(add_listen_iface(addr6, NULL, ipsec_server_port + i, PROTO_TCP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec server TCP interface for IPv6\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr6, NULL, ipsec_client_port + i, PROTO_UDP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec client UDP interface for IPv6\n");
-                return -1;
-            }
+			if(add_listen_iface(addr6, NULL, ipsec_client_port + i, PROTO_UDP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec client UDP interface for IPv6\n");
+				return -1;
+			}
 
-            if(add_listen_iface(addr6, NULL, ipsec_server_port + i, PROTO_UDP, 0) != 0) {
-                LM_ERR("Error adding listen ipsec server UDP interface for IPv6\n");
-                return -1;
-            }
-        }
-    }
+			if(add_listen_iface(addr6, NULL, ipsec_server_port + i, PROTO_UDP, 0) != 0) {
+				LM_ERR("Error adding listen ipsec server UDP interface for IPv6\n");
+				return -1;
+			}
+		}
+	}
 
-    if(fix_all_socket_lists() != 0) {
-        LM_ERR("Error calling fix_all_socket_lists()\n");
-        return -1;
-    }
+	if(fix_all_socket_lists() != 0) {
+		LM_ERR("Error calling fix_all_socket_lists()\n");
+		return -1;
+	}
 
-    ipsec_print_all_socket_lists();
+	ipsec_print_all_socket_lists();
 
-    return 0;
+	return 0;
 }
 
 /*! \brief
@@ -271,43 +271,43 @@ static int mod_init(void) {
 	LM_INFO("Successfully bound to TM module\n");
 
 	if(ipsec_add_listen_ifaces() != 0){
-        return -1;
-    }
-
-    if(ipsec_cleanall() != 0) {
-        LM_ERR("Error ipsec tunnels during for module initialisation\n");
-        return -1;
+		return -1;
 	}
 
-    int res = 0;
-    if((res = init_spi_gen(spi_id_start, spi_id_range)) != 0) {
-        LM_ERR("Error initialising spi generator. Error: %d\n", res);
-        return -1;
-    }
+	if(ipsec_cleanall() != 0) {
+		LM_ERR("Error ipsec tunnels during for module initialisation\n");
+		return -1;
+	}
 
-    if((res = init_port_gen(ipsec_server_port, ipsec_client_port, ipsec_max_connections)) != 0) {
-        LM_ERR("Error initialising port generator. Error: %d\n", res);
-        return -1;
-    }
+	int res = 0;
+	if((res = init_spi_gen(spi_id_start, spi_id_range)) != 0) {
+		LM_ERR("Error initialising spi generator. Error: %d\n", res);
+		return -1;
+	}
 
-    init_flag = 1;
+	if((res = init_port_gen(ipsec_server_port, ipsec_client_port, ipsec_max_connections)) != 0) {
+		LM_ERR("Error initialising port generator. Error: %d\n", res);
+		return -1;
+	}
+
+	init_flag = 1;
 
 	return 0;
 }
 
 static void mod_destroy(void)
 {
-    if(ipsec_cleanall() != 0) {
-        LM_ERR("Error ipsec tunnels during for module cleanup\n");
+	if(ipsec_cleanall() != 0) {
+		LM_ERR("Error ipsec tunnels during for module cleanup\n");
 	}
 
-    if(destroy_spi_gen() != 0) {
-        LM_ERR("Error destroying spi generator\n");
-    }
+	if(destroy_spi_gen() != 0) {
+		LM_ERR("Error destroying spi generator\n");
+	}
 
-    if(destroy_port_gen() != 0){
-        LM_ERR("Error destroying port generator\n");
-    }
+	if(destroy_port_gen() != 0){
+		LM_ERR("Error destroying port generator\n");
+	}
 }
 
 static int child_init(int rank)
