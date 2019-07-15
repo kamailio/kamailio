@@ -451,61 +451,61 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	struct pcontact* c;
 	struct sip_uri needle_uri;
 	int serviceroutematch;
-        char *params, *sep;
-        str rinstance = {0, 0};
+	char *params, *sep;
+	str rinstance = {0, 0};
         
-        LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d] Received [%d://%.*s:%d], Search flag is %d\n",
-				contact_info->aor.len, contact_info->aor.s, contact_info->via_prot, contact_info->via_host.len, contact_info->via_host.s, contact_info->via_port,
-                contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port, contact_info->searchflag);
-	
-            /* parse the uri in the NOTIFY */
-        if (contact_info->aor.len>0 && contact_info->aor.s){
-            LM_DBG("Have an AOR to search for\n");
-            if (parse_uri(contact_info->aor.s, contact_info->aor.len, &needle_uri) != 0) {
-                LM_ERR("Unable to parse contact aor in get_pcontact [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
-                return 0;
-            }
-            LM_DBG("checking for rinstance");
-            /*check for alias - NAT */
-            params = needle_uri.sip_params.s;
-            params_len = needle_uri.sip_params.len;
+	LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d] Received [%d://%.*s:%d], Search flag is %d\n",
+		contact_info->aor.len, contact_info->aor.s, contact_info->via_prot, contact_info->via_host.len, contact_info->via_host.s, contact_info->via_port,
+		contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port, contact_info->searchflag);
 
-            while (params_len >= RINSTANCE_LEN) {
-                if (strncmp(params, RINSTANCE, RINSTANCE_LEN) == 0) {
-                    has_rinstance = 1;
-                    break;
-                }
-                sep = memchr(params, 59 /* ; */, params_len);
-                if (sep == NULL) {
-                    LM_DBG("no rinstance param\n");
-                    break;
-                } else {
-                    params_len = params_len - (sep - params + 1);
-                    params = sep + 1;
-                }
-            }
-            if (has_rinstance) {
-                rinstance.s = params + RINSTANCE_LEN;
-                rinstance.len = params_len - RINSTANCE_LEN;
-                sep = (char*)memchr(rinstance.s, 59 /* ; */, rinstance.len);
-                if (sep != NULL){
-                    rinstance.len = (sep-rinstance.s);
-                }
-                LM_DBG("rinstance found [%.*s]\n", rinstance.len, rinstance.s);
-            }
-        }
+	/* parse the uri in the NOTIFY */
+	if (contact_info->aor.len>0 && contact_info->aor.s){
+		LM_DBG("Have an AOR to search for\n");
+		if (parse_uri(contact_info->aor.s, contact_info->aor.len, &needle_uri) != 0) {
+			LM_ERR("Unable to parse contact aor in get_pcontact [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
+			return 0;
+		}
+		LM_DBG("checking for rinstance");
+		/*check for alias - NAT */
+		params = needle_uri.sip_params.s;
+		params_len = needle_uri.sip_params.len;
+
+		while (params_len >= RINSTANCE_LEN) {
+			if (strncmp(params, RINSTANCE, RINSTANCE_LEN) == 0) {
+				has_rinstance = 1;
+				break;
+			}
+			sep = memchr(params, 59 /* ; */, params_len);
+			if (sep == NULL) {
+				LM_DBG("no rinstance param\n");
+				break;
+			} else {
+				params_len = params_len - (sep - params + 1);
+				params = sep + 1;
+			}
+		}
+		if (has_rinstance) {
+			rinstance.s = params + RINSTANCE_LEN;
+			rinstance.len = params_len - RINSTANCE_LEN;
+			sep = (char*)memchr(rinstance.s, 59 /* ; */, rinstance.len);
+			if (sep != NULL){
+				rinstance.len = (sep-rinstance.s);
+			}
+			LM_DBG("rinstance found [%.*s]\n", rinstance.len, rinstance.s);
+		}
+	}
              
     
 	/* search in cache */
 	aorhash = get_aor_hash(_d, &contact_info->via_host, contact_info->via_port, contact_info->via_prot);
 	sl = aorhash & (_d->size - 1);
         
-        LM_DBG("get_pcontact slot is [%d]\n", sl);
+	LM_DBG("get_pcontact slot is [%d]\n", sl);
 	c = _d->table[sl].first;
 
 	for (i = 0; i < _d->table[sl].n; i++) {
-            LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
-            LM_DBG("  contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
+		LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
+		LM_DBG("  contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
 		LM_DBG("contact received [%d:%.*s:%d]\n", c->received_proto, c->received_host.len, c->received_host.s, c->received_port);
 
 		if(c->aorhash == aorhash){
@@ -606,8 +606,8 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 		c = c->next;
 	}
         
-        LM_DBG("contact not found in memory\n");
-       	// Default: Not found.
+	LM_DBG("contact not found in memory\n");
+	// Default: Not found.
 	*_c = NULL;
         
 	return 1; /* Nothing found */
@@ -680,7 +680,7 @@ int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned s
 int delete_pcontact(udomain_t* _d, /*str* _aor, str* _received_host, int _received_port,*/ struct pcontact* _c)
 {
 	if (_c==0) {
-            return 0;
+		return 0;
 	}
 
 	if (exists_ulcb_type(PCSCF_CONTACT_DELETE)) {
@@ -817,7 +817,7 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 
 	memset( &ci, 0, sizeof(pcontact_info_t));
 
-        host.s = (char*) VAL_STRING(vals + 1);
+	host.s = (char*) VAL_STRING(vals + 1);
 	if (VAL_NULL(vals+1) || !host.s || !host.s[0]) {
 		host.len = 0;
 		host.s = 0;
@@ -825,8 +825,8 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		host.len = strlen(host.s);
 	}
 	ci.via_host = host;
-        ci.via_port = VAL_INT(vals + 2);
-        ci.via_prot = VAL_INT(vals + 3);
+	ci.via_port = VAL_INT(vals + 2);
+	ci.via_prot = VAL_INT(vals + 3);
 	received.s = (char*) VAL_STRING(vals + 4);
 	if (VAL_NULL(vals+4) || !received.s || !received.s[0]) {
 		LM_DBG("Empty received for contact [%.*s]....\n", contact->len, contact->s);	/*this could happen if you have been notified about a contact from S-CSCF*/
@@ -964,9 +964,9 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 
 	columns[0] = &domain_col;
 	columns[1] = &aor_col;
-        columns[2] = &host_col;
-        columns[3] = &port_col;
-        columns[4] = &protocol_col;
+	columns[2] = &host_col;
+	columns[3] = &port_col;
+	columns[4] = &protocol_col;
 	columns[5] = &received_col;
 	columns[6] = &received_port_col;
 	columns[7] = &received_proto_col;
@@ -1023,11 +1023,11 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 				continue;
 			}
 			aor.len = strlen(aor.s);
-                        ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
-                        if (!ci) {
-                            LM_WARN("Failed to get contact info from DB.... continuing...\n");
-                            continue;
-                        }
+			ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
+			if (!ci) {
+				LM_WARN("Failed to get contact info from DB.... continuing...\n");
+				continue;
+			}
 			lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 
 			if ( (mem_insert_pcontact(_d, &aor, ci, &c)) != 0) {
@@ -1035,8 +1035,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 				unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 				goto error1;
 			}
-                        //c->flags = c->flags|(1<<FLAG_READFROMDB);
-                        //TODO: need to subscribe to s-cscf for first public identity
+			//c->flags = c->flags|(1<<FLAG_READFROMDB);
+			//TODO: need to subscribe to s-cscf for first public identity
 			unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 		}
 
@@ -1074,7 +1074,7 @@ pcontact_t* db_load_pcontact(db1_con_t* _c, udomain_t* _d, str *_aor)
 	db1_res_t* res = NULL;
 	db_row_t *row;
 	int i;
-        str aor;
+	str aor;
 
 	pcontact_t* c;
 
@@ -1083,11 +1083,11 @@ pcontact_t* db_load_pcontact(db1_con_t* _c, udomain_t* _d, str *_aor)
 	vals[0].nul = 0;
 	vals[0].val.str_val = *_aor;
 
-        columns[0] = &domain_col;
+	columns[0] = &domain_col;
 	columns[1] = &aor_col;
-        columns[2] = &host_col;
-        columns[3] = &port_col;
-        columns[4] = &protocol_col;
+	columns[2] = &host_col;
+	columns[3] = &port_col;
+	columns[4] = &protocol_col;
 	columns[5] = &received_col;
 	columns[6] = &received_port_col;
 	columns[7] = &received_proto_col;
@@ -1099,7 +1099,7 @@ pcontact_t* db_load_pcontact(db1_con_t* _c, udomain_t* _d, str *_aor)
 	columns[13] = &public_ids_col;
 	columns[14] = &path_col;
         
-        LM_DBG("Querying database for P-CSCF contact [%.*s]\n", _aor->len, _aor->s);
+	LM_DBG("Querying database for P-CSCF contact [%.*s]\n", _aor->len, _aor->s);
         
 	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("failed to use table %.*s\n", _d->name->len, _d->name->s);
@@ -1118,29 +1118,27 @@ pcontact_t* db_load_pcontact(db1_con_t* _c, udomain_t* _d, str *_aor)
 	}
 
 	for(i = 0; i < RES_ROW_N(res); i++) {
-                        row = RES_ROWS(res) + i;
-
-			aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
-			if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
-				LM_CRIT("empty aor record in table %s...skipping\n", _d->name->s);
-				continue;
-			}
-			aor.len = strlen(aor.s);
-                        ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
-                        if (!ci) {
-                            LM_WARN("Failed to get contact info from DB.... continuing...\n");
-                            continue;
-                        }
-			lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
-
+		row = RES_ROWS(res) + i;
+		aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
+		if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
+			LM_CRIT("empty aor record in table %s...skipping\n", _d->name->s);
+			continue;
+		}
+		aor.len = strlen(aor.s);
+		ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
+		if (!ci) {
+			LM_WARN("Failed to get contact info from DB.... continuing...\n");
+			continue;
+		}
+		lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 			if ( (mem_insert_pcontact(_d, &aor, ci, &c)) != 0) {
-				LM_ERR("inserting contact failed\n");
-				unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
-				goto error;
-			}
-                        //c->flags = c->flags|(1<<FLAG_READFROMDB);
-                        //TODO: need to subscribe to s-cscf for first public identity
+			LM_ERR("inserting contact failed\n");
 			unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
+			goto error;
+		}
+		//c->flags = c->flags|(1<<FLAG_READFROMDB);
+		//TODO: need to subscribe to s-cscf for first public identity
+		unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 	}
 
 	ul_dbf.free_result(_c, res);
@@ -1148,7 +1146,7 @@ pcontact_t* db_load_pcontact(db1_con_t* _c, udomain_t* _d, str *_aor)
 	return c;
 
 error:
-        free_pcontact(c);
+	free_pcontact(c);
 
 	ul_dbf.free_result(_c, res);
 	return 0;

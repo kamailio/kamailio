@@ -14,8 +14,8 @@
 str id_col	        	= str_init(ID_COL);
 str domain_col			= str_init(DOMAIN_COL);
 str aor_col		    	= str_init(AOR_COL);
-str host_col                    = str_init(HOST_COL);
-str port_col                    = str_init(PORT_COL);
+str host_col			= str_init(HOST_COL);
+str port_col			= str_init(PORT_COL);
 str protocol_col 		= str_init(PROTOCOL_COL);
 str received_col    	= str_init(RECEIVED_COL);
 str received_port_col	= str_init(RECEIVED_PORT_COL);
@@ -136,7 +136,7 @@ int db_update_pcontact(pcontact_t* _c)
 								&rx_session_id_col, &public_ids_col };
 	db_val_t values[8];
         
-    LM_DBG("updating pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
+	LM_DBG("updating pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
 
 	VAL_TYPE(match_values) = DB1_STR;
 	VAL_NULL(match_values) = 0;
@@ -229,15 +229,15 @@ int db_delete_pcontact(pcontact_t* _c)
 		return -1;
 	}
 
-    if(ul_dbf.delete(ul_dbh, match_keys, 0, values, 2) < 0) {
+	if(ul_dbf.delete(ul_dbh, match_keys, 0, values, 2) < 0) {
     	LM_ERR("Failed to delete database information: aor[%.*s], received port %u, rx_session_id=[%.*s]\n",
     													_c->aor.len, _c->aor.s,
 														_c->received_port,
-    													_c->rx_session_id.len, _c->rx_session_id.s);
-        return -1;
-    }
+														_c->rx_session_id.len, _c->rx_session_id.s);
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 int db_insert_pcontact(struct pcontact* _c)
@@ -263,42 +263,42 @@ int db_insert_pcontact(struct pcontact* _c)
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PATH_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = DB1_DATETIME;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SOCKET_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PUBLIC_IPS_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
         
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_DOMAIN_IDX), (*_c->domain));
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_AOR_IDX), _c->aor);	//TODO: need to clean AOR
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RECEIVED_IDX), _c->received_host);
-        SET_STR_VALUE(GET_FIELD_IDX(values, LP_HOST_IDX), _c->via_host);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_HOST_IDX), _c->via_host);
 
 	SET_PROPER_NULL_FLAG((*_c->domain), values, LP_DOMAIN_IDX);
 	SET_PROPER_NULL_FLAG(_c->aor, values, LP_AOR_IDX);
 	SET_PROPER_NULL_FLAG(_c->received_host, values, LP_RECEIVED_IDX);
-        SET_PROPER_NULL_FLAG(_c->via_host, values, LP_HOST_IDX);
+	SET_PROPER_NULL_FLAG(_c->via_host, values, LP_HOST_IDX);
 
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = _c->received_port;
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = _c->received_proto;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = 0;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = 0;
-        VAL_INT(GET_FIELD_IDX(values, LP_PORT_IDX)) = _c->via_port;
-        VAL_INT(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = _c->via_proto;
-        VAL_NULL(GET_FIELD_IDX(values, LP_PORT_IDX)) = 0;
-        VAL_NULL(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = 0;
+	VAL_INT(GET_FIELD_IDX(values, LP_PORT_IDX)) = _c->via_port;
+	VAL_INT(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = _c->via_proto;
+	VAL_NULL(GET_FIELD_IDX(values, LP_PORT_IDX)) = 0;
+	VAL_NULL(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = 0;
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PATH_IDX), _c->path);
-        SET_STR_VALUE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX), _c->rinstance);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX), _c->rinstance);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX), _c->rx_session_id);
 	SET_PROPER_NULL_FLAG(_c->path, values, LP_PATH_IDX);
-        SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
+	SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
 	SET_PROPER_NULL_FLAG(_c->rx_session_id, values, LP_RX_SESSION_ID_IDX);
 
 	VAL_DOUBLE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
@@ -352,7 +352,7 @@ int db_insert_pcontact(struct pcontact* _c)
 int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, security_t* _s) {
 	db_val_t match_values[2];
 	db_key_t match_keys[2] = { &aor_col, &received_port_col };
-    db_op_t op[2];
+	db_op_t op[2];
 
 	db_key_t update_keys[15] = { &t_security_type_col, &t_protocol_col,
 			&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_pc_col, &t_port_ps_col, &t_port_uc_col,
@@ -369,7 +369,7 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 	VAL_NULL(match_values + 1)	= 0;
 	VAL_INT(match_values + 1)	= _c->received_port;
 
-    op[0]=OP_EQ;
+	op[0]=OP_EQ;
 	op[1]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
@@ -466,9 +466,9 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_t* _s) {
 	db_val_t match_values[2];
 	db_key_t match_keys[2] = { &aor_col, &received_port_col };
-    db_op_t op[2];
+	db_op_t op[2];
 
-    db_key_t update_keys[15] = { &security_type_col, &protocol_col,
+	db_key_t update_keys[15] = { &security_type_col, &protocol_col,
 			&mode_col, &ck_col, &ik_col, &ealg_col, &ialg_col, &port_pc_col, &port_ps_col, &port_uc_col,
 			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col };
 	db_val_t values[15];
