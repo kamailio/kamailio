@@ -1602,8 +1602,6 @@ modparam("dialog", "h_id_step", 10)
 		</example>
 	</section>
 
-	</section>
-
 	<section id="dialog.p.keep_proxy_rr">
 		<title><varname>keep_proxy_rr</varname> (string)</title>
 		<para>
@@ -1638,8 +1636,10 @@ modparam("dialog", "h_id_step", 10)
 		<programlisting format="linespecific">
 ...
 modparam("dialog", "keep_proxy_rr", 1)
+...
 </programlisting>
 		</example>
+	</section>
 	</section>
 
 	<section>
