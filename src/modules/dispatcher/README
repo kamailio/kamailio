@@ -10,29 +10,19 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Carsten Bock
 
    ng-voice GmbH
-
-Edited by
 
 Olle E. Johansson
 
    Edvina AB
 
-Edited by
-
 Alessandro Arrichiello
 
    Hewlett Packard
 
-Edited by
-
 Luis Martin
-
-Edited by
 
 Julien Chavanton
 
@@ -1463,7 +1453,7 @@ kamcmd dispatcher.ping_active 0
    Optionally, these fields can be followed by:
      * flags - control the mode of using the destination address and
        sending keepalives. It is a bitwise value that can be built using
-       the folowing flags:
+       the following flags:
           + 1 (bit at index 0 - 1 <<0) - inactive destination
           + 2 (bit at index 1 - 1 <<1) - temporary trying destination (in
             the way to become inactive if it does not reply to keepalives
@@ -1878,48 +1868,48 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       Does dispatcher provide a fair distribution?
+   Does dispatcher provide a fair distribution?
 
-       The algorithms doing hashing over parts of SIP message don't guarantee
-       a fair distribution. You should do some measurements to decide what
-       hashing algorithm fits better in your environment.
+   The algorithms doing hashing over parts of SIP message don't guarantee
+   a fair distribution. You should do some measurements to decide what
+   hashing algorithm fits better in your environment.
 
-       Other distribution algorithms such as round robin or call load
-       dispatching do a fair distribution in terms of delivered calls to
-       gateways.
+   Other distribution algorithms such as round robin or call load
+   dispatching do a fair distribution in terms of delivered calls to
+   gateways.
 
    2.2.
 
-       Is dispatcher dialog stateful?
+   Is dispatcher dialog stateful?
 
-       No. Dispatcher is stateless, although some distribution algorithms are
-       designed to select same destination for subsequent requests of the same
-       dialog (e.g., hashing the call-id).
+   No. Dispatcher is stateless, although some distribution algorithms are
+   designed to select same destination for subsequent requests of the same
+   dialog (e.g., hashing the call-id).
 
    2.3.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at https://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    2.4.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable version should be sent to
-       <sr-users@lists.kamailio.org> and e-mail regarding development versions
-       or GIT snapshots should be send to <sr-dev@lists.kamailio.org>.
+   E-mails regarding any stable version should be sent to
+   <sr-users@lists.kamailio.org> and e-mail regarding development versions
+   or GIT snapshots should be send to <sr-dev@lists.kamailio.org>.
 
    2.5.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       https://github.com/kamailio/kamailio/issues
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues
