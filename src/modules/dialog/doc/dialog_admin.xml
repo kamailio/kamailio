@@ -1633,6 +1633,7 @@ modparam("dialog", "h_id_step", 10)
 		<emphasis>
 			Default value is <quote>0</quote>.
 		</emphasis>
+		<example>
 		<title>Set <varname>dlg_keep_proxy_rr</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
