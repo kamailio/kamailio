@@ -340,7 +340,7 @@ event_route[tcp:closed] {
 
    Example 1.9. tcp_get_conid usage
 ...
-        if(tcp_conid_alive("127.0.0.1:5060", "$var(conid)")) {
+        if(tcp_get_conid("127.0.0.1:5060", "$var(conid)")) {
                 xlog("connection id is: $var(conid)\n");
         }
 ...

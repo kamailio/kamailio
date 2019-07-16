@@ -24,8 +24,6 @@ Jan Janak
 
    <jan@iptel.org>
 
-Edited by
-
 Bogdan-Andre Iancu
 
    Copyright © 2003 FhG FOKUS
@@ -91,6 +89,7 @@ Bogdan-Andre Iancu
               4.6. unregister(domain, uri[, ruid])
               4.7. reg_fetch_contacts(domain, uri, profile)
               4.8. reg_free_contacts(profile)
+              4.9. reg_send_reply()
 
         5. Event Routes
 
@@ -150,8 +149,9 @@ Bogdan-Andre Iancu
    1.36. unregister usage
    1.37. reg_fetch_contacts usage
    1.38. reg_free_contacts usage
-   1.39. event_route[usrloc:contact-expired] usage
-   1.40. $ulc(name) usage
+   1.39. reg_send_reply usage
+   1.40. event_route[usrloc:contact-expired] usage
+   1.41. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -211,6 +211,7 @@ Chapter 1. Admin Guide
         4.6. unregister(domain, uri[, ruid])
         4.7. reg_fetch_contacts(domain, uri, profile)
         4.8. reg_free_contacts(profile)
+        4.9. reg_send_reply()
 
    5. Event Routes
 
@@ -886,6 +887,7 @@ request_route {
    4.6. unregister(domain, uri[, ruid])
    4.7. reg_fetch_contacts(domain, uri, profile)
    4.8. reg_free_contacts(profile)
+   4.9. reg_send_reply()
 
 4.1.  save(domain, [, flags [, uri]])
 
@@ -1124,6 +1126,22 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 reg_free_contacts("callee");
 ...
 
+4.9.  reg_send_reply()
+
+   The function sends the SIP reply that is normally sent by save(...),
+   but that was skipped due to flag 0x2. It must be used after save(...,
+   "0x2"). Practically it allows saving registration to location table, do
+   other operations and then send the reply.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.39. reg_send_reply usage
+...
+save("location", "0x2");
+...
+reg_send_reply();
+...
+
 5. Event Routes
 
    5.1. event_route[usrloc:contact-expired]
@@ -1133,7 +1151,7 @@ reg_free_contacts("callee");
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.39. event_route[usrloc:contact-expired] usage
+   Example 1.40. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp=>aor)\n");
@@ -1207,7 +1225,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.40. $ulc(name) usage
+   Example 1.41. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

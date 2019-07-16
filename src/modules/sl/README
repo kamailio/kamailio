@@ -28,7 +28,7 @@ Daniel-Constantin Mierla
               3.1. sl_send_reply(code, reason)
               3.2. send_reply(code, reason)
               3.3. sl_reply_error()
-              3.4. sl_forward _reply([ code, [ reason ] ])
+              3.4. sl_forward_reply([ code, [ reason ] ])
 
         4. Statistics
 
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
         3.1. sl_send_reply(code, reason)
         3.2. send_reply(code, reason)
         3.3. sl_reply_error()
-        3.4. sl_forward _reply([ code, [ reason ] ])
+        3.4. sl_forward_reply([ code, [ reason ] ])
 
    4. Statistics
 
@@ -213,7 +213,7 @@ modparam("sl", "rich_redirect", 3)
    3.1. sl_send_reply(code, reason)
    3.2. send_reply(code, reason)
    3.3. sl_reply_error()
-   3.4. sl_forward _reply([ code, [ reason ] ])
+   3.4. sl_forward_reply([ code, [ reason ] ])
 
 3.1.  sl_send_reply(code, reason)
 
@@ -274,7 +274,7 @@ send_reply("403", "Invalid user - $fU");
 sl_reply_error();
 ...
 
-3.4.  sl_forward _reply([ code, [ reason ] ])
+3.4.  sl_forward_reply([ code, [ reason ] ])
 
    Forward statelessly the current received SIP reply, with the option to
    change the status code and reason text. The new code has to be in the
