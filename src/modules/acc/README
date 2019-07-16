@@ -22,8 +22,6 @@ Bogdan-Andrei Iancu
    Voice Sistem SRL
    <bogdan@voice-system.ro>
 
-Edited by
-
 Sven Knoblich
 
    1&1 Internet AG
@@ -845,6 +843,13 @@ modparam("acc", "log_flag", 2)
 6.11. log_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls via syslog.
+   This can be used to e.g. account failures during the call setup phase
+   from the callee side, for example if you do forking to several
+   destinations.
+
+   Keep in mind that this flag is reset after processing. Therefore it is
+   necessary to set it again e.g. in a failure_route if you do serial
+   forking and want to log all attempts.
 
    Default value is not-set (no flag).
 
@@ -1444,55 +1449,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happened with old log_fmt parameter
+   What happened with old log_fmt parameter
 
-       The parameter became obsolete with the restructure of the data logged
-       by ACC module (refer to the Overview chapter). For similar behaviour
-       you can use the extra accouting (see the coresponding chapter).
+   The parameter became obsolete with the restructure of the data logged
+   by ACC module (refer to the Overview chapter). For similar behaviour
+   you can use the extra accouting (see the coresponding chapter).
 
    2.2.
 
-       What happened with old multi_leg_enabled parameter
+   What happened with old multi_leg_enabled parameter
 
-       The parameter becaome obsolete by the addition of the new
-       multi_leg_info parameter. The multi-leg accouting is automatically
-       enabled when multi_leg_info is defined.
+   The parameter becaome obsolete by the addition of the new
+   multi_leg_info parameter. The multi-leg accouting is automatically
+   enabled when multi_leg_info is defined.
 
    2.3.
 
-       What happened with old src_leg_avp_id and dst_leg_avp_id parameters
+   What happened with old src_leg_avp_id and dst_leg_avp_id parameters
 
-       The parameter was replaced by the more generic new parameter
-       multi_leg_info. This allows logging (per-leg) of more information than
-       just dst and src.
+   The parameter was replaced by the more generic new parameter
+   multi_leg_info. This allows logging (per-leg) of more information than
+   just dst and src.
 
    2.4.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at https://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    2.5.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.kamailio.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.kamailio.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.kamailio.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.kamailio.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.kamailio.org>.
 
    2.6.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       https://github.com/kamailio/kamailio/issues.
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues.
