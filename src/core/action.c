@@ -1434,6 +1434,9 @@ match_cleanup:
 				ret=E_BUG;
 				goto error;
 			}
+			LM_DBG("setting send-socket to [%.*s]\n",
+					((struct socket_info*)a->val[0].u.data)->sock_str.len,
+					((struct socket_info*)a->val[0].u.data)->sock_str.s);
 			set_force_socket(msg, (struct socket_info*)a->val[0].u.data);
 			ret=1; /* continue processing */
 			break;
