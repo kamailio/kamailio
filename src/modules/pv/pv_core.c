@@ -2604,6 +2604,7 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		goto error;
 	}
 	val->rs.s[val->rs.len] = backup;
+	LM_DBG("trying to set send-socket to [%.*s]\n", val->rs.len, val->rs.s);
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL)
 	{
