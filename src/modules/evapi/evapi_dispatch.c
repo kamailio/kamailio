@@ -728,7 +728,6 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 
 	int len;
 	int sbsize;
-	int evapi_send_count;
 	evapi_msg_t *emsg;
 
 	LM_DBG("relaying event data [%.*s] (%d)\n",
@@ -782,11 +781,10 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 		cfg_update();
 		LM_DBG("dispatching [%p] [%.*s] (%d)\n", emsg,
 				emsg->data.len, emsg->data.s, emsg->data.len);
-		evapi_send_count = evapi_dispatch_notify(emsg);
-                if (evapi_send_count == 0) {
-			shm_free(emsg); 
-			LM_ERR("no evapi client to send the message, failed to send message\n");
-			return -1; 
+		if(evapi_dispatch_notify(emsg) == 0) {
+			shm_free(emsg);
+			LM_WARN("message not delivered - no client connected\n");
+			return -1;
 		}
 		shm_free(emsg);
 	}
