@@ -241,7 +241,7 @@ typedef struct _pv_cache
 	struct _pv_cache *next;
 } pv_cache_t;
 
-#define PV_CACHE_SIZE	64  /*!< pseudo-variables cache table size */
+#define PV_CACHE_SIZE	512  /*!< pseudo-variables cache table size */
 
 pv_cache_t **pv_cache_get_table(void);
 
