@@ -30,6 +30,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/digest/digest.h"
 
 MODULE_VERSION
 
@@ -485,6 +486,78 @@ static int ki_kx_get_protoid(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_auth_attr(sip_msg_t *msg, int iattr, int xmode)
+{
+	hdr_field_t *hdr;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if ((msg->REQ_METHOD == METHOD_ACK) ||
+			(msg->REQ_METHOD == METHOD_CANCEL)) {
+		LM_DBG("no [Proxy-]Authorization header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if ((parse_headers(msg, HDR_PROXYAUTH_F|HDR_AUTHORIZATION_F, 0)==-1)
+			|| (msg->proxy_auth==0 && msg->authorization==0)) {
+		LM_DBG("no [Proxy-]Authorization header\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
+
+	if(parse_credentials(hdr)!=0) {
+		LM_ERR("failed to parse credentials\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+	switch(iattr) {
+		case 1:
+			_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+			_sr_kemi_kx_xval.v.s = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+			return &_sr_kemi_kx_xval;
+
+		break;
+		default:
+			_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+			_sr_kemi_kx_xval.v.s = ((auth_body_t*)(hdr->parsed))->digest.username.whole;
+			return &_sr_kemi_kx_xval;
+	}
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_au(sip_msg_t *msg)
+{
+	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_au(sip_msg_t *msg)
+{
+	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_au(sip_msg_t *msg)
+{
+	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -609,6 +682,21 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_protoid"),
 		SR_KEMIP_INT, ki_kx_get_protoid,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_au"),
+		SR_KEMIP_XVAL, ki_kx_get_au,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_au"),
+		SR_KEMIP_XVAL, ki_kx_getw_au,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_au"),
+		SR_KEMIP_XVAL, ki_kx_gete_au,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
