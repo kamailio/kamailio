@@ -25,11 +25,14 @@ arch="all"
 license="GPL-2.0"
 depends="gawk"
 options="!check"
-makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
-	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
-	lua-dev openldap-dev openssl-dev net-snmp-dev libuuid libev-dev
-	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
-	rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev ruby-dev"
+makedepends="bison db-dev flex freeradius-client-dev expat-dev
+	lksctp-tools-dev perl-dev postgresql-dev python2-dev python3-dev
+	pcre-dev mariadb-dev libxml2-dev curl-dev unixodbc-dev
+	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
+	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
+	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
+	ruby-dev libmaxminddb-dev libunistring-dev"
+
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
 # secfixes:
@@ -159,8 +162,14 @@ _mod_list_lua="app_lua"
 # - modules depending on perl library
 _mod_list_perl="app_perl db_perlvdb"
 
-# - modules depending on python library
+# - modules depending on python2 library
 _mod_list_python="app_python"
+
+# - modules depending on ruby library
+_mod_list_ruby="app_ruby"
+
+# - modules depending on python3 libarary
+_mod_list_python3="app_python3"
 
 # - modules depending on ruby library
 _mod_list_ruby="app_ruby"
@@ -239,14 +248,15 @@ _module_group_kstandard="$_mod_list_basic $_mod_list_dbuid $_mod_list_pcre"
 
 # END Makefile.groups #############################################################
 
-subpackages="$pkgname-doc $pkgname-dbg"
+subpackages="$pkgname-doc $pkgname-dbg $pkgname-openrc"
 _modules="$_module_group_kstandard"
 for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson sqlang sipdump \
-	jsdt http_async kazoo rabbitmq sctp radius perl python ruby; do
+	jsdt http_async kazoo rabbitmq sctp radius perl python \
+	python3 ruby; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -531,12 +541,22 @@ perl() {
 }
 
 python() {
-	_generic_pkg "Python extensions for Kamailio" \
+	_generic_pkg "Execute embedded Python2 scripts" \
 		"$_mod_list_python"
 }
 
 ruby() {
 	_generic_pkg "Ruby extensions for Kamailio" \
+		"$_mod_list_ruby"
+}
+
+python3() {
+	_generic_pkg "Execute embedded Python3 scripts" \
+		"$_mod_list_python3"
+}
+
+ruby() {
+	_generic_pkg "Execute embedded Ruby scripts" \
 		"$_mod_list_ruby"
 }
 
