@@ -39,6 +39,25 @@ event_route[tm:branch-failure:myroute] {
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.e.local-request">
+		<title>
+			<function moreinfo="none">event_route[tm:local-request]</function>
+		</title>
+		<para>
+			Executed after the tm module has sent a local generated, transaction stateful request.
+		</para>
+		<example>
+			<title><function>event_route[tm:local-request]</function> usage</title>
+			<programlisting  format="linespecific">
+...
+event_route [tm:local-request] {
+    xlog("L_INFO", "Routing locally generated $rm to $ru\n");
+    t_set_fr(10000, 10000);
+}
+...
+			</programlisting>
+		</example>
+	</section>
 	<section id="tm.e.local-response">
 		<title>
 			<function moreinfo="none">event_route[tm:local-response]</function>
