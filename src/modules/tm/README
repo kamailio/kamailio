@@ -148,7 +148,8 @@ Daniel-Constantin Mierla
         6. Event Routes
 
               6.1. event_route[tm:branch-failure]
-              6.2. event_route[tm:local-response]
+              6.2. event_route[tm:local-request]
+              6.3. event_route[tm:local-response]
 
         7. TM Module API
 
@@ -265,7 +266,8 @@ Daniel-Constantin Mierla
    1.93. t_is_retr_async_reply usage
    1.94. t_uac_send usage
    1.95. event_route[tm:branch-failure] usage
-   1.96. event_route[tm:local-response] usage
+   1.96. event_route[tm:local-request] usage
+   1.97. event_route[tm:local-response] usage
 
 Chapter 1. Admin Guide
 
@@ -395,7 +397,8 @@ Chapter 1. Admin Guide
    6. Event Routes
 
         6.1. event_route[tm:branch-failure]
-        6.2. event_route[tm:local-response]
+        6.2. event_route[tm:local-request]
+        6.3. event_route[tm:local-response]
 
    7. TM Module API
 
@@ -2946,7 +2949,8 @@ t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
 6. Event Routes
 
    6.1. event_route[tm:branch-failure]
-   6.2. event_route[tm:local-response]
+   6.2. event_route[tm:local-request]
+   6.3. event_route[tm:local-response]
 
 6.1.  event_route[tm:branch-failure]
 
@@ -2971,12 +2975,25 @@ event_route[tm:branch-failure:myroute] {
 }
 ...
 
-6.2.  event_route[tm:local-response]
+6.2.  event_route[tm:local-request]
+
+   Executed after the tm module has sent a local generated, transaction
+   stateful request.
+
+   Example 1.96. event_route[tm:local-request] usage
+...
+event_route [tm:local-request] {
+    xlog("L_INFO", "Routing locally generated $rm to $ru\n");
+    t_set_fr(10000, 10000);
+}
+...
+
+6.3.  event_route[tm:local-response]
 
    Executed after the tm module has sent a local generated, transaction
    stateful response.
 
-   Example 1.96. event_route[tm:local-response] usage
+   Example 1.97. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
