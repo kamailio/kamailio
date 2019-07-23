@@ -778,7 +778,7 @@ if(uac_reg_request_to("$fU", 0))
 failure_route[REMOTE_AUTH] {
         if ($T_reply_code == 401 or $T_reply_code == 407) {
                 xlog("L_NOTICE", "Remote asked for authentication");
-                uac_auth()
+                uac_auth();
         }
 }
 ...
