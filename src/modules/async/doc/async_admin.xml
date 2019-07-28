@@ -94,7 +94,7 @@ modparam("async", "workers", 2)
 			Enables millisecond timer for async_ms_sleep() and async_ms_route() functions.
 			The integer value is the timer resolution in milliseconds.
 			ms_timer = 1 enables 1 millisecond timer but generates higher load on the system.
-			ms_timer = 20 enables 20 ms timer. 
+			ms_timer = 20 enables 20 ms timer.
 		</para>
 		<para>
 		<emphasis>
@@ -115,10 +115,10 @@ modparam("async", "ms_timer", 1)
 	<section>
 	<title>Functions</title>
 	<section id="async.f.async_route">
-	    <title>
+		<title>
 		<function moreinfo="none">async_route(routename, seconds)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Simulate a sleep of 'seconds' and then continue the processing of the SIP
 		request with the route[routename]. In case of internal errors, the
 		function returns false, otherwise the function exits the execution of
@@ -157,13 +157,13 @@ route[RESUME] {
 }
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section id="async.f.async_ms_route">
-	    <title>
+		<title>
 		<function moreinfo="none">async_ms_route(routename, milliseconds)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Simulate a sleep of 'milliseconds' and then continue the processing of the SIP
 		request with the route[routename]. In case of internal errors, the
 		function returns false, otherwise the function exits the execution of
@@ -203,14 +203,14 @@ route[RESUME] {
 }
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section id="async.f.async_sleep">
-	    <title>
+		<title>
 		<function moreinfo="none">async_sleep(seconds)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Simulate a sleep of 'seconds' and then continue the processing of SIP
 		request with the next action. In case of internal errors, the function
 		returns false.
@@ -232,14 +232,14 @@ send_reply("404", "Not found");
 exit;
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section id="async.f.async_ms_sleep">
-	    <title>
+		<title>
 		<function moreinfo="none">async_ms_sleep(milliseconds)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Simulate a sleep of 'milliseconds' and then continue the processing of SIP
 		request with the next action. In case of internal errors, the function
 		returns false.
@@ -258,33 +258,33 @@ exit;
 		<programlisting format="linespecific">
 ...
 route[REQUESTSHAPER] {
-        $var(res) = http_connect("leakybucket", 
-        			 "/add?key=$fd", $null, $null,"$avp(delay)");
-        $var(d) = $(avp(delay){s.int});
-	if ($var(d) > 0) {
+	$var(res) = http_connect("leakybucket",
+			"/add?key=$fd", $null, $null,"$avp(delay)");
+	$var(d) = $(avp(delay){s.int});
+	if ($var(d) &gt; 0) {
 		# Delay the request by $avp(delay) ms
 		async_ms_sleep("$var(d)");
 		if (!t_relay()) {
 			sl_reply_error();
 		}
 		exit;
-	} 
+	}
 	# No delay
 	if (!t_relay()) {
 		sl_reply_error();
 	}
-        exit;
+	exit;
 }
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section id="async.f.async_task_route">
-	    <title>
+		<title>
 		<function moreinfo="none">async_task_route(routename)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Continue the processing of the SIP request with the route[routename]
 		in one of the processes from core asynchronous framework. The core
 		parameter async_workers has to be set to enable asynchronous
@@ -304,7 +304,7 @@ route[REQUESTSHAPER] {
 async_workers=8
 ...
 </programlisting>
-	    </example>
+		</example>
 		</para>
 		<para>
 		In case of internal errors, the function returns false, otherwise the
@@ -339,7 +339,7 @@ route[RESUME] {
 }
 ...
 </programlisting>
-	    </example>
+	</example>
 	</section>
 	</section>
 </chapter>
