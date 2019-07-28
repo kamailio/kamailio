@@ -434,7 +434,7 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 		Here are definitions for the most important tables as well as a basic 
 		configuration file to use db_text with &kamailio;. The table structures
 		may change in time and you will have to adjust these examples. Check the
-		source code directory <quote>utils/kamctl/dbtxt/kamailio</quote> for
+		source code directory <quote>utils/kamctl/dbtext/kamailio</quote> for
 		current definitions.
 		</para>
 		<para>
