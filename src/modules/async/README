@@ -244,7 +244,7 @@ exit;
 ...
 route[REQUESTSHAPER] {
         $var(res) = http_connect("leakybucket",
-                                 "/add?key=$fd", $null, $null,"$avp(delay)");
+                        "/add?key=$fd", $null, $null,"$avp(delay)");
         $var(d) = $(avp(delay){s.int});
         if ($var(d) > 0) {
                 # Delay the request by $avp(delay) ms
