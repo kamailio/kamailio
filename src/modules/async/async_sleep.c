@@ -130,7 +130,7 @@ int async_init_ms_timer_list(void)
 	if(lock_init(&_async_ms_list->lock) == 0) {
 		LM_ERR("cannot init lock \n");
 		shm_free(_async_ms_list);
-		_async_ms_list = 0;
+		_async_ms_list = NULL;
 		return -1;
 	}
 	return 0;
@@ -140,6 +140,8 @@ int async_destroy_ms_timer_list(void)
 {	
 	if (_async_ms_list) {
 		lock_destroy(&_async_ms_list->lock);
+		shm_free(_async_ms_list);
+		_async_ms_list = NULL;
 	}
 	return 0;
 }
@@ -384,19 +386,6 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
-	dsize = sizeof(async_task_t) + sizeof(async_task_param_t) + sizeof(async_ms_item_t);
-
-	at = (async_task_t *)shm_malloc(dsize);
-	if(at == NULL) {
-		LM_ERR("no more shm memory\n");
-		return -1;
-	}
-	memset(at, 0, dsize);
-	at->param = (char *)at + sizeof(async_task_t);
-	atp = (async_task_param_t *)at->param;
-	ai = (async_ms_item_t *) ((char *)at +  sizeof(async_task_t) + sizeof(async_task_param_t));
-	ai->at = at;
-
 	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
@@ -417,9 +406,22 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	
 	if(tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
 		LM_ERR("failed to suspend the processing\n");
-		shm_free(ai);
 		return -1;
 	}
+
+	dsize = sizeof(async_task_t) + sizeof(async_task_param_t) + sizeof(async_ms_item_t);
+
+	at = (async_task_t *)shm_malloc(dsize);
+	if(at == NULL) {
+		LM_ERR("no more shm memory\n");
+		return -1;
+	}
+	memset(at, 0, dsize);
+	at->param = (char *)at + sizeof(async_task_t);
+	atp = (async_task_param_t *)at->param;
+	ai = (async_ms_item_t *) ((char *)at +  sizeof(async_task_t) + sizeof(async_task_param_t));
+	ai->at = at;
+
 	at->exec = async_exec_task;
 	at->param = atp;
 	atp->ract = act;
