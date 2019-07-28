@@ -10,13 +10,9 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
-Edited by
-
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
-
-Edited by
 
 Olle E. Johansson
 
@@ -355,7 +351,7 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
    Here are definitions for the most important tables as well as a basic
    configuration file to use db_text with Kamailio. The table structures
    may change in time and you will have to adjust these examples. Check
-   the source code directory “utils/kamctl/dbtxt/kamailio” for current
+   the source code directory “utils/kamctl/dbtext/kamailio” for current
    definitions.
 
    You have to populate the table 'subscriber' by hand with user profiles
