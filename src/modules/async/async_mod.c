@@ -155,10 +155,10 @@ static int child_init(int rank)
 	}
 
 	if((async_ms_timer > 0) && fork_basic_utimer(PROC_TIMER,
-				"ASYNC MOD MILLI TIMER SINGLETON", 1 /*socks flag*/,
+				"ASYNC MOD MS TIMER", 1 /*socks flag*/,
 				async_mstimer_exec, NULL, 1000 * async_ms_timer /*milliseconds*/)
 			< 0) {
-		LM_ERR("failed to register millisecond timer singleton as process (%d)\n",
+		LM_ERR("failed to register millisecond timer as process (%d)\n",
 				i);
 		return -1; /* error */
 	}
