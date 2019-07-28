@@ -137,7 +137,7 @@ int async_init_ms_timer_list(void)
 }
 
 int async_destroy_ms_timer_list(void)
-{	
+{
 	if (_async_ms_list) {
 		lock_destroy(&_async_ms_list->lock);
 		shm_free(_async_ms_list);
@@ -160,10 +160,10 @@ int async_destroy_timer_list(void)
 	return 0;
 }
 
-int async_insert_item(async_ms_item_t *ai) 
+int async_insert_item(async_ms_item_t *ai)
 {
 	struct timeval *due = &ai->due;
-	
+
 	if (unlikely(_async_ms_list == NULL))
 		return -1;
 	lock_get(&_async_ms_list->lock);
@@ -194,7 +194,7 @@ int async_insert_item(async_ms_item_t *ai)
 	}
 	_async_ms_list->len++;
 	lock_release(&_async_ms_list->lock);
-	return 0;	
+	return 0;
 }
 
 
@@ -307,16 +307,16 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 	if (_async_ms_list == NULL)
 		return;
 	lock_get(&_async_ms_list->lock);
-	
+
 	async_ms_item_t *aip, *next;
 	int i = 0;
 	for (aip = _async_ms_list->lstart; aip; aip = next, i++) {
 		next = aip->next;
 		if (timercmp(&now, &aip->due, >=)) {
-			if ((_async_ms_list->lstart = next) == NULL) 
+			if ((_async_ms_list->lstart = next) == NULL)
 				_async_ms_list->lend = NULL;
 			if (async_task_push(aip->at)<0) {
-		                shm_free(aip->at);
+				shm_free(aip->at);
 			}
 			_async_ms_list->len--;
 			continue;
@@ -325,7 +325,7 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 	}
 
 	lock_release(&_async_ms_list->lock);
-	
+
 	return;
 
 }
@@ -403,7 +403,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 			return -1;
 		}
 	}
-	
+
 	if(tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
 		LM_ERR("failed to suspend the processing\n");
 		return -1;
@@ -432,13 +432,13 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 		atp->cbname[cbname->len] = '\0';
 		atp->cbname_len = cbname->len;
 	}
-	
+
 	struct timeval now, upause;
 	gettimeofday(&now, NULL);
-	upause.tv_sec = milliseconds / 1000; 
+	upause.tv_sec = milliseconds / 1000;
 	upause.tv_usec = (milliseconds * 1000) % 1000000;
-	
-	timeradd(&now, &upause, &ai->due);	
+
+	timeradd(&now, &upause, &ai->due);
 	async_insert_item(ai);
 
 	return 0;
