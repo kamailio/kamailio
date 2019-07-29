@@ -176,4 +176,6 @@ int uldb_insert_attrs(str *_dname, str *_user, str *_domain,
  */
 void ul_set_xavp_contact_clone(int v);
 
+int uldb_delete_attrs_ruid(str* _dname, str *_ruid);
+
 #endif

@@ -909,6 +909,9 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 	int n;
 	urecord_t* r;
 	ucontact_t* c;
+#define RUIDBUF_SIZE 128
+	char ruidbuf[RUIDBUF_SIZE];
+	str ruid;
 
 	if (db_mode!=DB_ONLY) {
 		return 0;
@@ -1028,8 +1031,24 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 				run_ul_callbacks( UL_CONTACT_EXPIRE, c);
 			}
 			c->state = CS_SYNC;
+			ruid.len = 0;
+			if(c->ruid.len > 0 && ul_xavp_contact_name.s != NULL) {
+				/* clone ruid to delete attributes out of lock */
+				if(c->ruid.len < RUIDBUF_SIZE - 2) {
+					memcpy(ruidbuf, c->ruid.s, c->ruid.len);
+					ruidbuf[c->ruid.len] = '\0';
+					ruid.s = ruidbuf;
+					ruid.len = c->ruid.len;
+				} else {
+					LM_ERR("ruid is too long: %d\n", c->ruid.len);
+				}
+			}
 			release_urecord(r);
 			unlock_udomain(_d, &user);
+			if(ruid.len > 0 && ul_xavp_contact_name.s != NULL) {
+				/* delete attributes by ruid */
+				uldb_delete_attrs_ruid(_d->name, &ruid);
+			}
 		}
 
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
