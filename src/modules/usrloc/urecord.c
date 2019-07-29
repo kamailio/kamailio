@@ -94,7 +94,7 @@ void free_urecord(urecord_t* _r)
 		_r->contacts = _r->contacts->next;
 		free_ucontact(ptr);
 	}
-	
+
 	/* if mem cache is not used, the urecord struct is static*/
 	if (db_mode!=DB_ONLY) {
 		if (_r->aor.s) shm_free(_r->aor.s);
@@ -117,7 +117,7 @@ void print_urecord(FILE* _f, urecord_t* _r)
 	fprintf(_f, "aor    : '%.*s'\n", _r->aor.len, ZSW(_r->aor.s));
 	fprintf(_f, "aorhash: '%u'\n", (unsigned)_r->aorhash);
 	fprintf(_f, "slot:    '%d'\n", _r->aorhash&(_r->slot->d->size-1));
-	
+
 	if (_r->contacts) {
 		ptr = _r->contacts;
 		while(ptr) {
@@ -201,7 +201,7 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 			_c->next->prev = 0;
 		}
 	}
-}	
+}
 
 
 /*!
@@ -534,7 +534,7 @@ int db_delete_urecord_by_ruid(str *_table, str *_ruid)
 	}
 
 	if (ul_dbf.affected_rows(ul_dbh) == 0) {
-	        return -2;
+		return -2;
 	}
 
 	return 0;
@@ -653,12 +653,12 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 
 int delete_urecord_by_ruid(udomain_t* _d, str *_ruid)
 {
-    if (db_mode != DB_ONLY) {
-	LM_ERR("delete_urecord_by_ruid currently available only in db_mode=3\n");
-	return -1;
-    }
+	if (db_mode != DB_ONLY) {
+		LM_ERR("delete_urecord_by_ruid currently available only in db_mode=3\n");
+		return -1;
+	}
 
-    return db_delete_urecord_by_ruid(_d->name, _ruid);
+	return db_delete_urecord_by_ruid(_d->name, _ruid);
 }
 
 
@@ -674,7 +674,7 @@ static inline struct ucontact* contact_match( ucontact_t* ptr, str* _c)
 		if ((_c->len == ptr->c.len) && !memcmp(_c->s, ptr->c.s, _c->len)) {
 			return ptr;
 		}
-		
+
 		ptr = ptr->next;
 	}
 	return 0;
@@ -698,30 +698,29 @@ static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 		) {
 			return ptr;
 		}
-		
+
 		ptr = ptr->next;
 	}
 	return 0;
 }
 
- /*!
-+ * \brief Match a contact record to a contact string and path
-+ * \param ptr contact record
-+ * \param _c contact string
-+ * \param _path path
-+ * \return ptr on successfull match, 0 when they not match
-+ */
+/*!
+ * \brief Match a contact record to a contact string and path
+ * \param ptr contact record
+ * \param _c contact string
+ * \param _path path
+ * \return ptr on successfull match, 0 when they not match
+ */
 static inline struct ucontact* contact_path_match( ucontact_t* ptr, str* _c, str *_path)
 {
 	/* if no path is preset (in REGISTER request) or use_path is not configured
-	   in registrar module, default to contact_match() */
+	 * in registrar module, default to contact_match() */
 	if( _path == NULL) return contact_match(ptr, _c);
 
 	while(ptr) {
 		if ( (_c->len==ptr->c.len) && (_path->len==ptr->path.len)
-		&& !memcmp(_c->s, ptr->c.s, _c->len)
-		&& !memcmp(_path->s, ptr->path.s, _path->len)
-		) {
+			&& !memcmp(_c->s, ptr->c.s, _c->len)
+			&& !memcmp(_path->s, ptr->path.s, _path->len) ) {
 			return ptr;
 		}
 
@@ -744,7 +743,7 @@ static inline struct ucontact* contact_match_callidonly( ucontact_t* ptr, str* _
 		if ((_callid->len == ptr->callid.len) && !memcmp(_callid->s, ptr->callid.s, _callid->len)) {
 			return ptr;
 		}
-		
+
 		ptr = ptr->next;
 	}
 	return 0;
@@ -759,7 +758,7 @@ static inline struct ucontact* contact_match_callidonly( ucontact_t* ptr, str* _
  * \param _path path
  * \param _cseq CSEQ number
  * \param _co found contact
- * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * \return 0 - found, 1 - not found, -1 - invalid found,
  * -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
@@ -818,7 +817,7 @@ int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
 	ucontact_t* ptr;
 	str i1;
 	str i2;
-	
+
 	if (_ci->instance.s == NULL || _ci->instance.len <= 0) {
 		return get_ucontact(_r, _c, _ci->callid, _ci->path, _ci->cseq, _co);
 	}
@@ -843,7 +842,7 @@ int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
 				return 0;
 			}
 		}
-		
+
 		ptr = ptr->next;
 	}
 	return 1;
