@@ -83,7 +83,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 #ifdef STATISTICS
 	char *name;
 #endif
-	
+
 	/* Must be always in shared memory, since
 	 * the cache is accessed from timer which
 	 * lives in a separate process
@@ -150,7 +150,7 @@ error0:
 void free_udomain(udomain_t* _d)
 {
 	int i;
-	
+
 	if (_d->table) {
 		for(i = 0; i < _d->size; i++) {
 			deinit_slot(_d->table + i);
@@ -215,7 +215,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 /*!
  * \brief Convert database values into ucontact_info
  *
- * Convert database values into ucontact_info, 
+ * Convert database values into ucontact_info,
  * expects 12 rows (contact, expirs, q, callid, cseq, flags,
  * ua, received, path, socket, methods, last_modified)
  * \param vals database values
@@ -294,7 +294,7 @@ static inline ucontact_info_t* dbrow2info(db_val_t *vals, str *contact, int rcon
 		received.len = strlen(received.s);
 	}
 	ci.received = received;
-	
+
 	path.s  = (char*)VAL_STRING(vals+9);
 		if (VAL_NULL(vals+9) || !path.s || !path.s[0]) {
 			path.len = 0;
@@ -309,7 +309,7 @@ static inline ucontact_info_t* dbrow2info(db_val_t *vals, str *contact, int rcon
 	if (VAL_NULL(vals+10) || p==0 || p[0]==0){
 		ci.sock = 0;
 	} else {
-		if (parse_phostport( p, &host.s, &host.len, 
+		if (parse_phostport( p, &host.s, &host.len,
 		&port, &proto)!=0) {
 			LM_ERR("bad socket <%s>\n", p);
 			return 0;
@@ -509,7 +509,6 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 				}
 			}
 
-		
 			lock_udomain(_d, &user);
 			if (get_urecord(_d, &user, &r) > 0) {
 				if (mem_insert_urecord(_d, &user, &r) < 0) {
@@ -657,7 +656,7 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 					_aor->len, _aor->s, _d->name->s);
 			continue;
 		}
-		
+
 		if ( r==0 )
 			get_static_urecord( _d, _aor, &r);
 
@@ -948,13 +947,13 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 	UL_DB_EXPIRES_SET(&query_vals[1], 0);
 
 	if (ul_db_srvid != 0) {
-                query_cols[2] = &srv_id_col;
-                query_ops[2] = OP_EQ;
-                query_vals[2].type = DB1_INT;
-                query_vals[2].nul = 0;
-                query_vals[2].val.int_val = server_id;
-                key_num = 3;
-        }
+		query_cols[2] = &srv_id_col;
+		query_ops[2] = OP_EQ;
+		query_vals[2].type = DB1_INT;
+		query_vals[2].nul = 0;
+		query_vals[2].val.int_val = server_id;
+		key_num = 3;
+	}
 
 	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -985,8 +984,8 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 
 	if (RES_ROW_N(res) == 0) {
 		LM_DBG("no rows to be contact expired\n");
-                ul_dbf.free_result(_c, res);
-                return 0;
+		ul_dbf.free_result(_c, res);
+		return 0;
 	}
 
 	n = 0;
@@ -1059,7 +1058,7 @@ error:
 
 
 /*!
- * \brief Timer function to cleanup expired contacts, db_mode: DB_ONLY 
+ * \brief Timer function to cleanup expired contacts, db_mode: DB_ONLY
  *   and for WRITE_BACK, WRITE_THROUGH on config param
  * \param _d cleaned domain
  * \return 0 on success, -1 on failure
@@ -1097,7 +1096,7 @@ int db_timer_udomain(udomain_t* _d)
 		LM_ERR("use_table failed\n");
 		return -1;
 	}
-	
+
 	if (ul_dbf.delete(ul_dbh, keys, ops, vals, key_num) < 0) {
 		LM_ERR("failed to delete from table %s\n",_d->name->s);
 		return -1;
@@ -1131,7 +1130,7 @@ int testdb_udomain(db1_con_t* con, udomain_t* d)
 	VAL_TYPE(val) = DB1_STRING;
 	VAL_NULL(val) = 0;
 	VAL_STRING(val) = "dummy_user";
-	
+
 	VAL_TYPE(val+1) = DB1_STRING;
 	VAL_NULL(val+1) = 0;
 	VAL_STRING(val+1) = "dummy_domain";
@@ -1157,7 +1156,7 @@ int testdb_udomain(db1_con_t* con, udomain_t* d)
 int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
 	int sl;
-	
+
 	if (new_urecord(_d->name, _aor, _r) < 0) {
 		LM_ERR("creating urecord failed\n");
 		return -1;
