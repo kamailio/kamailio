@@ -631,7 +631,7 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("kx"), str_init("gete_fhost"),
-		SR_KEMIP_XVAL, ki_kx_gete_rhost,
+		SR_KEMIP_XVAL, ki_kx_gete_fhost,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
