@@ -11,7 +11,11 @@ PATH=$PATH:/usr/local/sbin/
 
 # for testing only, please don't enable this in production environments
 # as this introduce security risks
-TEST="false"
+if [ -z "$KAMCTL_TEST" ]; then
+	TEST="false"
+else
+	TEST="true"
+fi
 
 ### include config files
 
