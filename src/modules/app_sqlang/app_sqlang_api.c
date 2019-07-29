@@ -211,6 +211,7 @@ static void sqlang_pushlstring(HSQUIRRELVM J, char *s, int l)
 	sq_pushstring(J, (const SQChar*)s, (SQInteger)l);
 }
 
+#if 0
 static int sqlang_isnumber(HSQUIRRELVM J, int idx)
 {
 	if(idx>=0) {
@@ -221,6 +222,7 @@ static int sqlang_isnumber(HSQUIRRELVM J, int idx)
 		return 1;
 	return 0;
 }
+#endif
 
 static int sqlang_isstring(HSQUIRRELVM J, int idx)
 {
