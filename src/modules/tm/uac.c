@@ -473,11 +473,9 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	new_cell->fr_timeout=cfg_get(tm, tm_cfg, fr_timeout);
 	new_cell->fr_inv_timeout=cfg_get(tm, tm_cfg, fr_inv_timeout);
 	new_cell->end_of_life=get_ticks_raw()+lifetime;
-#ifdef TM_DIFF_RT_TIMEOUT
 	/* same as above for retransmission intervals */
 	new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);
 	new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);
-#endif
 
 	set_kr(REQ_FWDED);
 

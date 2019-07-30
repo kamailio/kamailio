@@ -99,10 +99,8 @@ int t_lookup_callid(struct cell** trans, str callid, str cseq);
 
 int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to );
 int t_reset_fr(void);
-#ifdef TM_DIFF_RT_TIMEOUT
 int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to);
 int t_reset_retr(void);
-#endif
 int t_set_max_lifetime(struct sip_msg* msg, unsigned int eol_inv,
 											unsigned int eol_noninv);
 int t_reset_max_lifetime(void);

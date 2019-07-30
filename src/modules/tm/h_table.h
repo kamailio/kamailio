@@ -54,11 +54,6 @@
 #include "../../core/hash_func.h"
 #include "config.h"
 
-/* if TM_DIFF_RT_TIMEOUT is defined, different retransmissions timeouts
- * can be used for each transaction, at a small memory cost
- * (extra 4 bytes/transaction) */
-#define TM_DIFF_RT_TIMEOUT
-
 
 struct s_table;
 struct entry;
@@ -429,10 +424,8 @@ typedef struct cell
 
 	ticks_t fr_timeout;		/* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
-#ifdef TM_DIFF_RT_TIMEOUT
 	retr_timeout_t rt_t1_timeout_ms; /* start retr. interval for retr_bufs */
 	retr_timeout_t rt_t2_timeout_ms; /* maximum retr. interval for retr_bufs */
-#endif
 	ticks_t end_of_life; /* maximum lifetime */
 
 	/* nr of replied branch; 0..sr_dst_max_branches=branch value,

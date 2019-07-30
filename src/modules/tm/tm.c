@@ -1967,14 +1967,7 @@ static int ki_t_reset_fr(struct sip_msg* msg)
 
 static int ki_t_set_retr(sip_msg_t* msg, int t1, int t2)
 {
-#ifdef TM_DIFF_RT_TIMEOUT
 	return t_set_retr(msg, t1, t2);
-#else
-	LM_ERR("support for changing retransmission intervals on "
-			"the fly not compiled in (re-compile tm with"
-			" -DTM_DIFF_RT_TIMEOUT)\n");
-	return -1;
-#endif
 }
 
 /* set retr. intervals per transaction; 0 means: use the default value */
@@ -1994,14 +1987,7 @@ static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
 /* reset retr. t1 and t2 to the default values */
 int ki_t_reset_retr(sip_msg_t* msg)
 {
-#ifdef TM_DIFF_RT_TIMEOUT
 	return t_reset_retr();
-#else
-	LM_ERR("support for changing retransmission intervals on "
-			"the fly not compiled in (re-compile tm with"
-			" -DTM_DIFF_RT_TIMEOUT)\n");
-	return -1;
-#endif
 }
 
 int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)

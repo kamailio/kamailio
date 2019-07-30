@@ -106,13 +106,8 @@
 #define TM_FAST_RETR_TIMER
 
 
-#ifdef TM_DIFF_RT_TIMEOUT
 #define RT_T1_TIMEOUT_MS(rb) ((rb)->my_T->rt_t1_timeout_ms)
 #define RT_T2_TIMEOUT_MS(rb) ((rb)->my_T->rt_t2_timeout_ms)
-#else
-#define RT_T1_TIMEOUT_MS(rb) (cfg_get(tm, tm_cfg, rt_t1_timeout_ms))
-#define RT_T2_TIMEOUT_MS(rb) (cfg_get(tm, tm_cfg, rt_t2_timeout_ms))
-#endif
 
 #define TM_REQ_TIMEOUT(t)                                    \
 	(is_invite(t) ? cfg_get(tm, tm_cfg, tm_max_inv_lifetime) \
@@ -121,10 +116,8 @@
 
 extern struct msgid_var user_fr_timeout;
 extern struct msgid_var user_fr_inv_timeout;
-#ifdef TM_DIFF_RT_TIMEOUT
 extern struct msgid_var user_rt_t1_timeout_ms;
 extern struct msgid_var user_rt_t2_timeout_ms;
-#endif
 extern struct msgid_var user_inv_max_lifetime;
 extern struct msgid_var user_noninv_max_lifetime;
 
@@ -301,7 +294,6 @@ inline static void change_fr(struct cell *t, ticks_t fr_inv, ticks_t fr)
 }
 
 
-#ifdef TM_DIFF_RT_TIMEOUT
 /* change t1 & t2 retransmissions timers
  * if now==1 try to change them almost on the fly
  *  (next retransmission either at rt_t1 or rt_t2)
@@ -332,7 +324,6 @@ inline static void change_retr(
 		}
 	}
 }
-#endif /* TM_DIFF_RT_TIMEOUT */
 
 
 /* set the maximum transaction lifetime (from the present moment)

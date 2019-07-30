@@ -711,9 +711,6 @@ route {
 		a transaction creating function (e.g.: t_set_retr(500, 4000);
 		t_relay()). All new transaction created after this function call, 
 		during the same script invocation will use the new values.
-		Note that this function will work only if tm is compile with
-		 -DTM_DIFF_RT_TIMEOUT (which increases every transaction size with
-		 4 bytes).
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>

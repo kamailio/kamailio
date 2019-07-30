@@ -1259,7 +1259,6 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			new_cell->fr_inv_timeout=cfg_get(tm, tm_cfg, fr_inv_timeout);
 		}
 	}
-#ifdef TM_DIFF_RT_TIMEOUT
 	new_cell->rt_t1_timeout_ms = (retr_timeout_t) get_msgid_val(
 			user_rt_t1_timeout_ms,
 			p_msg->id, int);
@@ -1270,7 +1269,6 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			p_msg->id, int);
 	if (likely(new_cell->rt_t2_timeout_ms == 0))
 		new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);
-#endif
 	new_cell->on_branch=get_on_branch();
 }
 
@@ -1783,7 +1781,6 @@ int t_reset_fr()
 	return 1;
 }
 
-#ifdef TM_DIFF_RT_TIMEOUT
 
 /* params: retr. t1 & retr. t2 value in ms, 0 means "do not touch"
  * ret: 1 on success, -1 on error (script safe)*/
@@ -1847,7 +1844,6 @@ int t_reset_retr()
 	}
 	return 1;
 }
-#endif
 
 
 /* params: maximum transaction lifetime for inv and non-inv

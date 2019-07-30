@@ -121,10 +121,8 @@
 
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
-#ifdef TM_DIFF_RT_TIMEOUT
 struct msgid_var user_rt_t1_timeout_ms;
 struct msgid_var user_rt_t2_timeout_ms;
-#endif
 struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
 
@@ -180,12 +178,10 @@ int tm_init_timers(void)
 	SIZE_FIT_CHECK(fr_timeout, default_tm_cfg.fr_timeout, "fr_timer");
 	SIZE_FIT_CHECK(
 			fr_inv_timeout, default_tm_cfg.fr_inv_timeout, "fr_inv_timer");
-#ifdef TM_DIFF_RT_TIMEOUT
 	SIZE_FIT_CHECK(
 			rt_t1_timeout_ms, default_tm_cfg.rt_t1_timeout_ms, "retr_timer1");
 	SIZE_FIT_CHECK(
 			rt_t2_timeout_ms, default_tm_cfg.rt_t2_timeout_ms, "retr_timer2");
-#endif
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_inv_lifetime,
 			"max_inv_lifetime");
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_noninv_lifetime,
@@ -193,10 +189,8 @@ int tm_init_timers(void)
 
 	memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
 	memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
-#ifdef TM_DIFF_RT_TIMEOUT
 	memset(&user_rt_t1_timeout_ms, 0, sizeof(user_rt_t1_timeout_ms));
 	memset(&user_rt_t2_timeout_ms, 0, sizeof(user_rt_t2_timeout_ms));
-#endif
 	memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
 	memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
 
@@ -269,10 +263,8 @@ int timer_fixup_ms(void *handle, str *gname, str *name, void **val)
 	t = (long)(*val);
 
 /* size fix checks */
-#ifdef TM_DIFF_RT_TIMEOUT
 	IF_IS_TIMER_NAME(rt_t1_timeout_ms, "retr_timer1")
 	else IF_IS_TIMER_NAME(rt_t2_timeout_ms, "retr_timer2")
-#endif
 
 			return 0;
 
