@@ -286,39 +286,6 @@ error:
 /******************** handlers ***************************/
 
 
-#ifndef TM_DEL_UNREF
-/* returns number of ticks before retrying the del, or 0 if the del.
- * was succesfull */
-inline static ticks_t delete_cell(struct cell *p_cell, int unlock)
-{
-	/* there may still be FR/RETR timers, which have been reset
-	   (i.e., time_out==TIMER_DELETED) but are stilled linked to
-	   timer lists and must be removed from there before the
-	   structures are released
-	*/
-	unlink_timers(p_cell);
-	/* still in use ... don't delete */
-	if(IS_REFFED_UNSAFE(p_cell)) {
-		if(unlock)
-			UNLOCK_HASH(p_cell->hash_index);
-		LM_DBG("%p: can't delete -- still reffed (%d)\n", p_cell,
-				p_cell->ref_count);
-		/* delay the delete */
-		/* TODO: change refcnts and delete on refcnt==0 */
-		return cfg_get(tm, tm_cfg, delete_timeout);
-	} else {
-		if(unlock)
-			UNLOCK_HASH(p_cell->hash_index);
-#ifdef EXTRA_DEBUG
-		LM_DBG("delete transaction %p\n", p_cell);
-#endif
-		free_cell(p_cell);
-		return 0;
-	}
-}
-#endif /* TM_DEL_UNREF */
-
-
 /* generate a fake reply
  * it assumes the REPLY_LOCK is already held and returns unlocked */
 static void fake_reply(struct cell *t, int branch, int code)
@@ -640,8 +607,6 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 #ifdef TIMER_DEBUG
 	LM_DBG("WAIT timer hit @%d for %p (timer_lm %p)\n", ti, p_cell, wait_tl);
 #endif
-
-#ifdef TM_DEL_UNREF
 	/* stop cancel timers if any running */
 	if(is_invite(p_cell)) {
 		cleanup_localcancel_timers(p_cell);
@@ -688,30 +653,5 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	p_cell->flags |= T_IN_AGONY;
 	UNREF_FREE(p_cell, unlinked);
 	ret = 0;
-#else  /* TM_DEL_UNREF */
-	if(p_cell->flags & T_IN_AGONY) {
-		/* delayed delete */
-		/* we call delete now without any locking on hash/ref_count;
-		   we can do that because delete_handler is only entered after
-		   the delete timer was installed from wait_handler, which
-		   removed transaction from hash table and did not destroy it
-		   because some processes were using it; that means that the
-		   processes currently using the transaction can unref and no
-		   new processes can ref -- we can wait until ref_count is
-		   zero safely without locking
-		*/
-		ret = delete_cell(p_cell, 0 /* don't unlock on return */);
-	} else {
-		/* stop cancel timers if any running */
-		if(is_invite(p_cell))
-			cleanup_localcancel_timers(p_cell);
-		/* remove the cell from the hash table */
-		LOCK_HASH(p_cell->hash_index);
-		remove_from_hash_table_unsafe(p_cell);
-		p_cell->flags |= T_IN_AGONY;
-		/* delete (returns with UNLOCK-ed_HASH) */
-		ret = delete_cell(p_cell, 1 /* unlock on return */);
-	}
-#endif /* TM_DEL_UNREF */
 	return ret;
 }

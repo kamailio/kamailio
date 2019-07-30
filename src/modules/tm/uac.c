@@ -494,9 +494,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #endif
 
 	if (!is_ack) {
-#ifdef TM_DEL_UNREF
 		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
-#endif
 		hi=dlg2hash(uac_r->dialog);
 		LOCK_HASH(hi);
 		insert_into_hash_table_unsafe(new_cell, hi);
@@ -585,7 +583,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 
 error2:
-#ifdef TM_DEL_UNREF
 	if (is_ack) {
 		free_cell(new_cell);
 	} else {
@@ -596,9 +593,6 @@ error2:
 			UNREF_FREE(new_cell, 0);
 		}
 	}
-#else
-	free_cell(new_cell);
-#endif
 error3:
 	return ret;
 }

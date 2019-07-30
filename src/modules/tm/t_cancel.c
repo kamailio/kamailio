@@ -153,11 +153,6 @@ int cancel_all_uacs(struct cell *trans, int how)
 	i=cancel_uacs(trans, &cancel_data, how);
 
 	if (how & F_CANCEL_UNREF)
-#ifndef TM_DEL_UNREF
-	/* in case of 'too many' _buggy_ invocations, the ref count (a uint) might
-	 * actually wrap around, possibly leaving the T leaking. */
-#warning "use of F_CANCEL_UNREF flag is unsafe without defining TM_DEL_UNREF"
-#endif
 		UNREF(trans);
 
 	/* count the still active branches */

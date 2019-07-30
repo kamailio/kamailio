@@ -94,8 +94,6 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 
 
 
-#ifdef TM_DEL_UNREF
-
 #define UNREF_FREE(_T_cell, _T_unlinked) \
 	do{\
 		if (atomic_dec_and_test(&(_T_cell)->ref_count)){ \
@@ -128,18 +126,6 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define REF_UNSAFE(_T_cell)  REF(_T_cell)
 #define INIT_REF(_T_cell, v) atomic_set(&(_T_cell)->ref_count, v)
 
-#else
-
-#define UNREF_UNSAFE(_T_cell) ((_T_cell)->ref_count--)
-#define UNREF(_T_cell) do{ \
-	LOCK_HASH( (_T_cell)->hash_index ); \
-	UNREF_UNSAFE(_T_cell); \
-	UNLOCK_HASH( (_T_cell)->hash_index ); }while(0)
-#define REF_UNSAFE(_T_cell) ((_T_cell)->ref_count++)
-#define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
-#define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
-
-#endif
 /*
  * Parse and fixup the fr_*_timer AVP specs
  */

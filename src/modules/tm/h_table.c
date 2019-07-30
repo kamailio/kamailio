@@ -590,11 +590,7 @@ void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 			(tcell->uas.request)?"yes":"no",
 			(unsigned)tcell->flags,
 			(unsigned)tcell->nr_of_outgoings,
-#ifdef TM_DEL_UNREF
 			(unsigned)atomic_get(&tcell->ref_count),
-#else
-			tcell->ref_count,
-#endif
 			(unsigned)TICKS_TO_S(tcell->end_of_life)
 		);
 

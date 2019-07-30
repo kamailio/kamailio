@@ -1305,15 +1305,10 @@ static inline int new_t(struct sip_msg *p_msg)
 		return E_OUT_OF_MEM;
 	}
 
-#ifdef TM_DEL_UNREF
 	INIT_REF(new_cell, 2); /* 1 because it will be ref'ed from the
 							* hash and +1 because we set T to it */
-#endif
 	insert_into_hash_table_unsafe( new_cell, p_msg->hash_index );
 	set_t(new_cell, T_BR_UNDEFINED);
-#ifndef TM_DEL_UNREF
-	INIT_REF_UNSAFE(T);
-#endif
 	/* init pointers to headers needed to construct local
 	 * requests such as CANCEL/ACK
 	 */
