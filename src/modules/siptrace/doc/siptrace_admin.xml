@@ -515,7 +515,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 	<title>Functions</title>
 	<section id="siptrace.f.sip_trace">
 		<title>
-		<function moreinfo="none">sip_trace([mode][,address][, correlation_id])</function>
+		<function moreinfo="none">sip_trace([address][,correlation_id][,mode])</function>
 		</title>
 		<para>
 		Store or forward the current processed SIP message/transaction/dialog in database.
@@ -525,17 +525,21 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>mode</emphasis> - SIP messages to be traced. One can trace the current message
-		(function can be called on either a reply or a request), the current transaction(the route must
-		belong to a request) or the current dialog(the message has to be an invite).
-		</para>
 		<para><emphasis>address</emphasis> - The address in form of SIP URI
 		where to send a duplicate of traced message. This parameter trumps
 		duplicate_uri and allows tracing to more than one server.
 		</para>
+		</listitem>
+		<listitem>
 		<para><emphasis>correlation_id</emphasis> - A string with a correlation ID
 		to be added to the HEP header when using HEPv3.
 		It's possible to use PVs.
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>mode</emphasis> - SIP messages to be traced. One can trace the current message
+		(function can be called on either a reply or a request), the current transaction(the route must
+		belong to a request) or the current dialog(the message has to be an invite).
 		</para>
 		</listitem>
 		</itemizedlist>
