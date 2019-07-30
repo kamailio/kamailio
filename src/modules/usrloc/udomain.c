@@ -1013,14 +1013,11 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 			}
 
 			lock_udomain(_d, &user);
-			if (get_urecord(_d, &user, &r) > 0) {
-				LM_ERR("failed to get a record\n");
-				unlock_udomain(_d, &user);
-				goto error;
-			}
+			get_static_urecord(_d, &user, &r);
 
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
-				LM_ERR("inserting contact failed\n");
+				LM_ERR("inserting temporary contact failed for %.*s\n",
+						user.len, user.s);
 				release_urecord(r);
 				unlock_udomain(_d, &user);
 				goto error;
@@ -1040,7 +1037,8 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 					ruid.s = ruidbuf;
 					ruid.len = c->ruid.len;
 				} else {
-					LM_ERR("ruid is too long: %d\n", c->ruid.len);
+					LM_ERR("ruid is too long %d for %.*s\n", c->ruid.len,
+							user.len, user.s);
 				}
 			}
 			release_urecord(r);
