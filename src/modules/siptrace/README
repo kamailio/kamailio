@@ -10,19 +10,13 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-Edited by
-
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Giacomo Vacca
 
    <giacomo.vacca@gmail.com>
-
-Edited by
 
 Camille Oudot
 
@@ -67,7 +61,7 @@ Camille Oudot
 
         4. Functions
 
-              4.1. sip_trace([mode][,address][, correlation_id])
+              4.1. sip_trace([address][,correlation_id][,mode])
               4.2. hlog([correlation_id,] message)
 
         5. RPC Commands
@@ -136,7 +130,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. sip_trace([mode][,address][, correlation_id])
+        4.1. sip_trace([address][,correlation_id][,mode])
         4.2. hlog([correlation_id,] message)
 
    5. RPC Commands
@@ -466,10 +460,10 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 
 4. Functions
 
-   4.1. sip_trace([mode][,address][, correlation_id])
+   4.1. sip_trace([address][,correlation_id][,mode])
    4.2. hlog([correlation_id,] message)
 
-4.1.  sip_trace([mode][,address][, correlation_id])
+4.1.  sip_trace([address][,correlation_id][,mode])
 
    Store or forward the current processed SIP message/transaction/dialog
    in database. It is stored in the form prior applying changes made to
@@ -477,15 +471,15 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
    the current transaction('t') or the current dialog('d').
 
    Meaning of the parameters is as follows:
+     * address - The address in form of SIP URI where to send a duplicate
+       of traced message. This parameter trumps duplicate_uri and allows
+       tracing to more than one server.
+     * correlation_id - A string with a correlation ID to be added to the
+       HEP header when using HEPv3. It's possible to use PVs.
      * mode - SIP messages to be traced. One can trace the current message
        (function can be called on either a reply or a request), the
        current transaction(the route must belong to a request) or the
        current dialog(the message has to be an invite).
-       address - The address in form of SIP URI where to send a duplicate
-       of traced message. This parameter trumps duplicate_uri and allows
-       tracing to more than one server.
-       correlation_id - A string with a correlation ID to be added to the
-       HEP header when using HEPv3. It's possible to use PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
