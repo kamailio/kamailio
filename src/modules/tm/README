@@ -2145,10 +2145,7 @@ route {
    with the new values. This function will work even if it's called in the
    script before a transaction creating function (e.g.: t_set_retr(500,
    4000); t_relay()). All new transaction created after this function
-   call, during the same script invocation will use the new values. Note
-   that this function will work only if tm is compile with
-   -DTM_DIFF_RT_TIMEOUT (which increases every transaction size with 4
-   bytes).
+   call, during the same script invocation will use the new values.
 
    Meaning of the parameters is as follows:
      * retr_t1_interval - new T1 retransmission interval (in
