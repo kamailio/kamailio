@@ -156,7 +156,6 @@ int tm_init_timers(void)
 	default_tm_cfg.fr_timeout = MS_TO_TICKS(default_tm_cfg.fr_timeout);
 	default_tm_cfg.fr_inv_timeout = MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
 	default_tm_cfg.wait_timeout = MS_TO_TICKS(default_tm_cfg.wait_timeout);
-	default_tm_cfg.delete_timeout = MS_TO_TICKS(default_tm_cfg.delete_timeout);
 	default_tm_cfg.tm_max_inv_lifetime =
 			MS_TO_TICKS(default_tm_cfg.tm_max_inv_lifetime);
 	default_tm_cfg.tm_max_noninv_lifetime =
@@ -168,8 +167,6 @@ int tm_init_timers(void)
 		default_tm_cfg.fr_inv_timeout = 1;
 	if(default_tm_cfg.wait_timeout == 0)
 		default_tm_cfg.wait_timeout = 1;
-	if(default_tm_cfg.delete_timeout == 0)
-		default_tm_cfg.delete_timeout = 1;
 	if(default_tm_cfg.rt_t2_timeout_ms == 0)
 		default_tm_cfg.rt_t2_timeout_ms = 1;
 	if(default_tm_cfg.rt_t1_timeout_ms == 0)
@@ -203,10 +200,10 @@ int tm_init_timers(void)
 	memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
 	memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
 
-	LM_DBG("tm init timers - fr=%d fr_inv=%d wait=%d delete=%d t1=%d t2=%d"
+	LM_DBG("tm init timers - fr=%d fr_inv=%d wait=%d t1=%d t2=%d"
 		   " max_inv_lifetime=%d max_noninv_lifetime=%d\n",
 			default_tm_cfg.fr_timeout, default_tm_cfg.fr_inv_timeout,
-			default_tm_cfg.wait_timeout, default_tm_cfg.delete_timeout,
+			default_tm_cfg.wait_timeout,
 			default_tm_cfg.rt_t1_timeout_ms, default_tm_cfg.rt_t2_timeout_ms,
 			default_tm_cfg.tm_max_inv_lifetime,
 			default_tm_cfg.tm_max_noninv_lifetime);

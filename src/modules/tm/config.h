@@ -56,10 +56,6 @@
    a transaction was finalized*/
 #define WT_TIME_OUT       5000 /* ms */
 
-/* DELETE timer ... tells how long should the transaction persist in memory
-   after it was removed from the hash table and before it will be deleted */
-#define DEL_TIME_OUT      200 /* ms, obsoleted */
-
 /* retransmission timers */
 #define RETR_T1           500 /* ms */
 #define RETR_T2          4000 /* ms */
@@ -109,7 +105,6 @@ struct cfg_group_tm {
 	unsigned int	fr_inv_timeout;
 	unsigned int    fr_inv_timeout_next;
 	unsigned int	wait_timeout;
-	unsigned int	delete_timeout;
 	unsigned int	rt_t1_timeout_ms;
 	unsigned int	rt_t2_timeout_ms;
 	unsigned int	tm_max_inv_lifetime;

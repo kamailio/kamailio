@@ -429,7 +429,6 @@ static param_export_t params[]={
 	{"fr_timer",            PARAM_INT, &default_tm_cfg.fr_timeout            },
 	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
 	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },
-	{"delete_timer",        PARAM_INT, &default_tm_cfg.delete_timeout        },
 	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout_ms      },
 	{"retr_timer2"  ,       PARAM_INT, &default_tm_cfg.rt_t2_timeout_ms      },
 	{"max_inv_lifetime",    PARAM_INT, &default_tm_cfg.tm_max_inv_lifetime   },

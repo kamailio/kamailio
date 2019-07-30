@@ -194,29 +194,6 @@ modparam("tm", "wt_timer", 1000)
 	</example>
     </section>
 
-    <section id="tm.p.delete_timer">
-	<title><varname>delete_timer</varname> (integer)</title>
-	<para>
-	    Time after which a to-be-deleted transaction currently ref-ed by a
-	    process will be tried to be deleted again (in milliseconds).
-	</para>
-	<para>
-	    Note: this parameter is obsolete for SER 2.1 (in 2.1 the transaction
-		 is deleted the moment it's not referenced anymore).
-	</para>
-	<para>
-	    Default value is 200 milliseconds.
-	</para>
-	<example>
-	    <title>Set <varname>delete_timer</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tm", "delete_timer", 100)
-...
-	    </programlisting>
-	</example>
-    </section>
-    
     <section id="tm.p.retr_timer1">
 	<title><varname>retr_timer1</varname> (integer)</title>
 	<para>
