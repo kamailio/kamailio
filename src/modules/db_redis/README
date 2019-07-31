@@ -10,8 +10,6 @@ Andreas Granig
 
    <agranig@sipwise.com>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
@@ -138,7 +136,9 @@ nce/string,server_id/int,connection_id/int,keepalive/int,partition/int
    parameter, but it does not need to be related to the table loaded from
    Redis server -- for example, if used only for permissions module with
    'address' table, then the 'keys' parameter can be specified for
-   'version' table.
+   'version' table. However, if it used for a module that inserts or
+   updates the records in database table, the key for entry must be
+   defined for that table.
 
    The mappings can be freely defined in the "keys" module parameter,
    which is composed of a semi-colon separated list of definitions in the
