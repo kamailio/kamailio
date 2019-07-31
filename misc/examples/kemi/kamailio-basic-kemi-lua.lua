@@ -118,24 +118,25 @@ end
 
 -- Per SIP request initial checks
 function ksr_route_reqinit()
-	if not KSR.is_myself(KSR.pv.get("$si")) then
-		if not KSR.pv.is_null("$sht(ipban=>$si)") then
+	if not KSR.is_myself_srcip() then
+		local srcip = KSR.kx.get_srcip();
+		if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 then
 			-- ip is already blocked
 			KSR.dbg("request from blocked IP - " .. KSR.pv.get("$rm")
-					.. " from " .. KSR.pv.get("$fu") .. " (IP:"
-					.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .. ")\n");
+					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.x.exit();
 		end
-		if KSR.pike.pike_check_req()<0 then
+		if KSR.pike.pike_check_req() < 0 then
 			KSR.err("ALERT: pike blocking " .. KSR.pv.get("$rm")
-					.. " from " .. KSR.pv.get("$fu") .. " (IP:"
-					.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .. ")\n");
-			KSR.pv.seti("$sht(ipban=>$si)", 1);
+					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
+			KSR.htable.sht_seti("ipban", srcip, 1);
 			KSR.x.exit();
 		end
 	end
 	if KSR.corex.has_user_agent() > 0 then
-		local ua = KSR.pv.gete("$ua");
+		local ua = KSR.kx.gete_ua();
 		if string.find(ua, "friendly-scanner")
 				or string.find(ua, "sipcli") then
 			KSR.sl.sl_send_reply(200, "OK");
@@ -157,7 +158,7 @@ function ksr_route_reqinit()
 
 	if KSR.sanity.sanity_check(1511, 7)<0 then
 		KSR.err("Malformed SIP message from "
-				.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .."\n");
+				.. KSR.kx.get_srcip() .. ":" .. KSR.kx.get_srcport() .."\n");
 		KSR.x.exit();
 	end
 
