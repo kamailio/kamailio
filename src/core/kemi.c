@@ -1315,6 +1315,14 @@ static int sr_kemi_core_add_tcp_alias_via(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_get_debug(sip_msg_t *msg)
+{
+	return get_cfg_debug_level();
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -1654,6 +1662,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("is_dst_port"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_dst_port,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("get_debug"),
+		SR_KEMIP_INT, sr_kemi_core_get_debug,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
