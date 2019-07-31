@@ -81,7 +81,9 @@ username/string,domain/string,contact/string,received/string,path/string,expires
 			parameter, but it does not need to be related to the table loaded
 			from Redis server -- for example, if used only for permissions module with
 			'address' table, then the 'keys' parameter can be specified for
-			'version' table.
+			'version' table. However, if it used for a module that inserts or
+			updates the records in database table, the key for entry must be defined for
+			that table.
 		</para>
 		<para>
 			The mappings can be freely defined in the "keys" module parameter, which is
