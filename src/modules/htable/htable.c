@@ -72,8 +72,8 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
 static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_rm_name(struct sip_msg* msg, char* hname, char* op, char *val);
 static int w_ht_rm_value(struct sip_msg* msg, char* hname, char* op, char *val);
-static int w_ht_has_name(struct sip_msg* msg, char* hname, char* op, char *val);
-static int w_ht_has_str_value(struct sip_msg* msg, char* hname, char* op, char *val);
+static int w_ht_match_name(struct sip_msg* msg, char* hname, char* op, char *val);
+static int w_ht_match_str_value(struct sip_msg* msg, char* hname, char* op, char *val);
 static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo);
 static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo);
 static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
@@ -120,9 +120,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sht_rm_value", (cmd_function)w_ht_rm_value,  3, fixup_spve_all, 0,
 		ANY_ROUTE},
-	{"sht_has_name",  (cmd_function)w_ht_has_name,   3, fixup_spve_all, 0,
+	{"sht_match_name",  (cmd_function)w_ht_match_name,   3, fixup_spve_all, 0,
 		ANY_ROUTE},
-	{"sht_has_str_value", (cmd_function)w_ht_has_str_value,  3, fixup_spve_all, 0,
+	{"sht_match_str_value", (cmd_function)w_ht_match_str_value,  3, fixup_spve_all, 0,
 		ANY_ROUTE},
 	{"sht_lock",        (cmd_function)w_ht_slot_lock,    1, fixup_ht_key, 0,
 		ANY_ROUTE},
@@ -583,7 +583,7 @@ static int w_ht_rm(sip_msg_t* msg, char* htname, char* itname)
 	return ki_ht_rm(msg, &shtname, &sitname);
 }
 
-static int ht_has_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
+static int ht_match_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
 		int mkey)
 {
 	ht_t *ht;
@@ -609,7 +609,7 @@ static int ht_has_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
 				LM_WARN("unsupported match operator: %.*s\n", op->len, op->s);
 				return -1;
 			}
-			if(ht_has_cell_op_str(val, ht, mkey, vop)<0) {
+			if(ht_match_cell_op_str(val, ht, mkey, vop)<0) {
 				return -1;
 			}
 			return 1;
@@ -619,7 +619,7 @@ static int ht_has_str_items(sip_msg_t* msg, str* hname, str* op, str *val,
 	}
 }
 
-static int w_ht_has_str_items(sip_msg_t* msg, char* hname, char* op, char *val,
+static int w_ht_match_str_items(sip_msg_t* msg, char* hname, char* op, char *val,
 		int mkey)
 {
 	str sname;
@@ -639,28 +639,28 @@ static int w_ht_has_str_items(sip_msg_t* msg, char* hname, char* op, char *val,
 		return -1;
 	}
 
-	return ht_has_str_items(msg, &sname, &sop, &sval, mkey);
+	return ht_match_str_items(msg, &sname, &sop, &sval, mkey);
 }
 
-static int w_ht_has_name(sip_msg_t* msg, char* hname, char* op, char *val)
+static int w_ht_match_name(sip_msg_t* msg, char* hname, char* op, char *val)
 {
-	return w_ht_has_str_items(msg, hname, op, val, 0);
+	return w_ht_match_str_items(msg, hname, op, val, 0);
 }
 
-static int w_ht_has_str_value(sip_msg_t* msg, char* hname, char* op, char *val)
+static int w_ht_match_str_value(sip_msg_t* msg, char* hname, char* op, char *val)
 {
-	return w_ht_has_str_items(msg, hname, op, val, 1);
+	return w_ht_match_str_items(msg, hname, op, val, 1);
 }
 
-static int ki_ht_has_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
+static int ki_ht_match_name(sip_msg_t* msg, str* sname, str* sop, str *sval)
 {
-	return ht_has_str_items(msg, sname, sop, sval, 0);
+	return ht_match_str_items(msg, sname, sop, sval, 0);
 
 }
 
-static int ki_ht_has_str_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
+static int ki_ht_match_str_value(sip_msg_t* msg, str* sname, str* sop, str *sval)
 {
-	return ht_has_str_items(msg, sname, sop, sval, 1);
+	return ht_match_str_items(msg, sname, sop, sval, 1);
 }
 
 static int ht_reset_by_name(str *hname)
@@ -1761,13 +1761,13 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("htable"), str_init("sht_has_name"),
-		SR_KEMIP_INT, ki_ht_has_name,
+	{ str_init("htable"), str_init("sht_match_name"),
+		SR_KEMIP_INT, ki_ht_match_name,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("htable"), str_init("sht_has_str_value"),
-		SR_KEMIP_INT, ki_ht_has_str_value,
+	{ str_init("htable"), str_init("sht_match_str_value"),
+		SR_KEMIP_INT, ki_ht_match_str_value,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

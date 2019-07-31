@@ -1337,7 +1337,7 @@ int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
 	return 0;
 }
 
-int ht_has_cell_op_str(str *sre, ht_t *ht, int mode, int op)
+int ht_match_cell_op_str(str *sre, ht_t *ht, int mode, int op)
 {
 	ht_cell_t *it;
 	str sm;
