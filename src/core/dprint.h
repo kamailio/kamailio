@@ -141,6 +141,7 @@ struct log_level_info {
 
 /** @brief per process debug level handling */
 int get_debug_level(char *mname, int mnlen);
+int get_cfg_debug_level(void);
 int get_debug_facility(char *mname, int mnlen);
 void set_local_debug_level(int level);
 void set_local_debug_facility(int facility);

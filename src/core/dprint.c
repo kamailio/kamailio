@@ -170,6 +170,16 @@ int get_debug_level(char *mname, int mnlen) {
 }
 
 /**
+ * @brief return the log level - the local one if it set,
+ *   otherwise the global value
+ */
+int get_cfg_debug_level(void) {
+	/*important -- no LOGs inside, because it will loop */
+	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL) ?
+				_local_debug_level : cfg_get(core, core_cfg, debug);
+}
+
+/**
  * @brief return the log facility - the local one if it set,
  *   otherwise the global value
  */
