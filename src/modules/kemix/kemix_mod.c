@@ -587,6 +587,39 @@ static sr_kemi_xval_t* ki_kx_get_method(sip_msg_t *msg)
 /**
  *
  */
+static int ki_kx_get_status(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		return -1;
+	}
+	if(msg->first_line.type != SIP_REPLY) {
+		return -1;
+	}
+	return (int)msg->first_line.u.reply.statuscode;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gets_status(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->first_line.type != SIP_REPLY) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_kx_xval;
+	}
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->first_line.u.reply.status;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -731,6 +764,16 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_method"),
 		SR_KEMIP_XVAL, ki_kx_get_method,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_status"),
+		SR_KEMIP_INT, ki_kx_get_status,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gets_status"),
+		SR_KEMIP_XVAL, ki_kx_gets_status,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
