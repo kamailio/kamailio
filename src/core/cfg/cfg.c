@@ -94,7 +94,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 		/* verify the type of the input */
 		if (CFG_INPUT_MASK(def[i].type)==0) {
-			def[i].type |= def[i].type << CFG_INPUT_SHIFT;
+			def[i].type |= CFG_VAR_MASK(def[i].type) << CFG_INPUT_SHIFT;
 		} else {
 			if ((CFG_INPUT_MASK(def[i].type) != CFG_VAR_MASK(def[i].type) << CFG_INPUT_SHIFT)
 			&& (def[i].on_change_cb == 0)) {
