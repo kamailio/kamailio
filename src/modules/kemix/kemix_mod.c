@@ -478,8 +478,9 @@ static int ki_kx_get_protoid(sip_msg_t *msg)
 	if(msg==NULL) {
 		return -1;
 	}
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_INT;
 	return (int)msg->rcv.proto;
 }
 
