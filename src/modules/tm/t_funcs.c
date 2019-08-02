@@ -32,7 +32,6 @@
 #include "../../core/mem/mem.h"
 #include "../../core/sr_compat.h"
 #include "../../core/pvar.h"
-#include "defs.h"
 #include "t_funcs.h"
 #include "t_fwd.h"
 #include "t_lookup.h"

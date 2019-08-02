@@ -43,8 +43,6 @@
 #ifndef _SIP_MSG_H
 #define _SIP_MSG_H
 
-#include "defs.h"
-
 
 #include "../../core/parser/msg_parser.h"
 #include "../../core/mem/shm_mem.h"

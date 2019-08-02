@@ -21,8 +21,6 @@
 #ifndef _T_FWD_H
 #define _T_FWD_H
 
-#include "defs.h"
-
 #include "../../core/proxy.h"
 #include "h_table.h"
 

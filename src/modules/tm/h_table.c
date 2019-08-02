@@ -37,7 +37,6 @@
 #include "../../core/error.h"
 #include "../../core/char_msg_val.h"
 #include "../../core/rand/kam_rand.h"
-#include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
@@ -171,10 +170,8 @@ void free_cell_helper(
 		sip_msg_free_unsafe(dead_cell->uas.request);
 	if(dead_cell->uas.response.buffer)
 		shm_free_unsafe(dead_cell->uas.response.buffer);
-#ifdef CANCEL_REASON_SUPPORT
 	if(unlikely(dead_cell->uas.cancel_reas))
 		shm_free_unsafe(dead_cell->uas.cancel_reas);
-#endif /* CANCEL_REASON_SUPPORT */
 
 	/* callbacks */
 	for(cbs = (struct tm_callback *)dead_cell->tmcb_hl.first; cbs;) {

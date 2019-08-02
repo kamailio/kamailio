@@ -25,8 +25,6 @@
 /* if defined even more stats are produced */
 #define TM_MORE_STATS
 
-#include "defs.h"
-
 #include "../../core/rpc.h"
 #include "../../core/pt.h"
 

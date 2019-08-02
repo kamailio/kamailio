@@ -46,8 +46,6 @@
  */
 
 
-#include "defs.h"
-
 
 #include <stdio.h>
 #include <string.h>
@@ -189,10 +187,8 @@ static int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
 static int w_t_set_disable_6xx(struct sip_msg* msg, char* on_off, char* foo);
 static int w_t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
-#ifdef CANCEL_REASON_SUPPORT
 static int w_t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 		char* f);
-#endif /* CANCEL_REASON_SUPPORT */
 static int w_t_set_disable_internal_reply(struct sip_msg* msg, char* on_off,
 		char* f);
 static int w_t_branch_timeout(struct sip_msg* msg, char*, char*);
@@ -363,7 +359,6 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_disable_failover", w_t_set_disable_failover, 1, fixup_var_int_1, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-#ifdef CANCEL_REASON_SUPPORT
 	{"t_set_no_e2e_cancel_reason", w_t_set_no_e2e_cancel_reason, 1,
 		fixup_var_int_1, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -371,7 +366,6 @@ static cmd_export_t cmds[]={
 	{"t_disable_e2e_cancel_reason", w_t_set_no_e2e_cancel_reason, 1,
 		fixup_var_int_1, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-#endif /* CANCEL_REASON_SUPPORT */
 	{"t_set_disable_internal_reply", w_t_set_disable_internal_reply, 1,
 		fixup_var_int_1, 0,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -470,10 +464,8 @@ static param_export_t params[]={
 	{"remap_503_500",       PARAM_INT, &tm_remap_503_500                     },
 	{"failure_exec_mode",   PARAM_INT, &tm_failure_exec_mode                 },
 	{"dns_reuse_rcv_socket",PARAM_INT, &tm_dns_reuse_rcv_socket              },
-#ifdef CANCEL_REASON_SUPPORT
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },
-#endif /* CANCEL_REASON_SUPPORT */
 	{"xavp_contact",        PARAM_STR, &ulattrs_xavp_name                    },
 	{"event_callback",      PARAM_STR, &tm_event_callback                    },
 	{"relay_100",           PARAM_INT, &default_tm_cfg.relay_100             },
@@ -2093,12 +2085,10 @@ T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 W_T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 
 
-#ifdef CANCEL_REASON_SUPPORT
 /* disable/enable e2e cancel reason copy for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
 
 W_T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
-#endif /* CANCEL_REASON_SUPPORT */
 
 
 /* disable internal negative reply for the current transaction */

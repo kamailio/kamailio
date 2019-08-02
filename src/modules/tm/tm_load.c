@@ -19,8 +19,6 @@
  *
  */
 
-#include "defs.h"
-
 
 #include "tm_load.h"
 #include "uac.h"

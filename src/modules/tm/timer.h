@@ -91,8 +91,6 @@
 #ifndef _TM_TIMER_H
 #define _TM_TIMER_H
 
-#include "defs.h"
-
 #include "../../core/compiler_opt.h"
 #include "lock.h"
 

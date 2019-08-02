@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "defs.h"
-
 
 #include "../../core/dprint.h"
 #include "../../core/config.h"
@@ -1105,9 +1103,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		}
 		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL,
 				CANCEL_LEN, &t_invite->to
-#ifdef CANCEL_REASON_SUPPORT
 				, 0
-#endif /* CANCEL_REASON_SUPPORT */
 				);
 		if (unlikely(!shbuf)) {
 			LM_ERR("printing e2e cancel failed\n");
@@ -1142,7 +1138,6 @@ error:
 
 
 
-#ifdef CANCEL_REASON_SUPPORT
 /** create a cancel reason structure packed into a single shm. block.
  * From a cause and a pointer to a str or cancel_msg, build a
  * packed cancel reason structure (CANCEL_REAS_PACKED_HDRS), using a
@@ -1242,7 +1237,6 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 error:
 	return 0;
 }
-#endif /* CANCEL_REASON_SUPPORT */
 
 
 
@@ -1252,10 +1246,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	branch_bm_t cancel_bm;
 #ifndef E2E_CANCEL_HOP_BY_HOP
 	branch_bm_t tmp_bm;
-#elif defined (CANCEL_REASON_SUPPORT)
+#endif /* E2E_CANCEL_HOP_BY_HOP */
 	struct cancel_reason* reason;
 	int free_reason;
-#endif /* E2E_CANCEL_HOP_BY_HOP */
 	int i;
 	int lowest_error;
 	int ret;
@@ -1310,7 +1303,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	 * have 0 branches and we check for the branch number in
 	 * t_reply_matching() ).
 	 */
-#ifdef CANCEL_REASON_SUPPORT
 	free_reason = 0;
 	reason = 0;
 	if (likely(t_invite->uas.cancel_reas == 0)){
@@ -1324,7 +1316,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			free_reason = 1;
 		}
 	}
-#endif /* CANCEL_REASON_SUPPORT */
 	for (i=0; i<t_invite->nr_of_outgoings; i++) {
 		if (cancel_bm & (1<<i)) {
 			/* it's safe to get the reply lock since e2e_cancel is
@@ -1334,9 +1325,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			ret=cancel_branch(
 					t_invite,
 					i,
-#ifdef CANCEL_REASON_SUPPORT
 					reason,
-#endif /* CANCEL_REASON_SUPPORT */
 					cfg_get(tm,tm_cfg, cancel_b_flags)
 					| ((t_invite->uac[i].request.buffer==NULL)?
 						F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
@@ -1345,12 +1334,10 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<lowest_error) lowest_error=ret;
 		}
 	}
-#ifdef CANCEL_REASON_SUPPORT
 	if (unlikely(free_reason)) {
 		/* reason was not set as the global reason => free it */
 		shm_free(reason);
 	}
-#endif /* CANCEL_REASON_SUPPORT */
 #else /* ! E2E_CANCEL_HOP_BY_HOP */
 	/* fix label -- it must be same for reply matching (the label is part of
 	 * the generated via branch for the cancels sent upstream and if it

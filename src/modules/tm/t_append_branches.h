@@ -28,8 +28,6 @@
 #ifndef _T_APPEND_BRANCHES_H
 #define _T_APPEND_BRANCHES_H
 
-#include "defs.h"
-
 #include "../../core/proxy.h"
 #include "h_table.h"
 

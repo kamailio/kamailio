@@ -23,8 +23,6 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
-#include "defs.h"
-
 /* TMCB_ONSEND used to enable certain callback-related features when
  * ONSEND was set, these days it's always enabled. For compatibility
  * reasons with modules that check ONSEND, continue to set it

@@ -20,8 +20,6 @@
  */
 
 
-#include "defs.h"
-
 
 #include <stdio.h>
 #include "t_stats.h"

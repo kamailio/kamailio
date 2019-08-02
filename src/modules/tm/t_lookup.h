@@ -23,8 +23,6 @@
 #ifndef _T_LOOKUP_H
 #define _T_LOOKUP_H
 
-#include "defs.h"
-
 
 #include "config.h"
 #include "t_funcs.h"

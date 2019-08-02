@@ -26,7 +26,6 @@
 #include <stdio.h> /* just for FILE* for fifo_uac_cancel */
 #include "../../core/rpc.h"
 #include "../../core/atomic_ops.h"
-#include "defs.h"
 #include "h_table.h"
 #include "t_reply.h"
 
@@ -65,9 +64,7 @@ void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
 int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags );
 int cancel_all_uacs(struct cell *trans, int how);
 int cancel_branch( struct cell *t, int branch,
-#ifdef CANCEL_REASON_SUPPORT
 					struct cancel_reason* reason,
-#endif /* CANCEL_REASON_SUPPORT */
 					int flags );
 
 typedef int(*cancel_uacs_f)(struct cell *t, struct cancel_info* cancel_data,

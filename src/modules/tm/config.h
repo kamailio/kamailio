@@ -27,8 +27,6 @@
 #ifndef _TM_CONFIG_H
 #define _TM_CONFIG_H
 
-#include "defs.h"
-
 /* this is where table size is defined now -- sort of
    ugly, core should not be bothered by TM table size,
    but on the other, core's stateless forwarding should

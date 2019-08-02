@@ -23,8 +23,6 @@
 #ifndef _T_FUNCS_H
 #define _T_FUNCS_H
 
-#include "defs.h"
-
 
 #include <errno.h>
 #include <netdb.h>

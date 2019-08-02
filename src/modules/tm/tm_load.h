@@ -24,8 +24,6 @@
 #ifndef _TM_BIND_H
 #define _TM_BIND_H
 
-#include "defs.h"
-
 
 #include "../../core/sr_module.h"
 #include "t_hooks.h"

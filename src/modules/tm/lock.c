@@ -19,9 +19,6 @@
  */
 
 
-#include "defs.h"
-
-
 #include <errno.h>
 
 #include "lock.h"
