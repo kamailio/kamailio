@@ -32,6 +32,7 @@
 // acquire_spi() and release_spi(uint32_t id) functions.
 
 int init_spi_gen(uint32_t start_val, uint32_t range);
+int clean_spi_list();
 int destroy_spi_gen();
 uint32_t acquire_spi();
 int release_spi(uint32_t id);

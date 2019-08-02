@@ -86,7 +86,8 @@ int bind_ipsec_pcscf(ipsec_pcscf_api_t* api) {
 		return -1;
 	}
 
-	api->ipsec_on_expire = ipsec_on_expire;
+	api->ipsec_on_expire	= ipsec_on_expire;
+	api->ipsec_reconfig		= ipsec_reconfig;
 
 	return 0;
 }
@@ -290,19 +291,34 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m)
         s->ck.s = NULL; s->ck.len = 0;
         shm_free(s->ik.s);
         s->ik.s = NULL; s->ik.len = 0;
+
+		release_spi(s->spi_pc);
         return -1;
     }
 
-    s->port_pc = acquire_cport();
-    s->port_ps = acquire_sport();
-
-    if(s->port_pc == 0){
+    if((s->port_pc = acquire_cport()) == 0){
         LM_ERR("No free client port for IPSEC tunnel creation\n");
+		shm_free(s->ck.s);
+		s->ck.s = NULL; s->ck.len = 0;
+		shm_free(s->ik.s);
+		s->ik.s = NULL; s->ik.len = 0;
+
+		release_spi(s->spi_pc);
+		release_spi(s->spi_ps);
         return -1;
     }
 
-    if(s->port_ps == 0){
+    if((s->port_ps = acquire_sport()) == 0){
         LM_ERR("No free server port for IPSEC tunnel creation\n");
+		shm_free(s->ck.s);
+		s->ck.s = NULL; s->ck.len = 0;
+		shm_free(s->ik.s);
+		s->ik.s = NULL; s->ik.len = 0;
+
+		release_cport(s->port_pc);
+
+		release_spi(s->spi_pc);
+		release_spi(s->spi_ps);
         return -1;
     }
 
@@ -832,6 +848,20 @@ cleanup:
     ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
     pkg_free(ci.received_host.s);
     return ret;
+}
+
+int ipsec_reconfig()
+{
+	if(ul.get_number_of_contacts() != 0){
+		return 0;
+	}
+
+	clean_spi_list();
+	clean_port_lists();
+
+	LM_DBG("Clean all ipsec tunnels\n");
+
+	return ipsec_cleanall();
 }
 
 int ipsec_cleanall()
