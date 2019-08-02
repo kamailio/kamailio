@@ -46,6 +46,7 @@
 inline static int char_msg_val( struct sip_msg *msg, char *cv )
 {
 	str src[8];
+	str sempty = str_init("");
 
 	if (unlikely(!check_transaction_quadruple(msg))) {
 		LM_ERR("can't calculate char_value due to a parsing error\n");
@@ -77,7 +78,12 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	}
 	/* use only the from & to tags */
 	src[0]=get_from(msg)->tag_value;
-	src[1]=get_to(msg)->tag_value;
+	if(msg->first_line.u.request.method_value
+			& (METHOD_INVITE|METHOD_ACK|METHOD_CANCEL)) {
+		src[1]=sempty;
+	} else {
+		src[1]=get_to(msg)->tag_value;
+	}
 #endif /* BRANCH_INCLUDE_FROMTO_BODY */
 	src[2]= msg->callid->body;
 	src[3]= msg->first_line.u.request.uri;
