@@ -199,14 +199,14 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		i_req->add_rm = dup_lump_list(i_req->add_rm);
 		if (unlikely(i_req->add_rm==0)){
 			ret=E_OUT_OF_MEM;
-			goto error06;
+			goto error05;
 		}
 	}
 	if (unlikely(i_req->body_lumps)){
 		i_req->body_lumps = dup_lump_list(i_req->body_lumps);
 		if (unlikely(i_req->body_lumps==0)){
 			ret=E_OUT_OF_MEM;
-			goto error05;
+			goto error04;
 		}
 	}
 	/* backup uri & path: we need to change them so that build_req...()
@@ -595,13 +595,12 @@ error03:
 	 * routing sections, Via, and Content-Length headers created in
 	 * build_req_buf_from_sip_req().
 	 */
-error04:
 	free_duped_lump_list(i_req->body_lumps);
 
-error05:
+error04:
 	free_duped_lump_list(i_req->add_rm);
 
-error06:
+error05:
 	/* Restore the lists from backups. */
 	i_req->add_rm = add_rm_backup;
 	i_req->body_lumps = body_lumps_backup;
