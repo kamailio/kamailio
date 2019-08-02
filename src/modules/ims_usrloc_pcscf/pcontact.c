@@ -122,25 +122,29 @@ void free_security(security_t* _p)
     if (!_p)
         return;
 
-    shm_free(_p->sec_header.s);
+	if(_p->sec_header.s)
+		shm_free(_p->sec_header.s);
 
     switch (_p->type)
     {
         case SECURITY_IPSEC:
-            shm_free(_p->data.ipsec->ealg.s);
-            shm_free(_p->data.ipsec->r_ealg.s);
-            shm_free(_p->data.ipsec->ck.s);
-            shm_free(_p->data.ipsec->alg.s);
-            shm_free(_p->data.ipsec->r_alg.s);
-            shm_free(_p->data.ipsec->ik.s);
-            shm_free(_p->data.ipsec->prot.s);
-            shm_free(_p->data.ipsec->mod.s);
+			if(_p->data.ipsec){
+				if(_p->data.ipsec->ealg.s)		shm_free(_p->data.ipsec->ealg.s);
+				if(_p->data.ipsec->r_ealg.s)	shm_free(_p->data.ipsec->r_ealg.s);
+				if(_p->data.ipsec->ck.s)		shm_free(_p->data.ipsec->ck.s);
+				if(_p->data.ipsec->alg.s)		shm_free(_p->data.ipsec->alg.s);
+				if(_p->data.ipsec->r_alg.s)		shm_free(_p->data.ipsec->r_alg.s);
+				if(_p->data.ipsec->ik.s)		shm_free(_p->data.ipsec->ik.s);
+				if(_p->data.ipsec->prot.s)		shm_free(_p->data.ipsec->prot.s);
+				if(_p->data.ipsec->mod.s)		shm_free(_p->data.ipsec->mod.s);
 
-            shm_free(_p->data.ipsec);
+				shm_free(_p->data.ipsec);
+			}
         break;
 
         case SECURITY_TLS:
-            shm_free(_p->data.tls);
+			if(_p->data.tls)
+				shm_free(_p->data.tls);
         break;
         
         case SECURITY_NONE:

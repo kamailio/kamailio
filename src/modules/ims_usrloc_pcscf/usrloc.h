@@ -257,6 +257,9 @@ typedef int (*get_all_ucontacts_t)(void* buf, int len, unsigned int flags, unsig
 typedef int (*update_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
 typedef int (*update_temp_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
 
+/* statistic APIs */
+typedef unsigned long(*get_number_of_contacts_t)();
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
     int use_domain; /*! use_domain module parameter */
@@ -281,6 +284,8 @@ typedef struct usrloc_api {
     update_temp_security_t update_temp_security;
 
     register_ulcb_t register_ulcb;
+
+	get_number_of_contacts_t get_number_of_contacts;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */
