@@ -2019,12 +2019,17 @@ static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 /**
  *
  */
-static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int rmode)
+static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
+		int rmode)
 {
 	char hbuf[256];
 	str s;
 	hdr_field_t shdr;
 	hdr_field_t *ihdr;
+#define SR_KEMI_VHDR_SIZE 256
+	hdr_field_t *vhdr[SR_KEMI_VHDR_SIZE];
+	int n;
+	int hmatch;
 
 	memset(&_sr_kemi_xval, 0, sizeof(sr_kemi_xval_t));
 
@@ -2055,22 +2060,48 @@ static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int rmod
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
+	n = 0;
 	for (ihdr=msg->headers; ihdr; ihdr=ihdr->next) {
+		hmatch = 0;
 		if (shdr.type!=HDR_OTHER_T && shdr.type!=HDR_ERROR_T) {
 			/* find by type */
 			if (shdr.type==ihdr->type) {
-				break;
+				hmatch = 1;
 			}
 		} else {
 			/* find by name */
 			if (cmp_hdrname_str(&ihdr->name, hname)==0) {
+				hmatch = 1;
+			}
+		}
+		if (hmatch == 1) {
+			if(idx==n) {
 				break;
+			} else {
+				if(idx<0) {
+					vhdr[n] = ihdr;
+				}
+				n++;
+				if(n==SR_KEMI_VHDR_SIZE) {
+					LM_DBG("too many headers with name: %.*s\n",
+							hname->len, hname->s);
+					sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+					return &_sr_kemi_xval;
+				}
 			}
 		}
 	}
-	if(ihdr==NULL) {
-		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
-		return &_sr_kemi_xval;
+	if(idx>=0) {
+		if(ihdr==NULL) {
+			sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+			return &_sr_kemi_xval;
+		}
+	} else {
+		if(n + idx < 0) {
+			sr_kemi_xval_null(&_sr_kemi_xval, rmode);
+			return &_sr_kemi_xval;
+		}
+		ihdr = vhdr[n + idx];
 	}
 
 	_sr_kemi_xval.vtype = SR_KEMIP_STR;
@@ -2083,7 +2114,7 @@ static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int rmod
  */
 static sr_kemi_xval_t* sr_kemi_hdr_get(sip_msg_t *msg, str *hname)
 {
-	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_NONE);
+	return sr_kemi_hdr_get_mode(msg, hname, 0, SR_KEMI_XVAL_NULL_NONE);
 }
 
 /**
@@ -2091,7 +2122,7 @@ static sr_kemi_xval_t* sr_kemi_hdr_get(sip_msg_t *msg, str *hname)
  */
 static sr_kemi_xval_t* sr_kemi_hdr_gete(sip_msg_t *msg, str *hname)
 {
-	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_EMPTY);
+	return sr_kemi_hdr_get_mode(msg, hname, 0, SR_KEMI_XVAL_NULL_EMPTY);
 }
 
 /**
@@ -2099,7 +2130,31 @@ static sr_kemi_xval_t* sr_kemi_hdr_gete(sip_msg_t *msg, str *hname)
  */
 static sr_kemi_xval_t* sr_kemi_hdr_getw(sip_msg_t *msg, str *hname)
 {
-	return sr_kemi_hdr_get_mode(msg, hname, SR_KEMI_XVAL_NULL_PRINT);
+	return sr_kemi_hdr_get_mode(msg, hname, 0, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_get_idx(sip_msg_t *msg, str *hname, int idx)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, idx, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_gete_idx(sip_msg_t *msg, str *hname, int idx)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, idx, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* sr_kemi_hdr_getw_idx(sip_msg_t *msg, str *hname, int idx)
+{
+	return sr_kemi_hdr_get_mode(msg, hname, idx, SR_KEMI_XVAL_NULL_PRINT);
 }
 
 /**
@@ -2164,6 +2219,21 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 	{ str_init("hdr"), str_init("getw"),
 		SR_KEMIP_XVAL, sr_kemi_hdr_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("get_idx"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_get_idx,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("gete_idx"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_gete_idx,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("getw_idx"),
+		SR_KEMIP_XVAL, sr_kemi_hdr_getw_idx,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
