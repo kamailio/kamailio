@@ -204,6 +204,7 @@ void hash_table_free(struct domain_list **hash_table)
 			shm_free(ap);
 			ap = next_ap;
 		}
+		shm_free(np);
 		np = np->next;
 	}
 
