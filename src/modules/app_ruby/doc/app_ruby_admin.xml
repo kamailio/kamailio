@@ -143,13 +143,13 @@ ruby_run("rb_funcx", "$rU", "2");
         </section>
        <section id="app_ruby.r.api_list">
             <title>
-            <function moreinfo="none">ruby_jsdt.api_list</function>
+            <function moreinfo="none">app_ruby.api_list</function>
             </title>
             <para>
 			List the functions available via Kemi framework.
             </para>
             <para>
-            Name: <emphasis>ruby_jsdt.api_list</emphasis>
+            Name: <emphasis>app_ruby.api_list</emphasis>
             </para>
             <para>Parameters: <emphasis>none</emphasis></para>
             <para>
