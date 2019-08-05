@@ -462,7 +462,8 @@ VALUE sr_kemi_ruby_exec_func_ex(ksr_ruby_context_t *R, sr_kemi_t *ket, int argc,
 
 	env_R = app_ruby_sr_env_get();
 	if(env_R==NULL || env_R->msg==NULL || ket==NULL) {
-		LM_ERR("invalid ruby environment attributes or parameters\n");
+		LM_ERR("invalid ruby environment attributes or parameters (%p/%p/%p)\n",
+				env_R, env_R->msg, ket);
 		return Qfalse;
 	}
 
