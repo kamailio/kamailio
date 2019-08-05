@@ -622,6 +622,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 		}
 		old_body = (struct to_body*) msg->to->parsed;
 		flag = FL_USE_UAC_TO;
+		LM_DBG("replacing in To header\n");
 	} else {
 		/* replace the FROM URI */
 		if ( parse_from_header(msg)<0 ) {
@@ -630,6 +631,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 		}
 		old_body = (struct to_body*) msg->from->parsed;
 		flag = FL_USE_UAC_FROM;
+		LM_DBG("replacing in From header\n");
 	}
 
 	if(restore_avp->s) {
