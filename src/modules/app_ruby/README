@@ -34,7 +34,7 @@ Daniel-Constantin Mierla
         5. RPC Commands
 
               5.1. app_ruby.reload
-              5.2. ruby_jsdt.api_list
+              5.2. app_ruby.api_list
 
         6. Example of usage
 
@@ -64,7 +64,7 @@ Chapter 1. Admin Guide
    5. RPC Commands
 
         5.1. app_ruby.reload
-        5.2. ruby_jsdt.api_list
+        5.2. app_ruby.api_list
 
    6. Example of usage
 
@@ -140,7 +140,7 @@ ruby_run("rb_funcx", "$rU", "2");
 5. RPC Commands
 
    5.1. app_ruby.reload
-   5.2. ruby_jsdt.api_list
+   5.2. app_ruby.api_list
 
 5.1.  app_ruby.reload
 
@@ -157,11 +157,11 @@ ruby_run("rb_funcx", "$rU", "2");
 kamcmd app_ruby.reload
 ...
 
-5.2.  ruby_jsdt.api_list
+5.2.  app_ruby.api_list
 
    List the functions available via Kemi framework.
 
-   Name: ruby_jsdt.api_list
+   Name: app_ruby.api_list
 
    Parameters: none
 
