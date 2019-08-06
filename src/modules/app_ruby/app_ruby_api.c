@@ -236,7 +236,7 @@ int ruby_sr_initialized(void)
  */
 int sr_kemi_ruby_return_int(sr_kemi_t *ket, int rc)
 {
-	if(ket->rtype==SR_KEMIP_INT) {
+	if(ket->rtype==SR_KEMIP_INT || ket->rtype==SR_KEMIP_XVAL) {
 		return INT2NUM(rc);
 	}
 	if(ket->rtype==SR_KEMIP_BOOL && rc!=SR_KEMI_FALSE) {
@@ -426,7 +426,7 @@ VALUE sr_kemi_ruby_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 		case SR_KEMIP_NONE:
 			return Qnil;
 		case SR_KEMIP_INT:
-			return sr_kemi_ruby_return_int(ket, rx->v.n);
+			return INT2NUM(rx->v.n);
 		case SR_KEMIP_STR:
 			return rb_str_new(rx->v.s.s, rx->v.s.len);
 		case SR_KEMIP_BOOL:
