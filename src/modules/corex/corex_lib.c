@@ -114,6 +114,7 @@ int corex_add_alias_subdomains(char* aliasval)
 	corex_alias_t ta;
 	corex_alias_t *na;
 
+	LM_DBG("try to add alias: %s\n", aliasval);
 	memset(&ta, 0, sizeof(corex_alias_t));
 
 	p = strchr(aliasval, ':');
@@ -134,27 +135,38 @@ int corex_add_alias_subdomains(char* aliasval)
 		} else if((p-aliasval)==4 && strncasecmp(aliasval, "sctp", 4)==0) {
 			ta.proto = PROTO_SCTP;
 		} else {
-			/* use hostname */
-			ta.alias.s = aliasval;
-			ta.alias.len = p - aliasval;
-		}
-	}
-	if(ta.alias.len==0) {
-		p++;
-		if(p>=aliasval+strlen(aliasval))
+			/* invalid protocol */
+			LM_ERR("invalid protocol %.*s", (int) (p-aliasval), aliasval);
 			goto error;
-		ta.alias.s = p;
+		}
+		/* hostname */
+		p++;
+		ta.alias.s = aliasval + (p-aliasval);
+
+		if(p>=aliasval+strlen(aliasval)) {
+			goto error;
+		}
+		/* port */
 		p = strchr(ta.alias.s, ':');
 		if(p==NULL) {
 			ta.alias.len = strlen(ta.alias.s);
 			goto done;
 		}
+		ta.alias.len = p - ta.alias.s;
+		p++;
+                ta.port = str2s(p, strlen(p), NULL);
+
+	} else {
+		/* hostname */
+		ta.alias.s = aliasval;
+		ta.alias.len = p - ta.alias.s;
+		/* port */
+		p++;
+		if(p>=aliasval+strlen(aliasval)) {
+			goto error;
+		}
+		ta.port = str2s(p, strlen(p), NULL);
 	}
-	/* port */
-	p++;
-	if(p>=aliasval+strlen(aliasval))
-		goto error;
-	ta.port = str2s(p, strlen(p), NULL);
 
 done:
 	if(ta.alias.len==0)
@@ -169,6 +181,8 @@ done:
 	na->next = _corex_alias_list;
 	_corex_alias_list = na;
 
+	LM_DBG("alias: %d:%.*s:%d from value: %s added\n", ta.proto,
+		ta.alias.len, ta.alias.s, ta.port, aliasval);
 	return 0;
 
 error:
@@ -181,6 +195,8 @@ int corex_check_self(str* host, unsigned short port, unsigned short proto)
 {
 	corex_alias_t *ta;
 
+	LM_DBG("check self for: %d:%.*s:%d\n", (int) proto, host->len,
+			host->s, (int)port);
 	for(ta=_corex_alias_list; ta; ta=ta->next) {
 		if(host->len<ta->alias.len)
 			continue;
@@ -191,21 +207,22 @@ int corex_check_self(str* host, unsigned short port, unsigned short proto)
 		if(host->len==ta->alias.len
 				&& strncasecmp(host->s, ta->alias.s, host->len)==0) {
 			/* match domain */
-			LM_DBG("check self domain match: %d:%.*s:%d\n", (int)ta->port,
-					ta->alias.len, ta->alias.s, (int)ta->proto);
+			LM_DBG("check self domain match: %d:%.*s:%d\n", (int)ta->proto,
+				ta->alias.len, ta->alias.s, (int)ta->port);
 			return 1;
 		}
 		if(strncasecmp(ta->alias.s, host->s + host->len - ta->alias.len,
 					ta->alias.len)==0) {
 			if(host->s[host->len - ta->alias.len - 1]=='.') {
 				/* match sub-domain */
-				LM_DBG("check self sub-domain match: %d:%.*s:%d\n", (int)ta->port,
-					ta->alias.len, ta->alias.s, (int)ta->proto);
+				LM_DBG("check self sub-domain match: %d:%.*s:%d\n",
+					(int)ta->proto, ta->alias.len, ta->alias.s,
+					(int)ta->port);
 				return 1;
 			}
 		}
 	}
-
+	LM_DBG("no match found\n");
 	return 0; /* no match */
 }
 
