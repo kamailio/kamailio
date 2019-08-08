@@ -67,7 +67,9 @@ Ovidiu Sas
               4.11. sht_iterator_end(iname)
               4.12. sht_iterator_next(iname)
               4.13. sht_match_name(htable, op, mval)
-              4.14. sht_match_str_value(htable, op, mval)
+              4.14. sht_has_name(htable, op, mval)
+              4.15. sht_match_str_value(htable, op, mval)
+              4.16. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -168,7 +170,9 @@ Chapter 1. Admin Guide
         4.11. sht_iterator_end(iname)
         4.12. sht_iterator_next(iname)
         4.13. sht_match_name(htable, op, mval)
-        4.14. sht_match_str_value(htable, op, mval)
+        4.14. sht_has_name(htable, op, mval)
+        4.15. sht_match_str_value(htable, op, mval)
+        4.16. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -707,7 +711,9 @@ modparam("htable", "event_callback_mode", 1)
    4.11. sht_iterator_end(iname)
    4.12. sht_iterator_next(iname)
    4.13. sht_match_name(htable, op, mval)
-   4.14. sht_match_str_value(htable, op, mval)
+   4.14. sht_has_name(htable, op, mval)
+   4.15. sht_match_str_value(htable, op, mval)
+   4.16. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -919,7 +925,11 @@ if(sht_match_name("ha", "eq", "alice")) {
 }
 ...
 
-4.14.  sht_match_str_value(htable, op, mval)
+4.14.  sht_has_name(htable, op, mval)
+
+   Alias for sht_match_name().
+
+4.15.  sht_match_str_value(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    string value against the mval parameter.
@@ -940,6 +950,10 @@ if(sht_match_str_value("ha", "eq", "alice")) {
   ...
 }
 ...
+
+4.16.  sht_has_str_value(htable, op, mval)
+
+   Alias for sht_match_str_value().
 
 5. Exported pseudo-variables
 
