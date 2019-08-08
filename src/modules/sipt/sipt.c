@@ -339,7 +339,7 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	sb_s_buf[0] = '\0';
+	memset(sb_s_buf, 0, 26);
 	if(body.s == NULL)
 	{
 		LM_INFO("No ISUP Message Found");
