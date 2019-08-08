@@ -1211,6 +1211,14 @@ static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
 	return 1;
 }
 
+static int ki_dlg_bridge(sip_msg_t *msg, str *sfrom, str *sto, str *soproxy)
+{
+	if(dlg_bridge(sfrom, sto, soproxy, NULL)!=0)
+		return -1;
+	return 1;
+
+}
+
 /**
  *
  */
@@ -2099,6 +2107,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("var_is_null"),
 		SR_KEMIP_INT, ki_dlg_var_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_bridge"),
+		SR_KEMIP_INT, ki_dlg_bridge,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
