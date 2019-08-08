@@ -339,6 +339,7 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 	str body;
 	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
+	sb_s_buf[0] = '\0';
 	if(body.s == NULL)
 	{
 		LM_INFO("No ISUP Message Found");
@@ -350,9 +351,9 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 		LM_DBG("message not an ACM or CPG\n");
 		return -1;
 	}
-	
+
 	isup_get_redirection_number((unsigned char*)body.s, body.len, sb_s_buf);
-	
+
 	if (strlen(sb_s_buf) > 0)
 	{
 		pv_get_strzval(msg, param, res, sb_s_buf);
