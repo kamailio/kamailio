@@ -326,9 +326,9 @@ modparam("uac","credential","username:domain:password")
 			<para><emphasis>
 				If you define it, you also need to define
 				<quote>auth_username_avp</quote>
-				(<xref linkend="uac.p.auth-username-avp-id"/>) and
+				(<xref linkend="uac.p.auth_username_avp"/>) and
 				<quote>auth_username_avp</quote>
-				(<xref linkend="uac.p.auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth_password_avp"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_realm_avp</varname> parameter</title>
@@ -348,9 +348,9 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 			<para><emphasis>
 				If you define it, you also need to define
 				<quote>auth_realm_avp</quote>
-				(<xref linkend="uac.p.auth-realm-avp-id"/>) and
+				(<xref linkend="uac.p.auth_realm_avp"/>) and
 				<quote>auth_username_avp</quote>
-				(<xref linkend="uac.p.auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth_password_avp"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_username_avp</varname> parameter</title>
@@ -370,9 +370,9 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 			<para><emphasis>
 				If you define it, you also need to define
 				<quote>auth_password_avp</quote>
-				(<xref linkend="uac.p.auth-password-avp-id"/>) and
+				(<xref linkend="uac.p.auth_realm_avp"/>) and
 				<quote>auth_username_avp</quote>
-				(<xref linkend="uac.p.auth-password-avp-id"/>).
+				(<xref linkend="uac.p.auth_username_avp"/>).
 			</emphasis></para>
 			<example>
 				<title>Set <varname>auth_password_avp</varname> parameter</title>
