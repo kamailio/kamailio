@@ -620,6 +620,59 @@ static sr_kemi_xval_t* ki_kx_gets_status(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_body_mode(sip_msg_t *msg, int rmode)
+{
+	str s;
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	s.s = get_body(msg);
+
+	if(s.s == NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
+		return &_sr_kemi_kx_xval;
+	}
+	s.len = msg->buf + msg->len - s.s;
+	if(s.len <=0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = s;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_body(sip_msg_t *msg)
+{
+	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_body(sip_msg_t *msg)
+{
+	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_body(sip_msg_t *msg)
+{
+	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -777,6 +830,22 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_body"),
+		SR_KEMIP_XVAL, ki_kx_get_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_body"),
+		SR_KEMIP_XVAL, ki_kx_getw_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_body"),
+		SR_KEMIP_XVAL, ki_kx_gete_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
