@@ -327,7 +327,7 @@ modparam("uac","credential","username:domain:password")
 				If you define it, you also need to define
 				<quote>auth_username_avp</quote>
 				(<xref linkend="uac.p.auth_username_avp"/>) and
-				<quote>auth_username_avp</quote>
+				<quote>auth_password_avp</quote>
 				(<xref linkend="uac.p.auth_password_avp"/>).
 			</emphasis></para>
 			<example>
@@ -349,7 +349,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 				If you define it, you also need to define
 				<quote>auth_realm_avp</quote>
 				(<xref linkend="uac.p.auth_realm_avp"/>) and
-				<quote>auth_username_avp</quote>
+				<quote>auth_password_avp</quote>
 				(<xref linkend="uac.p.auth_password_avp"/>).
 			</emphasis></para>
 			<example>
@@ -369,7 +369,7 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 			</para>
 			<para><emphasis>
 				If you define it, you also need to define
-				<quote>auth_password_avp</quote>
+				<quote>auth_realm_avp</quote>
 				(<xref linkend="uac.p.auth_realm_avp"/>) and
 				<quote>auth_username_avp</quote>
 				(<xref linkend="uac.p.auth_username_avp"/>).
