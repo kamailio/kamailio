@@ -347,7 +347,7 @@ static int mod_init(void)
 		ds_default_sockinfo =
 				grep_sock_info(&host, (unsigned short)port, proto);
 		if(ds_default_sockinfo == 0) {
-			LM_WARN("non-local socket <%.*s>\n", ds_default_socket.len,
+			LM_ERR("non-local socket <%.*s>\n", ds_default_socket.len,
 					ds_default_socket.s);
 			return -1;
 		}
