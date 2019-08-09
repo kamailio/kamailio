@@ -411,8 +411,9 @@ modparam("uac","credential","username:domain:password")
    This can be used if the realm upstream will be using is not known in
    advance.
 
-   If you define it, you also need to define “auth_username_avp” (???) and
-   “auth_username_avp” (???).
+   If you define it, you also need to define “auth_username_avp”
+   (Section 3.10, “auth_username_avp (string)”) and “auth_username_avp”
+   (Section 3.11, “auth_password_avp (string)”).
 
    Example 1.9. Set auth_realm_avp parameter
 ...
@@ -424,8 +425,9 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
    The definition of an AVP that might contain the username to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_realm_avp” (???) and
-   “auth_username_avp” (???).
+   If you define it, you also need to define “auth_realm_avp”
+   (Section 3.9, “auth_realm_avp (string)”) and “auth_username_avp”
+   (Section 3.11, “auth_password_avp (string)”).
 
    Example 1.10. Set auth_username_avp parameter
 ...
@@ -437,8 +439,9 @@ modparam("uac","auth_username_avp","$avp(i:11)")
    The definition of an AVP that might contain the password to be used to
    perform authentication.
 
-   If you define it, you also need to define “auth_password_avp” (???) and
-   “auth_username_avp” (???).
+   If you define it, you also need to define “auth_password_avp”
+   (Section 3.9, “auth_realm_avp (string)”) and “auth_username_avp”
+   (Section 3.10, “auth_username_avp (string)”).
 
    Example 1.11. Set auth_password_avp parameter
 ...
@@ -564,12 +567,15 @@ modparam("uac", "reg_gc_interval", 60)
 
    Default socket to be used for generating registration requests and
    sending requests with the function uac_req_send(). Useful e.g. when
-   several public interfaces are available.
+   several public interfaces are available. A send socket in the $uac_reg
+   variable used together with the uac_req_send() function will override
+   this parameter.
 
    By default no default socket is defined, the send socket is choosen
-   from the tm module when the requests is send out. A send socket in the
-   $uac_reg variable used together with the uac_req_send() function will
-   override this parameter.
+   from the “tm” module when the requests is send out.
+
+   If you want to force a certain TCP port (e.g. 5060), you will need to
+   set the tcp_reuse_port=yes core parameter as well.
 
    Example 1.21. Set the “default_socket” parameter
  ...
