@@ -808,11 +808,6 @@ int uac_reg_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
 	if (get_from(rpl)->tag_value.len) {
 		tmdlg->id.loc_tag = get_from(rpl)->tag_value;
 	}
-#if 0
-	if (get_to(rpl)->tag_value.len) {
-		tmdlg->id.rem_tag = get_to(rpl)->tag_value;
-	}
-#endif
 	tmdlg->loc_uri = get_from(rpl)->uri;
 	tmdlg->rem_uri = get_to(rpl)->uri;
 	tmdlg->state= DLG_CONFIRMED;
@@ -834,10 +829,6 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	struct uac_credential cred;
 	char  b_ruri[MAX_URI_SIZE];
 	str   s_ruri;
-#ifdef UAC_OLD_AUTH
-	char  b_turi[MAX_URI_SIZE];
-	str   s_turi;
-#endif
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
 	uac_req_t uac_r;
@@ -979,12 +970,6 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			goto error;
 		}
 
-#ifdef UAC_OLD_AUTH
-		snprintf(b_turi, MAX_URI_SIZE, "sip:%.*s@%.*s",
-				ri->r_username.len, ri->r_username.s,
-				ri->r_domain.len, ri->r_domain.s);
-		s_turi.s = b_turi; s_turi.len = strlen(s_turi.s);
-#endif
 		snprintf(b_hdrs, MAX_UACH_SIZE,
 				"Contact: <sip:%.*s@%.*s>\r\n"
 				"Expires: %d\r\n"
@@ -1013,18 +998,6 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		uac_r.cb  = uac_reg_tm_callback;
 		/* Callback parameter */
 		uac_r.cbp = (void*)uuid;
-#ifdef UAC_OLD_AUTH
-		/* default socket */
-		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-			uac_r.ssock = &uac_default_socket;
-		}
-		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
-				&s_ruri, /* Request-URI */
-				&s_turi, /* To */
-				&s_turi, /* From */
-				(ri->auth_proxy.len)?&ri->auth_proxy:NULL /* outbound uri */
-				);
-#endif
 		ret = uac_tmb.t_request_within(&uac_r);
 
 		if(ret<0) {
