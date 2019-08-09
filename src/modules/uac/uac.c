@@ -90,6 +90,8 @@ struct rr_binds uac_rrb;
 pv_spec_t auth_username_spec;
 pv_spec_t auth_realm_spec;
 pv_spec_t auth_password_spec;
+str uac_default_socket = STR_NULL;
+struct socket_info * uac_default_sockinfo = NULL;
 
 static int w_replace_from(struct sip_msg* msg, char* p1, char* p2);
 static int w_restore_from(struct sip_msg* msg, char* p1, char* p2);
@@ -172,6 +174,7 @@ static param_export_t params[] = {
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
+	{"default_socket",	PARAM_STR, &uac_default_socket},
 	{0, 0, 0}
 };
 
@@ -206,6 +209,8 @@ inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
+	str host;
+	int port, proto;
 
 	if (restore_mode_str && *restore_mode_str) {
 		if (strcasecmp(restore_mode_str,"none")==0) {
@@ -348,6 +353,25 @@ static int mod_init(void)
 		register_procs(1);
 		/* add child to update local config framework structures */
 		cfg_register_child(1);
+	}
+
+	if(uac_default_socket.s && uac_default_socket.len > 0) {
+		if(parse_phostport(
+				   uac_default_socket.s, &host.s, &host.len, &port, &proto)
+				!= 0) {
+			LM_ERR("bad socket <%.*s>\n", uac_default_socket.len,
+					uac_default_socket.s);
+			return -1;
+		}
+		uac_default_sockinfo =
+				grep_sock_info(&host, (unsigned short)port, proto);
+		if(uac_default_sockinfo == 0) {
+			LM_ERR("non-local socket <%.*s>\n", uac_default_socket.len,
+					uac_default_socket.s);
+			return -1;
+		}
+		LM_INFO("default uac socket set to <%.*s>\n",
+				uac_default_socket.len, uac_default_socket.s);
 	}
 	init_from_replacer();
 

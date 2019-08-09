@@ -40,6 +40,7 @@
 #include "auth.h"
 #include "auth_hdr.h"
 #include "uac_send.h"
+#include "uac_reg.h"
 
 #define MAX_UACH_SIZE 2048
 #define MAX_UACB_SIZE 32768
@@ -820,7 +821,13 @@ int uac_req_send(void)
 	uac_r.method = &_uac_req.s_method;
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
-	uac_r.ssock = (_uac_req.s_sock.len <= 0) ? NULL : &_uac_req.s_sock;
+
+	if (_uac_req.s_sock.s != NULL && _uac_req.s_sock.len > 0) {
+		uac_r.ssock = &_uac_req.s_sock;
+	} else if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+		uac_r.ssock = &uac_default_socket;
+	}
+
 	if((_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
 			|| (_uac_req.evroute > 0))
 	{

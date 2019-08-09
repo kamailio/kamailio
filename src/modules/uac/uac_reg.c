@@ -1013,6 +1013,10 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		uac_r.cb  = uac_reg_tm_callback;
 		/* Callback parameter */
 		uac_r.cbp = (void*)uuid;
+		/* default socket */
+		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+			uac_r.ssock = &uac_default_socket;
+		}
 #ifdef UAC_OLD_AUTH
 		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
 				&s_ruri, /* Request-URI */
@@ -1171,6 +1175,10 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 		ret = uac_tmb.t_request_within(&uac_r);
 	} else {
+		/* default socket */
+		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+			uac_r.ssock = &uac_default_socket;
+		}
 		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
 				&s_ruri, /* Request-URI */
 				&s_turi, /* To */

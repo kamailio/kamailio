@@ -32,6 +32,9 @@ extern int reg_random_delay;
 extern str reg_contact_addr;
 extern str reg_db_url;
 extern str reg_db_table;
+extern str uac_default_socket;
+/* just to check for non-local sockets for now */
+extern struct socket_info * uac_default_sockinfo;
 
 extern str l_uuid_column;
 extern str l_username_column;
