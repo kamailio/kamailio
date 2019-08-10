@@ -363,6 +363,8 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
+		ipsec_pcscf.ipsec_reconfig(); // try to clean all ipsec SAs/Policies if there is no registered contacts
+
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
 		ci.reg_state=PCONTACT_REG_PENDING;
 		if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {

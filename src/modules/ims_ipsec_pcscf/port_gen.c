@@ -25,17 +25,22 @@
 #include "spi_gen.h"
 #include "spi_list.h"
 #include <pthread.h>
+#include "../../core/mem/shm_mem.h"
 
-pthread_mutex_t sport_mut;  // server port mutex
-pthread_mutex_t cport_mut;  // client port mutex
-spi_list_t used_sports;     // list with used server ports
-spi_list_t used_cports;     // list with used client ports
-uint32_t sport_val;         // the last acquired server port
-uint32_t cport_val;         // the last acquired client port
-uint32_t min_sport;
-uint32_t min_cport;
-uint32_t max_sport;
-uint32_t max_cport;
+typedef struct port_generator{
+	pthread_mutex_t	sport_mut;		// server port mutex
+	pthread_mutex_t	cport_mut;		// client port mutex
+	spi_list_t		used_sports;	// list with used server ports
+	spi_list_t		used_cports;	// list with used client ports
+	uint32_t		sport_val;		// the last acquired server port
+	uint32_t		cport_val;		// the last acquired client port
+	uint32_t		min_sport;
+	uint32_t		min_cport;
+	uint32_t		max_sport;
+	uint32_t		max_cport;
+} port_generator_t;
+
+port_generator_t* port_data = NULL;
 
 int init_port_gen(uint32_t sport_start_val, uint32_t cport_start_val, uint32_t range)
 {
@@ -47,24 +52,40 @@ int init_port_gen(uint32_t sport_start_val, uint32_t cport_start_val, uint32_t r
         return 2;
     }
 
-    if(pthread_mutex_init(&sport_mut, NULL) || pthread_mutex_init(&cport_mut, NULL)){
-        return 3;
-    }
+	if(port_data){
+		return 3;
+	}
 
-    used_sports = create_list();
-    used_cports = create_list();
+	port_data = shm_malloc(sizeof(port_generator_t));
+	if(port_data == NULL){
+		return 4;
+	}
 
-    sport_val = min_sport = sport_start_val;
-    cport_val = min_cport = cport_start_val;
-    max_sport = sport_start_val + range;
-    max_cport = cport_start_val + range;
+	if(pthread_mutex_init(&port_data->sport_mut, NULL)){
+		shm_free(port_data);
+		return 5;
+	}
+
+	if(pthread_mutex_init(&port_data->cport_mut, NULL)){
+		pthread_mutex_destroy(&port_data->sport_mut);
+		shm_free(port_data);
+		return 6;
+	}
+
+	port_data->used_sports = create_list();
+	port_data->used_cports = create_list();
+
+	port_data->sport_val = port_data->min_sport = sport_start_val;
+	port_data->cport_val = port_data->min_cport = cport_start_val;
+	port_data->max_sport = sport_start_val + range;
+	port_data->max_cport = cport_start_val + range;
 
     return 0;
 }
 
 uint32_t acquire_port(spi_list_t* used_ports, pthread_mutex_t* port_mut, uint32_t* port_val, uint32_t min_port, uint32_t max_port)
 {
-    //save the initial value for the highly unlikely case where there are no free server PORTs
+	//save the initial value for the highly unlikely case where there are no free PORTs
     uint32_t initial_val = *port_val;
     uint32_t ret = 0; // by default return invalid port
 
@@ -76,6 +97,11 @@ uint32_t acquire_port(spi_list_t* used_ports, pthread_mutex_t* port_mut, uint32_
         if(spi_in_list(used_ports, *port_val) == 0) {
             ret = *port_val;
             (*port_val)++;
+
+			if(*port_val >= max_port) { //reached the top of the range - reset
+				*port_val = min_port;
+			}
+
             break;
         }
 
@@ -102,44 +128,100 @@ uint32_t acquire_port(spi_list_t* used_ports, pthread_mutex_t* port_mut, uint32_
 
 uint32_t acquire_sport()
 {
-    return acquire_port(&used_sports, &sport_mut, &sport_val, min_sport, max_sport);
+	if(!port_data){
+		return 0;
+	}
+
+	return acquire_port(&port_data->used_sports, &port_data->sport_mut, &port_data->sport_val, port_data->min_sport, port_data->max_sport);
 }
 
 uint32_t acquire_cport()
 {
-    return acquire_port(&used_cports, &cport_mut, &cport_val, min_cport, max_cport);
+	if(!port_data){
+		return 0;
+	}
+
+	return acquire_port(&port_data->used_cports, &port_data->cport_mut, &port_data->cport_val, port_data->min_cport, port_data->max_cport);
 }
 
 int release_sport(uint32_t port)
 {
-    if(pthread_mutex_lock(&sport_mut) != 0){
+	if(!port_data){
+		return 1;
+	}
+
+	if(pthread_mutex_lock(&port_data->sport_mut) != 0){
         return 1;
     }
 
-    spi_remove(&used_sports, port);
+	spi_remove(&port_data->used_sports, port);
 
-    pthread_mutex_unlock(&sport_mut);
+	pthread_mutex_unlock(&port_data->sport_mut);
     return 0;
 }
 
 int release_cport(uint32_t port)
 {
-    if(pthread_mutex_lock(&cport_mut) != 0){
+	if(!port_data){
+		return 1;
+	}
+
+	if(pthread_mutex_lock(&port_data->cport_mut) != 0){
         return 1;
     }
 
-    spi_remove(&used_cports, port);
+	spi_remove(&port_data->used_cports, port);
 
-    pthread_mutex_unlock(&cport_mut);
+	pthread_mutex_unlock(&port_data->cport_mut);
     return 0;
+}
+
+int clean_port_lists()
+{
+	if(!port_data){
+		return 1;
+	}
+
+	if(pthread_mutex_lock(&port_data->sport_mut) != 0){
+		return 1;
+	}
+
+	destroy_list(&port_data->used_sports);
+
+	pthread_mutex_unlock(&port_data->sport_mut);
+
+	if(pthread_mutex_lock(&port_data->cport_mut) != 0){
+		return 1;
+	}
+
+	destroy_list(&port_data->used_cports);
+
+	pthread_mutex_unlock(&port_data->cport_mut);
+
+	return 0;
 }
 
 int destroy_port_gen()
 {
-    int ret = pthread_mutex_destroy(&sport_mut);
+	if(!port_data){
+		return 1;
+	}
+
+	int ret;
+
+	destroy_list(&port_data->used_sports);
+	destroy_list(&port_data->used_cports);
+
+	port_data->sport_val = port_data->min_sport;
+	port_data->cport_val = port_data->min_cport;
+
+	ret = pthread_mutex_destroy(&port_data->sport_mut);
     if(ret != 0){
+		shm_free(port_data);
         return ret;
     }
 
-    return pthread_mutex_destroy(&cport_mut);
+	ret = pthread_mutex_destroy(&port_data->cport_mut);
+	shm_free(port_data);
+	return ret;
 }
