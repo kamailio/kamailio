@@ -631,8 +631,6 @@ data_target = $(prefix)/$(data_dir)
 #		core that the DNS servers are down. No DNS query is performed
 #		when the servers are unreachable, and even expired resource
 #		records are used from the cache. (requires external watchdog)
-# -DWITH_AS_SUPPORT
-#		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
 ifeq ($(OS), dragonfly)
@@ -727,9 +725,6 @@ ifeq ($(KMSTATS), 1)
 endif
 ifeq ($(FMSTATS), 1)
 	C_DEFS+= -DMALLOC_STATS
-endif
-ifeq ($(WITHAS), 1)
-	C_DEFS+= -DWITH_AS_SUPPORT
 endif
 
 ifeq ($(SCTP), 1)
