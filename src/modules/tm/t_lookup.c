@@ -618,11 +618,6 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				if (! STR_EQ(get_from(t_msg)->tag_value,
 							get_from(p_msg)->tag_value))
 					continue;
-#ifdef TM_E2E_ACK_CHECK_FROM_URI
-				if (! STR_EQ(get_from(t_msg)->uri,
-							get_from(p_msg)->uri))
-					continue;
-#endif
 
 				/* all criteria for proxied ACK are ok */
 				if (likely(p_cell->relayed_reply_branch!=-2)) {
