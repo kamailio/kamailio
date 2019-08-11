@@ -1537,7 +1537,6 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
 	return 1;
 }
 
-#ifdef WITH_AS_SUPPORT
 /**
  * Returns the hash coordinates of the transaction current CANCEL is targeting.
  */
@@ -1560,7 +1559,6 @@ int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index,
 	UNREF(orig);
 	return 1;
 }
-#endif /* WITH_AS_SUPPORT */
 
 
 

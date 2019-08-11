@@ -457,10 +457,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		new_cell->flags |= T_IS_INVITE_FLAG;
 		new_cell->flags|=T_AUTO_INV_100 &
 				(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
-#ifdef WITH_AS_SUPPORT
 		if (uac_r->cb_flags & TMCB_DONT_ACK)
 			new_cell->flags |= T_NO_AUTO_ACK;
-#endif
 		lifetime=cfg_get(tm, tm_cfg, tm_max_inv_lifetime);
 	}else
 		lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
@@ -736,7 +734,6 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	return ret;
 }
 
-#ifdef WITH_AS_SUPPORT
 struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 					unsigned int branch, str *hdrs, str *body)
 {
@@ -868,7 +865,6 @@ fin:
 
 #undef RET_INVALID
 }
-#endif /* WITH_AS_SUPPORT */
 
 
 /*

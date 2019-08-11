@@ -376,7 +376,6 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 								int branch, unsigned int *ret_len,
 								struct dest_info*  dst)
 {
-#ifdef WITH_AS_SUPPORT
 	struct retr_buf *local_ack, *old_lack;
 
 	/* do we have the ACK cache, previously build? */
@@ -414,10 +413,6 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 	*ret_len = local_ack->buffer_len;
 	*dst = local_ack->dst;
 	return local_ack->buffer;
-#else /* ! WITH_AS_SUPPORT */
-	return build_dlg_ack(rpl, trans, branch, /*hdrs*/NULL, /*body*/NULL,
-			ret_len, dst);
-#endif /* WITH_AS_SUPPORT */
 }
 
 
@@ -1483,14 +1478,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 	/* not >=300 ... it must be 2xx or provisional 1xx */
 	if (new_code>=100) {
-#ifdef WITH_AS_SUPPORT
 			/* need a copy of the message for ACK generation */
 			*should_store = (inv_through && is_local(Trans) &&
 					(Trans->uac[branch].last_received < 200) &&
 					(Trans->flags & T_NO_AUTO_ACK)) ? 1 : 0;
-#else
-		*should_store=0;
-#endif
 		/* By default, 1xx and 2xx (except 100) will be relayed. 100 relaying can be
 		 * controlled via relay_100 parameter */
 		Trans->uac[branch].last_received=new_code;
@@ -2297,9 +2288,6 @@ int reply_received( struct sip_msg  *p_msg )
 							run_trans_callbacks_off_params(TMCB_REQUEST_SENT,
 									t, &onsend_params);
 					}
-#ifndef WITH_AS_SUPPORT
-					shm_free(ack);
-#endif
 				}
 			}
 		}

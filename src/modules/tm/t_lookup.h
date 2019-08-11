@@ -103,7 +103,6 @@ int t_set_max_lifetime(struct sip_msg* msg, unsigned int eol_inv,
 											unsigned int eol_noninv);
 int t_reset_max_lifetime(void);
 
-#ifdef WITH_AS_SUPPORT
 /**
  * Returns the hash coordinates of the transaction current CANCEL is targeting.
  */
@@ -111,7 +110,6 @@ int t_get_canceled_ident(struct sip_msg *msg, unsigned int *hash_index,
 		unsigned int *label);
 typedef int (*t_get_canceled_ident_f)(struct sip_msg *msg, 
 		unsigned int *hash_index, unsigned int *label);
-#endif /* WITH_AS_SUPPORT */
 
 /**
  * required by TMX (K/O extensions)

@@ -1073,7 +1073,6 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
-#ifdef WITH_AS_SUPPORT
 	/* With AS support, TM allows for external modules to generate building of
 	 * the ACK; in this case, the ACK's retransmission buffer is built once
 	 * and kept in memory (to help when retransmitted 2xx are received and ACK
@@ -1087,7 +1086,6 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	 * 'out' to return the length of the allocated string buffer.
 	 */
 	unsigned offset = *len;
-#endif
 
 	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
 		LM_ERR("Error while parsing headers.\n");
@@ -1203,12 +1201,8 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	/* Content Length, EoM */
 	*len += CONTENT_LENGTH_LEN + body_len.len + CRLF_LEN + CRLF_LEN;
 
-#if WITH_AS_SUPPORT
 	req_buf = shm_malloc(offset + *len + 1);
 	req_buf += offset;
-#else
-	req_buf = shm_malloc(*len + 1);
-#endif
 	if (!req_buf) {
 		LM_ERR("Cannot allocate memory (%u+1)\n", *len);
 		goto error01;

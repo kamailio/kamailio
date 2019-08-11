@@ -217,7 +217,6 @@ typedef struct ua_client
 	/* internal processing code - (mapping over sip warning codes)
 	 * - storing the code giving a clue of what happened internally */
 	int icode;
-#ifdef WITH_AS_SUPPORT
 	/**
 	 * Resent for every rcvd 2xx reply.
 	 * This member's as an alternative to passing the reply to the AS,
@@ -226,7 +225,6 @@ typedef struct ua_client
 	 * concurrently with a 2xx reply (to generate an ACK).
 	 */
 	struct retr_buf *local_ack;
-#endif
 	/* the route to take if no final positive reply arrived */
 	unsigned short on_failure;
 	/* the route to take for all failure replies */
@@ -274,21 +272,17 @@ typedef struct async_state
 #define T_IN_AGONY (1 << 5)		/* set if waiting to die (delete timer)
 								 * TODO: replace it with del on unref */
 #define T_AUTO_INV_100 (1 << 6) /* send an 100 reply automatically  to inv. */
-#ifdef WITH_AS_SUPPORT
 /* don't generate automatically an ACK for local transaction */
 #define T_NO_AUTO_ACK (1 << 7)
-#endif
 
 #define T_DISABLE_6xx (1 << 8)		/* treat 6xx as a normal reply */
 #define T_DISABLE_FAILOVER (1 << 9) /* don't perform dns failover */
 #define T_NO_E2E_CANCEL_REASON (1 << 10) /* don't propagate CANCEL Reason */
 #define T_DONT_FORK (T_CANCELED | T_6xx)
 
-#ifdef WITH_AS_SUPPORT
 /* provisional replies must trigger callbacks for local transaction */
 #define T_PASS_PROVISIONAL_FLAG (1 << 11)
 #define pass_provisional(_t_) ((_t_)->flags & T_PASS_PROVISIONAL_FLAG)
-#endif
 #define T_ASYNC_CONTINUE \
 	(1 << 12) /* Is this transaction in a continuation after being suspended */
 
