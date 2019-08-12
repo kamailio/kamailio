@@ -2026,6 +2026,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	int i;
 	unsigned int hash;
 	ds_set_t *idx = NULL;
+	int ulast = 0;
 
 	if(msg == NULL) {
 		LM_ERR("bad parameters\n");
@@ -2082,6 +2083,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
+			ulast = 1;
 			break;
 		case DS_ALG_HASHAUTHUSER: /* 5 - hash auth username */
 			i = ds_hash_authusername(msg, &hash);
@@ -2093,6 +2095,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					/* No Authorization found: Use round robin */
 					hash = idx->last;
 					idx->last = (idx->last + 1) % idx->nr;
+					ulast = 1;
 					break;
 				default:
 					LM_ERR("can't get authorization hash\n");
@@ -2192,6 +2195,11 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			return -1;
 		}
 		rstate->emode = 1;
+	}
+
+	/* update last field for next select to point after the current active used */
+	if(ulast) {
+		idx->last = (hash + 1) % idx->nr;
 	}
 
 	LM_DBG("selected [%d-%d-%d/%d] <%.*s>\n", rstate->alg, rstate->setid,
