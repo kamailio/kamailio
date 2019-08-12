@@ -197,7 +197,11 @@ modparam("topos", "branch_expire", 300)
 
 3.6. dialog_expire (int)
 
-   Interval in seconds after which the dialog records are deleted.
+   Interval in seconds after which the dialog records are deleted. Keep in
+   mind that the module does not update the dialog timestamp after the
+   initial call setup on re-INVITEs or other in-dialog messages. So set a
+   large enough value (according your longest call duration) to prevent
+   problems in re-writing messages.
 
    Default value is 10800 (3 hours).
 
