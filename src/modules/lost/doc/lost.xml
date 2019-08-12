@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>LOST Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Wolfgang</firstname>
+		<surname>Kampichler</surname>
+		<affiliation><orgname>Frequentis AG</orgname></affiliation>
+		<affiliation><orgname>DEC112 (funded by netidee)</orgname></affiliation>
+		</author>
+	    <editor>
+		<firstname>Wolfgang</firstname>
+		<surname>Kampichler</surname>
+	    </editor>
+	</authorgroup>
+	<copyright>
+		<year>20018-2019</year>
+		<holder>Wolfgang Kampichler</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="lost_admin.xml"/>
+
+</book>
