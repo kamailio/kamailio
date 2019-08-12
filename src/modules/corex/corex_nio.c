@@ -141,6 +141,7 @@ int nio_msg_sent(sr_event_param_t *evp)
     int_str avp_value;
     struct usr_avp *avp;
     struct run_act_ctx ra_ctx;
+    str nbuf = STR_NULL;
 
     obuf = (str*)evp->data;
 
@@ -163,7 +164,15 @@ int nio_msg_sent(sr_event_param_t *evp)
         if(avp!=NULL && is_avp_str_val(avp)) {
             msg.buf = avp_value.s.s;
             msg.len = avp_value.s.len;
-            obuf->s = nio_msg_update(&msg, (unsigned int*)&obuf->len);
+            nbuf.s = nio_msg_update(&msg, (unsigned int*)&nbuf.len);
+			if(nbuf.s!=NULL) {
+				LM_DBG("new outbound buffer generated\n");
+				pkg_free(obuf->s);
+				obuf->s = nbuf.s;
+				obuf->len = nbuf.len;
+			} else {
+				LM_ERR("failed to generate new outbound buffer\n");
+			}
         } else {
             LM_WARN("no value set for AVP %.*s, using unmodified message\n",
                 nio_msg_avp_param.len, nio_msg_avp_param.s);
