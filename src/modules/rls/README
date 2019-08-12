@@ -602,6 +602,8 @@ For rls only:
 
 4.2.  rls_handle_notify()
 
+   Handle NOTIFY requests.
+
    This function can be used from REQUEST_ROUTE.
 
    Example 1.27. rls_handle_notify usage

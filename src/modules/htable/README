@@ -11,13 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
-
-Edited by
 
 Ovidiu Sas
 
@@ -590,9 +586,14 @@ modparam("htable", "timer_interval", 10)
 
 3.11. db_expires (integer)
 
-   If set to 1, the module will load/save the expires values of the items
+   If set to 1, the module loads/saves the value for expire of the items
    in hash table from/to database. It applies only to hash tables that
-   have the auto-expires attribute defined.
+   have the auto-expires attribute defined. If set to 0, only the key name
+   and the value are loaded, the expires for each item being set to 0.
+
+   Note that the module is not reloading automatically the items from
+   database when they expire, the reloading can be done only via RPC
+   command.
 
    Default value is 0.
 

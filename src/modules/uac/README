@@ -937,6 +937,7 @@ event_route[uac:reply] {
    Example 1.36. uac.reg_info usage
 ...
    kamcmd uac.reg_info l_uuid account123
+   kamcmd uac.reg_info l_uuid s:12345678
 ...
 
 8.3.  uac.reg_enable
@@ -950,6 +951,7 @@ event_route[uac:reply] {
    Example 1.37. uac.reg_enable usage
 ...
    kamcmd uac.reg_enable l_uuid account123
+   kamcmd uac.reg_enable l_uuid s:12345678
 ...
 
 8.4.  uac.reg_disable
@@ -963,6 +965,7 @@ event_route[uac:reply] {
    Example 1.38. uac.reg_disable usage
 ...
    kamcmd uac.reg_disable l_uuid account123
+   kamcmd uac.reg_disable l_uuid s:12345678
 ...
 
 8.5.  uac.reg_reload
@@ -983,6 +986,7 @@ event_route[uac:reply] {
    Example 1.40. uac.reg_refresh usage
 ...
    kamcmd uac.reg_refresh account123
+   kamcmd uac.reg_refresh s:12345678
 ...
 
 8.7.  uac.reg_active

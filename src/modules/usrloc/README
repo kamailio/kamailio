@@ -12,11 +12,7 @@ Edited by
 
 Jan Janak
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Carsten Bock
 
@@ -44,7 +40,7 @@ Carsten Bock
 
         3. Parameters
 
-              3.1. nat_bflag (integer)
+              3.1. nat_bflag (int)
               3.2. user_column (string)
               3.3. domain_column (string)
               3.4. contact_column (string)
@@ -65,17 +61,17 @@ Carsten Bock
               3.19. connection_id_column (string)
               3.20. keepalive_column (string)
               3.21. partition_column (string)
-              3.22. use_domain (integer)
-              3.23. desc_time_order (integer)
-              3.24. timer_interval (integer)
+              3.22. use_domain (int)
+              3.23. desc_time_order (int)
+              3.24. timer_interval (int)
               3.25. db_url (string)
-              3.26. db_mode (integer)
-              3.27. db_load (integer)
-              3.28. db_insert_update (integer)
-              3.29. matching_mode (integer)
-              3.30. cseq_delay (integer)
-              3.31. fetch_rows (integer)
-              3.32. hash_size (integer)
+              3.26. db_mode (int)
+              3.27. db_load (int)
+              3.28. db_insert_update (int)
+              3.29. matching_mode (int)
+              3.30. cseq_delay (int)
+              3.31. fetch_rows (int)
+              3.32. hash_size (int)
               3.33. preload (string)
               3.34. db_update_as_insert (int)
               3.35. db_check_update (int)
@@ -91,7 +87,7 @@ Carsten Bock
               3.45. db_timer_clean (int)
               3.46. rm_expired_delay (int)
               3.47. server_id_filter (int)
-              3.48. version_table (integer)
+              3.48. version_table (int)
 
         4. RPC Commands
 
@@ -203,7 +199,7 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. nat_bflag (integer)
+        3.1. nat_bflag (int)
         3.2. user_column (string)
         3.3. domain_column (string)
         3.4. contact_column (string)
@@ -224,17 +220,17 @@ Chapter 1. Admin Guide
         3.19. connection_id_column (string)
         3.20. keepalive_column (string)
         3.21. partition_column (string)
-        3.22. use_domain (integer)
-        3.23. desc_time_order (integer)
-        3.24. timer_interval (integer)
+        3.22. use_domain (int)
+        3.23. desc_time_order (int)
+        3.24. timer_interval (int)
         3.25. db_url (string)
-        3.26. db_mode (integer)
-        3.27. db_load (integer)
-        3.28. db_insert_update (integer)
-        3.29. matching_mode (integer)
-        3.30. cseq_delay (integer)
-        3.31. fetch_rows (integer)
-        3.32. hash_size (integer)
+        3.26. db_mode (int)
+        3.27. db_load (int)
+        3.28. db_insert_update (int)
+        3.29. matching_mode (int)
+        3.30. cseq_delay (int)
+        3.31. fetch_rows (int)
+        3.32. hash_size (int)
         3.33. preload (string)
         3.34. db_update_as_insert (int)
         3.35. db_check_update (int)
@@ -250,7 +246,7 @@ Chapter 1. Admin Guide
         3.45. db_timer_clean (int)
         3.46. rm_expired_delay (int)
         3.47. server_id_filter (int)
-        3.48. version_table (integer)
+        3.48. version_table (int)
 
    4. RPC Commands
 
@@ -310,7 +306,7 @@ Chapter 1. Admin Guide
 
    To find out how to control/select the contact matching algorithm,
    please see the module parameter matching_mode - Section 3.29,
-   “matching_mode (integer)”.
+   “matching_mode (int)”.
 
 2. Dependencies
 
@@ -330,7 +326,7 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. nat_bflag (integer)
+   3.1. nat_bflag (int)
    3.2. user_column (string)
    3.3. domain_column (string)
    3.4. contact_column (string)
@@ -351,17 +347,17 @@ Chapter 1. Admin Guide
    3.19. connection_id_column (string)
    3.20. keepalive_column (string)
    3.21. partition_column (string)
-   3.22. use_domain (integer)
-   3.23. desc_time_order (integer)
-   3.24. timer_interval (integer)
+   3.22. use_domain (int)
+   3.23. desc_time_order (int)
+   3.24. timer_interval (int)
    3.25. db_url (string)
-   3.26. db_mode (integer)
-   3.27. db_load (integer)
-   3.28. db_insert_update (integer)
-   3.29. matching_mode (integer)
-   3.30. cseq_delay (integer)
-   3.31. fetch_rows (integer)
-   3.32. hash_size (integer)
+   3.26. db_mode (int)
+   3.27. db_load (int)
+   3.28. db_insert_update (int)
+   3.29. matching_mode (int)
+   3.30. cseq_delay (int)
+   3.31. fetch_rows (int)
+   3.32. hash_size (int)
    3.33. preload (string)
    3.34. db_update_as_insert (int)
    3.35. db_check_update (int)
@@ -377,9 +373,9 @@ Chapter 1. Admin Guide
    3.45. db_timer_clean (int)
    3.46. rm_expired_delay (int)
    3.47. server_id_filter (int)
-   3.48. version_table (integer)
+   3.48. version_table (int)
 
-3.1. nat_bflag (integer)
+3.1. nat_bflag (int)
 
    The index of the branch flag to be used as NAT marker (if the contact
    is or not natted). This is a branch flag and it will be imported and
@@ -616,7 +612,7 @@ modparam("usrloc", "keepalive_column", "kalive")
 modparam("usrloc", "partition_column", "part")
 ...
 
-3.22. use_domain (integer)
+3.22. use_domain (int)
 
    If the domain part of the user should be also saved and used for
    identifying the user (along with the username part). Useful in multi
@@ -629,7 +625,7 @@ modparam("usrloc", "partition_column", "part")
 modparam("usrloc", "use_domain", 1)
 ...
 
-3.23. desc_time_order (integer)
+3.23. desc_time_order (int)
 
    If the user's contacts should be kept timestamp ordered; otherwise the
    contact will be ordered based on q value. Non 0 value means true.
@@ -641,7 +637,7 @@ modparam("usrloc", "use_domain", 1)
 modparam("usrloc", "desc_time_order", 1)
 ...
 
-3.24. timer_interval (integer)
+3.24. timer_interval (int)
 
    Number of seconds between two timer runs. The module uses a timer to
    delete expired contacts, synchronize with database and other tasks,
@@ -665,7 +661,7 @@ modparam("usrloc", "timer_interval", 120)
 modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.26. db_mode (integer)
+3.26. db_mode (int)
 
    The usrloc module can utilize a database for persistent contact
    storage. If a database is used, the location database (contacts) will
@@ -716,7 +712,7 @@ Warning
 modparam("usrloc", "db_mode", 2)
 ...
 
-3.27. db_load (integer)
+3.27. db_load (int)
 
    Determine if the usrloc module should load contacts from the database
    storage during module initialization A value of 0 disable the loading
@@ -726,10 +722,10 @@ modparam("usrloc", "db_mode", 2)
 
    Example 1.27. Set db_load parameter
 ...
-modparam("usrloc", "db_load", "0")
+modparam("usrloc", "db_load", 0)
 ...
 
-3.28. db_insert_update (integer)
+3.28. db_insert_update (int)
 
    Determine if the usrloc module should do an update when a duplicate key
    is found while inserting A value of 1 will activate update on duplicate
@@ -739,13 +735,13 @@ modparam("usrloc", "db_load", "0")
 
    Example 1.28. Set db_insert_update parameter
 ...
-modparam("usrloc", "db_insert_update", "1")
+modparam("usrloc", "db_insert_update", 1)
 ...
 
-3.29. matching_mode (integer)
+3.29. matching_mode (int)
 
-   What contact matching algorithm to be used. Refer to section
-   Section 1.1, “Contact matching” for the description of the algorithms.
+   What contact matching algorithm to be used. Refer to section ??? for
+   the description of the algorithms.
 
    The parameter may take the following values:
      * 0 - CONTACT ONLY based matching algorithm.
@@ -763,7 +759,7 @@ modparam("usrloc", "db_insert_update", "1")
 modparam("usrloc", "matching_mode", 1)
 ...
 
-3.30. cseq_delay (integer)
+3.30. cseq_delay (int)
 
    Delay (in seconds) for accepting as retransmissions register requests
    with same Call-ID and Cseq. The delay is calculated starting from the
@@ -782,7 +778,7 @@ modparam("usrloc", "matching_mode", 1)
 modparam("usrloc", "cseq_delay", 5)
 ...
 
-3.31. fetch_rows (integer)
+3.31. fetch_rows (int)
 
    The number of the rows to be fetched at once from database when loading
    the location records. This value can be used to tune the load time at
@@ -796,7 +792,7 @@ modparam("usrloc", "cseq_delay", 5)
 modparam("usrloc", "fetch_rows", 3000)
 ...
 
-3.32. hash_size (integer)
+3.32. hash_size (int)
 
    The number of entries of the hash table used by usrloc to store the
    location records is 2^hash_size. For hash_size=4, the number of slots
@@ -1019,7 +1015,7 @@ modparam("usrloc", "rm_expired_delay", 30)
 modparam("usrloc", "server_id_filter", 1)
 ...
 
-3.48. version_table (integer)
+3.48. version_table (int)
 
    If set to 0, the module will skip checking the version for location
    table.
