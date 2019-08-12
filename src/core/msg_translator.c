@@ -2187,10 +2187,11 @@ after_update_via1:
 		new_buf=(char*)pkg_malloc(new_len+1);
 	if (new_buf==0){
 		ser_error=E_OUT_OF_MEM;
-		if(unlikely(mode&BUILD_IN_SHM))
-                        SHM_MEM_ERROR;
-                else
-                        PKG_MEM_ERROR;
+		if(unlikely(mode&BUILD_IN_SHM)) {
+			SHM_MEM_ERROR;
+		} else {
+			PKG_MEM_ERROR;
+		}
 		goto error00;
 	}
 
