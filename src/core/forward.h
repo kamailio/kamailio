@@ -136,9 +136,18 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	outb.s = buf;
 	outb.len = len;
 	if(!(flags&1)) {
-		evp.data = (void*)&outb;
-		evp.dst = dst;
-		sr_event_exec(SREV_NET_DATA_OUT, &evp);
+		if(sr_event_enabled(SREV_NET_DATA_OUT)) {
+			outb.s = (char*)pkg_malloc(len + 1);
+			if(outb.s==NULL) {
+				LM_ERR("failed to clone outgoing buffer\n");
+				return -1;
+			}
+			memcpy(outb.s, buf, len);
+			outb.s[len] = '\0';
+			evp.data = (void*)&outb;
+			evp.dst = dst;
+			sr_event_exec(SREV_NET_DATA_OUT, &evp);
+		}
 	}
 
 	if(outb.s==NULL) {
