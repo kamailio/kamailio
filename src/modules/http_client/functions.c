@@ -653,7 +653,7 @@ int http_client_query(
 	query_params.timeout = default_connection_timeout;
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = default_query_result;
-	query_params.maxdatasize = 0;
+	query_params.maxdatasize = default_query_maxdatasize;
 	if(default_useragent.s != NULL && default_useragent.len > 0) {
 		query_params.useragent = default_useragent.s;
 	}

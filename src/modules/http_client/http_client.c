@@ -104,6 +104,8 @@ unsigned int default_authmethod =
  * - 0: return full result
  * - 1: return first line only */
 unsigned int default_query_result = 1;
+/*!< Default download size for result of query function. 0=disabled (no limit) */
+unsigned int default_query_maxdatasize = 0;
 
 str http_client_config_file = STR_NULL;
 
@@ -201,6 +203,7 @@ static param_export_t params[] = {
 	{"authmethod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
 	{"query_result", PARAM_INT, &default_query_result },
+	{"query_maxdatasize", PARAM_INT, &default_query_maxdatasize },
 	{0, 0, 0}
 };
 

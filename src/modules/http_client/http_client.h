@@ -63,6 +63,7 @@ extern unsigned int
 extern unsigned int
 		default_keep_connections; /*!< Keep http connections open for reuse */
 extern unsigned int default_query_result; /*!< Default query result mode */
+extern unsigned int default_query_maxdatasize; /*!< Default query result maximum download size */
 
 extern counter_handle_t connections; /* Number of connection definitions */
 extern counter_handle_t connok;		 /* Successful Connection attempts */
