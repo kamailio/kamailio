@@ -462,6 +462,24 @@ modparam("http_client", "query_result", 0)
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.query_maxdatasize">
+			<title><varname>query_maxdatasize</varname> (int)</title>
+			<para>
+			Control the size in bytes of the data to be returned by the
+			http_client_query(...) in the result variable.
+			</para>
+			<para>
+			Default value: 0 (disabled, unlimited size).
+			</para>
+			<example>
+			<title>Set <varname>query_maxdatasize</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "query_maxdatasize", 2048)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.p.httpcon">
 			<title><varname>httpcon</varname> (string)</title>
 			<para>
