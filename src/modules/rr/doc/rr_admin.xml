@@ -397,8 +397,7 @@ loose_route();
     </section>
 
     <section id="rr.f.record_route">
-      <title><function moreinfo="none">record_route()</function> and <function
-      moreinfo="none">record_route(string)</function></title>
+      <title><function moreinfo="none">record_route([sparams])</function></title>
 
       <para>The function adds a new Record-Route header field. The header
       field will be inserted in the message before any other Record-Route
@@ -413,6 +412,10 @@ loose_route();
       module this function will determine whether outbound is required for the
       request and generate and add a flow-token as the username part of the
       Record-Route-URI.</para>
+
+      <para>Note: if append From-tag is enabled and the function is used for requests
+      within dialog, it must be executed after loose_route() in order to detect
+      properly the direction.</para>
 
       <para>This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
       FAILURE_ROUTE.</para>
