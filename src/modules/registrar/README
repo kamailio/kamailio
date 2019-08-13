@@ -1070,7 +1070,7 @@ add_sock_hdr("Sock-Info");
      * ruid - The record unique ID for a a specific contact to be removed.
        It can contain pseudo-variables that are evaluated at runtime.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Return values:
      * 0 - Successfully deleted contact(s)
