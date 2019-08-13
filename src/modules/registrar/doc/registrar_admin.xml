@@ -1400,7 +1400,7 @@ add_sock_hdr("Sock-Info");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<para>
 		Return values:
