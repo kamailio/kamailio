@@ -56,8 +56,10 @@ Hugh Waite
               3.13. tlsversion (int)
               3.14. authmethod (int)
               3.15. keep_connections (int)
-              3.16. httpcon (string)
-              3.17. config_file (string)
+              3.16. query_result (int)
+              3.17. query_maxdatasize (int)
+              3.18. httpcon (string)
+              3.19. config_file (string)
 
         4. Functions
 
@@ -115,13 +117,15 @@ Hugh Waite
    1.13. Set tlsversion parameter
    1.14. Set authmethod parameter
    1.15. Set keep_connections parameter
-   1.16. Set httpcon parameter
-   1.17. Set config_file parameter
-   1.18. Short http_client config file
-   1.19. http_connect() usage
-   1.20. http_connect_raw() usage
-   1.21. http_get_redirect() usage
-   1.22. http_client_query() usage
+   1.16. Set query_result parameter
+   1.17. Set query_maxdatasize parameter
+   1.18. Set httpcon parameter
+   1.19. Set config_file parameter
+   1.20. Short http_client config file
+   1.21. http_connect() usage
+   1.22. http_connect_raw() usage
+   1.23. http_get_redirect() usage
+   1.24. http_client_query() usage
 
 Chapter 1. Admin Guide
 
@@ -150,8 +154,10 @@ Chapter 1. Admin Guide
         3.13. tlsversion (int)
         3.14. authmethod (int)
         3.15. keep_connections (int)
-        3.16. httpcon (string)
-        3.17. config_file (string)
+        3.16. query_result (int)
+        3.17. query_maxdatasize (int)
+        3.18. httpcon (string)
+        3.19. config_file (string)
 
    4. Functions
 
@@ -196,10 +202,10 @@ Chapter 1. Admin Guide
 
    Like in SIP, the HTTP URL may need encoding to be transported safely
    over the network. Check the string encoding functions in the
-   Transformation Cookbook (as used in the http_client_query example
+   Transformation Cookbook (as used in the http_client_query() example
    below).
 
-   The function http_client_query allows Kamailio to issue an HTTP GET
+   The function http_client_query() allows Kamailio to issue an HTTP GET
    request and get access to parts of the reply. This function has been
    ported from the utils module and now use the same libcurl functions. We
    recommend using the new functionality provided by this module.
@@ -244,8 +250,10 @@ Chapter 1. Admin Guide
    3.13. tlsversion (int)
    3.14. authmethod (int)
    3.15. keep_connections (int)
-   3.16. httpcon (string)
-   3.17. config_file (string)
+   3.16. query_result (int)
+   3.17. query_maxdatasize (int)
+   3.18. httpcon (string)
+   3.19. config_file (string)
 
 3.1. httpredirect (int)
 
@@ -481,7 +489,35 @@ modparam("http_client", "authmethod", 3)
 modparam("http_client", "keep_connections", 1)
 ...
 
-3.16. httpcon (string)
+3.16. query_result (int)
+
+   Control what is returned by the http_client_query(...) in the result
+   variable.
+
+   Valid values are:
+     * 0 - Return the entire HTTP result body
+     * 1 - Return the first oine from HTTP result body
+
+   Default value: 1 (return first line).
+
+   Example 1.16. Set query_result parameter
+...
+modparam("http_client", "query_result", 0)
+...
+
+3.17. query_maxdatasize (int)
+
+   Control the size in bytes of the data to be returned by the
+   http_client_query(...) in the result variable.
+
+   Default value: 0 (disabled, unlimited size).
+
+   Example 1.17. Set query_maxdatasize parameter
+...
+modparam("http_client", "query_maxdatasize", 2048)
+...
+
+3.18. httpcon (string)
 
    Defines a connection and credentials for the connection for use in a
    connection-oriented function call in this module.
@@ -529,7 +565,7 @@ modparam("http_client", "keep_connections", 1)
        Failure is either a connection failure or a response code of 500 or
        above.
 
-   Example 1.16. Set httpcon parameter
+   Example 1.18. Set httpcon parameter
 ...
 modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
@@ -539,7 +575,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 tstuff;timeout=12;failover=apione")
 ...
 
-3.17. config_file (string)
+3.19. config_file (string)
 
    The file name of a configuration file containing definitions of http
    connections. This is an alternative to the "httpcon" module parameter -
@@ -595,12 +631,12 @@ tstuff;timeout=12;failover=apione")
    you can specify an value of "" - two quotation marks. In order to
    disable a http proxy setting you can set the port to zero.
 
-   Example 1.17. Set config_file parameter
+   Example 1.19. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 
-   Example 1.18. Short http_client config file
+   Example 1.20. Short http_client config file
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
@@ -641,7 +677,7 @@ http_follow_redirect = no
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.19. http_connect() usage
+   Example 1.21. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -682,7 +718,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.20. http_connect_raw() usage
+   Example 1.22. http_connect_raw() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -709,7 +745,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
        result - The name of a pseudo variable that will contain the last
        used URL.
 
-   Example 1.21. http_get_redirect() usage
+   Example 1.23. http_get_redirect() usage
 ...
 modparam("http_client", "httpredirect", 1);
 ...
@@ -730,21 +766,21 @@ http_get_redirect("apiserver", "$var(targeturl)");
    Either of “post-data” or “hdrs” can be also set to empty string in
    order to be ignored.
 
-   If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
-   the reply's body (if any) is stored in “result” parameter, which must
-   be a writable pseudo variable.
+   If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line or
+   the entire reply body (if any) is stored in “result” parameter, which
+   must be a writable pseudo variable. See the query_result parameter for
+   controling what value to be stored in the result variable.
 
    Function returns reply code of HTTP reply or -1 if something went
    wrong.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, and BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Note that this function is based on the http_query function in the
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.22. http_client_query() usage
+   Example 1.24. http_client_query() usage
 ...
 # GET-Request
 http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(
