@@ -652,7 +652,7 @@ int http_client_query(
 	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;
 	query_params.http_follow_redirect = default_http_follow_redirect;
-	query_params.oneline = 1;
+	query_params.oneline = default_query_result;
 	query_params.maxdatasize = 0;
 	if(default_useragent.s != NULL && default_useragent.len > 0) {
 		query_params.useragent = default_useragent.s;

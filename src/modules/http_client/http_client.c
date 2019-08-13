@@ -100,6 +100,11 @@ unsigned int default_authmethod =
 		CURLAUTH_BASIC
 		| CURLAUTH_DIGEST; /*!< authentication method - Basic, Digest or both */
 
+/*!< Default http query result mode
+ * - 0: return full result
+ * - 1: return first line only */
+unsigned int default_query_result = 1;
+
 str http_client_config_file = STR_NULL;
 
 static curl_version_info_data *curl_info;
@@ -195,6 +200,7 @@ static param_export_t params[] = {
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"authmethod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
+	{"query_result", PARAM_INT, &default_query_result },
 	{0, 0, 0}
 };
 
