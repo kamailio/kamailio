@@ -1218,12 +1218,12 @@ found:
 int is_direction(struct sip_msg * msg, int dir)
 {
 	static str ftag_param = {"ftag",4};
-	static unsigned int last_id = (unsigned int)-1;
+	static msg_ctx_id_t last_id = {0};
 	static unsigned int last_dir = 0;
 	str ftag_val;
 	str tag;
 
-	if ( last_id==msg->id && last_dir!=0) {
+	if ( last_id.msgid==msg->id && last_id.pid==msg->pid && last_dir!=0) {
 		if (last_dir==RR_FLOW_UPSTREAM)
 			goto upstream;
 		else
@@ -1256,11 +1256,13 @@ int is_direction(struct sip_msg * msg, int dir)
 		goto upstream;
 
 downstream:
-	last_id = msg->id;
+	last_id.msgid = msg->id;
+	last_id.pid = msg->pid;
 	last_dir = RR_FLOW_DOWNSTREAM;
 	return (dir==RR_FLOW_DOWNSTREAM)?0:-1;
 upstream:
-	last_id = msg->id;
+	last_id.msgid = msg->id;
+	last_id.pid = msg->pid;
 	last_dir = RR_FLOW_UPSTREAM;
 	return (dir==RR_FLOW_UPSTREAM)?0:-1;
 }
