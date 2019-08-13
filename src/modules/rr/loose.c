@@ -57,8 +57,7 @@
 #define ROUTE_SUFFIX_LEN (sizeof(ROUTE_SUFFIX)-1)
 
 /*! variables used to hook the param part of the local route */
-static unsigned int routed_msg_id = 0;
-static int routed_msg_pid = 0;
+static msg_ctx_id_t routed_msg_id = {0};
 static str routed_params = {0,0};
 
 extern int rr_force_send_socket;
@@ -585,8 +584,8 @@ static inline int after_strict(struct sip_msg* _m)
 	uri = rt->nameaddr.uri;
 
 	/* reset rr handling static vars for safety in error case */
-	routed_msg_id = 0;
-	routed_msg_pid = 0;
+	routed_msg_id.msgid = 0;
+	routed_msg_id.pid = 0;
 	routed_params.s = NULL;
 	routed_params.len = 0;
 
@@ -637,8 +636,8 @@ static inline int after_strict(struct sip_msg* _m)
 	/* set the hooks for the param
 	 * important note: RURI is already parsed by the above function, so 
 	 * we just used it without any checking */
-	routed_msg_id = _m->id;
-	routed_msg_pid = _m->pid;
+	routed_msg_id.msgid = _m->id;
+	routed_msg_id.pid = _m->pid;
 	routed_params = _m->parsed_uri.params;
 
 	if (is_strict(&puri.params)) {
@@ -794,8 +793,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	uri = rt->nameaddr.uri;
 
 	/* reset rr handling static vars for safety in error case */
-	routed_msg_id = 0;
-	routed_msg_pid = 0;
+	routed_msg_id.msgid = 0;
+	routed_msg_id.pid = 0;
 
 	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LM_ERR("failed to parse the first route URI (%.*s)\n",
@@ -812,8 +811,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		LM_DBG("Topmost route URI: '%.*s' is me\n",
 			uri.len, ZSW(uri.s));
 		/* set the hooks for the params */
-		routed_msg_id = _m->id;
-		routed_msg_pid = _m->pid;
+		routed_msg_id.msgid = _m->id;
+		routed_msg_id.pid = _m->pid;
 
 		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
 			LM_INFO("failed to process outbound flow-token\n");
@@ -1015,7 +1014,7 @@ int redo_route_params(sip_msg_t *msg)
 	}
 
 	/* check if the hooked params belong to the same message */
-	if (routed_msg_id != msg->id || routed_msg_pid != msg->pid) {
+	if (routed_msg_id.msgid != msg->id || routed_msg_id.pid != msg->pid) {
 		redo = 1;
 	}
 	if((redo==0) && (routed_params.s==NULL || routed_params.len<=0)) {
@@ -1031,8 +1030,8 @@ int redo_route_params(sip_msg_t *msg)
 		uri = rt->nameaddr.uri;
 
 		/* reset rr handling static vars for safety in error case */
-		routed_msg_id = 0;
-		routed_msg_pid = 0;
+		routed_msg_id.msgid = 0;
+		routed_msg_id.pid = 0;
 
 		if (parse_uri(uri.s, uri.len, &puri) < 0) {
 			LM_ERR("failed to parse the first route URI (%.*s)\n",
@@ -1047,8 +1046,8 @@ int redo_route_params(sip_msg_t *msg)
 			LM_DBG("Topmost route URI: '%.*s' is me\n",
 				uri.len, ZSW(uri.s));
 			/* set the hooks for the params */
-			routed_msg_id = msg->id;
-			routed_msg_pid = msg->pid;
+			routed_msg_id.msgid = msg->id;
+			routed_msg_id.pid = msg->pid;
 			routed_params = puri.params;
 			return 0;
 		} else {
