@@ -16,8 +16,6 @@ Edited by
 
 Jan Janak
 
-Edited by
-
 Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
@@ -52,7 +50,7 @@ Bogdan-Andrei Iancu
         5. Functions
 
               5.1. loose_route()
-              5.2. record_route() and record_route(string)
+              5.2. record_route([sparams])
               5.3. remove_record_route()
               5.4. record_route_preset(string [,string2])
               5.5. record_route_advertised_address(address)
@@ -128,7 +126,7 @@ Chapter 1. Admin Guide
    5. Functions
 
         5.1. loose_route()
-        5.2. record_route() and record_route(string)
+        5.2. record_route([sparams])
         5.3. remove_record_route()
         5.4. record_route_preset(string [,string2])
         5.5. record_route_advertised_address(address)
@@ -362,7 +360,7 @@ modparam("rr", "ignore_sips", 1)
 5. Functions
 
    5.1. loose_route()
-   5.2. record_route() and record_route(string)
+   5.2. record_route([sparams])
    5.3. remove_record_route()
    5.4. record_route_preset(string [,string2])
    5.5. record_route_advertised_address(address)
@@ -417,7 +415,7 @@ modparam("rr", "ignore_sips", 1)
 loose_route();
 ...
 
-5.2. record_route() and record_route(string)
+5.2. record_route([sparams])
 
    The function adds a new Record-Route header field. The header field
    will be inserted in the message before any other Record-Route header
@@ -431,6 +429,10 @@ loose_route();
    will determine whether outbound is required for the request and
    generate and add a flow-token as the username part of the
    Record-Route-URI.
+
+   Note: if append From-tag is enabled and the function is used for
+   requests within dialog, it must be executed after loose_route() in
+   order to detect properly the direction.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
