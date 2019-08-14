@@ -205,7 +205,7 @@ int sql_res_param(modparam_t type, void *val)
 	res = sql_get_result(&s);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%s]\n", s.s);
+		LM_ERR("invalid result container [%s]\n", s.s);
 		goto error;
 	}
 	return 0;
@@ -335,7 +335,7 @@ static int fixup_sql_query(void** param, int param_no)
 		res = sql_get_result(&s);
 		if(res==NULL)
 		{
-			LM_ERR("invalid result [%s]\n", s.s);
+			LM_ERR("invalid result container [%s]\n", s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)res;
@@ -458,7 +458,7 @@ static int fixup_sql_rfree(void** param, int param_no)
 		res = sql_get_result(&s);
 		if(res==NULL)
 		{
-			LM_ERR("invalid result [%s]\n", s.s);
+			LM_ERR("invalid result container [%s]\n", s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)res;
