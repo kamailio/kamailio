@@ -307,6 +307,7 @@ static int mod_init(void)
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}
+	LM_WARN("OPENSSL_VERSION_NUMBER: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
 	if (fix_tls_cfg(&default_tls_cfg) < 0 ) {
 		LM_ERR("initial tls configuration fixup failed\n");
 		return -1;
