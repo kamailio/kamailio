@@ -1,3 +1,664 @@
+===================== 2019-08-14 Version 5.2.4 Released =====================
+
+===================== Changes Since Version 5.2.3 ===========================
+
+commit 0c23deeaad6b54236966807172388f4073e54dde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 14 11:17:03 2019 +0200
+
+    Makefile.defs: version set to 5.2.4
+
+commit 7218d1fdad903fabaff224cf2be8212013e35221
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 14 11:13:54 2019 +0200
+
+    pkg/kamailio: updated version to 5.2.4 in spec files
+
+commit f4f08a901bd798acd237851c7299c6d07083974e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Aug 14 08:32:33 2019 +0200
+
+    pkg/kamailio/deb: version set to 5.2.4 [skip ci]
+
+commit db0ae1e3dde3331810ba8b154d7e111bf3322583
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Aug 12 21:01:32 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 6e5cb772817a8275c89869c868ce20a2ddb47df9
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Aug 12 20:52:50 2019 +0200
+
+    topos: docs for dialog_expire param limitation for in-dialog requests (GH #2024)
+    
+    (cherry picked from commit 3ccf5ee691440e806d441f0e58562ddc4137a488)
+
+commit c1eaf3353f43d34f164f28a871399ca785c40b4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 20:15:17 2019 +0200
+
+    dispatcher: skip inactive destinations for pointing next to be used record
+    
+    (cherry picked from commit 18eeda012a711584239b03d5cfef8b7720f0ef31)
+
+commit 7069cbaf28beb35036eeb2ab9bde19844144eb00
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Aug 12 10:32:22 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 1d436e38cbadd47a36a5293b88713566e2454eb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 6 21:37:56 2019 +0200
+
+    misc_radius: increase MAX_EXTRA from 4 to 8
+    
+    - GH #2025
+    
+    (cherry picked from commit 4c537a618949eb48ffed9297f3abc8cdc879b70d)
+
+commit 5d7784a5e35e3060549e5e12a05d1dfc34fbff19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 6 21:37:04 2019 +0200
+
+    auth_radius: increase MAX_EXTRA from 4 to 8
+    
+    - GH #2025
+    
+    (cherry picked from commit df93a638040f4c1aa4d6ed3799d6f990b0593f94)
+
+commit 91ffb3e9d2ff60d0e31a33cc00c966afbadadcd2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 6 17:33:15 2019 +0200
+
+    app_python3: Makefile - get all ldflags for linking
+    
+    (cherry picked from commit d762848d4f71014a6c6b6693b44403324a8edd15)
+
+commit 7368859780f258945f2077a9ea0e1c7e603a75eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 5 18:29:42 2019 +0200
+
+    app_ruby: docs - fix rpc command name for listing the api
+    
+    (cherry picked from commit 5773fba2765c8a08be7016e82a6ec02579b49215)
+
+commit 2eafd02697f5f6c6885389e5ef25785d153b3026
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 5 18:11:00 2019 +0200
+
+    app_ruby: print pointers in error log message
+    
+    (cherry picked from commit ea526a8de9c961a57858ecc4c47ce4ba24e03908)
+
+commit 887c49e597572a58f6400736f8dcd753fa4543cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 5 18:03:47 2019 +0200
+
+    uac: debug messages when restoring from/to headers
+    
+    (cherry picked from commit 7a4c490a63cd3fa924b6921fcd20ba77a6d661fb)
+
+commit 21fa3d2c130d85a925d2db658dfbd291d21a6baa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 2 13:43:36 2019 +0200
+
+    tm: removed unused error label in prepare_new_uac()
+    
+    (cherry picked from commit c7ceb08b31fdb3f6560d02fff6b6ee71602c19ec)
+
+commit 5c042d6e1023828f49d7ac75f2b761ad3433ab31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 1 13:54:21 2019 +0200
+
+    tm: proper resoring of backup lumps in case of cloning failure
+    
+    (cherry picked from commit cd379886fa7a8ff01b9618491199f8e5b3ce897f)
+
+commit 164702ddbc2e88c818f9293d0c31fef163ea45b7
+Author: Guillem Jover <gjover@sipwise.com>
+Date:   Mon Jul 29 20:15:47 2019 +0200
+
+    build: Call make via $(MAKE)
+    
+    When we need to call make from within a Makefile, we should do so by
+    using the MAKE variable, which has special meaning for make itself.
+    This makes sure, it will get marked as recursive command, and will
+    make it possible to use the make jobserver.
+    
+    Change-Id: I6829f3ee0a830fc8273e1dffe696382fccc6a093
+    (cherry picked from commit 2306dd47b308f99e5c22c2d6f4d2bc1200ed8453)
+
+commit f88580226306bdc02120e8a0d0042c640192fd53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 31 11:04:21 2019 +0200
+
+    db_redis: note about defining key when updating table content
+    
+    (cherry picked from commit f2df5df815f8dfca87324ca70e6fe9a51fc417e9)
+
+commit 1c406f1e8ff2c02f1d739082c39835d7bee077ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 30 16:58:45 2019 +0200
+
+    usrloc: use static record for expires callback in db-only mode
+    
+    (cherry picked from commit 12dbf48d421680764f9e9621de9485616ca0c055)
+
+commit 112529b9e9396c12ec5471ca651f580a02d1b172
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 29 12:25:17 2019 +0200
+
+    kamctl: option to enable kamctl test from shell variable
+    
+    - set KAMCTL_TEST variable in shell
+    
+    (cherry picked from commit 4968e8994157f1152bf7461b16049d67e5c9cc59)
+
+commit 5bbf4aeca8063da6f7f911260a95c7475f6184a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 29 10:54:41 2019 +0200
+
+    usrloc: delete contact attributes in db-only mode
+    
+    (cherry picked from commit b642263a08313e86cc4936a9c489e8afb4a2cb5f)
+
+commit efaeb98c3a251e468573d6ebdb3d92c6065c7bdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 29 10:40:56 2019 +0200
+
+    usrloc: coherent indentation and whitespacing
+    
+    (cherry picked from commit 12bf3cb574e2ead2da46e7e237a33415ae12df61)
+
+commit e2a0873df1e18640e1bfe7bc0adee725202afa2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 19 10:03:53 2019 +0200
+
+    evapi: adjust log message when no client connected for dispatching
+    
+    (cherry picked from commit a6a2416e59c1e1a5cbadd3ecceecff52201be10d)
+
+commit 1bba5826292f0dbd6703f8df941f886a2a71c9e9
+Author: Surendra Tiwari <surendratiwari3@gmail.com>
+Date:   Fri Jul 19 13:07:32 2019 +0530
+
+    evapi:return code and log fixed for no evapi client while sending
+    
+    (cherry picked from commit 08cf17288861bcaa8f3b23166059ead517d1b4fe)
+
+commit 77abc5d6923930649bb2fc76dd3b4f5d702684d9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 19 09:50:21 2019 +0200
+
+    core: pv - increased the size for vars and transformations tables
+    
+    (cherry picked from commit e6b183a1ec3b267cc25040a9b67a1c151ee85555)
+
+commit ae766571c230ef9b1e8edd0faade674061488897
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 18 08:46:27 2019 +0200
+
+    corex: debug message for set rcv/snd sock functions
+    
+    (cherry picked from commit 5e961873401fd0a93ff03ba8d75dbcefbf2fbcf0)
+
+commit 2a864f3580fb97c9e920f8fa7cd9361ad3b88aae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 18 08:41:29 2019 +0200
+
+    core: debug message for forcing send socket action
+    
+    (cherry picked from commit abe060b417c5270082aa46660fdc2f78098a5888)
+
+commit 681dd5d519c24e8e0574eafccb62e9c0b6cf8732
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 18 08:34:31 2019 +0200
+
+    pv: debug message when seting $fs (send socket)
+    
+    (cherry picked from commit ac95f0c29390e1dbc0779b56936ee68a424595e0)
+
+commit 2fc5178d6557e2c1e8351330456cdcd8a55bebee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 15 17:24:14 2019 +0200
+
+    siputils: log method ids on mismatch for options_reply()
+    
+    (cherry picked from commit 9dab8303a96614fd74efff6add359a23713642a5)
+
+commit 787ebf8cef9972292a38c5d3335703a0407c547a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 15 16:41:22 2019 +0200
+
+    siputils: exported options_reply() to kemi framework
+    
+    (cherry picked from commit 183ff04e00e592cc2c7db54732c6a3bb8fb75bb8)
+
+commit a77c4a9268e416abdae5ec74374451d4172cc8e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 9 09:35:08 2019 +0200
+
+    kamctl: relaxed regex check on aor and sip uri
+    
+    - it required a dot (.), not valid for ipv6 and single word domains
+    (e.g., localhost)
+    - now just match on USERNAME_RE@.+
+    
+    (cherry picked from commit 94e9d47d2d2da82be23f1bae8cd6491c758a384c)
+
+commit 59d29bc35138939a14beed501e7d8ae47b35b6e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 6 09:00:06 2019 +0200
+
+    usrloc: coherence for int type of parameters
+    
+    - it was combination of int and integer, now all int
+    - fix examples for int params, related to GH #1999
+    
+    (cherry picked from commit 91fa799e436de252e9f5aa5d8f09609f46db6e58)
+
+commit 21af99321bbcc14ffeced749eafe003caff26b36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 1 17:30:07 2019 +0200
+
+    uac: docs - examples with rpc commands having params numbers converted to string
+    
+    - GH #1988
+    
+    (cherry picked from commit ec42a0b36a10dec0852bd1ef2bf3ad7ab9ad8dbc)
+
+commit 942b0ab096a7981ddad19a74974eef3d23d44cd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 28 16:01:43 2019 +0200
+
+    pv: relax uri and params transfromation parsing when separator is last char
+    
+    - more flexible in parsing custom values, detection done in
+    transformations code
+    
+    (cherry picked from commit 1c4af823c39d28b694c1dec607d8d72c5b726456)
+
+commit 1f7519fa002e7cfff0edd2180aeab2b5306881e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 28 14:53:02 2019 +0200
+
+    htable: docs - rephrased info for db_expires to clarify its purpose
+    
+    (cherry picked from commit f87adf6aba3fcebfe162341bc45d130365d34f5e)
+
+commit 4d3bc9dbd2d4da88e6f04f0cdaa52944430fd364
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 28 08:07:02 2019 +0200
+
+    uac: debug messages when initializing the remote uac registration
+    
+    (cherry picked from commit 0fcb2607d2d63a0e10fce189b6881ac15b985bb4)
+
+commit 4761c2708a6b315d4cc0b1d8c88fd9d90e1400ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 27 16:25:27 2019 +0200
+
+    sdpops: exported to kemi the functions to detect sdp with codecs
+    
+    - sdp_with_codecs_by_id() and sdp_with_codecs_by_name()
+    
+    (cherry picked from commit 3716541db01c09bd00998bdbd0c35b3a842cdaf5)
+
+commit a5f51d169ab3cd890d005eac1ea5d91102acbda7
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Tue Jun 25 15:37:43 2019 +0200
+
+    call_obj: b/f acept optional limit parameter.
+    
+    (cherry picked from commit 8266f0ee05b1f2faf2d4148efca257f7322da4ce)
+
+commit 203b027357259564aaef1db2f004bfaaa30c9fd7
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Mon Jun 24 15:06:25 2019 +0200
+
+    call_obj_mod: no need to use a free function for call_obj_get.
+    
+    (cherry picked from commit a58b4c2afbffdd2584f553f8d7d36a84d40e2aee)
+
+commit 8848bce61107c98a4b8e6fd2afe3670ec90baf70
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 27 09:36:21 2019 +0200
+
+    lib/srdb1: support for username@domain in user id part of db url
+    
+    - used by some cloud database services
+    - reworked patch from GH #1992
+    
+    (cherry picked from commit d419f427d2acf890e5e45c4f3e8e7a2b2fe4cead)
+
+commit bf5e1698e543bce6cbf424773322a06ae09d2c19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 25 23:03:17 2019 +0200
+
+    sanity: free parsed proxy-required header in case of failure
+    
+    - reported by GH #1990
+    
+    (cherry picked from commit ffa2aa438e2a13e6e8bdbe70dd90827ae18279ce)
+
+commit 2b58dee39ea92e2fd2038b70cb0c0436c109d6a2
+Author: Julien Arlt <julien-arlt@gmx.de>
+Date:   Fri Jun 21 14:52:11 2019 +0200
+
+    userblacklist: fix double "check_user_blacklist" in module documentation
+    
+    (cherry picked from commit b7f7efe4f952894aa847165cc038cd5af4c3141a)
+
+commit 9d4f48b20216b688006fb68e9878a2ce339d19a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 22 10:58:18 2019 +0200
+
+    rls: Makefile - link agaist libicu on macos/darwin
+    
+    - libxml2 needs it but its pkg-config doesn't list it
+    
+    (cherry picked from commit 46084c898d0598e94c7f22ab03d321e037fd7f55)
+
+commit df7a3c2b1c9dec3655f175728a5771262fd6a747
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 21 11:08:12 2019 +0200
+
+    presence: docs - aligned examples to avoid large whitespacing
+    
+    (cherry picked from commit 8a909021ccccc321b06b3437d124978bd901ab18)
+
+commit 0bcfc63dd365e50e8a6394e005972e2bf5d0e86a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 20 20:35:04 2019 +0200
+
+    presence: docs - fixed name for event route presence:notify-reply
+    
+    (cherry picked from commit f005e2edca8fef350546cb743bf1cb51ee4ddd8d)
+
+commit 59402a71c5c7d8fc4ffd3dbb5643fb6605982e51
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 20 11:01:09 2019 +0200
+
+    rls: docs - added section ids
+    
+    (cherry picked from commit 50dfec2f2b7a467afe7c935524d0d385e9018f02)
+
+commit 29114b86e4360f2de53310070db872cd09aaef6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 18 16:25:25 2019 +0200
+
+    pdb: safety check for header length in pdb_msg_dbg()
+    
+    (cherry picked from commit 3c07e2351a94e4ff2cf3c6b9b9df4d7462cd5760)
+
+commit db0cabd8673e5ad7468eebae1781dd176bac1788
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 7 09:55:04 2019 +0200
+
+    exec: debug message with number of results for exec_avp()
+    
+    (cherry picked from commit 01c50c84aed717f9de689ab4eec3faec59a498e4)
+
+commit 1789377bdb6180b8979a84502ba439366f7f8d45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 7 08:48:34 2019 +0200
+
+    tm: detect local uac transaction not inserted in the hash table
+    
+    (cherry picked from commit cf0008d843009acc8e40fcad3eceda063b1a358c)
+
+commit 2f07bb77623c556b440d040203ade01726a59fde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 28 08:44:32 2019 +0200
+
+    usrloc: clone xavp list in contact struct in memory mode
+    
+    (cherry picked from commit 76f0fa8a0330de3885f5f3830eb90061c59045d4)
+
+commit 009f62895e835606c1a6c378aeded6c7068f3902
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Aug 11 11:02:02 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 822820827c55adb02efae9703cfda9b936686f3f
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Aug 11 10:56:56 2019 +0200
+
+    acc: remove diameter specific doc content, code was moved in 2017 to acc_diameter
+    
+    (cherry picked from commit d8cede175ddeada5ca5654a74e765f154dcfa86d)
+
+commit 71e384ab77faf7d09c7cb27996a16f588e9dd22e
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Aug 11 10:51:37 2019 +0200
+
+    acc: doc improvement regarding radius and diameter modules
+    
+    (cherry picked from commit 59a58e8a01e91def4634b551cb69ebe1f1c953e0)
+
+commit 82bbbd443977ee45c87958265ef064c94689c17c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Aug 9 16:46:36 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 06d6009624ec5f537838e23afc491043e6edae75
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Aug 9 16:35:30 2019 +0200
+
+    uac: fix another copy and paste error in docs
+    
+    (cherry picked from commit 85994cda0a9413836386d595aab1657d1412ec8b)
+
+commit 1681a5b22270e1dfcbad8edea2881c24d49e847d
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Aug 9 16:25:02 2019 +0200
+
+    uac: fix references in docs for AVPs
+    
+    (cherry picked from commit a5360fa28d8394bf420915645ecd0658dcd1c7b8)
+
+commit 643faf56274d6432b9884a062a669d0920d04bd4
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Aug 4 21:12:48 2019 +0200
+
+    domain: fix memory leak on domain reload (related to domain_attr table, struct domain_list)
+    
+    - fix memory leak on domain reload, reported by Mack Hendricks
+    - related to domain_attr table, structure domain_list
+    
+    (cherry picked from commit f50177003c21f53564be6349c0bb4935be184e2d)
+
+commit 24e327280b1790ed15e16f6fd251c5596728abd8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 8 18:29:40 2019 +0200
+
+    sipt: reset the static buffer for returning the number
+    
+    - GH #2030
+    
+    (cherry picked from commit 2c052974263c0785eb5280a935162673ac82dc6b)
+
+commit b88e04ee3d873a1d9c09b504e62174c0e1aaa02b
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Aug 6 09:44:38 2019 +0200
+
+    corex: fix parser for alias_subdomain modparam, extend debugging output
+    
+    - fix parser for alias_subdomain modparam, it was not working correctly for
+      all proto:hostname:port combinations (e.g. hostname/proto mixed up)
+    - extend debugging output for alias adding and also alias matching
+    
+    (cherry picked from commit 36ef1bf77f9df7bc5022c1dc350e54df2d168cf3)
+
+commit 9db6d9cc7751684981c2b602b3bd6021edc3a7fb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 27 22:36:20 2018 +0100
+
+    db_mysql: remove build warning, unneeded include (#1777)
+    
+    db_mysql: mysql_version.h is already included at mysql.h (GH #1777)
+    
+    > In file included from km_dbase.c:38:
+    > /usr/include/mariadb/mysql_version.h:3:2: warning: This file should not be included by clients, include only <mysql.h> [-W#warnings]
+    > #warning This file should not be included by clients, include only <mysql.h>
+    
+    (cherry picked from commit 57263490bd1dedbb4b7fdad6046880980feea040)
+
+commit 82635674517b6c96678289ca4e807ae73020eefc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 29 13:51:57 2019 +0200
+
+    core: skip to-tag when computing via branch for invite, ack and cancel
+    
+    - proper functionality for stateless proxy in case of negative ACK (in
+    this case the INVITE has no To-tag, but ACK has it and resulted in
+    different via branch, making downstream proxy to not match transaction)
+    
+    (cherry picked from commit b4e11cb25d848651406e0ad355d54f10db971761)
+
+commit c93c7eb77692f213e68be7992f031e4cfd377605
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Jul 30 16:37:20 2019 +0200
+
+    utils/kamcmd: default port is 2049, adapt help and README
+    
+    (cherry picked from commit 74375eae8f447952d17a1d89e5a62f029a15a81c)
+
+commit dd21d3eab5024e351c06ea3ae7b0e427dbd38701
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Jul 28 22:01:44 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 228154df82bbc2ebfa4edaf5e1bb91453bfb53e5
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Jul 28 21:44:50 2019 +0200
+
+    db_text: small fix in docs
+    
+    (cherry picked from commit 6b946807dfa77eeead83b5a4650bd3e59f75ba57)
+
+commit 77c60ca41c1789cbc3b7872d0f66fc8323ac260f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jul 23 10:46:47 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4d8dac06ad4fe9bcdf9a2fbc2d79a56918ca4e8e
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Jul 22 21:13:54 2019 +0200
+
+    tm: add missing docs about event_route[tm:local-request], GH #980
+    
+    (cherry picked from commit 8d613cb532fadecddde799a982bd9acf96df1eaf)
+
+commit 99e78ce404da0d7d0e98464916eef794d0f889a1
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Jul 21 11:51:01 2019 +0200
+
+    uac: minor spelling fix in docs
+    
+    (cherry picked from commit e7061ee85ddcd203fb58fa023eeddd90bc97848e)
+
+commit 4a50d6c091e0c8b38a582d4b07263c5c97e64d7d
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jul 16 11:22:31 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e0f95f60ae08b583f52f1aa3aee72ef57c85e139
+Author: Niall McAndrew <34754073+niallmcandrew@users.noreply.github.com>
+Date:   Tue Jul 16 10:53:47 2019 +1200
+
+    tcpops: Fix the example documentation for tcp_get_conid
+    
+    (cherry picked from commit e094407297e89e574f10347ce720bd8475537970)
+
+commit 7c8ee7a32a712cddc4d6080f9d9f48a588113eb0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jul 15 12:09:00 2019 +0200
+
+    rtpengine: fix error output on send_rtpp_command()
+    
+    * rename out variable to cmd due to We already have an out goto label
+    
+    (cherry picked from commit 262068940ba8dbd1b9fd93847f83f40c038d988c)
+
+commit 13e6e5ab591297237027a966b01cef5cb59f9f10
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Jul 14 12:25:28 2019 +0200
+
+    dispatcher: small spelling fix in docs
+    
+    (cherry picked from commit 93d18c0e4a805c86e82e2271d2d496b4b125fdfd)
+
+commit c23ea82a80c3e66a11b3c1f0bb0ea22e0e7985bb
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Jul 3 22:09:40 2019 +0200
+
+    acc: extend description in docs for log_missed_calls flag
+    
+    (cherry picked from commit f7f3222ec03b2a1e9260a79e737cc55c7dac169f)
+
+commit 01786b79e449506d0ccdf7528343e996be4e7cad
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Jul 3 16:57:48 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f9caee5851bfafe195ebf009bd6a51051394c7d5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 28 17:06:54 2019 +0200
+
+    usrloc: fix memory leak on DB_ONLY mode on RPC commands
+    
+    (cherry picked from commit b97bb77265e7bfc5562a664e8a510692ed68b2f8)
+
+commit baf9e9fbfcf3be043085a649eec3f396213bcb5c
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sun Jun 30 11:51:57 2019 +0200
+
+    call_control: add a note that the callcontrol application expect the MI interface
+    
+    (cherry picked from commit 62d607f29593bcd645c7d068327e0bd4a0db0a8f)
+
+commit 4a458861b4377f53218a6c836f18adca6b17a9ff
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jun 26 12:29:22 2019 +0200
+
+    registrar: clean avp/xavp created at 'usrloc:contact-expired' route_event
+    
+    (cherry picked from commit c671e78142b51515d64392fd9a9db8f07e904167)
+
+commit dcce685ab41097dc77fad50c414a66e634db72b9
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Jun 14 02:00:09 2019 +0300
+
+    pkg/kamailio/obs: Updated libevent2 deps for CentOS 6 dist [skip ci]
+    
+    (cherry picked from commit a54b36e2533a71d8e38c03b497b470110a1e33fb)
+
+commit bda9d6a23a2c2e5f5548f0a57444aeb4137a0bb0
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Jun 13 11:51:17 2019 +0300
+
+    pkg/kamailio/obs: Updated jansson module dependences
+    
+    (cherry picked from commit 602eacf713a092eb0b4758f243ddd2342d2ee16f)
+
+commit 2d2b993673d0296e6d9c08ff78b73341e407a37a
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri May 31 12:42:21 2019 +0200
+
+    htable: fix a possible null pointer dereference in dmq startup error case
+    
+    (cherry picked from commit 6f0b67b675dd18dce60fa3e5a4ece063216bbab5)
+
+
 ===================== 2019-05-22 Version 5.2.3 Released =====================
 
 ===================== Changes Since Version 5.2.2 ===========================
