@@ -15,18 +15,21 @@ SSL_BUILDER=$(shell \
 	fi)
 endif
 
-ifneq ($(SSL_BUILDER),)
-	DEFS += $(shell $(SSL_BUILDER) --cflags)
-	LIBS += $(shell $(SSL_BUILDER) --libs)
-else
-	DEFS += -I$(LOCALBASE)/ssl/include
-	LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
-			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
-			-lssl -lcrypto
-	# NOTE: depending on the way in which libssl was compiled you might
-	#       have to add -lz -lkrb5   (zlib and kerberos5).
-	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
-endif
+DEFS+=	-I/usr/local/ssl/include
+LIBS+=	-L/usr/local/ssl/lib -lssl -lcrypto
+
+# ifneq ($(SSL_BUILDER),)
+# 	DEFS += $(shell $(SSL_BUILDER) --cflags)
+# 	LIBS += $(shell $(SSL_BUILDER) --libs)
+# else
+# 	DEFS += -I$(LOCALBASE)/ssl/include
+# 	LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
+# 			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
+# 			-lssl -lcrypto
+# 	# NOTE: depending on the way in which libssl was compiled you might
+# 	#       have to add -lz -lkrb5   (zlib and kerberos5).
+# 	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
+# endif
 
 TLS_EXTRA_LIBS= -L. -lfortuna
 LIBS+= $(TLS_EXTRA_LIBS)
