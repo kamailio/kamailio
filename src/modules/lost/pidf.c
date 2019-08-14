@@ -21,9 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-14  initial version (anca)
  */
 
 /*! \file
@@ -101,12 +98,9 @@ xmlNodePtr xmlNodeGetNodeByName(
 	while(cur) {
 		xmlNodePtr match = NULL;
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
-			if(!ns
-					|| (cur->ns
-							   && xmlStrcasecmp(
-										  cur->ns->prefix, (unsigned char *)ns)
-										  == 0))
-				return cur;
+			if(!ns || (cur->ns &&
+				xmlStrcasecmp(cur->ns->prefix, (unsigned char *)ns) == 0))
+			return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
 		if(match)

@@ -124,10 +124,6 @@ static int mod_init(void)
 /* Child initialization function */
 static int child_init(int rank)
 {
-	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN) {
-		return 0; /* do nothing for the main process */
-	}
-
 	return 0;
 }
 
@@ -152,7 +148,7 @@ static int fixup_lost_held_query(void **param, int param_no)
 			return -1;
 		}
 		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
+			LM_ERR("result pvar is not writable\n");
 			return -1;
 		}
 		return 0;
@@ -195,7 +191,7 @@ static int fixup_lost_held_query_id(void **param, int param_no)
 			return -1;
 		}
 		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
+			LM_ERR("result pvar is not writable\n");
 			return -1;
 		}
 		return 0;
@@ -237,7 +233,7 @@ static int fixup_lost_query(void **param, int param_no)
 			return -1;
 		}
 		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
+			LM_ERR("result pvar is not writable\n");
 			return -1;
 		}
 		return 0;
@@ -279,7 +275,7 @@ static int fixup_lost_query_all(void **param, int param_no)
 			return -1;
 		}
 		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
+			LM_ERR("result pvar is not writable\n");
 			return -1;
 		}
 		return 0;

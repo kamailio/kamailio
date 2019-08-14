@@ -40,6 +40,8 @@
 #define BUFSIZE 128	/* temporary buffer to hold geolocation */
 #define RANDSTRSIZE 16 /* temporary id in a findService request */
 
+#define LOSTFREE(x) pkg_free(x); x = NULL;
+
 typedef struct
 {
 	char *identity;
@@ -54,6 +56,7 @@ typedef struct
 
 void lost_rand_str(char *, size_t);
 void lost_free_loc(p_loc_t);
+void lost_free_string(str *);
 
 int lost_get_location_object(p_loc_t, xmlDocPtr, xmlNodePtr);
 int lost_parse_location_info(xmlNodePtr node, p_loc_t loc);
