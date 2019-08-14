@@ -21,15 +21,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-08-15  initial version (anca)
  */
 
 /*! \file
  * \brief Kamailio Presence_XML :: PIDF handling
  * \ref pidf.c
- * \ingroup presence_xml
+ * \ingroup lost
  */
 
 

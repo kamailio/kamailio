@@ -106,29 +106,40 @@ void lost_free_loc(p_loc_t ptr)
 	pkg_free(ptr);
 }
 
+void lost_free_string(str *string)
+{
+	str ptr = *string;
+
+	if(ptr.s) {
+		pkg_free(ptr.s);
+		ptr.s = NULL;
+		ptr.len = 0;
+	}
+}
+
 /*
  * lost_new_loc(urn)
  * creates a new location object in private memory and returns a pointer
  */
 p_loc_t lost_new_loc(str rurn)
 {
-	s_loc_t *ptr;
-	char *id;
-	char *urn;
+	s_loc_t *ptr = NULL;;
+	char *id = NULL;
+	char *urn = NULL;
 
 	ptr = (s_loc_t *)pkg_malloc(sizeof(s_loc_t));
 	if(ptr == NULL) {
-		LM_ERR("no more private memory\n");
+		goto err;
 	}
 
 	id = (char *)pkg_malloc(RANDSTRSIZE * sizeof(char) + 1);
 	if(id == NULL) {
-		LM_ERR("no more private memory\n");
+		goto err;
 	}
 
 	urn = (char *)pkg_malloc(rurn.len + 1);
 	if(urn == NULL) {
-		LM_ERR("no more private memory\n");
+		goto err;
 	}
 
 	memset(urn, 0, rurn.len + 1);
@@ -145,6 +156,10 @@ p_loc_t lost_new_loc(str rurn)
 	ptr->recursive = 0;
 
 	return ptr;
+
+err:	
+	LM_ERR("no more private memory\n");
+	return NULL;
 }
 
 /*
@@ -156,7 +171,6 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 	xmlNodePtr cur = node;
 	char *content;
 	char *cnt = NULL;
-
 	int len;
 
 	*lgth = 0;
@@ -166,6 +180,7 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 	if(cnt == NULL) {
 		LM_ERR("No more private memory\n");
+		return cnt;
 	}
 
 	memset(cnt, 0, len + 1);
@@ -188,7 +203,6 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 	xmlNodePtr cur = node;
 	char *content;
 	char *cnt = NULL;
-
 	int len;
 
 	*lgth = 0;
@@ -198,6 +212,7 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 	if(cnt == NULL) {
 		LM_ERR("No more private memory\n");
+		return cnt;
 	}
 
 	memset(cnt, 0, len + 1);
@@ -220,21 +235,19 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 	xmlNodePtr cur = node;
 	xmlNodePtr parent = NULL;
 	xmlNodePtr child = NULL;
-
 	char *cnt = NULL;
 	int len;
 
 	*lgth = 0;
-
 	parent = xmlNodeGetNodeByName(cur, name, NULL);
 	child = parent->children;
 
 	if(child) {
 		len = strlen((char *)child->name);
-
 		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 		if(cnt == NULL) {
 			LM_ERR("no more private memory\n");
+			return cnt;
 		}
 
 		memset(cnt, 0, len + 1);
@@ -271,6 +284,7 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
 				if(res == NULL) {
 					LM_ERR("no more private memory\n");
+					return res;
 				} else {
 					memset(res, 0, hf->body.len + 1);
 					memcpy(res, hf->body.s, hf->body.len + 1);
@@ -311,6 +325,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
 				if(res == NULL) {
 					LM_ERR("no more private memory\n");
+					return res;
 				} else {
 
 					memset(res, 0, hf->body.len + 1);
@@ -351,6 +366,7 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 	res = (char *)pkg_malloc((f_body->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
 		LM_ERR("no more private memory\n");
+		return res;
 	} else {
 		memset(res, 0, f_body->uri.len + 1);
 		memcpy(res, f_body->uri.s, f_body->uri.len + 1);
@@ -360,7 +376,6 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 	}
 	return res;
 }
-
 
 /*
  * lost_parse_location_info(node, loc)
@@ -442,8 +457,16 @@ https://tools.ietf.org/html/rfc6155
 
 	/* create request */
 	request = xmlNewDoc(BAD_CAST "1.0");
+	if(!request) {
+		LM_ERR("locationRequest xmlNewDoc() failed\n");
+		return doc;
+	}
 	/* locationRequest - element */
 	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST "locationRequest");
+	if(!ptrLocationRequest) {
+		LM_ERR("locationRequest xmlNewNode() failed\n");
+		return doc;
+	}
 	xmlDocSetRootElement(request, ptrLocationRequest);
 	/* properties */
 	xmlNewProp(ptrLocationRequest, BAD_CAST "xmlns",
@@ -456,6 +479,10 @@ https://tools.ietf.org/html/rfc6155
 	xmlNewProp(ptrLocationType, BAD_CAST "exact", BAD_CAST "false");
 	/* device - element */
 	ptrDevice = xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "device", NULL);
+	if(!ptrDevice) {
+		LM_ERR("locationRequest xmlNewChild() failed\n");
+		return doc;
+	}
 	/* properties */
 	xmlNewProp(ptrDevice, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held:id");
@@ -464,10 +491,15 @@ https://tools.ietf.org/html/rfc6155
 	xmlNewChild(ptrDevice, NULL, BAD_CAST "uri", BAD_CAST buf);
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
+	if(!xmlbuff) {
+		LM_ERR("locationRequest xmlDocDumpFormatMemory() failed\n");
+		return doc;
+	}
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
 		LM_ERR("no more private memory\n");
+		return doc;
 	}
 
 	memset(doc, 0, buffersize + 1);
@@ -524,8 +556,16 @@ https://tools.ietf.org/html/rfc5222
  */
 	/* create request */
 	request = xmlNewDoc(BAD_CAST "1.0");
+	if(!request) {
+		LM_ERR("findService request xmlNewDoc() failed\n");
+		return doc;
+	}
 	/* findService - element */
 	ptrFindService = xmlNewNode(NULL, BAD_CAST "findService");
+	if(!ptrFindService) {
+		LM_ERR("findService xmlNewNode() failed\n");
+		return doc;
+	}
 	xmlDocSetRootElement(request, ptrFindService);
 	/* set properties */
 	xmlNewProp(ptrFindService, BAD_CAST "xmlns",
@@ -544,6 +584,10 @@ https://tools.ietf.org/html/rfc5222
 	/* Point */
 	if(loc->radius == 0) {
 		ptrPoint = xmlNewChild(ptrLocation, NULL, BAD_CAST "Point", NULL);
+		if(!ptrPoint) {
+			LM_ERR("locationRequest xmlNewChild() failed\n");
+			return doc;
+		}
 		xmlNewProp(ptrPoint, BAD_CAST "xmlns",
 				BAD_CAST "http://www.opengis.net/gml");
 		xmlNewProp(ptrPoint, BAD_CAST "srsName",
@@ -553,6 +597,10 @@ https://tools.ietf.org/html/rfc5222
 	} else {
 		/* circle - Point */
 		ptrCircle = xmlNewChild(ptrLocation, NULL, BAD_CAST "gs:Circle", NULL);
+		if(!ptrCircle) {
+			LM_ERR("locationRequest xmlNewChild() failed\n");
+			return doc;
+		}
 		xmlNewProp(ptrCircle, BAD_CAST "xmlns:gml",
 				BAD_CAST "http://www.opengis.net/gml");
 		xmlNewProp(ptrCircle, BAD_CAST "xmlns:gs",
@@ -565,6 +613,10 @@ https://tools.ietf.org/html/rfc5222
 		snprintf(buf, BUFSIZE, "%d", loc->radius);
 		ptrRadius = xmlNewChild(
 				ptrCircle, NULL, BAD_CAST "gs:radius", BAD_CAST buf);
+		if(!ptrRadius) {
+			LM_ERR("locationRequest xmlNewChild() failed\n");
+			return doc;
+		}
 		xmlNewProp(ptrRadius, BAD_CAST "uom",
 				BAD_CAST "urn:ogc:def:uom:EPSG::9001");
 	}
@@ -573,10 +625,15 @@ https://tools.ietf.org/html/rfc5222
 	xmlNewChild(ptrFindService, NULL, BAD_CAST "service", BAD_CAST buf);
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
+	if(!xmlbuff) {
+		LM_ERR("findService request xmlDocDumpFormatMemory() failed\n");
+		return doc;
+	}
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
 		LM_ERR("no more private memory\n");
+		return doc;
 	}
 
 	memset(doc, 0, buffersize + 1);
