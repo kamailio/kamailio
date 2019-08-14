@@ -95,7 +95,7 @@ void lost_rand_str(char *dest, size_t lgth)
 
 /*
  * lost_free_loc(ptr)
- * freess a location object
+ * frees a location object
  */
 void lost_free_loc(p_loc_t ptr)
 {
@@ -106,6 +106,10 @@ void lost_free_loc(p_loc_t ptr)
 	pkg_free(ptr);
 }
 
+/*
+ * lost_free_string(ptr)
+ * frees and resets a string
+ */
 void lost_free_string(str *string)
 {
 	str ptr = *string;
