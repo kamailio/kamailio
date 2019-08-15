@@ -37,6 +37,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/receive.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
@@ -170,6 +171,9 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	}
 	set_route_type(backup_rt);
 	evapi_set_msg_env(fmsg, NULL);
+	/* free the structure -- it is a clone of faked msg */
+	free_sip_msg(fmsg);
+	ksr_msg_env_reset();
 	return 0;
 }
 
