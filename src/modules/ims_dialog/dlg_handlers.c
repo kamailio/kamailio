@@ -976,7 +976,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
                     dlg->from_tag.len, dlg->from_tag.s);
 
         } else if (ret > 0) {
-            LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+            LM_WARN("inconsistent dlg timer data on dlg %p [%u:%u] "
                     "with clid '%.*s' and tags '%.*s' \n",
                     dlg, dlg->h_entry, dlg->h_id,
                     dlg->callid.len, dlg->callid.s,
@@ -1015,7 +1015,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
                     dlg->from_tag.len, dlg->from_tag.s);
 
         } else if (ret > 0) {
-            LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+            LM_WARN("inconsistent dlg timer data on dlg %p [%u:%u] "
                     "with clid '%.*s' and tags '%.*s' \n",
                     dlg, dlg->h_entry, dlg->h_id,
                     dlg->callid.len, dlg->callid.s,
@@ -1051,7 +1051,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
                     dlg->from_tag.len, dlg->from_tag.s);
 
         } else if (ret > 0) {
-            LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+            LM_WARN("inconsistent dlg timer data on dlg %p [%u:%u] "
                     "with clid '%.*s' and tags '%.*s' \n",
                     dlg, dlg->h_entry, dlg->h_id,
                     dlg->callid.len, dlg->callid.s,
