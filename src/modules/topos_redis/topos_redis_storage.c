@@ -727,6 +727,7 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	memset(argv, 0, TPS_REDIS_NR_KEYS * sizeof(char*));
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
+	memset(&id, 0, sizeof(tps_data_t));
 
 	if(mode==0) {
 		/* load same transaction using Via branch */
@@ -737,7 +738,6 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 			LM_ERR("failed to load the INVITE branch value\n");
 			return -1;
 		}
-		memset(&id, 0, sizeof(tps_data_t));
 		xvbranch1 = &id.x_vbranch1;
 	}
 	if(xvbranch1->len<=0 || xvbranch1->s==NULL) {
