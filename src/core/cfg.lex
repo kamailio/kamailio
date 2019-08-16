@@ -375,6 +375,7 @@ MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
 TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
+TCP_ACCEPT_UNIQUE	"tcp_accept_unique"
 TCP_SEND_TIMEOUT	"tcp_send_timeout"
 TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 TCP_CON_LIFETIME	"tcp_connection_lifetime"
@@ -814,6 +815,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{TCP_ACCEPT_ALIASES}	{ count(); yylval.strval=yytext;
 									return TCP_ACCEPT_ALIASES; }
+<INITIAL>{TCP_ACCEPT_UNIQUE}	{ count(); yylval.strval=yytext;
+									return TCP_ACCEPT_UNIQUE; }
 <INITIAL>{TCP_SEND_TIMEOUT}		{ count(); yylval.strval=yytext;
 									return TCP_SEND_TIMEOUT; }
 <INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;

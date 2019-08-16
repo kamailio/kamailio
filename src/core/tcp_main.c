@@ -158,6 +158,7 @@ enum poll_types tcp_poll_method=0; /* by default choose the best method */
 int tcp_main_max_fd_no=0;
 int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections=DEFAULT_TLS_MAX_CONNECTIONS;
+int tcp_accept_unique=0;
 
 static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
 static union sockaddr_union* tcp_source_ipv4=0;
@@ -1655,6 +1656,24 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 }
 
 
+/**
+ * find if a tcp connection exits by id or remote+local address/port
+ * - return: 1 if found; 0 if not found
+ */
+int tcpconn_exists(int conn_id, ip_addr_t* peer_ip, int peer_port,
+						ip_addr_t* local_ip, int local_port)
+{
+	tcp_connection_t* c;
+
+	TCPCONN_LOCK;
+	c=_tcpconn_find(conn_id, peer_ip, peer_port, local_ip, local_port);
+	TCPCONN_UNLOCK;
+	if (c) {
+		return 1;
+	}
+	return 0;
+
+}
 
 /* _tcpconn_find with locks and timeout
  * local_addr contains the desired local ip:port. If null any local address 
@@ -4245,6 +4264,15 @@ static inline int handle_new_connect(struct socket_info* si)
 	/* add socket to list */
 	tcpconn=tcpconn_new(new_sock, &su, dst_su, si, si->proto, S_CONN_ACCEPT);
 	if (likely(tcpconn)){
+		if(tcp_accept_unique) {
+			if(tcpconn_exists(0, &tcpconn->rcv.dst_ip, tcpconn->rcv.dst_port,
+						&tcpconn->rcv.src_ip, tcpconn->rcv.src_port)) {
+				LM_ERR("duplicated connection by local and remote addresses\n");
+				_tcpconn_free(tcpconn);
+				tcp_safe_close(new_sock);
+				return 1; /* success, because the accept was succesfull */
+			}
+		}
 		tcpconn->flags|=F_CONN_PASSIVE;
 #ifdef TCP_PASS_NEW_CONNECTION_ON_DATA
 		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
