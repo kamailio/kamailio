@@ -227,6 +227,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	sr_xavp_t *xavp=NULL;
 	sip_uri_t path_uri;
 	str path_str;
+	branch_t *nbranch;
 
 	ret = -1;
 
@@ -419,6 +420,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		}
 
 		_m->reg_id = ptr->reg_id;
+		_m->otcpid = ptr->tcpconn_id;
 
 		if (ptr->ruid.len) {
 			if (set_ruid(_m, &(ptr->ruid)) < 0) {
@@ -507,18 +509,19 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 			 * regarding path vs. received. */
 			LM_DBG("instance is %.*s\n",
 				ptr->instance.len, ptr->instance.s);
-			if (append_branch(_m, &ptr->c,
+			nbranch = ksr_push_branch(_m, &ptr->c,
 					path_dst.len?&path_dst:&ptr->received,
 					path_dst.len?&path_str:0, ptr->q, ptr->cflags,
 					ptr->sock,
 					ptr->instance.len?&(ptr->instance):0,
 						ptr->instance.len?ptr->reg_id:0,
-						&ptr->ruid, &ptr->user_agent)
-					== -1) {
+						&ptr->ruid, &ptr->user_agent);
+			if (nbranch==NULL) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
 			}
+			nbranch->otcpid = ptr->tcpconn_id;
 			if(ptr->xavp!=NULL) {
 				xavp = xavp_clone_level_nodata(ptr->xavp);
 				if(xavp != NULL) {
