@@ -328,7 +328,7 @@ void clear_branches(void)
 
 
 
-/**  Add a new branch to the current transaction.
+/**  Add a new branch to the current destination set.
  * @param msg sip message, used for getting the uri if not specified (0).
  * @param uri uri, can be 0 (in which case the uri is taken from msg)
  * @param dst_uri destination uri, can be 0.
@@ -352,7 +352,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	str luri;
 
 	/* if we have already set up the maximum number
-	 * of branches, don't try new ones 
+	 * of branches, don't try new ones
 	 */
 	if (unlikely(nr_branches == sr_dst_max_branches - 1)) {
 		LM_ERR("max nr of branches exceeded\n");
@@ -466,11 +466,39 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		branches[nr_branches].location_ua[0] = '\0';
 		branches[nr_branches].location_ua_len = 0;
 	}
-	
+
 	nr_branches++;
 	return 1;
 }
 
+
+/**  Push a new branch to the current destination set.
+ * @param msg sip message, used for getting the uri if not specified (0).
+ * @param uri uri, can be 0 (in which case the uri is taken from msg)
+ * @param dst_uri destination uri, can be 0.
+ * @param path path vector (passed in a string), can be 0.
+ * @param q  q value.
+ * @param flags per branch flags.
+ * @param force_socket socket that should be used when sending.
+ * @param instance sip instance contact header param value
+ * @param reg_id reg-id contact header param value
+ * @param ruid ruid value from usrloc
+ * @param location_ua location user agent
+ *
+ * @return NULL on failure, new branch pointer on success.
+ */
+branch_t* ksr_push_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+		  qvalue_t q, unsigned int flags,
+		  struct socket_info* force_socket,
+		  str* instance, unsigned int reg_id,
+		  str* ruid, str* location_ua)
+{
+	if(append_branch(msg, uri, dst_uri, path, q, flags, force_socket,
+				instance, reg_id, ruid, location_ua)<0) {
+		return NULL;
+	}
+	return &branches[nr_branches-1];
+}
 
 /*! \brief
  * Combines the given elements into a Contact header field

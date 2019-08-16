@@ -94,7 +94,16 @@ branch_t *get_sip_branch(int idx);
 int drop_sip_branch(int idx);
 
 /*! \brief
- * Add a new branch to current transaction 
+ * Push a new branch to current destination set
+ */
+branch_t *ksr_push_branch(sip_msg_t* msg, str* uri, str* dst_uri, str* path,
+		  qvalue_t q, unsigned int flags,
+		  struct socket_info* force_socket,
+		  str* instance, unsigned int reg_id,
+		  str* ruid, str* location_ua);
+
+/*! \brief
+ * Add a new branch to current destination set
  */
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		  qvalue_t q, unsigned int flags,
