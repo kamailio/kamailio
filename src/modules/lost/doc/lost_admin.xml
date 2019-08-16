@@ -239,7 +239,7 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
     <section id="lost.s.counters">
 	    <title>Counters</title>
         <para>
-            This module has no specific counters but uses http_client therfore
+            This module has no specific counters but uses http_client therefore
             according counters may apply.
         </para>
 	</section>
