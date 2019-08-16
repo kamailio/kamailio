@@ -151,8 +151,10 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	if((rt<0) && (_evapi_event_callback.s==NULL || _evapi_event_callback.len<=0))
 		return 0;
 
-	fmsg = faked_msg_next();
-	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
+	if(faked_msg_get_new(&tmsg)<0) {
+		LM_ERR("failed to get a new faked message\n");
+		return -1;
+	}
 	fmsg = &tmsg;
 	evapi_set_msg_env(fmsg, evenv);
 	backup_rt = get_route_type();
