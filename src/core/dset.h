@@ -48,7 +48,7 @@ struct branch
     char uri[MAX_URI_SIZE];
     unsigned int len;
 
-         /* Real destination of the request */
+    /* Real destination of the request */
     char dst_uri[MAX_URI_SIZE];
     unsigned int dst_uri_len;
 
@@ -73,6 +73,9 @@ struct branch
 
     char location_ua[MAX_UA_SIZE + 1];
     unsigned int location_ua_len;
+
+	/* tcp connection id */
+	int otcpid;
 
     /* Branch flags */
     flag_t flags;

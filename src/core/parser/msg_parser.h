@@ -378,6 +378,7 @@ typedef struct sip_msg {
 	unsigned int reg_id;
 	str ruid;
 	str location_ua;
+	int otcpid; /*!< outbound tcp connection id, if known */
 
 	/* structure with fields that are needed for local processing
 	 * - not cloned to shm, reset to 0 in the clone */
