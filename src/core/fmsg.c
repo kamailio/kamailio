@@ -127,6 +127,7 @@ sip_msg_t* faked_msg_get_next_clear(void)
 
 int faked_msg_get_new(sip_msg_t *fmsg)
 {
+	clear_branches();
 	if(faked_msg_init_new(fmsg)<0) {
 		return -1;
 	}
