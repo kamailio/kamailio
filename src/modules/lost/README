@@ -1,4 +1,3 @@
-
 LOST Module
 
 Wolfgang Kampichler
@@ -219,7 +218,7 @@ var(uri)\n");
 
 5. Counters
 
-   This module has no specific counters but uses http_client therfore
+   This module has no specific counters but uses http_client therefore
    according counters may apply.
 
 6. Remarks
