@@ -314,6 +314,10 @@ char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
 	return ret;
 }
 
+/**
+ * Link branch attributes in the data structure
+ * - return: -1 (<0) on error; 0 - on no valid branch; 1 - on a valid branch
+ */
 int get_branch_data(unsigned int i, branch_data_t *vbranch)
 {
 	if(vbranch==NULL) {
@@ -348,18 +352,23 @@ int get_branch_data(unsigned int i, branch_data_t *vbranch)
 			vbranch->location_ua.s = branches[i].location_ua;
 		}
 		vbranch->otcpid = branches[i].otcpid;
+		return 1;
 	} else {
 		vbranch->q = Q_UNSPECIFIED;
+		return 0;
 	}
-
-	return 0;
 }
 
+/**
+ * Link branch attributes in the data structure and advance the iterator on
+ * return of a valid branch
+ * - return: -1 (<0) on error; 0 - on no valid branch; 1 - on a valid branch
+ */
 int next_branch_data(branch_data_t *vbranch)
 {
 	int ret;
 	ret= get_branch_data(branch_iterator, vbranch);
-	if (ret < 0) {
+	if (ret <= 0) {
 		return ret;
 	}
 	branch_iterator++;
