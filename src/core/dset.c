@@ -232,9 +232,9 @@ void set_branch_iterator(int n)
  * more branches
  */
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-		 str* path, unsigned int *flags,
-		 struct socket_info** force_socket,
-		 str *ruid, str *instance, str *location_ua)
+		str* path, unsigned int *flags,
+		struct socket_info** force_socket,
+		str *ruid, str *instance, str *location_ua)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -302,18 +302,69 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  * 0 is returned if there are no more branches
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-		  unsigned int* flags, struct socket_info** force_socket,
-		  str* ruid, str *instance, str *location_ua)
+		unsigned int* flags, struct socket_info** force_socket,
+		str* ruid, str *instance, str *location_ua)
 {
 	char* ret;
-	
+
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-		       force_socket, ruid, instance, location_ua);
+			force_socket, ruid, instance, location_ua);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
 }
 
+int get_branch_data(unsigned int i, branch_data_t *vbranch)
+{
+	if(vbranch==NULL) {
+		return -1;
+	}
+	memset(vbranch, 0, sizeof(branch_data_t));
+
+	if (i < nr_branches) {
+		vbranch->uri.s = branches[i].uri;
+		vbranch->uri.len = branches[i].len;
+		vbranch->q = branches[i].q;
+		if (branches[i].dst_uri_len > 0) {
+			vbranch->dst_uri.len = branches[i].dst_uri_len;
+			vbranch->dst_uri.s = branches[i].dst_uri;
+		}
+		if (branches[i].path_len > 0) {
+			vbranch->path.len = branches[i].path_len;
+			vbranch->path.s = branches[i].path;
+		}
+		vbranch->force_socket = branches[i].force_send_socket;
+		vbranch->flags = branches[i].flags;
+		if (branches[i].ruid_len > 0) {
+			vbranch->ruid.len = branches[i].ruid_len;
+			vbranch->ruid.s = branches[i].ruid;
+		}
+		if (branches[i].instance_len > 0) {
+			vbranch->instance.len = branches[i].instance_len;
+			vbranch->instance.s =branches[i].instance;
+		}
+		if (branches[i].location_ua_len > 0) {
+			vbranch->location_ua.len = branches[i].location_ua_len;
+			vbranch->location_ua.s = branches[i].location_ua;
+		}
+		vbranch->otcpid = branches[i].otcpid;
+	} else {
+		vbranch->q = Q_UNSPECIFIED;
+	}
+
+	return 0;
+}
+
+int next_branch_data(branch_data_t *vbranch)
+{
+	int ret;
+	ret= get_branch_data(branch_iterator, vbranch);
+	if (ret < 0) {
+		return ret;
+	}
+	branch_iterator++;
+	return ret;
+}
 
 /*
  * Empty the dset array

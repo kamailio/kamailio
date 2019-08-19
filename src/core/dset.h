@@ -43,7 +43,7 @@ extern int ruri_is_new;
 /*! \brief
  * Structure for storing branch attributes
  */
-struct branch
+typedef struct branch
 {
     char uri[MAX_URI_SIZE];
     unsigned int len;
@@ -79,9 +79,20 @@ struct branch
 
     /* Branch flags */
     flag_t flags;
-};
+} branch_t;
 
-typedef struct branch branch_t;
+typedef struct branch_data {
+	str uri;
+	str dst_uri;
+	qvalue_t q;
+	str path;
+	unsigned int flags;
+	socket_info_t* force_socket;
+	str ruid;
+	str instance;
+	str location_ua;
+	int otcpid;
+} branch_data_t;
 
 /*! \brief
  * Return pointer to branch[idx] structure
@@ -162,6 +173,9 @@ char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		  str* path, unsigned int *flags,
 		  struct socket_info** force_socket,
 		  str* ruid, str *instance, str *location_ua);
+
+int get_branch_data(unsigned int i, branch_data_t *vbranch);
+int next_branch_data(branch_data_t *vbranch);
 
 /*! \brief
  * Empty the array of branches
