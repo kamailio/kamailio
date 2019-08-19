@@ -1622,7 +1622,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 	int is_local_ip_any;
 	
 #ifdef EXTRA_DEBUG
-	LM_DBG("%d  port %d\n",id, port);
+	LM_DBG("%d  port %d\n", id, port);
 	if (ip) print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
 	if (likely(id)){
@@ -1632,7 +1632,10 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 			LM_DBG("c=%p, c->id=%d, port=%d\n", c, c->id, c->rcv.src_port);
 			print_ip("ip=", &c->rcv.src_ip, "\n");
 #endif
-			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
+			if ((id==c->id)&&(c->state!=S_CONN_BAD)) {
+				LM_DBG("found connection by id: %d\n", id);
+				return c;
+			}
 		}
 	}else if (likely(ip)){
 		hash=tcp_addr_hash(ip, port, l_ip, l_port);
@@ -1648,8 +1651,11 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) &&
 					(is_local_ip_any ||
 						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip))
-				)
+			   ) {
+				LM_DBG("found connection by peer address (id: %d)\n",
+						a->parent->id);
 				return a->parent;
+			}
 		}
 	}
 	return 0;
