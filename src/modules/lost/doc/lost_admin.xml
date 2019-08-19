@@ -255,11 +255,13 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
             https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6</ulink>
         </para>
         <para>
-            Note: http_client_query exported by the http_client API returns the first line of
+            Note: http_client_query exported by the http_client API returns by default the first line of
             the HTTP response (query_params.oneline = 1), but the lost module requires the complete
             response message, which requires query_params.oneline set to 0. In the case lost_query
             is used with the default http_client API, dereferencing location via HTTP provided with
-            the Geolocation header causes an error.
+			the Geolocation header causes an error. Therefore, to work properlu=y, it requires to set
+			<ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result">
+			http_client module parameter query_result to 0</ulink>.
         </para>
     </section>
 </chapter>
