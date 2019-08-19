@@ -230,9 +230,11 @@ var(uri)\n");
    https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
    -centos6
 
-   Note: http_client_query exported by the http_client API returns the
-   first line of the HTTP response (query_params.oneline = 1), but the
-   lost module requires the complete response message, which requires
-   query_params.oneline set to 0. In the case lost_query is used with the
-   default http_client API, dereferencing location via HTTP provided with
-   the Geolocation header causes an error.
+   Note: http_client_query exported by the http_client API returns by
+   default the first line of the HTTP response (query_params.oneline = 1),
+   but the lost module requires the complete response message, which
+   requires query_params.oneline set to 0. In the case lost_query is used
+   with the default http_client API, dereferencing location via HTTP
+   provided with the Geolocation header causes an error. Therefore, to
+   work properlu=y, it requires to set http_client module parameter
+   query_result to 0.
