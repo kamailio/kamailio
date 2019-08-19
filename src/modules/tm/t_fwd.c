@@ -1596,22 +1596,15 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		struct proxy_l * proxy, int proto)
 {
 	int branch_ret, lowest_ret;
-	str current_uri;
 	branch_bm_t	added_branches;
 	int first_branch;
-	int i, q;
+	int i;
 	struct cell *t_invite;
 	int success_branch;
 	int try_new;
 	int lock_replies;
-	str dst_uri, path, instance, ruid, location_ua;
-	struct socket_info* si;
 	flag_t backup_bflags = 0;
-	flag_t bflags = 0;
-
-
-	/* make -Wall happy */
-	current_uri.s=0;
+	branch_data_t obranch;
 
 	getbflagsval(0, &backup_bflags);
 
@@ -1667,40 +1660,46 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	 */
 	if (ruri_get_forking_state()) {
 		try_new=1;
-		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
+		branch_ret=add_uac(t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
 				&p_msg->path_vec, proxy, p_msg->force_send_socket,
 				p_msg->fwd_send_flags, proto,
 				(p_msg->dst_uri.len)?0:UAC_SKIP_BR_DST_F, &p_msg->instance,
 				&p_msg->ruid, &p_msg->location_ua);
 		/* test if cancel was received meanwhile */
 		if (t->flags & T_CANCELED) goto canceled;
-		if (branch_ret>=0)
+		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-		else
+			t->uac[branch_ret].request.dst.id = p_msg->otcpid;
+		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
-	} else try_new=0;
+		}
+	} else {
+		try_new=0;
+	}
 
+	memset(&obranch, 0, sizeof(branch_data_t));
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
-					&bflags, &si, &ruid, &instance, &location_ua))) {
+	while(next_branch_data(&obranch)==1) {
 		try_new++;
-		setbflagsval(0, bflags);
+		setbflagsval(0, obranch.flags);
 
-		branch_ret=add_uac( t, p_msg, &current_uri,
-				(dst_uri.len) ? (&dst_uri) : &current_uri,
-				&path, proxy, si, p_msg->fwd_send_flags,
-				proto, (dst_uri.len)?0:UAC_SKIP_BR_DST_F, &instance,
-				&ruid, &location_ua);
+		branch_ret=add_uac(t, p_msg, &obranch.uri,
+				(obranch.dst_uri.len>0) ? &obranch.dst_uri : &obranch.uri,
+				&obranch.path, proxy, obranch.force_socket, p_msg->fwd_send_flags,
+				proto, (obranch.dst_uri.len>0)?0:UAC_SKIP_BR_DST_F,
+				&obranch.instance, &obranch.ruid, &obranch.location_ua);
 		/* test if cancel was received meanwhile */
 		if (t->flags & T_CANCELED) goto canceled;
 		/* pick some of the errors in case things go wrong;
 		 * note that picking lowest error is just as good as
 		 * any other algorithm which picks any other negative
 		 * branch result */
-		if (branch_ret>=0)
+		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-		else
+			t->uac[branch_ret].request.dst.id = obranch.otcpid;
+		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
+		}
 	}
 	/* consume processed branches */
 	clear_branches();
