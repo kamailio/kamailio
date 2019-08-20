@@ -296,6 +296,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 												dst->proto, 0);
 			if (dst->send_sock){
 				dst->to=to;
+				dst->send_flags.f |= SND_F_FORCE_SOCKET;
 				return dst; /* found a good one */
 			}
 		}while(dns_srv_handle_next(dns_h, err));
@@ -317,6 +318,8 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 			proto2a(dst->proto), su2a(&dst->to, sizeof(dst->to)));
 		/* ser_error = E_NO_SOCKET;*/
 		/* try to continue */
+	} else {
+		dst->send_flags.f |= SND_F_FORCE_SOCKET;
 	}
 	return dst;
 }
