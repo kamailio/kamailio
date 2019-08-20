@@ -1207,6 +1207,42 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s[val->rs.len] = '\0';
 			break;
 
+		case TR_S_COUNT:
+			if(tp==NULL)
+			{
+				LM_ERR("invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			}
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("cannot get parameter value (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				st = v.rs;
+			}
+			LM_DBG("counting [%.*s](%d) in [%.*s](%d)\n",
+					st.len, st.s, st.len, val->rs.len, val->rs.s, val->rs.len);
+			j = 0;
+			for(i=0; i<val->rs.len; i++) {
+				if(val->rs.s[i]==st.s[0]) {
+					j++;
+				}
+			}
+			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
+			val->ri = j;
+			val->rs.s = int2str(j, &val->rs.len);
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d (cfg line: %d)\n",
 					subtype, get_cfg_crt_line());
@@ -2574,6 +2610,26 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==9 && strncasecmp(name.s, "unbracket", 9)==0) {
 		t->subtype = TR_S_UNBRACKET;
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "count", 5)==0) {
+		t->subtype = TR_S_COUNT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid count transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid count transformation: %.*s!!\n",
+					in->len, in->s);
+			goto error;
+		}
 		goto done;
 	}
 
