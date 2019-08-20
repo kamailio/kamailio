@@ -94,6 +94,7 @@ extern int socket_workers;
 extern int tcp_main_pid;
 extern int tcp_cfg_children_no;
 extern int tcp_accept_unique;
+extern int tcp_connection_match;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern enum poll_types tcp_poll_method;

@@ -379,6 +379,7 @@ TCP_ACCEPT_UNIQUE	"tcp_accept_unique"
 TCP_SEND_TIMEOUT	"tcp_send_timeout"
 TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 TCP_CON_LIFETIME	"tcp_connection_lifetime"
+TCP_CONNECTION_MATCH	"tcp_connection_match"
 TCP_POLL_METHOD		"tcp_poll_method"
 TCP_MAX_CONNECTIONS	"tcp_max_connections"
 TLS_MAX_CONNECTIONS	"tls_max_connections"
@@ -817,6 +818,8 @@ IMPORTFILE      "import_file"
 									return TCP_ACCEPT_ALIASES; }
 <INITIAL>{TCP_ACCEPT_UNIQUE}	{ count(); yylval.strval=yytext;
 									return TCP_ACCEPT_UNIQUE; }
+<INITIAL>{TCP_CONNECTION_MATCH}	{ count(); yylval.strval=yytext;
+									return TCP_CONNECTION_MATCH; }
 <INITIAL>{TCP_SEND_TIMEOUT}		{ count(); yylval.strval=yytext;
 									return TCP_SEND_TIMEOUT; }
 <INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;

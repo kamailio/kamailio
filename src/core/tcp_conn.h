@@ -39,6 +39,8 @@
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 
+#define TCPCONN_MATCH_DEFAULT 0
+#define TCPCONN_MATCH_STRICT 1
 
 /* tcp connection flags */
 #define F_CONN_READ_W       2 /* watched for READ ev. in main */
@@ -326,8 +328,10 @@ static inline unsigned tcp_addr_hash(	struct ip_addr* ip,
 #define tcp_id_hash(id) (id&(TCP_ID_HASH_SIZE-1))
 
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
-									union sockaddr_union* local_addr,
-									ticks_t timeout);
+		union sockaddr_union* local_addr, ticks_t timeout);
+
+struct tcp_connection* tcpconn_lookup(int id, struct ip_addr* ip, int port,
+		union sockaddr_union* local_addr, int try_local_port, ticks_t timeout);
 
 typedef struct tcp_event_info {
 	int type;

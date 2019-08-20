@@ -407,6 +407,7 @@ extern char *default_routename;
 %token DISABLE_TCP
 %token TCP_ACCEPT_ALIASES
 %token TCP_ACCEPT_UNIQUE
+%token TCP_CONNECTION_MATCH
 %token TCP_CHILDREN
 %token TCP_CONNECT_TIMEOUT
 %token TCP_SEND_TIMEOUT
@@ -1003,6 +1004,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_ACCEPT_UNIQUE EQUAL error { yyerror("number expected"); }
+	| TCP_CONNECTION_MATCH EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_connection_match=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_CONNECTION_MATCH EQUAL error { yyerror("number expected"); }
 	| TCP_CHILDREN EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_cfg_children_no=$3;

@@ -160,6 +160,8 @@ int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections=DEFAULT_TLS_MAX_CONNECTIONS;
 int tcp_accept_unique=0;
 
+int tcp_connection_match=TCPCONN_MATCH_DEFAULT;
+
 static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
 static union sockaddr_union* tcp_source_ipv4=0;
 static union sockaddr_union tcp_source_ipv6_addr; /* saved bind/src v6 addr. */
@@ -1681,21 +1683,22 @@ int tcpconn_exists(int conn_id, ip_addr_t* peer_ip, int peer_port,
 
 }
 
-/* _tcpconn_find with locks and timeout
- * local_addr contains the desired local ip:port. If null any local address 
- * will be used.  IN*ADDR_ANY or 0 port are wild cards.
+/* TCP connection find with locks and timeout
+ * - local_addr contains the desired local ip:port. If null any local address
+ * will be used. IN*ADDR_ANY or 0 port are wild cards.
+ * - try_local_port makes the search use it first, instead of port from local_addr
  * If found, the connection's reference counter will be incremented, you might
  * want to decrement it after use.
  */
-struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
-									union sockaddr_union* local_addr,
-									ticks_t timeout)
+struct tcp_connection* tcpconn_lookup(int id, struct ip_addr* ip, int port,
+		union sockaddr_union* local_addr, int try_local_port, ticks_t timeout)
 {
 	struct tcp_connection* c;
 	struct ip_addr local_ip;
 	int local_port;
-	
+
 	local_port=0;
+	c = NULL;
 	if (likely(ip)){
 		if (unlikely(local_addr)){
 			su2ip_addr(&local_ip, local_addr);
@@ -1706,8 +1709,13 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 		}
 	}
 	TCPCONN_LOCK;
-	c=_tcpconn_find(id, ip, port, &local_ip, local_port);
-	if (likely(c)){ 
+	if(likely(try_local_port!=0) && likely(local_port==0)) {
+		c=_tcpconn_find(id, ip, port, &local_ip, try_local_port);
+	}
+	if(unlikely(c==NULL)) {
+		c=_tcpconn_find(id, ip, port, &local_ip, local_port);
+	}
+	if (likely(c)) {
 			atomic_inc(&c->refcnt);
 			/* update the timeout only if the connection is not handled
 			 * by a tcp reader _and_the timeout is non-zero  (the tcp
@@ -1721,6 +1729,18 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	return c;
 }
 
+/* TCP connection find with locks and timeout
+ * - local_addr contains the desired local ip:port. If null any local address
+ * will be used.  IN*ADDR_ANY or 0 port are wild cards.
+ * If found, the connection's reference counter will be incremented, you might
+ * want to decrement it after use.
+ */
+struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
+									union sockaddr_union* local_addr,
+									ticks_t timeout)
+{
+	return tcpconn_lookup(id, ip, port, local_addr, 0, timeout);
+}
 
 
 /* add c->dst:port, local_addr as an alias for the "id" connection, 
@@ -1960,6 +1980,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	long response[2];
 	int n;
 	ticks_t con_lifetime;
+	int try_local_port;
 #ifdef USE_TLS
 	const char* rest_buf;
 	const char* t_buf;
@@ -1969,10 +1990,15 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 #endif /* USE_TLS */
 
 	port=su_getport(&dst->to);
+	try_local_port = (dst && dst->send_sock)?dst->send_sock->port_no:0;
 	con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
 	if (likely(port)){
 		su2ip_addr(&ip, &dst->to);
-		c=tcpconn_get(dst->id, &ip, port, from, con_lifetime);
+		if(tcp_connection_match==TCPCONN_MATCH_STRICT) {
+			c=tcpconn_lookup(dst->id, &ip, port, from, try_local_port, con_lifetime);
+		} else {
+			c=tcpconn_get(dst->id, &ip, port, from, con_lifetime);
+		}
 	}else if (likely(dst->id)){
 		c=tcpconn_get(dst->id, 0, 0, 0, con_lifetime);
 	}else{
@@ -1984,7 +2010,11 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		if (unlikely(c==0)) {
 			if (likely(port)){
 				/* try again w/o id */
-				c=tcpconn_get(0, &ip, port, from, con_lifetime);
+				if(tcp_connection_match==TCPCONN_MATCH_STRICT) {
+					c=tcpconn_lookup(dst->id, &ip, port, from, try_local_port, con_lifetime);
+				} else {
+					c=tcpconn_get(0, &ip, port, from, con_lifetime);
+				}
 			}else{
 				LM_ERR("id %d not found, dropping\n", dst->id);
 				return -1;

@@ -185,7 +185,12 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 		port = su_getport(&dst->to);
 		if (likely(port)) {
 			su2ip_addr(&ip, &dst->to);
-			con = tcpconn_get(dst->id, &ip, port, from, 0);
+			if(tcp_connection_match==TCPCONN_MATCH_STRICT) {
+				con = tcpconn_lookup(dst->id, &ip, port, from,
+						(dst->send_sock)?dst->send_sock->port_no:0, 0);
+			} else {
+				con = tcpconn_get(dst->id, &ip, port, from, 0);
+			}
 		}
 		else if (likely(dst->id))
 			con = tcpconn_get(dst->id, 0, 0, 0, 0);
