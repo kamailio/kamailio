@@ -139,26 +139,6 @@ str reg_delay_column = str_init("reg_delay");
 
 str str_empty = str_init("");
 
-#if 0
-INSERT INTO version (table_name, table_version) values ('uacreg','1');
-CREATE TABLE uacreg (
-		id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-		l_uuid VARCHAR(64) NOT NULL,
-		l_username VARCHAR(64) NOT NULL,
-		l_domain VARCHAR(128) DEFAULT '' NOT NULL,
-		r_username VARCHAR(64) NOT NULL,
-		r_domain VARCHAR(128) NOT NULL,
-		realm VARCHAR(64) NOT NULL,
-		auth_username VARCHAR(64) NOT NULL,
-		auth_password VARCHAR(64) NOT NULL,
-		auth_proxy VARCHAR(128) DEFAULT '' NOT NULL,
-		expires INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-		flags INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-		reg_delay INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-		CONSTRAINT l_uuid_idx UNIQUE (l_uuid)
-		) ENGINE=MyISAM;
-#endif
-
 
 extern struct tm_binds uac_tmb;
 extern pv_spec_t auth_username_spec;
