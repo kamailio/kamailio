@@ -2922,6 +2922,15 @@ select_rtpp_node_old(str callid, str viabranch, int do_test, enum rtpe_operation
 	return node;
 }
 
+unsigned int node_in_set(struct rtpp_node *node, struct rtpp_set *set) {
+	struct rtpp_node *current = set->rn_first;
+	while (current) {
+		if (current->idx == node->idx) return 1;
+		current = current->rn_next;
+	}
+	return 0;
+}
+
 /*
  * Main balancing routine. This DO try to keep the same proxy for
  * the call if some proxies were disabled or enabled (e.g. kamctl command)
@@ -2950,7 +2959,7 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 	node = select_rtpp_node_old(callid, viabranch, do_test, op);
 
 	// check node
-	if (!node) {
+	if (!node || (node_in_set(node, active_rtpp_set) == 0)) {
 		// run the selection algorithm
 		node = select_rtpp_node_new(callid, viabranch, do_test, queried_nodes_ptr, queried_nodes);
 
