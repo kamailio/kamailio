@@ -13,8 +13,9 @@ CREATE TABLE `uacreg` (
     `expires` INT DEFAULT 0 NOT NULL,
     `flags` INT DEFAULT 0 NOT NULL,
     `reg_delay` INT DEFAULT 0 NOT NULL,
+    `socket` VARCHAR(128) DEFAULT '' NOT NULL,
     CONSTRAINT l_uuid_idx UNIQUE (`l_uuid`)
 );
 
-INSERT INTO version (table_name, table_version) values ('uacreg','3');
+INSERT INTO version (table_name, table_version) values ('uacreg','4');
 

@@ -13,6 +13,7 @@ CREATE TABLE uacreg (
     expires NUMBER(10) DEFAULT 0 NOT NULL,
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     reg_delay NUMBER(10) DEFAULT 0 NOT NULL,
+    socket VARCHAR2(128) DEFAULT '',
     CONSTRAINT uacreg_l_uuid_idx  UNIQUE (l_uuid)
 );
 
@@ -24,5 +25,5 @@ END uacreg_tr;
 /
 BEGIN map2users('uacreg'); END;
 /
-INSERT INTO version (table_name, table_version) values ('uacreg','3');
+INSERT INTO version (table_name, table_version) values ('uacreg','4');
 

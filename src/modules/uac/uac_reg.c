@@ -76,6 +76,7 @@ typedef struct _reg_uac
 	str   auth_username;
 	str   auth_password;
 	str   callid;
+	str   socket;
 	unsigned int cseq;
 	unsigned int flags;
 	unsigned int expires;
@@ -136,6 +137,7 @@ str auth_proxy_column = str_init("auth_proxy");
 str expires_column = str_init("expires");
 str flags_column = str_init("flags");
 str reg_delay_column = str_init("reg_delay");
+str socket_column = str_init("socket");
 
 str str_empty = str_init("");
 
@@ -526,6 +528,7 @@ int reg_ht_add(reg_uac_t *reg)
 		+ reg->auth_proxy.len + 1
 		+ reg->auth_username.len + 1
 		+ reg->auth_password.len + 1
+		+ reg->socket.len + 1
 		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
@@ -555,6 +558,7 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, 0);
 	reg_copy_shm(&nr->auth_username, &reg->auth_username, 0);
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
+	reg_copy_shm(&nr->socket, &reg->socket, 0);
 	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	reg_ht_add_byuser(nr);
@@ -1128,9 +1132,18 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 		ret = uac_tmb.t_request_within(&uac_r);
 	} else {
+		/* custom socket */
+		if(reg->socket.s != NULL && reg->socket.len > 0) {
+			LM_DBG("using custom socket %.*s to send request\n",
+				reg->socket.len, reg->socket.s);
+			uac_r.ssock = &reg->socket;
+		}
 		/* default socket */
-		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-			uac_r.ssock = &uac_default_socket;
+		else {
+			if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+				LM_DBG("using configured default_socket to send request\n");
+				uac_r.ssock = &uac_default_socket;
+			}
 		}
 		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
 				&s_ruri, /* Request-URI */
@@ -1227,6 +1240,11 @@ static inline int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db
 	reg->expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
 	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
 	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+	/* socket may be empty */
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[12])) {
+		reg->socket.s = (char*)(RES_ROWS(db_res)[i].values[12].val.string_val);
+		reg->socket.len = strlen(reg->socket.s);
+	}
 	return 0;
 }
 
@@ -1239,7 +1257,7 @@ int uac_reg_load_db(void)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
-	db_key_t db_cols[12] = {
+	db_key_t db_cols[13] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1251,7 +1269,8 @@ int uac_reg_load_db(void)
 		&auth_proxy_column,
 		&expires_column,
 		&flags_column,
-		&reg_delay_column
+		&reg_delay_column,
+		&socket_column
 	};
 	db1_res_t* db_res = NULL;
 	int i, ret;
@@ -1283,6 +1302,12 @@ int uac_reg_load_db(void)
 		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
+
+	if(db_check_table_version(&reg_dbf, reg_db_con, &reg_db_table, UACREG_TABLE_VERSION) < 0) {
+		DB_TABLE_VERSION_ERROR(reg_db_table);
+		return -1;
+	}
+
 	if (reg_dbf.use_table(reg_db_con, &reg_db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
@@ -1290,7 +1315,7 @@ int uac_reg_load_db(void)
 	}
 
 	if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
-		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 12, 0, 0) < 0)
+		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 13, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -1309,7 +1334,7 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-						0, 12, 0, &db_res))!=0
+						0, 13, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
@@ -1367,7 +1392,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_func_t reg_dbf;
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
-	db_key_t db_cols[12] = {
+	db_key_t db_cols[13] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1379,7 +1404,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 		&auth_proxy_column,
 		&expires_column,
 		&flags_column,
-		&reg_delay_column
+		&reg_delay_column,
+		&socket_column
 	};
 	db_key_t db_keys[1] = {&l_uuid_column};
 	db_val_t db_vals[1];
@@ -1426,7 +1452,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
 	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
-					1 /*nr keys*/, 12 /*nr cols*/, 0, &db_res))!=0
+					1 /*nr keys*/, 13 /*nr cols*/, 0, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 	{
 		reg_dbf.free_result(reg_db_con, db_res);
@@ -1756,7 +1782,7 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if (rpc->struct_add(th, "SSSSSSSSSdddddd",
+	if (rpc->struct_add(th, "SSSSSSSSSddddddS",
 				"l_uuid",        &reg->l_uuid,
 				"l_username",    &reg->l_username,
 				"l_domain",      &reg->l_domain,
@@ -1772,7 +1798,8 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 				"diff_expires",  (int)(reg->timer_expires - tn),
 				"timer_expires", (int)reg->timer_expires,
 				"reg_init",      (int)reg->reg_init,
-				"reg_delay",     (int)reg->reg_delay
+				"reg_delay",     (int)reg->reg_delay,
+				"socket",        &reg->socket
 				)<0) {
 		rpc->fault(ctx, 500, "Internal error adding item");
 		return -1;
@@ -2016,7 +2043,7 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
 
-	if(rpc->scan(ctx, "SSSSSSSSSddd",
+	if(rpc->scan(ctx, "SSSSSSSSSdddS",
 				&reg.l_uuid,
 				&reg.l_username,
 				&reg.l_domain,
@@ -2028,7 +2055,8 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 				&reg.auth_proxy,
 				&reg.expires,
 				&reg.flags,
-				&reg.reg_delay
+				&reg.reg_delay,
+				&reg.socket
 			)<1)
 	{
 		rpc->fault(ctx, 400, "Invalid Parameters");

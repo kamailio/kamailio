@@ -567,8 +567,12 @@ modparam("uac", "reg_gc_interval", 60)
 		<para>
 			Default socket to be used for generating registration requests and sending
 			requests with the function uac_req_send(). Useful e.g. when several public
-			interfaces are available. A send socket in the $uac_reg variable used
-			together with the uac_req_send() function will override this parameter.
+			interfaces are available.
+		</para>
+		<para>
+		A send socket in the $uac_reg variable used together with the uac_req_send()
+		function will override this parameter. A socket value in the uacreg table will
+		also override the parameter for this particular entry.
 		</para>
 		<para>
 		<emphasis>
@@ -1353,6 +1357,13 @@ event_route[uac:reply] {
 			<emphasis>reg_delay</emphasis> - delay initial registration with at least reg_delay seconds, e.g.,: 3
 			</para></listitem>
 		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>socket</emphasis> - Used socket for sending out registration requests,
+			e.g.:, udp:192.168.0.125:5060
+			</para></listitem>
+		</itemizedlist>
+
 		<para>
 		The module takes care of sending REGISTER and refresh registrations
 		before they expire.
