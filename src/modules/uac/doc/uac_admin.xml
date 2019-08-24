@@ -570,9 +570,9 @@ modparam("uac", "reg_gc_interval", 60)
 			interfaces are available.
 		</para>
 		<para>
-		A send socket in the $uac_reg variable used together with the uac_req_send()
-		function will override this parameter. A socket value in the uacreg table will
-		also override the parameter for this particular entry.
+			A send socket in the $uac_reg variable used together with the uac_req_send()
+			function will override this parameter. A socket value in the uacreg table will
+			also override the parameter for this particular entry.
 		</para>
 		<para>
 		<emphasis>
