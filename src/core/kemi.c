@@ -869,6 +869,8 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 					return SR_KEMI_TRUE;
 				}
 			break;
+			default:
+				LM_WARN("unsupported method flag: %c\n", vmethod->s[i]);
 		}
 	}
 	return SR_KEMI_FALSE;
