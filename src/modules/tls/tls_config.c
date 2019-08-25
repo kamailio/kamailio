@@ -36,10 +36,11 @@
 #include "../../core/trim.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg.h"
-#include "../../core/stats.h"
 
 #include <dirent.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 static tls_domains_cfg_t* _ksr_tls_cfg = NULL;
 static tls_domain_t* _ksr_tls_domain = NULL;
