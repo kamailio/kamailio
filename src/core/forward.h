@@ -34,7 +34,6 @@
 #include "proxy.h"
 #include "ip_addr.h"
 
-#include "stats.h"
 #include "udp_server.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
@@ -229,7 +228,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 			dst=&new_dst;
 		}
 		if (unlikely(udp_send(dst, outb.s, outb.len)==-1)){
-			STATS_TX_DROPS;
 			LOG(cfg_get(core, core_cfg, corelog), "udp_send failed\n");
 			goto error;
 		}
@@ -237,7 +235,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 #ifdef USE_TCP
 	else if (dst->proto==PROTO_TCP){
 		if (unlikely(tcp_disable)){
-			STATS_TX_DROPS;
 			LM_WARN("attempt to send on tcp and tcp support is disabled\n");
 			goto error;
 		}else{
@@ -261,7 +258,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 				from=&local_addr;
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
-				STATS_TX_DROPS;
 				LOG(cfg_get(core, core_cfg, corelog), "tcp_send failed\n");
 				goto error;
 			}
@@ -270,7 +266,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 #ifdef USE_TLS
 	else if (dst->proto==PROTO_TLS){
 		if (unlikely(tls_disable)){
-			STATS_TX_DROPS;
 			LM_WARN("attempt to send on tls and tls support is disabled\n");
 			goto error;
 		}else{
@@ -294,7 +289,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 				from=&local_addr;
 			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
-				STATS_TX_DROPS;
 				LOG(cfg_get(core, core_cfg, corelog), "tcp_send failed\n");
 				goto error;
 			}
@@ -305,7 +299,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 #ifdef USE_SCTP
 	else if (dst->proto==PROTO_SCTP){
 		if (unlikely(sctp_disable)){
-			STATS_TX_DROPS;
 			LM_WARN("attempt to send on sctp and sctp support is disabled\n");
 			goto error;
 		}else{
@@ -319,7 +312,6 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 				dst=&new_dst;
 			}
 			if (unlikely(sctp_core_msg_send(dst, outb.s, outb.len)<0)){
-				STATS_TX_DROPS;
 				LOG(cfg_get(core, core_cfg, corelog), "sctp_msg_send failed\n");
 				goto error;
 			}

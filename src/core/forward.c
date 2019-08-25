@@ -609,8 +609,6 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}else{
 			p_onsend=0;
 			ret=ser_error=E_OK;
-			/* sent requests stats */
-			STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 			/* exit succcesfully */
 			goto end;
 		}
@@ -629,7 +627,6 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 #endif
 
 error:
-	STATS_TX_DROPS;
 end:
 #ifdef USE_DNS_FAILOVER
 	if (dst && cfg_get(core, core_cfg, use_dns_failover)){
@@ -829,10 +826,6 @@ static int do_forward_reply(struct sip_msg* msg, int mode)
 			(int) msg->via2->port);
 
 	done:
-#ifdef STATS
-	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
-#endif
-
 	LM_DBG("reply forwarding finished (2nd via address: %.*s port %d)\n",
 			msg->via2->host.len, msg->via2->host.s,
 			(int) msg->via2->port);

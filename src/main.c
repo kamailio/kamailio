@@ -119,7 +119,6 @@
 #include "core/rand/fastrand.h" /* seed */
 #include "core/rand/kam_rand.h"
 
-#include "core/stats.h"
 #include "core/counters.h"
 #include "core/cfg/cfg.h"
 #include "core/cfg/cfg_struct.h"
@@ -204,9 +203,6 @@ Options:\n\
                   field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
                   (to use both use `-rR`)\n"
-#ifdef STATS
-"    -s file     File where to write internal statistics on SIGUSR1\n"
-#endif
 "    --server-id=num set the value for server_id\n\
     --subst=exp set a subst preprocessor directive\n\
     --substdef=exp set a substdef preprocessor directive\n\
@@ -726,9 +722,6 @@ void handle_sigs(void)
 			break;
 
 		case SIGUSR1:
-#ifdef STATS
-			dump_all_statistic();
-#endif
 		memlog=cfg_get(core, core_cfg, memlog);
 #ifdef PKG_MALLOC
 		if (memlog <= cfg_get(core, core_cfg, debug)){
@@ -1309,9 +1302,6 @@ int main_loop(void)
 	}
 	/* one "main" process and n children handling i/o */
 	if (dont_fork){
-#ifdef STATS
-		setstats( 0 );
-#endif
 		if (udp_listen==0){
 			LM_ERR("no fork mode requires at least one"
 					" udp listen address, exiting...\n");
@@ -1659,9 +1649,7 @@ int main_loop(void)
 				}else if (pid==0){
 					/* child */
 					bind_address=si; /* shortcut */
-#ifdef STATS
-					setstats( i+r*children_no );
-#endif
+
 					if(woneinit==0) {
 						if(run_child_one_init_route()<0)
 							goto error;
@@ -1696,9 +1684,7 @@ int main_loop(void)
 					}else if (pid==0){
 						/* child */
 						bind_address=si; /* shortcut */
-#ifdef STATS
-						setstats( i+r*children_no );
-#endif
+
 						return sctp_core_rcv_loop();
 					}
 				}
@@ -1933,11 +1919,7 @@ int main(int argc, char** argv)
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:"
-#ifdef STATS
-		"s:"
-#endif
-	;
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
 	/* Handle special command line arguments, that must be treated before
 	 * intializing the various subsystem or before parsing other arguments:
 	 *  - get the startup debug and log_stderr values
@@ -2476,11 +2458,6 @@ try_again:
 						goto error;
 					}
 					break;
-			case 's':
-				#ifdef STATS
-					stat_file=optarg;
-				#endif
-					break;
 			default:
 					break;
 		}
@@ -2804,10 +2781,6 @@ try_again:
 		goto error;
 	};
 	fixup_complete=1;
-
-#ifdef STATS
-	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
-#endif
 
 	ret=main_loop();
 	if (ret < 0)

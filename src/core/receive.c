@@ -39,7 +39,6 @@
 #include "forward.h"
 #include "action.h"
 #include "mem/mem.h"
-#include "stats.h"
 #include "ip_addr.h"
 #include "script_cb.h"
 #include "nonsip_hooks.h"
@@ -228,12 +227,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
 	int ret;
-#ifdef STATS
-	int skipped = 1;
-	int stats_on = 1;
-#else
-	int stats_on = 0;
-#endif
 	struct timeval tvb, tve;
 	struct timezone tz;
 	unsigned int diff = 0;
@@ -339,8 +332,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	}
 
 
-	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-			|| stats_on == 1) {
+	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))) {
 		exectime = 1;
 	}
 
@@ -439,11 +431,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"request-route executed in: %d usec\n", diff);
 			}
-#ifdef STATS
-			stats->processed_requests++;
-			stats->acc_req_time += diff;
-			STATS_RX_REQUEST(msg->first_line.u.request.method_value);
-#endif
 		}
 
 		/* execute post request-script callbacks */
@@ -460,9 +447,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		if(exectime) {
 			gettimeofday(&tvb, &tz);
 		}
-#ifdef STATS
-		STATS_RX_RESPONSE(msg->first_line.u.reply.statuscode / 100);
-#endif
 
 		/* execute pre-script callbacks, if any; -jiri */
 		/* if some of the callbacks said not to continue with
@@ -528,10 +512,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"reply-route executed in: %d usec\n", diff);
 			}
-#ifdef STATS
-			stats->processed_responses++;
-			stats->acc_res_time += diff;
-#endif
 		}
 
 		/* execute post reply-script callbacks */
@@ -539,17 +519,10 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	}
 
 end:
-#ifdef STATS
-	skipped = 0;
-#endif
 	ksr_msg_env_reset();
 	LM_DBG("cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
-#ifdef STATS
-	if(skipped)
-		STATS_RX_DROPS;
-#endif
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return 0;
@@ -570,7 +543,6 @@ error02:
 	pkg_free(msg);
 error00:
 	ksr_msg_env_reset();
-	STATS_RX_DROPS;
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return -1;

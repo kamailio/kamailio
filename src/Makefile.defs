@@ -507,9 +507,6 @@ data_target = $(prefix)/$(data_dir)
 
 # compile-time options
 #
-# -DSTATS
-#		allows to print out number of packets processed on CTRL-C;
-# 		implementation still nasty and reports per-process
 # -DNO_DEBUG
 #		turns off some of the debug messages (DBG(...)).
 # -DNO_LOG
@@ -679,7 +676,6 @@ C_DEFS+= -DSHM_MMAP \
 	 #-DVQ_MALLOC  \
 	 #-DDBG_LOCK \
 	 #-DNOSMP \
-	 #-DSTATS \
 	 #-DNO_LOG \
 	 #-DPROFILING \
 	 #-DNO_SIG_DEBUG
