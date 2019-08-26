@@ -49,7 +49,7 @@
 	<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>UDP packet</emphasis> - 4 bytes (zero filled) UDP 
+			<emphasis>UDP packet</emphasis> - 4 bytes (zero filled) UDP
 			packets are sent to the contact address.
 			</para>
 			<itemizedlist>
@@ -59,8 +59,8 @@
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> unidirectional 
-				traffic through NAT (inbound - from outside to inside); As 
+				<para><emphasis>Disadvantages:</emphasis> unidirectional
+				traffic through NAT (inbound - from outside to inside); As
 				many NATs do update the bind timeout only on outbound traffic,
 				the bind may expire and closed.
 				</para>
@@ -69,19 +69,19 @@
 		</listitem>
 		<listitem>
 			<para>
-			<emphasis>SIP request</emphasis> - a stateless SIP request is 
+			<emphasis>SIP request</emphasis> - a stateless SIP request is
 			sent to the UDP contact address.
 			</para>
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>Advantages:</emphasis> bidirectional traffic
-				through NAT, since each PING request from &kamailio; (inbound 
-				traffic) will force the SIP client to generate a SIP reply 
+				through NAT, since each PING request from &kamailio; (inbound
+				traffic) will force the SIP client to generate a SIP reply
 				(outbound traffic) - the NAT bind will be surely kept open.
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> higher bandwidth 
+				<para><emphasis>Disadvantages:</emphasis> higher bandwidth
 				traffic, more expensive (as time) to generate by &kamailio;;
 				</para>
 				</listitem>
@@ -99,7 +99,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>usrloc</emphasis> module - only if the NATed 
+				<emphasis>usrloc</emphasis> module - only if the NATed
 				contacts are to be pinged.
 			</para>
 			</listitem>
@@ -109,7 +109,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -147,8 +147,8 @@ modparam("nathelper", "force_socket", "127.0.0.1:5060")
 	<section id="nathelper.p.natping_interval">
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
-		Period of time in seconds between sending the NAT pings to all 
-		currently registered &ua;s to keep their &nat; bindings alive. 
+		Period of time in seconds between sending the NAT pings to all
+		currently registered &ua;s to keep their &nat; bindings alive.
 		Value of 0 disables this functionality.
 		</para>
 		<note><para>
@@ -237,10 +237,10 @@ modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 	<section id="nathelper.p.received_avp">
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
-		The name of the Attribute-Value-Pair (AVP) used to store the URI 
-		containing the received IP, port, and protocol. The URI is created 
-		by fix_nated_register function of nathelper module and the attribute 
-		is then used by the registrar to store the received parameters. Do 
+		The name of the Attribute-Value-Pair (AVP) used to store the URI
+		containing the received IP, port, and protocol. The URI is created
+		by fix_nated_register function of nathelper module and the attribute
+		is then used by the registrar to store the received parameters. Do
 		not forget to change the value of corresponding parameter in
 		registrar module if you change the value of this parameter.
 		</para>
@@ -268,8 +268,8 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 	<section id="nathelper.p.sipping_bflag">
 		<title><varname>sipping_bflag</varname> (integer)</title>
 		<para>
-		Which branch flag should be used by the module to identify NATed 
-		contacts for which it should perform NAT ping via a SIP request 
+		Which branch flag should be used by the module to identify NATed
+		contacts for which it should perform NAT ping via a SIP request
 		instead of dummy UDP packet.
 		</para>
 		<para>
@@ -291,7 +291,7 @@ modparam("nathelper", "sipping_bflag", 7)
 		<para>
 		The parameter sets the SIP URI to be used in generating the SIP
 		requests for NAT ping purposes. To enable the SIP request pinging
-		feature, you have to set this parameter. The SIP request pinging 
+		feature, you have to set this parameter. The SIP request pinging
 		will be used only for requests marked so.
 		</para>
 		<para>
@@ -476,7 +476,7 @@ modparam("nathelper", "filter_server_id", 1)
 		<function moreinfo="none">fix_nated_contact()</function>
 		</title>
 		<para>
-		Rewrites the <quote>Contact</quote> header to contain the request's source 
+		Rewrites the <quote>Contact</quote> header to contain the request's source
 		address:port.
 		</para>
 		<para>
@@ -497,19 +497,19 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		</title>
 		<para>
 		Alters the SDP information in order to facilitate NAT traversal. What
-		changes to be performed may be controlled via the 
+		changes to be performed may be controlled via the
 		<quote>flags</quote> parameter. Return value is -1 if error occurred,
 		1 if ip's were replaced, 2 if no ip's were replaced.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
+			<emphasis>flags</emphasis> - the value may be a bitwise OR of
 			the following flags:
 			</para>
 			<itemizedlist>
 				<listitem>
-					<para><emphasis>0x01</emphasis> - adds 
+					<para><emphasis>0x01</emphasis> - adds
 					<quote>a=direction:active</quote> SDP line;
 					</para>
 				</listitem>
@@ -520,7 +520,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 					precedence over the source address).</para>
 				</listitem>
 				<listitem>
-					<para><emphasis>0x04</emphasis> - adds 
+					<para><emphasis>0x04</emphasis> - adds
 						<quote>a=nortpproxy:yes</quote> SDP line;</para>
 				</listitem>
 				<listitem>
@@ -541,7 +541,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -598,9 +598,9 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 		<function moreinfo="none">fix_nated_register()</function>
 		</title>
 		<para>
-		The function creates a URI consisting of the source IP, port, and 
-		protocol and stores the URI in an Attribute-Value-Pair. The URI will 
-		be appended as "received" parameter to Contact in 200 OK and 
+		The function creates a URI consisting of the source IP, port, and
+		protocol and stores the URI in an Attribute-Value-Pair. The URI will
+		be appended as "received" parameter to Contact in 200 OK and
 		registrar will store it in the received column in the location table.
 		</para>
 		<para>
@@ -631,7 +631,7 @@ fix_nated_register();
 		<para>Meaning of the flags is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>1</emphasis> -  The <quote>Contact</quote> header field is searched 
+			<emphasis>1</emphasis> -  The <quote>Contact</quote> header field is searched
 			for occurrence of RFC1918 or RFC6598 addresses.
 			</para></listitem>
 			<listitem><para>
@@ -641,11 +641,11 @@ fix_nated_register();
 			no port, it uses the default SIP port 5060
 			</para></listitem>
 			<listitem><para>
-			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched 
+			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched
 			for occurrence of RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
-			<emphasis>8</emphasis> -  The SDP is searched for occurrence of 
+			<emphasis>8</emphasis> -  The SDP is searched for occurrence of
 			RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
@@ -666,9 +666,12 @@ fix_nated_register();
 			URI port differs from the source port of the request (Warning: this is
 			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
+			<emphasis>256</emphasis> -  Test  <quote>SDP C line IP Address</quote>
+			matches with SIP source IP address
+			</para></listitem>
 			</itemizedlist>
 		<para>
-		All flags can be bitwise combined, the test returns true if any of 
+		All flags can be bitwise combined, the test returns true if any of
 		the tests identified a NAT.
 		</para>
 		<para>
@@ -748,8 +751,8 @@ if(is_rfc1918("$rd")) {
 		<para>
 		Checks if the Request URI has an <quote>alias</quote>
 		parameter and if so, removes it and sets the <quote>$du</quote> based
-		on its value.  Note that this means that routing of request is based on 
-		<quote>;alias</quote> parameter value of the Request URI rather than 
+		on its value.  Note that this means that routing of request is based on
+		<quote>;alias</quote> parameter value of the Request URI rather than
 		the Request URI itself. If you call <function>handle_ruri_alias()</function>
 		on a request, make sure that you screen the alias parameter value of
 		Request URI the same way as you would screen the
@@ -845,7 +848,7 @@ if(is_rfc1918("$rd")) {
 			If topmost Record Route in received SIP request
 			or reply is a double Record Route, value of
 			$rr_top_count is 2.  If it a single Record
-			Route, value of $rr_top_count 
+			Route, value of $rr_top_count
 			is 1.  If there is no Record Route(s), value of
 			$rr_top_count is 0.
 			</para>
@@ -909,4 +912,3 @@ $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 	</section>
 
 </chapter>
-
