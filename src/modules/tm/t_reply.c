@@ -2162,7 +2162,6 @@ error:
  */
 int reply_received( struct sip_msg  *p_msg )
 {
-
 	int msg_status;
 	int last_uac_status;
 	char *ack;
@@ -2192,6 +2191,8 @@ int reply_received( struct sip_msg  *p_msg )
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng = NULL;
+	int ret;
+	str evname = str_init("on_sl_reply");
 
 	/* make sure we know the associated transaction ... */
 	branch = T_BR_UNDEFINED;
@@ -2566,17 +2567,40 @@ done:
 
 trans_not_found:
 	/* transaction context was not found */
-	if (goto_on_sl_reply) {
-		/* The script writer has a chance to decide whether to
-		 * forward the reply or not.
-		 * Pre- and post-script callbacks have already
-		 * been execueted by the core. (Miklos)
-		 */
-		return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg, 0);
-	} else {
-		/* let the core forward the reply */
-		return 1;
+ 	if(on_sl_reply_name.s!=NULL && on_sl_reply_name.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			if (goto_on_sl_reply) {
+				/* The script writer has a chance to decide whether to
+				 * forward the reply or not.
+				 * Pre- and post-script callbacks have already
+				 * been execueted by the core. (Miklos)
+			 */
+				return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg, 0);
+			} else {
+				/* let the core forward the reply */
+				return 1;
+			}
+		} else {
+			bctx = sr_kemi_act_ctx_get();
+			init_run_actions_ctx(&ctx);
+			sr_kemi_act_ctx_set(&ctx);
+			ret = sr_kemi_ctx_route(keng, &ctx, p_msg, EVENT_ROUTE,
+						&on_sl_reply_name, &evname);
+			sr_kemi_act_ctx_set(bctx);
+			if(ret<0) {
+				LM_ERR("error running on sl reply callback\n");
+				return -1;
+			}
+			if(unlikely(ctx.run_flags & DROP_R_F)) {
+				LM_DBG("drop flag set - skip forwarding the reply\n");
+				return 0;
+			}
+			/* let the core forward the reply */
+			return 1;
+		}
 	}
+	return 1;
 }
 
 

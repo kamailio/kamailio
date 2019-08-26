@@ -689,6 +689,8 @@ static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 
 static int mod_init(void)
 {
+	sr_kemi_eng_t *keng = NULL;
+
 	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n",
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
 
@@ -701,10 +703,13 @@ static int mod_init(void)
 	}
 
 	if(on_sl_reply_name.s!=NULL && on_sl_reply_name.len>0) {
-		goto_on_sl_reply=route_get(&onreply_rt, on_sl_reply_name.s);
-		if (goto_on_sl_reply==-1){
-			LM_ERR("route get failed for on_sl_reply\n");
-			return -1;
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			goto_on_sl_reply=route_get(&onreply_rt, on_sl_reply_name.s);
+			if (goto_on_sl_reply==-1){
+				LM_ERR("route get failed for on_sl_reply\n");
+				return -1;
+			}
 		}
 	}
 	if (init_callid() < 0) {
