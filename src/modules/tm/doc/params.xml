@@ -711,7 +711,11 @@ modparam("tm", "reparse_on_dns_failover", 0)
 		Sets reply route block, to which control is passed when a
 		reply is received that has no associated transaction.
 		The reply is passed to the core for stateless forwarding after
-		the route block execution unless it returns 0.
+		the route block execution unless drop is executed (or it returns 0).
+	</para>
+	<para>
+		If KEMI is used, the parameter has to be the KEMI function name, which
+		receives a string parameter with the event name.
 	</para>
 	<example>
 	    <title>Set <varname>on_sl_reply</varname> parameter</title>
@@ -727,7 +731,7 @@ onreply_route["stateless_replies"] {
 	    </programlisting>
 	</example>
     </section>
-	
+
 	<section id ="tm.p.contacts_avp">
 		<title><varname>contacts_avp</varname> (string)</title>
 		<para>
