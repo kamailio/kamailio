@@ -96,6 +96,7 @@ static int goto_on_branch_failure=0;
 static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply=0;
+extern str on_sl_reply_name;
 
 /* remap 503 response code to 500 */
 extern int tm_remap_503_500;

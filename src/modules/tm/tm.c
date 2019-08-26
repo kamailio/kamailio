@@ -96,7 +96,6 @@ static int fixup_on_branch_failure(void** param, int param_no);
 static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
 static int fixup_t_reply(void** param, int param_no);
-static int fixup_on_sl_reply(modparam_t type, void* val);
 static int fixup_t_relay_to(void** param, int param_no);
 static int fixup_t_is_set(void** param, int param_no);
 
@@ -217,7 +216,7 @@ static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
 str contacts_avp = {0, 0};
 str contact_flows_avp = {0, 0};
 str ulattrs_xavp_name = {NULL, 0};
-
+str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
 
 int tm_failure_exec_mode = 0;
@@ -454,7 +453,7 @@ static param_export_t params[]={
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT,
 		&default_tm_cfg.reparse_on_dns_failover},
-	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
+	{"on_sl_reply",         PARAM_STR, &on_sl_reply_name                     },
 	{"contacts_avp",        PARAM_STR, &contacts_avp                },
 	{"contact_flows_avp",   PARAM_STR, &contact_flows_avp           },
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
@@ -588,21 +587,6 @@ static int fixup_on_branch(void** param, int param_no)
 	return 0;
 }
 
-static int fixup_on_sl_reply(modparam_t type, void* val)
-{
-	if ((type & PARAM_STRING) == 0) {
-		LM_ERR("not a string parameter\n");
-		return -1;
-	}
-
-	if (fixup_routes(0, &onreply_rt, &val))
-		return -1;
-
-	goto_on_sl_reply = (int)(long)val;
-	return 0;
-}
-
-
 
 /* (char *hostname, char *port_nr) ==> (struct proxy_l *, -)  */
 static int fixup_hostport2proxy(void** param, int param_no)
@@ -716,6 +700,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(on_sl_reply_name.s!=NULL && on_sl_reply_name.len>0) {
+		goto_on_sl_reply=route_get(&onreply_rt, on_sl_reply_name.s);
+		if (goto_on_sl_reply==-1){
+			LM_ERR("route get failed for on_sl_reply\n");
+			return -1;
+		}
+	}
 	if (init_callid() < 0) {
 		LM_CRIT("Error while initializing Call-ID generator\n");
 		return -1;
