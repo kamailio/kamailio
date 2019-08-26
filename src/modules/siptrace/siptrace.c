@@ -497,13 +497,13 @@ static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 
 static int sip_trace_store_db(siptrace_data_t *sto)
 {
+	if(trace_to_database_flag == NULL || *trace_to_database_flag == 0)
+		goto done;
+
 	if(db_con == NULL) {
 		LM_DBG("database connection not initialized\n");
 		return -1;
 	}
-
-	if(trace_to_database_flag == NULL || *trace_to_database_flag == 0)
-		goto done;
 
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
