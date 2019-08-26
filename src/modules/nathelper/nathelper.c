@@ -100,7 +100,7 @@ MODULE_VERSION
 #define NAT_UAC_TEST_O_1918 0x20
 #define NAT_UAC_TEST_WS 0x40
 #define NAT_UAC_TEST_C_PORT 0x80
-
+#define NAT_UAC_TEST_SDP_CLINE 0x100
 
 #define DEFAULT_NATPING_STATE 1
 
@@ -123,6 +123,7 @@ static int fixup_fix_sdp(void **param, int param_no);
 static int fixup_add_contact_alias(void **param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
+static int test_sdp_cline(struct sip_msg *msg);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -1331,7 +1332,46 @@ static int contact_rport(struct sip_msg *msg)
 		return 0;
 	}
 }
+/**
+* test SDP C line ip address and Source Ip address is matched
+*/
+static int test_sdp_cline(struct sip_msg *msg){
+	sdp_session_cell_t* session;
+	int sdp_session_num;
+	int result= 1;
+	str srcip;
 
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp body \n");
+		return -1;
+	}
+	srcip.s = ip_addr2a(&msg->rcv.src_ip);
+	srcip.len = strlen(srcip.s);
+
+	if(srcip.len <= 0 && srcip.s) {
+		LM_ERR("Couldn t find source ip address \n");
+		return -1;
+	}
+
+	LM_DBG("Message Source Ip add [%*.s] \n",srcip.len,srcip.s);
+
+	sdp_session_num = 0;
+
+	for(;;){
+		session = get_sdp_session(msg, sdp_session_num);
+		if(!session)
+			break;
+
+		if(!(session->ip_addr.len >0 && session->ip_addr.s))
+			break;
+
+		if( (session->pf == msg->rcv.src_ip.af) && (memcmp(session->ip_addr.s, srcip.s, srcip.len)==0)){
+			return -1;
+		}
+		sdp_session_num++;
+	}
+	return result;
+}
 /*
  * test for occurrence of RFC1918 IP address in SDP
  */
@@ -1439,6 +1479,11 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	 * port advertised in Contact
 	 */
 	if((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg) > 0))
+		return 1;
+	/**
+	* test if sdp c line ip address matches with sip source address
+	*/
+	if((tests & NAT_UAC_TEST_SDP_CLINE) && (test_sdp_cline(msg) > 0))
 		return 1;
 
 	/* no test succeeded */
