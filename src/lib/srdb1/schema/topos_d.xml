@@ -84,7 +84,7 @@
      <column id="a_contact">
         <name>a_contact</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&contact_len;</size>
         <default/>
         <description>Contact address - A side</description>
     </column>
@@ -92,7 +92,7 @@
     <column id="b_contact">
         <name>b_contact</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&contact_len;</size>
         <default/>
         <description>Contact address - B side</description>
     </column>
@@ -100,7 +100,7 @@
      <column id="as_contact">
         <name>as_contact</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&contact_len;</size>
         <default/>
         <description>Contact address - server A side</description>
     </column>
@@ -108,7 +108,7 @@
     <column id="bs_contact">
         <name>bs_contact</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&contact_len;</size>
         <default/>
         <description>Contact address - server B side</description>
 	</column>
