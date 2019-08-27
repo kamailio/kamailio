@@ -137,7 +137,7 @@
     <column id="socket">
         <name>socket</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&socket_len;</size>
         <default/>
         <description>Used socket for sending out requests</description>
     </column>
