@@ -441,6 +441,8 @@ inline static void start_final_repl_retr( struct cell *t )
 
 
 
+static int _tm_local_response_sent_lookup = 0;
+
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 				unsigned int code,
 				char *to_tag, unsigned int to_tag_len, int lock,
@@ -556,7 +558,12 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 						&onsend_params);
 			}
 
-			rt = route_lookup(&event_rt, "tm:local-response");
+			if(_tm_local_response_sent_lookup == 0) {
+				rt = route_lookup(&event_rt, "tm:local-response");
+				_tm_local_response_sent_lookup = 1;
+			} else {
+				rt = -1;
+			}
 			if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
 			{
 				if (likely(build_sip_msg_from_buf(&pmsg, buf, len,
