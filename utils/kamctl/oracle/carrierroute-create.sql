@@ -7,7 +7,7 @@ CREATE TABLE carrierroute (
     mask NUMBER(10) DEFAULT 0 NOT NULL,
     prob NUMBER DEFAULT 0 NOT NULL,
     strip NUMBER(10) DEFAULT 0 NOT NULL,
-    rewrite_host VARCHAR2(128) DEFAULT '',
+    rewrite_host VARCHAR2(255) DEFAULT '',
     rewrite_prefix VARCHAR2(64) DEFAULT '',
     rewrite_suffix VARCHAR2(64) DEFAULT '',
     description VARCHAR2(255) DEFAULT NULL
@@ -28,7 +28,7 @@ CREATE TABLE carrierfailureroute (
     carrier NUMBER(10) DEFAULT 0 NOT NULL,
     domain NUMBER(10) DEFAULT 0 NOT NULL,
     scan_prefix VARCHAR2(64) DEFAULT '',
-    host_name VARCHAR2(128) DEFAULT '',
+    host_name VARCHAR2(255) DEFAULT '',
     reply_code VARCHAR2(3) DEFAULT '',
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     mask NUMBER(10) DEFAULT 0 NOT NULL,

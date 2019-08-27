@@ -9,7 +9,7 @@ CREATE TABLE `uacreg` (
     `auth_username` VARCHAR(64) DEFAULT '' NOT NULL,
     `auth_password` VARCHAR(64) DEFAULT '' NOT NULL,
     `auth_ha1` VARCHAR(128) DEFAULT '' NOT NULL,
-    `auth_proxy` VARCHAR(128) DEFAULT '' NOT NULL,
+    `auth_proxy` VARCHAR(255) DEFAULT '' NOT NULL,
     `expires` INT DEFAULT 0 NOT NULL,
     `flags` INT DEFAULT 0 NOT NULL,
     `reg_delay` INT DEFAULT 0 NOT NULL,

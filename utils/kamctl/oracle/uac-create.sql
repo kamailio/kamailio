@@ -9,7 +9,7 @@ CREATE TABLE uacreg (
     auth_username VARCHAR2(64) DEFAULT '',
     auth_password VARCHAR2(64) DEFAULT '',
     auth_ha1 VARCHAR2(128) DEFAULT '',
-    auth_proxy VARCHAR2(128) DEFAULT '',
+    auth_proxy VARCHAR2(255) DEFAULT '',
     expires NUMBER(10) DEFAULT 0 NOT NULL,
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     reg_delay NUMBER(10) DEFAULT 0 NOT NULL,

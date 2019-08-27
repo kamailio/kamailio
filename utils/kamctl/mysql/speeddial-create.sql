@@ -4,7 +4,7 @@ CREATE TABLE `speed_dial` (
     `domain` VARCHAR(64) DEFAULT '' NOT NULL,
     `sd_username` VARCHAR(64) DEFAULT '' NOT NULL,
     `sd_domain` VARCHAR(64) DEFAULT '' NOT NULL,
-    `new_uri` VARCHAR(128) DEFAULT '' NOT NULL,
+    `new_uri` VARCHAR(255) DEFAULT '' NOT NULL,
     `fname` VARCHAR(64) DEFAULT '' NOT NULL,
     `lname` VARCHAR(64) DEFAULT '' NOT NULL,
     `description` VARCHAR(64) DEFAULT '' NOT NULL,

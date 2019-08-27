@@ -1,7 +1,7 @@
 CREATE TABLE purplemap (
     id NUMBER(10) PRIMARY KEY,
-    sip_user VARCHAR2(128),
-    ext_user VARCHAR2(128),
+    sip_user VARCHAR2(255),
+    ext_user VARCHAR2(255),
     ext_prot VARCHAR2(16),
     ext_pass VARCHAR2(64)
 );
