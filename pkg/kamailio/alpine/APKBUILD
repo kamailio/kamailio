@@ -31,7 +31,7 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
-	ruby-dev libmaxminddb-dev libunistring-dev"
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev"
 
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
@@ -253,7 +253,7 @@ _modules="$_module_group_kstandard"
 for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
 	ldap utils tls presence lua ims outbound debugger \
-	extras json websocket authephemeral \
+	extras json websocket authephemeral mongodb\
 	uuid ev memcached redis geoip2 jansson sqlang sipdump \
 	jsdt http_async kazoo rabbitmq sctp radius perl python \
 	python3 ruby; do
@@ -497,6 +497,11 @@ uuid() {
 memcached() {
 	_generic_pkg "memcached support" \
 		"$_mod_list_memcached"
+}
+
+mongodb() {
+	_generic_pkg "MongoDB database connectivity" \
+	"$_mod_list_mongodb"
 }
 
 rabbitmq() {
