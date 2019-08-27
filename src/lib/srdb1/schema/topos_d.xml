@@ -186,7 +186,7 @@
     <column id="a_srcaddr">
         <name>a_srcaddr</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&socket_len;</size>
         <default/>
         <description>Source address - A side</description>
     </column>
@@ -194,7 +194,7 @@
     <column id="b_srcaddr">
         <name>b_srcaddr</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&socket_len;</size>
         <default/>
         <description>Source address - B side</description>
     </column>
