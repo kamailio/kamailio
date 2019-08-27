@@ -3014,8 +3014,8 @@ event_route [tm:local-request] {
 
 6.3.  event_route[tm:local-response]
 
-   Executed when the tm module is about to send a local generated,
-   transaction stateful response.
+   Executed after the tm module sent a local generated, transaction
+   stateful response.
 
    Example 1.98. event_route[tm:local-response] usage
 ...
