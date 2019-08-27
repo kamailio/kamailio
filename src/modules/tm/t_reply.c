@@ -98,6 +98,8 @@ static int goto_on_reply=0;
 int goto_on_sl_reply=0;
 extern str on_sl_reply_name;
 
+extern str _tm_event_callback_lres_sent;
+
 /* remap 503 response code to 500 */
 extern int tm_remap_503_500;
 /* send path and flags in 3xx class reply */
@@ -454,7 +456,10 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	struct tmcb_params onsend_params;
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
+	struct run_act_ctx *bctx;
 	struct sip_msg pmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:local-response-sent");
 
 	init_cancel_info(&cancel_data);
 	if (!buf)
@@ -558,17 +563,20 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 						&onsend_params);
 			}
 
-			if(_tm_local_response_sent_lookup == 0) {
-				rt = route_lookup(&event_rt, "tm:local-response");
-				_tm_local_response_sent_lookup = 1;
-			} else {
-				rt = -1;
+			if(_tm_event_callback_lres_sent.len>0
+					&& _tm_event_callback_lres_sent.s!=NULL) {
+				keng = sr_kemi_eng_get();
 			}
-			if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
-			{
+			rt = -1;
+			if(likely(keng==NULL)) {
+				if(_tm_local_response_sent_lookup == 0) {
+					rt = route_lookup(&event_rt, "tm:local-response");
+					_tm_local_response_sent_lookup = 1;
+				}
+			}
+			if ((rt >= 0 && event_rt.rlist[rt] != NULL) || (keng != NULL)) {
 				if (likely(build_sip_msg_from_buf(&pmsg, buf, len,
-								inc_msg_no()) == 0))
-				{
+								inc_msg_no()) == 0)) {
 					struct onsend_info onsnd_info;
 
 					onsnd_info.to=&(trans->uas.response.dst.to);
@@ -580,11 +588,21 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					backup_rt = get_route_type();
 					set_route_type(LOCAL_ROUTE);
 					init_run_actions_ctx(&ctx);
-					run_top_route(event_rt.rlist[rt], &pmsg, 0);
+					if(keng == NULL) {
+						run_top_route(event_rt.rlist[rt], &pmsg, 0);
+					} else {
+						bctx = sr_kemi_act_ctx_get();
+						sr_kemi_act_ctx_set(&ctx);
+						sr_kemi_route(keng, &pmsg, EVENT_ROUTE,
+							&_tm_event_callback_lres_sent, &evname);
+						sr_kemi_act_ctx_set(bctx);
+					}
 					set_route_type(backup_rt);
 					p_onsend=0;
 
 					free_sip_msg(&pmsg);
+				} else {
+					LM_ERR("failed to build sip msg structure\n");
 				}
 			}
 

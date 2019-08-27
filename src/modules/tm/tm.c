@@ -218,6 +218,7 @@ str contact_flows_avp = {0, 0};
 str ulattrs_xavp_name = {NULL, 0};
 str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
+str _tm_event_callback_lres_sent = {NULL, 0};
 
 int tm_failure_exec_mode = 0;
 
@@ -469,6 +470,7 @@ static param_export_t params[]={
 	{"event_callback",      PARAM_STR, &tm_event_callback                    },
 	{"relay_100",           PARAM_INT, &default_tm_cfg.relay_100             },
 	{"rich_redirect" ,      PARAM_INT, &tm_rich_redirect                     },
+	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent    },
 	{0,0,0}
 };
 
