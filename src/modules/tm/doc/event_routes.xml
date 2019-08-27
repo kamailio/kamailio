@@ -79,7 +79,7 @@ event_route [tm:local-request] {
 			<function moreinfo="none">event_route[tm:local-response]</function>
 		</title>
 		<para>
-			Executed when the tm module is about to send a local generated,
+			Executed after the tm module sent a local generated,
 			transaction stateful response.
 		</para>
 		<example>
