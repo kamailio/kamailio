@@ -667,7 +667,7 @@ fix_nated_register();
 			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
 			<emphasis>256</emphasis> -  Test  <quote>SDP C line IP Address</quote>
-			matches with SIP source IP address
+			matches with SIP source IP address. if not matched ,returns 1. 
 			</para></listitem>
 			</itemizedlist>
 		<para>
