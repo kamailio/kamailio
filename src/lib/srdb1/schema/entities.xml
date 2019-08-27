@@ -6,7 +6,7 @@
 <!ENTITY password_len "64">
 <!ENTITY ha1_len "128">
 <!ENTITY realm_len "64">
-<!ENTITY uri_len "128">
+<!ENTITY uri_len "255">
 <!ENTITY xcap_uri_len "255">
 <!ENTITY id_len "64">
 <!ENTITY table_id_len "10">
