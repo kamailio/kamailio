@@ -102,7 +102,7 @@
         <type>string</type>
         <size>&ha1_len;</size>
         <default/>
-        <description>Hashed (HA1) authentication password</description>
+        <description>Hashed (HA1) authentication password - currently unused</description>
     </column>
 
     <column id="auth_proxy">
