@@ -91,4 +91,42 @@ modparam("sl", "rich_redirect", 3)
 		</example>
 	</section>
 
+	<section id="sl.p.event_callback_fl_ack">
+		<title><varname>event_callback_fl_ack</varname> (str)</title>
+		<para>
+		The name of the KEMI callback function to be executed instead of
+		event_route[sl:filtered-ack]. This function receives a string parameter.
+		</para>
+		<para>
+		Default value: not set.
+		</para>
+		<example>
+		<title>event_callback_fl_ack example</title>
+		<programlisting format="linespecific">
+...
+modparam("sl", "event_callback_fl_ack", "ksr_event_sl_filtered_ack")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sl.p.event_callback_lres_sent">
+		<title><varname>event_callback_lres_sent</varname> (str)</title>
+		<para>
+		The name of the KEMI callback function to be executed instead of
+		event_route[sl:local-response]. This function receives a string parameter.
+		</para>
+		<para>
+		Default value: not set.
+		</para>
+		<example>
+		<title>event_callback_lres_sent example</title>
+		<programlisting format="linespecific">
+...
+modparam("sl", "event_callback_lres_sent", "ksr_event_sl_local_response")
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
