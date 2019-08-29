@@ -1563,7 +1563,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 				if ((p->server_name_mode==KSR_TLS_SNM_INCDOM
 							|| p->server_name_mode==KSR_TLS_SNM_SUBDOM)
 						&& (p->server_name.len<sname->len)) {
-					dotpos = sname->len - p->server_name.len;
+					dotpos = sname->len - p->server_name.len - 1;
 					if(sname->s[dotpos] == '.'
 							&& strncasecmp(p->server_name.s,
 									sname->s + dotpos + 1,
