@@ -593,7 +593,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					} else {
 						bctx = sr_kemi_act_ctx_get();
 						sr_kemi_act_ctx_set(&ctx);
-						sr_kemi_route(keng, &pmsg, EVENT_ROUTE,
+						(void)sr_kemi_route(keng, &pmsg, EVENT_ROUTE,
 							&_tm_event_callback_lres_sent, &evname);
 						sr_kemi_act_ctx_set(bctx);
 					}
