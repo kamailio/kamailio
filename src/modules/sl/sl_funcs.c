@@ -293,7 +293,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 			} else if (keng!=NULL) {
 				bctx = sr_kemi_act_ctx_get();
 				sr_kemi_act_ctx_set(&ctx);
-				sr_kemi_route(keng, msg, EVENT_ROUTE,
+				(void)sr_kemi_route(keng, msg, EVENT_ROUTE,
 							&_sl_event_callback_lres_sent, &evname);
 				sr_kemi_act_ctx_set(bctx);
 			}
@@ -448,7 +448,7 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 					init_run_actions_ctx(&ctx);
 					bctx = sr_kemi_act_ctx_get();
 					sr_kemi_act_ctx_set(&ctx);
-					sr_kemi_route(keng, msg, EVENT_ROUTE,
+					(void)sr_kemi_route(keng, msg, EVENT_ROUTE,
 							&_sl_event_callback_fl_ack, &evname);
 					sr_kemi_act_ctx_set(bctx);
 				}
