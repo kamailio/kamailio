@@ -1425,7 +1425,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.htable
 %doc %{_docdir}/kamailio/modules/README.imc
 %doc %{_docdir}/kamailio/modules/README.ipops
+%doc %{_docdir}/kamailio/modules/README.kemix
 %doc %{_docdir}/kamailio/modules/README.kex
+%doc %{_docdir}/kamailio/modules/README.lost
 %doc %{_docdir}/kamailio/modules/README.malloc_test
 %doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
@@ -1492,6 +1494,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.userblacklist
 %doc %{_docdir}/kamailio/modules/README.usrloc
 %doc %{_docdir}/kamailio/modules/README.xhttp
+%doc %{_docdir}/kamailio/modules/README.xhttp_prom
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
 %doc %{_docdir}/kamailio/modules/README.xprint
@@ -1576,7 +1579,9 @@ fi
 %{_libdir}/kamailio/modules/htable.so
 %{_libdir}/kamailio/modules/imc.so
 %{_libdir}/kamailio/modules/ipops.so
+%{_libdir}/kamailio/modules/kemix.so
 %{_libdir}/kamailio/modules/kex.so
+%{_libdir}/kamailio/modules/lost.so
 %{_libdir}/kamailio/modules/malloc_test.so
 %{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so
@@ -1643,6 +1648,7 @@ fi
 %{_libdir}/kamailio/modules/userblacklist.so
 %{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xhttp.so
+%{_libdir}/kamailio/modules/xhttp_prom.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
 %{_libdir}/kamailio/modules/xprint.so
@@ -1875,7 +1881,9 @@ fi
 %files      lua
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_lua
+%doc %{_docdir}/kamailio/modules/README.app_lua_sr
 %{_libdir}/kamailio/modules/app_lua.so
+%{_libdir}/kamailio/modules/app_lua_sr.so
 %endif
 
 
@@ -2217,6 +2225,8 @@ fi
 
 
 %changelog
+* Sat Aug 31 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-dev7
+  - Packaged kemix, lost and xhttp_prom modules
 * Sat Mar 30 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
   - Added support of openSUSE:Leap:15.0, openSUSE:Leap:15.1 and Fedora 30 dists
 * Thu Feb 21 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0
