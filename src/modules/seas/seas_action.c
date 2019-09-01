@@ -687,15 +687,6 @@ int ac_reply(as_p the_as,unsigned char processor_id,unsigned int flags,char *act
    }else{
       totag.s=NULL;
       totag.len=0;
-      /*if(!(ttag=pkg_malloc(TOTAG_VALUE_LEN))){
-	 LM_ERR("Out of memory !!!\n");
-	 goto error;
-      }
-      totag.s=ttag;
-      calc_crc_suffix(c->uas.request,seas_tag_suffix);
-      LM_DBG("seas_tags = %.*s\n",TOTAG_VALUE_LEN,seas_tags);
-      memcpy(totag.s,seas_tags,TOTAG_VALUE_LEN);
-      totag.len=TOTAG_VALUE_LEN;*/
    }
    LM_DBG("Using totag=[%.*s]\n",totag.len,totag.s);
    if(my_msg->content_length)
