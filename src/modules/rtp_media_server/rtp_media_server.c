@@ -20,6 +20,7 @@
 
 #include "rtp_media_server.h"
 #include "../../core/fmsg.h"
+#include "../../core/rand/kam_rand.h"
 
 MODULE_VERSION
 
@@ -169,7 +170,7 @@ static int mod_init(void)
 	rms->udp_start_port = 50000;
 	LM_INFO("RTP media server module init\n");
 	rms->udp_end_port = 60000;
-	rms->udp_last_port = 50000 + rand() % 10000;
+	rms->udp_last_port = 50000 + kam_rand() % 10000;
 	rms_media_init();
 
 	if(!init_rms_dialog_list()) {
