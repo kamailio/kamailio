@@ -1334,18 +1334,19 @@ static int contact_rport(struct sip_msg *msg)
 }
 /**
 * test SDP C line ip address and Source Ip address is matched
-* if it is matched return -1 , there isnt any problem about natted issue
-* if it isnot matched return 1
-*
+* if all ip address matches , return -1 
+* returns unmatched ip address count
+* on parse error   , returns -2
 */
 static int test_sdp_cline(struct sip_msg *msg){
 	sdp_session_cell_t* session;
 	struct ip_addr cline_addr;
 	int sdp_session_num;
+	int result = 0;
 
 	if(parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse sdp body \n");
-		return -1;
+		return -2;
 	}
 
 
@@ -1358,28 +1359,30 @@ static int test_sdp_cline(struct sip_msg *msg){
 
 		if(!(session->ip_addr.len >0 && session->ip_addr.s))
 			break;
+
 		if(session->pf==AF_INET){
 			if(str2ipbuf(&session->ip_addr,&cline_addr)<0){
 				LM_ERR("Couldn't get SDP C line ip  address \n");
-				break;
+				return -2;
 			}
 		}else if(session->pf==AF_INET6){
 			if(str2ip6buf(&session->ip_addr,&cline_addr)<0){
 				LM_ERR("Couldn't get SDP C line ip  address \n");
-				break;
+				return -2;
 			}
 		}else{
 			LM_ERR("Couldn t get sdp address type \n");
-			break;
+			return -2;
 		}
 
 
 		if(ip_addr_cmp(&msg->rcv.src_ip,&cline_addr)){
-			return -1;
+			result++;
 		}
 		sdp_session_num++;
 	}
-	return 1;
+
+	return (sdp_session_num-result)==0?-1:(sdp_session_num-result);
 }
 /*
  * test for occurrence of RFC1918 IP address in SDP
@@ -1492,8 +1495,8 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	/**
 	* test if sdp c line ip address matches with sip source address
 	*/
-	if((tests & NAT_UAC_TEST_SDP_CLINE) && (test_sdp_cline(msg) > 0))
-		return 1;
+	if((tests & NAT_UAC_TEST_SDP_CLINE))
+		return test_sdp_cline(msg);
 
 	/* no test succeeded */
 	return -1;
