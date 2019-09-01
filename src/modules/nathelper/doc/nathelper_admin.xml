@@ -666,8 +666,9 @@ fix_nated_register();
 			URI port differs from the source port of the request (Warning: this is
 			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
-			<emphasis>256</emphasis> -  Test  <quote>SDP C line IP Address</quote>
-			matches with SIP source IP address. if not matched ,returns 1. 
+			<emphasis>256</emphasis> -  Test if the sdp connection address is different 
+			from source ip address. It returns unmatched address count. if all address matched , returns -1,
+			function on error returns -2;
 			</para></listitem>
 			</itemizedlist>
 		<para>
