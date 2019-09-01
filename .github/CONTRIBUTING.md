@@ -94,7 +94,6 @@ Please start always with the prefix of the component (subsystem) that is modifie
 
   * first line (subject line) has to contain meaningful text about what that commit
   does, do not put just a reference to bug tracker or pull request items
-  * t
   * commit message must describe the changes done by the patch
     * other details (e.g., how to reproduce, backtrace, sip packets, ...) belong
     to content (comments) of the pull request. Example:
