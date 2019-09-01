@@ -45,6 +45,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/rand/kam_rand.h"
 
 #include "pidf.h"
 #include "utilities.h"
@@ -85,9 +86,9 @@ void lost_rand_str(char *dest, size_t lgth)
 	char charset[] = "0123456789"
 					 "abcdefghijklmnopqrstuvwxyz"
 					 "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	srand(time(NULL));
+	kam_srand(time(NULL));
 	while(lgth-- > 0) {
-		index = (double)rand() / RAND_MAX * (sizeof charset - 1);
+		index = (double)kam_rand() / RAND_MAX * (sizeof charset - 1);
 		*dest++ = charset[index];
 	}
 	*dest = '\0';
