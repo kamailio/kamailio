@@ -36,10 +36,10 @@
 #include "str.h"
 #include "socket_info.h"
 
-#define TOTAG_VALUE_LEN (MD5_LEN+CRC16_LEN+1)
+#define TOTAG_VALUE_LEN (MD5_LEN+CRC32_LEN+1)
 
 /*! generate variable part of to-tag for a request;
- * it will have length of CRC16_LEN, sufficiently
+ * it will have length of CRC32_LEN, sufficiently
  * long buffer must be passed to the function */
 static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 {
@@ -50,9 +50,23 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 	if (msg->via1==0) return; /* no via, bad message */
 	suffix_source[0]=msg->via1->host;
 	suffix_source[1]=msg->via1->port_str;
-	if (msg->via1->branch)
-		suffix_source[ss_nr++]=msg->via1->branch->value;
+	if (msg->via1->branch) {
+		suffix_source[2]=msg->via1->branch->value;
+	} else {
+		suffix_source[2].s = NULL;
+		suffix_source[2].len = 0;
+	}
 	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
+
+	suffix_source[0]=msg->via1->port_str;
+	suffix_source[1]=msg->via1->host;
+	if (msg->callid) {
+		suffix_source[2]=msg->callid->body;
+	} else {
+		suffix_source[2].s = NULL;
+		suffix_source[2].len = 0;
+	}
+	crcitt_string_array( tag_suffix+4, suffix_source, ss_nr );
 }
 
 static void inline init_tags( char *tag, char **suffix, 

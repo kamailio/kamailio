@@ -5,6 +5,7 @@
 #include "str.h"
 
 #define CRC16_LEN	4
+#define CRC32_LEN	8
 
 extern unsigned long int crc_32_tab[];
 extern unsigned short int ccitt_tab[];
