@@ -138,11 +138,14 @@ p_loc_t lost_new_loc(str rurn)
 
 	id = (char *)pkg_malloc(RANDSTRSIZE * sizeof(char) + 1);
 	if(id == NULL) {
+		pkg_free(ptr);
 		goto err;
 	}
 
 	urn = (char *)pkg_malloc(rurn.len + 1);
 	if(urn == NULL) {
+		pkg_free(ptr);
+		pkg_free(id);
 		goto err;
 	}
 
@@ -179,6 +182,10 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 
 	*lgth = 0;
 	content = xmlNodeGetNodeContentByName(cur, name, NULL);
+	if (content == NULL) {
+		LM_ERR("could not get XML node content\n");
+		return cnt;
+	}
 	len = strlen(content);
 
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
@@ -211,6 +218,10 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 
 	*lgth = 0;
 	content = xmlNodeGetAttrContentByName(cur, name);
+	if (content == NULL) {
+		LM_ERR("could not get XML node content\n");
+		return cnt;
+	}
 	len = strlen(content);
 
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
@@ -275,7 +286,10 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse geolocation header\n");
+		return res;
+	}
 
 	for(hf = msg->headers; hf; hf = hf->next) {
 		if((hf->type == HDR_OTHER_T)
@@ -318,7 +332,10 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	parse_headers(msg, HDR_PAI_F, 0);
+	if (parse_headers(msg, HDR_PAI_F, 0) == -1) {
+		LM_ERR("could not parse PAI header\n");
+		return res;
+	}
 
 	for(hf = msg->headers; hf; hf = hf->next) {
 		if((hf->type == HDR_PAI_T)
@@ -360,7 +377,10 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	parse_headers(msg, HDR_FROM_F, 0);
+	if(parse_headers(msg, HDR_FROM_F, 0) == -1) {
+		LM_ERR("failed to parse From header\n");
+		return res;
+	}
 
 	if(msg->from == NULL || get_from(msg) == NULL) {
 		LM_ERR("From header not found\n");
@@ -469,6 +489,7 @@ https://tools.ietf.org/html/rfc6155
 	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST "locationRequest");
 	if(!ptrLocationRequest) {
 		LM_ERR("locationRequest xmlNewNode() failed\n");
+		xmlFreeDoc(request);
 		return doc;
 	}
 	xmlDocSetRootElement(request, ptrLocationRequest);
@@ -485,6 +506,7 @@ https://tools.ietf.org/html/rfc6155
 	ptrDevice = xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "device", NULL);
 	if(!ptrDevice) {
 		LM_ERR("locationRequest xmlNewChild() failed\n");
+		xmlFreeDoc(request);
 		return doc;
 	}
 	/* properties */
@@ -497,12 +519,15 @@ https://tools.ietf.org/html/rfc6155
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
 	if(!xmlbuff) {
 		LM_ERR("locationRequest xmlDocDumpFormatMemory() failed\n");
+		xmlFreeDoc(request);
 		return doc;
 	}
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
 		LM_ERR("no more private memory\n");
+		xmlFree(xmlbuff);
+		xmlFreeDoc(request);
 		return doc;
 	}
 
@@ -568,6 +593,7 @@ https://tools.ietf.org/html/rfc5222
 	ptrFindService = xmlNewNode(NULL, BAD_CAST "findService");
 	if(!ptrFindService) {
 		LM_ERR("findService xmlNewNode() failed\n");
+		xmlFreeDoc(request);
 		return doc;
 	}
 	xmlDocSetRootElement(request, ptrFindService);
@@ -590,6 +616,7 @@ https://tools.ietf.org/html/rfc5222
 		ptrPoint = xmlNewChild(ptrLocation, NULL, BAD_CAST "Point", NULL);
 		if(!ptrPoint) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
+			xmlFreeDoc(request);
 			return doc;
 		}
 		xmlNewProp(ptrPoint, BAD_CAST "xmlns",
@@ -603,6 +630,7 @@ https://tools.ietf.org/html/rfc5222
 		ptrCircle = xmlNewChild(ptrLocation, NULL, BAD_CAST "gs:Circle", NULL);
 		if(!ptrCircle) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
+			xmlFreeDoc(request);
 			return doc;
 		}
 		xmlNewProp(ptrCircle, BAD_CAST "xmlns:gml",
@@ -619,6 +647,7 @@ https://tools.ietf.org/html/rfc5222
 				ptrCircle, NULL, BAD_CAST "gs:radius", BAD_CAST buf);
 		if(!ptrRadius) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
+			xmlFreeDoc(request);
 			return doc;
 		}
 		xmlNewProp(ptrRadius, BAD_CAST "uom",
@@ -631,12 +660,15 @@ https://tools.ietf.org/html/rfc5222
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
 	if(!xmlbuff) {
 		LM_ERR("findService request xmlDocDumpFormatMemory() failed\n");
+		xmlFreeDoc(request);
 		return doc;
 	}
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
 		LM_ERR("no more private memory\n");
+		xmlFree(xmlbuff);
+		xmlFreeDoc(request);
 		return doc;
 	}
 
