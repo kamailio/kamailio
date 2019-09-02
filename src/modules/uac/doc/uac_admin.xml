@@ -1278,6 +1278,43 @@ event_route[uac:reply] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_add">
+		<para>
+		Add a new UAC remote registration record. If one with the same
+		unique id is found, it is deleted.
+		</para>
+		<para>
+		The parameters are:
+		<itemizedlist>
+			<listitem><para>l_uuid</para></listitem>
+			<listitem><para>l_username</para></listitem>
+			<listitem><para>l_domain</para></listitem>
+			<listitem><para>r_username</para></listitem>
+			<listitem><para>r_domain</para></listitem>
+			<listitem><para>realm</para></listitem>
+			<listitem><para>auth_username</para></listitem>
+			<listitem><para>auth_password</para></listitem>
+			<listitem><para>auth_ha1</para></listitem>
+			<listitem><para>auth_proxy</para></listitem>
+			<listitem><para>expires</para></listitem>
+			<listitem><para>flags</para></listitem>
+			<listitem><para>reg_delay</para></listitem>
+			<listitem><para>socket</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		Use a dot (.) if no value should be set for auth_password or auth_ha1.
+		</para>
+
+		<example>
+		<title><function>uac.reg_add</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_add ...
+...
+			</programlisting>
+		</example>
+
 	</section>
 
 	<section>
@@ -1331,8 +1368,14 @@ event_route[uac:reply] {
 		</itemizedlist>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>auth_password</emphasis> - authentication password,
-			e.g.,: xxxxxx
+			<emphasis>auth_password</emphasis> - authentication password in
+			clear text, e.g.,: xxxxxx
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>auth_ha1</emphasis> - hashed (HA1) authentication password,
+			it has priority over auth_password.
 			</para></listitem>
 		</itemizedlist>
 		<itemizedlist>
