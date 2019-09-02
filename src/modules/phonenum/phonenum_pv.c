@@ -111,6 +111,13 @@ sr_phonenum_item_t *sr_phonenum_add_item(str *name)
 	return it;
 }
 
+int sr_phonenum_add_resid(str *rname)
+{
+	if(sr_phonenum_add_item(rname)==NULL) {
+		return -1;
+	}
+	return 0;
+}
 
 int pv_parse_phonenum_name(pv_spec_p sp, str *in)
 {
