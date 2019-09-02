@@ -1314,7 +1314,7 @@ event_route[uac:reply] {
 ...
 			</programlisting>
 		</example>
-
+	</section>
 	</section>
 
 	<section>
