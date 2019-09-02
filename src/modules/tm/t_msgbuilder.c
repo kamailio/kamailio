@@ -1487,7 +1487,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 
 	if (dialog->id.loc_tag.len<=0) {
 		/* From Tag is mandatory in RFC3261 - generate one if not provided */
-		generate_fromtag(&fromtag, &dialog->id.call_id);
+		generate_fromtag(&fromtag, &dialog->id.call_id, &(dialog->rem_uri));
 		loc_tag = dialog->id.loc_tag;
 		dialog->id.loc_tag = fromtag;
 	}

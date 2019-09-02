@@ -519,7 +519,7 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 
 	/* Generate fromtag if not present */
 	if (!fromtag) {
-		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, &ruri);
 	}
 
 	/* Fill in CSeq */
@@ -750,7 +750,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 
 	/* Generate fromtag if not present */
 	if (!fromtag) {
-		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, ruri);
 	}
 
 	/* Fill in CSeq */

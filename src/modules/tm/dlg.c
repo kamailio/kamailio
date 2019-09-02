@@ -310,7 +310,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 		_cid = &generated_cid;
 	}
 	if(_cid && (!_ltag)) { /* if not given, compute new one */
-		generate_fromtag(&generated_ltag, _cid);
+		generate_fromtag(&generated_ltag, _cid, _ruri);
 		_ltag = &generated_ltag;
 	}
 	if(_lseq == 0)

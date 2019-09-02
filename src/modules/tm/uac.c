@@ -60,7 +60,7 @@
 #include "t_fwd.h"
 #endif
 
-#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
+#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC32_LEN) /* length of FROM tags */
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
 /* where to go for the local request route ("tm:local-request") */
@@ -106,10 +106,11 @@ int uac_init(void)
 /*
  * Generate a From tag
  */
-void generate_fromtag(str* tag, str* callid)
+void generate_fromtag(str* tag, str* callid, str* ruri)
 {
-	     /* calculate from tag from callid */
+	/* calculate from tag from callid and request uri */
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
+	crcitt_string_array(&from_tag[MD5_LEN + 5], ruri, 1);
 	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
 }
@@ -949,7 +950,7 @@ int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	if (check_params(uac_r, to, from) < 0) goto err;
 
 	generate_callid(&callid);
-	generate_fromtag(&fromtag, &callid);
+	generate_fromtag(&fromtag, &callid, ruri);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &uac_r->dialog) < 0) {
 		LM_ERR("Error while creating new dialog\n");
@@ -996,7 +997,7 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	    generate_callid(&callid);
 	else
 	    callid = *uac_r->callid;
-	generate_fromtag(&fromtag, &callid);
+	generate_fromtag(&fromtag, &callid, ruri);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
 		LM_ERR("Error while creating temporary dialog\n");
