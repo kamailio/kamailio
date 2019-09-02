@@ -75,6 +75,7 @@ typedef struct _reg_uac
 	str   auth_proxy;
 	str   auth_username;
 	str   auth_password;
+	str   auth_ha1;
 	str   callid;
 	str   socket;
 	unsigned int cseq;
@@ -133,6 +134,7 @@ str r_domain_column = str_init("r_domain");
 str realm_column = str_init("realm");
 str auth_username_column = str_init("auth_username");
 str auth_password_column = str_init("auth_password");
+str auth_ha1_column = str_init("auth_ha1");
 str auth_proxy_column = str_init("auth_proxy");
 str expires_column = str_init("expires");
 str flags_column = str_init("flags");
@@ -513,6 +515,7 @@ int reg_ht_add(reg_uac_t *reg)
 	int len;
 	reg_uac_t *nr = NULL;
 	char *p;
+	int i;
 
 	if(reg==NULL || _reg_htable==NULL)
 	{
@@ -528,6 +531,7 @@ int reg_ht_add(reg_uac_t *reg)
 		+ reg->auth_proxy.len + 1
 		+ reg->auth_username.len + 1
 		+ reg->auth_password.len + 1
+		+ reg->auth_ha1.len + 1
 		+ reg->socket.len + 1
 		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
@@ -558,8 +562,16 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, 0);
 	reg_copy_shm(&nr->auth_username, &reg->auth_username, 0);
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
+	reg_copy_shm(&nr->auth_ha1, &reg->auth_ha1, 0);
 	reg_copy_shm(&nr->socket, &reg->socket, 0);
 	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
+
+	for(i=0; i<nr->auth_ha1.len; i++) {
+		/* ha1 to lowercase */
+		if(nr->auth_ha1.s[i] >= 'A' && nr->auth_ha1.s[i] <= 'F') {
+			nr->auth_ha1.s[i] += 32;
+		}
+	}
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
@@ -810,7 +822,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	HASHHEX response;
 	str *new_auth_hdr = NULL;
 	static struct authenticate_body auth;
-	struct uac_credential cred;
+	uac_credential_t cred;
 	char  b_ruri[MAX_URI_SIZE];
 	str   s_ruri;
 	char  b_hdrs[MAX_UACH_SIZE];
@@ -936,9 +948,15 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				goto error;
 			}
 		}
+		cred.aflags = 0;
 		cred.realm = auth.realm;
 		cred.user = ri->auth_username;
-		cred.passwd = ri->auth_password;
+		if(ri->auth_ha1.len > 0) {
+			cred.passwd = ri->auth_ha1;
+			cred.aflags |= UAC_FLCRED_HA1;
+		} else {
+			cred.passwd = ri->auth_password;
+		}
 		cred.next = NULL;
 
 		snprintf(b_ruri, MAX_URI_SIZE, "sip:%.*s",
@@ -1206,45 +1224,75 @@ void uac_reg_timer(unsigned int ticks)
 	}
 }
 
-#define reg_db_set_attr(attr, pos) do { \
+static int uac_reg_check_password(reg_uac_t *reg)
+{
+	int i;
+
+	if(reg->auth_password.len<=0 && reg->auth_ha1.len<=0) {
+		LM_ERR("no password value provided - ignoring record\n");
+		return -1;
+	}
+
+	if(reg->auth_ha1.len > 0 && reg->auth_ha1.len != HASHHEXLEN) {
+		LM_ERR("invalid HA2 length: %d - ignoring record\n", reg->auth_ha1.len);
+		return -1;
+	}
+	for(i=0; i<reg->auth_ha1.len; i++) {
+		if(!((reg->auth_ha1.s[i]>='0' && reg->auth_ha1.s[i]<'9')
+				|| (reg->auth_ha1.s[i]>='a' && reg->auth_ha1.s[i]<='f')
+				|| (reg->auth_ha1.s[i]>='A' && reg->auth_ha1.s[i]<='F'))) {
+			LM_ERR("invalid char %d in HA1 string: %.*s\n", i,
+					reg->auth_ha1.len, reg->auth_ha1.s);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+#define reg_db_set_attr(attr, pos, eval) do { \
 	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[pos])) { \
 		reg->attr.s = \
-		(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
+				(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
 		reg->attr.len = strlen(reg->attr.s); \
 		if(reg->attr.len == 0) { \
-			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
-					pos, db_cols[pos]->len, db_cols[pos]->s); \
-			return -1; \
+			if(eval == 0) { \
+				LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
+						pos, db_cols[pos]->len, db_cols[pos]->s); \
+				return -1; \
+			}  else { \
+				reg->attr.s = NULL; \
+			} \
 		} \
 	} \
 } while(0);
 
 
-static inline int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db_key_t *db_cols)
+static int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db_key_t *db_cols)
 {
 	memset(reg, 0, sizeof(reg_uac_t));;
 	/* check for NULL values ?!?! */
-	reg_db_set_attr(l_uuid, 0);
-	reg_db_set_attr(l_username, 1);
-	reg_db_set_attr(l_domain, 2);
-	reg_db_set_attr(r_username, 3);
-	reg_db_set_attr(r_domain, 4);
+	reg_db_set_attr(l_uuid, 0, 0);
+	reg_db_set_attr(l_username, 1, 0);
+	reg_db_set_attr(l_domain, 2, 0);
+	reg_db_set_attr(r_username, 3, 0);
+	reg_db_set_attr(r_domain, 4, 0);
 	/* realm may be empty */
-	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
-		reg->realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
-		reg->realm.len = strlen(reg->realm.s);
+	reg_db_set_attr(realm, 5, 1);
+	reg_db_set_attr(auth_username, 6, 0);
+	reg_db_set_attr(auth_password, 7, 1);
+	reg_db_set_attr(auth_ha1, 8, 1);
+	if(uac_reg_check_password(reg) < 0) {
+		return -1;
 	}
-	reg_db_set_attr(auth_username, 6);
-	reg_db_set_attr(auth_password, 7);
-	reg_db_set_attr(auth_proxy, 8);
-	reg->expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
-	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
-	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+	reg_db_set_attr(auth_proxy, 9, 0);
+	reg->expires = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
+	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[12].val.int_val;
+
 	/* socket may be empty */
-	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[12])) {
-		reg->socket.s = (char*)(RES_ROWS(db_res)[i].values[12].val.string_val);
-		reg->socket.len = strlen(reg->socket.s);
-	}
+	reg_db_set_attr(socket, 13, 1);
+
 	return 0;
 }
 
@@ -1257,7 +1305,7 @@ int uac_reg_load_db(void)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
-	db_key_t db_cols[13] = {
+	db_key_t db_cols[14] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1266,6 +1314,7 @@ int uac_reg_load_db(void)
 		&realm_column,
 		&auth_username_column,
 		&auth_password_column,
+		&auth_ha1_column,
 		&auth_proxy_column,
 		&expires_column,
 		&flags_column,
@@ -1392,7 +1441,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_func_t reg_dbf;
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
-	db_key_t db_cols[13] = {
+	db_key_t db_cols[14] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1401,6 +1450,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 		&realm_column,
 		&auth_username_column,
 		&auth_password_column,
+		&auth_ha1_column,
 		&auth_proxy_column,
 		&expires_column,
 		&flags_column,
@@ -1782,7 +1832,7 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if (rpc->struct_add(th, "SSSSSSSSSddddddS",
+	if (rpc->struct_add(th, "SSSSSSSSSSddddddS",
 				"l_uuid",        &reg->l_uuid,
 				"l_username",    &reg->l_username,
 				"l_domain",      &reg->l_domain,
@@ -1790,9 +1840,12 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 				"r_domain",      &reg->r_domain,
 				"realm",         &reg->realm,
 				"auth_username", &reg->auth_username,
-				"auth_password", &reg->auth_password,
+				"auth_password", (reg->auth_password.len)?
+										&reg->auth_password:&none,
+				"auth_ha1",      (reg->auth_ha1.len)?
+										&reg->auth_ha1:&none,
 				"auth_proxy",    (reg->auth_proxy.len)?
-				&reg->auth_proxy:&none,
+										&reg->auth_proxy:&none,
 				"expires",       (int)reg->expires,
 				"flags",         (int)reg->flags,
 				"diff_expires",  (int)(reg->timer_expires - tn),
@@ -2043,7 +2096,7 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
 
-	if(rpc->scan(ctx, "SSSSSSSSSdddS",
+	if(rpc->scan(ctx, "SSSSSSSSSSdddS",
 				&reg.l_uuid,
 				&reg.l_username,
 				&reg.l_domain,
@@ -2052,6 +2105,7 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 				&reg.realm,
 				&reg.auth_username,
 				&reg.auth_password,
+				&reg.auth_ha1,
 				&reg.auth_proxy,
 				&reg.expires,
 				&reg.flags,
@@ -2060,6 +2114,21 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 			)<1)
 	{
 		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+
+	if(reg.auth_password.len==1 && reg.auth_password.s[0] == '.') {
+		reg.auth_password.s = NULL;
+		reg.auth_password.len = 0;
+	}
+
+	if(reg.auth_ha1.len==1 && reg.auth_ha1.s[0] == '.') {
+		reg.auth_ha1.s = NULL;
+		reg.auth_ha1.len = 0;
+	}
+
+	if(uac_reg_check_password(&reg) < 0) {
+		rpc->fault(ctx, 500, "Failed to add record - invalid password or ha1");
 		return;
 	}
 
