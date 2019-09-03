@@ -1388,16 +1388,13 @@ static int sdp_1918(struct sip_msg *msg)
 {
 	str *ip;
 	int pf;
-	int ret;
 	int sdp_session_num, sdp_stream_num;
 	sdp_session_cell_t *sdp_session;
 	sdp_stream_cell_t *sdp_stream;
 
-	ret = parse_sdp(msg);
-	if(ret != 0) {
-		if(ret < 0)
-			LM_ERR("Unable to parse sdp\n");
-		return 0;
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp body\n");
+		return -1;
 	}
 
 	sdp_session_num = 0;
@@ -1462,7 +1459,7 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	/*
 	 * test for occurrences of RFC1918 addresses in SDP body
 	 */
-	if((tests & NAT_UAC_TEST_S_1918) && sdp_1918(msg))
+	if((tests & NAT_UAC_TEST_S_1918) && (sdp_1918(msg) > 0))
 		return 1;
 	/*
 	 * test for occurrences of RFC1918 addresses top Via
