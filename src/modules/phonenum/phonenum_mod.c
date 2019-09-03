@@ -66,7 +66,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"smode", PARAM_INT, &phonenum_smode},
-	{"resid", PARAM_STR|PARAM_USE_FUNC, &phonenum_resid_param},
+	{"resid", PARAM_STRING|PARAM_USE_FUNC, &phonenum_resid_param},
 	{0, 0, 0}
 };
 
