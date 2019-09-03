@@ -666,6 +666,7 @@ fix_nated_register();
 			URI port differs from the source port of the request (Warning: this is
 			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
+			<listitem><para>
 			<emphasis>256</emphasis> -  Test if the SDP connection address is different
 			from source IP address. It will work also with multiple connection address
 			lines.
