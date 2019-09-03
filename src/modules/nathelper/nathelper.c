@@ -100,7 +100,7 @@ MODULE_VERSION
 #define NAT_UAC_TEST_O_1918 0x20
 #define NAT_UAC_TEST_WS 0x40
 #define NAT_UAC_TEST_C_PORT 0x80
-
+#define NAT_UAC_TEST_SDP_CLINE 0x100
 
 #define DEFAULT_NATPING_STATE 1
 
@@ -123,6 +123,7 @@ static int fixup_fix_sdp(void **param, int param_no);
 static int fixup_add_contact_alias(void **param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
+static int test_sdp_cline(struct sip_msg *msg);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -1332,6 +1333,54 @@ static int contact_rport(struct sip_msg *msg)
 	}
 }
 
+/**
+* test SDP C line ip address and source IP address match
+* if all ip address matches, return 0
+* returns unmatched ip address count
+* on parse error, returns -1
+*/
+static int test_sdp_cline(struct sip_msg *msg){
+	sdp_session_cell_t* session;
+	struct ip_addr cline_addr;
+	int sdp_session_num = 0;
+	int result = 0;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp body\n");
+		return -1;
+	}
+
+	for(;;){
+		session = get_sdp_session(msg, sdp_session_num);
+		if(!session)
+			break;
+
+		if(!(session->ip_addr.len > 0 && session->ip_addr.s))
+			break;
+
+		if(session->pf==AF_INET){
+			if(str2ipbuf(&session->ip_addr,&cline_addr)<0){
+				LM_ERR("Couldn't get sdp c line IP address\n");
+				return -1;
+			}
+		}else if(session->pf==AF_INET6){
+			if(str2ip6buf(&session->ip_addr, &cline_addr)<0){
+				LM_ERR("Couldn't get sdp c line IP address\n");
+				return -1;
+			}
+		}else{
+			LM_ERR("Couldn't get sdp address type\n");
+			return -1;
+		}
+
+		if(ip_addr_cmp(&msg->rcv.src_ip,&cline_addr)){
+			result++;
+		}
+		sdp_session_num++;
+	}
+
+	return sdp_session_num - result;
+}
 /*
  * test for occurrence of RFC1918 IP address in SDP
  */
@@ -1439,6 +1488,12 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	 * port advertised in Contact
 	 */
 	if((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg) > 0))
+		return 1;
+
+	/**
+	* test if sdp c line ip address matches with sip source address
+	*/
+	if((tests & NAT_UAC_TEST_SDP_CLINE) && (test_sdp_cline(msg) > 0))
 		return 1;
 
 	/* no test succeeded */
