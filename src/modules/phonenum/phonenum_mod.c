@@ -112,8 +112,7 @@ static int phonenum_resid_param(modparam_t type, void* val)
 {
 	str rname;
 
-	rname.s = (char*)val;
-	rname.len = strlen(rname.s);
+	rname = *((str*)val);
 	if(sr_phonenum_add_resid(&rname) < 0) {
 		LM_ERR("failed to register result container with id: %.*s\n",
 				rname.len, rname.s);
