@@ -21,6 +21,22 @@
  *
  */
 
+/**
+ * \file
+ * \ingroup call_obj
+ * \brief call_obj :: Core module interface
+ *
+ * - Module: \ref call_obj
+ */
+
+/**
+ * \defgroup call_obj call_obj :: Identify calls using an increasing sequence of integers.
+ *
+ * It starts assigning an integer to a call. Next call gets next free
+ * integer in a ring. When a call finishes its assigned number shall be
+ * freed.
+ */
+
 #include <inttypes.h>
 
 #include "cobj.h"
@@ -43,11 +59,13 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 /**
- * Module parameters
+ * \name Module parameters
+ * @{
  */
-/* Actually, negative or zero values are not allowed. */
-int call_obj_start = 0;
-int call_obj_end = 0;
+int call_obj_start = 0;/**< Start value of counting sequence. Negative values not allowed. */
+int call_obj_end = 0; /**< End value of counting sequence. Negative values not allowed.*/
+
+/**@}*/
 
 /* module commands */
 static cmd_export_t cmds[] = {
@@ -213,6 +231,9 @@ static rpc_export_t rpc_cmds[] = {
 	{0, 0, 0, 0}
 };
 
+/**
+ * \brief Functions and parameters exported by call_obj module.
+ */
 struct module_exports exports = {
 	"call_obj",
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -251,13 +272,13 @@ static void mod_destroy(void)
 }
 
 /**
- * Looks for the Call-ID header
+ * \brief Looks for the Call-ID header
  * On error content pointed by s is undefined.
  *
- * @param msg - the sip message
- * @param s  pointer to str where we will store callid.
+ * \param msg - the sip message
+ * \param s  pointer to str where we will store callid.
  *
- * @returns 0 on success
+ * \return 0 on success
  */
 static int get_call_id(struct sip_msg *msg, str *s)
 {
@@ -422,11 +443,11 @@ error:
 }
 
 /**
- * Free an object.
+ * \brief Free an object.
  *
- * /param num_obj number of the object to free.
- * /return 1 on success.
- * /return 0 on error.
+ * \param num_obj number of the object to free.
+ * \return 1 on success.
+ * \return 0 on error.
  */
 static int ki_call_obj_free(sip_msg_t *msg, int num_obj)
 {
@@ -458,7 +479,7 @@ static sr_kemi_t sr_kemi_call_obj_exports[] = {
 /* clang-format on */
 
 /**
- *
+ * Register KEMI functions.
  */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
