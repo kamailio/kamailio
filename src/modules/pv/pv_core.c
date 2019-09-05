@@ -1575,13 +1575,29 @@ static inline str *cred_realm(struct sip_msg *rq)
 int pv_get_acc_username(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+	static char buf[MAX_URI_SIZE];
 	str* user;
+	str* realm;
 	struct sip_uri puri;
 	struct to_body* from;
+	str s;
 
 	/* try to take it from credentials */
 	user = cred_user(msg);
 	if (user) {
+		realm = cred_realm(msg);
+		if (realm) {
+			s.len = user->len+1+realm->len;
+			if (s.len > MAX_URI_SIZE) {
+				LM_ERR("uri too long\n");
+				return pv_get_null(msg, param, res);
+			}
+			s.s = buf;
+			memcpy(s.s, user->s, user->len);
+			(s.s)[user->len] = '@';
+			memcpy(s.s+user->len+1, realm->s, realm->len);
+			return pv_get_strval(msg, param, res, &s);
+		}
 		return pv_get_strval(msg, param, res, user);
 	}
 
@@ -1596,9 +1612,20 @@ int pv_get_acc_username(struct sip_msg *msg, pv_param_t *param,
 			LM_ERR("bad From URI\n");
 			return pv_get_null(msg, param, res);
 		}
-		return pv_get_strval(msg, param, res, &(puri.user));
+		s.len = puri.user.len + 1 + puri.host.len;
+		if (s.len > MAX_URI_SIZE) {
+			LM_ERR("from URI too long\n");
+			return pv_get_null(msg, param, res);
+		}
+		s.s = buf;
+		memcpy(s.s, puri.user.s, puri.user.len);
+		(s.s)[puri.user.len] = '@';
+		memcpy(s.s + puri.user.len + 1, puri.host.s, puri.host.len);
+	} else {
+		s.len = 0;
+		s.s = 0;
 	}
-	return pv_get_null(msg, param, res);
+	return pv_get_strval(msg, param, res, &s);
 }
 
 int pv_get_branch(struct sip_msg *msg, pv_param_t *param,
