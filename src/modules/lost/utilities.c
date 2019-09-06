@@ -186,22 +186,21 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 	if (content == NULL) {
 		LM_ERR("could not get XML node content\n");
 		return cnt;
+	} else {
+		len = strlen(content);
+		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
+		if(cnt == NULL) {
+			LM_ERR("no more private memory\n");
+			xmlFree(content);
+			return cnt;
+		}
+		memset(cnt, 0, len + 1);
+		memcpy(cnt, content, len);
+		cnt[len] = '\0';
 	}
-	len = strlen(content);
-
-	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
-	if(cnt == NULL) {
-		LM_ERR("No more private memory\n");
-		return cnt;
-	}
-
-	memset(cnt, 0, len + 1);
-	memcpy(cnt, content, len);
-	cnt[len] = '\0';
-
-	*lgth = strlen(cnt);
 
 	xmlFree(content);
+	*lgth = strlen(cnt);
 
 	return cnt;
 }
@@ -222,22 +221,21 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 	if (content == NULL) {
 		LM_ERR("could not get XML node content\n");
 		return cnt;
+	} else {
+		len = strlen(content);
+		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
+		if(cnt == NULL) {
+			LM_ERR("no more private memory\n");
+			xmlFree(content);
+			return cnt;
+		}
+		memset(cnt, 0, len + 1);
+		memcpy(cnt, content, len);
+		cnt[len] = '\0';
 	}
-	len = strlen(content);
-
-	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
-	if(cnt == NULL) {
-		LM_ERR("No more private memory\n");
-		return cnt;
-	}
-
-	memset(cnt, 0, len + 1);
-	memcpy(cnt, content, len);
-	cnt[len] = '\0';
-
-	*lgth = strlen(cnt);
 
 	xmlFree(content);
+	*lgth = strlen(cnt);
 
 	return cnt;
 }
@@ -329,12 +327,13 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 {
 	struct hdr_field *hf;
+	to_body_t *pai_body;
 	char *res = NULL;
 
 	*lgth = 0;
 
 	if (parse_headers(msg, HDR_PAI_F, 0) == -1) {
-		LM_ERR("could not parse PAI header\n");
+		LM_ERR("could not parse P-A-I header\n");
 		return res;
 	}
 
@@ -344,17 +343,37 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_PAI_HEADER, LOST_PAI_HEADER_SIZE)
 					== 0) {
-				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
-				if(res == NULL) {
+
+				LM_DBG("P-A-I body:  [%.*s]\n", hf->body.len, hf->body.s);
+
+				/* first, get some memory */
+				pai_body = pkg_malloc(sizeof(to_body_t));
+				if (pai_body == NULL) {
 					LM_ERR("no more private memory\n");
 					return res;
-				} else {
+				}
+				/* parse P-A-I body */
+				memset(pai_body, 0, sizeof(to_body_t));
+				parse_to(hf->body.s, hf->body.s + hf->body.len + 1, pai_body);
+				if (pai_body->error == PARSE_ERROR) {
+					LM_ERR("bad P-A-I header\n");
+					pkg_free(pai_body);
+					return res;
+				}
+				if (pai_body->error == PARSE_OK) {
+					res = (char *)pkg_malloc((pai_body->uri.len + 1) * sizeof(char));
+					if(res == NULL) {
+						LM_ERR("no more private memory\n");
+						pkg_free(pai_body);
+						return res;
+					} else {
+						memset(res, 0, pai_body->uri.len + 1);
+						memcpy(res, pai_body->uri.s, pai_body->uri.len + 1);
+						res[pai_body->uri.len] = '\0';
+						pkg_free(pai_body);
 
-					memset(res, 0, hf->body.len + 1);
-					memcpy(res, hf->body.s, hf->body.len + 1);
-					res[hf->body.len] = '\0';
-
-					*lgth = strlen(res);
+						*lgth = strlen(res);
+					}
 				}
 			} else {
 				LM_ERR("header '%.*s' length %d\n", hf->body.len, hf->body.s,
@@ -388,6 +407,9 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 		return res;
 	}
 	f_body = get_from(msg);
+
+	LM_DBG("From body:  [%.*s]\n", f_body->body.len, f_body->body.s);
+
 	res = (char *)pkg_malloc((f_body->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
 		LM_ERR("no more private memory\n");
