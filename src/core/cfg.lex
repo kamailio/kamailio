@@ -1955,7 +1955,7 @@ static void pp_endif()
 {
 	pp_ifdef_level_update(-1);
 	if(pp_sptr==0) {
-		LM_WARN("invalid position for preprocessor directive 'else'"
+		LM_WARN("invalid position for preprocessor directive 'endif'"
 				" - at %s line %d\n", (finame)?finame:"cfg", line);
 		return;
 	}
