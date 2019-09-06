@@ -2211,7 +2211,8 @@ int main(int argc, char** argv)
 		cfg_stream=fopen (cfg_file, "r");
 	}
 	if (cfg_stream==0){
-		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
+		fprintf(stderr, "ERROR: loading config file(%s): %s,"
+				" check file and directory permissions\n", cfg_file,
 				strerror(errno));
 		goto error;
 	}
@@ -2551,8 +2552,8 @@ try_again:
 	/* create runtime dir if doesn't exist */
 	if (stat(runtime_dir, &st) == -1) {
 		if(mkdir(runtime_dir, 0700) == -1) {
-			LM_ERR("failed to create runtime dir %s\n", runtime_dir);
-			fprintf(stderr,  "failed to create runtime dir %s\n", runtime_dir);
+			LM_ERR("failed to create runtime dir %s, check directory permissions\n", runtime_dir);
+			fprintf(stderr, "failed to create runtime dir %s, check directory permissions\n", runtime_dir);
 			goto error;
 		}
 		if(sock_uid!=-1 || sock_gid!=-1) {

@@ -350,7 +350,7 @@ int daemonize(char*  name,  int status_wait)
 		}
 		pid=getpid();
 		if ((pid_stream=fopen(pid_file, "w"))==NULL){
-			LM_WARN("unable to create pid file %s: %s\n",
+			LM_WARN("unable to create pid file %s: %s, check directory permissions\n",
 				pid_file, strerror(errno));
 			goto error;
 		}else{
