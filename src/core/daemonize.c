@@ -357,7 +357,7 @@ int daemonize(char*  name,  int status_wait)
 			fprintf(pid_stream, "%i\n", (int)pid);
 			fclose(pid_stream);
 			if(chown(pid_file, pid_uid, pid_gid)<0) {
-				LM_ERR("failed to chwon PID file: %s\n", strerror(errno));
+				LM_ERR("failed to chown PID file: %s\n", strerror(errno));
 				goto error;
 			}
 		}
@@ -385,7 +385,7 @@ int daemonize(char*  name,  int status_wait)
 				fprintf(pid_stream, "%i\n", (int)pid);
 				fclose(pid_stream);
 				if(chown(pgid_file, pid_uid, pid_gid)<0) {
-					LM_ERR("failed to chwon PGID file: %s\n", strerror(errno));
+					LM_ERR("failed to chown PGID file: %s\n", strerror(errno));
 					goto error;
 				}
 			}
