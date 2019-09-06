@@ -141,6 +141,9 @@ static pv_export_t mod_pvs[] = {
 	{{"Au", (sizeof("Au")-1)}, /* */
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
+	{{"AU", (sizeof("AU")-1)}, /* */
+		PVT_OTHER, pv_get_acc_user, 0,
+		0, 0, pv_init_iname, 1},
 	{{"bf", (sizeof("bf")-1)}, /* */
 		PVT_CONTEXT, pv_get_bflags, pv_set_bflags,
 		0, 0, 0, 0},

@@ -1572,6 +1572,37 @@ static inline str *cred_realm(struct sip_msg *rq)
 	return realm;
 }
 
+
+int pv_get_acc_user(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str* user;
+	struct sip_uri puri;
+	struct to_body* from;
+
+	/* try to take it from credentials */
+	user = cred_user(msg);
+	if (user) {
+		return pv_get_strval(msg, param, res, user);
+	}
+
+	/* from from uri */
+	if(parse_from_header(msg)<0)
+	{
+		LM_ERR("cannot parse FROM header\n");
+		return pv_get_null(msg, param, res);
+	}
+	if (msg->from && (from=get_from(msg)) && from->uri.len) {
+		if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) {
+			LM_ERR("bad From URI\n");
+			return pv_get_null(msg, param, res);
+		}
+		return pv_get_strval(msg, param, res, &(puri.user));
+	}
+	return pv_get_null(msg, param, res);
+}
+
+
 int pv_get_acc_username(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
