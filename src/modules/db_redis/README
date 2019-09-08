@@ -235,6 +235,7 @@ loadmodule "db_redis.so"
 #!define DBURL_ACC    "redis://127.0.0.1:6379/6"
 #!define DBURL_AUTH   "redis://127.0.0.1:6379/7"
 #!define DBURL_PERM   "redis://127.0.0.1:6379/8"
+#!define DBURL_DLG    "redis://127.0.0.1:6379/9"
 ...
 modparam("db_redis", "schema_path", "/usr/share/kamailio/db_redis/kamailio")
 modparam("db_redis", "keys", "version=entry:table_name")
@@ -242,6 +243,9 @@ modparam("db_redis", "keys", "location=entry:ruid&usrdom:username,domain&timer:p
 artition,keepalive")
 modparam("db_redis", "keys", "acc=entry:callid,time_hires&cid:callid")
 modparam("db_redis", "keys", "subscriber=entry:username,domain")
+modparam("db_redis", "keys", "dialog=entry:hash_entry,hash_id&cid:callid")
+modparam("db_redis", "keys", "dialog_vars=entry:hash_entry,hash_id,dialog_key&di
+alog:hash_entry,hash_id")
 ...
 modparam("usrloc", "db_url", DBURL_USRLOC)
 ...
@@ -250,6 +254,8 @@ modparam("acc_db", "db_url", DBURL_ACC)
 modparam("auth_db", "db_url", DBURL_AUTH)
 ...
 modparam("permissions", "db_url", DBURL_PERM)
+...
+modparam("dialog", "db_url", DBURL_DLG)
 ...
 
    Samples adding records for address table using 'redis-cli':
