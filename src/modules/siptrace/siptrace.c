@@ -335,9 +335,8 @@ static int mod_init(void)
 	}
 
 	if (load_dlg_api(&dlgb) < 0) {
-		LM_WARN("can't load dlg api. Will not install dialog callbacks.\n");
-	}
-	else {
+		LM_INFO("can't load dlg api. Will not install dialog callbacks.\n");
+	} else {
 		if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, trace_dialog, NULL, NULL) != 0) {
 			LM_ERR("failed to register dialog callbacks! Tracing dialogs won't be available\n");
 		}
