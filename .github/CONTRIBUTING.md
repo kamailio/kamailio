@@ -65,8 +65,6 @@ and commit history, there are several *rules* required for each contribution.
   * code **should** be formatted with **clang-format** or to match the style of
   the component that the commit applies to. The `.clang-format` file is part of
   Kamailio source code tree, in the root folder.
-  * code **should** be use Linux style line endings and not Windows style
-  (CRLF). If you use a Windows editor, please configure it this way.
 
 ### Commit Message Rules ###
 
