@@ -1951,6 +1951,8 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 					+ iteration,
 			natping_processes * natping_interval, options);
 	if(rval < 0) {
+		if(buf != NULL)
+			pkg_free(buf);
 		LM_ERR("failed to fetch contacts\n");
 		goto done;
 	}
