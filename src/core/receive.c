@@ -221,7 +221,7 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
  *  WARNING: buf must be 0 terminated (buf[len]=0) or some things might
  * break (e.g.: modules/textops)
  */
-int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
+int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 {
 	struct sip_msg *msg;
 	struct run_act_ctx ctx;
@@ -238,6 +238,12 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	unsigned int cidlockset = 0;
 	int errsipmsg = 0;
 	int exectime = 0;
+
+	if(rcv_info->bind_address==NULL) {
+		LM_ERR("critical - incoming message without local socket [%.*s ...]\n",
+				(len>128)?128:len, buf);
+		return -1;
+	}
 
 	if(ksr_evrt_received_mode!=0) {
 		if(ksr_evrt_received(buf, len, rcv_info)<0) {
