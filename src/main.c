@@ -1567,12 +1567,20 @@ int main_loop(void)
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
 						((sendipv4_tls==0) ||
-							(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
+						 (sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST)))) {
 					sendipv4_tls=si;
+					if(sendipv4_tcp==0) {
+						sendipv4_tcp=si;
+					}
+				}
 				if( ((sendipv6_tls==0) ||
 							(sendipv6_tls->flags&(SI_IS_LO|SI_IS_MCAST))) &&
-						(si->address.af==AF_INET6))
+						(si->address.af==AF_INET6)) {
 					sendipv6_tls=si;
+					if(sendipv6_tcp==0) {
+						sendipv6_tcp=si;
+					}
+				}
 			}
 		}
 #endif /* USE_TLS */
