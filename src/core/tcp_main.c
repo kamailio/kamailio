@@ -1136,18 +1136,31 @@ again:
 	su2ip_addr(&ip, &my_name);
 find_socket:
 #ifdef USE_TLS
-	if (unlikely(type==PROTO_TLS))
+	if (unlikely(type==PROTO_TLS)) {
 		*res_si=find_si(&ip, 0, PROTO_TLS);
-	else
-#endif
+	} else {
 		*res_si=find_si(&ip, 0, PROTO_TCP);
-	
+	}
+#else
+	*res_si=find_si(&ip, 0, PROTO_TCP);
+#endif
+
 	if (unlikely(*res_si==0)){
 		LM_WARN("%s: could not find corresponding"
 				" listening socket for %s, using default...\n",
 					su2a(server, sizeof(*server)), ip_addr2a(&ip));
+#ifdef USE_TLS
+		if (unlikely(type==PROTO_TLS)) {
+			if (server->s.sa_family==AF_INET) *res_si=sendipv4_tls;
+			else *res_si=sendipv6_tls;
+		} else {
+			if (server->s.sa_family==AF_INET) *res_si=sendipv4_tcp;
+			else *res_si=sendipv6_tcp;
+		}
+#else
 		if (server->s.sa_family==AF_INET) *res_si=sendipv4_tcp;
 		else *res_si=sendipv6_tcp;
+#endif
 	}
 	*res_local_addr=*from;
 	return s;
