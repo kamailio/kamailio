@@ -489,7 +489,9 @@ modparam("acc", "early_media", 1)
 		<title><varname>failed_transaction_flag</varname> (integer)</title>
 		<para>
 		Per transaction flag which says if the transaction should be
-		accounted also in case of failure (status>=300).
+		accounted also in case of failure (SIP status code >= 300).
+		This flag triggers accouting when the whole transaction fails
+		(on the server side).
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -679,12 +681,12 @@ modparam("acc", "log_flag", 2)
 		<para>
 		Request flag which needs to be set to account missed calls via syslog.
 		This can be used to e.g. account failures during the call setup phase
-		from the callee side, for example if you do forking to several
+		from the callee (client) side, for example if you do forking to several
 		destinations.
 		</para>
 		<para>
-		Keep in mind that this flag is reset after processing. Therefore it is
-		necessary to set it again e.g. in a failure_route if you do serial
+		Keep in mind that this flag is reset after branch completion. Therefore
+		it is necessary to set it again e.g. in a failure_route if you do serial
 		forking and want to log all attempts.
 		</para>
 		<para>
@@ -775,8 +777,15 @@ modparam("acc", "db_flag", 2)
 	<section id="acc.p.db_missed_flag">
 		<title><varname>db_missed_flag</varname> (integer)</title>
 		<para>
-		Request flag which needs to be set to account missed
-		calls -- database specific.
+		Request flag which needs to be set to account missed calls via database.
+		This can be used to e.g. account failures during the call setup phase
+		from the callee (client) side, for example if you do forking to several
+		destinations.
+		</para>
+		<para>
+		Keep in mind that this flag is reset after branch completion. Therefore
+		it is necessary to set it again e.g. in a failure_route if you do serial
+		forking and want to log all attempts.
 		</para>
 		<para>
 		Default value is not-set (no flag).
