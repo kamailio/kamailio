@@ -189,22 +189,30 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg) {
  */
 static int isc_check_ruri(ims_spt *spt, struct sip_msg *msg) {
 	char buf[256];
+	char buf2[256];
 	regex_t comp;
 
 	if (spt->request_uri.len >= sizeof(buf)) {
-	    LM_ERR("RURI \"%.*s\" is to long to be processed (max %d bytes)\n", spt->request_uri.len, spt->request_uri.s, (int) (sizeof(buf) - 1));
+	    LM_ERR("RURI regexp \"%.*s\" is too long to be compiled (max %d bytes)\n", spt->request_uri.len, spt->request_uri.s, (int) (sizeof(buf) - 1));
+	    return FALSE;
+	}
+
+	if (msg->first_line.u.request.uri.len >= sizeof(buf2)) {
+	    LM_ERR("RURI \"%.*s\" is too long to be processed (max %d bytes)\n", msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s, (int) (sizeof(buf2) - 1));
 	    return FALSE;
 	}
 
 	/* compile the regex for content */
 	memcpy(buf, spt->request_uri.s, spt->request_uri.len);
 	buf[spt->request_uri.len] = 0;
-	if(regcomp(&(comp), buf, REG_ICASE | REG_EXTENDED) != 0) {
+	if (regcomp(&(comp), buf, REG_ICASE | REG_EXTENDED) != 0) {
 	    LM_ERR("Error compiling the following regexp for RURI content: %.*s\n", spt->request_uri.len, spt->request_uri.s);
 	    return FALSE;
 	}
 
-	if (regexec(&(comp), buf, 0, NULL, 0) == 0) //regex match
+	memcpy(buf2, msg->first_line.u.request.uri.s, msg->first_line.u.request.uri.len);
+	buf2[msg->first_line.u.request.uri.len] = 0;
+	if (regexec(&(comp), buf2, 0, NULL, 0) == 0) //regex match
 	{
 		regfree(&(comp));
 		return TRUE;
