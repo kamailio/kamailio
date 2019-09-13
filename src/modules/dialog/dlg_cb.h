@@ -109,6 +109,7 @@ void run_dlg_callbacks( int type ,
 
 void run_load_callbacks( void );
 
+void run_dlg_load_callbacks(struct dlg_cell *dlg);
 
 /*!
  * \brief Function that returns valid SIP message from given dialog callback parameter struct

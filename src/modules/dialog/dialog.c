@@ -707,7 +707,6 @@ static int mod_init(void)
 		}
 	}
 
-	destroy_dlg_callbacks( DLGCB_LOADED );
 
 	/* timer process to send keep alive requests */
 	if(dlg_ka_timer>0 && dlg_ka_interval>0)
