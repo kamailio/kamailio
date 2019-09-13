@@ -178,6 +178,42 @@ CC_EXTRA_OPTS ?=
 # extra LD command line options
 LD_EXTRA_OPTS ?=
 
+
+# enable workaround for libssl 1.1+ to set shared mutex attribute
+LIBSSL_SET_MUTEX_SHARED ?=
+ifneq ($(LIBSSL_SET_MUTEX_SHARED), 1)
+
+ifeq ($(CROSS_COMPILE),)
+LIBSSL_PKGCONFIG=$(shell \
+	if pkg-config --exists libssl; then \
+		echo 'pkg-config libssl'; \
+	fi)
+endif
+
+ifneq ($(LIBSSL_PKGCONFIG),)
+
+# numerical version (good for comparisons: A.B.C => A*1000000+B*1000+C)
+LIBSSL_VERNUM:= $(shell $(LIBSSL_PKGCONFIG) --modversion | sed -e 's/^[^0-9]*//' \
+		-e 's/^\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$$/\1/g' | \
+		(IFS=. read A B C D; R=0; \
+		[ -n "$$A" ] && R=`expr $$R \* 1000 + $$A` && \
+		[ -n "$$B" ] && R=`expr $$R \* 1000 + $$B` && \
+		[ -n "$$C" ] && R=`expr $$R \* 1000 + $$C`; echo $$R ) )
+
+# libssl version greater or equal than 1.1
+ifeq ($(shell [ $(LIBSSL_VERNUM) -ge 1001000 ] && echo libssl11plus), libssl11plus)
+LIBSSL_SET_MUTEX_SHARED := 1
+endif
+
+endif
+
+endif
+
+ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
+CC_EXTRA_OPTS+= -pthread -DKSR_PTHREAD_MUTEX_SHARED
+LD_EXTRA_OPTS+= -pthread -rdynamic -ldl -Wl,-Bsymbolic-functions
+endif
+
 ifeq ($(OS), solaris)
 #use GNU versions
 INSTALL ?= ginstall
