@@ -1,5 +1,10 @@
 # OpenSSL Shared Mutex #
 
+**IMPORTANT: the workaround of using this preloaded shared library is no longer
+needed starting with Kamailio v5.3.0-pre1. The code of this shared library
+has been included in the core of Kamailio and the same behaviour is now
+achieved by default.**
+
 This is a shared library required as a short term workaround for using Kamailio
 with OpenSSL (libssl) v1.1. It has to be pre-loaded before starting Kamailio.
 
