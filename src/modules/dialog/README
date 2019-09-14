@@ -2248,8 +2248,8 @@ Chapter 2. Developer Guide
        NULL only for DLGCB_CREATED callback type, which is not a per
        dialog type.
      * int type - types of callbacks; more types may be register for the
-       same callback function; only DLGCB_CREATED must be register alone.
-       Possible types:
+       same callback function; only DLGCB_LOADED and DLGCB_CREATED must be
+       registered alone. Possible types:
           + DLGCB_LOADED
           + DLGCB_CREATED - called when a new dialog is created - it's a
             global type (not associated to any dialog)
