@@ -112,6 +112,9 @@ void generate_fromtag(str* tag, str* callid, str* ruri)
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
 	if(ruri) {
 		crcitt_string_array(&from_tag[MD5_LEN + 5], ruri, 1);
+	} else {
+		/* prevent shorter tag in this case, to be changed */
+		crcitt_string_array(&from_tag[MD5_LEN + 5], callid, 1);
 	}
 	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
