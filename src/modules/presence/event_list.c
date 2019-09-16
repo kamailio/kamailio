@@ -150,6 +150,7 @@ int add_event(pres_ev_t* event)
 		if(ev== NULL)
 		{
 			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+			parsed_event.params.list = NULL;
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
