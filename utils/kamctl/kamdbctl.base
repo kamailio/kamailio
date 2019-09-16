@@ -205,16 +205,11 @@ merr() {
 #
 get_answer ()
 {
-    value=$1
-    question=$2
-    if [ "${value}" = "ask" ]; then
-        echo -n "$question"
-        read ANSWER
-    else
-        ANSWER=${value}
-    fi
-    ANSWER=${ANSWER:0:1}
-    ANSWER=${ANSWER/Y/y}
-    ANSWER=${ANSWER/N/n}
+	value=$1
+	question=$2
+	if [ "${value}" = "ask" ]; then
+		echo -n "$question"
+		read value
+	fi
+	ANSWER=$(echo ${value} | grep -o -e '[YyNn]' | sed -e 's/Y/y/' -e 's/N/n/')
 }
-
