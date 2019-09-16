@@ -142,6 +142,7 @@ int add_event(pres_ev_t *event)
 		ev = (pres_ev_t *)shm_malloc(sizeof(pres_ev_t));
 		if(ev == NULL) {
 			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+			parsed_event.params.list = NULL;
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
