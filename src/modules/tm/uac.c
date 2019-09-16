@@ -110,7 +110,9 @@ void generate_fromtag(str* tag, str* callid, str* ruri)
 {
 	/* calculate from tag from callid and request uri */
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
-	crcitt_string_array(&from_tag[MD5_LEN + 5], ruri, 1);
+	if(ruri) {
+		crcitt_string_array(&from_tag[MD5_LEN + 5], ruri, 1);
+	}
 	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
 }
