@@ -40,6 +40,7 @@ int k_sd_journal_send_xavp(str *rname)
 
 	if (!rxavp || rxavp->val.type != SR_XTYPE_XAVP) {
 		LM_ERR("not a valid xavp: %.*s?\n", rname->len, rname->s);
+		return -1;
 	}
 
 	/* first, count xavp nodes */
