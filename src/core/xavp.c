@@ -1030,9 +1030,14 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 			break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avp->val.v.s.s);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
+				if(avp->val.v.s.len == 0) {
+					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
+						avp->name.len, avp->name.s);
+				} else {
+					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
 						avp->name.len, avp->name.s,
 						avp->val.v.s.len, avp->val.v.s.s);
+				}
 				if(ostr.len<=0 || ostr.len>=olen-rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n",
 							ostr.len, olen-rlen);
