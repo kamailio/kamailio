@@ -1067,7 +1067,6 @@ static int build_iface_list(void)
 		struct rtgenmsg g;
 	} req;
 
-	int seq = 0;
 	int rtn = 0;
 	struct nlmsghdr*  nlp;
 	struct ifaddrmsg *ifi;
