@@ -224,8 +224,7 @@ static const char* dst_blst_stats_get_doc[] = {
 #endif
 
 
-
-#define MAX_CTIME_LEN 128
+#define MAX_CTIME_LEN 25
 
 /* up time */
 static char up_since_ctime[MAX_CTIME_LEN];
@@ -381,13 +380,14 @@ static void core_uptime(rpc_t* rpc, void* c)
 {
 	void* s;
 	time_t now;
+	char buf[MAX_CTIME_LEN];
 	str snow;
+	snow.s = buf;
 
 	time(&now);
 
 	if (rpc->add(c, "{", &s) < 0) return;
-	snow.s = ctime(&now);
-	if(snow.s) {
+	if(ctime_r(&now, snow.s)) {
 		snow.len = strlen(snow.s);
 		if(snow.len>2 && snow.s[snow.len-1]=='\n') snow.len--;
 		rpc->struct_add(s, "S", "now", &snow);
@@ -1187,21 +1187,14 @@ error:
 
 int rpc_init_time(void)
 {
-	char *t;
-	t=ctime(&up_since);
-	if (strlen(t)+1>=MAX_CTIME_LEN) {
-		ERR("Too long data %d\n", (int)strlen(t));
+	char t[MAX_CTIME_LEN];
+	int len;
+	if (! ctime_r(&up_since, t)) {
+		ERR("Invalid time value\n");
 		return -1;
 	}
 	strcpy(up_since_ctime, t);
-	t = up_since_ctime + strlen(up_since_ctime);
-	while(t>up_since_ctime) {
-		if(*t=='\0' || *t=='\r' || *t=='\n') {
-			*t = '\0';
-		} else {
-			break;
-		}
-		t--;
-	}
+	len = strlen(up_since_ctime);
+	if(len>2 && up_since_ctime[len-1]=='\n') up_since_ctime[len-1]='\0';
 	return 0;
 }
