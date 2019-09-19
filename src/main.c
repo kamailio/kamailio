@@ -1436,6 +1436,7 @@ int main_loop(void)
 					if (arm_timer()<0) goto error;
 					timer_main();
 				}else{
+					/* do nothing for main timer */
 				}
 
 		if(sr_wtimer_start()<0) {
