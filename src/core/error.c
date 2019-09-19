@@ -39,7 +39,7 @@ int ser_error=-1;
 int prev_ser_error=-1;
 
 int err2reason_phrase( 
-	int ser_error,  /* current internal ser error */
+	int int_error,   /* current internal ser error */
 	int *sip_error,  /* the sip error code to which ser 	
 					    ser error will be turned */
 	char *phrase,    /* resulting error text */
@@ -49,22 +49,22 @@ int err2reason_phrase(
 
 	char *error_txt;
 
-	switch( ser_error ) {
+	switch( int_error ) {
 		case E_SEND:
 			error_txt="Unfortunately error on sending to next hop occurred";
-			*sip_error=-ser_error;
+			*sip_error=-int_error;
 			break;
 		case E_BAD_ADDRESS:
 			error_txt="Unresolvable destination";
-			*sip_error=-ser_error;
+			*sip_error=-int_error;
 			break;
 		case E_BAD_REQ:
 			error_txt="Bad Request";
-			*sip_error=-ser_error;
+			*sip_error=-int_error;
 			break;
 		case E_BAD_URI:
 			error_txt="Regretfully, we were not able to process the URI";
-			*sip_error=-ser_error;
+			*sip_error=-int_error;
 			break;
 		case E_BAD_TUPEL:
 			error_txt="Transaction tuple incomplete";
@@ -105,7 +105,7 @@ int err2reason_phrase(
 
 		case E_CANCELED:
 			error_txt="transaction canceled";
-			*sip_error=-ser_error;
+			*sip_error=-int_error;
 			break;
 
 		case E_OUT_OF_MEM:
@@ -125,7 +125,7 @@ int err2reason_phrase(
 			break;
 	}
 	return snprintf( phrase, etl, "%s (%d/%s)", error_txt, 
-		-ser_error, signature );
+		-int_error, signature );
 }
 
 char *error_text( int code )
