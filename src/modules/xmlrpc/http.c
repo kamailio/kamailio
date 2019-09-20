@@ -67,6 +67,7 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 		LM_ERR("out of pkg memory\n");
 		goto error;
 	}
+	memset(vb, 0, sizeof(struct via_body));
 
 	msg->h_via1 = pkg_malloc(sizeof(hdr_field_t));
 	if (!msg->h_via1) {
@@ -74,7 +75,6 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 		goto error;
 	}
 	memset(msg->h_via1, 0, sizeof(hdr_field_t));
-	memset(vb, 0, sizeof(struct via_body));
 
 	/* FIXME: The code below would break if the VIA prefix
 	 * gets changed in config.h
@@ -121,10 +121,12 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 error:
 	if (vb) {
 		free_via_list(vb);
-		pkg_free(vb);
 	}
 
-	if (msg->h_via1) pkg_free(msg->h_via1);
+	if (msg->h_via1) {
+		pkg_free(msg->h_via1);
+		msg->h_via1 = 0;
+	}
 	return -1;
 }
 
