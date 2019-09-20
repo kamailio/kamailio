@@ -75,12 +75,12 @@ def traverse_routes(_level, _name):
 
 
 if len(sys.argv) < 2:
-	raise "usage: %s configuration-file [max_depth]" % sys.argv[0]
+	raise Exception('wrong number of arguments\nusage: ' + sys.argv[0] + ' configuration-file [max_depth]')
 if len(sys.argv) == 3:
 	max_depth = int(sys.argv[2])
 cfg = file(sys.argv[1], "r")
 if cfg is None:
-	raise "Missing config file"
+	raise Exception ('Missing config file')
 line = cfg.readline()
 rt = routes
 while line:
