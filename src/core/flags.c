@@ -66,10 +66,6 @@ int flag_in_range( flag_t flag ) {
 		LM_ERR("message flag %d too high; MAX=%d\n", flag, MAX_FLAG );
 		return 0;
 	}
-	if ((int)flag<0) {
-		LM_ERR("message flag (%d) must be in range 0..%d\n", flag, MAX_FLAG );
-		return 0;
-	}
 	return 1;
 }
 
