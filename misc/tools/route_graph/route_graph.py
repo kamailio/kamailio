@@ -37,6 +37,7 @@ re_call_route = re.compile("^(.*\([\s\t!]*)?route\(\"?([A-Za-z0-9-_]+)\"?\)", re
 routes = {}
 f_routes = {}
 b_routes = {}
+or_routes = {}
 r_routes = {}
 s_routes = {}
 e_routes = {}
@@ -104,9 +105,13 @@ while line:
 				if rname is None:
 					rname = "failure"
 			elif rtype == "onreply_":
-				rt = r_routes
+				rt = or_routes
 				if rname is None:
 					rname = "onreply"
+			elif rtype == "reply_":
+				rt = r_routes
+				if rname is None:
+					rname = "reply"
 			elif rtype == "onsend_":
 				rt = s_routes
 				if rname is None:
@@ -130,8 +135,11 @@ while line:
 				rt = f_routes
 				rname = "failure"
 			elif rtype == "onreply_":
-				rt = r_routes
+				rt = or_routes
 				rname = "onreply"
+			elif rtype == "reply_":
+				rt = r_routes
+				rname = "reply"
 			elif rtype == "onsend_":
 				rt = s_routes
 				rname = "onsend"
@@ -151,7 +159,8 @@ while line:
 log("routes: %s" % (routes))
 log("branch_routes: %s" % (b_routes))
 log("failure_routes: %s" % (f_routes))
-log("onreply_routes: %s" % (r_routes))
+log("onreply_routes: %s" % (or_routes))
+log("reply_routes: %s" % (r_routes))
 log("onsend_routes: %s" % (s_routes))
 log("event_routes: %s" % (e_routes))
 
@@ -193,8 +202,15 @@ if len(f_routes) > 0:
 		for r in f_routes[fr]:
 			traverse_routes(1, r)
 
-if len(r_routes) > 0:
+if len(or_routes) > 0:
 	print "\nOnreply routes\n--------------"
+	for onr in or_routes.keys():
+		print "\n%s" % (onr)
+		for r in or_routes[onr]:
+			traverse_routes(1, r)
+
+if len(r_routes) > 0:
+	print "\nReply routes\n--------------"
 	for onr in r_routes.keys():
 		print "\n%s" % (onr)
 		for r in r_routes[onr]:
