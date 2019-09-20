@@ -1565,7 +1565,7 @@ int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
 			return -1;
 	}
 	if (s->n <= SEL_POS+1) {
-		char buff[25];
+		char buff[26];
 		if (! asctime_r(&tm, buff)) {
 			ERR("Invalid time value\n");
 			return -1;

@@ -224,7 +224,7 @@ static const char* dst_blst_stats_get_doc[] = {
 #endif
 
 
-#define MAX_CTIME_LEN 25
+#define MAX_CTIME_LEN 26
 
 /* up time */
 static char up_since_ctime[MAX_CTIME_LEN];
