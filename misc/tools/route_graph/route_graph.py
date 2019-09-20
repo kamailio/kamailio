@@ -79,7 +79,7 @@ if len(sys.argv) < 2:
 if len(sys.argv) == 3:
 	max_depth = int(sys.argv[2])
 cfg = file(sys.argv[1], "r")
-if cfg == None:
+if cfg is None:
 	raise "Missing config file"
 line = cfg.readline()
 rt = routes
@@ -90,40 +90,40 @@ while line:
 		main_match = re_main_route.search(line)
 		def_match = re_def_route.search(line)
 		call_match = re_call_route.search(line)
-		if not call_match == None:
+		if not call_match is None:
 			log("CALL: " + line)
 			name = call_match.group(2)
 			log(rname +":"+name)
 			rt[rname].append(name)
-		elif not def_match == None:
+		elif not def_match is None:
 			log("DEF: " + line)
 			rtype = def_match.group(1)
 			rname = def_match.group(3)
 			if rtype == "failure_":
 				rt = f_routes
-				if rname == None:
+				if rname is None:
 					rname = "failure"
 			elif rtype == "onreply_":
 				rt = r_routes
-				if rname == None:
+				if rname is None:
 					rname = "onreply"
 			elif rtype == "onsend_":
 				rt = s_routes
-				if rname == None:
+				if rname is None:
 					rname = "onsend"
 			elif rtype == "branch_":
 				rt = b_routes
-				if rname == None:
+				if rname is None:
 					rname = "branch"
 			elif rtype == "event_":
 				rt = e_routes
-				if rname == None:
+				if rname is None:
 					rname = "event"
 			else:
 				rt = routes
 			log(rname)
 			rt[rname] = []
-		elif not main_match == None:
+		elif not main_match is None:
 			log("MAIN: " + line)
 			rtype = main_match.group(1)
 			if rtype == "failure_":
