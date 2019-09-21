@@ -247,8 +247,6 @@ static inline int generate_random_secret(void)
 		return -1;
 	}
 
-	/* srandom(time(0));  -- seeded by core */
-
 	for(i = 0; i < RAND_SECRET_LEN; i++) {
 		sec_rand1[i] = 32 + (int)(95.0 * kam_rand() / (KAM_RAND_MAX + 1.0));
 	}
