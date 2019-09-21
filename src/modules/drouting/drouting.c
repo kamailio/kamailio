@@ -52,7 +52,7 @@
 
 /*** DB relatede stuff ***/
 /* parameters  */
-static str db_url = {NULL, 0};
+static str db_url           = str_init(DEFAULT_RODB_URL);
 static str drg_table = str_init("dr_groups");
 static str drd_table = str_init("dr_gateways");
 static str drr_table = str_init("dr_rules");
