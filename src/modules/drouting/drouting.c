@@ -433,7 +433,6 @@ static int dr_child_init(int rank)
 		LM_ERR("cannot select table \"%.*s\"\n", drg_table.len, drg_table.s);
 		return -1;
 	}
-	kam_srand(getpid() + time(0) + rank);
 	return 0;
 }
 
