@@ -323,7 +323,6 @@ static int mod_init(void)
 
 	if(reg_db_url.s && reg_db_url.len>=0)
 	{
-		kam_srand(17 * getpid() + time(0));
 		if(!reg_contact_addr.s || reg_contact_addr.len<=0)
 		{
 			LM_ERR("contact address parameter not set\n");
@@ -386,8 +385,6 @@ static int child_init(int rank)
 {
 	int pid;
 
-	kam_srand((11 + rank) * getpid() * 17 +  time(0));
-
 	if (rank!=PROC_MAIN)
 		return 0;
 
@@ -406,7 +403,6 @@ static int child_init(int rank)
 		if (cfg_child_init())
 			return -1;
 
-		kam_srand(getpid() * 17 +  time(0));
 		uac_reg_load_db();
 		LM_DBG("run initial uac registration routine\n");
 		uac_reg_timer(0);
