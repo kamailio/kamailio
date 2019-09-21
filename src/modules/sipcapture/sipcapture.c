@@ -869,9 +869,6 @@ static int mod_init(void)
 	}
 #endif
 
-	kam_srand(time(NULL));
-
-
 	if(db_insert_mode) {
 		LM_INFO("INFO: sipcapture: mod_init: you have enabled INSERT DELAYED \
 				Make sure your DB can support it\n");
