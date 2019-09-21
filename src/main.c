@@ -2248,9 +2248,9 @@ try_again:
 	}
 	seed+=getpid()+time(0);
 	LM_DBG("seeding PRNG with %u\n", seed);
-	kam_srand(seed);
-	fastrand_seed(kam_rand());
-	srandom(kam_rand()+time(0));
+	fastrand_seed(seed);
+	kam_srand(fastrand());
+	srandom(fastrand()+time(0));
 	LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
 
 	/*register builtin  modules*/
