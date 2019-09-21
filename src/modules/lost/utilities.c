@@ -86,7 +86,6 @@ void lost_rand_str(char *dest, size_t lgth)
 	char charset[] = "0123456789"
 					 "abcdefghijklmnopqrstuvwxyz"
 					 "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	kam_srand(time(NULL));
 	while(lgth-- > 0) {
 		index = (double)kam_rand() / RAND_MAX * (sizeof charset - 1);
 		*dest++ = charset[index];
