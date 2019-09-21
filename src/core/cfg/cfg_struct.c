@@ -682,7 +682,7 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
 	if (i > 0)
 		memcpy(	new_array,
 				old_array,
-				inst_size * i);
+				(size_t) inst_size * i);
 
 	memset((char*)new_array + inst_size * i, 0, inst_size);
 	*new_group = (cfg_group_inst_t *)((char*)new_array + inst_size * i);
@@ -691,7 +691,7 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
 	if (i < meta->num)
 		memcpy(	(char*)new_array + inst_size * (i + 1),
 				(char*)old_array + inst_size * i,
-				inst_size * (meta->num - i));
+				(size_t) inst_size * (meta->num - i));
 
 	return new_array;
 }
