@@ -537,7 +537,6 @@ void shuffle_uint100array(unsigned int *arr)
 	int k;
 	int j;
 	unsigned int t;
-	kam_srand(time(0));
 	for(j = 0; j < 100; j++) {
 		k = j + (kam_rand() % (100 - j));
 		t = arr[j];
