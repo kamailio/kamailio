@@ -313,11 +313,9 @@ int mod_child_init (int rank)
 
 {
 /**********
-* o seed random number generator
 * o make sure DB initialized
 **********/
 
-srand (getpid () + time (0));
 if (rank == PROC_INIT || rank == PROC_TCP_MAIN || rank == PROC_MAIN)
   { return 0; }
 if (!pmod_data->pdb->init)
