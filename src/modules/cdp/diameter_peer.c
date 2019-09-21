@@ -236,7 +236,6 @@ int diameter_peer_start(int blocking)
 			return 0;
 		}
 		if (pid==0) {
-			srandom(time(0)*k);
 			snprintf(pt[process_no].desc, MAX_PT_DESC,"cdp worker child=%d", k );
 			if (cfg_child_init()) return 0;
 			worker_process(k);
@@ -262,7 +261,6 @@ int diameter_peer_start(int blocking)
 		return 0;
 	}
 	if (pid==0) {
-		srandom(time(0)*k);
 		snprintf(pt[process_no].desc, MAX_PT_DESC,
 				"cdp receiver peer unknown");
 		if (cfg_child_init()) return 0;
@@ -282,7 +280,6 @@ int diameter_peer_start(int blocking)
 			return 0;
 		}
 		if (pid==0) {
-			srandom(time(0)*k);
 				snprintf(pt[process_no].desc, MAX_PT_DESC,
 					"cdp_receiver_peer=%.*s", p->fqdn.len,p->fqdn.s );
 			if (cfg_child_init()) return 0;

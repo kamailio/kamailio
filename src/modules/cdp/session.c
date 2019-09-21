@@ -172,7 +172,6 @@ int cdp_sessions_init(int hash_size)
 		LOG_NO_MEM("shm",sizeof(unsigned int));
 		goto error;
 	}
-	kam_srand((unsigned int)time(0));
 	*session_id1 = kam_rand();
 	*session_id1 <<= 16;
 	*session_id1 += time(0)&0xFFFF;

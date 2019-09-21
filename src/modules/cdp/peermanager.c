@@ -84,7 +84,6 @@ int peer_manager_init(dp_config *config)
 	msg_id_lock = lock_alloc();
 	msg_id_lock = lock_init(msg_id_lock);
 
-	kam_srand((unsigned int)time(0));
 	*hopbyhop_id = kam_rand();
 	*endtoend_id = (time(0)&0xFFF)<<20;
 	*endtoend_id |= kam_rand() & 0xFFFFF;
