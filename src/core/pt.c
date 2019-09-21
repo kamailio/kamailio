@@ -289,7 +289,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 	}
 
 	child_process_no = *process_count;
-	new_seed1=kam_rand();
+	new_seed1=fastrand();
 	new_seed2=random();
 	pid = fork();
 	if (pid<0) {
@@ -305,9 +305,10 @@ int fork_process(int child_id, char *desc, int make_sock)
 #ifdef USE_TCP
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
-		kam_srand(new_seed1);
-		fastrand_seed(kam_rand());
+		fastrand_seed(new_seed1);
+		kam_srand(fastrand());
 		srandom(new_seed2+time(0));
+		LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
 		shm_malloc_on_fork();
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
