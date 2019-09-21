@@ -802,6 +802,23 @@ static int init_mod_child( struct sr_module* m, int rank )
 int init_child(int rank)
 {
 	int ret;
+	char* type;
+
+	switch(rank) {
+	case PROC_MAIN:       type = "PROC_MAIN";       break;
+	case PROC_TIMER:      type = "PROC_TIMER";      break;
+	case PROC_RPC:        type = "PROC_RPC";        break;
+	case PROC_TCP_MAIN:   type = "PROC_TCP_MAIN";   break;
+	case PROC_UNIXSOCK:   type = "PROC_UNIXSOCK";   break;
+	case PROC_ATTENDANT:  type = "PROC_ATTENDANT";  break;
+	case PROC_INIT:       type = "PROC_INIT";       break;
+	case PROC_NOCHLDINIT: type = "PROC_NOCHLDINIT"; break;
+	case PROC_SIPINIT:    type = "PROC_SIPINIT";    break;
+	case PROC_SIPRPC:     type = "PROC_SIPRPC";     break;
+	default:              type = "CHILD";           break;
+	}
+	LM_DBG("initializing %s with rank %d\n", type, rank);
+
 	if(async_task_child_init(rank)<0)
 		return -1;
 
