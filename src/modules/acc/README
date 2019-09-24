@@ -540,8 +540,8 @@ Note
 
    See also Section 6.33, “cdr_extra (string)”.
 
-   The full list of supported pseudo-variables in Sip-Router is available
-   at: http://sip-router.org/wiki/cookbooks/pseudo-variables/devel
+   The list with all pseudo-variables in Kamailio can be found at:
+   https://www.kamailio.org/wiki/.
 
 4.3. CDR with Multi Call-Legs
 
