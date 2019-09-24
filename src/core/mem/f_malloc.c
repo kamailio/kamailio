@@ -656,7 +656,7 @@ void fm_free(void* qmp, void* p)
 	f->mname=mname;
 #endif
 #ifdef MEM_JOIN_FREE
-	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0))
+	if(likely(cfg_get(core, core_cfg, mem_join)!=0))
 		fm_join_frag(qm, f);
 #endif /*MEM_JOIN_FREE*/
 	fm_insert_free(qm, f);

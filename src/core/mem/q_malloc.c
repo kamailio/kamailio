@@ -529,7 +529,7 @@ void qm_free(void* qmp, void* p)
 	qm->real_used-=size;
 
 #ifdef MEM_JOIN_FREE
-	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0)) {
+	if(likely(cfg_get(core, core_cfg, mem_join)!=0)) {
 		next=prev=0;
 		/* mark this fragment as used (might fall into the middle of joined frags)
 		 * to give us an extra chance of detecting a double free call (if the joined
