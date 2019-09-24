@@ -341,7 +341,7 @@ endif
 
 # ARCH detection
 # predefined compiler macros for different architectures
-# (see http://predef.sourceforge.net/prearch.html for a more complete list)
+# (see https://sourceforge.net/p/predef/wiki/Architectures/ for a more complete list)
 i386_macros= i386 __i386__ __i486__ __i586__ __i686__ \
 			__i386 _M_IX86 __X86__ _X86_
 x86_64_macros= __amd64__ __amd64 __x86_64__ __x86_64 _M_X64
