@@ -352,10 +352,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 					</itemizedlist>
 					See also <xref linkend="acc.p.cdr_extra"/>.
 					<para>
-					The full list of supported pseudo-variables in Sip-Router is
-					available at:
-					<ulink url="http://sip-router.org/wiki/cookbooks/pseudo-variables/devel">
-					http://sip-router.org/wiki/cookbooks/pseudo-variables/devel</ulink>
+					The list with all pseudo-variables in &kamailio; can
+					be found at: &kamwikilink;.
 					</para>
 			</section>
 		</section>
