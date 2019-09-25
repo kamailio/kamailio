@@ -66,7 +66,7 @@ int init_flag = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"ipsec_create",  (cmd_function)w_create,  1, save_fixup2, 0, ONREPLY_ROUTE },
+	{"ipsec_create",  (cmd_function)w_create,  1, save_fixup2, 0, ONREPLY_ROUTE | FAILURE_ROUTE},
 	{"ipsec_forward", (cmd_function)w_forward, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"ipsec_destroy", (cmd_function)w_destroy, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
     {"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0, 0, 0},
