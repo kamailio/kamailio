@@ -2320,9 +2320,9 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+&kamcmd; dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-&kamcmd; dlg.list abcdrssfrs122444@192.168.1.1
+&kamcmd; dlg.dlg_list abcdrssfrs122444@192.168.1.1
 ...
 		</programlisting>
 		</section>
