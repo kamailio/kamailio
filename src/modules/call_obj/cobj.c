@@ -112,15 +112,15 @@ int cobj_init(int start, int end)
 	
 	size_t total_size = (1 + end - start); /* [start, end] */
 	size_t array_size = total_size * sizeof(co_object_t);
-	LM_DBG("Element size: %lu\n", (long)sizeof(co_object_t));
-	LM_DBG("List element size: %lu\n", (long)sizeof(cobj_elem_t));
+	LM_DBG("Element size: %lu\n", (unsigned long)sizeof(co_object_t));
+	LM_DBG("List element size: %lu\n", (unsigned long)sizeof(cobj_elem_t));
 	
 	co_data->ring = (co_object_t*)shm_malloc(array_size);
 	if (!co_data->ring) {
 		LM_ERR("Cannot allocate shm memory for ring in call object\n");
 		return -1;
 	}
-	LM_DBG("Allocated %lu bytes for the ring\n", (long)array_size);
+	LM_DBG("Allocated %lu bytes for the ring\n", (unsigned long)array_size);
 
 	/*
 	 * Initialize lock.
