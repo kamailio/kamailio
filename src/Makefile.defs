@@ -863,12 +863,10 @@ endif
 
 ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
 endif
 
 ifeq ($(ARCH), arm7)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
 endif
 
 ifeq ($(ARCH), aarch64)
