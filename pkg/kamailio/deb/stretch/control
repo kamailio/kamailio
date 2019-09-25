@@ -44,7 +44,7 @@ Build-Depends:
  libsctp-dev,
  libsnmp-dev,
  libsqlite3-dev,
- libssl1.0-dev,
+ libssl-dev,
  libsystemd-dev,
  libunistring-dev,
  libxml2-dev,
