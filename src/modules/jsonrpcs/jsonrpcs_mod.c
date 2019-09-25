@@ -1011,7 +1011,7 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 		return 0;
 	}
 	if(nj->valuestring!=NULL && strlen(nj->valuestring)>JSONRPC_ID_SIZE-1) {
-		LM_ERR("id attribute is too long (%lu/%d)\n", strlen(nj->valuestring),
+		LM_ERR("id attribute is too long (%lu/%d)\n", (long)strlen(nj->valuestring),
 				JSONRPC_ID_SIZE);
 		return 0;
 	}
