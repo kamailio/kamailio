@@ -1340,9 +1340,8 @@ ifeq	($(ARCH), arm7)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
-				#common stuff, use armv7-a similar to debian
-				#build flags from https://wiki.debian.org/ArmHardFloatPort
-				CFLAGS=-march=armv7-a -mfpu=vfpv3-d16 $(CC_OPT) -funroll-loops -fsigned-char \
+				#common stuff, use armv7-a as lowest common architecture
+				CFLAGS=-march=armv7-a $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
 			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
