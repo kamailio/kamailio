@@ -1986,9 +1986,9 @@ kamcmd dlg.list_match_ctx furi sw sip:alice@
 
    RPC Command Format:
 ...
-kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-kamcmd dlg.list abcdrssfrs122444@192.168.1.1
+kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1
 ...
 
 9.6. dlg.dlg_list_ctx
