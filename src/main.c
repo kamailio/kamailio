@@ -276,6 +276,7 @@ void print_internals(void)
 #endif
 	printf("  Source code revision ID: %s\n", ver_id);
 	printf("  Compiled with: %s\n", ver_compiler);
+	printf("  Compiled architecture: %s\n", ARCH);
 	printf("  Compiled on: %s\n", ver_compiled_time);
 	printf("Thank you for flying %s!\n", NAME);
 }
