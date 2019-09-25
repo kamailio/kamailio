@@ -136,6 +136,7 @@ endif
 
 HOST_ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4[uv]/sparc64/  \
 			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ \
+			-e s/armv7.*/arm7/ -e s/armv8.*/arm8/ \
 			-e "s/Power Macintosh/ppc/" \
 			-e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ -e s/sparcv9/sparc64/ )
@@ -350,6 +351,9 @@ sparc_macros= __sparc__ __sparc __sparcv8
 sparc64_macros= __sparcv9 __sparc_v9__
 
 arm_macros= __arm__ __thumb__
+arm8_macros= __ARM_ARCH_8__
+arm8a_macros= __ARM_ARCH_8A__
+arm7_macros= __ARM_ARCH_7__
 arm6_macros= __ARM_ARCH_6__
 
 aarch64_macros= __aarch64__
@@ -367,6 +371,8 @@ alpha_macros= __alpha__ __alpha _M_ALPHA_
 
 ifeq ($(CC_NAME),gcc)
 #if gcc use gcc arch
+# to build with native architecture, e.g. for rasberry pi: add -march=native
+# armv8 not supported yet, fallback to armv7
 predef_macros:=$(shell $(CC) -dM -E -x c $(CC_EXTRA_OPTS) $(extra_defs) \
 					$(CFLAGS) /dev/null)
 
@@ -384,7 +390,14 @@ endif # sparc64_macros
 
 else ifneq ($(strip $(filter $(arm_macros), $(predef_macros))),)
 
-ifneq ($(strip $(filter $(arm6_macros), $(predef_macros))),)
+# arm8 not supported yet from core atomic operations, fallback to arm7
+ifneq ($(strip $(filter $(arm8a_macros), $(predef_macros))),)
+CC_ARCH=arm7
+else ifneq ($(strip $(filter $(arm8_macros), $(predef_macros))),)
+CC_ARCH=arm7
+else ifneq ($(strip $(filter $(arm7_macros), $(predef_macros))),)
+CC_ARCH=arm7
+else ifneq ($(strip $(filter $(arm6_macros), $(predef_macros))),)
 CC_ARCH=arm6
 else # arm6_macros
 CC_ARCH=arm
@@ -845,17 +858,22 @@ endif
 
 ifeq ($(ARCH), arm)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
+	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
 endif
 
 ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
+	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
+endif
+
+ifeq ($(ARCH), arm7)
+	use_fast_lock=yes
+	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
 endif
 
 ifeq ($(ARCH), aarch64)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP
+	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
 endif
 
 ifeq ($(ARCH), ppc)
@@ -1318,6 +1336,54 @@ else		# CC_NAME, gcc
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, arm6
+
+	#if armv7 cpu
+ifeq	($(ARCH), arm7)
+		# if gcc
+ifeq		($(CC_NAME), gcc)
+				C_DEFS+=-DCC_GCC_LIKE_ASM
+				#common stuff, use armv7-a similar to debian
+				#build flags from https://wiki.debian.org/ArmHardFloatPort
+				CFLAGS=-march=armv7-a -mfpu=vfpv3-d16 $(CC_OPT) -funroll-loops -fsigned-char \
+						$(PROFILE)
+			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
+					CFLAGS+= -ftree-vectorize -fno-strict-overflow
+else
+			#if gcc 4.x+
+ifeq			($(CC_SHORTVER), 4.x)
+					CFLAGS+= -ftree-vectorize
+else
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+=
+else
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+=
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+
+					CFLAGS+=
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
+endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
+
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, arm7
 
 	#if  mips (R3000)
 ifeq	($(ARCH), mips)
