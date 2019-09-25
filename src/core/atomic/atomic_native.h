@@ -30,7 +30,7 @@
  * - __CPU_ppc, __CPU_ppc64 - see atomic_ppc.h
  * - __CPU_sparc - see atomic_sparc.h
  * - __CPU_sparc64, SPARC64_MODE - see atomic_sparc64.h
- * - __CPU_arm, __CPU_arm6 - see atomic_arm.h
+ * - __CPU_arm, __CPU_arm6, __CPU_arm7 - see atomic_arm.h
  * - __CPU_alpha - see atomic_alpha.h
  * @ingroup atomic
  */
@@ -61,7 +61,7 @@
 
 #include "atomic_sparc.h"
 
-#elif defined __CPU_arm || defined __CPU_arm6
+#elif defined __CPU_arm || defined __CPU_arm6 || defined __CPU_arm7
 
 #include "atomic_arm.h"
 

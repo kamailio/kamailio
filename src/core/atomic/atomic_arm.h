@@ -24,7 +24,7 @@
  * Config defines:
  * - NOSMP
  * - __CPU_arm
- * - __CPU_arm6    - armv6 support (supports atomic ops via ldrex/strex)
+ * - __CPU_arm6, __CPU_arm7 - armv6, armv7 support (supports atomic ops via ldrex/strex)
  * @ingroup atomic
  */
 
@@ -61,7 +61,7 @@
 #endif /* NOSMP */
 
 
-#ifdef __CPU_arm6
+#if defined __CPU_arm6 || defined __CPU_arm7
 
 
 #define HAVE_ASM_INLINE_ATOMIC_OPS
@@ -387,7 +387,7 @@ inline static long mb_atomic_add_long(volatile long* v, long i)
  *  -- andrei
  */
 
-#endif /* __CPU_arm6 */
+#endif /* __CPU_arm6, arm7 */
 
 
 #endif

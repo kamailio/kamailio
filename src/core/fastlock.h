@@ -24,7 +24,6 @@
 * \ingroup core
 * Module: \ref core
  * WARNING: the code was not tested on the following architectures:
- *           - arm6  (cross-compiles ok, no test)
  *           - alpha (cross-compiles ok, no test)
  *           - mips64 (cross-compiles ok)
  *           - ppc64 (compiles ok)
@@ -74,7 +73,7 @@ typedef  volatile int fl_lock_t;
 #elif  defined(__CPU_sparc)
 #define membar_getlock()/* no need for a compiler barrier, already included */
 
-#elif defined __CPU_arm || defined __CPU_arm6
+#elif defined __CPU_arm || defined __CPU_arm6 || defined __CPU_arm7
 #ifndef NOSMP
 #warning smp not supported on arm* (no membars), try compiling with -DNOSMP
 #endif /* NOSMP */
@@ -189,7 +188,7 @@ inline static int tsl(fl_lock_t* lock)
 			"swp %0, %2, [%3] \n\t"
 			: "=&r" (val), "=m"(*lock) : "r"(1), "r" (lock) : "memory"
 	);
-#elif defined __CPU_arm6
+#elif defined __CPU_arm6 || defined __CPU_arm7
 	asm volatile(
 			"   ldrex %0, [%2] \n\t"
 			"   cmp %0, #0 \n\t"
@@ -354,7 +353,7 @@ inline static void release_lock(fl_lock_t* lock)
 			"stb %%g0, [%1] \n\t"
 			: "=m"(*lock) : "r" (lock) : "memory"
 	);
-#elif defined __CPU_arm || defined __CPU_arm6
+#elif defined __CPU_arm || defined __CPU_arm6 || defined __CPU_arm7
 #ifndef NOSMP
 #warning arm* smp mode not supported (no membars), try compiling with -DNOSMP
 #endif
