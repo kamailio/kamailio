@@ -1238,7 +1238,7 @@ static int uac_reg_check_password(reg_uac_t *reg)
 		return -1;
 	}
 	for(i=0; i<reg->auth_ha1.len; i++) {
-		if(!((reg->auth_ha1.s[i]>='0' && reg->auth_ha1.s[i]<'9')
+		if(!((reg->auth_ha1.s[i]>='0' && reg->auth_ha1.s[i]<='9')
 				|| (reg->auth_ha1.s[i]>='a' && reg->auth_ha1.s[i]<='f')
 				|| (reg->auth_ha1.s[i]>='A' && reg->auth_ha1.s[i]<='F'))) {
 			LM_ERR("invalid char %d in HA1 string: %.*s\n", i,
