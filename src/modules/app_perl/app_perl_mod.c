@@ -403,7 +403,7 @@ int app_perl_reset_interpreter(void)
 		return 0;
 
 	if(perl_destroy_func)
-		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS, args);
+		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS | G_EVAL, args);
 
 	gettimeofday(&t1, NULL);
 	if (perl_reload()<0) {
