@@ -17,6 +17,13 @@
 	<section>
 	<title>Overview</title>
 	<para>
+		Note: the module requires old version of external library, not compiling
+		with those available out of the stock in the Linux distributions. It is
+		going to be kept for a while in case someone wants to pick it up and
+		upgrade. Also, the module was never extensively tested, therefore take
+		the appropriate actions in case you plan to use it.
+	</para>
+	<para>
 		Db_cassandra is one of the &kamailio; database modules. It does
 		not export any functions executable from the configuration scripts,
 		but it exports a subset of functions using the database API, and thus,
