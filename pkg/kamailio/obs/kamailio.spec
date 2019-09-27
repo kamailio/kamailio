@@ -102,6 +102,56 @@
 %bcond_without xmlrpc
 %endif
 
+%if 0%{?fedora} == 31
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without ims
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without mongodb
+%bcond_without perl
+%bcond_without phonenum
+%bcond_without python3
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without ruby
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?fedora} == 99
+%define dist_name fedora
+%define dist_version %{?fedora}
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without ims
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without mongodb
+%bcond_without perl
+%bcond_without phonenum
+%bcond_without python3
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without ruby
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
 %if 0%{?centos_ver} == 6
 %define dist_name centos
 %define dist_version %{?centos}
@@ -780,7 +830,9 @@ Requires:   python3, kamailio = %ver
 BuildRequires:  python3, python3-devel
 %endif
 %endif
-
+%if 0%{?fedora}
+BuildRequires:  python2-devel
+%endif
 
 %description    python
 Python extensions for Kamailio.
@@ -1099,21 +1151,9 @@ UUID module for Kamailio.
     sed -i -e 's:#!/usr/bin/python:#!%{__python2}:' utils/kamctl/dbtextdb/dbtextdb.py
 %endif
 
-ln -s ../obs pkg/kamailio/fedora/27
-ln -s ../obs pkg/kamailio/fedora/28
-ln -s ../obs pkg/kamailio/fedora/29
-ln -s ../obs pkg/kamailio/fedora/30
-ln -s ../obs pkg/kamailio/rhel/6
-ln -s ../obs pkg/kamailio/rhel/7
-ln -s ../obs pkg/kamailio/opensuse/1315
-ln -s ../obs pkg/kamailio/opensuse/1330
-ln -s ../obs pkg/kamailio/opensuse/1500
-ln -s ../obs pkg/kamailio/opensuse/1550
-ln -s ../obs pkg/kamailio/centos/6
-ln -s ../obs pkg/kamailio/centos/7
-
 
 %build
+ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
 %if 0%{?fedora} || 0%{?suse_version}
 export FREERADIUS=1
 %endif
