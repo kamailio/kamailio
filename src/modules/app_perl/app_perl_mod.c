@@ -203,7 +203,7 @@ PerlInterpreter *parser_init(void) {
 	perl_construct(new_perl);
 
 	argv[0] = ""; argc++; /* First param _needs_ to be empty */
-	
+
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
 		modpathset_start = argc;
@@ -382,6 +382,7 @@ static void destroy(void)
 }
 
 
+static int app_perl_reset_n = 0;
 /**
  * count executions and rest interpreter
  *
@@ -402,8 +403,10 @@ int app_perl_reset_interpreter(void)
 	if(_ap_exec_cycles<=*_ap_reset_cycles)
 		return 0;
 
-	if(perl_destroy_func)
+	if(perl_destroy_func) {
 		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS | G_EVAL, args);
+		LM_DBG("perl destroy function executed\n");
+	}
 
 	gettimeofday(&t1, NULL);
 	if (perl_reload()<0) {
@@ -413,10 +416,11 @@ int app_perl_reset_interpreter(void)
 	}
 	gettimeofday(&t2, NULL);
 
-	LM_INFO("perl interpreter has been reset [%d/%d] (%d.%06d => %d.%06d)\n",
+	app_perl_reset_n++;
+	LM_INFO("perl interpreter has been reset [%d/%d] (%d.%06d => %d.%06d) (n: %d)\n",
 				_ap_exec_cycles, *_ap_reset_cycles,
 				(int)t1.tv_sec, (int)t1.tv_usec,
-				(int)t2.tv_sec, (int)t2.tv_usec);
+				(int)t2.tv_sec, (int)t2.tv_usec, app_perl_reset_n);
 	_ap_exec_cycles = 0;
 
 	return 0;
