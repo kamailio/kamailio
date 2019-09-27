@@ -32,7 +32,7 @@ max_depth = 120
 debug = 0
 
 re_main_route = re.compile("^([a-z]+_)*route[\s\t]*(?![\(\)])[\s\t]*\{?", re.I)
-re_def_route = re.compile("^([a-z]+_)*route(\[\"?([A-Za-z0-9-_:]+)\"?\])+[\s\t]*\{?", re.I)
+re_def_route = re.compile("^([a-z]+_)*route ?(\[\"?([A-Za-z0-9-_:]+)\"?\])+[\s\t]*\{?", re.I)
 re_call_route = re.compile("^(.*\([\s\t!]*)?route\(\"?([A-Za-z0-9-_]+)\"?\)", re.I)
 routes = {}
 f_routes = {}
