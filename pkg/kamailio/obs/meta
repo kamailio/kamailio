@@ -24,6 +24,19 @@
     <path project="Fedora:EPEL:6" repository="RHEL"/>
     <arch>x86_64</arch>
   </repository>
+  <repository name="Fedora_Rawhide">
+    <path project="Fedora:Rawhide" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
+  <repository name="Fedora_30">
+    <path project="Fedora:30" repository="update"/>
+    <path project="Fedora:30" repository="standard"/>
+    <arch>x86_64</arch>
+    <arch>i586</arch>
+    <arch>armv7l</arch>
+    <arch>aarch64</arch>
+    <arch>ppc64le</arch>
+  </repository>
   <repository name="Fedora_29">
     <path project="Fedora:29" repository="update"/>
     <path project="Fedora:29" repository="standard"/>
