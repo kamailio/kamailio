@@ -40,11 +40,13 @@
     <arch>x86_64</arch>
   </repository>
   <repository name="CentOS_7">
+    <path project="CentOS:CentOS-7" repository="standard"/>
     <path project="CentOS:CentOS-7" repository="update"/>
     <path project="Fedora:EPEL:7" repository="CentOS"/>
     <arch>x86_64</arch>
   </repository>
   <repository name="CentOS_6">
+    <path project="CentOS:CentOS-6" repository="standard"/>
     <path project="CentOS:CentOS-6" repository="update"/>
     <path project="Fedora:EPEL:6" repository="CentOS"/>
     <arch>x86_64</arch>
