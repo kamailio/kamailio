@@ -50,16 +50,6 @@
     <path project="Fedora:29" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
-  <repository name="Fedora_28">
-    <path project="Fedora:28" repository="update"/>
-    <path project="Fedora:28" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
-  <repository name="Fedora_27">
-    <path project="Fedora:27" repository="update"/>
-    <path project="Fedora:27" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
   <repository name="CentOS_7">
     <path project="CentOS:CentOS-7" repository="standard"/>
     <path project="CentOS:CentOS-7" repository="update"/>
