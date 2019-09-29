@@ -18,7 +18,7 @@
 	<para>
 		The SIPtrace module offer a possibility to store incoming and outgoing SIP
 		messages in a database and/or duplicate to the capturing server (using <acronym>HEP</acronym>,
-		the Homer encapsulation protocol, or plain SIP mode). Since version 5.4 new levels of tracing
+		the Homer encapsulation protocol, or plain SIP mode). Since version 5.3.0 new levels of tracing
 		are available. Transactions and dialogs can be traced.
 	</para>
 	<para>
