@@ -1364,7 +1364,7 @@ int uac_reg_load_db(void)
 	}
 
 	if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
-		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 13, 0, 0) < 0)
+		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 14, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -1383,7 +1383,7 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-						0, 13, 0, &db_res))!=0
+						0, 14, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
@@ -1502,7 +1502,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
 	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
-					1 /*nr keys*/, 13 /*nr cols*/, 0, &db_res))!=0
+					1 /*nr keys*/, 14 /*nr cols*/, 0, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 	{
 		reg_dbf.free_result(reg_db_con, db_res);
