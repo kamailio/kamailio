@@ -765,7 +765,7 @@ return ret;
 
 
 
-/* marks a timer as "to be deleted when the handler ends", usefull when
+/* marks a timer as "to be deleted when the handler ends", useful when
  * the timer handler knows it won't prolong the timer anymore (it will
  * return 0) and will do some time consuming work. Calling this function
  * will cause simultaneous timer_dels to return immediately (they won't

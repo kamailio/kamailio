@@ -3553,7 +3553,7 @@ again:
 /* handles io from a tcp child process
  * params: tcp_c - pointer in the tcp_children array, to the entry for
  *                 which an io event was detected 
- *         fd_i  - fd index in the fd_array (usefull for optimizing
+ *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
  * returns:  handle_* return convention: -1 on error, 0 on EAGAIN (no more
  *           io events queued), >0 on success. success/error refer only to
@@ -3776,7 +3776,7 @@ error:
  * 
  * params: p     - pointer in the ser processes array (pt[]), to the entry for
  *                 which an io event was detected
- *         fd_i  - fd index in the fd_array (usefull for optimizing
+ *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
  * returns:  handle_* return convention:
  *          -1 on error reading from the fd,

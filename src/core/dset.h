@@ -223,7 +223,7 @@ inline static int get_request_uri(struct sip_msg* _m, str* _u)
 #define ruri_mark_consumed()  (ruri_is_new = 0)
 
 /** returns whether or not ruri should be used when forking.
-  * (usefull for serial forking)
+  * (useful for serial forking)
   * @return 0 if already marked as consumed, 1 if not.
  */
 #define ruri_get_forking_state() (ruri_is_new)

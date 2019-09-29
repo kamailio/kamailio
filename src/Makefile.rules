@@ -207,7 +207,7 @@ all: $(NAME) every-module
 static: $(objs)
 
 # clean only the current directory (no modules or utils)
-# (it's usefull to have it separated from clean for speeding up make proper)
+# (it's useful to have it separated from clean for speeding up make proper)
 .PHONY: local-clean
 local-clean:
 	-@rm -f $(objs) $(NAME) $(objs:.o=.il) *.a librpath.lst 2>/dev/null
