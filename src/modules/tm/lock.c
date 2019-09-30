@@ -53,9 +53,6 @@
 static int sem_nr;
 gen_lock_set_t *entry_semaphore = 0;
 gen_lock_set_t *reply_semaphore = 0;
-#ifdef ENABLE_ASYNC_MUTEX
-gen_lock_set_t *async_semaphore = 0;
-#endif
 #endif
 
 
@@ -85,12 +82,6 @@ again:
 			lock_set_destroy(reply_semaphore);
 			lock_set_dealloc(reply_semaphore);
 		}
-#ifdef ENABLE_ASYNC_MUTEX
-		if(async_semaphore != 0) {
-			lock_set_destroy(async_semaphore);
-			lock_set_dealloc(async_semaphore);
-		}
-#endif
 		if(i == 0) {
 			LOG(L_CRIT, "lock_initialize: could not allocate semaphore"
 						" sets\n");
@@ -142,20 +133,6 @@ again:
 		i--;
 		goto again;
 	}
-#ifdef ENABLE_ASYNC_MUTEX
-	i++;
-	if(((async_semaphore = lock_set_alloc(i)) == 0)
-			|| (lock_set_init(async_semaphore) == 0)) {
-		if(async_semaphore) {
-			lock_set_dealloc(async_semaphore);
-			async_semaphore = 0;
-		}
-		LM_DBG("async semaphore initialization failure: %s\n", strerror(errno));
-		probe_run = 1;
-		i--;
-		goto again;
-	}
-#endif
 
 	/* return success */
 	LM_INFO("semaphore arrays of size %d allocated\n", sem_nr);
@@ -195,13 +172,6 @@ void lock_cleanup()
 		lock_set_destroy(reply_semaphore);
 		lock_set_dealloc(reply_semaphore);
 	};
-#ifdef ENABLE_ASYNC_MUTEX
-	if(async_semaphore != 0) {
-		lock_set_destroy(async_semaphore);
-		lock_set_dealloc(async_semaphore);
-	}
-	async_semaphore = 0;
-#endif
 	entry_semaphore = reply_semaphore = 0;
 }
 #endif /*GEN_LOCK_T_PREFERED*/
@@ -232,22 +202,6 @@ int init_entry_lock(struct s_table *ht, struct entry *entry)
 			(((char *)entry - (char *)(ht->entries)) / sizeof(struct entry))
 			% sem_nr;
 #endif
-	return 0;
-}
-
-int init_async_lock(struct cell *cell)
-{
-#ifdef ENABLE_ASYNC_MUTEX
-
-#ifdef GEN_LOCK_T_PREFERED
-	lock_init(&cell->async_mutex);
-#else
-	cell->async_mutex.semaphore_set = async_semaphore;
-	cell->async_mutex.semaphore_index = cell->hash_index % sem_nr;
-#endif /* GEN_LOCK_T_PREFERED */
-
-#endif /* ENABLE_ASYNC_MUTEX */
-
 	return 0;
 }
 
