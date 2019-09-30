@@ -65,7 +65,7 @@ MODULE_VERSION
 
 #define trace_is_off(_msg)                        \
 	 ((((_msg)->msg_flags & FL_SIPTRACE) == 0) \
-		|| ((_msg->flags & trace_flag) == 0))
+		|| ((trace_flag != 0) && (_msg->flags & trace_flag) == 0))
 
 #define is_null_pv(_str) \
 	(!str_strcmp(&_str, pv_get_null_str()))
@@ -138,6 +138,7 @@ static str xavp_trace_info_name_s = str_init(XAVP_TRACE_INFO_NAME);
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
 
+int trace_flag_param = -1;
 int trace_flag = 0;
 
 int trace_on = 0;
@@ -218,7 +219,7 @@ static param_export_t params[] = {
 	{"fromtag_column", PARAM_STR, &fromtag_column},
 	{"totag_column", PARAM_STR, &totag_column},
 	{"direction_column", PARAM_STR, &direction_column},
-	{"trace_flag", INT_PARAM, &trace_flag},
+	{"trace_flag", INT_PARAM, &trace_flag_param},
 	{"trace_on", INT_PARAM, &trace_on},
 	{"traced_user_avp", PARAM_STR, &traced_user_avp_str},
 	{"trace_table_avp", PARAM_STR, &trace_table_avp_str},
@@ -280,11 +281,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(trace_flag < 0 || trace_flag > (int)MAX_FLAG) {
-		LM_ERR("invalid trace flag %d\n", trace_flag);
-		return -1;
+	if(trace_flag_param!=-1) {
+		if(trace_flag_param < -1 || trace_flag_param > (int)MAX_FLAG) {
+			LM_ERR("invalid trace flag %d\n", trace_flag_param);
+			return -1;
+		}
+		trace_flag = 1 << trace_flag_param;
 	}
-	trace_flag = 1 << trace_flag;
 
 	trace_to_database_flag = (int *)shm_malloc(sizeof(int));
 	if(trace_to_database_flag == NULL) {
