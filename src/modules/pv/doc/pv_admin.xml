@@ -270,7 +270,7 @@ if (not_empty("$var(foo)")) {
 				<function moreinfo="none">xavp_copy(source_name, source_index, destination_name)</function>
 			</title>
 			<para>
-				Copy one XAVP.
+				Copy and append one XAVP.
 			</para>
 			<para>
 				The parameters can be variables or strings.
@@ -285,13 +285,14 @@ if (not_empty("$var(foo)")) {
 				<title><function>xavp_copy</function> usage</title>
 				<programlisting format="linespecific">
 ...
-# Using xavp_copy to reorder an existing xavp stack
+# Using xavp_copy to reorder an existing xavp stack in a new one
 $xavp(a=&gt;x) = "a-0-x";
 $xavp(a[0]=&gt;y) = "a-0-y";
 $xavp(a=&gt;x) = "a-1-x";
 $xavp(a[0]=&gt;y) = "a-1-y";
 xinfo("$$xavp(a[0]) = [$xavp(a[0]=&gt;x)][$xavp(a[0]=&gt;y)]\n");
 xinfo("$$xavp(a[1]) = [$xavp(a[1]=&gt;x)][$xavp(a[1]=&gt;y)]\n");
+
 # reorder
 $var(source_index) = 1;
 $var(destination_name) = "b";
@@ -299,11 +300,56 @@ xavp_copy("a", "$var(source_index)", "$var(destination_name)");
 xavp_copy("a", "0", "$var(destination_name)");
 xinfo("reordered: $$xavp(b[0]) = [$xavp(b[0]=&gt;x)][$xavp(b[0]=&gt;y)]\n");
 xinfo("reordered: $$xavp(b[1]) = [$xavp(b[1]=&gt;x)][$xavp(b[1]=&gt;y)]\n");
+
 # results in:
 # INFO: $xavp(a[0]) = [a-1-x][a-1-y]
 # INFO: $xavp(a[1]) = [a-0-x][a-0-y]
 # INFO: reordered: $xavp(b[0]) = [a-0-x][a-0-y]
 # INFO: reordered: $xavp(b[1]) = [a-1-x][a-1-y]
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavp_copy">
+			<title>
+				<function moreinfo="none">xavp_copy(source_name, source_index, destination_name, destination_index)</function>
+			</title>
+			<para>
+				Copy and replace one XAVP.
+			</para>
+			<para>
+				The parameters can be variables or strings.
+				First parameter is the source XAVP name.
+				Second parameter is the source XAVP stack index, use 0 to copy the last assigned XAVP.
+				Third parameter is the destination XAVP name, if not found xavp_copy will return -1.
+				Fourth parameter is the destination XAVP index, if not found xavp_copy will return -1.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+# Using xavp_copy to reorder an existing xavp stack inplace
+$xavp(a=>x) = "a-0-x";
+$xavp(a[0]=&gt;y) = "a-0-y";
+$xavp(a=>x) = "a-1-x";
+$xavp(a[0]=&gt;y) = "a-1-y";
+$xavp(a=>x) = "a-2-x";
+$xavp(a[0]=&gt;y) = "a-2-y";
+
+# INFO: NEW $xavp(a[0]) = [a-2-x][a-2-y]
+# INFO: NEW $xavp(a[1]) = [a-1-x][a-1-y]
+# INFO: NEW $xavp(a[2]) = [a-0-x][a-0-y]
+
+xavp_copy("a", "1", "c");
+xavp_copy("a", "2", "a", "1");
+xavp_copy("c", "0", "a", "2");
+
+# INFO: AFTER $xavp(a[0]) = [a-2-x][a-2-y]
+# INFO: AFTER $xavp(a[1]) = [a-0-x][a-0-y]
+# INFO: AFTER $xavp(a[2]) = [a-1-x][a-1-y]
 ...
 				</programlisting>
 			</example>
