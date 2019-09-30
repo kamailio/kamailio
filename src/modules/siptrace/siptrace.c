@@ -1026,8 +1026,13 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 	if (trace_type_p != NULL) {
 		trace_type = *(enum siptrace_type_t *)(trace_type_p);
 	} else {
-		/* fallback to default */
-		trace_type = SIPTRACE_MESSAGE;
+		/* fallback to default - transaction tracking when flag is set,
+		 * otherwise only the current message*/
+		if(msg->flags & trace_flag) {
+			trace_type = SIPTRACE_TRANSACTION;
+		} else {
+			trace_type = SIPTRACE_MESSAGE;
+		}
 	}
 
 	return sip_trace_helper(msg, (dest)?&dest_info:NULL,
