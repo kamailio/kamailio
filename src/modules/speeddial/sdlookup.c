@@ -117,7 +117,6 @@ int sd_lookup_owner(sip_msg_t* _msg, str* stable, str* sowner)
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = puri->host.s;
 		db_vals[nr_keys].val.str_val.len = puri->host.len;
-		nr_keys++;
 
 		if (dstrip_s.s!=NULL && dstrip_s.len>0
 			&& dstrip_s.len<puri->host.len
@@ -126,6 +125,7 @@ int sd_lookup_owner(sip_msg_t* _msg, str* stable, str* sowner)
 			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
 			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
 		}
+		nr_keys++;
 	}
 	/* take sd from r-uri */
 	if (parse_sip_msg_uri(_msg) < 0)
