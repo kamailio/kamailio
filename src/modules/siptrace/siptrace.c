@@ -87,6 +87,7 @@ static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
 static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char *trace_type);
 static int fixup_siptrace(void **param, int param_no);
+static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2);
 
 static int parse_siptrace_uri(str* duri, dest_info_t* dst);
 static enum siptrace_type_t parse_siptrace_flag(str* sflags);
@@ -198,6 +199,8 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog2, 2, fixup_spve_spve, 0,
 		ANY_ROUTE},
+	{"sip_trace_mode", (cmd_function)w_sip_trace_mode, 1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1182,6 +1185,54 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 	return sip_trace_store(&sto, dst, correlation_id_str);
 }
 
+
+/**
+ *
+ */
+static int ki_sip_trace_mode(sip_msg_t *msg, str *smode)
+{
+	enum siptrace_type_t trace_type;
+
+	if(smode==NULL || smode->s==NULL || smode->len<=0) {
+		LM_INFO("no tracing mode - trace message\n");
+		trace_type = SIPTRACE_MESSAGE;
+	} else {
+		switch(smode->s[0]) {
+			case 'M':
+			case 'm':
+				trace_type = SIPTRACE_MESSAGE;
+			break;
+			case 'T':
+			case 't':
+				trace_type = SIPTRACE_TRANSACTION;
+			break;
+			case 'D':
+			case 'd':
+				trace_type = SIPTRACE_DIALOG;
+			break;
+			default:
+				trace_type = SIPTRACE_MESSAGE;
+				LM_INFO("unexpected tracing mode [%.*s] - trace message\n",
+						smode->len, smode->s);
+		}
+	}
+
+	return sip_trace_helper(msg, NULL, NULL, NULL, NULL, trace_type);
+}
+
+/**
+ *
+ */
+static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2)
+{
+	str smode = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)pmode, &smode)<0) {
+		LM_ERR("failed to get tracing mode parameter\n");
+		return -1;
+	}
+	return ki_sip_trace_mode(msg, &smode);
+}
+
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 {
 	siptrace_data_t sto;
@@ -2132,6 +2183,11 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 	{ str_init("siptrace"), str_init("hlog_cid"),
 		SR_KEMIP_INT, ki_hlog_cid,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("sip_trace_mode"),
+		SR_KEMIP_INT, ki_sip_trace_mode,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
