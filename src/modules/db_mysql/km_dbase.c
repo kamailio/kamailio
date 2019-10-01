@@ -89,7 +89,7 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 			}
 		}
 		/*
-		 * We're doing later a query anyway that will reset the timout of the server,
+		 * We're doing later a query anyway that will reset the timeout of the server,
 		 * so it makes sense to set the timestamp value to the actual time in order
 		 * to prevent unnecessary pings.
 		 */
