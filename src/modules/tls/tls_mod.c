@@ -50,6 +50,7 @@
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_cfg.h"
+#include "tls_rand.h"
 
 #ifndef TLS_HOOKS
 	#error "TLS_HOOKS must be defined, or the tls module won't work"
@@ -79,6 +80,8 @@ static int mod_child(int rank);
 static void destroy(void);
 
 static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
+
+int ksr_rand_engine_param(modparam_t type, void* val);
 
 MODULE_VERSION
 
@@ -236,6 +239,8 @@ static param_export_t params[] = {
 	{"renegotiation",       PARAM_INT,    &sr_tls_renegotiation},
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
 	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
+	{"rand_engine",         PARAM_STR|USE_FUNC_PARAM, (void*)ksr_rand_engine_param},
+
 	{0, 0, 0}
 };
 
@@ -431,6 +436,24 @@ static void destroy(void)
 	 *   => nothing to do here */
 }
 
+
+int ksr_rand_engine_param(modparam_t type, void* val)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	str *reng;
+
+	if(val==NULL) {
+		return -1;
+	}
+	reng = (str*)val;
+	LM_DBG("random engine: %.*s\n", reng->len, reng->s);
+	if(reng->len == 5 && strncasecmp(reng->s, "krand", 5) == 0) {
+		LM_DBG("setting krand random engine\n");
+		RAND_set_rand_method(RAND_ksr_method());
+	}
+#endif
+	return 0;
+}
 
 static int ki_is_peer_verified(sip_msg_t* msg)
 {
