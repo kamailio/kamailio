@@ -2002,8 +2002,13 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	snd_flags_t t_send_flags;
 #endif /* USE_TLS */
 
+	if(unlikely(dst==NULL)) {
+		LM_ERR("no destination address provided\n");
+		return -1;
+	}
+
 	port=su_getport(&dst->to);
-	try_local_port = (dst && dst->send_sock)?dst->send_sock->port_no:0;
+	try_local_port = (dst->send_sock)?dst->send_sock->port_no:0;
 	con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
 	if (likely(port)){
 		su2ip_addr(&ip, &dst->to);
