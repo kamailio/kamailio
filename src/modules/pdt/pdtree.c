@@ -278,7 +278,6 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 		*plen = len;
 	
 	return domain;
-	
 }
 
 /**
@@ -287,7 +286,7 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 {
 	pdt_tree_t *it;
-	int len;
+	int len = 0;
 	str *domain=NULL;
 
 	if(pl==NULL || sdomain==NULL || sdomain->s==NULL || code == NULL
@@ -300,13 +299,14 @@ str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 	it = pl;
 	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
-	
+
 	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 		return NULL;
-	
+
 	domain = get_domain(it, code, &len);
 	if(plen!=NULL)
-			*plen = len;
+		*plen = len;
+
 	return domain;
 }
 
