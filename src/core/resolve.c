@@ -951,6 +951,12 @@ again:
 				*last=rd;
 				last=&(rd->next);
 				break;
+			case T_OPT:
+				/* skip DNS extensions, e.g. EDNS0 */
+				rd->rdata=0;
+				*last=rd;
+				last=&(rd->next);
+				break;
 			default:
 				LM_ERR("unknown type %d\n", rtype);
 				rd->rdata=0;
