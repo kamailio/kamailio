@@ -104,8 +104,8 @@ int rx_send_str(str *rx_session_id) {
 
     if (auth->u.auth.state == AUTH_ST_DISCON) {
         // If we are in DISCON is because an STR was already sent
-        // so just wait for STA or for Grace Timout to happen
-        LM_DBG("Hmmm, auth session already in disconnected state\n");
+        // so just wait for STA or for Grace Timeout to happen
+        LM_DBG("auth session already in disconnected state\n");
         cdpb.AAASessionsUnlock(auth->hash);
         return CSCF_RETURN_FALSE;
     }
