@@ -31,7 +31,7 @@ typedef int(*cds_report)( struct modem* , char* , int );
 
 
 /* put_command
-   Sends a command to the modem and waits max timout*0.1 seconds for an answer.
+   Sends a command to the modem and waits max timeout*0.1 seconds for an answer.
    The function returns the length of the answer.
    The answer can be Ok, ERROR or expect.
    The command may be empty or NULL  */
