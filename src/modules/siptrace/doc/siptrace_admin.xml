@@ -512,7 +512,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
                 </example>
         </section>
 	</section>
-	
+
 	<section>
 	<title>Functions</title>
 	<section id="siptrace.f.sip_trace">
@@ -564,6 +564,35 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc");
 ...
 /* trace current dialog; needs to be done on initial INVITE and dialog has to be loaded */
 sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="siptrace.f.sip_trace_mode">
+		<title>
+		<function moreinfo="none">sip_trace_mode(tmode])</function>
+		</title>
+		<para>
+			Set the tracing mode: message, transaction or dialog. Only the first
+			character of the parameter matters: m or M for message; t or T for
+			transaction; d or D for dialog.
+		</para>
+		<para>
+			In message tracing mode only the current message is stored or mirrored.
+			In transaction tracing mode, all the messages of the current transaction
+			are stored or mirrored. In dialog tracing mode, all the messages of the
+			current dialog are stored or mirrored.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		</emphasis>
+		<example>
+		<title><function>sip_trace_mode()</function> usage</title>
+		<programlisting format="linespecific">
+...
+sip_trace_mode("t");
 ...
 </programlisting>
 		</example>
