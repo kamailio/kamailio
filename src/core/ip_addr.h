@@ -420,6 +420,7 @@ static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 			break;
 		default:
 			LM_CRIT("unknown address family %d\n", su->s.sa_family);
+			memset(ip, 0, sizeof(ip_addr_t));
 	}
 }
 

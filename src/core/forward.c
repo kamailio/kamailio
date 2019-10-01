@@ -471,6 +471,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 
 	prev_send_sock=0;
 	err=0;
+	memset(&dns_srv_h, 0, sizeof(struct dns_srv_handle));
 #endif
 
 	buf=0;
