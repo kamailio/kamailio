@@ -571,7 +571,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
 	<section id="siptrace.f.sip_trace_mode">
 		<title>
-		<function moreinfo="none">sip_trace_mode(tmode])</function>
+		<function moreinfo="none">sip_trace_mode(tmode)</function>
 		</title>
 		<para>
 			Set the tracing mode: message, transaction or dialog. Only the first
@@ -587,7 +587,6 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 		<para>
 		This function can be used in ANY_ROUTE.
 		</para>
-		</emphasis>
 		<example>
 		<title><function>sip_trace_mode()</function> usage</title>
 		<programlisting format="linespecific">
