@@ -264,6 +264,8 @@ PerlInterpreter *parser_init(void) {
  *
  */
 int unload_perl(PerlInterpreter *p) {
+	/* clean and reset everything */
+	PL_perl_destruct_level = 1;
 	perl_destruct(p);
 	perl_free(p);
 
@@ -278,26 +280,26 @@ int unload_perl(PerlInterpreter *p) {
  */
 int perl_reload(void)
 {
-
-	PerlInterpreter *new_perl;
-
-	new_perl = parser_init();
-
-	if (new_perl) {
+	if(my_perl) {
 		unload_perl(my_perl);
-		my_perl = new_perl;
+	}
+	my_perl = parser_init();
+
 #ifdef PERL_EXIT_DESTRUCT_END
-		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #else
 #warning Perl 5.8.x should be used. Please upgrade.
 #warning This binary will be unsupported.
-		PL_exit_flags |= PERL_EXIT_EXPECTED;
+	PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
+
+	if(my_perl) {
+		LM_DBG("new perl interpreter initialized\n");
 		return 0;
 	} else {
-		return -1;
+		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
+		exit(-1);
 	}
-
 }
 
 
