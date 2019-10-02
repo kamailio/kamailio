@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "rfc2617_sha256.h"
-#include "../../lib/srutils/sha256.h"
+#include "../../core/crypto/sha256.h"
 #include "../../core/dprint.h"
 
 
