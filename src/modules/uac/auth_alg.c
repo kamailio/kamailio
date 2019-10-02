@@ -27,7 +27,7 @@
  */
 
 
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 
 #include "auth_alg.h"
 
