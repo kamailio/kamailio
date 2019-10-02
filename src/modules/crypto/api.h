@@ -41,7 +41,7 @@ typedef  int (*load_crypto_f)( struct crypto_binds* );
 int load_crypto( struct crypto_binds *cb );
 
 /*!
- * \brief Function to be called directly from other modules to load the CRYTPO API
+ * \brief Function to be called directly from other modules to load the CRYPTO API
  * \param cb crypto API export binding
  * \return 0 on success, -1 if the API loader could not imported
  */
