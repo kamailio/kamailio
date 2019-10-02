@@ -47,7 +47,7 @@
 #include "../../core/parser/parse_nameaddr.h"
 
 #include "../../core/strutils.h"
-#include "../../lib/srutils/shautils.h"
+#include "../../core/crypto/shautils.h"
 #include "pv_trans.h"
 
 
