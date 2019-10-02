@@ -31,7 +31,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/hash_func.h"
 #include "../../core/dprint.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/ut.h"
 #include "../../core/globals.h"
 #include "../../core/error.h"

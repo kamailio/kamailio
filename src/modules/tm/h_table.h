@@ -44,7 +44,6 @@
 
 #include "../../core/clist.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../core/md5utils.h"
 #include "../../core/usr_avp.h"
 #include "../../core/xavp.h"
 #include "../../core/timer.h"

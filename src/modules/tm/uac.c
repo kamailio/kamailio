@@ -29,7 +29,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
 #include "../../core/globals.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/crc.h"
 #include "../../core/ip_addr.h"
 #include "../../core/dset.h"

@@ -35,7 +35,6 @@
 #include "../../core/timer.h"
 #include "../../core/forward.h"
 #include "../../core/mem/mem.h"
-#include "../../core/md5utils.h"
 #include "../../core/ip_addr.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/usr_avp.h"
