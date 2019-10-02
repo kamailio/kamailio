@@ -30,7 +30,7 @@
 * Module: \ref srutils
 */
 
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 #include "../../core/ut.h"
 #include "shautils.h"
 
