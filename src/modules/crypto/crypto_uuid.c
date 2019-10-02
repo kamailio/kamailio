@@ -218,9 +218,8 @@ int crypto_generate_SHA1(str* in, str* hash)
 
 	void* ret;
 	if ((ret=SHA1((unsigned char *)in->s, in->len, crypto_buf)) != crypto_buf) {
-		LM_ERR("SHA1 algo failed!\n");
-		/* FIXME remove LM_BUG */
-		LM_BUG("Pointer value %p\n", ret);
+		LM_ERR("SHA1 algorithm failed!\n");
+		LM_DBG("return value from library %p\n", ret);
 		return -1;
 	}
 
