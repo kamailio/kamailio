@@ -29,7 +29,7 @@
 #include "parser/msg_parser.h"
 #include "parser/parse_to.h"
 #include "parser/parse_from.h"
-#include "md5utils.h"
+#include "crypto/md5utils.h"
 
 /*! \brief calculate characteristic value of a message -- this value
    is used to identify a transaction during the process of

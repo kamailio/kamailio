@@ -35,7 +35,6 @@
 #include "../lump_struct.h"
 #include "../flags.h"
 #include "../ip_addr.h"
-#include "../md5utils.h"
 #include "../config.h"
 #include "parse_def.h"
 #include "parse_cseq.h"

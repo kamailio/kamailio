@@ -91,7 +91,6 @@
 #include "mem/mem.h"
 #include "dprint.h"
 #include "config.h"
-#include "md5utils.h"
 #include "data_lump.h"
 #include "data_lump_rpl.h"
 #include "ip_addr.h"

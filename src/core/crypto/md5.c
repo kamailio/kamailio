@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include "endianness.h"
+#include "../endianness.h"
 #include "md5.h"
 
 #ifndef __OS_solaris

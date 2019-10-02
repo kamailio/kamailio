@@ -33,8 +33,8 @@
 #include <string.h>
 #include "md5.h"
 #include "md5utils.h"
-#include "dprint.h"
-#include "ut.h"
+#include "../dprint.h"
+#include "../ut.h"
 
 
 /*!

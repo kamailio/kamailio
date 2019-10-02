@@ -50,6 +50,7 @@
 #include "data_lump.h"
 #include "ut.h"
 #include "mem/mem.h"
+#include "crypto/md5utils.h"
 #include "msg_translator.h"
 #include "sr_module.h"
 #include "ip_addr.h"
