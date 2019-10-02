@@ -21,7 +21,7 @@
 #include "../../core/globals.h"
 #include "../../core/forward.h"
 #include "../../core/dprint.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/msg_translator.h"
 #include "../../core/udp_server.h"
 #include "../../core/timer.h"
