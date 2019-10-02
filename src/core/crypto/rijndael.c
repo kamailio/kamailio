@@ -639,6 +639,7 @@ show4x256u32(char *name, u_int32_t data[4][256])
 	printf("};\n\n");
 }
 
+#if 0
 int
 main()
 {
@@ -671,5 +672,6 @@ main()
 	printf("\n};\n\n");
 	return 0;
 }
+#endif
 
 #endif
