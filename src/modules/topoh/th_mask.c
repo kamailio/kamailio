@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "../../core/dprint.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 #include "../../core/crc.h"
 #include "../../core/mem/mem.h"
 #include "th_mask.h"
