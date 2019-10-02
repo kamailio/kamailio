@@ -34,7 +34,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../lib/srutils/shautils.h"
+#include "../../core/crypto/shautils.h"
 #include "../../core/strutils.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
