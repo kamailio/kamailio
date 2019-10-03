@@ -1241,6 +1241,39 @@ end
 	    </example>
 	</section>
 
+	<section id="tls.p.rand_engine">
+	<title><varname>rand_engine</varname> (str)</title>
+	<para>
+		Set the ranondom number generator engine for libssl.
+	</para>
+	<para>
+		Note: the default random number generator (PRNG) engine of libssl v1.1.x
+		is not designed for multi-process applications and can result in a crash.
+		Therefore set the PRNG engine to one of the options listed in this
+		section. If libssl 1.1.x (or newer) is detected at compile time, then
+		the PRNG engine is set to "fastrand".
+	</para>
+	<para>
+		The following options are avaialble:
+	</para>
+	<itemizedlist>
+		<listitem><para>krand - use internal kam_rand() function</para></listitem>
+		<listitem><para>fastrand - use internal fastrand function</para></listitem>
+	</itemizedlist>
+	<para>
+		The default value is empty (not set) for libssl v1.0.x or older, and
+		"fastrand" for libssl v1.1.x or newer.
+	</para>
+	<example>
+	    <title>Set <varname>rand_engine</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "rand_engine", "fastrand")
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.engine">
 	<title><varname>engine</varname> (string)</title>
 	<para>
