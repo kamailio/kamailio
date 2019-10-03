@@ -48,7 +48,7 @@ Mean:		   500 cycles =    51.2 mbits/sec
 #define PRE_CALC_TABLES
 #define LARGE_TABLES
 
-void gen_tabs(void);
+static void gen_tabs(void);
 
 /* 3. Basic macros for speeding up generic operations				*/
 
@@ -81,20 +81,20 @@ void gen_tabs(void);
 #define tab_gen		1
 #else							/* !PRE_CALC_TABLES */
 
-u1byte pow_tab[256];
-u1byte log_tab[256];
-u1byte sbx_tab[256];
-u1byte isb_tab[256];
-u4byte rco_tab[10];
-u4byte ft_tab[4][256];
-u4byte it_tab[4][256];
+static u1byte pow_tab[256];
+static u1byte log_tab[256];
+static u1byte sbx_tab[256];
+static u1byte isb_tab[256];
+static u4byte rco_tab[10];
+static u4byte ft_tab[4][256];
+static u4byte it_tab[4][256];
 
 #ifdef	LARGE_TABLES
-u4byte fl_tab[4][256];
-u4byte il_tab[4][256];
+static u4byte fl_tab[4][256];
+static u4byte il_tab[4][256];
 #endif
 
-u4byte tab_gen = 0;
+static u4byte tab_gen = 0;
 #endif   /* !PRE_CALC_TABLES */
 
 #define ff_mult(a,b)	((a) && (b) ? pow_tab[(log_tab[a] + log_tab[b]) % 255] : 0)
@@ -151,7 +151,7 @@ u4byte tab_gen = 0;
 		rotl(((u4byte)isb_tab[byte((bi)[((n) + 1) & 3],3)]), 24) ^ *((k) + (n))
 #endif
 
-void
+static void
 gen_tabs(void)
 {
 #ifndef PRE_CALC_TABLES
@@ -161,7 +161,7 @@ gen_tabs(void)
 				q;
 
 	/* log and power tables for GF(2**8) finite field with	*/
-	/* 0x11b as modular polynomial - the simplest prmitive	*/
+	/* 0x11b as modular polynomial - the simplest primitive	*/
 	/* root is 0x11, used here to generate the tables		*/
 
 	for (i = 0, p = 1; i < 256; ++i)
@@ -602,12 +602,12 @@ aes_cbc_decrypt(rijndael_ctx *ctx, u_int8_t *iva, u_int8_t *data, unsigned len)
  */
 #ifdef PRINT_TABS
 
-void
+static void
 show256u8(char *name, u_int8_t *data)
 {
 	int			i;
 
-	printf("const u1byte  %s[256] = {\n  ", name);
+	printf("static const u1byte  %s[256] = {\n  ", name);
 	for (i = 0; i < 256;)
 	{
 		printf("%u", pow_tab[i++]);
@@ -618,13 +618,13 @@ show256u8(char *name, u_int8_t *data)
 }
 
 
-void
+static void
 show4x256u32(char *name, u_int32_t data[4][256])
 {
 	int			i,
 				j;
 
-	printf("const u4byte  %s[4][256] = {\n{\n  ", name);
+	printf("static const u4byte  %s[4][256] = {\n{\n  ", name);
 	for (i = 0; i < 4; i++)
 	{
 		for (j = 0; j < 256;)
