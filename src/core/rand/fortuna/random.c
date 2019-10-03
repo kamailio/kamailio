@@ -58,15 +58,15 @@
 static time_t seed_time = 0;
 static time_t check_time = 0;
 
-static int get_random_bytes_int(u_int8_t *dst, unsigned count);
+int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count);
 
 /* private functions */
 
 static int safe_read(int fd, void *buf, size_t count)
 {
-	int			done = 0;
-	char	   *p = buf;
-	int			res;
+	int done = 0;
+	char *p = buf;
+	int res;
 
 	while (count)
 	{
@@ -86,8 +86,8 @@ static int safe_read(int fd, void *buf, size_t count)
 
 static u_int8_t * try_dev_random(u_int8_t *dst)
 {
-	int			fd;
-	int			res;
+	int fd;
+	int res;
 
 	fd = open("/dev/urandom", O_RDONLY, 0);
 	if (fd == -1)
@@ -110,7 +110,7 @@ static u_int8_t * try_dev_random(u_int8_t *dst)
  */
 static unsigned acquire_system_randomness(u_int8_t *dst)
 {
-	u_int8_t	   *p = dst;
+	u_int8_t *p = dst;
 
 	p = try_dev_random(p);
 	return p - dst;
@@ -118,61 +118,56 @@ static unsigned acquire_system_randomness(u_int8_t *dst)
 
 static void system_reseed(void)
 {
-        u_int8_t           buf[1024];
-        int                     n;
-        time_t          t;
-        int                     skip = 1;
+	u_int8_t buf[1024];
+	int n;
+	time_t t;
+	int skip = 1;
 
-        t = time(NULL);
+	t = time(NULL);
 
-        if (seed_time == 0)
-                skip = 0;
-        else if ((t - seed_time) < SYSTEM_RESEED_MIN)
-                skip = 1;
-        else if ((t - seed_time) > SYSTEM_RESEED_MAX)
-                skip = 0;
-        else if (check_time == 0 ||
-                         (t - check_time) > SYSTEM_RESEED_CHECK_TIME)
-        {
-                check_time = t;
+	if (seed_time == 0)
+		skip = 0;
+	else if ((t - seed_time) < SYSTEM_RESEED_MIN)
+		skip = 1;
+	else if ((t - seed_time) > SYSTEM_RESEED_MAX)
+		skip = 0;
+	else if (check_time == 0 ||
+			(t - check_time) > SYSTEM_RESEED_CHECK_TIME)
+	{
+		check_time = t;
 
-                /* roll dice */
-                get_random_bytes_int(buf, 1);
-                skip = buf[0] >= SYSTEM_RESEED_CHANCE;
-        }
-        /* clear 1 byte */
-        memset(buf, 0, sizeof(buf));
+		/* roll dice */
+		sr_get_pseudo_random_bytes(buf, 1);
+		skip = buf[0] >= SYSTEM_RESEED_CHANCE;
+	}
+	/* clear 1 byte */
+	memset(buf, 0, sizeof(buf));
 
-        if (skip)
-                return;
+	if (skip)
+		return;
 
-        n = acquire_system_randomness(buf);
-        if (n > 0)
-                fortuna_add_entropy(buf, n);
+	n = acquire_system_randomness(buf);
+	if (n > 0)
+		fortuna_add_entropy(buf, n);
 
-        seed_time = t;
-        memset(buf, 0, sizeof(buf));
+	seed_time = t;
+	memset(buf, 0, sizeof(buf));
 }
 
-static int get_random_bytes_int(u_int8_t *dst, unsigned count)
-{
-        system_reseed();
-        fortuna_get_bytes(count, dst);
-        return 0;
-}
 
 /* public functions */
 
 int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count)
 {
-        return get_random_bytes_int(dst, count);
+	system_reseed();
+	fortuna_get_bytes(count, dst);
+	return 0;
 }
-
 
 
 int sr_add_entropy(const u_int8_t *data, unsigned count)
 {
-        system_reseed();
-        fortuna_add_entropy(data, count);
-        return 0;
+	system_reseed();
+	fortuna_add_entropy(data, count);
+	return 0;
 }

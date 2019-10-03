@@ -37,6 +37,7 @@
 #ifndef _RANDOM_H_
 #define _RANDOM_H_
 
+#include <sys/types.h>
 
 /*
  * System reseeds should be separated at least this much.
@@ -56,9 +57,9 @@
  */
 #define SYSTEM_RESEED_MAX                       (12*60*60)      /* 12h */
 
-int sr_get_pseudo_random_bytes(unsigned char *dst, unsigned count);
+int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count);
 
-int sr_add_entropy(const unsigned char *data, unsigned count);
+int sr_add_entropy(const u_int8_t *data, unsigned count);
 
 
 #endif

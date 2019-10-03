@@ -31,7 +31,6 @@
 
 #include <sys/time.h>
 #include <time.h>
-#include <sys/types.h>
 #include <string.h>
 
 #include "../../crypto/rijndael.h"
