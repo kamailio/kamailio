@@ -907,7 +907,7 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 	str user, contact;
 	int i;
 	int n;
-	urecord_t* r;
+	urecord_t r;
 	ucontact_t* c;
 #define RUIDBUF_SIZE 128
 	char ruidbuf[RUIDBUF_SIZE];
@@ -1013,12 +1013,16 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 			}
 
 			lock_udomain(_d, &user);
-			get_static_urecord(_d, &user, &r);
+			/* don't use the same static value from get_static_urecord() */
+			memset( &r, 0, sizeof(struct urecord) );
+			r.aor = user;
+			r.aorhash = ul_get_aorhash(&user);
+			r.domain = _d->name;
 
-			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
+			if ( (c=mem_insert_ucontact(&r, &contact, ci)) == 0) {
 				LM_ERR("inserting temporary contact failed for %.*s\n",
 						user.len, user.s);
-				release_urecord(r);
+				release_urecord(&r);
 				unlock_udomain(_d, &user);
 				goto error;
 			}
@@ -1041,7 +1045,7 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 							user.len, user.s);
 				}
 			}
-			release_urecord(r);
+			release_urecord(&r);
 			unlock_udomain(_d, &user);
 			if(ruid.len > 0 && ul_xavp_contact_name.s != NULL) {
 				/* delete attributes by ruid */
