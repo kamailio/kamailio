@@ -449,7 +449,10 @@ int ksr_rand_engine_param(modparam_t type, void* val)
 	LM_DBG("random engine: %.*s\n", reng->len, reng->s);
 	if(reng->len == 5 && strncasecmp(reng->s, "krand", 5) == 0) {
 		LM_DBG("setting krand random engine\n");
-		RAND_set_rand_method(RAND_ksr_method());
+		RAND_set_rand_method(RAND_ksr_krand_method());
+	} else if(reng->len == 8 && strncasecmp(reng->s, "fastrand", 8) == 0) {
+		LM_DBG("setting fastrand random engine\n");
+		RAND_set_rand_method(RAND_ksr_fastrand_method());
 	}
 #endif
 	return 0;
