@@ -138,31 +138,31 @@ typedef struct fortuna_state FState;
  * - No memory allocations.
  */
 
-void
+static void
 ciph_init(CIPH_CTX * ctx, const u_int8_t *key, int klen)
 {
 	rijndael_set_key(ctx, (const u_int32_t *) key, klen, 1);
 }
 
-void
+static void
 ciph_encrypt(CIPH_CTX * ctx, const u_int8_t *in, u_int8_t *out)
 {
 	rijndael_encrypt(ctx, (const u_int32_t *) in, (u_int32_t *) out);
 }
 
-void
+static void
 md_init(MD_CTX * ctx)
 {
 	sr_SHA256_Init(ctx);
 }
 
-void
+static void
 md_update(MD_CTX * ctx, const u_int8_t *data, int len)
 {
 	sr_SHA256_Update(ctx, data, len);
 }
 
-void
+static void
 md_result(MD_CTX * ctx, u_int8_t *dst)
 {
 	SHA256_CTX	tmp;
@@ -175,7 +175,7 @@ md_result(MD_CTX * ctx, u_int8_t *dst)
 /*
  * initialize state
  */
-void
+static void
 init_state(FState *st)
 {
 	int			i;
@@ -189,7 +189,7 @@ init_state(FState *st)
  * Endianess does not matter.
  * It just needs to change without repeating.
  */
-void
+static void
 inc_counter(FState *st)
 {
 	u_int32_t	   *val = (u_int32_t *) st->counter;
@@ -206,7 +206,7 @@ inc_counter(FState *st)
 /*
  * This is called 'cipher in counter mode'.
  */
-void
+static void
 encrypt_counter(FState *st, u_int8_t *dst)
 {
 	ciph_encrypt(&st->ciph, st->counter, dst);
@@ -218,7 +218,7 @@ encrypt_counter(FState *st, u_int8_t *dst)
  * The time between reseed must be at least RESEED_INTERVAL
  * microseconds.
  */
-int
+static int
 enough_time_passed(FState *st)
 {
 	int			ok;
@@ -251,7 +251,7 @@ enough_time_passed(FState *st)
 /*
  * generate new key from all the pools
  */
-void
+static void
 reseed(FState *st)
 {
 	unsigned	k;
@@ -297,7 +297,7 @@ reseed(FState *st)
 /*
  * Pick a random pool.	This uses key bytes as random source.
  */
-unsigned
+static unsigned
 get_rand_pool(FState *st)
 {
 	unsigned	rnd;
@@ -317,8 +317,8 @@ get_rand_pool(FState *st)
 /*
  * update pools
  */
-void
-add_entropy_int(FState *st, const u_int8_t *data, unsigned len)
+static void
+add_entropy(FState *st, const u_int8_t *data, unsigned len)
 {
 	unsigned	pos;
 	u_int8_t		hash[BLOCK];
@@ -348,7 +348,7 @@ add_entropy_int(FState *st, const u_int8_t *data, unsigned len)
 /*
  * Just take 2 next blocks as new key
  */
-void
+static void
 rekey(FState *st)
 {
 	encrypt_counter(st, st->key);
@@ -362,7 +362,7 @@ rekey(FState *st)
  * This can also be viewed as spreading the startup
  * entropy over all of the components.
  */
-void
+static void
 startup_tricks(FState *st)
 {
 	int			i;
@@ -387,7 +387,7 @@ startup_tricks(FState *st)
 	st->tricks_done = 1;
 }
 
-void
+static void
 extract_data(FState *st, unsigned count, u_int8_t *dst)
 {
 	unsigned	n;
@@ -445,7 +445,7 @@ fortuna_add_entropy(const u_int8_t *data, unsigned len)
 	}
 	if (!data || !len)
 		return;
-	add_entropy_int(&main_state, data, len);
+	add_entropy(&main_state, data, len);
 }
 
 void

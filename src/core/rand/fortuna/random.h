@@ -1,10 +1,14 @@
 /*
  * random.h
  *              Acquire randomness from system.  For seeding RNG.
+ *              Get pseudo random numbers from RNG.
  *
  * Copyright (c) 2001 Marko Kreen
  * Copyright (c) 2019 Henning Westerholt
  * All rights reserved.
+ *
+ * Based on https://github.com/waitman/libfortuna, several cleanups
+ * done in this version: https://github.com/henningw/libfortuna
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,9 +56,9 @@
  */
 #define SYSTEM_RESEED_MAX                       (12*60*60)      /* 12h */
 
-int get_pseudo_random_bytes(unsigned char *dst, unsigned count);
+int sr_get_pseudo_random_bytes(unsigned char *dst, unsigned count);
 
-int add_entropy(const unsigned char *data, unsigned count);
+int sr_add_entropy(const unsigned char *data, unsigned count);
 
 
 #endif

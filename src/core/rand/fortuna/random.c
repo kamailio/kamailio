@@ -7,6 +7,9 @@
  * Copyright (c) 2019 Henning Westerholt
  * All rights reserved.
  *
+ * Based on https://github.com/waitman/libfortuna, refactoring
+ * done in this version: https://github.com/henningw/libfortuna
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -160,14 +163,14 @@ static int get_random_bytes_int(u_int8_t *dst, unsigned count)
 
 /* public functions */
 
-int get_pseudo_random_bytes(u_int8_t *dst, unsigned count)
+int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count)
 {
         return get_random_bytes_int(dst, count);
 }
 
 
 
-int add_entropy(const u_int8_t *data, unsigned count)
+int sr_add_entropy(const u_int8_t *data, unsigned count)
 {
         system_reseed();
         fortuna_add_entropy(data, count);
