@@ -39,6 +39,8 @@
 #include <sys/types.h>
 #include <string.h>
 
+#include "../../dprint.h"
+
 #include "random.h"
 #include "fortuna.h"
 
@@ -147,8 +149,10 @@ static void system_reseed(void)
 		return;
 
 	n = acquire_system_randomness(buf);
-	if (n > 0)
+	if (n > 0) {
 		fortuna_add_entropy(buf, n);
+		LM_DBG("cryptographic PRNG reseed done with %u bytes\n", n);
+	}
 
 	seed_time = t;
 	memset(buf, 0, sizeof(buf));
@@ -168,6 +172,7 @@ int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count)
 int sr_add_entropy(const u_int8_t *data, unsigned count)
 {
 	system_reseed();
+	LM_DBG("additional %u bytes entropy added to cryptographic PRNG\n", count);
 	fortuna_add_entropy(data, count);
 	return 0;
 }
