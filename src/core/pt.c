@@ -27,6 +27,7 @@
 #include "socket_info.h"
 #include "rand/fastrand.h"
 #include "rand/kam_rand.h"
+#include "rand/cryptorand.h"
 #ifdef PKG_MALLOC
 #include "mem/mem.h"
 #endif
@@ -249,8 +250,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 {
 	int pid, child_process_no;
 	int ret;
-	unsigned int new_seed1;
-	unsigned int new_seed2;
+	unsigned int new_seed;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
@@ -289,8 +289,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 	}
 
 	child_process_no = *process_count;
-	new_seed1=fastrand();
-	new_seed2=random();
+	new_seed=cryptorand();
 	pid = fork();
 	if (pid<0) {
 		lock_release(process_lock);
@@ -305,10 +304,13 @@ int fork_process(int child_id, char *desc, int make_sock)
 #ifdef USE_TCP
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
-		fastrand_seed(new_seed1);
-		kam_srand(fastrand());
-		srandom(new_seed2+time(0));
-		LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
+		new_seed+=getpid()+time(0);
+		LM_DBG("seeding PRNG with %u\n", new_seed);
+		cryptorand_seed(new_seed);
+		fastrand_seed(cryptorand());
+		kam_srand(cryptorand());
+		srandom(cryptorand());
+		LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(), fastrand(), cryptorand());
 		shm_malloc_on_fork();
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);

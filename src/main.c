@@ -124,6 +124,7 @@
 #endif
 #include "core/rand/fastrand.h" /* seed */
 #include "core/rand/kam_rand.h"
+#include "core/rand/cryptorand.h"
 
 #include "core/counters.h"
 #include "core/cfg/cfg.h"
@@ -2249,10 +2250,11 @@ try_again:
 	}
 	seed+=getpid()+time(0);
 	LM_DBG("seeding PRNG with %u\n", seed);
-	fastrand_seed(seed);
-	kam_srand(fastrand());
-	srandom(fastrand()+time(0));
-	LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
+	cryptorand_seed(seed);
+	fastrand_seed(cryptorand());
+	kam_srand(cryptorand());
+	srandom(cryptorand());
+	LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(), fastrand(), cryptorand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();
