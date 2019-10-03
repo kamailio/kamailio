@@ -561,6 +561,12 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 		return -1;
 
 	register_tls_hooks(&tls_h);
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	LM_DBG("setting fastrand random engine\n");
+	RAND_set_rand_method(RAND_ksr_fastrand_method());
+#endif
+
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
 	return 0;
