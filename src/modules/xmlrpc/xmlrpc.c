@@ -2509,7 +2509,7 @@ static int ki_xmlrpc_reply(sip_msg_t* msg, int rcode, str* reason)
 	reply.reason = as_asciiz(reason);
 	if (reply.reason == NULL) {
 		ERR("No memory left\n");
-		return -1;
+		goto error;
 	}
 
 	if (reply.code >= 300) {
