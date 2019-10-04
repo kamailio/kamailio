@@ -87,13 +87,13 @@ static int ksr_fastrand_bytes(unsigned char *outdata, int size)
 	}
 
 	while(size >= sizeof(int)) {
-		r = kam_rand();
+		r = fastrand();
 		memcpy(outdata, &r, sizeof(int));
 		size -= sizeof(int);
 		outdata += sizeof(int);
 	}
 	if(size>0) {
-		r = kam_rand();
+		r = fastrand();
 		memcpy(outdata, &r, size);
 	}
 	return 1;
