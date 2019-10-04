@@ -635,12 +635,12 @@ static inline int str2int(str* _s, unsigned int* _r)
 {
 	int i;
 
-	if (_s == NULL) return -1;
 	if (_r == NULL) return -1;
+	*_r = 0;
+	if (_s == NULL) return -1;
 	if (_s->len < 0) return -1;
 	if (_s->s == NULL) return -1;
 
-	*_r = 0;
 	for(i = 0; i < _s->len; i++) {
 		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
 			*_r *= 10;
