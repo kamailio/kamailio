@@ -27,6 +27,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/rand/kam_rand.h"
+#include "fortuna/random.h"
 
 static int ksr_rand_bytes(unsigned char *outdata, int size)
 {
@@ -37,6 +38,11 @@ static int ksr_rand_bytes(unsigned char *outdata, int size)
 	} else if (size == 0) {
 		return 1;
 	}
+
+/* TODO
+	sr_get_pseudo_random_bytes(outdata, size);
+	return 1;
+*/
 
 	while(size >= sizeof(int)) {
 		r = kam_rand();
