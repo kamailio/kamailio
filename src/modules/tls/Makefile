@@ -28,6 +28,7 @@ else
 	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
 endif
 
+TLS_EXTRA_LIBS="-L. -lfortuna"
 LIBS+= $(TLS_EXTRA_LIBS)
 
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
@@ -53,3 +54,7 @@ install-cfg:
 						"$(cfg_prefix)/$(cfg_dir)tls.cfg" ; \
 	fi
 
+libfortuna.a:
+	$(MAKE) -C ./fortuna OUT="../libfortuna.a"
+
+tls.so: libfortuna.a
