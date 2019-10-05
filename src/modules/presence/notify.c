@@ -2018,6 +2018,7 @@ int add_waiting_watchers(watcher_t *watchers, str pres_uri, str event)
 
 		w = (watcher_t *)pkg_malloc(sizeof(watcher_t));
 		if(w == NULL) {
+			pkg_free(wuri.s);
 			ERR_MEM(PKG_MEM_STR);
 		}
 		memset(w, 0, sizeof(watcher_t));
