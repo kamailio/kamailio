@@ -535,6 +535,7 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo);
 static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
+static int w_xavp_copy(sip_msg_t *msg, char *src_name, char *src_idx, char *dst_name);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
@@ -549,6 +550,7 @@ static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
 static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
 static int w_xavp_to_var(sip_msg_t *msg, char *p1);
 
+int pv_xavp_copy_fixup(void** param, int param_no);
 int pv_evalx_fixup(void** param, int param_no);
 int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt);
 
@@ -579,6 +581,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
 		2, fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"xavp_copy", (cmd_function)w_xavp_copy, 3, pv_xavp_copy_fixup, 0,
 		ANY_ROUTE},
 	{"xavp_params_implode", (cmd_function)w_xavp_params_implode,
 		2, fixup_spve_str, fixup_free_spve_str,
@@ -810,6 +814,57 @@ static int ki_xavp_print(sip_msg_t* msg)
 	xavp_print_list(NULL);
 	return 1;
 }
+
+/**
+ *
+ */
+static int w_xavp_copy(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_dst_name)
+{
+	str src_name;
+	int src_idx;
+	str dst_name;
+	if(get_str_fparam(&src_name, msg, (gparam_p)_src_name) != 0) {
+		LM_ERR("xavp_copy: missing source\n");
+		return -1;
+	}
+	if(get_str_fparam(&dst_name, msg, (gparam_p)_dst_name) != 0) {
+		LM_ERR("xavp_copy: missing destination\n");
+		return -1;
+	}
+	if(get_int_fparam(&src_idx, msg, (gparam_t*)_src_idx)<0) {
+		LM_ERR("failed to get the src_idx value\n");
+		return -1;
+	}
+	sr_xavp_t *src_xavp = xavp_get_by_index(&src_name, src_idx, NULL);
+	if(!src_xavp) {
+		LM_ERR("xavp_copy: missing can not find source xavp [%.*s]\n", src_name.len, src_name.s);
+		return -1;
+	}
+	// Check if destination exist, if it does we will append, similar to XAVP assigment
+	sr_xavp_t *dst_xavp = xavp_get(&dst_name, NULL);
+	sr_xavp_t *new_xavp = xavp_clone_level_nodata_with_new_name(src_xavp, &dst_name);
+	if (!new_xavp) {
+		LM_ERR("error cloning xavp\n");
+		return -1;
+	}
+	if (!dst_xavp) {
+		LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
+		if(xavp_add(new_xavp, NULL)<0) {
+			LM_ERR("error adding new xavp\n");
+			xavp_destroy_list(&dst_xavp);
+			return -1;
+		}
+	} else {
+		LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
+		if(xavp_add_last(new_xavp, &dst_xavp)<0) {
+			LM_ERR("error appending new xavp\n");
+			xavp_destroy_list(&dst_xavp);
+			return -1;
+		}
+	}
+	return 1;
+}
+
 
 /**
  *
@@ -1363,6 +1418,16 @@ static int ki_sbranch_reset(sip_msg_t *msg)
 	if(sbranch_reset()<0)
 		return -1;
 	return 1;
+}
+
+int pv_xavp_copy_fixup(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 3)
+		return fixup_var_str_12(param, param_no);
+	if (param_no == 2)
+		return fixup_var_int_12(param, param_no);
+	LM_ERR("invalid parameter count [%d]\n", param_no);
+	return -1;
 }
 
 int pv_evalx_fixup(void** param, int param_no)

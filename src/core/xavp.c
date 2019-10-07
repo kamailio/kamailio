@@ -693,11 +693,16 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 	return result;
 }
 
+sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
+{
+	return xavp_clone_level_nodata_with_new_name(xold, &xold->name);
+}
+
 /**
  * clone the xavp without values that are custom data
  * - only one list level is cloned, other sublists are ignored
  */
-sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
+sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 {
 	sr_xavp_t *xnew = NULL;
 	sr_xavp_t *navp = NULL;
@@ -713,13 +718,13 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
 		return NULL;
 	}
-	xnew = xavp_new_value(&xold->name, &xold->val);
+	xnew = xavp_new_value(dst_name, &xold->val);
 	if(xnew==NULL)
 	{
 		LM_ERR("cannot create cloned root xavp\n");
 		return NULL;
 	}
-	LM_DBG("cloned root xavp [%.*s]\n", xold->name.len, xold->name.s);
+	LM_DBG("cloned root xavp [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s, dst_name->len, dst_name->s);
 
 	if(xold->val.type!=SR_XTYPE_XAVP)
 	{
