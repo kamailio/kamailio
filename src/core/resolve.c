@@ -32,8 +32,12 @@
 #include <resolv.h>
 #include <string.h>
 
-/* older glibc < 2.25 does not include T_OPT in nameser_compat.h yet */
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 25
+/*
+ * Older glibc < 2.25 does not include T_OPT in nameser_compat.h yet.
+ * On alpine linux musl library it is also not defined. There is no
+ * musl feature test macro, so we look for glibc instead.
+ */
+#if (defined __GLIBC__ &&  __GLIBC__ == 2 && __GLIBC_MINOR__ < 25) || !defined __GLIBC__
 #ifndef T_OPT
 #define T_OPT ns_t_opt
 #endif
