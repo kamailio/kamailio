@@ -129,4 +129,46 @@ const RAND_METHOD *RAND_ksr_fastrand_method(void)
     return &_ksr_fastrand_method;
 }
 
+
+/*
+ * Implementation with Fortuna cryptographic PRNG.
+ * We are not strictly implementing the OpenSSL API here - we will
+ * not return an error if the PRNG has not been seeded with enough
+ * randomness to ensure an unpredictable byte sequence.
+ */
+static int ksr_cryptorand_bytes(unsigned char *outdata, int size)
+{
+	if (size < 0) {
+		return 0;
+	} else if (size == 0) {
+		return 1;
+	}
+
+	sr_get_pseudo_random_bytes(outdata, size);
+	return 1;
+}
+
+static int ksr_cryptorand_status(void)
+{
+    return 1;
+}
+
+/*
+ * We don't have a dedicated function for pseudo-random
+ * bytes, just use the secure version as well for it.
+ */
+const RAND_METHOD _ksr_cryptorand_method = {
+    NULL,
+    ksr_cryptorand_bytes,
+    NULL,
+    NULL,
+    ksr_cryptorand_bytes,
+    ksr_cryptorand_status
+};
+
+const RAND_METHOD *RAND_ksr_cryptorand_method(void)
+{
+    return &_ksr_cryptorand_method;
+}
+
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
