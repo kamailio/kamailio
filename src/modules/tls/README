@@ -1435,12 +1435,14 @@ end
    The following options are avaialble:
      * krand - use internal kam_rand() function
      * fastrand - use internal fastrand function
-     * cryptorand - use internal cryptorand function
+     * cryptorand - use internal cryptorand (fortuna) function
+
+   Note: the krand and fastrand engines are not recommended for use on
+   systems requiring strong security, as they may not generate numbers
+   with enough randomness.
 
    The default value is empty (not set) for libssl v1.0.x or older, and
-   "cryptorand" for libssl v1.1.x or newer. The krand and fastrand engines
-   are not recommended for production use, as they will not generate
-   secure enough random numbers.
+   "cryptorand" for libssl v1.1.x or newer.
 
    Example 1.45. Set rand_engine parameter
 ...
