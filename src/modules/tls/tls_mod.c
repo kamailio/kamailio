@@ -566,7 +566,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	register_tls_hooks(&tls_h);
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	LM_DBG("setting fastrand random engine\n");
+	LM_DBG("setting cryptorand random engine\n");
 	RAND_set_rand_method(RAND_ksr_cryptorand_method());
 #endif
 
