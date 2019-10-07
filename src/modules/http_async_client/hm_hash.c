@@ -62,38 +62,24 @@ int init_http_m_table(unsigned int size)
 
 unsigned int build_hash_key(void *p)
 {
-	str			*hash_str;
-	char		*pointer_str;
-	int			len;
+	str			hash_str;
+	char		pointer_str[20];
 
 	unsigned int hash;
 
-	pointer_str = (char *)pkg_malloc(sizeof(p) + 1);
-
-	if (pointer_str==0) {
-		LM_ERR("no more pkg mem\n");
+	hash_str.len = snprintf(pointer_str, 20, "%p", p);
+	if(hash_str.len<=0 || hash_str.len>=20) {
+		LM_ERR("failed to print the pointer address\n");
 		return 0;
 	}
+	LM_DBG("received id %p (%d)-> %s (%d)\n", p, (int)sizeof(p), pointer_str,
+			hash_str.len);
 
-	sprintf(pointer_str, "%p", p);
-	len = strlen(pointer_str);
-	LM_DBG("received id %p (%d)-> %s (%d)\n", p, (int)sizeof(p), pointer_str, len);
+	hash_str.s = pointer_str;
 
-	hash_str = (str *)pkg_malloc(sizeof(str));
-	if (hash_str==0) {
-		LM_ERR("no more pkg mem\n");
-		pkg_free(pointer_str);
-		return 0;
-	}
-	hash_str->s = pointer_str;
-	hash_str->len = len;
-
-	hash = core_hash(hash_str, 0, hash_size);
+	hash = core_hash(&hash_str, 0, hash_size);
 
 	LM_DBG("hash for %p is %d\n", p, hash);
-
-	pkg_free(pointer_str);
-	pkg_free(hash_str);
 
 	return hash;
 
