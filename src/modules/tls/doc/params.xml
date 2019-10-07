@@ -1251,7 +1251,7 @@ end
 		is not designed for multi-process applications and can result in a crash.
 		Therefore set the PRNG engine to one of the options listed in this
 		section. If libssl 1.1.x (or newer) is detected at compile time, then
-		the PRNG engine is set to "fastrand".
+		the PRNG engine is set to "cryptorand".
 	</para>
 	<para>
 		The following options are avaialble:
@@ -1259,10 +1259,13 @@ end
 	<itemizedlist>
 		<listitem><para>krand - use internal kam_rand() function</para></listitem>
 		<listitem><para>fastrand - use internal fastrand function</para></listitem>
+		<listitem><para>cryptorand - use internal cryptorand function</para></listitem>
 	</itemizedlist>
 	<para>
 		The default value is empty (not set) for libssl v1.0.x or older, and
-		"fastrand" for libssl v1.1.x or newer.
+		"cryptorand" for libssl v1.1.x or newer. The krand and fastrand engines are
+		not recommended for production use, as they will not generate secure enough
+		random numbers.
 	</para>
 	<example>
 	    <title>Set <varname>rand_engine</varname> parameter</title>
