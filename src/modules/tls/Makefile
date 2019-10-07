@@ -28,7 +28,7 @@ else
 	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
 endif
 
-TLS_EXTRA_LIBS="-L. -lfortuna"
+TLS_EXTRA_LIBS= -L. -lfortuna
 LIBS+= $(TLS_EXTRA_LIBS)
 
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
