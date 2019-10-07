@@ -65,9 +65,10 @@ Olle E. Johansson
               10.31. config (string)
               10.32. xavp_cfg (string)
               10.33. event_callback (str)
-              10.34. engine (string)
-              10.35. engine_config (string)
-              10.36. engine_algorithms (string)
+              10.34. rand_engine (str)
+              10.35. engine (string)
+              10.36. engine_config (string)
+              10.37. engine_algorithms (string)
 
         11. Functions
 
@@ -137,8 +138,9 @@ Olle E. Johansson
    1.42. Change and reload the TLS configuration at runtime
    1.43. Set xavp_cfg parameter
    1.44. Set event_callback parameter
-   1.45. is_peer_verified usage
-   1.46. Use of event_route[tls:connection-out]
+   1.45. Set rand_engine parameter
+   1.46. is_peer_verified usage
+   1.47. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -188,9 +190,10 @@ Chapter 1. Admin Guide
         10.31. config (string)
         10.32. xavp_cfg (string)
         10.33. event_callback (str)
-        10.34. engine (string)
-        10.35. engine_config (string)
-        10.36. engine_algorithms (string)
+        10.34. rand_engine (str)
+        10.35. engine (string)
+        10.36. engine_config (string)
+        10.37. engine_algorithms (string)
 
    11. Functions
 
@@ -603,9 +606,10 @@ Place holder
    10.31. config (string)
    10.32. xavp_cfg (string)
    10.33. event_callback (str)
-   10.34. engine (string)
-   10.35. engine_config (string)
-   10.36. engine_algorithms (string)
+   10.34. rand_engine (str)
+   10.35. engine (string)
+   10.36. engine_config (string)
+   10.37. engine_algorithms (string)
 
 10.1. tls_method (string)
 
@@ -1415,7 +1419,29 @@ function ksr_tls_event(evname)
 end
 ...
 
-10.34. engine (string)
+10.34. rand_engine (str)
+
+   Set the ranondom number generator engine for libssl.
+
+   Note: the default random number generator (PRNG) engine of libssl
+   v1.1.x is not designed for multi-process applications and can result in
+   a crash. Therefore set the PRNG engine to one of the options listed in
+   this section. If libssl 1.1.x (or newer) is detected at compile time,
+   then the PRNG engine is set to "fastrand".
+
+   The following options are avaialble:
+     * krand - use internal kam_rand() function
+     * fastrand - use internal fastrand function
+
+   The default value is empty (not set) for libssl v1.0.x or older, and
+   "fastrand" for libssl v1.1.x or newer.
+
+   Example 1.45. Set rand_engine parameter
+...
+modparam("tls", "rand_engine", "fastrand")
+...
+
+10.35. engine (string)
 
    If OpenSSL is compiled with engine support this will allow algorithms
    to be offloaded and private keys from HSM to be used. Currently only a
@@ -1441,13 +1467,13 @@ modparam("tls", "engine_algorithms", "ALL")
    By default OpenSSL engine support is disabled (NONE). This global param
    is not supported in the tls config file.
 
-10.35. engine_config (string)
+10.36. engine_config (string)
 
    A OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
-10.36. engine_algorithms (string)
+10.37. engine_algorithms (string)
 
    A list of cryptographic methods to be set as default in the engine.
    This is a comma-separated list of values from ALL RSA DSA DH EC RAND
@@ -1469,7 +1495,7 @@ modparam("tls", "engine_algorithms", "ALL")
 
    It can be used only in a request route.
 
-   Example 1.45. is_peer_verified usage
+   Example 1.46. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
                 exit;
@@ -1546,7 +1572,7 @@ modparam("tls", "engine_algorithms", "ALL")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.46. Use of event_route[tls:connection-out]
+   Example 1.47. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {
