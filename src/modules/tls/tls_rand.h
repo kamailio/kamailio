@@ -27,6 +27,7 @@
 
 const RAND_METHOD *RAND_ksr_krand_method(void);
 const RAND_METHOD *RAND_ksr_fastrand_method(void);
+const RAND_METHOD *RAND_ksr_cryptorand_method(void);
 
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
 #endif
