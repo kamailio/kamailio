@@ -209,42 +209,38 @@ void ksr_kxlibssl_init(void)
 	}
 }
 
-#ifdef __OS_darwin
-int ksr_kxlibssl_seed(const void *buf, int num)
-#else
+#ifdef KSRTLSVOID
 void ksr_kxlibssl_seed(const void *buf, int num)
-#endif
 {
-#ifdef __OS_darwin
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return;
+	}
+	if(_ksr_kxlibssl_local_method->seed == NULL) {
+		return;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	_ksr_kxlibssl_local_method->seed(buf, num);
+	lock_release(_ksr_kxlibssl_local_lock);
+}
+#else
+int ksr_kxlibssl_seed(const void *buf, int num)
+{
 	int ret;
-#endif
 
 	ksr_kxlibssl_init();
 	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
-#ifdef __OS_darwin
 		return 0;
-#else
-		return;
-#endif
 	}
 	if(_ksr_kxlibssl_local_method->seed == NULL) {
-#ifdef __OS_darwin
 		return 0;
-#else
-		return;
-#endif
 	}
 	lock_get(_ksr_kxlibssl_local_lock);
-#ifdef __OS_darwin
 	ret = _ksr_kxlibssl_local_method->seed(buf, num);
-#else
-	_ksr_kxlibssl_local_method->seed(buf, num);
-#endif
 	lock_release(_ksr_kxlibssl_local_lock);
-#ifdef __OS_darwin
 	return ret;
-#endif
 }
+#endif
 
 int ksr_kxlibssl_bytes(unsigned char *buf, int num)
 {
@@ -277,42 +273,39 @@ void ksr_kxlibssl_cleanup(void)
 	lock_release(_ksr_kxlibssl_local_lock);
 }
 
-#ifdef __OS_darwin
-int ksr_kxlibssl_add(const void *buf, int num, double randomness)
-#else
+#ifdef KSRTLSVOID
 void ksr_kxlibssl_add(const void *buf, int num, int randomness)
-#endif
 {
-#ifdef __OS_darwin
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return;
+	}
+	if(_ksr_kxlibssl_local_method->add == NULL) {
+		return;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	_ksr_kxlibssl_local_method->add(buf, num, randomness);
+	lock_release(_ksr_kxlibssl_local_lock);
+}
+#else
+int ksr_kxlibssl_add(const void *buf, int num, double randomness)
+{
 	int ret;
-#endif
 
 	ksr_kxlibssl_init();
 	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
-#ifdef __OS_darwin
 		return 0;
-#else
-		return;
-#endif
 	}
 	if(_ksr_kxlibssl_local_method->add == NULL) {
-#ifdef __OS_darwin
 		return 0;
-#else
-		return;
-#endif
 	}
 	lock_get(_ksr_kxlibssl_local_lock);
-#ifdef __OS_darwin
 	ret = _ksr_kxlibssl_local_method->add(buf, num, randomness);
-#else
-	_ksr_kxlibssl_local_method->add(buf, num, randomness);
-#endif
 	lock_release(_ksr_kxlibssl_local_lock);
-#ifdef __OS_darwin
+
 	return ret;
-#endif
 }
+#endif
 
 int ksr_kxlibssl_pseudorand(unsigned char *buf, int num)
 {
