@@ -1379,7 +1379,7 @@ static int attr_hdr_body2attrs2(struct sip_msg* msg, char* header_, char* prefix
 static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 {
 	char *c, *params;
-	hdr_name_t *h;
+	hdr_name_t *h = NULL;
 	int n;
 	str *s;
 	if(param_no == 1) {
@@ -1426,6 +1426,7 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 						LOG(L_ERR, "attr_hdr_body2attrs_fixup: bad field param "
 								"modifier near '%s'\n",
 								params);
+						pkg_free(h);
 						return E_CFG;
 				}
 				params++;
@@ -1433,6 +1434,7 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 			if(!h->val_types) {
 				LOG(L_ERR, "attr_hdr_body2attrs_fixup: no field param modifier "
 						"specified\n");
+				pkg_free(h);
 				return E_CFG;
 			}
 		} else {
