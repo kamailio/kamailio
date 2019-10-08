@@ -1436,6 +1436,7 @@ end
      * krand - use internal kam_rand() function
      * fastrand - use internal fastrand function
      * cryptorand - use internal cryptorand (fortuna) function
+     * kxlibssl - default libssl rand engine wrapped by a Kamailio mutex
 
    Note: the krand and fastrand engines are not recommended for use on
    systems requiring strong security, as they may not generate numbers
