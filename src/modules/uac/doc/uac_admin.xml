@@ -1279,6 +1279,9 @@ event_route[uac:reply] {
 		</section>
 
 		<section id="uac.r.uac.reg_add">
+			<title>
+				<function moreinfo="none">uac.reg_add</function>
+			</title>
 		<para>
 		Add a new UAC remote registration record. If one with the same
 		unique id is found, it is deleted.
@@ -1356,7 +1359,7 @@ event_route[uac:reply] {
 		</itemizedlist>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>realm</emphasis> - remote relam, e.g.,:
+			<emphasis>realm</emphasis> - remote realm, e.g.,:
 			sipprovider.com
 			</para></listitem>
 		</itemizedlist>
