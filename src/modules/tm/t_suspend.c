@@ -187,9 +187,9 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 	backup_T = get_t();
 	backup_T_branch = get_t_branch();
 
-	if (t_lookup_ident(&t, hash_index, label) < 0) {
+	if (t_lookup_ident_filter(&t, hash_index, label, 1) < 0) {
 		set_t(backup_T, backup_T_branch);
-		LM_ERR("transaction not found\n");
+		LM_ERR("active transaction not found\n");
 		return -1;
 	}
 

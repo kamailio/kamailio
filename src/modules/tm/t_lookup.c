@@ -1586,11 +1586,12 @@ int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index,
  *                0).
  * @param hash_index - searched transaction hash_index (part of the ident).
  * @param label - searched transaction label (part of the ident).
+ * @param filter - if 1, skip transaction put on-wait (terminated state).
  * @return -1 on error/not found, 1 on success (found)
  * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
  */
-int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
-		unsigned int label)
+int t_lookup_ident_filter(struct cell ** trans, unsigned int hash_index,
+		unsigned int label, int filter)
 {
 	struct cell* p_cell;
 	struct entry* hash_bucket;
@@ -1608,9 +1609,19 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 #endif
 	hash_bucket=&(get_tm_table()->entries[hash_index]);
 	/* all the transactions from the entry are compared */
-	clist_foreach(hash_bucket, p_cell, next_c){
+	clist_foreach(hash_bucket, p_cell, next_c) {
 		prefetch_loc_r(p_cell->next_c, 1);
-		if(p_cell->label == label){
+		if(p_cell->label == label) {
+			if(filter==1) {
+				if(t_on_wait(p_cell)) {
+					/* transaction in terminated state */
+					UNLOCK_HASH(hash_index);
+					set_t(0, T_BR_UNDEFINED);
+					*trans=NULL;
+					LM_DBG("transaction in terminated phase - skipping\n");
+					return -1;
+				}
+			}
 			REF_UNSAFE(p_cell);
 			UNLOCK_HASH(hash_index);
 			set_t(p_cell, T_BR_UNDEFINED);
@@ -1622,14 +1633,27 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 
 	UNLOCK_HASH(hash_index);
 	set_t(0, T_BR_UNDEFINED);
-	*trans=p_cell;
+	*trans=NULL;
 
 	LM_DBG("transaction not found\n");
 
 	return -1;
 }
 
-
+/** lookup a transaction based on its identifier (hash_index:label).
+ * @param trans - double pointer to cell structure, that will be filled
+ *                with the result (a pointer to an existing transaction or
+ *                0).
+ * @param hash_index - searched transaction hash_index (part of the ident).
+ * @param label - searched transaction label (part of the ident).
+ * @return -1 on error/not found, 1 on success (found)
+ * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
+ */
+int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
+		unsigned int label)
+{
+	return t_lookup_ident_filter(trans, hash_index, label, 0);
+}
 
 /** check if a transaction is local or not.
  * Check if the transaction corresponding to the current message
