@@ -1261,7 +1261,7 @@ event_route[uac:reply] {
 		</itemizedlist>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>realm</emphasis> - remote relam, e.g.,:
+			<emphasis>realm</emphasis> - remote realm, e.g.,:
 			sipprovider.com
 			</para></listitem>
 		</itemizedlist>
