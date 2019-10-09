@@ -456,6 +456,9 @@ int ksr_rand_engine_param(modparam_t type, void* val)
 	} else if (reng->len == 10 && strncasecmp(reng->s, "cryptorand", 10) == 0) {
 		LM_DBG("setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());
+	} else if (reng->len == 8 && strncasecmp(reng->s, "kxlibssl", 8) == 0) {
+		LM_DBG("setting kxlibssl random engine\n");
+		RAND_set_rand_method(RAND_ksr_kxlibssl_method());
 	}
 #endif
 	return 0;
