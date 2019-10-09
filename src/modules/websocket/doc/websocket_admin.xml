@@ -378,11 +378,11 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 		</para></listitem>
 		<listitem><para>
 		<emphasis>2</emphasis> - msrp (RFC 7977) -
-		msrp.so must be loaded before websocket.so
+		the msrp module must be loaded before the websocket module
 		</para></listitem>
 		</itemizedlist>
-		<para><emphasis>Default value is 1 when msrp.so is not loaded
-		 3 when msrp.so is loaded.</emphasis></para>
+		<para><emphasis>Default value is 1 when msrp module is not loaded,
+		 3 when msrp module is loaded.</emphasis></para>
 		<example>
 		<title>Set <varname>sub_protocols</varname>
 		parameter</title>
