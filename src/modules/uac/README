@@ -925,7 +925,7 @@ event_route[uac:reply] {
 
      * r_domain - remote domain, e.g.,: sipprovider.com
 
-     * realm - remote relam, e.g.,: sipprovider.com
+     * realm - remote realm, e.g.,: sipprovider.com
 
      * auth_username - authentication username, e.g.,: test123
 
