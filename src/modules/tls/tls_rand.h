@@ -28,6 +28,7 @@
 const RAND_METHOD *RAND_ksr_krand_method(void);
 const RAND_METHOD *RAND_ksr_fastrand_method(void);
 const RAND_METHOD *RAND_ksr_cryptorand_method(void);
+const RAND_METHOD *RAND_ksr_kxlibssl_method(void);
 
 void ksr_cryptorand_seed_init();
 

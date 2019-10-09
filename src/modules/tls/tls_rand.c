@@ -20,12 +20,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "tls_rand.h"
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 
 #include "../../core/dprint.h"
+#include "../../core/locking.h"
+#include "../../core/mem/shm.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../core/rand/fastrand.h"
 #include "fortuna/random.h"
@@ -186,4 +190,193 @@ void ksr_cryptorand_seed_init() {
         sr_add_entropy(bytes, 4);
 }
 
+/**
+ * PRNG by using default libssl random engine protected by lock
+ */
+static int _ksr_kxlibssl_local_pid = 0;
+gen_lock_t *_ksr_kxlibssl_local_lock = 0;
+const RAND_METHOD *_ksr_kxlibssl_local_method = 0;
+
+void ksr_kxlibssl_init(void)
+{
+	int mypid;
+
+	if(_ksr_kxlibssl_local_method == NULL) {
+		_ksr_kxlibssl_local_method = RAND_get_rand_method();
+	}
+	mypid = getpid();
+	if(_ksr_kxlibssl_local_lock==NULL || _ksr_kxlibssl_local_pid!=mypid) {
+		_ksr_kxlibssl_local_lock = lock_alloc();
+		if(_ksr_kxlibssl_local_lock == 0) {
+			LM_ERR("failed to allocate the lock\n");
+			return;
+		}
+		lock_init(_ksr_kxlibssl_local_lock);
+		_ksr_kxlibssl_local_pid = mypid;
+		LM_DBG("lock initialized for pid: %d\n", mypid);
+	}
+}
+
+#ifdef KSRTLSVOID
+void ksr_kxlibssl_seed(const void *buf, int num)
+{
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return;
+	}
+	if(_ksr_kxlibssl_local_method->seed == NULL) {
+		return;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	_ksr_kxlibssl_local_method->seed(buf, num);
+	lock_release(_ksr_kxlibssl_local_lock);
+}
+#else
+int ksr_kxlibssl_seed(const void *buf, int num)
+{
+	int ret;
+
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+	if(_ksr_kxlibssl_local_method->seed == NULL) {
+		return 0;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	ret = _ksr_kxlibssl_local_method->seed(buf, num);
+	lock_release(_ksr_kxlibssl_local_lock);
+	return ret;
+}
+#endif
+
+int ksr_kxlibssl_bytes(unsigned char *buf, int num)
+{
+	int ret;
+
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+	if(_ksr_kxlibssl_local_method->bytes == NULL) {
+		return 0;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	ret = _ksr_kxlibssl_local_method->bytes(buf, num);
+	lock_release(_ksr_kxlibssl_local_lock);
+	return ret;
+}
+
+void ksr_kxlibssl_cleanup(void)
+{
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return;
+	}
+	if(_ksr_kxlibssl_local_method->cleanup == NULL) {
+		return;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	_ksr_kxlibssl_local_method->cleanup();
+	lock_release(_ksr_kxlibssl_local_lock);
+}
+
+#ifdef KSRTLSVOID
+void ksr_kxlibssl_add(const void *buf, int num, int randomness)
+{
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return;
+	}
+	if(_ksr_kxlibssl_local_method->add == NULL) {
+		return;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	_ksr_kxlibssl_local_method->add(buf, num, randomness);
+	lock_release(_ksr_kxlibssl_local_lock);
+}
+#else
+int ksr_kxlibssl_add(const void *buf, int num, double randomness)
+{
+	int ret;
+
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+	if(_ksr_kxlibssl_local_method->add == NULL) {
+		return 0;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	ret = _ksr_kxlibssl_local_method->add(buf, num, randomness);
+	lock_release(_ksr_kxlibssl_local_lock);
+
+	return ret;
+}
+#endif
+
+int ksr_kxlibssl_pseudorand(unsigned char *buf, int num)
+{
+	int ret;
+
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+	if(_ksr_kxlibssl_local_method->pseudorand == NULL) {
+		return 0;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	ret = _ksr_kxlibssl_local_method->pseudorand(buf, num);
+	lock_release(_ksr_kxlibssl_local_lock);
+	return ret;
+}
+
+int ksr_kxlibssl_status(void)
+{
+	int ret;
+
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+	if(_ksr_kxlibssl_local_method->status == NULL) {
+		return 0;
+	}
+	lock_get(_ksr_kxlibssl_local_lock);
+	ret = _ksr_kxlibssl_local_method->status();
+	lock_release(_ksr_kxlibssl_local_lock);
+	return ret;
+}
+
+static RAND_METHOD _ksr_kxlibssl_method = {0};
+
+const RAND_METHOD *RAND_ksr_kxlibssl_method(void)
+{
+	ksr_kxlibssl_init();
+	if(_ksr_kxlibssl_local_lock == 0 || _ksr_kxlibssl_local_method == 0) {
+		return 0;
+	}
+
+	if(_ksr_kxlibssl_local_method->seed != NULL) {
+		_ksr_kxlibssl_method.seed = ksr_kxlibssl_seed;
+	}
+	if(_ksr_kxlibssl_local_method->bytes != NULL) {
+		_ksr_kxlibssl_method.bytes = ksr_kxlibssl_bytes;
+	}
+	if(_ksr_kxlibssl_local_method->cleanup != NULL) {
+		_ksr_kxlibssl_method.cleanup = ksr_kxlibssl_cleanup;
+	}
+	if(_ksr_kxlibssl_local_method->add != NULL) {
+		_ksr_kxlibssl_method.add = ksr_kxlibssl_add;
+	}
+	if(_ksr_kxlibssl_local_method->pseudorand != NULL) {
+		_ksr_kxlibssl_method.pseudorand = ksr_kxlibssl_pseudorand;
+	}
+	if(_ksr_kxlibssl_local_method->status != NULL) {
+		_ksr_kxlibssl_method.status = ksr_kxlibssl_status;
+	}
+
+    return &_ksr_kxlibssl_method;
+}
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
