@@ -94,6 +94,8 @@ typedef int (*tset_fr_f)(struct sip_msg*, unsigned int, unsigned int);
 int t_is_local(struct sip_msg*);
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);
 int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
+int t_lookup_ident_filter(struct cell ** trans, unsigned int hash_index,
+		unsigned int label, int filter);
 /* lookup a transaction by callid and cseq */
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
 
