@@ -85,7 +85,7 @@ Ramona-Elena Modroiu
               8.5. uac.reg_reload
               8.6. uac.reg_refresh
               8.7. uac.reg_active
-              8.8.
+              8.8. uac.reg_add
 
         9. Remote Registration
 
@@ -203,7 +203,7 @@ Chapter 1. Admin Guide
         8.5. uac.reg_reload
         8.6. uac.reg_refresh
         8.7. uac.reg_active
-        8.8.
+        8.8. uac.reg_add
 
    9. Remote Registration
 
@@ -957,7 +957,7 @@ event_route[uac:reply] {
    8.5. uac.reg_reload
    8.6. uac.reg_refresh
    8.7. uac.reg_active
-   8.8.
+   8.8. uac.reg_add
 
 8.1.  uac.reg_dump
 
@@ -1054,6 +1054,8 @@ event_route[uac:reply] {
    kamctl rpc uac.reg_active 1
 ...
 
+8.8.  uac.reg_add
+
    Add a new UAC remote registration record. If one with the same unique
    id is found, it is deleted.
 
@@ -1095,7 +1097,7 @@ event_route[uac:reply] {
 
      * r_domain - remote domain, e.g.,: sipprovider.com
 
-     * realm - remote relam, e.g.,: sipprovider.com
+     * realm - remote realm, e.g.,: sipprovider.com
 
      * auth_username - authentication username, e.g.,: test123
 
