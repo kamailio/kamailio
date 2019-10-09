@@ -1260,6 +1260,7 @@ end
 		<listitem><para>krand - use internal kam_rand() function</para></listitem>
 		<listitem><para>fastrand - use internal fastrand (ISAAC) function</para></listitem>
 		<listitem><para>cryptorand - use internal cryptorand (Fortuna) function</para></listitem>
+		<listitem><para>kxlibssl - default libssl rand engine wrapped by a &kamailio; mutex</para></listitem>
 	</itemizedlist>
 	<para>
 		Note: the krand and fastrand engines are not recommended for use on
