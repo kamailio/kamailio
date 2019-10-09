@@ -171,4 +171,19 @@ const RAND_METHOD *RAND_ksr_cryptorand_method(void)
     return &_ksr_cryptorand_method;
 }
 
+/* seed the generator during startup, internally it will also use system entropy */
+void ksr_cryptorand_seed_init() {
+        u_int8_t bytes[4];
+        unsigned int seed;
+
+        seed = fastrand();
+        bytes[0] = (seed >> 24) & 0xFF;
+        bytes[1] = (seed >> 16) & 0xFF;
+        bytes[2] = (seed >> 8)  & 0xFF;
+        bytes[3] = seed & 0xFF;
+
+        LM_DBG("seeding cryptorand generator with %u\n", seed);
+        sr_add_entropy(bytes, 4);
+}
+
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
