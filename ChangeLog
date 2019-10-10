@@ -1,3 +1,1019 @@
+===================== 2019-10-10 Version 5.2.5 Released =====================
+
+===================== Changes Since Version 5.2.4 ===========================
+
+commit 8d08d3fdb8f70955ae0bcbf62a32761d653383a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 10 10:33:45 2019 +0200
+
+    Makefile.defs: version set to 5.2.5
+
+commit b8fed3a479d970f2c9e77ef0f3fcf7bff1ae3efe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 10 09:56:18 2019 +0200
+
+    pkg/kamailio: updated version to 5.2.5 in spec files
+
+commit 361b5c5d75bbbcf231654c0c44fbbf49619b341d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 10 09:45:56 2019 +0200
+
+    pkg/kamailio/deb: version set 5.2.5
+
+commit 9271ec3e0bc1de5d911f44e311104d8d685e8f4b
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 22:46:37 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 88adabadaa1b2916dbdffdc7a6eb526dc124c871
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 22:41:47 2019 +0200
+
+    websocket: small doc improvement (use module names instead of file names)
+    
+    (cherry picked from commit 179c536e972f4f8739a4ba3446610161d8cb913f)
+
+commit aac6b02731bfdd0b9627cbc6f78f8337bf09c666
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 21:46:27 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 66baf224211877241b4c5d8911d36083fe7d58c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 9 21:28:40 2019 +0200
+
+    tls: docs for kxlibssl rand engine
+    
+    - manual backport
+    
+    (cherry picked from commit 64c35a9f06ef42ecbfe2ac11a7ed171c7e91c06c)
+
+commit 9a97bbae48725955e991bbbf4c28dbfbd6b0e0c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 9 20:29:52 2019 +0200
+
+    tls: added rand engine kxlibssl
+    
+    - use default libssl engine wrapped in a kamailio mutex lock
+    - manual backport from master
+    
+    (cherry picked from commit 29a75074c99b334ea80d78a247562684d18b2116)
+
+commit 9617f51a19dc715932ddbb58e72fb264ae90b747
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 21:22:38 2019 +0200
+
+    uac: spelling fix in uac docs
+    
+    (cherry picked from commit 167efd5eea2e9a918ecda4249fa5574cfba4e310)
+
+commit f36d6562e54acc2b2f72c04a628b8e85f36bc9dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 9 12:38:14 2019 +0200
+
+    tm: skip resuming suspended transactions put on wait
+    
+    - transaction is expired in that moment, pending its destroy process
+    - GH #2055
+    
+    (cherry picked from commit 52afc7b70f8e4abfb347c84872ab7daa202a6a24)
+    (cherry picked from commit c44bd17c79bc0119ae201b826d84b9514700eda9)
+
+commit 9230834aec2de5a078c0a4a81f33bd5483729898
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 8 12:31:39 2019 +0200
+
+    avp: free allocated variable in case of error
+    
+    (cherry picked from commit 5a18155c0fe661e7488f75afa7b0ea7638932943)
+    (cherry picked from commit fc9ca0fcdff7ebc5399374038bc6a0aa02207229)
+
+commit 0afa37d08b83a050152bbfec9e8ac764e78fd97a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 18:01:29 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 698e21f29b25c432057c4792d8134a4e953efeb9
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Oct 7 17:04:54 2019 +0200
+
+    texopsx: extend docs with a small note about msg_apply_changes()
+    
+    (cherry picked from commit 899b826bcf2ebe0197fae5766962e0c193c585ec)
+
+commit 4006c2cc53818f52a9a3211c3906d5a7c829970e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 17:16:26 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4288880cd5a11c255ecf426311033a74a8e292f4
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 16:56:31 2019 +0200
+
+    tls: add initial seeding to cryptorand generator, as we don't do it in core
+    
+    - add initial seeding to cryptorand generator initialization to main proces
+    - only as additional fallback in case of no access to system entropy sources
+    - not needed for 5.3 - we do it in here in the core for all processes
+    
+    (cherry picked from commit 21e0fba6adb9e77e91ea83ed79b13621df556e1e)
+
+commit 6170ca3bb3f309bd20061fc7eb747631c405980d
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 15:47:05 2019 +0200
+
+    tls: small extensions in parameter docs related to PRNG engines
+    
+    (cherry picked from commit 6fb06e5f71bdf1b7fc689701a57f543e34836812)
+
+commit 64cdf0df255932856abceb650cb4ce543b3cd519
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Oct 7 11:50:29 2019 +0200
+
+    tls: update name and mailing list in tls_cert.sh script
+    
+    (cherry picked from commit 49a78933845f136f8f7caaf7e24e6cdcf206cbb5)
+
+commit 9fc7c9a1ee97e708247e050988eabf8b529c5fb2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 3 14:21:35 2019 +0200
+
+    usrloc: keep a private copy of urecord before running ul_callbacks
+    
+    fixes #2089
+    
+    (cherry picked from commit f3cf0a2f4e60a3a7185baa106869dab85cd8cd0b)
+
+commit 052c647e310b59efd06903668aec231eadf321c2
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Oct 7 15:38:22 2019 +0200
+
+    core: workaround related to T_OPT for alpine linux musl C library (GH #2095)
+    
+    (cherry picked from commit cec1043a9c4daa39b4245b87f28fb5566e8627bd)
+
+commit c419dfddfbfc7b250a4be18665d4ed779435ac2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 7 16:26:10 2019 +0200
+
+    http_async_client: use enough size to print pointer as string in build_hash_key()
+    
+    - use local string variables instead of allocation in pkg, because the values
+    are needed only inside the function
+    - use safer snprintf() instead of sprintf()
+    - GH #2091
+    
+    (cherry picked from commit 087654a5028cd800e17fcd9d1768135a60fd6706)
+    (cherry picked from commit 2ec8caa1ef9577fa4f21fb1fa2f9f6217a29f3eb)
+
+commit a365a8d3519d33f5314a9c3bdab4e1c1ea465642
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Oct 7 15:31:30 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit dde78715ce88c8bfb6530559fcaa3a182ca72af7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 7 15:13:58 2019 +0200
+
+    tls: docs - documented cryptorand engine for prng
+    
+    (cherry picked from commit 398641926648a32b635f39f655ae3231038b9c3d)
+
+commit 0e5fbd02c95d76045487b707a7386abb029234ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 7 14:57:06 2019 +0200
+
+    tls: add cryptorand (fortuna) engine for PRNG if libssl v1.1.0+
+    
+    - set it to be the default PRNG with libssl v1.1.0+
+    
+    (cherry picked from commit 58f6eb7b8bbd6e22994f4b147b6c2fc9c7d1daa0)
+
+commit dbd4bc0944664c861a31f42c4c70eac148312969
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Oct 7 11:46:59 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 466075c0c9145cf676ffac8102af23478cc1a244
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 7 11:42:12 2019 +0200
+
+    tls: Makefile - do not enclose fortuna lib in quotes
+    
+    - bsd make keeps them in compile/ldd command
+    
+    (cherry picked from commit f07893606b2129f3a7f24a7d1f7fee619f9b8105)
+
+commit 1ccb215b96f3dc0bd49ea3feb00f9e8f1a5c1fda
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 4 18:12:15 2019 +0200
+
+    xmlrpc: clean allocated buffer for reply when no more memory for reason value
+    
+    (cherry picked from commit 36a4b16117d79f1a30a9f929350f75ab8bfd5d2a)
+    (cherry picked from commit aa875e297bea05828f319d71fc68c44969931231)
+
+commit 6beb87f165d9926cd14eb0bd4d57f4167232121c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 4 11:15:04 2019 +0200
+
+    tls: use fastrand() for the corresponding rand_engine
+    
+    (cherry picked from commit f877069e141749796ec02a78ce16342f9e120ef7)
+    (cherry picked from commit 52dda341500c697b988f600d3ae6f1b0065670bc)
+
+commit d86c831a474e57acc6bd744eb52a24b3b7b9a3c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 4 08:53:53 2019 +0200
+
+    core: str2int() test first if result is null, otherwise init it to 0
+    
+    (cherry picked from commit b83a165e2d0e34c9bca742708c1891eb114bae04)
+    (cherry picked from commit ac16e21715e57befcba386e74214fa482bdf97d7)
+
+commit 52e348087551b42c97bcb235dabbc95255a83b1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 3 11:36:05 2019 +0200
+
+    tls: docs for rand_engine parameter
+    
+    (cherry picked from commit 787b95a5a0573d4e81b2475a84bad59076e34faf)
+    (cherry picked from commit 3c11a405344af55aa4b9c8d35e1c181473cbdf42)
+
+commit e1b740b43f0fda7bcbf4b36c2816d318193acf54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 3 11:23:09 2019 +0200
+
+    tls: set random number engine to fastrand for libssl1.1+
+    
+    (cherry picked from commit 6d154fbb2ff1d2941316281fad120b5db219deb1)
+    (cherry picked from commit 2935b65d7d909f8ac355b8f2b5404494c4ec2c6b)
+
+commit f73aa7727607c18cf6d6bcb11c51510c8d3660c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 3 11:18:41 2019 +0200
+
+    tls: option to set use fastrand for rand_engine
+    
+    (cherry picked from commit 4f514a7956534f1afc1ef30d8332f5dc3547de4b)
+    (cherry picked from commit 43aa779ee9e43805e6a7da2c12562fdc89c5c413)
+
+commit c6cac67746e96fff43dbf6b55e018a84722a1400
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Oct 4 16:26:20 2019 +0200
+
+    tls: add local copy of fortuna and depenencies from git master
+    
+    - add local copy of fortuna and depenencies from git master
+    - not active yet, needs additions in tls_rand.* and probably also Makefile
+    
+    (cherry picked from commit 26d8e3cf82a49ad4e58ced507f7a1787b74656b0)
+
+commit 254d66b0a1b88ba91dabffc3b55a0b10430a18e1
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Oct 7 11:01:53 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8c70c16d10ed46f4ba8cf002a5b1599a02b5cb93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 2 08:32:21 2019 +0200
+
+    app_perl: first destroy old interpreter before creating the new one
+    
+    - on interpreter reset, the new one may inherit globals from the old
+    one, if that is not yet destroyed
+    
+    (cherry picked from commit 58047ba61d0cbceebc8c85590970a573fc396aa5)
+
+commit 0e22d01b54340009d34db92bafb7da5a82c76cc7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 23:04:01 2019 +0200
+
+    tls: option to set custom random bytess generator
+    
+    - attempt to fix GH #2077 which exposes a crash in the libssl v1.1
+    default random bytes generator
+    
+    (cherry picked from commit fc542100d85a013272dde869e54173a7d5a062f4)
+
+commit fdb54474b7a7cbe953f7869be41459650493e551
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 12:22:34 2019 +0200
+
+    pdt: init len variable to avoid using garbage value
+    
+    (cherry picked from commit 47e0649eca286bfc26c39dd1142169fc06eea077)
+
+commit 7829be6555b1da66a3802b713304cb28a5ff29a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 12:17:48 2019 +0200
+
+    speeddial: fix stripping domain prefix
+    
+    - increment the index after the value is adjusted
+    
+    (cherry picked from commit 6861995e417c40e9ab530d4c0bed97c57de184fd)
+
+commit 7c219b4a7a2e6a8448d72789587ca10f27fcf36c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 10:28:13 2019 +0200
+
+    core: init local structs to avoid use of garbage values
+    
+    (cherry picked from commit dfe8db758f84f5e88e0cb35b80a65dcd48158897)
+
+commit 3bd97b2ddaf537cad9f937485ec94391f78b17a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:04:01 2019 +0200
+
+    jsonrpcc: removed old todo file
+    
+    (cherry picked from commit fa5f36454f2ef5fb4e55dd05f746430d9786e842)
+
+commit 77c4bd3207173f7e43e67e553fb47f1f260c166e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:02:56 2019 +0200
+
+    ims_qos: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit a6caed41166e555d7297abbae6017c5c54262662)
+
+commit 342e1dcdd8d59269efe93f4c3e7651d4019e2dd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:01:29 2019 +0200
+
+    sms: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit 5631338036c405b1e8c7fe8a1e320db2eb63c3f9)
+
+commit df08856b7570ee477e1aaa49d0550e8541f19f02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 08:59:44 2019 +0200
+
+    db_mysql: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit 75e0e0f4d693e207d2035f84c3e1ddc9cc715ec4)
+
+commit b5264c56d0fe55622e7f2451d5fbdec1eb05865f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 30 09:05:47 2019 +0200
+
+    tm: removed async mutex define option
+    
+    - it was disbaled due to conflict with reply processing, the reply mutex
+    being used, t_continue() has same processing like a failure handling
+    
+    (cherry picked from commit de11e2850314b12320cf8fed29f709a38a986709)
+
+commit bc8bdcaa726f375f6deea8228a1ab0cf97c67035
+Author: Anthony Messina <amessina@messinet.com>
+Date:   Sun Sep 29 11:04:58 2019 -0500
+
+    kamctl: Update dbtextdb.py for Python3
+    - reported by GH #1747
+    
+    (cherry picked from commit a44ade38dc420d2699896930ededf54645837a22)
+
+commit f14807f722e85feb8c7d98b08454a432837fecf7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 27 12:22:24 2019 +0200
+
+    app_perl: log the number of reset cycles in debug message
+    
+    (cherry picked from commit 1fdabbf5ce5fd218a47b7d147ebec5c6c45c1cce)
+
+commit 7e7621a93013174bf42ff0dd782a46d238c0943a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 23:09:37 2019 +0200
+
+    app_perl: set G_EVAL flag when executing perl_destroy_func
+    
+    - trap use of die in the perl libs to avoid having an exit when
+    reset_cycles is used
+    
+    (cherry picked from commit 9490ec06d3cf0cfd0b0cf2d0a5ef701ccdabcaba)
+
+commit 438df8714322ef9d100452a5f5f2c33304bb2957
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 09:19:46 2019 +0200
+
+    db_cassandra: docs - note about the state of the module
+    
+    (cherry picked from commit 39b7b4073465fd5343297683c59d75510c87d195)
+
+commit cd4f3c7ad82ef11e73a8c5a53cea2fb812b7dd60
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 1 18:00:13 2019 +0200
+
+    core: fix compile error related to missing T_OPT in older (<2.25) glibc (GH #2087)
+    
+    (cherry picked from commit 325d1e6d53b3db3265d6f76ec34bb3d6a31419c4)
+
+commit f24fb5cd5509dd7c539bf1c36b2676220dc1e826
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 1 16:38:20 2019 +0200
+
+    core: skip get_record for DNS extensions e.g. for EDNS0 (GH #2087)
+    
+    (cherry picked from commit aeea940adaddc12c1467a0ac8f5e34d14b1339be)
+
+commit dfe5422a70c264af3428e27decf82ab05024b048
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Sep 27 18:31:35 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 983f6436719f5cb388b165ec6474be631263e2fb
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Sep 27 18:15:25 2019 +0200
+
+    dialog: two spelling fixes in docs, small rephrasing
+    
+    (cherry picked from commit 21af49a8db75b80e6a910e6b6ed0412bbcf5608a)
+
+commit 75c90d1e00170f07c8113b131f889e6a59d28192
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:25:51 2019 +0300
+
+    pkg/kamailio/obs: removed deprecated fedora dists [skip ci]
+    
+    (cherry picked from commit 827713c8abb15c50828d7b0597fdf1024a45cbd5)
+
+commit cffcefb66776667846b7e1b1c39059cdd0e8bdc9
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:47:07 2019 +0300
+
+    pkg/kamailio/obs: Added fedora rawhide packaging [skip ci]
+    
+    (cherry picked from commit 94a20e8f0005f16b371833b315f8d64457709328)
+
+commit e7e6b547332fb5bdf22b595b9ea7e53794792b27
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:27:05 2019 +0300
+
+    pkg/kamailio/obs: fixed rpm buils for CentOS dist on OBS [skip ci]
+    
+    (cherry picked from commit 3ac708b5d80faf1f7615eb884dba2ce2fc04bdf3)
+
+commit 668497172343c01509a6ae17efc2c6e3ac26c770
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:23:13 2019 +0300
+
+    pkg/kamailio/obs: set correct group name for systemd unit files [skip ci]
+    
+    (cherry picked from commit e9671df3f458ad40d913bd2ce0792340a5df5948)
+
+commit 02d70893718a96f552dc6426d016a0342e47247f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 25 15:16:23 2019 +0200
+
+    app_python3: implement missing types for 3 params
+    
+    (cherry picked from commit eeeecadeb1452972de7386354dfca37f483cef06)
+
+commit 695bdaf4a0501c9b5d455052141f42f9f7d8b349
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 25 15:11:30 2019 +0200
+
+    app_python: implement missing types for 3 params
+    
+    (cherry picked from commit 261cb0f91e7a85bf56c64bbf929673c46197efcf)
+
+commit 40184602ea9b3550fe740a9f41abd73976e4372c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 25 15:16:52 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 1d0e11e3d240d3b818fe41c51c3e8d1955fcfbf7
+Author: Jurijs I <jurijs.ivolga@gmail.com>
+Date:   Wed Sep 25 15:34:06 2019 +0300
+
+    Typo in RPC Command dlg.dlg_list example
+    
+    Typo in RPC Command dlg.dlg_list example, it should be kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1, instead of kamcmd dlg.list abcdrssfrs122444@192.168.1.1
+    
+    (cherry picked from commit 6319d73aa3aac1d4da689259dc3ec6084bbfca2f)
+
+commit f8f056b9e822aa7a6fa7abc0e335a6fc64cf603e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Sep 24 12:17:23 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 991a12f98320af2066697cd74394b6fe5900294d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 20 19:25:26 2019 +0200
+
+    xcap_server: free xpath object before reusing the variable
+    
+    - removed unnecessary resets of local variables at the end of function
+    
+    (cherry picked from commit d0ed04ae7938ef09da1ca215043334190adb9c52)
+
+commit 745475301cdacf9d391b39bb17014538a69d697d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 20 14:25:31 2019 +0200
+
+    xmlrpc: reset fields in case of error for building fake via
+    
+    (cherry picked from commit b54573ca9167c807a1de39634bed04cb7953dce0)
+
+commit 40e1dba3b2089ee66fec6e431dbbd2bf1f34374f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 17 13:18:08 2019 +0200
+
+    core: print a version flag when pthread shared mutex is enabled for tls
+    
+    (cherry picked from commit 801a9e38bcd863950a53ed0ca63a2976376daddc)
+
+commit 25585a67489cba4e55e888c68aacb1da17732bd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 10:12:47 2019 +0200
+
+    kamctl: kamdbctl.base - replaced get_answer() with a portable version
+    
+    - contributed by Sergey Safarov, GH #2019
+    
+    (cherry picked from commit 88d06a08a8baf460188745f1d748dd83f275356f)
+
+commit ffec32d01d440cb16dbaaac1b497f7ca9d2c363c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 09:45:33 2019 +0200
+
+    presence: reset freed list to avoid double free in case of error
+    
+    (cherry picked from commit 28dc74fa8a30b17abd7f7b173b66b8538c5a4bb5)
+
+commit 3425fbad549c16aa79c001560e7ec9ab7583f353
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 09:38:26 2019 +0200
+
+    log_systemd: return in case the xavp is not valid
+    
+    (cherry picked from commit 9e703c1c1eb362bd68e53b38021aa42f8b173d0c)
+
+commit cba7b6a19c9ac0d80e4bf89153796852afb28e9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 13 13:00:17 2019 +0200
+
+    core: main - functions to set PTHREAD_PROCESS_SHARED for pthread mutex and rwlock
+    
+    - code relocated from src/modules/tls/utils/openssl_mutex_shared/openssl_mutex_shared.c
+    - simpler option to initialize kamailio with the workaround for libssl
+    v1.1+ without using the preloaded library approach
+    
+    (cherry picked from commit a8c811e69e964821b73d0861a9547a301253d172)
+
+commit 827dccc75d560257ba4caef5187894dd5dbd7999
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 13 12:57:38 2019 +0200
+
+    Makefile.defs: detect if libssl version is 1.1+
+    
+    - link against pthread to be able to set PTHREAD_PROCESS_SHARED attribute
+    for mutex and rwlock initialization
+    
+    (cherry picked from commit 79619717aa67c219fc36dfaac8d06919b8f2018e)
+
+commit 28c4e65e7aef8e6ab1129a45fc01e2b4b721adab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 11 12:42:58 2019 +0200
+
+    core: tcp - set default local socket for tls when lookup fails
+    
+    - GH #2028
+    
+    (cherry picked from commit f40df55af2f50789ca4a8b89a213f7323b1932f2)
+
+commit 7c3cc32c98a66318fa355fd14c69772e13ba0a4c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 11 12:05:18 2019 +0200
+
+    core: main - set default send tcp sockets to tls if no tcp is available
+    
+    (cherry picked from commit 8a678c244aa34cf352fb614693c6e6d505ce2dfe)
+
+commit dcdfc26fc260d36000c991eed89da250c6eb6748
+Author: A Alba <ascanio.alba7@gmail.com>
+Date:   Mon Sep 2 01:28:48 2019 +0800
+
+    module rr: KEMI expose record_route_preset
+    
+    (cherry picked from commit e1ab977fd9a61864376782f2534cc0d932347d78)
+
+commit becc6bc3f90781f64b90879db1f7eeac8c2c0ebf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 3 20:03:05 2019 +0200
+
+    phonenum: proper access to the str type param resid
+    
+    (cherry picked from commit 56f86535e0ae3fcf8fa2d0b565c7ab61351678d0)
+
+commit e1197ad59685fa97868c5fffcbde841a6136eea3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 2 13:45:16 2019 +0200
+
+    phonenum: docs for resid parameter
+    
+    (cherry picked from commit d2bac426192c074368bf78014e0d1d0ca97f3274)
+
+commit 21ccb8f3e4f5496e5bb71c6cdfeec96c263f51ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 2 13:41:03 2019 +0200
+
+    phonenum: new param resid to register result container ids
+    
+    - allow use in KEMI scripting by pre-registering container result id via
+    modparam
+    
+    (cherry picked from commit 67412b4b2b377cca179de2ebe109bd56fb8a63b9)
+
+commit 80bb3b96f60d3347460a202ec69e01233d9a0586
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 29 18:51:17 2019 +0200
+
+    tls: proper dot position for matching subdomains
+    
+    - reported by GH #2049
+    
+    (cherry picked from commit 16beec2b7660d416a05f069695b4ce18e8b4e795)
+
+commit c63d048c7ba2dc1e271fafbbd0e0a74bf7c515a3
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Aug 23 10:05:33 2019 +0300
+
+    modules/rtpengine: set_rtpengine_set fix
+    
+    (cherry picked from commit fe6614feb5f9b062a556de82fd7df6fc12c96471)
+
+commit ccf16cb7b8f84d2f9899d9922f5c940394ec2020
+Author: Surendra Tiwari <surendratiwari3@gmail.com>
+Date:   Tue Aug 20 13:17:04 2019 +0530
+
+    Module:rtpengine: memory leak is fixed, if no rtpengine in list while reload
+    
+    (cherry picked from commit 0e29879ee950d5a9e9a669c7d5c634416d52f5c9)
+
+commit 09ac3e47ef79dbd599b7dec5b84ae3b792f025ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 20 12:07:30 2019 +0200
+
+    tm: set send socket flag when computing the destination and local socket is found
+    
+    (cherry picked from commit 8d608d1c3ed0fe4c69cb02868b746cd0497dd1f5)
+
+commit 24b46f0e3ec6b280302e3cf59b41ed44424eaf7a
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Sep 19 23:45:20 2019 +0200
+
+    core: remove unused seq variable in build_iface_list function
+    
+    (cherry picked from commit 8821cc2f5a6b972307fb71e73cf8d57496e61f66)
+
+commit d3ee5a3e16750655c0c106613028b27a8d00e427
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Sep 20 12:02:03 2019 +0200
+
+    tools: fix python exception usage in route_graph.py tool
+    
+    (cherry picked from commit 4a66e500ddb6028d3dfcf67aca951282309b6ea4)
+
+commit 1ef44dbf7a62a912618f2dc3174ac0adc91e63ac
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Sep 20 11:54:16 2019 +0200
+
+    tools: use correct check of None instead of wrong comparison in route_graph.py tool
+    
+    (cherry picked from commit 545ef51912ae9bf5e14eaffeb9f41be8359a442f)
+
+commit 35292bc172e8ad2246b3c7c1e1e576264e70a1de
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sat Sep 21 21:15:12 2019 +0200
+
+    core: fix possible int overflow (conversion after multiplication) in cfg code
+    
+    (cherry picked from commit d1f5a2a266716d4f6759f9e695249dce442ccdd2)
+
+commit e8c6a8fbd1b16ddd1b8c9180aaf27dcd5cc9e05c
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Fri Sep 13 13:56:34 2019 +0200
+
+    dialog: run DLGCB_LOADED callbacks when loading dialog from db
+
+commit 2c011ba68ae2c2d299d1851a818a5d4b7018f74e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Sep 14 16:46:57 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 5ac8002cfe62bb825dbc2db75a47e38244b03404
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sat Sep 14 16:38:48 2019 +0200
+
+    msilo: fix documentation for expire_time and clean_period to values from code
+    
+    (cherry picked from commit 492f6e1584d4a2a51c584ab5a71fe43822acef72)
+
+commit c6eab3787b46f60e860ca7a90b6abf7c21be9f0e
+Author: Jeff Gross <jeff@grosssoftware.com>
+Date:   Thu Sep 12 15:46:48 2019 -0400
+
+    ims_isc: fixed the RURI trigger point match
+    
+    - use the RURI from the SIP message in the regex compare, rather
+      than the regex string from the trigger point
+    
+    (cherry picked from commit 36ee7fa70ee43cffc8e7f2c279fb97862daf3f9b)
+
+commit f7ad4bdc2398d37d9226c7a07cdbe0fe604a9cba
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Sep 12 23:47:08 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit daab9563d3edcdf59028ca5b4004bc1d6edecced
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Sep 12 21:53:21 2019 +0200
+
+    acc: extend documentation related to flag usage
+    
+    (cherry picked from commit 40905046baab49fb3baf0f2fdded1307b023d08a)
+
+commit 71efcfbb059e72cb05572ef7d3f58ac2e7dba397
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 6 20:35:08 2019 +0200
+
+    core: ensure index of preprocessor directive conditions is not negative
+    
+    - avoid accessing the array at negative index for else processing
+    
+    (cherry picked from commit 8f6e826576e52270f21c22a7d94b3026cc22c172)
+
+commit 79dd00cdb3f02868e847c6c20932360c403a73d0
+Author: Pintu Lohar <plohar@sk.com>
+Date:   Tue Sep 10 09:14:00 2019 +0200
+
+    nathelper: Fixed memory leak in nathelper fetch contact timer (GH #2062)
+    
+    - Allocated buffer is not freed when contact fetch is failed
+    - Leak frequently occur when database disconnect and reconnect
+    
+    (cherry picked from commit 79fecc643d0a17b4de25f54ae269d1bee1f0cb00)
+
+commit d6bc471aa41447d605eab42ee0596a2e47e3be29
+Author: Alexey Vasilyev <alexei.vasilyev@gmail.com>
+Date:   Wed Sep 4 14:12:22 2019 +0300
+
+    db_postgres: database URL supports IPv6 address as hostname
+    
+    - changed parsing of db_url to accept IPv6 address for hostname
+    
+    (cherry picked from commit f99b4926c817e181f83f92ffa15510ff133d0a15)
+
+commit d128b3170c6e82ecd5751351885f9098490068f5
+Author: Alexey Vasilyev <alexei.vasilyev@gmail.com>
+Date:   Wed Sep 4 13:47:23 2019 +0300
+
+    db_mysql: database URL supports IPv6 address as hostname
+    
+    - changed parsing of db_url to accept IPv6 address for hostname
+    
+    (cherry picked from commit a7588f382605991bef4499de8c89b10a9468c8cf)
+
+commit 5a4debabd3c6e997200947453503a972b9dcab0f
+Author: Alexey Vasilyev <alexei.vasilyev@gmail.com>
+Date:   Tue Sep 3 16:48:02 2019 +0300
+
+    lib: database URL supports IPv6 address as hostname
+    
+    - changed parsing of db_url to accept IPv6 address for hostname
+    
+    (cherry picked from commit 9e29e262f0107cedbf2e2d61d045b05c5a5fc410)
+
+commit de9a03f1353456d8e0165cd673d660c3d8e1e27e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Sep 8 22:16:41 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 307939e892877603357af11ff452ca8c62d7bef5
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Sun Sep 8 09:56:43 2019 +0200
+
+    db_redis: add examples about usage with dialog module
+    
+    (cherry picked from commit 86990ab53c4b5e5ede49b95e17b02f96ae00a01c)
+
+commit 761758b1d8a7ebdb72caf8d5442a38988cf2e951
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Sun Sep 8 08:58:54 2019 +0200
+
+    dialog: check xdata length when loading profile from db
+    
+    (cherry picked from commit d05dfc20632fde1d65017ff5d7f41713a9c79825)
+
+commit cf9b59a54a49201bd1022a3fb1b7688b45ed3536
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Sep 6 12:13:19 2019 +0200
+
+    core: spelling fix in error message related to pid/pgid chown
+    
+    (cherry picked from commit 21afc6081c3044b4f754e6a34ea67fd98f2e3af9)
+
+commit 94b60464c9ccac49ebae238aa42ae16fb2c5f9ec
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Aug 26 20:21:13 2019 +0200
+
+    siptrace: check if trace_to_database is set before checking the db connection
+    
+    (cherry picked from commit afd0c929dc72a975e2ca3c88f307fd8c140a4fda)
+
+commit b16b9bf49d1b8437673c8913265daf8ee311e51a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 24 16:22:16 2019 +0200
+
+    core: kemi - warning when using an unsupported method flag for is_method_in()
+    
+    (cherry picked from commit 7dc450006743ea160864ce5583a4494fb1033e9e)
+
+commit b21a75dad1575999549f9a84de522dfb8d7fb50f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 24 16:09:45 2019 +0200
+
+    core: kemi - fix matching update for is_method_in("U")
+    
+    (cherry picked from commit e876770e36c83ce47d1b0f95c14fe269b92a4e70)
+
+commit 5244a3ac50f9766fff9bf4f769eb1d3464d1fc74
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Aug 24 10:47:03 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 63cf7598b2ed0bdf8420782a21a39a44094a6f64
+Author: Yasin CANER <caner_yaso@hotmail.com>
+Date:   Sat Aug 24 09:13:26 2019 +0300
+
+    ims_registrar_scscf : document title is fixed
+    
+    Document title is fixed
+    
+    (cherry picked from commit 2668110abe7b008470740ffbace1235933b9ba09)
+
+commit a57138162a40390c245236a8ab693e62292d92ce
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Aug 20 22:24:30 2019 +0200
+
+    dialog: run dlg callbacks also for PRACK requests (as done for "other" requests)
+    
+    - run dlg callbacks also for PRACK requests (as done for "other" requests)
+    - bugfix for uac module in auto mode with dialog storage for PRACK requests
+    
+    (cherry picked from commit 4efe19f64d8bb787d2d620a833f5dd29619fa588)
+
+commit 000e778cf8838989e316aa71f35f2e0e252c511d
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Aug 15 16:25:57 2019 +0200
+
+    topos_redis: fix regression in PRACK routing (commit cfc89db53c087, GH #1784)
+    
+    - fix regression in PRACK routing (introduced in cfc89db53c, GH #1784)
+    - result set were set to 0 before usage by a memset
+    
+    (cherry picked from commit a263f5b62c03851a5d8a61f09e69745f90370703)
+
+commit 0ded702ccbb746a26c7172bcbf80dd971ec8b530
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 16 12:57:33 2019 +0200
+
+    evapi: use a completely new fake message structure for dispatcher handling
+    
+    (cherry picked from commit 769dce2fad66efdbc6cce6951bc60b60bf453a19)
+
+commit 67f889bcda49ad8f99f619b495e3fa201968ad64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 16 12:56:49 2019 +0200
+
+    core: clear branches and expose the function for a new faked msg
+    
+    (cherry picked from commit d7bd8a187546f132547788c47ff9a3947be49957)
+
+commit 4db7db8486ecab55e649a4037a1d86cda7633faf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 16 12:37:58 2019 +0200
+
+    core: function to get a new faked message in a specific structure
+    
+    - refactored the code to be able to fill a sip msg structure with
+    content from the faked request
+    
+    (cherry picked from commit 4a904b5fe90253d0d5517cf1a5cdca3695e59ec3)
+
+commit 9f4c8c37f50ce15e52ea64388d7aab46167e78cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 15 08:33:49 2019 +0200
+
+    evapi: free the faked msg clone used for dispatcher event route
+    
+    (cherry picked from commit d36a4b00c6becd42cfcec4fc7eb398371e1cc812)
+
+commit 9b6d1e9ee767e2bf2a31dcf817558566d99f81b2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:18:39 2019 +0200
+
+    corex: free old outbound buffer inside SREV_NET_DATA_OUT callback
+    
+    (cherry picked from commit c79dfbeab0bfefaa4dd5cefc41cba3ba157da0ce)
+
+commit d815945cdf85250877c89b3368506d444aa0ff2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:18:21 2019 +0200
+
+    gzcompress: free old outbound buffer inside SREV_NET_DATA_OUT callback
+    
+    (cherry picked from commit d9a1cbc8f66f9fd0991048e5e1ba1579916a092e)
+
+commit 0df6f49fe7a13ce6c01542a16fdd8932043f5ec9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:18:08 2019 +0200
+
+    dialog: free old outbound buffer inside SREV_NET_DATA_OUT callback
+    
+    (cherry picked from commit ad8d9628da27a3ab68b005ef52842784af6bda3a)
+
+commit bbac07207f55216ece4fad4d1aed2ed578cb0e15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:17:33 2019 +0200
+
+    topos: free old outbound buffer inside SREV_NET_DATA_OUT callback
+    
+    - GH #2027
+    
+    (cherry picked from commit 21816a11a56628a9eee17765645fcf03d57929bd)
+
+commit aaeb0ca500f4cbf98631c58da5289eea30b3dd92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:16:23 2019 +0200
+
+    topoh: free old outbound buffer inside th_msg_sent()
+    
+    - GH #2027
+    
+    (cherry picked from commit 37a1765853294016f43bd633667cd623aaaa2d3e)
+
+commit 891bd927f3e519bb9fb2f23a65f21f82f2f7e0af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 12 11:14:38 2019 +0200
+
+    core: forward - clone outbound buffer for SREV_NET_DATA_OUT event
+    
+    - this event can execute a series of callbacks, leading to leak if only
+    the core function does pkg free
+    - GH #2027
+    
+    (cherry picked from commit 98249e2cc97e818cf7ad492132ecfea2ce13a78b)
+
+commit 5e314acbe9c66fb868ed4cbff1e57a98fc18fa60
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Aug 15 08:46:18 2019 +0200
+
+    ims_dialog: small spelling fix in WARN log messages
+    
+    (cherry picked from commit f25cf7806a84caccf49275be14a5885a9038bdca)
+
+commit 9f766cbb6d4820e5418594681ae0ebb305204bfd
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Aug 15 08:45:37 2019 +0200
+
+    dialog: small spelling fix in WARN log messages
+    
+    (cherry picked from commit 389843c34eed6f39f4631eede6f6ab8b6bade2eb)
+
+commit 6670a3b6403fb43670042103ce4e087f92fa0c1b
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Aug 14 19:37:37 2019 +0200
+
+    add ims_usrloc_scscf README
+
+commit 3dc241b48be634ff444443ef9e0a4c4f4ddf33a6
+Author: Yasin CANER <caner_yaso@hotmail.com>
+Date:   Mon Feb 4 21:09:24 2019 +0300
+
+    ims_usrloc_scscf: doc is added
+    
+    documentation is added for ims_usrloc_scscf
+    
+    (cherry picked from commit 44049e9a9793824a8ef09759813b3cc8b5864103)
+
+
 ===================== 2019-08-14 Version 5.2.4 Released =====================
 
 ===================== Changes Since Version 5.2.3 ===========================
