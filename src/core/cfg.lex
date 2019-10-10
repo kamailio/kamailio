@@ -470,6 +470,8 @@ LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 LATENCY_LIMIT_CFG		latency_limit_cfg
 
+URI_HOST_EXTRA_CHARS	"uri_host_extra_chars"
+
 MSG_TIME	msg_time
 ONSEND_RT_REPLY		"onsend_route_reply"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
@@ -980,6 +982,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
+<INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }
