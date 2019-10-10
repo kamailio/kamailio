@@ -1488,10 +1488,10 @@ int ds_list_exist(int set)
 	si = ds_avl_find(_ds_list, set);
 
 	if(si == NULL) {
-		LM_INFO("destination set [%d] not found\n", set);
+		LM_DBG("destination set [%d] not found\n", set);
 		return -1; /* False */
 	}
-	LM_INFO("destination set [%d] found\n", set);
+	LM_DBG("destination set [%d] found\n", set);
 	return 1; /* True */
 }
 
