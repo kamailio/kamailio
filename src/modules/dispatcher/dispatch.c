@@ -2688,6 +2688,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
+	LM_DBG("update state for %.*s in group %d to %d\n", address->len, address->s, group, state);
 
 	while(i < idx->nr) {
 		if(idx->dlist[i].uri.len == address->len
@@ -2718,12 +2719,15 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 
 			if(state & DS_TRYING_DST) {
 				idx->dlist[i].message_count++;
+				LM_DBG("destination did not replied %d times, threshold %d\n",
+						 idx->dlist[i].message_count, probing_threshold);
 				/* Destination is not replying.. Increasing failure counter */
 				if(idx->dlist[i].message_count >= probing_threshold) {
-					/* Destionation has too much lost messages.. Bringing it to inactive state */
+					/* Destination has too much lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
 					idx->dlist[i].message_count = 0;
+					LM_DBG("deactivate destination, threshold %d reached\n", probing_threshold);
 				}
 			} else {
 				if(!(init_state & DS_TRYING_DST)
@@ -2733,9 +2737,12 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 					if(idx->dlist[i].message_count < inactive_threshold) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
 						idx->dlist[i].flags |= DS_INACTIVE_DST;
+						LM_DBG("destination replied successful %d times, threshold %d\n",
+								 idx->dlist[i].message_count, inactive_threshold);
 					} else {
 						/* Destination has enough replied messages.. Bringing it to active state */
 						idx->dlist[i].message_count = 0;
+						LM_DBG("activate destination, threshold %d reached\n", inactive_threshold);
 					}
 				} else {
 					idx->dlist[i].message_count = 0;
@@ -2753,6 +2760,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 				ds_reinit_rweight_on_state_change(
 						old_state, idx->dlist[i].flags, idx);
 
+			LM_DBG("old state was %d, set new state to %d\n", old_state, idx->dlist[i].flags);
 			return 0;
 		}
 		i++;
