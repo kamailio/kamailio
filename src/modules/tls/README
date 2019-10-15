@@ -614,6 +614,8 @@ Place holder
 10.1. tls_method (string)
 
    Sets the TLS protocol method. Possible values are:
+     * TLSv1.2+ - TLSv1.2 or newer (TLSv1.3, ...) connections are accepted
+       (available starting with openssl/libssl v1.1.1)
      * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
        with openssl/libssl v1.0.1e)
      * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
