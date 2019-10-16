@@ -1242,12 +1242,12 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	dest_info_t *dst;
 
 	if(t == NULL || ps == NULL) {
-		LM_ERR("very weird\n");
+		LM_ERR("unexpected parameter values\n");
 		return;
 	}
 
 	if(ps->flags & TMCB_RETR_F) {
-		LM_ERR("retransmission\n");
+		LM_DBG("retransmission - ignoring\n");
 		return;
 	}
 	info = (siptrace_info_t *)(*ps->param);
