@@ -311,7 +311,7 @@ xinfo("AFTER $xavp(b[2]=&gt;x) == [a-2-x] == $xavp(b[2]=&gt;y) == [a-2-y]\n");
 				</programlisting>
 			</example>
 		</section>
-		<section id="pv.f.xavp_copy">
+		<section id="pv.f.xavp_copy2">
 			<title>
 				<function moreinfo="none">xavp_copy(source_name, source_index, destination_name, destination_index)</function>
 			</title>
