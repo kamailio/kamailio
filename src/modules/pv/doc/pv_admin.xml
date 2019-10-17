@@ -290,22 +290,23 @@ $xavp(a=&gt;x) = "a-0-x";
 $xavp(a[0]=&gt;y) = "a-0-y";
 $xavp(a=&gt;x) = "a-1-x";
 $xavp(a[0]=&gt;y) = "a-1-y";
-xinfo("$$xavp(a[0]) = [$xavp(a[0]=&gt;x)][$xavp(a[0]=&gt;y)]\n");
-xinfo("$$xavp(a[1]) = [$xavp(a[1]=&gt;x)][$xavp(a[1]=&gt;y)]\n");
+$xavp(a=&gt;x) = "a-2-x";
+$xavp(a[0]=&gt;y) = "a-2-y";
+
+xinfo("BEFORE $xavp(a[0]=&gt;x) == [a-2-x] == $xavp(a[0]=&gt;y) == [a-2-y]\n");
+xinfo("BEFORE $xavp(a[1]=&gt;x) == [a-1-x] == $xavp(a[1]=&gt;y) == [a-1-y]\n");
+xinfo("BEFORE $xavp(a[2]=&gt;x) == [a-0-x] == $xavp(a[2]=&gt;y) == [a-0-y]\n");
 
 # reorder
 $var(source_index) = 1;
 $var(destination_name) = "b";
+xavp_copy("a", "2", "b");
 xavp_copy("a", "$var(source_index)", "$var(destination_name)");
 xavp_copy("a", "0", "$var(destination_name)");
-xinfo("reordered: $$xavp(b[0]) = [$xavp(b[0]=&gt;x)][$xavp(b[0]=&gt;y)]\n");
-xinfo("reordered: $$xavp(b[1]) = [$xavp(b[1]=&gt;x)][$xavp(b[1]=&gt;y)]\n");
 
-# results in:
-# INFO: $xavp(a[0]) = [a-1-x][a-1-y]
-# INFO: $xavp(a[1]) = [a-0-x][a-0-y]
-# INFO: reordered: $xavp(b[0]) = [a-0-x][a-0-y]
-# INFO: reordered: $xavp(b[1]) = [a-1-x][a-1-y]
+xinfo("AFTER $xavp(b[0]=&gt;x) == [a-0-x] == $xavp(b[0]=&gt;y) == [a-0-y]\n");
+xinfo("AFTER $xavp(b[1]=&gt;x) == [a-1-x] == $xavp(b[1]=&gt;y) == [a-1-y]\n");
+xinfo("AFTER $xavp(b[2]=&gt;x) == [a-2-x] == $xavp(b[2]=&gt;y) == [a-2-y]\n");
 ...
 				</programlisting>
 			</example>
@@ -332,24 +333,24 @@ xinfo("reordered: $$xavp(b[1]) = [$xavp(b[1]=&gt;x)][$xavp(b[1]=&gt;y)]\n");
 				<programlisting format="linespecific">
 ...
 # Using xavp_copy to reorder an existing xavp stack inplace
-$xavp(a=>x) = "a-0-x";
-$xavp(a[0]=&gt;y) = "a-0-y";
-$xavp(a=>x) = "a-1-x";
-$xavp(a[0]=&gt;y) = "a-1-y";
-$xavp(a=>x) = "a-2-x";
-$xavp(a[0]=&gt;y) = "a-2-y";
+$xavp(d=&gt;x) = "d-0-x";
+$xavp(d[0]=&gt;y) = "d-0-y";
+$xavp(d=&gt;x) = "d-1-x";
+$xavp(d[0]=&gt;y) = "d-1-y";
+$xavp(d=&gt;x) = "d-2-x";
+$xavp(d[0]=&gt;y) = "d-2-y";
 
-# INFO: NEW $xavp(a[0]) = [a-2-x][a-2-y]
-# INFO: NEW $xavp(a[1]) = [a-1-x][a-1-y]
-# INFO: NEW $xavp(a[2]) = [a-0-x][a-0-y]
+xinfo("NEW $xavp(d[0]=&gt;x) == [d-2-x] and $xavp(d[0]=&gt;y) == [d-2-y]\n");
+xinfo("NEW $xavp(d[1]=&gt;x) == [d-1-x] and $xavp(d[1]=&gt;y) == [d-1-y]\n");
+xinfo("NEW $xavp(d[2]=&gt;x) == [d-0-x] and $xavp(d[2]=&gt;y) == [d-0-y]\n");
 
-xavp_copy("a", "1", "c");
-xavp_copy("a", "2", "a", "1");
-xavp_copy("c", "0", "a", "2");
+xavp_copy("d", "0", "e");
+xavp_copy("d", "2", "d", "0");
+xavp_copy("e", "0", "d", "2");
 
-# INFO: AFTER $xavp(a[0]) = [a-2-x][a-2-y]
-# INFO: AFTER $xavp(a[1]) = [a-0-x][a-0-y]
-# INFO: AFTER $xavp(a[2]) = [a-1-x][a-1-y]
+xinfo("AFTER $xavp(d[0]=&gt;x) == [d-0-x] $xavp(d[0]=&gt;y) == [d-0-y]\n");
+xinfo("AFTER $xavp(d[1]=&gt;x) == [d-1-x] $xavp(d[1]=&gt;y) == [d-1-y]\n");
+xinfo("AFTER $xavp(d[2]=&gt;x) == [d-2-x] $xavp(d[2]=&gt;y) == [d-2-y]\n");
 ...
 				</programlisting>
 			</example>
