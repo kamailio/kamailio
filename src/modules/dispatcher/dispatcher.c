@@ -1025,9 +1025,8 @@ static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 
 	if(fixup_get_ivalue(msg, (gparam_p)param, &set) != 0) {
 		LM_ERR("cannot get set id param value\n");
-		return -1;
+		return -2;
 	}
-	LM_DBG("--- Looking for dispatcher set %d\n", set);
 	return ds_list_exist(set);
 }
 
