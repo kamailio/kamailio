@@ -1530,6 +1530,11 @@ failure_route[tryagain] {
 		</listitem>
 		</itemizedlist>
 		<para>
+			It returns true (value 1) if the group exists, or otherwise false
+			(-1 when the group is not found; -2 when evaluating the parameter
+			fails).
+		</para>
+		<para>
 			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
