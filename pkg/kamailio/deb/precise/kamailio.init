@@ -18,7 +18,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio
 NAME=`basename "$0"`
 DESC="Kamailio SIP Server"
-HOMEDIR=/var/run/$NAME
+HOMEDIR=/run/$NAME
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/$NAME
 CFGFILE=/etc/$NAME/kamailio.cfg
@@ -112,7 +112,7 @@ if test "$DUMP_CORE" = "yes" ; then
     # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
-# /var/run can be a tmpfs
+# $HOMEDIR can be a tmpfs
 if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
     chown ${USER}:${GROUP} $HOMEDIR
