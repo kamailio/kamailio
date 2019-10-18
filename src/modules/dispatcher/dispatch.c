@@ -1482,16 +1482,16 @@ static inline int ds_get_index(int group, int ds_list_idx, ds_set_t **index)
 int ds_list_exist(int set)
 {
 	ds_set_t *si = NULL;
-	LM_DBG("-- Looking for set %d\n", set);
+	LM_DBG("looking for destination set [%d]\n", set);
 
 	/* get the index of the set */
 	si = ds_avl_find(_ds_list, set);
 
 	if(si == NULL) {
-		LM_INFO("destination set [%d] not found\n", set);
+		LM_DBG("destination set [%d] not found\n", set);
 		return -1; /* False */
 	}
-	LM_INFO("destination set [%d] found\n", set);
+	LM_DBG("destination set [%d] found\n", set);
 	return 1; /* True */
 }
 
