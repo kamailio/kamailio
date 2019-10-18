@@ -1271,6 +1271,9 @@ failure_route[tryagain] {
    Check if a specific group is defined in dispatcher list or database.
      * groupid - A group ID to check.
 
+   It returns true (value 1) if the group exists, or otherwise false (-1
+   when the group is not found; -2 when evaluating the parameter fails).
+
    This function can be used from ANY_ROUTE.
 
    Example 1.47. ds_list_exists usage
