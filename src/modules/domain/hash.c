@@ -137,7 +137,7 @@ int hash_table_install(struct domain_list **hash_table, str *did, str *domain)
 	np->did.len = did->len;
 	np->did.s = (char *)shm_malloc(did->len);
 	if(np->did.s == NULL) {
-		LM_ERR("no shared memeory for did\n");
+		LM_ERR("no shared memory for did\n");
 		shm_free(np);
 		return -1;
 	}
