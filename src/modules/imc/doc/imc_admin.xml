@@ -72,7 +72,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="imc.p.db_url">
 		<title><varname>db_url</varname> (str)</title>
 		<para>
 		The database url.
@@ -91,7 +91,7 @@ modparam("imc", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.rooms_table">
 		<title><varname>rooms_table</varname> (str)</title>
 		<para>
 		The name of the table storing IMC rooms.
@@ -110,7 +110,7 @@ modparam("imc", "rooms_table", "rooms")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.members_table">
 		<title><varname>members_table</varname> (str)</title>
 		<para>
 		The name of the table storing IMC members.
@@ -129,7 +129,7 @@ modparam("imc", "members_table", "members")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.hash_size">
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
 		The power of 2 to get the size of the hash table used for storing
@@ -149,7 +149,7 @@ modparam("imc", "hash_size", 8)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.imc_cmd_start_char">
 		<title><varname>imc_cmd_start_char</varname> (str)</title>
 		<para>
 		The character which indicates that the body of the message is
@@ -169,7 +169,7 @@ modparam("imc", "imc_cmd_start_char", "#")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.outbound_proxy">
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
 			The SIP address used as next hop when sending the message. Very
@@ -193,7 +193,7 @@ modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 		</example>
 	</section>
 
-	<section>
+	<section id="imc.p.extra_hdrs">
 		<title><varname>extra_hdrs</varname> (str)</title>
 		<para>
 		Extra headers (each ending with \r\n) to be added in
@@ -213,7 +213,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.create_on_join">
 		<title><varname>create_on_join</varname> (integer)</title>
 		<para>
 		If set to 1 and user requests to join a non-existing
@@ -234,7 +234,7 @@ modparam("imc", "create_on_join", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="imc.p.check_on_create">
 		<title><varname>check_on_create</varname> (integer)</title>
 		<para>
 		  If set to 1, the chat server will report an error if
@@ -259,7 +259,7 @@ modparam("imc", "check_on_create", 1)
 	<section>
 	<title>Functions</title>
 	<section>
-		<title>
+		<title id="imc.p.imc_manager">
 		<function moreinfo="none">imc_manager()</function>
 		</title>
 		<para>
