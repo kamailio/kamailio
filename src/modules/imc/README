@@ -36,6 +36,8 @@ Anca-Maria Vamanu
               3.5. imc_cmd_start_char (str)
               3.6. outbound_proxy (str)
               3.7. extra_hdrs (str)
+              3.8. create_on_join (integer)
+              3.9. check_on_create (integer)
 
         4. Functions
 
@@ -62,8 +64,10 @@ Anca-Maria Vamanu
    1.5. Set imc_cmd_start_char parameter
    1.6. Set outbound_proxy parameter
    1.7. Set extra_hdrs parameter
-   1.8. Usage of imc_manager() function
-   1.9. List of commands
+   1.8. Set create_on_join parameter
+   1.9. Set check_on_create parameter
+   1.10. Usage of imc_manager() function
+   1.11. List of commands
 
 Chapter 1. Admin Guide
 
@@ -84,6 +88,8 @@ Chapter 1. Admin Guide
         3.5. imc_cmd_start_char (str)
         3.6. outbound_proxy (str)
         3.7. extra_hdrs (str)
+        3.8. create_on_join (integer)
+        3.9. check_on_create (integer)
 
    4. Functions
 
@@ -145,6 +151,8 @@ Chapter 1. Admin Guide
    3.5. imc_cmd_start_char (str)
    3.6. outbound_proxy (str)
    3.7. extra_hdrs (str)
+   3.8. create_on_join (integer)
+   3.9. check_on_create (integer)
 
 3.1. db_url (str)
 
@@ -229,6 +237,31 @@ modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 ...
 
+3.8. create_on_join (integer)
+
+   If set to 1 and user requests to join a non-existing room, the room
+   will be automatically created. If set to 0, joinin a non-existing room
+   returns an error.
+
+   The default value is 1.
+
+   Example 1.8. Set create_on_join parameter
+...
+modparam("imc", "create_on_join", 0)
+...
+
+3.9. check_on_create (integer)
+
+   If set to 1, the chat server will report an error if the user attempts
+   to create a room that already exists.
+
+   The default value is 0.
+
+   Example 1.9. Set check_on_create parameter
+...
+modparam("imc", "check_on_create", 1)
+...
+
 4. Functions
 
    4.1. imc_manager()
@@ -242,7 +275,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
    This function can be used from REQUEST_ROUTE. See command description
    for error codes returned by this function.
 
-   Example 1.8. Usage of imc_manager() function
+   Example 1.10. Usage of imc_manager() function
 ...
 # the rooms will be named chat-xyz to avoid overlapping
 # with usernames
@@ -305,7 +338,7 @@ kamcmd imc_list_members _room_
 
    Next picture presents the list of commands and their parameters.
 
-   Example 1.9. List of commands
+   Example 1.11. List of commands
 ...
 
 1.create
@@ -377,10 +410,21 @@ kamcmd imc_list_members _room_
   -only the owner of a room has the right to destroy it
   -error case: return codes: -110 -- -119
 
-9.list
+9.members
   -list members in a room
   -error case: return codes: -100 -- -109
 
+10.add
+  -adds a user to a room
+  -takes 2 parameters:
+     1)the complete address of the user
+     2)the address of the room -if not present it will be considered
+           to be the address in the To header of the message
+  -only certain users have the right to add other users: the owner
+    and the administrators
+  -eg: #add sip:john@kamailio.org sip:chat-000@kamailio.org
+    or  #add john@kamailio.org sent to sip:chat-000@kamailio.org
+  -error case: return codes: -50 -- -59
 ...
 
 8. Installation
