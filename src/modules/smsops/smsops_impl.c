@@ -573,7 +573,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 							if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF) {
 								if(contains_8bit_refnum) {
 									pkg_free(ie);
-									LM_ERR("IE Concatenated Short Message 8bit Reference occured more than once in UDH\n");
+									LM_ERR("IE Concatenated Short Message 8bit Reference occurred more than once in UDH\n");
 									return -1;
 								}
 
