@@ -30,7 +30,7 @@ struct unc_as{
    union sockaddr_union su;
 };
 
-/*uncomplete as table, from 0 to MAX_UNC_AS_NR are event, from then on are action*/
+/*incomplete as table, from 0 to MAX_UNC_AS_NR are event, from then on are action*/
 /*should only be modified by the dispatcher process, or we should add a lock*/
 extern struct unc_as unc_as_t[];
 
