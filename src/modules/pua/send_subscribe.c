@@ -669,7 +669,7 @@ faked_error:
 	{
 		LM_DBG("BLA_SUBSCRIBE FLAG inserted\n");
 	}	
-	LM_DBG("record for subscribe from %.*s to %.*s inserted in datatbase\n",
+	LM_DBG("record for subscribe from %.*s to %.*s inserted in database\n",
 			presentity->watcher_uri->len, presentity->watcher_uri->s,
 			presentity->pres_uri->len, presentity->pres_uri->s);
 
