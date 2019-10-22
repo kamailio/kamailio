@@ -543,7 +543,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 
 						// Check for malicious length, which might cause buffer overflow
 						if(udh_len > body.len - p) {
-							LM_ERR("TP-User-Data-Lenght is bigger than the remaining message buffer!\n");
+							LM_ERR("TP-User-Data-Length is bigger than the remaining message buffer!\n");
 							return -1;
 						}
 
@@ -564,7 +564,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 
 							// Check for malicious length, which might cause buffer overflow
 							if(udh_read + ie->data.len + 2 /* two octets are read so far */ > udh_len) {
-								LM_ERR("IE Lenght for IE id %d is bigger than the remaining User-Data element!\n",
+								LM_ERR("IE Length for IE id %d is bigger than the remaining User-Data element!\n",
 																									ie->identifier);
 								pkg_free(ie);
 								return -1;
