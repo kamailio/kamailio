@@ -250,7 +250,7 @@ void pp_define_core(void)
 
 	n = snprintf(p, 64 - (int)(p-defval), "_%d", VERSIONVAL/1000000);
 	if(n<0 || n>=64 - (int)(p-defval)) {
-		LM_ERR("faild to build define token\n");
+		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
@@ -262,7 +262,7 @@ void pp_define_core(void)
 	n = snprintf(p, 64 - (int)(p-defval), "_%d_%d", VERSIONVAL/1000000,
 			(VERSIONVAL%1000000)/1000);
 	if(n<0 || n>=64 - (int)(p-defval)) {
-		LM_ERR("faild to build define token\n");
+		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
@@ -274,7 +274,7 @@ void pp_define_core(void)
 	n = snprintf(p, 64 - (int)(p-defval), "_%d_%d_%d", VERSIONVAL/1000000,
 			(VERSIONVAL%1000000)/1000, VERSIONVAL%1000);
 	if(n<0 || n>=64 - (int)(p-defval)) {
-		LM_ERR("faild to build define token\n");
+		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
