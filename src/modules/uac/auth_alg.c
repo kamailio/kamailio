@@ -96,7 +96,7 @@ void uac_calc_HA1( struct uac_credential *crd,
 	MD5_CTX Md5Ctx;
 	HASH HA1;
 
-	if(UAC_FLCRED_HA1 & UAC_FLCRED_HA1) {
+	if(crd->aflags & UAC_FLCRED_HA1) {
 		memcpy(sess_key, crd->passwd.s, HASHHEXLEN);
 		sess_key[HASHHEXLEN] = '\0';
 		if ( auth->flags& AUTHENTICATE_MD5SESS ) {
