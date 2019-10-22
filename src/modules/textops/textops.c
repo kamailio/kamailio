@@ -832,7 +832,7 @@ static int ki_regex_substring(sip_msg_t* msg, str *input, str *regex,
 	rc = regcomp(&preg, regex->s, REG_EXTENDED);
 
 	if (0 != rc) {
-		LM_ERR("regular experession coudnt be compiled, Error code: (%d)\n", rc);
+		LM_ERR("regular expression coudnt be compiled, Error code: (%d)\n", rc);
 		pkg_free(pmatch);
 		regfree(&preg);
 		return -1;
