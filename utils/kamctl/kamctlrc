@@ -52,6 +52,9 @@
 ## - known to work for: mysql
 # DBROOTPW="dbrootpw"
 
+## option to ask confirmation for all database creation steps
+# DBINITASK=yes
+
 ## database character set (used by MySQL when creating database)
 #CHARSET="latin1"
 
