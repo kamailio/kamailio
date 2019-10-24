@@ -203,6 +203,32 @@
 %bcond_without xmlrpc
 %endif
 
+%if 0%{?centos_ver} == 8
+%define dist_name centos
+%define dist_version %{?centos}
+%define dist .el8.centos
+%bcond_with cnxcc
+%bcond_with dnssec
+%bcond_with geoip
+%bcond_without http_async_client
+%bcond_without ims
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without mongodb
+%bcond_without perl
+%bcond_with phonenum
+%bcond_without python3
+%bcond_without rabbitmq
+%bcond_with redis
+%bcond_without ruby
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
 %if 0%{?suse_version}
 %define dist_name opensuse
 %define dist_version %{?suse_version}
@@ -272,6 +298,31 @@
 %bcond_with python3
 %bcond_with rabbitmq
 %bcond_without redis
+%bcond_with ruby
+%bcond_with sctp
+%bcond_with websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?rhel} == 8 && 0%{?centos_ver} != 8
+%define dist_name rhel
+%define dist_version %{?rhel}
+%bcond_with cnxcc
+%bcond_with dnssec
+%bcond_with geoip
+%bcond_with http_async_client
+%bcond_with ims
+%bcond_with jansson
+%bcond_with json
+%bcond_with lua
+%bcond_with kazoo
+%bcond_with memcached
+%bcond_without mongodb
+%bcond_without perl
+%bcond_with phonenum
+%bcond_with python3
+%bcond_with rabbitmq
+%bcond_with redis
 %bcond_with ruby
 %bcond_with sctp
 %bcond_with websocket
@@ -827,8 +878,8 @@ SIP Presence (and RLS, XCAP, etc) support for Kamailio.
 %package    python
 Summary:    Python extensions for Kamailio
 Group:      %{PKGGROUP}
-Requires:   python, kamailio = %ver
-BuildRequires:  python, python-devel
+Requires:   python2, kamailio = %ver
+BuildRequires:  python2, python2-devel
 %if %{with python3}
 %if 0%{?rhel} == 7
 Requires:   python36, kamailio = %ver
@@ -837,9 +888,6 @@ BuildRequires:  python36, python36-devel
 Requires:   python3, kamailio = %ver
 BuildRequires:  python3, python3-devel
 %endif
-%endif
-%if 0%{?fedora}
-BuildRequires:  python2-devel
 %endif
 
 %description    python
@@ -862,7 +910,7 @@ RabbitMQ module for Kamailio.
 Summary:    RADIUS modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?fedora} || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
 Requires:   freeradius-client
 BuildRequires:  freeradius-client-devel
 %else
@@ -1014,8 +1062,8 @@ Send commands to statsd server.
 %package        sqlang
 Summary:        Squirrel Language (SQLang) for Kamailio
 Group:          %{PKGGROUP}
-Requires:       squirrel-libs, kamailio = %version
-BuildRequires:  squirrel-devel gcc-c++
+Requires:       kamailio = %version
+BuildRequires:  gcc-c++
 
 %description    sqlang
 app_sqlang module for Kamailio.
@@ -1168,10 +1216,9 @@ UUID module for Kamailio.
     sed -i -e 's:#!/usr/bin/python:#!%{__python2}:' utils/kamctl/dbtextdb/dbtextdb.py
 %endif
 
-
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
-%if 0%{?fedora} || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
 export FREERADIUS=1
 %endif
 make cfg prefix=/usr \
@@ -1183,7 +1230,7 @@ make cfg prefix=/usr \
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
-%if 0%{?fedora} || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -1267,7 +1314,7 @@ rm -rf %{buildroot}
 make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
-%if 0%{?fedora} || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -1377,7 +1424,7 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 %if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
-%if 0%{?fedora}
+%if 0%{?fedora} || 0%{?rhel} == 8
 %py_byte_compile %{__python2} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
 
