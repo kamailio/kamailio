@@ -345,7 +345,7 @@ BuildRequires:  systemd-mini, shadow
 
 
 %description
-Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
+Kamailio is an Open Source SIP Server released under GPL, able
 to handle thousands of call setups per second. Among features: asynchronous TCP,
 UDP and SCTP, secure communication via TLS for VoIP (voice, video); IPv4 and
 IPv6; SIMPLE instant messaging and presence with embedded XCAP server and MSRP
@@ -2207,11 +2207,11 @@ fi
 
 %files      tls
 %defattr(-,root,root)
+%dir %{_libdir}/kamailio/openssl_mutex_shared
 %doc %{_docdir}/kamailio/modules/README.auth_identity
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
-%dir %{_libdir}/kamailio/openssl_mutex_shared
 %{_libdir}/kamailio/openssl_mutex_shared/openssl_mutex_shared.so
 
 
