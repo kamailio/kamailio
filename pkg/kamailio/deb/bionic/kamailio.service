@@ -19,7 +19,7 @@ ExecStart=/usr/sbin/kamailio -P /run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_M
 Restart=on-failure
 # /run/kamailio in tmpfs
 RuntimeDirectory=kamailio
-RuntimeDirectoryMode=0750
+RuntimeDirectoryMode=0770
 
 [Install]
 WantedBy=multi-user.target
