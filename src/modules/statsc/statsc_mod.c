@@ -257,6 +257,7 @@ void statsc_timer(unsigned int ticks, void *param)
 	statsc_nmap_t *sm = NULL;
 	time_t tn;
 	int n;
+	int i;
 
 	if(_statsc_info==NULL || _statsc_info->slist==NULL) {
 		LM_ERR("statsc not initialized\n");
@@ -270,8 +271,12 @@ void statsc_timer(unsigned int ticks, void *param)
 	LM_DBG("statsc timer - time: %lu - ticks: %u - index: %d - steps: %llu\n",
 			(unsigned long)tn, ticks, n, (unsigned long long)_statsc_info->steps);
 
+	i = 0;
 	for(sm=_statsc_info->slist->next; sm!=NULL; sm=sm->next) {
+		LM_DBG("fetching value for: [%.*s] - step [%d]\n", sm->rname.len,
+				sm->rname.s, i);
 		statsc_svalue(&sm->rname, sm->vals + n);
+		i++;
 	}
 	_statsc_info->steps++;
 }
