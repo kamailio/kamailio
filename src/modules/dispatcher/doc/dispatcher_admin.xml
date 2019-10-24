@@ -89,7 +89,7 @@
 		<title>Set the <quote>list_file</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
+modparam("dispatcher", "list_file", "/run/kamailio/dispatcher.list")
 ...
 </programlisting>
 		</example>

@@ -218,7 +218,7 @@ modparam("call_control", "disable", 1)
       <para>
         <emphasis>
           Default value is 
-            <quote>/var/run/callcontrol/socket</quote>.
+            <quote>/run/callcontrol/socket</quote>.
         </emphasis>
       </para>
 
@@ -226,7 +226,7 @@ modparam("call_control", "disable", 1)
       <title>Setting the <varname>socket_name</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("call_control", "socket_name", "/var/run/callcontrol/socket")
+modparam("call_control", "socket_name", "/run/callcontrol/socket")
 ...
         </programlisting>
       </example>

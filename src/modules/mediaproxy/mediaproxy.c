@@ -191,7 +191,7 @@ static int mediaproxy_disabled = False;
 static str ice_candidate = str_init("none");
 
 static MediaproxySocket mediaproxy_socket = {
-		"/var/run/mediaproxy/dispatcher.sock", // name
+		"/run/mediaproxy/dispatcher.sock", // name
 		-1,									   // sock
 		500, // timeout in 500 miliseconds if there is no answer
 		0,   // time of the last failure

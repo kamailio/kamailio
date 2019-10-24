@@ -184,7 +184,7 @@ modparam("mediaproxy", "disable", 1)
       <para>
         <emphasis>
           Default value is
-            <quote>/var/run/mediaproxy/dispatcher.sock</quote>.
+            <quote>/run/mediaproxy/dispatcher.sock</quote>.
         </emphasis>
       </para>
 
@@ -192,7 +192,7 @@ modparam("mediaproxy", "disable", 1)
       <title>Setting the <varname>mediaproxy_socket</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("mediaproxy", "mediaproxy_socket", "/var/run/mediaproxy/dispatcher.sock")
+modparam("mediaproxy", "mediaproxy_socket", "/run/mediaproxy/dispatcher.sock")
 ...
         </programlisting>
       </example>

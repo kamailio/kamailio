@@ -69,7 +69,7 @@ c_defs=-DNAME='\"kamailio\"' -DVERSION='\"5.1.0-dev3\"' -DARCH='\"x86_64\"' \
 	   -DOS='linux_' -DOS_QUOTED='\"linux\"' -DCOMPILER='\"gcc 4.9.2\"' \
 	   -D__CPU_x86_64 -D__OS_linux -DSER_VER=5001000 \
 	   -DCFG_DIR='\"/usr/local/etc/kamailio/\"' \
-	   -DRUN_DIR='\"/var/run/kamailio/\"' -DPKG_MALLOC -DSHM_MEM -DSHM_MMAP \
+	   -DRUN_DIR='\"/run/kamailio/\"' -DPKG_MALLOC -DSHM_MEM -DSHM_MMAP \
 	   -DDNS_IP_HACK -DUSE_MCAST -DUSE_TCP -DDISABLE_NAGLE -DHAVE_RESOLV_RES \
 	   -DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR \
 	   -DWITH_XAVP -DMEM_JOIN_FREE -DF_MALLOC -DQ_MALLOC -DTLSF_MALLOC \

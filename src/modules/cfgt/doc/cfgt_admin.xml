@@ -73,7 +73,7 @@
 		<title>Set <varname>cfgtrace</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("cfgt", "basedir", "/var/run/kamailio/cfgtest")
+modparam("cfgt", "basedir", "/run/kamailio/cfgtest")
 ...
 </programlisting>
 		</example>

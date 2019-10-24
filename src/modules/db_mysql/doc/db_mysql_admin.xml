@@ -250,7 +250,7 @@ default-character-set = utf8
 		<programlisting format="linespecific">
 ...
 [client]
-socket = /var/run/mysql/mysqld.sock
+socket = /run/mysql/mysqld.sock
 
 [kamailio]
 socket = /path/to/mysqld.sock

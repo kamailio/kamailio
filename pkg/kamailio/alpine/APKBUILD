@@ -290,7 +290,7 @@ prepare() {
 	cd "$builddir"
 
 	cd utils/kamctl/
-	sed -i -e 's:/var/run/kamailio.pid:/var/run/kamailio/kamailio.pid:g' \
+	sed -i -e 's:/run/kamailio.pid:/run/kamailio/kamailio.pid:g' \
 		kamctl.base kamctlrc || return 1
 	# we actually dont need bash
 	sed -i -e 's:/bin/bash:/bin/sh:' kamctl kamdbctl \
@@ -318,7 +318,7 @@ package() {
 	make  FREERADIUS=1 -j1 install || return 1
 
 	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
-	install -d -o kamailio "$pkgdir"/var/run/kamailio
+	install -d -o kamailio "$pkgdir"/run/kamailio
 }
 
 _mv_mod() {

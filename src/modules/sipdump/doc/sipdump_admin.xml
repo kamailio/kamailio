@@ -144,7 +144,7 @@ modparam("sipdump", "rotate", 3600)
 		<title>Set <varname>folder</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sipdump", "folder", "/var/run/kamailio")
+modparam("sipdump", "folder", "/run/kamailio")
 ...
 </programlisting>
 		</example>
