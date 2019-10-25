@@ -6,7 +6,7 @@ case "$1" in
     configure)
         adduser --quiet --system --group --disabled-password \
                 --shell /bin/false --gecos "Kamailio SIP Server" \
-                --home /var/run/kamailio kamailio || true
+                --home /run/kamailio kamailio || true
 
         ;;
 

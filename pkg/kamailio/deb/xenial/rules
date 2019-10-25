@@ -165,7 +165,7 @@ install: build
 	# install /etc/default/kamailio file
 	mkdir -p $(CURDIR)/debian/kamailio/etc/default
 	cp -f debian/kamailio.default $(CURDIR)/debian/kamailio/etc/default/kamailio
-	# delete /var/run/kamailio dir
+	# delete /run/kamailio dir
 	rm -rf $(CURDIR)/debian/kamailio/usr/local
 
 
