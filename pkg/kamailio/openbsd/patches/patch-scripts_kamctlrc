@@ -4,8 +4,8 @@ $OpenBSD$
 @@ -135,7 +135,7 @@
  
  ## OPENSER START Options
- ## PID file path - default is: /var/run/kamailio.pid
--# PID_FILE=/var/run/kamailio.pid
+ ## PID file path - default is: /run/kamailio.pid
+-# PID_FILE=/run/kamailio.pid
 +PID_FILE=/var/kamailio/kamailio.pid
  
  ## Extra start options - default is: not set

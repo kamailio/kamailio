@@ -5,8 +5,8 @@ After=syslog.target network-online.target auditd.service
 
 [Service]
 EnvironmentFile=/etc/sysconfig/kamailio
-ExecStartPre=/usr/bin/mkdir -m=2770 -p /var/run/kamailio
-ExecStartPre=/usr/bin/chown kamailio:kamailio /var/run/kamailio
+ExecStartPre=/usr/bin/mkdir -m=2770 -p /run/kamailio
+ExecStartPre=/usr/bin/chown kamailio:kamailio /run/kamailio
 ExecStart=/usr/sbin/kamailio -f $CFG_FILE -P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=control-group

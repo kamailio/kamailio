@@ -6,7 +6,7 @@
 # description: Kamailio is a fast SIP Server.
 #
 # processname: kamailio
-# pidfile: /var/run/kamailio.pid
+# pidfile: /run/kamailio.pid
 # config: /etc/kamailio/kamailio.cfg
 
 # Source function library.
@@ -15,7 +15,7 @@
 KAM=/usr/sbin/kamailio
 KAMCFG=/etc/kamailio/kamailio.cfg
 PROG=kamailio
-PID_FILE=/var/run/kamailio.pid
+PID_FILE=/run/kamailio.pid
 LOCK_FILE=/var/lock/subsys/kamailio
 RETVAL=0
 DEFAULTS=/etc/default/kamailio

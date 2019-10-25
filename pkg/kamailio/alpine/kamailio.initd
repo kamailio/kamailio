@@ -1,7 +1,7 @@
 #!/sbin/openrc-run
 
 daemon=/usr/sbin/kamailio
-pidfile=/var/run/kamailio/kamailio.pid
+pidfile=/run/kamailio/kamailio.pid
 
 extra_started_commands="reload"
 
@@ -12,7 +12,7 @@ depend() {
 
 start() {
 	ebegin "Starting Kamailio"
-	checkpath -d -o kamailio:kamailio /var/run/kamailio
+	checkpath -d -o kamailio:kamailio /run/kamailio
 	start-stop-daemon --start --quiet --pidfile $pidfile --exec $daemon \
 		-- \
 		-u ${KAMAILIO_USER:-kamailio} \

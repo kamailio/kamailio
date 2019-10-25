@@ -31,6 +31,6 @@ DUMP_CORE=no
 
 CFG_FILE=/etc/kamailio/kamailio.cfg
 
-PID_FILE=/var/run/kamailio/kamailio.pid
+PID_FILE=/run/kamailio/kamailio.pid
 
 LOCK_FILE=/var/lock/subsys/kamailio
