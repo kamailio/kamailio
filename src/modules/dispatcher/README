@@ -364,7 +364,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set the “list_file” parameter
 ...
-modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
+modparam("dispatcher", "list_file", "/run/kamailio/dispatcher.list")
 ...
 
 3.2. db_url (string)

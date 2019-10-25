@@ -161,7 +161,7 @@ modparam("sipdump", "rotate", 3600)
 
    Example 1.4. Set folder parameter
 ...
-modparam("sipdump", "folder", "/var/run/kamailio")
+modparam("sipdump", "folder", "/run/kamailio")
 ...
 
 3.5. fprefix (str)

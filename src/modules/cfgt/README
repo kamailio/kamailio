@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set cfgtrace parameter
 ...
-modparam("cfgt", "basedir", "/var/run/kamailio/cfgtest")
+modparam("cfgt", "basedir", "/run/kamailio/cfgtest")
 ...
 
 3.2. mask (int)

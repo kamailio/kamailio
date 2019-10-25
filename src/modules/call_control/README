@@ -197,11 +197,11 @@ modparam("call_control", "disable", 1)
    The path to the filesystem socket where the callcontrol application
    listens for commands from the module.
 
-   Default value is “/var/run/callcontrol/socket”.
+   Default value is “/run/callcontrol/socket”.
 
    Example 1.2. Setting the socket_name parameter
 ...
-modparam("call_control", "socket_name", "/var/run/callcontrol/socket")
+modparam("call_control", "socket_name", "/run/callcontrol/socket")
 ...
 
 5.3. socket_timeout (int)

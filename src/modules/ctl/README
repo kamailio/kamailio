@@ -80,9 +80,8 @@ Chapter 1. Admin Guide
    protocol).
 
    By default (if no parameters are changed in the config file) it uses a
-   Unix stream socket under /var/run/kamailio:
-   /var/run/kamailio/kamailio_ctl. This socket is also the default for
-   kamcmd.
+   Unix stream socket under /run/kamailio: /run/kamailio/kamailio_ctl.
+   This socket is also the default for kamcmd.
 
    In general it's used in conjunction with kamcmd. kamcmd is a Unix tool
    for invoking Kamailio RPC functions. It can be used both in interactive
@@ -151,8 +150,8 @@ $ kamcmd ps
    Multiple transports / listen addresses can be specified, just by
    setting the parameter multiple times.
 
-   Default: "unix:/var/run/kamailio/kamailio_ctl" (Unix stream socket).
-   The default value is used only if no binrpc parameter is found in the
+   Default: "unix:/run/kamailio/kamailio_ctl" (Unix stream socket). The
+   default value is used only if no binrpc parameter is found in the
    config file.
 
    Example 1.2. Set binrpc parameter
@@ -160,7 +159,7 @@ loadmodule "ctl"
 # optional listen addresses, if no one is specified,
 # ctl will listen on unixs:/tmp/ser_ctl
 
-modparam("ctl", "binrpc", "unix:/var/run/kamailio/kamailio_ctl") # default
+modparam("ctl", "binrpc", "unix:/run/kamailio/kamailio_ctl") # default
 modparam("ctl", "binrpc", "udp:localhost:2046")
 modparam("ctl", "binrpc", "tcp:localhost:2046")
 modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram
@@ -289,7 +288,7 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    Example 1.11. print usage
  $ kamcmd -f"[%v] %v:%v %v\n" ctl.listen
-[binrpc] unix_stream:/var/run/kamailio/kamailio_ctl
+[binrpc] unix_stream:/run/kamailio/kamailio_ctl
 
 # note: the above command is equivalent with kamcmd listen
 
@@ -307,6 +306,6 @@ modparam("ctl", "binrpc_struct_max_body_size", 4)
 
    Example 1.13. ctl.who usage
  $ kamcmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
-[binrpc] unix_stream: <anonymous unix socket>  -> /var/run/kamailio/kamailio_ctl
+[binrpc] unix_stream: <anonymous unix socket>  -> /run/kamailio/kamailio_ctl
 
 # note the above command is equivalent to kamcmd who
