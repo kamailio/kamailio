@@ -492,7 +492,7 @@ modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: &kamailio;\r\n
       <title>Setting the <varname>keepalive_state_file</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_state")
+modparam("nat_traversal", "keepalive_state_file", "/run/kamailio/keepalive_state")
 ...
         </programlisting>
       </example>
