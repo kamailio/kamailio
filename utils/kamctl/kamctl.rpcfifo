@@ -23,7 +23,7 @@ fi
 ### parameters
 #
 if [ -z "$RPCFIFOPATH" ]; then
-	RPCFIFOPATH=/var/run/kamailio/kamailio_rpc.fifo
+	RPCFIFOPATH=/run/kamailio/kamailio_rpc.fifo
 fi
 
 #
