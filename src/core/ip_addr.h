@@ -172,6 +172,15 @@ typedef struct dest_info {
 } dest_info_t;
 
 
+typedef struct ksr_coninfo {
+	ip_addr_t src_ip;
+	ip_addr_t dst_ip;
+	unsigned short src_port; /* host byte order */
+	unsigned short dst_port; /* host byte order */
+	int proto;
+	socket_info_t *csocket;
+} ksr_coninfo_t;
+
 typedef struct sr_net_info {
 	str data;
 	receive_info_t* rcv;

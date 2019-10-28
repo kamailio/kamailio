@@ -1021,6 +1021,14 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 		bytes = recv(c->s, &hdr, sizeof(hdr), MSG_PEEK);
 	} while (bytes == -1 && (errno == EINTR || errno == EAGAIN));
 
+	/* copy original tunnel address details */
+	memcpy(&c->cinfo.src_ip, &c->rcv.src_ip, sizeof(ip_addr_t));
+	memcpy(&c->cinfo.dst_ip, &c->rcv.dst_ip, sizeof(ip_addr_t));
+	c->cinfo.src_port = c->rcv.src_port;
+	c->cinfo.dst_port = c->rcv.dst_port;
+	c->cinfo.proto = (int)c->rcv.proto;
+	c->cinfo.csocket = c->rcv.bind_address;
+
 	src_ip = &c->rcv.src_ip;
 	dst_ip = &c->rcv.dst_ip;
 

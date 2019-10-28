@@ -200,6 +200,7 @@ typedef struct tcp_connection {
 			 * reply-ing */
 	int reader_pid; /* pid of the active reader process */
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
+	ksr_coninfo_t cinfo; /* connection info (e.g., for haproxy ) */
 	struct tcp_req req; /* request data */
 	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
