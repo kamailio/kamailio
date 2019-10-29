@@ -951,12 +951,27 @@ $var(status) = uac_reg_status("$rU");
 				<function moreinfo="none">uac_reg_request_to(user, mode)</function>
 			</title>
 			<para>
-			This function can be used to send an authenticated request to a remote user in 
+			This function can be used to send an authenticated request to a remote user in
 			the uac registrations table. It sets the request-uri, dst-uri and auth_*_avp
-			pv's to the values that correspond to the supplied user.
+			variables to the values that correspond to the supplied user.
 			</para>
 			<para>
-			The mode indicates whether the user should match the local uuid (mode=0), or the username (mode=1).
+			The mode is a bitwise set of flags controlling how the matching of
+			the record is done and what field is used to set auth_password_avp:
+			<itemizedlist>
+			<listitem>
+				<para>
+				indicates whether the user should match the local uuid (bit value=0),
+				or the username (bit value=1, int value=1).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				indicates whether the auth_password value is used to set auth_password_avp
+				(bit value=0), or the auth_ha1 value (bit value=1, int value=2).
+				</para>
+			</listitem>
+			</itemizedlist>
 			</para>
 			<para>
 			The auth_*_avp module parameters must be set to valid pv&apos;s.
