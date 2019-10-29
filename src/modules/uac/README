@@ -61,7 +61,7 @@ Ramona-Elena Modroiu
               4.4. uac_replace_to(display,uri)
               4.5. uac_replace_to(uri)
               4.6. uac_restore_to()
-              4.7. uac_auth()
+              4.7. uac_auth([mode])
               4.8. uac_req_send()
               4.9. uac_reg_lookup(uuid, dst)
               4.10. uac_reg_status(uuid)
@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
         4.4. uac_replace_to(display,uri)
         4.5. uac_replace_to(uri)
         4.6. uac_restore_to()
-        4.7. uac_auth()
+        4.7. uac_auth([mode])
         4.8. uac_req_send()
         4.9. uac_reg_lookup(uuid, dst)
         4.10. uac_reg_status(uuid)
@@ -596,7 +596,7 @@ modparam("uac", "reg_gc_interval", 60)
    4.4. uac_replace_to(display,uri)
    4.5. uac_replace_to(uri)
    4.6. uac_restore_to()
-   4.7. uac_auth()
+   4.7. uac_auth([mode])
    4.8. uac_req_send()
    4.9. uac_reg_lookup(uuid, dst)
    4.10. uac_reg_status(uuid)
@@ -743,11 +743,15 @@ uac_replace_to("sip:batman@gotham.org");
 uac_restore_to();
 ...
 
-4.7.  uac_auth()
+4.7.  uac_auth([mode])
 
    This function can be called only from failure route and will build the
    authentication response header and insert it into the request without
    sending anything.
+
+   If mode is set to 1, then the password has to be provided in HA1
+   format. The parameter can be a static integer or a variable holding an
+   integer value.
 
    This function can be used from FAILURE_ROUTE.
 
@@ -773,7 +777,9 @@ failure_route[TRUNKAUTH] {
     if(t_check_status("401|407")) {
         $avp(auser) = "test";
         $avp(apass) = "test";
+        # $avp(apass) = "36d0a02793542b4961e8348347236dbf";
         uac_auth();
+        # uac_auth("1");
         t_relay();
         exit;
     }
@@ -838,10 +844,16 @@ $var(status) = uac_reg_status("$rU");
 
    This function can be used to send an authenticated request to a remote
    user in the uac registrations table. It sets the request-uri, dst-uri
-   and auth_*_avp pv's to the values that correspond to the supplied user.
+   and auth_*_avp variables to the values that correspond to the supplied
+   user.
 
-   The mode indicates whether the user should match the local uuid
-   (mode=0), or the username (mode=1).
+   The mode is a bitwise set of flags controlling how the matching of the
+   record is done and what field is used to set auth_password_avp:
+     * indicates whether the user should match the local uuid (bit
+       value=0), or the username (bit value=1, int value=1).
+     * indicates whether the auth_password value is used to set
+       auth_password_avp (bit value=0), or the auth_ha1 value (bit
+       value=1, int value=2).
 
    The auth_*_avp module parameters must be set to valid pv's.
 
