@@ -47,6 +47,8 @@ typedef struct authenticate_body {
 	str *cnonce;
 } uac_authenticate_body_t;
 
+#define UACAUTH_MODE_HA1 (1<<0)
+
 #define AUTHENTICATE_MD5         (1<<0)
 #define AUTHENTICATE_MD5SESS     (1<<1)
 #define AUTHENTICATE_STALE       (1<<2)
@@ -67,7 +69,8 @@ void destroy_credentials(void);
 
 struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl, int rpl_code);
 
-int uac_auth( struct sip_msg *msg);
+int uac_auth(sip_msg_t *msg);
+int uac_auth_mode(sip_msg_t *msg, int mode);
 
 void do_uac_auth(str *method, str *uri,
 		struct uac_credential *crd,

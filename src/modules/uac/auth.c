@@ -375,9 +375,10 @@ error:
 	return -1;
 }
 
-
-
-int uac_auth(sip_msg_t *msg)
+/**
+ *
+ */
+int uac_auth_mode(sip_msg_t *msg, int mode)
 {
 	static struct authenticate_body auth;
 	struct uac_credential *crd;
@@ -451,6 +452,10 @@ int uac_auth(sip_msg_t *msg)
 		goto error;
 	}
 
+	if(mode & UACAUTH_MODE_HA1) {
+		crd->aflags |= UAC_FLCRED_HA1;
+	}
+
 	/* do authentication */
 	do_uac_auth( &msg->first_line.u.request.method,
 			&t->uac[branch].uri, crd, &auth, response);
@@ -489,5 +494,10 @@ error:
 	return -1;
 }
 
-
-
+/**
+ *
+ */
+int uac_auth(sip_msg_t *msg)
+{
+	return uac_auth_mode(msg, 0);
+}
