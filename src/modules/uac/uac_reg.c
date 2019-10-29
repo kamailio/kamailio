@@ -1678,8 +1678,13 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 	pv_value_t val;
 	struct action act;
 	struct run_act_ctx ra_ctx;
+	unsigned int umode;
+	unsigned int amode;
 
-	switch(mode)
+	umode = mode & UACREG_REQTO_MASK_USER;
+	amode = mode & UACREG_REQTO_MASK_AUTH;
+
+	switch(umode)
 	{
 		case 0:
 			reg = reg_ht_get_byuuid(src);
@@ -1745,13 +1750,17 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 		goto error;
 	}
 
-	// Set auth_password
-	val.rs = reg->auth_password;
+	if(amode) {
+		// set auth_ha1
+		val.rs = reg->auth_ha1;
+	} else {
+		// set auth_password
+		val.rs = reg->auth_password;
+	}
 	if(pv_set_spec_value(msg, &auth_password_spec, 0, &val)!=0) {
-		LM_ERR("error while setting auth_password\n");
+		LM_ERR("error while setting auth password (mode: %d)\n", amode);
 		goto error;
 	}
-
 	lock_release(reg->lock);
 	return 1;
 

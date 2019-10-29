@@ -25,6 +25,9 @@
 
 #define UACREG_TABLE_VERSION 4
 
+#define UACREG_REQTO_MASK_USER 1
+#define UACREG_REQTO_MASK_AUTH 2
+
 extern int reg_timer_interval;
 extern int reg_retry_interval;
 extern int reg_htable_size;

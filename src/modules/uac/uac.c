@@ -715,7 +715,7 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* pmode)
 		return -1;
 	}
 
-	if (imode > 1) {
+	if (imode > (UACREG_REQTO_MASK_USER|UACREG_REQTO_MASK_AUTH)) {
 		LM_ERR("invalid mode\n");
 		return -1;
 	}
