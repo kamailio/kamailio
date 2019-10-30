@@ -338,15 +338,18 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
     if(remote_addr->af == AF_INET){
         if(str2ipbuf(&ipsec_listen_addr, &ipsec_addr) < 0){
             LM_ERR("Unable to convert ipsec addr4 [%.*s]\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
+            close_mnl_socket(sock);
             return 0;
         }
     } else if(remote_addr->af == AF_INET6){
         if(str2ip6buf(&ipsec_listen_addr6, &ipsec_addr) < 0){
             LM_ERR("Unable to convert ipsec addr6 [%.*s]\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
+            close_mnl_socket(sock);
             return 0;
         }
     } else {
         LM_ERR("Unsupported AF %d\n", remote_addr->af);
+        close_mnl_socket(sock);
         return 0;
     }
 
@@ -355,6 +358,7 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
     memset(remote_addr_str, 0, sizeof(remote_addr_str));
     if(inet_ntop(remote_addr->af, remote_addr->u.addr, remote_addr_str, sizeof(remote_addr_str)) == NULL) {
         LM_CRIT("Error converting remote IP address: %s\n", strerror(errno));
+        close_mnl_socket(sock);
         return -1;
     }
 
@@ -401,6 +405,7 @@ static int destroy_ipsec_tunnel(str remote_addr, ipsec_t* s, unsigned short rece
     // convert 'remote_addr' ip string to ip_addr_t
     if(str2ipxbuf(&remote_addr, &ip_addr) < 0){
         LM_ERR("Unable to convert remote address [%.*s]\n", remote_addr.len, remote_addr.s);
+        close_mnl_socket(sock);
         return -1;
     }
 
