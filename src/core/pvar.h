@@ -173,7 +173,9 @@ char* pv_parse_spec2(str *in, pv_spec_p sp, int silent);
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
 int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
 		pv_value_t *value);
-int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
+int pv_printf_mode(sip_msg_t* msg, pv_elem_t* list, int mode, char *buf, int *len);
+int pv_printf(sip_msg_t* msg, pv_elem_t* list, char *buf, int *len);
+int pv_printf_size(sip_msg_t* msg, pv_elem_t *list);
 int pv_elem_free_all(pv_elem_p log);
 void pv_value_destroy(pv_value_t *val);
 void pv_spec_destroy(pv_spec_t *spec);
