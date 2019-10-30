@@ -65,6 +65,7 @@ struct mnl_socket* init_mnl_socket()
 
     if(mnl_socket_bind(mnl_socket, 0, MNL_SOCKET_AUTOPID) < 0) {
         LM_ERR("Error binding a MNL socket\n");
+        close_mnl_socket(mnl_socket);
         return NULL;
     }
 
