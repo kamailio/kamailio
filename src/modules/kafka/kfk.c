@@ -233,24 +233,6 @@ int kfk_init(char *brokers)
 	 */
 	rk_conf = rd_kafka_conf_new();
 
-	/* Log level range 0-7  7 == LOG_DEBUG */
-	/* char *rk_log_level = "4"; */
-	/* if (rd_kafka_conf_set(rk_conf, "log_level", rk_log_level, */
-	/* 					  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) { */
-	/* 	LM_ERR("Cannot set loglevel (%s): %s\n", rk_log_level, errstr); */
-	/* 	return -1; */
-	/* } */
-
-    /* char *debug_option = "all"; */
-	/* if (rd_kafka_conf_set(rk_conf, "debug", debug_option, */
-	/* 				      errstr, sizeof(errstr)) != */
-	/* 	RD_KAFKA_CONF_OK) { */
-	/* 	LM_ERR("Debug configuration failed: " */
-	/* 			"%s: %s\n", */
-	/* 			errstr, debug_option); */
-	/* 	return -1; */
-	/* } */
-
 	/* Set logger */
 	rd_kafka_conf_set_log_cb(rk_conf, kfk_logger);
 
