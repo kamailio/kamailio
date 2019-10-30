@@ -2368,8 +2368,10 @@ static const char *rpc_end_dlg_entry_id_doc[2] = {
 static const char *rpc_dlg_terminate_dlg_doc[2] = {
         "End a given dialog based on callid", 0
 };
-static const char *rpc_dlg_kill_active_dlg_doc[2] = {
-        "Kill a given active dialog based on callid and tags", 0
+static const char *rpc_dlg_set_state_doc[3] = {
+        "Set state for a dialog based on callid and tags",
+        "It is targeting the need to update from state 4 (confirmed) to 5 (terminated)",
+        0
 };
 static const char *rpc_profile_get_size_doc[2] = {
 	"Returns the number of dialogs belonging to a profile", 0
@@ -2438,53 +2440,65 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
     }
 }
 
-static void rpc_dlg_kill_active_dlg(rpc_t *rpc,void *c){
+static void rpc_dlg_set_state(rpc_t *rpc,void *c){
 	str callid = {NULL,0};
 	str ftag = {NULL,0};
 	str ttag = {NULL,0};
+	int sval = DLG_STATE_DELETED;
+	int ostate = 0;
 
 	dlg_cell_t * dlg = NULL;
 	unsigned int dir;
 	int unref=1;
 	dir = 0;
 
-	if(rpc->scan(c, ".S.S.S", &callid,&ftag,&ttag)<3) {
-		LM_ERR("Unable to read the parameters dlg_terminate_dlg \n" );
-		rpc->fault(c, 400, "Need a Callid ,from tag ,to tag");
+	if(rpc->scan(c, ".S.S.Sd", &callid, &ftag, &ttag, &sval)<3) {
+		LM_ERR("unable to read the parameters\n" );
+		rpc->fault(c, 400, "Need the callid, from tag,to tag and state");
+		return;
+	}
+	if(sval < DLG_STATE_UNCONFIRMED || sval > DLG_STATE_DELETED) {
+		LM_ERR("invalid new state value: %d\n", sval);
+		rpc->fault(c, 500, "Invalid state value");
 		return;
 	}
 
 	dlg=get_dlg(&callid, &ftag, &ttag, &dir);
 
 	if(dlg==NULL) {
-		LM_ERR("Couldnt find callid in dialog '%.*s' \n",callid.len, callid.s);
-		rpc->fault(c, 500, "Couldnt find callid in dialog");
+		LM_ERR("dialog not found - callid '%.*s' \n", callid.len, callid.s);
+		rpc->fault(c, 500, "Dialog not found");
 		return;
 	}
 
-	LM_DBG("Dialog is found with callid '%.*s' for kill_active_dlg rpc \n",
-			callid.len, callid.s);
+	LM_DBG("dialog found - callid '%.*s'\n", callid.len, callid.s);
 
-	if(dlg->state != 4) {
-		LM_ERR("Not handling dialog with callid '%.*s': should be in active state to run this command \n",
-			callid.len, callid.s);
-		rpc->fault(c, 500, "Dialog not in active state");
-		return;
+	if(dlg->state != DLG_STATE_CONFIRMED || sval!=DLG_STATE_DELETED) {
+		LM_WARN("updating states for not confirmed dialogs not properly supported yet,"
+				" use at own risk: '%.*s'\n", callid.len, callid.s);
 	}
 
-	/* Forcing next state for this dialog */
-	dlg->state = 5;
-	/* Updating timestamps, flags, dialog stats */
-	dlg->init_ts = (unsigned int)(time(0));
-	dlg->end_ts = (unsigned int)(time(0));
+	/* setting new state for this dialog */
+	ostate = dlg->state;
+	dlg->state = sval;
+
+	/* updates for terminated dialogs */
+	if(ostate==DLG_STATE_CONFIRMED && sval==DLG_STATE_DELETED) {
+		/* updating timestamps, flags, dialog stats */
+		dlg->init_ts = (unsigned int)(time(0));
+		dlg->end_ts = (unsigned int)(time(0));
+	}
 	dlg->dflags |= DLG_FLAG_NEW;
 
 	dlg_unref(dlg, unref);
-	if_update_stat(dlg_enable_stats, active_dlgs, -1);
+
+	if(ostate==DLG_STATE_CONFIRMED && sval==DLG_STATE_DELETED) {
+		if_update_stat(dlg_enable_stats, active_dlgs, -1);
+	}
 
 	/* dlg_clean_run called by timer execution will handle timers deletion and all that stuff */
-	LM_NOTICE("Dialog '%.*s' forced to deleted state: will be wiped out from memory in a few minutes \n",
-			callid.len, callid.s);
+	LM_NOTICE("dialog callid '%.*s' - state change forced - old: %d - new: %d\n",
+			callid.len, callid.s, ostate, sval);
 
 	rpc->add(c, "s", "Done");
 
@@ -2835,7 +2849,7 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
-	{"dlg.kill_active_dlg", rpc_dlg_kill_active_dlg, rpc_dlg_kill_active_dlg_doc, 0},
+	{"dlg.set_state", rpc_dlg_set_state, rpc_dlg_set_state_doc, 0},
 	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
 	{"dlg.is_alive",  rpc_dlg_is_alive, rpc_dlg_is_alive_doc, 0},
 	{0, 0, 0, 0}
