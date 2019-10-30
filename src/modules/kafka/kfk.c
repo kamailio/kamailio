@@ -122,12 +122,10 @@ static void kfk_stats_topic_free(kfk_stats_t *st_topic);
 /*@}*/
 
 /**
- * \brief Kafka logger callback (optional)
+ * \brief Kafka logger callback
  */
 static void kfk_logger (const rd_kafka_t *rk, int level,
 		    const char *fac, const char *buf) {
-
-	/* LM_DBG("log_level: %d\n", level); */
 
 	switch(level) {
 		case LOG_EMERG:
