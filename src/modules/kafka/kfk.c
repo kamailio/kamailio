@@ -155,12 +155,17 @@ static void kfk_logger (const rd_kafka_t *rk, int level,
 			break;
 
 		case LOG_WARNING:
-		case LOG_NOTICE:
 			LM_WARN("RDKAFKA fac: %s : %s : %s\n",
 					fac, rk ? rd_kafka_name(rk) : NULL,
 					buf);
 			break;
 
+		case LOG_NOTICE:
+			LM_NOTICE("RDKAFKA fac: %s : %s : %s\n",
+					fac, rk ? rd_kafka_name(rk) : NULL,
+					buf);
+			break;
+			
 		case LOG_INFO:
 			LM_INFO("RDKAFKA fac: %s : %s : %s\n",
 					fac, rk ? rd_kafka_name(rk) : NULL,
