@@ -747,9 +747,9 @@ int fixup_free_vstr_all(void** param, int param_no)
 /**
  *
  */
-int fixup_get_vstr_buf(sip_msg_t *msg, gparam_t *p, char *buf, int blen)
+int fixup_get_vstr_buf(sip_msg_t *msg, pv_elem_t *p, char *buf, int blen)
 {
-	if(pv_printf(msg, (pv_elem_t*)p, buf, &blen)<0) {
+	if(pv_printf(msg, p, buf, &blen)<0) {
 		LM_ERR("unable to get the value\n");
 		return -1;
 	}
