@@ -73,7 +73,7 @@
 		<programlisting>
 loadmodule "ctl"
 # optional listen addresses, if no one is specified,
-# ctl will listen on unixs:/tmp/ser_ctl
+# ctl will listen on unixs:/tmp/kamailio_ctl
 
 modparam("ctl", "binrpc", "unix:/var/run/&kamailiobinary;/&kamailiobinary;_ctl") # default
 modparam("ctl", "binrpc", "udp:localhost:2046")
@@ -92,7 +92,8 @@ modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
     <section id="binrpc_buffer_size">
     <title><varname>binrpc_buffer_size</varname> (integer or string)</title>
     <para>
-        the size of the internal buffer.
+		The size of the internal buffer used for printing elements of the RPC
+		response (e.g., internal RPC printf()). The value is given in bytes.
     </para>
     <para>
         Default: 1024.
@@ -167,7 +168,7 @@ modparam("ctl", "group", 100)
 		The fifo protocol can be run over a real fifo, over UDP or over TCP.
 		Format: [protocol:]path|address.
 		If no protocol is specified the default is "fifo".
-		Examples: "fifo:/tmp/ser_fifo", "/tmp/ser_fifo2", "udp:*:2050",
+		Examples: "fifo:/tmp/kamailio_fifo", "/tmp/kamailio_fifo2", "udp:*:2050",
 		"tcp:localhost:2050".
 		For more details on the UDP and TCP formats see 
 		<varname>binrpc</varname>.
@@ -183,8 +184,8 @@ modparam("ctl", "group", 100)
 		<programlisting>
 ...
 # old fifo support
-modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # classic fifo
-modparam("ctl", "fifo", "/tmp/ser_fifo2")       
+modparam("ctl", "fifo", "fifo:/tmp/kamailio_fifo")      # classic fifo
+modparam("ctl", "fifo", "/tmp/kamailio_fifo2")
 modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
 modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 ...
