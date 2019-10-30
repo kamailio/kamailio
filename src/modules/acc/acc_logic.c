@@ -178,7 +178,7 @@ int acc_parse_code(char *p, struct acc_param *param)
 int acc_get_param_value(struct sip_msg *rq, struct acc_param *param)
 {
 	if(param->elem!=NULL) {
-		if(pv_printf_s(rq, param->elem, &param->reason)==-1) {
+		if(pv_printf_s(rq, param->elem, &param->reason)<0) {
 			LM_ERR("Can't get value for %.*s\n", param->reason.len, param->reason.s);
 			return -1;
 		}
