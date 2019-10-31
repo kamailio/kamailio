@@ -1215,31 +1215,29 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 
 	c->rcv.src_su=*su;
 
+	su2ip_addr(&c->rcv.src_ip, su);
+	c->rcv.src_port=su_getport(su);
+	if (likely(local_addr)){
+		su2ip_addr(&c->rcv.dst_ip, local_addr);
+		c->rcv.dst_port=su_getport(local_addr);
+	}else if (ba){
+		c->rcv.dst_ip=ba->address;
+		c->rcv.dst_port=ba->port_no;
+	}
+	c->rcv.bind_address=ba;
+
 	atomic_set(&c->refcnt, 0);
 	local_timer_init(&c->timer, tcpconn_main_timeout, c, 0);
+
 	if (unlikely(ksr_tcp_accept_haproxy && state == S_CONN_ACCEPT)) {
 		ret = tcpconn_read_haproxy(c);
-
 		if (ret == -1) {
 			LM_ERR("invalid PROXY protocol header\n");
 			goto error;
 		} else if (ret == 1) {
 			LM_DBG("PROXY protocol did not override IP addresses\n");
-			goto read_ip_info;
-		}
-	} else {
-read_ip_info:
-		su2ip_addr(&c->rcv.src_ip, su);
-		c->rcv.src_port=su_getport(su);
-		if (likely(local_addr)){
-			su2ip_addr(&c->rcv.dst_ip, local_addr);
-			c->rcv.dst_port=su_getport(local_addr);
-		}else if (ba){
-			c->rcv.dst_ip=ba->address;
-			c->rcv.dst_port=ba->port_no;
 		}
 	}
-	c->rcv.bind_address=ba;
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
 	LM_DBG("on port %d, type %d\n", c->rcv.src_port, type);
 	init_tcp_req(&c->req, (char*)c+sizeof(struct tcp_connection), rd_b_size);
