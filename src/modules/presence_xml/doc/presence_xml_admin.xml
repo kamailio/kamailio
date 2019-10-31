@@ -333,7 +333,68 @@ modparam("presence_xml", "force_dummy_presence", 1)
 </programlisting>
         </example>
     </section>
-</section>
+    <section id="presence_xml.p.force_presence_single_body">
+        <title><varname>force_presence_single_body</varname>(int)</title>
+        <para>
+        Set this parameter to enable single body notify.
+        One presentity can have multiple dialogs and will by default notify all the dialogs and this can be a problem
+        when dealing with large ring-groups or attendants, use this parameter to only send one body.
+        Look at <varname>presence_single_body_priorities</varname> and <varname>presence_single_body_lookup_element</varname> to customize the behaviour.
+        </para>
+        <para>
+        <emphasis>Default value: <quote>0</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>force_presence_single_body</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("presence_xml", "force_presence_single_body", 1)
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="presence_xml.p.presence_single_body_priorities">
+        <title><varname>presence_single_body_priorities</varname>(str)</title>
+        <para>
+        Change this parameter to set the priorities when choosing the dialog that will be the final.
+        </para>
+        <para>
+        Importance is left to right.
+        </para>
+        <para>
+        <emphasis>Default value: <quote>Available|Ringing|On the Phone</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presence_single_body_priorities</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("presence_xml", "presence_single_body_priorities", "Offline|Online|Busy|Really Busy")
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="presence_xml.p.presence_single_body_lookup_element">
+        <title><varname>presence_single_body_lookup_element</varname>(str)</title>
+        <para>
+        Set the name of the element that should be used to get the priority.
+        If the value obtained is not in the list of <varname>presence_single_body_priorities</varname> the priority is 0.
+        </para>
+        <para>
+        <emphasis>Default value: <quote>note</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presence_single_body_lookup_element</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("presence_xml", "presence_single_body_lookup_element", "status")
+...
+</programlisting>
+        </example>
+    </section>
+	</section>
 
 
 <section>
