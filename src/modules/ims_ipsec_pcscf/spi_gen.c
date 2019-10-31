@@ -42,27 +42,28 @@ int init_spi_gen(uint32_t start_val, uint32_t range)
         return 1;
     }
 
-    if(UINT32_MAX - range < start_val)
+    if(UINT32_MAX - range < start_val) {
         return 2;
+    }
 
-	if(spi_data){
-		return 3;
-	}
+    if(spi_data){
+        return 3;
+    }
 
-	spi_data = shm_malloc(sizeof(spi_generator_t));
-	if(spi_data == NULL){
-		return 4;
-	}
+    spi_data = shm_malloc(sizeof(spi_generator_t));
+    if(spi_data == NULL){
+        return 4;
+    }
 
-	if(pthread_mutex_init(&spi_data->spis_mut, NULL)){
-		shm_free(spi_data);
-		return 5;
-	}
+    if(pthread_mutex_init(&spi_data->spis_mut, NULL)){
+        shm_free(spi_data);
+        return 5;
+    }
 
-	spi_data->used_spis = create_list();
+    spi_data->used_spis = create_list();
 
-	spi_data->spi_val = spi_data->min_spi = start_val;
-	spi_data->max_spi = start_val + range;
+    spi_data->spi_val = spi_data->min_spi = start_val;
+    spi_data->max_spi = start_val + range;
 
     return 0;
 }
