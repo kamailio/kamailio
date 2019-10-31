@@ -1296,9 +1296,10 @@ if(ds_list_exists("10")) {
        specific group id. The parameter can be an integer or a variable
        holding an integer value.
      * mode - (optional) - a bitmask to specify how the matching should be
-       done. If is 0, all ip, port and proto are matched. If bit one is
-       set, then port is ignored. If bit two is set, then protocol is
-       ignored. The parameter can be an integer or a variable holding an
+       done. If is 0, all ip, port and proto are matched and active status
+       is ignored. If bit one is set, then port is ignored. If bit two is
+       set, then protocol is ignored. If bit three is set, then state must
+       be active. The parameter can be an integer or a variable holding an
        integer value. It must be provided if the uri parameter is
        provided.
      * uri (optional) - if is empty or missing, the matching is done
