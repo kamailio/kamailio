@@ -55,6 +55,9 @@ str _evapi_event_callback = STR_NULL;
 int _evapi_dispatcher_pid = -1;
 int _evapi_max_clients = 8;
 
+static str _evapi_data = STR_NULL;
+static int _evapi_data_size = 0;
+
 static tm_api_t tmb;
 
 static int  mod_init(void);
@@ -241,6 +244,59 @@ static void mod_destroy(void)
 {
 }
 
+#define evapi_malloc malloc
+#define evapi_free free
+
+/**
+ *
+ */
+static int evapi_get_data(sip_msg_t *msg, pv_elem_t *pdata, str *sdata)
+{
+	int ret;
+	int osize;
+
+	if(_evapi_data.s == NULL) {
+		_evapi_data_size = 8*1024;
+		_evapi_data.s = (char*)evapi_malloc(_evapi_data_size * sizeof(char));
+		if(_evapi_data.s == NULL) {
+			LM_ERR("failed to allocate the buffer for data\n");
+			_evapi_data_size = 0;
+			return -1;
+		}
+	}
+	_evapi_data.len = _evapi_data_size;
+	ret = pv_printf_mode(msg, pdata, 0, _evapi_data.s, &_evapi_data.len);
+	if(ret<0) {
+		if(ret == -2) {
+			osize = pv_printf_size(msg, pdata);
+			if(osize<0) {
+				LM_ERR("failed to get the data parameter\n");
+				return -1;
+			}
+			if(osize < _evapi_data_size - 8) {
+				LM_ERR("failed to get data in an existing buffer\n");
+				return -1;
+			}
+			evapi_free(_evapi_data.s);
+			_evapi_data_size = osize + 8;
+			_evapi_data.s = (char*)evapi_malloc(_evapi_data_size * sizeof(char));
+			if(_evapi_data.s == NULL) {
+				LM_ERR("failed to allocate the new buffer for data\n");
+				_evapi_data_size = 0;
+				return -1;
+			}
+			_evapi_data.len = _evapi_data_size;
+			ret = pv_printf_mode(msg, pdata, 0, _evapi_data.s, &_evapi_data.len);
+			if(ret<0) {
+				LM_ERR("failed to get data in the new buffer\n");
+				return -1;
+			}
+		}
+	}
+	sdata->s = _evapi_data.s;
+	sdata->len = _evapi_data.len;
+	return 0;
+}
 /**
  *
  */
@@ -253,7 +309,7 @@ static int w_evapi_relay(sip_msg_t *msg, char *evdata, char *p2)
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -311,7 +367,7 @@ static int w_evapi_async_relay(sip_msg_t *msg, char *evdata, char *p2)
 
 	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -340,7 +396,7 @@ static int w_evapi_multicast(sip_msg_t *msg, char *evdata, char *ptag)
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -408,7 +464,7 @@ static int w_evapi_async_multicast(sip_msg_t *msg, char *evdata, char *ptag)
 
 	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -447,7 +503,7 @@ static int w_evapi_unicast(sip_msg_t *msg, char *evdata, char *ptag)
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -513,7 +569,7 @@ static int w_evapi_async_unicast(sip_msg_t *msg, char *evdata, char *ptag)
 
 	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
 
-	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+	if(evapi_get_data(msg, (pv_elem_t*)evdata, &sdata)<0) {
 		LM_ERR("unable to get data\n");
 		return -1;
 	}
@@ -543,7 +599,7 @@ static int w_evapi_async_unicast(sip_msg_t *msg, char *evdata, char *ptag)
  */
 static int fixup_evapi_relay(void** param, int param_no)
 {
-	return fixup_spve_null(param, param_no);
+	return fixup_vstr_all(param, param_no);
 }
 
 /**
@@ -551,7 +607,10 @@ static int fixup_evapi_relay(void** param, int param_no)
  */
 static int fixup_evapi_multicast(void** param, int param_no)
 {
-	return fixup_spve_spve(param, param_no);
+	if(param_no == 1) {
+		return fixup_vstr_all(param, param_no);
+	}
+	return fixup_spve_all(param, param_no);
 }
 
 /**
