@@ -2998,7 +2998,9 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						   || tport == node->dlist[j].port)
 				&& ((mode & DS_MATCH_NOPROTO)
-						   || tproto == node->dlist[j].proto)) {
+						   || tproto == node->dlist[j].proto)
+				&& (((mode & DS_MATCH_ACTIVE) && !ds_skip_dst(node->dlist[j].flags))
+						   || !(mode & DS_MATCH_ACTIVE))) {
 			if(export_set_pv && ds_setid_pvname.s != 0) {
 				memset(&val, 0, sizeof(pv_value_t));
 				val.flags = PV_VAL_INT | PV_TYPE_INT;

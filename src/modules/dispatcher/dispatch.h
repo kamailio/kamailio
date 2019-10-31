@@ -57,6 +57,7 @@
 #define DS_MATCH_ALL		0
 #define DS_MATCH_NOPORT		1
 #define DS_MATCH_NOPROTO	2
+#define DS_MATCH_ACTIVE 	4
 
 #define DS_SETOP_DSTURI		0
 #define DS_SETOP_RURI		1
