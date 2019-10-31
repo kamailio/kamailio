@@ -300,7 +300,7 @@ event_route[topos:msg-outgoing] {
 
    It is executed before doing topology stripping processing for a SIP
    message to be sent out, being executed after
-   event_route[topos:sending].
+   event_route[topos:msg-outgoing].
 
    Inside the event route the variables $sndto(ip), $sndto(port) and
    $sndto(proto) point to the destination. The SIP message is the one to
