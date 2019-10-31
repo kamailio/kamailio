@@ -1518,6 +1518,25 @@ static int ki_jsonrpcs_exec(sip_msg_t *msg, str *scmd)
 /**
  *
  */
+static sr_kemi_xval_t _sr_kemi_jsonrpcs_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_jsonrpcs_response(sip_msg_t *msg)
+{
+	if(_jsonrpc_plain_reply.rbody.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_jsonrpcs_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_jsonrpcs_xval;
+	}
+	_sr_kemi_jsonrpcs_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_jsonrpcs_xval.v.s = _jsonrpc_plain_reply.rbody;
+	return &_sr_kemi_jsonrpcs_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_jsonrpcs_exports[] = {
 	{ str_init("jsonrpcs"), str_init("exec"),
@@ -1528,6 +1547,11 @@ static sr_kemi_t sr_kemi_jsonrpcs_exports[] = {
 	{ str_init("jsonrpcs"), str_init("execx"),
 		SR_KEMIP_INT, ki_jsonrpcs_exec,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("jsonrpcs"), str_init("response"),
+		SR_KEMIP_XVAL, ki_jsonrpcs_response,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
