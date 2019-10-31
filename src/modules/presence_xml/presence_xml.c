@@ -98,6 +98,10 @@ int passive_mode = 0;
 int disable_xcapdiff = 0;
 str xcapauth_userdel_reason = str_init("probation");
 
+int presence_force_single_body = 0;
+str presence_single_body_priorities = str_init("Available|Ringing|On the Phone");
+str presence_single_body_lookup_element = str_init("note");
+
 /** SL API structure */
 sl_api_t slb;
 
@@ -135,6 +139,9 @@ static param_export_t params[]={
 	{ "passive_mode",		INT_PARAM, &passive_mode },
 	{ "xcapauth_userdel_reason", PARAM_STR, &xcapauth_userdel_reason},
 	{ "force_dummy_presence",       INT_PARAM, &force_dummy_presence },
+	{ "force_presence_single_body", INT_PARAM, &presence_force_single_body },
+	{ "presence_single_body_priorities",  PARAM_STR, &presence_single_body_priorities },
+	{ "presence_single_body_lookup_element", PARAM_STR, &presence_single_body_lookup_element },
 	{ 0, 0, 0}
 };
 /* clang-format on */
