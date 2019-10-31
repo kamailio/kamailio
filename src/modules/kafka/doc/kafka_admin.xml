@@ -47,6 +47,13 @@
 				  url='https://github.com/edenhill/librdkafka'>
 			  https://github.com/edenhill/librdkafka</ulink>
 			</para>
+			<para>
+			  Old librdkafka version like 1.1.0 has been reported to work.
+			  Newer versions should work fine (E.g: Version 1.2.2-RC1 also works OK)
+			  <ulink
+				  url='https://github.com/edenhill/librdkafka/releases'>
+			  https://github.com/edenhill/librdkafka/releases</ulink>
+			</para>
 		  </listitem>
 		</itemizedlist>
 	  </para>
