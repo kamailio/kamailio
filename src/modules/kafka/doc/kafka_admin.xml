@@ -158,6 +158,9 @@ modparam("kafka", "topic", "name=third_topic")
 		  Send a message to a specific topic via Kafka server.
 		</para>
 		<para>
+		  This function returns -1 for all sort of errors. (So execution of script continues)
+		</para>
+		<para>
 		  Parameters:
 		  <itemizedlist>
 			<listitem><emphasis>topic</emphasis>: (string) name of the topic.
