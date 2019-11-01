@@ -160,6 +160,7 @@ Julien Klingenmeyer
               9.12. dlg.bridge_dlg
               9.13. dlg.stats_active
               9.14. dlg.is_alive
+              9.15. dlg.briefing
 
         10. Exported Variables
 
@@ -396,6 +397,7 @@ Chapter 1. Admin Guide
         9.12. dlg.bridge_dlg
         9.13. dlg.stats_active
         9.14. dlg.is_alive
+        9.15. dlg.briefing
 
    10. Exported Variables
 
@@ -1918,6 +1920,7 @@ if(has_totag()) {
    9.12. dlg.bridge_dlg
    9.13. dlg.stats_active
    9.14. dlg.is_alive
+   9.15. dlg.briefing
 
 9.1. dlg.list
 
@@ -2188,6 +2191,20 @@ kamcmd dlg.stats_active
    RPC Command Format:
 ...
 kamcmd dlg.is_alive callid123 fromtag123 totag123
+...
+
+9.15. dlg.briefing
+
+   Lists fewer attributes for dialog records in memory.
+
+   Name: dlg.briefing
+
+   Parameters:
+     * none - no parameter
+
+   RPC Command Example:
+...
+kamctl rpc dlg.briefing
 ...
 
 10. Exported Variables
