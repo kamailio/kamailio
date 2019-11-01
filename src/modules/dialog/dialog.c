@@ -2837,7 +2837,46 @@ static void rpc_dlg_list_match_ctx(rpc_t *rpc, void *c)
 	rpc_dlg_list_match_ex(rpc, c, 1);
 }
 
+static const char *rpc_dlg_briefing_doc[2] = {
+	"List the summary of dialog records in memory", 0
+};
+
+/*!
+ * \brief List summary of active calls
+ */
+static void rpc_dlg_briefing(rpc_t *rpc, void *c)
+{
+	dlg_cell_t *dlg;
+	unsigned int i;
+	void *h;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			if (rpc->add(c, "{", &h) < 0) {
+				rpc->fault(c, 500, "Failed to create the structure");
+				return;
+			}
+			if(rpc->struct_add(h, "ddSSSSSd",
+					"h_entry", dlg->h_entry,
+					"h_id", dlg->h_id,
+					"from_uri", &dlg->from_uri,
+					"to_uri", &dlg->to_uri,
+					"call-id", &dlg->callid,
+					"from_tag", &dlg->tag[DLG_CALLER_LEG],
+					"to_tag", &dlg->tag[DLG_CALLER_LEG],
+					"state", dlg->state) < 0) {
+				rpc->fault(c, 500, "Failed to add fields");
+				return;
+
+			}
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+}
+
 static rpc_export_t rpc_methods[] = {
+	{"dlg.briefing", rpc_dlg_briefing, rpc_dlg_briefing_doc, RET_ARRAY},
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
 	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
 	{"dlg.list_match", rpc_dlg_list_match, rpc_dlg_list_match_doc, RET_ARRAY},
