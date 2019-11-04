@@ -70,32 +70,32 @@ int get_subscriber(impurecord_t* urec, str *presentity_uri, str *watcher_contact
     reg_subscriber* s = NULL;
 
     if (!watcher_contact || !presentity_uri) {
-        LM_DBG("no valid presentity_uri/watcher contact pair");
+        LM_DBG("no valid presentity_uri/watcher contact pair\n");
         return 0;
     }
 
     if (!urec) {
-        LM_WARN("No impurecord passed.... ignoring");
+        LM_WARN("No impurecord passed.... ignoring\n");
         return 1;
     }
 
-    LM_DBG("Getting existing subscription to reg if it exists for watcher contact <%.*s> and presentity uri <%.*s>", watcher_contact->len, watcher_contact->s,
+    LM_DBG("Getting existing subscription to reg if it exists for watcher contact <%.*s> and presentity uri <%.*s>\n", watcher_contact->len, watcher_contact->s,
             presentity_uri->len, presentity_uri->s);
 
     s = urec->shead;
     while (s) {
-        LM_DBG("Scrolling through subscription to reg events in IMPU record list");
+        LM_DBG("Scrolling through subscription to reg events in IMPU record list\n");
         if (s->event == event &&
                 (s->watcher_contact.len == watcher_contact->len)
                 && (strncasecmp(s->watcher_contact.s, watcher_contact->s, watcher_contact->len) == 0)
                 && (strncasecmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
-            LM_DBG("Found subscription for watcher contact  <%.*s> and presentity_uri <%.*s>", watcher_contact->len, watcher_contact->s, presentity_uri->len, presentity_uri->s);
+            LM_DBG("Found subscription for watcher contact  <%.*s> and presentity_uri <%.*s>\n", watcher_contact->len, watcher_contact->s, presentity_uri->len, presentity_uri->s);
             *r_subscriber = s;
             return 0;
         }
         s = s->next;
     }
-    LM_DBG("Did not find subscription for watcher contact  <%.*s> and presentity_uri <%.*s>", watcher_contact->len, watcher_contact->s, presentity_uri->len, presentity_uri->s);
+    LM_DBG("Did not find subscription for watcher contact  <%.*s> and presentity_uri <%.*s>\n", watcher_contact->len, watcher_contact->s, presentity_uri->len, presentity_uri->s);
     
     return 1;
 }
@@ -115,7 +115,7 @@ reg_subscriber* new_subscriber(subscriber_data_t* subscriber_data) {
             + subscriber_data->watcher_contact->len + subscriber_data->watcher_uri->len + subscriber_data->presentity_uri->len
             + subscriber_data->record_route->len + subscriber_data->sockinfo_str->len;
 
-    LM_DBG("Creating new subscription to reg");
+    LM_DBG("Creating new subscription to reg\n");
 
     s = (reg_subscriber*) shm_malloc(len);
     if (s == 0) {
@@ -192,7 +192,7 @@ reg_subscriber* new_subscriber(subscriber_data_t* subscriber_data) {
     
     hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
     
-    LM_DBG("Adding sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
+    LM_DBG("Adding sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>\n", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
     
     if (pres_insert_shtable(sub_dialog_table, hash_code, &subs))
     {
@@ -213,7 +213,7 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
     hash_code = core_hash(callid, to_tag, sub_dialog_hash_size);
     /* search the record in hash table */
     lock_get(&sub_dialog_table[hash_code].lock);
-    LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>", callid->len, callid->s, to_tag->len, to_tag->s, from_tag->len, from_tag->s, hash_code);
+    LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>\n", callid->len, callid->s, to_tag->len, to_tag->s, from_tag->len, from_tag->s, hash_code);
     s = pres_search_shtable(sub_dialog_table, *callid, *to_tag, *from_tag, hash_code);
     if(s== NULL)
     {
@@ -233,7 +233,7 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
     
     lock_release(&sub_dialog_table[hash_code].lock);
     
-    LM_DBG("Found subscriber dialog record in hash table with pres_uri: [%.*s]", pres_uri.len, pres_uri.s);
+    LM_DBG("Found subscriber dialog record in hash table with pres_uri: [%.*s]\n", pres_uri.len, pres_uri.s);
     return pres_uri;
 }
 
@@ -244,7 +244,7 @@ int add_subscriber(impurecord_t* urec,
     reg_subscriber *s, *previous_s;
 	reg_subscriber *first_s = 0;
 	int subscribe_count = 0;
-    LM_DBG("Adding reg subscription to IMPU record");
+    LM_DBG("Adding reg subscription to IMPU record\n");
 
     if (!urec) {
         LM_ERR("no presentity impu record provided\n");
@@ -252,21 +252,21 @@ int add_subscriber(impurecord_t* urec,
     }
     
 	if (max_subscribes > 0) {
-		LM_DBG("Maximum subscribers per watcher_uri, presentity_uri, event combination is <%d>", max_subscribes);
+		LM_DBG("Maximum subscribers per watcher_uri, presentity_uri, event combination is <%d>\n", max_subscribes);
 		previous_s = urec->shead;
 		while (previous_s) {
-				LM_DBG("Scrolling through subscription to reg events in IMPU record list");
+				LM_DBG("Scrolling through subscription to reg events in IMPU record list\n");
 				if (previous_s->event == subscriber_data->event &&
 						(previous_s->watcher_uri.len == subscriber_data->watcher_uri->len)
 						&& (strncasecmp(previous_s->watcher_uri.s, subscriber_data->watcher_uri->s, subscriber_data->watcher_uri->len) == 0)
 						&& (strncasecmp(previous_s->presentity_uri.s, subscriber_data->presentity_uri->s, subscriber_data->presentity_uri->len) == 0)) {
-						LM_DBG("Found existing subscription for watcher_uri <%.*s>, presentity_uri <%.*s>, event <%d>",
+						LM_DBG("Found existing subscription for watcher_uri <%.*s>, presentity_uri <%.*s>, event <%d>\n",
 								subscriber_data->watcher_uri->len, subscriber_data->watcher_uri->s,
 								subscriber_data->presentity_uri->len, subscriber_data->presentity_uri->s,
 								subscriber_data->event);
 						subscribe_count++;
 						if (first_s == 0) {
-						    LM_DBG("This is the first subscription with the same watcher uri, presentity uri, event combination - we store it in case we need to remove the first, oldest subscription");
+						    LM_DBG("This is the first subscription with the same watcher uri, presentity uri, event combination - we store it in case we need to remove the first, oldest subscription\n");
 							first_s = previous_s;	
 						}
 
@@ -275,7 +275,7 @@ int add_subscriber(impurecord_t* urec,
 				previous_s = previous_s->next;
 		}
 		if (subscribe_count >= max_subscribes) {
-				LM_DBG("There are currently more subscribes for this watcher_uri, presentity_uri, event combination  <%d> than the maximum - so we remove the first and oldest one",
+				LM_DBG("There are currently more subscribes for this watcher_uri, presentity_uri, event combination  <%d> than the maximum - so we remove the first and oldest one\n",
 						subscribe_count);
 				//we remove the first, oldest subscription
 				delete_subscriber (urec, first_s);
@@ -288,7 +288,7 @@ int add_subscriber(impurecord_t* urec,
 
     if (!s) return -1;
 
-    LM_DBG("Adding new subscription to IMPU record list");
+    LM_DBG("Adding new subscription to IMPU record list\n");
     s->next = 0;
     s->prev = urec->stail;
     if (urec->stail) urec->stail->next = s;
@@ -350,7 +350,7 @@ int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int 
     
     hash_code = core_hash(&subs.callid, &subs.to_tag, sub_dialog_hash_size);
     
-    LM_DBG("Updating sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
+    LM_DBG("Updating sub dialog hash info with call_id: <%.*s> and ttag <%.*s> amd ftag <%.*s> and hash code <%d>\n", subs.callid.len, subs.callid.s, subs.to_tag.len, subs.to_tag.s, subs.from_tag.len,  subs.from_tag.s, hash_code);
     
     if (pres_update_shtable(sub_dialog_table, hash_code, &subs, REMOTE_TYPE))
     {
@@ -369,10 +369,10 @@ int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int 
 
 
 void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domain) {
-    LM_DBG("Deleting subscriber");
+    LM_DBG("Deleting subscriber\n");
     impurecord_t* urec;
    
-    LM_DBG("Updating reg subscription in IMPU record");
+    LM_DBG("Updating reg subscription in IMPU record\n");
 
     if(lock_domain) lock_udomain(_t, &s->presentity_uri);
     int res = get_impurecord(_t, &s->presentity_uri, &urec);
@@ -388,7 +388,7 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domai
 }
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
-    LM_DBG("Deleting subscriber [%.*s], watcher_contact [%.*s] from IMPU: [%.*s]", 
+    LM_DBG("Deleting subscriber [%.*s], watcher_contact [%.*s] from IMPU: [%.*s]\n", 
 			s->watcher_uri.len, s->watcher_uri.s, s->watcher_contact.len, s->watcher_contact.s, urec->public_identity.len, urec->public_identity.s);
     
     if (db_mode == WRITE_THROUGH && db_unlink_subscriber_from_impu(urec, s) !=0) {
@@ -404,7 +404,7 @@ void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
     else s->prev->next = s->next;
     if (urec->stail == s) urec->stail = s->prev;
     else s->next->prev = s->prev;
-    LM_DBG("About to free subscriber memory");
+    LM_DBG("About to free subscriber memory\n");
     free_subscriber(s);
 }
 
@@ -413,7 +413,7 @@ void free_subscriber(reg_subscriber *s) {
     unsigned int hash_code=0;
     subs_t subs;
     
-    LM_DBG("Freeing subscriber memory");
+    LM_DBG("Freeing subscriber memory\n");
     
     memset(&subs, 0, sizeof(subs_t));
     
@@ -425,7 +425,7 @@ void free_subscriber(reg_subscriber *s) {
     /* delete from cache table */
     hash_code= core_hash(&s->call_id, &s->to_tag, sub_dialog_hash_size);
     
-    LM_DBG("Removing sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, hash_code);
+    LM_DBG("Removing sub dialog hash info with call_id: <%.*s> and ttag <%.*s> and ftag <%.*s> and hash code <%d>\n", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, hash_code);
     if(pres_delete_shtable(sub_dialog_table,hash_code, &subs)< 0)
     {
 	    LM_ERR("record not found in hash table\n");
