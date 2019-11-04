@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+  <title>&adminguide;</title>
+  
+  <section>
+	<title>Overview</title>
+	<para>
+	  This module produces and sends messages to a Kafka server.
+	</para>
+  </section>
+  <section>
+	<title>Dependencies</title>
+	<section>
+	  <title>&kamailio; Modules</title>
+	  <para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  <emphasis>none</emphasis>.
+			</para>
+		  </listitem>
+		</itemizedlist>
+	  </para>
+	</section>
+	<section>
+	  <title>External Libraries or Applications</title>
+	  <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  <emphasis>librdkafka</emphasis>: the Apache Kafka C/C++ client library.
+			  <ulink
+				  url='https://github.com/edenhill/librdkafka'>
+			  https://github.com/edenhill/librdkafka</ulink>
+			</para>
+			<para>
+			  Old librdkafka version like 1.1.0 has been reported to work.
+			  Newer versions should work fine (E.g: Version 1.2.2-RC1 also works OK)
+			  <ulink
+				  url='https://github.com/edenhill/librdkafka/releases'>
+			  https://github.com/edenhill/librdkafka/releases</ulink>
+			</para>
+		  </listitem>
+		</itemizedlist>
+	  </para>
+	</section>
+	<section>
+	  <title>Parameters</title>
+	  <section id="kafka.p.brokers">
+		<title><varname>brokers</varname> (string)</title>
+		<para>
+		  Specifies a list of brokers separated by commas.
+		</para>
+		<para>
+		  From librdkafka documentation:
+		</para>
+		<para>
+		  brokerlist is a ,-separated list of brokers in the format:
+		  &lt;broker1&gt;,&lt;broker2&gt;,
+		</para>
+		<para>
+		  Where each broker is in either the host or URL based format:
+		  <itemizedlist>
+			<listitem>&lt;host&gt;[:&lt;port&gt;]</listitem>
+			<listitem>&lt;proto&gt;://&lt;host&gt;[:port]</listitem>
+		  </itemizedlist>
+		</para>
+		<para>
+		  &lt;proto&gt; is either PLAINTEXT, SSL, SASL, SASL_PLAINTEXT
+		</para>
+		<para>
+		  The two formats can be mixed but ultimately the value of the
+		  <emphasis>security.protocol</emphasis> config property decides what brokers are allowed.
+		</para>
+		<para>
+		  <emphasis>
+			This parameter is mandatory. There is no default value.
+		  </emphasis>
+		</para>
+		<example>
+		  <title>Set <varname>brokers</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "brokers", "localhost:9092")
+modparam("kafka", "brokers", "broker1:10000,broker2")
+modparam("kafka", "brokers", "SSL://broker3:9000,ssl://broker2")
+...
+		  </programlisting>
+		</example>
+	  </section>
+	  <section id="kafka.p.configuration">
+		<title><varname>configuration</varname> (string)</title>
+		<para>
+		  Specifies a set of general properties.
+		</para>
+		<para>
+		  Each configuration property follows: <emphasis>name = value</emphasis> pattern.
+		  And configuration properties are separated by <emphasis>;</emphasis>
+		</para>
+		<para>
+		  This parameter is optional, but if it exists it can be configured only once.
+		</para>
+		<example>
+		  <title>Set <varname>configuration</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "configuration", "topic.metadata.refresh.interval.ms=20000;queue.buffering.max.messages=1000000;metadata.request.timeout.ms=90000")
+
+modparam("kafka", "configuration", "topic.metadata.refresh.interval.ms=20000;queue.buffering.max.messages=500000;debug=all;metadata.request.timeout.ms=900000")
+...
+		  </programlisting>
+		</example>
+	  </section>
+	  <section id="kafka.p.topic">
+		<title><varname>topic</varname> (string)</title>
+		<para>
+		  Specifies a topic name and a set of topic properties.
+		</para>
+		<para>
+		  The topic defined in topic parameter has to already exist in Kafka servers.
+		</para>
+		<para>
+		  Each topic property is a list of <emphasis>attribute = value</emphasis> separated by semicolon.
+		</para>
+		<para>
+		  name atribute indicates the topic name. It is mandatory.
+		  Other attributes mean names of properties and are optional.
+		</para>
+		<para>
+		  This parameter is optional. Each topic needs a topic parameter so several topic parameters are allowed.
+		</para>
+		<example>
+		  <title>Set <varname>topic</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "topic", "name=my_topic;request.required.acks=0;request.timeout.ms=10000")
+modparam("kafka", "topic", "name=second_topic;request.required.acks=0;request.timeout.ms=10000")
+modparam("kafka", "topic", "name=third_topic")
+...
+		  </programlisting>
+		</example>
+	  </section>
+	</section>
+	<section>
+	  <title>Functions</title>
+	  <section id="kafka.f.kafka_send">
+		<title>
+		  <function moreinfo="none">kafka_send(topic, msg)</function>
+		</title>
+		<para>
+		  Send a message to a specific topic via Kafka server.
+		</para>
+		<para>
+		  This function returns -1 for all sort of errors. (So execution of script continues)
+		</para>
+		<para>
+		  Parameters:
+		  <itemizedlist>
+			<listitem><emphasis>topic</emphasis>: (string) name of the topic.
+			It is mandatory.</listitem>
+			<listitem><emphasis>msg</emphasis>: (string) message to send.
+			It is mandatory.</listitem>
+		  </itemizedlist>
+		</para>
+		<para>
+		  Available via KEMI framework as <emphasis>kafka.send</emphasis>.
+		</para>
+		<example>
+		  <title><function>kafka_send</function> usage</title>
+		  <programlisting format="linespecific">
+...
+# Send "test message" to topic "my_topic"			
+kafka_send("my_topic", "test message");
+...
+		  </programlisting>
+		</example>
+	  </section>
+	</section>
+	<section>
+	  <title><acronym>RPC</acronym> Commands</title>
+	  <section  id="kafka.stats">
+		<title><function moreinfo="none">kafka.stats</function></title>
+		<para>
+		  Show statistics about total sent messages and failed to deliver ones.
+		</para>
+		<example>
+		  <title><function>kafka.stats</function> usage</title>
+		  <programlisting format="linespecific">
+...
+&kamcmd; kafka.stats
+Total messages: 26  Errors: 0
+...
+		  </programlisting>
+		</example>
+	  </section>
+	  <section>
+		<title><function moreinfo="none">kafka.stats_topic</function></title>
+		<para>
+		  Show statistics about sent messages and failed to deliver ones for a specific topic.
+		</para>
+		<para>
+		  Parameter: <emphasis>topic</emphasis> (string) name of the topic. Required.
+		</para>
+		<example>
+		  <title><function>kafka.stats</function> usage</title>
+		  <programlisting format="linespecific">
+...
+# Show statistics for my_topic.
+&kamcmd; kafka.stats_topic "my_topic"
+Topic: my_topic  Total messages: 17  Errors: 0
+...
+		  </programlisting>
+		</example>
+	  </section>
+	</section>
+  </section>
+</chapter>
