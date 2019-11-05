@@ -1101,7 +1101,19 @@ void slow_timer_main()
 #endif
 				SET_RUNNING_SLOW(tl);
 				UNLOCK_SLOW_TIMER_LIST();
-					ret=tl->f(*ticks, tl, tl->data);
+					if(likely(tl->f)) {
+						ret=tl->f(*ticks, tl, tl->data);
+					} else {
+						ret =0;
+#ifdef TIMER_DEBUG
+						LM_WARN("null timer callback for %p (%s:%u - %s(...))\n",
+								tl, (tl->add_file)?tl->add_file:"unknown",
+								tl->add_line,
+								(tl->add_func)?tl->add_func:"unknown");
+#else
+						LM_WARN("null callback function for %p\n", tl);
+#endif
+					}
 					/* reset the configuration group handles */
 					cfg_reset_all();
 					if (ret==0){
