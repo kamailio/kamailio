@@ -88,6 +88,7 @@ int dbk_internal_loop_count = 5;
 int dbk_consumer_loop_count = 10;
 int dbk_consumer_ack_loop_count = 20;
 int dbk_include_entity = 1;
+int dbk_use_full_entity = 0;
 int dbk_pua_mode = 1;
 db_locking_t kz_pua_lock_type = DB_LOCKING_WRITE;
 int dbk_use_hearbeats = 0;
@@ -140,6 +141,7 @@ static pv_export_t kz_mod_pvs[] = {
  */
 static cmd_export_t cmds[] = {
     {"kazoo_publish", (cmd_function) kz_amqp_publish, 3, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
+    {"kazoo_publish", (cmd_function) kz_amqp_publish_ex, 4, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
     {"kazoo_query", (cmd_function) kz_amqp_query, 4, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
     {"kazoo_query", (cmd_function) kz_amqp_query_ex, 3, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
     {"kazoo_pua_publish", (cmd_function) kz_pua_publish, 1, 0, 0, ANY_ROUTE},
@@ -156,6 +158,9 @@ static cmd_export_t cmds[] = {
     {"kazoo_encode", (cmd_function) kz_amqp_encode, 2, fixup_kz_amqp_encode, fixup_kz_amqp_encode_free, ANY_ROUTE},
 
     {"kazoo_async_query", (cmd_function) kz_amqp_async_query, 5, fixup_kz_async_amqp, fixup_kz_async_amqp_free, ANY_ROUTE},
+    {"kazoo_async_query", (cmd_function) kz_amqp_async_query_ex, 6, fixup_kz_async_amqp, fixup_kz_async_amqp_free, ANY_ROUTE},
+    {"kazoo_query_async", (cmd_function) kz_amqp_async_query, 5, fixup_kz_async_amqp, fixup_kz_async_amqp_free, ANY_ROUTE},
+    {"kazoo_query_async", (cmd_function) kz_amqp_async_query_ex, 6, fixup_kz_async_amqp, fixup_kz_async_amqp_free, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -181,6 +186,7 @@ static param_export_t params[] = {
     {"amqp_consumer_loop_count", INT_PARAM, &dbk_consumer_loop_count},
     {"amqp_consumer_ack_loop_count", INT_PARAM, &dbk_consumer_ack_loop_count},
     {"pua_include_entity", INT_PARAM, &dbk_include_entity},
+	{"presence_use_full_entity", INT_PARAM, &dbk_use_full_entity},
     {"presentity_table", PARAM_STR, &kz_presentity_table},
 	{"db_url", PARAM_STR, &kz_db_url},
     {"pua_mode", INT_PARAM, &dbk_pua_mode},

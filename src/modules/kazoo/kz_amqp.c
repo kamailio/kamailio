@@ -1213,7 +1213,7 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
     return ret;
 }
 
-int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _pub_flags)
 {
 	  str json_s;
 	  str exchange_s;
@@ -1253,6 +1253,10 @@ int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char
 
 };
 
+int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+{
+	return kz_amqp_publish_ex(msg, exchange, routing_key, payload, NULL);
+}
 
 char* last_payload_result = NULL;
 
@@ -1261,7 +1265,7 @@ int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value
 	return last_payload_result == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, last_payload_result);
 }
 
-int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route)
+int kz_amqp_async_query_ex(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route, char* _pub_flags)
 {
 	  str json_s;
 	  str exchange_s;
@@ -1405,6 +1409,11 @@ exit:
 
 	    return ret;
 };
+
+int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route)
+{
+	return kz_amqp_async_query_ex(msg, _exchange, _routing_key, _payload, _cb_route, _err_route, NULL);
+}
 
 void kz_amqp_reset_last_result()
 {
@@ -3230,8 +3239,8 @@ int kz_amqp_consumer_worker_proc(int cmd_pipe)
 	set_non_blocking(cmd_pipe);
 	event_set(&pipe_ev, cmd_pipe, EV_READ | EV_PERSIST, kz_amqp_consumer_worker_cb, &pipe_ev);
 	event_add(&pipe_ev, NULL);
-	event_dispatch();
-	return 0;
+
+	return event_dispatch();
 }
 
 void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer)
