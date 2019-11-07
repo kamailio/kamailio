@@ -232,7 +232,8 @@ route[RUN_ACC_PUBLISH] {
 ...
 </programlisting>
 		</example>
-	</section>
+	</section>	
+	
 	<section id="acc_json.p.output_syslog">
 		<title><varname>output_syslog</varname> (integer)</title>
 		<para>
@@ -249,15 +250,15 @@ route[RUN_ACC_PUBLISH] {
 		<programlisting format="linespecific">
 ...
 modparam("acc_json", "output_syslog", 1)
-modparam("acc_json", "log_level", 2)
-modparam("acc_json", "log_facility", "LOG_DAEMON")
+modparam("acc_json", "acc_log_level", 2)
+modparam("acc_json", "acc_log_facility", "LOG_DAEMON")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="acc_json.p.log_facility">
-		<title><varname>log_facility</varname> (integer)</title>
+	<section id="acc_json.p.acc_log_facility">
+		<title><varname>acc_log_facility</varname> (integer)</title>
 		<para>
 		Log facility to which accounting messages are issued to syslog.
                 This allows to easily separate the accounting specific logging
@@ -267,10 +268,10 @@ modparam("acc_json", "log_facility", "LOG_DAEMON")
 		Default value is LOG_DAEMON.
 		</para>
 		<example>
-		<title>log_facility example</title>
+		<title>acc_log_facility example</title>
 		<programlisting format="linespecific">
 ...
-modparam("acc_json", "log_facility", "LOG_LOCAL0")
+modparam("acc_json", "acc_log_facility", "LOG_LOCAL0")
 
 # modify you syslog/rsyslog config
 # /etc/rsyslog.d/default.conf
@@ -283,8 +284,8 @@ modparam("acc_json", "log_facility", "LOG_LOCAL0")
 		</example>
 	</section>
 
-	<section id="acc_json.p.log_level">
-		<title><varname>log_level</varname> (integer)</title>
+	<section id="acc_json.p.acc_log_level">
+		<title><varname>acc_log_level</varname> (integer)</title>
 		<para>
 		Log level at which accounting messages are issued to syslog.
 		</para>
@@ -292,10 +293,162 @@ modparam("acc_json", "log_facility", "LOG_LOCAL0")
 		Default value is 1 (L_NOTICE).
 		</para>
 		<example>
-			<title>log_level example</title>
+			<title>acc_log_level example</title>
 		<programlisting format="linespecific">
 ...
-modparam("acc_json", "log_level", 2) # Set log_level to 2 (L_INFO)
+modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section id="acc.p.cdr_enable">
+		<title><varname>cdr_enable</varname> (str)</title>
+		<para>
+		Enable Call Data Record generation.
+		</para>
+		<para>
+		Default value is 0 (disabled).
+		</para>
+		<example>
+		<title>cdr_enable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_enable", 1)
+...
+</programlisting>
+		</example>
+	</section>	
+	
+	<section id="acc.p.cdr_extra">
+		<title><varname>cdr_extra</varname> (str)</title>
+		<para>
+		Set of pseudo-variables defining custom CDR fields. 
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>cdr_extra example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	
+	<section id="acc.p.cdr_expired_dlg_enable">
+		<title><varname>cdr_expired_dlg_enable</varname> (str)</title>
+		<para>
+		Should CDR-based logging be enabled in case of expired dialogs? 
+		</para>
+		<para>
+		0 - off (default). 1 - on. 
+		</para>
+		<example>
+		<title>cdr_expired_dlg_enable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_expired_dlg_enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section id="acc_json.p.cdr_output_mqueue">
+		<title><varname>cdr_output_mqueue</varname> (integer)</title>
+		<para>
+                Requires the mqueue module.
+                The acc module will queue json cdr events in the specified mqueue.
+                Using a rtimer module exec you can access the queue and process them.
+		</para>
+		<para>
+                You can also fetch the cdr events using mqueue.fetch over JSON-RPC.
+		</para>
+		<para>
+		Default value is not-set mqueue will not be required.
+		</para>
+		<example>
+		<title>cdr_output_mqueue usage example</title>
+		<programlisting format="linespecific">
+...
+# example using json_mqueue/http_client to publish to NSQD
+modparam("mqueue", "mqueue", "name=cdr_events;size=100000")
+modparam("acc_json", "cdr_enable", 1)
+modparam("acc_json", "cdr_output_mqueue", "cdr_events")
+modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id)")
+modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
+modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
+modparam("http_client", "keep_connections", 1)
+modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
+
+route[RUN_CDR_PUBLISH] {
+   $var(count) = 0;
+   while (mq_fetch("cdr_events")) {
+      $var(q_size) = mq_size("cdr_events");
+      $var(count) = $var(count) + 1;
+      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(cdr_events)][$mqv(cdr_events)]\n");
+      $var(res) = http_connect_raw("nsqd", "", "application/json", $mqv(cdr_events), "$var(nsq_res)");
+      if ($var(res) &lt; 0) {
+         xerr("[RUN_CDR_PUBLISH][$var(res)] http_connect_raw: timeout or error !\n");
+         mq_add("cdr_events", "cdr_key", "$mqv(cdr_events)");
+      } else if ($var(res) &lt; 200 || $var(res) &gt; 299) {
+         xerr("[RUN_CDR_PUBLISH][$var(res)] http unexpected response code !\n");
+         mq_add("cdr_dead_letter_queue", "cdr_key", "$mqv(cdr_events)");
+         return;
+      }
+   }
+   if ($var(count) &gt; 0 ) {
+      xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
+   }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	
+<section id="acc_json.p.cdr_log_facility">
+		<title><varname>cdr_log_facility</varname> (integer)</title>
+		<para>
+		Log facility to which accounting messages are issued to syslog.
+                This allows to easily separate the accounting specific logging
+                from the other log messages.
+		</para>
+		<para>
+		Default value is LOG_DAEMON.
+		</para>
+		<example>
+		<title>cdr_log_facility example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_log_facility", "LOG_LOCAL0")
+
+# modify you syslog/rsyslog config
+# /etc/rsyslog.d/default.conf
+# remove local0 from default log file
+# *.*;local0,auth,authpriv.none /var/log/syslog
+# add local0 to another log file
+# local0.*                      /var/log/json_cdr.log
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc_json.p.cdr_log_level">
+		<title><varname>cdr_log_level</varname> (integer)</title>
+		<para>
+		Log level at which accounting messages are issued to syslog.
+		</para>
+		<para>
+		Default value is 1 (L_NOTICE).
+		</para>
+		<example>
+			<title>cdr_log_level example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_log_level", 2) # Set cdr_log_level to 2 (L_INFO)
 ...
 </programlisting>
 		</example>
