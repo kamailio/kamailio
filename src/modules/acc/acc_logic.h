@@ -50,5 +50,7 @@ int ki_acc_request(sip_msg_t *rq, str *comment, str *dbtable);
 
 int acc_api_exec(struct sip_msg *rq, acc_engine_t *eng,
 		acc_param_t* comment);
+int cdr_api_exec(struct dlg_cell *dlg, struct sip_msg *rq, cdr_engine_t *eng,
+		acc_param_t* comment);
 
 #endif

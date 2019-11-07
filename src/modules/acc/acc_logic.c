@@ -675,6 +675,16 @@ int acc_api_exec(struct sip_msg *rq, acc_engine_t *eng,
 	return eng->acc_req(rq, &inf);
 }
 
+/**
+ * @brief execute an acc event via a specific engine
+ */
+int cdr_api_exec(struct dlg_cell *dlg, struct sip_msg *rq, cdr_engine_t *eng, acc_param_t* comment)
+{
+	cdr_info_t inf;
+	memset(&inf, 0, sizeof(cdr_info_t));
+	cdr_api_set_arrays(&inf);
+	return eng->cdr_write(dlg, rq, &inf);
+}
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 {
