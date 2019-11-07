@@ -340,7 +340,8 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     } else {
         presentity_uri = ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
         if (presentity_uri.len == 0) {
-            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
+                callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
             goto done;
         }
     }
@@ -1078,7 +1079,8 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         //cscf_get_to_uri(msg, &presentity_uri);
         presentity_uri = ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
         if (presentity_uri.len == 0) {
-            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n", callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+            LM_ERR("Unable to get presentity uri from subscriber dialog with callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
+                callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
             ret = CSCF_RETURN_FALSE;
             goto doneorerror;
         }
@@ -1360,7 +1362,8 @@ int contact_port_ip_match(str *c1, str *c2) {
     str ip_port1, ip_port2;
     aor_to_contact(c1, &ip_port1); //strip userpart from test contact
     aor_to_contact(c2, &ip_port2); //strip userpart from test contact
-    LM_DBG("Matching contact using only port and ip - comparing [%.*s] and [%.*s]\n", ip_port1.len, ip_port1.s, ip_port2.len, ip_port2.s);
+    LM_DBG("Matching contact using only port and ip - comparing [%.*s] and [%.*s]\n",
+        ip_port1.len, ip_port1.s, ip_port2.len, ip_port2.s);
     if ((ip_port1.len == ip_port2.len) && !memcmp(ip_port1.s, ip_port2.s, ip_port1.len)) {
         return 1;
     }
@@ -1437,7 +1440,8 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
         if (event_type == IMS_REGISTRAR_SUBSCRIBE) {
             if (contact_port_ip_match(watcher_contact, &s->watcher_contact) &&
                     (presentity_uri->len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
-                LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed. About to make new notification! We always increment the local cseq and version before we send a new notification\n");
+                LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed.\n");
+                LM_DBG("About to make new notification! We always increment the local cseq and version before we send a new notification\n");
 
                 local_cseq = s->local_cseq + 1;
                 version = s->version + 1;
