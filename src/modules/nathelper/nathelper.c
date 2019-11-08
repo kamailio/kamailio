@@ -2452,6 +2452,9 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 
 	return 0;
 }
+/**
+* wrapper of set_alias_to_avp_f
+*/
 static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp){
 	str dest_avp={0,0};
 
@@ -2464,6 +2467,13 @@ static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp){
 	return set_alias_to_avp_f(msg,&dest_avp);
 
 }
+/**
+* function reads from @param msg then write to given avp @param uri_avp
+* as sip uri
+* @result 1 succes , -1 fail
+* @param msg sip message
+* @param uri_avp given avp name
+*/
 static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp){
 	str contact;
 	str alias_uri={0,0};
@@ -2495,7 +2505,11 @@ static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp){
 	return 1;
 
 }
-
+/**
+* write_to_avp function writes data to given avp
+* @param data  source data
+* @param uri_avp destination avp name
+*/
 void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	pv_spec_t *pvresult = NULL;
 	pv_value_t valx;
@@ -2525,6 +2539,12 @@ void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
 
 }
+/**
+* function alias_to_uri  select alias paramter from @param contact_header
+* then writes to @param alias_uri
+* @param contact_header  Source contact header
+* @param alias_uri destination string
+*/
 void alias_to_uri(str *contact_header, str *alias_uri){
 	int i=0; // index
 	str host={0,0};
