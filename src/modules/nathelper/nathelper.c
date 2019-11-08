@@ -125,6 +125,11 @@ static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
 static int test_sdp_cline(struct sip_msg *msg);
 
+static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp);
+static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp);
+void alias_to_uri(str *contact_header, str *alias_uri);
+void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp);
+
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
 static int child_init(int);
@@ -223,6 +228,8 @@ static cmd_export_t cmds[] = {
 	{"is_rfc1918",         (cmd_function)is_rfc1918_f,           1,
 		fixup_spve_null, 0,
 		ANY_ROUTE },
+		{"set_alias_to_avp",   (cmd_function)ki_set_alias_to_avp,     1,
+		0, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -2444,6 +2451,155 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 	res->len += c->len - (hostport.s + hostport.len - c->name.s);
 
 	return 0;
+}
+static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp){
+	str dest_avp={0,0};
+
+	if(!uri_avp)
+	       return -1;
+
+	dest_avp.s=uri_avp;
+	dest_avp.len=strlen(dest_avp.s);
+
+	return set_alias_to_avp_f(msg,&dest_avp);
+
+}
+static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp){
+	str contact;
+	str alias_uri={0,0};
+
+
+	if(parse_headers(msg,HDR_CONTACT_F,0) < 0 ) {
+	       LM_ERR("Finding Contact Header is failed\n");
+	       return -1;
+	}
+
+	if(!msg->contact)
+	       return -1;
+
+	if(parse_contact(msg->contact)<0 || !msg->contact->parsed ||
+	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
+	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL){
+	       LM_ERR("Parsing Contact Header is failed\n");
+	       return -1;
+	}
+
+
+
+	contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->name.s;
+	contact.len = ((contact_body_t *)msg->contact->parsed)->contacts->len;
+
+	alias_to_uri(&contact,&alias_uri);
+	write_to_avp(msg, &alias_uri, uri_avp);
+
+	return 1;
+
+}
+
+void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
+	pv_spec_t *pvresult = NULL;
+	pv_value_t valx;
+	pvresult = pv_cache_get(uri_avp);
+
+	if(pvresult == NULL) {
+	       LM_ERR("Failed to malloc destination pseudo-variable \n");
+	       return;
+	}
+
+	if(pvresult->setf==NULL) {
+	       LM_ERR("destination pseudo-variable is not writable: %.*s \n",uri_avp->len, uri_avp->s);
+	       return;
+	}
+	memset(&valx, 0, sizeof(pv_value_t));
+
+	if(!data->s){
+				 LM_ERR("There isnt any data to write avp\n");
+				 return;
+	}
+
+	valx.flags      =       PV_VAL_STR;
+	valx.rs.s       =       data->s;
+	valx.rs.len     =       data->len;
+
+	LM_DBG("result: %.*s\n", valx.rs.len, valx.rs.s);
+	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
+
+}
+void alias_to_uri(str *contact_header, str *alias_uri){
+	int i=0; // index
+	str host={0,0};
+	str port={0,0};
+	str proto={0,0};
+	char *memchr_pointer;
+
+	if(!contact_header)
+	       return;
+
+	LM_DBG("Contact header [%.*s] \r\n",contact_header->len,contact_header->s);
+
+	for(i=0; i<contact_header->len  ;i++){
+		if(strncmp(&contact_header->s[i], SALIAS, SALIAS_LEN) == 0){
+			i=i+SALIAS_LEN;
+			host.s = &contact_header->s[i];
+			memchr_pointer = memchr(host.s , 126 /* ~ */,contact_header->len-i);
+				if(memchr_pointer == NULL) {
+					LM_ERR("No alias param found for host\n");
+					return;
+				} else {
+					host.len = memchr_pointer - &contact_header->s[i];
+					i=i+host.len;
+				}
+			break;
+			}
+	}
+
+	if(!memchr_pointer){
+		LM_ERR("No alias param found\n");
+		return ;
+	}
+	if(&memchr_pointer[1])
+		port.s=&memchr_pointer[1];
+	else{
+		LM_ERR("We cannot find alias sign for port - exit\n");
+		return;
+	}
+
+	memchr_pointer = memchr(port.s , 126 /* ~ */,contact_header->len-i);
+	if(memchr_pointer == NULL) {
+		LM_ERR("No alias param found for port\n");
+		return ;
+	} else {
+		port.len = memchr_pointer - port.s;
+		i=i+port.len;
+	}
+
+	//last char is proto 0,1,2,3,4..7
+	proto.s= &port.s[port.len+1];
+	proto_type_int_to_str(atoi(proto.s), &proto);
+
+	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s] \r\n",host.len,host.s,port.len,port.s,proto.len,proto.s);
+
+	//sip:host:port;transport=udp
+	alias_uri->s =(char *) pkg_malloc(port.len+host.len+proto.len+16);
+	if(!alias_uri->s){
+		LM_ERR("Allocation ERROR\n");
+		return ;
+	}
+
+	memset(alias_uri->s,0,16+port.len+host.len);
+
+	memcpy(alias_uri->s,"sip:",4);
+	memcpy(&alias_uri->s[4],host.s,host.len);
+
+	memcpy(&alias_uri->s[4+host.len],":",1);
+	memcpy(&alias_uri->s[4+host.len+1],port.s,port.len);
+	memcpy(&alias_uri->s[4+host.len+1+port.len],";transport=",11);
+	memcpy(&alias_uri->s[4+host.len+1+port.len+11],proto.s,proto.len);
+
+	alias_uri->len=port.len+host.len+16+proto.len;
+	LM_DBG("Alias uri [%.*s][len: %d] \r\n",alias_uri->len,alias_uri->s,alias_uri->len);
+
+	return;
 }
 
 /**
