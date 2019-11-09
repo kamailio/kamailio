@@ -676,7 +676,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 
 	bzero(&evapi_srv_addr, sizeof(evapi_srv_addr));
 	evapi_srv_addr.sin_family = h->h_addrtype;
-	evapi_srv_addr.sin_port   = htons((short)lport);
+	evapi_srv_addr.sin_port   = htons(lport);
 	evapi_srv_addr.sin_addr  = *(struct in_addr*)h->h_addr;
 
 	/* Set SO_REUSEADDR option on listening socket so that we don't
