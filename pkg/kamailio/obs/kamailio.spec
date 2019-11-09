@@ -389,9 +389,9 @@ Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
-%if 0%{?suse_version}
+%if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
-BuildRequires:  systemd-mini, shadow
+BuildRequires:  systemd, shadow
 %endif
 
 
