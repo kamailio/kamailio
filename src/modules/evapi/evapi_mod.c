@@ -148,7 +148,7 @@ static int mod_init(void)
 		p = strchr(_evapi_bind_param, ':');
 		if(p!=NULL) {
 			*p++ = '\0';
-			_evapi_bind_port = (short)atoi(p);
+			_evapi_bind_port = atoi(p);
 			if (_evapi_bind_port <= 0) {
 				LM_ERR("invalid port: %d\n", _evapi_bind_port);
 				return -1;
