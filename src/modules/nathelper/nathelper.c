@@ -127,8 +127,8 @@ static int test_sdp_cline(struct sip_msg *msg);
 
 static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp);
 static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp);
-void alias_to_uri(str *contact_header, str *alias_uri);
-void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp);
+static int alias_to_uri(str *contact_header, str *alias_uri);
+static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -2452,14 +2452,19 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 
 	return 0;
 }
-/**
-* wrapper of set_alias_to_avp_f
+/*!
+* @function ki_set_alias_to_avp
+* @abstract wrapper of set_alias_to_avp_f
+* @param msg sip message
+* @param uri_avp given avp name
+*
+* @result 1 successful  , -1 fail
 */
 static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp){
 	str dest_avp={0,0};
 
 	if(!uri_avp)
-	       return -1;
+		return -1;
 
 	dest_avp.s=uri_avp;
 	dest_avp.len=strlen(dest_avp.s);
@@ -2467,93 +2472,107 @@ static int ki_set_alias_to_avp(struct sip_msg *msg, char *uri_avp){
 	return set_alias_to_avp_f(msg,&dest_avp);
 
 }
-/**
-* function reads from @param msg then write to given avp @param uri_avp
-* as sip uri
-* @result 1 succes , -1 fail
+/*!
+* @function set_alias_to_avp_f
+* @abstract reads from  msg then write to given avp uri_avp as sip uri
+*
 * @param msg sip message
 * @param uri_avp given avp name
+*
+* @result 1 successful  , -1 fail
 */
 static int set_alias_to_avp_f(struct sip_msg *msg, str *uri_avp){
 	str contact;
 	str alias_uri={0,0};
 
-
 	if(parse_headers(msg,HDR_CONTACT_F,0) < 0 ) {
-	       LM_ERR("Finding Contact Header is failed\n");
-	       return -1;
+		LM_ERR("Couldn't find Contact Header\n");
+		return -1;
 	}
 
 	if(!msg->contact)
-	       return -1;
+		return -1;
 
 	if(parse_contact(msg->contact)<0 || !msg->contact->parsed ||
 	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
 	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL){
-	       LM_ERR("Parsing Contact Header is failed\n");
-	       return -1;
+		LM_ERR("Couldn't parse Contact Header\n");
+		return -1;
 	}
-
-
 
 	contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->name.s;
 	contact.len = ((contact_body_t *)msg->contact->parsed)->contacts->len;
 
-	alias_to_uri(&contact,&alias_uri);
-	write_to_avp(msg, &alias_uri, uri_avp);
+	if(alias_to_uri(&contact,&alias_uri)<0)
+		return -1;
+
+	if(write_to_avp(msg, &alias_uri, uri_avp)<0)
+		goto error;
+
+	if(alias_uri.s)
+		pkg_free(alias_uri.s);
 
 	return 1;
 
+	error :
+		if(alias_uri.s)
+			pkg_free(alias_uri.s);
+
+		return -1;
 }
-/**
-* write_to_avp function writes data to given avp
+/*!
+* @function write_to_avp
+* @abstract write_to_avp function writes data to given avp
 * @param data  source data
 * @param uri_avp destination avp name
+* @result 1 successful  , -1 fail
 */
-void write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
+static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	pv_spec_t *pvresult = NULL;
 	pv_value_t valx;
 	pvresult = pv_cache_get(uri_avp);
 
 	if(pvresult == NULL) {
-	       LM_ERR("Failed to malloc destination pseudo-variable \n");
-	       return;
+		LM_ERR("Failed to malloc destination pseudo-variable \n");
+		return -1;
 	}
 
 	if(pvresult->setf==NULL) {
-	       LM_ERR("destination pseudo-variable is not writable: %.*s \n",uri_avp->len, uri_avp->s);
-	       return;
+		LM_ERR("Destination pseudo-variable is not writable: [%.*s] \n",uri_avp->len, uri_avp->s);
+		return -1;
 	}
 	memset(&valx, 0, sizeof(pv_value_t));
 
 	if(!data->s){
-				 LM_ERR("There isnt any data to write avp\n");
-				 return;
+		LM_ERR("There isn't any data to write to avp\n");
+		return -1;
 	}
 
 	valx.flags      =       PV_VAL_STR;
 	valx.rs.s       =       data->s;
 	valx.rs.len     =       data->len;
 
-	LM_DBG("result: %.*s\n", valx.rs.len, valx.rs.s);
+	LM_DBG("result: [%.*s]\n", valx.rs.len, valx.rs.s);
 	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
-
+	return 1;
 }
-/**
-* function alias_to_uri  select alias paramter from @param contact_header
-* then writes to @param alias_uri
+/*!
+* @function alias_to_uri
+* @abstract select alias paramter from contact_header
+* 					then writes to alias_uri
 * @param contact_header  Source contact header
-* @param alias_uri destination string
+* @param alias_uri Destination string
+* @result 1 successful  , -1 fail
 */
-void alias_to_uri(str *contact_header, str *alias_uri){
+static int alias_to_uri(str *contact_header, str *alias_uri){
 	int i=0; // index
 	str host={0,0};
 	str port={0,0};
 	str proto={0,0};
-	char *memchr_pointer;
+	char *memchr_pointer=0;
 
 	if(!contact_header)
-	       return;
+		return -1;
 
 	LM_DBG("Contact header [%.*s] \r\n",contact_header->len,contact_header->s);
 
@@ -2562,9 +2581,9 @@ void alias_to_uri(str *contact_header, str *alias_uri){
 			i=i+SALIAS_LEN;
 			host.s = &contact_header->s[i];
 			memchr_pointer = memchr(host.s , 126 /* ~ */,contact_header->len-i);
-				if(memchr_pointer == NULL) {
-					LM_ERR("No alias param found for host\n");
-					return;
+				if(memchr_pointer == NULL || memchr_pointer == 0) {
+					LM_ERR("No alias parameter found for host\n");
+					return -1;
 				} else {
 					host.len = memchr_pointer - &contact_header->s[i];
 					i=i+host.len;
@@ -2574,28 +2593,27 @@ void alias_to_uri(str *contact_header, str *alias_uri){
 	}
 
 	if(!memchr_pointer){
-		LM_ERR("No alias param found\n");
-		return ;
+		LM_ERR("Alias couldn't be found \n");
+		return -1;
 	}
-	if(&memchr_pointer[1])
+	if(&memchr_pointer[1]){
 		port.s=&memchr_pointer[1];
-	else{
-		LM_ERR("We cannot find alias sign for port - exit\n");
-		return;
+	}else{
+		LM_ERR("Alias sign couldn't be found for port \n");
+		return -1;
 	}
 
 	memchr_pointer = memchr(port.s , 126 /* ~ */,contact_header->len-i);
 	if(memchr_pointer == NULL) {
-		LM_ERR("No alias param found for port\n");
-		return ;
+		LM_ERR("Alias sign couldn't be found for proto \n");
+		return -1;
 	} else {
 		port.len = memchr_pointer - port.s;
 		i=i+port.len;
 	}
-
 	//last char is proto 0,1,2,3,4..7
 	proto.s= &port.s[port.len+1];
-	proto_type_int_to_str(atoi(proto.s), &proto);
+	proto_type_to_str((unsigned short)atoi(proto.s), &proto);
 
 	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s] \r\n",host.len,host.s,port.len,port.s,proto.len,proto.s);
 
@@ -2603,7 +2621,7 @@ void alias_to_uri(str *contact_header, str *alias_uri){
 	alias_uri->s =(char *) pkg_malloc(port.len+host.len+proto.len+16);
 	if(!alias_uri->s){
 		LM_ERR("Allocation ERROR\n");
-		return ;
+		return -1;
 	}
 
 	memset(alias_uri->s,0,16+port.len+host.len);
@@ -2619,7 +2637,7 @@ void alias_to_uri(str *contact_header, str *alias_uri){
 	alias_uri->len=port.len+host.len+16+proto.len;
 	LM_DBG("Alias uri [%.*s][len: %d] \r\n",alias_uri->len,alias_uri->s,alias_uri->len);
 
-	return;
+	return 1;
 }
 
 /**
