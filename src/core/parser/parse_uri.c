@@ -1439,26 +1439,3 @@ void proto_type_to_str(unsigned short type, str *s) {
 		*s = s_null;
 	}
 }
-
-void proto_type_int_to_str(int type, str *s) {
-       switch (type) {
-       case PROTO_UDP:
-               *s = s_udp;
-               break;
-       case PROTO_TCP:
-               *s = s_tcp;
-               break;
-       case PROTO_TLS:
-               *s = s_tls;
-               break;
-       case PROTO_SCTP:
-               *s = s_sctp;
-               break;
-       case PROTO_WS:
-       case PROTO_WSS:
-               *s = s_ws;
-               break;
-       default:
-               *s = s_null;
-       }
-}
