@@ -20,7 +20,7 @@ include ../../Makefile.modules
 
 cphonenumber.o: cphonenumber.cpp cphonenumber.h
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(C_DEFS) $(DEFS) -c $< -o $@
+	$(CXX) -std=c++11 $(CXXFLAGS) $(CFLAGS) $(C_DEFS) $(DEFS) -c $< -o $@
 
 phonenum.so: cphonenumber.o
 
