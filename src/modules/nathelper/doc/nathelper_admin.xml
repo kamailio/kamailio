@@ -823,6 +823,27 @@ if(is_rfc1918("$rd")) {
 		</programlisting>
 		</example>
 	</section>
+		<section id="nathelper.set_alias_to_avp">
+		<title>
+		<function moreinfo="none">set_alias_to_avp(target_avp)</function>
+		</title>
+		<para>
+		Reads <quote>;alias=ip~port~transport</quote> from Contact header then
+		writes to target avp as a sip uri.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_alias_to_avp</function> usage</title>
+		<programlisting format="linespecific">
+...
+		set_alias_to_avp("$avp(aliasuri)");
+...
+		</programlisting>
+		</example>
+	</section>
 
 	</section>
 
