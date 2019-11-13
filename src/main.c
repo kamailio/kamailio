@@ -822,8 +822,10 @@ void handle_sigs(void)
 void sig_usr(int signo)
 {
 
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
 #ifdef PKG_MALLOC
 	int memlog;
+#endif
 #endif
 
 	if (is_main){
@@ -870,6 +872,7 @@ void sig_usr(int signo)
 					_exit(0);
 					break;
 			case SIGUSR1:
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
 #ifdef PKG_MALLOC
 					cfg_update_no_cbs();
 					memlog=cfg_get(core, core_cfg, memlog);
@@ -883,6 +886,7 @@ void sig_usr(int signo)
 							pkg_sums();
 						}
 					}
+#endif
 #endif
 					break;
 				/* ignored*/
