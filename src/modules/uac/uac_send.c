@@ -738,10 +738,10 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
+	memset(&cred, 0, sizeof(struct uac_credential));
 	cred.realm  = auth.realm;
 	cred.user   = tp->s_auser;
 	cred.passwd = tp->s_apasswd;
-	cred.next   = NULL;
 
 	do_uac_auth(&tp->s_method, &tp->s_ruri, &cred, &auth, response);
 	new_auth_hdr=build_authorization_hdr(ps->code, &tp->s_ruri, &cred,
