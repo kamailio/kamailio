@@ -667,9 +667,9 @@ data_target = $(prefix)/$(data_dir)
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
-# -DNO_SIG_DEBUG
-#        turns off debugging messages in signal handlers (which might be
-#         unsafe)
+# -DUSE_UNSAFE_SIG_DEBUG
+#		turns on debugging messages in signal handlers (which are
+#		unsafe, but might be acceptable for occasional debugging)
 # -DUSE_NAPTR
 #		 turns on naptr support (but must be also enabled from the config)
 # -DDNS_WATCHDOG_SUPPORT
@@ -727,7 +727,7 @@ C_DEFS+= -DSHM_MMAP \
 	 #-DNOSMP \
 	 #-DNO_LOG \
 	 #-DPROFILING \
-	 #-DNO_SIG_DEBUG
+	 #-DUSE_UNSAFE_SIG_DEBUG
 
 #PROFILE=  -pg	# set this if you want profiling
 				# you may also want to set -DPROFILING

@@ -49,7 +49,7 @@ void km_log_func_set(km_log_f f)
 	_km_log_func = f;
 }
 
-#ifndef NO_SIG_DEBUG
+#ifndef USE_UNSAFE_SIG_DEBUG
 /* signal protection: !=0 when LOG/DBG/... are printing */
 volatile int dprint_crit = 0; 
 #endif

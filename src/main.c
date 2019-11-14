@@ -147,11 +147,11 @@
 #endif
 #include "core/ver.h"
 
-/* define SIG_DEBUG by default */
-#ifdef NO_SIG_DEBUG
-#undef SIG_DEBUG
-#else
+/* Do not define SIG_DEBUG by default */
+#ifdef USE_UNSAFE_SIG_DEBUG
 #define SIG_DEBUG
+#else
+#undef SIG_DEBUG
 #endif
 
 

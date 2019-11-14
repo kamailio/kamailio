@@ -156,7 +156,7 @@ void set_module_debug_facility_cb(get_module_debug_facility_f f);
 extern struct log_level_info log_level_info[];
 extern char *log_name;
 
-#ifndef NO_SIG_DEBUG
+#ifndef USE_UNSAFE_SIG_DEBUG
 /** @brief protection against "simultaneous" printing from signal handlers */
 extern volatile int dprint_crit;
 #endif
@@ -201,7 +201,7 @@ void log_prefix_init(void);
 
 #else
 
-#	ifdef NO_SIG_DEBUG
+#	ifdef USE_UNSAFE_SIG_DEBUG
 #		define DPRINT_NON_CRIT		(1)
 #		define DPRINT_CRIT_ENTER
 #		define DPRINT_CRIT_EXIT
