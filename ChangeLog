@@ -2,6 +2,14 @@
 
 ===================== Changes Since Version 5.3.0 ===========================
 
+commit 97eb5e2558c5031794f4ca16ff8e5e46edf38ee3 (HEAD -> 5.3)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 12:25:09 2019 +0100
+
+    uac: reset credentials structure for uac_req_send() authentication
+
+    (cherry picked from commit 2b12754920704f49cd227c518e130cef4d76ea7d)
+
 commit b18203a2114a2999532e15336874b69a70c20473
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Nov 14 11:49:21 2019 +0100
