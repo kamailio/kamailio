@@ -1,3 +1,388 @@
+===================== 2019-11-14 Version 5.3.1 Released =====================
+
+===================== Changes Since Version 5.3.0 ===========================
+
+commit b18203a2114a2999532e15336874b69a70c20473
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 11:49:21 2019 +0100
+
+    Makefile.defs: version set to 5.3.1
+
+commit e6a359b6436ca433cdd8916020cf4a75898a6e2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 11:47:19 2019 +0100
+
+    pkg: rpm/specs - set version to 5.3.1
+
+commit 909aa7ea5e8a6a4825ec57997e65ea490205ef6a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 14 11:41:53 2019 +0100
+
+    pkg/kamailio/deb: version set 5.3.1
+
+commit ae7a6f6e0950dcfb13e421ed64da6d9cd023f58c
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Nov 12 12:18:06 2019 +0100
+
+    core: bug fix in str2ipbuf, return an error for invalid input parameter
+    
+    (cherry picked from commit a48d87dff0d266efabaf4b0312d2c228ccbd13ff)
+
+commit e76e2cefb5112372bc76935dbb17670ca2c377b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 11 10:51:33 2019 +0100
+
+    phonenum: use -std=c++11 cpp compile flag
+    
+    - required by the libphonenumber
+    
+    (cherry picked from commit 75c5a20a870985059f642ac1a6624655332dbca8)
+
+commit 74e1b77336e9b7b9d16c48217190a8742a6efd63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 5 13:47:53 2019 +0100
+
+    core: slow timer - warning message if callback function is null
+    
+    (cherry picked from commit 574b080d69b2b968cfe871bc7cfe8fdf930fbc2e)
+
+commit 92454e1175698b6b00e1e1466859c30da6a6d342
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 3 10:30:09 2019 +0100
+
+    core: qmalloc - print details of prev fragment when its tail is overwritten
+    
+    - do it when check2 field is not touched
+    
+    (cherry picked from commit bf1ba8d2d4519af50d44acfce5f34535fd1db8e0)
+
+commit ed2befe76dc8987c3bcc22fb8f47db58d4d578f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 2 18:04:23 2019 +0100
+
+    textops: remove check done in the called function
+    
+    (cherry picked from commit 7261efbcd0826014227fbe814e4142cec0c79368)
+
+commit c4e3f20eefe45a543bfaddce8d13434566d63b90
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 31 09:54:22 2019 +0100
+
+    evapi: use local allocated buffer to get data parameter for event relay
+    
+    - use system malloc given that the data can be passed from jsonrpcs,
+    which uses system malloc as well
+    - try to grow the internall buffer as needed based on estimated size of
+    output for the data parameter
+    
+    (cherry picked from commit 63334e312d60a5d6a6470b0067c29db672d08c7c)
+
+commit f8a8ad28bcc984938a65c1cf69adab06f460d2b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:27:40 2019 +0100
+
+    acc: better evaluation of error return for pv_printf_s()
+    
+    (cherry picked from commit 69ccdc25fbfaf01785127ecb051429e51df6cad5)
+
+commit 8d7dbdd934375c7bbeed9bb8d6c75d98615aa0af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:26:34 2019 +0100
+
+    core: pv - function to get the size of the value for strings with vars
+    
+    - added silent mode for printing strings with vars
+    
+    (cherry picked from commit 6ee9e9c9dc2d818a5ce6c6cf7828a68a1c8cb291)
+
+commit 3eca96c29ed5bc8d51643e8d9a87318a220c9042
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:25:44 2019 +0100
+
+    core: use pv_elem_t for vstr fixup value get
+    
+    (cherry picked from commit 73e36b6a467491252e1f81be1b8da66d6c1a4b1b)
+
+commit 7bc98c4ebd8e8bff8417b8e9542c07badafda63e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 15:41:04 2019 +0100
+
+    core: fixup helpers to get dynamic string parameter in own buffer
+    
+    (cherry picked from commit 3e1438bebdf611b83574ab44c8ed3eb3c7067391)
+
+commit 4ca6ad00eb71ea76dacf71c6126a4fe853d898c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 10:14:07 2019 +0100
+
+    ctl: docs - more infor about binrpc_buffer_size modparam
+    
+    - replaced ser with kamailio in a few examples
+    
+    (cherry picked from commit c9070600af1b7993b003964b5c58db3391d50f60)
+
+commit 3fb626bd5f9a5b5a21659f98d215234ce74e90a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 28 10:00:28 2019 +0100
+
+    core: pad some fields in contained structs for 4 byte alignment
+    
+    - safety for sigbus on strict cpu architectures when accesing fields by
+    address
+    
+    (cherry picked from commit 1296bb2270985a1bf3af04f35e4cdae1fe4b184a)
+
+commit 3950df29cd6f3f2c4a35e0cd8dde8c31180b99bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 24 12:38:20 2019 +0200
+
+    statsc: debug message when fetching stats values
+    
+    (cherry picked from commit a463c53e767114567ff25f0fe50115da0e3d0045)
+
+commit c773828d392729cb27f99d7adeaf095084056aee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 22 10:49:18 2019 +0200
+
+    kamdbctl: split create user and grant access statements for mysql
+    
+    - MySQL 8 doesn't support all in one statement
+    
+    (cherry picked from commit c0879add55bef77703f2259f224b4a1f954cd8bf)
+
+commit ff2705b98784b451a7fe37b8fe680a5032af2fb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 21 08:28:09 2019 +0200
+
+    imc: docs - added section ids
+    
+    (cherry picked from commit 6f9bb6427ce201863d60e3255debe31a6a7db776)
+
+commit fe0b4cb34964b16f08e7b594d9ea1d0940994131
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 18 08:52:23 2019 +0200
+
+    dispatcher: docs - details of returned code by ds_list_exists()
+    
+    (cherry picked from commit 619b2603b486efea29fd314f360647f6d8ef3aec)
+
+commit 46333e57afa8e90808c921c923e06c913c390c60
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 18 08:48:27 2019 +0200
+
+    dispatcher: adjustments to ds_list_exist()
+    
+    - info log messages made debug
+    - return -2 if evaluating the fixup param fails
+    
+    (cherry picked from commit fcabdc012d5490cfc740d0e0773fd88ed07c2b64)
+
+commit 6ec84c91c75e2bb8ac04245292b130ae99464098
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Nov 9 10:58:06 2019 +0300
+
+    pkg/kamailio/obs: replaced systemd-mini requirments by systemd [skip ci]
+    
+    Also commit restrict requirements only for OpenSUSE Leap dists
+    
+    (cherry picked from commit 0075472ef96c77ec38789af7bba744667a49ef22)
+
+commit fb393b1a6e59ba0ca2ce2700aeb11c5f4e1291f8
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Mon Nov 4 13:51:07 2019 +0200
+
+    ims_usrloc_scscf: added '\n' for debug messages
+    
+    - added a new line to the end of some debug logs for
+      better formatting.
+    
+    (cherry picked from commit 90ff57e10f1b456b35dc8ac262457dbb2c497997)
+
+commit 865bd055cb1ecea8c08976f41ef733a40444c74d
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Nov 7 18:25:36 2019 +0100
+
+    ims_registrar_scscf: formatting change for a few really long lines
+    
+    (cherry picked from commit a7b8cb33d815fcea5dec7c82a33e8fcbad54ba03)
+
+commit f6087e8084a3ccf854f53594e9c1c1998fcb3c39
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Thu Nov 7 18:11:21 2019 +0200
+
+    ims_registrar_scscf: added '\n' for debug messages
+    
+        - added a new line to the end of some debug logs for
+          better formatting.
+    
+    (cherry picked from commit 2e4727014fff86545bb9ce8bb97f72173d8c8c87)
+
+commit 6d1abb352c772caf164486854a2609ca67a0142b
+Author: Stanislav S. Litvinenko <litvinenko@protei.ru>
+Date:   Thu Oct 31 02:17:54 2019 +0300
+
+    ims_ipsec_pcscf: closing mnl_socket in some exceptional situations
+    
+    - fix leak socket when error handling errors in creation or destruction ipsec tunnel
+    
+    (cherry picked from commit 575102bef5418ddfef2f619f22dd827183eef8af)
+
+commit 50dcbdf4f6f2a99d1a60aa0d676612c782285133
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Oct 31 16:39:59 2019 +0100
+
+    ims_ipsec_pcscf: fix gcc warning about misleading indention
+    
+    (cherry picked from commit 08e451066aad2ed14a70a72a18733788a48224ef)
+
+commit 543fbbf9b1dd2429be910b27566bf273381cbf78
+Author: Stanislav S. Litvinenko <litvinenko@protei.ru>
+Date:   Thu Oct 31 01:54:28 2019 +0300
+
+    ims_ipsec_pcscf: fix non-close mnl_socket when a bind error
+    
+    (cherry picked from commit 8cae623c7051d529d779c4bf072225c44154e403)
+
+commit 72d17edf9c38118b852ffece061417653f9a97ff
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Oct 31 12:46:32 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f6c49cd7bf3ee6a2dd85367b4225402548488e91
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Oct 31 12:30:46 2019 +0100
+
+    topos: fix documentation for msg-sending event_route (GH #2115)
+    
+    (cherry picked from commit e42fcc9395ee82d3d9d3df0da3728dd652a1d5c2)
+
+commit 65136e5df6926c7757b52da79eae9ecef26235e1
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Oct 31 12:29:05 2019 +0100
+
+    topos: fix event_mode parameter type (GH #2115)
+    
+    (cherry picked from commit d9c603d3fcc93a3a160a03e7e3c5500d744957db)
+
+commit e591ff9ded3e3ab8478c7a574c64e27ff35c3e91
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+    
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+    
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit 9bf5f8a70edb2a0c5177389cae1ddc1778a53ede
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:19:32 2019 +0300
+
+    pkg/kamailio/obs: added packaging for RHEL 8 and for CentOS 8 dists GH #2078 [skip ci]
+    
+    (cherry picked from commit a3ce062fdec2d3a5d5e46f49c9d0ea9d449a1bec)
+
+commit eb79a1361ef47671b7ee64789cd89e505d3f7031
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:13:45 2019 +0300
+
+    pkg/kamailio/obs: packaged lost module [skip ci]
+    
+    (cherry picked from commit ac97c59a762b5ebf024775785193a9b25345c2fe)
+
+commit 6a2e45a6133b7fe8da3715971e73efd5afe6ca7e
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Oct 11 12:37:57 2019 +0300
+
+    pkg/kamailio: Updated RPM spec release extracting for "-rc" [skip ci]
+    
+    (cherry picked from commit 1361ce6e980856ce7a3ffb77349cc45254ced6ab)
+
+commit ad1905397bd5bb7cca8c32f0f782fd340f07c68b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 22 15:16:30 2019 +0200
+
+    uac: proper condition to chech if ha1 flag is set for uac reg authentication
+    
+    - GH #2108
+    
+    (cherry picked from commit 2a3186ee0f8a2989f8de154019fd0ad73b390d73)
+
+commit d6a55699c56c5b298442d3bb10838304156d6850
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 00:29:48 2019 +0200
+
+    domain: fix spelling error
+    
+    (cherry picked from commit 0944689db2eabbb531fc6daed9db3a9bcc1780b6)
+
+commit 09b3a82e496dd6f45a8f55fb06ca8ff6d4582aa1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:08:34 2019 +0200
+
+    core: fix spelling error
+    
+    (cherry picked from commit e35fe2d7b4ae79be6af9a70d8520620941960a72)
+
+commit 81e39705affe8efe3e544ef34ae4e7649f745512
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:04:58 2019 +0200
+
+    pua: fix spelling error
+    
+    (cherry picked from commit d06e85d6fa9e75e8008bc422a7596671283054f7)
+
+commit 48e4b9b41c70ebe3f7a478dcdcb628e7a0306123
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:02:36 2019 +0200
+
+    utils/kamctl: update shebang to python3
+    
+    (cherry picked from commit 9aa42d7c8161d4a0d085b019a85cde6981b3b4f9)
+
+commit 4c36858eb9302465bba492f7901986f6a94198f0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:00:16 2019 +0200
+
+    textops: fix spelling error
+    
+    (cherry picked from commit 20e6c522c6722012cb8c38ae7e0c1773b2d536ed)
+
+commit c1e5c03aadb86abe0b8063f04f1cbcc8e908b0a8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:59:02 2019 +0200
+
+    smsops: fix spelling error
+    
+    (cherry picked from commit 4ba14d2f6db6144870650398da6c07b07d23d64d)
+
+commit 4537518a1df4c579f0603dfdbe947f3cee6d0fe3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:57:07 2019 +0200
+
+    smsops: fix spelling error
+    
+    (cherry picked from commit 4a657005a5c4eff88e48dc2b8847d5800a90bead)
+
+commit a616c673ca4164a026ca8fc64db977bb3ffcef95
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:52:42 2019 +0200
+
+    secfilter: fix spelling error
+    
+    (cherry picked from commit 3c26ebe4670eaffce4754bbd0cd76cbecf5bf590)
+
+commit edc998d58fbd9f5555d951c6469d7278525af1e1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:35:10 2019 +0200
+
+    seas: fix spelling error
+    
+    (cherry picked from commit 8a197dcc8d2d063d3615e8800ed8d2f7812cce0f)
+
+
 ===================== 2019-10-17 Version 5.3.0 Released =====================
 
 ===================== Changes Since Version 5.2.0 ===========================
