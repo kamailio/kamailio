@@ -1623,9 +1623,8 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 	return 0;
 }
 
-extern subs_t *_pres_subs_last_sub;
-sip_msg_t *_pres_subs_notify_reply_msg = NULL;
-int _pres_subs_notify_reply_code = 0;
+static sip_msg_t *_pres_subs_notify_reply_msg = NULL;
+static int _pres_subs_notify_reply_code = 0;
 
 int pv_parse_notify_reply_var_name(pv_spec_p sp, str *in)
 {
