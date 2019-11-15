@@ -137,9 +137,12 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 		SIP_VERSION, SIP_VERSION_LEN))
 
 #define IS_HTTP_REPLY(rpl)                                                \
-	((rpl)->first_line.u.reply.version.len >= HTTP_VERSION_LEN && \
+	(((rpl)->first_line.u.reply.version.len >= HTTP_VERSION_LEN && \
 	!strncasecmp((rpl)->first_line.u.reply.version.s,             \
-		HTTP_VERSION, HTTP_VERSION_LEN))
+		HTTP_VERSION, HTTP_VERSION_LEN)) ||                         \
+	((rpl)->first_line.u.reply.version.len >= HTTP2_VERSION_LEN && \
+	!strncasecmp((rpl)->first_line.u.reply.version.s,             \
+		HTTP2_VERSION, HTTP2_VERSION_LEN)))
 
 #define IS_SIP_REPLY(rpl)                                                \
 	((rpl)->first_line.u.reply.version.len >= SIP_VERSION_LEN && \
