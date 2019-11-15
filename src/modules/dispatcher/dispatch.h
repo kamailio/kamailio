@@ -66,6 +66,7 @@
 #define DS_USE_NEXT			1
 
 #define DS_XAVP_DST_SKIP_ATTRS	1
+#define DS_XAVP_DST_ADD_SOCKSTR	(1<<1)
 
 #define DS_XAVP_CTX_SKIP_CNT	1
 
@@ -94,6 +95,7 @@ extern str ds_xavp_dst_grp;
 extern str ds_xavp_dst_dstid;
 extern str ds_xavp_dst_attrs;
 extern str ds_xavp_dst_sock;
+extern str ds_xavp_dst_socket;
 
 extern str ds_xavp_ctx_cnt;
 
