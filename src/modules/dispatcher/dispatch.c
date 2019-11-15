@@ -1925,6 +1925,17 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 			LM_ERR("failed to add destination sock xavp field\n");
 			return -1;
 		}
+		if((ds_xavp_dst_mode & DS_XAVP_DST_ADD_SOCKSTR)
+				&& (dsidx->dlist[pos].attrs.socket.len > 0)) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = dsidx->dlist[pos].attrs.socket;
+			if(xavp_add_value(&ds_xavp_dst_socket, &nxval, &nxavp)==NULL) {
+				xavp_destroy_list(&nxavp);
+				LM_ERR("failed to add destination attrs xavp field\n");
+				return -1;
+			}
+		}
 	}
 
 	if(alg == DS_ALG_CALLLOAD) {

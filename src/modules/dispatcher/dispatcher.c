@@ -85,6 +85,7 @@ str ds_xavp_dst_grp = str_init("grp");
 str ds_xavp_dst_dstid = str_init("dstid");
 str ds_xavp_dst_attrs = str_init("attrs");
 str ds_xavp_dst_sock = str_init("sock");
+str ds_xavp_dst_socket = str_init("socket");
 
 str ds_xavp_ctx_cnt = str_init("cnt");
 
