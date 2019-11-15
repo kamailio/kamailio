@@ -929,6 +929,28 @@ modparam("presence", "enable_dmq", 1)
 	</example>
 </section>
 
+<section id="presence.p.pres_subs_mode">
+	<title><varname>pres_subs_mode</varname> (integer)</title>
+	<para>
+	Allow disabling cloning subscription structure for pv $subs(...), saving the
+	pkg memory and copy operations for all its fields. If 1 the cloning is done;
+	if 0, no cloning and $subs(...) returns $null.
+	</para>
+	<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>pres_subs_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "pres_subs_mode", 0)
+...
+</programlisting>
+	</example>
+</section>
+
 </section>
 
 <section>
