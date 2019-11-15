@@ -1,3 +1,0 @@
-@comment $OpenBSD$
-%%SHARED%%
-share/doc/kamailio/README.mi_xmlrpc

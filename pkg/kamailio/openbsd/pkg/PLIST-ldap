@@ -1,4 +1,0 @@
-@comment $OpenBSD$
-%%SHARED%%
-share/doc/kamailio/README.h350
-share/doc/kamailio/README.ldap
