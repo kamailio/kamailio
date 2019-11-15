@@ -65,6 +65,12 @@ and commit history, there are several *rules* required for each contribution.
   * code **should** be formatted with **clang-format** or to match the style of
   the component that the commit applies to. The `.clang-format` file is part of
   Kamailio source code tree, in the root folder.
+  * new function exports to the configuration **must** be done both as native
+  configuration export and KEMI function export.
+  * new introduced module parameters, functions and RPC commands **must**
+  be documented in the module documentation.
+  * new introduced pseudo-variables and transformations **must** be
+  documented in the wiki.
 
 ### Commit Message Rules ###
 
