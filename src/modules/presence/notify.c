@@ -56,6 +56,7 @@ int goto_on_notify_reply = -1;
 extern int pres_local_log_level;
 extern int pres_local_log_facility;
 extern subs_t *_pres_subs_last_sub;
+extern int _pres_subs_mode;
 
 c_back_param *shm_dup_cbparam(subs_t *);
 void free_cbparam(c_back_param *cb_param);
@@ -1507,13 +1508,17 @@ jump_over_body:
 	LM_DBG("expires %d status %d\n", subs->expires, subs->status);
 	cb_param = mem_copy_subs(subs, SHM_MEM_TYPE);
 
-	backup_subs = _pres_subs_last_sub;
-	_pres_subs_last_sub = subs;
+	if(_pres_subs_mode==1) {
+		backup_subs = _pres_subs_last_sub;
+		_pres_subs_last_sub = subs;
+	}
 
 	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
 			p_tm_callback, (void *)cb_param);
 	result = tmb.t_request_within(&uac_r);
-	_pres_subs_last_sub = backup_subs;
+	if(_pres_subs_mode==1) {
+		_pres_subs_last_sub = backup_subs;
+	}
 	if(result < 0) {
 		LM_ERR("in function tmb.t_request_within\n");
 		if(cb_param)
@@ -1705,8 +1710,10 @@ void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
 		_pres_subs_notify_reply_msg = ps->rpl;
 	}
 
-	backup_subs = _pres_subs_last_sub;
-	_pres_subs_last_sub = mem_copy_subs((subs_t *)(*ps->param), PKG_MEM_TYPE);
+	if(_pres_subs_mode==1) {
+		backup_subs = _pres_subs_last_sub;
+		_pres_subs_last_sub = mem_copy_subs((subs_t *)(*ps->param), PKG_MEM_TYPE);
+	}
 
 	backup_route_type = get_route_type();
 	set_route_type(LOCAL_ROUTE);
@@ -1715,8 +1722,10 @@ void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
 
 	_pres_subs_notify_reply_msg = NULL;
 	_pres_subs_notify_reply_code = 0;
-	pkg_free(_pres_subs_last_sub);
-	_pres_subs_last_sub = backup_subs;
+	if(_pres_subs_mode==1) {
+		pkg_free(_pres_subs_last_sub);
+		_pres_subs_last_sub = backup_subs;
+	}
 	free_sip_msg(&msg);
 }
 

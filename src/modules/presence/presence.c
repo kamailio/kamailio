@@ -102,6 +102,7 @@ int library_mode = 0;
 str server_address = {0, 0};
 evlist_t *EvList = NULL;
 int pres_subs_remove_match = 0;
+int _pres_subs_mode = 1;
 
 /* sip uri match */
 sip_uri_match_f presence_sip_uri_match;
@@ -243,6 +244,7 @@ static param_export_t params[]={
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
 	{ "cseq_offset",            PARAM_INT, &pres_cseq_offset},
 	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},
+	{ "pres_subs_mode",         PARAM_INT, &_pres_subs_mode},
 	{0,0,0}
 };
 /* clang-format on */

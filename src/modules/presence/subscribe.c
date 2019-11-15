@@ -731,6 +731,7 @@ void msg_watchers_clean(unsigned int ticks, void *param)
 		LM_ERR("cleaning pending subscriptions\n");
 }
 
+extern int _pres_subs_mode;
 subs_t *_pres_subs_last_sub = NULL;
 
 /*
@@ -1036,9 +1037,11 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 	str reply_str;
 	int sent_reply = 0;
 
-	if(_pres_subs_last_sub) {
-		pkg_free(_pres_subs_last_sub);
-		_pres_subs_last_sub = NULL;
+	if(_pres_subs_mode==1) {
+		if(_pres_subs_last_sub) {
+			pkg_free(_pres_subs_last_sub);
+			_pres_subs_last_sub = NULL;
+		}
 	}
 
 	/* ??? rename to avoid collisions with other symbols */
@@ -1188,7 +1191,9 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		}
 	}
 
-	_pres_subs_last_sub = mem_copy_subs(&subs, PKG_MEM_TYPE);
+	if(_pres_subs_mode==1) {
+		_pres_subs_last_sub = mem_copy_subs(&subs, PKG_MEM_TYPE);
+	}
 
 	/* check if correct status */
 	if(get_status_str(subs.status) == NULL) {
