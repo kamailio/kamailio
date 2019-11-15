@@ -344,10 +344,15 @@ modparam("dispatcher", "force_dst", 1)
 			sock - the socket pointer.
 			</listitem>
 			<listitem>
+			socket - the socket string - it iadded only if xavp_dst_mode has bit 2 set
+			(value 2).
+			</listitem>
+			<listitem>
 			dstid - the destination unique id (in case of call load distribution algorithm).
 			</listitem>
 			<listitem>
-			attrs - the attributes - they are added if xavp_dst_mode does not have the bit 1 set.
+			attrs - the attributes - they are added if xavp_dst_mode does not have
+			the bit 1 set (value 1).
 			</listitem>
 		</itemizedlist>
  		</para>
@@ -358,11 +363,13 @@ modparam("dispatcher", "force_dst", 1)
  		</para>
  		<example>
  		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_dst_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+    modparam("dispatcher", "xavp_dst_mode", 1)
+...
+    modparam("dispatcher", "xavp_dst_mode", 2)
+...
+</programlisting>
  		</example>
  	</section>
  	<section id="dispatcher.p.xavp_ctx">
