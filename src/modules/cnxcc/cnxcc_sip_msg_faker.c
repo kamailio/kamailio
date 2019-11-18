@@ -40,7 +40,7 @@ int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag,
 {
 	memset(_faked_sip_msg_buf, 0, FAKED_SIP_MSG_BUF_LEN);
 
-	sprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_FORMAT, from_uri->len,
+	snprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_BUF_LEN, FAKED_SIP_MSG_FORMAT, from_uri->len,
 			from_uri->s, from_tag->len, from_tag->s, to_uri->len, to_uri->s,
 			to_tag->len, to_tag->s, callid->len, callid->s);
 
