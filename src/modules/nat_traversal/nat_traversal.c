@@ -1479,7 +1479,7 @@ static int FixContact(struct sip_msg *msg)
 	struct lump *anchor;
 	struct sip_uri uri;
 	int len, offset;
-	char *buf;
+	str buf;
 
 	if(!get_contact_uri(msg, &uri, &contact))
 		return -1;
@@ -1506,8 +1506,8 @@ static int FixContact(struct sip_msg *msg)
 
 	// first try to alloc mem. if we fail we don't want to have the lump
 	// deleted and not replaced. at least this way we keep the original.
-	buf = pkg_malloc(len);
-	if(buf == NULL) {
+	buf.s = pkg_malloc(len);
+	if(buf.s == NULL) {
 		LM_ERR("out of memory\n");
 		return -1;
 	}
@@ -1517,26 +1517,30 @@ static int FixContact(struct sip_msg *msg)
 			msg, offset, contact->uri.len, (enum _hdr_types_t)HDR_CONTACT_F);
 
 	if(!anchor) {
-		pkg_free(buf);
+		pkg_free(buf.s);
 		return -1;
 	}
 
 	if(msg->rcv.src_ip.af == AF_INET6) {
-		len = sprintf(buf, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
+		buf.len = snprintf(buf.s, len, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
 				newip.s, newport, after.len, after.s);
 	} else {
-		len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
+		buf.len = snprintf(buf.s, len, "%.*s%s:%d%.*s", before_host.len, before_host.s,
 				newip.s, newport, after.len, after.s);
 	}
-
-	if(insert_new_lump_after(anchor, buf, len, (enum _hdr_types_t)HDR_CONTACT_F)
-			== 0) {
-		pkg_free(buf);
+	if(buf.len < 0 || buf.len>=len) {
+		pkg_free(buf.s);
 		return -1;
 	}
 
-	contact->uri.s = buf;
-	contact->uri.len = len;
+	if(insert_new_lump_after(anchor, buf.s, buf.len, (enum _hdr_types_t)HDR_CONTACT_F)
+			== 0) {
+		pkg_free(buf.s);
+		return -1;
+	}
+
+	contact->uri.s = buf.s;
+	contact->uri.len = buf.len;
 
 	return 1;
 }
