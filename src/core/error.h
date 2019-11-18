@@ -48,6 +48,7 @@
 #define E_Q_EMPTY       -16 /* Empty q */
 #define E_Q_TOO_BIG     -17 /* q too big (> 1) */
 #define E_Q_DEC_MISSING -18 /* Decimal part missing */
+#define E_DROP          -19 /* Dropped in script */
 
 
 
