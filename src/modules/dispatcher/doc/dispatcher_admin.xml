@@ -344,7 +344,7 @@ modparam("dispatcher", "force_dst", 1)
 			sock - the socket pointer.
 			</listitem>
 			<listitem>
-			socket - the socket string - it iadded only if xavp_dst_mode has bit 2 set
+			socket - the socket string - it is added only if xavp_dst_mode has bit 2 set
 			(value 2).
 			</listitem>
 			<listitem>
