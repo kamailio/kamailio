@@ -568,6 +568,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 	int i;
 	int_str avp_value;
 	int flag;
+	int bsize;
 
 	/* we should process only sequential request, but since we are looking
 	 * for Route param, the test is not really required -bogdan */
@@ -589,15 +590,20 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 		goto failed;
 	}
 
-	add_to_rr.s = pkg_malloc(3+rr_param->len+param_val.len);
+	bsize = 3+rr_param->len+param_val.len;
+	add_to_rr.s = pkg_malloc(bsize);
 	if ( add_to_rr.s==0 ) {
 		add_to_rr.len = 0;
 		LM_ERR("no more pkg mem\n");
 		goto failed;
 	}
-	add_to_rr.len = sprintf(add_to_rr.s, ";%.*s=%.*s",
+	add_to_rr.len = snprintf(add_to_rr.s, bsize, ";%.*s=%.*s",
 			rr_param->len, rr_param->s, param_val.len, param_val.s);
 
+	if(add_to_rr.len<0 || add_to_rr.len>=bsize) {
+		LM_ERR("printing rr param failed\n");
+		goto failed;
+	}
 	if ( uac_rrb.add_rr_param(msg, &add_to_rr)!=0 ) {
 		LM_ERR("add rr param failed\n");
 		goto failed;
