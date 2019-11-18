@@ -161,6 +161,11 @@ static int acc_init_engines(void);
 static acc_engine_t *_acc_engines=NULL;
 static int _acc_module_initialized = 0;
 
+static int cdr_register_engine(cdr_engine_t *eng);
+static int cdr_init_engines(void);
+static cdr_engine_t *_cdr_engines=NULL;
+static int cdr_module_initialized = 0;
+
 /* ------------- fixup function --------------- */
 static int acc_fixup(void** param, int param_no);
 static int free_acc_fixup(void** param, int param_no);
@@ -560,6 +565,12 @@ static int mod_init( void )
 		return -1;
 	}
 
+	cdr_module_initialized = 1;
+	if(cdr_init_engines()<0) {
+		LM_ERR("failed to init extra engines\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -613,6 +624,19 @@ static int bind_acc(acc_api_t* api)
 	api->get_leg_attrs   = legs2strar;
 	api->parse_extra     = parse_acc_extra;
 	api->exec            = acc_api_exec;
+
+	if (cdr_enable) {
+		api->register_cdr_engine = cdr_register_engine;
+		api->get_core_cdr_attrs  = cdr_core2strar;
+		api->get_extra_dlg_attrs = extra2strar_dlg_only;
+		api->exec_cdr            = cdr_api_exec;
+	}
+	else {
+		api->register_cdr_engine = NULL;
+		api->get_core_cdr_attrs  = NULL;
+		api->get_extra_dlg_attrs = NULL;
+		api->exec_cdr            = NULL;
+	}
 	return 0;
 }
 
@@ -686,11 +710,80 @@ static int acc_register_engine(acc_engine_t *eng)
 }
 
 /**
+ * @brief init an acc engine
+ */
+static int cdr_init_engine(cdr_engine_t *e)
+{
+	if(cdr_module_initialized==0)
+		return 0;
+
+	if(e->cdr_init()<0)
+	{
+		LM_ERR("failed to initialize extra cdr engine\n");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * @brief init registered acc engines
+ */
+static int cdr_init_engines(void)
+{
+	cdr_engine_t *e;
+	e = _cdr_engines;
+	while(e) {
+		if(cdr_init_engine(e)<0)
+			return -1;
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
+ * @brief register an accounting engine
+ * @return 0 on success, <0 on failure
+ */
+static int cdr_register_engine(cdr_engine_t *eng)
+{
+	cdr_engine_t *e;
+
+	if(eng==NULL)
+		return -1;
+	e = (cdr_engine_t*)pkg_malloc(sizeof(cdr_engine_t));
+	if(e ==NULL)
+	{
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(e, eng, sizeof(cdr_engine_t));
+
+	if(cdr_init_engine(e)<0)
+	{
+		pkg_free(e);
+		return -1;
+	}
+
+	e->next = _cdr_engines;
+	_cdr_engines = e;
+	LM_DBG("new acc engine registered: %s\n", e->name);
+	return 0;
+}
+
+/**
  *
  */
 acc_engine_t *acc_api_get_engines(void)
 {
 	return _acc_engines;
+}
+
+/**
+ *
+ */
+cdr_engine_t *cdr_api_get_engines(void)
+{
+	return _cdr_engines;
 }
 
 /**
