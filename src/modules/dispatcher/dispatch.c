@@ -105,7 +105,8 @@ int *next_idx = NULL;
 #define _ds_list (ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
-static void ds_run_route(struct sip_msg *msg, str *uri, char *route);
+static void ds_run_route(struct sip_msg *msg, str *uri, char *route,
+		ds_rctx_t *rctx);
 
 void shuffle_uint100array(unsigned int *arr);
 int ds_reinit_rweight_on_state_change(
@@ -2484,6 +2485,7 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	sr_xavp_t *rxavp = NULL;
 	int group;
 	int ret;
+	ds_rctx_t rctx;
 
 	if(!(ds_flags & DS_FAILOVER_ON)) {
 		LM_WARN("failover support disabled\n");
@@ -2505,7 +2507,23 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	if(rxavp == NULL )
 		return -1; /* dst addr uri not available */
 
-	ret = ds_update_state(msg, group, &rxavp->val.v.s, state);
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	if(msg!=NULL) {
+		if(msg!=FAKED_REPLY) {
+			if(msg->first_line.type == SIP_REPLY) {
+				rctx.flags |= 1;
+				rctx.code = (int)msg->first_line.u.reply.statuscode;
+				rctx.reason = msg->first_line.u.reply.reason;
+			} else {
+				rctx.code = 820;
+			}
+		} else {
+			rctx.code = 810;
+		}
+	} else {
+		rctx.code = 800;
+	}
+	ret = ds_update_state(msg, group, &rxavp->val.v.s, state, &rctx);
 
 	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, rxavp->val.v.s.len,
 			rxavp->val.v.s.s);
@@ -2682,7 +2700,8 @@ int ds_get_state(int group, str *address)
 /**
  * Update destionation's state
  */
-int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
+int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
+		ds_rctx_t *rctx)
 {
 	int i = 0;
 	int old_state = 0;
@@ -2761,11 +2780,11 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			}
 
 			if(!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags)) {
-				ds_run_route(msg, address, "dispatcher:dst-down");
+				ds_run_route(msg, address, "dispatcher:dst-down", rctx);
 
 			} else {
 				if(ds_skip_dst(old_state) && !ds_skip_dst(idx->dlist[i].flags))
-					ds_run_route(msg, address, "dispatcher:dst-up");
+					ds_run_route(msg, address, "dispatcher:dst-up", rctx);
 			}
 			if(idx->dlist[i].attrs.rweight > 0)
 				ds_reinit_rweight_on_state_change(
@@ -2780,7 +2799,20 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 	return -1;
 }
 
-static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
+/**
+ *
+ */
+static ds_rctx_t *_ds_rctx = NULL;
+
+/**
+ *
+ */
+ds_rctx_t* ds_get_rctx(void)
+{
+	return _ds_rctx;
+}
+
+static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
@@ -2793,7 +2825,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 		return;
 	}
 
-	LM_DBG("ds_run_route event_route[%s]\n", route);
+	LM_DBG("executing event_route[%s]\n", route);
 
 	rt = -1;
 	if(ds_event_callback.s==NULL || ds_event_callback.len<=0) {
@@ -2824,6 +2856,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 	}
 
 	if(rt>=0 || ds_event_callback.len>0) {
+		_ds_rctx = rctx;
 		backup_rt = get_route_type();
 		set_route_type(REQUEST_ROUTE);
 		init_run_actions_ctx(&ctx);
@@ -2840,6 +2873,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 			}
 		}
 		set_route_type(backup_rt);
+		_ds_rctx = NULL;
 	}
 }
 
@@ -3132,6 +3166,7 @@ static void ds_options_callback(
 	str uri = {0, 0};
 	sip_msg_t *fmsg;
 	int state;
+	ds_rctx_t rctx;
 
 	/* The param contains the group, in which the failed host
 	 * can be found.*/
@@ -3154,8 +3189,19 @@ static void ds_options_callback(
 	uri.len = t->to.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
-	if (ds_ping_latency_stats)
+	if (ds_ping_latency_stats) {
 		ds_update_latency(group, &uri, ps->code);
+	}
+
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	rctx.code = ps->code;
+	if(ps->rpl!=NULL) {
+		if(ps->rpl!=FAKED_REPLY) {
+			rctx.flags |= 1;
+			rctx.reason = ps->rpl->first_line.u.reply.reason;
+		}
+	}
+
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
@@ -3170,7 +3216,7 @@ static void ds_options_callback(
 
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
@@ -3180,7 +3226,7 @@ static void ds_options_callback(
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
 		}

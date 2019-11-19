@@ -183,6 +183,16 @@ static void destroy(void);
 
 static int ds_warn_fixup(void** param, int param_no);
 
+static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_dsv(pv_spec_p sp, str *in);
+
+static pv_export_t mod_pvs[] = {
+	{ {"dsv", (sizeof("dsv")-1)}, PVT_OTHER, pv_get_dsv, 0,
+		pv_parse_dsv, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 static cmd_export_t cmds[]={
 	{"ds_select",    (cmd_function)w_ds_select,            2,
 		fixup_igp_igp, 0, ANY_ROUTE},
@@ -287,7 +297,7 @@ struct module_exports exports= {
 	cmds,            /* cmd (cfg function) exports */
 	params,          /* param exports */
 	0,               /* exported rpc functions */
-	0,               /* exported pseudo-variables */
+	mod_pvs,         /* exported pseudo-variables */
 	0,               /* response handling function */
 	mod_init,        /* module init function */
 	child_init,      /* per-child init function */
@@ -1158,6 +1168,74 @@ int ds_ping_check_rplcode(int code)
 void ds_ping_reply_codes_update(str *gname, str *name)
 {
 	ds_parse_reply_codes();
+}
+
+/**
+ *
+ */
+static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ds_rctx_t *rctx;
+
+	if(param==NULL) {
+		return -1;
+	}
+	rctx = ds_get_rctx();
+	if(rctx==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_sintval(msg, param, res, rctx->code);
+		case 1:
+			if(rctx->reason.s!=NULL && rctx->reason.len>0) {
+				return pv_get_strval(msg, param, res, &rctx->reason);
+			}
+			return pv_get_null(msg, param, res);
+		case 2:
+			return pv_get_sintval(msg, param, res, rctx->flags);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_dsv(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 4:
+			if(strncmp(in->s, "code", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "flags", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "reason", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV key: %.*s\n", in->len, in->s);
+	return -1;
 }
 
 /* KEMI wrappers */
