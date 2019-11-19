@@ -24,6 +24,8 @@ SQUIRREL_API SQBool sqstd_rex_getsubexp(SQRex* exp, SQInteger n, SQRexMatch *sub
 
 SQUIRREL_API SQRESULT sqstd_format(HSQUIRRELVM v,SQInteger nformatstringidx,SQInteger *outlen,SQChar **output);
 
+SQUIRREL_API void sqstd_pushstringf(HSQUIRRELVM v,const SQChar *s,...);
+
 SQUIRREL_API SQRESULT sqstd_register_stringlib(HSQUIRRELVM v);
 
 #ifdef __cplusplus

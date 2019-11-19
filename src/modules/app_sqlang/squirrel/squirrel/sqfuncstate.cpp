@@ -238,7 +238,7 @@ SQInteger SQFuncState::GetConstant(const SQObject &cons)
     return _integer(val);
 }
 
-void SQFuncState::SetIntructionParams(SQInteger pos,SQInteger arg0,SQInteger arg1,SQInteger arg2,SQInteger arg3)
+void SQFuncState::SetInstructionParams(SQInteger pos,SQInteger arg0,SQInteger arg1,SQInteger arg2,SQInteger arg3)
 {
     _instructions[pos]._arg0=(unsigned char)*((SQUnsignedInteger *)&arg0);
     _instructions[pos]._arg1=(SQInt32)*((SQUnsignedInteger *)&arg1);
@@ -246,7 +246,7 @@ void SQFuncState::SetIntructionParams(SQInteger pos,SQInteger arg0,SQInteger arg
     _instructions[pos]._arg3=(unsigned char)*((SQUnsignedInteger *)&arg3);
 }
 
-void SQFuncState::SetIntructionParam(SQInteger pos,SQInteger arg,SQInteger val)
+void SQFuncState::SetInstructionParam(SQInteger pos,SQInteger arg,SQInteger val)
 {
     switch(arg){
         case 0:_instructions[pos]._arg0=(unsigned char)*((SQUnsignedInteger *)&val);break;
@@ -481,7 +481,6 @@ void SQFuncState::AddInstruction(SQInstruction &i)
         break;
         case _OP_GET:
             if( pi.op == _OP_LOAD && pi._arg0 == i._arg2 && (!IsLocal(pi._arg0))){
-                pi._arg1 = pi._arg1;
                 pi._arg2 = (unsigned char)i._arg1;
                 pi.op = _OP_GETK;
                 pi._arg0 = i._arg0;
@@ -493,7 +492,6 @@ void SQFuncState::AddInstruction(SQInstruction &i)
             if( pi.op == _OP_LOAD  && pi._arg0 == i._arg1 && (!IsLocal(pi._arg0))){
                 pi.op = _OP_PREPCALLK;
                 pi._arg0 = i._arg0;
-                pi._arg1 = pi._arg1;
                 pi._arg2 = i._arg2;
                 pi._arg3 = i._arg3;
                 return;
@@ -511,7 +509,6 @@ void SQFuncState::AddInstruction(SQInstruction &i)
             if(aat != -1 && pi._arg0 == i._arg1 && (!IsLocal(pi._arg0))){
                 pi.op = _OP_APPENDARRAY;
                 pi._arg0 = i._arg0;
-                pi._arg1 = pi._arg1;
                 pi._arg2 = (unsigned char)aat;
                 pi._arg3 = MAX_FUNC_STACKSIZE;
                 return;
@@ -553,7 +550,6 @@ void SQFuncState::AddInstruction(SQInstruction &i)
             {
                 pi.op = i.op;
                 pi._arg0 = i._arg0;
-                pi._arg1 = pi._arg1;
                 pi._arg2 = i._arg2;
                 pi._arg3 = MAX_FUNC_STACKSIZE;
                 return;
