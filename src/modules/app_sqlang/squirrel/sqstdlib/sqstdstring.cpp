@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #define MAX_FORMAT_LEN  20
 #define MAX_WFORMAT_LEN 3
@@ -151,6 +152,25 @@ SQRESULT sqstd_format(HSQUIRRELVM v,SQInteger nformatstringidx,SQInteger *outlen
     dest[i] = '\0';
     *output = dest;
     return SQ_OK;
+}
+
+void sqstd_pushstringf(HSQUIRRELVM v,const SQChar *s,...)
+{
+    SQInteger n=256;
+    va_list args;
+begin:
+    va_start(args,s);
+    SQChar *b=sq_getscratchpad(v,n);
+    SQInteger r=scvsprintf(b,n,s,args);
+    va_end(args);
+    if (r>=n) {
+        n=r+1;//required+null
+        goto begin;
+    } else if (r<0) {
+        sq_pushnull(v);
+    } else {
+        sq_pushstring(v,b,r);
+    }
 }
 
 static SQInteger _string_printf(HSQUIRRELVM v)
