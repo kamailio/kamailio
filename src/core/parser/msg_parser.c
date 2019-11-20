@@ -749,7 +749,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 		memcpy(msg->dst_uri.s, uri->s, uri->len);
 		msg->dst_uri.len = uri->len;
 	} else {
-		ptr = (char*)pkg_malloc(uri->len);
+		ptr = (char*)pkg_malloc(uri->len + 1);
 		if (!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
@@ -759,6 +759,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 		if (msg->dst_uri.s) pkg_free(msg->dst_uri.s);
 		msg->dst_uri.s = ptr;
 		msg->dst_uri.len = uri->len;
+		msg->dst_uri.s[msg->dst_uri.len] = '\0';
 	}
 	return 0;
 }
