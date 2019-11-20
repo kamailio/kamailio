@@ -66,13 +66,14 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag
 	/* change destination so it forwards to the app server */
 	if (msg->dst_uri.s)
 		pkg_free(msg->dst_uri.s);
-	msg->dst_uri.s = pkg_malloc(m->server_name.len);
+	msg->dst_uri.s = pkg_malloc(m->server_name.len + 1);
 	if (!msg->dst_uri.s) {
 		LM_ERR("error allocating %d bytes\n", m->server_name.len);
 		return ISC_RETURN_ERROR;
 	}
 	msg->dst_uri.len = m->server_name.len;
 	memcpy(msg->dst_uri.s, m->server_name.s, m->server_name.len);
+	msg->dst_uri.s[msg->dst_uri.len] = '\0';
 
 	/* append branch if last trigger failed */
 	if (is_route_type(FAILURE_ROUTE) && !firstflag)
