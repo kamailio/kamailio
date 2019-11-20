@@ -753,13 +753,14 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d)
 
     int buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len, ci.via_host.s, dst_port);
 
-    if((m->dst_uri.s = pkg_malloc(buf_len)) == NULL) {
+    if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
         LM_ERR("Error allocating memory for dst_uri\n");
         goto cleanup;
     }
 
     memcpy(m->dst_uri.s, buf, buf_len);
     m->dst_uri.len = buf_len;
+    m->dst_uri.s[m->dst_uri.len] = '\0';
 
     // Set send socket
     struct socket_info * client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6, src_port, dst_proto);
