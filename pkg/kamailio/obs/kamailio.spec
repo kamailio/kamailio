@@ -1212,10 +1212,6 @@ UUID module for Kamailio.
 %prep
 %setup -n %{name}-%{ver}
 
-%if "%{__python2}" != ""
-    sed -i -e 's:#!/usr/bin/python:#!%{__python2}:' utils/kamctl/dbtextdb/dbtextdb.py
-%endif
-
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
