@@ -196,7 +196,7 @@ mod_list_cnxcc=cnxcc
 mod_list_erlang=erlang
 
 # - modules depending on systemd library
-mod_list_systemd=log_systemd
+mod_list_systemd=log_systemd systemdops
 
 # - modules depending on libnsq (+libev libevbuffsock liblcurl libjson-c) library
 mod_list_nsq=nsq
@@ -247,6 +247,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
 			   $(mod_list_phonenum) \
 			   $(mod_list_kafka) \
+			   $(mod_list_systemdops) \
 			   $(mod_list_rtp_media_server)
 
 
