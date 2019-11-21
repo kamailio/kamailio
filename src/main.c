@@ -684,6 +684,8 @@ static void sig_alarm_abort(int signo)
 
 static void shutdown_children(int sig, int show_status)
 {
+	sr_corecb_void_exec(app_shutdown);
+
 	kill_all_children(sig);
 	if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
 		LM_ERR("could not install SIGALARM handler\n");
@@ -1788,6 +1790,7 @@ int main_loop(void)
 		cfg_ok=1;
 
 		*_sr_instance_started = 1;
+		sr_corecb_void_exec(app_ready);
 
 #ifdef EXTRA_DEBUG
 		for (r=0; r<*process_count; r++){
