@@ -1222,7 +1222,7 @@ static int pv_parse_dsv(pv_spec_p sp, str *in)
 		break;
 		case 6:
 			if(strncmp(in->s, "reason", 6)==0)
-				sp->pvp.pvn.u.isname.name.n = 2;
+				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
 		default:
