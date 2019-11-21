@@ -79,4 +79,20 @@ int sr_event_enabled(int type);
 void sr_core_ert_init(void);
 void sr_core_ert_run(sip_msg_t *msg, int e);
 
+typedef void (*sr_corecb_void_f)(void);
+typedef struct sr_corecb {
+	sr_corecb_void_f app_ready;
+	sr_corecb_void_f app_shutdown;
+} sr_corecb_t;
+
+sr_corecb_t *sr_corecb_get(void);
+
+#define sr_corecb_void_exec(fname) \
+	do { \
+		sr_corecb_t *__cbp = sr_corecb_get(); \
+		if(__cbp && __cbp->fname) { \
+			__cbp->fname(); \
+		} \
+	} while(0);
+
 #endif
