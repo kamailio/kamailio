@@ -374,15 +374,19 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 					goto error03;
 				}
 			}
+			/* run the specific callbacks for this transaction */
+			if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
+				run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
+						-i_req->REQ_METHOD);
+
 			tm_ctx_set_branch_index(T_BR_UNDEFINED);
 			set_route_type(backup_route_type);
+		} else {
+			/* run the specific callbacks for this transaction */
+			if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
+				run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
+						-i_req->REQ_METHOD);
 		}
-
-		/* run the specific callbacks for this transaction */
-		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
-			run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
-					-i_req->REQ_METHOD);
-
 		if (likely( !(flags & UAC_DNS_FAILOVER_F) && i_req->dst_uri.s &&
 					i_req->dst_uri.len)){
 			/* no dns failover and non-empty dst_uri => use it as dst
