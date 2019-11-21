@@ -823,9 +823,9 @@ if(is_rfc1918("$rd")) {
 		</programlisting>
 		</example>
 	</section>
-		<section id="nathelper.set_alias_to_avp">
+		<section id="nathelper.set_alias_to_pv">
 		<title>
-		<function moreinfo="none">set_alias_to_avp(target_avp)</function>
+		<function moreinfo="none">set_alias_to_pv(target_avp)</function>
 		</title>
 		<para>
 		Reads <quote>;alias=ip~port~transport</quote> from Contact header then
@@ -836,10 +836,10 @@ if(is_rfc1918("$rd")) {
 		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>set_alias_to_avp</function> usage</title>
+		<title><function>set_alias_to_pv</function> usage</title>
 		<programlisting format="linespecific">
 ...
-		set_alias_to_avp("$avp(aliasuri)");
+		set_alias_to_pv("$avp(aliasuri)");
 ...
 		</programlisting>
 		</example>
