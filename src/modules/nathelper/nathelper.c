@@ -125,8 +125,8 @@ static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
 static int test_sdp_cline(struct sip_msg *msg);
 
-static int w_set_alias_to_avp(struct sip_msg *msg, char *uri_avp, char *hollow);
-static int ki_set_alias_to_avp(struct sip_msg *msg, str *uri_avp);
+static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow);
+static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp);
 static int alias_to_uri(str *contact_header, str *alias_uri);
 static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp);
 
@@ -228,7 +228,7 @@ static cmd_export_t cmds[] = {
 	{"is_rfc1918",         (cmd_function)is_rfc1918_f,           1,
 		fixup_spve_null, 0,
 		ANY_ROUTE },
-		{"set_alias_to_avp",   (cmd_function)w_set_alias_to_avp,     1,
+		{"set_alias_to_pv",   (cmd_function)w_set_alias_to_pv,     1,
 		0, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -2453,14 +2453,14 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 	return 0;
 }
 /*!
-* @function w_set_alias_to_avp
+* @function w_set_alias_to_pv
 * @abstract wrapper of set_alias_to_avp_f
 * @param msg sip message
 * @param uri_avp given avp name
 *
 * @result 1 successful  , -1 fail
 */
-static int w_set_alias_to_avp(struct sip_msg *msg, char *uri_avp, char *hollow){
+static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow){
 	str dest_avp={0,0};
 
 	if(!uri_avp)
@@ -2469,11 +2469,11 @@ static int w_set_alias_to_avp(struct sip_msg *msg, char *uri_avp, char *hollow){
 	dest_avp.s=uri_avp;
 	dest_avp.len=strlen(dest_avp.s);
 
-	return ki_set_alias_to_avp(msg,&dest_avp);
+	return ki_set_alias_to_pv(msg,&dest_avp);
 }
 
 /*!
-* @function ki_set_alias_to_avp
+* @function ki_set_alias_to_pv
 * @abstract reads from  msg then write to given avp uri_avp as sip uri
 *
 * @param msg sip message
@@ -2481,7 +2481,7 @@ static int w_set_alias_to_avp(struct sip_msg *msg, char *uri_avp, char *hollow){
 *
 * @result 1 successful  , -1 fail
 */
-static int ki_set_alias_to_avp(struct sip_msg *msg, str *uri_avp){
+static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp){
 	str contact;
 	str alias_uri={0,0};
 
@@ -2701,7 +2701,7 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("nathelper"), str_init("set_alias_to_avp"),
-		SR_KEMIP_INT, ki_set_alias_to_avp,
+		SR_KEMIP_INT, ki_set_alias_to_pv,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
