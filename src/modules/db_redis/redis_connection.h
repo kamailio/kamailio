@@ -66,6 +66,7 @@ typedef struct km_redis_con {
     redis_command_t *command_queue;
     unsigned int append_counter;
     struct str_hash_table tables;
+    char srem_key_lua[41]; // sha-1 hex string
 } km_redis_con_t;
 
 

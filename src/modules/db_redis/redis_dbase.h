@@ -25,6 +25,9 @@
 
 #include "db_redis_mod.h"
 
+#define SREM_KEY_LUA "redis.call('SREM', KEYS[1], KEYS[3]); if redis.call('SCARD', KEYS[1]) == 0 then redis.call('SREM', KEYS[2], KEYS[1]) end"
+
+
 /*
  * Initialize database connection
  */

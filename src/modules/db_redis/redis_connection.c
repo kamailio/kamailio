@@ -23,6 +23,7 @@
 #include "db_redis_mod.h"
 #include "redis_connection.h"
 #include "redis_table.h"
+#include "redis_dbase.h"
 
 extern int db_redis_verbosity;
 
@@ -167,6 +168,31 @@ int db_redis_connect(km_redis_con_t *con) {
                 con->id->url.len, con->id->url.s, reply->str);
         goto err;
     }
+    freeReplyObject(reply); reply = NULL;
+    LM_DBG("connection opened to %.*s\n", con->id->url.len, con->id->url.s);
+
+    reply = redisCommand(con->con, "SCRIPT LOAD %s", SREM_KEY_LUA);
+    if (!reply) {
+        LM_ERR("failed to load LUA script to server %.*s: %s\n",
+                con->id->url.len, con->id->url.s, con->con->errstr);
+        goto err;
+    }
+    if (reply->type == REDIS_REPLY_ERROR) {
+        LM_ERR("failed to load LUA script to server %.*s: %s\n",
+                con->id->url.len, con->id->url.s, reply->str);
+        goto err;
+    }
+    if (reply->type != REDIS_REPLY_STRING) {
+        LM_ERR("failed to load LUA script to server %.*s: %i\n",
+                con->id->url.len, con->id->url.s, reply->type);
+        goto err;
+    }
+    if (reply->len >= sizeof(con->srem_key_lua)) {
+        LM_ERR("failed to load LUA script to server %.*s: %i >= %i\n",
+                con->id->url.len, con->id->url.s, (int) reply->len, (int) sizeof(con->srem_key_lua));
+        goto err;
+    }
+    strcpy(con->srem_key_lua, reply->str);
     freeReplyObject(reply); reply = NULL;
     LM_DBG("connection opened to %.*s\n", con->id->url.len, con->id->url.s);
 
