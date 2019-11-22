@@ -193,6 +193,7 @@ Options:\n\
                   -l udp:127.0.0.1:5080/1.2.3.4:5060,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
+    --loadmodule=name load the module specified by name\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
@@ -1922,6 +1923,7 @@ int main(int argc, char** argv)
 		{"substdef",    required_argument, 0, KARGOPTVAL + 2},
 		{"substdefs",   required_argument, 0, KARGOPTVAL + 3},
 		{"server-id",   required_argument, 0, KARGOPTVAL + 4},
+		{"loadmodule",  required_argument, 0, KARGOPTVAL + 5},
 		{0, 0, 0, 0 }
 	};
 
@@ -2137,6 +2139,7 @@ int main(int argc, char** argv)
 			case 'a':
 			case 's':
 			case 'Y':
+			case KARGOPTVAL+5:
 					break;
 
 			/* long options */
@@ -2223,6 +2226,23 @@ int main(int argc, char** argv)
 
 	/* Fix the value of cfg_file variable.*/
 	if (fix_cfg_file() < 0) goto error;
+
+	/* process command line parameters that require initialized basic environment */
+	optind = 1;  /* reset getopt index */
+	option_index = 0;
+	/* switches required before config parsing and processing */
+	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
+		switch(c) {
+			case KARGOPTVAL+5:
+					if (load_module(optarg)!=0) {
+						LM_ERR("failed to load the module: %s\n", optarg);
+						goto error;
+					}
+					break;
+			default:
+					break;
+		}
+	}
 
 	/* load config file or die */
 	if (cfg_file[0] == '-' && strlen(cfg_file)==1) {
