@@ -389,9 +389,13 @@ Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
+%if 0%{?rhel} != 6
+Requires:  systemd
+BuildRequires:  systemd-devel
+%endif
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
-BuildRequires:  systemd, shadow
+BuildRequires:  shadow
 %endif
 
 
@@ -1294,7 +1298,11 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with sctp}
     ksctp \
 %endif
-    ksnmpstats ksqlite ktls kunixodbc kutils \
+    ksnmpstats ksqlite \
+%if "%{?_unitdir}" != ""
+    ksystemd \
+%endif
+    ktls kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -1378,7 +1386,11 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with sctp}
     ksctp \
 %endif
-    ksnmpstats ksqlite ktls kunixodbc kutils \
+    ksnmpstats ksqlite \
+%if "%{?_unitdir}" != ""
+    ksystemd \
+%endif
+    ktls kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -1598,6 +1610,10 @@ fi
 %doc %{_docdir}/kamailio/modules/README.statsc
 %doc %{_docdir}/kamailio/modules/README.topos
 %doc %{_docdir}/kamailio/modules/README.cfgt
+%if "%{?_unitdir}" != ""
+%doc %{_docdir}/kamailio/modules/README.log_systemd
+%doc %{_docdir}/kamailio/modules/README.systemdops
+%endif
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
@@ -1751,6 +1767,10 @@ fi
 %{_libdir}/kamailio/modules/statsc.so
 %{_libdir}/kamailio/modules/topos.so
 %{_libdir}/kamailio/modules/cfgt.so
+%if "%{?_unitdir}" != ""
+%{_libdir}/kamailio/modules/log_systemd.so
+%{_libdir}/kamailio/modules/systemdops.so
+%endif
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
