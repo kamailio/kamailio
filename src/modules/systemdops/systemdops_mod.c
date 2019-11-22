@@ -68,5 +68,11 @@ void ksr_sd_app_shutdown(void)
  */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	sr_corecb_t *cbp = sr_corecb_get();
+	if(cbp) {
+		return -1;
+	}
+	cbp->app_ready = ksr_sd_app_ready;
+	cbp->app_shutdown = ksr_sd_app_shutdown;
 	return 0;
 }
