@@ -46,6 +46,7 @@ enum rtpe_operation {
         OP_STOP_FORWARDING,
         OP_PLAY_MEDIA,
         OP_STOP_MEDIA,
+        OP_PLAY_DTMF,
 
         OP_ANY,
 };

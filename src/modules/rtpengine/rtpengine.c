@@ -138,6 +138,7 @@ static const char *command_strings[] = {
 	[OP_STOP_FORWARDING]	= "stop forwarding",
 	[OP_PLAY_MEDIA]		= "play media",
 	[OP_STOP_MEDIA]		= "stop media",
+	[OP_PLAY_DTMF]		= "play DTMF",
 };
 
 struct minmax_mos_stats {
@@ -197,6 +198,7 @@ static int start_forwarding_f(struct sip_msg *, char *, char *);
 static int stop_forwarding_f(struct sip_msg *, char *, char *);
 static int play_media_f(struct sip_msg *, char *, char *);
 static int stop_media_f(struct sip_msg *, char *, char *);
+static int play_dtmf_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -375,6 +377,9 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"stop_media",		(cmd_function)stop_media_f, 		0,
 		0, 0,
+		ANY_ROUTE},
+	{"play_dtmf",		(cmd_function)play_dtmf_f, 		1,
+		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
@@ -3837,6 +3842,12 @@ static int
 stop_media_f(struct sip_msg* msg, char *str1, char *str2)
 {
 	return rtpengine_generic_f(msg, str1, OP_STOP_MEDIA);
+}
+
+static int
+play_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_generic_f(msg, str1, OP_PLAY_DTMF);
 }
 
 static int
