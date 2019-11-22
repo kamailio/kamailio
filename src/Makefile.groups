@@ -247,7 +247,6 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
 			   $(mod_list_phonenum) \
 			   $(mod_list_kafka) \
-			   $(mod_list_systemdops) \
 			   $(mod_list_rtp_media_server)
 
 
