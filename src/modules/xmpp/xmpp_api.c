@@ -43,7 +43,7 @@ int init_xmpp_cb_list(void)
 {
 	_xmpp_cb_list = (xmpp_cb_list_t*)shm_malloc(sizeof(xmpp_cb_list_t));
 	if (_xmpp_cb_list==0) {
-		LM_CRIT("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_xmpp_cb_list, 0, sizeof(xmpp_cb_list_t));
@@ -91,7 +91,7 @@ int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
 	/* build callback structure */
 	if (!(it=(xmpp_callback_t*)shm_malloc(sizeof(xmpp_callback_t))))
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 
