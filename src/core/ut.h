@@ -691,7 +691,7 @@ static inline int str2sint(str* _s, int* _r)
 
 
 /**
- * \brief Make a copy of a str structure using shm_malloc
+ * \brief Make a copy of a str structure to a str using shm_malloc
  * \param dst destination
  * \param src source
  * \return 0 on success, -1 on failure
@@ -736,6 +736,58 @@ static inline int shm_str_dup(str* dst, const str* src)
 	return 0;
 }
 
+/**
+ * \brief Make a copy of a char pointer to a char pointer using shm_malloc
+ * \param src source
+ * \return a pointer to the new allocated char on success, 0 on failure
+ */
+static inline char* shm_char_dup(const char *src)
+{
+	char *rval;
+	int len;
+
+	if (!src) {
+		LM_ERR("NULL src or dst\n");
+		return NULL;
+	}
+
+	len = strlen(src) + 1;
+	rval = shm_malloc(len);
+	if (!rval) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+
+	memcpy(rval, src, len);
+
+	return rval;
+}
+
+
+/**
+ * \brief Make a copy from str structure to a char pointer using shm_malloc
+ * \param src source
+ * \return a pointer to the new allocated char on success, 0 on failure
+ */
+static inline char* shm_str2char_dup(str *src)
+{
+	char *res;
+
+	if (!src || !src->s) {
+		LM_ERR("NULL src\n");
+		return NULL;
+	}
+
+	if (!(res = (char *) shm_malloc(src->len + 1))) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+
+	strncpy(res, src->s, src->len);
+	res[src->len] = 0;
+
+	return res;
+}
 
 
 /**
