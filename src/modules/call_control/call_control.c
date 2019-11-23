@@ -40,6 +40,7 @@
 #include "../../core/str.h"
 #include "../../core/pvar.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/script_cb.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_from.h"
@@ -348,41 +349,6 @@ parse_param_stop(unsigned int type, void *val) {
     if (cc_parse_param(val, &cc_stop_avps) == -1)
         return E_CFG;
     return 0;
-}
-
-
-// Functions dealing with strings
-//
-
-// returns string with whitespace trimmed from left end
-static inline void
-ltrim(str *string)
-{
-    while (string->len>0 && isspace((int)*(string->s))) {
-        string->len--;
-        string->s++;
-    }
-}
-
-// returns string with whitespace trimmed from right end
-static inline void
-rtrim(str *string)
-{
-    char *ptr;
-
-    ptr = string->s + string->len - 1;
-    while (string->len>0 && (*ptr==0 || isspace((int)*ptr))) {
-        string->len--;
-        ptr--;
-    }
-}
-
-// returns string with whitespace trimmed from both ends
-static inline void
-trim(str *string)
-{
-    ltrim(string);
-    rtrim(string);
 }
 
 
