@@ -730,34 +730,6 @@ static bool Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
 // Miscellaneous helper functions
 //
 
-// returns str with leading whitespace removed
-static INLINE void ltrim(str *string)
-{
-	while(string->len > 0 && isspace((int)*(string->s))) {
-		string->len--;
-		string->s++;
-	}
-}
-
-// returns str with trailing whitespace removed
-static INLINE void rtrim(str *string)
-{
-	char *ptr;
-
-	ptr = string->s + string->len - 1;
-	while(string->len > 0 && (*ptr == 0 || isspace((int)*ptr))) {
-		string->len--;
-		ptr--;
-	}
-}
-
-// returns str with leading and trailing whitespace removed
-static INLINE void trim(str *string)
-{
-	ltrim(string);
-	rtrim(string);
-}
-
 static bool get_contact_uri(
 		struct sip_msg *msg, struct sip_uri *uri, contact_t **_c)
 {
