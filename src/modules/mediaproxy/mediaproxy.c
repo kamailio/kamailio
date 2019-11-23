@@ -41,6 +41,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -289,33 +290,6 @@ static void *strcasefind(
 	return NULL;
 }
 
-// returns string with whitespace trimmed from left end
-static INLINE void ltrim(str *string)
-{
-	while(string->len > 0 && isspace((int)*(string->s))) {
-		string->len--;
-		string->s++;
-	}
-}
-
-// returns string with whitespace trimmed from right end
-static INLINE void rtrim(str *string)
-{
-	char *ptr;
-
-	ptr = string->s + string->len - 1;
-	while(string->len > 0 && (*ptr == 0 || isspace((int)*ptr))) {
-		string->len--;
-		ptr--;
-	}
-}
-
-// returns string with whitespace trimmed from both ends
-static INLINE void trim(str *string)
-{
-	ltrim(string);
-	rtrim(string);
-}
 
 // returns a pointer to first CR or LF char found or the end of string
 static char *findendline(char *string, int len)
