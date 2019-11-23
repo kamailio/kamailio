@@ -352,16 +352,9 @@ static void *curl_shm_calloc(size_t nmemb, size_t size)
 
 static char *curl_shm_strdup(const char *cp)
 {
-    char *rval;
-    int len;
+    char *p = shm_char_dup(cp);
 
-    len = strlen(cp) + 1;
-    rval = shm_malloc(len);
-    if (!rval)
-        return NULL;
-
-    memcpy(rval, cp, len);
-    return rval;
+    return p;
 }
 
 void set_curl_mem_callbacks(void)
