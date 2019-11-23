@@ -625,7 +625,7 @@ static SQInteger __map_array(SQArray *dest,SQArray *src,HSQUIRRELVM v) {
     SQObject &closure = stack_get(v, 2);
     v->Push(closure);
 
-    SQInteger nArgs;
+    SQInteger nArgs = 0;
     if(sq_type(closure) == OT_CLOSURE) {
         nArgs = _closure(closure)->_function->_nparameters;
     }
