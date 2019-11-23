@@ -94,34 +94,14 @@ extern const str null_str;
 static inline str pkg_strdup(str src)
 {
 	str res;
-
-	if (!src.s) {
-		res.s = NULL;
-		res.len = 0;
-	} else if (!(res.s = (char *) pkg_malloc(src.len + 1))) {
-		res.len = 0;
-	} else {
-		strncpy(res.s, src.s, src.len);
-		res.s[src.len] = 0;
-		res.len = src.len;
-	}
+	pkg_str_dup(&src, &res);
 	return res;
 }
 
 static inline str shm_strdup(str src)
 {
 	str res;
-
-	if (!src.s) {
-		res.s = NULL;
-		res.len = 0;
-	} else if (!(res.s = (char *) shm_malloc(src.len + 1))) {
-		res.len = 0;
-	} else {
-		strncpy(res.s, src.s, src.len);
-		res.s[src.len] = 0;
-		res.len = src.len;
-	}
+	shm_str_dup(&src, &res);
 	return res;
 }
 
