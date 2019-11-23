@@ -732,6 +732,8 @@ static int kfk_topic_exist(str *topic_name)
 {
 	/* Where to receive metadata. */
 	const struct rd_kafka_metadata *metadatap = NULL;
+	int i;
+	int topic_found = 0; /* Topic not found by default. */
 
 	if (!topic_name || topic_name->len == 0 || topic_name->s == NULL) {
 		LM_ERR("Bad topic name\n");
@@ -747,9 +749,7 @@ static int kfk_topic_exist(str *topic_name)
 	}
 
 	/* List topics */
-	int topic_found = 0; /* Topic not found by default. */
-
-	for (int i=0; i<metadatap->topic_cnt; i++) {
+	for (i=0; i<metadatap->topic_cnt; i++) {
 		rd_kafka_metadata_topic_t *t = &metadatap->topics[i];
 		if (t->topic) {
 			LM_DBG("Metadata Topic: %s\n", t->topic);
