@@ -51,6 +51,7 @@
 #include "../../core/lock_ops.h"
 #include "../../core/dprint.h"
 #include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../core/pvar.h"
 #include "../../core/error.h"
 #include "../../core/timer.h"
@@ -212,8 +213,6 @@ static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2);
 static bool test_private_contact(struct sip_msg *msg);
 static bool test_source_address(struct sip_msg *msg);
 static bool test_private_via(struct sip_msg *msg);
-
-static INLINE char *shm_strdup(char *source);
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -436,7 +435,7 @@ static NAT_Contact *NAT_Contact_new(char *uri, struct socket_info *socket)
 	}
 	memset(contact, 0, sizeof(NAT_Contact));
 
-	contact->uri = shm_strdup(uri);
+	contact->uri = shm_char_dup(uri);
 	if(!contact->uri) {
 		LM_ERR("out of memory while creating new NAT_Contact structure\n");
 		shm_free(contact);
@@ -714,7 +713,7 @@ static bool Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
 		param->callee_candidates.size = new_size;
 	}
 
-	new_candidate = shm_strdup(candidate);
+	new_candidate = shm_char_dup(candidate);
 	if(!new_candidate) {
 		LM_ERR("cannot allocate shared memory for new candidate uri\n");
 		return false;
@@ -758,23 +757,6 @@ static INLINE void trim(str *string)
 	ltrim(string);
 	rtrim(string);
 }
-
-
-static INLINE char *shm_strdup(char *source)
-{
-	char *copy;
-
-	if(!source)
-		return NULL;
-
-	copy = (char *)shm_malloc(strlen(source) + 1);
-	if(!copy)
-		return NULL;
-	strcpy(copy, source);
-
-	return copy;
-}
-
 
 static bool get_contact_uri(
 		struct sip_msg *msg, struct sip_uri *uri, contact_t **_c)
@@ -1142,7 +1124,7 @@ static void __dialog_confirmed(
 		// free old uri in case this callback is called more than once (shouldn't normally happen)
 		if(param->callee_uri)
 			shm_free(param->callee_uri);
-		param->callee_uri = shm_strdup(callee_uri);
+		param->callee_uri = shm_char_dup(callee_uri);
 		if(!param->callee_uri) {
 			LM_ERR("cannot allocate shared memory for callee_uri in dialog "
 				   "param\n");
@@ -1277,7 +1259,7 @@ static void __dialog_created(
 		return;
 
 	uri = get_source_uri(request);
-	param->caller_uri = shm_strdup(uri);
+	param->caller_uri = shm_char_dup(uri);
 	if(!param->caller_uri) {
 		LM_ERR("cannot allocate shared memory for caller_uri in dialog "
 			   "param\n");
