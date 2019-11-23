@@ -923,6 +923,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
     char *match = NULL;
     int ret;
     redisReply *reply = NULL;
+    int i, j;
 
     *query_keys = NULL;
     *query_keys_count = 0;
@@ -992,7 +993,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
         memcpy(match, ts_scan_key->s, scan_offset);
 
         // append a number of ?. minimum string length is 10 digits
-        for (int i = 0; i < scan_length - 1; i++) {
+        for (i = 0; i < scan_length - 1; i++) {
             int len = scan_offset + i;
             char match_char = ts_scan_key->s[len];
             // skip non-numbers
@@ -1020,7 +1021,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
         }
     }
 
-    for (int i = 0; i < scan_length; i++) {
+    for (i = 0; i < scan_length; i++) {
         int len = scan_offset + i;
         char match_char = ts_scan_key->s[len];
         // skip non-numbers
@@ -1042,7 +1043,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
         else
             len += sprintf(match + len, "[%c-9]", match_char + 1);
         // finish with trailing ?s
-	for (int j = i + 1; j < scan_length; j++) {
+	for (j = i + 1; j < scan_length; j++) {
             match_char = ts_scan_key->s[scan_offset + j];
             // skip non-numbers
             if (match_char < '0' || match_char > '9') {
@@ -1108,7 +1109,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 
         LM_DBG("adding %i keys returned from set", (int) reply->elements);
 
-        for (int i = 0; i < reply->elements; i++) {
+        for (i = 0; i < reply->elements; i++) {
             if (reply->element[i]->type != REDIS_REPLY_STRING) {
                 LM_ERR("Unexpected entry key type in type query, expecting a string\n");
                 goto out;
