@@ -38,7 +38,7 @@ static void db_redis_dump_reply(redisReply *reply) {
     } else if (reply->type == REDIS_REPLY_NIL) {
         LM_DBG("<null>\n");
     } else if (reply->type == REDIS_REPLY_ARRAY) {
-        LM_DBG("printing %lu elements in array reply\n", reply->elements);
+        LM_DBG("printing %lu elements in array reply\n", (unsigned long) reply->elements);
         for(i = 0; i < reply->elements; ++i) {
             db_redis_dump_reply(reply->element[i]);
         }
@@ -850,12 +850,12 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con, const str *matc
             redisReply *key = keys_list->element[j];
             if (!key) {
                 LM_ERR("Invalid null key at cursor result index %lu while scanning table '%.*s'\n",
-                        j, match_pattern->len, match_pattern->s);
+                        (unsigned long) j, match_pattern->len, match_pattern->s);
                 goto err;
             }
             if (key->type != REDIS_REPLY_STRING) {
                 LM_ERR("Invalid key type at cursor result index %lu while scanning table '%.*s', expected string\n",
-                        j, match_pattern->len, match_pattern->s);
+                        (unsigned long) j, match_pattern->len, match_pattern->s);
                 goto err;
             }
             if (db_redis_key_prepend_string(query_keys, key->str, strlen(key->str)) != 0) {
@@ -897,7 +897,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con, const str *matc
         db_redis_free_reply(&reply);
     }
 
-    LM_DBG("got %lu entries by scan\n", i);
+    LM_DBG("got %lu entries by scan\n", (unsigned long) i);
     return 0;
 
 err:
@@ -1364,7 +1364,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
             LM_DBG("manually filtering key '%.*s'\n",
                     k->len, k->s);
             if (db_redis_compare_column(k, &v, o, reply->element[col]) != 0) {
-                LM_DBG("column %lu does not match, ignore row\n", col);
+                LM_DBG("column %lu does not match, ignore row\n", (unsigned long) col);
                 return 0;
             }
         }
@@ -1380,7 +1380,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
 
     if (reply->elements - manual_keys_count > RES_COL_N(_r)) {
         LM_ERR("Invalid number of columns at row %d/%d, expecting %d, got %lu\n",
-                RES_NUM_ROWS(_r), RES_ROW_N(_r), RES_COL_N(_r), reply->elements - manual_keys_count);
+                RES_NUM_ROWS(_r), RES_ROW_N(_r), RES_COL_N(_r), (unsigned long) reply->elements - manual_keys_count);
         return -1;
     }
     for (col = manual_keys_count; col < reply->elements; ++col) {
@@ -1390,7 +1390,7 @@ static int db_redis_convert_row(km_redis_con_t *con, db1_res_t* _r, const db_key
         redisReply *col_val = reply->element[redisidx];
         str *col_name = _c[colidx];
 
-        LM_DBG("converting column #%lu of row #%d", colidx, RES_ROW_N(_r));
+        LM_DBG("converting column #%lu of row #%d", (unsigned long) colidx, RES_ROW_N(_r));
 
         if (col_val->type != REDIS_REPLY_STRING &&
             col_val->type != REDIS_REPLY_NIL) {
@@ -1736,7 +1736,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
                 LM_DBG("manually filtering key '%.*s'\n",
                         k->len, k->s);
                 if (db_redis_compare_column(k, &v, o, reply->element[col]) != 0) {
-                    LM_DBG("column %lu does not match, ignore row\n", col);
+                    LM_DBG("column %lu does not match, ignore row\n", (unsigned long) col);
                     row_match = 0;
                     break;
                 }
@@ -2043,7 +2043,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
                 LM_DBG("manually filtering key '%.*s'\n",
                         k->len, k->s);
                 if (db_redis_compare_column(k, &v, o, reply->element[col]) != 0) {
-                    LM_DBG("column %lu does not match, ignore row\n", col);
+                    LM_DBG("column %lu does not match, ignore row\n", (unsigned long) col);
                     row_match = 0;
                     break;
                 }
