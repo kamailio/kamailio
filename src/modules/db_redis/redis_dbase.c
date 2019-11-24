@@ -923,6 +923,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
     char *match = NULL;
     int ret;
     redisReply *reply = NULL;
+    redis_key_t *set_key = NULL;
     int i, j;
 
     *query_keys = NULL;
@@ -1083,7 +1084,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 
     ret = -1;
 
-    for (redis_key_t *set_key = set_keys; set_key; set_key = set_key->next) {
+    for (set_key = set_keys; set_key; set_key = set_key->next) {
         LM_DBG("pulling set members from key '%.*s'\n", set_key->key.len, set_key->key.s);
 
         redis_key_t *query_v = NULL;
