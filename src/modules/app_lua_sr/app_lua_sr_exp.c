@@ -655,7 +655,7 @@ static int lua_sr_tm_t_on_branch_failure(lua_State *L)
 		}
 		rt_name.len = rt_name_len;
 	}
-	sprintf(rt_name.s, "%s:%s", BRANCH_FAILURE_ROUTE_PREFIX, name);
+	snprintf(rt_name.s, rt_name_len+1, "%s:%s", BRANCH_FAILURE_ROUTE_PREFIX, name);
 
 	i = route_get(&event_rt, rt_name.s);
 	if(i < 0 || event_rt.rlist[i]==0)
