@@ -273,6 +273,9 @@ static inline int t_run_local_req(
 	tm_global_ctx_id.msgid=lreq.id;
 	tm_global_ctx_id.pid=lreq.pid;
 	set_t(new_cell, T_BR_UNDEFINED);
+  
+	init_run_actions_ctx(&ra_ctx);
+	
 	if(goto_on_local_req>=0) {
 		run_top_route(event_rt.rlist[goto_on_local_req], &lreq, &ra_ctx);
 	} else {
