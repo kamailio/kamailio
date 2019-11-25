@@ -237,6 +237,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				struct cseq_body *cseqb;
 				char *tmp2;
 				int len;
+				int tsize;
 
 				if ((hf = (hdr_field_t*) pkg_malloc(sizeof(struct hdr_field))) == NULL)
 				{
@@ -251,8 +252,9 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 					goto event_route_error;
 				}
 
-				if ((tmp = (char *) pkg_malloc(sizeof(char)
-						* (msg->first_line.u.request.method.len + 5))) == NULL)
+				tsize = sizeof(char)
+						* (msg->first_line.u.request.method.len + 5);
+				if ((tmp = (char *) pkg_malloc(tsize)) == NULL)
 				{
 					LM_ERR("out of package memory\n");
 					pkg_free(cseqb);
@@ -263,9 +265,16 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				memset(hf, 0, sizeof(struct hdr_field));
 				memset(cseqb, 0, sizeof(struct cseq_body));
 
-				len = sprintf(tmp, "0 %.*s\r\n",
+				len = snprintf(tmp, tsize, "0 %.*s\r\n",
 						msg->first_line.u.request.method.len,
 						msg->first_line.u.request.method.s);
+				if(len<0 || len>tsize) {
+					LM_ERR("failed to print the tmp cseq\n");
+					pkg_free(tmp);
+					pkg_free(cseqb);
+					pkg_free(hf);
+					goto event_route_error;
+				}
 				tmp2 = parse_cseq(tmp, &tmp[len], cseqb);
 
 				hf->type = HDR_CSEQ_T;
