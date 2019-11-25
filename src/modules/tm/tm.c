@@ -538,21 +538,27 @@ static int fixup_on_failure(void** param, int param_no)
 static int fixup_on_branch_failure(void** param, int param_no)
 {
 	char *full_route_name = NULL;
-	int len;
+	int blen =0;
+	int bsize = 0;
 	int ret = 0;
-	if (param_no==1){
-		if((len = strlen((char*)*param))<=1
-				&& (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
+	if (param_no==1) {
+		bsize = strlen((char*)*param);
+		if((bsize <=1) && (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
 			*param = (void*)0;
 			return 0;
 		}
-		len += strlen(BRANCH_FAILURE_ROUTE_PREFIX) + 1;
-		if ((full_route_name = pkg_malloc(len+1)) == NULL)
-		{
+		bsize += strlen(BRANCH_FAILURE_ROUTE_PREFIX) + 2;
+		if ((full_route_name = pkg_malloc(bsize)) == NULL) {
 			LM_ERR("No memory left in branch_failure fixup\n");
 			return -1;
 		}
-		sprintf(full_route_name, "%s:%s", BRANCH_FAILURE_ROUTE_PREFIX, (char*)*param);
+		blen = snprintf(full_route_name, bsize, "%s:%s",
+					BRANCH_FAILURE_ROUTE_PREFIX, (char*)*param);
+		if(blen<0 || blen>=bsize) {
+			LM_ERR("Failure to construct route block name\n");
+			pkg_free(full_route_name);
+			return -1;
+		}
 		*param=(void*)full_route_name;
 		ret = fixup_routes("t_on_branch_failure", &event_rt, param);
 		pkg_free(full_route_name);
