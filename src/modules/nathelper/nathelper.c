@@ -2544,7 +2544,7 @@ static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	memset(&valx, 0, sizeof(pv_value_t));
 
 	if(!data->s){
-		LM_ERR("There isn't any data to write to avp\n");
+		LM_ERR("There isn't any data to write to the destination\n");
 		return -1;
 	}
 
