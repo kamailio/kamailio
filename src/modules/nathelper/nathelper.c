@@ -2581,7 +2581,7 @@ static int alias_to_uri(str *contact_header, str *alias_uri){
 			i=i+SALIAS_LEN;
 			host.s = &contact_header->s[i];
 			memchr_pointer = memchr(host.s , 126 /* ~ */,contact_header->len-i);
-				if(memchr_pointer == NULL || memchr_pointer == 0) {
+				if(memchr_pointer == NULL) {
 					LM_ERR("No alias parameter found for host\n");
 					return -1;
 				} else {
