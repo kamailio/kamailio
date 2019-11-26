@@ -1095,11 +1095,15 @@ static int db_redis_perform_query(const db1_con_t* _h, km_redis_con_t *con, cons
     RES_COL_N(*_r) = _nc;
 
     if (!(*keys_count) && do_table_scan) {
-        LM_WARN("performing full table scan on table '%.*s' while performing query\n",
+        if(_n > 0) {
+            LM_WARN("performing full table scan on table '%.*s' while doing the query\n",
                 CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-        for(i = 0; i < _n; ++i) {
-            LM_WARN("  scan key %d is '%.*s'\n",
-                    i, _k[i]->len, _k[i]->s);
+            for(i = 0; i < _n; ++i) {
+                LM_WARN("  scan key %d is '%.*s'\n",
+                        i, _k[i]->len, _k[i]->s);
+            }
+        } else {
+            LM_DBG("loading full table: '%.*s\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
         }
         if (db_redis_scan_query_keys(con, CON_TABLE(_h), _k, _n,
                     keys, keys_count,
