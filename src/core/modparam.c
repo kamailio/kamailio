@@ -34,6 +34,30 @@
 #include <regex.h>
 #include <string.h>
 
+static char *get_mod_param_type_str(int ptype)
+{
+	if(ptype & PARAM_USE_FUNC) {
+		if(ptype & PARAM_STRING) {
+			return "func-string";
+		} else if (ptype & PARAM_INT) {
+			return "func-int";
+		} else if (ptype & PARAM_STR) {
+			return "func-str";
+		} else {
+			return "func-unknown";
+		}
+	}
+	if(ptype & PARAM_STRING) {
+		return "string";
+	} else if (ptype & PARAM_INT) {
+		return "int";
+	} else if (ptype & PARAM_STR) {
+		return "str";
+	} else {
+		return "unknown";
+	}
+}
+
 int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val)
 {
 	return set_mod_param_regex(_mod, _name, _type, _val);
@@ -137,8 +161,8 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				}
 			}
 			else {
-				LM_ERR("parameter <%s> of type <%d> not found in module <%s>\n",
-						name, type, t->exports.name);
+				LM_ERR("parameter <%s> of type <%d:%s> not found in module <%s>\n",
+						name, type, get_mod_param_type_str(type), t->exports.name);
 				regfree(&preg);
 				pkg_free(reg);
 				return -3;
