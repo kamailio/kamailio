@@ -754,9 +754,13 @@ static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
 	if ((si = grep_sock_info(&puri->host,
 				puri->port_no?puri->port_no:proto_default_port(puri->proto),
 				puri->proto)) != 0) {
+		LM_DBG("set send socket %p for local route uri: %.*s\n", si,
+				rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 		set_force_socket(_m, si);
 	} else if ((si = grep_sock_info(&puri->host, puri->port_no,
 					puri->proto)) != 0) {
+		LM_DBG("set send socket %p for local route uri: %.*s\n", si,
+				rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 		set_force_socket(_m, si);
 	} else {
 		if (enable_socket_mismatch_warning && rr2on) {
@@ -766,6 +770,9 @@ static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
 				LM_WARN("second RR uri is not myself (%.*s)\n",
 						rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 			}
+		} else {
+			LM_DBG("no socket found to match second RR (%.*s)\n",
+					rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 		}
 	}
 }
