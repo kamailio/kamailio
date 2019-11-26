@@ -689,6 +689,62 @@ static inline int str2sint(str* _s, int* _r)
 }
 
 
+/*
+ * Convert a str into integer
+ */
+static inline int strz2int(char* _s, unsigned int* _r)
+{
+	int i;
+
+	if (_r == NULL) return -1;
+	*_r = 0;
+	if (_s == NULL) return -1;
+
+	for(i = 0; _s[i] != '\0'; i++) {
+		if ((_s[i] >= '0') && (_s[i] <= '9')) {
+			*_r *= 10;
+			*_r += _s[i] - '0';
+		} else {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Convert an str to signed integer
+ */
+static inline int strz2sint(char* _s, int* _r)
+{
+	int i;
+	int sign;
+
+	if (_r == NULL) return -1;
+	*_r = 0;
+	if (_s == NULL) return -1;
+
+	sign = 1;
+	i = 0;
+	if (_s[0] == '+') {
+		i++;
+	} else if (_s[0] == '-') {
+		sign = -1;
+		i++;
+	}
+	for(; _s[i] != '\0'; i++) {
+		if ((_s[i] >= '0') && (_s[i] <= '9')) {
+			*_r *= 10;
+			*_r += _s[i] - '0';
+		} else {
+			return -1;
+		}
+	}
+	*_r *= sign;
+
+	return 0;
+}
+
 
 /**
  * \brief Make a copy of a str structure to a str using shm_malloc
