@@ -78,6 +78,7 @@
 #include "core/mem/shm_mem.h"
 #include "core/shm_init.h"
 #include "core/sr_module.h"
+#include "core/modparam.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
 #include "core/ip_addr.h"
@@ -196,6 +197,9 @@ Options:\n\
     --loadmodule=name load the module specified by name\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
+    --modparam=modname:paramname:type:value set the module parameter\n\
+                  type has to be 's' for string value and 'i' for int value, \n\
+                  example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
@@ -1924,6 +1928,7 @@ int main(int argc, char** argv)
 		{"substdefs",   required_argument, 0, KARGOPTVAL + 3},
 		{"server-id",   required_argument, 0, KARGOPTVAL + 4},
 		{"loadmodule",  required_argument, 0, KARGOPTVAL + 5},
+		{"modparam",    required_argument, 0, KARGOPTVAL + 6},
 		{0, 0, 0, 0 }
 	};
 
@@ -2140,6 +2145,7 @@ int main(int argc, char** argv)
 			case 's':
 			case 'Y':
 			case KARGOPTVAL+5:
+			case KARGOPTVAL+6:
 					break;
 
 			/* long options */
@@ -2236,6 +2242,12 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+5:
 					if (load_module(optarg)!=0) {
 						LM_ERR("failed to load the module: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+6:
+					if(set_mod_param_serialized(optarg) < 0) {
+						LM_ERR("failed to set modparam: %s\n", optarg);
 						goto error;
 					}
 					break;

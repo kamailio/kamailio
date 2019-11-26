@@ -154,3 +154,63 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	}
 	return 0;
 }
+
+int set_mod_param_serialized(char* mval)
+{
+#define MPARAM_MBUF_SIZE 256
+	char mbuf[MPARAM_MBUF_SIZE];
+	char *mname = NULL;
+	char *mparam = NULL;
+	char *sval = NULL;
+	int ival = 0;
+	int ptype = PARAM_STRING;
+	char *p = NULL;
+
+	if(strlen(mval) >= MPARAM_MBUF_SIZE) {
+		LM_ERR("argument is too long: %s\n", mval);
+		return -1;
+	}
+	strcpy(mbuf, mval);
+	mname = mbuf;
+	p = strchr(mbuf, ':');
+	if(p==NULL) {
+		LM_ERR("invalid format for argument: %s\n", mval);
+		return -1;
+	}
+	*p = '\0';
+	p++;
+	mparam = p;
+	p = strchr(p, ':');
+	if(p==NULL) {
+		LM_ERR("invalid format for argument: %s\n", mval);
+		return -1;
+	}
+	*p = '\0';
+	p++;
+	if(*p=='i' || *p=='I') {
+		ptype = PARAM_INT;
+	} else if(*p=='s' || *p=='S') {
+		ptype = PARAM_STRING;
+	} else {
+		LM_ERR("invalid format for argument: %s\n", mval);
+		return -1;
+	}
+	p++;
+	if(*p!=':') {
+		LM_ERR("invalid format for argument: %s\n", mval);
+		return -1;
+	}
+	p++;
+	sval = p;
+
+	if(ptype == PARAM_STRING) {
+		return set_mod_param_regex(mname, mparam, PARAM_STRING, sval);
+	} else {
+		if(strlen(sval) <= 0) {
+			LM_ERR("invalid format for argument: %s\n", mval);
+			return -1;
+		}
+		strz2sint(sval, &ival);
+		return set_mod_param_regex(mname, mparam, PARAM_INT, (void*)(long)ival);
+	}
+}
