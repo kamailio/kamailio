@@ -127,8 +127,8 @@ static int test_sdp_cline(struct sip_msg *msg);
 
 static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow);
 static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp);
-static int alias_to_uri(str *contact_header, str *alias_uri);
-static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp);
+static int nh_alias_to_uri(str *contact_header, str *alias_uri);
+static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -2460,7 +2460,8 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 *
 * @result 1 successful  , -1 fail
 */
-static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow){
+static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow)
+{
 	str dest_avp={0,0};
 
 	if(!uri_avp)
@@ -2481,7 +2482,8 @@ static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow){
 *
 * @result 1 successful  , -1 fail
 */
-static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp){
+static int ki_set_alias_to_pv(struct sip_msg *msg, str *pvname)
+{
 	str contact;
 	str alias_uri={0,0};
 
@@ -2503,10 +2505,10 @@ static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp){
 	contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->name.s;
 	contact.len = ((contact_body_t *)msg->contact->parsed)->contacts->len;
 
-	if(alias_to_uri(&contact,&alias_uri)<0)
+	if(nh_alias_to_uri(&contact, &alias_uri)<0)
 		return -1;
 
-	if(write_to_avp(msg, &alias_uri, uri_avp)<0)
+	if(nh_write_to_pv(msg, &alias_uri, pvname)<0)
 		goto error;
 
 	if(alias_uri.s)
@@ -2518,19 +2520,20 @@ static int ki_set_alias_to_pv(struct sip_msg *msg, str *uri_avp){
 		if(alias_uri.s)
 			pkg_free(alias_uri.s);
 
-		return -1;
+	return -1;
 }
 /*!
-* @function write_to_avp
-* @abstract write_to_avp function writes data to given avp
+* @function nh_write_to_pv
+* @abstract nh_write_to_pv function writes data to given avp
 * @param data  source data
 * @param uri_avp destination avp name
 * @result 1 successful  , -1 fail
 */
-static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
+static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname)
+{
 	pv_spec_t *pvresult = NULL;
 	pv_value_t valx;
-	pvresult = pv_cache_get(uri_avp);
+	pvresult = pv_cache_get(pvname);
 
 	if(pvresult == NULL) {
 		LM_ERR("Failed to malloc destination pseudo-variable \n");
@@ -2538,7 +2541,8 @@ static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	}
 
 	if(pvresult->setf==NULL) {
-		LM_ERR("Destination pseudo-variable is not writable: [%.*s] \n",uri_avp->len, uri_avp->s);
+		LM_ERR("Destination pseudo-variable is not writable: [%.*s] \n",
+				pvname->len, pvname->s);
 		return -1;
 	}
 	memset(&valx, 0, sizeof(pv_value_t));
@@ -2557,14 +2561,15 @@ static int write_to_avp(struct sip_msg *msg, str *data, str *uri_avp){
 	return 1;
 }
 /*!
-* @function alias_to_uri
+* @function nh_alias_to_uri
 * @abstract select alias paramter from contact_header
 * 					then writes to alias_uri
 * @param contact_header  Source contact header
 * @param alias_uri Destination string
 * @result 1 successful  , -1 fail
 */
-static int alias_to_uri(str *contact_header, str *alias_uri){
+static int nh_alias_to_uri(str *contact_header, str *alias_uri)
+{
 	int i=0; // index
 	str host={0,0};
 	str port={0,0};
@@ -2700,7 +2705,7 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("nathelper"), str_init("set_alias_to_avp"),
+	{ str_init("nathelper"), str_init("set_alias_to_pv"),
 		SR_KEMIP_INT, ki_set_alias_to_pv,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
