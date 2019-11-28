@@ -322,13 +322,16 @@ void cfgt_save_node(cfgt_node_p node)
 	FILE *fp;
 	str dest = STR_NULL;
 	int dir = 0;
+	struct stat sb;
 	if(_cfgt_get_filename(node->msgid, node->uuid, &dest, &dir) < 0) {
 		LM_ERR("can't build filename\n");
 		return;
 	}
 	dest.s[dir] = '\0';
 	LM_DBG("dir [%s]\n", dest.s);
-	if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
+	if (stat(dest.s, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+		LM_DBG("dir [%s] already existing\n", dest.s);
+	} else if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
 		LM_ERR("failed to make directory: %s\n", strerror(errno));
 		return;
 	}
