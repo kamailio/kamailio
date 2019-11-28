@@ -67,6 +67,8 @@ static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
 static int fixup_op_avp(void** param, int param_no);
 static int fixup_subst(void** param, int param_no);
+static int fixup_subst_pv(void** param, int param_no);
+static int fixup_free_subst_pv(void** param, int param_no);
 static int fixup_is_avp_set(void** param, int param_no);
 
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
@@ -81,6 +83,7 @@ static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
 static int w_op_avps(struct sip_msg* msg, char* param, char *op);
 static int w_subst(struct sip_msg* msg, char* src, char *subst);
+static int w_subst_pv(struct sip_msg* msg, char* src, char *param);
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
 
 /*! \brief
@@ -110,6 +113,9 @@ static cmd_export_t cmds[] = {
 	{"avp_op",     (cmd_function)w_op_avps, 2, fixup_op_avp, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"avp_subst",  (cmd_function)w_subst,   2, fixup_subst, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
+	{"avp_subst_pv", (cmd_function)w_subst_pv, 2, fixup_subst_pv,
+		fixup_free_subst_pv,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"is_avp_set", (cmd_function)w_is_avp_set, 1, fixup_is_avp_set, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
@@ -708,6 +714,16 @@ static int fixup_check_avp(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_subst_pv(void** param, int param_no)
+{
+	if(param_no==1) {
+		return fixup_subst(param, param_no);
+	} else if (param_no==2) {
+		return fixup_var_str_2(param, param_no);
+	}
+	return 0;
+}
+
 static int fixup_subst(void** param, int param_no)
 {
 	struct subst_expr* se;
@@ -837,6 +853,14 @@ static int fixup_subst(void** param, int param_no)
 		/* replace it with the compiled subst. re */
 		*param=se;
 	}
+
+	return 0;
+}
+
+static int fixup_free_subst_pv(void** param, int param_no)
+{
+	if (param_no==2)
+		fparam_free_restore(param);
 
 	return 0;
 }
@@ -1052,6 +1076,40 @@ static int w_op_avps(struct sip_msg* msg, char* param, char *op)
 static int w_subst(struct sip_msg* msg, char* src, char *subst)
 {
 	return ops_subst(msg, (struct fis_param**)src, (struct subst_expr*)subst);
+}
+
+static int w_subst_pv(struct sip_msg* msg, char* src, char *param)
+{
+	str tstr = STR_NULL;
+	str subst = STR_NULL;
+	struct subst_expr* se;
+	fparam_t *fp;
+	int res;
+
+	fp = (fparam_t*)param;
+	if(get_str_fparam(&tstr, msg, fp) != 0)
+	{
+		LM_ERR("error fetching subst re\n");
+		return -1;
+	}
+
+	LM_DBG("preparing to evaluate: [%.*s]\n", tstr.len, tstr.s);
+	if(pv_eval_str(msg, &subst, &tstr)<0){
+		subst.s = tstr.s;
+		subst.len = tstr.len;
+	}
+
+	LM_DBG("preparing %s\n", subst.s);
+	se = subst_parser(&subst);
+	if(se==0)
+	{
+		LM_ERR("bad subst re %s\n", subst.s);
+		return E_BAD_RE;
+	}
+
+	res = ops_subst(msg, (struct fis_param**)src, se);
+	subst_expr_free(se);
+	return res;
 }
 
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *op)
