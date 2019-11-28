@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The main goal of the module is to offload the intermediate header processing
+	into the XAVP dynamic container as well as provide with high level methods
+	and pseudovariables to simplify &sip; message header modifications.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>uac</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			<para>
+			Needed only if <quote><link linked="pv_headers.p.auto_msg">auto_msg</link></quote> parameter is set to 1.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+
+	<section>
+		<title>Exported Variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$x_hdr</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_fu</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_fU</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_fd</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_fn</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_ft</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_tu</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_tU</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_td</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_tn</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_tt</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_rs</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$x_rr</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>

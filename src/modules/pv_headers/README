@@ -1,0 +1,337 @@
+pv_headers Module
+
+Kirill Solomko
+
+   Sipwise GmbH
+   <ksolomko@sipwise.com>
+
+Edited by
+
+Victor Seva
+
+   Sipwise GmbH
+   <vseva@sipwise.com>
+
+   Copyright © 2018 Sipwise GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. xavp_name (string)
+              3.2. header_value_size (int)
+              3.3. header_collect_flag (int)
+              3.4. header_apply_flag (int)
+              3.5. skip_headers (string)
+              3.6. split_headers (string)
+              3.7. auto_msg (int)
+
+        4. Functions
+
+              4.1. pvh_collect_headers()
+              4.2. pvh_apply_headers()
+              4.3. pvh_reset_headers()
+              4.4. pvh_check_header(hname)
+              4.5. pvh_append_header(hname, hvalue)
+              4.6. pvh_modify_header(hname, hvalue, [idx])
+              4.7. pvh_remove_header(hname, [idx])
+
+        5. Exported Variables
+
+   List of Examples
+
+   1.1. Set xavp_name parameter
+   1.2. Set header_value_size parameter
+   1.3. Set header_collect_flag parameter
+   1.4. Set header_apply_flag parameter
+   1.5. Set skip_headers parameter
+   1.6. Set split_headers parameter
+   1.7. Set auto_msg parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. xavp_name (string)
+        3.2. header_value_size (int)
+        3.3. header_collect_flag (int)
+        3.4. header_apply_flag (int)
+        3.5. skip_headers (string)
+        3.6. split_headers (string)
+        3.7. auto_msg (int)
+
+   4. Functions
+
+        4.1. pvh_collect_headers()
+        4.2. pvh_apply_headers()
+        4.3. pvh_reset_headers()
+        4.4. pvh_check_header(hname)
+        4.5. pvh_append_header(hname, hvalue)
+        4.6. pvh_modify_header(hname, hvalue, [idx])
+        4.7. pvh_remove_header(hname, [idx])
+
+   5. Exported Variables
+
+1. Overview
+
+   The main goal of the module is to offload the intermediate header
+   processing into the XAVP dynamic container as well as provide with high
+   level methods and pseudovariables to simplify SIP message header
+   modifications.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * uac.
+     * tm.
+       Needed only if "auto_msg" parameter is set to 1.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. xavp_name (string)
+   3.2. header_value_size (int)
+   3.3. header_collect_flag (int)
+   3.4. header_apply_flag (int)
+   3.5. skip_headers (string)
+   3.6. split_headers (string)
+   3.7. auto_msg (int)
+
+3.1. xavp_name (string)
+
+   Name of the XAVP there the collected headers are stored.
+
+   Default value is "headers".
+
+   Example 1.1. Set xavp_name parameter
+...
+modparam("pv_headers", "xavp_name", "pvh")
+...
+
+   Result: $xavp(headers[0]=>From) $xavp(headers[0]=>To)
+   $xavp(headers[0]=>Call-ID)
+
+3.2. header_value_size (int)
+
+   Defines an internal maximum SIP header value size. Header values longer
+   than this setting will be stripped down when collected or applied.
+
+   Default value is 1024.
+
+   Example 1.2. Set header_value_size parameter
+...
+modparam("pv_headers", "header_value_size", 512)
+...
+
+3.3. header_collect_flag (int)
+
+   Used to mark that headers are collected for the SIP message, leading to
+   subsequent headers collection on this message to be declined with an
+   error. Should be used only in branches and replies.
+
+   Default value is 27.
+
+   Example 1.3. Set header_collect_flag parameter
+...
+modparam("pv_headers", "header_collect_flag", 37)
+...
+
+3.4. header_apply_flag (int)
+
+   Used to mark that headers are applied for the SIP message, leading to
+   subsequent headers applies on this message to be declined with an
+   error. Should be used only in branches and replies.
+
+   Default value is 28.
+
+   Example 1.4. Set header_apply_flag parameter
+...
+modparam("pv_headers", "header_apply_flag", 38)
+...
+
+3.5. skip_headers (string)
+
+   A comma separated headers list that must be excluded from processing
+   (they are skipped when pvh_apply_headers() changes the SIP message
+   headers).
+
+   If the parameter is set to an empty string then all the SIP message
+   headers are processed.
+
+   Default value is
+   "Record-Route,Via,Route,Content-Length,Max-Forwards,CSeq".
+
+   Example 1.5. Set skip_headers parameter
+...
+modparam("pv_headers", "skip_headers", "Record-Route,Via,Route")
+...
+
+3.6. split_headers (string)
+
+   A comma separated headers list that must be split into multi headers if
+   their value is a comma separated list.
+
+   If the parameter is set to an empty string then no headers are split.
+
+   Default value is "".
+
+   Example 1.6. Set split_headers parameter
+...
+modparam("pv_headers", "split_headers", "Diversion")
+...
+
+   Result: Received Diversion header: Diversion:
+   <user1@test.local>,<user2@test.local>,<user3@test.local> After split:
+   Diversion: <user1@test.local> Diversion: <user2@test.local> Diversion:
+   <user3@test.local>
+
+   Becomes handy if used together with pvh_modify_header() or
+   pvh_remove_header() to change or remove value 2 for instance.
+
+3.7. auto_msg (int)
+
+   Defines wether the headers are automatically collected for incoming
+   messages, as well as automatically applied for forwarded messages.
+
+   It is enabled by default and requires the 'tm' module to be loaded,
+   otherwise the mode is disabled and manual invocation of
+   pvh_collect_headers()/pvh_apply_headers() is required.
+
+   Default value is 1 (enabled).
+
+   Example 1.7. Set auto_msg parameter
+...
+modparam("pvh", "auto_msg", 1)
+...
+
+4. Functions
+
+   4.1. pvh_collect_headers()
+   4.2. pvh_apply_headers()
+   4.3. pvh_reset_headers()
+   4.4. pvh_check_header(hname)
+   4.5. pvh_append_header(hname, hvalue)
+   4.6. pvh_modify_header(hname, hvalue, [idx])
+   4.7. pvh_remove_header(hname, [idx])
+
+   \
+
+4.1.  pvh_collect_headers()
+
+   Collects all headers from the message into the XAVP. It should be used
+   preferably just when the SIP message is received by Kamailio.
+
+   This function can be used from ANY_ROUTE.
+
+4.2.  pvh_apply_headers()
+
+   Applies the current XAVP headers state to the real headers. and should
+   be called only once per branch when the message is about to leave
+   Kamailio.
+
+   The following rules apply:
+     * all headers in the XAVP except for ones provided in the
+       skip_headers parameter and From/To are recreated in the SIP
+       message.
+     * From/To headers are processed by the uac module if it is loaded.
+     * From/To headers are not changed in the reply messages.
+     * headers with NULL value are removed if exist in the SIP message.
+     * the initial order of the SIP headers is preserved.
+
+   This function can be used from ANY_ROUTE.
+
+4.3.  pvh_reset_headers()
+
+   Collects all headers from the message into the XAVP. It should be used
+   preferably just when the SIP message is received by >Kamailio.
+
+   This function can be used from ANY_ROUTE.
+
+4.4.  pvh_check_header(hname)
+
+   Checks if the header "hname" already exists in the XAVP.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() or with "auto_msg" parameter enabled.
+
+4.5.  pvh_append_header(hname, hvalue)
+
+   Appends a new header "hname" with the value "hvalue" into the XAVP.
+   Please note that subsequent "pv_append_header" calls will result in
+   multiple headers.
+
+   If the provided "hvalue" is $null then the header is added into the
+   XAVP but it is not going to be added into the message.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() or with "auto_msg" parameter enabled.
+
+4.6.  pvh_modify_header(hname, hvalue, [idx])
+
+   Modifies an existing header in the XAVP "hname" with the value "hvalue"
+   into the XAVP. Index order is top to bottom. Please note that
+   subsequent pvh_append_header calls will result in multiple headers.
+
+   Please note that if the header "hname"does not exist it will be
+   explicitly appended. If there are multiple headers with the same name
+   and "idx" is omitted, only the first one will be affected.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() or with "auto_msg" parameter enabled.
+
+4.7.  pvh_remove_header(hname, [idx])
+
+   Removes an existing header "hname" from the XAVP. Index order is top to
+   bottom.
+
+   If there are multiple headers with the same name and "idx" is omitted,
+   all of them will be removed.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() or with "auto_msg" parameter enabled.
+
+5. Exported Variables
+
+     * $x_hdr
+     * $x_fu
+     * $x_fU
+     * $x_fd
+     * $x_fn
+     * $x_ft
+     * $x_tu
+     * $x_tU
+     * $x_td
+     * $x_tn
+     * $x_tt
+     * $x_rs
+     * $x_rr
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="pv_headers" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>pv_headers Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Kirill</firstname>
+		<surname>Solomko</surname>
+			<email>ksolomko@sipwise.com</email>
+		<affiliation><orgname>Sipwise GmbH</orgname></affiliation>
+	    </author>
+	    <editor>
+		<firstname>Victor</firstname>
+		<surname>Seva</surname>
+		    <email>vseva@sipwise.com</email>
+		<affiliation><orgname>Sipwise GmbH</orgname></affiliation>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2018</year>
+	    <holder>Sipwise GmbH</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+	<xi:include href="pv_headers_admin.xml"/>
+
+</book>
