@@ -420,7 +420,7 @@ int kamailioSIPContactTable_get_value(netsnmp_request_info *request,
 
 			/* Convert the float into a string, as specified by the
 			 * MIB. */
-			sprintf(contactPreference, "%5.2f", preferenceAsFloat);
+			snprintf(contactPreference, 6, "%5.2f", preferenceAsFloat);
 
 			snmp_set_var_typed_value(
 					var, ASN_OCTET_STR, (unsigned char *)contactPreference, 5);
