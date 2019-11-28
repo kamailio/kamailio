@@ -220,7 +220,7 @@ PerlInterpreter *parser_init(void) {
 						PKG_MEM_ERROR;
 						return NULL;
 					}
-					sprintf(argv[argc], "-I%s", entry);
+					snprintf(argv[argc], strlen(entry)+20, "-I%s", entry);
 					modpathset_end = argc;
 					argc++;
 				}
