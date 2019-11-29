@@ -153,7 +153,7 @@ kamailio_dump()  # pars: <database name>
 		merr "kamailio_dump function takes two param"
 		exit 1
 	fi
-	if [ "$USED_DBENGINE" == "oracle" ]; then
+	if [ "$USED_DBENGINE" = "oracle" ]; then
 		oracle_dump $1 $2
 	elif [ "$PW" = "" ] ; then
 		$DUMP_CMD $1 > $2
@@ -174,7 +174,7 @@ kamailio_restore() #pars: <database name> <filename>
 		merr "kamailio_restore function takes two params"
 		exit 1
 	fi
-	if [ "$USED_DBENGINE" == "oracle" ]; then
+	if [ "$USED_DBENGINE" = "oracle" ]; then
 		oracle_restore $1 $2
 	else
 		sql_query $1 < $2
@@ -313,7 +313,7 @@ case $1 in
 		;;
 	copy)
 		# copy database to some other name
-		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
@@ -346,7 +346,7 @@ case $1 in
 		exit $ret
 		;;
 	backup)
-		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
@@ -360,7 +360,7 @@ case $1 in
 		exit $?
 		;;
 	restore)
-		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
