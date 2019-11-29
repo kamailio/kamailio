@@ -329,7 +329,7 @@ void cfgt_save_node(cfgt_node_p node)
 	}
 	dest.s[dir] = '\0';
 	LM_DBG("dir [%s]\n", dest.s);
-	if (stat(dest.s, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+	if(stat(dest.s, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		LM_DBG("dir [%s] already existing\n", dest.s);
 	} else if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
 		LM_ERR("failed to make directory: %s\n", strerror(errno));
@@ -467,9 +467,15 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 	} else {
 		LM_DBG("actual routename:[%.*s][%d]\n", node->route->s.len,
 				node->route->s.s, node->route->type);
-		if(node->route->prev)
+		if(node->route->prev) {
+			if(node->route->prev->prev)
+				LM_DBG("prev prev routename:[%.*s][%d]\n",
+						node->route->prev->prev->s.len,
+						node->route->prev->prev->s.s,
+						node->route->prev->prev->type);
 			LM_DBG("prev routename:[%.*s][%d]\n", node->route->prev->s.len,
 					node->route->prev->s.s, node->route->prev->type);
+		}
 		if(node->route->next)
 			LM_DBG("next routename:[%.*s][%d]\n", node->route->next->s.len,
 					node->route->next->s.s, node->route->next->type);
@@ -477,12 +483,20 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 			LM_DBG("same route\n");
 			_cfgt_set_type(node->route, a);
 			return 2;
-		} else if(node->route->prev
-				  && STR_EQ(*routename, node->route->prev->s)) {
-			LM_DBG("back to route[%.*s]\n", node->route->prev->s.len,
-					node->route->prev->s.s);
-			_cfgt_set_type(node->route->prev, a);
-			return 3;
+		} else if(node->route->prev) {
+			if(STR_EQ(*routename, node->route->prev->s)) {
+				LM_DBG("back to prev route[%.*s]\n", node->route->prev->s.len,
+						node->route->prev->s.s);
+				_cfgt_set_type(node->route->prev, a);
+				return 3;
+			} else if(node->route->prev->prev
+					  && STR_EQ(*routename, node->route->prev->prev->s)) {
+				LM_DBG("back to prev prev route[%.*s]\n",
+						node->route->prev->prev->s.len,
+						node->route->prev->prev->s.s);
+				_cfgt_set_type(node->route->prev->prev, a);
+				return 3;
+			}
 		}
 		route = pkg_malloc(sizeof(cfgt_str_list_t));
 		if(!route) {
@@ -490,6 +504,9 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 			return -1;
 		}
 		memset(route, 0, sizeof(cfgt_str_list_t));
+		if(route->prev && node->route->prev) {
+			route->prev->prev = node->route->prev;
+		}
 		route->prev = node->route;
 		node->route->next = route;
 		node->route = route;
