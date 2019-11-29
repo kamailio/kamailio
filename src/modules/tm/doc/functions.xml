@@ -302,6 +302,12 @@ branch_route[1] {
 	    is the only way a script can add a new transaction in an atomic
 	    way. Typically, it is used to deploy a UAS.
 	</para>
+	<para>
+	    Note that any flag operations (e.g. for accounting) after this
+	    function has been called will be ignored. You can use the the tmx
+	    module function t_flush_flags() to flush the altered flags to the
+	    already created transaction.
+	</para>
 	<example>
 	    <title><function>t_newtran</function> usage</title>
 	    <programlisting>
