@@ -561,9 +561,9 @@ resetdebug();
 ...
 		</programlisting>
     </section>
-	<section id="kex.r.core.shmem">
+	<section id="kex.r.core.shmmem">
 		<title>
-		<function moreinfo="none">core.shmem</function>
+		<function moreinfo="none">core.shmmem</function>
 		</title>
 		<para>
 		Returns shared memory info. It has an optional parameter that specifies
