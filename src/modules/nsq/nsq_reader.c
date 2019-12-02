@@ -92,23 +92,23 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 	json_api.extract_field(json_obj, k, &ev_name);
 	pkg_free(k);
 
-	sprintf(buffer, "nsq:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
+	snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
 	for (p=buffer ; *p; ++p) *p = tolower(*p);
 	for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
 	if (nsq_consumer_fire_event(buffer) != 0) {
-		sprintf(buffer, "nsq:consumer-event-%.*s", ev_category.len, ev_category.s);
+		snprintf(buffer, 512, "nsq:consumer-event-%.*s", ev_category.len, ev_category.s);
 		for (p=buffer ; *p; ++p) *p = tolower(*p);
 		for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
 		if (nsq_consumer_fire_event(buffer) != 0) {
-			sprintf(buffer, "nsq:consumer-event-%.*s-%.*s", nsq_event_key.len, nsq_event_key.s, nsq_event_sub_key.len, nsq_event_sub_key.s);
+			snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s", nsq_event_key.len, nsq_event_key.s, nsq_event_sub_key.len, nsq_event_sub_key.s);
 			for (p=buffer ; *p; ++p) *p = tolower(*p);
 			for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
 			if (nsq_consumer_fire_event(buffer) != 0) {
-				sprintf(buffer, "nsq:consumer-event-%.*s", nsq_event_key.len, nsq_event_key.s);
+				snprintf(buffer, 512, "nsq:consumer-event-%.*s", nsq_event_key.len, nsq_event_key.s);
 				for (p=buffer ; *p; ++p) *p = tolower(*p);
 				for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
 				if (nsq_consumer_fire_event(buffer) != 0) {
-					sprintf(buffer, "nsq:consumer-event");
+					snprintf(buffer, 512, "nsq:consumer-event");
 					if (nsq_consumer_fire_event(buffer) != 0) {
 						LM_ERR("nsq:consumer-event not found");
 					}
