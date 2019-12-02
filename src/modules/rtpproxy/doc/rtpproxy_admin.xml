@@ -380,7 +380,7 @@ rtpproxy_offer();
 </programlisting>
 		</example>
 	</section>
-        <section id="rtpproxy.f.rtpproxy_ofrer">
+        <section id="rtpproxy.f.rtpproxy_offer">
                 <title>
                 <function moreinfo="none">rtpproxy_offer([flags [, ip_address]])</function>
                 </title>
