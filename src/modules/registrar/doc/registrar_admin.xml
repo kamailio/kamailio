@@ -771,6 +771,11 @@ request_route {
 				<emphasis>received</emphasis> - the record's received value.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>path</emphasis> - the record's path value.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			For example. if this parameter is set to 'ulrcd', then values are set in:
@@ -784,6 +789,9 @@ request_route {
 		</listitem>
 		<listitem>
 			<para><emphasis>$xavp(ulrcd[0]=&gt;received)</emphasis></para>
+		</listitem>
+		<listitem>
+			<para><emphasis>$xavp(ulrcd[0]=&gt;path)</emphasis></para>
 		</listitem>
 		</itemizedlist>
 		<para>
