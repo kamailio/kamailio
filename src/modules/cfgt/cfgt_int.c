@@ -727,7 +727,7 @@ static void cfgt_rpc_mask(rpc_t *rpc, void *ctx)
 
 /* clang-format off */
 rpc_export_t cfgt_rpc[] = {
-		{"dbg.cfgt.mask", cfgt_rpc_mask, cfgt_rpc_mask_doc, 0},
+		{"cfgt.mask", cfgt_rpc_mask, cfgt_rpc_mask_doc, 0},
 		{0, 0, 0, 0}
 };
 /* clang-format on */
