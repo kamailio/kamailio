@@ -147,6 +147,7 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 		</example>
 	</section>
 
+	</section>
 	<section>
 	<title>RPC Commands</title>
 	<section id="cfgt.r.mask">
@@ -169,7 +170,7 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &sercmd; dbg.cfgt.mask 32
+&sercmd; dbg.cfgt.mask 32
 ...
 </programlisting>
     </section>
