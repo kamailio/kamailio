@@ -328,7 +328,7 @@ void cfgt_save_node(cfgt_node_p node)
 	dest.s[dir] = '\0';
 	LM_DBG("dir [%s]\n", dest.s);
 	if(stat(dest.s, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-		LM_DBG("dir [%s] already existing\n", dest.s);
+		LM_DBG("dir [%s] already exists\n", dest.s);
 	} else if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
 		LM_ERR("failed to make directory: %s\n", strerror(errno));
 		return;
@@ -725,8 +725,12 @@ static void cfgt_rpc_mask(rpc_t *rpc, void *ctx)
 	rpc->add(ctx, "s", "200 ok");
 }
 
+/* clang-format off */
 rpc_export_t cfgt_rpc[] = {
-		{"dbg.mask", cfgt_rpc_mask, cfgt_rpc_mask_doc, 0}, {0, 0, 0, 0}};
+		{"dbg.cfgt.mask", cfgt_rpc_mask, cfgt_rpc_mask_doc, 0},
+		{0, 0, 0, 0}
+};
+/* clang-format on */
 
 int cfgt_init(void)
 {
