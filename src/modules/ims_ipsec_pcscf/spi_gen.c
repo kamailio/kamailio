@@ -60,10 +60,16 @@ int init_spi_gen(uint32_t start_val, uint32_t range)
         return 5;
     }
 
+	if(pthread_mutex_lock(&spi_data->spis_mut) != 0){
+		return 6;
+	}
+
     spi_data->used_spis = create_list();
 
     spi_data->spi_val = spi_data->min_spi = start_val;
     spi_data->max_spi = start_val + range;
+
+	pthread_mutex_unlock(&spi_data->spis_mut);
 
     return 0;
 }
@@ -74,13 +80,13 @@ uint32_t acquire_spi()
 		return 0;
 	}
 
+	if(pthread_mutex_lock(&spi_data->spis_mut) != 0){
+		return 0;
+	}
+
     //save the initial value for the highly unlikely case where there are no free SPIs
 	uint32_t initial_val = spi_data->spi_val;
     uint32_t ret = 0; // by default return invalid SPI
-
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0){
-        return ret;
-    }
 
     while(1) {
 		if(spi_in_list(&spi_data->used_spis, spi_data->spi_val) == 0){

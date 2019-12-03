@@ -339,18 +339,18 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
         if(str2ipbuf(&ipsec_listen_addr, &ipsec_addr) < 0){
             LM_ERR("Unable to convert ipsec addr4 [%.*s]\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
             close_mnl_socket(sock);
-            return 0;
+            return -1;
         }
     } else if(remote_addr->af == AF_INET6){
         if(str2ip6buf(&ipsec_listen_addr6, &ipsec_addr) < 0){
             LM_ERR("Unable to convert ipsec addr6 [%.*s]\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
             close_mnl_socket(sock);
-            return 0;
+            return -1;
         }
     } else {
         LM_ERR("Unsupported AF %d\n", remote_addr->af);
         close_mnl_socket(sock);
-        return 0;
+        return -1;
     }
 
     //Convert to char* for logging
@@ -574,8 +574,8 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
     // Get request from reply
     struct cell *t = tmb.t_gett();
     if (!t || t == (void*) -1) {
-        LM_ERR("fill_contact(): Reply without transaction\n");
-        return -1;
+        LM_ERR("Reply without transaction\n");
+        goto cleanup;
     }
 
     struct sip_msg* req = t->uas.request;
@@ -792,7 +792,8 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d)
         t->uas.response.dst = dst_info;
     }
 
-    LM_DBG("Destination changed to [%d://%.*s]\n", dst_info.proto, m->dst_uri.len, m->dst_uri.s);
+	LM_DBG("Destination changed to [%d://%.*s], from [%d:%d]\n", dst_info.proto, m->dst_uri.len, m->dst_uri.s,
+			dst_info.send_sock->proto, dst_info.send_sock->port_no);
 
     ret = IPSEC_CMD_SUCCESS; // all good, return SUCCESS
 
