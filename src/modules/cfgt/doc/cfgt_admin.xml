@@ -147,6 +147,33 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 		</example>
 	</section>
 
+	<section>
+	<title>RPC Commands</title>
+	<section id="cfgt.r.mask">
+		<title>
+		<function moreinfo="none">dbg.cfgt.mask</function>
+		</title>
+		<para>
+		Sets <link linked="cfgt.p.mask">mask</link> module parameter.
+		</para>
+		<para>
+		Name: <emphasis>dbg.cfgt.mask</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>mask : int value</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &sercmd; dbg.cfgt.mask 32
+...
+</programlisting>
+    </section>
+
 	</section>
 	<section>
 		<title>Usage</title>
