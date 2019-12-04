@@ -175,6 +175,63 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 </programlisting>
     </section>
 
+	<section id="cfgt.r.list">
+		<title>
+		<function moreinfo="none">cfgt.list</function>
+		</title>
+		<para>
+		Lists reports info in memory.
+		</para>
+		<para>
+		Name: <emphasis>cfgt.list</emphasis>
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; cfgt.list
+{
+        uuid: unknown
+        msgid: 2
+}
+{
+        uuid: whatever
+        msgid: 1
+}
+200 ok
+...
+</programlisting>
+    </section>
+
+	<section id="cfgt.r.clean">
+		<title>
+		<function moreinfo="none">cfgt.clean</function>
+		</title>
+		<para>
+		Removes reports from disk and cleans info in memory.
+		</para>
+		<para>
+		Name: <emphasis>cfgt.clean</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>report : string value</para>
+				<para>use 'all' to clean any report</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; cfgt.clean unknown
+...
+&sercmd; cfgt.clean all
+...
+</programlisting>
+    </section>
+
 	</section>
 	<section>
 		<title>Usage</title>

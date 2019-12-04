@@ -21,6 +21,7 @@
  */
 #include <stdio.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <string.h>
 #include <errno.h>
 
@@ -40,6 +41,8 @@ cfgt_hash_p _cfgt_uuid = NULL;
 str cfgt_hdr_prefix = {"NGCP%", 5};
 str cfgt_basedir = {"/tmp", 4};
 int cfgt_mask = CFGT_DP_ALL;
+
+int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir);
 
 static int shm_str_hash_alloc(struct str_hash_table *ht, int size)
 {
@@ -75,24 +78,89 @@ int _cfgt_pv_parse(str *param, pv_elem_p *elem)
 	return 0;
 }
 
-void _cfgt_remove_uuid(const str *uuid)
+void _cfgt_remove_report(const str *scen)
+{
+	str dest = STR_NULL;
+	str filepath = STR_NULL;
+	int dir = 0;
+	int len;
+	struct stat sb;
+	DIR *folder = NULL;
+	struct dirent *next_file = NULL;
+
+	if(_cfgt_get_filename(0, *scen, &dest, &dir) < 0) {
+		LM_ERR("can't build filename for uuid: %.*s\n", scen->len, scen->s);
+		return;
+	}
+	dest.s[dir] = '\0';
+
+	if(stat(dest.s, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+		filepath.s = (char *)pkg_malloc(sizeof(char) * dest.len + 1);
+		if(filepath.s == NULL) {
+			PKG_MEM_ERROR;
+			goto end;
+		}
+		if((folder = opendir(dest.s)) == NULL) {
+			LM_ERR("can't open dir: %s", strerror(errno));
+			goto end;
+		}
+		while((next_file = readdir(folder)) != NULL) {
+			len = strlen(next_file->d_name);
+			if(len <= 2) {
+				if(strncmp(next_file->d_name, "..", 2) == 0
+						|| strncmp(next_file->d_name, ".", 1) == 0) {
+					continue;
+				}
+			}
+			sprintf(filepath.s, "%s/%s", dest.s, next_file->d_name);
+			if(remove(filepath.s) < 0) {
+				LM_ERR("failed removing file: %s\n", strerror(errno));
+			} else {
+				LM_DBG("removed report file: %s\n", filepath.s);
+			}
+		}
+		if(closedir(folder) < 0) {
+			LM_ERR("can't close dir: %s", strerror(errno));
+		}
+		if(remove(dest.s) < 0) {
+			LM_ERR("failed removing dir: %s\n", strerror(errno));
+		} else {
+			LM_DBG("removed report dir: %s\n", dest.s);
+		}
+	} else {
+		LM_DBG("dir %s not found\n", dest.s);
+	}
+
+end:
+	if(filepath.s)
+		pkg_free(filepath.s);
+	if(dest.s)
+		pkg_free(dest.s);
+}
+
+int _cfgt_remove_uuid(const str *uuid, int remove_report)
 {
 	struct str_hash_head *head;
 	struct str_hash_entry *entry, *back;
 	int i;
+	int res = -1;
 
 	if(_cfgt_uuid == NULL)
-		return;
+		return res;
 	if(uuid) {
 		lock_get(&_cfgt_uuid->lock);
 		entry = str_hash_get(&_cfgt_uuid->hash, uuid->s, uuid->len);
 		if(entry) {
 			str_hash_del(entry);
+			if(remove_report)
+				_cfgt_remove_report(&entry->key);
 			shm_free(entry->key.s);
 			shm_free(entry);
 			LM_DBG("uuid[%.*s] removed from hash\n", uuid->len, uuid->s);
-		} else
+			res = 0;
+		} else {
 			LM_DBG("uuid[%.*s] not found in hash\n", uuid->len, uuid->s);
+		}
 		lock_release(&_cfgt_uuid->lock);
 	} else {
 		lock_get(&_cfgt_uuid->lock);
@@ -100,16 +168,20 @@ void _cfgt_remove_uuid(const str *uuid)
 			head = _cfgt_uuid->hash.table + i;
 			clist_foreach_safe(head, entry, back, next)
 			{
+				str_hash_del(entry);
+				if(remove_report)
+					_cfgt_remove_report(&entry->key);
 				LM_DBG("uuid[%.*s] removed from hash\n", entry->key.len,
 						entry->key.s);
-				str_hash_del(entry);
 				shm_free(entry->key.s);
 				shm_free(entry);
 			}
-			lock_release(&_cfgt_uuid->lock);
 		}
+		lock_release(&_cfgt_uuid->lock);
+		res = 0;
 		LM_DBG("remove all uuids. done\n");
 	}
+	return res;
 }
 
 int _cfgt_get_uuid_id(cfgt_node_p node)
@@ -708,10 +780,53 @@ int cfgt_msgout(sr_event_param_t *evp)
 	return -1;
 }
 
+int _cfgt_clean(str *scen)
+{
+	if(strncmp(scen->s, "all", 3) == 0) {
+		return _cfgt_remove_uuid(NULL, 1);
+	}
+	return _cfgt_remove_uuid(scen, 1);
+}
+
+int _cfgt_list_uuids(rpc_t *rpc, void *ctx)
+{
+	void *vh;
+	struct str_hash_head *head;
+	struct str_hash_entry *entry, *back;
+	int i;
+
+	if(_cfgt_uuid == NULL) {
+		LM_DBG("no _cfgt_uuid\n");
+		rpc->fault(ctx, 500, "Server error");
+		return -1;
+	}
+
+
+	lock_get(&_cfgt_uuid->lock);
+	for(i = 0; i < CFGT_HASH_SIZE; i++) {
+		head = _cfgt_uuid->hash.table + i;
+		clist_foreach_safe(head, entry, back, next)
+		{
+			if(rpc->add(ctx, "{", &vh) < 0) {
+				rpc->fault(ctx, 500, "Server error");
+				return -1;
+			}
+			rpc->struct_add(vh, "Sd", "uuid", &entry->key, "msgid", entry->u.n);
+		}
+	}
+	lock_release(&_cfgt_uuid->lock);
+	return 0;
+}
+
 /**
  *
  */
 static const char *cfgt_rpc_mask_doc[2] = {"Specify module mask", 0};
+static const char *cfgt_rpc_list_doc[2] = {
+		"List scenarios currently in memory", 0};
+static const char *cfgt_rpc_clean_doc[2] = {
+		"Clean scenario, 'all' to clean all scenarios in memory", 0};
+
 
 static void cfgt_rpc_mask(rpc_t *rpc, void *ctx)
 {
@@ -725,9 +840,32 @@ static void cfgt_rpc_mask(rpc_t *rpc, void *ctx)
 	rpc->add(ctx, "s", "200 ok");
 }
 
+static void cfgt_rpc_list(rpc_t *rpc, void *ctx)
+{
+	if(_cfgt_list_uuids(rpc, ctx) >= 0)
+		rpc->add(ctx, "s", "200 ok");
+}
+
+static void cfgt_rpc_clean(rpc_t *rpc, void *ctx)
+{
+	str scen = STR_NULL;
+
+	if(rpc->scan(ctx, "S", &scen) != 1) {
+		rpc->fault(ctx, 500, "invalid parameters");
+		return;
+	}
+	if(_cfgt_clean(&scen) != 0) {
+		rpc->fault(ctx, 500, "error in clean");
+		return;
+	}
+	rpc->add(ctx, "s", "200 ok");
+}
+
 /* clang-format off */
 rpc_export_t cfgt_rpc[] = {
 		{"cfgt.mask", cfgt_rpc_mask, cfgt_rpc_mask_doc, 0},
+		{"cfgt.list", cfgt_rpc_list, cfgt_rpc_list_doc, 0},
+		{"cfgt.clean", cfgt_rpc_clean, cfgt_rpc_clean_doc, 0},
 		{0, 0, 0, 0}
 };
 /* clang-format on */
