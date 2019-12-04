@@ -136,6 +136,28 @@ modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
     </section>
 
     <section>
+      <title><varname>ipsec_reuse_server_port</varname> (int)</title>
+
+      <para>Reuse (1) or not (0) the P-CSCF Server port for Re-registration for one UA.
+      When set to 0 - During Re-registration P-CSCF will distribute new P-CSCF client and
+      P-CSCF server ports.
+      When set to 1 - During Re-registration P-CSCF will reuse the old P-CSCF server port and
+      will distribute a new P-CSCF client port.</para>
+
+      <para><emphasis>Default value is 1.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_reuse_server_port</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>ipsec_spi_id_start</varname> (int)</title>
 
       <para>Each IPSec tunnel has a unique system-wide identifier. This and the following option
