@@ -32,6 +32,8 @@ Victor Seva
         4. RPC Commands
 
               4.1. cfgt.mask
+              4.2. cfgt.list
+              4.3. cfgt.clean
 
         5. Usage
         6. Report format
@@ -61,6 +63,8 @@ Chapter 1. Admin Guide
    4. RPC Commands
 
         4.1. cfgt.mask
+        4.2. cfgt.list
+        4.3. cfgt.clean
 
    5. Usage
    6. Report format
@@ -144,6 +148,8 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 4. RPC Commands
 
    4.1. cfgt.mask
+   4.2. cfgt.list
+   4.3. cfgt.clean
 
 4.1.  cfgt.mask
 
@@ -157,6 +163,43 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
    Example:
 ...
 kamcmd cfgt.mask 32
+...
+
+4.2.  cfgt.list
+
+   Lists reports info in memory.
+
+   Name: cfgt.list
+
+   Example:
+...
+kamcmd cfgt.list
+{
+        uuid: unknown
+        msgid: 2
+}
+{
+        uuid: whatever
+        msgid: 1
+}
+200 ok
+...
+
+4.3.  cfgt.clean
+
+   Removes reports from disk and cleans info in memory.
+
+   Name: cfgt.clean
+
+   Parameters:
+     * report : string value
+       use 'all' to clean any report
+
+   Example:
+...
+kamcmd cfgt.clean unknown
+...
+kamcmd cfgt.clean all
 ...
 
 5. Usage
