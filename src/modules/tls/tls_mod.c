@@ -108,6 +108,7 @@ static tls_domain_t mod_params = {
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -132,6 +133,7 @@ tls_domain_t srv_defaults = {
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -173,6 +175,7 @@ tls_domain_t cli_defaults = {
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -206,6 +209,7 @@ static param_export_t params[] = {
 	{"verify_certificate",  PARAM_INT,    &default_tls_cfg.verify_cert  },
 	{"verify_depth",        PARAM_INT,    &default_tls_cfg.verify_depth },
 	{"require_certificate", PARAM_INT,    &default_tls_cfg.require_cert },
+	{"verify_client",       PARAM_STR,    &default_tls_cfg.verify_client},
 	{"private_key",         PARAM_STR,    &default_tls_cfg.private_key  },
 	{"ca_list",             PARAM_STR,    &default_tls_cfg.ca_list      },
 	{"certificate",         PARAM_STR,    &default_tls_cfg.certificate  },
@@ -296,6 +300,7 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 static int mod_init(void)
 {
 	int method;
+	int verify_client;
 
 	if (tls_disable){
 		LM_WARN("tls support is disabled "
@@ -329,6 +334,13 @@ static int mod_init(void)
 	mod_params.cert_file = cfg_get(tls, tls_cfg, certificate);
 	mod_params.cipher_list = cfg_get(tls, tls_cfg, cipher_list);
 	mod_params.server_name = cfg_get(tls, tls_cfg, server_name);
+	/* Convert verify_client parameter to integer */
+	verify_client = tls_parse_verify_client(&cfg_get(tls, tls_cfg, verify_client));
+	if (verify_client < 0) {
+		LM_ERR("Invalid tls_method parameter value\n");
+		return -1;
+	}
+	mod_params.verify_client = verify_client;
 
 	tls_domains_cfg =
 			(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));

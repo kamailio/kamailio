@@ -91,6 +91,19 @@ enum tls_domain_type {
 #define KSR_TLS_SNM_STRICT 0 /**< Match server_name only */
 #define KSR_TLS_SNM_INCDOM 1 /**< Match server_name and subdomains */
 #define KSR_TLS_SNM_SUBDOM 2 /**< Match subdomains only */
+
+
+/**
+ * TLS "verify_client" options
+ */
+enum tls_verify_client_options {
+	TLS_VERIFY_CLIENT_OFF = 0,
+	TLS_VERIFY_CLIENT_ON = 1,
+	TLS_VERIFY_CLIENT_OPTIONAL = 2,
+	TLS_VERIFY_CLIENT_OPTIONAL_NO_CA = 3
+};
+
+
 /**
  * separate configuration per ip:port
  */
@@ -111,6 +124,7 @@ typedef struct tls_domain {
 	str server_name;
 	int server_name_mode;
 	str server_id;
+	int verify_client;
 	struct tls_domain* next;
 } tls_domain_t;
 
