@@ -58,24 +58,24 @@ Yasin Caner
 
    List of Examples
 
-   1.1. Set db_urlparameter
-   1.2. Set db_mode(int)
-   1.3. Set maxcontactparameter
-   1.4. Set maxcontact_3gppparameter
+   1.1. Set db_url parameter
+   1.2. Set db_mode parameter
+   1.3. Set maxcontact parameter
+   1.4. Set maxcontact_3gpp parameter
    1.5. Set maxcontact_behaviour parameter
-   1.6. Set subscription_expires_rangeparameter
-   1.7. Setsub_dialog_hash_sizeparameter
-   1.8. Settimer_procsparameter
-   1.9. Set timer_intervalparameter
-   1.10. Set desc_time_orderparameter
-   1.11. Set matching_modeparameter
-   1.12. Set scscf_nameparameter
-   1.13. Set fetch_rowsparameter
-   1.14. Set hash_sizeparameter
-   1.15. Set subs_hash_sizeparameter
-   1.16. Set contacts_hash_sizeparameter
-   1.17. Set nat_bflagparameter
-   1.18. Set contact_delete_delayparameter
+   1.6. Set subscription_expires_range parameter
+   1.7. Set sub_dialog_hash_size parameter
+   1.8. Set timer_procs parameter
+   1.9. Set timer_interval parameter
+   1.10. Set desc_time_order parameter
+   1.11. Set matching_mode parameter
+   1.12. Set cseq_delay parameter
+   1.13. Set fetch_rows parameter
+   1.14. Set hash_size parameter
+   1.15. Set subs_hash_size parameter
+   1.16. Set contacts_hash_size parameter
+   1.17. Set nat_bflag parameter
+   1.18. Set contact_delete_delay parameter
    1.19. Set support_wildcardPSI parameter
    1.20. Set unreg_validity parameter
    1.21. Set unreg_validity parameter
@@ -164,7 +164,7 @@ Chapter 1. Admin Guide
 
    database URL for storing impu/contacts records
 
-   Example 1.1. Set db_urlparameter
+   Example 1.1. Set db_url parameter
         modparam("ims_usrloc_scscf", "db_url", "mysql//username:password@localho
 st/scscf")
 
@@ -180,7 +180,7 @@ st/scscf")
 
    Default value is 0.
 
-   Example 1.2. Set db_mode(int)
+   Example 1.2. Set db_mode parameter
 ...
         modparam("ims_usrloc_scscf", "db_mode", 1)
 
@@ -190,7 +190,7 @@ st/scscf")
 
    Default value is 0(max)
 
-   Example 1.3. Set maxcontactparameter
+   Example 1.3. Set maxcontact parameter
 ...
         modparam("ims_usrloc_scscf", "maxcontact", 10)
 
@@ -201,7 +201,7 @@ st/scscf")
 
    Default value is 0.(max)
 
-   Example 1.4. Set maxcontact_3gppparameter
+   Example 1.4. Set maxcontact_3gpp parameter
 ...
         modparam("ims_usrloc_scscf", "maxcontact_3gpp", 0)
 
@@ -224,7 +224,7 @@ st/scscf")
 
    Default value is 0.
 
-   Example 1.6. Set subscription_expires_rangeparameter
+   Example 1.6. Set subscription_expires_range parameter
 ...
         modparam("ims_usrloc_scscf", "max_subscribes", 2)
 
@@ -234,7 +234,7 @@ st/scscf")
 
    Default value is 10.
 
-   Example 1.7. Setsub_dialog_hash_sizeparameter
+   Example 1.7. Set sub_dialog_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "sub_dialog_hash_size", 512)
 
@@ -244,7 +244,7 @@ st/scscf")
 
    Default value is 0
 
-   Example 1.8. Settimer_procsparameter
+   Example 1.8. Set timer_procs parameter
 ...
         modparam("ims_usrloc_scscf", "timer_procs", 5)
 
@@ -256,7 +256,7 @@ st/scscf")
 
    Default value is 90
 
-   Example 1.9. Set timer_intervalparameter
+   Example 1.9. Set timer_interval parameter
 ...
         modparam("ims_usrloc_scscf", "timer_interval", 120)
 
@@ -267,7 +267,7 @@ st/scscf")
 
    Default value is timestamp ordering not enabled
 
-   Example 1.10. Set desc_time_orderparameter
+   Example 1.10. Set desc_time_order parameter
 ...
         modparam("ims_usrloc_scscf", "desc_time_order", 1)
 
@@ -281,7 +281,7 @@ st/scscf")
 
    Default value is 0.
 
-   Example 1.11. Set matching_modeparameter
+   Example 1.11. Set matching_mode parameter
 ...
         modparam("ims_usrloc_scscf", "matching_mode", 0)
 
@@ -292,7 +292,7 @@ st/scscf")
 
    Default value is 20.
 
-   Example 1.12. Set scscf_nameparameter
+   Example 1.12. Set cseq_delay parameter
 ...
         modparam("ims_usrloc_scscf", "cseq_delay", 20)
 
@@ -303,7 +303,7 @@ st/scscf")
 
    Default value is 2000.
 
-   Example 1.13. Set fetch_rowsparameter
+   Example 1.13. Set fetch_rows parameter
 ...
         modparam("ims_usrloc_scscf", "fetch_rows", 3000)
 
@@ -313,7 +313,7 @@ st/scscf")
 
    Default value 512
 
-   Example 1.14. Set hash_sizeparameter
+   Example 1.14. Set hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "hash_size", 512)
 
@@ -324,7 +324,7 @@ st/scscf")
 
    Default value 512
 
-   Example 1.15. Set subs_hash_sizeparameter
+   Example 1.15. Set subs_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "subs_hash_size", 512)
 
@@ -335,7 +335,7 @@ st/scscf")
 
    Default value is 512
 
-   Example 1.16. Set contacts_hash_sizeparameter
+   Example 1.16. Set contacts_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "contacts_hash_size", 512)
 
@@ -345,7 +345,7 @@ st/scscf")
 
    Default value is 0
 
-   Example 1.17. Set nat_bflagparameter
+   Example 1.17. Set nat_bflag parameter
         modparam("ims_usrloc_scscf", "nat_bflag", 3)
 
 3.18. contact_delete_delay (int)
@@ -355,7 +355,7 @@ st/scscf")
 
    Default value is 30
 
-   Example 1.18. Set contact_delete_delayparameter
+   Example 1.18. Set contact_delete_delay parameter
         modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
 
 3.19. support_wildcardPSI (int)
