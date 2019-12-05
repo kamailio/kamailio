@@ -710,12 +710,14 @@ request_route {
      * contact - the record's contact value.
      * expires - the record's expires value.
      * received - the record's received value.
+     * path - the record's path value.
 
    For example. if this parameter is set to 'ulrcd', then values are set
    in:
      * $xavp(ulrcd[0]=>ruid)
      * $xavp(ulrcd[0]=>contact)
      * $xavp(ulrcd[0]=>received)
+     * $xavp(ulrcd[0]=>path)
 
    Default value is NULL (disabled).
 
