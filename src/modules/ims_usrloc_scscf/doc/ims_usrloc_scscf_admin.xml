@@ -38,7 +38,7 @@
       <title><varname>db_url</varname> (string)</title>
       <para>database <acronym>URL</acronym> for storing impu/contacts records</para>
       <example>
-        <title>Set <varname>db_url</varname>parameter</title>
+        <title>Set <varname>db_url</varname> parameter</title>
         <programlisting format="linespecific">
         modparam("ims_usrloc_scscf", "db_url", "mysql//username:password@localhost/scscf")
         </programlisting>
@@ -63,7 +63,7 @@
   		</itemizedlist>
       <para><emphasis> Default value is 0. </emphasis></para>
       <example>
-        <title>Set <varname>db_mode</varname>(int)</title>
+        <title>Set <varname>db_mode</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "db_mode", 1)
         </programlisting>
@@ -74,7 +74,7 @@
       <para>The parameter can be used to limit the number of contact for each impu</para>
       <para><emphasis>Default value is 0(max)</emphasis></para>
       <example>
-        <title>Set <varname>maxcontact</varname>parameter</title>
+        <title>Set <varname>maxcontact</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "maxcontact", 10)
         </programlisting>
@@ -85,7 +85,7 @@
       <para>The parameter can be used to limit the number of 3GPP contact for each impu</para>
       <para><emphasis> Default value is 0.(max) </emphasis></para>
       <example>
-        <title>Set <varname>maxcontact_3gpp</varname>parameter</title>
+        <title>Set <varname>maxcontact_3gpp</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "maxcontact_3gpp", 0)
         </programlisting>
@@ -113,8 +113,7 @@
   		</itemizedlist>
       <para><emphasis> Default value is 0. </emphasis></para>
       <example>
-        <title>Set <varname>maxcontact_behaviour</varname>
-        parameter</title>
+        <title>Set <varname>maxcontact_behaviour</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "maxcontact_behaviour", 2)
         </programlisting>
@@ -125,7 +124,7 @@
       <para>Max number of subscribes allowed per watcher for each IMPU </para>
       <para><emphasis> Default value is 0. </emphasis></para>
       <example>
-        <title>Set <varname>subscription_expires_range</varname>parameter</title>
+        <title>Set <varname>subscription_expires_range</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "max_subscribes", 2)
         </programlisting>
@@ -136,7 +135,7 @@
       <para>Subscriber dialog hash table size</para>
       <para><emphasis> Default value is 10. </emphasis></para>
       <example>
-        <title>Set<varname>sub_dialog_hash_size</varname>parameter</title>
+        <title>Set <varname>sub_dialog_hash_size</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "sub_dialog_hash_size", 512)
       </programlisting>
@@ -147,7 +146,7 @@
       <para>process number of handling registeration </para>
       <para><emphasis> Default value is 0 </emphasis></para>
       <example>
-        <title>Set<varname>timer_procs</varname>parameter</title>
+        <title>Set <varname>timer_procs</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "timer_procs", 5)
         </programlisting>
@@ -159,7 +158,7 @@
          synchronize with database and other tasks, that need to be run periodically</para>
       <para><emphasis> Default value is 90  </emphasis></para>
       <example>
-        <title>Set <varname>timer_interval</varname>parameter</title>
+        <title>Set <varname>timer_interval</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "timer_interval", 120)
         </programlisting>
@@ -170,7 +169,7 @@
       <para>If the user's contacts should be kept timestamp ordered; otherwise the contact will be ordered based on q value. Non 0 value means true.</para>
       <para><emphasis> Default value is timestamp ordering not enabled  </emphasis></para>
       <example>
-        <title>Set <varname>desc_time_order</varname>parameter</title>
+        <title>Set <varname>desc_time_order</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "desc_time_order", 1)
         </programlisting>
@@ -203,7 +202,7 @@
   		</itemizedlist>
       <para><emphasis> Default value is 0. </emphasis></para>
       <example>
-        <title>Set <varname>matching_mode</varname>parameter</title>
+        <title>Set <varname>matching_mode</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "matching_mode", 0)
        </programlisting>
@@ -214,7 +213,7 @@
       <para>Delay (in seconds) for accepting as retransmissions register requests with same Call-ID and Cseq.</para>
       <para><emphasis> Default value is 20. </emphasis></para>
       <example>
-        <title>Set <varname>scscf_name</varname>parameter</title>
+        <title>Set <varname>cseq_delay</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "cseq_delay", 20)
         </programlisting>
@@ -225,7 +224,7 @@
       <para>The number of the rows to be fetched at once from database when loading the location records.</para>
       <para><emphasis> Default value is 2000. </emphasis></para>
       <example>
-        <title>Set <varname>fetch_rows</varname>parameter</title>
+        <title>Set <varname>fetch_rows</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "fetch_rows", 3000)
         </programlisting>
@@ -236,7 +235,7 @@
       <para>The number of entries of the hash table used by usrloc </para>
       <para><emphasis> Default value 512</emphasis></para>
       <example>
-        <title>Set <varname>hash_size</varname>parameter</title>
+        <title>Set <varname>hash_size</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "hash_size", 512)
         </programlisting>
@@ -247,7 +246,7 @@
       <para>The number of entries of the hash table used by usrloc to store the ims subscribe records</para>
       <para><emphasis> Default value 512</emphasis></para>
       <example>
-        <title>Set <varname>subs_hash_size</varname>parameter</title>
+        <title>Set <varname>subs_hash_size</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "subs_hash_size", 512)
         </programlisting>
@@ -258,7 +257,7 @@
       <para>The number of entries of the hash table used by usrloc to store the contact records</para>
       <para><emphasis> Default value is 512</emphasis></para>
       <example>
-        <title>Set <varname>contacts_hash_size</varname>parameter</title>
+        <title>Set <varname>contacts_hash_size</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "contacts_hash_size", 512)
         </programlisting>
@@ -269,7 +268,7 @@
       <para>NAT marker to handle natted registration</para>
       <para><emphasis> Default value is 0 </emphasis></para>
       <example>
-        <title>Set <varname>nat_bflag</varname>parameter</title>
+        <title>Set <varname>nat_bflag</varname> parameter</title>
         <programlisting format="linespecific">
         modparam("ims_usrloc_scscf", "nat_bflag", 3)
        </programlisting>
@@ -280,7 +279,7 @@
       <para>If contact is put into delay delete state ,this is how long we delay before deleting </para>
       <para><emphasis> Default value is 30</emphasis></para>
       <example>
-        <title>Set <varname>contact_delete_delay</varname>parameter</title>
+        <title>Set <varname>contact_delete_delay </varname>parameter</title>
         <programlisting format="linespecific">
         modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
 	     </programlisting>
