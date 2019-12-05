@@ -93,14 +93,14 @@ extern const str null_str;
 
 static inline str pkg_strdup(str src)
 {
-	str res;
+	str res = STR_NULL;
 	pkg_str_dup(&src, &res);
 	return res;
 }
 
 static inline str shm_strdup(str src)
 {
-	str res;
+	str res = STR_NULL;
 	shm_str_dup(&src, &res);
 	return res;
 }
