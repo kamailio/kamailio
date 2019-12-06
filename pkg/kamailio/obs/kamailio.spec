@@ -1553,6 +1553,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.print
 %doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.pv
+%doc %{_docdir}/kamailio/modules/README.pv_headers
 %doc %{_docdir}/kamailio/modules/README.pua_rpc
 %doc %{_docdir}/kamailio/modules/README.qos
 %doc %{_docdir}/kamailio/modules/README.ratelimit
@@ -1711,6 +1712,7 @@ fi
 %{_libdir}/kamailio/modules/print_lib.so
 %{_libdir}/kamailio/modules/pua_rpc.so
 %{_libdir}/kamailio/modules/pv.so
+%{_libdir}/kamailio/modules/pv_headers.so
 %{_libdir}/kamailio/modules/qos.so
 %{_libdir}/kamailio/modules/ratelimit.so
 %{_libdir}/kamailio/modules/registrar.so
