@@ -809,6 +809,37 @@ modparam("registrar", "xavp_rcd", "ulrcd")
 		</example>
 	</section>
 
+	<section id="registrar.p.xavp_rcd_mask">
+		<title><varname>xavp_rcd_mask</varname> (int)</title>
+		<para>
+			Defines what values to skip when xavp_rcd is stored.
+		</para>
+		<itemizedlist>
+		<listitem><para>1 - <emphasis>ruid</emphasis></para></listitem>
+		<listitem><para>2 - <emphasis>contact</emphasis></para></listitem>
+		<listitem><para>4 - <emphasis>expires</emphasis></para></listitem>
+		<listitem><para>8 - <emphasis>received</emphasis></para></listitem>
+		<listitem><para>16 - <emphasis>path</emphasis></para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is 0 (none).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_rcd_mask</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# skip path value
+modparam("registrar", "xavp_rcd_mask", 16)
+...
+# skip path and expires values
+modparam("registrar", "xavp_rcd_mask", 20)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.p.gruu_enabled">
 		<title><varname>gruu_enabled</varname> (integer)</title>
 		<para>
