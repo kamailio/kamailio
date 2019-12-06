@@ -94,8 +94,8 @@ extern const str null_str;
 #define jsr_ms_to_tv(ms, tv) \
 	do { \
 		memset(&tv, 0, sizeof(struct timeval)); \
-		tv.tv_sec = time/1000; \
-		tv.tv_usec = ((time % 1000) * 1000); \
+		tv.tv_sec = ms/1000; \
+		tv.tv_usec = ((ms % 1000) * 1000); \
 	} while(0)
 
 #endif /* _JSONRPC_H_ */

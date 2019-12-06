@@ -230,7 +230,7 @@ error:
 
 int schedule_retry(jsonrpc_request_t* req)
 {
-	const struct timeval tv;
+	struct timeval tv;
 	unsigned int ltime;
 
 	if(!req) {
