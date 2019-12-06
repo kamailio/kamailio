@@ -67,6 +67,12 @@ extern int contact_max_size; /* configurable using module parameter "contact_max
  *   increases! */
 #define REG_FLOW_TIMER_MAX	999
 
+#define AVP_RCD_RUID	1
+#define AVP_RCD_CNT		2
+#define AVP_RCD_EXP		4
+#define AVP_RCD_RCV		8
+#define AVP_RCD_PATH	16
+
 extern int nat_flag;
 extern int tcp_persistent_flag;
 extern int received_avp;
@@ -96,7 +102,7 @@ extern int sock_flag;
 
 extern str reg_xavp_cfg;
 extern str reg_xavp_rcd;
-
+extern int reg_xavp_rcd_mask;
 extern usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 
 extern sl_api_t slb;

@@ -126,7 +126,7 @@ int_str rcv_avp_name;
 
 str reg_xavp_cfg = {0};
 str reg_xavp_rcd = {0};
-
+int reg_xavp_rcd_mask = 0;
 int reg_use_domain = 0;
 
 int sock_flag = -1;
@@ -238,6 +238,7 @@ static param_export_t params[] = {
 	{"path_check_local",   INT_PARAM, &path_check_local                     },
 	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
 	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
+	{"xavp_rcd_mask",      INT_PARAM, &reg_xavp_rcd_mask   					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},

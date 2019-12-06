@@ -169,29 +169,36 @@ int xavp_rcd_helper(ucontact_t* ptr)
 
 	list = xavp_get(&reg_xavp_rcd, NULL);
 	xavp = list ? &list->val.v.xavp : &new_xavp;
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->ruid;
-	xavp_add_value(&xname_ruid, &xval, xavp);
 
-	if(ptr->received.len > 0) {
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RUID)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->ruid;
+		xavp_add_value(&xname_ruid, &xval, xavp);
+	}
+
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RCV) && (ptr->received.len > 0)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = ptr->received;
 		xavp_add_value(&xname_received, &xval, xavp);
 	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->c;
-	xavp_add_value(&xname_contact, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_CNT)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->c;
+		xavp_add_value(&xname_contact, &xval, xavp);
+	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = (int) (ptr->expires - time(0));
-	xavp_add_value(&xname_expires, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_EXP)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_INT;
+		xval.v.i = (int) (ptr->expires - time(0));
+		xavp_add_value(&xname_expires, &xval, xavp);
+	}
 
-	if(ptr->path.len > 0) {
+	if(!(reg_xavp_rcd_mask & AVP_RCD_PATH) && (ptr->path.len > 0)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = ptr->path;
