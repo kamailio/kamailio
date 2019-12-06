@@ -210,7 +210,7 @@ static void update_opt_variables(void)
 	options[16].param = &_ksr_tls_domain->server_name_mode;
 	options[17].param = &_ksr_tls_domain->server_id;
 	for(i = 0; verify_client_params[i].name; i++) {
-		verify_client_params[i].param = &domain->verify_client;
+		verify_client_params[i].param = &_ksr_tls_domain->verify_client;
 	}
 }
 
