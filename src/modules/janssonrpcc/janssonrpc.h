@@ -91,27 +91,11 @@ extern str result_pv_str;
 extern retry_range_t* global_retry_ranges;
 extern const str null_str;
 
-static inline str pkg_strdup(str src)
-{
-	str res = STR_NULL;
-	pkg_str_dup(&src, &res);
-	return res;
-}
-
-static inline str shm_strdup(str src)
-{
-	str res = STR_NULL;
-	shm_str_dup(&src, &res);
-	return res;
-}
-
-static inline struct timeval ms_to_tv(unsigned int time)
-{
-	struct timeval tv = {0,0};
-	tv.tv_sec = time/1000;
-	tv.tv_usec = ((time % 1000) * 1000);
-	return tv;
-}
-
+#define jsr_ms_to_tv(ms, tv) \
+	do { \
+		memset(&tv, 0, sizeof(struct timeval)); \
+		tv.tv_sec = time/1000; \
+		tv.tv_usec = ((time % 1000) * 1000); \
+	} while(0)
 
 #endif /* _JSONRPC_H_ */

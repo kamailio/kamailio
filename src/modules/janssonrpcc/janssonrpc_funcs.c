@@ -95,7 +95,7 @@ int jsonrpc_request(struct sip_msg* _m,
 		for (; pit;pit=pit->next)
 		{
 			if PIT_MATCHES("route") {
-				route = pkg_strdup(pit->body);
+				pkg_str_dup(&route, &pit->body);
 				CHECK_MALLOC_GOTO(route.s, end);
 
 			} else if PIT_MATCHES("timeout") {
@@ -202,19 +202,19 @@ int mod_jsonrpc_request(
 	jsonrpc_req_cmd_t* req_cmd = create_req_cmd();
 	CHECK_MALLOC(req_cmd);
 
-	req_cmd->conn   = shm_strdup(conn);
+	shm_str_dup(&req_cmd->conn, &conn);
 	CHECK_MALLOC_GOTO(req_cmd->conn.s, error);
 
-	req_cmd->method = shm_strdup(method);
+	shm_str_dup(&req_cmd->method, &method);
 	CHECK_MALLOC_GOTO(req_cmd->conn.s, error);
 
 	if(params.s) {
-		req_cmd->params = shm_strdup(params);
+		shm_str_dup(&req_cmd->params, &params);
 		CHECK_MALLOC_GOTO(req_cmd->params.s, error);
 	}
 
 	if(route.s) {
-		req_cmd->route = shm_strdup(route);
+		shm_str_dup(&req_cmd->route, &route);
 		CHECK_MALLOC_GOTO(req_cmd->route.s, error);
 	}
 
