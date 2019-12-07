@@ -61,7 +61,7 @@ void ka_check_timer(unsigned int ticks, void *param)
 
 	LM_DBG("ka check timer\n");
 
-	lock_get(ka_destinations_list->lock);
+	ka_lock_destination_list();
 
 	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
 			ka_dest = ka_dest->next) {
@@ -72,7 +72,7 @@ void ka_check_timer(unsigned int ticks, void *param)
 		 *		str* b, str *oburi,
 		 *		transaction_cb cb, void* cbp); */
 
-		if(ka_dest->counter>counter_del){
+		if(ka_dest->counter>ka_counter_del){
 			continue;
 		}
 
@@ -87,8 +87,7 @@ void ka_check_timer(unsigned int ticks, void *param)
 
 		ka_dest->last_checked = time(NULL);
 	}
-	lock_release(ka_destinations_list->lock);
-
+	ka_unlock_destination_list();
 
 	return;
 }

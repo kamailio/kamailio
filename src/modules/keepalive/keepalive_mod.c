@@ -63,17 +63,17 @@ extern struct tm_binds tmb;
 int ka_ping_interval = 30;
 ka_destinations_list_t *ka_destinations_list = NULL;
 str ka_ping_from = str_init("sip:keepalive@kamailio.org");
-int counter_del = 5;
+int ka_counter_del = 5;
 
 
 
 static cmd_export_t cmds[] = {
-	{"is_alive", (cmd_function)w_cmd_is_alive, 1,
+	{"ka_is_alive", (cmd_function)w_cmd_is_alive, 1,
 			fixup_spve_null, 0, ANY_ROUTE},
 	// internal API
-	{"add_destination", (cmd_function)w_add_destination, 2,
+	{"ka_add_destination", (cmd_function)w_add_destination, 2,
 		fixup_add_destination, 0, REQUEST_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"del_destination", (cmd_function)w_del_destination, 2,
+	{"ka_del_destination", (cmd_function)w_del_destination, 2,
 		fixup_add_destination, 0, ANY_ROUTE},
 	{"bind_keepalive", (cmd_function)bind_keepalive, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -85,7 +85,7 @@ static param_export_t params[] = {
 	{"destination", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)ka_mod_add_destination},
 	{"ping_from", PARAM_STRING,	&ka_ping_from},
-	{"delete_counter", PARAM_INT,	&counter_del},
+	{"delete_counter", PARAM_INT,	&ka_counter_del},
 	{0, 0, 0}
 };
 
@@ -138,8 +138,10 @@ static int mod_init(void)
  */
 static void mod_destroy(void)
 {
-	lock_release(ka_destinations_list->lock);
-	lock_dealloc(ka_destinations_list->lock);
+	if(ka_destinations_list){
+		lock_release(ka_destinations_list->lock);
+		lock_dealloc(ka_destinations_list->lock);
+	}
 }
 
 

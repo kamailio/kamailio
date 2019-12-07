@@ -54,6 +54,8 @@ int bind_keepalive(keepalive_api_t *api)
 	api->add_destination = ka_add_dest;
 	api->destination_state = ka_destination_state;
 	api->del_destination = ka_del_destination;
+	api->lock_destination_list = ka_lock_destination_list;
+	api->unlock_destination_list = ka_unlock_destination_list;
 	return 0;
 }
 
@@ -64,13 +66,14 @@ int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 		void *user_attr)
 {
 	struct sip_uri _uri;
-	ka_dest_t *dest=0;
+	ka_dest_t *dest=0,*hollow=0;
 
 	LM_DBG("adding destination: %.*s\n", uri->len, uri->s);
-
-	if(ka_find_destination(uri , owner , &dest , &dest)){
+	ka_lock_destination_list();
+	if(ka_find_destination(uri , owner , &dest , &hollow)){
 		LM_INFO("uri [%.*s] already in stack --ignoring \r\n",uri->len, uri->s);
 		dest->counter=0;
+		ka_unlock_destination_list();
 		return -2;
 	}
 
@@ -107,7 +110,9 @@ int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 	dest->next = ka_destinations_list->first;
 	ka_destinations_list->first = dest;
 
-	return 0;
+	ka_unlock_destination_list();
+
+	return 1;
 
 err:
 	if(dest) {
@@ -116,6 +121,8 @@ err:
 
 		shm_free(dest);
 	}
+	ka_unlock_destination_list();
+
 	return -1;
 }
 /*
@@ -124,7 +131,7 @@ err:
 ka_state ka_destination_state(str *destination)
 {
 	ka_dest_t *ka_dest = NULL;
-
+	ka_lock_destination_list();
 	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
 			ka_dest = ka_dest->next) {
 		if((destination->len == ka_dest->uri.len - 4)
@@ -133,7 +140,7 @@ ka_state ka_destination_state(str *destination)
 			break;
 		}
 	}
-
+	ka_unlock_destination_list();
 	if(ka_dest == NULL) {
 		return (-1);
 	}
@@ -153,36 +160,37 @@ ka_state ka_destination_state(str *destination)
 int ka_del_destination(str *uri, str *owner){
 
 	ka_dest_t *target=0,*head=0;
+	ka_lock_destination_list();
 
 	if(!ka_find_destination(uri,owner,&target,&head)){
-		LM_ERR("Couldnt find destination \r\n");
-		return -1;
+		LM_ERR("Couldn't find destination \r\n");
+		goto err;
 	}
 
 	if(!target){
-		LM_ERR("Couldnt find destination \r\n");
-		return -1;
+		LM_ERR("Couldn't find destination \r\n");
+		goto err;
 	}
 
-	lock_get(ka_destinations_list->lock);
-
 	if(!head){
-		LM_DBG("There isnt any head so maybe it is first \r\n");
+		LM_DBG("There isn't any head so maybe it is first \r\n");
 		ka_destinations_list->first = target->next;
 		free_destination(target);
-		lock_release(ka_destinations_list->lock);
+		ka_unlock_destination_list();
 		return 1;
 	}
 	head->next = target->next;
 	free_destination(target);
-	lock_release(ka_destinations_list->lock);
-
+	ka_unlock_destination_list();
 	return 1;
+err:
+	ka_unlock_destination_list();
+	return -1;
 }
 /*!
 * @function ka_find_destination
 * @abstract find given destination uri address in destination_list stack
-*
+*           don't forget to add lock via ka_lock_destination_list to prevent crashes
 * @param *uri given uri
 * @param *owner given owner name, not using now
 * @param **target searched address in stack
@@ -193,8 +201,8 @@ int ka_del_destination(str *uri, str *owner){
 int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **head){
 
 	ka_dest_t  *dest=0 ,*temp=0;
+	LM_DBG("finding destination: %.*s\n", uri->len, uri->s);
 
-	lock_get(ka_destinations_list->lock);
 	for(dest = ka_destinations_list->first ;dest; temp=dest, dest= dest->next ){
 		if(!dest)
 			break;
@@ -203,14 +211,12 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 			continue;
 
 		if(memcmp(dest->uri.s , uri->s , uri->len>dest->uri.len?dest->uri.len : uri->len)==0){
-			*target = dest;
 			*head = temp;
+			*target = dest;
 			LM_DBG("destination is found [target : %p] [head : %p] \r\n",target,temp);
-			lock_release(ka_destinations_list->lock);
 			return 1;
 		}
 	}
-	lock_release(ka_destinations_list->lock);
 
 	return 0;
 
@@ -236,4 +242,20 @@ int free_destination(ka_dest_t *dest){
 	}
 
 	return 1;
+}
+
+int ka_lock_destination_list(){
+	if(ka_destinations_list){
+		lock_get(ka_destinations_list->lock);
+		return 1;
+	}
+	return 0;
+}
+
+int ka_unlock_destination_list(){
+	if(ka_destinations_list){
+		lock_release(ka_destinations_list->lock);
+		return 1;
+	}
+	return 0;
 }

@@ -74,7 +74,7 @@ typedef struct _ka_destinations_list
 } ka_destinations_list_t;
 
 extern ka_destinations_list_t *ka_destinations_list;
-extern int counter_del;
+extern int ka_counter_del;
 
 int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 		void *user_attr);
@@ -83,5 +83,6 @@ int ka_str_copy(str *src, str *dest, char *prefix);
 int free_destination(ka_dest_t *dest) ;
 int ka_del_destination(str *uri, str *owner) ;
 int ka_find_destination(str *uri, str *owner, ka_dest_t **target ,ka_dest_t **head);
-
+int ka_lock_destination_list();
+int ka_unlock_destination_list();
 #endif
