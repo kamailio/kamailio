@@ -480,7 +480,7 @@ modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 		<title>Set <varname>hash_table_size</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpengine", "hash_table_size", "123")
+modparam("rtpengine", "hash_table_size", 123)
 ...
 </programlisting>
 		</example>
@@ -507,7 +507,7 @@ modparam("rtpengine", "hash_table_size", "123")
 		<title>Set <varname>hash_table_tout</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpengine", "hash_table_tout", "300")
+modparam("rtpengine", "hash_table_tout", 300)
 ...
 </programlisting>
                 </example>
@@ -2002,7 +2002,7 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 		<title>Set <varname>control_cmd_tos</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpengine", "control_cmd_tos", "144")
+modparam("rtpengine", "control_cmd_tos", 144)
 ...
 </programlisting>
 		</example>
@@ -2025,7 +2025,7 @@ modparam("rtpengine", "control_cmd_tos", "144")
 <programlisting format="linespecific">
 ...
 ### use SHA1 instead of legacy algorithm
-modparam("rtpengine", "hash_algo", "1")
+modparam("rtpengine", "hash_algo", 1)
 ...
 </programlisting>
 		</example>
