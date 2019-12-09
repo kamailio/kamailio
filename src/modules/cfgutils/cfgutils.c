@@ -1001,6 +1001,7 @@ int bind_cfgutils(cfgutils_api_t *api)
 /**
  * KEMI exports
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("lock"),
 		SR_KEMIP_INT, cfg_lock,
@@ -1080,6 +1081,7 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
