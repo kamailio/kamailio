@@ -1025,6 +1025,7 @@ static int permissions_init_rpc(void)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_permissions_exports[] = {
 	{ str_init("permissions"), str_init("allow_source_address"),
 		SR_KEMIP_INT, allow_source_address,
@@ -1049,6 +1050,7 @@ static sr_kemi_t sr_kemi_permissions_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
