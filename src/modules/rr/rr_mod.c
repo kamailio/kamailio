@@ -292,26 +292,45 @@ static int ki_record_route(sip_msg_t *msg)
 }
 
 /**
- * wrapper for record_route_preset(msg, key1, key2)
+ * wrapper for record_route_preset(msg, addr1, addr2)
  */
-static int ki_record_route_preset(sip_msg_t *msg, str *key1, str *key2)
+static int ki_record_route_preset(sip_msg_t *msg, str *addr1, str *addr2)
 {
 	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
-	if (key2 && !enable_double_rr) {
+	if (addr2 && addr2->len>0 && !enable_double_rr) {
 		LM_ERR("Attempt to double record-route while 'enable_double_rr' param is disabled\n");
 		return -1;
 	}
 
-	if ( record_route_preset( msg, key1)<0 )
+	if ( record_route_preset(msg, addr1)<0 )
 		return -1;
 
-	if (!key2)
+	if (!addr2 || addr2->len<=0)
 		goto done;
 
-	if ( record_route_preset( msg, key2)<0 )
+	if ( record_route_preset(msg, addr2)<0 )
+		return -1;
+
+done:
+	msg->msg_flags |= FL_RR_ADDED;
+	return 1;
+
+}
+
+/**
+ * wrapper for record_route_preset(msg, addr1)
+ */
+static int ki_record_route_preset_one(sip_msg_t *msg, str *addr1)
+{
+	if (msg->msg_flags & FL_RR_ADDED) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+
+	if ( record_route_preset( msg, addr1)<0 )
 		return -1;
 
 done:
@@ -773,6 +792,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	},
 	{ str_init("rr"), str_init("is_direction"),
 		SR_KEMIP_INT, ki_is_direction,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("record_route_preset_one"),
+		SR_KEMIP_INT, ki_record_route_preset_one,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
