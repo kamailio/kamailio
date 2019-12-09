@@ -112,7 +112,8 @@ void _cfgt_remove_report(const str *scen)
 					continue;
 				}
 			}
-			sprintf(filepath.s, "%s/%s", dest.s, next_file->d_name);
+			snprintf(filepath.s, dest.len + 1, "%s/%s", dest.s,
+				next_file->d_name);
 			if(remove(filepath.s) < 0) {
 				LM_ERR("failed removing file: %s\n", strerror(errno));
 			} else {
