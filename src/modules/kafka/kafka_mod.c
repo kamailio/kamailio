@@ -245,6 +245,7 @@ static int ki_kafka_send(struct sip_msg* msg, str *s_topic, str *s_message)
 /**
  * \brief Kafka :: Array with KEMI functions
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_kafka_exports[] = {
 	{ str_init("kafka"), str_init("send"),
 	  SR_KEMIP_INT, ki_kafka_send,
@@ -254,6 +255,7 @@ static sr_kemi_t sr_kemi_kafka_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  * \brief Kafka :: register Kafka module
