@@ -229,6 +229,7 @@ int bind_maxfwd(maxfwd_api_t *api)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_maxfwd_exports[] = {
 	{ str_init("maxfwd"), str_init("process_maxfwd"),
 		SR_KEMIP_INT, process_maxfwd_header,
@@ -243,6 +244,7 @@ static sr_kemi_t sr_kemi_maxfwd_exports[] = {
 
 	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
 };
+/* clang-format on */
 
 /**
  *
