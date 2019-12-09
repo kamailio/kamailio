@@ -170,6 +170,7 @@ void pike_exit(void)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_pike_exports[] = {
 	{ str_init("pike"), str_init("pike_check_req"),
 		SR_KEMIP_INT, pike_check_req,
@@ -179,6 +180,7 @@ static sr_kemi_t sr_kemi_pike_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
