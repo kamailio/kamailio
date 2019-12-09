@@ -759,6 +759,7 @@ static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("record_route"),
 		SR_KEMIP_INT, ki_record_route,
@@ -807,6 +808,7 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
