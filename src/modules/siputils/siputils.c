@@ -479,6 +479,7 @@ static int ki_is_uri(sip_msg_t* msg, str* suri)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("has_totag"),
 		SR_KEMIP_INT, has_totag,
@@ -548,6 +549,7 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
