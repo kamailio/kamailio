@@ -601,6 +601,7 @@ static int bind_sl(sl_api_t* api)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sl_kemi_exports[] = {
 	{ str_init("sl"), str_init("sl_send_reply"),
 		SR_KEMIP_INT, sl_send_reply_str,
@@ -625,6 +626,7 @@ static sr_kemi_t sl_kemi_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
