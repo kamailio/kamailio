@@ -1043,6 +1043,7 @@ modparam("tls", "renegotiation", 1)
 			<listitem><para>tls_method - (str) - TLS methods</para></listitem>
 			<listitem><para>verify_certificate - (bool) - see modparam</para></listitem>
 			<listitem><para>require_certificate - (bool) - see modparam</para></listitem>
+			<listitem><para>verify_client - (str) - see modparam</para></listitem>
 			<listitem><para>private_key - (str) - see modparam</para></listitem>
 			<listitem><para>certificate - (str) - see modparam</para></listitem>
 			<listitem><para>verify_depth - (int) - see modparam</para></listitem>
@@ -1339,4 +1340,65 @@ modparam("tls", "engine_algorithms", "ALL")
 	        The default is not to set any methods as default. This global param is not supported in the tls config file.
 	</para>
         </section>
+
+	<section id="tls.p.verify_client">
+	<title><varname>verify_client</varname> (string)</title>
+	<para>
+		Provides an alternative to verify_certificate and require_certificate modparam and tls.cfg
+		parameters, and creates an additional opportunistic connection establishment option for connections with
+		with unverifiable certificates (optional_no_ca).
+	</para>
+	<para>
+		This is useful for allowing connections from SIP phones with self-signed
+		certificates, signed by unrecognized root CAs, expired certificates, etc.
+	</para>
+	<para>
+		The following values have respective behaviors:
+	</para>
+	<itemizedlist>
+		<listitem><para>off - no client certificate request performed.</para></listitem>
+		<listitem><para>on - require a verified certificate from the client.</para></listitem>
+		<listitem><para>optional - ask client for certificate. If one is provided, it must
+				be verified. Allowing missing certificate.</para></listitem>
+		<listitem><para>optional_no_ca - ask client for certificate. Opportunistically try to
+				verify certificate. Allow connection regardless of whether there is
+				no certificate or whether certificate is present (verified or not).
+				Note that verification status can be retrieved via $tls_peer_verified.</para></listitem>
+	</itemizedlist>
+	<para>
+		Default value is 'off' (no client certificate request performed).
+	</para>
+	<para>
+		Recommendation: when using this parameter, do not use verify_certificate or
+		require_certificate parameters. Conversion table is as follows:
+	</para>
+	<itemizedlist>
+		<listitem><para>verify_certificate=0, require_certificate=0 => verify_client="off"</listitem></para>
+		<listitem><para>verify_certificate=1, require_certificate=0 => verify_client="optional"</listitem></para>
+		<listitem><para>verify_certificate=1, require_certificate=1 => verify_client="on"</listitem></para>
+	</itemizedlist>
+	<example>
+		<title>Set <varname>verify_client</varname> modparam parameter</title>
+		<programlisting>
+...
+modparam("tls", "verify_client", "on")
+...
+		</programlisting>
+	</example>
+	<example>
+		<title>Set <varname>verify_client</varname> tls.cfg parameter</title>
+		<programlisting>
+...
+[server:1.2.3.4:5061]
+method = TLSv1
+verify_client = on
+...
+
+[server:5.6.7.8:5061]
+method = TLSv1.2
+verify_client = optional_no_ca
+...
+		</programlisting>
+	</example>
+	</section>
  </section>

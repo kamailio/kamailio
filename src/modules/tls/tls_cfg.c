@@ -41,6 +41,7 @@ struct cfg_group_tls default_tls_cfg = {
 	0, /* verify_certificate */
 	9, /* verify_depth */
 	0, /* require_certificate */
+	STR_STATIC_INIT("off"), /* verify_client */
 	STR_NULL, /* private_key (default value set in fix_tls_cfg) */
 	STR_NULL, /* ca_list (default value set in fix_tls_cfg) */
 	STR_NULL, /* crl (default value set in fix_tls_cfg) */
@@ -155,6 +156,8 @@ cfg_def_t	tls_cfg_def[] = {
 		" verification go in the search for a trusted CA" },
 	{"require_certificate", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 		"if enabled a certificate will be required from clients" },
+	{"verify_client", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
+		"set to off (default), on, optional, or optional_no_ca" },
 	{"private_key", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the private key (pem format), if not"
 		" contained in the certificate file" },
