@@ -52,6 +52,7 @@ void usrloc_dmq_send_multi_contact_flush(dmq_node_t* node);
 #define MAX_AOR_LEN 256
 
 extern int _dmq_usrloc_sync;
+extern int _dmq_usrloc_replicate_socket_info;
 extern int _dmq_usrloc_batch_msg_contacts;
 extern int _dmq_usrloc_batch_msg_size;
 extern int _dmq_usrloc_batch_size;
@@ -322,13 +323,14 @@ int usrloc_dmq_send(str* body, dmq_node_t* node) {
 static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	static ucontact_info_t ci;
 	srjson_t *it = NULL;
+	struct socket_info* sock=0;
 	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
-				 methods, reg_id, server_id;
+				 methods, reg_id, server_id, port, proto;
 	str aor=STR_NULL, ruid=STR_NULL, received=STR_NULL, instance=STR_NULL;
-	static str c=STR_NULL, callid=STR_NULL, path=STR_NULL, user_agent=STR_NULL;
+	static str host=STR_NULL, c=STR_NULL, callid=STR_NULL, path=STR_NULL, user_agent=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
-		= methods = reg_id = server_id = 0;
+		= methods = reg_id = server_id = port = proto = 0;
 
 	for(it=jdoc_action; it; it = it->next) {
 		if (it->string == NULL) continue;
@@ -347,6 +349,20 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 		} else if (strcmp(it->string, "received")==0) {
 			received.s = it->valuestring;
 			received.len = strlen(received.s);
+		} else if (_dmq_usrloc_replicate_socket_info==1 && strcmp(it->string, "sock")==0) {
+			if (parse_phostport( it->valuestring, &host.s, &host.len,
+			&port, &proto)!=0) {
+				LM_ERR("bad socket <%s>\n", it->valuestring);
+				return 0;
+			}
+			sock = grep_sock_info( &host, (unsigned short)port, proto);
+			if (sock==0) {
+				LM_DBG("non-local socket <%s>...ignoring\n", it->valuestring);
+			} else {
+				sock = grep_sock_info( &host, (unsigned short)port, proto);
+				sock->sock_str.s = it->valuestring;
+				sock->sock_str.len = strlen(sock->sock_str.s);
+			}
 		} else if (strcmp(it->string, "path")==0) {
 			path.s = it->valuestring;
 			path.len = strlen(path.s);
@@ -385,6 +401,8 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	ci.ruid = ruid;
 	ci.c = &c;
 	ci.received = received;
+	if (_dmq_usrloc_replicate_socket_info==1)
+		ci.sock = sock;
 	ci.path = &path;
 	ci.expires = expires;
 	ci.q = q;
@@ -662,6 +680,10 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += ptr->c.len;
 	srjson_AddStrToObject(jdoc, jdoc_contact, "received", ptr->received.s, ptr->received.len);
 	jdoc_contact_group.size += ptr->received.len;
+	if (_dmq_usrloc_replicate_socket_info==1) {
+		srjson_AddStrToObject(jdoc, jdoc_contact, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
+		jdoc_contact_group.size += ptr->sock->sock_str.len;
+	}
 	srjson_AddStrToObject(jdoc, jdoc_contact, "path", ptr->path.s, ptr->path.len);
 	jdoc_contact_group.size += ptr->path.len;
 	srjson_AddStrToObject(jdoc, jdoc_contact, "callid", ptr->callid.s, ptr->callid.len);
@@ -722,6 +744,8 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddStrToObject(&jdoc, jdoc.root, "ruid", ptr->ruid.s, ptr->ruid.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "c", ptr->c.s, ptr->c.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "received", ptr->received.s, ptr->received.len);
+	if (_dmq_usrloc_replicate_socket_info==1)
+		srjson_AddStrToObject(&jdoc, jdoc.root, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "path", ptr->path.s, ptr->path.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "callid", ptr->callid.s, ptr->callid.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "user_agent", ptr->user_agent.s, ptr->user_agent.len);
