@@ -438,6 +438,7 @@ error:
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_auth_db_exports[] = {
 	{ str_init("auth_db"), str_init("auth_check"),
 		SR_KEMIP_INT, auth_check,
@@ -452,6 +453,7 @@ static sr_kemi_t sr_kemi_auth_db_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
