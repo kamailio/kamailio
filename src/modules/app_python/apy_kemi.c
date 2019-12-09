@@ -1839,6 +1839,7 @@ static int sr_apy_kemi_f_ktest(sip_msg_t *msg, str *txt)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t _sr_apy_kemi_test[] = {
 	{ str_init(""), str_init("ktest"),
 		SR_KEMIP_NONE, sr_apy_kemi_f_ktest,
@@ -1848,6 +1849,7 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
