@@ -384,7 +384,7 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 
 	pvh_get_branch_index(msg, &br_idx);
 	if(br_idx > 0) {
-		sprintf(br_idx_s, "%d", br_idx - 1);
+		snprintf(br_idx_s, 32, "%d", br_idx - 1);
 		br_idx_len = strlen(br_idx_s);
 		memcpy(dst->s + os, ".", 1);
 		os += 1;
