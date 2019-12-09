@@ -2153,6 +2153,7 @@ error:
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("remove_codecs_by_name"),
 		SR_KEMIP_INT, sdp_remove_codecs_by_name,
@@ -2242,6 +2243,7 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
