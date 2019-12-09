@@ -4065,6 +4065,7 @@ static int ki_set_rtpengine_set2(sip_msg_t *msg, int r1, int r2)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     { str_init("rtpengine"), str_init("rtpengine_manage0"),
         SR_KEMIP_INT, ki_rtpengine_manage0,
@@ -4139,6 +4140,7 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
 
     { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {
     sr_kemi_modules_add(sr_kemi_rtpengine_exports);
