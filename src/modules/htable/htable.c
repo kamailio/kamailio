@@ -1709,6 +1709,7 @@ static int htable_init_rpc(void)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_lock"),
 		SR_KEMIP_INT, ki_ht_slot_lock,
@@ -1818,6 +1819,7 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
