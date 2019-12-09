@@ -2376,6 +2376,48 @@ if(has_totag()) {
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.f.dlg_reset_property">
+		<title>
+		<function moreinfo="none">dlg_reset_property(attr)</function>
+		</title>
+		<para>
+			Reset a dialog property - an attribute that enable/disable
+			various behaviours (e.g., sending keep alive requests).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>attr</emphasis> - name of property. It can be:
+				<itemizedlist>
+					<listitem>
+						'ka-src' - send keep alive OPTION requests to caller
+					</listitem>
+					<listitem>
+						'ka-dst' - send keep alive OPTION requests to callee
+					</listitem>
+					<listitem>
+						'timeout-noreset' - don't reset timeout on in-dialog messages reception
+					</listitem>
+				</itemizedlist>
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_reset_property</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_reset_property("ka-src");
+dlg_reset_property("ka-dst");
+dlg_reset_property("timeout-noreset");
+...
+
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 

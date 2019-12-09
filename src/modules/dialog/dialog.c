@@ -176,6 +176,7 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2);
+static int w_dlg_reset_property(struct sip_msg *msg, char *prop, char *s2);
 static int w_dlg_manage(struct sip_msg*, char*, char*);
 static int w_dlg_bye(struct sip_msg*, char*, char*);
 static int w_dlg_refer(struct sip_msg*, char*, char*);
@@ -244,6 +245,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
+	{"dlg_reset_property", (cmd_function)w_dlg_reset_property,1,fixup_spve_null,
+            0, ANY_ROUTE }, 			
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
@@ -1328,6 +1331,66 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 	}
 
 	return ki_dlg_set_property(msg, &val);
+}
+
+/**
+ *
+ */
+static int ki_dlg_reset_property(sip_msg_t *msg, str *pval)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+
+	if(pval->len<=0) {
+		LM_ERR("empty property value\n");
+		return -1;
+	}
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
+		return -1;
+
+	if(pval->len==6 && strncmp(pval->s, "ka-src", 6)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_KA_SRC);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_KA_SRC);
+			dlg_release(d);
+		}
+	} else if(pval->len==6 && strncmp(pval->s, "ka-dst", 6)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_KA_DST);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_KA_DST);
+			dlg_release(d);
+		}
+	} else if(pval->len==15 && strncmp(pval->s, "timeout-noreset", 15)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_TIMER_NORESET);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_TIMER_NORESET);
+			dlg_release(d);
+		}
+	} else {
+		LM_ERR("unknown property value [%.*s]\n", pval->len, pval->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlg_reset_property(struct sip_msg *msg, char *prop, char *s2)
+{
+	str val;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prop, &val)!=0)
+	{
+		LM_ERR("no property value\n");
+		return -1;
+	}
+
+	return ki_dlg_reset_property(msg, &val);
 }
 
 static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
