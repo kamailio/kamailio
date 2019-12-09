@@ -1373,9 +1373,9 @@ modparam("tls", "engine_algorithms", "ALL")
 		require_certificate parameters. Conversion table is as follows:
 	</para>
 	<itemizedlist>
-		<listitem><para>verify_certificate=0, require_certificate=0 => verify_client="off"</listitem></para>
-		<listitem><para>verify_certificate=1, require_certificate=0 => verify_client="optional"</listitem></para>
-		<listitem><para>verify_certificate=1, require_certificate=1 => verify_client="on"</listitem></para>
+		<listitem><para>verify_certificate=0, require_certificate=0 => verify_client="off"</para></listitem>
+		<listitem><para>verify_certificate=1, require_certificate=0 => verify_client="optional"</para></listitem>
+		<listitem><para>verify_certificate=1, require_certificate=1 => verify_client="on"</para></listitem>
 	</itemizedlist>
 	<example>
 		<title>Set <varname>verify_client</varname> modparam parameter</title>
