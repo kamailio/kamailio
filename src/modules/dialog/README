@@ -135,6 +135,7 @@ Julien Klingenmeyer
               7.18. dlg_set_ruri()
               7.19. dlg_db_load_callid(cival)
               7.20. dlg_db_load_extra()
+              7.21. dlg_reset_property(attr)
 
         8. Statistics
 
@@ -271,6 +272,7 @@ Julien Klingenmeyer
    1.80. dlg_set_ruri() usage
    1.81. dlg_db_load_callid() usage
    1.82. dlg_db_load_extra() usage
+   1.83. dlg_reset_property usage
 
 Chapter 1. Admin Guide
 
@@ -372,6 +374,7 @@ Chapter 1. Admin Guide
         7.18. dlg_set_ruri()
         7.19. dlg_db_load_callid(cival)
         7.20. dlg_db_load_extra()
+        7.21. dlg_reset_property(attr)
 
    8. Statistics
 
@@ -1452,6 +1455,7 @@ modparam("dialog", "keep_proxy_rr", 1)
    7.18. dlg_set_ruri()
    7.19. dlg_db_load_callid(cival)
    7.20. dlg_db_load_extra()
+   7.21. dlg_reset_property(attr)
 
 7.1.  set_dlg_profile(profile,[value])
 
@@ -1873,6 +1877,27 @@ if(has_totag()) {
         }
     }
 }
+...
+
+7.21.  dlg_reset_property(attr)
+
+   Reset a dialog property - an attribute that enable/disable various
+   behaviours (e.g., sending keep alive requests).
+
+   Meaning of the parameters is as follows:
+     * attr - name of property. It can be:
+          + 'ka-src' - send keep alive OPTION requests to caller
+          + 'ka-dst' - send keep alive OPTION requests to callee
+          + 'timeout-noreset' - don't reset timeout on in-dialog messages
+            reception
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.83. dlg_reset_property usage
+...
+dlg_reset_property("ka-src");
+dlg_reset_property("ka-dst");
+dlg_reset_property("timeout-noreset");
 ...
 
 8. Statistics
