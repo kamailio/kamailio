@@ -3009,6 +3009,7 @@ static int ki_rtpproxy_stop_stream2uas(sip_msg_t* msg)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rtpproxy_exports[] = {
 	{ str_init("rtpproxy"), str_init("rtpproxy_manage0"),
 		SR_KEMIP_INT, ki_rtpproxy_manage0,
@@ -3098,6 +3099,7 @@ static sr_kemi_t sr_kemi_rtpproxy_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
