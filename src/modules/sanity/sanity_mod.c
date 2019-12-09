@@ -303,6 +303,7 @@ static int bind_sanity(sanity_api_t* api)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_sanity_exports[] = {
 	{ str_init("sanity"), str_init("sanity_check"),
 		SR_KEMIP_INT, ki_sanity_check,
@@ -322,6 +323,7 @@ static sr_kemi_t sr_kemi_sanity_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
