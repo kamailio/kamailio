@@ -12,25 +12,15 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Juha Heinanen
 
-Edited by
-
 Sas Ovidiu
-
-Edited by
 
 Carsten Bock
 
    ng-voice GmbH
-
-Edited by
 
 Richard Fuchs
 
@@ -52,7 +42,7 @@ Richard Fuchs
    1. Admin Guide
 
         1. Overview
-        2. Multiple RTP proxy usage
+        2. Usage With Multiple RTPEngine Instances
         3. Dependencies
 
               3.1. Kamailio Modules
@@ -245,7 +235,7 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
-   2. Multiple RTP proxy usage
+   2. Usage With Multiple RTPEngine Instances
    3. Dependencies
 
         3.1. Kamailio Modules
@@ -356,19 +346,19 @@ Chapter 1. Admin Guide
    however due to the incompatible control protocol, it only works with
    RTP proxies which specifically support it.
 
-2. Multiple RTP proxy usage
+2. Usage With Multiple RTPEngine Instances
 
-   The rtpengine module can support multiple RTP proxies for
+   The rtpengine module can support multiple RTPEngine instances for
    balancing/distribution and control/selection purposes.
 
-   The module allows definition of several sets of rtpproxies.
+   The module allows definition of several sets of RTPEngines.
    Load-balancing will be performed over a set and the admin has the
    ability to choose what set should be used. The set is selected via its
    id - the id being defined with the set. Refer to the “rtpengine_sock”
    module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
-   the weight of each RTP proxy from the set.
+   the weight of each RTPEngine from the set.
 
    The selection of the set is done from script prior using
    rtpengine_delete(), rtpengine_offer() or rtpengine_answer() functions -
@@ -389,11 +379,11 @@ Chapter 1. Admin Guide
    the set was selected using setid_avp, the avp needs to be set only once
    before rtpengine_offer() or rtpengine_manage() call.
 
-   From the current implementation point of view, the sets of rtpproxy
-   nodes are shared memory(shm), so all processes can see a common list of
-   nodes. There is no locking when setting the nodes enabled/disabled (to
-   keep the memory access as fast as possible). Thus, problems related to
-   node state might appear for concurent processes that might set the
+   From the current implementation point of view, the sets of rtpengine
+   nodes are in shared memory(shm), so all processes can see a common list
+   of nodes. There is no locking when setting the nodes enabled/disabled
+   (to keep the memory access as fast as possible). Thus, problems related
+   to node state might appear for concurent processes that might set the
    nodes enabled/disabled(e.g. by fifo command). This robustness problems
    are overcomed as follows.
 
@@ -717,7 +707,7 @@ modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 
    Example 1.13. Set hash_table_size parameter
 ...
-modparam("rtpengine", "hash_table_size", "123")
+modparam("rtpengine", "hash_table_size", 123)
 ...
 
 4.14. hash_table_tout (integer)
@@ -740,7 +730,7 @@ modparam("rtpengine", "hash_table_size", "123")
 
    Example 1.14. Set hash_table_tout parameter
 ...
-modparam("rtpengine", "hash_table_tout", "300")
+modparam("rtpengine", "hash_table_tout", 300)
 ...
 
 4.15. db_url (string)
@@ -783,12 +773,12 @@ mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
 
 mysql> select * from rtpengine;
-+-------+---------------------------+--------+----------+---------------------+
-| setid | url                       | weight | disabled | stamp               |
-+-------+---------------------------+--------+----------+---------------------+
-|     0 | udp:rtpproxy1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
-|     0 | udp:rtpproxy2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
-+-------+---------------------------+--------+----------+---------------------+
++-------+----------------------------+--------+----------+---------------------+
+| setid | url                        | weight | disabled | stamp               |
++-------+----------------------------+--------+----------+---------------------+
+|     0 | udp:rtpengine1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
+|     0 | udp:rtpengine2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
++-------+----------------------------+--------+----------+---------------------+
 
 mysql> select * from version;
 +---------------------------+---------------+
@@ -1967,6 +1957,10 @@ rtpengine_offer();
           + record-call=on - instructs RTPEngine to record the session.
             Use it in rtpengine_offer() to start recording immediately and
             save the call metadata, as alternative to start_recording().
+          + metadata - a generic metadata string. The metadata will be
+            used when recording calls to provide custom additional
+            information. More details about this are found in the
+            rtpengine README.
        Check also the documentation of RTPEngine, these flags are
        documented there as well: https://github.com/sipwise/rtpengine.
 
