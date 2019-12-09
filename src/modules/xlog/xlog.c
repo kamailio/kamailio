@@ -936,6 +936,7 @@ int ki_xcrit(sip_msg_t *msg, str *lmsg)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_xlog_exports[] = {
 	{ str_init("xlog"), str_init("xdbg"),
 		SR_KEMIP_INT, ki_xdbg,
@@ -980,6 +981,7 @@ static sr_kemi_t sr_kemi_xlog_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
