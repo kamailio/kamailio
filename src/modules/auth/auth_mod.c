@@ -1211,6 +1211,7 @@ static int fixup_auth_get_www_authenticate(void **param, int param_no)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_auth_exports[] = {
 	{ str_init("auth"), str_init("consume_credentials"),
 		SR_KEMIP_INT, consume_credentials,
@@ -1235,6 +1236,7 @@ static sr_kemi_t sr_kemi_auth_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
