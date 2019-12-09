@@ -313,6 +313,7 @@ int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 	return 1;
 }
 
+/* clang-format off */
 static sr_kemi_t pvh_kemi_exports[] = {
 	{ str_init("pv_headers"), str_init("pvh_collect_headers"),
 		SR_KEMIP_INT, ki_pvh_collect_headers,
@@ -351,6 +352,7 @@ static sr_kemi_t pvh_kemi_exports[] = {
 	},
 	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
