@@ -314,35 +314,43 @@ int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 }
 
 static sr_kemi_t pvh_kemi_exports[] = {
-		{str_init("pv_headers"), str_init("pvh_collect_headers"), SR_KEMIP_INT,
-				ki_pvh_collect_headers,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_apply_headers"), SR_KEMIP_INT,
-				ki_pvh_apply_headers,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_reset_headers"), SR_KEMIP_INT,
-				pvh_reset_headers,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_check_header"), SR_KEMIP_INT,
-				pvh_check_header,
-				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_append_header"), SR_KEMIP_INT,
-				pvh_check_header,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_modify_header"), SR_KEMIP_INT,
-				pvh_modify_header,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("pv_headers"), str_init("pvh_remove_header"), SR_KEMIP_INT,
-				pvh_remove_header,
-				{SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
+	{ str_init("pv_headers"), str_init("pvh_collect_headers"),
+		SR_KEMIP_INT, ki_pvh_collect_headers,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_apply_headers"),
+		SR_KEMIP_INT, ki_pvh_apply_headers,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_reset_headers"),
+		SR_KEMIP_INT, pvh_reset_headers,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_check_header"),
+		SR_KEMIP_INT, pvh_check_header,
+			{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_append_header"),
+		SR_KEMIP_INT, pvh_append_header,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_modify_header"),
+		SR_KEMIP_INT, pvh_modify_header,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_remove_header"),
+		SR_KEMIP_INT, pvh_remove_header,
+			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+};
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
