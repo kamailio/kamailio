@@ -246,7 +246,7 @@ static cmd_export_t cmds[]={
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
 	{"dlg_reset_property", (cmd_function)w_dlg_reset_property,1,fixup_spve_null,
-            0, ANY_ROUTE }, 			
+            0, ANY_ROUTE },
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
@@ -2068,6 +2068,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("dlg_set_property"),
 		SR_KEMIP_INT, ki_dlg_set_property,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_reset_property"),
+		SR_KEMIP_INT, ki_dlg_reset_property,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
