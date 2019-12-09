@@ -911,6 +911,7 @@ void expires_range_update(str* gname, str* name){
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_registrar_exports[] = {
 	{ str_init("registrar"), str_init("save"),
 		SR_KEMIP_INT, regapi_save,
@@ -999,6 +1000,7 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *
