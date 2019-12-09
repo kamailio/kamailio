@@ -12,25 +12,15 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Juha Heinanen
 
-Edited by
-
 Sas Ovidiu
-
-Edited by
 
 Carsten Bock
 
    ng-voice GmbH
-
-Edited by
 
 Richard Fuchs
 
@@ -755,7 +745,7 @@ modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 
    Example 1.14. Set hash_table_size parameter
 ...
-modparam("rtpengine", "hash_table_size", "123")
+modparam("rtpengine", "hash_table_size", 123)
 ...
 
 4.15. hash_table_tout (integer)
@@ -778,7 +768,7 @@ modparam("rtpengine", "hash_table_size", "123")
 
    Example 1.15. Set hash_table_tout parameter
 ...
-modparam("rtpengine", "hash_table_tout", "300")
+modparam("rtpengine", "hash_table_tout", 300)
 ...
 
 4.16. db_url (string)
@@ -1763,7 +1753,7 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 
    Example 1.71. Set control_cmd_tos parameter
 ...
-modparam("rtpengine", "control_cmd_tos", "144")
+modparam("rtpengine", "control_cmd_tos", 144)
 ...
 
 5. Functions
