@@ -76,6 +76,8 @@ const int IPSEC_CMD_SUCCESS = 1;
 extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
+#define IPSEC_SEND_FORCE_SOCKET		0x01 /* if set - set send force socket for request messages */
+
 int bind_ipsec_pcscf(ipsec_pcscf_api_t* api) {
 	if(!api){
 		LM_ERR("invalid parameter value\n");
@@ -658,7 +660,7 @@ cleanup:
 }
 
 
-int ipsec_forward(struct sip_msg* m, udomain_t* d)
+int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 {
     struct pcontact_info ci;
     pcontact_t* pcontact = NULL;
@@ -773,6 +775,10 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d)
    // Set destination info
     struct dest_info dst_info;
     dst_info.send_sock = client_sock;
+	if(m->first_line.type == SIP_REQUEST && (_cflags & IPSEC_SEND_FORCE_SOCKET)){
+		dst_info.send_flags.f |= SND_F_FORCE_SOCKET;
+		m->fwd_send_flags.f |= SND_F_FORCE_SOCKET;
+	}
 #ifdef USE_DNS_FAILOVER
     if (!uri2dst(NULL, &dst_info, m, &m->dst_uri, dst_proto)) {
 #else

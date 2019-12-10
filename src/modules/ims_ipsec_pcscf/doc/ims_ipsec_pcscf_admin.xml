@@ -209,7 +209,7 @@ ipsec_create("location");
     </section>
 
     <section>
-      <title><function moreinfo="none">ipsec_forward(domain)</function></title>
+      <title><function moreinfo="none">ipsec_forward(domain, flags)</function></title>
       <para>The function processes redirects outgoing message via the IPSec tunnel
       initiated with ipsec_create().</para>
 		  <para>Meaning of the parameters is as follows:</para>
@@ -220,6 +220,11 @@ ipsec_create("location");
           If a database is used then this must be name of the table which
           stores the contacts.
           </para>
+          <para>
+          <emphasis>flags</emphasis> - Set send force socket for request messages.
+          If 1 - set force socket for request messages. Useful for ipsec and TCP.
+          An optional parameter. Default value - 0.
+          </para>
         </listitem>
       </itemizedlist>
       <example>
@@ -227,7 +232,7 @@ ipsec_create("location");
 
         <programlisting format="linespecific">
 ...
-ipsec_forward("location");
+ipsec_forward("location"); or ipsec_forward("location", "1");
 ...
         </programlisting>
       </example>
