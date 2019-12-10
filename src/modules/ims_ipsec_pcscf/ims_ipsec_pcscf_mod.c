@@ -57,6 +57,7 @@ static int w_destroy(struct sip_msg* _m, char* _d, char* _cflags);
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup2(void** param, int param_no);
+static int free_uint_fixup(void** param, int param_no);
 
 extern int bind_ipsec_pcscf(usrloc_api_t* api);
 
@@ -68,8 +69,9 @@ int init_flag = 0;
 static cmd_export_t cmds[] = {
 	{"ipsec_create",  (cmd_function)w_create,  1, save_fixup2, 0, ONREPLY_ROUTE },
 	{"ipsec_forward", (cmd_function)w_forward, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"ipsec_forward", (cmd_function)w_forward, 2, save_fixup2, free_uint_fixup, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"ipsec_destroy", (cmd_function)w_destroy, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
-    {"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0, 0, 0},
+	{"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -330,6 +332,41 @@ static int domain_fixup(void** param, int param_no)
 	return 0;
 }
 
+static int unit_fixup(void** param, int param_no)
+{
+	str s;
+	unsigned int* num;
+
+	if(*param){
+		num = (unsigned int*)pkg_malloc(sizeof(unsigned int));
+		*num = 0;
+
+		s.s = *param;
+		s.len = strlen(s.s);
+
+		if (likely(str2int(&s, num) == 0)) {
+			*param = (void*)(long)num;
+		}else{
+			LM_ERR("failed to convert to int\n");
+			pkg_free(num);
+			return E_UNSPEC;
+		}
+	}else{
+		return E_UNSPEC;
+	}
+
+	return 0;
+}
+
+static int free_uint_fixup(void** param, int param_no)
+{
+	if(*param && param_no == 2){
+		pkg_free(*param);
+		*param = 0;
+	}
+	return 0;
+}
+
 /*! \brief
  * Fixup for "save" function - both domain and flags
  */
@@ -337,8 +374,11 @@ static int save_fixup2(void** param, int param_no)
 {
 	if (param_no == 1) {
 		return domain_fixup(param,param_no);
+	}else if(param_no == 2){
+		return unit_fixup(param, param_no);
 	}
-        return 0;
+
+	return 0;
 }
 
 
@@ -352,7 +392,10 @@ static int w_create(struct sip_msg* _m, char* _d, char* _cflags)
 
 static int w_forward(struct sip_msg* _m, char* _d, char* _cflags)
 {
-	return ipsec_forward(_m, (udomain_t*)_d);
+	if(_cflags){
+		return ipsec_forward(_m, (udomain_t*)_d, ((int)(*_cflags)));
+	}
+	return ipsec_forward(_m, (udomain_t*)_d, 0);
 }
 
 static int w_destroy(struct sip_msg* _m, char* _d, char* _cflags)
