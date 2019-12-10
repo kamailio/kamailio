@@ -1194,7 +1194,7 @@ EVP_PKEY* tls_lookup_private_key(SSL_CTX* ctx)
 static int load_engine_private_key(tls_domain_t* d)
 {
 	int idx, ret_pwd, i;
-	EVP_PKEY *pkey;
+	EVP_PKEY *pkey = 0;
 	int procs_no;
 	char ctx_str[64];
 
