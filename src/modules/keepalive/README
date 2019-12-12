@@ -4,11 +4,19 @@ Guillaume Bour
 
    <guillaume@bour.cc>
 
+Yasin CANER
+
+   <caner_yaso@hotmail.com>
+
 Edited by
 
 Guillaume Bour
 
    <guillaume@bour.cc>
+
+Yasin CANER
+
+   <caner_yaso@hotmail.com>
 
    Copyright © 2017 Guillaume Bour
      __________________________________________________________________
@@ -26,10 +34,18 @@ Guillaume Bour
 
                     2.3.1. ping_interval (integer)
                     2.3.2. destination (string)
+                    2.3.3. delete_counter(int)
+                    2.3.4. ping_from(string)
 
               2.4. Functions
 
-                    2.4.1. is_alive(destination)
+                    2.4.1. ka_is_alive(destination)
+                    2.4.2. ka_add_destination(sip_uri)
+                    2.4.3. ka_del_destination(sip_uri)
+
+              2.5. RPC Commands
+
+                    2.5.1. keepalive.list
 
    2. Developer Guide
 
@@ -44,7 +60,12 @@ Guillaume Bour
 
    1.1. Set ping_interval parameter
    1.2. Set destination parameter
-   1.3. is_alive() usage
+   1.3. Set delete_counter parameter
+   1.4. Set ping_from parameter
+   1.5. ka_is_alive() usage
+   1.6. ka_add_destination(sip_uri) usage
+   1.7. ka_del_destination(sip_uri) usage
+   1.8. keepalive.list RPC example
    2.1. Loading KeepAlive module's API from another module, adding a
           destination to monitor & registering a callback
 
@@ -61,10 +82,18 @@ Chapter 1. Admin Guide
 
               2.3.1. ping_interval (integer)
               2.3.2. destination (string)
+              2.3.3. delete_counter(int)
+              2.3.4. ping_from(string)
 
         2.4. Functions
 
-              2.4.1. is_alive(destination)
+              2.4.1. ka_is_alive(destination)
+              2.4.2. ka_add_destination(sip_uri)
+              2.4.3. ka_del_destination(sip_uri)
+
+        2.5. RPC Commands
+
+              2.5.1. keepalive.list
 
 1. Overview
 
@@ -84,10 +113,18 @@ Chapter 1. Admin Guide
 
         2.3.1. ping_interval (integer)
         2.3.2. destination (string)
+        2.3.3. delete_counter(int)
+        2.3.4. ping_from(string)
 
    2.4. Functions
 
-        2.4.1. is_alive(destination)
+        2.4.1. ka_is_alive(destination)
+        2.4.2. ka_add_destination(sip_uri)
+        2.4.3. ka_del_destination(sip_uri)
+
+   2.5. RPC Commands
+
+        2.5.1. keepalive.list
 
 2.1. Kamailio Modules
 
@@ -123,9 +160,32 @@ modparam("keepalive", "destination", "192.168.10.20")
 modparam("keepalive", "destination", "sip.provider.com")
 ...
 
+2.3.3. delete_counter(int)
+
+   Unsuccesful attemps increase delete_counter . After passing it ,
+   keepalive module doesn't try to send options requests.
+
+   Default value is 5 .
+
+   Example 1.3. Set delete_counter parameter
+...
+modparam("keepalive", "delete_counter", "5")
+...
+
+2.3.4. ping_from(string)
+
+   Sets from header's uri.
+
+   Default value is "sip:keepalive@kamailio.org" .
+
+   Example 1.4. Set ping_from parameter
+...
+modparam("keepalive", "ping_from", "sip:keepalive@kamailio.org")
+...
+
 2.4. Functions
 
-2.4.1.  is_alive(destination)
+2.4.1.  ka_is_alive(destination)
 
    Get destination status.
 
@@ -138,12 +198,64 @@ modparam("keepalive", "destination", "sip.provider.com")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. is_alive() usage
+   Example 1.5. ka_is_alive() usage
 ...
-if(is_alive("192.168.10.20") == 1) {
+if(ka_is_alive("192.168.10.20") == 1) {
   // do stuff
 };
 ...
+
+2.4.2.  ka_add_destination(sip_uri)
+
+   Adds destination sip/sips uri in memory list to keep alive .
+
+   Returned value:
+     * 1 - successful
+     * -1 - on error
+
+   This function can be used from
+   REQUEST_ROUTE,BRANCH_ROUTE,ONREPLY_ROUTE.
+
+   Example 1.6. ka_add_destination(sip_uri) usage
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_add_destination("$avp(duri3)");
+ka_add_destination("sip:192.168.1.10:5060;transport=tcp");
+...
+
+2.4.3.  ka_del_destination(sip_uri)
+
+   Deletes destination sip/sips uri in memory list .
+
+   Returned value:
+     * 1 - successful
+     * -1 - on error
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. ka_del_destination(sip_uri) usage
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_del_destination("$avp(duri3)");
+ka_del_destination("sip:192.168.1.10:5060;transport=tcp");
+...
+
+2.5. RPC Commands
+
+2.5.1. keepalive.list
+
+   Lists destinations in memory.
+
+   Name: keepalive.list
+
+   Parameters: none
+
+   Example 1.8. keepalive.list RPC example
+                         keepalive.list
 
 Chapter 2. Developer Guide
 
