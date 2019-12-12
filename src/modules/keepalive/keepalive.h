@@ -30,7 +30,7 @@
 
 #include <time.h>
 #include "../../core/sr_module.h"
-
+#include "../../core/locking.h"
 
 #define KA_INACTIVE_DST 1 /*!< inactive destination */
 #define KA_TRYING_DST 2   /*!< temporary trying destination */
@@ -47,6 +47,7 @@
 
 typedef void (*ka_statechanged_f)(str *uri, int state, void *user_attr);
 
+
 typedef struct _ka_dest
 {
 	str uri;
@@ -55,10 +56,10 @@ typedef struct _ka_dest
 	int flags;
 	int state;
 	time_t last_checked, last_up, last_down;
+	int counter;	// counts unreachable attemps
 
 	void *user_attr;
 	ka_statechanged_f statechanged_clb;
-
 	struct socket_info *sock;
 	struct ip_addr ip_address; /*!< IP-Address of the entry */
 	unsigned short int port;   /*!< Port of the URI */
@@ -68,14 +69,20 @@ typedef struct _ka_dest
 
 typedef struct _ka_destinations_list
 {
+	gen_lock_t *lock;
 	ka_dest_t *first;
 } ka_destinations_list_t;
 
 extern ka_destinations_list_t *ka_destinations_list;
+extern int ka_counter_del;
 
 int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 		void *user_attr);
 int ka_destination_state(str *uri);
 int ka_str_copy(str *src, str *dest, char *prefix);
-
+int free_destination(ka_dest_t *dest) ;
+int ka_del_destination(str *uri, str *owner) ;
+int ka_find_destination(str *uri, str *owner, ka_dest_t **target ,ka_dest_t **head);
+int ka_lock_destination_list();
+int ka_unlock_destination_list();
 #endif
