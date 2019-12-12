@@ -303,19 +303,22 @@ branch_route[1] {
 	    way. Typically, it is used to deploy a UAS.
 	</para>
 	<para>
-	    Note that any flag operations (e.g. for accounting) after this
-	    function has been called will be ignored. You can use the the tmx
-	    module function t_flush_flags() to flush the altered flags to the
-	    already created transaction.
+		Note: once the t_newtran() is executed, the new message flag operations
+		(i.e., setflag() and resetflag()) are not syncronized to the transaction,
+		being stored only in the private memory SIP message structure. Use the
+		tmx module function t_flush_flags() to synchronize the modified message
+		flags to the already created transaction.
 	</para>
 	<example>
 	    <title><function>t_newtran</function> usage</title>
 	    <programlisting>
 ...
-if (t_newtran()) { 
-    log("UAS logic"); 
-    t_reply("999","hello"); 
-} else sl_reply_error();
+if (t_newtran()) {
+    xlog("the transaction has been created\n");
+    t_reply("999","hello");
+} else {
+    sl_reply_error();
+}
 ...
 	    </programlisting>
 	</example>
