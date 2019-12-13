@@ -1568,14 +1568,14 @@ if(ds_list_exists("10")) {
 		<listitem>
 			<para><emphasis>groupid</emphasis> (optional) - if not given or its
 				value is -1, the matching will be done over all addresses in
-				all dispacher groups. Otherwise the matching will be done only
+				all dispatcher groups. Otherwise the matching will be done only
 				against the addresses in the specific group id. The parameter
 				can be an integer or a variable holding an integer value.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
-				how the matching should be done. If is 0, all ip, port and
+				how the matching should be done. If parameter is 0, all ip, port and
 				proto are matched and active status is ignored.
 				If bit one is set, then port is ignored.
 				If bit two is set, then protocol is ignored.
@@ -1585,7 +1585,7 @@ if(ds_list_exists("10")) {
 			</para>
 		</listitem>
         <listitem>
-            <para><emphasis>uri</emphasis> (optional) - if is empty or missing,
+            <para><emphasis>uri</emphasis> (optional) - if parameter is empty or missing,
                 the matching is done against source IP, port and protocol.
                 Otherwise the value has to be a valid SIP URI, used to match
                 against addresses in the dispatcher list. Only IP, port and
