@@ -57,6 +57,7 @@ Bogdan-Andrei Iancu
               5.6. add_rr_param(param)
               5.7. check_route_param(re)
               5.8. is_direction(dir)
+              5.9. rr_next_hop_route()
 
         6. Exported Pseudo Variables
 
@@ -96,7 +97,8 @@ Bogdan-Andrei Iancu
    1.16. add_rr_param usage
    1.17. check_route_param usage
    1.18. is_direction usage
-   1.19. $route_uri
+   1.19. rr_next_hop_route usage
+   1.20. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -133,6 +135,7 @@ Chapter 1. Admin Guide
         5.6. add_rr_param(param)
         5.7. check_route_param(re)
         5.8. is_direction(dir)
+        5.9. rr_next_hop_route()
 
    6. Exported Pseudo Variables
 
@@ -367,6 +370,7 @@ modparam("rr", "ignore_sips", 1)
    5.6. add_rr_param(param)
    5.7. check_route_param(re)
    5.8. is_direction(dir)
+   5.9. rr_next_hop_route()
 
 5.1. loose_route()
 
@@ -577,6 +581,24 @@ if (is_direction("downstream")) {
 }
 ...
 
+5.9. rr_next_hop_route()
+
+   The function returns 1 (true) if there is a Route header for the next
+   hop address. It has to be used after loose_route(), when the local
+   Route headers are processed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. rr_next_hop_route usage
+...
+if(loose_route) {
+    if(rr_next_hop_route()) {
+        # next hop address is from Route header
+    }
+
+}
+...
+
 6. Exported Pseudo Variables
 
    6.1. $route_uri
@@ -585,7 +607,7 @@ if (is_direction("downstream")) {
 
    Returns the URI of the top route-header.
 
-   Example 1.19. $route_uri
+   Example 1.20. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
