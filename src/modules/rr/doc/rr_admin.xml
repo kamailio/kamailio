@@ -649,6 +649,35 @@ if (is_direction("downstream")) {
 </programlisting>
       </example>
     </section>
+
+    <section id="rr.f.rr_next_hop_route">
+		<title><function moreinfo="none">rr_next_hop_route()</function></title>
+
+		<para>The function returns 1 (true) if there is a Route header for the
+			next hop address. It has to be used after loose_route(), when the
+			local Route headers are processed.
+		</para>
+
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+
+      <example>
+        <title><function>rr_next_hop_route</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(loose_route) {
+    if(rr_next_hop_route()) {
+        # next hop address is from Route header
+    }
+
+}
+...
+</programlisting>
+      </example>
+  </section>
+
   </section>
 
   <section>
