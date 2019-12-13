@@ -893,6 +893,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 					uri.len, ZSW(uri.s));
 			return RR_ERROR;
 		}
+		_m->msg_flags |= FL_ROUTE_ADDR;
 	} else {
 #ifdef ENABLE_USER_CHECK
 		/* check if it the ignored user */
