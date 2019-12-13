@@ -109,6 +109,7 @@ typedef enum request_method {
 #define FL_USE_XAVP_VIA_FIELDS (1<<22) /*!< use xavp fields for local via attrs */
 #define FL_MSG_NOREPLY       (1<<23) /*!< do not send sip reply for request */
 #define FL_SIPTRACE          (1<<24) /*!< message to be traced in stateless replies */
+#define FL_ROUTE_ADDR        (1<<25) /*!< request has Route address for next hop */
 
 /* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
