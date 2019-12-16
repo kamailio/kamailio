@@ -42,10 +42,14 @@
 #include "api.h"
 
 static const char *keepalive_rpc_list_doc[2];
+static const char *keepalive_rpc_add_doc[2];
+
 static void keepalive_rpc_list(rpc_t *rpc, void *ctx);
+static void keepalive_rpc_add(rpc_t *rpc, void *ctx);
 
 rpc_export_t keepalive_rpc_cmds[] = {
 	{"keepalive.list", keepalive_rpc_list, keepalive_rpc_list_doc, 0},
+	{"keepalive.add", keepalive_rpc_add, keepalive_rpc_add_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -87,3 +91,35 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 
 	return;
 }
+
+static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
+{
+	str sip_adress = {0,0};
+	str table_name ={0,0};
+	int ret = 0;
+
+	ret = rpc->scan(ctx, "SS",&sip_adress,&table_name);
+
+	if (ret < 2) {
+		LM_ERR("not enough parameters - read so far: %d\n", ret);
+		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
+		return;
+	}
+
+	LM_DBG(" keepalive adds [%.*s]\n", sip_adress.len , sip_adress.s);
+	if(sip_adress.len<1 || table_name.len <1){
+		LM_ERR("parameter is len less than 1  \n"  );
+		rpc->fault(ctx, 500, "parameter is len less than 1");
+		return;
+	}
+
+	if(ka_add_dest(&sip_adress,&table_name,0,0,0) < 0 ){
+		LM_ERR("couldn't add data to list \n"  );
+		rpc->fault(ctx, 500, "couldn't add data to list");
+		return;
+	}
+
+	return;
+}
+static const char *keepalive_rpc_add_doc[2] = {
+		"adds new destination to keepalive memory. usage keepalive.add sip:username@domain listname", 0};
