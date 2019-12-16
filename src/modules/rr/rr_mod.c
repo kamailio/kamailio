@@ -333,10 +333,10 @@ static int ki_record_route_preset_one(sip_msg_t *msg, str *addr1)
 		return -1;
 	}
 
-	if ( record_route_preset( msg, addr1)<0 )
+	if ( record_route_preset(msg, addr1)<0 ) {
 		return -1;
+	}
 
-done:
 	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 
