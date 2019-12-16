@@ -1154,7 +1154,7 @@ failure_route[1] {
 
 	<section id="tm.f.t_load_contacts">
 		<title>
-		<function moreinfo="none">t_load_contacts()</function>
+		<function moreinfo="none">t_load_contacts([mode])</function>
 		</title>
 		<para>
 		  This is the first of the three functions that can be used
@@ -1178,18 +1178,35 @@ failure_route[1] {
 		</para>
 		<para>
 		  If the current destination set contains more than one branch,
-		  the function sorts them
-		  according to increasing value of the q parameter and
-		  then stores the branches in reverse order into the XAVP.
+		  the function sorts them according to the algorithm selected
+		  with the 'mode' paramenter and then stores the branches in
+		  reverse order into the XAVP.
 		</para>
 		<para>
 		  The q parameter of a branch contains a value from range 0-1.0
 		  and it  expresses relative preference of the branch
 		  among all branches in the destination set.
 		  The higher the q value the more preference the
-		  user agent gave to the branch. Branches with higher q
-		  values will be tried before branches with lower ones
-		  when serial forking takes place.
+		  user agent gave to the branch.
+		  The parameter 'mode' controls which type of algorithm kamailio
+		  will apply to sort the branches based on the q values:
+		</para>
+		<para>
+		  - '0' or missing: branches with higher q values will be tried
+		  before branches with lower ones when serial forking takes place
+		  Equals q values will result in a parallel forking.
+		</para>
+		<para>
+		  - '1': branches are ordered using a proportional algorithm
+          that uses to q value as the weight of the branch. Higher is the
+          q value, higher is the probability to be tried as first. Equals
+          q values means equals probability to be tried. Differently from
+          the previous mode there is no possibility to have parallel forking.
+          Branches with q values equals to 0 or lower are not considered by
+          the ordering algorithm, but just added at the end of the list
+          as backup option if all other branches fail.
+          This algorithm can be useful in case of endpoints in ACTIVE-ACTIVE
+          configuration to load-balance the calls.
 		</para>
 		<para>
 		  After calling <function>t_load_contacts()</function>, function
@@ -1197,7 +1214,7 @@ failure_route[1] {
 		  also <function>t_next_contact_flow()</function> need
 		  to be called
 		  one or more times in order to retrieve the branches based
-		  on their q value.
+		  on their order.
 		</para>
 		<para>
 		  Function returns 1 if loading of contacts succeeded or
