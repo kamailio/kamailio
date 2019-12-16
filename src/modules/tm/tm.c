@@ -402,7 +402,9 @@ static cmd_export_t cmds[]={
 	{"t_get_status_code", w_t_get_status_code,      0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
-	{"t_load_contacts", t_load_contacts,            0, 0, 0,
+	{"t_load_contacts", t_load_contacts,          0, 0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_load_contacts", t_load_contacts,          1, fixup_var_int_1, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", t_next_contacts,            0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
@@ -3038,6 +3040,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_load_contacts"),
 		SR_KEMIP_INT, ki_t_load_contacts,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("ki_t_load_contacts_mode"),
+		SR_KEMIP_INT, ki_t_load_contacts_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_next_contacts"),
