@@ -139,7 +139,7 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 	str uri = STR_NULL;
 	struct str_hash_table rm_hdrs;
 	int from_cnt = 0, to_cnt = 0;
-	str br_xname = STR_NULL;
+	int skip_from_to = 0;
 	int br_idx, keys_count;
 	int res = -1;
 
@@ -170,19 +170,10 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 		goto err;
 	if(pvh_str_new(&uri, header_value_size) < 0)
 		goto err;
-	if(pvh_str_new(&br_xname, header_value_size) < 0)
-		goto err;
 
-	pvh_get_branch_xname(msg, &xavp_name, &br_xname);
-
-	if((xavp = xavp_get(&br_xname, NULL)) == NULL
-			&& (xavp = xavp_get(&xavp_name, NULL)) == NULL) {
-		LM_ERR("missing xavp %s, run pv_collect_headers() first\n",
-				xavp_name.s);
-		goto err;
-	}
-	if(xavp->val.type != SR_XTYPE_XAVP) {
-		LM_ERR("not xavp child type %s\n", xavp_name.s);
+	if((xavp = pvh_xavp_get(msg, &xavp_name)) == NULL) {
+		LM_ERR("missing xavp %.*s, run pv_collect_headers() first\n",
+				xavp_name.len, xavp_name.s);
 		goto err;
 	}
 
@@ -195,19 +186,29 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 		PKG_MEM_ERROR;
 		goto err;
 	}
-	LM_DBG("xavp->name:%.*s br_xname:%.*s keys_count: %d\n", xavp->name.len,
-			xavp->name.s, br_xname.len, br_xname.s, keys_count);
+	LM_DBG("xavp->name:%.*s keys_count: %d\n", xavp->name.len, xavp->name.s,
+			keys_count);
 	str_hash_init(&rm_hdrs);
+
+	if(msg->first_line.type == SIP_REPLY
+			|| msg->first_line.u.request.method_value == METHOD_ACK
+			|| msg->first_line.u.request.method_value == METHOD_PRACK
+			|| msg->first_line.u.request.method_value == METHOD_BYE) {
+		skip_from_to = 1;
+		if(msg->to == NULL) {
+			LM_DBG("no To header, can't store To info in parsed\n");
+		} else {
+			if(pvh_set_parsed(msg, &_hdr_to, &msg->to->body, NULL) == NULL)
+				LM_ERR("can't store To info in parsed\n");
+		}
+	}
 
 	do {
 		if(pvh_skip_header(&sub->name))
 			continue;
 
 		if(strncasecmp(sub->name.s, _hdr_from.s, sub->name.len) == 0) {
-			if(msg->first_line.type == SIP_REPLY
-					|| msg->first_line.u.request.method_value == METHOD_ACK
-					|| msg->first_line.u.request.method_value == METHOD_PRACK
-					|| msg->first_line.u.request.method_value == METHOD_BYE) {
+			if(skip_from_to) {
 				LM_DBG("skip From header change in reply messages\n");
 				continue;
 			}
@@ -240,10 +241,7 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 		}
 
 		if(strncasecmp(sub->name.s, _hdr_to.s, sub->name.len) == 0) {
-			if(msg->first_line.type == SIP_REPLY
-					|| msg->first_line.u.request.method_value == METHOD_ACK
-					|| msg->first_line.u.request.method_value == METHOD_PRACK
-					|| msg->first_line.u.request.method_value == METHOD_BYE) {
+			if(skip_from_to) {
 				LM_DBG("skip To header change in reply messages\n");
 				continue;
 			}
@@ -309,7 +307,6 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 err:
 	pvh_str_free(&display);
 	pvh_str_free(&uri);
-	pvh_str_free(&br_xname);
 	if(rm_hdrs.size)
 		pvh_str_hash_free(&rm_hdrs);
 	return res;
@@ -325,9 +322,10 @@ int pvh_reset_headers(struct sip_msg *msg)
 
 	pvh_get_branch_index(msg, &br_idx);
 	pvh_get_branch_xname(msg, &xavp_name, &br_xname);
-
+	/*	LM_DBG("clean xavp:%.*s\n", br_xname.len, br_xname.s); */
 	pvh_free_xavp(&br_xname);
 	pvh_get_branch_xname(msg, &xavp_parsed_xname, &br_xname);
+	/*	LM_DBG("clean xavp:%.*s\n", br_xname.len, br_xname.s); */
 	pvh_free_xavp(&br_xname);
 
 	if(msg->first_line.type == SIP_REPLY) {
