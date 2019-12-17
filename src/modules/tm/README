@@ -117,7 +117,7 @@ Daniel-Constantin Mierla
               4.36. t_lookup_cancel([1])
               4.37. t_drop_replies([mode])
               4.38. t_save_lumps()
-              4.39. t_load_contacts()
+              4.39. t_load_contacts([mode])
               4.40. t_next_contacts()
               4.41. t_next_contact_flow()
               4.42. t_check_status(re)
@@ -372,7 +372,7 @@ Chapter 1. Admin Guide
         4.36. t_lookup_cancel([1])
         4.37. t_drop_replies([mode])
         4.38. t_save_lumps()
-        4.39. t_load_contacts()
+        4.39. t_load_contacts([mode])
         4.40. t_next_contacts()
         4.41. t_next_contact_flow()
         4.42. t_check_status(re)
@@ -1724,7 +1724,7 @@ modparam("tm", "rich_redirect", 3)
    4.36. t_lookup_cancel([1])
    4.37. t_drop_replies([mode])
    4.38. t_save_lumps()
-   4.39. t_load_contacts()
+   4.39. t_load_contacts([mode])
    4.40. t_next_contacts()
    4.41. t_next_contact_flow()
    4.42. t_check_status(re)
@@ -2473,7 +2473,7 @@ failure_route[1] {
         t_relay();
 }
 
-4.39.  t_load_contacts()
+4.39.  t_load_contacts([mode])
 
    This is the first of the three functions that can be used to implement
    serial/parallel forking based on q and +sip.instance values of
@@ -2489,18 +2489,33 @@ failure_route[1] {
    nothing.
 
    If the current destination set contains more than one branch, the
-   function sorts them according to increasing value of the q parameter
-   and then stores the branches in reverse order into the XAVP.
+   function sorts them according to the algorithm selected with the 'mode'
+   paramenter and then stores the branches in reverse order into the XAVP.
 
    The q parameter of a branch contains a value from range 0-1.0 and it
    expresses relative preference of the branch among all branches in the
    destination set. The higher the q value the more preference the user
-   agent gave to the branch. Branches with higher q values will be tried
-   before branches with lower ones when serial forking takes place.
+   agent gave to the branch. The parameter 'mode' controls which type of
+   algorithm kamailio will apply to sort the branches based on the q
+   values:
+
+   - '0' or missing: branches with higher q values will be tried before
+   branches with lower ones when serial forking takes place Equals q
+   values will result in a parallel forking.
+
+   - '1': branches are ordered using a proportional algorithm that uses to
+   q value as the weight of the branch. Higher is the q value, higher is
+   the probability to be tried as first. Equals q values means equals
+   probability to be tried. Differently from the previous mode there is no
+   possibility to have parallel forking. Branches with q values equals to
+   0 or lower are not considered by the ordering algorithm, but just added
+   at the end of the list as backup option if all other branches fail.
+   This algorithm can be useful in case of endpoints in ACTIVE-ACTIVE
+   configuration to load-balance the calls.
 
    After calling t_load_contacts(), function t_next_contacts() and
    possibly also t_next_contact_flow() need to be called one or more times
-   in order to retrieve the branches based on their q value.
+   in order to retrieve the branches based on their order.
 
    Function returns 1 if loading of contacts succeeded or there was
    nothing to do. In case of an error, function returns -1 (see syslog).
