@@ -211,8 +211,11 @@ endif
 endif
 
 ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
-CC_EXTRA_OPTS+= -pthread -DKSR_PTHREAD_MUTEX_SHARED
-LD_EXTRA_OPTS+= -pthread -rdynamic -ldl -Wl,-Bsymbolic-functions
+CC_PMUTEX_OPTS = -pthread -DKSR_PTHREAD_MUTEX_SHARED
+LD_PMUTEX_OPTS = -pthread -rdynamic -ldl -Wl,-Bsymbolic-functions
+else
+CC_PMUTEX_OPTS =
+LD_PMUTEX_OPTS =
 endif
 
 ifeq ($(OS), solaris)
@@ -1676,7 +1679,7 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, ppc
 
-CFLAGS+= $(CC_EXTRA_OPTS)
+CFLAGS+= $(CC_EXTRA_OPTS) $(CC_PMUTEX_OPTS)
 
 
 # setting LDFLAGS
@@ -1725,9 +1728,9 @@ ifeq ($(CC_NAME), clang)
 	LD_RPATH=-Wl,-rpath,
 endif
 
-LDFLAGS+= $(LD_EXTRA_OPTS)
-MOD_LDFLAGS+= $(LD_EXTRA_OPTS)
-LIB_LDFLAGS+= $(LD_EXTRA_OPTS)
+LDFLAGS+= $(LD_EXTRA_OPTS) $(LD_PMUTEX_OPTS)
+MOD_LDFLAGS+= $(LD_EXTRA_OPTS) $(LD_PMUTEX_OPTS)
+LIB_LDFLAGS+= $(LD_EXTRA_OPTS) $(LD_PMUTEX_OPTS)
 
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
@@ -2171,7 +2174,8 @@ saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
 # variable changeable at compile time
 # extra: prefix DESTDIR BASEDIR basedirt
 saved_chg_vars:=\
-		CC_EXTRA_OPTS CPUTYPE CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS UTILS_CFLAGS \
+		CC_EXTRA_OPTS CC_PMUTEX_OPTS CPUTYPE CFLAGS_RM CFLAGS MOD_CFLAGS \
+		LIB_CFLAGS UTILS_CFLAGS \
 		BASEDIR basedir DESTDIR LIBDIR RUNBASEDIR runbasedir \
 		PREFIX prefix \
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
