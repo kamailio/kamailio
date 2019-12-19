@@ -1058,7 +1058,7 @@ static int sdp_remove_media(sip_msg_t *msg, str *media)
 						media->len)==0)
 			{
 				/* found - remove */
-				LM_DBG("removing media stream: %.*s", media->len, media->s);
+				LM_DBG("removing media stream: %.*s\n", media->len, media->s);
 				nxt_stream = get_sdp_stream(msg, sdp_session_num,
 						sdp_stream_num+1);
 				/* skip back 'm=' */
