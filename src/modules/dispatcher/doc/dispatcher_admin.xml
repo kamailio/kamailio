@@ -681,8 +681,8 @@ modparam("dispatcher", "force_dst", 1)
 			set to TRYING state.</para>
 		</listitem>
 		<listitem>
-			<para>Value 2: if set to 2, only gateways in inactive state with
-			probing mode set are tested.</para>
+			<para>Value 2: if set to 2, only gateways in INACTIVE state with
+			PROBING mode set are tested.</para>
 		</listitem>
 		<listitem>
 			<para>Value 3: If set to 3, any gateway with state PROBING is continually probed
