@@ -223,7 +223,7 @@ ipsec_create("location");
           <para>
           <emphasis>flags</emphasis> - Set send force socket for request messages.
           If 1 - set force socket for request messages. Useful for ipsec and TCP.
-          An optional parameter. Default value - 0.
+          This is an optional parameter, default value - 0.
           </para>
         </listitem>
       </itemizedlist>
@@ -232,7 +232,9 @@ ipsec_create("location");
 
         <programlisting format="linespecific">
 ...
-ipsec_forward("location"); or ipsec_forward("location", "1");
+ipsec_forward("location");
+# or
+ipsec_forward("location", "1");
 ...
         </programlisting>
       </example>
