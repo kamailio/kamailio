@@ -2767,6 +2767,10 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 					if(idx->dlist[i].message_count < inactive_threshold) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
 						idx->dlist[i].flags |= DS_INACTIVE_DST;
+						/* if destination was in probing state, we stay there for now */
+						if((old_state & DS_PROBING_DST) != 0) {
+							idx->dlist[i].flags |= DS_PROBING_DST;
+						}
 						LM_DBG("destination replied successful %d times, threshold %d\n",
 								 idx->dlist[i].message_count, inactive_threshold);
 					} else {
@@ -3235,6 +3239,32 @@ static void ds_options_callback(
 	return;
 }
 
+/*
+ * Small helper to decide to ping a gateway or not
+ */
+static inline int ds_ping_result_helper(ds_set_t *node, int j)
+{
+	/* probe all */
+	if(ds_probing_mode == DS_PROBE_ALL) {
+		LM_DBG("probe all, mode DS_PROBE_ALL\n");
+		return 1;
+	}
+	/* probe if probing is set, but not in mode DS_PROBE_INACTIVE */
+	if (ds_probing_mode != DS_PROBE_INACTIVE
+			&& (node->dlist[j].flags & DS_PROBING_DST) != 0) {
+		LM_DBG("probing set, but not mode DS_PROBE_INACTIVE\n");
+		return 1;
+	}
+	/* probe for mode DS_PROBE_INACTIVE only for inactive and probing gw */
+	if (ds_probing_mode == DS_PROBE_INACTIVE
+			&& (node->dlist[j].flags & DS_PROBING_DST) != 0
+			&& (node->dlist[j].flags & DS_INACTIVE_DST) != 0) {
+		LM_DBG("probing and inactive set, mode DS_PROBE_INACTIVE\n");
+		return 1;
+	}
+	return 0;
+}
+
 /**
  *
  */
@@ -3255,8 +3285,7 @@ void ds_ping_set(ds_set_t *node)
 		if((node->dlist[j].flags & DS_DISABLED_DST) != 0)
 			continue;
 		/* If the Flag of the entry has "Probing set, send a probe:	*/
-		if(ds_probing_mode == DS_PROBE_ALL
-				|| (node->dlist[j].flags & DS_PROBING_DST) != 0) {
+		if(ds_ping_result_helper(node, j)) {
 			LM_DBG("probing set #%d, URI %.*s\n", node->id,
 					node->dlist[j].uri.len, node->dlist[j].uri.s);
 
