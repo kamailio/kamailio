@@ -698,7 +698,7 @@ Note
        set to TRYING state. This means that probing will be executed all
        the time, but you can skip some servers with flag 4 in destination
        list file, for example.
-     * Value 2: if set to 2, only gateways in inactive state with probing
+     * Value 2: if set to 2, only gateways in INACTIVE state with PROBING
        mode set are tested.
      * Value 3: If set to 3, any gateway with state PROBING is continually
        probed without modifying/removing the PROBING state. This allows
