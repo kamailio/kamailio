@@ -216,19 +216,27 @@ void pp_ifdef_level_update(int val)
 /**
  *
  */
-void pp_ifdef_level_check(void)
+int pp_ifdef_level_check(void)
 {
 	if(_pp_ifdef_level!=0) {
-		if (_pp_ifdef_level > 0) {
-	                LM_WARN("different number of preprocessor directives:"
-				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
-		} else {
-			LM_WARN("different number of preprocessor directives:"
-				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
-		}
+		return -1;
 	} else {
 		LM_DBG("same number of pairing preprocessor directives"
 			" #!IF[N]DEF - #!ENDIF\n");
+	}
+	return 0;
+}
+
+void pp_ifdef_level_error(void)
+{
+	if(_pp_ifdef_level!=0) {
+		if (_pp_ifdef_level > 0) {
+			LM_ERR("different number of preprocessor directives:"
+				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
+		} else {
+			LM_ERR("different number of preprocessor directives:"
+				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
+		}
 	}
 }
 

@@ -2299,10 +2299,10 @@ try_again:
 
 	yyin=cfg_stream;
 	debug_save = default_core_cfg.debug;
-	if ((yyparse()!=0)||(cfg_errors)){
+	if ((yyparse()!=0)||(cfg_errors)||(pp_ifdef_level_check()<0)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		if (debug_flag) default_core_cfg.debug = debug_save;
-		pp_ifdef_level_check();
+		pp_ifdef_level_error();
 
 		goto error;
 	}
@@ -2310,7 +2310,6 @@ try_again:
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
-	pp_ifdef_level_check();
 	print_rls();
 
 	if(init_dst_set()<0) {
