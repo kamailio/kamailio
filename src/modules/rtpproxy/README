@@ -791,6 +791,7 @@ Chapter 2. Frequently Asked Questions
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
+   2.5. Does rtpproxy support MSRP protocol?
 
    2.1.
 
@@ -826,3 +827,9 @@ Chapter 2. Frequently Asked Questions
 
    Please follow the guidelines provided at:
    https://github.com/kamailio/kamailio/issues.
+
+   2.5.
+
+   Does rtpproxy support MSRP protocol?
+
+   Module do not support message media of MSRP protocol.
