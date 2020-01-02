@@ -249,6 +249,39 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 </programlisting>
 		</example>
 	</section>
+	<section id="usrloc_dmq.p.replicate_socket_info">
+		<title><varname>replicate_socket_info</varname> (int)</title>
+		<para>
+			The parameter controls whether the socket replication is active or not.
+			This is important for anycast scenarios.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>replicate_socket_info</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "replicate_socket_info", 0)
+...
+</programlisting>
+	</example>
+	</section>
 	</section>
 
 </chapter>
