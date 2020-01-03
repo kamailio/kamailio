@@ -49,9 +49,10 @@ Ramona-Elena Modroiu
               5.8. avp_copy(old_name,new_name)
               5.9. avp_printf(dest, format)
               5.10. avp_subst(avps, subst)
-              5.11. avp_op(name,op_value)
-              5.12. is_avp_set(name)
-              5.13. avp_print()
+              5.11. avp_subst_pv(avps, subst)
+              5.12. avp_op(name,op_value)
+              5.13. is_avp_set(name)
+              5.14. avp_print()
 
    List of Examples
 
@@ -76,9 +77,10 @@ Ramona-Elena Modroiu
    1.19. avp_copy usage
    1.20. avp_printf usage
    1.21. avp_subst usage
-   1.22. avp_op usage
-   1.23. is_avp_set usage
-   1.24. avp_print usage
+   1.22. avp_subst_pv usage
+   1.23. avp_op usage
+   1.24. is_avp_set usage
+   1.25. avp_print usage
 
 Chapter 1. Admin Guide
 
@@ -116,9 +118,10 @@ Chapter 1. Admin Guide
         5.8. avp_copy(old_name,new_name)
         5.9. avp_printf(dest, format)
         5.10. avp_subst(avps, subst)
-        5.11. avp_op(name,op_value)
-        5.12. is_avp_set(name)
-        5.13. avp_print()
+        5.11. avp_subst_pv(avps, subst)
+        5.12. avp_op(name,op_value)
+        5.13. is_avp_set(name)
+        5.14. avp_print()
 
 1. Overview
 
@@ -345,9 +348,10 @@ modparam("avpops","db_scheme",
    5.8. avp_copy(old_name,new_name)
    5.9. avp_printf(dest, format)
    5.10. avp_subst(avps, subst)
-   5.11. avp_op(name,op_value)
-   5.12. is_avp_set(name)
-   5.13. avp_print()
+   5.11. avp_subst_pv(avps, subst)
+   5.12. avp_op(name,op_value)
+   5.13. is_avp_set(name)
+   5.14. avp_print()
 
 5.1.  avp_db_load(source,name)
 
@@ -657,7 +661,29 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    after the first src_avp is processed, it will be added in avp list and
    next processing will use it.
 
-5.11.  avp_op(name,op_value)
+5.11.  avp_subst_pv(avps, subst)
+
+   Same functionality than avp_subst() but seccond parameter will be
+   evaluated first.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.22. avp_subst_pv usage
+...
+$(avp(src)[*]) = "testME";
+$var(z) = "j";
+$var(y) = "e";
+$var(x) = "/" + $var(y) + "/" + $var(z) + "/gi";
+
+## all this calls will produce the same result "tjstMj"
+avp_subst_pv("$avp(src)", "/e/j/gi");
+avp_subst_pv("$avp(src)", "/" + $var(y) + "/" + $var(z) + "/gi");
+avp_subst_pv("$avp(src)", "/$var(y)/$var(z)/gi");
+avp_subst_pv("$avp(src)", "$var(x)");
+...
+
+5.12.  avp_op(name,op_value)
 
    Different integer operations with avps.
 
@@ -683,13 +709,13 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.22. avp_op usage
+   Example 1.23. avp_op usage
 ...
 avp_op("$avp(i:678)", "add/i:345/g");
 avp_op("$avp(number)","sub/$avp(number2)/d");
 ...
 
-5.12.  is_avp_set(name)
+5.13.  is_avp_set(name)
 
    Check if any AVP with name is set.
 
@@ -702,13 +728,13 @@ avp_op("$avp(number)","sub/$avp(number2)/d");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.23. is_avp_set usage
+   Example 1.24. is_avp_set usage
 ...
 if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
 
-5.13.  avp_print()
+5.14.  avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
@@ -716,7 +742,7 @@ if(is_avp_set("$avp(i:678)"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.24. avp_print usage
+   Example 1.25. avp_print usage
 ...
 avp_print();
 ...
