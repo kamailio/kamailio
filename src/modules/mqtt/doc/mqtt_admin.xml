@@ -563,6 +563,9 @@ event_route[mqtt:message] {
 			<listitem><para>
 				<emphasis>$mqtt(msg)</emphasis> - Received message (only in mqtt:message)
 			</para></listitem>
+			<listitem><para>
+				<emphasis>$mqtt(qos)</emphasis> - The received message QOS level: 0, 1 ,2 (only in mqtt:message)
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.

@@ -354,11 +354,13 @@ void mqtt_on_message(struct mosquitto *mosquitto, void *userdata, const struct m
 	sip_msg_t tmsg;
 
 	str topic, payload;
+	int qos;
 	topic.s = message->topic;
 	topic.len = strlen(message->topic);
 	payload.s = (char*) message->payload;
 	payload.len = message->payloadlen;
-	LM_DBG("mqtt message [%s] -> [%s]\n", topic.s, payload.s);
+	qos = message->qos;
+	LM_DBG("mqtt message [%s] -> [%s] (qos %d)\n", topic.s, payload.s, qos);
 
 	cfg_update();
 
@@ -425,6 +427,8 @@ int pv_parse_mqtt_name(pv_spec_t *sp, str *in)
 		case 3:
 			if(strncmp(in->s, "msg", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "qos", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		break;
 		case 5:
@@ -452,6 +456,7 @@ int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct mosquitto_message* message;
 	str topic, payload;
+	int qos;
 
 	if(param==NULL || res==NULL)
 		return -1;
@@ -467,6 +472,7 @@ int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		topic.len = strlen(message->topic);
 		payload.s = (char*) message->payload;
 		payload.len = message->payloadlen;
+		qos = message->qos;
 	}
 
 	// populate value depeding on the param name
@@ -477,6 +483,8 @@ int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_strval(msg, param, res, &topic);
 		case 1:
 			return pv_get_strval(msg, param, res, &payload);
+		case 2:
+			return pv_get_sintval(msg, param, res, qos);
 		default:
 			return pv_get_null(msg, param, res);
 	}
