@@ -145,7 +145,7 @@ void mqtt_close_notify_sockets_parent(void)
  */
 int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 {
-	int res;
+	int res, cert_req;
 	struct ev_io request_notify;
 
 	// prepare and init libmosquitto handle
@@ -199,6 +199,32 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 	// periodic timer for mqtt keepalive
 	ev_timer_init(&timer_notify, mqtt_timer_notify, _mqtt_timer_freq, 0.);
 	ev_timer_start(loop, &timer_notify);
+
+
+	// prepare tls configuration if at least a ca is configured
+	if (cfg->ca_file != NULL || cfg->ca_path != NULL) {
+		LM_DBG("Preparing TLS connection");
+		if (cfg->verify_certificate == 0) {
+			cert_req = 0;
+		} else if (cfg->verify_certificate == 1) {
+			cert_req = 1;
+		} else {
+			LM_ERR("invalid verify_certificate parameter\n");
+			return -1;
+		}
+		res = mosquitto_tls_opts_set(_mosquitto, cert_req, cfg->tls_method, cfg->cipher_list);
+		if (res != MOSQ_ERR_SUCCESS) {
+			LM_ERR("invalid tls_method or cipher_list parameters\n");
+			LM_ERR("mosquitto_tls_opts_set() failed: %d %s\n",errno, strerror(errno));
+			return -1;
+		}
+		res = mosquitto_tls_set(_mosquitto, cfg->ca_file, cfg->ca_path, cfg->certificate, cfg->private_key, NULL);
+		if (res != MOSQ_ERR_SUCCESS) {
+			LM_ERR("invalid ca_file, ca_path, certificate or private_key parameters\n");
+			LM_ERR("mosquitto_tls_set() failed: %d %s\n",errno, strerror(errno));
+			return -1;
+		}
+	}
 
 	res = mosquitto_connect(_mosquitto, cfg->host, cfg->port, cfg->keepalive);
 	if (res == MOSQ_ERR_INVAL) {
@@ -268,6 +294,9 @@ void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents)
 				// let's wait again N ticks
 				wait_ticks = _reconnect_wait_ticks;
 			}
+			break;
+		case MOSQ_ERR_TLS:
+			LM_ERR("mosquitto_loop() failed, tls error\n");
 			break;
 		default:
 			LM_ERR("mosquitto_loop() failed: case %i\n", res);

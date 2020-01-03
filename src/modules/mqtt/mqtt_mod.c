@@ -31,14 +31,21 @@
 
 MODULE_VERSION
 
-static char *_mqtt_host       = NULL;
-static int   _mqtt_port       = 1883;
-static char *_mqtt_id         = NULL;
-static char *_mqtt_username   = NULL;
-static char *_mqtt_password   = NULL;
-static char *_mqtt_will       = NULL;
-static char *_mqtt_willtopic  = NULL;
-static int   _mqtt_keepalive  = 5;
+static char *_mqtt_host               = NULL;
+static int   _mqtt_port               = 1883;
+static char *_mqtt_id                 = NULL;
+static char *_mqtt_username           = NULL;
+static char *_mqtt_password           = NULL;
+static char *_mqtt_will               = NULL;
+static char *_mqtt_willtopic          = NULL;
+static int   _mqtt_keepalive          = 5;
+static char *_mqtt_ca_file            = NULL;
+static char *_mqtt_ca_path            = NULL;
+static char *_mqtt_certificate        = NULL;
+static char *_mqtt_private_key        = NULL;
+static char *_mqtt_tls_method         = NULL;
+static int   _mqtt_verify_certificate = 1;
+static char *_mqtt_cipher_list        = NULL;
 
 str _mqtt_event_callback = STR_NULL;
 int _mqtt_dispatcher_pid = -1;
@@ -68,15 +75,22 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"host",           PARAM_STRING,   &_mqtt_host},
-	{"port",           INT_PARAM,      &_mqtt_port},
-	{"id",             PARAM_STRING,   &_mqtt_id},
-	{"username",       PARAM_STRING,   &_mqtt_username},
-	{"password",       PARAM_STRING,   &_mqtt_password},
-	{"will_topic",     PARAM_STRING,   &_mqtt_willtopic},
-	{"will",           PARAM_STRING,   &_mqtt_will},
-	{"keepalive",      INT_PARAM,      &_mqtt_keepalive},
-	{"event_callback", PARAM_STR,      &_mqtt_event_callback},
+	{"host",               PARAM_STRING,   &_mqtt_host},
+	{"port",               INT_PARAM,      &_mqtt_port},
+	{"id",                 PARAM_STRING,   &_mqtt_id},
+	{"username",           PARAM_STRING,   &_mqtt_username},
+	{"password",           PARAM_STRING,   &_mqtt_password},
+	{"will_topic",         PARAM_STRING,   &_mqtt_willtopic},
+	{"will",               PARAM_STRING,   &_mqtt_will},
+	{"keepalive",          INT_PARAM,      &_mqtt_keepalive},
+	{"event_callback",     PARAM_STR,      &_mqtt_event_callback},
+	{"tls_method",         PARAM_STRING,   &_mqtt_tls_method},
+	{"ca_file",            PARAM_STRING,   &_mqtt_ca_file},
+	{"ca_path",            PARAM_STRING,   &_mqtt_ca_path},
+	{"certificate",        PARAM_STRING,   &_mqtt_certificate},
+	{"private_key",        PARAM_STRING,   &_mqtt_private_key},
+	{"verify_certificate", INT_PARAM,      &_mqtt_verify_certificate},
+	{"cipher_list",        PARAM_STRING,   &_mqtt_cipher_list},
 	{0,0,0}
 };
 
@@ -171,14 +185,21 @@ static int child_init(int rank)
 
 		/* module parameter hand over to dispatcher */
 		mqtt_dispatcher_cfg_t cfg;
-		cfg.host       = _mqtt_host;
-		cfg.port       = _mqtt_port;
-		cfg.id         = _mqtt_id;
-		cfg.username   = _mqtt_username;
-		cfg.password   = _mqtt_password;
-		cfg.keepalive  = _mqtt_keepalive;
-		cfg.will       = _mqtt_will;
-		cfg.will_topic = _mqtt_willtopic;
+		cfg.host               = _mqtt_host;
+		cfg.port               = _mqtt_port;
+		cfg.id                 = _mqtt_id;
+		cfg.username           = _mqtt_username;
+		cfg.password           = _mqtt_password;
+		cfg.keepalive          = _mqtt_keepalive;
+		cfg.will               = _mqtt_will;
+		cfg.will_topic         = _mqtt_willtopic;
+		cfg.ca_file            = _mqtt_ca_file;
+		cfg.ca_path            = _mqtt_ca_path;
+		cfg.certificate        = _mqtt_certificate;
+		cfg.private_key        = _mqtt_private_key;
+		cfg.tls_method         = _mqtt_tls_method;
+		cfg.verify_certificate = _mqtt_verify_certificate;
+		cfg.cipher_list        = _mqtt_cipher_list;
 
 		/* this process becomes the dispatcher, block now */
 		return mqtt_run_dispatcher(&cfg);

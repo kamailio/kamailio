@@ -29,13 +29,20 @@ void mqtt_init_environment();
 
 typedef struct mqtt_dispatcher_cfg {
 	char *host;
-	int port;
+	int   port;
 	char *id;
 	char *username;
 	char *password;
-	int keepalive;
+	int   keepalive;
 	char *will_topic;
 	char *will;
+	char *ca_file;
+	char *ca_path;
+	char *certificate;
+	char *private_key;
+	char *tls_method;
+	int   verify_certificate;
+	char *cipher_list;
 } mqtt_dispatcher_cfg_t;
 
 int mqtt_init_notify_sockets(void);
