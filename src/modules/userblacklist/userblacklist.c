@@ -647,11 +647,13 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 
 	if (msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("SIP msg is not a request\n");
+		pkg_free(arg1);
 		return -1;
 	}
 
 	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
 		LM_ERR("cannot parse msg URI\n");
+		pkg_free(arg1);
 		return -1;
 	}
 	strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
@@ -682,6 +684,8 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 		ret = 1; /* not found is ok */
 	}
 	lock_release(lock);
+
+	pkg_free(arg1);
 
 	return ret;
 }
@@ -729,11 +733,13 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 
 	if (msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("SIP msg is not a request\n");
+		pkg_free(arg1);
 		return -1;
 	}
 
 	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
 		LM_ERR("cannot parse msg URI\n");
+		pkg_free(arg1);
 		return -1;
 	}
 	strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
@@ -764,6 +770,8 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 		ret = -1; /* not found is ok */
 	}
 	lock_release(lock);
+
+	pkg_free(arg1);
 
 	return ret;
 }
