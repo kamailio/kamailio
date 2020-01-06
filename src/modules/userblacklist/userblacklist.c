@@ -1301,11 +1301,6 @@ static int blacklist_child_initialized = 0;
 
 static int rpc_child_init(void)
 {
-	/* global blacklist init */
-	if (check_globalblacklist_fixup(NULL, 0) != 0) {
-		LM_ERR("could not add global table when init the module");
-	}
-
 	/* user blacklist init */
 	if(userblacklist_child_initialized)
 		return 0;
@@ -1314,6 +1309,11 @@ static int rpc_child_init(void)
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
+	}
+
+	/* global blacklist init */
+	if (check_globalblacklist_fixup(NULL, 0) != 0) {
+		LM_ERR("could not add global table when init the module");
 	}
 
 	/* because we've added new sources during the fixup */
