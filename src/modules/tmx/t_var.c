@@ -682,6 +682,8 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 		case 12:
 			if(strncmp(in->s, "branch_index", 12)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "reply_reason", 12)==0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else goto error;
 			break;
 		default:
@@ -713,6 +715,8 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_tm_reply_code(msg, param, res);
 		case 4:
 			return pv_get_tm_branch_idx(msg, param, res);
+		case 10:
+			return pv_get_tm_reply_reason(msg, param, res);
 	}
 
 	t = _tmx_tmb.t_gett();
