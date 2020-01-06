@@ -46,6 +46,10 @@ Yasin CANER
               2.5. RPC Commands
 
                     2.5.1. keepalive.list
+                    2.5.2. keepalive.add
+                    2.5.3. keepalive.del
+                    2.5.4. keepalive.get
+                    2.5.5. keepalive.flush
 
    2. Developer Guide
 
@@ -66,6 +70,10 @@ Yasin CANER
    1.6. ka_add_destination(sip_uri) usage
    1.7. ka_del_destination(sip_uri) usage
    1.8. keepalive.list RPC example
+   1.9. keepalive.add RPC example
+   1.10. keepalive.del RPC example
+   1.11. keepalive.get RPC example
+   1.12. keepalive.flush RPC example
    2.1. Loading KeepAlive module's API from another module, adding a
           destination to monitor & registering a callback
 
@@ -94,6 +102,10 @@ Chapter 1. Admin Guide
         2.5. RPC Commands
 
               2.5.1. keepalive.list
+              2.5.2. keepalive.add
+              2.5.3. keepalive.del
+              2.5.4. keepalive.get
+              2.5.5. keepalive.flush
 
 1. Overview
 
@@ -125,6 +137,10 @@ Chapter 1. Admin Guide
    2.5. RPC Commands
 
         2.5.1. keepalive.list
+        2.5.2. keepalive.add
+        2.5.3. keepalive.del
+        2.5.4. keepalive.get
+        2.5.5. keepalive.flush
 
 2.1. Kamailio Modules
 
@@ -256,6 +272,50 @@ ka_del_destination("sip:192.168.1.10:5060;transport=tcp");
 
    Example 1.8. keepalive.list RPC example
                          keepalive.list
+
+2.5.2. keepalive.add
+
+   Adds destination in memory.
+
+   Name: keepalive.add
+
+   Parameters: sip_uri listname
+
+   Example 1.9. keepalive.add RPC example
+                         keepalive.add sip:username@domain listname
+
+2.5.3. keepalive.del
+
+   Deletes destination in memory.
+
+   Name: keepalive.del
+
+   Parameters: sip_uri listname
+
+   Example 1.10. keepalive.del RPC example
+                         keepalive.del sip:username@domain listname
+
+2.5.4. keepalive.get
+
+   Gets destination in memory.
+
+   Name: keepalive.get
+
+   Parameters: sip_uri listname
+
+   Example 1.11. keepalive.get RPC example
+                         keepalive.get sip:username@domain listname
+
+2.5.5. keepalive.flush
+
+   Deletes all destinations in memory.
+
+   Name: keepalive.flush
+
+   Parameters:
+
+   Example 1.12. keepalive.flush RPC example
+                         keepalive.flush
 
 Chapter 2. Developer Guide
 
