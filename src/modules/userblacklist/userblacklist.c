@@ -521,6 +521,7 @@ static int ki_check_globalblacklist(sip_msg_t *msg)
 {
 	char * table = globalblacklist_table.s;
 	struct check_blacklist_fs_t* arg = NULL;
+	int result;
 
 	if (!table) {
 		LM_ERR("no table name\n");
@@ -546,7 +547,10 @@ static int ki_check_globalblacklist(sip_msg_t *msg)
 	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
 	arg->dtrie_root = gnode;
 
-	return check_blacklist(msg, arg);
+	result = check_blacklist(msg, arg);
+	pkg_free(arg);
+
+	return result;
 }
 
 static int check_globalblacklist(sip_msg_t* msg)
