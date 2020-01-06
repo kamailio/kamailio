@@ -17,11 +17,11 @@
 	<title>Overview</title>
 	<para>
 		The MQTT module allows bidirectional publish/subscribe communication
-		by connection Kamailio to a MQTT Broker.
+		by connecting &kamailio; to a MQTT Broker.
 	</para>
 	<para>
 		Messages can be published from any point in the routing script.
-		Also subscription can be fully controlled by scripting commands.
+		Also the subscriptions can be fully controlled by scripting commands.
 	</para>
 	</section>
 
@@ -52,7 +52,7 @@
 	<section id="mqtt.p.host">
 		<title><varname>host</varname> (str)</title>
 		<para>
-		MQTT Broker IP/Hostname 
+		MQTT Broker IP/Hostname.
 		</para>
 		<para>
 		<emphasis>
