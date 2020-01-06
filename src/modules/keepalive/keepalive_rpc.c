@@ -72,7 +72,7 @@ int ka_init_rpc(void)
 }
 
 static const char *keepalive_rpc_list_doc[2] = {
-		"Return the content of dispatcher sets", 0};
+		"Return the content of keepalive destination groups", 0};
 
 static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 {
@@ -115,7 +115,7 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG(" keepalive adds [%.*s]\n", sip_adress.len , sip_adress.s);
+	LM_DBG("keepalive add [%.*s]\n", sip_adress.len, sip_adress.s);
 	if(sip_adress.len<1 || table_name.len <1){
 		LM_ERR("parameter is len less than 1  \n"  );
 		rpc->fault(ctx, 500, "parameter is len less than 1");
@@ -131,7 +131,7 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_add_doc[2] = {
-		"adds new destination to keepalive memory. usage: keepalive.add sip:username@domain listname", 0};
+		"add new destination to keepalive memory. Usage: keepalive.add sip:user@domain listname", 0};
 
 static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 {
@@ -147,7 +147,7 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG(" keepalive deletes [%.*s]\n", sip_adress.len , sip_adress.s);
+	LM_DBG("keepalive delete [%.*s]\n", sip_adress.len, sip_adress.s);
 
 	if(sip_adress.len < 1 || table_name.len < 1){
 		LM_ERR("parameter is len less than 1  \n");
@@ -164,7 +164,7 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_del_doc[2] = {
-		"deletes destination from keepalive memory. usage: keepalive.del sip:username@domain listname", 0};
+		"delete destination from keepalive memory. Usage: keepalive.del sip:user@domain listname", 0};
 
 static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 {
@@ -182,7 +182,7 @@ static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG(" keepalive gets [%.*s]\n", sip_adress.len , sip_adress.s);
+	LM_DBG("keepalive get [%.*s]\n", sip_adress.len , sip_adress.s);
 
 	if(sip_adress.len < 1 || table_name.len < 1){
 		LM_ERR("parameter is len less than 1  \n");
@@ -215,13 +215,13 @@ static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_get_doc[2] = {
-		"gets destination info data  from keepalive memory. usage keepalive.get sip:xx@domain listname", 0};
+		"get destination details from keepalive memory. Usage: keepalive.get sip:user@domain listname", 0};
 
 
 static void keepalive_rpc_flush(rpc_t *rpc, void *ctx)
 {
 	ka_dest_t *dest;
-	LM_DBG("Keepalive flushes  \n");
+	LM_DBG("keepalive flushe\n");
 	ka_lock_destination_list();
 
 	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
@@ -233,4 +233,4 @@ static void keepalive_rpc_flush(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_flush_doc[2] = {
-		"Flush data from keepalive memory. usage keepalive.flush ", 0};
+		"Flush data from keepalive memory. Usage: keepalive.flush", 0};
