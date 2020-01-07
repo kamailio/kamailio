@@ -30,6 +30,7 @@ Build-Depends:
  libmnl-dev,
  libmongoc-dev,
  libmono-2.0-dev,
+ libmosquitto-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
@@ -802,6 +803,26 @@ Description: mongodb modules for the Kamailio SIP server
  .
  This package provides the mongodb database driver and non-db connector for
  Kamailio.
+
+Package: kamailio-mqtt-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: MQTT modules for the Kamailio SIP Server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ MQTT module allows bidirectional publish/subscribe communication by
+ connecting Kamailio to a MQTT Broker.
+ .
+ Messages can be published from any point in the routing script. Also
+ the subscriptions can be fully controlled by scripting commands.
 
 Package: kamailio-extra-modules
 Architecture: linux-any
