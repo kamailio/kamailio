@@ -808,7 +808,7 @@ static inline char* shm_char_dup(const char *src)
 	}
 
 	len = strlen(src) + 1;
-	rval = shm_malloc(len);
+	rval = (char*)shm_malloc(len);
 	if (!rval) {
 		SHM_MEM_ERROR;
 		return NULL;
