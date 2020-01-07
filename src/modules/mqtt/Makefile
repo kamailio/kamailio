@@ -8,25 +8,34 @@ NAME=mqtt.so
 ifeq ($(CROSS_COMPILE),)
 	BUILDER = $(shell which pkg-config)
 ifneq ($(BUILDER),)
-	PKGLIBUV = $(shell $(BUILDER) --exists libmosquitto > /dev/null 2>&1 ; echo $$? )
-ifneq ($(PKGLIBUV),0)
-	BUILDER =
-endif
+	PKGLIBMO = $(shell $(BUILDER) --exists libmosquitto > /dev/null 2>&1 ; echo $$? )
+	PKGLIBEV = $(shell $(BUILDER) --exists libev > /dev/null 2>&1 ; echo $$? )
 endif
 endif
 
-ifneq ($(BUILDER),)
+ifeq ($(PKGLIBMO),0)
 	DEFS += $(shell $(BUILDER) --cflags libmosquitto)
 	LIBS += $(shell $(BUILDER) --libs libmosquitto)
+else
+ifneq (,$(findstring darwin,$(OS)))
+	DEFS += -I/opt/local/include -I$(LOCALBASE)/include
+	LIBS += -L/opt/local/lib -L$(LOCALBASE)/lib -lmosquitto
+else
+	DEFS += -I$(LOCALBASE)/include -I$(SYSBASE)/include
+	LIBS += -L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmosquitto
+endif
+endif
+
+ifeq ($(PKGLIBEV),0)
 	DEFS += $(shell $(BUILDER) --cflags libev)
 	LIBS += $(shell $(BUILDER) --libs libev)
 else
 ifneq (,$(findstring darwin,$(OS)))
 	DEFS += -I/opt/local/include -I$(LOCALBASE)/include
-	LIBS += -L/opt/local/lib -L$(LOCALBASE)/lib -lmosquitto -lev
+	LIBS += -L/opt/local/lib -L$(LOCALBASE)/lib -lev
 else
 	DEFS += -I$(LOCALBASE)/include -I$(SYSBASE)/include
-	LIBS += -L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmosquitto -lev
+	LIBS += -L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lev
 endif
 endif
 
