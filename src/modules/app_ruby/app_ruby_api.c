@@ -1049,8 +1049,8 @@ int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	/* check the script version loaded */
 	app_ruby_kemi_reload_script();
 
+	memset(&rbdata, 0, sizeof(ksr_ruby_data_t));
 	rbdata.robj = rb_mKernel;
-	rbdata.nargs = 0;
 	rbdata.metid = rb_intern(func);
 
 	LM_DBG("executing ruby function: [[%s]]\n", func);
