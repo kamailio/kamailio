@@ -25,7 +25,7 @@ endif
 
 MKTAGS?=ctags
 EMACS_COMPAT=
-ifneq (INSIDE_EMACS,)
+ifneq ($(INSIDE_EMACS),)
 EMACS_COMPAT=-e
 endif
 
