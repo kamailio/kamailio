@@ -517,17 +517,21 @@ Note
      * grp - the set id (group id).
      * uri - the URI address.
      * sock - the socket pointer.
+     * socket - the socket string - it is added only if xavp_dst_mode has
+       bit 2 set (value 2).
      * dstid - the destination unique id (in case of call load
        distribution algorithm).
      * attrs - the attributes - they are added if xavp_dst_mode does not
-       have the bit 1 set.
+       have the bit 1 set (value 1).
 
    Default value is “0” (add all fields).
 
    Example 1.12. Set the “xavp_dst_mode” parameter
- ...
- modparam("dispatcher", "xavp_dst_mode", 1)
- ...
+...
+    modparam("dispatcher", "xavp_dst_mode", 1)
+...
+    modparam("dispatcher", "xavp_dst_mode", 2)
+...
 
 3.13. xavp_ctx (str)
 
