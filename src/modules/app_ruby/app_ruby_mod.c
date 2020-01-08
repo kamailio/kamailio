@@ -52,6 +52,7 @@ static int w_app_ruby_run3(sip_msg_t *msg, char *func, char *p1, char *p2,
 static int fixup_ruby_run(void** param, int param_no);
 
 extern str _sr_ruby_load_file;
+int _ksr_app_ruby_xval_mode = 0;
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -69,6 +70,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"load", PARAM_STR, &_sr_ruby_load_file},
+	{"xval_mode", PARAM_INT, &_ksr_app_ruby_xval_mode},
 	{0, 0, 0}
 };
 
