@@ -88,7 +88,7 @@
 %bcond_without cnxcc
 %bcond_with dnssec
 %bcond_without evapi
-%bcond_with geoip
+%bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -98,7 +98,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_with phonenum
+%bcond_without phonenum
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -192,7 +192,7 @@
 %bcond_without cnxcc
 %bcond_with dnssec
 %bcond_without evapi
-%bcond_with geoip
+%bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -202,7 +202,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_with phonenum
+%bcond_without phonenum
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
