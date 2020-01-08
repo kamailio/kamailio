@@ -62,6 +62,9 @@ sed -i -e '/ruby-dev/d' -e '/^Package: kamailio-ruby-modules/,/^$/d' \
 sed -i -e 's/ ruby[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ ruby/' ${DIST}/rules
 
+# use old libmosquitto
+sed -i 's/libmosquitto-dev/libmosquitto0-dev/' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

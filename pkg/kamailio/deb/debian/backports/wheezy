@@ -94,6 +94,9 @@ sed -i -e '/python3-dev/d' -e '/^Package: kamailio-python3-modules/,/^$/d' \
 sed -i -e 's/ python3[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ python3/' ${DIST}/rules
 
+# use old libmosquitto
+sed -i 's/libmosquitto-dev/libmosquitto0-dev/' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
