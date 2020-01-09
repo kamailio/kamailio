@@ -188,6 +188,18 @@ static int w_add_destination(sip_msg_t *msg, char *uri, char *owner)
 
 	return ka_add_dest(&suri, &sowner, 0, 0, 0);
 }
+
+/*!
+ *
+ */
+static int ki_add_destination(sip_msg_t *msg, str *uri, str *owner)
+{
+	if(ka_alloc_destinations_list() < 0)
+		return -1;
+
+	return ka_add_dest(uri, owner, 0, 0, 0);
+}
+
 /*!
 * @function w_del_destination_f
 * @abstract deletes given sip uri in allocated destination stack as named ka_alloc_destinations_list
@@ -212,6 +224,14 @@ static int w_del_destination(sip_msg_t *msg, char *uri, char *owner)
 	}
 
 	return ka_del_destination(&suri, &sowner);
+}
+
+/*!
+ *
+ */
+static int ki_del_destination(sip_msg_t *msg, str *uri, str *owner)
+{
+	return ka_del_destination(uri, owner);
 }
 
 /*
@@ -290,12 +310,12 @@ static sr_kemi_t sr_kemi_keepalive_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("keepalive"), str_init("add_destination"),
-		SR_KEMIP_INT, ka_add_dest,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
-			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+		SR_KEMIP_INT, ki_add_destination,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("keepalive"), str_init("del_destination"),
-		SR_KEMIP_INT, ka_del_destination,
+		SR_KEMIP_INT, ki_del_destination,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
