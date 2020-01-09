@@ -94,8 +94,11 @@ sed -i -e '/python3-dev/d' -e '/^Package: kamailio-python3-modules/,/^$/d' \
 sed -i -e 's/ python3[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ python3/' ${DIST}/rules
 
-# use old libmosquitto
-sed -i 's/libmosquitto-dev/libmosquitto0-dev/' ${DIST}/control
+# No mqtt module
+sed -i -e '/libmosquitto-dev/d' -e '/^Package: kamailio-mqtt-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ mqtt[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mqtt/' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 
