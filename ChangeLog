@@ -1,3 +1,763 @@
+===================== 2020-01-09 Version 5.3.2 Released =====================
+
+===================== Changes Since Version 5.3.1 ===========================
+
+commit ef7ad5164d5d2ed97fb94dd3a12f9fc9496f68e0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 11:27:07 2020 +0100
+
+    Makefile.defs: version set to 5.3.2
+
+commit 2a4eb02cb934fbbf7f0b69a8a90ae1e4e0d16ef2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 11:24:45 2020 +0100
+
+    pkg: updated version to 5.3.2 in rpm specs
+
+commit eb319d6d6bbf28cf17236764b892520197c85b86
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jan 9 10:01:36 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8830a13af10e5d13e646a8d325e046bc95cc54d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 21:07:11 2020 +0100
+
+    app_ruby: docs for xval_mode parameter
+    
+    (cherry picked from commit 4b30a3c4a9fc9d4ca7d3ce40fc5a0637f2386646)
+
+commit 912ad4fc621df6418e0cb7f55ba26a384316dc60
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 20:50:42 2020 +0100
+
+    app_ruby: option to use internal KSR::PV module and skip returning xval str
+    
+    - controlled via xval_mode module parameter
+    - workaround for a reported regression causing crash by using core
+    KSR::PV exports (GH #2180)
+    
+    (cherry picked from commit 9bafd4c4e09825b25a84bb35a6dc4a39dbd07b73)
+
+commit 2e8d629a7722cbecae543a7e4a9d0174a16fbc16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 17:38:57 2020 +0100
+
+    app_ruby: memset rbdata to 0 in app_ruby_run_ex()
+    
+    (cherry picked from commit af18330c7ed5266079038ca7ae515487537cd6b6)
+
+commit 4f83d158dbae4d0f854f4bea8a847c071a45d861
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 17:31:27 2020 +0100
+
+    misc: use single quotes in formatted ruby scrip for kemi example
+    
+    (cherry picked from commit 77a1698ce24620be0edc171494c4f414a5c5b5e1)
+
+commit 57c54e76f03cf2753487aaa82b516dda1e66f2f2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 9 09:56:52 2020 +0100
+
+    pkg/kamailio/deb: version set 5.3.2
+
+commit 27f6bb93db36b62520f0093a4f2ffe477ad7306d
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Jan 8 15:22:28 2020 +0300
+
+    pkg/kamailio/obs: enabled build of geoip and phonenum modules for CentOS 8 and RHEL 8 dists
+    
+    (cherry picked from commit c953af29433abef3251e9e4644c0af98b84368cb)
+
+commit ffa3b089a192ef6d135a094bd6b3a29125e35389
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 10:15:26 2020 +0100
+
+    Makefile: use variable for detecting emacs for ctags flag
+    
+    (cherry picked from commit ef19acf3a79a804a47238daf1f6d4794f1d82a5e)
+
+commit 13874b22adbff7bb269a6229a00f59c29013d196
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Jan 8 10:01:29 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8fc643b5d199e257ec403fd925f3d15327e8ded1
+Author: James Aimonetti <james.aimonetti@gmail.com>
+Date:   Tue Jan 7 23:55:01 2020 +0000
+
+    Makefile: include flag to generate Emacs-compatible TAGS file
+    
+    Emacs exposes an environment variable `INSIDE_EMACS` which can be used
+    to toggle ctags to generate an Emacs-friendly TAGS file.
+    
+    (cherry picked from commit 35c846b1e8dc7075b0cee196a430dd1b09a87446)
+
+commit 2dc27439365ec4f2442b19b139eda1f2c29ec958
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 10:11:42 2020 +0100
+
+    ipops: fix locating static index for dns pv
+    
+    - reported by GH #2179
+    
+    (cherry picked from commit a383caa12a1af2cbc0f135add643045a159f24f2)
+
+commit 851e3f34ed6de43d22511ad52b5cc61163bb7be5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 11:25:32 2020 +0100
+
+    tm: added missing $T(reply_reason)
+    
+    (cherry picked from commit bf57a7ab50949ddbeec787331548dfcb023c238f)
+
+commit 030be68ca0af03cf2e54ddbe00670900588459a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 24 14:39:17 2019 +0100
+
+    tls: docs - fix example for setting xavp_cfg
+    
+    (cherry picked from commit 4f42115ce29d446ad60b32af9ad370d9b2d847c2)
+
+commit 766e0d30454e0a872a8f5016fc1a4f865f95f655
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 16:08:16 2019 +0100
+
+    tls: set default tls method (version) to 1+
+    
+    - it was 1, but newer libssl doesn't have it anymore
+    - while older systems don't have newer version support
+    
+    (cherry picked from commit 1da196174d8cd7e82ce57d4de60197fc063e6b50)
+
+commit cfba21fc16aa0920c0f36fcd79692f7d64428403
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 16 11:02:57 2019 +0100
+
+    rr: fixed warning about unused label in ki_record_route_reset_one()
+    
+    (cherry picked from commit c65e0926b26ee9f1cdadb9fbd6f488159275cbea)
+
+commit b0888cf384d57b4a11200872f3b9fbdde77c53ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 12 08:42:06 2019 +0100
+
+    tm: clarification that the sip message flags operations after t_newtran()
+    
+    - they are not reflected in transaction, only in local sip message
+    structure
+    
+    (cherry picked from commit 9a0c850f98063da145120f90d2c5c2a43e76b976)
+
+commit 428c862a9e4445ebf1bec244510a29d443c9e4db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 10 12:46:34 2019 +0100
+
+    tls: init EVP_PKEY pointer when loading engine key
+    
+    (cherry picked from commit 433551f3ea00e4151f2fa4e84d7c52422b6cefe3)
+
+commit e0420bcf6ee37eb305595b2c56e9054546b3fc63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 10 12:38:30 2019 +0100
+
+    tcp: checks for event route index on close
+    
+    (cherry picked from commit 46436cf8ef7d337c255b2fd9115544a6971f9741)
+
+commit 2c0048dc6d41c61137f64e9021f897d390d6140f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 22:15:24 2019 +0100
+
+    tm: rework code to avoid compiler warnings
+    
+    - fix log message priting wrong string variable
+    
+    (cherry picked from commit 263b8ce5360716e44c6a7bcdbc65a76dfad67575)
+
+commit 331de11a6164a7a2289da62f4782e42aae21f843
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:47:00 2019 +0100
+
+    app_python3: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 731056f0e7ae752273e16bc7bc1a48ba16638235)
+
+commit 9d00826874acc5d164dc207a4fcd890d38393742
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:46:19 2019 +0100
+
+    app_python: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit e0f3675e1b0c93ec416e7663ab8b6e21b75373e2)
+
+commit 8f4e5524db2ea1625919c7a92ab9fce7f6277a46
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:44:58 2019 +0100
+
+    xlog: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit b5e3409aff3a5f8307ab812693ddea286ebc08e9)
+
+commit db6b7f470fcfbcf3b736f9e9461d87b003e824e3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:44:18 2019 +0100
+
+    tmx: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 18059dcc87f371f353fb585a89aefd8d7cadce8c)
+
+commit 0eed9af6156c7bee2ef1a06895ca3b3a0732424c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:43:29 2019 +0100
+
+    tm: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 6e7a441a9f27cb22ff22919f2e7b911045b7a7c0)
+
+commit b170db2d9f9f8d29b13bbdad78adb5ec63079ee4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:42:44 2019 +0100
+
+    sl: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit af9cdfb14798e331eacb9495aaf70eedf9eae527)
+
+commit 480095d20fcb5bdb34bb9fc496fe0a8e4b1c8b11
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:42:10 2019 +0100
+
+    siputils: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 3f859cf341d71ca3789907d9502fea18a48ca56a)
+
+commit 112729e810d5eef40a153b60f720abb60588864f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:41:33 2019 +0100
+
+    sdpops: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit beb9a7f7c6397f1ea51b8e8746d06c43f602d2a0)
+
+commit 0b182c2e9cbb3ca8213d7785115e24950c531cb4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:40:41 2019 +0100
+
+    sanity: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 2b4d555610b06a1902e3d67f282b4a101e9f3796)
+
+commit 4a69bff459e57a35606edf1f5c715efe13b521ec
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:40:02 2019 +0100
+
+    rtpproxy: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 60838d3a51d0afff75a6923791e99c94960f638e)
+
+commit 9d25bc343ec9fd0ad2c566b6d8bcc60147178a37
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:39:26 2019 +0100
+
+    rtpengine: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 401240be0a1e4a3b06d2095d2f2a003c371921ed)
+
+commit f57c9fbc276c6daa2fa79175622984bab19e7e5a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:38:32 2019 +0100
+
+    rtjson: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit bc046a1cdd096ff66057bc7cb19512192743b705)
+
+commit fb368f2de6c740e075fcefd231ff1e9bdd3f52b5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:37:53 2019 +0100
+
+    rr: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 3d5d7278135e21f8fa63d29934943d3424c60de8)
+
+commit f614e328086a851b4053f3df4ae67d6eabf52cef
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:37:11 2019 +0100
+
+    registrar: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 49903d1c03af293210b12ea48d13ff12a2bf7954)
+
+commit 5e5e67a680b4c90057645feb8a9a9bfa31d8d0af
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:35:59 2019 +0100
+
+    pike: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 48a92121ce496536a38ec3f076ad1298ef85c7e0)
+
+commit 2593e8b26f05cd70b2fb3c9861db214babfcf3f2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:35:21 2019 +0100
+
+    permissions: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 2c69186668353c371af4f4d27c78131b72b8719b)
+
+commit cd33d744696bc1ee12f6b26d821cbe8f85578513
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:34:37 2019 +0100
+
+    mtree: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 8a1be5135296e0e340e0ef970a53d4e48615d62f)
+
+commit cd2b7a4d86673797bc47d061e1d5362eafa05014
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:33:53 2019 +0100
+
+    maxfwd: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 81eeb1b671d7750dd5d52e472242630f95cf7e48)
+
+commit 24d7cf34ecd19012eb2c7d47185e08a80709ae42
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:31:56 2019 +0100
+
+    htable: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit c340ef019789ebed2c57e5b4a0a0f1543b6df7ae)
+
+commit 7f140734951c2820c87dc80e4facd7311942918e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:31:13 2019 +0100
+
+    geoip2: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 7167ae9134edf247819618522c88c5f8d3cc1adf)
+
+commit e279869422f7cb1c3ea53c8d070a6697c8738d7d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:30:25 2019 +0100
+
+    geoip: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 72509a9c538052ef21c0da9b9f3f220c01d8a81c)
+
+commit 10ec9a7e1cdfd42979ca3e3ec4a2497dad38641c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:29:27 2019 +0100
+
+    cfgutils: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 7fb0410df8b0a05870690c5d770247855767630f)
+
+commit 6e8209e50a513c37f6fe2ea389ac25cef4e8a638
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:28:19 2019 +0100
+
+    auth_db: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit 52f29796fc79706e31f389fbcf35d7b4a38900bb)
+
+commit 71bbd316369dd9f5e2f7608fae041b8032385fc2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 9 18:26:27 2019 +0100
+
+    auth: add clang-format directives to skip format on kemi_exports
+    
+    format is important for generating docs by our python tool
+    
+    (cherry picked from commit d39dd5480c6e8d56a1fb2c91220da079c1a65800)
+
+commit 72e0eb88dd61daf2bab52425d1d3945da6e0f0c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 07:03:18 2019 +0100
+
+    rr: exported to kemi record_route_preset_one()
+    
+    - the variant for record_route_preset() with one parameter
+    - GH #2171
+    
+    (cherry picked from commit b05b0891d890d55b649d19ec22105b2bdcfd3ba5)
+
+commit 6b5838e105f0ce31a448cdb785e4a86148054e02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 4 08:20:30 2019 +0100
+
+    core: kemi - fixed missing support to check for REFER method
+    
+    (cherry picked from commit 840e29d7d63602482e202e1b514a0ba9952dffe5)
+
+commit e64a0e247d19be178241d38756e7b785c6865730
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 19:07:40 2019 +0100
+
+    rtproxy: docs - fixed section id value
+    
+    (cherry picked from commit e896f2c9286809b5ef81c4952577780002ee5df8)
+
+commit 8513d5468bd7d348ef149c5b4d14feb34da93ed7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 16:47:40 2019 +0100
+
+    kex: docs - fixed rpc command name for shm memory details
+    
+    (cherry picked from commit 9e89a66b36d7aa691cf69d5b33b7ee31330693e9)
+
+commit 0969030f4e8b01314009e95b84426ee25e7d1066
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 26 15:18:22 2019 +0100
+
+    core: print modparam type as string in log message
+    
+    (cherry picked from commit f35fd46de42a26d910e637023396a801c0ad404c)
+
+commit 5f0f06dc9c02031a367945b1b79d77a922398c63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 26 11:25:46 2019 +0100
+
+    rr: debug messages when setting send socket on double rr
+    
+    (cherry picked from commit a0e04cb2a06ec2cae9a066003732746cb8d609d0)
+
+commit de1970f67194e383345d773f3658f277de1ce8b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 19:31:19 2019 +0100
+
+    ims_isc: null terminate dst_uri field
+    
+    (cherry picked from commit a8cc28b6e0236b21569625baffa865ff4ce0a153)
+
+commit 6f26ff89510a2cd20d1114f87eebb63342052344
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 19:30:44 2019 +0100
+
+    ims_ipsec_pcscf: null terminate dst_uri fields
+    
+    (cherry picked from commit a8be2459fc4013060944bf79e7c66b3613e8d04c)
+
+commit 99f51cb6091d1c051ca38af9e43ee64ccb43ddd3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 18:06:22 2019 +0100
+
+    core: make dst_uri null terminated
+    
+    (cherry picked from commit ca546d35c326666c6389c84ce45214bd2fc5c147)
+
+commit dfdc5917f3c3d0faee1acea10317c6bc4a958e19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 19 15:34:00 2019 +0100
+
+    app_sqlang: imported latest squirrel interpreter
+    
+    (cherry picked from commit b0fc60403b539672c6a2638083e8955783c65e0b)
+
+commit b03256c62fc1f278e47e13765df651cffd48d06b
+Author: Markus BÃ¶nke <mbodbg@gmx.net>
+Date:   Mon Nov 18 17:40:23 2019 +0100
+
+    dispatcher: Fixed typo in dispatcher_admin.xml
+    
+    (cherry picked from commit 840d2babc7518e92ffc2173dc760828da1d2ff7b)
+
+commit e400db248e737d282864c6b975177f3995836b8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 20:58:31 2019 +0100
+
+    dispatcher: docs for xavp_dst_mode to store socket string in dst xavp
+    
+    (cherry picked from commit 6389c98d29eeb7f61547bb68ec9d59e4f47b7552)
+
+commit 16e41ffcc834b2eaddb21f8517bda38afeac3ee2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 20:52:02 2019 +0100
+
+    dispatcher: option to set add socket as string in the dst xavp
+    
+    - bit 2 has to be set for xavp_dst_mode modparam
+    
+    (cherry picked from commit 8507efe8644c43a5f3b5d4dc27d557596b3b2f2c)
+
+commit 08353d68f6db7d01e985cad95e9cb8911b9e5f15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 17:28:09 2019 +0100
+
+    pv: print missing types for xavp values
+    
+    (cherry picked from commit 4b0b045a114591de6cc0655ae019029e337167d0)
+
+commit fd489d716fae87c4b57bbc41e6dc5f89cdb00de3
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Jan 4 23:53:10 2020 +0300
+
+    pkg/docker: update submodule [skip ci]
+
+commit 1373aedd261e77c71a0b27b8c4fff72ceb5cd0e7
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 22:13:47 2019 +0300
+
+    pkg/kamailio/obs: packaged evapi module [skip ci]
+    
+    Releated GH #2098
+    
+    (cherry picked from commit 298abc9eb6240b9567df5166d64eba9f6da078dd)
+
+commit 0f2835311ef8e23cdca217e35b5e7640a69c9d80
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Dec 21 07:31:20 2019 +0300
+
+    pkg/kamailio/obs: simplified fedora packaging rules [skip ci]
+    
+    (cherry picked from commit 1fb5f81618dc142a51104c7b60d467eb1acd9261)
+
+commit 7fa917eef3c1940bb9a178b5e538fd9931dd431c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 19 17:46:29 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e57e8e9e9301982078005ca5fdd9ad9c6310de64
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 17:35:58 2019 +0100
+
+    dispatcher: small style fix in ds_probing_mode docs
+    
+    (cherry picked from commit faccbb1cf62bfb625d0bcc9d1a52727dcdd962ff)
+
+commit d9d677cbc30b2f771a3742c3aa95fd736dc48765
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 17:32:14 2019 +0100
+
+    dispatcher: fix bugs in ds_inactive threshold and ds_probing_mode 2 (GH #2100)
+    
+    - fix bugs in ds_inactive threshold and ds_probing_mode 2 (GH #2100)
+    - ds_mode 2 should ping only gateways with mode inactive and probing
+    - ds_inactive threshould should work also in ds_probing_mode 0 and 2
+    - move ping logic to a small helper function
+    
+    (cherry picked from commit ee45c2a07292cc977a7a212cac18fd2156279588)
+
+commit 1ebae0fa58ff83848336391422014580861bef03
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 11:31:54 2019 +0100
+
+    sdpops: add missing line break for debug log
+    
+    (cherry picked from commit 0d7b5bd4575c80053e1d3851aeae34d5fbd5cf0b)
+
+commit 8d0d4e094940308fde0ff14ab4d6ddf74174ae0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 17 07:49:57 2019 +0100
+
+    Makefile.defs: use dedicated vars for pthread mutex flags
+    
+    - CC_EXTRA_OPTS and LD_EXTRA_OPTS may be set from environment
+    
+    (cherry picked from commit be34082aac3e275058f4747c3706499848ccd86d)
+
+commit d231c2856d1c056614a7ec64cddb276312f67214
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 16 11:39:11 2019 +0100
+
+    travis: build using pkg-kamailio-docker 5.3-$DIST tag
+
+commit f36ac2aa2d5ac9ed9209176cd01b94c349c49cd8
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Dec 9 19:31:26 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 763c30cc65307b7cdd7dd54f604acdffecb9a4b7
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Dec 9 18:31:37 2019 +0300
+
+    rtpengine: doc typos
+    
+    (cherry picked from commit b86fa175e92be4a2ab36f198ebc47d8f9b7c9e2a)
+
+commit acd02bbcd3cdcc86f8be4807d4349d03e706db05
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 5 10:16:46 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit a9a26744f2aa469f090206850ed0016b8f22dea5
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 5 10:05:14 2019 +0100
+
+    ims_usrloc_scscf: fix parameter example titles
+    
+    (cherry picked from commit 55233fffb6ed9165bc912565ec782624dbffaa26)
+
+commit 1e560eafb9ba0155bdbaee6cc54b344cfdd4aa31
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Dec 4 12:14:14 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 93d06acf1f1cc201ce3ca6970c2f73eec0e57d87
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Tue Dec 3 14:05:00 2019 +0200
+
+    ims_ipsec_pcscf: fixed defects and warnings:
+    
+    - fixed a defect reported from Coverity Scan - Concurrent data access
+      violations in spi_gen.c for spi_data->spi_val.
+    - in create_ipsec_tunnel() return -1 when unable to convert ip address.
+    - in ipsec_create() go to cleanup instead return -1 when get request
+      for reply fails. Fixed debug message for that error.
+    
+    (cherry picked from commit 8973feb34ab5059966158b34d3d3e3deb2af1b23)
+
+commit dc322c0d24fec1a864e133bff6bb8a7a67e136b5
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Nov 29 19:40:03 2019 +0100
+
+    tm: extend t_newtran docs with a note about flag behaviour
+    
+    (cherry picked from commit f2f492bd580621dec23d0538b8785635a013497a)
+
+commit 3eac27269bb60ec062eb0c2058319c70a94e0fbb
+Author: Greg Troxel <gdt@lexort.com>
+Date:   Thu Nov 28 20:53:23 2019 -0500
+
+    utils: Change sh(1) "test ==" usage to "="
+    
+    The POSIX sh(1) specification says that strings are compared with
+    test(1) (also "[") with "=".  Bash accepts "==" and this leads to
+    non-portable code.  This commit simply changes "==" within test/[ to
+    "=".
+    
+    (cherry picked from commit e8b8251f6c7382f8e373c2b309422973a3bf730d)
+
+commit aa26d787ee21733dd1f4d13a6869302b28a229a5
+Author: Marco Capetta <mcapetta@sipwise.com>
+Date:   Fri Nov 29 09:28:45 2019 +0100
+
+    cfgt: fix detection of jump to previous-previous route
+    
+    * this happends with onsend_route
+    
+    (cherry picked from commit e0ed91acb88091caf285704689f72e48c5127ae4)
+
+commit aa94a3a3310f9088b2b48ddeeb69ef0e78d5d6b3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 28 14:28:14 2019 +0100
+
+    cfgt: don't try to create dir if it already exists
+    
+    (cherry picked from commit 6918a96cc61fa0b15e09db01bb02e9b9f8c78abf)
+
+commit 7e5b726ec106fcc06f9ed406570b3f5fea72bd7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 27 20:28:49 2019 +0100
+
+    core: safety checks for xavp operations
+    
+    (cherry picked from commit 1067abf87cdaabc9557a99b36ad60e2349e16fa5)
+
+commit 2b4a62658176a72b99f0f5a1f8ea88fb6baad30c
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Nov 21 17:12:37 2019 +0300
+
+    pkg/kamailio/obs: fixed rpm requirment for python23
+    
+    (cherry picked from commit 6677dfdba3534a0f50c15fe5b43b8220444b18ad)
+
+commit c3392b750ebe70db7aee8928fd40b704af23a5d9
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Fri Nov 15 13:35:13 2019 +0100
+
+    core: add support for parsing http/2 replies parsing
+    
+    (cherry picked from commit 17be36102e3a1c286c69a5da193dd8405000ab62)
+
+commit 8b558ce9aa0625bdc2d3c66d795a450ce982a716
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 21 08:15:03 2019 +0100
+
+    tm: execute TMCB_REQUEST_FWDED cb as BRANCH_ROUTE when necessary
+    
+    (cherry picked from commit bc40eaa4fe446bffd9f41d5d6b21becd7b7fdc87)
+
+commit 159e32c2c2cc3f2c5c3c226be3406bd91ca9a052
+Author: rdboisvert <rdbprog@gmail.com>
+Date:   Tue Nov 19 16:05:34 2019 -0500
+
+    db_redis: allow deletion of all rows
+    
+    (cherry picked from commit bf2ecd4dec55d5009e0904392d083e17af91977d)
+
+commit 404c3ee38b6158d755f196c66f69eeee234f97e2
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 18 20:45:48 2019 +0300
+
+    utils/db_berkeley: fixed unused var
+    
+    kambdb_recover.c: In function 'load_metadata_columns':
+    kambdb_recover.c:819:6: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+      819 |  int ret,n,len;
+          |      ^~~
+    
+    (cherry picked from commit 792261b43d74518e6d67f807df60b6622ba2d9f8)
+
+commit 6867b0e47fa250c335746e3583ee6f248ab56904
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 18 00:55:13 2019 +0300
+
+    pkg/kamailio/obs: added extra packages to centos 8, rhel 8 and 7 dists
+    
+    (cherry picked from commit 24eb08c9cbcf4ab464ac5e8f2830bf8afa8a4271)
+
+
 ===================== 2019-11-14 Version 5.3.1 Released =====================
 
 ===================== Changes Since Version 5.3.0 ===========================
