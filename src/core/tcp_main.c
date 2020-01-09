@@ -892,75 +892,6 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 
 
 
-#if 0
-/* blocking write even on non-blocking sockets 
- * if TCP_TIMEOUT will return with error */
-static int tcp_blocking_write(struct tcp_connection* c, int fd, char* buf,
-								unsigned int len)
-{
-	int n;
-	fd_set sel_set;
-	struct timeval timeout;
-	int ticks;
-	int initial_len;
-	
-	initial_len=len;
-again:
-	
-	n=send(fd, buf, len,
-#ifdef HAVE_MSG_NOSIGNAL
-			MSG_NOSIGNAL
-#else
-			0
-#endif
-		);
-	if (n<0){
-		if (errno==EINTR)	goto again;
-		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
-			LM_ERR("failed to send: (%d) %s\n", errno, strerror(errno));
-			TCP_EV_SEND_TIMEOUT(errno, &c->rcv);
-			TCP_STATS_SEND_TIMEOUT();
-			goto error;
-		}
-	}else if (n<len){
-		/* partial write */
-		buf+=n;
-		len-=n;
-	}else{
-		/* success: full write */
-		goto end;
-	}
-	while(1){
-		FD_ZERO(&sel_set);
-		FD_SET(fd, &sel_set);
-		timeout.tv_sec=tcp_send_timeout;
-		timeout.tv_usec=0;
-		ticks=get_ticks();
-		n=select(fd+1, 0, &sel_set, 0, &timeout);
-		if (n<0){
-			if (errno==EINTR) continue; /* signal, ignore */
-			LM_ERR("select failed: (%d) %s\n", errno, strerror(errno));
-			goto error;
-		}else if (n==0){
-			/* timeout */
-			if (get_ticks()-ticks>=tcp_send_timeout){
-				LM_ERR("send timeout (%d)\n", tcp_send_timeout);
-				goto error;
-			}
-			continue;
-		}
-		if (FD_ISSET(fd, &sel_set)){
-			/* we can write again */
-			goto again;
-		}
-	}
-error:
-		return -1;
-end:
-		return initial_len;
-}
-#endif
-
 /* Attempt to extract real connection information from an upstream load
  * balancer or reverse proxy. This should be called right after accept()ing the
  * connection, and before TLS negotiation.
@@ -2794,7 +2725,6 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 		n=_tcpconn_write_nb(fd, c, buf, len);
 	}else{
 #endif /* TCP_ASYNC */
-		/* n=tcp_blocking_write(c, fd, buf, len); */
 		n=tsend_stream(fd, buf, len,
 						TICKS_TO_S(cfg_get(tcp, tcp_cfg, send_timeout)) *
 						1000);
