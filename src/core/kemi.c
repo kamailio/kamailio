@@ -136,8 +136,12 @@ static int sr_kemi_core_log(sip_msg_t *msg, str *level, str *txt)
 				LM_DBG("%s", txt->s);
 			} else if(strcasecmp(level->s, "info")==0) {
 				LM_INFO("%s", txt->s);
+			} else if(strcasecmp(level->s, "notice")==0) {
+				LM_NOTICE("%s", txt->s);
 			} else if(strcasecmp(level->s, "warn")==0) {
 				LM_WARN("%s", txt->s);
+			} else if(strcasecmp(level->s, "err")==0) {
+				LM_ERR("%s", txt->s);
 			} else if(strcasecmp(level->s, "crit")==0) {
 				LM_CRIT("%s", txt->s);
 			} else {
