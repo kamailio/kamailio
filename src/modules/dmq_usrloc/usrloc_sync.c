@@ -351,7 +351,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 			received.len = strlen(received.s);
 		} else if (_dmq_usrloc_replicate_socket_info==1 && strcmp(it->string, "sock")==0) {
 			if (parse_phostport( it->valuestring, &host.s, &host.len,
-			&port, &proto)!=0) {
+					(int*)&port, (int*)&proto)!=0) {
 				LM_ERR("bad socket <%s>\n", it->valuestring);
 				return 0;
 			}
@@ -391,7 +391,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 			methods = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "reg_id")==0) {
 			reg_id = SRJSON_GET_UINT(it);
-                } else if (strcmp(it->string, "server_id")==0) {
+		} else if (strcmp(it->string, "server_id")==0) {
                         server_id = SRJSON_GET_UINT(it);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
