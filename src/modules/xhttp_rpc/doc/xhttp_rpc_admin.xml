@@ -125,7 +125,7 @@ modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 		<title>Set <varname>xhttp_rpc_buf_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "xhttp_rpc_buf_size", 1024)
+modparam("xhttp_rpc", "xhttp_rpc_buf_size", 1024)
 ...
 </programlisting>
 		</example>
