@@ -10,8 +10,6 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
@@ -136,7 +134,7 @@ modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 
    Example 1.2. Set xhttp_rpc_buf_size parameter
 ...
-modparam("xhttp", "xhttp_rpc_buf_size", 1024)
+modparam("xhttp_rpc", "xhttp_rpc_buf_size", 1024)
 ...
 
 5. Functions
