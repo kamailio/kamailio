@@ -404,6 +404,34 @@ static struct dtrie_node_t *table2dt(const char *table)
 
 
 /**
+ * Prepares source d-tree table and loads data.
+ * \return entries count on success, -1 otherwise
+ */
+static int load_source(struct source_t *src)
+{
+	str tmp;
+	int result;
+
+	if(!src || !src->table) {
+		LM_ERR("could not access source or no table defined\n");
+		return -1;
+	}
+
+	tmp.s = src->table;
+	tmp.len = strlen(src->table);
+
+	result = db_reload_source(&tmp, src->dtrie_root);
+	if (result < 0) {
+		LM_ERR("cannot load source from '%.*s'\n", tmp.len, tmp.s);
+		return 0;
+	}
+
+	LM_INFO("got %d entries from '%.*s'\n", result, tmp.len, tmp.s);
+	return result;
+}
+
+
+/**
  * Adds a new table to the list, if the table is
  * already present, nothing will be done.
  * \return zero on success, negative on errors
@@ -413,7 +441,10 @@ static int add_source(const char *table)
 	/* check if the table is already present */
 	struct source_t *src = sources->head;
 	while (src) {
-		if (strcmp(table, src->table) == 0) return 0;
+		if (strcmp(table, src->table) == 0) {
+			LM_DBG("table %s is already present", src->table);
+			return 0;
+		}
 		src = src->next;
 	}
 
@@ -424,6 +455,9 @@ static int add_source(const char *table)
 	}
 	memset(src, 0, sizeof(struct source_t));
 
+	/* avoids dirty reads when adding source and d-tree */
+	lock_get(lock);
+
 	src->next = sources->head;
 	sources->head = src;
 
@@ -431,6 +465,7 @@ static int add_source(const char *table)
 	if (!src->table) {
 		SHM_MEM_ERROR;
 		shm_free(src);
+		lock_release(lock);
 		return -1;
 	}
 	strcpy(src->table, table);
@@ -440,9 +475,17 @@ static int add_source(const char *table)
 
 	if (src->dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
+		lock_release(lock);
 		return -1;
 	}
 
+	if(load_source(src) < 0) {
+		LM_ERR("could not load table data");
+		lock_release(lock);
+		return -1;
+	}
+
+	lock_release(lock);
 	return 0;
 }
 
@@ -472,6 +515,42 @@ static int check_globalblacklist_fixup(void** param, int param_no)
 	}
 
 	return 0;
+}
+
+static int ki_check_globalblacklist(sip_msg_t *msg)
+{
+	char * table = globalblacklist_table.s;
+	struct check_blacklist_fs_t* arg = NULL;
+	int result;
+
+	if (!table) {
+		LM_ERR("no table name\n");
+		return -1;
+	}
+	/* try to add the table */
+	if (add_source(table) != 0) {
+		LM_ERR("could not add table");
+		return -1;
+	}
+
+	gnode = table2dt(table);
+	if (!gnode) {
+		LM_ERR("invalid table '%s'\n", table);
+		return -1;
+	}
+
+	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	if (!arg) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	arg->dtrie_root = gnode;
+
+	result = check_blacklist(msg, arg);
+	pkg_free(arg);
+
+	return result;
 }
 
 static int check_globalblacklist(sip_msg_t* msg)
@@ -529,6 +608,43 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 	return 0;
 }
 
+static int ki_check_blacklist(sip_msg_t *msg, str* stable)
+{
+	struct dtrie_node_t *node = NULL;
+	struct check_blacklist_fs_t* arg = NULL;
+	int result;
+
+	if(stable==NULL || stable->len<=0) {
+		LM_ERR("no table name\n");
+		return -1;
+	}
+
+	/* try to add the table */
+	if (add_source(stable->s) != 0) {
+		LM_ERR("could not add table '%s'\n", stable->s);
+		return -1;
+	}
+
+	/* get the node that belongs to the table */
+	node = table2dt(stable->s);
+	if (!node) {
+		LM_ERR("invalid table '%s'\n", stable->s);
+		return -1;
+	}
+
+	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	if (!arg) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	arg->dtrie_root = node;
+
+	result = check_blacklist(msg, arg);
+	pkg_free(arg);
+
+	return result;
+}
 
 static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
@@ -578,6 +694,44 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	return ret;
 }
 
+static int ki_check_whitelist(sip_msg_t *msg, str* stable)
+{
+	struct dtrie_node_t *node = NULL;
+	struct check_blacklist_fs_t* arg = NULL;
+	int result;
+
+	if(stable==NULL || stable->len<=0) {
+		LM_ERR("no table name\n");
+		return -1;
+	}
+
+	/* try to add the table */
+	if (add_source(stable->s) != 0) {
+		LM_ERR("could not add table '%s'\n", stable->s);
+		return -1;
+	}
+
+	/* get the node that belongs to the table */
+	node = table2dt(stable->s);
+	if (!node) {
+		LM_ERR("invalid table '%s'\n", stable->s);
+		return -1;
+	}
+
+	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	if (!arg) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	arg->dtrie_root = node;
+
+	result = check_whitelist(msg, arg);
+	pkg_free(arg);
+
+	return result;
+}
+
 static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
 	void **nodeflags;
@@ -599,7 +753,7 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 
 	ptr = req_number;
 	/* Skip over non-digits.  */
-	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
+	while (match_mode == 10 && strlen(ptr) > 0 && !isdigit(*ptr)) {
 		ptr = ptr + 1;
 	}
 
@@ -607,7 +761,7 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 
 	/* avoids dirty reads when updating d-tree */
 	lock_get(lock);
-	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, 10);
+	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
 		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
@@ -633,24 +787,18 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 static int reload_sources(void)
 {
 	int result = 0;
-	str tmp;
 	struct source_t *src;
-	int n;
 
 	/* critical section start: avoids dirty reads when updating d-tree */
 	lock_get(lock);
 
 	src = sources->head;
 	while (src) {
-		tmp.s = src->table;
-		tmp.len = strlen(src->table);
-		n = db_reload_source(&tmp, src->dtrie_root);
-		if (n < 0) {
-			LM_ERR("cannot reload source from '%.*s'\n", tmp.len, tmp.s);
+		LM_INFO("Reloading source table '%s' with dtrie root '%p'\n", src->table, src->dtrie_root);
+		if(load_source(src) < 0) {
 			result = -1;
 			break;
 		}
-		LM_INFO("got %d entries from '%.*s'\n", n, tmp.len, tmp.s);
 		src = src->next;
 	}
 
@@ -1157,11 +1305,6 @@ static int blacklist_child_initialized = 0;
 
 static int rpc_child_init(void)
 {
-	/* global blacklist init */
-	if (check_globalblacklist_fixup(NULL, 0) != 0) {
-		LM_ERR("could not add global table when init the module");
-	}
-
 	/* user blacklist init */
 	if(userblacklist_child_initialized)
 		return 0;
@@ -1170,6 +1313,11 @@ static int rpc_child_init(void)
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
+	}
+
+	/* global blacklist init */
+	if (check_globalblacklist_fixup(NULL, 0) != 0) {
+		LM_ERR("could not add global table when init the module");
 	}
 
 	/* because we've added new sources during the fixup */
@@ -1224,6 +1372,21 @@ static sr_kemi_t sr_kemi_userblacklist_exports[] = {
 		SR_KEMIP_INT, ki_check_user_whitelist_table,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_whitelist"),
+		SR_KEMIP_INT, ki_check_whitelist,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_blacklist"),
+		SR_KEMIP_INT, ki_check_blacklist,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblacklist"), str_init("check_global_blacklist"),
+		SR_KEMIP_INT, ki_check_globalblacklist,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
