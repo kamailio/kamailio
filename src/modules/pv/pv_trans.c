@@ -465,6 +465,55 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s = _tr_buffer;
 			val->rs.len = i;
 			break;
+		case TR_S_ENCODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64_enc((unsigned char *) val->rs.s, val->rs.len,
+					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			if (i>1 && _tr_buffer[i-1] == '=') {
+				i--;
+				if (i>1 && _tr_buffer[i-1] == '=') {
+					i--;
+				}
+			}
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len % 4) {
+				if(val->rs.len + 4 >= TR_BUFFER_SIZE-1) {
+					LM_ERR("not enough space to insert padding\n");
+					return -1;
+				}
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+				for(i=0; i < (4 - (val->rs.len % 4)); i++) {
+					_tr_buffer[val->rs.len + i] = '=';
+				}
+				st.s = _tr_buffer;
+				st.len = val->rs.len + (4 - (val->rs.len % 4));
+				/* move to next buffer */
+				tr_set_crt_buffer();
+				i = base64_dec((unsigned char *) st.s, st.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			} else {
+				i = base64_dec((unsigned char *) val->rs.s, val->rs.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			}
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
 		case TR_S_ESCAPECOMMON:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2314,6 +2363,12 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "decode.base64", 13)==0) {
 		t->subtype = TR_S_DECODEBASE64;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "encode.base64t", 14)==0) {
+		t->subtype = TR_S_ENCODEBASE64T;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "decode.base64t", 14)==0) {
+		t->subtype = TR_S_DECODEBASE64T;
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "escape.common", 13)==0) {
 		t->subtype = TR_S_ESCAPECOMMON;
