@@ -1199,7 +1199,8 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 			}
 			break;
 		default:
-			LM_CRIT("Invalid right operand (%d)\n", rtype);
+			LM_CRIT("Invalid right operand (rtype: %d expr-op: %d lval: %ld)\n",
+					rtype, op, left);
 			return E_BUG;
 	}
 
