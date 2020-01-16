@@ -48,7 +48,7 @@ static str dmq_500_rpl  = str_init("Server Internal Error");
 static int dmq_cell_group_empty_size = 12; // {"cells":[]}
 static int dmq_cell_group_max_size = 60000;
 static ht_dmq_jdoc_cell_group_t ht_dmq_jdoc_cell_group;
-int ht_dmq_init_sync;
+extern int ht_dmq_init_sync;
 
 dmq_api_t ht_dmqb;
 dmq_peer_t* ht_dmq_peer = NULL;

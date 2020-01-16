@@ -31,8 +31,6 @@ extern dmq_api_t ht_dmqb;
 extern dmq_peer_t* ht_dmq_peer;
 extern dmq_resp_cback_t ht_dmq_resp_callback;
 
-int ht_dmq_init_sync;
-
 typedef enum {
 		HT_DMQ_NONE,
         HT_DMQ_SET_CELL,
