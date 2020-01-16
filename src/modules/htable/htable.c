@@ -220,7 +220,7 @@ static int mod_init(void)
 		}
 	}
 
-	if (ht_enable_dmq>0 && ht_dmq_initialize(ht_dmq_init_sync)!=0) {
+	if (ht_enable_dmq>0 && ht_dmq_initialize()!=0) {
 		LM_ERR("failed to initialize dmq integration\n");
 		return -1;
 	}
