@@ -213,8 +213,8 @@ void log_prefix_init(void);
 #	ifdef __SUNPRO_C
 #		define LOG__(facility, level, lname, prefix, fmt, ...) \
 			do { \
-				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
-						DPRINT_NON_CRIT) { \
+				if (DPRINT_NON_CRIT \
+						&& get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level)) { \
 					int __llevel; \
 					__llevel = ((level)<L_ALERT)?L_ALERT:(((level)>L_DBG)?L_DBG:level); \
 					DPRINT_CRIT_ENTER; \
@@ -291,8 +291,8 @@ void log_prefix_init(void);
 #	else /* ! __SUNPRO_C */
 #		define LOG__(facility, level, lname, prefix, fmt, args...) \
 			do { \
-				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
-						DPRINT_NON_CRIT) { \
+				if (DPRINT_NON_CRIT \
+						&& get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) ) { \
 					int __llevel; \
 					__llevel = ((level)<L_ALERT)?L_ALERT:(((level)>L_DBG)?L_DBG:level); \
 					DPRINT_CRIT_ENTER; \
