@@ -124,7 +124,7 @@ static int w_log_udp(struct sip_msg* msg, char* txt, char* p2)
 		return 1;
 
 	if(fixup_get_svalue(msg, (gparam_t*)txt, &stxt)!=0) {
-		LM_ERR("unable to get text parameter\n");
+		udp_send(&_lc_udp_dst, "error: unable to get text parameter\n", 36);
 		return -1;
 	}
 
@@ -149,7 +149,7 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
 	if(udp_send(&_lc_udp_dst, obuf, n)!=0) {
-		LM_DBG("udp send returned non zero\n");
+		udp_send(&_lc_udp_dst, "debug: previous udp send returned non zero\n", 43);
 	}
 }
 
