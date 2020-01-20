@@ -27,14 +27,14 @@
  */
 
 
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <strings.h>
 
 #include "globals.h"
 #include "dprint.h"
 #include "pvar.h"
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <strings.h>
 
 char *_km_log_engine_type = NULL;
 char *_km_log_engine_data = NULL;
@@ -484,34 +484,129 @@ void log_prefix_set(sip_msg_t *msg)
 
 ksr_slog_f _ksr_slog_func = NULL;
 
+static void ksr_slog_json_str_escape(str *s_in, str *s_out)
+{
+	char *p1, *p2;
+	int len = 0;
+	char token;
+	int i;
+
+	s_out->len = 0;
+	if (!s_in || !s_in->s) {
+		s_out->s = strdup("");
+		return;
+	}
+	for(i = 0; i < s_in->len; i++) {
+		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
+			len += 2;
+		} else if (s_in->s[i] < 32) {
+			len += 5;
+		} else {
+			len++;
+		}
+	}
+
+	s_out->s = (char*)malloc(len + 2);
+	if (!s_out->s) {
+		return;
+	}
+
+	p2 = s_out->s;
+	p1 = s_in->s;
+	while (p1 < s_in->s + s_in->len) {
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\')
+			*p2++ = *p1++;
+		else {
+			*p2++ = '\\';
+			switch (token = *p1++) {
+			case '\\':
+				*p2++ = '\\';
+				break;
+			case '\"':
+				*p2++ = '\"';
+				break;
+			case '\b':
+				*p2++ = 'b';
+				break;
+			case '\f':
+				*p2++ = 'f';
+				break;
+			case '\n':
+				*p2++ = 'n';
+				break;
+			case '\r':
+				*p2++ = 'r';
+				break;
+			case '\t':
+				*p2++ = 't';
+				break;
+			default:
+				snprintf(p2, 6, "u%04x", token);
+				p2 += 5;
+				break;	/* escape and print */
+			}
+		}
+	}
+	*p2++ = 0;
+	s_out->len = len;
+	return;
+}
+
+#define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"message\": \"%.*s\" }\n"
+
+#define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"message\": \"%.*s\" }\n"
+
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
 	va_list arglist;
 #define KSR_SLOG_MAX_SIZE 32*1024
 	char obuf[KSR_SLOG_MAX_SIZE];
 	int n;
+	str s_in = STR_NULL;
+	str s_out = STR_NULL;
 
-	n = 0;
 	va_start(arglist, format);
-	n += vsnprintf(obuf + n, KSR_SLOG_MAX_SIZE - n, format, arglist);
+	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
+	if(n<0 || n>=KSR_SLOG_MAX_SIZE - s_in.len) {
+		va_end(arglist);
+		goto error;
+	}
+	s_in.len += n;
 	va_end(arglist);
 
+	s_in.s = obuf;
+	ksr_slog_json_str_escape(&s_in, &s_out);
+	if(s_out.s == NULL) {
+		goto error;
+	}
 	if (unlikely(log_stderr)) {
 		if (unlikely(log_color)) dprint_color(kld->v_level);
 		fprintf(stderr,
-				"{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\", \"line\": %d, \"function\": \"%s\", \"message\": \"%.*s\" }\n",
-				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, n, obuf);
+				KSR_SLOG_STDERR_JSON_FMT, process_no, my_pid(),
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
+				s_out.len, s_out.s);
 		if (unlikely(log_color)) dprint_color_reset();
 	} else {
 		_km_log_func(kld->v_facility,
-				"{  \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\", \"line\": %d, \"function\": \"%s\", \"message\": \"%.*s\" }\n",
-				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, n, obuf);
+				KSR_SLOG_SYSLOG_JSON_FMT,
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
+				s_out.len, s_out.s);
 	}
+	free(s_out.s);
+	return;
+error:
+	return;
 }
 
 void ksr_slog_init(char *ename)
 {
 	if(ename && (strlen(ename)==4) && (strcasecmp(ename, "json")==0)) {
+		_km_log_engine_type = "json";
 		_ksr_slog_func = &ksr_slog_json;
 	}
 }
