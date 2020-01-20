@@ -259,33 +259,35 @@ void log_prefix_init(void);
 			} while(0)
 
 #		define LOG_(facility, level, ...) \
-	LOG__(facility, level, NULL, __VA_ARGS__, NULL)
+			LOG__(facility, level, NULL, __VA_ARGS__, NULL)
 
 #		ifdef LOG_FUNC_NAME
 #			define LOG(level, ...) \
 				_LOG(level, __VA_ARGS__, NULL)
 #			define _LOG(level, fmt, ...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt,\
-				_FUNC_NAME_, __VA_ARGS__)
+				LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt,\
+					_FUNC_NAME_, __VA_ARGS__)
 
 #			define LOG_FC(facility, level, ...) \
 				_LOG_FC(facility, level, __VA_ARGS__, NULL)
 #			define _LOG_FC(facility, level, fmt, ...) \
-	LOG_((facility), (level), LOC_INFO, "%s(): " fmt , _FUNC_NAME_, __VA_ARGS__)
+				LOG_((facility), (level), LOC_INFO, "%s(): " fmt ,\
+						_FUNC_NAME_, __VA_ARGS__)
 
 #			define LOG_LN(level, lname, ...) \
 				_LOG_LN(level, lname, __VA_ARGS__, NULL)
 #			define _LOG_LN(level, lname, fmt, ...) \
-	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt,\
-				_FUNC_NAME_, __VA_ARGS__)
+				LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt,\
+						_FUNC_NAME_, __VA_ARGS__)
 
 #		else /* LOG_FUNC_NAME */
 #			define LOG(level, ...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, __VA_ARGS__, NULL)
+				LOG_(DEFAULT_FACILITY, (level), LOC_INFO, __VA_ARGS__, NULL)
 #			define LOG_FC(facility, level, ...) \
-	LOG_((facility), (level), LOC_INFO, __VA_ARGS__, NULL)
+				LOG_((facility), (level), LOC_INFO, __VA_ARGS__, NULL)
 #			define LOG_LN(level, lname, ...) \
-	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, __VA_ARGS__, NULL)
+				LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO,\
+						__VA_ARGS__, NULL)
 
 #		endif /* LOG_FUNC_NAME */
 
@@ -337,27 +339,28 @@ void log_prefix_init(void);
 			} while(0)
 
 #		define LOG_(facility, level, prefix, fmt, args...) \
-	LOG__(facility, level, NULL, prefix, fmt, ## args)
+			LOG__(facility, level, NULL, prefix, fmt, ## args)
 
 #		ifdef LOG_FUNC_NAME
 #			define LOG(level, fmt, args...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt ,\
-			_FUNC_NAME_, ## args)
+				LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt ,\
+						_FUNC_NAME_, ## args)
 
 #			define LOG_FC(facility, level, fmt, args...) \
-	LOG_((facility), (level), LOC_INFO, "%s(): " fmt , _FUNC_NAME_, ## args)
+				LOG_((facility), (level), LOC_INFO, "%s(): " fmt ,\
+						_FUNC_NAME_, ## args)
 
 #			define LOG_LN(level, lname, fmt, args...) \
-	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt ,\
-			_FUNC_NAME_, ## args)
+				LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt ,\
+						_FUNC_NAME_, ## args)
 
 #		else /* LOG_FUNC_NAME */
 #			define LOG(level, fmt, args...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt , ## args)
+				LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt , ## args)
 #			define LOG_FC(facility, level, fmt, args...) \
-	LOG_((facility), (level), LOC_INFO, fmt , ## args)
+				LOG_((facility), (level), LOC_INFO, fmt , ## args)
 #			define LOG_LN(level, lname, fmt, args...) \
-	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, fmt , ## args)
+				LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, fmt , ## args)
 
 #		endif /* LOG_FUNC_NAME */
 #	endif /* __SUNPRO_C */
