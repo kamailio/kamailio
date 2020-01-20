@@ -309,9 +309,9 @@ make install-modules-all group_include="k%PYTHON_MODULES"
 make install-modules-all group_include="k%GEOIP_MODULES"
 
 
-mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/service
+mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system
 install -m644 $RPM_SOURCE_DIR/kamailio.service \
-              $RPM_BUILD_ROOT/usr/lib/systemd/system/service/kamailio.service
+              $RPM_BUILD_ROOT/usr/lib/systemd/system/kamailio.service
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 $RPM_SOURCE_DIR/kamailio.sysconfig \
@@ -488,7 +488,7 @@ fi
 %dir %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %config /usr/lib/systemd/system/service/kamailio.service
-%config %{_sysconfdir}/sysconfg/kamailio
+%config %{_sysconfdir}/sysconfig/kamailio
 
 %dir %{_libdir}/kamailio
 %{_libdir}/kamailio/libbinrpc.so
