@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -106,6 +106,28 @@
 #define LOG2SYSLOG_LEVEL(level) \
 	(log_level_info[(level) - (L_ALERT)].syslog_level)
 
+/**
+ * data fileds used for structured logging
+ */
+typedef struct ksr_logdata {
+	/* next field are automatically set by log macro */
+	int v_facility;
+	int v_level;
+	char *v_lname;
+	const char *v_fname;
+	int v_fline;
+	const char *v_mname;
+	const char *v_func;
+	const char *v_locinfo;
+	/* next field are __not__ automatically set by log macro */
+	int v_pid;
+	int v_pidx;
+} ksr_logdata_t;
+
+typedef void (*ksr_slog_f)(ksr_logdata_t*, const char*, ...);
+void ksr_slog_init(char *ename);
+
+extern ksr_slog_f _ksr_slog_func;
 
 /** @brief my_pid(), process_no are from pt.h but we cannot \#include it here
    because of circular dependencies */
@@ -259,23 +281,39 @@ void log_prefix_init(void);
 					int __llevel; \
 					__llevel = ((level)<L_ALERT)?L_ALERT:(((level)>L_DBG)?L_DBG:level); \
 					DPRINT_CRIT_ENTER; \
-					if (unlikely(log_stderr)) { \
-						if (unlikely(log_color)) dprint_color(__llevel); \
-						fprintf(stderr, "%2d(%d) %s: %.*s%s" _FUNC_FMT_ fmt, \
+					if (_ksr_slog_func) { /* structured logging */ \
+						ksr_logdata_t __kld = {0}; \
+						__kld.v_facility = LOG2SYSLOG_LEVEL(__llevel) | \
+							   (((facility) != DEFAULT_FACILITY) ? \
+								(facility) : \
+								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)); \
+						__kld.v_level = __llevel; \
+						__kld.v_lname = (lname)?(lname):LOG_LEVEL2NAME(__llevel); \
+						__kld.v_fname = __FILE__; \
+						__kld.v_fline = __LINE__; \
+						__kld.v_mname = LOG_MNAME; \
+						__kld.v_func = _FUNC_NAME_; \
+						__kld.v_locinfo = prefix; \
+						_ksr_slog_func(&__kld, fmt, ## args); \
+					} else { /* classic logging */ \
+						if (unlikely(log_stderr)) { \
+							if (unlikely(log_color)) dprint_color(__llevel); \
+							fprintf(stderr, "%2d(%d) %s: %.*s%s" _FUNC_FMT_ fmt, \
 								process_no, my_pid(), \
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
 								LOGV_PREFIX_LEN, LOGV_PREFIX_STR, \
-								(prefix), _FUNC_NAME_, ## args);\
-						if (unlikely(log_color)) dprint_color_reset(); \
-					} else { \
-						_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
+								(prefix), _FUNC_NAME_, ## args); \
+							if (unlikely(log_color)) dprint_color_reset(); \
+						} else { \
+							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) | \
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
 								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-								"%s: %.*s%s" _FUNC_FMT_ fmt,\
-								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								"%s: %.*s%s" _FUNC_FMT_ fmt, \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
 								LOGV_PREFIX_LEN, LOGV_PREFIX_STR, \
 								(prefix), _FUNC_NAME_, ## args); \
+						} \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \

@@ -1,5 +1,5 @@
 /*
- * debug print 
+ * debug print
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -27,11 +27,11 @@
  */
 
 
- 
+
 #include "globals.h"
 #include "dprint.h"
 #include "pvar.h"
- 
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
@@ -51,7 +51,7 @@ void km_log_func_set(km_log_f f)
 
 #ifndef NO_SIG_DEBUG
 /* signal protection: !=0 when LOG/DBG/... are printing */
-volatile int dprint_crit = 0; 
+volatile int dprint_crit = 0;
 #endif
 
 static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
@@ -63,7 +63,7 @@ static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
 			"LOG_AUTHPRIV","LOG_FTP","LOG_SYSLOG",
 #endif
 			0};
-			
+
 static int int_fac[]={LOG_AUTH ,  LOG_CRON , LOG_DAEMON ,
 		      LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
 		      LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
@@ -478,4 +478,40 @@ void log_prefix_set(sip_msg_t *msg)
 	if(log_prefix_str.len<=0)
 		return;
 	log_prefix_val = &log_prefix_str;
+}
+
+/* structured logging */
+
+ksr_slog_f _ksr_slog_func = NULL;
+
+void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
+{
+	va_list arglist;
+#define KSR_SLOG_MAX_SIZE 32*1024
+	char obuf[KSR_SLOG_MAX_SIZE];
+	int n;
+
+	n = 0;
+	va_start(arglist, format);
+	n += vsnprintf(obuf + n, KSR_SLOG_MAX_SIZE - n, format, arglist);
+	va_end(arglist);
+
+	if (unlikely(log_stderr)) {
+		if (unlikely(log_color)) dprint_color(kld->v_level);
+		fprintf(stderr,
+				"{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\", \"line\": %d, \"function\": \"%s\", \"message\": \"%.*s\" }\n",
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, n, obuf);
+		if (unlikely(log_color)) dprint_color_reset();
+	} else {
+		_km_log_func(kld->v_facility,
+				"{  \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\", \"line\": %d, \"function\": \"%s\", \"message\": \"%.*s\" }\n",
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, n, obuf);
+	}
+}
+
+void ksr_slog_init(char *ename)
+{
+	if(ename && (strlen(ename)==4) && (strcasecmp(ename, "json")==0)) {
+		_ksr_slog_func = &ksr_slog_json;
+	}
 }
