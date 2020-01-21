@@ -100,7 +100,7 @@ unsigned int default_authmethod =
 		CURLAUTH_BASIC
 		| CURLAUTH_DIGEST; /*!< authentication method - Basic, Digest or both */
 
-char *default_netintrface = 0; /*!< local network interface */
+char *default_netinterface = 0; /*!< local network interface */
 
 /*!< Default http query result mode
  * - 0: return full result
