@@ -44,7 +44,7 @@
 #include "../../core/dset.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../core/counters.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"

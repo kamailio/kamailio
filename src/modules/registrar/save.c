@@ -43,7 +43,7 @@
 #include "../../core/dset.h"
 #include "../../core/xavp.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../core/strutils.h"
 #include "../../core/parser/parse_require.h"
 #include "../../core/parser/parse_supported.h"
