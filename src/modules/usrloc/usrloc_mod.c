@@ -48,7 +48,7 @@
 #include "../../core/timer_proc.h" /* register_sync_timer */
 #include "../../core/globals.h"   /* is_main */
 #include "../../core/ut.h"        /* str_init */
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
