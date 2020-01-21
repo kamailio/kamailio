@@ -31,7 +31,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
 
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 
 
 MODULE_VERSION
