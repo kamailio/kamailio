@@ -56,7 +56,7 @@
 #include "../../core/kemi.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "../../modules/sanity/api.h"
 
