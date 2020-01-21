@@ -26,7 +26,7 @@
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/kemi.h"
 #include "rd_funcs.h"
