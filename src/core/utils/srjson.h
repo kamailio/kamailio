@@ -21,9 +21,9 @@
 */
 /*!
 * \file
-* \brief srutils :: SRjson
-* \ingroup srutils
-* Module: \ref srutils
+* \brief core/utils :: SRjson
+* \ingroup core/utils
+* Module: \ref core/utils
 */
 
 #ifndef _srjson__h_

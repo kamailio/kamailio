@@ -23,9 +23,9 @@
  * Time Recurence Library according to iCalendar (RFC 2445)
  * - implemented at FhG Fokus, 2003 - external link:
  *   https://github.com/miconda/tmrec
- * \brief srutils :: <description of this file>
- * \ingroup srutils
- * Module: \ref srutils
+ * \brief core/utils :: <description of this file>
+ * \ingroup core/utils
+ * Module: \ref core/utils
  */
 
 #include <stdio.h>

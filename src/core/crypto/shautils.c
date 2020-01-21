@@ -19,15 +19,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-/*! @defgroup srutils Various utilities
+/*! @defgroup core/crypto Various crypto utilities
  *
  * Kamailio core library.
  */
 /*!
 * \file
-* \brief srutils :: SHA and other hashing utilities
-* \ingroup srutils
-* Module: \ref srutils
+* \brief core/crypto :: SHA and other hashing utilities
+* \ingroup core/crypto
+* Module: \ref core/crypto
 */
 
 #include "../../core/crypto/md5.h"

@@ -15,15 +15,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
 * \file
-* \brief srutils :: Unique ID generator
-* \ingroup srutils
-* Module: \ref srutils
+* \brief core/utils :: Unique ID generator
+* \ingroup core/utils
+* Module: \ref core/utils
 */
 
 #ifndef _SRUID_H_
