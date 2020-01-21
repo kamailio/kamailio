@@ -26,7 +26,7 @@
 #include "../../core/hashes.h"
 #include "../../core/ut.h"
 
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/sr_module.h"
