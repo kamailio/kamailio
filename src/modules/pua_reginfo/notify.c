@@ -26,7 +26,7 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../modules/usrloc/usrloc.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include <libxml/parser.h>
 #include "usrloc_cb.h"
 #include "pua_reginfo.h"
