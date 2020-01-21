@@ -1363,7 +1363,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 				p->server_id.len, ZSW(p->server_id.s),
 				srvid->len, ZSW(srvid->s));
 			if(p->server_id.s && p->server_id.len==srvid->len
-					&& strncasecmp(p->server_name.s, srvid->s, srvid->len)==0) {
+					&& strncasecmp(p->server_id.s, srvid->s, srvid->len)==0) {
 				LM_DBG("TLS config found by server id\n");
 				return p;
 			}
