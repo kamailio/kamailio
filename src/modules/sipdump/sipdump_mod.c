@@ -206,7 +206,7 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 
 	if(!sipdump_enabled())
 		return 1;
-	
+
 	memset(&sdi, 0, sizeof(sipdump_info_t));
 
 	sdi.buf.s = msg->buf;
@@ -267,14 +267,14 @@ static int w_sipdump_send(sip_msg_t *msg, char *ptag, char *str2)
 }
 
 /**
- * 
+ *
  */
 int sipdump_msg_received(sr_event_param_t *evp)
 {
 	str wdata;
 	sipdump_info_t sdi;
 	char srcip_buf[IP_ADDR_MAX_STRZ_SIZE];
-	
+
 	if(!sipdump_enabled())
 		return 0;
 
@@ -319,7 +319,7 @@ int sipdump_msg_received(sr_event_param_t *evp)
 }
 
 /**
- * 
+ *
  */
 int sipdump_msg_sent(sr_event_param_t *evp)
 {
@@ -327,7 +327,7 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 	sipdump_info_t sdi;
 	ip_addr_t ip;
 	char dstip_buf[IP_ADDR_MAX_STRZ_SIZE];
-	
+
 	if(!sipdump_enabled())
 		return 0;
 
