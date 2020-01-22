@@ -274,5 +274,25 @@ sipdump_send("cfg");
 	</section>
 	</section>
 
+	<section>
+	<title>Event Routes</title>
+	<section>
+		<title>
+		<function moreinfo="none">sipdump:msg</function>
+		</title>
+		<para>
+			Executed when sipdump handles messages and mode parameter has flag 2 set.
+			The variable $sipdump(...) is available inside the event route.
+		</para>
+<programlisting  format="linespecific">
+...
+event_route[sipdump:msg] {
+    xinfo("[$sipdump(tag)] [[$sipdump(buf)]]\n");
+}
+...
+</programlisting>
+	</section>
+	</section>
+
 </chapter>
 
