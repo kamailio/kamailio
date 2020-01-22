@@ -487,6 +487,8 @@ ksr_slog_f _ksr_slog_func = NULL;
 static int _ksr_slog_json_flags = 0;
 #define KSR_SLOGJSON_FL_STRIPMSGNL (1<<0)
 #define KSR_SLOGJSON_FL_NOLOGNL (1<<1)
+#define KSR_SLOGJSON_FL_APPPREFIX (1<<2)
+#define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1<<3)
 
 static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 {
@@ -565,11 +567,18 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 }
 
 #define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"message\": \"%.*s\" }%s"
+	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_PFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
 
 #define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
 	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"message\": \"%.*s\" }%s"
+	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_PFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
 
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
@@ -580,6 +589,9 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	str s_in = STR_NULL;
 	str s_out = STR_NULL;
 	int emode = 0;
+	char *prefmsg;
+	const char *efmt;
+	const char *sfmt;
 
 	va_start(arglist, format);
 	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
@@ -601,21 +613,35 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	if(s_out.s == NULL) {
 		goto error;
 	}
+
+	if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_APPPREFIX) {
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOAPPPREFIXMSG) {
+			prefmsg = "";
+		} else {
+			prefmsg = NAME ".";
+		}
+		efmt = KSR_SLOG_STDERR_JSON_PFMT;
+		sfmt = KSR_SLOG_SYSLOG_JSON_PFMT;
+	} else {
+		prefmsg = "";
+		efmt = KSR_SLOG_STDERR_JSON_FMT;
+		sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
+	}
 	if (unlikely(log_stderr)) {
 		if (unlikely(log_color)) dprint_color(kld->v_level);
 		fprintf(stderr,
-				KSR_SLOG_STDERR_JSON_FMT, process_no, my_pid(),
+				efmt, process_no, my_pid(),
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
 				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
-				s_out.len, s_out.s,
+				prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 		if (unlikely(log_color)) dprint_color_reset();
 	} else {
 		_km_log_func(kld->v_facility,
-				KSR_SLOG_SYSLOG_JSON_FMT,
+				sfmt,
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
 				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
-				s_out.len, s_out.s,
+				prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 	}
 	if(emode && s_out.s) {
@@ -654,6 +680,12 @@ void ksr_slog_init(char *ename)
 					break;
 					case 'N':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOLOGNL;
+					break;
+					case 'a':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_APPPREFIX;
+					break;
+					case 'A':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOAPPPREFIXMSG;
 					break;
 				}
 				p++;
