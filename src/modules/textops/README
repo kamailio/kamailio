@@ -11,19 +11,13 @@ Andrei Pelinescu-Onciul
 
    <pelinescu-onciul@fokus.fraunhofer.de>
 
-Edited by
-
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Juha Heinanen
 
    <jh@tutpro.com>
-
-Edited by
 
 Ovidiu Sas
 
@@ -1228,8 +1222,9 @@ Content-Disposition: signal;handling=required
 
    Example 1.45. append_body_part with headers
 ...
-$var(b) = "";
-append_body_part("$var(b)", "application/xml\r\nX-Header: xyz");
+$var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
+append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext\r\nX-Header: xyz",
+ "signal;handling=required");
 msg_apply_changes();
 ...
 
@@ -1237,6 +1232,7 @@ msg_apply_changes();
 
 ...
 Content-Type: application/vnd.cirpack.isdn-ext
+X-Header: xyz
 Content-Disposition: signal;handling=required
 
 7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c
