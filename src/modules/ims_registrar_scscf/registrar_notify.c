@@ -1350,6 +1350,21 @@ int aor_to_contact(str* aor, str* contact) {
 }
 
 /*!
+ * \brief Match two contacts with full string - ips, ports and aliases
+ * \param c1 contact string 1
+ * \param c2 contact string 2
+ * \return 1 when they match, 0 when they not match
+ */
+static int contact_match(str* c1, str* c2) {
+	LM_DBG("Matching full contact string - comparing [%.*s] and [%.*s]\n", c1->len, c1->s, c2->len, c2->s);
+	if ((c1->len == c2->len) && !memcmp(c1->s, c2->s, c1->len)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+/*!
  * \brief Match a contact record to a contact string but only compare the ip port portion
  * \param ptr contact record
  * \param _c contact string
@@ -1435,7 +1450,7 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
 
         //This is a fix to ensure that when a user subscribes a full reg info is only sent to that UE
         if (event_type == IMS_REGISTRAR_SUBSCRIBE) {
-            if (contact_port_ip_match(watcher_contact, &s->watcher_contact) &&
+            if (contact_match(watcher_contact, &s->watcher_contact) &&
                     (presentity_uri->len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
                 LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed. About to make new notification! We always increment the local cseq and version before we send a new notification\n");
 
