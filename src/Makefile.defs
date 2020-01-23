@@ -1775,7 +1775,7 @@ ifeq ($(YACC),)
 endif
 YACC_FLAGS=-d -b core/cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS= -ldl -lresolv -lm
+LIBS= -ldl -lresolv
 LIB_PREFIX:=lib
 LIB_SUFFIX:=.so
 
