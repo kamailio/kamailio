@@ -15,8 +15,6 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Ovidiu Sas
 
    <osas@voipembedded.com.com>
@@ -66,7 +64,7 @@ Ovidiu Sas
               4.9. core.ps
               4.10. core.psx
               4.11. core.pwd
-              4.12. core.shmem
+              4.12. core.shmmem
               4.13. core.sockets_list
               4.14. core.tcp_info
               4.15. core.tcp_list
@@ -142,7 +140,7 @@ Chapter 1. Admin Guide
         4.9. core.ps
         4.10. core.psx
         4.11. core.pwd
-        4.12. core.shmem
+        4.12. core.shmmem
         4.13. core.sockets_list
         4.14. core.tcp_info
         4.15. core.tcp_list
@@ -442,7 +440,7 @@ resetdebug();
    4.9. core.ps
    4.10. core.psx
    4.11. core.pwd
-   4.12. core.shmem
+   4.12. core.shmmem
    4.13. core.sockets_list
    4.14. core.tcp_info
    4.15. core.tcp_list
@@ -534,7 +532,7 @@ kamcmd core.kill
 kamcmd core.pwd
 ...
 
-4.12.  core.shmem
+4.12.  core.shmmem
 
    Returns shared memory info. It has an optional parameter that specifies
    the measuring unit: b - bytes (default), k or kb, m or mb, g or gb.
