@@ -1708,16 +1708,14 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 
 	params.s = memchr(msg->content_type->body.s, ';',
 		msg->content_type->body.len);
-	if (params.s == NULL)
-	{
+	if (params.s == NULL) {
 		LM_INFO("Content-Type hdr has no boundary params <%.*s>\n",
 				msg->content_type->body.len, msg->content_type->body.s);
-		return -1;
+		return -2;
 	}
 	params.len = msg->content_type->body.len -
 		(params.s - msg->content_type->body.s);
-	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0)
-	{
+	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0) {
 		LM_ERR("while parsing Content-Type params\n");
 		return -1;
 	}
@@ -1725,11 +1723,9 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 	boundary->len = 0;
 	for (p = list; p; p = p->next) {
 		if ((p->name.len == 8)
-			&& (strncasecmp(p->name.s, "boundary", 8) == 0))
-		{
+			&& (strncasecmp(p->name.s, "boundary", 8) == 0)) {
 			boundary->s = pkg_malloc(p->body.len + 2);
-			if (boundary->s == NULL)
-			{
+			if (boundary->s == NULL) {
 				free_params(list);
 				LM_ERR("no memory for boundary string\n");
 				return -1;
@@ -1762,9 +1758,17 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 	int t, ret, lb_size;
 	char *pb;
 
-	if(!(msg->msg_flags&FL_BODY_MULTIPART)) return 0;
-	else
-	{
+	if(!(msg->msg_flags&FL_BODY_MULTIPART)) {
+		LM_DBG("no multi-part body\n");
+		return 0;
+	} else {
+		if((t = get_boundary(msg, &ob)) != 0) {
+			if(t==-2) {
+				LM_INFO("no boundary - maybe just turning into multipart body\n");
+				return -2;
+			}
+			return -1;
+		}
 		buf.s = build_body(msg, (unsigned int *)&buf.len, &ret, send_info);
 		if(ret) {
 			LM_ERR("Can't get body\n");
@@ -1772,10 +1776,6 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		}
 		tmp.s = buf.s;
 		t = tmp.len = buf.len;
-		if(get_boundary(msg, &ob)!=0) {
-			if(tmp.s) pkg_free(tmp.s);
-			return -1;
-		}
 		if(str_append(&ob, &bsuffix, &b)!=0) {
 			LM_ERR("Can't append suffix to boundary\n");
 			goto error;
@@ -1959,6 +1959,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	unsigned int flags;
 	unsigned int udp_mtu;
 	struct dest_info di;
+	int ret;
 
 	via_insert_param=0;
 	uri_len=0;
@@ -1976,9 +1977,10 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	path_buf.len=0;
 
 	flags=msg->msg_flags|global_req_flags;
-	if(check_boundaries(msg, send_info)<0){
-		LM_WARN("check_boundaries error\n");
+	if((ret = check_boundaries(msg, send_info)) < 0){
+		LM_INFO("check boundaries negative (%d)\n", ret);
 	}
+
 	/* Calculate message body difference and adjust Content-Length */
 	body_delta = lumps_len(msg, msg->body_lumps, send_info);
 	if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
