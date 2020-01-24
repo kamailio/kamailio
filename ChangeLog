@@ -1,3 +1,1109 @@
+===================== 2019-01-24 Version 5.2.6 Released =====================
+
+===================== Changes Since Version 5.2.5 ===========================
+
+commit fc63e970304ba74b7f6800176b0a9b41b7b39f52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 22 10:49:18 2019 +0200
+
+    kamdbctl: split create user and grant access statements for mysql
+
+    - MySQL 8 doesn't support all in one statement
+
+    (cherry picked from commit c0879add55bef77703f2259f224b4a1f954cd8bf)
+
+commit 114cda75a593a5f1119bc8b5b545b4560416b41c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 10:14:07 2019 +0100
+
+    ctl: docs - more infor about binrpc_buffer_size modparam
+
+    - replaced ser with kamailio in a few examples
+
+    (cherry picked from commit c9070600af1b7993b003964b5c58db3391d50f60)
+    (cherry picked from commit 4ca6ad00eb71ea76dacf71c6126a4fe853d898c9)
+
+commit 0e552e6c2efcf449e91040b781eafafca2a1e97a
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 21:12:48 2019 +0200
+
+    uri_db: spelling fix in variable name
+
+    (cherry picked from commit 23b60ed9fbf9396bd531c76f57c133d5850c0764)
+
+commit 2f0a0b785efc921cd82dee274b548516b1bb5d40
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 14:02:57 2019 +0200
+
+    nathelper: removed exe flag from c file
+
+    (cherry picked from commit 82195c2a51c5020ca0024f59492a4e2faef0e15a)
+
+commit a519a289cccf89a06bb7fa3857fef5505049a277
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 24 12:38:20 2019 +0200
+
+    statsc: debug message when fetching stats values
+
+    (cherry picked from commit a463c53e767114567ff25f0fe50115da0e3d0045)
+
+commit 3d6246d97385fbd3742c1d860b8f974a79f0ef8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 28 10:00:28 2019 +0100
+
+    core: pad some fields in contained structs for 4 byte alignment
+
+    - safety for sigbus on strict cpu architectures when accesing fields by
+    address
+
+    (cherry picked from commit 1296bb2270985a1bf3af04f35e4cdae1fe4b184a)
+
+commit b1bb24d3639c2869f825dd692a9b1346d1bb30b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 31 09:54:22 2019 +0100
+
+    evapi: use local allocated buffer to get data parameter for event relay
+
+    - use system malloc given that the data can be passed from jsonrpcs,
+    which uses system malloc as well
+    - try to grow the internall buffer as needed based on estimated size of
+    output for the data parameter
+
+    (cherry picked from commit 63334e312d60a5d6a6470b0067c29db672d08c7c)
+
+commit 0b6cde5604fcbc3756311b1ddacc4d7a230d7152
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sat Nov 23 18:53:17 2019 +0100
+
+    app_sqlang: fix squirrel warning: ‘nArgs’ may be used uninitialized in this function
+
+    (cherry picked from commit 7fad9c51f71854e0649fe76e273190e4b4f82438)
+
+commit 9bdcde18c932d81efd4d58a810b88e42d9fcdec8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 19 15:34:00 2019 +0100
+
+    app_sqlang: imported latest squirrel interpreter
+
+    (cherry picked from commit b0fc60403b539672c6a2638083e8955783c65e0b)
+
+commit e62d4bb6d5c5f759cbb4cce32921db2a6418589c
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Jan 24 16:07:30 2020 +0100
+
+    Makefile.defs: version set to 5.2.6
+
+commit 3fbd91923977dcaabda119a97b7cbd0182dc1eaf
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Jan 24 16:05:16 2020 +0100
+
+    pkg/kamailio: updated version to 5.2.6 in spec files
+
+commit 826f99ac4266a7f1dcb72dcf6aeb7dfff1bf686a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jan 24 10:11:57 2020 +0100
+
+    pkg/kamailio/deb: version set 5.2.6
+
+commit 659810200f4fc60da12b2633489e81e10dc7a565
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Jan 23 15:55:04 2020 +0100
+
+    Revert "pv: print missing types for xavp values"
+
+    This reverts commit f17353dfbf7fc42b2d070bdc45a3b72278202a08.
+
+commit 57198b5fb3ee5376ee94761e8735a38b855ee13e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:02:36 2019 +0200
+
+    utils/kamctl: update shebang to python3
+
+    (cherry picked from commit 9aa42d7c8161d4a0d085b019a85cde6981b3b4f9)
+
+commit 8f2552a6d517c598058e94d862cbfb62c1e67ef0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 00:29:48 2019 +0200
+
+    domain: fix spelling error
+
+    (cherry picked from commit 0944689db2eabbb531fc6daed9db3a9bcc1780b6)
+
+commit 766b993b78e38f4aa108b6ec901cecbd9c938fbc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:35:10 2019 +0200
+
+    seas: fix spelling error
+
+    (cherry picked from commit 8a197dcc8d2d063d3615e8800ed8d2f7812cce0f)
+
+commit edbe99332af576b8c860c9d887e3eb1c51c9b6db
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:57:07 2019 +0200
+
+    smsops: fix spelling error
+
+    (cherry picked from commit 4a657005a5c4eff88e48dc2b8847d5800a90bead)
+
+commit abb94a6747f24c2d89e9c3f6afc6615e44fea120
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 09:59:02 2019 +0200
+
+    smsops: fix spelling error
+
+    (cherry picked from commit 4ba14d2f6db6144870650398da6c07b07d23d64d)
+
+commit d79c2c37acd0c5660cfc4d36d7e0e801f8da8d59
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:04:58 2019 +0200
+
+    pua: fix spelling error
+
+    (cherry picked from commit d06e85d6fa9e75e8008bc422a7596671283054f7)
+
+commit 8ea6d73689b954f2ae60261075b232d09401c525
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 10:08:34 2019 +0200
+
+    core: fix spelling error
+
+    (cherry picked from commit e35fe2d7b4ae79be6af9a70d8520620941960a72)
+
+commit 97627793db2963704202f252d45821d8c05acc1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:27:40 2019 +0100
+
+    acc: better evaluation of error return for pv_printf_s()
+
+    (cherry picked from commit 69ccdc25fbfaf01785127ecb051429e51df6cad5)
+
+commit f7c990e2ca6c7b2d43cf15723c71ba38065236e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 3 10:30:09 2019 +0100
+
+    core: qmalloc - print details of prev fragment when its tail is overwritten
+
+    - do it when check2 field is not touched
+
+    (cherry picked from commit bf1ba8d2d4519af50d44acfce5f34535fd1db8e0)
+
+commit 7bebd6586b0b3b1fcee852502863ab4daea970bd
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Mon Nov 4 13:51:07 2019 +0200
+
+    ims_usrloc_scscf: added '\n' for debug messages
+
+    - added a new line to the end of some debug logs for
+      better formatting.
+
+    (cherry picked from commit 90ff57e10f1b456b35dc8ac262457dbb2c497997)
+
+commit e85fcbf139473760fed9895d839f447adadc8f53
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Thu Nov 7 18:11:21 2019 +0200
+
+    ims_registrar_scscf: added '\n' for debug messages
+
+        - added a new line to the end of some debug logs for
+          better formatting.
+
+    (cherry picked from commit 2e4727014fff86545bb9ce8bb97f72173d8c8c87)
+
+commit 4935d3c3c9ff76f34670fe39e26df11f909d6453
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Sat Nov 9 01:17:44 2019 -0500
+
+    evapi: Removed cast of bind port to short, as this restricted ports to signed 16-bit int values (< 32768).
+
+    htons() takes unsigned 16-bit integer and returns the same. When this value was cast to (short), higher ports could not be used.
+
+    (cherry picked from commit e9545ae1e490ff768270d03ea28f14b751d2c132)
+
+commit c4431b1932a73fec7c9e75418f451c3745bd7ad5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 13:37:25 2019 +0100
+
+    rr: debug messages when record-route is inserted
+
+    - some trailing whitespace removed
+
+    (cherry picked from commit 027082793ccd4e849234e1dfa312c2148a8fd08d)
+
+commit f17353dfbf7fc42b2d070bdc45a3b72278202a08
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 17:28:09 2019 +0100
+
+    pv: print missing types for xavp values
+
+    (cherry picked from commit 4b0b045a114591de6cc0655ae019029e337167d0)
+
+commit bca76be86e52b545b968476e8c9bdf899c2e4739
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 15 20:32:27 2019 +0100
+
+    pkg/kamailio: removed netbsd unmaintained specs
+
+    (cherry picked from commit 686daa57309b6dc5c32caf75e65a130dfd09d523)
+
+commit f0cc36ed668eae7fdcd1b01d44b3e0e509d6f40e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jan 23 15:31:27 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2c00d15ddb48436827fba7d1d3a0c5ae3ec3e864
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 12:25:09 2019 +0100
+
+    uac: reset credentials structure for uac_req_send() authentication
+
+    (cherry picked from commit 2b12754920704f49cd227c518e130cef4d76ea7d)
+
+commit 0614a74d44c98deffada7a8c61edfe7453da260f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 11 10:51:33 2019 +0100
+
+    phonenum: use -std=c++11 cpp compile flag
+
+    - required by the libphonenumber
+
+    (cherry picked from commit 75c5a20a870985059f642ac1a6624655332dbca8)
+
+commit cff87a49dac6f3bc04bd0bd203aa3c09b91cd613
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 26 09:14:42 2019 +0100
+
+    db_redis: do not print full table scan warning when loading the entire table
+
+    - GH #2149
+
+    (cherry picked from commit 13c1c0bfdd93d2f727ff65275e93f4a780143dee)
+
+commit c9b0ef608d2d6afe8b551057fed0ccb47b5fe985
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 16:47:40 2019 +0100
+
+    kex: docs - fixed rpc command name for shm memory details
+
+    (cherry picked from commit 9e89a66b36d7aa691cf69d5b33b7ee31330693e9)
+
+commit 0da0fee7d5cc7d3f07e5525b335d78f8a17e0a18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 19:07:40 2019 +0100
+
+    rtproxy: docs - fixed section id value
+
+    (cherry picked from commit e896f2c9286809b5ef81c4952577780002ee5df8)
+
+commit eae9d86fb1e579cb3a18577884f631014ad7b455
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 12:12:54 2019 +0100
+
+    permissions: fix crash if load_backends parameter is 1
+
+    fixes #2151
+
+    (cherry picked from commit d7f4493da751802dc47a694d251d34a85a7b3bf1)
+
+commit 34c1509bd53bbbb99aaa4438f7e7465583128f7c
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Dec 25 15:13:29 2019 +0300
+
+    src/modules/rtpproxy: Updated FAQ about MSRP support
+
+    (cherry picked from commit 347a3d1399389335102869b9253ec07fed521613)
+
+commit 0d3c8cfe6be0ab712baa75a0d0b972f79fa19226
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jan 23 15:16:27 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 29ca1231c624e79ded4d2cb633e7eeae77398d4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 19:31:19 2019 +0100
+
+    ims_isc: null terminate dst_uri field
+
+    (cherry picked from commit a8cc28b6e0236b21569625baffa865ff4ce0a153)
+
+commit 0d123b3cbd1a500ff47ebb1aee26c43671d14c23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 19:30:44 2019 +0100
+
+    ims_ipsec_pcscf: null terminate dst_uri fields
+
+    (cherry picked from commit a8be2459fc4013060944bf79e7c66b3613e8d04c)
+
+commit 73be78ff3585e521e9b2102d7473db8b8ef13481
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 18:06:22 2019 +0100
+
+    core: make dst_uri null terminated
+
+    (cherry picked from commit ca546d35c326666c6389c84ce45214bd2fc5c147)
+
+commit d5aaffd2a32e15f7288d0392063688f408ae9194
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 4 08:20:30 2019 +0100
+
+    core: kemi - fixed missing support to check for REFER method
+
+    (cherry picked from commit 840e29d7d63602482e202e1b514a0ba9952dffe5)
+
+commit 020065420e539420d86ecc51d6822c38ca17c81c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 10 12:46:34 2019 +0100
+
+    tls: init EVP_PKEY pointer when loading engine key
+
+    (cherry picked from commit 433551f3ea00e4151f2fa4e84d7c52422b6cefe3)
+
+commit ae584e61a2219d45ab0c175d72fb42497b866a5c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 10 12:38:30 2019 +0100
+
+    tcp: checks for event route index on close
+
+    (cherry picked from commit 46436cf8ef7d337c255b2fd9115544a6971f9741)
+
+commit 1d8f795c111c0fe5f5f992d137d0d94d49144fb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 22:15:24 2019 +0100
+
+    tm: rework code to avoid compiler warnings
+
+    - fix log message priting wrong string variable
+
+    (cherry picked from commit 263b8ce5360716e44c6a7bcdbc65a76dfad67575)
+
+commit ba8b8b2aed1cb66f7f73b8d1720cb35756268ece
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 12 08:42:06 2019 +0100
+
+    tm: clarification that the sip message flags operations after t_newtran()
+
+    - they are not reflected in transaction, only in local sip message
+    structure
+
+    (cherry picked from commit 9a0c850f98063da145120f90d2c5c2a43e76b976)
+
+commit 880f1d433eec3a2764bb7e46cca7b7e0e01efbb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 10:15:26 2020 +0100
+
+    Makefile: use variable for detecting emacs for ctags flag
+
+    (cherry picked from commit ef19acf3a79a804a47238daf1f6d4794f1d82a5e)
+
+commit bc5ddff280f6ead66cf976d1e04e23acdc26a142
+Author: James Aimonetti <james.aimonetti@gmail.com>
+Date:   Tue Jan 7 23:55:01 2020 +0000
+
+    Makefile: include flag to generate Emacs-compatible TAGS file
+
+    Emacs exposes an environment variable `INSIDE_EMACS` which can be used
+    to toggle ctags to generate an Emacs-friendly TAGS file.
+
+    (cherry picked from commit 35c846b1e8dc7075b0cee196a430dd1b09a87446)
+
+commit fb952a9351071bedadb61e6ea030a031f6fec6e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 19 13:39:22 2020 +0100
+
+    log_custom: send processing logs via udp
+
+    (cherry picked from commit ec0dd71bd963d7bf5959521ff82b6a659efe699a)
+
+commit eb2f7ad9d50f9bdd7ad4c3688f0e04a9494d1e0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 19 16:30:28 2020 +0100
+
+    core: check logging protection before the level
+
+    (cherry picked from commit 53ca8b50207ca35f16a2315efb1ed29448961da8)
+
+commit bd9fcd34420b6fef3e9f8838af7bfc73587626da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 16:08:16 2019 +0100
+
+    tls: set default tls method (version) to 1+
+
+    - it was 1, but newer libssl doesn't have it anymore
+    - while older systems don't have newer version support
+
+    (cherry picked from commit 1da196174d8cd7e82ce57d4de60197fc063e6b50)
+
+commit b1a6e5838e23716c19051eff89912ebc1410c69c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 24 14:39:17 2019 +0100
+
+    tls: docs - fix example for setting xavp_cfg
+
+    (cherry picked from commit 4f42115ce29d446ad60b32af9ad370d9b2d847c2)
+
+commit 7d2fab4d6c2c918c9636d5bcee74cb53f8475ea8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 11:25:32 2020 +0100
+
+    tm: added missing $T(reply_reason)
+
+    (cherry picked from commit bf57a7ab50949ddbeec787331548dfcb023c238f)
+
+commit 732f2c04cbdbff537411118642c9f68340b66825
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 10:11:42 2020 +0100
+
+    ipops: fix locating static index for dns pv
+
+    - reported by GH #2179
+
+    (cherry picked from commit a383caa12a1af2cbc0f135add643045a159f24f2)
+
+commit ff7f254b939ed50b296e2191c0a36095d926edc1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 8 17:38:57 2020 +0100
+
+    app_ruby: memset rbdata to 0 in app_ruby_run_ex()
+
+    (cherry picked from commit af18330c7ed5266079038ca7ae515487537cd6b6)
+
+commit 765333402b2c012e0862d786202834e483f17cd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 18:12:56 2020 +0100
+
+    core: kemi - handle notice log level in KSR.log()
+
+    (cherry picked from commit 73088fd871b4b1a292c67e80c55373ed1b891144)
+
+commit 2a5fb5add18abdddf0094754d7f4d5a34f8478a2
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Jan 23 12:38:23 2020 +0100
+
+    Revert "Makefile.defs: add -lm to linker flags"
+
+    This reverts commit bb247563f2d5efbf95c52e682c72215a8b1fbb0a.
+
+commit 4fb3ef304ba9ace8e276978d893a05bbcb76fde4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Jan 22 23:16:30 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit a9df08d48297fbaf2690b5035314d8f4093ab315
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 17:43:38 2020 +0100
+
+    auth_xkeys: proper debug log messages on valid match
+
+    (cherry picked from commit 39802fd2efad4b710072244f360741312a7164f2)
+
+commit 2d6101227365f1f21b39ec4806b09f1c44df6348
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 15 17:06:36 2020 +0100
+
+    core: more details on error log on failed comp_num() expression
+
+    (cherry picked from commit a85bdf58e3f1933a4a1d231b5de4fd9cf1393366)
+
+commit 27de46c506dc7cc9bdc6ce8f249176f6df0221f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 16 11:23:40 2020 +0100
+
+    htable: make ht_dmq_init_sync variable extern in ht_dmq.c
+
+    - avoiding redeclaration, it is set via modparam
+
+    (cherry picked from commit 02bff604ec70a51a5ba9faae38e946e556763e08)
+
+commit 045641ce82ba6150c72a3a25f967fea9a9e551f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 14:54:07 2020 +0100
+
+    corex: declare nio specific globals in c file
+
+    (cherry picked from commit 512f89bec0b6ebd2b3c7c16b115f15dbd6de9a39)
+
+commit bb247563f2d5efbf95c52e682c72215a8b1fbb0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 15:02:53 2020 +0100
+
+    Makefile.defs: add -lm to linker flags
+
+    - on some linux distros is not linked by default
+
+    (cherry picked from commit f12492c231e1f3a08994727e3e8263886f1f2fbb)
+
+commit f96b99f09af56921e42322b0e63194b4d1b45939
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 16:08:56 2020 +0100
+
+    pipelimit: make error log debug in rpc command when pipe not found
+
+    - error code is returned to rpc command
+
+    (cherry picked from commit 5a607cabc34d16fe3770f273241b667fea470dc9)
+
+commit 669266e775197760644c56be73a632db365f3d97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 17:20:19 2020 +0100
+
+    tls: proper match of config profile by server id
+
+    (cherry picked from commit 40f87b7e46714a114e7c98be7e677b20f1deb694)
+
+commit 4e6345bbd0ca9b484b3031a4177040d524868a5c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 22 11:02:39 2020 +0100
+
+    sipdump: small whitespace fixes
+
+    (cherry picked from commit 5d523e81c2a6ad1394254a36e9e143cb04e0171b)
+
+commit 7f66bb3beccdb9489388dec24be48d6a0e810876
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 22 17:39:49 2020 +0100
+
+    seas: docs - removed mi_fifo from examples
+
+    (cherry picked from commit 31b710b5ec402bf75b3babe5ffe440c429d3ec63)
+
+commit c3493767ba479c7e8b39730af76402abea0a4953
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Jan 20 20:39:52 2020 +0300
+
+    pkg/kamailio: removed not maintaned Oracle packaging files [skip ci]
+
+    To package for Oracle dist need use OBS folder
+
+    (cherry picked from commit fcd45145d9c534e2230707ce64b044d927efca14)
+
+commit 717a678e4e773dcd28cf8e751b99149abc93e2dd
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Jan 12 12:16:52 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 7189b5cf877a15481ad83850de7008ad24bc1010
+Author: Sam Ware <sam.ware@gmail.com>
+Date:   Sat Jan 11 14:24:37 2020 -0600
+
+    xhttp_rpc: documentation correction
+
+    - The documentation in the README file had the
+      wrong module name in the modparam in the
+      example for the xhttp_rpc_buf_size parameter.
+      Corrected this in section 4.2.
+
+    (cherry picked from commit c9229d66136f41fda0082585c4a73baf503b2c2b)
+
+commit 764bcd72b1447b2fa9314bdc380818247b15143a
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Jan 8 15:22:28 2020 +0300
+
+    pkg/kamailio/obs: enabled build of geoip and phonenum modules for CentOS 8 and RHEL 8 dists
+
+    (cherry picked from commit c953af29433abef3251e9e4644c0af98b84368cb)
+
+commit d2d78cf21d7278a847bcbc8e90a7a70a1f240cdd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 22:13:47 2019 +0300
+
+    pkg/kamailio/obs: packaged evapi module [skip ci]
+
+    Releated GH #2098
+
+    (cherry picked from commit 298abc9eb6240b9567df5166d64eba9f6da078dd)
+
+commit 42f49a901e31ebc9ae8a507ba6b1c79f0ff3daaa
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Dec 21 07:31:20 2019 +0300
+
+    pkg/kamailio/obs: simplified fedora packaging rules [skip ci]
+
+    (cherry picked from commit 1fb5f81618dc142a51104c7b60d467eb1acd9261)
+
+commit 9d8be519bb0cc97a20360652085da6aaed94e86e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 19 17:46:43 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit fdd8bd3cce007e6256be5373d84413ffdeff802e
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 17:35:58 2019 +0100
+
+    dispatcher: small style fix in ds_probing_mode docs
+
+    (cherry picked from commit faccbb1cf62bfb625d0bcc9d1a52727dcdd962ff)
+
+commit 32d4f5875e7b9624dc54a83f9f4a507ff20486a5
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 11:31:54 2019 +0100
+
+    sdpops: add missing line break for debug log
+
+    (cherry picked from commit 0d7b5bd4575c80053e1d3851aeae34d5fbd5cf0b)
+
+commit 354cce84135836a780364f1fef441ba850c9f2ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 17 07:49:57 2019 +0100
+
+    Makefile.defs: use dedicated vars for pthread mutex flags
+
+    - CC_EXTRA_OPTS and LD_EXTRA_OPTS may be set from environment
+
+    (cherry picked from commit be34082aac3e275058f4747c3706499848ccd86d)
+
+commit 9474e01d8ffa82c80c61706b87fc1e1dfd47d747
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 16 11:40:37 2019 +0100
+
+    travis: build using pkg-kamailio-docker 5.2-$DIST tag
+
+commit c0ad6576661c4940b1406af99d2dae262469b470
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Dec 9 19:31:41 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 61445fc12961d414141ed2115a6003c551884e74
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Dec 9 18:31:37 2019 +0300
+
+    rtpengine: doc typos
+
+    (cherry picked from commit b86fa175e92be4a2ab36f198ebc47d8f9b7c9e2a)
+    Adapted for 5.2
+
+commit 7fae9f78b15c8385e4c93989532b22b79732f819
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 5 10:17:15 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f4abac26de5ce4d48e988887a03405f71e24a318
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 5 10:05:14 2019 +0100
+
+    ims_usrloc_scscf: fix parameter example titles
+
+    (cherry picked from commit 55233fffb6ed9165bc912565ec782624dbffaa26)
+
+commit 097687c90fd9b51928aa0f10330f714f3371fa27
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Dec 4 12:16:24 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit bb7e84d46017a112b88fa0c4a187bb5ca7f961c5
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Nov 29 19:40:03 2019 +0100
+
+    tm: extend t_newtran docs with a note about flag behaviour
+
+    (cherry picked from commit f2f492bd580621dec23d0538b8785635a013497a)
+
+commit d55905c1877b13f5d8367e8d4fd16cd0f01dffee
+Author: Greg Troxel <gdt@lexort.com>
+Date:   Thu Nov 28 20:53:23 2019 -0500
+
+    utils: Change sh(1) "test ==" usage to "="
+
+    The POSIX sh(1) specification says that strings are compared with
+    test(1) (also "[") with "=".  Bash accepts "==" and this leads to
+    non-portable code.  This commit simply changes "==" within test/[ to
+    "=".
+
+    (cherry picked from commit e8b8251f6c7382f8e373c2b309422973a3bf730d)
+
+commit 65d13ddf14c134555fa99555ef46273cb8f56248
+Author: Marco Capetta <mcapetta@sipwise.com>
+Date:   Thu Mar 28 12:29:10 2019 +0100
+
+    dialplan: fixed avp usage in subst_exp field
+
+    - in case both match_exp and subst_exp contain avps, the content
+    of match_exp were used to evaluate the substitute expression.
+
+    (cherry picked from commit 81b268d9610ea16420d7ce2aa1a9e3ba5364773c)
+
+commit 60aa0d9fd7b3a53154b10eedcd0c51d51c6e0035
+Author: Marco Capetta <mcapetta@sipwise.com>
+Date:   Fri Nov 29 09:28:45 2019 +0100
+
+    cfgt: fix detection of jump to previous-previous route
+
+    * this happends with onsend_route
+
+    (cherry picked from commit e0ed91acb88091caf285704689f72e48c5127ae4)
+
+commit fa7778816de04aea0b23f4cce06fd8af6da598fb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 28 14:28:14 2019 +0100
+
+    cfgt: don't try to create dir if it already exists
+
+    (cherry picked from commit 6918a96cc61fa0b15e09db01bb02e9b9f8c78abf)
+
+commit ca4d105c8b9718138e0d6a62b81cdf2d63470712
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 27 20:28:49 2019 +0100
+
+    core: safety checks for xavp operations
+
+    (cherry picked from commit 1067abf87cdaabc9557a99b36ad60e2349e16fa5)
+    (cherry picked from commit 7e5b726ec106fcc06f9ed406570b3f5fea72bd7e)
+
+commit 18444d619b87c3734f3078f09c50a4fef1f8a259
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Fri Nov 15 13:35:13 2019 +0100
+
+    core: add support for parsing http/2 replies parsing
+
+    (cherry picked from commit 17be36102e3a1c286c69a5da193dd8405000ab62)
+
+commit 7b10327189fc6c1cf1c53fc7c90bed84753ec54b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 21 08:15:03 2019 +0100
+
+    tm: execute TMCB_REQUEST_FWDED cb as BRANCH_ROUTE when necessary
+
+    (cherry picked from commit bc40eaa4fe446bffd9f41d5d6b21becd7b7fdc87)
+
+commit cd955a22ddceab2356a8bf6ca37b57704baec097
+Author: rdboisvert <rdbprog@gmail.com>
+Date:   Tue Nov 19 16:05:34 2019 -0500
+
+    db_redis: allow deletion of all rows
+
+    (cherry picked from commit bf2ecd4dec55d5009e0904392d083e17af91977d)
+
+commit ec04243cd760532dc4aa87b278068b09d408d174
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 18 20:45:48 2019 +0300
+
+    utils/db_berkeley: fixed unused var
+
+    kambdb_recover.c: In function 'load_metadata_columns':
+    kambdb_recover.c:819:6: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+      819 |  int ret,n,len;
+          |      ^~~
+
+    (cherry picked from commit 792261b43d74518e6d67f807df60b6622ba2d9f8)
+
+commit 5a8da74f91fbb33b18d6bf1119801f3270e90599
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 18 00:55:13 2019 +0300
+
+    pkg/kamailio/obs: added extra packages to centos 8, rhel 8 and 7 dists
+
+    (cherry picked from commit 24eb08c9cbcf4ab464ac5e8f2830bf8afa8a4271)
+
+commit 7428ddac71777fe5f0d8b65020dca75ec1b3b828
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Nov 9 10:58:06 2019 +0300
+
+    pkg/kamailio/obs: replaced systemd-mini requirments by systemd [skip ci]
+
+    Also commit restrict requirements only for OpenSUSE Leap dists
+
+    (cherry picked from commit 0075472ef96c77ec38789af7bba744667a49ef22)
+
+commit c24bd9e7e449275fa9b9b7a05960e264edb15fac
+Author: Stanislav S. Litvinenko <litvinenko@protei.ru>
+Date:   Thu Oct 31 01:54:28 2019 +0300
+
+    ims_ipsec_pcscf: fix non-close mnl_socket when a bind error
+
+    (cherry picked from commit 8cae623c7051d529d779c4bf072225c44154e403)
+
+commit 548db41611da0c70bb6c8cdd19fa11a9bb6e7172
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Oct 31 12:46:56 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 87df0c0b7c3bccfc38b17fe20572948a39a57cff
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Oct 31 12:30:46 2019 +0100
+
+    topos: fix documentation for msg-sending event_route (GH #2115)
+...skipping...
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Oct 31 12:29:05 2019 +0100
+
+    topos: fix event_mode parameter type (GH #2115)
+
+    (cherry picked from commit d9c603d3fcc93a3a160a03e7e3c5500d744957db)
+
+commit 4437787b3de382ffa8a7df0fad54f5226c1bafd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit dc0d4f8514ca8aec79e57c49e91360a5ed90f3fd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:19:32 2019 +0300
+
+    pkg/kamailio/obs: added packaging for RHEL 8 and for CentOS 8 dists GH #2078 [skip ci]
+
+    (cherry picked from commit a3ce062fdec2d3a5d5e46f49c9d0ea9d449a1bec)
+
+commit b40d13d4e68112ff9598fd78fdd0bb7bcad410d8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Oct 11 12:37:57 2019 +0300
+
+    pkg/kamailio: Updated RPM spec release extracting for "-rc" [skip ci]
+
+    (cherry picked from commit 1361ce6e980856ce7a3ffb77349cc45254ced6ab)
+
+commit 116fb0108b0f422cff955a37ce6b16de94f22c64
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 27 21:03:33 2019 +0300
+
+    pkg/kamailio: added rpm spec version and release configuration [skip ci]
+
+    (cherry picked from commit ab0a69eb01953be97ccdfdb230e5af06bac9649c)
+
+commit e10d4f0224132952ebb9411b06d173b5520b5509
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 15 15:17:01 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 597ac3f589b82982c02631f3dc8b7962969b9645
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 15:13:09 2019 +0200
+
+    tls: fix missing TLSv1.2+ parameter documentation
+
+    (cherry picked from commit 5e00109fabe3507f1c20cbef80348e72ddb78cc8)
+
+commit 722b8f0f3147359ce20bf6a2ba1a463ae79f6d93
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 14:14:16 2019 +0200
+
+    tls: switch to TLSv1.2 in example cfg, usage of TLS 1.0 is not recommended anymore
+
+    (cherry picked from commit 3fa7b04cb6ac4170343455fa4f591fa95f7a3ff9)
+
+commit 62d35f9e80577f511371ef3e4571773ecaa18b03 (tag: 5.2.5)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 10 10:44:09 2019 +0200
+
+    ChangeLog: content updated for v5.2.5
+...skipping...
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Oct 31 12:29:05 2019 +0100
+
+    topos: fix event_mode parameter type (GH #2115)
+
+    (cherry picked from commit d9c603d3fcc93a3a160a03e7e3c5500d744957db)
+
+commit 4437787b3de382ffa8a7df0fad54f5226c1bafd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit dc0d4f8514ca8aec79e57c49e91360a5ed90f3fd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:19:32 2019 +0300
+
+    pkg/kamailio/obs: added packaging for RHEL 8 and for CentOS 8 dists GH #2078 [skip ci]
+
+    (cherry picked from commit a3ce062fdec2d3a5d5e46f49c9d0ea9d449a1bec)
+
+commit b40d13d4e68112ff9598fd78fdd0bb7bcad410d8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Oct 11 12:37:57 2019 +0300
+
+    pkg/kamailio: Updated RPM spec release extracting for "-rc" [skip ci]
+
+    (cherry picked from commit 1361ce6e980856ce7a3ffb77349cc45254ced6ab)
+
+commit 116fb0108b0f422cff955a37ce6b16de94f22c64
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 27 21:03:33 2019 +0300
+
+    pkg/kamailio: added rpm spec version and release configuration [skip ci]
+
+    (cherry picked from commit ab0a69eb01953be97ccdfdb230e5af06bac9649c)
+
+commit e10d4f0224132952ebb9411b06d173b5520b5509
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 15 15:17:01 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 597ac3f589b82982c02631f3dc8b7962969b9645
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 15:13:09 2019 +0200
+
+    tls: fix missing TLSv1.2+ parameter documentation
+
+    (cherry picked from commit 5e00109fabe3507f1c20cbef80348e72ddb78cc8)
+
+commit 722b8f0f3147359ce20bf6a2ba1a463ae79f6d93
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 14:14:16 2019 +0200
+
+    tls: switch to TLSv1.2 in example cfg, usage of TLS 1.0 is not recommended anymore
+
+    (cherry picked from commit 3fa7b04cb6ac4170343455fa4f591fa95f7a3ff9)
+
+commit 62d35f9e80577f511371ef3e4571773ecaa18b03 (tag: 5.2.5)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 10 10:44:09 2019 +0200
+
+    ChangeLog: content updated for v5.2.5
+...skipping...
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Oct 31 12:29:05 2019 +0100
+
+    topos: fix event_mode parameter type (GH #2115)
+
+    (cherry picked from commit d9c603d3fcc93a3a160a03e7e3c5500d744957db)
+
+commit 4437787b3de382ffa8a7df0fad54f5226c1bafd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit dc0d4f8514ca8aec79e57c49e91360a5ed90f3fd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:19:32 2019 +0300
+
+    pkg/kamailio/obs: added packaging for RHEL 8 and for CentOS 8 dists GH #2078 [skip ci]
+
+    (cherry picked from commit a3ce062fdec2d3a5d5e46f49c9d0ea9d449a1bec)
+
+commit b40d13d4e68112ff9598fd78fdd0bb7bcad410d8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Oct 11 12:37:57 2019 +0300
+
+    pkg/kamailio: Updated RPM spec release extracting for "-rc" [skip ci]
+
+    (cherry picked from commit 1361ce6e980856ce7a3ffb77349cc45254ced6ab)
+
+commit 116fb0108b0f422cff955a37ce6b16de94f22c64
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 27 21:03:33 2019 +0300
+
+    pkg/kamailio: added rpm spec version and release configuration [skip ci]
+
+    (cherry picked from commit ab0a69eb01953be97ccdfdb230e5af06bac9649c)
+
+commit e10d4f0224132952ebb9411b06d173b5520b5509
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 15 15:17:01 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 597ac3f589b82982c02631f3dc8b7962969b9645
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 15:13:09 2019 +0200
+
+    tls: fix missing TLSv1.2+ parameter documentation
+
+    (cherry picked from commit 5e00109fabe3507f1c20cbef80348e72ddb78cc8)
+
+commit 722b8f0f3147359ce20bf6a2ba1a463ae79f6d93
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 14:14:16 2019 +0200
+
+    tls: switch to TLSv1.2 in example cfg, usage of TLS 1.0 is not recommended anymore
+
+    (cherry picked from commit 3fa7b04cb6ac4170343455fa4f591fa95f7a3ff9)
+
+commit 62d35f9e80577f511371ef3e4571773ecaa18b03 (tag: 5.2.5)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 10 10:44:09 2019 +0200
+
+    ChangeLog: content updated for v5.2.5
+...skipping...
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Oct 31 12:29:05 2019 +0100
+
+    topos: fix event_mode parameter type (GH #2115)
+
+    (cherry picked from commit d9c603d3fcc93a3a160a03e7e3c5500d744957db)
+
+commit 4437787b3de382ffa8a7df0fad54f5226c1bafd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit dc0d4f8514ca8aec79e57c49e91360a5ed90f3fd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Oct 24 14:19:32 2019 +0300
+
+    pkg/kamailio/obs: added packaging for RHEL 8 and for CentOS 8 dists GH #2078 [skip ci]
+
+    (cherry picked from commit a3ce062fdec2d3a5d5e46f49c9d0ea9d449a1bec)
+
+commit b40d13d4e68112ff9598fd78fdd0bb7bcad410d8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Oct 11 12:37:57 2019 +0300
+
+    pkg/kamailio: Updated RPM spec release extracting for "-rc" [skip ci]
+
+    (cherry picked from commit 1361ce6e980856ce7a3ffb77349cc45254ced6ab)
+
+commit 116fb0108b0f422cff955a37ce6b16de94f22c64
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 27 21:03:33 2019 +0300
+
+    pkg/kamailio: added rpm spec version and release configuration [skip ci]
+
+    (cherry picked from commit ab0a69eb01953be97ccdfdb230e5af06bac9649c)
+
+commit e10d4f0224132952ebb9411b06d173b5520b5509
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 15 15:17:01 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 597ac3f589b82982c02631f3dc8b7962969b9645
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 15:13:09 2019 +0200
+
+    tls: fix missing TLSv1.2+ parameter documentation
+
+    (cherry picked from commit 5e00109fabe3507f1c20cbef80348e72ddb78cc8)
+
+commit 722b8f0f3147359ce20bf6a2ba1a463ae79f6d93
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 14:14:16 2019 +0200
+
+    tls: switch to TLSv1.2 in example cfg, usage of TLS 1.0 is not recommended anymore
+
+    (cherry picked from commit 3fa7b04cb6ac4170343455fa4f591fa95f7a3ff9)
+
 ===================== 2019-10-10 Version 5.2.5 Released =====================
 
 ===================== Changes Since Version 5.2.4 ===========================
