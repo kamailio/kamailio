@@ -2,6 +2,15 @@
 
 ===================== Changes Since Version 5.2.5 ===========================
 
+commit 5c2a2c51fc5e2d4469818028c57c0ef8be9757a6 (HEAD -> 5.2)
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Jan 24 17:54:42 2020 +0100
+
+    Revert "evapi: use local allocated buffer to get data parameter for event relay"
+
+    - This reverts commit b1bb24d3639c2869f825dd692a9b1346d1bb30b5.
+    - needs PV core enchancements which don't apply cleanly to this branch
+
 commit fc63e970304ba74b7f6800176b0a9b41b7b39f52
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Tue Oct 22 10:49:18 2019 +0200
