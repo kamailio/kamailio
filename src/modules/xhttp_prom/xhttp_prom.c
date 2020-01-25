@@ -315,7 +315,7 @@ static int init_xhttp_prom_reply(prom_ctx_t *ctx)
 	reply->reason = XHTTP_PROM_REASON_OK;
 	reply->buf.s = pkg_malloc(buf_size);
 	if (!reply->buf.s) {
-		LM_ERR("oom\n");
+		PKG_MEM_ERROR;
 		prom_fault(ctx, 500, "Internal Server Error (No memory left)");
 		return -1;
 	}
@@ -1231,7 +1231,7 @@ static int double_parse_str(str *s_number, double *pnumber)
 	int len = s_number->len;
 	s = pkg_malloc(len + 1);
 	if (!s) {
-		LM_ERR("Out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(s, s_number->s, len);
