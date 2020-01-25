@@ -220,7 +220,7 @@ static char* xhttp_to_sip(sip_msg_t* msg, int* new_msg_len)
 	p = new_msg = pkg_malloc(len + 1);
 	if (new_msg == 0)
 	{
-		LM_DBG("memory allocation failure (%d bytes)\n", len);
+		PKG_MEM_ERROR_FMT(" (%d bytes)\n", len);
 		pkg_free(via);
 		return 0;
 	}
@@ -412,7 +412,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 
 		if (tbuf.s==0)
 		{
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(tbuf.s, "Content-Type: ", sizeof("Content-Type: ") - 1);
