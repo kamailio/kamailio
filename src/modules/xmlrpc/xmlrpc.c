@@ -2039,13 +2039,17 @@ static struct rpc_delayed_ctx* rpc_delayed_ctx_new(rpc_ctx_t* ctx)
 		return 0; /* no delayed reply if already replied */
 	/* clone the sip msg */
 	shm_msg=sip_msg_shm_clone(ctx->msg, &len, 1);
-	if (shm_msg==0)
+	if (shm_msg==0) {
+		ERR("could not clone SIP message in shared memory\n");
 		goto error;
+	}
 
 	/* alloc into one block */
 	size=ROUND_POINTER(sizeof(*ret))+sizeof(rpc_ctx_t);
-	if ((ret=shm_malloc(size))==0)
+	if ((ret=shm_malloc(size))==0) {
+		SHM_MEM_ERROR;
 		goto error;
+	}
 	memset(ret, 0, size);
 	ret->rpc=func_param;
 	ret->reply_ctx=(char*)ret+ROUND_POINTER(sizeof(*ret));
@@ -2508,7 +2512,7 @@ static int ki_xmlrpc_reply(sip_msg_t* msg, int rcode, str* reason)
 
 	reply.reason = as_asciiz(reason);
 	if (reply.reason == NULL) {
-		ERR("No memory left\n");
+		ERR("could not convert string\n");
 		goto error;
 	}
 
