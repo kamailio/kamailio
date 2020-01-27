@@ -186,6 +186,7 @@ request_route {
 		installed and its environment configured, then run the following commands:
 	</para>
 		<example>
+		<title>Libsecsipid usage</title>
 		<programlisting format="linespecific">
 ...
 go get https://github.com/asipto/secsipidx
