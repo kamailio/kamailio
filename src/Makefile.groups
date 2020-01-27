@@ -213,6 +213,9 @@ mod_list_kafka=kafka
 # - modules depending on mqtt mosquitto and ev library
 mod_list_mqtt=mqtt
 
+# - modules depending on secsipid library
+mod_list_secsipid=secsipid
+
 # - modules depending on oRTP and mediastreamer2 libraries
 mod_list_rtp_media_server=rtp_media_server
 
@@ -251,6 +254,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_phonenum) \
 			   $(mod_list_kafka) \
 			   $(mod_list_mqtt) \
+			   $(mod_list_secsipid) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -470,6 +474,9 @@ module_group_kkafka=$(mod_list_kafka)
 
 # K mqtt modules
 module_group_kmqtt=$(mod_list_mqtt)
+
+# K secsipid modules
+module_group_kmqtt=$(mod_list_secsipid)
 
 # K rtp_media_server modules
 module_group_krtp_media_server=$(mod_list_rtp_media_server)
