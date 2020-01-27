@@ -476,7 +476,7 @@ module_group_kkafka=$(mod_list_kafka)
 module_group_kmqtt=$(mod_list_mqtt)
 
 # K secsipid modules
-module_group_kmqtt=$(mod_list_secsipid)
+module_group_ksecsipid=$(mod_list_secsipid)
 
 # K rtp_media_server modules
 module_group_krtp_media_server=$(mod_list_rtp_media_server)
