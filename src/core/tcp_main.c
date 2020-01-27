@@ -1163,7 +1163,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	if (unlikely(ksr_tcp_accept_haproxy && state == S_CONN_ACCEPT)) {
 		ret = tcpconn_read_haproxy(c);
 		if (ret == -1) {
-			LM_WARN("invalid PROXY protocol header\n");
+			LM_ERR("invalid PROXY protocol header\n");
 			goto error;
 		} else if (ret == 1) {
 			LM_DBG("PROXY protocol did not override IP addresses\n");
