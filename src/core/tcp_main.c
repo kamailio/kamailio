@@ -1168,7 +1168,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		} else if (ret == 1) {
 			LM_DBG("PROXY protocol did not override IP addresses\n");
 		} else if (ret == 2) {
-			LM_WARN("PROXY protocol header not found or wrong. can't owerride IP addresses\n");
+			LM_DBG("PROXY protocol header not found. can't owerride IP addresses\n");
 		}
 	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
