@@ -507,6 +507,38 @@ static sr_kemi_xval_t* ki_sipdump_get_tag(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_sipdump_get_src_ip(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_info==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_info->src_ip;
+	return &_ksr_kemi_sipdump_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sipdump_get_dst_ip(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_info==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_info->dst_ip;
+	return &_ksr_kemi_sipdump_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_sipdump_exports[] = {
 	{ str_init("sipdump"), str_init("send"),
@@ -521,6 +553,16 @@ static sr_kemi_t sr_kemi_sipdump_exports[] = {
 	},
 	{ str_init("sipdump"), str_init("get_tag"),
 		SR_KEMIP_XVAL, ki_sipdump_get_tag,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipdump"), str_init("get_src_ip"),
+		SR_KEMIP_XVAL, ki_sipdump_get_src_ip,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipdump"), str_init("get_dst_ip"),
+		SR_KEMIP_XVAL, ki_sipdump_get_dst_ip,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
