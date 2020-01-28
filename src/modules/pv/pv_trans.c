@@ -295,6 +295,25 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
 			break;
+		case TR_S_RMWS:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len >= TR_BUFFER_SIZE - 1)
+				return -1;
+			j = 0;
+			for(i=0; i < val->rs.len; i++) {
+				if(val->rs.s[i] != ' ' && val->rs.s[i] != '\t'
+						&& val->rs.s[i] != '\r' && val->rs.s[i] != '\n') {
+					_tr_buffer[j] = val->rs.s[i];
+					j++;
+				}
+			}
+			_tr_buffer[j] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
+			break;
 		case TR_S_MD5:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2321,6 +2340,9 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "rmws", 4)==0) {
+		t->subtype = TR_S_RMWS;
 		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "sha256", 6)==0) {
 		t->subtype = TR_S_SHA256;
