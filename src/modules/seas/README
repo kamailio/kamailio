@@ -754,9 +754,7 @@ loadmodule "/usr/local/lib/kamailio/modules/usrloc.so"
 loadmodule "/usr/local/lib/kamailio/modules/registrar.so"
 loadmodule "/usr/local/lib/kamailio/modules/textops.so"
 loadmodule "/usr/local/lib/kamailio/modules/seas.so"
-loadmodule "/usr/local/lib/kamailio/modules/mi_fifo.so"
 
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 modparam("usrloc", "db_mode",   0)
 modparam("rr", "enable_full_lr", 1)
 modparam("seas", "listen_sockets", "127.0.0.1:5080");
@@ -820,9 +818,7 @@ mpath="/home/elias/src/sipservlet/seas"
 
 loadmodule "modules/tm/tm.so"
 loadmodule "modules/seas/seas.so"
-loadmodule "modules/mi_fifo/mi_fifo.so"
 
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 modparam("seas", "listen_sockets","127.0.0.1:5080")
 
 route{
