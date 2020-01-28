@@ -851,6 +851,46 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 	return NULL;
 }
 
+int ht_cell_exists(ht_t *ht, str *name)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ht_cell_t *it;
+
+	if(ht==NULL || ht->entries==NULL)
+		return 0;
+
+	hid = ht_compute_hash(name);
+
+	idx = ht_get_entry(hid, ht->htsize);
+
+	/* head test and return */
+	if(ht->entries[idx].first==NULL)
+		return 0;
+
+	ht_slot_lock(ht, idx);
+	it = ht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+		it = it->next;
+	while(it!=NULL && it->cellid == hid) {
+		if(name->len==it->name.len
+				&& strncmp(name->s, it->name.s, name->len)==0) {
+			/* found */
+			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
+				/* entry has expired */
+				ht_slot_unlock(ht, idx);
+				return 0;
+			}
+			ht_slot_unlock(ht, idx);
+			return 1;
+		}
+		it = it->next;
+	}
+	ht_slot_unlock(ht, idx);
+	return 0;
+}
+
+
 int ht_dbg(void)
 {
 	int i;

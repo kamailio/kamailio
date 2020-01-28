@@ -1001,6 +1001,31 @@ static sr_kemi_xval_t* ki_ht_getw(sip_msg_t *msg, str *htname, str *itname)
 /**
  *
  */
+static int ki_ht_is_null(sip_msg_t *msg, str *htname, str *itname)
+{
+	ht_t *ht = NULL;
+
+	/* find the hash htable */
+	ht = ht_get_table(htname);
+	if (ht == NULL) {
+		return 2;
+	}
+
+	if(ht->flags==PV_VAL_INT) {
+		/* htable defined with default value */
+		return -2;
+	}
+
+	if(ht_cell_exists(ht, itname)>0) {
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 {
 	int_str isvalue;
@@ -1815,6 +1840,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 		SR_KEMIP_INT, ki_ht_setxs,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_is_null"),
+		SR_KEMIP_INT, ki_ht_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
