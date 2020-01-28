@@ -673,6 +673,46 @@ static sr_kemi_xval_t* ki_kx_getw_body(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_duri_mode(sip_msg_t *msg, int xmode)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->dst_uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_duri(sip_msg_t *msg)
+{
+	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_duri(sip_msg_t *msg)
+{
+	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
+{
+	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -755,6 +795,22 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_duri"),
+		SR_KEMIP_XVAL, ki_kx_get_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_duri"),
+		SR_KEMIP_XVAL, ki_kx_gete_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_duri"),
+		SR_KEMIP_XVAL, ki_kx_getw_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 	{ str_init("kx"), str_init("get_ua"),
 		SR_KEMIP_XVAL, ki_kx_get_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
