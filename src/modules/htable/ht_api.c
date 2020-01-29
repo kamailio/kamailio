@@ -237,6 +237,10 @@ ht_t* ht_get_table(str *name)
 	unsigned int htid;
 	ht_t *ht;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return NULL;
+	}
 	htid = ht_compute_hash(name);
 
 	/* does it exist */
@@ -263,6 +267,10 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	int c;
 	int i;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 	htid = ht_compute_hash(name);
 
 	/* does it exist */
@@ -463,8 +471,14 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	ht_cell_t *it, *prev, *cell;
 	time_t now;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht==NULL || ht->entries==NULL) {
+		LM_WARN("invalid ht parameter\n");
 		return -1;
+	}
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 
 	hid = ht_compute_hash(name);
 
@@ -639,6 +653,10 @@ int ht_del_cell(ht_t *ht, str *name)
 	if(ht==NULL || ht->entries==NULL)
 		return -1;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
@@ -685,6 +703,10 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 	if(ht==NULL || ht->entries==NULL)
 		return NULL;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return NULL;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
@@ -807,6 +829,10 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 	if(ht==NULL || ht->entries==NULL)
 		return NULL;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return NULL;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
@@ -860,6 +886,10 @@ int ht_cell_exists(ht_t *ht, str *name)
 	if(ht==NULL || ht->entries==NULL)
 		return 0;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
@@ -1197,6 +1227,10 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	if(ht->htexpire==0)
 		return 0;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
@@ -1242,6 +1276,10 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 	if(ht->htexpire==0)
 		return 0;
 
+	if(name==NULL || name->s==NULL) {
+		LM_WARN("invalid name parameter\n");
+		return -1;
+	}
 	hid = ht_compute_hash(name);
 
 	idx = ht_get_entry(hid, ht->htsize);
