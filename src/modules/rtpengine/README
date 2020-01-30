@@ -1882,20 +1882,22 @@ rtpengine_offer();
             “Via” header; “auto” - use the first “Via” header if this is a
             request, or the second one if this is a reply; “extra” - don't
             take the value from a header, but instead use the value of the
-            “extra_id_pv” variable; “next” - use the value of the
-            “Via/branch” tag that Kamailio will generate for the next
-            branch. This can be used to create one media session per
-            branch on the RTP proxy. When sending a subsequent “delete”
-            command to the RTP proxy, you can then stop just the session
-            for a specific branch when passing the flag '1' or '2' in the
-            “rtpengine_delete”, or stop all sessions for a call when not
-            passing one of those two flags there. This is especially
-            useful if you have serially forked call scenarios where the
-            RTP proxy gets an “offer” command for a new branch, and then a
-            “delete” command for the previous branch, which would
-            otherwise delete the full call, breaking the subsequent
-            “answer” for the new branch. This flag is only supported by
-            the Sipwise rtpengine RTP proxy at the moment!
+            “extra_id_pv” variable; “next” - use the branch ID generated
+            by Kamailio for the next outgoing branch; “auto-next” - use
+            “next” in requests and “1” in replies; “auto-extra” - use
+            “extra” in requests and “1” in replies. This can be used to
+            create one media session per branch on the RTP proxy. When
+            sending a subsequent “delete” command to the RTP proxy, you
+            can then stop just the session for a specific branch when
+            passing the flag '1' or '2' in the “rtpengine_delete”, or stop
+            all sessions for a call when not passing one of those two
+            flags there. This is especially useful if you have serially
+            forked call scenarios where the RTP proxy gets an “offer”
+            command for a new branch, and then a “delete” command for the
+            previous branch, which would otherwise delete the full call,
+            breaking the subsequent “answer” for the new branch. This flag
+            is only supported by the Sipwise rtpengine RTP proxy at the
+            moment!
           + asymmetric - flags that UA from which message is received
             doesn't support symmetric RTP. Disables learning of endpoint
             addresses in the Sipwise rtpengine proxy.

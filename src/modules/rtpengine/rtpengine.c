@@ -2268,6 +2268,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 						ng_flags->via = -1;
 					else if (str_eq(&val, "next"))
 						ng_flags->via = -2;
+					else if (str_eq(&val, "auto-next") || str_eq(&val, "next-auto"))
+						ng_flags->via = -3;
+					else if (str_eq(&val, "auto-extra") || str_eq(&val, "extra-auto"))
+						ng_flags->via = -4;
 					else
 						goto error;
 					goto next;
@@ -2363,6 +2367,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	char md5[MD5_LEN];
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	bencode_item_t *result;
+	tm_cell_t *t;
+	unsigned int branch_idx;
 
 	/*** get & init basic stuff needed ***/
 
@@ -2453,11 +2459,21 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
 	if (ng_flags.via) {
-		ret = -1;
+		/* pre-process */
 		switch (ng_flags.via) {
 			case 3:
 				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 2 : 1;
-				/* fall thru */
+				break;
+			case -3:
+				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 1 : -2;
+				break;
+			case -4:
+				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 1 : -1;
+				break;
+		}
+
+		ret = -1;
+		switch (ng_flags.via) {
 			case 1:
 			case 2:
 				ret = get_via_branch(msg, ng_flags.via, &viabranch);
@@ -2469,10 +2485,16 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			case -2:
 				if (!char_msg_val(msg, md5))
 					break;
+				branch_idx = 0;
+				if (tmb.t_gett) {
+					t = tmb.t_gett();
+					if (t && t != T_UNDEFINED)
+						branch_idx = t->nr_of_outgoings;
+				}
 				msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
 
 				viabranch.s = branch_buf;
-				if (branch_builder(msg->hash_index, 0, md5, 0, branch_buf, &viabranch.len))
+				if (branch_builder(msg->hash_index, 0, md5, branch_idx, branch_buf, &viabranch.len))
 					ret = 0;
 				break;
 		}
