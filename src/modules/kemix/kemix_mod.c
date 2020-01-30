@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -713,6 +714,14 @@ static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
 /**
  *
  */
+static int ki_kx_get_timestamp(sip_msg_t *msg)
+{
+	return (int)time(NULL);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -901,7 +910,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("kx"), str_init("get_timestamp"),
+		SR_KEMIP_INT, ki_kx_get_timestamp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
