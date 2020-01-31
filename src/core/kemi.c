@@ -225,6 +225,38 @@ static int sr_kemi_core_is_myself_ruri(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_myself_duri(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (msg->dst_uri.s!=NULL)
+		return sr_kemi_core_is_myself(msg, &msg->dst_uri);
+
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_nhuri(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (msg->dst_uri.s!=NULL)
+		return sr_kemi_core_is_myself(msg, &msg->dst_uri);
+
+	return sr_kemi_core_is_myself_ruri(msg);
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_is_myself_furi(sip_msg_t *msg)
 {
 	to_body_t *xfrom;
@@ -1397,6 +1429,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_myself_ruri"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_myself_ruri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_duri"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_nhuri"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_nhuri,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
