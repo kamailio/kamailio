@@ -1302,7 +1302,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		}
 		/* this looks however how a very strange status rewrite attempt;
 		 * report on it */
-		LM_ERR("status rewrite by UAS: stored: %d, received: %d\n",
+		LM_WARN("status rewrite by UAS: stored: %d, received: %d\n",
 			Trans->uac[branch].last_received, new_code);
 		goto discard;
 	}
