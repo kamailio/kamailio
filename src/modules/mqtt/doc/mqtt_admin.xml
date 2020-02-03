@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The MQTT module allows bidirectional publish/subscribe communication
+		by connecting &kamailio; to a MQTT Broker.
+	</para>
+	<para>
+		Messages can be published from any point in the routing script.
+		Also the subscriptions can be fully controlled by scripting commands.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libev</emphasis> - <ulink url="http://software.schmorp.de/pkg/libev">http://software.schmorp.de/pkg/libev</ulink>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>libmosquitto</emphasis> - <ulink url="https://mosquitto.org">https://mosquitto.org</ulink>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="mqtt.p.host">
+		<title><varname>host</varname> (str)</title>
+		<para>
+		MQTT Broker IP/Hostname.
+		</para>
+		<para>
+		<emphasis>
+			No default, this parameter is mandatory.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "host", "1.2.3.4")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.port">
+		<title><varname>port</varname> (int)</title>
+		<para>
+		MQTT Broker port number.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1883.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "port", 1883)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.keepalive">
+		<title><varname>keepalive</varname> (int)</title>
+		<para>
+		The number of seconds after which the broker should send a PING message to the kamailio
+		if no other messages have been exchanged in that time.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "keepalive", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.id">
+		<title><varname>id</varname> (str)</title>
+		<para>
+		String to use as the mqtt client id.
+		If NULL, a random client id will be generated. 
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "id", "kamailio123")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.username">
+		<title><varname>username</varname> (str)</title>
+		<para>
+		The username to send as a string or NULL to disable authentication.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (no authentication). 
+			Must be used together with <varname>password</varname>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>username</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "username", "kamailio-user")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.password">
+		<title><varname>password</varname> (str)</title>
+		<para>
+		The password to send as a string or NULL to disable authentication.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (no authentication). 
+			Must be used together with <varname>username</varname>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>password</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "password", "supers3cre7")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.will_topic">
+		<title><varname>will_topic</varname> (str)</title>
+		<para>
+		The topic on which to publish the mqtt will.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. Must be used together with <varname>will</varname>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>will_topic</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "will_topic", "kamailio123")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.will">
+		<title><varname>will</varname> (str)</title>
+		<para>
+		The mqtt will payload to be published.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. Must be used together with <varname>will_topic</varname>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>will</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "will", "gone")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values are: 'mqtt:connected', 'mqtt:disconnected',
+			'mqtt:message'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "event_callback", "ksr_mqtt_event")
+...
+-- event callback function implemented in Lua
+function ksr_mqtt_event(evname)
+	KSR.info("===== mqtt module triggered event: " .. evname .. "\n");
+	return 1;
+end
+
+-- event callback function implemented in Python
+function ksr_mqtt_event(self, msg, evname)
+	KSR.info("===== mqtt module triggered event: %s\n" % evname);
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.ca_file">
+		<title><varname>ca_file</varname> (str)</title>
+		<para>
+		Path to a file containing the PEM encoded trusted CA certificate files.  
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. 
+			Set either this parameter or <varname>ca_path</varname> if you want to connect via TLS.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ca_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "ca_file", "/etc/ssl/certs/myca.pem")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.ca_path">
+		<title><varname>ca_path</varname> (str)</title>
+		<para>
+		Used to define a directory that contains PEM encoded CA certificates 
+		that are trusted. For <varname>ca_path</varname>  to work correctly, the certificates files must have ".pem" as the
+		file ending and you must run "openssl rehash /your/ca_path" each time you add/remove a certificate.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. 
+			Set either this parameter or <varname>ca_file</varname> if you want to connect via TLS.
+			<varname>ca_file</varname> and <varname>ca_path</varname> are mutual exclusive.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ca_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "ca_path", "/etc/ssl/certs")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.tls_method">
+		<title><varname>tls_method</varname> (str)</title>
+		<para>
+		The version of the SSL/TLS protocol to use as a string.  
+		If NULL, the default value is used. 
+		The default value and the available values depend on the version of openssl that libmosquitto was compiled against.  
+		</para>
+		<para>
+		Possible values:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+				tlsv1.3 is available with openssl &gt;= 1.1.1 together with libmosquitto v1.6.8 and newer.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				For openssl &gt;= 1.0.1, the available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2 as the default.  
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				For openssl &lt; 1.0.1, only tlsv1 is available.
+				</para>
+			</listitem>
+		</itemizedlist>
+
+		<para>
+		<emphasis>
+			Default value is NULL. 
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_method</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "tls_method", "tlsv1.3")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.certificate">
+		<title><varname>certificate</varname> (str)</title>
+		<para>
+		Path to a file containing the PEM encoded certificate file for a TLS client connection.  
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. 
+			If NULL, <varname>private_key</varname> must also be NULL and no client certificate will be used.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>certificate</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "certificate", "/etc/ssl/certs/myclient.pem")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.private_key">
+		<title><varname>private_key</varname> (str)</title>
+		<para>
+		Path to a file containing the PEM encoded private key for a TLS client connection.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. 
+			If NULL, <varname>certificate</varname> must also be NULL and no client certificate will be used.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>private_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "private_key", "/etc/ssl/private/myclient.key")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.cipher_list">
+		<title><varname>cipher_list</varname> (str)</title>
+		<para>
+		A string describing the ciphers available for use. See the <ulink url="https://www.openssl.org/docs/manmaster/man1/ciphers.html">
+		cipher(1)</ulink> OpenSSL man page.
+		If NULL, the libssl default ciphers will be used.		
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL. 
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cipher_list</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "cipher_list", "HIGH")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="mqtt.p.verify_certificate">
+		<title><varname>verify_certificate</varname> (str)</title>
+		<para>
+		Configure verification of the server certificate.  
+		If value is set to 0, it is impossible to guarantee that the host you are connecting to is not 
+		impersonating your server.  
+		</para>
+		<para>
+		This can be useful in initial server testing, but makes it possible for a 
+		malicious third party to impersonate your server through DNS spoofing, for example. 
+		</para>
+		<para>
+		Do not disable verification in a real system as it makes the connection encryption pointless.	
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1. 
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>verify_certificate</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "verify_certificate", "0")
+...
+		</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="evapi.f.mqtt_subscribe">
+		<title>
+		<function moreinfo="none">mqtt_subscribe(topic, qos)</function>
+		</title>
+		<para>
+		Subscribe to the given topic. Mqtt qos levels 0, 1 and 2 can be used.
+		</para>
+		<para>
+		The function is passing the task to mqtt dispatcher process, therefore
+		the SIP worker process is not blocked. 
+		</para>
+		<para>
+		Incoming messages for this topic are then handled by the same process
+		and exposed to the event_route[mqtt:message].
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>mqtt_subscribe</function> usage</title>
+		<programlisting format="linespecific">
+...
+mqtt_subscribe("kamailio/script", 0);
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="evapi.f.mqtt_unsubscribe">
+		<title>
+		<function moreinfo="none">mqtt_unsubscribe(topic)</function>
+		</title>
+		<para>
+		Unsubscribe to a previously subscribed topic. The mqtt broker will stop
+		forwarding messages for this topic.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>mqtt_unsubscribe</function> usage</title>
+		<programlisting format="linespecific">
+...
+mqtt_unsubscribe("kamailio/script");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="evapi.f.mqtt_publish">
+		<title>
+		<function moreinfo="none">mqtt_publish(topic, message, qos)</function>
+		</title>
+		<para>
+		Send out a message to a topic with a specified mqtt qos level (0, 1, 2).
+		Again the actual sending is done in a mqtt dispatcher process and will not
+		block the SIP worker.
+		</para>
+		<example>
+		<title><function>mqtt_publish</function> usage</title>
+		<programlisting format="linespecific">
+...
+mqtt_publish("kamailio/event", "some message", 0);
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+    <section>
+    <title>Event routes</title>
+    <section>
+        <title>
+        <function moreinfo="none">mqtt:connected</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[mqtt:connected]
+			when a outgoing broker connection is established.
+        </para>
+        <para>
+			MQTT subscriptions are not durable, so you should use this
+			event route to manage your subscriptions.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[mqtt:connected] {
+        xlog("mqtt connected !\n");
+        mqtt_subscribe("kamailio/script", 0);
+}
+...
+        </programlisting>
+	</section>
+    <section>
+        <title>
+        <function moreinfo="none">mqtt:disconnected</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[mqtt:disconnected]
+			when the broker connection is lost.
+        </para>
+        <para>
+			The module will automatically try to reconnect to the broker every 3 seconds.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[mqtt:disconnected] {
+    xlog("Lost mqtt connection !\n");
+}
+...
+        </programlisting>
+    </section>
+    <section>
+        <title>
+        <function moreinfo="none">mqtt:message</function>
+        </title>
+        <para>
+			If defined, the module calls event_route[mqtt:message]
+			when a message is received from the broker.
+        </para>
+        <para>
+			All incoming messages are handled in a single mqtt dispatcher
+			process.
+        </para>
+        <programlisting  format="linespecific">
+...
+event_route[mqtt:message] {
+	xlog("mqtt message received: $mqtt(topic) -> $mqtt(msg) !\n");
+}
+...
+        </programlisting>
+    </section>
+    </section>
+
+    <section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$mqtt(topic)</emphasis> - Received topic (only in mqtt:message)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mqtt(msg)</emphasis> - Received message (only in mqtt:message)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mqtt(qos)</emphasis> - The received message QOS level: 0, 1 ,2 (only in mqtt:message)
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+</chapter>
+

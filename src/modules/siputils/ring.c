@@ -47,7 +47,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/timer.h"
 #include "../../core/locking.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 
 #include "config.h"
 #include "ring.h"

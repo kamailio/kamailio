@@ -436,8 +436,8 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 {
 	xmlDocPtr doc = NULL;
 	xmlDocPtr newnode = NULL;
-	xmlXPathContextPtr xpathCtx = NULL; 
-	xmlXPathObjectPtr xpathObj = NULL; 
+	xmlXPathContextPtr xpathCtx = NULL;
+	xmlXPathObjectPtr xpathObj = NULL;
 	xmlNodeSetPtr nodes;
 	const xmlChar* value = NULL;
 	xmlChar *xmem = NULL;
@@ -466,7 +466,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		LM_ERR("unable to create new XPath context\n");
 		goto error;
 	}
-	
+
 	/* Evaluate xpath expression */
 	xpathObj = xmlXPathEvalExpression(
 					(const xmlChar*)xpaths->s, xpathCtx);
@@ -488,6 +488,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 			goto done;
 		/* evaluate xpath expression for parrent node */
 		*p = 0;
+		xmlXPathFreeObject(xpathObj);
 		xpathObj = xmlXPathEvalExpression(
 					(const xmlChar*)xpaths->s, xpathCtx);
 		if(xpathObj == NULL)
@@ -525,7 +526,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		size = nodes->nodeNr;
 		if(val!=NULL)
 			value = (const xmlChar*)val->s;
-    
+
 	/*
 	 * NOTE: the nodes are processed in reverse order, i.e. reverse document
 	 *       order because xmlNodeSetContent can actually free up descendant
@@ -561,7 +562,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		 * This can be exercised by running
 		 *       valgrind xpath2 test3.xml '//discarded' discarded
 		 * There is 2 ways around it:
-		 *   - make a copy of the pointers to the nodes from the result set 
+		 *   - make a copy of the pointers to the nodes from the result set
 		 *     then call xmlXPathFreeObject() and then modify the nodes
 		 * or
 		 *   - remove the reference to the modified nodes from the node set
@@ -599,22 +600,16 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 
 done:
 	if(xpathObj!=NULL) xmlXPathFreeObject(xpathObj);
-	if(xpathCtx!=NULL) xmlXPathFreeContext(xpathCtx); 
+	if(xpathCtx!=NULL) xmlXPathFreeContext(xpathCtx);
 	if(doc!=NULL) xmlFreeDoc(doc);
 	if(newnode!=NULL) xmlFreeDoc(newnode);
-	xpathObj = NULL;
-	xpathCtx = NULL; 
-	doc = NULL; 
 	return 0;
 
 error:
 	if(xpathObj!=NULL) xmlXPathFreeObject(xpathObj);
-	if(xpathCtx!=NULL) xmlXPathFreeContext(xpathCtx); 
+	if(xpathCtx!=NULL) xmlXPathFreeContext(xpathCtx);
 	if(doc!=NULL) xmlFreeDoc(doc);
 	if(newnode!=NULL) xmlFreeDoc(newnode);
-	xpathObj = NULL;
-	xpathCtx = NULL; 
-	doc = NULL; 
 	outbuf->s =   NULL;
 	outbuf->len = 0;
 	return -1;

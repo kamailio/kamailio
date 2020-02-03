@@ -8,6 +8,8 @@ After=mysqld.service
 
 [Service]
 Type=simple
+User=kamailio
+Group=kamailio
 WorkingDirectory=/run/sipcapture
 Environment='CFGFILE=/etc/kamailio/kamailio-sipcapture.cfg'
 Environment='SHM_MEMORY=32'
@@ -18,8 +20,6 @@ PIDFile=/run/sipcapture/sipcapture.pid
 # ExecStart requires a full absolute path
 ExecStart=/usr/sbin/kamailio -DD -P /run/sipcapture/sipcapture.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
 Restart=on-failure
-User=kamailio
-Group=daemon
 
 
 [Install]

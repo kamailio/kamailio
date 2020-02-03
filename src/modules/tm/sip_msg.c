@@ -41,8 +41,6 @@
  * @ingroup tm
  */
 
-#include "defs.h"
-
 
 #include "sip_msg.h"
 #include "../../core/dprint.h"

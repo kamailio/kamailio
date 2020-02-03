@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	chroot_dir = getenv("CHROOT_DIR");
 	if (chroot_dir == NULL)
 		chroot_dir = "";
-	sprintf(name, "%s/tmp/Kamailio.%d.XXXXXX", chroot_dir, getpid());
+	snprintf(name, 256, "%s/tmp/Kamailio.%d.XXXXXX", chroot_dir, getpid());
 	umask(0);
 	/* set mode to 0666 for when Kamailio is running as non-root user
 	 * and kamctl is running as root */

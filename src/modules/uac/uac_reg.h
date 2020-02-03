@@ -23,6 +23,11 @@
 
 #include "../../core/pvar.h"
 
+#define UACREG_TABLE_VERSION 4
+
+#define UACREG_REQTO_MASK_USER 1
+#define UACREG_REQTO_MASK_AUTH 2
+
 extern int reg_timer_interval;
 extern int reg_retry_interval;
 extern int reg_htable_size;
@@ -32,6 +37,9 @@ extern int reg_random_delay;
 extern str reg_contact_addr;
 extern str reg_db_url;
 extern str reg_db_table;
+extern str uac_default_socket;
+/* just to check for non-local sockets for now */
+extern struct socket_info * uac_default_sockinfo;
 
 extern str l_uuid_column;
 extern str l_username_column;
@@ -43,6 +51,7 @@ extern str auth_username_column;
 extern str auth_password_column;
 extern str auth_proxy_column;
 extern str expires_column;
+extern str socket_column;
 
 int uac_reg_load_db(void);
 int uac_reg_init_ht(unsigned int sz);

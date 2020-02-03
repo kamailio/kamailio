@@ -1,6 +1,0 @@
-@comment $OpenBSD$
-lib/kamailio/modules/auth_radius.so
-lib/kamailio/modules/avp_radius.so
-lib/kamailio/modules/group_radius.so
-lib/kamailio/modules/peering.so
-lib/kamailio/modules/uri_radius.so

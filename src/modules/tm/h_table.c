@@ -31,13 +31,12 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/hash_func.h"
 #include "../../core/dprint.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/ut.h"
 #include "../../core/globals.h"
 #include "../../core/error.h"
 #include "../../core/char_msg_val.h"
 #include "../../core/rand/kam_rand.h"
-#include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
@@ -171,10 +170,8 @@ void free_cell_helper(
 		sip_msg_free_unsafe(dead_cell->uas.request);
 	if(dead_cell->uas.response.buffer)
 		shm_free_unsafe(dead_cell->uas.response.buffer);
-#ifdef CANCEL_REASON_SUPPORT
 	if(unlikely(dead_cell->uas.cancel_reas))
 		shm_free_unsafe(dead_cell->uas.cancel_reas);
-#endif /* CANCEL_REASON_SUPPORT */
 
 	/* callbacks */
 	for(cbs = (struct tm_callback *)dead_cell->tmcb_hl.first; cbs;) {
@@ -237,10 +234,8 @@ void free_cell_helper(
 		}
 	}
 
-#ifdef WITH_AS_SUPPORT
 	if(dead_cell->uac[0].local_ack)
 		free_local_ack_unsafe(dead_cell->uac[0].local_ack);
-#endif
 
 	/* collected to tags */
 	tt = dead_cell->fwded_totags;
@@ -401,7 +396,6 @@ struct cell *build_cell(struct sip_msg *p_msg)
 
 	init_synonym_id(p_msg, new_cell->md5);
 	init_cell_lock(new_cell);
-	init_async_lock(new_cell);
 	t_stats_created();
 	return new_cell;
 
@@ -590,11 +584,7 @@ void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 			(tcell->uas.request)?"yes":"no",
 			(unsigned)tcell->flags,
 			(unsigned)tcell->nr_of_outgoings,
-#ifdef TM_DEL_UNREF
 			(unsigned)atomic_get(&tcell->ref_count),
-#else
-			tcell->ref_count,
-#endif
 			(unsigned)TICKS_TO_S(tcell->end_of_life)
 		);
 

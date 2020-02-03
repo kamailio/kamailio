@@ -157,7 +157,7 @@
  *                   __CPU_ppc, __CPU_ppc64 - see atomic/atomic_ppc.h
  *                   __CPU_sparc - see atomic/atomic_sparc.h
  *                   __CPU_sparc64, SPARC64_MODE - see atomic/atomic_sparc64.h
- *                   __CPU_arm, __CPU_arm6 - see atomic/atomic_arm.h
+ *                   __CPU_arm, __CPU_arm6, __CPU_arm7 - see atomic/atomic_arm.h
  *                   __CPU_alpha - see atomic/atomic_alpha.h
  */
 /* 

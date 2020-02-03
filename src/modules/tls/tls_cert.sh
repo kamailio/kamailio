@@ -11,7 +11,7 @@
 # Configuration variables
 #############################################################################
 NAME=$MAIN_NAME
-if [ -z "$NAME" ] ; then NAME="sip-router"; fi;
+if [ -z "$NAME" ] ; then NAME="kamailio"; fi;
 DEFAULT_DIR="/usr/local/etc/$NAME"
 DEFAULT_DAYS=365
 DEFAULT_INFO="Self-signed certificate for $NAME"
@@ -102,7 +102,7 @@ AUTHOR
   Written by Jan Janak <jan@iptel.org>
 
 REPORTING BUGS
-  Report bugs to <sr-dev@sip-router.org>
+  Report bugs to <sr-dev@lists.kamailio.org>
 EOF
 } #usage
 

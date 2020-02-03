@@ -49,8 +49,8 @@ MSFilterDesc *rms_ms_filter_descs[] = {&ms_alaw_dec_desc, &ms_alaw_enc_desc,
 		&ms_tone_detector_desc, &ms_speex_dec_desc, &ms_speex_enc_desc,
 		&ms_speex_ec_desc, &ms_file_player_desc, &ms_file_rec_desc,
 		&ms_resample_desc,
-		//       &ms_opus_dec_desc,
-		//       &ms_opus_enc_desc,
+		&ms_opus_dec_desc,
+		&ms_opus_enc_desc,
 		NULL};
 
 static MSFactory *rms_create_factory()
@@ -97,26 +97,38 @@ void rms_media_destroy(call_leg_media_t *m)
 	m->ms_factory = NULL;
 }
 
+int create_session_payload(call_leg_media_t *m) {
+	LM_INFO("RTP [%p][%d]\n", m->pt, m->pt->type);
+	m->rtp_profile=rtp_profile_new("Call profile");
+	if(!m->rtp_profile) return 0;
+	rtp_profile_set_payload(m->rtp_profile, m->pt->type, m->pt);
+	rtp_session_set_profile(m->rtps, m->rtp_profile);
+	rtp_session_set_payload_type(m->rtps, m->pt->type);
+	return 1;
+}
+
 int create_call_leg_media(call_leg_media_t *m)
 {
-//	if (m->ms_factory) return 0;
 	if (m) rms_stop_media(m);
 	m->ms_factory = rms_create_factory();
-	// create caller RTP session
+	// Create caller RTP session
 	LM_INFO("RTP session [%s:%d]<>[%s:%d]\n", m->local_ip.s, m->local_port,
 			m->remote_ip.s, m->remote_port);
 	m->rtps = ms_create_duplex_rtp_session(m->local_ip.s, m->local_port,
 			m->local_port + 1, ms_factory_get_mtu(m->ms_factory));
+
+	create_session_payload(m);
+
 	rtp_session_set_remote_addr_full(m->rtps, m->remote_ip.s, m->remote_port,
 			m->remote_ip.s, m->remote_port + 1);
-	rtp_session_set_payload_type(m->rtps, m->pt->type);
+
 	rtp_session_enable_rtcp(m->rtps, FALSE);
 	// create caller filters : rtprecv1/rtpsend1/encoder1/decoder1
 	m->ms_rtprecv = ms_factory_create_filter(m->ms_factory, MS_RTP_RECV_ID);
 	m->ms_rtpsend = ms_factory_create_filter(m->ms_factory, MS_RTP_SEND_ID);
 
-	LM_INFO("codec[%s] rtprecv[%p] rtpsend[%p]\n", m->pt->mime_type,
-			m->ms_rtprecv, m->ms_rtpsend);
+	LM_INFO("codec[%s] rtprecv[%p] rtpsend[%p] rate[%dHz]\n", m->pt->mime_type,
+			m->ms_rtprecv, m->ms_rtpsend, m->pt->clock_rate);
 	m->ms_encoder = ms_factory_create_encoder(m->ms_factory, m->pt->mime_type);
 	if(!m->ms_encoder) {
 		LM_ERR("creating encoder failed.\n");
@@ -153,6 +165,7 @@ int rms_get_dtmf(call_leg_media_t *m, char dtmf)
 
 int rms_playfile(call_leg_media_t *m, rms_action_t *a)
 {
+	int channels = 1;
 	int file_sample_rate = 8000;
 	if(!m->ms_player)
 		return 0;
@@ -160,15 +173,16 @@ int rms_playfile(call_leg_media_t *m, rms_action_t *a)
 	ms_filter_call_method(
 			m->ms_player, MS_FILE_PLAYER_OPEN, (void *)a->param.s);
 	ms_filter_call_method(m->ms_player, MS_FILE_PLAYER_START, NULL);
-	ms_filter_call_method(
-			m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(
-			m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE,
-			&m->pt->clock_rate);
-	ms_filter_call_method(
-			m->ms_resampler, MS_FILTER_SET_OUTPUT_NCHANNELS, &m->pt->channels);
-	LM_INFO("clock[%d][%d]\n", m->pt->clock_rate, file_sample_rate);
+	ms_filter_call_method(m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
+	ms_filter_call_method(m->ms_player, MS_FILTER_GET_NCHANNELS, &channels);
+
+	if (m->ms_resampler) {
+		ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
+		LM_INFO("clock[%d]file[%d]\n", m->pt->clock_rate, file_sample_rate);
+		ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE, &m->pt->clock_rate);
+		ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_NCHANNELS, &m->pt->channels);
+	}
+	LM_INFO("[%s]clock[%d][%d]\n", m->pt->mime_type, m->pt->clock_rate, file_sample_rate);
 	return 1;
 }
 
@@ -186,31 +200,35 @@ int rms_start_media(call_leg_media_t *m, char *file_name)
 	m->ms_player = ms_factory_create_filter(m->ms_factory, MS_FILE_PLAYER_ID);
 	if(!m->ms_player)
 		goto error;
-	m->ms_resampler = ms_factory_create_filter(m->ms_factory, MS_RESAMPLE_ID);
-	if(!m->ms_resampler)
-		goto error;
-	// m->ms_recorder = ms_factory_create_filter(m->ms_factory,
-	// MS_FILE_PLAYER_ID);
+
+
+	// m->ms_recorder = ms_factory_create_filter(m->ms_factory, MS_FILE_PLAYER_ID);
 	m->ms_voidsink = ms_factory_create_filter(m->ms_factory, MS_VOID_SINK_ID);
 	if(!m->ms_voidsink)
 		goto error;
-	LM_INFO("m[%p]call-id[%p]\n", m, m->di->callid.s);
+	LM_INFO("m[%p]call-id[%p]pt[%s]\n", m, m->di->callid.s, m->pt->mime_type);
 
-	ms_filter_call_method(
-			m->ms_player, MS_FILTER_SET_OUTPUT_NCHANNELS, &channels);
+	ms_filter_call_method(m->ms_player, MS_FILTER_SET_OUTPUT_NCHANNELS, &channels);
 	ms_filter_call_method_noarg(m->ms_player, MS_FILE_PLAYER_START);
-	ms_filter_call_method(
-			m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(
-			m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
-	ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE,
-			&m->pt->clock_rate);
+	ms_filter_call_method(m->ms_player, MS_FILTER_GET_SAMPLE_RATE, &file_sample_rate);
+	if (strcasecmp(m->pt->mime_type,"opus") == 0) {
+		ms_filter_call_method(m->ms_encoder, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
+		ms_filter_call_method(m->ms_encoder, MS_FILTER_SET_NCHANNELS, &channels);
+	} else {
+		m->ms_resampler = ms_factory_create_filter(m->ms_factory, MS_RESAMPLE_ID);
+		if (!m->ms_resampler) goto error;
+	}
+
+	if (m->ms_resampler) {
+		ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_SAMPLE_RATE, &file_sample_rate);
+		ms_filter_call_method(m->ms_resampler, MS_FILTER_SET_OUTPUT_SAMPLE_RATE, &m->pt->clock_rate);
+	}
 
 	// sending graph
 	ms_connection_helper_start(&h);
 	ms_connection_helper_link(&h, m->ms_player, -1, 0);
-
-	ms_connection_helper_link(&h, m->ms_resampler, 0, 0);
+	if (m->ms_resampler)
+		ms_connection_helper_link(&h, m->ms_resampler, 0, 0);
 	ms_connection_helper_link(&h, m->ms_encoder, 0, 0);
 	ms_connection_helper_link(&h, m->ms_rtpsend, 0, -1);
 

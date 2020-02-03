@@ -79,6 +79,7 @@
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../modules/crypto/api.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
@@ -137,6 +138,7 @@ static const char *command_strings[] = {
 	[OP_STOP_FORWARDING]	= "stop forwarding",
 	[OP_PLAY_MEDIA]		= "play media",
 	[OP_STOP_MEDIA]		= "stop media",
+	[OP_PLAY_DTMF]		= "play DTMF",
 };
 
 struct minmax_mos_stats {
@@ -196,6 +198,7 @@ static int start_forwarding_f(struct sip_msg *, char *, char *);
 static int stop_forwarding_f(struct sip_msg *, char *, char *);
 static int play_media_f(struct sip_msg *, char *, char *);
 static int stop_media_f(struct sip_msg *, char *, char *);
+static int play_dtmf_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
@@ -289,6 +292,10 @@ static pv_spec_t *media_duration_pvar = NULL;
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
 
+
+
+static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
+
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
@@ -304,6 +311,7 @@ static struct minmax_mos_label_stats global_mos_stats,
 				     side_A_mos_stats,
 				     side_B_mos_stats;
 int got_any_mos_pvs;
+struct crypto_binds rtpengine_cb;
 
 
 static cmd_export_t cmds[] = {
@@ -369,6 +377,9 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"stop_media",		(cmd_function)stop_media_f, 		0,
 		0, 0,
+		ANY_ROUTE},
+	{"play_dtmf",		(cmd_function)play_dtmf_f, 		1,
+		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	0,
 		0, 0,
@@ -441,6 +452,7 @@ static param_export_t params[] = {
 	{"hash_table_size",       INT_PARAM, &hash_table_size        },
 	{"setid_default",         INT_PARAM, &setid_default          },
 	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
+	{"hash_algo",             INT_PARAM, &hash_algo},
 
 	/* MOS stats output */
 	/* global averages */
@@ -1722,6 +1734,12 @@ mod_init(void)
         return -1;
     }
 
+	if (hash_algo == RTP_HASH_SHA1_CALLID) {
+		if (load_crypto_api(&rtpengine_cb) != 0) {
+			LM_ERR("Crypto module required in order to have SHA1 hashing!\n");
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -1768,12 +1786,13 @@ static int build_rtpp_socks(int lmode, int rtest) {
 	}
 
 	rtpp_socks_size = current_rtpp_no;
-	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size));
+	/* allocate one more to have a safety end place holder */
+	rtpp_socks = (int*)pkg_reallocxf(rtpp_socks, sizeof(int)*(rtpp_socks_size+1));
 	if (!rtpp_socks) {
 		LM_ERR("no more pkg memory for rtpp_socks\n");
 		return -1;
 	}
-	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
+	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size+1));
 
 	rtpe_reload_lock_get(rtpp_set_list->rset_head_lock);
 	_rtpe_list_vernum_local = _rtpe_list_version->vernum;
@@ -2249,6 +2268,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 						ng_flags->via = -1;
 					else if (str_eq(&val, "next"))
 						ng_flags->via = -2;
+					else if (str_eq(&val, "auto-next") || str_eq(&val, "next-auto"))
+						ng_flags->via = -3;
+					else if (str_eq(&val, "auto-extra") || str_eq(&val, "extra-auto"))
+						ng_flags->via = -4;
 					else
 						goto error;
 					goto next;
@@ -2344,6 +2367,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	char md5[MD5_LEN];
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	bencode_item_t *result;
+	tm_cell_t *t;
+	unsigned int branch_idx;
 
 	/*** get & init basic stuff needed ***/
 
@@ -2434,11 +2459,21 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
 	if (ng_flags.via) {
-		ret = -1;
+		/* pre-process */
 		switch (ng_flags.via) {
 			case 3:
 				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 2 : 1;
-				/* fall thru */
+				break;
+			case -3:
+				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 1 : -2;
+				break;
+			case -4:
+				ng_flags.via = (msg->first_line.type == SIP_REPLY) ? 1 : -1;
+				break;
+		}
+
+		ret = -1;
+		switch (ng_flags.via) {
 			case 1:
 			case 2:
 				ret = get_via_branch(msg, ng_flags.via, &viabranch);
@@ -2450,10 +2485,16 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			case -2:
 				if (!char_msg_val(msg, md5))
 					break;
+				branch_idx = 0;
+				if (tmb.t_gett) {
+					t = tmb.t_gett();
+					if (t && t != T_UNDEFINED)
+						branch_idx = t->nr_of_outgoings;
+				}
 				msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
 
 				viabranch.s = branch_buf;
-				if (branch_builder(msg->hash_index, 0, md5, 0, branch_buf, &viabranch.len))
+				if (branch_builder(msg->hash_index, 0, md5, branch_idx, branch_buf, &viabranch.len))
 					ret = 0;
 				break;
 		}
@@ -2756,7 +2797,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 	static char buf[0x10000];
 	struct pollfd fds[1];
 	struct iovec *v;
-	str out = STR_NULL;
+	str cmd = STR_NULL;
 
 	v = bencode_iovec(dict, &vcnt, 1, 0);
 	if (!v) {
@@ -2821,8 +2862,9 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				len = writev(rtpp_socks[node->idx], v, vcnt + 1);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
-				bencode_get_str(bencode_dictionary_get(dict, "command"), &out);
-				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
+				bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
+				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n",
+					cmd.len, cmd.s, node->rn_url.s);
 				goto badproxy;
 			}
 			rtpengine_tout_ms = cfg_get(rtpengine,rtpengine_cfg,rtpengine_tout_ms);
@@ -2832,7 +2874,9 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
-					LM_ERR("can't read reply for command \"%.*s\" from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
+					bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
+					LM_ERR("can't read reply for command \"%.*s\" from RTP proxy <%s>\n",
+						cmd.len, cmd.s, node->rn_url.s);
 					goto badproxy;
 				}
 				if (len >= (v[0].iov_len - 1) &&
@@ -2849,7 +2893,9 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			}
 		}
 		if (i == rtpengine_retr) {
-			LM_ERR("timeout waiting reply for command \"%.*s\" from RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
+			bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
+			LM_ERR("timeout waiting reply for command \"%.*s\" from RTP proxy <%s>\n",
+				cmd.len, cmd.s, node->rn_url.s);
 			goto badproxy;
 		}
 	}
@@ -2904,11 +2950,41 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	unsigned i, sum, sumcut, weight_sum;
 	int was_forced = 0;
 
+	str hash_data;
+
+	switch (hash_algo) {
+		case RTP_HASH_CALLID:
+			hash_data = callid;
+
+			break;
+		case RTP_HASH_SHA1_CALLID:
+			if (rtpengine_cb.SHA1 == NULL) {
+				/* don't throw warning here; there is already a warni*/
+				LM_BUG("SHA1 algo set but crypto not loaded! Program shouldn't have started!");
+				return NULL;
+			}
+
+			if (rtpengine_cb.SHA1(&callid, &hash_data) < 0) {
+				LM_ERR("SHA1 hash in crypto module failed!\n");
+				return NULL;
+			}
+
+			break;
+		default:
+			LM_ERR("unknown hashing algo %d\n", hash_algo);
+			return NULL;
+	}
+
 	/* XXX Use quick-and-dirty hashing algo */
 	sum = 0;
-	for(i = 0; i < callid.len; i++)
-		sum += callid.s[i];
-	sum &= 0xff;
+	for(i = 0; i < hash_data.len; i++)
+		sum += hash_data.s[i];
+
+	/* FIXME this seems to affect the algorithm in a negative way
+	 * legacy code uses it; disable it for other algos */
+	if (hash_algo == RTP_HASH_CALLID) {
+		sum &= 0xff;
+	}
 
 retry:
 	weight_sum = 0;
@@ -3030,6 +3106,15 @@ select_rtpp_node_old(str callid, str viabranch, int do_test, enum rtpe_operation
 	return node;
 }
 
+unsigned int node_in_set(struct rtpp_node *node, struct rtpp_set *set) {
+	struct rtpp_node *current = set->rn_first;
+	while (current) {
+		if (current->idx == node->idx) return 1;
+		current = current->rn_next;
+	}
+	return 0;
+}
+
 /*
  * Main balancing routine. This DO try to keep the same proxy for
  * the call if some proxies were disabled or enabled (e.g. kamctl command)
@@ -3058,7 +3143,7 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 	node = select_rtpp_node_old(callid, viabranch, do_test, op);
 
 	// check node
-	if (!node) {
+	if (!node || (node_in_set(node, active_rtpp_set) == 0)) {
 		// run the selection algorithm
 		node = select_rtpp_node_new(callid, viabranch, do_test, queried_nodes_ptr, queried_nodes);
 
@@ -3782,6 +3867,12 @@ stop_media_f(struct sip_msg* msg, char *str1, char *str2)
 }
 
 static int
+play_dtmf_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_generic_f(msg, str1, OP_PLAY_DTMF);
+}
+
+static int
 start_forwarding_f(struct sip_msg* msg, char *str1, char *str2)
 {
 	return rtpengine_generic_f(msg, str1, OP_START_FORWARDING);
@@ -3914,12 +4005,12 @@ static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
 }
 
 static int ki_rtpengine_query0(sip_msg_t *msg)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, NULL, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query(sip_msg_t *msg, str *flags)
-{       
+{
         return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, flags->s, 1, OP_ANY);
 }
 
@@ -3996,6 +4087,7 @@ static int ki_set_rtpengine_set2(sip_msg_t *msg, int r1, int r2)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     { str_init("rtpengine"), str_init("rtpengine_manage0"),
         SR_KEMIP_INT, ki_rtpengine_manage0,
@@ -4070,6 +4162,7 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
 
     { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {
     sr_kemi_modules_add(sr_kemi_rtpengine_exports);

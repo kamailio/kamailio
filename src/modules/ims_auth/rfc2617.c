@@ -47,7 +47,7 @@
 #include <string.h>
 
 #include "rfc2617.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 #include "../../core/dprint.h"
 
 

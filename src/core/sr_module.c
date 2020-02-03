@@ -761,85 +761,6 @@ void destroy_modules()
 	}
 }
 
-#ifdef NO_REVERSE_INIT
-
-/*
- * Initialize all loaded modules, the initialization
- * is done *AFTER* the configuration file is parsed
- */
-int init_modules(void)
-{
-	struct sr_module* t;
-
-	if(async_task_init()<0)
-		return -1;
-
-	for(t = modules; t; t = t->next) {
-		if (t->exports.init_f) {
-			if (t->exports.init_f() != 0) {
-				LM_ERR("Error while initializing module %s\n", t->exports.name);
-				return -1;
-			}
-			/* delay next module init, if configured */
-			if(unlikely(modinit_delay>0))
-				sleep_us(modinit_delay);
-		}
-		if (t->exports.response_f)
-			mod_response_cbk_no++;
-	}
-	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
-									sizeof(response_function));
-	if (mod_response_cbks==0){
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next) {
-		if (t->exports.response_f) {
-			mod_response_cbks[i]=t->exports.response_f;
-			i++;
-		}
-	}
-	return 0;
-}
-
-
-
-/*
- * per-child initialization
- */
-int init_child(int rank)
-{
-	struct sr_module* t;
-	char* type;
-
-	switch(rank) {
-	case PROC_MAIN:     type = "PROC_MAIN";     break;
-	case PROC_TIMER:    type = "PROC_TIMER";    break;
-	case PROC_FIFO:     type = "PROC_FIFO";     break;
-	case PROC_TCP_MAIN: type = "PROC_TCP_MAIN"; break;
-	default:            type = "CHILD";         break;
-	}
-	LM_DBG("initializing %s with rank %d\n", type, rank);
-
-	if(async_task_child_init(rank)<0)
-		return -1;
-
-	for(t = modules; t; t = t->next) {
-		if (t->exports.init_child_f) {
-			if ((t->exports.init_child_f(rank)) < 0) {
-				LM_ERR("Initialization of child %d failed\n", rank);
-				return -1;
-			}
-		}
-	}
-	if(rank!=PROC_INIT) {
-		pt[process_no].status = 1;
-	}
-	return 0;
-}
-
-#else
-
 
 /* recursive module child initialization; (recursion is used to
  * process the module linear list in the same order in
@@ -881,6 +802,23 @@ static int init_mod_child( struct sr_module* m, int rank )
 int init_child(int rank)
 {
 	int ret;
+	char* type;
+
+	switch(rank) {
+	case PROC_MAIN:       type = "PROC_MAIN";       break;
+	case PROC_TIMER:      type = "PROC_TIMER";      break;
+	case PROC_RPC:        type = "PROC_RPC";        break;
+	case PROC_TCP_MAIN:   type = "PROC_TCP_MAIN";   break;
+	case PROC_UNIXSOCK:   type = "PROC_UNIXSOCK";   break;
+	case PROC_ATTENDANT:  type = "PROC_ATTENDANT";  break;
+	case PROC_INIT:       type = "PROC_INIT";       break;
+	case PROC_NOCHLDINIT: type = "PROC_NOCHLDINIT"; break;
+	case PROC_SIPINIT:    type = "PROC_SIPINIT";    break;
+	case PROC_SIPRPC:     type = "PROC_SIPRPC";     break;
+	default:              type = "CHILD";           break;
+	}
+	LM_DBG("initializing %s with rank %d\n", type, rank);
+
 	if(async_task_child_init(rank)<0)
 		return -1;
 
@@ -957,8 +895,6 @@ int init_modules(void)
 
 	return 0;
 }
-
-#endif
 
 
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no,

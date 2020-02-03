@@ -73,7 +73,7 @@
 		<title>Set <varname>cfgtrace</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("cfgt", "basedir", "/var/run/kamailio/cfgtest")
+modparam("cfgt", "basedir", "/run/kamailio/cfgtest")
 ...
 </programlisting>
 		</example>
@@ -146,6 +146,91 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 </programlisting>
 		</example>
 	</section>
+
+	</section>
+	<section>
+	<title>RPC Commands</title>
+	<section id="cfgt.r.mask">
+		<title>
+		<function moreinfo="none">cfgt.mask</function>
+		</title>
+		<para>
+		Sets <link linked="cfgt.p.mask">mask</link> module parameter.
+		</para>
+		<para>
+		Name: <emphasis>cfgt.mask</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>mask : int value</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; cfgt.mask 32
+...
+</programlisting>
+    </section>
+
+	<section id="cfgt.r.list">
+		<title>
+		<function moreinfo="none">cfgt.list</function>
+		</title>
+		<para>
+		Lists reports info in memory.
+		</para>
+		<para>
+		Name: <emphasis>cfgt.list</emphasis>
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; cfgt.list
+{
+        uuid: unknown
+        msgid: 2
+}
+{
+        uuid: whatever
+        msgid: 1
+}
+200 ok
+...
+</programlisting>
+    </section>
+
+	<section id="cfgt.r.clean">
+		<title>
+		<function moreinfo="none">cfgt.clean</function>
+		</title>
+		<para>
+		Removes reports from disk and cleans info in memory.
+		</para>
+		<para>
+		Name: <emphasis>cfgt.clean</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>report : string value</para>
+				<para>use 'all' to clean any report</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; cfgt.clean unknown
+...
+&sercmd; cfgt.clean all
+...
+</programlisting>
+    </section>
 
 	</section>
 	<section>

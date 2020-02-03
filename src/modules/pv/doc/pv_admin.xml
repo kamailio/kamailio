@@ -265,6 +265,96 @@ if (not_empty("$var(foo)")) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_copy">
+			<title>
+				<function moreinfo="none">xavp_copy(source_name, source_index, destination_name)</function>
+			</title>
+			<para>
+				Copy and append one XAVP.
+			</para>
+			<para>
+				The parameters can be variables or strings.
+				First parameter is the source XAVP name.
+				Second parameter is the source XAVP stack index, use 0 to copy the last assigned XAVP.
+				Third parameter is the destination XAVP name, if found the XAVP will be appended else it will be created.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+# Using xavp_copy to reorder an existing xavp stack in a new one
+$xavp(a=&gt;x) = "a-0-x";
+$xavp(a[0]=&gt;y) = "a-0-y";
+$xavp(a=&gt;x) = "a-1-x";
+$xavp(a[0]=&gt;y) = "a-1-y";
+$xavp(a=&gt;x) = "a-2-x";
+$xavp(a[0]=&gt;y) = "a-2-y";
+
+xinfo("BEFORE $xavp(a[0]=&gt;x) == [a-2-x] == $xavp(a[0]=&gt;y) == [a-2-y]\n");
+xinfo("BEFORE $xavp(a[1]=&gt;x) == [a-1-x] == $xavp(a[1]=&gt;y) == [a-1-y]\n");
+xinfo("BEFORE $xavp(a[2]=&gt;x) == [a-0-x] == $xavp(a[2]=&gt;y) == [a-0-y]\n");
+
+# reorder
+$var(source_index) = 1;
+$var(destination_name) = "b";
+xavp_copy("a", "2", "b");
+xavp_copy("a", "$var(source_index)", "$var(destination_name)");
+xavp_copy("a", "0", "$var(destination_name)");
+
+xinfo("AFTER $xavp(b[0]=&gt;x) == [a-0-x] == $xavp(b[0]=&gt;y) == [a-0-y]\n");
+xinfo("AFTER $xavp(b[1]=&gt;x) == [a-1-x] == $xavp(b[1]=&gt;y) == [a-1-y]\n");
+xinfo("AFTER $xavp(b[2]=&gt;x) == [a-2-x] == $xavp(b[2]=&gt;y) == [a-2-y]\n");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavp_copy2">
+			<title>
+				<function moreinfo="none">xavp_copy(source_name, source_index, destination_name, destination_index)</function>
+			</title>
+			<para>
+				Copy and replace one XAVP.
+			</para>
+			<para>
+				The parameters can be variables or strings.
+				First parameter is the source XAVP name.
+				Second parameter is the source XAVP stack index, use 0 to copy the last assigned XAVP.
+				Third parameter is the destination XAVP name, if not found xavp_copy will return -1.
+				Fourth parameter is the destination XAVP index, if not found xavp_copy will return -1.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+# Using xavp_copy to reorder an existing xavp stack inplace
+$xavp(d=&gt;x) = "d-0-x";
+$xavp(d[0]=&gt;y) = "d-0-y";
+$xavp(d=&gt;x) = "d-1-x";
+$xavp(d[0]=&gt;y) = "d-1-y";
+$xavp(d=&gt;x) = "d-2-x";
+$xavp(d[0]=&gt;y) = "d-2-y";
+
+xinfo("NEW $xavp(d[0]=&gt;x) == [d-2-x] and $xavp(d[0]=&gt;y) == [d-2-y]\n");
+xinfo("NEW $xavp(d[1]=&gt;x) == [d-1-x] and $xavp(d[1]=&gt;y) == [d-1-y]\n");
+xinfo("NEW $xavp(d[2]=&gt;x) == [d-0-x] and $xavp(d[2]=&gt;y) == [d-0-y]\n");
+
+xavp_copy("d", "0", "e");
+xavp_copy("d", "2", "d", "0");
+xavp_copy("e", "0", "d", "2");
+
+xinfo("AFTER $xavp(d[0]=&gt;x) == [d-0-x] $xavp(d[0]=&gt;y) == [d-0-y]\n");
+xinfo("AFTER $xavp(d[1]=&gt;x) == [d-1-x] $xavp(d[1]=&gt;y) == [d-1-y]\n");
+xinfo("AFTER $xavp(d[2]=&gt;x) == [d-2-x] $xavp(d[2]=&gt;y) == [d-2-y]\n");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavp_params_explode">
 			<title>
 				<function moreinfo="none">xavp_params_explode(sparams, xname)</function>
@@ -327,9 +417,9 @@ xavp_params_implode("x", "$var(out)");
 				</programlisting>
 			</example>
 		</section>
-		<section id="pv.f.xavp_set_child_ival">
+		<section id="pv.f.xavp_child_seti">
 			<title>
-				<function moreinfo="none">xavp_set_child_ival(rname, cname, ival)</function>
+				<function moreinfo="none">xavp_child_seti(rname, cname, ival)</function>
 			</title>
 			<para>
 				Set the value of $xavp(rname=&gt;cname) to integer value ival.
@@ -343,19 +433,19 @@ xavp_params_implode("x", "$var(out)");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_set_child_ival</function> usage</title>
+				<title><function>xavp_child_seti</function> usage</title>
 				<programlisting format="linespecific">
 ...
 $var(n) = 10;
-xavp_set_child_ival("x", "y", "$var(n)");
+xavp_child_seti("x", "y", "$var(n)");
 # results in: $xavp(x=&gt;y) is 10
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="pv.f.xavp_set_child_sval">
+		<section id="pv.f.xavp_child_sets">
 			<title>
-				<function moreinfo="none">xavp_set_child_sval(rname, cname, sval)</function>
+				<function moreinfo="none">xavp_child_sets(rname, cname, sval)</function>
 			</title>
 			<para>
 				Set the value of $xavp(rname=&gt;cname) to string value sval.
@@ -369,11 +459,11 @@ xavp_set_child_ival("x", "y", "$var(n)");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_set_child_sval</function> usage</title>
+				<title><function>xavp_child_sets</function> usage</title>
 				<programlisting format="linespecific">
 ...
 $var(n) = 10;
-xavp_set_child_sval("x", "y", "Count: $var(n)");
+xavp_child_sets("x", "y", "Count: $var(n)");
 # results in: $xavp(x=&gt;y) is "Count: 10"
 ...
 				</programlisting>
@@ -397,16 +487,16 @@ xavp_set_child_sval("x", "y", "Count: $var(n)");
 				<title><function>xavp_rm</function> usage</title>
 				<programlisting format="linespecific">
 ...
-xavp_rm_child_sval("x");
+xavp_rm("x");
 # same result as: $xavp(x) = $null;
 ...
 				</programlisting>
 			</example>
 		</section>
 
-		<section id="pv.f.xavp_rm_child">
+		<section id="pv.f.xavp_child_rm">
 			<title>
-				<function moreinfo="none">xavp_rm_child(rname, cname)</function>
+				<function moreinfo="none">xavp_child_rm(rname, cname)</function>
 			</title>
 			<para>
 				Remove the value of $xavp(rname=&gt;cname).
@@ -420,10 +510,10 @@ xavp_rm_child_sval("x");
 			Function can be used from ANY ROUTE.
 			</para>
 			<example>
-				<title><function>xavp_rm_child</function> usage</title>
+				<title><function>xavp_child_rm</function> usage</title>
 				<programlisting format="linespecific">
 ...
-xavp_rm_child_sval("x", "y");
+xavp_child_rm("x", "y");
 # same result as: $xavp(x=&gt;y) = $null;
 ...
 				</programlisting>

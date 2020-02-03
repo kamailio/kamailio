@@ -24,7 +24,6 @@
 #define _MSGBUILDER_H
 
 #include "../../core/ip_addr.h"
-#include "defs.h"
 #include "dlg.h"
 #include "h_table.h"
 #include "t_reply.h"
@@ -49,16 +48,12 @@
 
 char *build_local(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
-#ifdef CANCEL_REASON_SUPPORT
 	, struct cancel_reason* reason
-#endif /* CANCEL_REASON_SUPPORT */
 	);
 
 char *build_local_reparse(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
-#ifdef CANCEL_REASON_SUPPORT
 	, struct cancel_reason* reason
-#endif /* CANCEL_REASON_SUPPORT */
 	);
 
 char *build_uac_request(  str msg_type, str dst, str from,

@@ -362,3 +362,16 @@ int sr_event_enabled(int type)
 	return 0;
 }
 
+
+/**
+ *
+ */
+static sr_corecb_t _ksr_corecb = {0};
+
+/**
+ *
+ */
+sr_corecb_t *sr_corecb_get(void)
+{
+	return &_ksr_corecb;
+}

@@ -357,6 +357,7 @@ extern char *default_routename;
 
 /* ipv6 auto bind */
 %token AUTO_BIND_IPV6
+%token BIND_IPV6_LINK_LOCAL
 
 /*blacklist*/
 %token DST_BLST_INIT
@@ -405,6 +406,8 @@ extern char *default_routename;
 %token MHOMED
 %token DISABLE_TCP
 %token TCP_ACCEPT_ALIASES
+%token TCP_ACCEPT_UNIQUE
+%token TCP_CONNECTION_MATCH
 %token TCP_CHILDREN
 %token TCP_CONNECT_TIMEOUT
 %token TCP_SEND_TIMEOUT
@@ -500,6 +503,7 @@ extern char *default_routename;
 %token LATENCY_LIMIT_CFG
 %token MSG_TIME
 %token ONSEND_RT_REPLY
+%token URI_HOST_EXTRA_CHARS
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -867,6 +871,8 @@ assign_stm:
 	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
+	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}
+	| BIND_IPV6_LINK_LOCAL error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER {
@@ -902,11 +908,6 @@ assign_stm:
 	| IP_FREE_BIND EQUAL intno { _sr_ip_free_bind=$3; }
 	| IP_FREE_BIND EQUAL error { yyerror("int value expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
-	| STAT EQUAL STRING {
-		#ifdef STATS
-				stat_file=$3;
-		#endif
-	}
 	| MAXBUFFER EQUAL NUMBER { maxbuffer=$3; }
 	| MAXBUFFER EQUAL error { yyerror("number expected"); }
     | SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
@@ -991,6 +992,22 @@ assign_stm:
 		#endif
 	}
 	| TCP_ACCEPT_ALIASES EQUAL error { yyerror("boolean value expected"); }
+	| TCP_ACCEPT_UNIQUE EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_accept_unique=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_ACCEPT_UNIQUE EQUAL error { yyerror("number expected"); }
+	| TCP_CONNECTION_MATCH EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_connection_match=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_CONNECTION_MATCH EQUAL error { yyerror("number expected"); }
 	| TCP_CHILDREN EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_cfg_children_no=$3;
@@ -1421,6 +1438,8 @@ assign_stm:
 			user_agent_hdr.len=strlen(user_agent_hdr.s);
 	}
 	| USER_AGENT_HEADER EQUAL error { yyerror("string value expected"); }
+	| URI_HOST_EXTRA_CHARS EQUAL STRING { _sr_uri_host_extra_chars=$3; }
+	| URI_HOST_EXTRA_CHARS EQUAL error { yyerror("string value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
 	| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 	| LISTEN EQUAL id_lst {

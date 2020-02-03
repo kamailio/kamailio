@@ -666,6 +666,11 @@ fix_nated_register();
 			URI port differs from the source port of the request (Warning: this is
 			might be legal or even intended combination in non NATted scenarios)
 			</para></listitem>
+			<listitem><para>
+			<emphasis>256</emphasis> -  Test if the SDP connection address is different
+			from source IP address. It will work also with multiple connection address
+			lines.
+			</para></listitem>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
@@ -814,6 +819,27 @@ if(is_rfc1918("$rd")) {
             exit;
         };
     };
+...
+		</programlisting>
+		</example>
+	</section>
+		<section id="nathelper.set_alias_to_pv">
+		<title>
+		<function moreinfo="none">set_alias_to_pv(target_avp)</function>
+		</title>
+		<para>
+		Reads <quote>;alias=ip~port~transport</quote> from Contact header then
+		writes to target pseudo-variable as a sip uri.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_alias_to_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+		set_alias_to_pv("$avp(aliasuri)");
 ...
 		</programlisting>
 		</example>

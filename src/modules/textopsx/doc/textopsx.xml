@@ -37,6 +37,11 @@
 		in routing block configurations.
 		It adds new features similar to the textops module (textops eXtentions).
 	</para>
+	<para>
+		Note: If you add or remove message parts (header, body etc..) it
+		may be required to execute msg_apply_changes() from this module
+		if there are other operations done on the SIP message later on.
+	</para>
     </section>
 
     <xi:include href="functions.xml"/>

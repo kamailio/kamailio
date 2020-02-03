@@ -66,6 +66,9 @@ static str default_reason = STR_STATIC_INIT("Internal Server Error");
 static int sl_bind_tm = 1;
 static struct tm_binds tmb;
 
+str _sl_event_callback_fl_ack = STR_NULL;
+str _sl_event_callback_lres_sent = STR_NULL;
+
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
@@ -117,6 +120,8 @@ static param_export_t params[] = {
 	{"default_reason", PARAM_STR, &default_reason},
 	{"bind_tm",        PARAM_INT, &sl_bind_tm},
 	{"rich_redirect",  PARAM_INT, &sl_rich_redirect},
+	{"event_callback_fl_ack",    PARAM_STR, &_sl_event_callback_fl_ack},
+	{"event_callback_lres_sent", PARAM_STR, &_sl_event_callback_lres_sent},
 
 	{0, 0, 0}
 };
@@ -596,6 +601,7 @@ static int bind_sl(sl_api_t* api)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sl_kemi_exports[] = {
 	{ str_init("sl"), str_init("sl_send_reply"),
 		SR_KEMIP_INT, sl_send_reply_str,
@@ -620,6 +626,7 @@ static sr_kemi_t sl_kemi_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {

@@ -1,0 +1,240 @@
+LOST Module
+
+Wolfgang Kampichler
+
+   Frequentis AG
+   DEC112 (funded by netidee)
+
+Edited by
+
+Wolfgang Kampichler
+
+   Copyright © 20018-2019 Wolfgang Kampichler
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+        4. Functions
+
+              4.1. lost_held_query(con, [id,] pidf-lo, url, error)
+              4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+
+        5. Counters
+        6. Remarks
+
+   List of Examples
+
+   1.1. lost_held_query() usage
+   1.2. lost() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+   4. Functions
+
+        4.1. lost_held_query(con, [id,] pidf-lo, url, error)
+        4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+
+   5. Counters
+   6. Remarks
+
+1. Overview
+
+   SIP requests may be forwarded based on a location provided with the
+   request or retrieved from a specific location server using an identity
+   (HELD). This module implements the basic functionality to get or parse
+   location information and to query a mapping service (LOST) in order to
+   get next hop based on location and service urn either specified or
+   provided with the request.
+
+   This module implements protocol functions that use the http_client api
+   to fetch data from external LOST and HELD servers. The module is using
+   the http_client concept of "connections" to define properties of HTTP
+   sessions. A connection has one or multiple servers and a set of
+   settings that apply to the specific connection.
+
+   The function lost_held_query allows Kamailio to assemble a HELD
+   locationRequest as defined in RFC6155
+   (https://tools.ietf.org/html/rfc6155) to query location information
+   represented as PIDF-LO for a given identity (in most cases a SIP URI).
+   The identity may be a specific parameter or taken from the
+   P-Asserted-Identity or From header. The locationRequest response is
+   parsed and represented as PIDF-LO and location URI to dereference
+   location via HTTP(S).
+
+   The function lost_query allows Kamailio to assemble a LOST findService
+   request as defined in RFC5222 (https://tools.ietf.org/html/rfc5255) to
+   query routing information for a given (geodetic) location and a service
+   URN. Both, PIDF-LO and service URN may be provided as function
+   parameter, or are taken from the request message if applicable. The
+   findServiceResponse is parsed and represented asdisplay name and SIP
+   URI typically used as next hop in a Route header.
+
+   The http_client module use the CURL library setting up connections. The
+   CURL library by default use the system configured DNS resolvers, not
+   the Kamailio resolver.
+
+   The module is limited to using HTTP and HTTPS protocols.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * HTTP_CLIENT - the http_client module should be loaded first in
+       order to initialize connections properly.
+     * TLS - if you use TLS connections (https) the tls module should be
+       loaded first in order to initialize OpenSSL properly.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl
+     * libxml2
+
+3. Parameters
+
+   This module has no specific paramater but uses http_client therfore
+   according parameters may apply.
+
+4. Functions
+
+   4.1. lost_held_query(con, [id,] pidf-lo, url, error)
+   4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+
+4.1.  lost_held_query(con, [id,] pidf-lo, url, error)
+
+   Sends a HELD locationRequest to a given connection. The device identity
+   is either specified, or the P-A-I header value, or the From header
+   value.
+     * con - the name of an existing HTTP connection, definied by a
+       httpcon modparam
+     * id - the device id used in the HELD locationRequest
+     * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
+     * url - the location reference returned in the HELD locationRequest
+       response - this reference may be added as Geolocation header value
+       and forwarded downstream
+     * error - any error code returned in the HELD locationRequest
+       response
+
+   The return value is 200 on success, 400 if an internal error occured,
+   or 500 if an error code is returned in the HELD locationRequest
+   response.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
+
+   Example 1.1. lost_held_query() usage
+...
+modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
+...
+# HELD location request
+$var(id) = "sip:alice@atlanta";
+$var(res) = lost_held_query("heldsrv", "$var(id)" , "$var(pidf)", "$var(url)", "
+$var(err)");
+xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
+r(pidf)");
+...
+$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)"", "$var(err)");
+xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
+r(pidf)\n");
+...
+
+4.2.  lost_query(con, [pidf-lo, urn,] uri, name, error)
+
+   Sends a LOST findService request to a given connection. PIDF-LO and URN
+   are either specified, or, if omitted, parsed from the message body
+   (PIDF-LO) and request line (URN). Either "pidf-lo" or "urn" can be set
+   to an empty string in order to be ignored.
+     * con - the name of an existing HTTP connection definied by a httpcon
+       modparam
+     * pidf-lo - the PIDF-LO used to create the LOST findService request
+     * urn - the URN used to create the LOST findService request
+     * uri - the SIP uri returned in the LOST findServiceResponse
+     * name - the display name returned in the LOST findServiceResponse
+     * error - any error code returned in the LOST findServiceResponse
+
+   The return value is 200 on success, 400 if an internal error occured,
+   or 500 if an error code is returned in the LOST findServiceResponse.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
+
+   Example 1.2. lost() usage
+...
+modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
+modparam("http_client", "httpcon", "lostsrv=>http://service.org/api/lost");
+...
+# HELD location request
+$var(id) = "sip:alice@atlanta";
+$var(res) = lost_held_query("heldsrv", "$var(id)" , "$var(pidf)", "$var(url)", "
+$var(err)");
+...
+# LOST findService request - pidf-lo and urn as parameter
+$var(id) = "urn:service:sos";
+$var(res) = lost_query("lostsrv", "$var(pidf)", "$var(urn)", "$var(uri)", "$var(
+name)", "$var(err)");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
+var(uri)\n");
+...
+# LOST findService request - pidf-lo as parameter, urn taken from request line
+$var(res) = lost_query("lostsrv", "$var(pidf)", "", "$var(uri)", "$var(name)", "
+$var(err)");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
+var(uri)\n");
+...
+# LOST findService request - urn as parameter, pidf-lo taken from message body
+$var(res) = lost_query("lostsrv", "", "$var(urn)", "$var(uri)", "$var(name)", "$
+var(err)");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
+var(uri)\n");
+...
+# LOST findService request - pidf-lo and urn taken from message
+$var(res) = lost_query("lostsrv", "$var(uri)", "$var(name)", "$var(err)");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
+var(uri)\n");
+...
+
+5. Counters
+
+   This module has no specific counters but uses http_client therefore
+   according counters may apply.
+
+6. Remarks
+
+   Note: libcurl leak in CentOS 6 - this module uses libcurl library (via
+   http_client) and in case if you are using CentOS 6, be aware that
+   standard libcurl-7.19.7-52 has a memory leak. To fix this memory,
+   install libcurl from city-fan repository. More details at:
+   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
+   -centos6
+
+   Note: http_client_query exported by the http_client API returns by
+   default the first line of the HTTP response (query_params.oneline = 1),
+   but the lost module requires the complete response message, which
+   requires query_params.oneline set to 0. In the case lost_query is used
+   with the default http_client API, dereferencing location via HTTP
+   provided with the Geolocation header causes an error. Therefore, to
+   work properlu=y, it requires to set http_client module parameter
+   query_result to 0.

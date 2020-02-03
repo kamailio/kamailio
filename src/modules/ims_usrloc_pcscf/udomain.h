@@ -77,6 +77,7 @@ int insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci
 int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _r);
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 int delete_pcontact(udomain_t* _d, struct pcontact* _r);
+int unreg_pending_contacts_cb(udomain_t* _d, pcontact_t* _c, int type);
 int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
 int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
 

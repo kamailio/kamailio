@@ -70,6 +70,16 @@
 		</para>
 	    </answer>
 	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Does rtpproxy support MSRP protocol?</para>
+	    </question>
+	    <answer>
+		<para>
+			Module do not support message media of MSRP protocol.
+		</para>
+	    </answer>
+	</qandaentry>
     </qandaset>
 </chapter>
 

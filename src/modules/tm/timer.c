@@ -88,8 +88,6 @@
  */
 
 
-#include "defs.h"
-
 
 #include "config.h"
 #include "h_table.h"
@@ -121,10 +119,8 @@
 
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
-#ifdef TM_DIFF_RT_TIMEOUT
 struct msgid_var user_rt_t1_timeout_ms;
 struct msgid_var user_rt_t2_timeout_ms;
-#endif
 struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
 
@@ -156,7 +152,6 @@ int tm_init_timers(void)
 	default_tm_cfg.fr_timeout = MS_TO_TICKS(default_tm_cfg.fr_timeout);
 	default_tm_cfg.fr_inv_timeout = MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
 	default_tm_cfg.wait_timeout = MS_TO_TICKS(default_tm_cfg.wait_timeout);
-	default_tm_cfg.delete_timeout = MS_TO_TICKS(default_tm_cfg.delete_timeout);
 	default_tm_cfg.tm_max_inv_lifetime =
 			MS_TO_TICKS(default_tm_cfg.tm_max_inv_lifetime);
 	default_tm_cfg.tm_max_noninv_lifetime =
@@ -168,8 +163,6 @@ int tm_init_timers(void)
 		default_tm_cfg.fr_inv_timeout = 1;
 	if(default_tm_cfg.wait_timeout == 0)
 		default_tm_cfg.wait_timeout = 1;
-	if(default_tm_cfg.delete_timeout == 0)
-		default_tm_cfg.delete_timeout = 1;
 	if(default_tm_cfg.rt_t2_timeout_ms == 0)
 		default_tm_cfg.rt_t2_timeout_ms = 1;
 	if(default_tm_cfg.rt_t1_timeout_ms == 0)
@@ -183,12 +176,10 @@ int tm_init_timers(void)
 	SIZE_FIT_CHECK(fr_timeout, default_tm_cfg.fr_timeout, "fr_timer");
 	SIZE_FIT_CHECK(
 			fr_inv_timeout, default_tm_cfg.fr_inv_timeout, "fr_inv_timer");
-#ifdef TM_DIFF_RT_TIMEOUT
 	SIZE_FIT_CHECK(
 			rt_t1_timeout_ms, default_tm_cfg.rt_t1_timeout_ms, "retr_timer1");
 	SIZE_FIT_CHECK(
 			rt_t2_timeout_ms, default_tm_cfg.rt_t2_timeout_ms, "retr_timer2");
-#endif
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_inv_lifetime,
 			"max_inv_lifetime");
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_noninv_lifetime,
@@ -196,17 +187,15 @@ int tm_init_timers(void)
 
 	memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
 	memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
-#ifdef TM_DIFF_RT_TIMEOUT
 	memset(&user_rt_t1_timeout_ms, 0, sizeof(user_rt_t1_timeout_ms));
 	memset(&user_rt_t2_timeout_ms, 0, sizeof(user_rt_t2_timeout_ms));
-#endif
 	memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
 	memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
 
-	LM_DBG("tm init timers - fr=%d fr_inv=%d wait=%d delete=%d t1=%d t2=%d"
+	LM_DBG("tm init timers - fr=%d fr_inv=%d wait=%d t1=%d t2=%d"
 		   " max_inv_lifetime=%d max_noninv_lifetime=%d\n",
 			default_tm_cfg.fr_timeout, default_tm_cfg.fr_inv_timeout,
-			default_tm_cfg.wait_timeout, default_tm_cfg.delete_timeout,
+			default_tm_cfg.wait_timeout,
 			default_tm_cfg.rt_t1_timeout_ms, default_tm_cfg.rt_t2_timeout_ms,
 			default_tm_cfg.tm_max_inv_lifetime,
 			default_tm_cfg.tm_max_noninv_lifetime);
@@ -272,10 +261,8 @@ int timer_fixup_ms(void *handle, str *gname, str *name, void **val)
 	t = (long)(*val);
 
 /* size fix checks */
-#ifdef TM_DIFF_RT_TIMEOUT
 	IF_IS_TIMER_NAME(rt_t1_timeout_ms, "retr_timer1")
 	else IF_IS_TIMER_NAME(rt_t2_timeout_ms, "retr_timer2")
-#endif
 
 			return 0;
 
@@ -284,39 +271,6 @@ error:
 }
 
 /******************** handlers ***************************/
-
-
-#ifndef TM_DEL_UNREF
-/* returns number of ticks before retrying the del, or 0 if the del.
- * was succesfull */
-inline static ticks_t delete_cell(struct cell *p_cell, int unlock)
-{
-	/* there may still be FR/RETR timers, which have been reset
-	   (i.e., time_out==TIMER_DELETED) but are stilled linked to
-	   timer lists and must be removed from there before the
-	   structures are released
-	*/
-	unlink_timers(p_cell);
-	/* still in use ... don't delete */
-	if(IS_REFFED_UNSAFE(p_cell)) {
-		if(unlock)
-			UNLOCK_HASH(p_cell->hash_index);
-		LM_DBG("%p: can't delete -- still reffed (%d)\n", p_cell,
-				p_cell->ref_count);
-		/* delay the delete */
-		/* TODO: change refcnts and delete on refcnt==0 */
-		return cfg_get(tm, tm_cfg, delete_timeout);
-	} else {
-		if(unlock)
-			UNLOCK_HASH(p_cell->hash_index);
-#ifdef EXTRA_DEBUG
-		LM_DBG("delete transaction %p\n", p_cell);
-#endif
-		free_cell(p_cell);
-		return 0;
-	}
-}
-#endif /* TM_DEL_UNREF */
 
 
 /* generate a fake reply
@@ -341,13 +295,8 @@ static void fake_reply(struct cell *t, int branch, int code)
 				relay_reply(t, FAKED_REPLY, branch, code, &cancel_data, 0);
 	}
 /* now when out-of-lock do the cancel I/O */
-#ifdef CANCEL_REASON_SUPPORT
 	if(do_cancel_branch)
 		cancel_branch(t, branch, &cancel_data.reason, 0);
-#else /* CANCEL_REASON_SUPPORT */
-	if(do_cancel_branch)
-		cancel_branch(t, branch, 0);
-#endif /* CANCEL_REASON_SUPPORT */
 	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/
@@ -640,8 +589,6 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 #ifdef TIMER_DEBUG
 	LM_DBG("WAIT timer hit @%d for %p (timer_lm %p)\n", ti, p_cell, wait_tl);
 #endif
-
-#ifdef TM_DEL_UNREF
 	/* stop cancel timers if any running */
 	if(is_invite(p_cell)) {
 		cleanup_localcancel_timers(p_cell);
@@ -688,30 +635,5 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	p_cell->flags |= T_IN_AGONY;
 	UNREF_FREE(p_cell, unlinked);
 	ret = 0;
-#else  /* TM_DEL_UNREF */
-	if(p_cell->flags & T_IN_AGONY) {
-		/* delayed delete */
-		/* we call delete now without any locking on hash/ref_count;
-		   we can do that because delete_handler is only entered after
-		   the delete timer was installed from wait_handler, which
-		   removed transaction from hash table and did not destroy it
-		   because some processes were using it; that means that the
-		   processes currently using the transaction can unref and no
-		   new processes can ref -- we can wait until ref_count is
-		   zero safely without locking
-		*/
-		ret = delete_cell(p_cell, 0 /* don't unlock on return */);
-	} else {
-		/* stop cancel timers if any running */
-		if(is_invite(p_cell))
-			cleanup_localcancel_timers(p_cell);
-		/* remove the cell from the hash table */
-		LOCK_HASH(p_cell->hash_index);
-		remove_from_hash_table_unsafe(p_cell);
-		p_cell->flags |= T_IN_AGONY;
-		/* delete (returns with UNLOCK-ed_HASH) */
-		ret = delete_cell(p_cell, 1 /* unlock on return */);
-	}
-#endif /* TM_DEL_UNREF */
 	return ret;
 }

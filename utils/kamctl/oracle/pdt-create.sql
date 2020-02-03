@@ -1,8 +1,8 @@
 CREATE TABLE pdt (
     id NUMBER(10) PRIMARY KEY,
-    sdomain VARCHAR2(128),
+    sdomain VARCHAR2(255),
     prefix VARCHAR2(32),
-    domain VARCHAR2(128) DEFAULT '',
+    domain VARCHAR2(255) DEFAULT '',
     CONSTRAINT pdt_sdomain_prefix_idx  UNIQUE (sdomain, prefix)
 );
 

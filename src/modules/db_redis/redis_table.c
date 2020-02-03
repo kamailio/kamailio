@@ -487,13 +487,14 @@ static struct str_hash_entry* db_redis_create_column(str *col, str *type) {
 }
 
 int db_redis_parse_keys(km_redis_con_t *con) {
-    char *p;
+    char *p, *q;
     char *start;
     char *end;
 
     str table_name;
     str type_name;
     str column_name;
+    str version_code;
 
     struct str_hash_entry *table_entry;
     redis_table_t *table;
@@ -533,6 +534,16 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 }
                 table_name.s = start;
                 table_name.len = p - start;
+
+                version_code = (str){"",0};
+                q = memchr(table_name.s, ':', table_name.len);
+                if (q) {
+                    version_code = table_name;
+                    version_code.len = q - table_name.s + 1;
+                    table_name.s = q + 1;
+                    table_name.len -= version_code.len;
+                }
+
                 state = DBREDIS_KEYS_TYPE_ST;
                 start = ++p;
                 LM_DBG("found table name '%.*s'\n", table_name.len, table_name.s);
@@ -544,6 +555,7 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                     goto err;
                 }
                 table = table_entry->u.p;
+                table->version_code = version_code;
                 break;
             case DBREDIS_KEYS_TYPE_ST:
                 while(p != end && *p != ':')
@@ -593,6 +605,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 column_name.s = start;
                 column_name.len = p - start;
                 start = ++p;
+
+                if (!column_name.len)
+                    break;
+
                 /*
                 LM_DBG("found column name '%.*s' in type '%.*s' for table '%.*s'\n",
                         column_name.len, column_name.s,

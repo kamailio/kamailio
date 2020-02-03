@@ -205,7 +205,7 @@ int statsc_nmap_add(str *sname, str *rname)
 		return 0;
 	}
 	sl = _statsc_info->slist;
-	while(sl->next!=NULL) sl = sl->next;
+	while(sl->next!=NULL) { sl = sl->next; }
 	sl->next = sm;
 	_statsc_info->slots++;
 	return 0;
@@ -257,6 +257,7 @@ void statsc_timer(unsigned int ticks, void *param)
 	statsc_nmap_t *sm = NULL;
 	time_t tn;
 	int n;
+	int i;
 
 	if(_statsc_info==NULL || _statsc_info->slist==NULL) {
 		LM_ERR("statsc not initialized\n");
@@ -270,8 +271,12 @@ void statsc_timer(unsigned int ticks, void *param)
 	LM_DBG("statsc timer - time: %lu - ticks: %u - index: %d - steps: %llu\n",
 			(unsigned long)tn, ticks, n, (unsigned long long)_statsc_info->steps);
 
+	i = 0;
 	for(sm=_statsc_info->slist->next; sm!=NULL; sm=sm->next) {
+		LM_DBG("fetching value for: [%.*s] - step [%d]\n", sm->rname.len,
+				sm->rname.s, i);
 		statsc_svalue(&sm->rname, sm->vals + n);
+		i++;
 	}
 	_statsc_info->steps++;
 }
@@ -287,18 +292,23 @@ int statsc_track_param(modparam_t type, void* val)
 	param_t *pit=NULL;
 	str s;
 
-	if(val==NULL)
+	if(val==NULL) {
 		return -1;
-	if(statsc_init()<0)
+	}
+	if(statsc_init()<0) {
 		return -1;
+	}
 	s.s = (char*)val;
 	s.len = strlen(s.s);
-	if(s.s[s.len-1]==';')
+	if(s.s[s.len-1]==';') {
 		s.len--;
-	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0)
+	}
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0) {
 		return -1;
+	}
 	for (pit = params_list; pit; pit=pit->next) {
 		if(statsc_nmap_add(&pit->name, &pit->body)<0) {
+			free_params(params_list);
 			LM_ERR("cannot enable tracking statistics\n");
 			return -1;
 		}
@@ -369,8 +379,9 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 			sname.s = NULL;
 		}
 		rpc->scan(ctx, "*d", &range);
-		if(range<0 || range>statsc_items)
+		if(range<0 || range>statsc_items) {
 			range = 0;
+		}
 	}
 
 	tn = time(NULL);

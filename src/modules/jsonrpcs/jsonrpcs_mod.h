@@ -27,7 +27,7 @@
 #include "../../core/str.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 
 #define JSONRPC_ID_SIZE	64
 

@@ -91,6 +91,7 @@ typedef struct addr_info {
 typedef struct advertise_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	unsigned short port_no;  /* port number */
+	short port_pad; /* padding field */
 	str port_no_str; /* port number converted to string -- optimization*/
 	str address_str;        /*ip address converted to string -- optimization*/
 	struct ip_addr address; /* ip address */
@@ -109,6 +110,8 @@ typedef struct socket_info {
 	struct socket_info* prev;
 	unsigned short port_no;  /* port number */
 	char proto; /* tcp or udp*/
+	char proto_pad0; /* padding field */
+	short proto_pad1; /* padding field */
 	str sock_str; /* Socket proto, ip, and port as string */
 	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
 	int workers; /* number of worker processes for this socket */
@@ -143,7 +146,11 @@ typedef struct receive_info {
 										* the msg was received */
 	char proto;
 #ifdef USE_COMP
+	char proto_pad0;  /* padding field */
 	short comp; /* compression */
+#else
+	char proto_pad0;  /* padding field */
+	short proto_pad1; /* padding field */
 #endif
 	/* no need for dst_su yet */
 } receive_info_t;
@@ -153,13 +160,26 @@ typedef struct dest_info {
 	struct socket_info* send_sock;
 	union sockaddr_union to;
 	int id; /* tcp stores the connection id here */
-	char proto;
 	snd_flags_t send_flags;
+	char proto;
 #ifdef USE_COMP
+	char proto_pad0;  /* padding field */
 	short comp;
+#else
+	char proto_pad0;  /* padding field */
+	short proto_pad1; /* padding field */
 #endif
 } dest_info_t;
 
+
+typedef struct ksr_coninfo {
+	ip_addr_t src_ip;
+	ip_addr_t dst_ip;
+	unsigned short src_port; /* host byte order */
+	unsigned short dst_port; /* host byte order */
+	int proto;
+	socket_info_t *csocket;
+} ksr_coninfo_t;
 
 typedef struct sr_net_info {
 	str data;
@@ -421,6 +441,7 @@ static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 			break;
 		default:
 			LM_CRIT("unknown address family %d\n", su->s.sa_family);
+			memset(ip, 0, sizeof(ip_addr_t));
 	}
 }
 

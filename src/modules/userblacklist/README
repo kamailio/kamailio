@@ -7,8 +7,6 @@ Henning Westerholt
    1&1 Internet AG
    <henning.westerholt@1und1.de>
 
-Edited by
-
 Pawel Kuzak
 
    1&1 Internet AG
@@ -89,7 +87,7 @@ Pawel Kuzak
    1.13. Set globalblacklist_whitelist_col parameter
    1.14. Set globalblacklist_description_col parameter
    1.15. check_user_blacklist usage
-   1.16. check_user_blacklist usage
+   1.16. check_user_whitelist usage
    1.17. check_blacklist usage
    1.18. check_whitelist usage
    1.19. userblacklist.reload_blacklist usage
@@ -407,7 +405,7 @@ table)
    are optional, the defaults are used if they are omitted. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.16. check_user_blacklist usage
+   Example 1.16. check_user_whitelist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI

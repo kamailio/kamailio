@@ -394,6 +394,12 @@ void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg->cseq[DLG_CALLEE_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
+	if (dlg->route_set[DLG_CALLER_LEG].s)
+		shm_free(dlg->route_set[DLG_CALLER_LEG].s);
+
+	if (dlg->route_set[DLG_CALLEE_LEG].s)
+		shm_free(dlg->route_set[DLG_CALLEE_LEG].s);
+
 	if (dlg->toroute_name.s)
 		shm_free(dlg->toroute_name.s);
 
@@ -518,7 +524,6 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 					str *cseq, unsigned int leg)
 {
-	char *p;
 	str cs = {"0", 1};
 
 	/* if we don't have cseq, set it to 0 */
@@ -528,7 +533,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
-	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len );
+	dlg->tag[leg].s = (char*)shm_malloc(tag->len);
 
 	if(dlg->cseq[leg].s) {
 		if (dlg->cseq[leg].len < cs.len) {
@@ -548,8 +553,17 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		dlg->contact[leg].s = (char*)shm_malloc( contact->len );
 	}
 
+	if(dlg->route_set[leg].s) {
+		if (dlg->route_set[leg].len < rr->len) {
+			shm_free(dlg->route_set[leg].s);
+			dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+		}
+	} else {
+		dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+	}
+
 	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL
-			|| dlg->contact[leg].s==NULL) {
+			|| dlg->contact[leg].s==NULL || dlg->route_set[leg].s==NULL) {
 		LM_ERR("no more shm mem\n");
 		if (dlg->tag[leg].s)
 		{
@@ -566,25 +580,34 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 			shm_free(dlg->contact[leg].s);
 			dlg->contact[leg].s = NULL;
 		}
+		if (dlg->route_set[leg].s)
+		{
+			shm_free(dlg->route_set[leg].s);
+			dlg->route_set[leg].s = NULL;
+		}
 
 		return -1;
 	}
-	p = dlg->tag[leg].s;
 
 	/* tag */
 	dlg->tag[leg].len = tag->len;
-	memcpy( p, tag->s, tag->len);
-	p += tag->len;
+	memcpy( dlg->tag[leg].s, tag->s, tag->len);
+
 	/* rr */
 	if (rr->len) {
-		dlg->route_set[leg].s = p;
 		dlg->route_set[leg].len = rr->len;
-		memcpy( p, rr->s, rr->len);
+		memcpy(dlg->route_set[leg].s, rr->s, rr->len);
 	}
 
 	/* contact */
 	dlg->contact[leg].len = contact->len;
-	memcpy(dlg->contact[leg].s, contact->s, contact->len);
+	if(contact->s) {
+		memcpy(dlg->contact[leg].s, contact->s, contact->len);
+	} else {
+		if(contact->len>0) {
+			memset(dlg->contact[leg].s, 0, contact->len);
+		}
+	}
 	/* cseq */
 	dlg->cseq[leg].len = cs.len;
 	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
@@ -673,6 +696,55 @@ int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct)
 
 	LM_DBG("contact of leg[%d] is %.*s\n", leg,
 			dlg->contact[leg].len, dlg->contact[leg].s);
+done:
+	dlg_unlock(d_table, d_entry);
+	return 0;
+error:
+	dlg_unlock(d_table, d_entry);
+	LM_ERR("not more shm mem\n");
+	return -1;
+}
+
+
+/*!
+ * \brief Update or set the routeset for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param rr routeset
+ * \return 0 on success, -1 on failure
+ */
+int dlg_update_rr_set(struct dlg_cell * dlg, unsigned int leg, str *rr)
+{
+	dlg_entry_t *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+
+	dlg_lock(d_table, d_entry);
+
+	if ( dlg->route_set[leg].s ) {
+		if(dlg->route_set[leg].len == rr->len
+				&& memcmp(dlg->route_set[leg].s, rr->s, rr->len)==0) {
+			LM_DBG("same route_set for leg[%d] - [%.*s]\n", leg,
+				dlg->route_set[leg].len, dlg->route_set[leg].s);
+			goto done;
+		}
+		if (dlg->route_set[leg].len < rr->len) {
+			shm_free(dlg->route_set[leg].s);
+			dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+			if (dlg->route_set[leg].s==NULL)
+				goto error;
+		}
+	} else {
+		dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+		if (dlg->route_set[leg].s==NULL)
+			goto error;
+	}
+
+	memcpy( dlg->route_set[leg].s, rr->s, rr->len );
+	dlg->route_set[leg].len = rr->len;
+
+	LM_DBG("route_set of leg[%d] is %.*s\n", leg,
+			dlg->route_set[leg].len, dlg->route_set[leg].s);
 done:
 	dlg_unlock(d_table, d_entry);
 	return 0;

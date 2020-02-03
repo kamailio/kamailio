@@ -11,13 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
-
-Edited by
 
 Ovidiu Sas
 
@@ -70,8 +66,10 @@ Ovidiu Sas
               4.10. sht_iterator_start(iname, hname)
               4.11. sht_iterator_end(iname)
               4.12. sht_iterator_next(iname)
-              4.13. sht_has_name(htable, op, mval)
-              4.14. sht_has_str_value(htable, op, mval)
+              4.13. sht_match_name(htable, op, mval)
+              4.14. sht_has_name(htable, op, mval)
+              4.15. sht_match_str_value(htable, op, mval)
+              4.16. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -124,8 +122,8 @@ Ovidiu Sas
    1.29. sht_iterator_start usage
    1.30. sht_iterator_end usage
    1.31. sht_iterator_next usage
-   1.32. sht_has_name usage
-   1.33. sht_has_name usage
+   1.32. sht_match_name usage
+   1.33. sht_match_name usage
 
 Chapter 1. Admin Guide
 
@@ -171,8 +169,10 @@ Chapter 1. Admin Guide
         4.10. sht_iterator_start(iname, hname)
         4.11. sht_iterator_end(iname)
         4.12. sht_iterator_next(iname)
-        4.13. sht_has_name(htable, op, mval)
-        4.14. sht_has_str_value(htable, op, mval)
+        4.13. sht_match_name(htable, op, mval)
+        4.14. sht_has_name(htable, op, mval)
+        4.15. sht_match_str_value(htable, op, mval)
+        4.16. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -592,9 +592,14 @@ modparam("htable", "timer_interval", 10)
 
 3.11. db_expires (integer)
 
-   If set to 1, the module will load/save the expires values of the items
+   If set to 1, the module loads/saves the value for expire of the items
    in hash table from/to database. It applies only to hash tables that
-   have the auto-expires attribute defined.
+   have the auto-expires attribute defined. If set to 0, only the key name
+   and the value are loaded, the expires for each item being set to 0.
+
+   Note that the module is not reloading automatically the items from
+   database when they expire, the reloading can be done only via RPC
+   command.
 
    Default value is 0.
 
@@ -705,8 +710,10 @@ modparam("htable", "event_callback_mode", 1)
    4.10. sht_iterator_start(iname, hname)
    4.11. sht_iterator_end(iname)
    4.12. sht_iterator_next(iname)
-   4.13. sht_has_name(htable, op, mval)
-   4.14. sht_has_str_value(htable, op, mval)
+   4.13. sht_match_name(htable, op, mval)
+   4.14. sht_has_name(htable, op, mval)
+   4.15. sht_match_str_value(htable, op, mval)
+   4.16. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -896,7 +903,7 @@ sht_iterator_end("i1");
     sht_iterator_end("i1");
 ...
 
-4.13.  sht_has_name(htable, op, mval)
+4.13.  sht_match_name(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    name against the mval parameter.
@@ -911,14 +918,18 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.32. sht_has_name usage
+   Example 1.32. sht_match_name usage
 ...
-if(sht_has_name("ha", "eq", "alice")) {
+if(sht_match_name("ha", "eq", "alice")) {
   ...
 }
 ...
 
-4.14.  sht_has_str_value(htable, op, mval)
+4.14.  sht_has_name(htable, op, mval)
+
+   Alias for sht_match_name().
+
+4.15.  sht_match_str_value(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    string value against the mval parameter.
@@ -933,12 +944,16 @@ if(sht_has_name("ha", "eq", "alice")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.33. sht_has_name usage
+   Example 1.33. sht_match_name usage
 ...
-if(sht_has_str_value("ha", "eq", "alice")) {
+if(sht_match_str_value("ha", "eq", "alice")) {
   ...
 }
 ...
+
+4.16.  sht_has_str_value(htable, op, mval)
+
+   Alias for sht_match_str_value().
 
 5. Exported pseudo-variables
 

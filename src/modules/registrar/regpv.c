@@ -35,6 +35,7 @@
 #include "../../core/action.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/receive.h"
 #include "../usrloc/usrloc.h"
 #include "registrar.h"
 #include "common.h"
@@ -751,7 +752,7 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 		}
 	}
 	set_route_type(backup_rt);
-
+	ksr_msg_env_reset();
 	return;
 error:
 	regpv_free_profile(rpp);

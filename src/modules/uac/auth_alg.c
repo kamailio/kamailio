@@ -27,7 +27,7 @@
  */
 
 
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 
 #include "auth_alg.h"
 
@@ -61,8 +61,31 @@ static inline void cvt_hex(HASH bin, HASHHEX hex)
 }
 
 
+static inline void cvt_bin(HASHHEX hex, HASH bin)
+{
+	unsigned short i;
+	unsigned char j;
+	for (i = 0; i<HASHLEN; i++) {
+		if(hex[2*i]>='0' && hex[2*i]<='9')
+			j = (hex[2*i]-'0') << 4;
+		else if(hex[2*i]>='a'&&hex[2*i]<='f')
+			j = (hex[2*i]-'a'+10) << 4;
+		else if(hex[2*i]>='A'&&hex[2*i]<='F')
+			j = (hex[2*i]-'A'+10) << 4;
+		else j = 0;
 
-/* 
+		if(hex[2*i+1]>='0'&&hex[2*i+1]<='9')
+			j += hex[2*i+1]-'0';
+		else if(hex[2*i+1]>='a'&&hex[2*i+1]<='f')
+			j += hex[2*i+1]-'a'+10;
+		else if(hex[2*i+1]>='A'&&hex[2*i+1]<='F')
+			j += hex[2*i+1]-'A'+10;
+
+		bin[i] = j;
+	}
+}
+
+/*
  * calculate H(A1)
  */
 void uac_calc_HA1( struct uac_credential *crd,
@@ -73,16 +96,25 @@ void uac_calc_HA1( struct uac_credential *crd,
 	MD5_CTX Md5Ctx;
 	HASH HA1;
 
-	MD5Init(&Md5Ctx);
-	MD5Update(&Md5Ctx, crd->user.s, crd->user.len);
-	MD5Update(&Md5Ctx, ":", 1);
-	MD5Update(&Md5Ctx, crd->realm.s, crd->realm.len);
-	MD5Update(&Md5Ctx, ":", 1);
-	MD5Update(&Md5Ctx, crd->passwd.s, crd->passwd.len);
-	MD5Final(HA1, &Md5Ctx);
+	if(crd->aflags & UAC_FLCRED_HA1) {
+		memcpy(sess_key, crd->passwd.s, HASHHEXLEN);
+		sess_key[HASHHEXLEN] = '\0';
+		if ( auth->flags& AUTHENTICATE_MD5SESS ) {
+			cvt_bin(sess_key, HA1);
+		} else {
+			return;
+		}
+	} else {
+		MD5Init(&Md5Ctx);
+		MD5Update(&Md5Ctx, crd->user.s, crd->user.len);
+		MD5Update(&Md5Ctx, ":", 1);
+		MD5Update(&Md5Ctx, crd->realm.s, crd->realm.len);
+		MD5Update(&Md5Ctx, ":", 1);
+		MD5Update(&Md5Ctx, crd->passwd.s, crd->passwd.len);
+		MD5Final(HA1, &Md5Ctx);
+	}
 
-	if ( auth->flags& AUTHENTICATE_MD5SESS )
-	{
+	if ( auth->flags& AUTHENTICATE_MD5SESS ) {
 		MD5Init(&Md5Ctx);
 		MD5Update(&Md5Ctx, HA1, HASHLEN);
 		MD5Update(&Md5Ctx, ":", 1);
@@ -90,7 +122,7 @@ void uac_calc_HA1( struct uac_credential *crd,
 		MD5Update(&Md5Ctx, ":", 1);
 		MD5Update(&Md5Ctx, cnonce->s, cnonce->len);
 		MD5Final(HA1, &Md5Ctx);
-	};
+	}
 
 	cvt_hex(HA1, sess_key);
 }

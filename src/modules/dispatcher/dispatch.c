@@ -105,7 +105,8 @@ int *next_idx = NULL;
 #define _ds_list (ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
-static void ds_run_route(struct sip_msg *msg, str *uri, char *route);
+static void ds_run_route(struct sip_msg *msg, str *uri, char *route,
+		ds_rctx_t *rctx);
 
 void shuffle_uint100array(unsigned int *arr);
 int ds_reinit_rweight_on_state_change(
@@ -537,7 +538,6 @@ void shuffle_uint100array(unsigned int *arr)
 	int k;
 	int j;
 	unsigned int t;
-	kam_srand(time(0));
 	for(j = 0; j < 100; j++) {
 		k = j + (kam_rand() % (100 - j));
 		t = arr[j];
@@ -1483,16 +1483,16 @@ static inline int ds_get_index(int group, int ds_list_idx, ds_set_t **index)
 int ds_list_exist(int set)
 {
 	ds_set_t *si = NULL;
-	LM_DBG("-- Looking for set %d\n", set);
+	LM_DBG("looking for destination set [%d]\n", set);
 
 	/* get the index of the set */
 	si = ds_avl_find(_ds_list, set);
 
 	if(si == NULL) {
-		LM_INFO("destination set [%d] not found\n", set);
+		LM_DBG("destination set [%d] not found\n", set);
 		return -1; /* False */
 	}
-	LM_INFO("destination set [%d] found\n", set);
+	LM_DBG("destination set [%d] found\n", set);
 	return 1; /* True */
 }
 
@@ -1926,6 +1926,17 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 			LM_ERR("failed to add destination sock xavp field\n");
 			return -1;
 		}
+		if((ds_xavp_dst_mode & DS_XAVP_DST_ADD_SOCKSTR)
+				&& (dsidx->dlist[pos].attrs.socket.len > 0)) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = dsidx->dlist[pos].attrs.socket;
+			if(xavp_add_value(&ds_xavp_dst_socket, &nxval, &nxavp)==NULL) {
+				xavp_destroy_list(&nxavp);
+				LM_ERR("failed to add destination attrs xavp field\n");
+				return -1;
+			}
+		}
 	}
 
 	if(alg == DS_ALG_CALLLOAD) {
@@ -2023,6 +2034,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	int i;
 	unsigned int hash;
 	ds_set_t *idx = NULL;
+	int ulast = 0;
 
 	if(msg == NULL) {
 		LM_ERR("bad parameters\n");
@@ -2079,6 +2091,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
+			ulast = 1;
 			break;
 		case DS_ALG_HASHAUTHUSER: /* 5 - hash auth username */
 			i = ds_hash_authusername(msg, &hash);
@@ -2090,6 +2103,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					/* No Authorization found: Use round robin */
 					hash = idx->last;
 					idx->last = (idx->last + 1) % idx->nr;
+					ulast = 1;
 					break;
 				default:
 					LM_ERR("can't get authorization hash\n");
@@ -2189,6 +2203,11 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			return -1;
 		}
 		rstate->emode = 1;
+	}
+
+	/* update last field for next select to point after the current active used */
+	if(ulast) {
+		idx->last = (hash + 1) % idx->nr;
 	}
 
 	LM_DBG("selected [%d-%d-%d/%d] <%.*s>\n", rstate->alg, rstate->setid,
@@ -2466,6 +2485,7 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	sr_xavp_t *rxavp = NULL;
 	int group;
 	int ret;
+	ds_rctx_t rctx;
 
 	if(!(ds_flags & DS_FAILOVER_ON)) {
 		LM_WARN("failover support disabled\n");
@@ -2487,7 +2507,23 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	if(rxavp == NULL )
 		return -1; /* dst addr uri not available */
 
-	ret = ds_update_state(msg, group, &rxavp->val.v.s, state);
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	if(msg!=NULL) {
+		if(msg!=FAKED_REPLY) {
+			if(msg->first_line.type == SIP_REPLY) {
+				rctx.flags |= 1;
+				rctx.code = (int)msg->first_line.u.reply.statuscode;
+				rctx.reason = msg->first_line.u.reply.reason;
+			} else {
+				rctx.code = 820;
+			}
+		} else {
+			rctx.code = 810;
+		}
+	} else {
+		rctx.code = 800;
+	}
+	ret = ds_update_state(msg, group, &rxavp->val.v.s, state, &rctx);
 
 	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, rxavp->val.v.s.len,
 			rxavp->val.v.s.s);
@@ -2664,7 +2700,8 @@ int ds_get_state(int group, str *address)
 /**
  * Update destionation's state
  */
-int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
+int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
+		ds_rctx_t *rctx)
 {
 	int i = 0;
 	int old_state = 0;
@@ -2681,6 +2718,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
+	LM_DBG("update state for %.*s in group %d to %d\n", address->len, address->s, group, state);
 
 	while(i < idx->nr) {
 		if(idx->dlist[i].uri.len == address->len
@@ -2711,12 +2749,15 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 
 			if(state & DS_TRYING_DST) {
 				idx->dlist[i].message_count++;
+				LM_DBG("destination did not replied %d times, threshold %d\n",
+						 idx->dlist[i].message_count, probing_threshold);
 				/* Destination is not replying.. Increasing failure counter */
 				if(idx->dlist[i].message_count >= probing_threshold) {
-					/* Destionation has too much lost messages.. Bringing it to inactive state */
+					/* Destination has too much lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
 					idx->dlist[i].message_count = 0;
+					LM_DBG("deactivate destination, threshold %d reached\n", probing_threshold);
 				}
 			} else {
 				if(!(init_state & DS_TRYING_DST)
@@ -2726,9 +2767,16 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 					if(idx->dlist[i].message_count < inactive_threshold) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
 						idx->dlist[i].flags |= DS_INACTIVE_DST;
+						/* if destination was in probing state, we stay there for now */
+						if((old_state & DS_PROBING_DST) != 0) {
+							idx->dlist[i].flags |= DS_PROBING_DST;
+						}
+						LM_DBG("destination replied successful %d times, threshold %d\n",
+								 idx->dlist[i].message_count, inactive_threshold);
 					} else {
 						/* Destination has enough replied messages.. Bringing it to active state */
 						idx->dlist[i].message_count = 0;
+						LM_DBG("activate destination, threshold %d reached\n", inactive_threshold);
 					}
 				} else {
 					idx->dlist[i].message_count = 0;
@@ -2736,16 +2784,17 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			}
 
 			if(!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags)) {
-				ds_run_route(msg, address, "dispatcher:dst-down");
+				ds_run_route(msg, address, "dispatcher:dst-down", rctx);
 
 			} else {
 				if(ds_skip_dst(old_state) && !ds_skip_dst(idx->dlist[i].flags))
-					ds_run_route(msg, address, "dispatcher:dst-up");
+					ds_run_route(msg, address, "dispatcher:dst-up", rctx);
 			}
 			if(idx->dlist[i].attrs.rweight > 0)
 				ds_reinit_rweight_on_state_change(
 						old_state, idx->dlist[i].flags, idx);
 
+			LM_DBG("old state was %d, set new state to %d\n", old_state, idx->dlist[i].flags);
 			return 0;
 		}
 		i++;
@@ -2754,7 +2803,20 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 	return -1;
 }
 
-static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
+/**
+ *
+ */
+static ds_rctx_t *_ds_rctx = NULL;
+
+/**
+ *
+ */
+ds_rctx_t* ds_get_rctx(void)
+{
+	return _ds_rctx;
+}
+
+static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
@@ -2767,7 +2829,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 		return;
 	}
 
-	LM_DBG("ds_run_route event_route[%s]\n", route);
+	LM_DBG("executing event_route[%s]\n", route);
 
 	rt = -1;
 	if(ds_event_callback.s==NULL || ds_event_callback.len<=0) {
@@ -2798,6 +2860,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 	}
 
 	if(rt>=0 || ds_event_callback.len>0) {
+		_ds_rctx = rctx;
 		backup_rt = get_route_type();
 		set_route_type(REQUEST_ROUTE);
 		init_run_actions_ctx(&ctx);
@@ -2814,6 +2877,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 			}
 		}
 		set_route_type(backup_rt);
+		_ds_rctx = NULL;
 	}
 }
 
@@ -2983,7 +3047,9 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						   || tport == node->dlist[j].port)
 				&& ((mode & DS_MATCH_NOPROTO)
-						   || tproto == node->dlist[j].proto)) {
+						   || tproto == node->dlist[j].proto)
+				&& (((mode & DS_MATCH_ACTIVE) && !ds_skip_dst(node->dlist[j].flags))
+						   || !(mode & DS_MATCH_ACTIVE))) {
 			if(export_set_pv && ds_setid_pvname.s != 0) {
 				memset(&val, 0, sizeof(pv_value_t));
 				val.flags = PV_VAL_INT | PV_TYPE_INT;
@@ -3104,6 +3170,7 @@ static void ds_options_callback(
 	str uri = {0, 0};
 	sip_msg_t *fmsg;
 	int state;
+	ds_rctx_t rctx;
 
 	/* The param contains the group, in which the failed host
 	 * can be found.*/
@@ -3126,8 +3193,19 @@ static void ds_options_callback(
 	uri.len = t->to.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
-	if (ds_ping_latency_stats)
+	if (ds_ping_latency_stats) {
 		ds_update_latency(group, &uri, ps->code);
+	}
+
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	rctx.code = ps->code;
+	if(ps->rpl!=NULL) {
+		if(ps->rpl!=FAKED_REPLY) {
+			rctx.flags |= 1;
+			rctx.reason = ps->rpl->first_line.u.reply.reason;
+		}
+	}
+
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
@@ -3142,7 +3220,7 @@ static void ds_options_callback(
 
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
@@ -3152,13 +3230,39 @@ static void ds_options_callback(
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
 		}
 	}
 
 	return;
+}
+
+/*
+ * Small helper to decide to ping a gateway or not
+ */
+static inline int ds_ping_result_helper(ds_set_t *node, int j)
+{
+	/* probe all */
+	if(ds_probing_mode == DS_PROBE_ALL) {
+		LM_DBG("probe all, mode DS_PROBE_ALL\n");
+		return 1;
+	}
+	/* probe if probing is set, but not in mode DS_PROBE_INACTIVE */
+	if (ds_probing_mode != DS_PROBE_INACTIVE
+			&& (node->dlist[j].flags & DS_PROBING_DST) != 0) {
+		LM_DBG("probing set, but not mode DS_PROBE_INACTIVE\n");
+		return 1;
+	}
+	/* probe for mode DS_PROBE_INACTIVE only for inactive and probing gw */
+	if (ds_probing_mode == DS_PROBE_INACTIVE
+			&& (node->dlist[j].flags & DS_PROBING_DST) != 0
+			&& (node->dlist[j].flags & DS_INACTIVE_DST) != 0) {
+		LM_DBG("probing and inactive set, mode DS_PROBE_INACTIVE\n");
+		return 1;
+	}
+	return 0;
 }
 
 /**
@@ -3181,8 +3285,7 @@ void ds_ping_set(ds_set_t *node)
 		if((node->dlist[j].flags & DS_DISABLED_DST) != 0)
 			continue;
 		/* If the Flag of the entry has "Probing set, send a probe:	*/
-		if(ds_probing_mode == DS_PROBE_ALL
-				|| (node->dlist[j].flags & DS_PROBING_DST) != 0) {
+		if(ds_ping_result_helper(node, j)) {
 			LM_DBG("probing set #%d, URI %.*s\n", node->id,
 					node->dlist[j].uri.len, node->dlist[j].uri.s);
 

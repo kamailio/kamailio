@@ -23,8 +23,6 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
-#include "defs.h"
-
 /* TMCB_ONSEND used to enable certain callback-related features when
  * ONSEND was set, these days it's always enabled. For compatibility
  * reasons with modules that check ONSEND, continue to set it
@@ -56,9 +54,7 @@ struct cell;
 #define TMCB_E2ECANCEL_IN_N     18
 #define TMCB_E2EACK_RETR_IN_N   19
 #define TMCB_RESPONSE_READY_N	20
-#ifdef WITH_AS_SUPPORT
 #define TMCB_DONT_ACK_N         21 /* TM shoudn't ACK a local UAC  */
-#endif
 #define TMCB_REQUEST_SENT_N     22
 #define TMCB_RESPONSE_SENT_N    23
 #define TMCB_ON_BRANCH_FAILURE_RO_N 24
@@ -87,9 +83,7 @@ struct cell;
 #define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
 #define TMCB_E2EACK_RETR_IN   (1<<TMCB_E2EACK_RETR_IN_N)
 #define TMCB_RESPONSE_READY   (1<<TMCB_RESPONSE_READY_N)
-#ifdef WITH_AS_SUPPORT
 #define TMCB_DONT_ACK         (1<<TMCB_DONT_ACK_N)
-#endif
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
 #define TMCB_ON_BRANCH_FAILURE (1<<TMCB_ON_BRANCH_FAILURE_N)

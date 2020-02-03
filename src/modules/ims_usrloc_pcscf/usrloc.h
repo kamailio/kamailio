@@ -107,6 +107,8 @@ typedef struct ipsec {
     unsigned int spi_ps; /**< SPI Server to use					*/
     unsigned short port_uc; /**< Port UE Client						*/
     unsigned short port_us; /**< Port UE Server						*/
+    unsigned short port_pc; /**< Port Proxy Client		*/
+    unsigned short port_ps; /**< Port Proxy Server      */
 
     str ealg; /**< Cypher Algorithm - ESP				*/
     str r_ealg; /**< received Cypher Algorithm - ESP	*/
@@ -241,6 +243,7 @@ typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short
 
 typedef int (*insert_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact_info* ci, struct pcontact** _c);
 typedef int (*delete_pcontact_t)(struct udomain* _d, struct pcontact* _c);
+typedef int (*unreg_pending_contacts_cb_t)(struct udomain* _d, struct pcontact* _c, int type);
 typedef int (*update_pcontact_t)(struct udomain* _d, struct pcontact_info* ci, struct pcontact* _c);
 typedef int (*update_rx_regsession_t)(struct udomain* _d, str* session_id, struct pcontact* _c);
 
@@ -254,6 +257,9 @@ typedef int (*get_all_ucontacts_t)(void* buf, int len, unsigned int flags, unsig
 typedef int (*update_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
 typedef int (*update_temp_security_t)(struct udomain* _d, security_type _t, security_t* _s, struct pcontact* _c);
 
+/* statistic APIs */
+typedef unsigned long(*get_number_of_contacts_t)();
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
     int use_domain; /*! use_domain module parameter */
@@ -266,6 +272,7 @@ typedef struct usrloc_api {
 
     insert_pcontact_t insert_pcontact;
     delete_pcontact_t delete_pcontact;
+    unreg_pending_contacts_cb_t unreg_pending_contacts_cb;
     get_pcontact_t get_pcontact;
     assert_identity_t assert_identity;
 
@@ -277,6 +284,8 @@ typedef struct usrloc_api {
     update_temp_security_t update_temp_security;
 
     register_ulcb_t register_ulcb;
+
+	get_number_of_contacts_t get_number_of_contacts;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */

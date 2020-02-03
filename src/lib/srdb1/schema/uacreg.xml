@@ -9,7 +9,7 @@
 
 <table id="uacreg" xmlns:db="http://docbook.org/ns/docbook">
     <name>uacreg</name>
-    <version>3</version>
+    <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
@@ -94,7 +94,7 @@
         <type>string</type>
         <size>&password_len;</size>
         <default/>
-        <description>Authentication password</description>
+        <description>Authentication password in clear text</description>
     </column>
 
     <column id="auth_ha1">
@@ -102,7 +102,8 @@
         <type>string</type>
         <size>&ha1_len;</size>
         <default/>
-        <description>Hashed (HA1) authentication password</description>
+		<description>Hashed (HA1) authentication password - it has priority over
+		auth_password field.</description>
     </column>
 
     <column id="auth_proxy">
@@ -134,7 +135,15 @@
         <description>Initial registration delay</description>
     </column>
 
-	<index>
+    <column id="socket">
+        <name>socket</name>
+        <type>string</type>
+        <size>&socket_len;</size>
+        <default/>
+        <description>Used socket for sending out requests</description>
+    </column>
+
+    <index>
         <name>l_uuid_idx</name>
         <colref linkend="l_uuid"/>
         <unique/>

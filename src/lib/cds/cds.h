@@ -36,7 +36,7 @@
  *  - many duplicated functions in modules (copy&pasted between modules)
  *  without touching SER's core
  *  - possibility to debug programs outside of SER due to its simplicity 
- *  and many usefull tools
+ *  and many useful tools
  *
  * @{ */
 

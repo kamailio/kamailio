@@ -65,6 +65,12 @@ and commit history, there are several *rules* required for each contribution.
   * code **should** be formatted with **clang-format** or to match the style of
   the component that the commit applies to. The `.clang-format` file is part of
   Kamailio source code tree, in the root folder.
+  * new function exports to the configuration **must** be done both as native
+  configuration export and KEMI function export.
+  * new introduced module parameters, functions and RPC commands **must**
+  be documented in the module documentation.
+  * new introduced pseudo-variables and transformations **must** be
+  documented in the wiki.
 
 ### Commit Message Rules ###
 
@@ -94,7 +100,6 @@ Please start always with the prefix of the component (subsystem) that is modifie
 
   * first line (subject line) has to contain meaningful text about what that commit
   does, do not put just a reference to bug tracker or pull request items
-  * t
   * commit message must describe the changes done by the patch
     * other details (e.g., how to reproduce, backtrace, sip packets, ...) belong
     to content (comments) of the pull request. Example:
@@ -137,6 +142,9 @@ dialplan: basic safety for concurrent rpc reload
 ```
 ...: fix for http://private-tracker.lab/1234
 ```
+  * do not mention any developer name or yourself when fixing an issue introduced
+  by an old commit done by that developer or you. That commit can be referenced
+  by hash id.
 
 #### Commit Message Examples ####
 

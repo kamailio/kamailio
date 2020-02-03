@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -57,6 +58,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../ims_ipsec_pcscf/cmd.h"
 
 /* Bindings to PUA */
 #include "../pua/pua_bind.h"
@@ -73,14 +75,15 @@ usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
 sl_api_t slb;							/**!< SL API structure */
 struct tm_binds tmb;					/**!< TM API structure */
 pua_api_t pua; 							/**!< PUA API structure */
+ipsec_pcscf_api_t ipsec_pcscf;			/**!< Structure containing pointers to ipsec pcscf functions*/
 
 int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
 int subscription_expires = 3600;
 int ignore_reg_state = 0;
-int ignore_contact_rxport_check = 0;                             /**!< ignore port checks between received port on message and 
-registration received port. 
-                                                                 * this is useful for example if you register with UDP but possibly send invite over TCP (message too big)*/
+/**!< ignore port checks between received port on message and registration received port.
+ * this is useful for example if you register with UDP but possibly send invite over TCP (message too big) */
+int ignore_contact_rxport_check = 0;
 
 time_t time_now;
 
@@ -91,7 +94,7 @@ unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pe
 
 int is_registered_fallback2ip = 0;
 
-int reginfo_queue_size_threshold = 0;    /**Threshold for size of reginfo queue after which a warning is logged */
+int reginfo_queue_size_threshold = 0;			/**Threshold for size of reginfo queue after which a warning is logged */
 
 
 char* rcv_avp_param = 0;
@@ -147,7 +150,7 @@ static cmd_export_t cmds[] = {
 	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,REQUEST_ROUTE },
 	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,      assert_identity_fixup,  0,ONREPLY_ROUTE },
 	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,REQUEST_ROUTE},
-        {"pcscf_unregister",		(cmd_function)w_unregister,		4,      unregister_fixup,       0,ANY_ROUTE},
+	{"pcscf_unregister",		(cmd_function)w_unregister,		4,      unregister_fixup,       0,ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -161,10 +164,10 @@ static param_export_t params[] = {
 	{"received_avp",                PARAM_STR, &rcv_avp_param       		},
 	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip           },
 	{"publish_reginfo",             INT_PARAM, &publish_reginfo                     },
-        {"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
-        {"subscription_expires",        INT_PARAM, &subscription_expires                },
-        {"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
-        {"ignore_reg_state",		INT_PARAM, &ignore_reg_state			},
+	{"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
+	{"subscription_expires",        INT_PARAM, &subscription_expires                },
+	{"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
+	{"ignore_reg_state",		INT_PARAM, &ignore_reg_state			},
 	{"force_icscf_uri",		PARAM_STR, &force_icscf_uri			},
 	{"reginfo_queue_size_threshold",	INT_PARAM, &reginfo_queue_size_threshold		},
 //	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
@@ -174,11 +177,11 @@ static param_export_t params[] = {
 
 
 static pv_export_t mod_pvs[] = {
-    {{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity")-1)}, /* The first identity of the contact. */
-     PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
-    {{"pcscf_registration_contact", (sizeof("pcscf_registration_contact")-1)}, /* The contact used during REGISTER */
-     PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
-    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+	{{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity")-1)}, /* The first identity of the contact. */
+	PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
+	{{"pcscf_registration_contact", (sizeof("pcscf_registration_contact")-1)}, /* The contact used during REGISTER */
+	PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
 /*! \brief
@@ -228,6 +231,7 @@ int fix_parameters() {
 static int mod_init(void) {
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
+	bind_ipsec_pcscf_t bind_ipsec_pcscf;
 
 	/*register space for event processor*/
 	register_procs(1);
@@ -259,39 +263,50 @@ static int mod_init(void) {
 	}
 	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
 
-       if(subscribe_to_reginfo == 1){
-               /* Bind to PUA: */
-               bind_pua = (bind_pua_t) find_export("bind_pua", 1, 0);
-               if (!bind_pua) {
-                       LM_ERR("Can't bind pua\n");
-                       return -1;
-               }
-               if (bind_pua(&pua) < 0) {
-                       LM_ERR("Can't bind pua\n");
-                       return -1;
-               }
-               /* Check for Publish/Subscribe methods */
-               if (pua.send_publish == NULL) {
-                       LM_ERR("Could not import send_publish\n");
-                       return -1;
-               }
-               if (pua.send_subscribe == NULL) {
-                       LM_ERR("Could not import send_subscribe\n");
-                       return -1;
-               }
-	       if (pua.get_subs_list == NULL) {
-                       LM_ERR("Could not import get_subs_list\n");
-                       return -1;
-               }
-	       LM_DBG("Successfully bound to PUA module\n");
-	       
-	       /*init cdb cb event list*/
+	bind_ipsec_pcscf = (bind_ipsec_pcscf_t) find_export("bind_ims_ipsec_pcscf", 1, 0);
+	if (!bind_ipsec_pcscf) {
+		LM_ERR("can't bind ims_ipsec_pcscf\n");
+		return -1;
+	}
+
+	if (bind_ipsec_pcscf(&ipsec_pcscf) < 0) {
+		return -1;
+	}
+	LM_INFO("Successfully bound to PCSCF IPSEC module\n");
+
+	if(subscribe_to_reginfo == 1){
+		/* Bind to PUA: */
+		bind_pua = (bind_pua_t) find_export("bind_pua", 1, 0);
+		if (!bind_pua) {
+			LM_ERR("Can't bind pua\n");
+			return -1;
+		}
+		if (bind_pua(&pua) < 0) {
+			LM_ERR("Can't bind pua\n");
+			return -1;
+		}
+		/* Check for Publish/Subscribe methods */
+		if (pua.send_publish == NULL) {
+			LM_ERR("Could not import send_publish\n");
+			return -1;
+		}
+		if (pua.send_subscribe == NULL) {
+			LM_ERR("Could not import send_subscribe\n");
+			return -1;
+		}
+		if (pua.get_subs_list == NULL) {
+			LM_ERR("Could not import get_subs_list\n");
+			return -1;
+		}
+		LM_DBG("Successfully bound to PUA module\n");
+
+		/*init cdb cb event list*/
 		if (!init_reginfo_event_list()) {
 		    LM_ERR("unable to initialise reginfo_event_list\n");
 		    return -1;
 		}
-	       LM_DBG("Successfully initialised reginfo_event_list\n");
-       }
+		LM_DBG("Successfully initialised reginfo_event_list\n");
+	}
 
 	return 0;
 
@@ -308,15 +323,15 @@ static int child_init(int rank)
 {
     
 	LM_DBG("Initialization of module in child [%d] \n", rank);
-        if ((subscribe_to_reginfo == 1) && (rank == PROC_MAIN)) {
-	     LM_DBG("Creating RegInfo Event Processor process\n");
+	if ((subscribe_to_reginfo == 1) && (rank == PROC_MAIN)) {
+		LM_DBG("Creating RegInfo Event Processor process\n");
 	    int pid = fork_process(PROC_SIPINIT, "RegInfo Event Processor", 1);
 	    if (pid < 0)
-		return -1; //error
+			return -1; //error
 	    if (pid == 0) {
-		if (cfg_child_init())
-		    return -1; //error
-		reginfo_event_process();
+			if (cfg_child_init())
+				return -1; //error
+			reginfo_event_process();
 	    }
 	}
     
@@ -358,7 +373,7 @@ static int save_fixup2(void** param, int param_no)
 	if (param_no == 1) {
 		return domain_fixup(param,param_no);
 	}
-        return 0;
+	return 0;
 }
 
 /*! \brief

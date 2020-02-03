@@ -364,6 +364,7 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 	struct via_body *via;
 	hdr_field_t *hfk = NULL;
 	sr_cfgenv_t *cenv = NULL;
+	str nbuf = STR_NULL;
 
 	obuf = (str*)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
@@ -520,11 +521,13 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 		}
 	}
 	/* replace old msg content */
-	obuf->s = pkg_malloc((tbuf_len+1)*sizeof(char));
-	if(obuf->s==NULL) {
+	nbuf.s = pkg_malloc((tbuf_len+1)*sizeof(char));
+	if(nbuf.s==NULL) {
 		LM_ERR("not enough memory for new message\n");
 		goto done;
 	}
+	pkg_free(obuf->s);
+	obuf->s = nbuf.s;
 	memcpy(obuf->s, tbuf, tbuf_len);
 	obuf->s[tbuf_len] = 0;
 	obuf->len = tbuf_len;

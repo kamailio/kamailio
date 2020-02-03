@@ -155,15 +155,15 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 	for (; pit;pit=pit->next)
 	{
 		if PIT_MATCHES("conn") {
-			conn = shm_strdup(pit->body);
+			shm_str_dup(&conn, &pit->body);
 			CHECK_MALLOC(conn.s);
 
 		} else if PIT_MATCHES("srv") {
-			srv = shm_strdup(pit->body);
+			shm_str_dup(&srv, &pit->body);
 			CHECK_MALLOC(srv.s);
 
 		} else if PIT_MATCHES("addr") {
-			addr = shm_strdup(pit->body);
+			shm_str_dup(&addr, &pit->body);
 			CHECK_MALLOC(addr.s);
 
 		} else if PIT_MATCHES("port") {
@@ -280,13 +280,13 @@ int jsonrpc_server_from_srv(str conn, str srv,
 		server = create_server();
 		CHECK_MALLOC(server);
 
-		server->conn = shm_strdup(conn);
+		shm_str_dup(&server->conn, &conn);
 		CHECK_MALLOC_GOTO(server->conn.s, error);
 
-		server->addr = shm_strdup(name);
+		shm_str_dup(&server->addr, &name);
 		CHECK_MALLOC_GOTO(server->addr.s, error);
 
-		server->srv = shm_strdup(srv);
+		shm_str_dup(&server->srv, &srv);
 		CHECK_MALLOC_GOTO(server->srv.s, error);
 
 		server->port = srv_record->port;
@@ -532,7 +532,7 @@ int jsonrpc_add_server(jsonrpc_server_t* server, jsonrpc_server_group_t** group_
 		priority_grp->priority = server->priority;
 		priority_grp->sub_group = weight_grp;
 
-		conn_grp->conn = shm_strdup(server->conn);
+		shm_str_dup(&conn_grp->conn, &server->conn);
 		CHECK_MALLOC_GOTO(conn_grp->conn.s, error);
 
 		conn_grp->sub_group = priority_grp;

@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 
 /**
  * State structure

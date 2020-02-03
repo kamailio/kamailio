@@ -24,7 +24,6 @@
 #include <assert.h>
 #endif /* EXTRA_DEBUG */
 
-#include "defs.h"
 #include "config.h"
 
 #include "t_funcs.h"
@@ -126,9 +125,7 @@ int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 			r=cancel_branch(
 				t,
 				i,
-#ifdef CANCEL_REASON_SUPPORT
 				&cancel_data->reason,
-#endif /* CANCEL_REASON_SUPPORT */
 				flags | ((t->uac[i].request.buffer==NULL)?
 					F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
 			);
@@ -153,11 +150,6 @@ int cancel_all_uacs(struct cell *trans, int how)
 	i=cancel_uacs(trans, &cancel_data, how);
 
 	if (how & F_CANCEL_UNREF)
-#ifndef TM_DEL_UNREF
-	/* in case of 'too many' _buggy_ invocations, the ref count (a uint) might
-	 * actually wrap around, possibly leaving the T leaking. */
-#warning "use of F_CANCEL_UNREF flag is unsafe without defining TM_DEL_UNREF"
-#endif
 		UNREF(trans);
 
 	/* count the still active branches */
@@ -212,9 +204,7 @@ int cancel_all_uacs(struct cell *trans, int how)
  *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
 int cancel_branch( struct cell *t, int branch,
-	#ifdef CANCEL_REASON_SUPPORT
 					struct cancel_reason* reason,
-	#endif /* CANCEL_REASON_SUPPORT */
 					int flags )
 {
 	char *cancel;
@@ -292,16 +282,12 @@ int cancel_branch( struct cell *t, int branch,
 		/* build the CANCEL from the INVITE which was sent out */
 		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
 									 (t->uas.request && t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to
-	#ifdef CANCEL_REASON_SUPPORT
 									 , reason
-	#endif /* CANCEL_REASON_SUPPORT */
 									 );
 	} else {
 		/* build the CANCEL from the received INVITE */
 		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to
-	#ifdef CANCEL_REASON_SUPPORT
 								, reason
-	#endif /* CANCEL_REASON_SUPPORT */
 								);
 	}
 	if (!cancel) {

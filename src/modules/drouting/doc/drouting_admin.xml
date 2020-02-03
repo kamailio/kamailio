@@ -831,7 +831,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.
+		<emphasis>Default value is <quote>&defaultrodb;</quote>.
 		</emphasis>
 		</para>
 		<example>

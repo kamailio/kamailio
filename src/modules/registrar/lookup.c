@@ -160,6 +160,7 @@ int xavp_rcd_helper(ucontact_t* ptr)
 	str xname_received = { "received", 8};
 	str xname_contact = { "contact", 7};
 	str xname_expires = {"expires", 7};
+	str xname_path = {"path", 4};
 	sr_xval_t xval;
 
 	if(ptr==NULL) return -1;
@@ -168,27 +169,41 @@ int xavp_rcd_helper(ucontact_t* ptr)
 
 	list = xavp_get(&reg_xavp_rcd, NULL);
 	xavp = list ? &list->val.v.xavp : &new_xavp;
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->ruid;
-	xavp_add_value(&xname_ruid, &xval, xavp);
 
-	if(ptr->received.len > 0) {
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RUID)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->ruid;
+		xavp_add_value(&xname_ruid, &xval, xavp);
+	}
+
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RCV) && (ptr->received.len > 0)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = ptr->received;
 		xavp_add_value(&xname_received, &xval, xavp);
 	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->c;
-	xavp_add_value(&xname_contact, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_CNT)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->c;
+		xavp_add_value(&xname_contact, &xval, xavp);
+	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = (int) (ptr->expires - time(0));
-	xavp_add_value(&xname_expires, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_EXP)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_INT;
+		xval.v.i = (int) (ptr->expires - time(0));
+		xavp_add_value(&xname_expires, &xval, xavp);
+	}
+
+	if(!(reg_xavp_rcd_mask & AVP_RCD_PATH) && (ptr->path.len > 0)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->path;
+		xavp_add_value(&xname_path, &xval, xavp);
+	}
 
 	if(list==NULL) {
 		/* no reg_xavp_rcd xavp in root list - add it */
@@ -227,6 +242,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	sr_xavp_t *xavp=NULL;
 	sip_uri_t path_uri;
 	str path_str;
+	branch_t *nbranch;
 
 	ret = -1;
 
@@ -419,6 +435,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		}
 
 		_m->reg_id = ptr->reg_id;
+		_m->otcpid = ptr->tcpconn_id;
 
 		if (ptr->ruid.len) {
 			if (set_ruid(_m, &(ptr->ruid)) < 0) {
@@ -507,18 +524,19 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 			 * regarding path vs. received. */
 			LM_DBG("instance is %.*s\n",
 				ptr->instance.len, ptr->instance.s);
-			if (append_branch(_m, &ptr->c,
+			nbranch = ksr_push_branch(_m, &ptr->c,
 					path_dst.len?&path_dst:&ptr->received,
 					path_dst.len?&path_str:0, ptr->q, ptr->cflags,
 					ptr->sock,
 					ptr->instance.len?&(ptr->instance):0,
 						ptr->instance.len?ptr->reg_id:0,
-						&ptr->ruid, &ptr->user_agent)
-					== -1) {
+						&ptr->ruid, &ptr->user_agent);
+			if (nbranch==NULL) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
 			}
+			nbranch->otcpid = ptr->tcpconn_id;
 			if(ptr->xavp!=NULL) {
 				xavp = xavp_clone_level_nodata(ptr->xavp);
 				if(xavp != NULL) {

@@ -405,7 +405,7 @@ inline static void adjust_ticks(void)
 			diff_time_ticks=(ticks_t)((diff_time*TIMER_TICKS_HZ)/1000000LL);
 			delta=(s_ticks_t)(diff_time_ticks-diff_ticks_raw);
 			if (delta<-1){
-				LM_WARN("our timer runs faster then real-time"
+				LM_WARN("our timer runs faster than real-time"
 						" (%lu ms / %u ticks our time .->"
 						" %lu ms / %u ticks real time)\n",
 						(unsigned long)(diff_ticks_raw*1000L/TIMER_TICKS_HZ),
@@ -765,7 +765,7 @@ return ret;
 
 
 
-/* marks a timer as "to be deleted when the handler ends", usefull when
+/* marks a timer as "to be deleted when the handler ends", useful when
  * the timer handler knows it won't prolong the timer anymore (it will
  * return 0) and will do some time consuming work. Calling this function
  * will cause simultaneous timer_dels to return immediately (they won't
@@ -1101,7 +1101,19 @@ void slow_timer_main()
 #endif
 				SET_RUNNING_SLOW(tl);
 				UNLOCK_SLOW_TIMER_LIST();
-					ret=tl->f(*ticks, tl, tl->data);
+					if(likely(tl->f)) {
+						ret=tl->f(*ticks, tl, tl->data);
+					} else {
+						ret =0;
+#ifdef TIMER_DEBUG
+						LM_WARN("null timer callback for %p (%s:%u - %s(...))\n",
+								tl, (tl->add_file)?tl->add_file:"unknown",
+								tl->add_line,
+								(tl->add_func)?tl->add_func:"unknown");
+#else
+						LM_WARN("null callback function for %p\n", tl);
+#endif
+					}
 					/* reset the configuration group handles */
 					cfg_reset_all();
 					if (ret==0){

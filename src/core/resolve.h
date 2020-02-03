@@ -212,161 +212,12 @@ void free_rdata_list(struct rdata* head);
 		(((c)>='a') && ((c)<='f'))? ((c)-'a')+10 : -1 )
 
 
-
-
-
-/* converts a str to an ipv4 address, returns the address or 0 on error
-   Warning: the result is a pointer to a statically allocated structure */
-static inline struct ip_addr* str2ip(str* st)
-{
-	int i;
-	unsigned char *limit;
-	static struct ip_addr ip;
-	unsigned char* s;
-
-	/* just in case that e.g. the VIA parser get confused */
-	if(unlikely(!st->s || st->len <= 0)) {
-		LM_ERR("invalid name, no conversion to IP address possible\n");
-		return 0;
-	}
-	s=(unsigned char*)st->s;
-
-	/*init*/
-	ip.u.addr32[0]=0;
-	i=0;
-	limit=(unsigned char*)(st->s + st->len);
-
-	for(;s<limit ;s++){
-		if (*s=='.'){
-				i++;
-				if (i>3) goto error_dots;
-		}else if ( (*s <= '9' ) && (*s >= '0') ){
-				ip.u.addr[i]=ip.u.addr[i]*10+*s-'0';
-		}else{
-				//error unknown char
-				goto error_char;
-		}
-	}
-	if (i<3) goto error_dots;
-	ip.af=AF_INET;
-	ip.len=4;
-	
-	return &ip;
-error_dots:
-	DBG("str2ip: ERROR: too %s dots in [%.*s]\n", (i>3)?"many":"few", 
-			st->len, st->s);
-	return 0;
- error_char:
-	/*
-	DBG("str2ip: WARNING: unexpected char %c in [%.*s]\n", *s, st->len, st->s);
-	*/
-	return 0;
-}
-
-
-/* returns an ip_addr struct.; on error returns 0
- * the ip_addr struct is static, so subsequent calls will destroy its content*/
-static inline struct ip_addr* str2ip6(str* st)
-{
-	int i, idx1, rest;
-	int no_colons;
-	int double_colon;
-	int hex;
-	static struct ip_addr ip;
-	unsigned short* addr_start;
-	unsigned short addr_end[8];
-	unsigned short* addr;
-	unsigned char* limit;
-	unsigned char* s;
-	
-	/* just in case that e.g. the VIA parser get confused */
-	if(unlikely(!st->s || st->len <= 0)) {
-		LM_ERR("invalid name, no conversion to IP address possible\n");
-		return 0;
-	}
-	/* init */
-	if ((st->len) && (st->s[0]=='[')){
-		/* skip over [ ] */
-		if (st->s[st->len-1]!=']') goto error_char;
-		s=(unsigned char*)(st->s+1);
-		limit=(unsigned char*)(st->s+st->len-1);
-	}else{
-		s=(unsigned char*)st->s;
-		limit=(unsigned char*)(st->s+st->len);
-	}
-	i=idx1=rest=0;
-	double_colon=0;
-	no_colons=0;
-	ip.af=AF_INET6;
-	ip.len=16;
-	addr_start=ip.u.addr16;
-	addr=addr_start;
-	memset(addr_start, 0 , 8*sizeof(unsigned short));
-	memset(addr_end, 0 , 8*sizeof(unsigned short));
-	for (; s<limit; s++){
-		if (*s==':'){
-			no_colons++;
-			if (no_colons>7) goto error_too_many_colons;
-			if (double_colon){
-				idx1=i;
-				i=0;
-				if (addr==addr_end) goto error_colons;
-				addr=addr_end;
-			}else{
-				double_colon=1;
-				addr[i]=htons(addr[i]);
-				i++;
-			}
-		}else if ((hex=HEX2I(*s))>=0){
-				addr[i]=addr[i]*16+hex;
-				double_colon=0;
-		}else{
-			/* error, unknown char */
-			goto error_char;
-		}
-	}
-	if (!double_colon){ /* not ending in ':' */
-		addr[i]=htons(addr[i]);
-		i++; 
-	}
-	/* if address contained '::' fix it */
-	if (addr==addr_end){
-		rest=8-i-idx1;
-		memcpy(addr_start+idx1+rest, addr_end, i*sizeof(unsigned short));
-	}else{
-		/* no double colons inside */
-		if (no_colons<7) goto error_too_few_colons;
-	}
-/*
-	DBG("str2ip6: idx1=%d, rest=%d, no_colons=%d, hex=%x\n",
-			idx1, rest, no_colons, hex);
-	DBG("str2ip6: address %x:%x:%x:%x:%x:%x:%x:%x\n", 
-			addr_start[0], addr_start[1], addr_start[2],
-			addr_start[3], addr_start[4], addr_start[5],
-			addr_start[6], addr_start[7] );
-*/
-	return &ip;
-
-error_too_many_colons:
-	DBG("str2ip6: ERROR: too many colons in [%.*s]\n", st->len, st->s);
-	return 0;
-
-error_too_few_colons:
-	DBG("str2ip6: ERROR: too few colons in [%.*s]\n", st->len, st->s);
-	return 0;
-
-error_colons:
-	DBG("str2ip6: ERROR: too many double colons in [%.*s]\n", st->len, st->s);
-	return 0;
-
-error_char:
-	/*
-	DBG("str2ip6: WARNING: unexpected char %c in  [%.*s]\n", *s, st->len,
-			st->s);*/
-	return 0;
-}
-
-
+int str2ipbuf(str* st, ip_addr_t* ipb);
+int str2ip6buf(str* st, ip_addr_t* ipb);
+int str2ipxbuf(str* st, ip_addr_t* ipb);
+ip_addr_t* str2ip(str* st);
+ip_addr_t* str2ip6(str* st);
+ip_addr_t* str2ipx(str* st);
 
 struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto);
 
@@ -376,7 +227,7 @@ struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto);
 static inline struct hostent* _resolvehost(char* name)
 {
 	static struct hostent* he=0;
-#ifdef HAVE_GETIPNODEBYNAME 
+#ifdef HAVE_GETIPNODEBYNAME
 	int err;
 	static struct hostent* he2=0;
 #endif

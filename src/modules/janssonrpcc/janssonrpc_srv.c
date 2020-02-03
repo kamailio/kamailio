@@ -111,13 +111,13 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 			new_server = create_server();
 			CHECK_MALLOC(new_server);
 
-			new_server->conn = shm_strdup(cgroup->conn);
+			shm_str_dup(&new_server->conn, &cgroup->conn);
 			CHECK_MALLOC(new_server->conn.s);
 
-			new_server->addr = shm_strdup(name);
+			shm_str_dup(&new_server->addr, &name);
 			CHECK_MALLOC(new_server->addr.s);
 
-			new_server->srv = shm_strdup(srv);
+			shm_str_dup(&new_server->srv, &srv);
 			CHECK_MALLOC(new_server->srv.s);
 
 			new_server->port = srv_record->port;
@@ -220,7 +220,7 @@ jsonrpc_srv_t* create_srv(str srv, str conn, unsigned int ttl)
 {
 	jsonrpc_srv_t* new_srv = shm_malloc(sizeof(jsonrpc_srv_t));
 	if(!new_srv) goto error;
-	new_srv->srv = shm_strdup(srv);
+	shm_str_dup(&new_srv->srv, &srv);
 
 	if (ttl < jsonrpc_min_srv_ttl) {
 		new_srv->ttl = jsonrpc_min_srv_ttl;
@@ -229,7 +229,7 @@ jsonrpc_srv_t* create_srv(str srv, str conn, unsigned int ttl)
 	}
 
 	if(create_server_group(CONN_GROUP, &(new_srv->cgroup))<0) goto error;
-	new_srv->cgroup->conn = shm_strdup(conn);
+	shm_str_dup(&new_srv->cgroup->conn, &conn);
 	if(!(new_srv->cgroup->conn.s)) return NULL;
 
 	return new_srv;
@@ -291,7 +291,7 @@ void addto_srv_list(jsonrpc_srv_t* srv, jsonrpc_srv_t** list)
 				}
 			}
 			if(create_server_group(CONN_GROUP, &(cprev->next))<0) goto clean;
-			cprev->next->conn = shm_strdup(srv->cgroup->conn);
+			shm_str_dup(&cprev->next->conn, &srv->cgroup->conn);
 			CHECK_MALLOC_GOTO(cprev->next->conn.s, clean);
 			node->ttl = srv->ttl;
 			goto clean;

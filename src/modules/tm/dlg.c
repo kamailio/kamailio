@@ -117,7 +117,7 @@ int register_dlg_tmcb(int types, dlg_t *dlg, transaction_cb f, void *param)
 		return E_BUG;
 	}
 	if(f == 0) {
-		LM_CRIT("null callback function");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 	return insert_tmcb(&dlg->dlg_callbacks, types, f, param, NULL);
@@ -310,7 +310,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 		_cid = &generated_cid;
 	}
 	if(_cid && (!_ltag)) { /* if not given, compute new one */
-		generate_fromtag(&generated_ltag, _cid);
+		generate_fromtag(&generated_ltag, _cid, _ruri);
 		_ltag = &generated_ltag;
 	}
 	if(_lseq == 0)

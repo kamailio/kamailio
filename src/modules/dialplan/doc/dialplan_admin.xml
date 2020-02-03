@@ -410,6 +410,33 @@ modparam("dialplan", "append_branch", 0)
 		</example>
 	</section>
 
+	<section id="dialplan.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+		The number of seconds that have to be waited before executing a new reload
+		of dialplan rules. By default there is a rate limiting of maximum one reload
+		in five seconds.
+		</para>
+		<para>
+		If set to 0, no rate limit is configured. Note carefully: use this configuration
+		only in tests environments because executing two dialplan reloads at the same
+		time can cause to kamailio to crash.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reload_delta</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialplan", "reload_delta", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -615,13 +642,14 @@ xlog("translated to var $var(y) \n");
 
 	</section>
 
-	<section id="dispatcher.f.dp_reload">
+	<section id="dialplan.f.dp_reload">
 		<title>
 		<function moreinfo="none">dp_reload()</function>
 		</title>
 		<para>
-		Reload the translation rules from the database. Note that there is
-		a rate limiting of maximum one reload in five seconds.
+		Reload the translation rules from the database. Note that there is a
+		rate limiting defined by 'reload_delta' paramenter. By default is allowed
+		maximum one reload in five seconds.
 		</para>
 		<para>
 		Name: <emphasis>dp_reload</emphasis>
@@ -657,7 +685,9 @@ xlog("translated to var $var(y) \n");
 		<section id="dialplan.r.dp.reload">
 			<title><varname>dialplan.reload</varname></title>
 			<para>
-			Forces an update of the translation rules from the database.
+			Perform a reload of the translation rules from the database.
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 			</para>
 			<para>
 			Name: <emphasis>dialplan.reload</emphasis>

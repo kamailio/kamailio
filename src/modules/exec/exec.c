@@ -282,8 +282,11 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 
 		i++;
 	}
-	if(i == 0)
+	if(i == 0) {
 		LM_DBG("no result from %s\n", cmd);
+	} else {
+		LM_DBG("%d results from %s\n", i, cmd);
+	}
 	/* success */
 	ret = 1;
 

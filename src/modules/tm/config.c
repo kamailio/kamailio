@@ -51,7 +51,6 @@ struct cfg_group_tm	default_tm_cfg = {
 	INV_FR_TIME_OUT,	/* fr_inv_timeout */
 	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next */
 	WT_TIME_OUT,	/* wait_timeout */
-	DEL_TIME_OUT,	/* delete_timeout */
 	RETR_T1,	/* rt_t1_timeout_ms */
 	RETR_T2,	/* rt_t2_timeout_ms */
 
@@ -128,9 +127,6 @@ cfg_def_t	tm_cfg_def[] = {
 	{"wt_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"time for which a transaction stays in memory to absorb "
 		"delayed messages after it completed"},
-	{"delete_timer",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
-		"time after which a to-be-deleted transaction currently "
-		"ref-ed by a process will be tried to be deleted again."},
 	{"retr_timer1",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup_ms, 0,
 		"initial retransmission period (in milliseconds)"},
 	{"retr_timer2",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup_ms, 0,

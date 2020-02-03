@@ -192,6 +192,10 @@ modparam("topos", "branch_expire", 300)
 		<title><varname>dialog_expire</varname> (int)</title>
 		<para>
 			Interval in seconds after which the dialog records are deleted.
+			Keep in mind that the module does not update the dialog timestamp
+			after the initial call setup on re-INVITEs or other in-dialog
+			messages. So set a large enough value (according your longest call
+			duration) to prevent problems in re-writing messages.
 		</para>
 		<para>
 		<emphasis>
@@ -337,7 +341,7 @@ event_route[topos:msg-outgoing] {
 		<title>event_route[topos:msg-sending]</title>
 		<para>
 		It is executed before doing topology stripping processing for a SIP
-		message to be sent out, being executed after event_route[topos:sending].
+		message to be sent out, being executed after event_route[topos:msg-outgoing].
 		</para>
 		<para>
 		Inside the event route the variables $sndto(ip), $sndto(port) and

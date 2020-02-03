@@ -324,7 +324,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 		parameter can be used to check for example against the from URI user.
 	    </para>
 	<example>
-		<title><function>check_user_blacklist</function> usage</title>
+		<title><function>check_user_whitelist</function> usage</title>
 		<programlisting format="linespecific">
 ...
 $avp(i:80) = $rU;

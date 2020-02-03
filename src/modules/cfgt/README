@@ -29,8 +29,14 @@ Victor Seva
               3.2. mask (int)
               3.3. callid_prefix (string)
 
-        4. Usage
-        5. Report format
+        4. RPC Commands
+
+              4.1. cfgt.mask
+              4.2. cfgt.list
+              4.3. cfgt.clean
+
+        5. Usage
+        6. Report format
 
    List of Examples
 
@@ -54,8 +60,14 @@ Chapter 1. Admin Guide
         3.2. mask (int)
         3.3. callid_prefix (string)
 
-   4. Usage
-   5. Report format
+   4. RPC Commands
+
+        4.1. cfgt.mask
+        4.2. cfgt.list
+        4.3. cfgt.clean
+
+   5. Usage
+   6. Report format
 
 1. Overview
 
@@ -97,7 +109,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set cfgtrace parameter
 ...
-modparam("cfgt", "basedir", "/var/run/kamailio/cfgtest")
+modparam("cfgt", "basedir", "/run/kamailio/cfgtest")
 ...
 
 3.2. mask (int)
@@ -133,7 +145,64 @@ modparam("cfgt", "mask", 12)
 modparam("cfgt", "callid_prefix", "TEST-ID%")
 ...
 
-4. Usage
+4. RPC Commands
+
+   4.1. cfgt.mask
+   4.2. cfgt.list
+   4.3. cfgt.clean
+
+4.1.  cfgt.mask
+
+   Sets mask module parameter.
+
+   Name: cfgt.mask
+
+   Parameters:
+     * mask : int value
+
+   Example:
+...
+kamcmd cfgt.mask 32
+...
+
+4.2.  cfgt.list
+
+   Lists reports info in memory.
+
+   Name: cfgt.list
+
+   Example:
+...
+kamcmd cfgt.list
+{
+        uuid: unknown
+        msgid: 2
+}
+{
+        uuid: whatever
+        msgid: 1
+}
+200 ok
+...
+
+4.3.  cfgt.clean
+
+   Removes reports from disk and cleans info in memory.
+
+   Name: cfgt.clean
+
+   Parameters:
+     * report : string value
+       use 'all' to clean any report
+
+   Example:
+...
+kamcmd cfgt.clean unknown
+...
+kamcmd cfgt.clean all
+...
+
+5. Usage
 
    This module is used by the debugger module, so it must be loaded first.
    To enable the generation of the reports, the debugger module must be
@@ -160,7 +229,7 @@ modparam("debugger", "cfgtest", 1)
 #!endif
 ...
 
-5. Report format
+6. Report format
 
    cfgt generates a json file per request processed. The files are created
    at <basedir>/<prefix>/<message_id>.json. The “message_id” is a sequence

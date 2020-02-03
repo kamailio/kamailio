@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include "../../core/compiler_opt.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/parser/msg_parser.h"

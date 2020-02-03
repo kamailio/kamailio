@@ -971,6 +971,36 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
 			processing will use it.
 			</para>
 		</section>
+		<section id="avpops.f.avp_subst_pv">
+			<title>
+				<function moreinfo="none">avp_subst_pv(avps, subst)</function>
+			</title>
+			<para>
+			Same functionality than avp_subst() but seccond parameter will be
+			evaluated first.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_subst_pv</function> usage</title>
+				<programlisting format="linespecific">
+...
+$(avp(src)[*]) = "testME";
+$var(z) = "j";
+$var(y) = "e";
+$var(x) = "/" + $var(y) + "/" + $var(z) + "/gi";
+
+## all this calls will produce the same result "tjstMj"
+avp_subst_pv("$avp(src)", "/e/j/gi");
+avp_subst_pv("$avp(src)", "/" + $var(y) + "/" + $var(z) + "/gi");
+avp_subst_pv("$avp(src)", "/$var(y)/$var(z)/gi");
+avp_subst_pv("$avp(src)", "$var(x)");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="avpops.f.avp_op">
 			<title>
 				<function moreinfo="none">avp_op(name,op_value)

@@ -427,9 +427,11 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
    A bitmap that allows you to control the sub-protocols supported by the
    WebSocket server.
      * 1 - sip (RFC 7118)
-     * 2 - msrp (RFC 7977) - msrp.so must be loaded before websocket.so
+     * 2 - msrp (RFC 7977) - the msrp module must be loaded before the
+       websocket module
 
-   Default value is 1 when msrp.so is not loaded 3 when msrp.so is loaded.
+   Default value is 1 when msrp module is not loaded, 3 when msrp module
+   is loaded.
 
    Example 1.8. Set sub_protocols parameter
 ...

@@ -40,6 +40,7 @@
 #include "regtime.h"
 #include "reply.h"
 #include "config.h"
+#include "lookup.h"
 
 #define MAX_CONTACT_BUFFER 1024
 
@@ -173,14 +174,6 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	unsigned int ahash;
 	unsigned short digit;
 	int mode;
-	sr_xavp_t **xavp=NULL;
-	sr_xavp_t *list=NULL;
-	sr_xavp_t *new_xavp=NULL;
-	str xname = {"ruid", 4};
-	str ename = {"expires", 7};
-	sr_xval_t xval;
-
-
 
 	if(msg!=NULL && parse_supported(msg)==0
 			&& (get_supported(msg) & F_OPTION_TAG_GRUU))
@@ -209,13 +202,6 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 
 	memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
 	p += CONTACT_BEGIN_LEN;
-
-	/* add xavp with details of the record (ruid, ...) */
-	if(reg_xavp_rcd.s!=NULL)
-	{
-		list = xavp_get(&reg_xavp_rcd, NULL);
-		xavp = list ? &list->val.v.xavp : &new_xavp;
-	}
 
 	fl = 0;
 	while(c) {
@@ -333,40 +319,11 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 			}
 			if(reg_xavp_rcd.s!=NULL)
 			{
-				memset(&xval, 0, sizeof(sr_xval_t));
-				xval.type = SR_XTYPE_STR;
-				xval.v.s = c->ruid;
-
-				if(xavp_add_value(&xname, &xval, xavp)==NULL) {
-					LM_ERR("cannot add ruid value to xavp\n");
-				}
-				/* Add contact expiry */
-				memset(&xval, 0, sizeof(sr_xval_t));
-				xval.type = SR_XTYPE_INT;
-				xval.v.i = (int)(c->expires - act_time);
-
-				if(xavp_add_value(&ename, &xval, xavp)==NULL) {
-					LM_ERR("cannot add expires value to xavp\n");
-				}
+				xavp_rcd_helper(c);
 			}
 		}
 
 		c = c->next;
-	}
-
-	/* add xavp with details of the record (ruid, ...) */
-
-	if(reg_xavp_rcd.s!=NULL)
-	{
-		if(list==NULL && *xavp!=NULL)
-		{
-			xval.type = SR_XTYPE_XAVP;
-			xval.v.xavp = *xavp;
-			if(xavp_add_value(&reg_xavp_rcd, &xval, NULL)==NULL) {
-				LM_ERR("cannot add ruid xavp to root list\n");
-				xavp_destroy_list(xavp);
-			}
-		}
 	}
 
 	memcpy(p, CRLF, CRLF_LEN);

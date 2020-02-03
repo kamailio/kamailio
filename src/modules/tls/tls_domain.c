@@ -49,6 +49,7 @@ extern EVP_PKEY * tls_engine_private_key(const char* key_id);
 #include "tls_init.h"
 #include "tls_domain.h"
 #include "tls_cfg.h"
+#include "tls_verify.h"
 
 /*
  * ECDHE is enabled only on OpenSSL 1.0.0e and later.
@@ -174,6 +175,7 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_cert = -1;
 	d->verify_depth = -1;
 	d->require_cert = -1;
+	d->verify_client = -1;
 	return d;
 }
 
@@ -352,6 +354,9 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 	
 	if (d->verify_depth == -1) d->verify_depth = parent->verify_depth;
 	LOG(L_INFO, "%s: verify_depth=%d\n", tls_domain_str(d), d->verify_depth);
+
+	if (d->verify_client == -1) d->verify_client = parent->verify_client;
+	LOG(L_INFO, "%s: verify_client=%d\n", tls_domain_str(d), d->verify_client);
 
 	return 0;
 }
@@ -686,12 +691,12 @@ static int set_verification(tls_domain_t* d)
 	int verify_mode, i;
 	int procs_no;
 
-	if (d->require_cert) {
+	if (d->require_cert || d->verify_client == TLS_VERIFY_CLIENT_ON) {
 		verify_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 		LOG(L_INFO, "%s: %s MUST present valid certificate\n", 
 			tls_domain_str(d), d->type & TLS_DOMAIN_SRV ? "Client" : "Server");
 	} else {
-		if (d->verify_cert) {
+		if (d->verify_cert || d->verify_client >= TLS_VERIFY_CLIENT_OPTIONAL) {
 			verify_mode = SSL_VERIFY_PEER;
 			if (d->type & TLS_DOMAIN_SRV) {
 				LOG(L_INFO, "%s: IF client provides certificate then it"
@@ -711,12 +716,17 @@ static int set_verification(tls_domain_t* d)
 			}
 		}
 	}
-	
+
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		SSL_CTX_set_verify(d->ctx[i], verify_mode, 0);
+		if (d->verify_client >= TLS_VERIFY_CLIENT_OPTIONAL_NO_CA) {
+			/* Note that actual verification result is available in $tls_peer_verified */
+			SSL_CTX_set_verify(d->ctx[i], verify_mode, verify_callback_unconditional_success);
+		} else {
+			SSL_CTX_set_verify(d->ctx[i], verify_mode, 0);
+		}
 		SSL_CTX_set_verify_depth(d->ctx[i], d->verify_depth);
-		
+
 	}
 	return 0;
 }
@@ -1061,17 +1071,20 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 		* check server domains for server_name extension and register
 		* callback function
 		*/
-		if ((d->type & TLS_DOMAIN_SRV) && d->server_name.len>0) {
+		if ((d->type & TLS_DOMAIN_SRV)
+				&& (d->server_name.len>0 || (d->type & TLS_DOMAIN_DEF))) {
 			if (!SSL_CTX_set_tlsext_servername_callback(d->ctx[i], tls_server_name_cb)) {
 				LM_ERR("register server_name callback handler for socket "
 					"[%s:%d], server_name='%s' failed for proc %d\n",
-					ip_addr2a(&d->ip), d->port, d->server_name.s, i);
+					ip_addr2a(&d->ip), d->port,
+					(d->server_name.s)?d->server_name.s:"<default>", i);
 				return -1;
 			}
 			if (!SSL_CTX_set_tlsext_servername_arg(d->ctx[i], d)) {
 				LM_ERR("register server_name callback handler data for socket "
 					"[%s:%d], server_name='%s' failed for proc %d\n",
-					ip_addr2a(&d->ip), d->port, d->server_name.s, i);
+					ip_addr2a(&d->ip), d->port,
+					(d->server_name.s)?d->server_name.s:"<default>", i);
 				return -1;
 			}
 		}
@@ -1079,10 +1092,11 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 	}
 
 #ifndef OPENSSL_NO_TLSEXT
-	if ((d->type & TLS_DOMAIN_SRV) && d->server_name.len>0) {
+	if ((d->type & TLS_DOMAIN_SRV)
+			&& (d->server_name.len>0 || (d->type & TLS_DOMAIN_DEF))) {
 		LM_NOTICE("registered server_name callback handler for socket "
 			"[%s:%d], server_name='%s' ...\n", ip_addr2a(&d->ip), d->port,
-			d->server_name.s);
+			(d->server_name.s)?d->server_name.s:"<default>");
 	}
 #endif
 
@@ -1180,7 +1194,7 @@ EVP_PKEY* tls_lookup_private_key(SSL_CTX* ctx)
 static int load_engine_private_key(tls_domain_t* d)
 {
 	int idx, ret_pwd, i;
-	EVP_PKEY *pkey;
+	EVP_PKEY *pkey = 0;
 	int procs_no;
 	char ctx_str[64];
 
@@ -1529,7 +1543,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 				p->server_id.len, ZSW(p->server_id.s),
 				srvid->len, ZSW(srvid->s));
 			if(p->server_id.s && p->server_id.len==srvid->len
-					&& strncasecmp(p->server_name.s, srvid->s, srvid->len)==0) {
+					&& strncasecmp(p->server_id.s, srvid->s, srvid->len)==0) {
 				LM_DBG("TLS config found by server id\n");
 				return p;
 			}
@@ -1559,7 +1573,7 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 				if ((p->server_name_mode==KSR_TLS_SNM_INCDOM
 							|| p->server_name_mode==KSR_TLS_SNM_SUBDOM)
 						&& (p->server_name.len<sname->len)) {
-					dotpos = sname->len - p->server_name.len;
+					dotpos = sname->len - p->server_name.len - 1;
 					if(sname->s[dotpos] == '.'
 							&& strncasecmp(p->server_name.s,
 									sname->s + dotpos + 1,

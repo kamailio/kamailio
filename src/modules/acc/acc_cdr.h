@@ -35,6 +35,9 @@
  *  version).
  *
  */
+#ifndef _ACC_CDR_H_
+#define _ACC_CDR_H_
+
 
 #define MAX_CDR_CORE 3
 #define MAX_CDR_EXTRA 64
@@ -44,6 +47,7 @@ int set_cdr_extra( char* cdr_extra_value);
 int set_cdr_facility( char* cdr_facility);
 int init_cdr_generation( void);
 void destroy_cdr_generation( void);
+int cdr_core2strar( struct dlg_cell* dlg, str* values, int* unused, char* types);
 
 
-
+#endif

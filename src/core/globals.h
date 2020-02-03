@@ -93,6 +93,8 @@ extern int socket_workers;
 #ifdef USE_TCP
 extern int tcp_main_pid;
 extern int tcp_cfg_children_no;
+extern int tcp_accept_unique;
+extern int tcp_connection_match;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern enum poll_types tcp_poll_method;
@@ -140,6 +142,7 @@ extern char* mcast;
 #endif /* USE_MCAST */
 
 extern int auto_bind_ipv6;
+extern int sr_bind_ipv6_link_local;
 
 extern int tos;
 extern int pmtu_discovery;
@@ -211,6 +214,8 @@ extern int ksr_verbose_startup;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
+
+extern char *_sr_uri_host_extra_chars;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */

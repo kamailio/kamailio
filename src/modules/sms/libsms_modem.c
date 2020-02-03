@@ -125,7 +125,7 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 				}
 			}
 		}
-	/* repeat until timout */
+	/* repeat until timeout */
 	}while (timeoutcounter<timeout);
 
 	if (!answer_e)

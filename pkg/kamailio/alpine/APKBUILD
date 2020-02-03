@@ -25,11 +25,14 @@ arch="all"
 license="GPL-2.0"
 depends="gawk"
 options="!check"
-makedepends="bison db-dev flex freeradius-client-dev expat-dev lksctp-tools-dev perl-dev postgresql-dev python2-dev pcre-dev mariadb-dev
-	libxml2-dev curl-dev unixodbc-dev confuse-dev ncurses-dev sqlite-dev
-	lua-dev openldap-dev openssl-dev net-snmp-dev libuuid libev-dev
-	jansson-dev json-c-dev libevent-dev linux-headers libmemcached-dev
-	rabbitmq-c-dev hiredis-dev libmaxminddb-dev libunistring-dev ruby-dev"
+makedepends="bison db-dev flex freeradius-client-dev expat-dev
+	lksctp-tools-dev perl-dev postgresql-dev python2-dev python3-dev
+	pcre-dev mariadb-dev libxml2-dev curl-dev unixodbc-dev
+	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
+	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
+	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev"
+
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
 # secfixes:
@@ -159,8 +162,14 @@ _mod_list_lua="app_lua"
 # - modules depending on perl library
 _mod_list_perl="app_perl db_perlvdb"
 
-# - modules depending on python library
+# - modules depending on python2 library
 _mod_list_python="app_python"
+
+# - modules depending on ruby library
+_mod_list_ruby="app_ruby"
+
+# - modules depending on python3 libarary
+_mod_list_python3="app_python3"
 
 # - modules depending on ruby library
 _mod_list_ruby="app_ruby"
@@ -178,17 +187,17 @@ _mod_list_sqlite="db_sqlite"
 _mod_list_oracle="db_oracle"
 
 # - modules depending on json library
-_mod_list_json="json jsonrpcc jsonrpcs"
+_mod_list_json="json jsonrpcc jsonrpcs pua_json"
 
 # - modules depending on redis library
-_mod_list_redis="ndb_redis topos_redis"
+_mod_list_redis="db_redis ndb_redis topos_redis"
 
 # - modules depending on mono library
 _mod_list_mono="app_mono"
 
 # - modules related to IMS extensions
 _mod_list_ims="cdp cdp_avp ims_dialog ims_diameter_server ims_auth ims_isc ims_icscf ims_qos \
-		ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
+		ims_ocs ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
 		ims_usrloc_scscf ims_charging"
 
 # - modules depending on osp toolkit library
@@ -216,7 +225,7 @@ _mod_list_kazoo="kazoo"
 _mod_list_mongodb="db_mongodb ndb_mongodb"
 
 # - modules depending on jansson library
-_mod_list_jansson="jansson janssonrpcc"
+_mod_list_jansson="acc_json jansson janssonrpcc"
 
 # - modules depending on libm
 _mod_list_jsdt="app_jsdt"
@@ -239,14 +248,15 @@ _module_group_kstandard="$_mod_list_basic $_mod_list_dbuid $_mod_list_pcre"
 
 # END Makefile.groups #############################################################
 
-subpackages="$pkgname-doc $pkgname-dbg"
+subpackages="$pkgname-doc $pkgname-dbg $pkgname-openrc"
 _modules="$_module_group_kstandard"
 for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
 	ldap utils tls presence lua ims outbound debugger \
-	extras json websocket authephemeral \
+	extras json websocket authephemeral mongodb\
 	uuid ev memcached redis geoip2 jansson sqlang sipdump \
-	jsdt http_async kazoo rabbitmq sctp radius perl python ruby; do
+	jsdt http_async kazoo rabbitmq sctp radius perl python \
+	python3 ruby; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -280,7 +290,7 @@ prepare() {
 	cd "$builddir"
 
 	cd utils/kamctl/
-	sed -i -e 's:/var/run/kamailio.pid:/var/run/kamailio/kamailio.pid:g' \
+	sed -i -e 's:/run/kamailio.pid:/run/kamailio/kamailio.pid:g' \
 		kamctl.base kamctlrc || return 1
 	# we actually dont need bash
 	sed -i -e 's:/bin/bash:/bin/sh:' kamctl kamdbctl \
@@ -308,7 +318,7 @@ package() {
 	make  FREERADIUS=1 -j1 install || return 1
 
 	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
-	install -d -o kamailio "$pkgdir"/var/run/kamailio
+	install -d -o kamailio "$pkgdir"/run/kamailio
 }
 
 _mv_mod() {
@@ -489,6 +499,11 @@ memcached() {
 		"$_mod_list_memcached"
 }
 
+mongodb() {
+	_generic_pkg "MongoDB database connectivity" \
+	"$_mod_list_mongodb"
+}
+
 rabbitmq() {
 	_generic_pkg "RabbitMQ client for configuration file" \
 		"$_mod_list_rabbitmq"
@@ -531,12 +546,22 @@ perl() {
 }
 
 python() {
-	_generic_pkg "Python extensions for Kamailio" \
+	_generic_pkg "Execute embedded Python2 scripts" \
 		"$_mod_list_python"
 }
 
 ruby() {
 	_generic_pkg "Ruby extensions for Kamailio" \
+		"$_mod_list_ruby"
+}
+
+python3() {
+	_generic_pkg "Execute embedded Python3 scripts" \
+		"$_mod_list_python3"
+}
+
+ruby() {
+	_generic_pkg "Execute embedded Ruby scripts" \
 		"$_mod_list_ruby"
 }
 
@@ -556,4 +581,4 @@ sipdump() {
 }
 
 sha512sums="51ea5fccd27a9d3d1783cfc5596eb28ab27e34faeec3268600363f43c48a3634c3c584c479ba874fdb53b85766a0ce8fe7df0e20954c9c6514b1d9d41d9237e6  kamailio-5.1.0.20171125-991fe9b.tar.gz
-321b1b160434150bcde3c0ad7f47ddf259791b68d4ce74ba4c35034026421a2bc6f5e86f26f393f5fcdb523d8cd75f944709473065553ce860b0ea06b3dc2a1b  kamailio.initd"
+a777338f1a60b95aa2bf3e38314a0cfa77a3397ccad342955409eb95f66ad9c38a3a64d2974d353d50f2aced3936b209063a0f0a7127851b1c278d8384f4cc45  kamailio.initd"

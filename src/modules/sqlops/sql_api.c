@@ -35,6 +35,8 @@
 
 #include "sql_api.h"
 
+#define SQLOPS_RESULT_MAXSIZE 32
+
 sql_con_t *_sql_con_root = NULL;
 sql_result_t *_sql_result_root = NULL;
 
@@ -209,16 +211,24 @@ sql_result_t* sql_get_result(str *name)
 {
 	sql_result_t *sr;
 	unsigned int resid;
+	int i;
 
 	resid = core_case_hash(name, 0, 0);
 
 	sr = _sql_result_root;
+	i = 0;
 	while(sr)
 	{
 		if(sr->resid==resid && sr->name.len==name->len
 				&& strncmp(sr->name.s, name->s, name->len)==0)
 			return sr;
+		i++;
 		sr = sr->next;
+	}
+	if(i>SQLOPS_RESULT_MAXSIZE)
+	{
+		LM_ERR("too many result containers defined\n");
+		return NULL;
 	}
 	sr = (sql_result_t*)pkg_malloc(sizeof(sql_result_t) + name->len);
 	if(sr==NULL)
@@ -736,7 +746,7 @@ int sqlops_do_query(str *scon, str *squery, str *sres)
 		res = sql_get_result(sres);
 		if(res==NULL)
 		{
-			LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+			LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 			goto error;
 		}
 	}
@@ -764,7 +774,7 @@ int sqlops_get_value(str *sres, int i, int j, sql_val_t **val)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
 	if(i>=res->nrows)
@@ -800,7 +810,7 @@ int sqlops_is_null(str *sres, int i, int j)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
 	if(i>=res->nrows)
@@ -836,7 +846,7 @@ int sqlops_get_column(str *sres, int i, str *col)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
 	if(i>=res->ncols)
@@ -866,7 +876,7 @@ int sqlops_num_columns(str *sres)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
 	return res->ncols;
@@ -890,7 +900,7 @@ int sqlops_num_rows(str *sres)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
 	return res->nrows;
@@ -914,7 +924,7 @@ void sqlops_reset_result(str *sres)
 	res = sql_get_result(sres);
 	if(res==NULL)
 	{
-		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		return;
 	}
 	sql_reset_result(res);

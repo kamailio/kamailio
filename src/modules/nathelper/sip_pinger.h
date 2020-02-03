@@ -30,6 +30,7 @@
 #include "../../core/str.h"
 #include "../../core/ut.h"
 #include "../../core/ip_addr.h"
+#include "../../core/rand/kam_rand.h"
 
 /* size of buffer used for building SIP PING req */
 #define MAX_SIPPING_SIZE 65536
@@ -56,15 +57,15 @@ static void init_sip_ping(void)
 	char *p;
 
 	/* FROM tag - some random number */
-	sipping_fromtag = rand();
+	sipping_fromtag = kam_rand();
 	/* callid fix part - hexa string */
 	len = 8;
 	p = sipping_callid_buf;
-	int2reverse_hex(&p, &len, rand());
+	int2reverse_hex(&p, &len, kam_rand());
 	sipping_callid.s = sipping_callid_buf;
 	sipping_callid.len = 8 - len;
 	/* callid counter part */
-	sipping_callid_cnt = rand();
+	sipping_callid_cnt = kam_rand();
 }
 
 

@@ -982,7 +982,7 @@ install_initd_debian install-initd-debian:
 	sed -e "s#DAEMON=/usr/sbin/kamailio#DAEMON=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
 		-e "s#NAME=kamailio#NAME=$(NAME)#g" \
 		-e "s#DESC=Kamailio#DESC=$(NAME)#g" \
-		-e "s#HOMEDIR=/var/run/kamailio#HOMEDIR=/var/run/$(NAME)#g" \
+		-e "s#HOMEDIR=/run/kamailio#HOMEDIR=/run/$(NAME)#g" \
 		-e "s#DEFAULTS=/etc/default/kamailio#DEFAULTS=/etc/default/$(NAME)#g" \
 		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
 		< pkg/kamailio/deb/debian/kamailio.init \
@@ -991,18 +991,18 @@ install_initd_debian install-initd-debian:
 	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
 		< pkg/kamailio/deb/debian/kamailio.default \
 		> /etc/default/$(NAME)
-	mkdir -p /var/run/$(NAME)
+	mkdir -p /run/$(NAME)
 	adduser --quiet --system --group --disabled-password \
         --shell /bin/false --gecos "$(NAME)" \
-        --home /var/run/$(NAME) $(NAME)
-	chown $(NAME):$(NAME) /var/run/$(NAME)
+        --home /run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /run/$(NAME)
 
 .PHONY: install_initd_centos install-initd-centos
 install_initd_centos install-initd-centos:
 	sed -e "s#KAM=/usr/sbin/kamailio#KAM=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
 		-e "s#PROG=kamailio#PROG=$(NAME)#g" \
 		-e "s#DEFAULTS=/etc/default/kamailio#DEFAULTS=/etc/default/$(NAME)#g" \
-		-e "s#PID_FILE=/var/run/kamailio.pid#PID_FILE=/var/run/$(NAME).pid#g" \
+		-e "s#PID_FILE=/run/kamailio.pid#PID_FILE=/run/$(NAME).pid#g" \
 		-e "s#LOCK_FILE=/var/lock/subsys/kamailio#LOCK_FILE=/var/lock/subsys/$(NAME)#g" \
 		-e "s#KAMCFG=/etc/kamailio/kamailio.cfg#KAMCFG=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
 		< pkg/kamailio/rpm/kamailio.init \
@@ -1013,17 +1013,17 @@ install_initd_centos install-initd-centos:
 		-e "s#GROUP=kamailio#GROUP=$(NAME)#g" \
 		< pkg/kamailio/rpm/kamailio.default \
 		> /etc/default/$(NAME)
-	mkdir -p /var/run/$(NAME)
+	mkdir -p /run/$(NAME)
 	/usr/sbin/groupadd -r $(NAME)
 	/usr/sbin/useradd -r -g $(NAME) -s /bin/false -c "Kamailio Daemon" \
-                  -d /var/run/$(NAME) $(NAME)
-	chown $(NAME):$(NAME) /var/run/$(NAME)
+                  -d /run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /run/$(NAME)
 
 .PHONY: install_systemd_debian install-systemd-debian
 install_systemd_debian install-systemd-debian:
 	sed -e "s#ExecStart=/usr/sbin/kamailio#ExecStart=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
 		-e "s#Description=Kamailio#Description=$(NAME)#g" \
-		-e "s#/var/run/kamailio/kamailio.pid#/var/run/$(NAME)/$(NAME).pid#g" \
+		-e "s#/run/kamailio/kamailio.pid#/run/$(NAME)/$(NAME).pid#g" \
 		-e "s#EnvironmentFile=-/etc/default/kamailio#EnvironmentFile=-/etc/default/$(NAME)#g" \
 		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
 		< ../pkg/kamailio/deb/debian/kamailio.service \
@@ -1031,11 +1031,11 @@ install_systemd_debian install-systemd-debian:
 	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
 		< ../pkg/kamailio/deb/debian/kamailio.default \
 		> /etc/default/$(NAME)
-	mkdir -p /var/run/$(NAME)
+	mkdir -p /run/$(NAME)
 	adduser --quiet --system --group --disabled-password \
         --shell /bin/false --gecos "$(NAME)" \
-        --home /var/run/$(NAME) $(NAME)
-	chown $(NAME):$(NAME) /var/run/$(NAME)
+        --home /run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /run/$(NAME)
 	echo "D /run/$(NAME) 0700 $(NAME) $(NAME) -" > /etc/tmpfiles.d/$(NAME).conf
 	@echo
 	@echo "* to enable kamailio service run:"
@@ -1045,18 +1045,18 @@ install_systemd_debian install-systemd-debian:
 install_systemd_centos install-systemd-centos:
 	sed -e "s#ExecStart=/usr/sbin/kamailio#ExecStart=$(bin_prefix)/$(bin_dir)$(NAME)#g" \
 		-e "s#Description=Kamailio#Description=$(NAME)#g" \
-		-e "s#/var/run/kamailio/kamailio.pid#/var/run/$(NAME)/$(NAME).pid#g" \
+		-e "s#/run/kamailio/kamailio.pid#/run/$(NAME)/$(NAME).pid#g" \
 		-e "s#EnvironmentFile=-/etc/sysconfig/kamailio#EnvironmentFile=-/etc/sysconfig/$(NAME)#g" \
 		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
 		< ../pkg/kamailio/obs/kamailio.service \
 		> /etc/systemd/system/$(NAME).service
 	cp ../pkg/kamailio/obs/kamailio.sysconfig \
 		/etc/sysconfig/$(NAME)
-	mkdir -p /var/run/$(NAME)
-	chmod 0700 /var/run/$(NAME)
+	mkdir -p /run/$(NAME)
+	chmod 0700 /run/$(NAME)
 	groupadd --system $(NAME)
-	useradd $(NAME) --system --shell /sbin/nologin -g $(NAME) --home /var/run/$(NAME)
-	chown $(NAME):$(NAME) /var/run/$(NAME)
+	useradd $(NAME) --system --shell /sbin/nologin -g $(NAME) --home /run/$(NAME)
+	chown $(NAME):$(NAME) /run/$(NAME)
 	echo "D /run/$(NAME) 0700 $(NAME) $(NAME) -" > /etc/tmpfiles.d/$(NAME).conf
 	@echo
 	@echo "* to enable kamailio service run:"

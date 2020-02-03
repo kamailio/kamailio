@@ -18,15 +18,15 @@
 	<title>Overview</title>
 	<para>
 		ACC module is used to account transactions information to different
-		backends like syslog and <abbrev>SQL</abbrev>. With the separate module,
-		<acronym>radius</acronym> support is enabled.
+		backends like syslog and <abbrev>SQL</abbrev>. With the separate module
+		<quote>acc_radius</quote> support for <acronym>radius</acronym> is enabled.
 	</para>
 	<para>
-		There is some very early support of
-		the <acronym>Diameter</acronym> protocol in the code which is no longer included
-		by default and will be deleted in coming releases.
-		This support is not up to date with the current Diameter protocols and
-		is disabled. If you need Diameter support, please use the <acronym>ims_charging</acronym> module.
+		There is some very early support of the <acronym>Diameter</acronym>
+		protocol in the <quote>acc_diameter</quote> module which will be deleted
+		in coming releases. This support is not up to date with the current
+		Diameter protocols. If you need Diameter support, please use the
+		<acronym>ims_charging</acronym> module.
 	</para>
 	<para>
 		To account a transaction and to choose which set of backends to be
@@ -104,18 +104,8 @@
 		</itemizedlist>
 	</para>
 	<para>
-		The SQL backend support is compiled in the module. For
-		DIAMETER you need to enable it by recompiling the module with properly
-		set defines: uncomment the DDIAM_ACC lines in
-		modules/acc/Makefile.
+		The SQL backend support is compiled in the module.
         </para>
-	<para>
-		NOTE: diameter support was developed for DISC (DIameter Server Client
-		project at http://developer.berlios.de/projects/disc/). This project
-		seems to be no longer maintained and DIAMETER specifications were updated
-		in the meantime. Thus, the DIAMETER part in the module is obsolete and
-		needs rework to be usable with opendiameter or other DIAMETER servers.
-	</para>
 	<section>
 		<title>General Example</title>
 		<programlisting format="linespecific">
@@ -362,10 +352,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 					</itemizedlist>
 					See also <xref linkend="acc.p.cdr_extra"/>.
 					<para>
-					The full list of supported pseudo-variables in Sip-Router is
-					available at:
-					<ulink url="http://sip-router.org/wiki/cookbooks/pseudo-variables/devel">
-					http://sip-router.org/wiki/cookbooks/pseudo-variables/devel</ulink>
+					The list with all pseudo-variables in &kamailio; can
+					be found at: &kamwikilink;.
 					</para>
 			</section>
 		</section>
@@ -499,7 +487,9 @@ modparam("acc", "early_media", 1)
 		<title><varname>failed_transaction_flag</varname> (integer)</title>
 		<para>
 		Per transaction flag which says if the transaction should be
-		accounted also in case of failure (status>=300).
+		accounted also in case of failure (SIP status code >= 300).
+		This flag triggers accouting when the whole transaction fails
+		(on the server side).
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -688,6 +678,14 @@ modparam("acc", "log_flag", 2)
 		<title><varname>log_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed calls via syslog.
+		This can be used to e.g. account failures during the call setup phase
+		from the callee (client) side, for example if you do forking to several
+		destinations.
+		</para>
+		<para>
+		Keep in mind that this flag is reset after branch completion. Therefore
+		it is necessary to set it again e.g. in a failure_route if you do serial
+		forking and want to log all attempts.
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -777,8 +775,15 @@ modparam("acc", "db_flag", 2)
 	<section id="acc.p.db_missed_flag">
 		<title><varname>db_missed_flag</varname> (integer)</title>
 		<para>
-		Request flag which needs to be set to account missed
-		calls -- database specific.
+		Request flag which needs to be set to account missed calls via database.
+		This can be used to e.g. account failures during the call setup phase
+		from the callee (client) side, for example if you do forking to several
+		destinations.
+		</para>
+		<para>
+		Keep in mind that this flag is reset after branch completion. Therefore
+		it is necessary to set it again e.g. in a failure_route if you do serial
+		forking and want to log all attempts.
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -1010,97 +1015,6 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 		<programlisting format="linespecific">
 ...
 modparam("acc", "db_insert_mode", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	<!-- DIAMETER specific ACC parameters -->
-	<section id="acc.p.diameter_flag">
-		<title><varname>diameter_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a
-		transaction -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is not-set (no flag).
-		</para>
-		<example>
-		<title>diameter_flag example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "diameter_flag", 2)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.diameter_missed_flag">
-		<title><varname>diameter_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed
-		calls -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is not-set (no flag).
-		</para>
-		<example>
-		<title>diameter_missed_flag example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "diameter_missed_flag", 3)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.diameter_client_host">
-		<title><varname>diameter_client_host</varname> (string)</title>
-		<para>
-		Hostname of the machine where the DIAMETER Client is
-		running -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is <quote>localhost</quote>.
-		</para>
-		<example>
-		<title>diameter_client_host example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "diameter_client_host", "3a_server.net")
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.diameter_client_port">
-		<title><varname>diameter_client_port</varname> (int)</title>
-		<para>
-		Port number where the Diameter Client is
-		listening -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is 3000.
-		</para>
-		<example>
-		<title>diameter_client_host example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "diameter_client_port", 3000)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.diameter_extra">
-		<title><varname>diameter_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged via DIAMETER - DIAMETER specific.
-		See section <xref linkend="acc.i.extra-accounting"/> for more details.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>diameter_extra example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 ...
 </programlisting>
 		</example>

@@ -444,7 +444,8 @@ int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 			free_req_cmd(req->cmd);
 			free_request(req);
 		} else {
-			const struct timeval tv = ms_to_tv(req->timeout);
+			struct timeval tv;
+			jsr_ms_to_tv(req->timeout, tv);
 
 			req->timeout_ev = evtimer_new(global_ev_base, timeout_cb, (void*)req);
 			if(event_add(req->timeout_ev, &tv)<0) {

@@ -16,7 +16,7 @@ PYTHON3_LIBDIR=${shell ${PYTHON3} -c "import distutils.sysconfig;print(distutils
 PYTHON3_LDFLAGS=${shell ${PYTHON3} -c "import distutils.sysconfig;print(distutils.sysconfig.get_config_var('LINKFORSHARED'))"}
 PYTHON3_INCDIR=${shell ${PYTHON3} -c "import distutils.sysconfig;print(distutils.sysconfig.get_python_inc())"}
 
-LIBS=${shell ${PYTHON3}-config --libs}
+LIBS=${shell ${PYTHON3}-config --ldflags}
 
 ifeq ($(OS), freebsd)
 LIBS+=-pthread

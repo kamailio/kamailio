@@ -465,7 +465,7 @@ modparam("msilo", "expire_time", 36000)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>30</quote>.
+			Default value is <quote>60</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -509,7 +509,7 @@ modparam("msilo", "send_time", 60)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>5</quote>.
+			Default value is <quote>10</quote>.
 		</emphasis>
 		</para>
 		<example>

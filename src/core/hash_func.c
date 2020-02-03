@@ -125,7 +125,7 @@ void hashtest_cycle( int hits[TABLE_ENTRIES+5], char *ip )
 	int  hashv;
 	static char buf1[1024];
 	static char buf2[1024];
-	str call_id; 
+	str call_id;
 	str cseq;
 
 	call_id.s=buf1;
@@ -135,11 +135,11 @@ void hashtest_cycle( int hits[TABLE_ENTRIES+5], char *ip )
 		for (j=85296341;j<85296341+10;j++)
 			for (k=987654;k<=987654+10;k++)
 				for (l=101;l<201;l++) {
-					call_id.len=sprintf( buf1, "%d-%d-%d@%s",(int)i,(int)j,
-						(int)k, ip );
-					cseq.len=sprintf( buf2, "%d", (int)l );
+					call_id.len=snprintf(buf1, 1024, "%d-%d-%d@%s",(int)i,(int)j,
+						(int)k, ip);
+					cseq.len=snprintf(buf2, 1024, "%d", (int)l );
 					/* printf("%s\t%s\n", buf1, buf2 ); */
-					hashv=hash( call_id, cseq );
+					hashv=hash(call_id, cseq);
 					hits[ hashv ]++;
 				}
 }

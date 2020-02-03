@@ -91,47 +91,11 @@ extern str result_pv_str;
 extern retry_range_t* global_retry_ranges;
 extern const str null_str;
 
-static inline str pkg_strdup(str src)
-{
-	str res;
-
-	if (!src.s) {
-		res.s = NULL;
-		res.len = 0;
-	} else if (!(res.s = (char *) pkg_malloc(src.len + 1))) {
-		res.len = 0;
-	} else {
-		strncpy(res.s, src.s, src.len);
-		res.s[src.len] = 0;
-		res.len = src.len;
-	}
-	return res;
-}
-
-static inline str shm_strdup(str src)
-{
-	str res;
-
-	if (!src.s) {
-		res.s = NULL;
-		res.len = 0;
-	} else if (!(res.s = (char *) shm_malloc(src.len + 1))) {
-		res.len = 0;
-	} else {
-		strncpy(res.s, src.s, src.len);
-		res.s[src.len] = 0;
-		res.len = src.len;
-	}
-	return res;
-}
-
-static inline struct timeval ms_to_tv(unsigned int time)
-{
-	struct timeval tv = {0,0};
-	tv.tv_sec = time/1000;
-	tv.tv_usec = ((time % 1000) * 1000);
-	return tv;
-}
-
+#define jsr_ms_to_tv(ms, tv) \
+	do { \
+		memset(&tv, 0, sizeof(struct timeval)); \
+		tv.tv_sec = ms/1000; \
+		tv.tv_usec = ((ms % 1000) * 1000); \
+	} while(0)
 
 #endif /* _JSONRPC_H_ */

@@ -190,12 +190,11 @@ modparam("mediaproxy", "disable", 1)
    It is the path to the filesystem socket where the mediaproxy dispatcher
    listens for commands from the module.
 
-   Default value is “/var/run/mediaproxy/dispatcher.sock”.
+   Default value is “/run/mediaproxy/dispatcher.sock”.
 
    Example 1.2. Setting the mediaproxy_socket parameter
 ...
-modparam("mediaproxy", "mediaproxy_socket", "/var/run/mediaproxy/dispatcher.sock
-")
+modparam("mediaproxy", "mediaproxy_socket", "/run/mediaproxy/dispatcher.sock")
 ...
 
 5.3. mediaproxy_timeout (int)

@@ -24,8 +24,6 @@
 #ifndef _TM_BIND_H
 #define _TM_BIND_H
 
-#include "defs.h"
-
 
 #include "../../core/sr_module.h"
 #include "t_hooks.h"
@@ -94,13 +92,8 @@ struct tm_binds {
 	                    if no dlg callbacks are used/defined*/
 	void* reserved2;
 #endif
-#ifdef WITH_AS_SUPPORT
 	ack_local_uac_f           ack_local_uac;
 	t_get_canceled_ident_f    t_get_canceled_ident;
-#else
-	void* reserved3;
-	void* reserved4;
-#endif
 	t_suspend_f	t_suspend;
 	t_continue_f	t_continue;
 	t_continue_cb_f	t_continue_cb;

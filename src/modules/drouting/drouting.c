@@ -52,7 +52,7 @@
 
 /*** DB relatede stuff ***/
 /* parameters  */
-static str db_url = {NULL, 0};
+static str db_url           = str_init(DEFAULT_RODB_URL);
 static str drg_table = str_init("dr_groups");
 static str drd_table = str_init("dr_gateways");
 static str drr_table = str_init("dr_rules");
@@ -433,7 +433,6 @@ static int dr_child_init(int rank)
 		LM_ERR("cannot select table \"%.*s\"\n", drg_table.len, drg_table.s);
 		return -1;
 	}
-	kam_srand(getpid() + time(0) + rank);
 	return 0;
 }
 

@@ -519,7 +519,7 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 
 	/* Generate fromtag if not present */
 	if (!fromtag) {
-		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, &ruri);
 	}
 
 	/* Fill in CSeq */
@@ -602,28 +602,28 @@ static int t_uac_check_msg(struct sip_msg* msg,
 	char ch;
 
 	if (body->len && !msg->content_type) {
-		LM_ERR("Content-Type missing");
+		LM_ERR("Content-Type missing\n");
 		goto err;
 	}
 
 	if (body->len && msg->content_length) {
-		LM_ERR("Content-Length disallowed");
+		LM_ERR("Content-Length disallowed\n");
 		goto err;
 	}
 
 	if (!msg->to) {
-		LM_ERR("To missing");
+		LM_ERR("To missing\n");
 		goto err;
 	}
 
 	if (!msg->from) {
-		LM_ERR("From missing");
+		LM_ERR("From missing\n");
 		goto err;
 	}
 
 	/* we also need to know if there is from-tag and add it otherwise */
 	if (parse_from_header(msg) < 0) {
-		LM_ERR("Error in From");
+		LM_ERR("Error in From\n");
 		goto err;
 	}
 
@@ -640,14 +640,14 @@ static int t_uac_check_msg(struct sip_msg* msg,
 			} else {
 				DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n",
 						(unsigned int)ch, ch);
-				LM_ERR("Non-numerical CSeq");
+				LM_ERR("Non-numerical CSeq\n");
 				goto err;
 			}
 		}
 
 		if (parsed_cseq->method.len != method->len ||
 				memcmp(parsed_cseq->method.s, method->s, method->len) !=0 ) {
-			LM_ERR("CSeq method mismatch");
+			LM_ERR("CSeq method mismatch\n");
 			goto err;
 		}
 	} else {
@@ -684,7 +684,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 
 	/* check and parse parameters */
 	if (method->len<=0){
-		LM_ERR("Empty method");
+		LM_ERR("Empty method\n");
 		return -1;
 	}
 	if (parse_uri(ruri->s, ruri->len, &p_uri)<0){
@@ -724,7 +724,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	faked_msg.len=headers->len;
 	faked_msg.buf=faked_msg.unparsed=headers->s;
 	if (parse_headers(&faked_msg, HDR_EOH_F, 0)==-1){
-		LM_ERR("Invalid headers");
+		LM_ERR("Invalid headers\n");
 		return -1;
 	}
 	/* at this moment all the parameters are parsed => more sanity checks */
@@ -735,7 +735,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	}
 	if(get_hfblock(nexthop->len? nexthop: ruri, faked_msg.headers,
 			PROTO_NONE, ssock, &hfb)<0) {
-		LM_ERR("failed to get the block of headers");
+		LM_ERR("failed to get the block of headers\n");
 		goto error;
 	}
 	/* proceed to transaction creation */
@@ -750,7 +750,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 
 	/* Generate fromtag if not present */
 	if (!fromtag) {
-		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, ruri);
 	}
 
 	/* Fill in CSeq */
@@ -773,7 +773,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	ret = t_uac(&uac_req);
 
 	if (ret <= 0) {
-		LM_ERR("UAC error");
+		LM_ERR("UAC error\n");
 		goto error01;
 	}
 error01:

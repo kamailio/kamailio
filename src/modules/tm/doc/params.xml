@@ -194,29 +194,6 @@ modparam("tm", "wt_timer", 1000)
 	</example>
     </section>
 
-    <section id="tm.p.delete_timer">
-	<title><varname>delete_timer</varname> (integer)</title>
-	<para>
-	    Time after which a to-be-deleted transaction currently ref-ed by a
-	    process will be tried to be deleted again (in milliseconds).
-	</para>
-	<para>
-	    Note: this parameter is obsolete for SER 2.1 (in 2.1 the transaction
-		 is deleted the moment it's not referenced anymore).
-	</para>
-	<para>
-	    Default value is 200 milliseconds.
-	</para>
-	<example>
-	    <title>Set <varname>delete_timer</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tm", "delete_timer", 100)
-...
-	    </programlisting>
-	</example>
-    </section>
-    
     <section id="tm.p.retr_timer1">
 	<title><varname>retr_timer1</varname> (integer)</title>
 	<para>
@@ -734,7 +711,11 @@ modparam("tm", "reparse_on_dns_failover", 0)
 		Sets reply route block, to which control is passed when a
 		reply is received that has no associated transaction.
 		The reply is passed to the core for stateless forwarding after
-		the route block execution unless it returns 0.
+		the route block execution unless drop is executed (or it returns 0).
+	</para>
+	<para>
+		If KEMI is used, the parameter has to be the KEMI function name, which
+		receives a string parameter with the event name.
 	</para>
 	<example>
 	    <title>Set <varname>on_sl_reply</varname> parameter</title>
@@ -750,7 +731,7 @@ onreply_route["stateless_replies"] {
 	    </programlisting>
 	</example>
     </section>
-	
+
 	<section id ="tm.p.contacts_avp">
 		<title><varname>contacts_avp</varname> (string)</title>
 		<para>
@@ -1450,7 +1431,37 @@ modparam("tm", "event_callback", "ksr_tm_event")
 ...
 -- event callback function implemented in Lua
 function ksr_tm_event(evname)
-	KSR.info("===== htable module triggered event: " .. evname .. "\n");
+	KSR.info("===== tm module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.event_callback_lres_sent">
+		<title><varname>event_callback_lres</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[tm:local-response] block. The function receives
+			a string parameter with the name of the event, respectively
+			"tm:local-response".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback_lres_sent</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "event_callback_lres_sent", "ksr_tm_event_response_sent")
+...
+-- event callback function implemented in Lua
+function ksr_tm_event_response_sent(evname)
+	KSR.info("===== tm module triggered event: " .. evname .. "\n");
 	return 1;
 end
 ...

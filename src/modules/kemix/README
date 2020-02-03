@@ -1,0 +1,63 @@
+KEMIX Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2019 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+1. Overview
+
+   This module collects extensions and functions to be used with KEMI SIP
+   routing scripting. The target is to implement alternatives to specific
+   concepts designed for the native scripting language (e.g., core
+   keywords and core conditions) without pushing code in the core of the
+   application.
+
+   It does not provide functions for the native Kamailio.cfg.
+
+   To see the KEMI functions exported by this module, see:
+     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None

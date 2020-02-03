@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * Copyright (C) 2019 Aleksandar Yosifov
  * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -50,6 +51,7 @@
 #include "subscribe.h"
 
 #include "../pua/pua_bind.h"
+#include "../ims_ipsec_pcscf/cmd.h"
 #include "sec_agree.h"
 
 extern struct tm_binds tmb;
@@ -59,10 +61,11 @@ extern unsigned int pending_reg_expires;
 extern int subscribe_to_reginfo;
 extern int subscription_expires;
 extern pua_api_t pua;
+extern ipsec_pcscf_api_t ipsec_pcscf;
 
 struct sip_msg* get_request_from_reply(struct sip_msg* reply)
 {
-    struct cell *t;
+	struct cell *t;
 	t = tmb.t_gett();
 	if (!t || t == (void*) -1) {
 		LM_ERR("Reply without transaction\n");
@@ -88,7 +91,7 @@ struct sip_msg* get_request_from_reply(struct sip_msg* reply)
  */
 static inline int calc_contact_expires(contact_t *c,int expires_hdr, int local_time_now)
 {
-    unsigned int r = 0;
+	unsigned int r = 0;
 	if (expires_hdr >= 0)
 		r = expires_hdr;
 
@@ -201,18 +204,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
 						goto next_contact;
 					} 
-				    
-                                        LM_DBG("We don't add contact from the 200OK that did not go through us (ie, not present in explicit REGISTER that went through us\n");
-//					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
-//					ci.reg_state = PCONTACT_REGISTERED;
-//					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
-//						LM_ERR("Failed inserting new pcontact\n");
-//					} else {
-//						//register for callbacks on this contact so we can send PUBLISH to SCSCF should status change
-//						LM_DBG("registering for UL callback\n");
-//						ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE, callback_pcscf_contact_cb, NULL);
-//						//we also need to subscribe to reg event of this contact at SCSCF
-//					}
+					LM_DBG("We don't add contact from the 200OK that did not go through us (ie, not present in explicit REGISTER that went through us\n");
 				} else { //contact already exists - update
 					LM_DBG("contact already exists and is in state (%d) : [%s]\n",pcontact->reg_state, reg_state_to_string(pcontact->reg_state));
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
@@ -228,7 +220,17 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 								expires-local_time_now);
 						ci.reg_state = PCONTACT_REGISTERED;
 						if (ul.update_pcontact(_d, &ci, pcontact) != 0) {
-							LM_ERR("failed to update pcscf contact\n");
+							LM_DBG("failed to update pcscf contact\n");
+						}else{
+							// Register callback to destroy related tunnels to this contact.
+							// The registration should be exact here, after the successfuly registration of the UE
+							LM_DBG("ul.register_ulcb(pcontact, PCSCF_CONTACT_EXPIRE|PCSCF_CONTACT_DELETE...)\n");
+							if(ul.register_ulcb(pcontact, PCSCF_CONTACT_EXPIRE|PCSCF_CONTACT_DELETE, ipsec_pcscf.ipsec_on_expire, NULL) != 1){
+								LM_DBG("Error subscribing for contact\n");
+							}
+
+							// After successful registration try to unregister all callbacks for pending contacts ralated to this contact.
+							ul.unreg_pending_contacts_cb(_d, pcontact, PCSCF_CONTACT_EXPIRE);
 						}
 						pcontact->expires = expires;
 					}
@@ -251,17 +253,17 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	pcontact_t* pcontact;
 	contact_t* c;
 	struct pcontact_info ci;
-        struct via_body* vb;
-        unsigned short port, proto;
+	struct via_body* vb;
+	unsigned short port, proto;
 	int_str val;
 	struct sip_uri parsed_received;
 	char srcip[50];
 
 	memset(&ci, 0, sizeof(struct pcontact_info));
         
-        vb = cscf_get_ue_via(_m);
-        port = vb->port?vb->port:5060;
-        proto = vb->proto;
+	vb = cscf_get_ue_via(_m);
+	port = vb->port?vb->port:5060;
+	proto = vb->proto;
 
 	cb = cscf_parse_contacts(_m);
 	if (!cb || (!cb->contacts)) {
@@ -269,7 +271,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		goto error;
 	}
         
-        c = cb->contacts;
+	c = cb->contacts;
 	//TODO: need support for multiple contacts - currently assume one contact
 	//make sure this is not a de-registration
 	int expires_hdr = cscf_get_expires_hdr(_m, 0);
@@ -291,19 +293,20 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		LM_DBG("not doing pending reg on de-registration\n");
 		return 1;
 	}
-        LM_DBG("Save Pending");
+
+	LM_DBG("Save pending contact with AOR [%.*s], proto %d, port %d\n", c->uri.len, c->uri.s, proto, port);
 	LM_DBG("contact requesting to expire in %d seconds\n", expires-local_time_now);
 
 	/*populate CI with bare minimum*/
-        ci.via_host = vb->host;
-        ci.via_port = port;
-        ci.via_prot = proto;
-        ci.aor = c->uri;
+	ci.via_host = vb->host;
+	ci.via_port = port;
+	ci.via_prot = proto;
+	ci.aor = c->uri;
 	ci.num_public_ids=0;
 	ci.num_service_routes=0;
 	ci.expires=local_time_now + pending_reg_expires;
 	ci.reg_state=PCONTACT_ANY;
-        ci.searchflag=SEARCH_RECEIVED;  //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
+	ci.searchflag=SEARCH_RECEIVED;  //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
 
 	// Received Info: First try AVP, otherwise simply take the source of the request:
 	memset(&val, 0, sizeof(int_str));
@@ -333,14 +336,35 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	if (ci.received_port == 0)
 		ci.received_port = 5060;
 
-    // Parse security parameters
-    security_t* sec_params = NULL;
-    if((sec_params = cscf_get_security(_m)) == NULL) {
-        LM_ERR("Will save pending contact without security parameters\n");
-    }
+	// Parse security parameters
+	security_t* sec_params = NULL;
+	if((sec_params = cscf_get_security(_m)) == NULL) {
+		LM_DBG("Will save pending contact without security parameters\n");
+	}
+
+	// Parse security-verify parameters
+	security_t* sec_verify_params = NULL;
+	if((sec_verify_params = cscf_get_security_verify(_m)) == NULL){
+		LM_DBG("Will save pending contact without security-verify parameters\n");
+	}else{
+		if(sec_params){
+			// for REGISTER request try to set spi pc and spi ps from security-verify header
+			sec_params->data.ipsec->spi_ps = sec_verify_params->data.ipsec->spi_us;
+			sec_params->data.ipsec->spi_pc = sec_verify_params->data.ipsec->spi_uc;
+
+			// Get from verify header pcscf server and client ports
+			sec_params->data.ipsec->port_ps = sec_verify_params->data.ipsec->port_us;
+			sec_params->data.ipsec->port_pc = sec_verify_params->data.ipsec->port_uc;
+
+			LM_DBG("Will save pending contact with security-verify parameters, spc_ps %u, spi_pc %u, port_ps %u, port_pc %u\n",
+					sec_params->data.ipsec->spi_ps, sec_params->data.ipsec->spi_pc, sec_params->data.ipsec->port_ps, sec_params->data.ipsec->port_pc);
+		}
+	}
 
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
+		ipsec_pcscf.ipsec_reconfig(); // try to clean all ipsec SAs/Policies if there is no registered contacts
+
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
 		ci.reg_state=PCONTACT_REG_PENDING;
 		if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
@@ -348,18 +372,17 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 		} else {
 			LM_DBG("registering for UL callback\n");
 			ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_UPDATE, callback_pcscf_contact_cb, NULL);
+
+			// Update security parameters only for the pending contacts
+			if(sec_params){
+				if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0){
+					LM_ERR("Error updating temp security\n");
+				}
+			}
 		}
 	} else { //contact already exists - update
         LM_DBG("Contact already exists - not doing anything for now\n");
 	}
-
-    // Update security parameters
-    if(sec_params) {
-        if(ul.update_temp_security(_d, sec_params->type, sec_params, pcontact) != 0)
-        {
-            LM_ERR("Error updating temp security\n");
-        }
-    }
 
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 

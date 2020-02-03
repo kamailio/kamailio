@@ -1,0 +1,233 @@
+Kafka Module
+
+Vicente Hernando
+
+   <vhernando@sonoc.io>
+
+Edited by
+
+Vicente Hernando
+
+   <vhernando@sonoc.io>
+
+Javier Gallart
+
+   <jgallart@sonoc.io>
+
+   Copyright © 2019 www.sonoc.io
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+              2.3. Parameters
+
+                    2.3.1. brokers (string)
+                    2.3.2. configuration (string)
+                    2.3.3. topic (string)
+
+              2.4. Functions
+
+                    2.4.1. kafka_send(topic, msg)
+
+              2.5. RPC Commands
+
+                    2.5.1. kafka.stats
+                    2.5.2. kafka.stats_topic
+
+   List of Examples
+
+   1.1. Set brokers parameter
+   1.2. Set configuration parameter
+   1.3. Set topic parameter
+   1.4. kafka_send usage
+   1.5. kafka.stats usage
+   1.6. kafka.stats usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+        2.3. Parameters
+
+              2.3.1. brokers (string)
+              2.3.2. configuration (string)
+              2.3.3. topic (string)
+
+        2.4. Functions
+
+              2.4.1. kafka_send(topic, msg)
+
+        2.5. RPC Commands
+
+              2.5.1. kafka.stats
+              2.5.2. kafka.stats_topic
+
+1. Overview
+
+   This module produces and sends messages to a Kafka server.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+   2.3. Parameters
+
+        2.3.1. brokers (string)
+        2.3.2. configuration (string)
+        2.3.3. topic (string)
+
+   2.4. Functions
+
+        2.4.1. kafka_send(topic, msg)
+
+   2.5. RPC Commands
+
+        2.5.1. kafka.stats
+        2.5.2. kafka.stats_topic
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * librdkafka: the Apache Kafka C/C++ client library.
+       https://github.com/edenhill/librdkafka
+       Old librdkafka version like 1.1.0 has been reported to work. Newer
+       versions should work fine (E.g: Version 1.2.2-RC1 also works OK)
+       https://github.com/edenhill/librdkafka/releases
+
+2.3. Parameters
+
+2.3.1. brokers (string)
+
+   Specifies a list of brokers separated by commas.
+
+   From librdkafka documentation:
+
+   brokerlist is a ,-separated list of brokers in the format:
+   <broker1>,<broker2>,
+
+   Where each broker is in either the host or URL based format:
+     * <host>[:<port>]
+     * <proto>://<host>[:port]
+
+   <proto> is either PLAINTEXT, SSL, SASL, SASL_PLAINTEXT
+
+   The two formats can be mixed but ultimately the value of the
+   security.protocol config property decides what brokers are allowed.
+
+   This parameter is mandatory. There is no default value.
+
+   Example 1.1. Set brokers parameter
+...
+modparam("kafka", "brokers", "localhost:9092")
+modparam("kafka", "brokers", "broker1:10000,broker2")
+modparam("kafka", "brokers", "SSL://broker3:9000,ssl://broker2")
+...
+
+2.3.2. configuration (string)
+
+   Specifies a set of general properties.
+
+   Each configuration property follows: name = value pattern. And
+   configuration properties are separated by ;
+
+   This parameter is optional, but if it exists it can be configured only
+   once.
+
+   Example 1.2. Set configuration parameter
+...
+modparam("kafka", "configuration", "topic.metadata.refresh.interval.ms=20000;que
+ue.buffering.max.messages=1000000;metadata.request.timeout.ms=90000")
+
+modparam("kafka", "configuration", "topic.metadata.refresh.interval.ms=20000;que
+ue.buffering.max.messages=500000;debug=all;metadata.request.timeout.ms=900000")
+...
+
+2.3.3. topic (string)
+
+   Specifies a topic name and a set of topic properties.
+
+   The topic defined in topic parameter has to already exist in Kafka
+   servers.
+
+   Each topic property is a list of attribute = value separated by
+   semicolon.
+
+   name atribute indicates the topic name. It is mandatory. Other
+   attributes mean names of properties and are optional.
+
+   This parameter is optional. Each topic needs a topic parameter so
+   several topic parameters are allowed.
+
+   Example 1.3. Set topic parameter
+...
+modparam("kafka", "topic", "name=my_topic;request.required.acks=0;request.timeou
+t.ms=10000")
+modparam("kafka", "topic", "name=second_topic;request.required.acks=0;request.ti
+meout.ms=10000")
+modparam("kafka", "topic", "name=third_topic")
+...
+
+2.4. Functions
+
+2.4.1.  kafka_send(topic, msg)
+
+   Send a message to a specific topic via Kafka server.
+
+   This function returns -1 for all sort of errors. (So execution of
+   script continues)
+
+   Parameters:
+     * topic: (string) name of the topic. It is mandatory.
+     * msg: (string) message to send. It is mandatory.
+
+   Available via KEMI framework as kafka.send.
+
+   Example 1.4. kafka_send usage
+...
+# Send "test message" to topic "my_topic"
+kafka_send("my_topic", "test message");
+...
+
+2.5. RPC Commands
+
+2.5.1. kafka.stats
+
+   Show statistics about total sent messages and failed to deliver ones.
+
+   Example 1.5. kafka.stats usage
+...
+kamcmd kafka.stats
+Total messages: 26  Errors: 0
+...
+
+2.5.2. kafka.stats_topic
+
+   Show statistics about sent messages and failed to deliver ones for a
+   specific topic.
+
+   Parameter: topic (string) name of the topic. Required.
+
+   Example 1.6. kafka.stats usage
+...
+# Show statistics for my_topic.
+kamcmd kafka.stats_topic "my_topic"
+Topic: my_topic  Total messages: 17  Errors: 0
+...

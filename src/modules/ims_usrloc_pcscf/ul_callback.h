@@ -81,6 +81,7 @@ int init_ulcb_list(void);
 void destroy_ulcb_list(void);
 void destroy_ul_callbacks_list(struct ul_callback* cb);
 int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param);
+void delete_ulcb(struct pcontact* c, int type);
 void run_ul_callbacks( int type , struct pcontact *c);
 void run_ul_create_callbacks(struct pcontact *c);
 

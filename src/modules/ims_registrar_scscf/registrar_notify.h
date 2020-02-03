@@ -132,9 +132,9 @@ int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str
 int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *explit_dereg_contact, int num_explit_dereg_contact);
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *explit_dereg_contact, int num_explit_dereg_contact, unsigned int reginfo_version);
 
-str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
+str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned int reginfo_version);
 
 void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact);
 

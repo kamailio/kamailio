@@ -47,7 +47,7 @@
 #include "../../core/parser/parse_nameaddr.h"
 
 #include "../../core/strutils.h"
-#include "../../lib/srutils/shautils.h"
+#include "../../core/crypto/shautils.h"
 #include "pv_trans.h"
 
 
@@ -295,6 +295,25 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
 			break;
+		case TR_S_RMWS:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len >= TR_BUFFER_SIZE - 1)
+				return -1;
+			j = 0;
+			for(i=0; i < val->rs.len; i++) {
+				if(val->rs.s[i] != ' ' && val->rs.s[i] != '\t'
+						&& val->rs.s[i] != '\r' && val->rs.s[i] != '\n') {
+					_tr_buffer[j] = val->rs.s[i];
+					j++;
+				}
+			}
+			_tr_buffer[j] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
+			break;
 		case TR_S_MD5:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -465,6 +484,55 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s = _tr_buffer;
 			val->rs.len = i;
 			break;
+		case TR_S_ENCODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64_enc((unsigned char *) val->rs.s, val->rs.len,
+					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			if (i>1 && _tr_buffer[i-1] == '=') {
+				i--;
+				if (i>1 && _tr_buffer[i-1] == '=') {
+					i--;
+				}
+			}
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len % 4) {
+				if(val->rs.len + 4 >= TR_BUFFER_SIZE-1) {
+					LM_ERR("not enough space to insert padding\n");
+					return -1;
+				}
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+				for(i=0; i < (4 - (val->rs.len % 4)); i++) {
+					_tr_buffer[val->rs.len + i] = '=';
+				}
+				st.s = _tr_buffer;
+				st.len = val->rs.len + (4 - (val->rs.len % 4));
+				/* move to next buffer */
+				tr_set_crt_buffer();
+				i = base64_dec((unsigned char *) st.s, st.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			} else {
+				i = base64_dec((unsigned char *) val->rs.s, val->rs.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			}
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
 		case TR_S_ESCAPECOMMON:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -614,6 +682,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				val->rs.s += i;
 				val->rs.len = j;
+				tr_string_clone_result;
 				break;
 			}
 			i = -i;
@@ -1206,6 +1275,42 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s[val->rs.len] = '\0';
 			break;
 
+		case TR_S_COUNT:
+			if(tp==NULL)
+			{
+				LM_ERR("invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			}
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("cannot get parameter value (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				st = v.rs;
+			}
+			LM_DBG("counting [%.*s](%d) in [%.*s](%d)\n",
+					st.len, st.s, st.len, val->rs.len, val->rs.s, val->rs.len);
+			j = 0;
+			for(i=0; i<val->rs.len; i++) {
+				if(val->rs.s[i]==st.s[0]) {
+					j++;
+				}
+			}
+			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
+			val->ri = j;
+			val->rs.s = int2str(j, &val->rs.len);
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d (cfg line: %d)\n",
 					subtype, get_cfg_crt_line());
@@ -1231,6 +1336,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 	str sproto;
+	int dlen = 0;
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
@@ -1265,8 +1371,11 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			free_params(_tr_uri_params);
 			_tr_uri_params = 0;
 		}
+		if(_tr_uri.len>4 && _tr_uri.s[_tr_uri.len-1]==';') {
+			dlen = 1;
+		}
 		/* parse uri -- params only when requested */
-		if(parse_uri(_tr_uri.s, _tr_uri.len, &_tr_parsed_uri)!=0)
+		if(parse_uri(_tr_uri.s, _tr_uri.len - dlen, &_tr_parsed_uri)!=0)
 		{
 			LM_ERR("invalid uri [%.*s]\n", val->rs.len,
 					val->rs.s);
@@ -1504,6 +1613,9 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 		/* parse params */
 		sv = _tr_params_str;
+		if(sv.len>1 && sv.s[sv.len - 1] == _tr_params_separator) {
+			sv.len--;
+		}
 		if (parse_params2(&sv, CLASS_ANY, &phooks, &_tr_params_list,
 					_tr_params_separator)<0)
 			return -1;
@@ -2229,6 +2341,9 @@ char* tr_parse_string(str* in, trans_t *t)
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
 		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "rmws", 4)==0) {
+		t->subtype = TR_S_RMWS;
+		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "sha256", 6)==0) {
 		t->subtype = TR_S_SHA256;
 		goto done;
@@ -2270,6 +2385,12 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "decode.base64", 13)==0) {
 		t->subtype = TR_S_DECODEBASE64;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "encode.base64t", 14)==0) {
+		t->subtype = TR_S_ENCODEBASE64T;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "decode.base64t", 14)==0) {
+		t->subtype = TR_S_DECODEBASE64T;
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "escape.common", 13)==0) {
 		t->subtype = TR_S_ESCAPECOMMON;
@@ -2566,6 +2687,26 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==9 && strncasecmp(name.s, "unbracket", 9)==0) {
 		t->subtype = TR_S_UNBRACKET;
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "count", 5)==0) {
+		t->subtype = TR_S_COUNT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid count transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid count transformation: %.*s!!\n",
+					in->len, in->s);
+			goto error;
+		}
 		goto done;
 	}
 

@@ -4,7 +4,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/pdb_server
 NAME=pdb_server
 DESC=pdb_server
-PIDFILE=/var/run/pdb_server.pid
+PIDFILE=/run/pdb_server.pid
 
 test -x $DAEMON || exit 0
 

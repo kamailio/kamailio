@@ -136,7 +136,7 @@ c_defsX=-DNAME='\"kamailio\"' -DVERSION='\"5.1.0-dev3\"' -DARCH='\"x86_64\"' \
 	   -DOS='linux_' -DOS_QUOTED='\"linux\"' -DCOMPILER='\"gcc 4.9.2\"' \
 	   -D__CPU_x86_64 -D__OS_linux -DSER_VER=5001000 \
 	   -DCFG_DIR='\"/usr/local/etc/kamailio/\"' \
-	   -DRUN_DIR='\"/var/run/kamailio/\"' -DPKG_MALLOC -DSHM_MEM -DSHM_MMAP \
+	   -DRUN_DIR='\"/run/kamailio/\"' -DPKG_MALLOC -DSHM_MEM -DSHM_MMAP \
 	   -DDNS_IP_HACK -DUSE_MCAST -DUSE_TCP -DDISABLE_NAGLE -DHAVE_RESOLV_RES \
 	   -DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR \
 	   -DWITH_XAVP -DMEM_JOIN_FREE -DF_MALLOC -DQ_MALLOC -DTLSF_MALLOC \
@@ -148,7 +148,7 @@ c_defsX=-DNAME='\"kamailio\"' -DVERSION='\"5.1.0-dev3\"' -DARCH='\"x86_64\"' \
 	   -DHAVE_SCHED_SETSCHEDULER -DHAVE_IP_MREQN -DHAVE_EPOLL -DHAVE_SIGIO_RT \
 	   -DSIGINFO64_WORKARROUND -DUSE_FUTEX -DHAVE_SELECT
 
-c_defs=$(subst ^^,='\",$(subst ",\"',$(subst =",^^,$(shell make -s -C ../../../src printcdefs))))
+c_defs=$(subst ^^,='\",$(subst ",\"',$(subst =",^^,$(shell $(MAKE) -s -C ../../../src printcdefs))))
 
 c_defs+= -DMOD_NAME='\"rpcgen\"'
 c_defs+= -I$(COREPATH)/modules/app_sqlang/squirrel/include
@@ -176,7 +176,7 @@ get_listed_grp=$(word 2, $(subst :, ,$(1)))
 # get module interface define
 get_modiface=$(word 3, $(subst :, ,$(1)))
 
-find_modiface=$(if $(findstring modules,$(1)),$(shell make -s -C $(dir $(1)) printmiface),-DNONE)
+find_modiface=$(if $(findstring modules,$(1)),$(shell $(MAKE) -s -C $(dir $(1)) printmiface),-DNONE)
 
 # get base file name from file:grp: get_bname(file:grp)
 # => basename(file) without extension (e.g. get_bname(foo/bar.c:x) => bar)

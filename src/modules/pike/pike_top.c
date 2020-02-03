@@ -41,22 +41,28 @@ char *pike_top_print_addr( unsigned char *ip, int iplen, char *buff,
 		int buffsize )
 {
 	unsigned short *ipv6_ptr = (unsigned short *)ip;
-	memset(buff, 0, PIKE_BUFF_SIZE*sizeof(char));
+	int bsize;
+	int blen;
+
+	bsize = PIKE_BUFF_SIZE*sizeof(char);
+	memset(buff, 0, bsize);
 
 	DBG("pike:top:print_addr(iplen: %d, buffsize: %d)", iplen, buffsize);
 
 	if ( iplen == 4 ) {
 		inet_ntop(AF_INET, ip, buff, buffsize);
-	}
-	else if ( iplen == 16 ) {
+	} else if ( iplen == 16 ) {
 		inet_ntop(AF_INET6, ip, buff, buffsize);
-	}
-	else {
-		sprintf( buff, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
+	} else {
+		blen = snprintf(buff, bsize, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
 				htons(ipv6_ptr[0]), htons(ipv6_ptr[1]), htons(ipv6_ptr[2]),
 				htons(ipv6_ptr[3]),
 				htons(ipv6_ptr[4]), htons(ipv6_ptr[5]), htons(ipv6_ptr[6]),
 				htons(ipv6_ptr[7]));
+		if(blen < 0 || blen >= bsize) {
+			LM_ERR("failed to print the address - reset it\n");
+			memset(buff, 0, bsize);
+		}
 	}
 
 	return buff;

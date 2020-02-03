@@ -230,6 +230,9 @@ error:
 
 int schedule_retry(jsonrpc_request_t* req)
 {
+	struct timeval tv;
+	unsigned int ltime;
+
 	if(!req) {
 		ERR("Trying to schedule retry for a null request.\n");
 		return -1;
@@ -246,16 +249,16 @@ int schedule_retry(jsonrpc_request_t* req)
 	}
 
 	/* next retry in milliseconds */
-	unsigned int time = req->ntries * req->ntries * req->timeout;
-	if(time > RETRY_MAX_TIME) {
-		time = RETRY_MAX_TIME;
+	ltime = req->ntries * req->ntries * req->timeout;
+	if(ltime > RETRY_MAX_TIME) {
+		ltime = RETRY_MAX_TIME;
 	}
 
 	jsonrpc_request_t* new_req = create_request(req->cmd);
 
 	new_req->ntries = req->ntries;
 
-	const struct timeval tv = ms_to_tv(time);
+	jsr_ms_to_tv(ltime, tv);
 
 	new_req->retry_ev = evtimer_new(global_ev_base, retry_cb, (void*)new_req);
 	if(evtimer_add(new_req->retry_ev, &tv)<0) {

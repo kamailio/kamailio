@@ -80,6 +80,7 @@ static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
 static int w_remove_record_route(sip_msg_t*, char*, char*);
+static int w_rr_next_hop_route(sip_msg_t *, char *, char *);
 /* PV functions */
 static int pv_get_route_uri_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
@@ -113,6 +114,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"remove_record_route",  w_remove_record_route, 0, 0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
+	{"rr_next_hop_route",    (cmd_function)w_rr_next_hop_route,		0, 0, 0,
+			ANY_ROUTE},
 	{"load_rr",              (cmd_function)load_rr, 				0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -292,6 +295,54 @@ static int ki_record_route(sip_msg_t *msg)
 }
 
 /**
+ * wrapper for record_route_preset(msg, addr1, addr2)
+ */
+static int ki_record_route_preset(sip_msg_t *msg, str *addr1, str *addr2)
+{
+	if (msg->msg_flags & FL_RR_ADDED) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+	if (addr2 && addr2->len>0 && !enable_double_rr) {
+		LM_ERR("Attempt to double record-route while 'enable_double_rr' param is disabled\n");
+		return -1;
+	}
+
+	if ( record_route_preset(msg, addr1)<0 )
+		return -1;
+
+	if (!addr2 || addr2->len<=0)
+		goto done;
+
+	if ( record_route_preset(msg, addr2)<0 )
+		return -1;
+
+done:
+	msg->msg_flags |= FL_RR_ADDED;
+	return 1;
+
+}
+
+/**
+ * wrapper for record_route_preset(msg, addr1)
+ */
+static int ki_record_route_preset_one(sip_msg_t *msg, str *addr1)
+{
+	if (msg->msg_flags & FL_RR_ADDED) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+
+	if ( record_route_preset(msg, addr1)<0 ) {
+		return -1;
+	}
+
+	msg->msg_flags |= FL_RR_ADDED;
+	return 1;
+
+}
+
+/**
  * config wrapper for record_route(msg, params)
  */
 static int w_record_route(struct sip_msg *msg, char *key, char *bar)
@@ -317,7 +368,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 	str s;
 
 	if (msg->msg_flags & FL_RR_ADDED) {
-		LM_ERR("Duble attempt to record-route\n");
+		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
 	if (key2 && !enable_double_rr) {
@@ -708,9 +759,30 @@ static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 }
 
+
 /**
  *
  */
+static int ki_rr_next_hop_route(sip_msg_t *msg)
+{
+	if(msg->msg_flags & FL_ROUTE_ADDR) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_rr_next_hop_route(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_rr_next_hop_route(msg);
+}
+
+/**
+ *
+ */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("record_route"),
 		SR_KEMIP_INT, ki_record_route,
@@ -747,8 +819,24 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("rr"), str_init("record_route_preset_one"),
+		SR_KEMIP_INT, ki_record_route_preset_one,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("record_route_preset"),
+		SR_KEMIP_INT, ki_record_route_preset,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("next_hop_route"),
+		SR_KEMIP_INT, ki_rr_next_hop_route,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

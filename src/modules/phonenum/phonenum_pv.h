@@ -34,6 +34,7 @@ int phonenum_init_pv(int smode);
 void phonenum_destroy_pv(void);
 void phonenum_pv_reset(str *pvclass);
 int phonenum_update_pv(str *tomatch, str *cncode, str *pvclass);
+int sr_phonenum_add_resid(str *rname);
 
 #endif
 

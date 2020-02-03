@@ -42,6 +42,7 @@ Julien Chavanton
               3.5. batch_msg_size (int)
               3.6. batch_msg_contacts (int)
               3.7. usrloc_domain (string)
+              3.8. replicate_socket_info (int)
 
    List of Examples
 
@@ -52,6 +53,7 @@ Julien Chavanton
    1.5. Set batch_msg_size parameter
    1.6. Set batch_msg_contacts parameter
    1.7. Set usrloc_domain parameter
+   1.8. Set replicate_socket_info parameter
 
 Chapter 1. Admin Guide
 
@@ -71,6 +73,7 @@ Chapter 1. Admin Guide
         3.5. batch_msg_size (int)
         3.6. batch_msg_contacts (int)
         3.7. usrloc_domain (string)
+        3.8. replicate_socket_info (int)
 
 1. Overview
 
@@ -96,6 +99,7 @@ Chapter 1. Admin Guide
    3.5. batch_msg_size (int)
    3.6. batch_msg_contacts (int)
    3.7. usrloc_domain (string)
+   3.8. replicate_socket_info (int)
 
 3.1. enable (int)
 
@@ -200,4 +204,18 @@ modparam("dmq_usrloc", "batch_usleep", 500000)    # one batch every 500ms
    Example 1.7. Set usrloc_domain parameter
 ...
 modparam("dmq_usrloc", "usrloc_domain", "my_domain")
+...
+
+3.8. replicate_socket_info (int)
+
+   The parameter controls whether the socket replication is active or not.
+   This is important for anycast scenarios. The value can be:
+     * 0 - disabled
+     * 1 - enabled
+
+   Default value is 0.
+
+   Example 1.8. Set replicate_socket_info parameter
+...
+modparam("dmq_usrloc", "replicate_socket_info", 0)
 ...

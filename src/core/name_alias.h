@@ -27,6 +27,8 @@
 */
 
 
+#ifndef name_alias_h
+#define name_alias_h
 
 #include "str.h"
 #include "dprint.h"
@@ -108,3 +110,4 @@ error:
 
 
 
+#endif

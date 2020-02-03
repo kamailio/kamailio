@@ -50,6 +50,7 @@
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_cfg.h"
+#include "tls_rand.h"
 
 #ifndef TLS_HOOKS
 	#error "TLS_HOOKS must be defined, or the tls module won't work"
@@ -80,6 +81,8 @@ static void destroy(void);
 
 static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 
+int ksr_rand_engine_param(modparam_t type, void* val);
+
 MODULE_VERSION
 
 
@@ -100,11 +103,12 @@ static tls_domain_t mod_params = {
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
 	{0, },                /* Cipher list */
-	TLS_USE_TLSv1,    /* TLS method */
+	TLS_USE_TLSv1_PLUS,   /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -124,11 +128,12 @@ tls_domain_t srv_defaults = {
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
-	TLS_USE_TLSv1,    /* TLS method */
+	TLS_USE_TLSv1_PLUS,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -165,11 +170,12 @@ tls_domain_t cli_defaults = {
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
-	TLS_USE_TLSv1,    /* TLS method */
+	TLS_USE_TLSv1_PLUS,    /* TLS method */
 	{0, 0}, /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
 	0,                /* Server name (SNI) mode */
 	{0, 0},           /* Server id */
+	TLS_VERIFY_CLIENT_OFF,             /* Verify client */
 	0                 /* next */
 };
 
@@ -203,6 +209,7 @@ static param_export_t params[] = {
 	{"verify_certificate",  PARAM_INT,    &default_tls_cfg.verify_cert  },
 	{"verify_depth",        PARAM_INT,    &default_tls_cfg.verify_depth },
 	{"require_certificate", PARAM_INT,    &default_tls_cfg.require_cert },
+	{"verify_client",       PARAM_STR,    &default_tls_cfg.verify_client},
 	{"private_key",         PARAM_STR,    &default_tls_cfg.private_key  },
 	{"ca_list",             PARAM_STR,    &default_tls_cfg.ca_list      },
 	{"certificate",         PARAM_STR,    &default_tls_cfg.certificate  },
@@ -236,6 +243,8 @@ static param_export_t params[] = {
 	{"renegotiation",       PARAM_INT,    &sr_tls_renegotiation},
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
 	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
+	{"rand_engine",         PARAM_STR|USE_FUNC_PARAM, (void*)ksr_rand_engine_param},
+
 	{0, 0, 0}
 };
 
@@ -291,6 +300,7 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 static int mod_init(void)
 {
 	int method;
+	int verify_client;
 
 	if (tls_disable){
 		LM_WARN("tls support is disabled "
@@ -324,6 +334,13 @@ static int mod_init(void)
 	mod_params.cert_file = cfg_get(tls, tls_cfg, certificate);
 	mod_params.cipher_list = cfg_get(tls, tls_cfg, cipher_list);
 	mod_params.server_name = cfg_get(tls, tls_cfg, server_name);
+	/* Convert verify_client parameter to integer */
+	verify_client = tls_parse_verify_client(&cfg_get(tls, tls_cfg, verify_client));
+	if (verify_client < 0) {
+		LM_ERR("Invalid tls_method parameter value\n");
+		return -1;
+	}
+	mod_params.verify_client = verify_client;
 
 	tls_domains_cfg =
 			(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
@@ -432,6 +449,33 @@ static void destroy(void)
 }
 
 
+int ksr_rand_engine_param(modparam_t type, void* val)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	str *reng;
+
+	if(val==NULL) {
+		return -1;
+	}
+	reng = (str*)val;
+	LM_DBG("random engine: %.*s\n", reng->len, reng->s);
+	if(reng->len == 5 && strncasecmp(reng->s, "krand", 5) == 0) {
+		LM_DBG("setting krand random engine\n");
+		RAND_set_rand_method(RAND_ksr_krand_method());
+	} else if(reng->len == 8 && strncasecmp(reng->s, "fastrand", 8) == 0) {
+		LM_DBG("setting fastrand random engine\n");
+		RAND_set_rand_method(RAND_ksr_fastrand_method());
+	} else if (reng->len == 10 && strncasecmp(reng->s, "cryptorand", 10) == 0) {
+		LM_DBG("setting cryptorand random engine\n");
+		RAND_set_rand_method(RAND_ksr_cryptorand_method());
+	} else if (reng->len == 8 && strncasecmp(reng->s, "kxlibssl", 8) == 0) {
+		LM_DBG("setting kxlibssl random engine\n");
+		RAND_set_rand_method(RAND_ksr_kxlibssl_method());
+	}
+#endif
+	return 0;
+}
+
 static int ki_is_peer_verified(sip_msg_t* msg)
 {
 	struct tcp_connection *c;
@@ -535,6 +579,12 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 		return -1;
 
 	register_tls_hooks(&tls_h);
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	LM_DBG("setting cryptorand random engine\n");
+	RAND_set_rand_method(RAND_ksr_cryptorand_method());
+#endif
+
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
 	return 0;

@@ -105,7 +105,7 @@
  * return the scope for IPv6 interface matching the ipval parameter
  * - needed for binding to link local IPv6 addresses
  */
-unsigned int ipv6_get_netif_scope(const char *ipval)
+unsigned int ipv6_get_netif_scope(char *ipval)
 {
 	struct ifaddrs *netiflist = NULL;
 	struct ifaddrs *netif = NULL;
@@ -113,6 +113,20 @@ unsigned int ipv6_get_netif_scope(const char *ipval)
 	unsigned int iscope = 0;
 	int i = 0;
 	int r = 0;
+	ip_addr_t *ipa = NULL;
+	ip_addr_t vaddr;
+	str ips;
+
+	ips.s = ipval;
+	ips.len = strlen(ipval);
+
+	ipa = str2ip6(&ips);
+	if(ipa==NULL) {
+		LM_ERR("could not parse ipv6 address: %s\n", ipval);
+		return 0;
+	}
+	memcpy(&vaddr, ipa, sizeof(ip_addr_t));
+	ipa = NULL;
 
 	/* walk over the list of all network interface addresses */
 	if(getifaddrs(&netiflist)!=0) {
@@ -136,10 +150,15 @@ unsigned int ipv6_get_netif_scope(const char *ipval)
 					break;
 				}
 			}
-			/* if the ips matche, get scope index from interface name */
-			if(strcmp(ipaddr, ipval)==0){
-				iscope=if_nametoindex(netif->ifa_name);
-				goto done;
+			ips.s = ipaddr;
+			ips.len = strlen(ipaddr);
+			ipa = str2ip6(&ips);
+			if(ipa!=NULL) {
+				/* if the ips match, get scope index from interface name */
+				if(ip_addr_cmp(&vaddr, ipa)) {
+					iscope=if_nametoindex(netif->ifa_name);
+					goto done;
+				}
 			}
 		}
 	}
@@ -1048,7 +1067,6 @@ static int build_iface_list(void)
 		struct rtgenmsg g;
 	} req;
 
-	int seq = 0;
 	int rtn = 0;
 	struct nlmsghdr*  nlp;
 	struct ifaddrmsg *ifi;
@@ -1136,6 +1154,7 @@ static int build_iface_list(void)
 			entry->ifa_flags = ifi->ifa_flags;
             is_link_local = 0;
 
+			name[0] = '\0';
 			for(;RTA_OK(rtap, rtl);rtap=RTA_NEXT(rtap,rtl)){
 				switch(rtap->rta_type){
 					case IFA_ADDRESS:
@@ -1168,12 +1187,16 @@ static int build_iface_list(void)
 				}
 			}
 			if(is_link_local) {
-				pkg_free(entry);
-				continue;    /* link local addresses are not bindable */
+				if(sr_bind_ipv6_link_local==0) {
+					/* skip - link local addresses are not bindable without scope */
+					pkg_free(entry);
+					continue;
+				}
 			}
 
-			if(strlen(ifaces[index].name)==0)
+			if(strlen(ifaces[index].name)==0 && strlen(name)>0) {
 				strncpy(ifaces[index].name, name, MAX_IF_LEN-1);
+			}
 
 			ifaces[index].index = index;
 

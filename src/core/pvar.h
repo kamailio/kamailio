@@ -173,7 +173,9 @@ char* pv_parse_spec2(str *in, pv_spec_p sp, int silent);
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
 int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
 		pv_value_t *value);
-int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
+int pv_printf_mode(sip_msg_t* msg, pv_elem_t* list, int mode, char *buf, int *len);
+int pv_printf(sip_msg_t* msg, pv_elem_t* list, char *buf, int *len);
+int pv_printf_size(sip_msg_t* msg, pv_elem_t *list);
 int pv_elem_free_all(pv_elem_p log);
 void pv_value_destroy(pv_value_t *val);
 void pv_spec_destroy(pv_spec_t *spec);
@@ -209,6 +211,8 @@ int pv_free_extra_list(void);
 int pv_locate_name(str *in);
 pv_spec_t* pv_cache_get(str *name);
 str* pv_cache_get_name(pv_spec_t *spec);
+str *pv_get_null_str(void);
+str *pv_get_empty_str(void);
 
 /*! \brief PV helper functions */
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -240,7 +244,7 @@ typedef struct _pv_cache
 	struct _pv_cache *next;
 } pv_cache_t;
 
-#define PV_CACHE_SIZE	64  /*!< pseudo-variables cache table size */
+#define PV_CACHE_SIZE	512  /*!< pseudo-variables cache table size */
 
 pv_cache_t **pv_cache_get_table(void);
 

@@ -80,18 +80,16 @@ typedef int (*req_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_
 typedef int (*t_uac_t)(uac_req_t *uac_r);
 typedef int (*t_uac_with_ids_t)(uac_req_t *uac_r,
 		unsigned int *ret_index, unsigned int *ret_label);
-#ifdef WITH_AS_SUPPORT
 typedef int (*ack_local_uac_f)(struct cell *trans, str *hdrs, str *body);
-#endif
 typedef int (*prepare_request_within_f)(uac_req_t *uac_r,
 		struct retr_buf **dst_req);
 typedef void (*send_prepared_request_f)(struct retr_buf *request_dst);
-typedef void (*generate_fromtag_f)(str*, str*);
+typedef void (*generate_fromtag_f)(str*, str*, str*);
 
 /*
  * Generate a fromtag based on given Call-ID
  */
-void generate_fromtag(str* tag, str* callid);
+void generate_fromtag(str* tag, str* callid, str* ruri);
 
 
 /*
@@ -123,7 +121,6 @@ int req_within(uac_req_t *uac_r);
 int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str* next_hop);
 
 
-#ifdef WITH_AS_SUPPORT
 struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 					unsigned int branch, str *hdrs, str *body);
 void free_local_ack(struct retr_buf *lack);
@@ -133,7 +130,6 @@ void free_local_ack_unsafe(struct retr_buf *lack);
  * ACK an existing local INVITE transaction...
  */
 int ack_local_uac(struct cell *trans, str *hdrs, str *body);
-#endif
 
 /*
  * Send a transactional request, no dialogs involved

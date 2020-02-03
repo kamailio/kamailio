@@ -71,7 +71,7 @@
     <column>
         <name>received</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&socket_len;</size>
         <null/>
         <default><null/></default>
         <description>Received IP:PORT in the format SIP:IP:PORT</description>

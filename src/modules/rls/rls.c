@@ -1085,8 +1085,46 @@ static const char* rls_rpc_cleanup_doc[2] = {
 	0
 };
 
+static void rls_rpc_update_subs(rpc_t* rpc, void* ctx)
+{
+	str uri = {0, 0};
+	str event = {0, 0};
+	int pn = 0;
+
+	LM_DBG("executing update subs\n");
+	pn = rpc->scan(ctx, "SS", &uri, &event);
+	if(pn < 2) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+
+	if(uri.s == NULL || uri.len == 0) {
+		LM_ERR("empty uri\n");
+		rpc->fault(ctx, 500, "Empty URI");
+		return;
+	}
+
+	if(event.s == NULL || event.len == 0) {
+		LM_ERR("empty event parameter\n");
+		rpc->fault(ctx, 500, "Empty event parameter");
+		return;
+	}
+	LM_DBG("uri '%.*s' - event '%.*s'\n", uri.len, uri.s, event.len, event.s);
+
+	if(ki_rls_update_subs(NULL, &uri, &event)<0) {
+		rpc->fault(ctx, 500, "Processing failure");
+		return;
+	}
+}
+
+static const char* rls_rpc_update_subs_doc[2] = {
+	"Trigger rls cleanup.",
+	0
+};
+
 rpc_export_t rls_rpc[] = {
 	{"rls.cleanup", rls_rpc_cleanup, rls_rpc_cleanup_doc, 0},
+	{"rls.update_subs", rls_rpc_update_subs, rls_rpc_update_subs_doc, 0},
 	{0, 0, 0, 0}
 };
 

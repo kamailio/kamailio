@@ -96,22 +96,22 @@ error:
 	return 0;
 }
 
-//static char *rms_sdp_get_rtpmap(str body, int type_number)
-//{
-//	char *pos = body.s;
-//	while((pos = strstr(pos, "a=rtpmap:"))) {
-//		int id;
-//		int sampling_rate;
-//		char codec[64];
-//		sscanf(pos, "a=rtpmap:%d %s/%d", &id, codec, &sampling_rate);
-//		if(id == type_number) {
-//			LM_INFO("[%d][%s/%d]\n", id, codec, sampling_rate);
-//			return rms_char_dup(codec, 1);
-//		}
-//		pos++;
-//	}
-//	return NULL;
-//}
+static char *rms_sdp_get_rtpmap(str body, int type_number)
+{
+	char *pos = body.s;
+	while((pos = strstr(pos, "a=rtpmap:"))) {
+		int id;
+		int sampling_rate;
+		char codec[64];
+		sscanf(pos, "a=rtpmap:%d %s/%d", &id, codec, &sampling_rate);
+		if(id == type_number) {
+			LM_INFO("[%d][%s/%d]\n", id, codec, sampling_rate);
+			return rms_char_dup(codec, 1);
+		}
+		pos++;
+	}
+	return NULL;
+}
 
 void rms_sdp_info_init(rms_sdp_info_t *sdp_info)
 {
@@ -134,7 +134,7 @@ void rms_sdp_info_free(rms_sdp_info_t *sdp_info)
 	}
 }
 
-int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, int payload_type_number)
+int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, PayloadType *pt)
 {
 	if(sdp_info->new_body.s)
 		return 0;
@@ -154,9 +154,18 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, int payload_type_number)
 	body->len += strlen(sdp_c);
 
 	char sdp_m[128];
-	snprintf(sdp_m, 128, "m=audio %d RTP/AVP %d\r\n", sdp_info->udp_local_port,
-			payload_type_number);
+	snprintf(sdp_m, 128, "m=audio %d RTP/AVP %d\r\n", sdp_info->udp_local_port, pt->type);
 	body->len += strlen(sdp_m);
+
+	char sdp_a[128];
+	if (pt->type >= 96) {
+		if (strcasecmp(pt->mime_type,"opus") == 0) {
+			snprintf(sdp_a, 128, "a=rtpmap:%d opus/48000/2\r\n", pt->type);
+		} else {
+			snprintf(sdp_a, 128, "a=rtpmap:%d %s/%d/%d\r\n", pt->type, pt->mime_type, pt->clock_rate, pt->channels);
+		}
+		body->len += strlen(sdp_a);
+	}
 
 	body->s = shm_malloc(body->len + 1);
 	if(!body->s)
@@ -167,68 +176,91 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, int payload_type_number)
 	strcat(body->s, sdp_c);
 	strcat(body->s, sdp_t);
 	strcat(body->s, sdp_m);
+
+	if (pt->type >= 96) {
+		strcat(body->s, sdp_a);
+	}
 	return 1;
 }
 
 PayloadType *
-rms_payload_type_new() // TODO: convert at the last minute from the MS manager process instead.
+rms_payload_type_new() // This could be problematic as it must remain compatible with the constructor in MS2.
 {
 	PayloadType *newpayload = (PayloadType *)shm_malloc(sizeof(PayloadType));
 	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+	memset(newpayload, 0, sizeof(PayloadType));
 	return newpayload;
 }
 
-PayloadType *rms_sdp_check_payload(rms_sdp_info_t *sdp)
+PayloadType *rms_sdp_check_payload_type(PayloadType *pt, rms_sdp_info_t *sdp)
+{
+	pt->clock_rate = 8000;
+	pt->channels = 1;
+	pt->mime_type = NULL;
+	if (pt->type > 127) {
+		return NULL;
+	} else if (pt->type >= 96) {
+		char *rtpmap = rms_sdp_get_rtpmap(sdp->recv_body, pt->type);
+		if (!rtpmap) return NULL;
+		char *s_mime_type = strtok(rtpmap,"/");
+		if (!s_mime_type) {
+			shm_free(rtpmap);
+			return NULL;
+		}
+		if (strcasecmp(s_mime_type,"opus") == 0) {
+			int payload_type = pt->type;
+			memcpy(pt, &payload_type_opus, sizeof(PayloadType));
+			pt->type = payload_type;
+			char * s_clock_rate = strtok(NULL,"/");
+			char * s_channels = strtok(NULL,"/");
+			if (s_clock_rate) {
+				pt->clock_rate = atoi(s_clock_rate);
+			} else {
+				pt->clock_rate = 8000;
+			}
+			if (s_channels) {
+				pt->channels = atoi(s_channels);
+			} else {
+				pt->channels = 2;
+			}
+			shm_free(rtpmap);
+			LM_INFO("[%p][%d][%s|%d|%d]\n", pt, pt->type, pt->mime_type, pt->clock_rate, pt->channels);
+			return pt;
+		}
+		shm_free(pt->mime_type);
+		shm_free(rtpmap);
+
+	} else if (pt->type == 0) {
+		pt->mime_type = rms_char_dup("pcmu", 1); /* ia=rtpmap:0 PCMU/8000*/
+	} else if (pt->type == 8) {
+		pt->mime_type = rms_char_dup("pcma", 1);
+	}
+	//	} else if (pt->type == 9) {
+	//		pt->mime_type=rms_char_dup("g722", 1);
+	//	} else if (pt->type == 18) {
+	//		pt->mime_type=rms_char_dup("g729", 1);
+	//	}
+	return pt;
+}
+
+PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 {
 	// https://tools.ietf.org/html/rfc3551
 	LM_INFO("payloads[%s]\n", sdp->payloads.s); // 0 8
 	PayloadType *pt = rms_payload_type_new();
 	char *payloads = sdp->payloads.s;
 	char *payload_type_number = strtok(payloads, " ");
-	if(!payload_type_number) {
-		payload_type_destroy(pt);
-		return NULL;
-	}
-	pt->type = atoi(payload_type_number);
-	pt->clock_rate = 8000;
-	pt->channels = 1;
-	pt->mime_type = NULL;
-	while(!pt->mime_type) {
-		if(pt->type > 127) {
-			return NULL;
-			//		} else if (pt->type >= 96) {
-			//			continue;
-			//			char *rtpmap =
-			// rms_sdp_get_rtpmap(sdp->recv_body, pt->type);
-			//			pt->mime_type = rms_char_dup(strtok(rtpmap,
-			//"/"),1);
-			//			if (strcasecmp(pt->mime_type,"opus") == 0) {
-			//				pt->clock_rate = atoi(strtok(NULL,
-			//"/"));
-			//				pt->channels = atoi(strtok(NULL, "/"));
-			//				shm_free(rtpmap);
-			//				return pt;
-			//			}
-			//			shm_free(pt->mime_type);
-			//			pt->mime_type=NULL;
-			//			shm_free(rtpmap);
-		} else if(pt->type == 0) {
-			pt->mime_type = rms_char_dup("pcmu", 1); /* ia=rtpmap:0 PCMU/8000*/
-		} else if(pt->type == 8) {
-			pt->mime_type = rms_char_dup("pcma", 1);
-			//		} else if (pt->type == 9) {
-			//			pt->mime_type=rms_char_dup("g722", 1);
-			//		} else if (pt->type == 18) {
-			//			pt->mime_type=rms_char_dup("g729", 1);
-		}
-		if(pt->mime_type)
-			break;
-		payload_type_number = strtok(NULL, " ");
-		if(!payload_type_number) {
-			payload_type_destroy(pt);
-			return NULL;
-		}
+
+	while (payload_type_number) {
 		pt->type = atoi(payload_type_number);
+		pt = rms_sdp_check_payload_type(pt, sdp);
+		if (pt->mime_type) return pt;
+		payload_type_number = strtok(NULL, " ");
+	}
+	if (!pt->mime_type) {
+		LM_INFO("unsuported codec\n");
+		if (pt) shm_free(pt); // payload_type_destroy(pt);
+		return NULL;
 	}
 	LM_INFO("payload_type:%d %s/%d/%d\n", pt->type, pt->mime_type,
 			pt->clock_rate, pt->channels);

@@ -739,7 +739,11 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 		msg->rcv.proto = PROTO_UDP;
 
 	if(payload != NULL)
+	{
 		ret = len - payload_len;
+		msg->buf = payload;
+                msg->len = payload_len;
+	}
 
 
 done:

@@ -41,13 +41,14 @@ static str opt_200_rpl = str_init("OK");
 static str opt_500_rpl = str_init("Server internal error");
 
 
-int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
+int ki_opt_reply(struct sip_msg* _msg) {
 	str rpl_hf;
 	int offset = 0;
 
 	/* check if it is called for an OPTIONS request */
 	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
-		LM_ERR("called for non-OPTIONS request\n");
+		LM_ERR("called for non-OPTIONS request (%d!=%d)\n",
+				_msg->REQ_METHOD, METHOD_OPTIONS);
 		return -1;
 	}
 	if(_msg->parsed_uri_ok==0 && parse_sip_msg_uri(_msg)<0)
@@ -127,3 +128,6 @@ error:
 		return 1;
 }
 
+int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
+	return ki_opt_reply(_msg);
+}

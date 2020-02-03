@@ -26,6 +26,7 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. smode (int)
+              3.2. resid (str)
 
         4. Functions
 
@@ -37,8 +38,9 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set smode parameter
-   1.2. phonenum_match usage
-   1.3. phonenum_match_cn usage
+   1.2. Set resid parameter
+   1.3. phonenum_match usage
+   1.4. phonenum_match_cn usage
 
 Chapter 1. Admin Guide
 
@@ -53,6 +55,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. smode (int)
+        3.2. resid (str)
 
    4. Functions
 
@@ -95,16 +98,34 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. smode (int)
+   3.2. resid (str)
 
 3.1. smode (int)
 
-   Phone number search mode.
+   Phone number search mode (not in use yet).
 
    Default value is “0”.
 
    Example 1.1. Set smode parameter
 ...
 modparam("phonenum", "smode", 0)
+...
+
+3.2. resid (str)
+
+   Preregister result container id during initialization, enabling the use
+   of the module in KEMI scripts. In native Kamailio.cfg file,
+   registration is done when parsing config and finding variables.
+
+   Default value is “” (empty).
+
+   Example 1.2. Set resid parameter
+...
+modparam("phonenum", "resid", "src")
+...
+if(phonenum_match("1-484-555-8888", "src")) {
+   ...
+}
 ...
 
 4. Functions
@@ -115,14 +136,14 @@ modparam("phonenum", "smode", 0)
 4.1.  phonenum_match(num, pvc)
 
    Match num against the libphonenumber and set the attributes inside the
-   pvc container. The function has to be called before accessing a key
-   via: $phn(pvc=>key).
+   pvc result container. The function has to be called before accessing a
+   key via: $phn(pvc=>key).
 
    The parameters can be static strings or strings with variables.
 
    It can be used from ANY_ROUTE.
 
-   Example 1.2. phonenum_match usage
+   Example 1.3. phonenum_match usage
 ...
 if(phonenum_match("1-484-555-8888", "src")) {
     if($phn(src=>valid)==1) {
@@ -144,7 +165,7 @@ if(phonenum_match("1-484-555-8888", "src")) {
 
    It can be used from ANY_ROUTE.
 
-   Example 1.3. phonenum_match_cn usage
+   Example 1.4. phonenum_match_cn usage
 ...
 if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
     if($phn(src=>valid)==1) {

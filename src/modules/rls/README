@@ -58,6 +58,7 @@ Anca-Maria Vamanu
         5. RPC Commands
 
               5.1. rls.cleanup
+              5.2. rls.update_subs
 
         6. Installation
 
@@ -141,6 +142,7 @@ Chapter 1. Admin Guide
    5. RPC Commands
 
         5.1. rls.cleanup
+        5.2. rls.update_subs
 
    6. Installation
 
@@ -602,6 +604,8 @@ For rls only:
 
 4.2.  rls_handle_notify()
 
+   Handle NOTIFY requests.
+
    This function can be used from REQUEST_ROUTE.
 
    Example 1.27. rls_handle_notify usage
@@ -642,6 +646,7 @@ Within event_route[xhttp:request]:
 5. RPC Commands
 
    5.1. rls.cleanup
+   5.2. rls.update_subs
 
 5.1. rls.cleanup
 
@@ -656,6 +661,23 @@ Within event_route[xhttp:request]:
    RPC Command Format:
 ...
 kamcmd rls.cleanup
+...
+
+5.2. rls.update_subs
+
+   Manually triggers updates to resource list subscriptions (for example,
+   after the contents of a resource list has changes).
+
+   Name: rls.cleanup
+
+   Parameters:
+     * uri - the uri of the user who made the change and whose resource
+       list subscriptions should be updated
+     * event - the event package (e.g. presence).
+
+   RPC Command Format:
+...
+kamcmd rls.update_subs sip:alice@domain.com presence
 ...
 
 6. Installation

@@ -22,6 +22,7 @@
  */
 
 #include "spi_list.h"
+#include "../../core/mem/shm_mem.h"
 
 
 spi_list_t create_list()
@@ -32,21 +33,31 @@ spi_list_t create_list()
     return lst;
 }
 
-void destroy_list(spi_list_t lst)
+void destroy_list(spi_list_t* lst)
 {
-    spi_node_t* l = lst.head;
+	if(!lst){
+		return;
+	}
+	
+    spi_node_t* l = lst->head;
     while(l) {
         spi_node_t* n = l->next;
-        free(l);
+        shm_free(l);
         l = n;
     }
+
+	lst->head = NULL;
+	lst->tail = NULL;
 }
 
 int spi_add(spi_list_t* list, uint32_t id)
 {
-    // create new node
-    spi_node_t* n = malloc(sizeof(spi_node_t));
+	if(!list){
+		return 1;
+	}
 
+	// create new node
+	spi_node_t* n = shm_malloc(sizeof(spi_node_t));
     if(!n)
         return 1;
 
@@ -74,7 +85,7 @@ int spi_add(spi_list_t* list, uint32_t id)
         list->tail = n;
     }
     else if(n->id == c->id) { //c is not NULL, so check for duplicates
-        free(n);
+        shm_free(n);
         return 1;
     }
     else if(c == list->head) { //at the start of the list?
@@ -92,6 +103,10 @@ int spi_add(spi_list_t* list, uint32_t id)
 
 int spi_remove(spi_list_t* list, uint32_t id)
 {
+	if(!list){
+		return 0;
+	}
+
     //when list is empty
     if(!list->head) {
         return 0;
@@ -107,7 +122,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
             list->tail = list->head;
         }
 
-        free(t);
+		shm_free(t);
         return 0;
     }
 
@@ -127,7 +142,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
                 list->tail = prev;
             }
 
-            free(t);
+			shm_free(t);
             return 0;
         }
 
@@ -135,11 +150,15 @@ int spi_remove(spi_list_t* list, uint32_t id)
         curr = curr->next;
     }
 
-    return 0;
+    return -1; // out of scope
 }
 
 int spi_in_list(spi_list_t* list, uint32_t id)
 {
+	if(!list){
+		return 0;
+	}
+
     if(!list->head)
         return 0;
 
@@ -150,6 +169,8 @@ int spi_in_list(spi_list_t* list, uint32_t id)
     while(n) {
         if (n->id == id)
             return 1;
+        
+        n = n->next;
     }
 
     return 0;

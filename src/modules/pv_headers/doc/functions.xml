@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+
+<section id="pv_headers.funtions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>\
+
+    <title>Functions</title>
+	<section id="pv_headers.f.pvh_collect_headers">
+		<title>
+		<function moreinfo="none">pvh_collect_headers()</function>
+		</title>
+		<para>
+		Collects all headers from the message into the XAVP.
+		It should be used preferably just when the &sip; message is received by &kamailio;.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_apply_headers">
+		<title>
+		<function moreinfo="none">pvh_apply_headers()</function>
+		</title>
+		<para>
+		Applies the current XAVP headers state to the real headers.
+		and should be called only once per branch when the message is about to leave &kamailio;.
+		</para>
+		<para>
+		The following rules apply:
+		<itemizedlist>
+			<listitem>
+			all headers in the XAVP except for ones provided in the
+			<link linked="pv_headers.p.skip_headers">skip_headers</link> parameter and
+			From/To are recreated in the &sip; message.
+			</listitem>
+			<listitem>From/To headers are processed by the uac module if it is loaded.</listitem>
+			<listitem>From/To headers are not changed in the reply messages.</listitem>
+			<listitem>headers with NULL value are removed if exist in the &sip; message.</listitem>
+			<listitem>the initial order of the &sip; headers is preserved.</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_reset_headers">
+		<title>
+		<function moreinfo="none">pvh_reset_headers()</function>
+		</title>
+		<para>
+		Collects all headers from the message into the XAVP.
+		It should be used preferably just when the &sip; message is received by >&kamailio;.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_check_header">
+		<title>
+		<function moreinfo="none">pvh_check_header(hname)</function>
+		</title>
+		<para>
+		Checks if the header <quote>hname</quote> already exists in the XAVP.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_append_header">
+		<title>
+		<function moreinfo="none">pvh_append_header(hname, hvalue)</function>
+		</title>
+		<para>
+		Appends a new header <quote>hname</quote> with the value <quote>hvalue</quote> into the XAVP.
+		Please note that subsequent "pv_append_header" calls will result in multiple headers.
+		</para>
+		<para>
+		If the provided <quote>hvalue</quote> is $null then the header is added into the XAVP but it is
+		not going to be added into the message.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_modify_header">
+		<title>
+		<function moreinfo="none">pvh_modify_header(hname, hvalue, [idx])</function>
+		</title>
+		<para>
+		Modifies an existing header in the XAVP <quote>hname</quote> with the value <quote>hvalue</quote> into the XAVP.
+		Index order is top to bottom.
+		Please note that subsequent <link linked="pv_headers.f.pvh_append_header">pvh_append_header</link> calls
+		will result in multiple headers.
+		</para>
+		<para>
+		Please note that if the header <quote>hname</quote>does not exist it will be explicitly appended.
+		If there are multiple headers with the same name and <quote>idx</quote> is omitted, only the first one
+		will be affected.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+	</section>
+	<section id="pv_headers.f.pvh_remove_header">
+		<title>
+		<function moreinfo="none">pvh_remove_header(hname, [idx])</function>
+		</title>
+		<para>
+		Removes an existing header <quote>hname</quote> from the XAVP. Index order is top to bottom.
+		</para>
+		<para>
+		If there are multiple headers with the same name and <quote>idx</quote> is omitted, all of them will be removed.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+	</section>
+	</section>

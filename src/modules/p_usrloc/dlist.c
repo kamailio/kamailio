@@ -150,7 +150,7 @@ int register_udomain(const char *name, udomain_t **domain) {
 unsigned long get_number_of_users(void)
 {
 	int numberOfUsers = 0;
-	LM_INFO("not available with partitioned interface");
+	LM_INFO("not available with partitioned interface\n");
 	return numberOfUsers;
 }
 
@@ -158,7 +158,7 @@ unsigned long get_number_of_users(void)
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
                          unsigned int part_idx, unsigned int part_max, int options)
 {
-	LM_INFO("not available with partitioned interface");
+	LM_INFO("not available with partitioned interface\n");
 	return -1;
 }
 /*!
@@ -168,7 +168,7 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 int synchronize_all_udomains(void)
 {
 	int res = 0;
-	LM_INFO("not available with partitioned interface");
+	LM_INFO("not available with partitioned interface\n");
 	return res;
 }
 

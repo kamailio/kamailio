@@ -190,7 +190,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps) {
                     dlg, dlg->h_entry, dlg->h_id,
                     dlg->callid.len, dlg->callid.s);
         } else if (ret > 0) {
-            LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+            LM_WARN("inconsistent dlg timer data on dlg %p [%u:%u] "
                     "with clid '%.*s'\n",
                     dlg, dlg->h_entry, dlg->h_id,
                     dlg->callid.len, dlg->callid.s);

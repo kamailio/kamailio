@@ -44,27 +44,33 @@ Tsvetomir Dimitrov
         3. Parameters
 
               3.1. ipsec_listen_addr (string)
-              3.2. ipsec_client_port (int)
-              3.3. ipsec_server_port (int)
-              3.4. ipsec_spi_id_start (int)
-              3.5. ipsec_spi_id_range (int)
+              3.2. ipsec_listen_addr6 (string)
+              3.3. ipsec_client_port (int)
+              3.4. ipsec_server_port (int)
+              3.5. ipsec_max_connections (int)
+              3.6. ipsec_reuse_server_port (int)
+              3.7. ipsec_spi_id_start (int)
+              3.8. ipsec_spi_id_range (int)
 
         4. Functions
 
               4.1. ipsec_create(domain)
-              4.2. ipsec_forward(domain)
+              4.2. ipsec_forward(domain, flags)
               4.3. ipsec_destroy(domain)
 
    List of Examples
 
    1.1. ipsec_listen_addr parameter usage
-   1.2. ipsec_client_port parameter usage
-   1.3. ipsec_server_port parameter usage
-   1.4. ipsec_spi_id_start parameter usage
-   1.5. ipsec_spi_id_range parameter usage
-   1.6. ipsec_create
-   1.7. ipsec_forward
-   1.8. ipsec_forward
+   1.2. ipsec_listen_addr6 parameter usage
+   1.3. ipsec_client_port parameter usage
+   1.4. ipsec_server_port parameter usage
+   1.5. ipsec_max_connections parameter usage
+   1.6. ipsec_reuse_server_port parameter usage
+   1.7. ipsec_spi_id_start parameter usage
+   1.8. ipsec_spi_id_range parameter usage
+   1.9. ipsec_create
+   1.10. ipsec_forward
+   1.11. ipsec_destroy
 
 Chapter 1. Admin Guide
 
@@ -79,15 +85,18 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. ipsec_listen_addr (string)
-        3.2. ipsec_client_port (int)
-        3.3. ipsec_server_port (int)
-        3.4. ipsec_spi_id_start (int)
-        3.5. ipsec_spi_id_range (int)
+        3.2. ipsec_listen_addr6 (string)
+        3.3. ipsec_client_port (int)
+        3.4. ipsec_server_port (int)
+        3.5. ipsec_max_connections (int)
+        3.6. ipsec_reuse_server_port (int)
+        3.7. ipsec_spi_id_start (int)
+        3.8. ipsec_spi_id_range (int)
 
    4. Functions
 
         4.1. ipsec_create(domain)
-        4.2. ipsec_forward(domain)
+        4.2. ipsec_forward(domain, flags)
         4.3. ipsec_destroy(domain)
 
 1. Overview
@@ -114,46 +123,95 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. ipsec_listen_addr (string)
-   3.2. ipsec_client_port (int)
-   3.3. ipsec_server_port (int)
-   3.4. ipsec_spi_id_start (int)
-   3.5. ipsec_spi_id_range (int)
+   3.2. ipsec_listen_addr6 (string)
+   3.3. ipsec_client_port (int)
+   3.4. ipsec_server_port (int)
+   3.5. ipsec_max_connections (int)
+   3.6. ipsec_reuse_server_port (int)
+   3.7. ipsec_spi_id_start (int)
+   3.8. ipsec_spi_id_range (int)
 
 3.1. ipsec_listen_addr (string)
 
    IP address which the Proxy-CSCF will use for incoming/outgoing SIP
    traffic over IPSec.
 
-   Default value is "127.0.0.1"
+   Default value is empty string (null) - IPv4 listen interface will not
+   be added
 
    Example 1.1. ipsec_listen_addr parameter usage
 ...
-modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "127.0.0.1")
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "")
 ...
 
-3.2. ipsec_client_port (int)
+3.2. ipsec_listen_addr6 (string)
 
-   Port number which will be bound for incoming (server) IPSec traffic.
+   IPv6 address which the Proxy-CSCF will use for incoming/outgoing SIP
+   traffic over IPSec.
 
-   Default value is 5963.
+   Default value is empty string (null) - IPv6 listen interface will not
+   be added
 
-   Example 1.2. ipsec_client_port parameter usage
+   Example 1.2. ipsec_listen_addr6 parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
+...
+
+3.3. ipsec_client_port (int)
+
+   Start port number which will be bound for incoming (server) IPSec
+   traffic.
+
+   Default value is 5062.
+
+   Example 1.3. ipsec_client_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
 ...
 
-3.3. ipsec_server_port (int)
+3.4. ipsec_server_port (int)
 
-   Port number which will be bound for incoming (server) IPSec traffic.
+   Start port number which will be bound for incoming (server) IPSec
+   traffic.
 
    Default value is 5063.
 
-   Example 1.3. ipsec_server_port parameter usage
+   Example 1.4. ipsec_server_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 ...
 
-3.4. ipsec_spi_id_start (int)
+3.5. ipsec_max_connections (int)
+
+   Maximum IPSec connections for the process. E.g. if
+   ipsec_client_port=5100, ipsec_server_port=6100 and
+   ipsec_max_connections=10, all client ports between 5100 and 5109 and
+   all server ports between 6100 and 6109 will be used for maximum to 10
+   IPSec connections.
+
+   Default value is 2.
+
+   Example 1.5. ipsec_max_connections parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
+...
+
+3.6. ipsec_reuse_server_port (int)
+
+   Reuse (1) or not (0) the P-CSCF Server port for Re-registration for one
+   UA. When set to 0 - During Re-registration P-CSCF will distribute new
+   P-CSCF client and P-CSCF server ports. When set to 1 - During
+   Re-registration P-CSCF will reuse the old P-CSCF server port and will
+   distribute a new P-CSCF client port.
+
+   Default value is 1.
+
+   Example 1.6. ipsec_reuse_server_port parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
+...
+
+3.7. ipsec_spi_id_start (int)
 
    Each IPSec tunnel has a unique system-wide identifier. This and the
    following option allows to tune the SPIs used by Kamailio in order to
@@ -162,12 +220,12 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 
    Default value is 100.
 
-   Example 1.4. ipsec_spi_id_start parameter usage
+   Example 1.7. ipsec_spi_id_start parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 ...
 
-3.5. ipsec_spi_id_range (int)
+3.8. ipsec_spi_id_range (int)
 
    How many SPIs to be allocated for the process. E.g. if
    ipsec_spi_id_start = 100 and ipsec_spi_id_range = 1000, SPIs between
@@ -175,7 +233,7 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 
    Default value is 1000.
 
-   Example 1.5. ipsec_spi_id_range parameter usage
+   Example 1.8. ipsec_spi_id_range parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
 ...
@@ -183,7 +241,7 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
 4. Functions
 
    4.1. ipsec_create(domain)
-   4.2. ipsec_forward(domain)
+   4.2. ipsec_forward(domain, flags)
    4.3. ipsec_destroy(domain)
 
 4.1. ipsec_create(domain)
@@ -197,12 +255,12 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
 
-   Example 1.6. ipsec_create
+   Example 1.9. ipsec_create
 ...
 ipsec_create("location");
 ...
 
-4.2. ipsec_forward(domain)
+4.2. ipsec_forward(domain, flags)
 
    The function processes redirects outgoing message via the IPSec tunnel
    initiated with ipsec_create().
@@ -210,10 +268,15 @@ ipsec_create("location");
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
+       flags - Set send force socket for request messages. If 1 - set
+       force socket for request messages. Useful for ipsec and TCP. This
+       is an optional parameter, default value - 0.
 
-   Example 1.7. ipsec_forward
+   Example 1.10. ipsec_forward
 ...
 ipsec_forward("location");
+# or
+ipsec_forward("location", "1");
 ...
 
 4.3. ipsec_destroy(domain)
@@ -224,7 +287,7 @@ ipsec_forward("location");
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
 
-   Example 1.8. ipsec_forward
+   Example 1.11. ipsec_destroy
 ...
 ipsec_destroy("location");
 ...

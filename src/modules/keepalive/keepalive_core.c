@@ -46,7 +46,7 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route);
 static void ka_options_callback(struct cell *t, int type,
 		struct tmcb_params *ps);
 
-
+extern str ka_ping_from;
 /*! \brief
  * Timer for checking probing destinations
  *
@@ -56,11 +56,12 @@ void ka_check_timer(unsigned int ticks, void *param)
 {
 	ka_dest_t *ka_dest;
 	str ka_ping_method = str_init("OPTIONS");
-	str ka_ping_from = str_init("sip:dispatcher@localhost");
 	str ka_outbound_proxy = {0, 0};
 	uac_req_t uac_r;
 
 	LM_DBG("ka check timer\n");
+
+	ka_lock_destination_list();
 
 	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
 			ka_dest = ka_dest->next) {
@@ -70,6 +71,11 @@ void ka_check_timer(unsigned int ticks, void *param)
 		 * int request(str* m, str* ruri, str* to, str* from, str* h,
 		 *		str* b, str *oburi,
 		 *		transaction_cb cb, void* cbp); */
+
+		if(ka_dest->counter>ka_counter_del){
+			continue;
+		}
+
 		set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
 				ka_options_callback, (void *)ka_dest);
 
@@ -81,6 +87,7 @@ void ka_check_timer(unsigned int ticks, void *param)
 
 		ka_dest->last_checked = time(NULL);
 	}
+	ka_unlock_destination_list();
 
 	return;
 }
@@ -112,9 +119,11 @@ static void ka_options_callback(
 	if(ps->code >= 200 && ps->code <= 299) {
 		state = KA_STATE_UP;
 		ka_dest->last_down = time(NULL);
+		ka_dest->counter=0;
 	} else {
 		state = KA_STATE_DOWN;
 		ka_dest->last_up = time(NULL);
+		ka_dest->counter++;
 	}
 
 	LM_DBG("new state is: %d\n", state);

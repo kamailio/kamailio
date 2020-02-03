@@ -201,7 +201,7 @@ PerlInterpreter *parser_init(void) {
 	perl_construct(new_perl);
 
 	argv[0] = ""; argc++; /* First param _needs_ to be empty */
-	
+
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
 		modpathset_start = argc;
@@ -220,7 +220,7 @@ PerlInterpreter *parser_init(void) {
 						PKG_MEM_ERROR;
 						return NULL;
 					}
-					sprintf(argv[argc], "-I%s", entry);
+					snprintf(argv[argc], strlen(entry)+20, "-I%s", entry);
 					modpathset_end = argc;
 					argc++;
 				}
@@ -262,6 +262,8 @@ PerlInterpreter *parser_init(void) {
  *
  */
 int unload_perl(PerlInterpreter *p) {
+	/* clean and reset everything */
+	PL_perl_destruct_level = 1;
 	perl_destruct(p);
 	perl_free(p);
 
@@ -276,26 +278,26 @@ int unload_perl(PerlInterpreter *p) {
  */
 int perl_reload(void)
 {
-
-	PerlInterpreter *new_perl;
-
-	new_perl = parser_init();
-
-	if (new_perl) {
+	if(my_perl) {
 		unload_perl(my_perl);
-		my_perl = new_perl;
+	}
+	my_perl = parser_init();
+
 #ifdef PERL_EXIT_DESTRUCT_END
-		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #else
 #warning Perl 5.8.x should be used. Please upgrade.
 #warning This binary will be unsupported.
-		PL_exit_flags |= PERL_EXIT_EXPECTED;
+	PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
+
+	if(my_perl) {
+		LM_DBG("new perl interpreter initialized\n");
 		return 0;
 	} else {
-		return -1;
+		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
+		exit(-1);
 	}
-
 }
 
 
@@ -380,6 +382,7 @@ static void destroy(void)
 }
 
 
+static int app_perl_reset_n = 0;
 /**
  * count executions and rest interpreter
  *
@@ -400,8 +403,10 @@ int app_perl_reset_interpreter(void)
 	if(_ap_exec_cycles<=*_ap_reset_cycles)
 		return 0;
 
-	if(perl_destroy_func)
-		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS, args);
+	if(perl_destroy_func) {
+		call_argv(perl_destroy_func, G_DISCARD | G_NOARGS | G_EVAL, args);
+		LM_DBG("perl destroy function executed\n");
+	}
 
 	gettimeofday(&t1, NULL);
 	if (perl_reload()<0) {
@@ -411,10 +416,11 @@ int app_perl_reset_interpreter(void)
 	}
 	gettimeofday(&t2, NULL);
 
-	LM_INFO("perl interpreter has been reset [%d/%d] (%d.%06d => %d.%06d)\n",
+	app_perl_reset_n++;
+	LM_INFO("perl interpreter has been reset [%d/%d] (%d.%06d => %d.%06d) (n: %d)\n",
 				_ap_exec_cycles, *_ap_reset_cycles,
 				(int)t1.tv_sec, (int)t1.tv_usec,
-				(int)t2.tv_sec, (int)t2.tv_usec);
+				(int)t2.tv_sec, (int)t2.tv_usec, app_perl_reset_n);
 	_ap_exec_cycles = 0;
 
 	return 0;

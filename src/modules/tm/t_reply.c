@@ -57,7 +57,6 @@
 #include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
-#include "defs.h"
 #include "config.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -97,6 +96,9 @@ static int goto_on_branch_failure=0;
 static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply=0;
+extern str on_sl_reply_name;
+
+extern str _tm_event_callback_lres_sent;
 
 /* remap 503 response code to 500 */
 extern int tm_remap_503_500;
@@ -353,17 +355,13 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 		/* build the ACK from the INVITE which was sent out */
 		return build_local_reparse( trans, branch, ret_len,
 					ACK, ACK_LEN, &to
-	#ifdef CANCEL_REASON_SUPPORT
 					, 0
-	#endif /* CANCEL_REASON_SUPPORT */
 					);
 	} else {
 		/* build the ACK from the reveived INVITE */
 		return build_local( trans, branch, ret_len,
 					ACK, ACK_LEN, &to
-	#ifdef CANCEL_REASON_SUPPORT
 					, 0
-	#endif /* CANCEL_REASON_SUPPORT */
 					);
 	}
 }
@@ -381,7 +379,6 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 								int branch, unsigned int *ret_len,
 								struct dest_info*  dst)
 {
-#ifdef WITH_AS_SUPPORT
 	struct retr_buf *local_ack, *old_lack;
 
 	/* do we have the ACK cache, previously build? */
@@ -419,10 +416,6 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 	*ret_len = local_ack->buffer_len;
 	*dst = local_ack->dst;
 	return local_ack->buffer;
-#else /* ! WITH_AS_SUPPORT */
-	return build_dlg_ack(rpl, trans, branch, /*hdrs*/NULL, /*body*/NULL,
-			ret_len, dst);
-#endif /* WITH_AS_SUPPORT */
 }
 
 
@@ -450,6 +443,8 @@ inline static void start_final_repl_retr( struct cell *t )
 
 
 
+static int _tm_local_response_sent_lookup = 0;
+
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 				unsigned int code,
 				char *to_tag, unsigned int to_tag_len, int lock,
@@ -461,7 +456,10 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	struct tmcb_params onsend_params;
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
+	struct run_act_ctx *bctx;
 	struct sip_msg pmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:local-response-sent");
 
 	init_cancel_info(&cancel_data);
 	if (!buf)
@@ -522,9 +520,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)){
 			prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-#ifdef CANCEL_REASON_SUPPORT
 			cancel_data.reason.cause=code;
-#endif /* CANCEL_REASON_SUPPORT */
 			cancel_uacs( trans, &cancel_data, F_CANCEL_B_KILL );
 		}
 		start_final_repl_retr(  trans );
@@ -567,12 +563,20 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 						&onsend_params);
 			}
 
-			rt = route_lookup(&event_rt, "tm:local-response");
-			if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
-			{
+			if(_tm_event_callback_lres_sent.len>0
+					&& _tm_event_callback_lres_sent.s!=NULL) {
+				keng = sr_kemi_eng_get();
+			}
+			rt = -1;
+			if(likely(keng==NULL)) {
+				if(_tm_local_response_sent_lookup == 0) {
+					rt = route_lookup(&event_rt, "tm:local-response");
+					_tm_local_response_sent_lookup = 1;
+				}
+			}
+			if ((rt >= 0 && event_rt.rlist[rt] != NULL) || (keng != NULL)) {
 				if (likely(build_sip_msg_from_buf(&pmsg, buf, len,
-								inc_msg_no()) == 0))
-				{
+								inc_msg_no()) == 0)) {
 					struct onsend_info onsnd_info;
 
 					onsnd_info.to=&(trans->uas.response.dst.to);
@@ -584,11 +588,21 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					backup_rt = get_route_type();
 					set_route_type(LOCAL_ROUTE);
 					init_run_actions_ctx(&ctx);
-					run_top_route(event_rt.rlist[rt], &pmsg, 0);
+					if(keng == NULL) {
+						run_top_route(event_rt.rlist[rt], &pmsg, 0);
+					} else {
+						bctx = sr_kemi_act_ctx_get();
+						sr_kemi_act_ctx_set(&ctx);
+						(void)sr_kemi_route(keng, &pmsg, EVENT_ROUTE,
+							&_tm_event_callback_lres_sent, &evname);
+						sr_kemi_act_ctx_set(bctx);
+					}
 					set_route_type(backup_rt);
 					p_onsend=0;
 
 					free_sip_msg(&pmsg);
+				} else {
+					LM_ERR("failed to build sip msg structure\n");
 				}
 			}
 
@@ -1339,9 +1353,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 					 * if the 6xx handling is not disabled */
 					prepare_to_cancel(Trans, &cancel_data->cancel_bitmap, 0);
 					Trans->flags|=T_6xx;
-#ifdef CANCEL_REASON_SUPPORT
 					cancel_data->reason.cause=new_code;
-#endif /* CANCEL_REASON_SUPPORT */
 				}
 			}
 			LM_DBG("store - other branches still active\n");
@@ -1492,23 +1504,17 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 	/* not >=300 ... it must be 2xx or provisional 1xx */
 	if (new_code>=100) {
-#ifdef WITH_AS_SUPPORT
 			/* need a copy of the message for ACK generation */
 			*should_store = (inv_through && is_local(Trans) &&
 					(Trans->uac[branch].last_received < 200) &&
 					(Trans->flags & T_NO_AUTO_ACK)) ? 1 : 0;
-#else
-		*should_store=0;
-#endif
 		/* By default, 1xx and 2xx (except 100) will be relayed. 100 relaying can be
 		 * controlled via relay_100 parameter */
 		Trans->uac[branch].last_received=new_code;
 		*should_relay= (new_code==100 && !cfg_get(tm, tm_cfg, relay_100)) ? -1 : branch;
 		if (new_code>=200 ) {
 			prepare_to_cancel( Trans, &cancel_data->cancel_bitmap, 0);
-#ifdef CANCEL_REASON_SUPPORT
 			cancel_data->reason.cause=new_code;
-#endif /* CANCEL_REASON_SUPPORT */
 			LM_DBG("rps completed - uas status: %d\n", Trans->uas.status);
 			return RPS_COMPLETED;
 		} else {
@@ -2181,7 +2187,6 @@ error:
  */
 int reply_received( struct sip_msg  *p_msg )
 {
-
 	int msg_status;
 	int last_uac_status;
 	char *ack;
@@ -2211,6 +2216,8 @@ int reply_received( struct sip_msg  *p_msg )
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng = NULL;
+	int ret;
+	str evname = str_init("on_sl_reply");
 
 	/* make sure we know the associated transaction ... */
 	branch = T_BR_UNDEFINED;
@@ -2308,9 +2315,6 @@ int reply_received( struct sip_msg  *p_msg )
 							run_trans_callbacks_off_params(TMCB_REQUEST_SENT,
 									t, &onsend_params);
 					}
-#ifndef WITH_AS_SUPPORT
-					shm_free(ack);
-#endif
 				}
 			}
 		}
@@ -2335,7 +2339,6 @@ int reply_received( struct sip_msg  *p_msg )
 				 * if BUSY or set just exit, a cancel will be (or was) sent
 				 * shortly on this branch */
 				LM_DBG("branch CANCEL created\n");
-#ifdef CANCEL_REASON_SUPPORT
 				if (t->uas.cancel_reas) {
 					/* cancel reason was saved, use it */
 					cancel_branch(t, branch, t->uas.cancel_reas,
@@ -2350,9 +2353,6 @@ int reply_received( struct sip_msg  *p_msg )
 					cancel_branch(t, branch, &cancel_data.reason,
 														F_CANCEL_B_FORCE_C);
 				}
-#else /* CANCEL_REASON_SUPPORT */
-				cancel_branch(t, branch, F_CANCEL_B_FORCE_C);
-#endif /* CANCEL_REASON_SUPPORT */
 			}
 			goto done; /* nothing to do */
 		}
@@ -2592,17 +2592,40 @@ done:
 
 trans_not_found:
 	/* transaction context was not found */
-	if (goto_on_sl_reply) {
-		/* The script writer has a chance to decide whether to
-		 * forward the reply or not.
-		 * Pre- and post-script callbacks have already
-		 * been execueted by the core. (Miklos)
-		 */
-		return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg, 0);
-	} else {
-		/* let the core forward the reply */
-		return 1;
+ 	if(on_sl_reply_name.s!=NULL && on_sl_reply_name.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			if (goto_on_sl_reply) {
+				/* The script writer has a chance to decide whether to
+				 * forward the reply or not.
+				 * Pre- and post-script callbacks have already
+				 * been execueted by the core. (Miklos)
+			 */
+				return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg, 0);
+			} else {
+				/* let the core forward the reply */
+				return 1;
+			}
+		} else {
+			bctx = sr_kemi_act_ctx_get();
+			init_run_actions_ctx(&ctx);
+			sr_kemi_act_ctx_set(&ctx);
+			ret = sr_kemi_ctx_route(keng, &ctx, p_msg, EVENT_ROUTE,
+						&on_sl_reply_name, &evname);
+			sr_kemi_act_ctx_set(bctx);
+			if(ret<0) {
+				LM_ERR("error running on sl reply callback\n");
+				return -1;
+			}
+			if(unlikely(ctx.run_flags & DROP_R_F)) {
+				LM_DBG("drop flag set - skip forwarding the reply\n");
+				return 0;
+			}
+			/* let the core forward the reply */
+			return 1;
+		}
 	}
+	return 1;
 }
 
 

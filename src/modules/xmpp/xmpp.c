@@ -323,19 +323,6 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 
 /*********************************************************************************/
 
-static char *shm_strdup(str *src)
-{
-	char *res;
-
-	if (!src || !src->s)
-		return NULL;
-	if (!(res = (char *) shm_malloc(src->len + 1)))
-		return NULL;
-	strncpy(res, src->s, src->len);
-	res[src->len] = 0;
-	return res;
-}
-
 void xmpp_free_pipe_cmd(struct xmpp_pipe_cmd *cmd)
 {
 	if (cmd->from)
@@ -359,10 +346,10 @@ static int xmpp_send_pipe_cmd(enum xmpp_pipe_cmd_type type, str *from, str *to,
 	memset(cmd, 0, sizeof(struct xmpp_pipe_cmd));
 
 	cmd->type = type;
-	cmd->from = shm_strdup(from);
-	cmd->to = shm_strdup(to);
-	cmd->body = shm_strdup(body);
-	cmd->id = shm_strdup(id);
+	cmd->from = shm_str2char_dup(from);
+	cmd->to = shm_str2char_dup(to);
+	cmd->body = shm_str2char_dup(body);
+	cmd->id = shm_str2char_dup(id);
 
 	if (write(pipe_fds[1], &cmd, sizeof(cmd)) != sizeof(cmd)) {
 		LM_ERR("failed to write to command pipe: %s\n", strerror(errno));

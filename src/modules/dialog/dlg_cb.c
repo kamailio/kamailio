@@ -232,6 +232,23 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 	return;
 }
 
+void run_dlg_load_callbacks(struct dlg_cell *dlg)
+{
+	struct dlg_callback *cb;
+
+	if (load_cbs && load_cbs!=POINTER_CLOSED_MARKER) {
+		for ( cb=load_cbs->first; cb; cb=cb->next ) {
+			params.req = NULL;
+			params.rpl = NULL;
+			params.direction = DLG_DIR_NONE;
+			params.param = &cb->param;
+	
+			cb->callback( dlg, DLGCB_LOADED, &params );
+		}
+  }
+	return;
+}
+
 
 void run_dlg_callbacks( int type ,
 						struct dlg_cell *dlg,

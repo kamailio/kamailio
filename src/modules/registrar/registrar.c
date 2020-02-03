@@ -44,7 +44,7 @@
 #include "../../core/dset.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../core/counters.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
@@ -76,6 +76,7 @@ static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags);
 static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
 		char* _actionflags);
+static int w_reg_send_reply(sip_msg_t* _m, char* _p1, char* _p2);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -125,7 +126,7 @@ int_str rcv_avp_name;
 
 str reg_xavp_cfg = {0};
 str reg_xavp_rcd = {0};
-
+int reg_xavp_rcd_mask = 0;
 int reg_use_domain = 0;
 
 int sock_flag = -1;
@@ -191,9 +192,9 @@ static cmd_export_t cmds[] = {
 	{"add_sock_hdr", (cmd_function)w_add_sock_hdr,  1,  fixup_spve_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
-			REQUEST_ROUTE| FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"unregister",   (cmd_function)w_unregister2, 3, unreg_fixup, 0,
-			REQUEST_ROUTE| FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3,
 			fetchc_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
@@ -201,6 +202,8 @@ static cmd_export_t cmds[] = {
 			fixup_str_null, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"lookup_branches",  (cmd_function)w_lookup_branches, 1,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"reg_send_reply",   (cmd_function)w_reg_send_reply,  0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"bind_registrar",  (cmd_function)bind_registrar,  0,
 		0, 0, 0},
@@ -235,6 +238,7 @@ static param_export_t params[] = {
 	{"path_check_local",   INT_PARAM, &path_check_local                     },
 	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
 	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
+	{"xavp_rcd_mask",      INT_PARAM, &reg_xavp_rcd_mask   					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
@@ -674,6 +678,24 @@ static int ki_unregister_ruid(sip_msg_t* _m, str* _dtable, str* _uri, str *_ruid
 	return unregister(_m, d, _uri, _ruid);
 }
 
+/*!
+ *
+ */
+static int ki_reg_send_reply(sip_msg_t* _m)
+{
+	int ret;
+	ret = reg_send_reply(_m);
+	return (ret==0)?1:ret;
+}
+
+/*!
+ *
+ */
+static int w_reg_send_reply(sip_msg_t* _m, char* _p1, char* _p2)
+{
+	return ki_reg_send_reply(_m);
+}
+
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
  */
@@ -890,6 +912,7 @@ void expires_range_update(str* gname, str* name){
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_registrar_exports[] = {
 	{ str_init("registrar"), str_init("save"),
 		SR_KEMIP_INT, regapi_save,
@@ -971,8 +994,14 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("registrar"), str_init("reg_send_reply"),
+		SR_KEMIP_INT, ki_reg_send_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

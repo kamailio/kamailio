@@ -30,6 +30,12 @@
  * sip router core part.
  */
 
+#ifdef KSR_PTHREAD_MUTEX_SHARED
+#define _GNU_SOURCE
+#include <pthread.h>
+#include <dlfcn.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -72,6 +78,7 @@
 #include "core/mem/shm_mem.h"
 #include "core/shm_init.h"
 #include "core/sr_module.h"
+#include "core/modparam.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
 #include "core/ip_addr.h"
@@ -118,8 +125,8 @@
 #endif
 #include "core/rand/fastrand.h" /* seed */
 #include "core/rand/kam_rand.h"
+#include "core/rand/cryptorand.h"
 
-#include "core/stats.h"
 #include "core/counters.h"
 #include "core/cfg/cfg.h"
 #include "core/cfg/cfg_struct.h"
@@ -157,7 +164,8 @@ Options:\n\
                   disable with no or off\n\
     --alias=val  Add an alias, the value has to be '[proto:]hostname[:port]'\n\
                   (like for 'alias' global parameter)\n\
-    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
+    -A define    Add config pre-processor define (e.g., -A WITH_AUTH,\n\
+                  -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
     -c           Check configuration file for syntax errors\n\
@@ -176,15 +184,23 @@ Options:\n\
     -I           Print more internal compile flags and options\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-                  mean listening on more addresses).  The address format is\n\
-                  [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
-                  addr_lst= addr|(addr, addr_lst) and \n\
-                  addr= host|ip_address|interface_name. \n\
+                  mean listening on more addresses). The address format is\n\
+                  [proto:]addr_lst[:port][/advaddr], \n\
+                  where proto=udp|tcp|tls|sctp, \n\
+                  addr_lst= addr|(addr, addr_lst), \n\
+                  addr=host|ip_address|interface_name and \n\
+                  advaddr=addr[:port] (advertised address). \n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
+                  -l udp:127.0.0.1:5080/1.2.3.4:5060,\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
+    --loadmodule=name load the module specified by name\n\
+    --log-engine=log engine name and data\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
+    --modparam=modname:paramname:type:value set the module parameter\n\
+                  type has to be 's' for string value and 'i' for int value, \n\
+                  example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
@@ -200,9 +216,10 @@ Options:\n\
                   field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
                   (to use both use `-rR`)\n"
-#ifdef STATS
-"    -s file     File where to write internal statistics on SIGUSR1\n"
-#endif
+"    --server-id=num set the value for server_id\n\
+    --subst=exp set a subst preprocessor directive\n\
+    --substdef=exp set a substdef preprocessor directive\n\
+    --substdefs=exp set a substdefs preprocessor directive\n"
 #ifdef USE_SCTP
 "    -S           disable sctp\n"
 #endif
@@ -266,6 +283,7 @@ void print_internals(void)
 #endif
 	printf("  Source code revision ID: %s\n", ver_id);
 	printf("  Compiled with: %s\n", ver_compiler);
+	printf("  Compiled architecture: %s\n", ARCH);
 	printf("  Compiled on: %s\n", ver_compiled_time);
 	printf("Thank you for flying %s!\n", NAME);
 }
@@ -426,6 +444,7 @@ int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;
 
 int auto_bind_ipv6 = 0;
+int sr_bind_ipv6_link_local = 0;
 
 struct socket_info* udp_listen=0;
 #ifdef USE_TCP
@@ -671,6 +690,8 @@ static void sig_alarm_abort(int signo)
 
 static void shutdown_children(int sig, int show_status)
 {
+	sr_corecb_void_exec(app_shutdown);
+
 	kill_all_children(sig);
 	if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
 		LM_ERR("could not install SIGALARM handler\n");
@@ -717,9 +738,6 @@ void handle_sigs(void)
 			break;
 
 		case SIGUSR1:
-#ifdef STATS
-			dump_all_statistic();
-#endif
 		memlog=cfg_get(core, core_cfg, memlog);
 #ifdef PKG_MALLOC
 		if (memlog <= cfg_get(core, core_cfg, debug)){
@@ -1300,9 +1318,6 @@ int main_loop(void)
 	}
 	/* one "main" process and n children handling i/o */
 	if (dont_fork){
-#ifdef STATS
-		setstats( 0 );
-#endif
 		if (udp_listen==0){
 			LM_ERR("no fork mode requires at least one"
 					" udp listen address, exiting...\n");
@@ -1431,6 +1446,7 @@ int main_loop(void)
 					if (arm_timer()<0) goto error;
 					timer_main();
 				}else{
+					/* do nothing for main timer */
 				}
 
 		if(sr_wtimer_start()<0) {
@@ -1568,12 +1584,20 @@ int main_loop(void)
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
 						((sendipv4_tls==0) ||
-							(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
+						 (sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST)))) {
 					sendipv4_tls=si;
+					if(sendipv4_tcp==0) {
+						sendipv4_tcp=si;
+					}
+				}
 				if( ((sendipv6_tls==0) ||
 							(sendipv6_tls->flags&(SI_IS_LO|SI_IS_MCAST))) &&
-						(si->address.af==AF_INET6))
+						(si->address.af==AF_INET6)) {
 					sendipv6_tls=si;
+					if(sendipv6_tcp==0) {
+						sendipv6_tcp=si;
+					}
+				}
 			}
 		}
 #endif /* USE_TLS */
@@ -1650,9 +1674,7 @@ int main_loop(void)
 				}else if (pid==0){
 					/* child */
 					bind_address=si; /* shortcut */
-#ifdef STATS
-					setstats( i+r*children_no );
-#endif
+
 					if(woneinit==0) {
 						if(run_child_one_init_route()<0)
 							goto error;
@@ -1687,9 +1709,7 @@ int main_loop(void)
 					}else if (pid==0){
 						/* child */
 						bind_address=si; /* shortcut */
-#ifdef STATS
-						setstats( i+r*children_no );
-#endif
+
 						return sctp_core_rcv_loop();
 					}
 				}
@@ -1776,6 +1796,7 @@ int main_loop(void)
 		cfg_ok=1;
 
 		*_sr_instance_started = 1;
+		sr_corecb_void_exec(app_ready);
 
 #ifdef EXTRA_DEBUG
 		for (r=0; r<*process_count; r++){
@@ -1879,6 +1900,8 @@ int main(int argc, char** argv)
 	int tmp_len;
 	int port;
 	int proto;
+	char *ahost = NULL;
+	int aport = 0;
 	char *options;
 	int ret;
 	unsigned int seed;
@@ -1889,6 +1912,9 @@ int main(int argc, char** argv)
 	char *p;
 	struct stat st = {0};
 
+#define KSR_TBUF_SIZE 512
+	char tbuf[KSR_TBUF_SIZE];
+
 	int option_index = 0;
 
 #define KARGOPTVAL	1024
@@ -1897,7 +1923,14 @@ int main(int argc, char** argv)
 		{"help",  no_argument, 0, 'h'},
 		{"version",  no_argument, 0, 'v'},
 		/* long options without short variant */
-		{"alias",  required_argument, 0, KARGOPTVAL},
+		{"alias",       required_argument, 0, KARGOPTVAL},
+		{"subst",       required_argument, 0, KARGOPTVAL + 1},
+		{"substdef",    required_argument, 0, KARGOPTVAL + 2},
+		{"substdefs",   required_argument, 0, KARGOPTVAL + 3},
+		{"server-id",   required_argument, 0, KARGOPTVAL + 4},
+		{"loadmodule",  required_argument, 0, KARGOPTVAL + 5},
+		{"modparam",    required_argument, 0, KARGOPTVAL + 6},
+		{"log-engine",  required_argument, 0, KARGOPTVAL + 7},
 		{0, 0, 0, 0 }
 	};
 
@@ -1915,11 +1948,7 @@ int main(int argc, char** argv)
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:"
-#ifdef STATS
-		"s:"
-#endif
-	;
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
 	/* Handle special command line arguments, that must be treated before
 	 * intializing the various subsystem or before parsing other arguments:
 	 *  - get the startup debug and log_stderr values
@@ -1960,6 +1989,10 @@ int main(int argc, char** argv)
 			case 'X':
 					sr_memmng_pkg = optarg;
 					break;
+			case KARGOPTVAL+7:
+					ksr_slog_init(optarg);
+					break;
+
 			default:
 					if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
 						printf("version: %s\n", full_version);
@@ -2117,6 +2150,9 @@ int main(int argc, char** argv)
 			case 'a':
 			case 's':
 			case 'Y':
+			case KARGOPTVAL+5:
+			case KARGOPTVAL+6:
+			case KARGOPTVAL+7:
 					break;
 
 			/* long options */
@@ -2128,6 +2164,31 @@ int main(int argc, char** argv)
 					}
 					if(add_alias(tmp, tmp_len, port, proto)<0) {
 						fprintf(stderr, "Failed to add alias value '%s'\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+1:
+					if(pp_subst_add(optarg)<0) {
+						LM_ERR("failed to add subst expression: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+2:
+					if(pp_substdef_add(optarg, 0)<0) {
+						LM_ERR("failed to add substdef expression: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+3:
+					if(pp_substdef_add(optarg, 1)<0) {
+						LM_ERR("failed to add substdefs expression: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+4:
+					server_id=(int)strtol(optarg, &tmp, 10);
+					if ((tmp==0) || (*tmp)){
+						LM_ERR("bad server_id value: %s\n", optarg);
 						goto error;
 					}
 					break;
@@ -2179,6 +2240,29 @@ int main(int argc, char** argv)
 	/* Fix the value of cfg_file variable.*/
 	if (fix_cfg_file() < 0) goto error;
 
+	/* process command line parameters that require initialized basic environment */
+	optind = 1;  /* reset getopt index */
+	option_index = 0;
+	/* switches required before config parsing and processing */
+	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
+		switch(c) {
+			case KARGOPTVAL+5:
+					if (load_module(optarg)!=0) {
+						LM_ERR("failed to load the module: %s\n", optarg);
+						goto error;
+					}
+					break;
+			case KARGOPTVAL+6:
+					if(set_mod_param_serialized(optarg) < 0) {
+						LM_ERR("failed to set modparam: %s\n", optarg);
+						goto error;
+					}
+					break;
+			default:
+					break;
+		}
+	}
+
 	/* load config file or die */
 	if (cfg_file[0] == '-' && strlen(cfg_file)==1) {
 		cfg_stream=stdin;
@@ -2186,7 +2270,8 @@ int main(int argc, char** argv)
 		cfg_stream=fopen (cfg_file, "r");
 	}
 	if (cfg_stream==0){
-		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
+		fprintf(stderr, "ERROR: loading config file(%s): %s,"
+				" check file and directory permissions\n", cfg_file,
 				strerror(errno));
 		goto error;
 	}
@@ -2207,10 +2292,11 @@ try_again:
 	}
 	seed+=getpid()+time(0);
 	LM_DBG("seeding PRNG with %u\n", seed);
-	kam_srand(seed);
-	fastrand_seed(kam_rand());
-	srandom(kam_rand()+time(0));
-	LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
+	cryptorand_seed(seed);
+	fastrand_seed(cryptorand());
+	kam_srand(cryptorand());
+	srandom(cryptorand());
+	LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(), fastrand(), cryptorand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();
@@ -2220,10 +2306,10 @@ try_again:
 
 	yyin=cfg_stream;
 	debug_save = default_core_cfg.debug;
-	if ((yyparse()!=0)||(cfg_errors)){
+	if ((yyparse()!=0)||(cfg_errors)||(pp_ifdef_level_check()<0)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		if (debug_flag) default_core_cfg.debug = debug_save;
-		pp_ifdef_level_check();
+		pp_ifdef_level_error();
 
 		goto error;
 	}
@@ -2231,7 +2317,6 @@ try_again:
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) default_core_cfg.debug = debug_save;
-	pp_ifdef_level_check();
 	print_rls();
 
 	if(init_dst_set()<0) {
@@ -2286,7 +2371,38 @@ try_again:
 				#endif
 					break;
 			case 'l':
-					if ((n_lst=parse_phostport_mh(optarg, &tmp, &tmp_len,
+					p = strrchr(optarg, '/');
+					if(p==NULL) {
+						p = optarg;
+					} else {
+						if(strlen(optarg)>=KSR_TBUF_SIZE-1) {
+							fprintf(stderr, "listen value too long: %s\n",
+									optarg);
+							goto error;
+						}
+						strcpy(tbuf, optarg);
+						p = strrchr(tbuf, '/');
+						if(p==NULL) {
+							fprintf(stderr, "unexpected bug for listen: %s\n",
+									optarg);
+							goto error;
+						}
+						*p = '\0';
+						p++;
+						tmp_len = 0;
+						if(parse_phostport(p, &ahost, &tmp_len, &aport,
+									&proto)<0)
+						{
+							fprintf(stderr, "listen value with invalid advertise: %s\n",
+									optarg);
+							goto error;
+						}
+						if(ahost) {
+							ahost[tmp_len] = '\0';
+						}
+						p = tbuf;
+					}
+					if ((n_lst=parse_phostport_mh(p, &tmp, &tmp_len,
 											&port, &proto))==0){
 						fprintf(stderr, "bad -l address specifier: %s\n"
 											"Check disabled protocols\n",
@@ -2294,9 +2410,10 @@ try_again:
 						goto error;
 					}
 					/* add a new addr. to our address list */
-					if (add_listen_iface(n_lst->name, n_lst->next,  port,
-											proto, n_lst->flags)!=0){
-						fprintf(stderr, "failed to add new listen address\n");
+					if (add_listen_advertise_iface(n_lst->name, n_lst->next,  port,
+											proto, ahost, aport, n_lst->flags)!=0){
+						fprintf(stderr, "failed to add new listen address: %s\n",
+								optarg);
 						free_name_lst(n_lst);
 						goto error;
 					}
@@ -2401,11 +2518,6 @@ try_again:
 						goto error;
 					}
 					break;
-			case 's':
-				#ifdef STATS
-					stat_file=optarg;
-				#endif
-					break;
 			default:
 					break;
 		}
@@ -2499,8 +2611,8 @@ try_again:
 	/* create runtime dir if doesn't exist */
 	if (stat(runtime_dir, &st) == -1) {
 		if(mkdir(runtime_dir, 0700) == -1) {
-			LM_ERR("failed to create runtime dir %s\n", runtime_dir);
-			fprintf(stderr,  "failed to create runtime dir %s\n", runtime_dir);
+			LM_ERR("failed to create runtime dir %s, check directory permissions\n", runtime_dir);
+			fprintf(stderr, "failed to create runtime dir %s, check directory permissions\n", runtime_dir);
 			goto error;
 		}
 		if(sock_uid!=-1 || sock_gid!=-1) {
@@ -2730,10 +2842,6 @@ try_again:
 	};
 	fixup_complete=1;
 
-#ifdef STATS
-	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
-#endif
-
 	ret=main_loop();
 	if (ret < 0)
 		goto error;
@@ -2757,3 +2865,72 @@ error:
 	}
 	return -1;
 }
+
+
+#ifdef KSR_PTHREAD_MUTEX_SHARED
+
+/**
+ * code to set PTHREAD_PROCESS_SHARED attribute for phtread mutex to cope
+ * with libssl 1.1+ thread-only mutex initialization
+ */
+
+#define SYMBOL_EXPORT __attribute__((visibility("default")))
+
+int SYMBOL_EXPORT pthread_mutex_init (pthread_mutex_t *__mutex,
+		const pthread_mutexattr_t *__mutexattr)
+{
+	static int (*real_pthread_mutex_init)(pthread_mutex_t *__mutex,
+			const pthread_mutexattr_t *__mutexattr) = 0;
+	pthread_mutexattr_t attr;
+	int ret;
+
+	if (!real_pthread_mutex_init) {
+		real_pthread_mutex_init = dlsym(RTLD_NEXT, "pthread_mutex_init");
+		if (!real_pthread_mutex_init) {
+			return -1;
+		}
+	}
+
+	if (__mutexattr) {
+		pthread_mutexattr_t attr = *__mutexattr;
+		pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+		return real_pthread_mutex_init(__mutex, &attr);
+	}
+
+	pthread_mutexattr_init(&attr);
+	pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+	ret = real_pthread_mutex_init(__mutex, &attr);
+	pthread_mutexattr_destroy(&attr);
+
+	return ret;
+}
+
+int SYMBOL_EXPORT pthread_rwlock_init (pthread_rwlock_t *__restrict __rwlock,
+				const pthread_rwlockattr_t *__restrict __attr)
+{
+	static int (*real_pthread_rwlock_init)(pthread_rwlock_t *__restrict __rwlock,
+				const pthread_rwlockattr_t *__restrict __attr) = 0;
+	pthread_rwlockattr_t attr;
+	int ret;
+
+	if (!real_pthread_rwlock_init) {
+		real_pthread_rwlock_init = dlsym(RTLD_NEXT, "pthread_rwlock_init");
+		if (!real_pthread_rwlock_init) {
+			return -1;
+		}
+	}
+
+	if (__attr) {
+		pthread_rwlockattr_t attr = *__attr;
+		pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+		return real_pthread_rwlock_init(__rwlock, &attr);
+	}
+
+	pthread_rwlockattr_init(&attr);
+	pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+	ret = real_pthread_rwlock_init(__rwlock, &attr);
+	pthread_rwlockattr_destroy(&attr);
+
+	return ret;
+}
+#endif

@@ -19,8 +19,6 @@
  *
  */
 
-#include "defs.h"
-
 
 #include "tm_load.h"
 #include "uac.h"
@@ -113,10 +111,8 @@ int load_tm( struct tm_binds *tmb)
 	tmb->register_new_dlg_cb=register_new_dlg_cb;
 	tmb->register_dlg_tmcb=register_dlg_tmcb;
 #endif
-#ifdef WITH_AS_SUPPORT
 	tmb->ack_local_uac = ack_local_uac;
 	tmb->t_get_canceled_ident = t_get_canceled_ident;
-#endif
 	tmb->t_suspend = t_suspend;
 	tmb->t_continue = t_continue;
 	tmb->t_continue_cb = t_continue_cb;

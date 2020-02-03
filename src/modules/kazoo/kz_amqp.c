@@ -140,7 +140,7 @@ static inline str* kz_str_dup(str* src)
 {
 	char *dst_char = (char*)shm_malloc(sizeof(str)+src->len+1);
 	if (!dst_char) {
-		LM_ERR("error allocating shared memory for str");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	str* dst = (str*)dst_char;
@@ -157,7 +157,7 @@ static inline str* kz_str_dup_from_char(char* src)
 	int len = strlen(src);
 	char *dst_char = (char*)shm_malloc(sizeof(str)+len+1);
 	if (!dst_char) {
-		LM_ERR("error allocating shared memory for str");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	str* dst = (str*)dst_char;
@@ -216,7 +216,7 @@ static inline str* kz_local_str_dup(str* src)
 {
 	char *dst_char = (char*)pkg_malloc(sizeof(str)+src->len+1);
 	if (!dst_char) {
-		LM_ERR("error allocating shared memory for str");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	str* dst = (str*)dst_char;
@@ -247,7 +247,7 @@ static inline str* kz_str_from_amqp_bytes(amqp_bytes_t src)
 {
 	char *dst_char = (char*)shm_malloc(sizeof(str)+src.len+1);
 	if (!dst_char) {
-		LM_ERR("error allocating shared memory for str");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	str* dst = (str*)dst_char;
@@ -1213,7 +1213,7 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
     return ret;
 }
 
-int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _pub_flags)
 {
 	  str json_s;
 	  str exchange_s;
@@ -1253,6 +1253,10 @@ int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char
 
 };
 
+int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+{
+	return kz_amqp_publish_ex(msg, exchange, routing_key, payload, NULL);
+}
 
 char* last_payload_result = NULL;
 
@@ -1261,7 +1265,7 @@ int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value
 	return last_payload_result == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, last_payload_result);
 }
 
-int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route)
+int kz_amqp_async_query_ex(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route, char* _pub_flags)
 {
 	  str json_s;
 	  str exchange_s;
@@ -1406,6 +1410,11 @@ exit:
 	    return ret;
 };
 
+int kz_amqp_async_query(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route)
+{
+	return kz_amqp_async_query_ex(msg, _exchange, _routing_key, _payload, _cb_route, _err_route, NULL);
+}
+
 void kz_amqp_reset_last_result()
 {
 	if(last_payload_result)
@@ -1531,7 +1540,7 @@ kz_amqp_queue_ptr kz_amqp_queue_new(str *name)
 {
 	kz_amqp_queue_ptr queue = (kz_amqp_queue_ptr) shm_malloc(sizeof(kz_amqp_queue));
 	if(queue == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(queue, 0, sizeof(kz_amqp_queue));
@@ -1558,7 +1567,7 @@ kz_amqp_queue_ptr kz_amqp_queue_from_json(str *name, json_object* json_obj)
 	kz_amqp_queue_ptr queue = kz_amqp_queue_new(name);
 
 	if(queue == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 
@@ -1601,7 +1610,7 @@ kz_amqp_exchange_ptr kz_amqp_exchange_new(str *name, str* type)
 {
 	kz_amqp_exchange_ptr exchange = (kz_amqp_exchange_ptr) shm_malloc(sizeof(kz_amqp_exchange));
 	if(exchange == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(exchange, 0, sizeof(kz_amqp_exchange));
@@ -1646,7 +1655,7 @@ kz_amqp_exchange_ptr kz_amqp_exchange_from_json(str *name, json_object* json_obj
 
 	exchange = kz_amqp_exchange_new(name, &type);
 	if(exchange == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 
@@ -1723,7 +1732,7 @@ kz_amqp_routings_ptr kz_amqp_routing_from_json(json_object* json_obj)
 		break;
 
    	default:
-   		LM_DBG("type not handled in routing");
+		LM_DBG("type not handled in routing\n");
    		break;
    	}
    	return ret;
@@ -1765,7 +1774,7 @@ kz_amqp_exchange_binding_ptr kz_amqp_exchange_binding_from_json(json_object* JOb
 		    	binding->from_exchange = exchange;
 		    	binding->routing = kz_amqp_routing_from_json(routingObj);
 		    	if(binding->routing == NULL) {
-		    		LM_DBG("invalid routing");
+					LM_DBG("invalid routing\n");
 		    		kz_amqp_exchange_bindings_free(binding);
 		    		binding = NULL;
 		    	} else {
@@ -2371,7 +2380,7 @@ void kz_amqp_consumer_event(kz_amqp_consumer_delivery_ptr Evt)
 				if(kz_amqp_consumer_fire_event(buffer) != 0) {
 					sprintf(buffer, "kazoo:consumer-event");
 					if(kz_amqp_consumer_fire_event(buffer) != 0) {
-						LM_ERR("kazoo:consumer-event not found");
+						LM_ERR("kazoo:consumer-event not found\n");
 					}
 				}
             }
@@ -2401,7 +2410,7 @@ void kz_amqp_send_consumer_event_ex(char* payload, char* event_key, char* event_
 {
 	kz_amqp_consumer_delivery_ptr ptr = (kz_amqp_consumer_delivery_ptr) shm_malloc(sizeof(kz_amqp_consumer_delivery));
 	if(ptr == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return;
 	}
 	memset(ptr, 0, sizeof(kz_amqp_consumer_delivery));
@@ -2467,7 +2476,7 @@ int kz_send_worker_error_event(kz_amqp_cmd_ptr cmd)
 	cmd->return_code = -1;
 	kz_amqp_consumer_delivery_ptr ptr = (kz_amqp_consumer_delivery_ptr) shm_malloc(sizeof(kz_amqp_consumer_delivery));
 	if(ptr == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(ptr, 0, sizeof(kz_amqp_consumer_delivery));
@@ -2997,7 +3006,7 @@ void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* e
 
 	ptr = (kz_amqp_consumer_delivery_ptr) shm_malloc(sizeof(kz_amqp_consumer_delivery));
 	if(ptr == NULL) {
-		LM_ERR("NO MORE SHARED MEMORY!");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(ptr, 0, sizeof(kz_amqp_consumer_delivery));
@@ -3230,8 +3239,8 @@ int kz_amqp_consumer_worker_proc(int cmd_pipe)
 	set_non_blocking(cmd_pipe);
 	event_set(&pipe_ev, cmd_pipe, EV_READ | EV_PERSIST, kz_amqp_consumer_worker_cb, &pipe_ev);
 	event_add(&pipe_ev, NULL);
-	event_dispatch();
-	return 0;
+
+	return event_dispatch();
 }
 
 void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer)

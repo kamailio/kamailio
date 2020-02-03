@@ -232,9 +232,9 @@ void set_branch_iterator(int n)
  * more branches
  */
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-		 str* path, unsigned int *flags,
-		 struct socket_info** force_socket,
-		 str *ruid, str *instance, str *location_ua)
+		str* path, unsigned int *flags,
+		struct socket_info** force_socket,
+		str *ruid, str *instance, str *location_ua)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -302,18 +302,78 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  * 0 is returned if there are no more branches
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-		  unsigned int* flags, struct socket_info** force_socket,
-		  str* ruid, str *instance, str *location_ua)
+		unsigned int* flags, struct socket_info** force_socket,
+		str* ruid, str *instance, str *location_ua)
 {
 	char* ret;
-	
+
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-		       force_socket, ruid, instance, location_ua);
+			force_socket, ruid, instance, location_ua);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
 }
 
+/**
+ * Link branch attributes in the data structure
+ * - return: -1 (<0) on error; 0 - on no valid branch; 1 - on a valid branch
+ */
+int get_branch_data(unsigned int i, branch_data_t *vbranch)
+{
+	if(vbranch==NULL) {
+		return -1;
+	}
+	memset(vbranch, 0, sizeof(branch_data_t));
+
+	if (i < nr_branches) {
+		vbranch->uri.s = branches[i].uri;
+		vbranch->uri.len = branches[i].len;
+		vbranch->q = branches[i].q;
+		if (branches[i].dst_uri_len > 0) {
+			vbranch->dst_uri.len = branches[i].dst_uri_len;
+			vbranch->dst_uri.s = branches[i].dst_uri;
+		}
+		if (branches[i].path_len > 0) {
+			vbranch->path.len = branches[i].path_len;
+			vbranch->path.s = branches[i].path;
+		}
+		vbranch->force_socket = branches[i].force_send_socket;
+		vbranch->flags = branches[i].flags;
+		if (branches[i].ruid_len > 0) {
+			vbranch->ruid.len = branches[i].ruid_len;
+			vbranch->ruid.s = branches[i].ruid;
+		}
+		if (branches[i].instance_len > 0) {
+			vbranch->instance.len = branches[i].instance_len;
+			vbranch->instance.s =branches[i].instance;
+		}
+		if (branches[i].location_ua_len > 0) {
+			vbranch->location_ua.len = branches[i].location_ua_len;
+			vbranch->location_ua.s = branches[i].location_ua;
+		}
+		vbranch->otcpid = branches[i].otcpid;
+		return 1;
+	} else {
+		vbranch->q = Q_UNSPECIFIED;
+		return 0;
+	}
+}
+
+/**
+ * Link branch attributes in the data structure and advance the iterator on
+ * return of a valid branch
+ * - return: -1 (<0) on error; 0 - on no valid branch; 1 - on a valid branch
+ */
+int next_branch_data(branch_data_t *vbranch)
+{
+	int ret;
+	ret= get_branch_data(branch_iterator, vbranch);
+	if (ret <= 0) {
+		return ret;
+	}
+	branch_iterator++;
+	return ret;
+}
 
 /*
  * Empty the dset array
@@ -328,7 +388,7 @@ void clear_branches(void)
 
 
 
-/**  Add a new branch to the current transaction.
+/**  Add a new branch to the current destination set.
  * @param msg sip message, used for getting the uri if not specified (0).
  * @param uri uri, can be 0 (in which case the uri is taken from msg)
  * @param dst_uri destination uri, can be 0.
@@ -352,7 +412,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	str luri;
 
 	/* if we have already set up the maximum number
-	 * of branches, don't try new ones 
+	 * of branches, don't try new ones
 	 */
 	if (unlikely(nr_branches == sr_dst_max_branches - 1)) {
 		LM_ERR("max nr of branches exceeded\n");
@@ -466,11 +526,39 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		branches[nr_branches].location_ua[0] = '\0';
 		branches[nr_branches].location_ua_len = 0;
 	}
-	
+
 	nr_branches++;
 	return 1;
 }
 
+
+/**  Push a new branch to the current destination set.
+ * @param msg sip message, used for getting the uri if not specified (0).
+ * @param uri uri, can be 0 (in which case the uri is taken from msg)
+ * @param dst_uri destination uri, can be 0.
+ * @param path path vector (passed in a string), can be 0.
+ * @param q  q value.
+ * @param flags per branch flags.
+ * @param force_socket socket that should be used when sending.
+ * @param instance sip instance contact header param value
+ * @param reg_id reg-id contact header param value
+ * @param ruid ruid value from usrloc
+ * @param location_ua location user agent
+ *
+ * @return NULL on failure, new branch pointer on success.
+ */
+branch_t* ksr_push_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+		  qvalue_t q, unsigned int flags,
+		  struct socket_info* force_socket,
+		  str* instance, unsigned int reg_id,
+		  str* ruid, str* location_ua)
+{
+	if(append_branch(msg, uri, dst_uri, path, q, flags, force_socket,
+				instance, reg_id, ruid, location_ua)<0) {
+		return NULL;
+	}
+	return &branches[nr_branches-1];
+}
 
 /*! \brief
  * Combines the given elements into a Contact header field

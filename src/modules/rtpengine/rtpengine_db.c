@@ -98,6 +98,7 @@ static int rtpp_load_db(void)
 	if (n_rows == 0)
 	{
 		LM_WARN("No rtpproxy instances in database\n");
+		rtpp_dbf.free_result(rtpp_db_handle, res);
 		return 0;
 	}
 

@@ -1355,6 +1355,7 @@ int pres_htable_restore(void)
 			ev_str.s = (char *)row_vals[event_col].val.string_val;
 			ev_str.len = strlen(ev_str.s);
 
+			memset(&ev, 0, sizeof(event_t));
 			if(event_parser(ev_str.s, ev_str.len, &ev) < 0) {
 				LM_ERR("parsing event\n");
 				free_event_params(ev.params.list, PKG_MEM_TYPE);

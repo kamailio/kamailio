@@ -48,7 +48,7 @@
 #include "../../core/timer_proc.h" /* register_sync_timer */
 #include "../../core/globals.h"   /* is_main */
 #include "../../core/ut.h"        /* str_init */
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -377,8 +377,11 @@ static int mod_init(void)
 	if (handle_lost_tcp && db_mode == DB_ONLY)
 		LM_WARN("handle_lost_tcp option makes nothing in DB_ONLY mode\n");
 
-	init_flag = 1;
+	if(db_mode != DB_ONLY) {
+		ul_set_xavp_contact_clone(1);
+	}
 
+	init_flag = 1;
 	return 0;
 }
 

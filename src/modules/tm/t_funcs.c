@@ -32,7 +32,6 @@
 #include "../../core/mem/mem.h"
 #include "../../core/sr_compat.h"
 #include "../../core/pvar.h"
-#include "defs.h"
 #include "t_funcs.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
@@ -285,8 +284,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	   e2e ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
 		LM_DBG("forwarding ACK statelessly\n");
+		init_dest_info(&dst);
+		dst.id = p_msg->otcpid;
 		if (proxy==0) {
-			init_dest_info(&dst);
 			dst.proto=proto;
 			if (get_uri_send_info(GET_NEXT_HOP(p_msg), &host, &port,
 									&dst.proto, &comp)!=0){
@@ -300,7 +300,6 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			 * of it */
 			ret=forward_request(p_msg, &host, port, &dst);
 		} else {
-			init_dest_info(&dst);
 			dst.proto=get_proto(proto, proxy->proto);
 			proxy2su(&dst.to, proxy);
 			/* dst->send_sock not set, but forward_request will take care

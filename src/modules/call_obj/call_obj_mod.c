@@ -1,3 +1,41 @@
+/*
+ * CALL_OBJ module
+ *
+ * Copyright (C) 2017-2019 - Sonoc
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+/**
+ * \file
+ * \ingroup call_obj
+ * \brief call_obj :: Core module interface
+ *
+ * - Module: \ref call_obj
+ */
+
+/**
+ * \defgroup call_obj call_obj :: Identify calls using an increasing sequence of integers.
+ *
+ * It starts assigning an integer to a call. Next call gets next free
+ * integer in a ring. When a call finishes its assigned number shall be
+ * freed.
+ */
 
 #include <inttypes.h>
 
@@ -9,6 +47,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/trim.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -20,15 +59,17 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 /**
- * Module parameters
+ * \name Module parameters
+ * @{
  */
-/* Actually, negative or zero values are not allowed. */
-int call_obj_start = 0;
-int call_obj_end = 0;
+int call_obj_start = 0;/**< Start value of counting sequence. Negative values not allowed. */
+int call_obj_end = 0; /**< End value of counting sequence. Negative values not allowed.*/
+
+/**@}*/
 
 /* module commands */
 static cmd_export_t cmds[] = {
-	{"call_obj_get", (cmd_function)w_call_obj_get, 1, fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+	{"call_obj_get", (cmd_function)w_call_obj_get, 1, fixup_pvar_null, 0, ANY_ROUTE},
 	{"call_obj_free", (cmd_function)w_call_obj_free, 1, fixup_var_str_1, 0, ANY_ROUTE},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -105,7 +146,7 @@ static void rpc_call_obj_list(rpc_t *rpc, void *ctx)
 	cobj_elem_t *list = NULL;
 
 	int rc = rpc->scan(ctx, "d*d", &duration, &limit);
-	if (rc != -1 && rc != 2) {
+	if (rc != 1 && rc != 2) {
 		rpc->fault(ctx, 400, "requires arguments for duration number (and optionally limit)");
 		goto clean;
 	}
@@ -190,6 +231,9 @@ static rpc_export_t rpc_cmds[] = {
 	{0, 0, 0, 0}
 };
 
+/**
+ * \brief Functions and parameters exported by call_obj module.
+ */
 struct module_exports exports = {
 	"call_obj",
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -228,13 +272,13 @@ static void mod_destroy(void)
 }
 
 /**
- * Looks for the Call-ID header
+ * \brief Looks for the Call-ID header
  * On error content pointed by s is undefined.
  *
- * @param msg - the sip message
- * @param s  pointer to str where we will store callid.
+ * \param msg - the sip message
+ * \param s  pointer to str where we will store callid.
  *
- * @returns 0 on success
+ * \return 0 on success
  */
 static int get_call_id(struct sip_msg *msg, str *s)
 {
@@ -362,4 +406,83 @@ static int w_call_obj_free(struct sip_msg* msg, char* num_obj)
 	}
 
 	return 1;
+}
+
+/**
+ * Get a free object.
+ *
+ * /return -1 on error.
+ * /return number of free object on success.
+ */
+static int ki_call_obj_get(sip_msg_t *msg)
+{
+	str call_id;
+	if (get_call_id(msg, &call_id)) {
+		LM_ERR("Cannot get callid header\n");
+		goto error;
+	}
+	LM_DBG("CallId: %.*s\n", call_id.len, call_id.s);
+
+	uint64_t current_ts;
+	if (get_timestamp(&current_ts)) {
+		LM_ERR("error getting timestamp");
+		goto error;
+	}
+
+	int obj = cobj_get(current_ts, &call_id);
+	if (obj == -1) {
+		LM_ERR("Getting object\n");
+		goto error;
+	}
+	/* obj >= 0 */
+
+	return obj;
+
+error:
+	return -1;
+}
+
+/**
+ * \brief Free an object.
+ *
+ * \param num_obj number of the object to free.
+ * \return 1 on success.
+ * \return 0 on error.
+ */
+static int ki_call_obj_free(sip_msg_t *msg, int num_obj)
+{
+	if (cobj_free(num_obj)) {
+		LM_ERR("Freeing object: %d\n", num_obj);
+		return 0;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_call_obj_exports[] = {
+	{ str_init("call_obj"), str_init("get"),
+		SR_KEMIP_INT, ki_call_obj_get,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("call_obj"), str_init("free"),
+	    SR_KEMIP_INT, ki_call_obj_free,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ * Register KEMI functions.
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_call_obj_exports);
+	return 0;
 }

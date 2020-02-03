@@ -28,10 +28,8 @@
 #ifndef _H_TABLE_H
 #define _H_TABLE_H
 
-#include "defs.h"
 #include "t_stats.h"
 
-#define TM_DEL_UNREF
 /* uncomment the next define if you wish to keep hash statistics*/
 /*
 #define TM_HASH_STATS
@@ -46,7 +44,6 @@
 
 #include "../../core/clist.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../core/md5utils.h"
 #include "../../core/usr_avp.h"
 #include "../../core/xavp.h"
 #include "../../core/timer.h"
@@ -54,11 +51,6 @@
 #include "../../core/atomic_ops.h"
 #include "../../core/hash_func.h"
 #include "config.h"
-
-/* if TM_DIFF_RT_TIMEOUT is defined, different retransmissions timeouts
- * can be used for each transaction, at a small memory cost
- * (extra 4 bytes/transaction) */
-#define TM_DIFF_RT_TIMEOUT
 
 
 struct s_table;
@@ -176,10 +168,8 @@ typedef struct ua_server
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
 	str local_totag;
-#ifdef CANCEL_REASON_SUPPORT
 	struct cancel_reason *cancel_reas; /* pointer to cancel reason, used
 										* for e2e cancels */
-#endif /* CANCEL_REASON_SUPPORT */
 	unsigned int status;
 } tm_ua_server_t;
 
@@ -226,7 +216,6 @@ typedef struct ua_client
 	/* internal processing code - (mapping over sip warning codes)
 	 * - storing the code giving a clue of what happened internally */
 	int icode;
-#ifdef WITH_AS_SUPPORT
 	/**
 	 * Resent for every rcvd 2xx reply.
 	 * This member's as an alternative to passing the reply to the AS,
@@ -235,7 +224,6 @@ typedef struct ua_client
 	 * concurrently with a 2xx reply (to generate an ACK).
 	 */
 	struct retr_buf *local_ack;
-#endif
 	/* the route to take if no final positive reply arrived */
 	unsigned short on_failure;
 	/* the route to take for all failure replies */
@@ -283,23 +271,17 @@ typedef struct async_state
 #define T_IN_AGONY (1 << 5)		/* set if waiting to die (delete timer)
 								 * TODO: replace it with del on unref */
 #define T_AUTO_INV_100 (1 << 6) /* send an 100 reply automatically  to inv. */
-#ifdef WITH_AS_SUPPORT
 /* don't generate automatically an ACK for local transaction */
 #define T_NO_AUTO_ACK (1 << 7)
-#endif
 
 #define T_DISABLE_6xx (1 << 8)		/* treat 6xx as a normal reply */
 #define T_DISABLE_FAILOVER (1 << 9) /* don't perform dns failover */
-#ifdef CANCEL_REASON_SUPPORT
 #define T_NO_E2E_CANCEL_REASON (1 << 10) /* don't propagate CANCEL Reason */
-#endif									 /* CANCEL_REASON_SUPPORT */
 #define T_DONT_FORK (T_CANCELED | T_6xx)
 
-#ifdef WITH_AS_SUPPORT
 /* provisional replies must trigger callbacks for local transaction */
 #define T_PASS_PROVISIONAL_FLAG (1 << 11)
 #define pass_provisional(_t_) ((_t_)->flags & T_PASS_PROVISIONAL_FLAG)
-#endif
 #define T_ASYNC_CONTINUE \
 	(1 << 12) /* Is this transaction in a continuation after being suspended */
 
@@ -365,8 +347,6 @@ typedef struct cell
 
 	/* free operations counter - debug */
 	int fcount;
-
-#ifdef TM_DEL_UNREF
 	/* every time the transaction/cell is referenced from somewhere this
 	 * ref_count should be increased (via REF()) and every time the reference
 	 * is removed the ref_count should be decreased (via UNREF()).
@@ -378,19 +358,6 @@ typedef struct cell
 	 * it will be automatically deleted by the UNREF() operation.
 	 */
 	atomic_t ref_count;
-#else
-	/* how many processes are currently processing this transaction ;
-	 * note that only processes working on a request/reply belonging
-	 * to a transaction increase ref_count -- timers don't, since we
-	 * rely on transaction state machine to clean-up all but wait timer
-	 * when entering WAIT state and the wait timer is the only place
-	 * from which a transaction can be deleted (if ref_count==0); good
-	 * for protecting from conditions in which wait_timer hits and
-	 * tries to delete a transaction whereas at the same time
-	 * a delayed message belonging to the transaction is received */
-	volatile unsigned int ref_count;
-#endif
-
 	/* needed for generating local ACK/CANCEL for local
 	 * transactions; all but cseq_n include the entire
 	 * header field value, cseq_n only Cseq number; with
@@ -438,17 +405,10 @@ typedef struct cell
 	/* recursive reply lock count */
 	int reply_rec_lock_level;
 
-#ifdef ENABLE_ASYNC_MUTEX
-	/* protect against concurrent async continues */
-	ser_lock_t async_mutex;
-#endif
-
 	ticks_t fr_timeout;		/* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
-#ifdef TM_DIFF_RT_TIMEOUT
 	retr_timeout_t rt_t1_timeout_ms; /* start retr. interval for retr_bufs */
 	retr_timeout_t rt_t2_timeout_ms; /* maximum retr. interval for retr_bufs */
-#endif
 	ticks_t end_of_life; /* maximum lifetime */
 
 	/* nr of replied branch; 0..sr_dst_max_branches=branch value,

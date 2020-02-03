@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -42,7 +42,8 @@ enum _tr_s_subtype {
 	TR_S_TIMEFORMAT, TR_S_TRIM, TR_S_RTRIM, TR_S_LTRIM, TR_S_RM, TR_S_STRIPTO,
 	TR_S_URLENCODEPARAM, TR_S_URLDECODEPARAM, TR_S_NUMERIC, TR_S_ESCAPECSV,
 	TR_S_ENCODEBASE58, TR_S_DECODEBASE58, TR_S_COREHASH, TR_S_UNQUOTE,
-	TR_S_UNBRACKET
+	TR_S_UNBRACKET, TR_S_COUNT, TR_S_ENCODEBASE64T, TR_S_DECODEBASE64T,
+	TR_S_RMWS
 };
 enum _tr_uri_subtype {
 	TR_URI_NONE=0, TR_URI_USER, TR_URI_HOST, TR_URI_PASSWD, TR_URI_PORT,

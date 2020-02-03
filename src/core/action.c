@@ -383,10 +383,16 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			init_dest_info(&dst);
 			if (a->type==FORWARD_UDP_T) dst.proto=PROTO_UDP;
 #ifdef USE_TCP
-			else if (a->type==FORWARD_TCP_T) dst.proto= PROTO_TCP;
+			else if (a->type==FORWARD_TCP_T) {
+				dst.proto= PROTO_TCP;
+				dst.id = msg->otcpid;
+			}
 #endif
 #ifdef USE_TLS
-			else if (a->type==FORWARD_TLS_T) dst.proto= PROTO_TLS;
+			else if (a->type==FORWARD_TLS_T) {
+				dst.proto= PROTO_TLS;
+				dst.id = msg->otcpid;
+			}
 #endif
 #ifdef USE_SCTP
 			else if (a->type==FORWARD_SCTP_T) dst.proto=PROTO_SCTP;
@@ -1434,6 +1440,9 @@ match_cleanup:
 				ret=E_BUG;
 				goto error;
 			}
+			LM_DBG("setting send-socket to [%.*s]\n",
+					((struct socket_info*)a->val[0].u.data)->sock_str.len,
+					((struct socket_info*)a->val[0].u.data)->sock_str.s);
 			set_force_socket(msg, (struct socket_info*)a->val[0].u.data);
 			ret=1; /* continue processing */
 			break;

@@ -18,7 +18,7 @@ var FLB_NATSIPPING=7
 function ksr_request_route()
 {
 	// KSR.sl.sl_send_reply(100,"Intelligent trying");
-	// KSR.info("===== request - from kamailio lua script\n");
+	// KSR.info("===== request - from kamailio javascript script\n");
 
 	// per request initial checks
 	ksr_route_reqinit();

@@ -1,0 +1,31 @@
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+#
+# scripts
+*.sh text
+*.py text
+*.pl text
+# source code
+*.c text
+*.h text
+*.cpp
+# documentation
+*.xml text
+*.xsl text
+*.xslt text
+README text
+Changelog text
+*.md text
+# build and packaging
+Makefile* text
+*.init text
+*.service text
+*.spec text
+*.sysconfig text
+*.default text
+*.tmpfiles text
+*.lintian-overrides text
+*.in text
+changelog text
+control text
+copyright text

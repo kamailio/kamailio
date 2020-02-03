@@ -37,6 +37,25 @@
 static char _sr_uri_empty_buf[2] = {0};
 static str _sr_uri_empty = { _sr_uri_empty_buf, 0 };
 
+/* extra chars that should be allowed in URI host */
+char *_sr_uri_host_extra_chars = "";
+
+int uri_host_char_allowed(char c)
+{
+	int i = 0;
+
+	if(_sr_uri_host_extra_chars==NULL || _sr_uri_host_extra_chars[0]=='\0') {
+		return 0;
+	}
+	while(_sr_uri_host_extra_chars[i]!='\0') {
+		if(_sr_uri_host_extra_chars[i]==c) {
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
+
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
  * returns: fills uri & returns <0 on error or 0 if ok
@@ -542,7 +561,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 				switch(*p) {
 					check_host_end;
 					default:
-						if(!isalnum(*p) && (*p != '.') && (*p != '-')) {
+						if(!isalnum(*p) && (*p != '.') && (*p != '-')
+								&& !uri_host_char_allowed(*p)) {
 							goto error_bad_host;
 						}
 				}

@@ -51,6 +51,7 @@
 #include "../../core/lock_ops.h"
 #include "../../core/dprint.h"
 #include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../core/pvar.h"
 #include "../../core/error.h"
 #include "../../core/timer.h"
@@ -212,8 +213,6 @@ static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2);
 static bool test_private_contact(struct sip_msg *msg);
 static bool test_source_address(struct sip_msg *msg);
 static bool test_private_via(struct sip_msg *msg);
-
-static INLINE char *shm_strdup(char *source);
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -436,7 +435,7 @@ static NAT_Contact *NAT_Contact_new(char *uri, struct socket_info *socket)
 	}
 	memset(contact, 0, sizeof(NAT_Contact));
 
-	contact->uri = shm_strdup(uri);
+	contact->uri = shm_char_dup(uri);
 	if(!contact->uri) {
 		LM_ERR("out of memory while creating new NAT_Contact structure\n");
 		shm_free(contact);
@@ -714,7 +713,7 @@ static bool Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
 		param->callee_candidates.size = new_size;
 	}
 
-	new_candidate = shm_strdup(candidate);
+	new_candidate = shm_char_dup(candidate);
 	if(!new_candidate) {
 		LM_ERR("cannot allocate shared memory for new candidate uri\n");
 		return false;
@@ -730,51 +729,6 @@ static bool Dialog_Param_add_candidate(Dialog_Param *param, char *candidate)
 
 // Miscellaneous helper functions
 //
-
-// returns str with leading whitespace removed
-static INLINE void ltrim(str *string)
-{
-	while(string->len > 0 && isspace((int)*(string->s))) {
-		string->len--;
-		string->s++;
-	}
-}
-
-// returns str with trailing whitespace removed
-static INLINE void rtrim(str *string)
-{
-	char *ptr;
-
-	ptr = string->s + string->len - 1;
-	while(string->len > 0 && (*ptr == 0 || isspace((int)*ptr))) {
-		string->len--;
-		ptr--;
-	}
-}
-
-// returns str with leading and trailing whitespace removed
-static INLINE void trim(str *string)
-{
-	ltrim(string);
-	rtrim(string);
-}
-
-
-static INLINE char *shm_strdup(char *source)
-{
-	char *copy;
-
-	if(!source)
-		return NULL;
-
-	copy = (char *)shm_malloc(strlen(source) + 1);
-	if(!copy)
-		return NULL;
-	strcpy(copy, source);
-
-	return copy;
-}
-
 
 static bool get_contact_uri(
 		struct sip_msg *msg, struct sip_uri *uri, contact_t **_c)
@@ -1142,7 +1096,7 @@ static void __dialog_confirmed(
 		// free old uri in case this callback is called more than once (shouldn't normally happen)
 		if(param->callee_uri)
 			shm_free(param->callee_uri);
-		param->callee_uri = shm_strdup(callee_uri);
+		param->callee_uri = shm_char_dup(callee_uri);
 		if(!param->callee_uri) {
 			LM_ERR("cannot allocate shared memory for callee_uri in dialog "
 				   "param\n");
@@ -1277,7 +1231,7 @@ static void __dialog_created(
 		return;
 
 	uri = get_source_uri(request);
-	param->caller_uri = shm_strdup(uri);
+	param->caller_uri = shm_char_dup(uri);
 	if(!param->caller_uri) {
 		LM_ERR("cannot allocate shared memory for caller_uri in dialog "
 			   "param\n");
@@ -1479,7 +1433,7 @@ static int FixContact(struct sip_msg *msg)
 	struct lump *anchor;
 	struct sip_uri uri;
 	int len, offset;
-	char *buf;
+	str buf;
 
 	if(!get_contact_uri(msg, &uri, &contact))
 		return -1;
@@ -1506,8 +1460,8 @@ static int FixContact(struct sip_msg *msg)
 
 	// first try to alloc mem. if we fail we don't want to have the lump
 	// deleted and not replaced. at least this way we keep the original.
-	buf = pkg_malloc(len);
-	if(buf == NULL) {
+	buf.s = pkg_malloc(len);
+	if(buf.s == NULL) {
 		LM_ERR("out of memory\n");
 		return -1;
 	}
@@ -1517,26 +1471,30 @@ static int FixContact(struct sip_msg *msg)
 			msg, offset, contact->uri.len, (enum _hdr_types_t)HDR_CONTACT_F);
 
 	if(!anchor) {
-		pkg_free(buf);
+		pkg_free(buf.s);
 		return -1;
 	}
 
 	if(msg->rcv.src_ip.af == AF_INET6) {
-		len = sprintf(buf, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
+		buf.len = snprintf(buf.s, len, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
 				newip.s, newport, after.len, after.s);
 	} else {
-		len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
+		buf.len = snprintf(buf.s, len, "%.*s%s:%d%.*s", before_host.len, before_host.s,
 				newip.s, newport, after.len, after.s);
 	}
-
-	if(insert_new_lump_after(anchor, buf, len, (enum _hdr_types_t)HDR_CONTACT_F)
-			== 0) {
-		pkg_free(buf);
+	if(buf.len < 0 || buf.len>=len) {
+		pkg_free(buf.s);
 		return -1;
 	}
 
-	contact->uri.s = buf;
-	contact->uri.len = len;
+	if(insert_new_lump_after(anchor, buf.s, buf.len, (enum _hdr_types_t)HDR_CONTACT_F)
+			== 0) {
+		pkg_free(buf.s);
+		return -1;
+	}
+
+	contact->uri.s = buf.s;
+	contact->uri.len = buf.len;
 
 	return 1;
 }

@@ -1,2 +1,0 @@
-@comment $OpenBSD$
-lib/kamailio/modules/db_mysql.so

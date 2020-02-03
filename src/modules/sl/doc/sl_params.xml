@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sl.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <title>Parameters</title>
 
-	<section id="default_code">
+	<section id="sl.p.default_code">
 		<title><varname>default_code</varname> (int)</title>
 		<para>
 		Default reply status code.
@@ -24,7 +24,7 @@ modparam("sl", "default_code", 505)
 		</example>
 	</section>
 
-	<section id="default_reason">
+	<section id="sl.p.default_reason">
 		<title><varname>default_reason</varname> (str)</title>
 		<para>
 		Default reply reason phrase.
@@ -42,7 +42,7 @@ modparam("sl", "default_reason", "Server Error")
 		</example>
 	</section>
 
-	<section id="bind_tm">
+	<section id="sl.p.bind_tm">
 		<title><varname>bind_tm</varname> (int)</title>
 		<para>
 		Controls if SL module should attempt to bind to TM module in order
@@ -61,7 +61,7 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 		</example>
 	</section>
 
-	<section id="rich_redirect">
+	<section id="sl.p.rich_redirect">
 		<title><varname>rich_redirect</varname> (int)</title>
 		<para>
 		When sending a 3xx class reply, include additional branch info
@@ -88,6 +88,44 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 modparam("sl", "rich_redirect", 3)
 ...
 			</programlisting>
+		</example>
+	</section>
+
+	<section id="sl.p.event_callback_fl_ack">
+		<title><varname>event_callback_fl_ack</varname> (str)</title>
+		<para>
+		The name of the KEMI callback function to be executed instead of
+		event_route[sl:filtered-ack]. This function receives a string parameter.
+		</para>
+		<para>
+		Default value: not set.
+		</para>
+		<example>
+		<title>event_callback_fl_ack example</title>
+		<programlisting format="linespecific">
+...
+modparam("sl", "event_callback_fl_ack", "ksr_event_sl_filtered_ack")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sl.p.event_callback_lres_sent">
+		<title><varname>event_callback_lres_sent</varname> (str)</title>
+		<para>
+		The name of the KEMI callback function to be executed instead of
+		event_route[sl:local-response]. This function receives a string parameter.
+		</para>
+		<para>
+		Default value: not set.
+		</para>
+		<example>
+		<title>event_callback_lres_sent example</title>
+		<programlisting format="linespecific">
+...
+modparam("sl", "event_callback_lres_sent", "ksr_event_sl_local_response")
+...
+</programlisting>
 		</example>
 	</section>
 

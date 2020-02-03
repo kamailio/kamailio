@@ -185,7 +185,7 @@ size_t netstring_encode_new(char **netstring, char *data, size_t len) {
 		LM_ERR("Out of memory!");
 		return 0;
 	}
-    sprintf(ns, "%lu:", (unsigned long)len);
+    snprintf(ns, num_len + len + 2, "%lu:", (unsigned long)len);
     memcpy(ns + num_len + 1, data, len);
     ns[num_len + len + 1] = ',';
   }

@@ -84,7 +84,7 @@ Copyright © 2005 Cesc Santasusana
 	modification in Makefile.defs. 
 	The Makefile.defs file is where the library and include paths are set (where to locate Openssl) 
 	Read more on this below on the "external libraries" dependencies.
-	The cfg.XXX patch provide configuration features from the ser.cfg file, usefull and necessary.
+	The cfg.XXX patch provide configuration features from the ser.cfg file, useful and necessary.
 	This core module has been compiled successfully with ser branch rel_0_9_0 (updated
 		as of June 2005, ser-0.9.3). It should compile in HEAD too without problem.
 	It has been tested for functionality (successfully) with rel_0_9_0 (ser-0.9.0).

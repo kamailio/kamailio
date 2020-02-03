@@ -50,8 +50,8 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/mod_fix.h"
-#include "../../core/md5.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/globals.h"
 #include "../../core/hashes.h"
 #include "../../core/locking.h"
@@ -1001,6 +1001,7 @@ int bind_cfgutils(cfgutils_api_t *api)
 /**
  * KEMI exports
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("lock"),
 		SR_KEMIP_INT, cfg_lock,
@@ -1080,6 +1081,7 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

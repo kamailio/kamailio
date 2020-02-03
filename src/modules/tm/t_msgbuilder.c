@@ -21,7 +21,6 @@
  *
  */
 
-#include "defs.h"
 
 #ifdef EXTRA_DEBUG
 #include <assert.h>
@@ -60,9 +59,7 @@
  */
 char *build_local(struct cell *Trans,unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
-#ifdef CANCEL_REASON_SUPPORT
 	, struct cancel_reason* reason
-#endif /* CANCEL_REASON_SUPPORT */
 	)
 {
 	char                *cancel_buf, *p, *via;
@@ -73,10 +70,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	str branch_str;
 	str via_id;
 	struct hostport hp;
-#ifdef CANCEL_REASON_SUPPORT
 	int reason_len, code_len;
 	struct hdr_field *reas1, *reas_last;
-#endif /* CANCEL_REASON_SUPPORT */
 
 	/* init */
 	via_id.s=0;
@@ -139,7 +134,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	/* Content Length, EoM */
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
-#ifdef CANCEL_REASON_SUPPORT
 	reason_len = 0;
 	reas1 = 0;
 	reas_last = 0;
@@ -172,7 +166,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			LM_BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len+= reason_len;
-#endif /* CANCEL_REASON_SUPPORT */
 	*len+= CRLF_LEN; /* end of msg. */
 
 	cancel_buf=shm_malloc( *len+1 );
@@ -215,7 +208,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	/* Content Length */
 	append_str(p, CONTENT_LENGTH "0" CRLF, CONTENT_LENGTH_LEN + 1 + CRLF_LEN);
-#ifdef CANCEL_REASON_SUPPORT
 	/* add reason if needed */
 	if (reason_len) {
 		if (likely(reason->cause > 0)) {
@@ -243,7 +235,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			}
 		}
 	}
-#endif /* CANCEL_REASON_SUPPORT */
 	append_str(p, CRLF, CRLF_LEN); /* msg. end */
 	*p=0;
 
@@ -263,9 +254,7 @@ error:
  */
 char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
-#ifdef CANCEL_REASON_SUPPORT
 	, struct cancel_reason *reason
-#endif /* CANCEL_REASON_SUPPORT */
 	)
 {
 	char	*invite_buf, *invite_buf_end;
@@ -275,10 +264,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	enum _hdr_types_t	hf_type;
 	int	first_via, to_len;
 	int cancel_buf_len;
-#ifdef CANCEL_REASON_SUPPORT
 	int reason_len, code_len;
 	struct hdr_field *reas1, *reas_last, *hdr;
-#endif /* CANCEL_REASON_SUPPORT */
 	int hadded = 0;
 	sr_cfgenv_t *cenv = NULL;
 
@@ -295,7 +282,6 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		goto error;
 	}
 
-#ifdef CANCEL_REASON_SUPPORT
 	reason_len = 0;
 	reas1 = 0;
 	reas_last = 0;
@@ -327,7 +313,6 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
 			LM_BUG("unhandled reason cause %d\n", reason->cause);
 	}
-#endif /* CANCEL_REASON_SUPPORT */
 
 	invite_buf_end = invite_buf + invite_len;
 	s = invite_buf;
@@ -337,11 +322,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	I just extend it with the length of new To HF to be sure.
 	Ugly, but we avoid lots of checks and memory allocations this way */
 	to_len = to ? to->len : 0;
-#ifdef CANCEL_REASON_SUPPORT
 	cancel_buf_len = invite_len + to_len + reason_len;
-#else
-	cancel_buf_len = invite_len + to_len;
-#endif /* CANCEL_REASON_SUPPORT */
+
 	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
@@ -437,7 +419,6 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			case HDR_EOH_T:
 				/* end of SIP message found */
-#ifdef CANCEL_REASON_SUPPORT
 				/* add reason if needed */
 				if (reason_len) {
 					/* if reason_len !=0, no need for any reason enabled
@@ -470,7 +451,6 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 						}
 					}
 				}
-#endif /* CANCEL_REASON_SUPPORT */
 				/* final (end-of-headers) CRLF */
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
@@ -680,7 +660,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 				 * rte list is evaluated => must do a copy of it */
 				if (duplicate_rr(&new_p, p) < 0) {
 					pkg_free(t);
-					LM_ERR("failed to duplicate RR");
+					LM_ERR("failed to duplicate RR\n");
 					goto err;
 				}
 				t->ptr = new_p;
@@ -1093,7 +1073,6 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
-#ifdef WITH_AS_SUPPORT
 	/* With AS support, TM allows for external modules to generate building of
 	 * the ACK; in this case, the ACK's retransmission buffer is built once
 	 * and kept in memory (to help when retransmitted 2xx are received and ACK
@@ -1107,7 +1086,6 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	 * 'out' to return the length of the allocated string buffer.
 	 */
 	unsigned offset = *len;
-#endif
 
 	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
 		LM_ERR("Error while parsing headers.\n");
@@ -1223,12 +1201,8 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	/* Content Length, EoM */
 	*len += CONTENT_LENGTH_LEN + body_len.len + CRLF_LEN + CRLF_LEN;
 
-#if WITH_AS_SUPPORT
 	req_buf = shm_malloc(offset + *len + 1);
 	req_buf += offset;
-#else
-	req_buf = shm_malloc(*len + 1);
-#endif
 	if (!req_buf) {
 		LM_ERR("Cannot allocate memory (%u+1)\n", *len);
 		goto error01;
@@ -1513,7 +1487,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 
 	if (dialog->id.loc_tag.len<=0) {
 		/* From Tag is mandatory in RFC3261 - generate one if not provided */
-		generate_fromtag(&fromtag, &dialog->id.call_id);
+		generate_fromtag(&fromtag, &dialog->id.call_id, &(dialog->rem_uri));
 		loc_tag = dialog->id.loc_tag;
 		dialog->id.loc_tag = fromtag;
 	}

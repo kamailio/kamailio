@@ -32,27 +32,32 @@
     <path project="Fedora:EPEL:6" repository="RHEL"/>
     <arch>x86_64</arch>
   </repository>
+  <repository name="Fedora_Rawhide">
+    <path project="Fedora:Rawhide" repository="standard"/>
+    <arch>x86_64</arch>
+  </repository>
+  <repository name="Fedora_30">
+    <path project="Fedora:30" repository="update"/>
+    <path project="Fedora:30" repository="standard"/>
+    <arch>x86_64</arch>
+    <arch>i586</arch>
+    <arch>armv7l</arch>
+    <arch>aarch64</arch>
+    <arch>ppc64le</arch>
+  </repository>
   <repository name="Fedora_29">
     <path project="Fedora:29" repository="update"/>
     <path project="Fedora:29" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
-  <repository name="Fedora_28">
-    <path project="Fedora:28" repository="update"/>
-    <path project="Fedora:28" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
-  <repository name="Fedora_27">
-    <path project="Fedora:27" repository="update"/>
-    <path project="Fedora:27" repository="standard"/>
-    <arch>x86_64</arch>
-  </repository>
   <repository name="CentOS_7">
+    <path project="CentOS:CentOS-7" repository="standard"/>
     <path project="CentOS:CentOS-7" repository="update"/>
     <path project="Fedora:EPEL:7" repository="CentOS"/>
     <arch>x86_64</arch>
   </repository>
   <repository name="CentOS_6">
+    <path project="CentOS:CentOS-6" repository="standard"/>
     <path project="CentOS:CentOS-6" repository="update"/>
     <path project="Fedora:EPEL:6" repository="CentOS"/>
     <arch>x86_64</arch>

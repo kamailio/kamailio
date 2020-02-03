@@ -65,9 +65,11 @@ Olle E. Johansson
               10.31. config (string)
               10.32. xavp_cfg (string)
               10.33. event_callback (str)
-              10.34. engine (string)
-              10.35. engine_config (string)
-              10.36. engine_algorithms (string)
+              10.34. rand_engine (str)
+              10.35. engine (string)
+              10.36. engine_config (string)
+              10.37. engine_algorithms (string)
+              10.38. verify_client (string)
 
         11. Functions
 
@@ -137,8 +139,11 @@ Olle E. Johansson
    1.42. Change and reload the TLS configuration at runtime
    1.43. Set xavp_cfg parameter
    1.44. Set event_callback parameter
-   1.45. is_peer_verified usage
-   1.46. Use of event_route[tls:connection-out]
+   1.45. Set rand_engine parameter
+   1.46. Set verify_client modparam parameter
+   1.47. Set verify_client tls.cfg parameter
+   1.48. is_peer_verified usage
+   1.49. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -188,9 +193,11 @@ Chapter 1. Admin Guide
         10.31. config (string)
         10.32. xavp_cfg (string)
         10.33. event_callback (str)
-        10.34. engine (string)
-        10.35. engine_config (string)
-        10.36. engine_algorithms (string)
+        10.34. rand_engine (str)
+        10.35. engine (string)
+        10.36. engine_config (string)
+        10.37. engine_algorithms (string)
+        10.38. verify_client (string)
 
    11. Functions
 
@@ -606,13 +613,17 @@ Place holder
    10.31. config (string)
    10.32. xavp_cfg (string)
    10.33. event_callback (str)
-   10.34. engine (string)
-   10.35. engine_config (string)
-   10.36. engine_algorithms (string)
+   10.34. rand_engine (str)
+   10.35. engine (string)
+   10.36. engine_config (string)
+   10.37. engine_algorithms (string)
+   10.38. verify_client (string)
 
 10.1. tls_method (string)
 
    Sets the TLS protocol method. Possible values are:
+     * TLSv1.2+ - TLSv1.2 or newer (TLSv1.3, ...) connections are accepted
+       (available starting with openssl/libssl v1.1.1)
      * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
        with openssl/libssl v1.0.1e)
      * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
@@ -1255,6 +1266,7 @@ modparam("tls", "renegotiation", 1)
      * tls_method - (str) - TLS methods
      * verify_certificate - (bool) - see modparam
      * require_certificate - (bool) - see modparam
+     * verify_client - (str) - see modparam
      * private_key - (str) - see modparam
      * certificate - (str) - see modparam
      * verify_depth - (int) - see modparam
@@ -1391,7 +1403,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   modparam("tls", "xavp_cfg", "tls")
  ...
   $xavp(tls=>server_name) = "kamailio.org";
-  $xavp(tls=>server_id) = "kamailio.org";
+  $xavp(tls[0]=>server_id) = "kamailio.org";
   $du = "sip:kamailio.org:5061;transport=tls";
   route(RELAY);
 ...
@@ -1418,7 +1430,35 @@ function ksr_tls_event(evname)
 end
 ...
 
-10.34. engine (string)
+10.34. rand_engine (str)
+
+   Set the ranondom number generator engine for libssl.
+
+   Note: the default random number generator (PRNG) engine of libssl
+   v1.1.x is not designed for multi-process applications and can result in
+   a crash. Therefore set the PRNG engine to one of the options listed in
+   this section. If libssl 1.1.x (or newer) is detected at compile time,
+   then the PRNG engine is set to "cryptorand".
+
+   The following options are avaialble:
+     * krand - use internal kam_rand() function
+     * fastrand - use internal fastrand (ISAAC) function
+     * cryptorand - use internal cryptorand (Fortuna) function
+     * kxlibssl - default libssl rand engine wrapped by a Kamailio mutex
+
+   Note: the krand and fastrand engines are not recommended for use on
+   systems requiring strong security, as they may not generate numbers
+   with enough randomness and are not cryptographically secure.
+
+   The default value is empty (not set) for libssl v1.0.x or older, and
+   "cryptorand" for libssl v1.1.x or newer.
+
+   Example 1.45. Set rand_engine parameter
+...
+modparam("tls", "rand_engine", "fastrand")
+...
+
+10.35. engine (string)
 
    If OpenSSL is compiled with engine support this will allow algorithms
    to be offloaded and private keys from HSM to be used. Currently only a
@@ -1444,13 +1484,13 @@ modparam("tls", "engine_algorithms", "ALL")
    By default OpenSSL engine support is disabled (NONE). This global param
    is not supported in the tls config file.
 
-10.35. engine_config (string)
+10.36. engine_config (string)
 
    A OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
-10.36. engine_algorithms (string)
+10.37. engine_algorithms (string)
 
    A list of cryptographic methods to be set as default in the engine.
    This is a comma-separated list of values from ALL RSA DSA DH EC RAND
@@ -1459,6 +1499,55 @@ modparam("tls", "engine_algorithms", "ALL")
 
    The default is not to set any methods as default. This global param is
    not supported in the tls config file.
+
+10.38. verify_client (string)
+
+   Provides an alternative to verify_certificate and require_certificate
+   modparam and tls.cfg parameters, and creates an additional
+   opportunistic connection establishment option for connections with with
+   unverifiable certificates (optional_no_ca).
+
+   This is useful for allowing connections from SIP phones with
+   self-signed certificates, signed by unrecognized root CAs, expired
+   certificates, etc.
+
+   The following values have respective behaviors:
+     * off - no client certificate request performed.
+     * on - require a verified certificate from the client.
+     * optional - ask client for certificate. If one is provided, it must
+       be verified. Allowing missing certificate.
+     * optional_no_ca - ask client for certificate. Opportunistically try
+       to verify certificate. Allow connection regardless of whether there
+       is no certificate or whether certificate is present (verified or
+       not). Note that verification status can be retrieved via
+       $tls_peer_verified.
+
+   Default value is 'off' (no client certificate request performed).
+
+   Recommendation: when using this parameter, do not use
+   verify_certificate or require_certificate parameters. Conversion table
+   is as follows:
+     * verify_certificate=0, require_certificate=0 => verify_client="off"
+     * verify_certificate=1, require_certificate=0 =>
+       verify_client="optional"
+     * verify_certificate=1, require_certificate=1 => verify_client="on"
+
+   Example 1.46. Set verify_client modparam parameter
+...
+modparam("tls", "verify_client", "on")
+...
+
+   Example 1.47. Set verify_client tls.cfg parameter
+...
+[server:1.2.3.4:5061]
+method = TLSv1
+verify_client = on
+...
+
+[server:5.6.7.8:5061]
+method = TLSv1.2
+verify_client = optional_no_ca
+...
 
 11. Functions
 
@@ -1472,7 +1561,7 @@ modparam("tls", "engine_algorithms", "ALL")
 
    It can be used only in a request route.
 
-   Example 1.45. is_peer_verified usage
+   Example 1.48. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
                 exit;
@@ -1549,7 +1638,7 @@ modparam("tls", "engine_algorithms", "ALL")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.46. Use of event_route[tls:connection-out]
+   Example 1.49. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {

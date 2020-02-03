@@ -1542,16 +1542,22 @@ int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
 {
 #define SEL_POS 2
 	time_t t;
-	struct tm *tm;
+	struct tm tm;
 	
 	t = time(NULL);
 	switch (s->params[SEL_POS].v.i) {
 		case SEL_NOW_GMT:
-			tm = gmtime(&t);
+			if (! gmtime_r(&t, &tm)) {
+				ERR("Invalid UTC time value\n");
+				return -1;
+			}
 			break;
 	
 		case SEL_NOW_LOCAL:
-			tm = localtime(&t);
+			if (! localtime_r(&t, &tm)) {
+                                ERR("Invalid local time value\n");
+                                return -1;
+			}
 			break;
 		default:
 			BUG("Unexpected parameter value 'now' \"%d\" (%p)\n",
@@ -1559,19 +1565,22 @@ int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
 			return -1;
 	}
 	if (s->n <= SEL_POS+1) {
-		char *c;
-		c = asctime(tm);
-		res->len = strlen(c);
-		while (res->len && c[res->len-1] < ' ') res->len--; /* rtrim */
+		char buff[26];
+		if (! asctime_r(&tm, buff)) {
+			ERR("Invalid time value\n");
+			return -1;
+		}
+		res->len = strlen(buff);
+		while (res->len && buff[res->len-1] < ' ') res->len--; /* rtrim */
 		res->s = get_static_buffer(res->len);
 		if (!res->s) return -1;
-		memcpy(res->s, c, res->len);
+		memcpy(res->s, &buff, res->len);
 	}
 	else {
 		char c, buff[80];
 		c = s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len];
 		s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len] = '\0';
-		res->len = strftime(buff, sizeof(buff)-1, s->params[SEL_POS+1].v.s.s, tm);
+		res->len = strftime(buff, sizeof(buff)-1, s->params[SEL_POS+1].v.s.s, &tm);
 		s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len] = c;
 		res->s = get_static_buffer(res->len);
 		if (!res->s) return -1;

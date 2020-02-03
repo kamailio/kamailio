@@ -3,6 +3,8 @@
  *
  *  Created on: Nov 11, 2013
  *      Author: carlos
+ * 
+ * Copyright (C) 2019 Aleksandar Yosifov
  */
 
 #include "../../lib/srdb1/db.h"
@@ -12,8 +14,8 @@
 str id_col	        	= str_init(ID_COL);
 str domain_col			= str_init(DOMAIN_COL);
 str aor_col		    	= str_init(AOR_COL);
-str host_col                    = str_init(HOST_COL);
-str port_col                    = str_init(PORT_COL);
+str host_col			= str_init(HOST_COL);
+str port_col			= str_init(PORT_COL);
 str protocol_col 		= str_init(PROTOCOL_COL);
 str received_col    	= str_init(RECEIVED_COL);
 str received_port_col	= str_init(RECEIVED_PORT_COL);
@@ -32,6 +34,8 @@ str ck_col				= str_init(CK_COL);
 str ik_col 				= str_init(IK_COL);
 str ealg_col			= str_init(EALG_COL);
 str ialg_col 			= str_init(IALG_COL);
+str port_pc_col			= str_init(PORTPC_COL);
+str port_ps_col 		= str_init(PORTPS_COL);
 str port_uc_col			= str_init(PORTUC_COL);
 str port_us_col 		= str_init(PORTUS_COL);
 str spi_pc_col 			= str_init(SPIPC_COL);
@@ -45,6 +49,8 @@ str t_ck_col			= str_init(T_CK_COL);
 str t_ik_col 			= str_init(T_IK_COL);
 str t_ealg_col			= str_init(T_EALG_COL);
 str t_ialg_col 			= str_init(T_IALG_COL);
+str t_port_pc_col		= str_init(T_PORTPC_COL);
+str t_port_ps_col 		= str_init(T_PORTPS_COL);
 str t_port_uc_col		= str_init(T_PORTUC_COL);
 str t_port_us_col 		= str_init(T_PORTUS_COL);
 str t_spi_pc_col 		= str_init(T_SPIPC_COL);
@@ -121,22 +127,27 @@ int db_update_pcontact(pcontact_t* _c)
 {
 	str impus, service_routes;
 
-	db_val_t match_values[1];
-	db_key_t match_keys[1] = { &aor_col };
-        db_op_t op[1];
+	db_val_t match_values[2];
+	db_key_t match_keys[2] = { &aor_col, &received_port_col };
+    db_op_t op[2];
 	db_key_t update_keys[8] = { &expires_col, &reg_state_col,
 								&service_routes_col, &received_col,
 								&received_port_col, &received_proto_col,
 								&rx_session_id_col, &public_ids_col };
 	db_val_t values[8];
         
-        LM_DBG("updating pcontact: %.*s\n", _c->aor.len, _c->aor.s);
+	LM_DBG("updating pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
 
 	VAL_TYPE(match_values) = DB1_STR;
-
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
-        op[0]=OP_EQ;
+
+	VAL_TYPE(match_values + 1)	= DB1_INT;
+	VAL_NULL(match_values + 1)	= 0;
+	VAL_INT(match_values + 1)	= _c->received_port;
+	
+	op[0]=OP_EQ;
+	op[1]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -184,7 +195,7 @@ int db_update_pcontact(pcontact_t* _c)
 	SET_PROPER_NULL_FLAG(impus, values, 7);
 	SET_STR_VALUE(values + 7, impus);
 
-	if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,values, 1, 8)) !=0){
+	if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,values, 2, 8)) !=0){
 		LM_ERR("could not update database info\n");
 	    return -1;
 	}
@@ -201,27 +212,32 @@ int db_update_pcontact(pcontact_t* _c)
 
 int db_delete_pcontact(pcontact_t* _c)
 {
-	LM_DBG("Trying to delete contact: %.*s\n", _c->aor.len, _c->aor.s);
+	LM_DBG("Trying to delete contact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
 	db_val_t values[1];
-	db_key_t match_keys[1] = { &aor_col};
+	db_key_t match_keys[2] = { &aor_col, &received_port_col };
 
 	VAL_TYPE(values) = DB1_STR;
 	VAL_NULL(values) = 0;
 	SET_STR_VALUE(values, _c->aor);
+
+	VAL_TYPE(values + 1) = DB1_INT;
+	VAL_NULL(values + 1) = 0;
+	VAL_INT(values + 1)	 = _c->received_port;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
 		return -1;
 	}
 
-    if(ul_dbf.delete(ul_dbh, match_keys, 0, values, 1) < 0) {
-    	LM_ERR("Failed to delete database information: aor[%.*s], rx_session_id=[%.*s]\n",
+	if(ul_dbf.delete(ul_dbh, match_keys, 0, values, 2) < 0) {
+    	LM_ERR("Failed to delete database information: aor[%.*s], received port %u, rx_session_id=[%.*s]\n",
     													_c->aor.len, _c->aor.s,
-    													_c->rx_session_id.len, _c->rx_session_id.s);
-        return -1;
-    }
+														_c->received_port,
+														_c->rx_session_id.len, _c->rx_session_id.s);
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 int db_insert_pcontact(struct pcontact* _c)
@@ -247,42 +263,42 @@ int db_insert_pcontact(struct pcontact* _c)
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PATH_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = DB1_DATETIME;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SOCKET_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PUBLIC_IPS_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
-        VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
         
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_DOMAIN_IDX), (*_c->domain));
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_AOR_IDX), _c->aor);	//TODO: need to clean AOR
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RECEIVED_IDX), _c->received_host);
-        SET_STR_VALUE(GET_FIELD_IDX(values, LP_HOST_IDX), _c->via_host);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_HOST_IDX), _c->via_host);
 
 	SET_PROPER_NULL_FLAG((*_c->domain), values, LP_DOMAIN_IDX);
 	SET_PROPER_NULL_FLAG(_c->aor, values, LP_AOR_IDX);
 	SET_PROPER_NULL_FLAG(_c->received_host, values, LP_RECEIVED_IDX);
-        SET_PROPER_NULL_FLAG(_c->via_host, values, LP_HOST_IDX);
+	SET_PROPER_NULL_FLAG(_c->via_host, values, LP_HOST_IDX);
 
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = _c->received_port;
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = _c->received_proto;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = 0;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = 0;
-        VAL_INT(GET_FIELD_IDX(values, LP_PORT_IDX)) = _c->via_port;
-        VAL_INT(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = _c->via_proto;
-        VAL_NULL(GET_FIELD_IDX(values, LP_PORT_IDX)) = 0;
-        VAL_NULL(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = 0;
+	VAL_INT(GET_FIELD_IDX(values, LP_PORT_IDX)) = _c->via_port;
+	VAL_INT(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = _c->via_proto;
+	VAL_NULL(GET_FIELD_IDX(values, LP_PORT_IDX)) = 0;
+	VAL_NULL(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = 0;
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PATH_IDX), _c->path);
-        SET_STR_VALUE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX), _c->rinstance);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX), _c->rinstance);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX), _c->rx_session_id);
 	SET_PROPER_NULL_FLAG(_c->path, values, LP_PATH_IDX);
-        SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
+	SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
 	SET_PROPER_NULL_FLAG(_c->rx_session_id, values, LP_RX_SESSION_ID_IDX);
 
 	VAL_DOUBLE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
@@ -334,20 +350,27 @@ int db_insert_pcontact(struct pcontact* _c)
 }
 
 int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, security_t* _s) {
-	db_val_t match_values[1];
-	db_key_t match_keys[1] = { &aor_col };
-        db_op_t op[1];
-	db_key_t update_keys[13] = { &t_security_type_col, &t_protocol_col,
-			&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_uc_col,
-			&t_port_us_col, &t_spi_pc_col, &t_spi_ps_col, &t_spi_uc_col, &t_spi_us_col };
-	db_val_t values[13];
+	db_val_t match_values[2];
+	db_key_t match_keys[2] = { &aor_col, &received_port_col };
+	db_op_t op[2];
 
-	LM_DBG("updating temp security for pcontact: %.*s\n", _c->aor.len, _c->aor.s);
+	db_key_t update_keys[15] = { &t_security_type_col, &t_protocol_col,
+			&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_pc_col, &t_port_ps_col, &t_port_uc_col,
+			&t_port_us_col, &t_spi_pc_col, &t_spi_ps_col, &t_spi_uc_col, &t_spi_us_col };
+	db_val_t values[15];
+
+	LM_CRIT("updating temp security for pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
 
 	VAL_TYPE(match_values) = DB1_STR;
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
-        op[0]=OP_EQ;
+
+	VAL_TYPE(match_values + 1)	= DB1_INT;
+	VAL_NULL(match_values + 1)	= 0;
+	VAL_INT(match_values + 1)	= _c->received_port;
+
+	op[0]=OP_EQ;
+	op[1]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -374,42 +397,58 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 		VAL_TYPE(values + ++i) = DB1_STR;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_STR(values + i) = ipsec?ipsec->ck:s_empty;
+
 		VAL_TYPE(values + ++i) = DB1_STR;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_STR(values + i) = ipsec?ipsec->ik:s_empty;
+
 		VAL_TYPE(values + ++i) = DB1_STR;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_STR(values + i) = ipsec?ipsec->ealg:s_empty;
+
 		VAL_TYPE(values + ++i) = DB1_STR;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_STR(values + i) = ipsec?ipsec->alg:s_empty;
+
+		VAL_TYPE(values + ++i) = DB1_INT;
+		VAL_NULL(values + i) = ipsec?0:1;
+		VAL_INT(values + i) = ipsec?ipsec->port_pc:0;
+
+		VAL_TYPE(values + ++i) = DB1_INT;
+		VAL_NULL(values + i) = ipsec?0:1;
+		VAL_INT(values + i) = ipsec?ipsec->port_ps:0;
+
 		VAL_TYPE(values + ++i) = DB1_INT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_INT(values + i) = ipsec?ipsec->port_uc:0;
+
 		VAL_TYPE(values + ++i) = DB1_INT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_INT(values + i) = ipsec?ipsec->port_us:0;
+
 		VAL_TYPE(values + ++i) = DB1_BIGINT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_pc:0;
+
 		VAL_TYPE(values + ++i) = DB1_BIGINT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_ps:0;
+
 		VAL_TYPE(values + ++i) = DB1_BIGINT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_uc:0;
+
 		VAL_TYPE(values + ++i) = DB1_BIGINT;
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_us:0;
 
-		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-				values, 1, 13)) != 0) {
+		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys, values, 2, 15)) != 0) {
 			LM_ERR("could not update database info\n");
 			return -1;
 		}
 
 		if (ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-			LM_DBG("no existing rows for an update... doing insert\n");
+			LM_CRIT("no existing rows for an update... doing insert\n");
 			if (db_insert_pcontact(_c) != 0) {
 				LM_ERR("Failed to insert a pcontact on update\n");
 			}
@@ -425,21 +464,27 @@ int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, secu
 }
 
 int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_t* _s) {
-	db_val_t match_values[1];
-	db_key_t match_keys[1] = { &aor_col };
-        db_op_t op[1];
-        
-	db_key_t update_keys[13] = { &security_type_col, &protocol_col,
-			&mode_col, &ck_col, &ik_col, &ealg_col, &ialg_col, &port_uc_col,
-			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col };
-	db_val_t values[13];
+	db_val_t match_values[2];
+	db_key_t match_keys[2] = { &aor_col, &received_port_col };
+	db_op_t op[2];
 
-	LM_DBG("updating security for pcontact: %.*s\n", _c->aor.len, _c->aor.s);
+	db_key_t update_keys[15] = { &security_type_col, &protocol_col,
+			&mode_col, &ck_col, &ik_col, &ealg_col, &ialg_col, &port_pc_col, &port_ps_col, &port_uc_col,
+			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col };
+	db_val_t values[15];
+
+	LM_DBG("updating security for pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
 
 	VAL_TYPE(match_values) = DB1_STR;
 	VAL_NULL(match_values) = 0;
 	VAL_STR(match_values) = _c->aor;
-        op[0]=OP_EQ;
+
+	VAL_TYPE(match_values + 1)	= DB1_INT;
+	VAL_NULL(match_values + 1)	= 0;
+	VAL_INT(match_values + 1)	= _c->received_port;
+	
+	op[0]=OP_EQ;
+	op[1]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -449,7 +494,6 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 	VAL_TYPE(values) = DB1_INT;
 	VAL_TIME(values) = _s?_s->type:0;
 	VAL_NULL(values) = 0;
-        
 
 	switch (_t) {
 	case SECURITY_IPSEC: {
@@ -482,6 +526,14 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 
 		VAL_TYPE(values + ++i) = DB1_INT;
 		VAL_NULL(values + i) = ipsec?0:1;
+		VAL_INT(values + i) = ipsec?ipsec->port_pc:0;
+
+		VAL_TYPE(values + ++i) = DB1_INT;
+		VAL_NULL(values + i) = ipsec?0:1;
+		VAL_INT(values + i) = ipsec?ipsec->port_ps:0;
+
+		VAL_TYPE(values + ++i) = DB1_INT;
+		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_INT(values + i) = ipsec?ipsec->port_uc:0;
 
 		VAL_TYPE(values + ++i) = DB1_INT;
@@ -504,8 +556,7 @@ int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_
 		VAL_NULL(values + i) = ipsec?0:1;
 		VAL_BIGINT(values + i) = ipsec?ipsec->spi_us:0;
 
-		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-				values, 1, 13)) != 0) {
+		if ((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys, values, 2, 15)) != 0) {
 			LM_ERR("could not update database info\n");
 			return -1;
 		}

@@ -39,7 +39,6 @@
 #include "../../core/str.h"
 #include "../dialog/dlg_load.h"
 
-#include "acc_api.h"
 #include "acc_cdr.h"
 #include "acc_mod.h"
 #include "acc_extra.h"
@@ -92,7 +91,7 @@ extern int _acc_cdr_on_failed;
 static int string2time( str* time_str, struct timeval* time_value);
 
 /* write all basic information to buffers(e.g. start-time ...) */
-static int cdr_core2strar( struct dlg_cell* dlg,
+int cdr_core2strar( struct dlg_cell* dlg,
 		str* values,
 		int* unused,
 		char* types)
@@ -383,6 +382,10 @@ static int write_cdr( struct dlg_cell* dialog,
 		LM_ERR( "dialog is empty!");
 		return -1;
 	}
+
+	/* engines decide if they have cdr_expired_dlg_enable set or not */
+	cdr_run_engines(dialog, message);
+
 	/* message can be null when logging expired dialogs  */
 	if ( !cdr_expired_dlg_enable && !message ){
 		LM_ERR( "message is empty!");
@@ -949,4 +952,38 @@ void destroy_cdr_generation( void)
 	}
 
 	destroy_extras( cdr_extra);
+}
+
+/**
+ * @brief execute all acc engines for a SIP request event
+ */
+int cdr_run_engines(struct dlg_cell *dlg, struct sip_msg *msg)
+{
+	cdr_info_t inf;
+	cdr_engine_t *e;
+
+	e = cdr_api_get_engines();
+
+	if(e==NULL)
+		return 0;
+
+	memset(&inf, 0, sizeof(cdr_info_t));
+	inf.varr = cdr_value_array;
+	inf.iarr = cdr_int_array;
+	inf.tarr = cdr_type_array;
+	while(e) {
+		e->cdr_write(dlg, msg, &inf);
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
+ * @brief set hooks to acc_info_t attributes
+ */
+void cdr_api_set_arrays(cdr_info_t *inf)
+{
+	inf->varr = cdr_value_array;
+	inf->iarr = cdr_int_array;
+	inf->tarr = cdr_type_array;
 }

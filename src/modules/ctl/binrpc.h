@@ -434,7 +434,7 @@ error_len:
 
 
 
-/* adds an avp (name, value) pair, usefull to add structure members */
+/* adds an avp (name, value) pair, useful to add structure members */
 inline static int binrpc_addavp(struct binrpc_pkt* pkt, struct binrpc_val* avp)
 {
 	int ret;

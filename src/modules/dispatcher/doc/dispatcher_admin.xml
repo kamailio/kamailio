@@ -89,7 +89,7 @@
 		<title>Set the <quote>list_file</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
+modparam("dispatcher", "list_file", "/run/kamailio/dispatcher.list")
 ...
 </programlisting>
 		</example>
@@ -344,10 +344,15 @@ modparam("dispatcher", "force_dst", 1)
 			sock - the socket pointer.
 			</listitem>
 			<listitem>
+			socket - the socket string - it is added only if xavp_dst_mode has bit 2 set
+			(value 2).
+			</listitem>
+			<listitem>
 			dstid - the destination unique id (in case of call load distribution algorithm).
 			</listitem>
 			<listitem>
-			attrs - the attributes - they are added if xavp_dst_mode does not have the bit 1 set.
+			attrs - the attributes - they are added if xavp_dst_mode does not have
+			the bit 1 set (value 1).
 			</listitem>
 		</itemizedlist>
  		</para>
@@ -358,11 +363,13 @@ modparam("dispatcher", "force_dst", 1)
  		</para>
  		<example>
  		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_dst_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+    modparam("dispatcher", "xavp_dst_mode", 1)
+...
+    modparam("dispatcher", "xavp_dst_mode", 2)
+...
+</programlisting>
  		</example>
  	</section>
  	<section id="dispatcher.p.xavp_ctx">
@@ -644,8 +651,8 @@ modparam("dispatcher", "force_dst", 1)
 			but you can skip some servers with flag 4 in destination list file, for example.</para>
 		</listitem>
 		<listitem>
-			<para>Value 2: if set to 2, only gateways in inactive state with
-			probing mode set are tested.</para>
+			<para>Value 2: if set to 2, only gateways in INACTIVE state with
+			PROBING mode set are tested.</para>
 		</listitem>
 		<listitem>
 			<para>Value 3: If set to 3, any gateway with state PROBING is continually probed
@@ -1009,6 +1016,32 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
  		</example>
 	</section>
 
+	<section id="dispatcher.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+		The number of seconds that have to be waited before executing a new reload
+		of dispatcher records. By default there is a rate limiting of maximum
+		one reload in five seconds.
+		</para>
+		<para>
+		If set to 0, no rate limit is configured. Note carefully: use this
+		configuration only in tests environments because executing many RPC
+		reload commands at the same time can cause unexpected behavior.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reload_delta</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "reload_delta", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -1504,6 +1537,11 @@ failure_route[tryagain] {
 		</listitem>
 		</itemizedlist>
 		<para>
+			It returns true (value 1) if the group exists, or otherwise false
+			(-1 when the group is not found; -2 when evaluating the parameter
+			fails).
+		</para>
+		<para>
 			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
@@ -1530,22 +1568,24 @@ if(ds_list_exists("10")) {
 		<listitem>
 			<para><emphasis>groupid</emphasis> (optional) - if not given or its
 				value is -1, the matching will be done over all addresses in
-				all dispacher groups. Otherwise the matching will be done only
+				all dispatcher groups. Otherwise the matching will be done only
 				against the addresses in the specific group id. The parameter
 				can be an integer or a variable holding an integer value.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
-				how the matching should be done. If is 0, all ip, port and
-				proto are matched. If bit one is set, then port is ignored.
-				If bit two is set, then protocol is ignored. The parameter
+				how the matching should be done. If parameter is 0, all ip, port and
+				proto are matched and active status is ignored.
+				If bit one is set, then port is ignored.
+				If bit two is set, then protocol is ignored.
+				If bit three is set, then state must be active.	The parameter
 				can be an integer or a variable holding an integer value.
 				It must be provided if the uri parameter is provided.
 			</para>
 		</listitem>
         <listitem>
-            <para><emphasis>uri</emphasis> (optional) - if is empty or missing,
+            <para><emphasis>uri</emphasis> (optional) - if parameter is empty or missing,
                 the matching is done against source IP, port and protocol.
                 Otherwise the value has to be a valid SIP URI, used to match
                 against addresses in the dispatcher list. Only IP, port and
@@ -1885,7 +1925,7 @@ DEST: {
 			<listitem>
 			<para>flags - control the mode of using the destination address and
 			sending keepalives. It is a bitwise value that can be built using
-			the folowing flags:
+			the following flags:
 			<itemizedlist>
 				<listitem><para>1 (bit at index 0 - 1 &lt;&lt;0) - inactive destination</para>
 				</listitem>

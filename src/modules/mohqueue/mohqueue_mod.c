@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-17 Robert Boisvert
+ * Copyright (C) 2013-19 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -276,14 +276,14 @@ if (!pconn)
 if (db_check_table_version (pdb, pconn,
   &pmod_data->pcfg->db_ctable, MOHQ_CTABLE_VERSION) < 0)
   {
-    DB_TABLE_VERSION_ERROR(pmod_data->pcfg->db_ctable);
-    goto dberror;
+  DB_TABLE_VERSION_ERROR (pmod_data->pcfg->db_ctable);
+  goto dberror;
   }
 if (db_check_table_version (pdb, pconn,
   &pmod_data->pcfg->db_qtable, MOHQ_QTABLE_VERSION) < 0)
   {
-    DB_TABLE_VERSION_ERROR(pmod_data->pcfg->db_qtable);
-    goto dberror;
+  DB_TABLE_VERSION_ERROR (pmod_data->pcfg->db_qtable);
+  goto dberror;
   }
 clear_calls (pconn);
 update_mohq_lst (pconn);
@@ -313,11 +313,9 @@ int mod_child_init (int rank)
 
 {
 /**********
-* o seed random number generator
 * o make sure DB initialized
 **********/
 
-srand (getpid () + time (0));
 if (rank == PROC_INIT || rank == PROC_TCP_MAIN || rank == PROC_MAIN)
   { return 0; }
 if (!pmod_data->pdb->init)

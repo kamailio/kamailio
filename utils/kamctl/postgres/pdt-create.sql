@@ -1,8 +1,8 @@
 CREATE TABLE pdt (
     id SERIAL PRIMARY KEY NOT NULL,
-    sdomain VARCHAR(128) NOT NULL,
+    sdomain VARCHAR(255) NOT NULL,
     prefix VARCHAR(32) NOT NULL,
-    domain VARCHAR(128) DEFAULT '' NOT NULL,
+    domain VARCHAR(255) DEFAULT '' NOT NULL,
     CONSTRAINT pdt_sdomain_prefix_idx UNIQUE (sdomain, prefix)
 );
 

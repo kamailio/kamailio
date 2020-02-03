@@ -91,7 +91,7 @@ void ul_db_watch_destroy(void){
 }
 
 void check_dbs(unsigned int ticks, void *param){
-	LM_DBG("check availability of databases");
+	LM_DBG("check availability of databases\n");
 	ul_db_watch_list_t * tmp;
 	ul_db_handle_list_t * tmp2, * new_element;
 	int found;

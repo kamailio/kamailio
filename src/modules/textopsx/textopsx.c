@@ -177,11 +177,6 @@ static int ki_msg_set_buffer(sip_msg_t *msg, str *obuf)
  */
 static int ki_msg_apply_changes(sip_msg_t *msg)
 {
-	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
-		LM_ERR("invalid usage - not in request route or a reply\n");
-		return -1;
-	}
-
 	return sip_msg_apply_changes(msg);
 }
 
@@ -190,7 +185,7 @@ static int ki_msg_apply_changes(sip_msg_t *msg)
  */
 static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 {
-	return ki_msg_apply_changes(msg);
+	return sip_msg_apply_changes(msg);
 }
 
 /**

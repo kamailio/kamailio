@@ -36,7 +36,7 @@ struct extra_attr
 	struct extra_attr *next;
 };
 
-#define MAX_EXTRA 4
+#define MAX_EXTRA 32
 
 void init_extra_engine(void);
 

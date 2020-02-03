@@ -52,10 +52,17 @@ void xavp_shm_free_unsafe(void *p)
 
 void xavp_free(sr_xavp_t *xa)
 {
+	if(xa==NULL) {
+		return;
+	}
 	if(xa->val.type == SR_XTYPE_DATA) {
 		if(xa->val.v.data!=NULL && xa->val.v.data->pfree!=NULL) {
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free);
 			shm_free(xa->val.v.data);
+		}
+	} else if(xa->val.type == SR_XTYPE_SPTR) {
+		if(xa->val.v.vptr) {
+			shm_free(xa->val.v.vptr);
 		}
 	} else if(xa->val.type == SR_XTYPE_XAVP) {
 		xavp_destroy_list(&xa->val.v.xavp);
@@ -65,10 +72,17 @@ void xavp_free(sr_xavp_t *xa)
 
 void xavp_free_unsafe(sr_xavp_t *xa)
 {
+	if(xa==NULL) {
+		return;
+	}
 	if(xa->val.type == SR_XTYPE_DATA) {
 		if(xa->val.v.data!=NULL && xa->val.v.data->pfree!=NULL) {
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free_unsafe);
 			shm_free_unsafe(xa->val.v.data);
+		}
+	} else if(xa->val.type == SR_XTYPE_SPTR) {
+		if(xa->val.v.vptr) {
+			shm_free_unsafe(xa->val.v.vptr);
 		}
 	} else if(xa->val.type == SR_XTYPE_XAVP) {
 		xavp_destroy_list_unsafe(&xa->val.v.xavp);
@@ -114,8 +128,9 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list)
 {
-	if (xavp==NULL)
+	if (xavp==NULL) {
 		return -1;
+	}
 	/* Prepend new xavp to the list */
 	if(list) {
 		xavp->next = *list;
@@ -133,8 +148,9 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 	sr_xavp_t *prev;
 	sr_xavp_t *crt;
 
-	if (xavp==NULL)
+	if (xavp==NULL) {
 		return -1;
+	}
 
 	crt = xavp_get_internal(&xavp->name, list, 0, 0);
 
@@ -164,6 +180,10 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 
 int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp)
 {
+	if (nxavp==NULL) {
+		return -1;
+	}
+
 	if(pxavp==NULL) {
 		nxavp->next = *_xavp_list_crt;
 		*_xavp_list_crt = nxavp;
@@ -288,7 +308,7 @@ static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 	if(name==NULL || name->s==NULL)
 		return NULL;
 	id = get_hash1_raw(name->s, name->len);
-	
+
 	if(list && *list)
 		avp = *list;
 	else
@@ -325,7 +345,7 @@ sr_xavp_t *xavp_get_next(sr_xavp_t *start)
 
 	if(start==NULL)
 		return NULL;
-	
+
 	avp = start->next;
 	while(avp)
 	{
@@ -469,7 +489,7 @@ int xavp_count(str *name, sr_xavp_t **start)
 	if(name==NULL || name->s==NULL)
 		return -1;
 	id = get_hash1_raw(name->s, name->len);
-	
+
 	if(start)
 		avp = *start;
 	else
@@ -521,7 +541,7 @@ void xavp_destroy_list(sr_xavp_t **head)
 void xavp_reset_list(void)
 {
 	assert(_xavp_list_crt!=0 );
-	
+
 	if (_xavp_list_crt!=&_xavp_list_head)
 		_xavp_list_crt=&_xavp_list_head;
 	xavp_destroy_list(_xavp_list_crt);
@@ -531,7 +551,7 @@ void xavp_reset_list(void)
 sr_xavp_t **xavp_set_list(sr_xavp_t **head)
 {
 	sr_xavp_t **avp;
-	
+
 	assert(_xavp_list_crt!=0);
 
 	avp = _xavp_list_crt;
@@ -587,6 +607,9 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 			break;
 			case SR_XTYPE_VPTR:
 				LM_INFO("     XAVP value: <vptr:%p>\n", avp->val.v.vptr);
+			break;
+			case SR_XTYPE_SPTR:
+				LM_INFO("     XAVP value: <sptr:%p>\n", avp->val.v.vptr);
 			break;
 			case SR_XTYPE_DATA:
 				LM_INFO("     XAVP value: <data:%p>\n", avp->val.v.data);
@@ -682,11 +705,16 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 	return result;
 }
 
+sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
+{
+	return xavp_clone_level_nodata_with_new_name(xold, &xold->name);
+}
+
 /**
  * clone the xavp without values that are custom data
  * - only one list level is cloned, other sublists are ignored
  */
-sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
+sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 {
 	sr_xavp_t *xnew = NULL;
 	sr_xavp_t *navp = NULL;
@@ -697,18 +725,18 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	{
 		return NULL;
 	}
-	if(xold->val.type==SR_XTYPE_DATA)
+	if(xold->val.type==SR_XTYPE_DATA || xold->val.type==SR_XTYPE_SPTR)
 	{
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
 		return NULL;
 	}
-	xnew = xavp_new_value(&xold->name, &xold->val);
+	xnew = xavp_new_value(dst_name, &xold->val);
 	if(xnew==NULL)
 	{
 		LM_ERR("cannot create cloned root xavp\n");
 		return NULL;
 	}
-	LM_DBG("cloned root xavp [%.*s]\n", xold->name.len, xold->name.s);
+	LM_DBG("cloned root xavp [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s, dst_name->len, dst_name->s);
 
 	if(xold->val.type!=SR_XTYPE_XAVP)
 	{
@@ -720,7 +748,8 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 
 	while(oavp)
 	{
-		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP)
+		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP
+				&& oavp->val.type!=SR_XTYPE_SPTR)
 		{
 			navp =  xavp_new_value(&oavp->name, &oavp->val);
 			if(navp==NULL)
@@ -762,6 +791,10 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 	sr_xval_t val;
 	int n = 0;
 	int i = 0;
+
+	if(xavp==NULL) {
+		return -1;
+	}
 
 	crt = xavp_get_internal(&xavp->name, list, 0, NULL);
 
@@ -828,7 +861,7 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
 				avp->next = NULL;
 			}
 		}
-		
+
 		return avp;
 	}
 
@@ -1018,9 +1051,14 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 			break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avp->val.v.s.s);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
+				if(avp->val.v.s.len == 0) {
+					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
+						avp->name.len, avp->name.s);
+				} else {
+					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
 						avp->name.len, avp->name.s,
 						avp->val.v.s.len, avp->val.v.s.s);
+				}
 				if(ostr.len<=0 || ostr.len>=olen-rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n",
 							ostr.len, olen-rlen);

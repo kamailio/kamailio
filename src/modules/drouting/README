@@ -6,8 +6,6 @@ Edited by
 
 Ovidiu Sas
 
-Edited by
-
 Anca-Maria Vamanu
 
    Copyright © 2005-2008 Voice Sistem SRL
@@ -307,18 +305,18 @@ Chapter 1. Admin Guide
        draft 09):
        Table 1.4. Time recurrence attributes
 
-     Attribute                            Description
-     dastard    Start of interval (RFC 2445 DATE-TIME)
-     duration   Length of interval (RFC 2445 DURATION)
-     freq       Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
-                monthly, or yearly).
-     until      bound of recurrence (RFC 2445 DATE-TIME)
-     interval   How often the recurrence repeats
-     byday      List of days of the week
-     bymonthday List of days of the month
-     byyearday  List of days of the year
-     byweekno   List of weeks of the year
-     bymonth    List of months of the year
+   Attribute Description
+   dastard Start of interval (RFC 2445 DATE-TIME)
+   duration Length of interval (RFC 2445 DURATION)
+   freq Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
+   monthly, or yearly).
+   until bound of recurrence (RFC 2445 DATE-TIME)
+   interval How often the recurrence repeats
+   byday List of days of the week
+   bymonthday List of days of the month
+   byyearday List of days of the year
+   byweekno List of weeks of the year
+   bymonth List of months of the year
        The value stored in database has the format of:
        <dtstart>|<duration>|<freq>|<until>|<interval>|<byday>|<bymonthday>
        |<byyearday>|<byweekno>|<bymonth>
@@ -509,7 +507,7 @@ Chapter 1. Admin Guide
 
    The database url.
 
-   Default value is “NULL”.
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...

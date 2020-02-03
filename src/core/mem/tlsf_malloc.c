@@ -491,7 +491,6 @@ static block_header_t* block_split(block_header_t* block, size_t size)
 
 	tlsf_assert(block_size(block) == remain_size + size + block_header_overhead);
 	block_set_size(remaining, remain_size);
-	tlsf_assert(block_size(remaining) >= 0 && "block split with invalid size");
 
 	block_set_size(block, size);
 	block_mark_as_free(remaining);

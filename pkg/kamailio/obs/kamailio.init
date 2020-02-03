@@ -6,7 +6,7 @@
 # description: Kamailio (OpenSER) - the Open Source SIP Server
 #
 # processname: kamailio
-# pidfile: /var/run/kamailio.pid
+# pidfile: /run/kamailio.pid
 # config: /etc/kamailio/kamailio.cfg
 #
 ### BEGIN INIT INFO
@@ -23,8 +23,8 @@
 KAM=/usr/sbin/kamailio
 KAMCFG=/etc/kamailio/kamailio.cfg
 PROG=kamailio
-HOMEDIR=/var/run/$PROG
-PID_FILE=/var/run/$PROG/kamailio.pid
+HOMEDIR=/run/$PROG
+PID_FILE=/run/$PROG/kamailio.pid
 LOCK_FILE=/var/lock/subsys/kamailio
 RETVAL=0
 DEFAULTS=/etc/sysconfig/kamailio
@@ -102,7 +102,7 @@ if test "$DUMP_CORE" = "yes" ; then
     echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
-# /var/run can be a tmpfs
+# /run can be a tmpfs
 if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
 	chown ${USER}:${GROUP} $HOMEDIR

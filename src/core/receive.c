@@ -39,7 +39,6 @@
 #include "forward.h"
 #include "action.h"
 #include "mem/mem.h"
-#include "stats.h"
 #include "ip_addr.h"
 #include "script_cb.h"
 #include "nonsip_hooks.h"
@@ -48,6 +47,7 @@
 #include "usr_avp.h"
 #include "xavp.h"
 #include "select_buf.h"
+#include "locking.h"
 
 #include "tcp_server.h"  /* for tcpconn_add_alias */
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
@@ -77,7 +77,7 @@ int ksr_route_locks_set_init(void)
 		return 0;
 
 	ksr_route_locks_set = rec_lock_set_alloc(ksr_route_locks_size);
-	if(ksr_route_locks_set) {
+	if(ksr_route_locks_set==NULL) {
 		LM_ERR("failed to allocate route locks set\n");
 		return -1;
 	}
@@ -221,18 +221,12 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
  *  WARNING: buf must be 0 terminated (buf[len]=0) or some things might
  * break (e.g.: modules/textops)
  */
-int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
+int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 {
 	struct sip_msg *msg;
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
 	int ret;
-#ifdef STATS
-	int skipped = 1;
-	int stats_on = 1;
-#else
-	int stats_on = 0;
-#endif
 	struct timeval tvb, tve;
 	struct timezone tz;
 	unsigned int diff = 0;
@@ -244,6 +238,12 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	unsigned int cidlockset = 0;
 	int errsipmsg = 0;
 	int exectime = 0;
+
+	if(rcv_info->bind_address==NULL) {
+		LM_ERR("critical - incoming message without local socket [%.*s ...]\n",
+				(len>128)?128:len, buf);
+		return -1;
+	}
 
 	if(ksr_evrt_received_mode!=0) {
 		if(ksr_evrt_received(buf, len, rcv_info)<0) {
@@ -338,8 +338,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	}
 
 
-	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
-			|| stats_on == 1) {
+	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))) {
 		exectime = 1;
 	}
 
@@ -438,11 +437,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"request-route executed in: %d usec\n", diff);
 			}
-#ifdef STATS
-			stats->processed_requests++;
-			stats->acc_req_time += diff;
-			STATS_RX_REQUEST(msg->first_line.u.request.method_value);
-#endif
 		}
 
 		/* execute post request-script callbacks */
@@ -459,9 +453,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 		if(exectime) {
 			gettimeofday(&tvb, &tz);
 		}
-#ifdef STATS
-		STATS_RX_RESPONSE(msg->first_line.u.reply.statuscode / 100);
-#endif
 
 		/* execute pre-script callbacks, if any; -jiri */
 		/* if some of the callbacks said not to continue with
@@ -527,10 +518,6 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"reply-route executed in: %d usec\n", diff);
 			}
-#ifdef STATS
-			stats->processed_responses++;
-			stats->acc_res_time += diff;
-#endif
 		}
 
 		/* execute post reply-script callbacks */
@@ -538,17 +525,10 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 	}
 
 end:
-#ifdef STATS
-	skipped = 0;
-#endif
 	ksr_msg_env_reset();
 	LM_DBG("cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
-#ifdef STATS
-	if(skipped)
-		STATS_RX_DROPS;
-#endif
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return 0;
@@ -569,7 +549,6 @@ error02:
 	pkg_free(msg);
 error00:
 	ksr_msg_env_reset();
-	STATS_RX_DROPS;
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return -1;

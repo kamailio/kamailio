@@ -103,6 +103,7 @@ static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 static int db_skip_load = 0;
+static int dlg_keep_proxy_rr = 0;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
@@ -175,6 +176,7 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2);
+static int w_dlg_reset_property(struct sip_msg *msg, char *prop, char *s2);
 static int w_dlg_manage(struct sip_msg*, char*, char*);
 static int w_dlg_bye(struct sip_msg*, char*, char*);
 static int w_dlg_refer(struct sip_msg*, char*, char*);
@@ -243,6 +245,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
+	{"dlg_reset_property", (cmd_function)w_dlg_reset_property,1,fixup_spve_null,
+            0, ANY_ROUTE },
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
@@ -322,6 +326,7 @@ static param_export_t mod_params[]={
 	{ "end_timeout",           PARAM_INT, &dlg_end_timeout          },
 	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
+	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
 	{ 0,0,0 }
 };
 
@@ -528,6 +533,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (dlg_keep_proxy_rr < 0 || dlg_keep_proxy_rr > 3) {
+		LM_ERR("invalid value for keep_proxy_rr\n");
+		return -1;
+	}
+
 	if (timeout_spec.s) {
 		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0
 				&& (timeout_avp.type!=PVT_AVP)){
@@ -655,7 +665,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode);
+		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode, dlg_keep_proxy_rr);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
@@ -707,7 +717,6 @@ static int mod_init(void)
 		}
 	}
 
-	destroy_dlg_callbacks( DLGCB_LOADED );
 
 	/* timer process to send keep alive requests */
 	if(dlg_ka_timer>0 && dlg_ka_interval>0)
@@ -1204,6 +1213,14 @@ static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
 	return 1;
 }
 
+static int ki_dlg_bridge(sip_msg_t *msg, str *sfrom, str *sto, str *soproxy)
+{
+	if(dlg_bridge(sfrom, sto, soproxy, NULL)!=0)
+		return -1;
+	return 1;
+
+}
+
 /**
  *
  */
@@ -1314,6 +1331,66 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 	}
 
 	return ki_dlg_set_property(msg, &val);
+}
+
+/**
+ *
+ */
+static int ki_dlg_reset_property(sip_msg_t *msg, str *pval)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+
+	if(pval->len<=0) {
+		LM_ERR("empty property value\n");
+		return -1;
+	}
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
+		return -1;
+
+	if(pval->len==6 && strncmp(pval->s, "ka-src", 6)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_KA_SRC);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_KA_SRC);
+			dlg_release(d);
+		}
+	} else if(pval->len==6 && strncmp(pval->s, "ka-dst", 6)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_KA_DST);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_KA_DST);
+			dlg_release(d);
+		}
+	} else if(pval->len==15 && strncmp(pval->s, "timeout-noreset", 15)==0) {
+		dctx->iflags &= ~(DLG_IFLAG_TIMER_NORESET);
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags &= ~(DLG_IFLAG_TIMER_NORESET);
+			dlg_release(d);
+		}
+	} else {
+		LM_ERR("unknown property value [%.*s]\n", pval->len, pval->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlg_reset_property(struct sip_msg *msg, char *prop, char *s2)
+{
+	str val;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prop, &val)!=0)
+	{
+		LM_ERR("no property value\n");
+		return -1;
+	}
+
+	return ki_dlg_reset_property(msg, &val);
 }
 
 static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
@@ -1857,6 +1934,111 @@ static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
+{
+	dlg_cell_t *dlg;
+	int ret;
+
+	dlg = dlg_get_msg_dialog(msg);
+	ret = set_dlg_variable_unsafe(dlg, name, val);
+	if(dlg) {
+		dlg_release(dlg);
+	}
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
+{
+	dlg_cell_t *dlg;
+	str *pval;
+
+	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
+
+	dlg = dlg_get_msg_dialog(msg);
+	if(dlg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
+		return &_sr_kemi_dialog_xval;
+	}
+	pval = get_dlg_variable(dlg, name);
+	if(pval==NULL || pval->s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
+		goto done;
+	}
+
+	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_dialog_xval.v.s = *pval;
+
+done:
+	dlg_release(dlg);
+	return &_sr_kemi_dialog_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_get(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_gete(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_EMPTY);
+}
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_dlg_var_getw(sip_msg_t *msg, str *name)
+{
+	return ki_dlg_var_get_mode(msg, name, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static int ki_dlg_var_rm(sip_msg_t *msg, str *name)
+{
+	dlg_cell_t *dlg;
+
+	dlg = dlg_get_msg_dialog(msg);
+	set_dlg_variable_unsafe(dlg, name, NULL);
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
+{
+	dlg_cell_t *dlg;
+	str *pval;
+
+	dlg = dlg_get_msg_dialog(msg);
+	if(dlg==NULL) {
+		return 1;
+	}
+	pval = get_dlg_variable(dlg, name);
+	if(pval==NULL || pval->s==NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -1886,6 +2068,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("dlg_set_property"),
 		SR_KEMIP_INT, ki_dlg_set_property,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_reset_property"),
+		SR_KEMIP_INT, ki_dlg_reset_property,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1957,6 +2144,41 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_db_load_extra"),
 		SR_KEMIP_INT, ki_dlg_db_load_extra,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_sets"),
+		SR_KEMIP_INT, ki_dlg_var_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_get"),
+		SR_KEMIP_XVAL, ki_dlg_var_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_gete"),
+		SR_KEMIP_XVAL, ki_dlg_var_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_getw"),
+		SR_KEMIP_XVAL, ki_dlg_var_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_rm"),
+		SR_KEMIP_INT, ki_dlg_var_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("var_is_null"),
+		SR_KEMIP_INT, ki_dlg_var_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_bridge"),
+		SR_KEMIP_INT, ki_dlg_bridge,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
@@ -2214,6 +2436,11 @@ static const char *rpc_end_dlg_entry_id_doc[2] = {
 static const char *rpc_dlg_terminate_dlg_doc[2] = {
         "End a given dialog based on callid", 0
 };
+static const char *rpc_dlg_set_state_doc[3] = {
+        "Set state for a dialog based on callid and tags",
+        "It is targeting the need to update from state 4 (confirmed) to 5 (terminated)",
+        0
+};
 static const char *rpc_profile_get_size_doc[2] = {
 	"Returns the number of dialogs belonging to a profile", 0
 };
@@ -2279,6 +2506,70 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
         		callid.len, callid.s);
         dlg_release(dlg);
     }
+}
+
+static void rpc_dlg_set_state(rpc_t *rpc,void *c){
+	str callid = {NULL,0};
+	str ftag = {NULL,0};
+	str ttag = {NULL,0};
+	int sval = DLG_STATE_DELETED;
+	int ostate = 0;
+
+	dlg_cell_t * dlg = NULL;
+	unsigned int dir;
+	int unref=1;
+	dir = 0;
+
+	if(rpc->scan(c, ".S.S.Sd", &callid, &ftag, &ttag, &sval)<3) {
+		LM_ERR("unable to read the parameters\n" );
+		rpc->fault(c, 400, "Need the callid, from tag,to tag and state");
+		return;
+	}
+	if(sval < DLG_STATE_UNCONFIRMED || sval > DLG_STATE_DELETED) {
+		LM_ERR("invalid new state value: %d\n", sval);
+		rpc->fault(c, 500, "Invalid state value");
+		return;
+	}
+
+	dlg=get_dlg(&callid, &ftag, &ttag, &dir);
+
+	if(dlg==NULL) {
+		LM_ERR("dialog not found - callid '%.*s' \n", callid.len, callid.s);
+		rpc->fault(c, 500, "Dialog not found");
+		return;
+	}
+
+	LM_DBG("dialog found - callid '%.*s'\n", callid.len, callid.s);
+
+	if(dlg->state != DLG_STATE_CONFIRMED || sval!=DLG_STATE_DELETED) {
+		LM_WARN("updating states for not confirmed dialogs not properly supported yet,"
+				" use at own risk: '%.*s'\n", callid.len, callid.s);
+	}
+
+	/* setting new state for this dialog */
+	ostate = dlg->state;
+	dlg->state = sval;
+
+	/* updates for terminated dialogs */
+	if(ostate==DLG_STATE_CONFIRMED && sval==DLG_STATE_DELETED) {
+		/* updating timestamps, flags, dialog stats */
+		dlg->init_ts = (unsigned int)(time(0));
+		dlg->end_ts = (unsigned int)(time(0));
+	}
+	dlg->dflags |= DLG_FLAG_NEW;
+
+	dlg_unref(dlg, unref);
+
+	if(ostate==DLG_STATE_CONFIRMED && sval==DLG_STATE_DELETED) {
+		if_update_stat(dlg_enable_stats, active_dlgs, -1);
+	}
+
+	/* dlg_clean_run called by timer execution will handle timers deletion and all that stuff */
+	LM_NOTICE("dialog callid '%.*s' - state change forced - old: %d - new: %d\n",
+			callid.len, callid.s, ostate, sval);
+
+	rpc->add(c, "s", "Done");
+
 }
 
 static void rpc_dlg_is_alive(rpc_t *rpc, void *c)
@@ -2614,7 +2905,46 @@ static void rpc_dlg_list_match_ctx(rpc_t *rpc, void *c)
 	rpc_dlg_list_match_ex(rpc, c, 1);
 }
 
+static const char *rpc_dlg_briefing_doc[2] = {
+	"List the summary of dialog records in memory", 0
+};
+
+/*!
+ * \brief List summary of active calls
+ */
+static void rpc_dlg_briefing(rpc_t *rpc, void *c)
+{
+	dlg_cell_t *dlg;
+	unsigned int i;
+	void *h;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			if (rpc->add(c, "{", &h) < 0) {
+				rpc->fault(c, 500, "Failed to create the structure");
+				return;
+			}
+			if(rpc->struct_add(h, "ddSSSSSd",
+					"h_entry", dlg->h_entry,
+					"h_id", dlg->h_id,
+					"from_uri", &dlg->from_uri,
+					"to_uri", &dlg->to_uri,
+					"call-id", &dlg->callid,
+					"from_tag", &dlg->tag[DLG_CALLER_LEG],
+					"to_tag", &dlg->tag[DLG_CALLER_LEG],
+					"state", dlg->state) < 0) {
+				rpc->fault(c, 500, "Failed to add fields");
+				return;
+
+			}
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+}
+
 static rpc_export_t rpc_methods[] = {
+	{"dlg.briefing", rpc_dlg_briefing, rpc_dlg_briefing_doc, RET_ARRAY},
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
 	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
 	{"dlg.list_match", rpc_dlg_list_match, rpc_dlg_list_match_doc, RET_ARRAY},
@@ -2626,6 +2956,7 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{"dlg.terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
+	{"dlg.set_state", rpc_dlg_set_state, rpc_dlg_set_state_doc, 0},
 	{"dlg.stats_active", rpc_dlg_stats_active, rpc_dlg_stats_active_doc, 0},
 	{"dlg.is_alive",  rpc_dlg_is_alive, rpc_dlg_is_alive_doc, 0},
 	{0, 0, 0, 0}

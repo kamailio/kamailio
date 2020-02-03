@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="rergistrar.overview">
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic. The actual location
@@ -771,6 +771,11 @@ request_route {
 				<emphasis>received</emphasis> - the record's received value.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>path</emphasis> - the record's path value.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			For example. if this parameter is set to 'ulrcd', then values are set in:
@@ -785,6 +790,9 @@ request_route {
 		<listitem>
 			<para><emphasis>$xavp(ulrcd[0]=&gt;received)</emphasis></para>
 		</listitem>
+		<listitem>
+			<para><emphasis>$xavp(ulrcd[0]=&gt;path)</emphasis></para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -796,6 +804,37 @@ request_route {
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "xavp_rcd", "ulrcd")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="registrar.p.xavp_rcd_mask">
+		<title><varname>xavp_rcd_mask</varname> (int)</title>
+		<para>
+			Defines what values to skip when xavp_rcd is stored.
+		</para>
+		<itemizedlist>
+		<listitem><para>1 - <emphasis>ruid</emphasis></para></listitem>
+		<listitem><para>2 - <emphasis>contact</emphasis></para></listitem>
+		<listitem><para>4 - <emphasis>expires</emphasis></para></listitem>
+		<listitem><para>8 - <emphasis>received</emphasis></para></listitem>
+		<listitem><para>16 - <emphasis>path</emphasis></para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is 0 (none).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_rcd_mask</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# skip path value
+modparam("registrar", "xavp_rcd_mask", 16)
+...
+# skip path and expires values
+modparam("registrar", "xavp_rcd_mask", 20)
 ...
 		</programlisting>
 		</example>
@@ -1400,7 +1439,7 @@ add_sock_hdr("Sock-Info");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<para>
 		Return values:
@@ -1509,6 +1548,30 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 		<programlisting format="linespecific">
 ...
 reg_free_contacts("callee");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="registrar.f.reg_send_reply">
+		<title>
+		<function moreinfo="none">reg_send_reply()</function>
+		</title>
+		<para>
+			The function sends the SIP reply that is normally sent by
+			save(...), but that was skipped due to flag 0x2. It must be used
+			after save(..., "0x2"). Practically it allows saving registration
+			to location table, do other operations and then send the reply.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>reg_send_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+save("location", "0x2");
+...
+reg_send_reply();
 ...
 </programlisting>
 		</example>

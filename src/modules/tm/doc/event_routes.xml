@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="tm.event_routes" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -10,20 +16,20 @@
 
     <section id="tm.e.branch-failure">
 	<title>
-	    <function moreinfo="none">event_route[tm:branch-failure]</function>
+	    <function moreinfo="none">event_route[tm:branch-failure:id]</function>
 	</title>
 	<para>
 		Named branch failure routes can be defined to run when when a failure
 		response is received. This allows handling failures on individual
 		branches, for example, retrying an alternative outbound flow.
 	</para>
-        <para>
-			The format of the event_route name is "tm:branch-failure:&lt;name&gt;"
-			and is enabled with the t_on_branch_failure function.
-            This event_route uses the BRANCH_FAILURE_ROUTE route type.
-        </para>
+    <para>
+		The format of the event_route name is "tm:branch-failure:&lt;id&gt;"
+		and is enabled with the t_on_branch_failure function.
+		This event_route uses the BRANCH_FAILURE_ROUTE route type.
+    </para>
 	<example>
-	    <title><function>event_route[tm:branch-failure]</function> usage</title>
+	    <title><function>event_route[tm:branch-failure:id]</function> usage</title>
 	    <programlisting>
 ...
 request_route {
@@ -39,12 +45,42 @@ event_route[tm:branch-failure:myroute] {
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.e.local-request">
+		<title>
+			<function moreinfo="none">event_route[tm:local-request]</function>
+		</title>
+		<para>
+			Executed when the tm module generates a request, in other words,
+			the request originates from &kamailio; and a transaction is created
+			for it. The source of the requests can be tm itself or other modules
+			that use tm internally (e.g., msilo, uac). The event route is executed
+			if it is defined in the native &kamailio; config file. To execute
+			the equivalent callback when using KEMI scripting, see the
+			'event_callback' module parameter.
+		</para>
+		<para>
+			The request can still be updated, i.e., changes are possible to
+			R-URI ($ru), destination URI ($du) or the send socket ($fs).
+		</para>
+		<example>
+			<title><function>event_route[tm:local-request]</function> usage</title>
+			<programlisting  format="linespecific">
+...
+event_route [tm:local-request] {
+    xlog("L_INFO", "Routing locally generated $rm to $ru\n");
+    t_set_fr(10000, 10000);
+}
+...
+			</programlisting>
+		</example>
+	</section>
 	<section id="tm.e.local-response">
 		<title>
 			<function moreinfo="none">event_route[tm:local-response]</function>
 		</title>
 		<para>
-			Executed after the tm module has sent a local generated, transaction stateful response.
+			Executed after the tm module sent a local generated,
+			transaction stateful response.
 		</para>
 		<example>
 			<title><function>event_route[tm:local-response]</function> usage</title>

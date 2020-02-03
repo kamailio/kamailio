@@ -36,10 +36,10 @@
 	<para>
 	Like in SIP, the HTTP URL may need encoding to be transported safely
 	over the network. Check the string encoding functions in the Transformation
-	Cookbook (as used in the http_client_query example below).
+	Cookbook (as used in the http_client_query() example below).
 	</para>
 	<para>
-	The function http_client_query allows &kamailio; to issue an HTTP GET
+	The function http_client_query() allows &kamailio; to issue an HTTP GET
 	request and get access to parts of the reply. This function has
 	been ported from the utils module and now use the same libcurl
 	functions. We recommend using the new functionality provided by
@@ -437,6 +437,49 @@ modparam("http_client", "keep_connections", 1)
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.query_result">
+			<title><varname>query_result</varname> (int)</title>
+			<para>
+			Control what is returned by the http_client_query(...) in the result
+			variable.
+			</para>
+			<para>
+			Valid values are:
+				<itemizedlist>
+				<listitem><para>0 - Return the entire HTTP result body</para></listitem>
+				<listitem><para>1 - Return the first oine from HTTP result body</para></listitem>
+				</itemizedlist>
+			</para>
+			<para>
+			Default value: 1 (return first line).
+			</para>
+			<example>
+			<title>Set <varname>query_result</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "query_result", 0)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.query_maxdatasize">
+			<title><varname>query_maxdatasize</varname> (int)</title>
+			<para>
+			Control the size in bytes of the data to be returned by the
+			http_client_query(...) in the result variable.
+			</para>
+			<para>
+			Default value: 0 (disabled, unlimited size).
+			</para>
+			<example>
+			<title>Set <varname>query_maxdatasize</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "query_maxdatasize", 2048)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.p.httpcon">
 			<title><varname>httpcon</varname> (string)</title>
 			<para>
@@ -616,6 +659,28 @@ http_follow_redirect = no
 	</example>
 
 		</section>
+		<section id="http_client.p.netinterface">
+			<title><varname>netinterface</varname> (string)</title>
+			<para>
+			Set local network interface to be used for HTTP queries. It
+			can be interface name or IP address. For more details see:
+			https://curl.haxx.se/libcurl/c/CURLOPT_INTERFACE.html .
+			</para>
+			<para>
+			<emphasis>
+				Default value not set.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>netinterface</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "netinterface", "eth0")
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
@@ -796,17 +861,18 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			</para>
 			<para>
 			If HTTP server returns a class 2xx, 3xx or 4xx reply,
-			the first line of the reply's body (if any) is
+			the first line or the entire reply body (if any) is
 			stored in <quote>result</quote> parameter,
-			which must be a	writable pseudo	variable.
+			which must be a	writable pseudo	variable. See the query_result
+			parameter for controling what value to be stored in the result
+			variable.
 			</para>
 			<para>
 			Function returns reply code of HTTP reply or -1
 			if something went wrong.
 			</para>
 			<para>
-			This function can be used from REQUEST_ROUTE,
-			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 			</para>
 			<para>
 			Note that this function is based on the http_query function in the utils module.

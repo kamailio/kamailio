@@ -136,14 +136,14 @@
 	<column>
 		<name>caller_sock</name>
 		<type>string</type>
-		<size>64</size>
+		<size>&domain_len;</size>
 		<description>Local socket used to communicate with caller</description>
 	</column>
 
 	<column>
 		<name>callee_sock</name>
 		<type>string</type>
-		<size>64</size>
+		<size>&domain_len;</size>
 		<description>Local socket used to communicate with callee</description>
 	</column>
 

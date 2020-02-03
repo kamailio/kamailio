@@ -32,11 +32,12 @@ max_depth = 120
 debug = 0
 
 re_main_route = re.compile("^([a-z]+_)*route[\s\t]*(?![\(\)])[\s\t]*\{?", re.I)
-re_def_route = re.compile("^([a-z]+_)*route(\[\"?([A-Za-z0-9-_:]+)\"?\])+[\s\t]*\{?", re.I)
+re_def_route = re.compile("^([a-z]+_)*route ?(\[\"?([A-Za-z0-9-_:]+)\"?\])+[\s\t]*\{?", re.I)
 re_call_route = re.compile("^(.*\([\s\t!]*)?route\(\"?([A-Za-z0-9-_]+)\"?\)", re.I)
 routes = {}
 f_routes = {}
 b_routes = {}
+or_routes = {}
 r_routes = {}
 s_routes = {}
 e_routes = {}
@@ -75,12 +76,12 @@ def traverse_routes(_level, _name):
 
 
 if len(sys.argv) < 2:
-	raise "usage: %s configuration-file [max_depth]" % sys.argv[0]
+	raise Exception('wrong number of arguments\nusage: ' + sys.argv[0] + ' configuration-file [max_depth]')
 if len(sys.argv) == 3:
 	max_depth = int(sys.argv[2])
 cfg = file(sys.argv[1], "r")
-if cfg == None:
-	raise "Missing config file"
+if cfg is None:
+	raise Exception ('Missing config file')
 line = cfg.readline()
 rt = routes
 while line:
@@ -90,48 +91,55 @@ while line:
 		main_match = re_main_route.search(line)
 		def_match = re_def_route.search(line)
 		call_match = re_call_route.search(line)
-		if not call_match == None:
+		if not call_match is None:
 			log("CALL: " + line)
 			name = call_match.group(2)
 			log(rname +":"+name)
 			rt[rname].append(name)
-		elif not def_match == None:
+		elif not def_match is None:
 			log("DEF: " + line)
 			rtype = def_match.group(1)
 			rname = def_match.group(3)
 			if rtype == "failure_":
 				rt = f_routes
-				if rname == None:
+				if rname is None:
 					rname = "failure"
 			elif rtype == "onreply_":
-				rt = r_routes
-				if rname == None:
+				rt = or_routes
+				if rname is None:
 					rname = "onreply"
+			elif rtype == "reply_":
+				rt = r_routes
+				if rname is None:
+					rname = "reply"
 			elif rtype == "onsend_":
 				rt = s_routes
-				if rname == None:
+				if rname is None:
 					rname = "onsend"
 			elif rtype == "branch_":
 				rt = b_routes
-				if rname == None:
+				if rname is None:
 					rname = "branch"
 			elif rtype == "event_":
 				rt = e_routes
-				if rname == None:
+				if rname is None:
 					rname = "event"
 			else:
 				rt = routes
 			log(rname)
 			rt[rname] = []
-		elif not main_match == None:
+		elif not main_match is None:
 			log("MAIN: " + line)
 			rtype = main_match.group(1)
 			if rtype == "failure_":
 				rt = f_routes
 				rname = "failure"
 			elif rtype == "onreply_":
-				rt = r_routes
+				rt = or_routes
 				rname = "onreply"
+			elif rtype == "reply_":
+				rt = r_routes
+				rname = "reply"
 			elif rtype == "onsend_":
 				rt = s_routes
 				rname = "onsend"
@@ -151,7 +159,8 @@ while line:
 log("routes: %s" % (routes))
 log("branch_routes: %s" % (b_routes))
 log("failure_routes: %s" % (f_routes))
-log("onreply_routes: %s" % (r_routes))
+log("onreply_routes: %s" % (or_routes))
+log("reply_routes: %s" % (r_routes))
 log("onsend_routes: %s" % (s_routes))
 log("event_routes: %s" % (e_routes))
 
@@ -193,8 +202,15 @@ if len(f_routes) > 0:
 		for r in f_routes[fr]:
 			traverse_routes(1, r)
 
-if len(r_routes) > 0:
+if len(or_routes) > 0:
 	print "\nOnreply routes\n--------------"
+	for onr in or_routes.keys():
+		print "\n%s" % (onr)
+		for r in or_routes[onr]:
+			traverse_routes(1, r)
+
+if len(r_routes) > 0:
+	print "\nReply routes\n--------------"
 	for onr in r_routes.keys():
 		print "\n%s" % (onr)
 		for r in r_routes[onr]:

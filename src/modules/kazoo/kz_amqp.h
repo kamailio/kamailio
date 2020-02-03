@@ -273,6 +273,7 @@ void kz_amqp_destroy();
 int kz_amqp_add_connection(modparam_t type, void* val);
 
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload);
+int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _pub_flags);
 int kz_amqp_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* dst);
 int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload);
 int kz_amqp_subscribe(struct sip_msg* msg, char* payload);
@@ -281,6 +282,7 @@ int kz_amqp_encode(struct sip_msg* msg, char* unencoded, char* encoded);
 int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val);
 
 int kz_amqp_async_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _cb_route, char* _err_route);
+int kz_amqp_async_query_ex(struct sip_msg* msg, char* _exchange, char* _routing_key, char* _payload, char* _cb_route, char* _err_route, char* _pub_flags);
 
 //void kz_amqp_generic_consumer_loop(int child_no);
 void kz_amqp_manager_loop(int child_no);

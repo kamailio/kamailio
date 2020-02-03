@@ -30,7 +30,8 @@
 #define SR_KEMIP_INT	(1<<0)	/* type integer */
 #define SR_KEMIP_STR	(1<<1)	/* type str* */
 #define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
-#define SR_KEMIP_INTSTR	(1<<3)	/* type integer or str* */
+#define SR_KEMIP_XVAL	(1<<3)	/* type extended value (integer, str*, ...) */
+#define SR_KEMIP_NULL	(1<<4)	/* type NULL */
 
 #define SR_KEMI_FALSE	0
 #define SR_KEMI_TRUE	1
@@ -64,6 +65,14 @@ typedef union {
 	int n;
 	str s;
 } sr_kemi_val_t;
+
+typedef struct sr_kemi_xval {
+	int vtype;
+	union {
+		int n;
+		str s;
+	} v;
+} sr_kemi_xval_t;
 
 /* only sip_msg_t */
 typedef int (*sr_kemi_fm_f)(sip_msg_t*);
@@ -108,10 +117,53 @@ typedef int (*sr_kemi_fmssss_f)(sip_msg_t*, str*, str*, str*, str*);
 
 /* sip_msg_t and five int|str params */
 typedef int (*sr_kemi_fmsssss_f)(sip_msg_t*, str*, str*, str*, str*, str*);
+typedef int (*sr_kemi_fmssssn_f)(sip_msg_t*, str*, str*, str*, str*, int);
+typedef int (*sr_kemi_fmsssns_f)(sip_msg_t*, str*, str*, str*, int, str*);
+typedef int (*sr_kemi_fmsssnn_f)(sip_msg_t*, str*, str*, str*, int, int);
+typedef int (*sr_kemi_fmssnss_f)(sip_msg_t*, str*, str*, int, str*, str*);
+typedef int (*sr_kemi_fmssnsn_f)(sip_msg_t*, str*, str*, int, str*, int);
 typedef int (*sr_kemi_fmssnns_f)(sip_msg_t*, str*, str*, int, int, str*);
+typedef int (*sr_kemi_fmssnnn_f)(sip_msg_t*, str*, str*, int, int, int);
+typedef int (*sr_kemi_fmsnsss_f)(sip_msg_t*, str*, int, str*, str*, str*);
+typedef int (*sr_kemi_fmsnssn_f)(sip_msg_t*, str*, int, str*, str*, int);
+typedef int (*sr_kemi_fmsnsns_f)(sip_msg_t*, str*, int, str*, int, str*);
+typedef int (*sr_kemi_fmsnsnn_f)(sip_msg_t*, str*, int, str*, int, int);
+typedef int (*sr_kemi_fmsnnss_f)(sip_msg_t*, str*, int, int, str*, str*);
+typedef int (*sr_kemi_fmsnnsn_f)(sip_msg_t*, str*, int, int, str*, int);
+typedef int (*sr_kemi_fmsnnns_f)(sip_msg_t*, str*, int, int, int, str*);
+typedef int (*sr_kemi_fmsnnnn_f)(sip_msg_t*, str*, int, int, int, int);
+typedef int (*sr_kemi_fmnssss_f)(sip_msg_t*, int, str*, str*, str*, str*);
+typedef int (*sr_kemi_fmnsssn_f)(sip_msg_t*, int, str*, str*, str*, int);
+typedef int (*sr_kemi_fmnssns_f)(sip_msg_t*, int, str*, str*, int, str*);
+typedef int (*sr_kemi_fmnssnn_f)(sip_msg_t*, int, str*, str*, int, int);
+typedef int (*sr_kemi_fmnsnss_f)(sip_msg_t*, int, str*, int, str*, str*);
+typedef int (*sr_kemi_fmnsnsn_f)(sip_msg_t*, int, str*, int, str*, int);
+typedef int (*sr_kemi_fmnsnns_f)(sip_msg_t*, int, str*, int, int, str*);
+typedef int (*sr_kemi_fmnsnnn_f)(sip_msg_t*, int, str*, int, int, int);
+typedef int (*sr_kemi_fmnnsss_f)(sip_msg_t*, int, int, str*, str*, str*);
+typedef int (*sr_kemi_fmnnssn_f)(sip_msg_t*, int, int, str*, str*, int);
+typedef int (*sr_kemi_fmnnsns_f)(sip_msg_t*, int, int, str*, int, str*);
+typedef int (*sr_kemi_fmnnsnn_f)(sip_msg_t*, int, int, str*, int, int);
+typedef int (*sr_kemi_fmnnnss_f)(sip_msg_t*, int, int, int, str*, str*);
+typedef int (*sr_kemi_fmnnnsn_f)(sip_msg_t*, int, int, int, str*, int);
+typedef int (*sr_kemi_fmnnnns_f)(sip_msg_t*, int, int, int, int, str*);
+typedef int (*sr_kemi_fmnnnnn_f)(sip_msg_t*, int, int, int, int, int);
 
 /* sip_msg_t and six int|str params */
 typedef int (*sr_kemi_fmssssss_f)(sip_msg_t*, str*, str*, str*, str*, str*, str*);
+
+/* return xval, params only sip_msg_t */
+typedef sr_kemi_xval_t* (*sr_kemi_xfm_f)(sip_msg_t*);
+
+/* return xval, params sip_msg_t and one int|str param */
+typedef sr_kemi_xval_t* (*sr_kemi_xfmn_f)(sip_msg_t*, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfms_f)(sip_msg_t*, str*);
+
+/* return xval, params sip_msg_t and two int|str params */
+typedef sr_kemi_xval_t* (*sr_kemi_xfmnn_f)(sip_msg_t*, int, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmns_f)(sip_msg_t*, int, str*);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmsn_f)(sip_msg_t*, str*, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmss_f)(sip_msg_t*, str*, str*);
 
 sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname);
 
@@ -149,5 +201,12 @@ int sr_kemi_route(sr_kemi_eng_t *keng, sip_msg_t *msg, int rtype,
 		str *ename, str *edata);
 int sr_kemi_ctx_route(sr_kemi_eng_t *keng, run_act_ctx_t *ctx, sip_msg_t *msg,
 		int rtype, str *ename, str *edata);
+
+sr_kemi_t* sr_kemi_exports_get_pv(void);
+
+#define SR_KEMI_XVAL_NULL_NONE 0
+#define SR_KEMI_XVAL_NULL_PRINT 1
+#define SR_KEMI_XVAL_NULL_EMPTY 2
+void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode);
 
 #endif

@@ -12,15 +12,9 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
 
-Edited by
-
 Juha Heinanen
-
-Edited by
 
 Ovidiu Sas
 
@@ -73,6 +67,7 @@ Ovidiu Sas
               5.7. add_contact_alias([ip_addr, port, proto])
               5.8. handle_ruri_alias()
               5.9. set_contact_alias()
+              5.10. set_alias_to_pv(target_avp)
 
         6. Exported Pseudo Variables
 
@@ -115,10 +110,11 @@ Ovidiu Sas
    1.22. add_contact_alias usage
    1.23. handle_ruri_alias usage
    1.24. set_contact_alias usage
-   1.25. $rr_count usage
-   1.26. $rr_top_count usage
-   1.27. nathelper.enable_ping usage
-   1.28. @nathelper.rewrite_contact usage
+   1.25. set_alias_to_pv usage
+   1.26. $rr_count usage
+   1.27. $rr_top_count usage
+   1.28. nathelper.enable_ping usage
+   1.29. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -160,6 +156,7 @@ Chapter 1. Admin Guide
         5.7. add_contact_alias([ip_addr, port, proto])
         5.8. handle_ruri_alias()
         5.9. set_contact_alias()
+        5.10. set_alias_to_pv(target_avp)
 
    6. Exported Pseudo Variables
 
@@ -475,6 +472,7 @@ modparam("nathelper", "filter_server_id", 1)
    5.7. add_contact_alias([ip_addr, port, proto])
    5.8. handle_ruri_alias()
    5.9. set_contact_alias()
+   5.10. set_alias_to_pv(target_avp)
 
 5.1.  fix_nated_contact()
 
@@ -587,6 +585,9 @@ fix_nated_register();
      * 128 - Test if the “Contact” header URI port differs from the source
        port of the request (Warning: this is might be legal or even
        intended combination in non NATted scenarios)
+     * 256 - Test if the SDP connection address is different from source
+       IP address. It will work also with multiple connection address
+       lines.
 
    All flags can be bitwise combined, the test returns true if any of the
    tests identified a NAT.
@@ -693,6 +694,19 @@ if(is_rfc1918("$rd")) {
     };
 ...
 
+5.10.  set_alias_to_pv(target_avp)
+
+   Reads “;alias=ip~port~transport” from Contact header then writes to
+   target pseudo-variable as a sip uri.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE, and FAILURE_ROUTE.
+
+   Example 1.25. set_alias_to_pv usage
+...
+                set_alias_to_pv("$avp(aliasuri)");
+...
+
 6. Exported Pseudo Variables
 
    6.1. $rr_count
@@ -702,7 +716,7 @@ if(is_rfc1918("$rd")) {
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.25. $rr_count usage
+   Example 1.26. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -714,7 +728,7 @@ if(is_rfc1918("$rd")) {
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.26. $rr_top_count usage
+   Example 1.27. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -732,7 +746,7 @@ if(is_rfc1918("$rd")) {
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.27. nathelper.enable_ping usage
+   Example 1.28. nathelper.enable_ping usage
 ...
 $ kamcmd nathelper.enable_ping 1
 ...
@@ -747,7 +761,7 @@ $ kamcmd nathelper.enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.28. @nathelper.rewrite_contact usage
+   Example 1.29. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...
@@ -762,35 +776,35 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happened with “rtpproxy_disable” parameter?
+   What happened with “rtpproxy_disable” parameter?
 
-       It was removed as it became obsolete - now “rtpproxy_sock” can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now “rtpproxy_sock” can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at https://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.kamailio.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.kamailio.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.kamailio.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       https://github.com/kamailio/kamailio/issues.
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues.

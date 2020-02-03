@@ -630,6 +630,8 @@ static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode)
 				ssock->len, ssock->s, smode);
 		goto error;
 	}
+	LM_DBG("trying to set %s-socket to [%.*s] (%d)\n",
+				(smode==0)?"snd":"rcv", ssock->len, ssock->s, smode);
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL) {
 		if(smode==0) {

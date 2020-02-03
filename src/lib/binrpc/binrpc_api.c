@@ -268,9 +268,6 @@ int binrpc_open_connection(struct binrpc_handle* handle, char* name, int port, i
 	handle->buf = NULL;
 	mysun.sun_path[0] = '\0';
 	
-	/* init the random number generator */
-	srand(getpid()+time(0)); /* we don't need very strong random numbers */
-	
 	if (name == NULL) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"open_connection: invalid IP address or socket name");

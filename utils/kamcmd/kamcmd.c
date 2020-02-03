@@ -103,7 +103,7 @@ Options:\n\
     -h          This help message\n\
 address:\n\
     [proto:]name[:port]   where proto is one of tcp, udp, unixs or unixd\n\
-                          e.g.:  tcp:localhost:2048 , unixs:/tmp/kamailio_ctl\n\
+                          e.g.:  tcp:localhost:2049 , unixs:/tmp/kamailio_ctl\n\
 cmd:\n\
     method  [arg1 [arg2...]]\n\
 arg:\n\

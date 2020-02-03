@@ -394,21 +394,21 @@ void sq_newclosure(HSQUIRRELVM v,SQFUNCTION func,SQUnsignedInteger nfreevars)
     v->Push(SQObjectPtr(nc));
 }
 
-SQRESULT sq_getclosureinfo(HSQUIRRELVM v,SQInteger idx,SQUnsignedInteger *nparams,SQUnsignedInteger *nfreevars)
+SQRESULT sq_getclosureinfo(HSQUIRRELVM v,SQInteger idx,SQInteger *nparams,SQInteger *nfreevars)
 {
     SQObject o = stack_get(v, idx);
     if(sq_type(o) == OT_CLOSURE) {
         SQClosure *c = _closure(o);
         SQFunctionProto *proto = c->_function;
-        *nparams = (SQUnsignedInteger)proto->_nparameters;
-        *nfreevars = (SQUnsignedInteger)proto->_noutervalues;
+        *nparams = proto->_nparameters;
+        *nfreevars = proto->_noutervalues;
         return SQ_OK;
     }
     else if(sq_type(o) == OT_NATIVECLOSURE)
     {
         SQNativeClosure *c = _nativeclosure(o);
-        *nparams = (SQUnsignedInteger)c->_nparamscheck;
-        *nfreevars = c->_noutervalues;
+        *nparams = c->_nparamscheck;
+        *nfreevars = (SQInteger)c->_noutervalues;
         return SQ_OK;
     }
     return sq_throwerror(v,_SC("the object is not a closure"));
@@ -978,7 +978,7 @@ SQRESULT sq_setdelegate(HSQUIRRELVM v,SQInteger idx)
     case OT_TABLE:
         if(sq_type(mt) == OT_TABLE) {
             if(!_table(self)->SetDelegate(_table(mt))) {
-                return sq_throwerror(v, _SC("delagate cycle"));
+                return sq_throwerror(v, _SC("delegate cycle"));
             }
             v->Pop();
         }
@@ -1175,23 +1175,15 @@ SQRESULT sq_resume(HSQUIRRELVM v,SQBool retval,SQBool raiseerror)
 SQRESULT sq_call(HSQUIRRELVM v,SQInteger params,SQBool retval,SQBool raiseerror)
 {
     SQObjectPtr res;
-    if(v->Call(v->GetUp(-(params+1)),params,v->_top-params,res,raiseerror?true:false)){
-
-        if(!v->_suspended) {
-            v->Pop(params);//pop args
-        }
-        if(retval){
-            v->Push(res); return SQ_OK;
-        }
-        return SQ_OK;
-    }
-    else {
-        v->Pop(params);
+    if(!v->Call(v->GetUp(-(params+1)),params,v->_top-params,res,raiseerror?true:false)){
+        v->Pop(params); //pop args
         return SQ_ERROR;
     }
     if(!v->_suspended)
-        v->Pop(params);
-    return sq_throwerror(v,_SC("call failed"));
+        v->Pop(params); //pop args
+    if(retval)
+        v->Push(res); // push result
+    return SQ_OK;
 }
 
 SQRESULT sq_tailcall(HSQUIRRELVM v, SQInteger nparams)

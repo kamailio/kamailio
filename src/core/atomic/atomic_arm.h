@@ -24,7 +24,8 @@
  * Config defines:
  * - NOSMP
  * - __CPU_arm
- * - __CPU_arm6    - armv6 support (supports atomic ops via ldrex/strex)
+ * - __CPU_arm6 - armv6 support (supports atomic ops via ldrex/strex)
+ * - __CPU_arm7 - armv7 support 
  * @ingroup atomic
  */
 
@@ -37,13 +38,39 @@
 #ifdef NOSMP
 #define HAVE_ASM_INLINE_MEMBAR
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
+
+#else /* SMP */
+
+#ifdef __CPU_arm7
+
+#define HAVE_ASM_INLINE_MEMBAR
+#define membar() asm volatile ("dmb" : : : "memory")
+
+#elif defined __CPU_arm6
+
+#define HAVE_ASM_INLINE_MEMBAR
+/* arm6 implements memory barriers using CP15 */
+#define membar() asm volatile ("mcr p15, 0, %0, c7, c10, 5" \
+								: : "r"(0) : "memory")
+
+#else
+#warning SMP not supported for arm atomic ops, try compiling with -DNOSMP
+/* fall back to default lock based barriers (don't define HAVE_ASM...) */
+#endif /* __CPU_arm7 / __CPU_arm6 */
+
+#endif /* NOSMP */
+
+
+/* all other membars are either empty or the same as membar(),
+   irrespective of the SMP or NOSMP mode */
+#ifdef HAVE_ASM_INLINE_MEMBAR
+
 #define membar_read()  membar()
 #define membar_write() membar()
 #define membar_depends()   do {} while(0) /* really empty, not even a cc bar.*/
-/* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
- * contain gcc barriers*/
-#define membar_enter_lock() do {} while(0)
-#define membar_leave_lock() do {} while(0)
+/* lock barriers */
+#define membar_enter_lock()  membar()
+#define membar_leave_lock()  membar()
 /* membars after or before atomic_ops or atomic_setget -> use these or
  *  mb_<atomic_op_name>() if you need a memory barrier in one of these
  *  situations (on some archs where the atomic operations imply memory
@@ -55,19 +82,17 @@
 #define membar_write_atomic_setget()	membar_write()
 #define membar_read_atomic_op()			membar_read()
 #define membar_read_atomic_setget()		membar_read()
-#else /* SMP */
-#warning SMP not supported for arm atomic ops, try compiling with -DNOSMP
-/* fall back to default lock based barriers (don't define HAVE_ASM...) */
-#endif /* NOSMP */
+
+#endif /* HAVE_ASM_INLINE_MEMBAR */
 
 
-#ifdef __CPU_arm6
+#if defined __CPU_arm6 || defined __CPU_arm7
 
 
 #define HAVE_ASM_INLINE_ATOMIC_OPS
 
 /* hack to get some membars */
-#ifndef NOSMP
+#if !defined NOSMP && !defined HAVE_ASM_INLINE_MEMBAR
 #include "atomic_unknown.h"
 #endif
 
@@ -128,7 +153,19 @@
 		return RET_EXPR; \
 	}
 
+#define ATOMIC_XCHG_DECL(NAME, P_TYPE) \
+	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE v ) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			ATOMIC_ASM_OP2() \
+			: "=&r"(ret), "=&r"(tmp), "=m"(*var) : "r"(var), "r"(v) : "cc" \
+			); \
+		return ret; \
+	}
 
+/* old swp based version (doesn't work on arm7)
 #define ATOMIC_XCHG_DECL(NAME, P_TYPE) \
 	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
 														P_TYPE v ) \
@@ -141,6 +178,7 @@
 			); \
 		return ret; \
 	}
+*/
 
 
 /* cmpxchg: %5=old, %4=new_v, %3=var
@@ -176,8 +214,8 @@ ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret==0 )
 ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret==0 )
-//ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , int, int,  ret)
-ATOMIC_XCHG_DECL(get_and_set, int)
+ATOMIC_FUNC_DECL2(get_and_set, "" /* no extra op needed */ , int, int,  ret)
+//ATOMIC_XCHG_DECL(get_and_set, int)
 ATOMIC_CMPXCHG_DECL(cmpxchg, int)
 ATOMIC_FUNC_DECL1(add,     "add  %1, %0, %4", int, int, ret )
 
@@ -187,8 +225,8 @@ ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret==0 )
 ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret==0 )
-//ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
-ATOMIC_XCHG_DECL(get_and_set, long)
+ATOMIC_FUNC_DECL2(get_and_set, "" /* no extra op needed */ , long, long,  ret)
+//ATOMIC_XCHG_DECL(get_and_set, long)
 ATOMIC_CMPXCHG_DECL(cmpxchg, long)
 ATOMIC_FUNC_DECL1(add,     "add  %1, %0, %4", long, long, ret )
 
@@ -387,7 +425,7 @@ inline static long mb_atomic_add_long(volatile long* v, long i)
  *  -- andrei
  */
 
-#endif /* __CPU_arm6 */
+#endif /* __CPU_arm6, arm7 */
 
 
 #endif

@@ -26,6 +26,9 @@
 #include "../../core/str.h"
 #include "../../core/locking.h"
 
+#define SIPDUMP_MODE_WFILE (1<<0)
+#define SIPDUMP_MODE_EVROUTE (1<<1)
+
 typedef struct sipdump_data {
 	str data;
 	struct sipdump_data *next;

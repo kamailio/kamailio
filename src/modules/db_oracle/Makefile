@@ -17,7 +17,7 @@ ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-oracle-scripts: $(bin_prefix)/$(bin_dir)
-		ORACLEON=yes make -C ../../../utils/kamctl/ install-modules
+	ORACLEON=yes $(MAKE) -C ../../../utils/kamctl/ install-modules
 
 install-scripts: install-oracle-scripts
 

@@ -45,6 +45,7 @@ typedef struct _spi_list {
 
 
 spi_list_t create_list();
+void destroy_list(spi_list_t* lst);
 int spi_add(spi_list_t* list, uint32_t id);
 int spi_remove(spi_list_t* list, uint32_t id);
 int spi_in_list(spi_list_t* list, uint32_t id);

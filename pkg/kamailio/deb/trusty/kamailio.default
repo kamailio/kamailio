@@ -11,6 +11,14 @@
 # Group to run as
 #GROUP=kamailio
 
+# On systemd, to change username or group please create drop-in
+# /etc/systemd/system/kamailio.service.d/10-user_group.conf file, like
+# ```
+# [Service]
+# User=kamuser
+# Group=kamgroup
+# ```
+
 # Amount of shared and private memory to allocate
 # for the running Kamailio server (in Mb)
 #SHM_MEMORY=64

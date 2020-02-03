@@ -49,14 +49,31 @@
       <title><varname>ipsec_listen_addr</varname> (string)</title>
 
       <para>IP address which the Proxy-CSCF will use for incoming/outgoing SIP traffic over IPSec.</para>
-      <para><emphasis>Default value is "127.0.0.1"</emphasis></para>
+      <para><emphasis>Default value is empty string (null) - IPv4 listen interface will not be added</emphasis></para>
 
       <example>
         <title><varname>ipsec_listen_addr</varname> parameter usage</title>
 
         <programlisting format="linespecific">
 ...
-modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "127.0.0.1")
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_listen_addr6</varname> (string)</title>
+
+      <para>IPv6 address which the Proxy-CSCF will use for incoming/outgoing SIP traffic over IPSec.</para>
+      <para><emphasis>Default value is empty string (null) - IPv6 listen interface will not be added</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_listen_addr6</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
 ...
         </programlisting>
       </example>
@@ -65,9 +82,9 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "127.0.0.1")
     <section>
       <title><varname>ipsec_client_port</varname> (int)</title>
 
-      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
 
-      <para><emphasis>Default value is 5963.</emphasis></para>
+      <para><emphasis>Default value is 5062.</emphasis></para>
 
       <example>
         <title><varname>ipsec_client_port</varname> parameter usage</title>
@@ -83,7 +100,7 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
     <section>
       <title><varname>ipsec_server_port</varname> (int)</title>
 
-      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
 
       <para><emphasis>Default value is 5063.</emphasis></para>
 
@@ -93,6 +110,48 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
         <programlisting format="linespecific">
 ...
 modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_max_connections</varname> (int)</title>
+
+      <para>Maximum IPSec connections for the process. E.g. if ipsec_client_port=5100, ipsec_server_port=6100 and
+      ipsec_max_connections=10, all client ports between 5100 and 5109 and all server ports between 6100 and 6109
+      will be used for maximum to 10 IPSec connections.</para>
+
+      <para><emphasis>Default value is 2.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_max_connections</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_reuse_server_port</varname> (int)</title>
+
+      <para>Reuse (1) or not (0) the P-CSCF Server port for Re-registration for one UA.
+      When set to 0 - During Re-registration P-CSCF will distribute new P-CSCF client and
+      P-CSCF server ports.
+      When set to 1 - During Re-registration P-CSCF will reuse the old P-CSCF server port and
+      will distribute a new P-CSCF client port.</para>
+
+      <para><emphasis>Default value is 1.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_reuse_server_port</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
 ...
         </programlisting>
       </example>
@@ -172,7 +231,7 @@ ipsec_create("location");
     </section>
 
     <section>
-      <title><function moreinfo="none">ipsec_forward(domain)</function></title>
+      <title><function moreinfo="none">ipsec_forward(domain, flags)</function></title>
       <para>The function processes redirects outgoing message via the IPSec tunnel
       initiated with ipsec_create().</para>
 		  <para>Meaning of the parameters is as follows:</para>
@@ -183,6 +242,11 @@ ipsec_create("location");
           If a database is used then this must be name of the table which
           stores the contacts.
           </para>
+          <para>
+          <emphasis>flags</emphasis> - Set send force socket for request messages.
+          If 1 - set force socket for request messages. Useful for ipsec and TCP.
+          This is an optional parameter, default value - 0.
+          </para>
         </listitem>
       </itemizedlist>
       <example>
@@ -191,6 +255,8 @@ ipsec_create("location");
         <programlisting format="linespecific">
 ...
 ipsec_forward("location");
+# or
+ipsec_forward("location", "1");
 ...
         </programlisting>
       </example>
@@ -210,7 +276,7 @@ ipsec_forward("location");
         </listitem>
 		  </itemizedlist>
       <example>
-        <title>ipsec_forward</title>
+        <title>ipsec_destroy</title>
 
         <programlisting format="linespecific">
 ...

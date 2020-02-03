@@ -1,6 +1,6 @@
 # PUA_REGINFO
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -19,8 +19,5 @@ else
 	DEFS+=-I$(LOCALBASE)/include/libxml2 -I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 endif
-
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 
 include ../../Makefile.modules

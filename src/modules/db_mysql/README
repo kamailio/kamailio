@@ -229,7 +229,7 @@ default-character-set = utf8
    Example 1.9. Using [client] and specific group
 ...
 [client]
-socket = /var/run/mysql/mysqld.sock
+socket = /run/mysql/mysqld.sock
 
 [kamailio]
 socket = /path/to/mysqld.sock

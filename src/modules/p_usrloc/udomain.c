@@ -599,7 +599,7 @@ int db_timer_udomain(udomain_t* _d)
 	vals[1].nul = 0;
 	vals[1].val.time_val = 0;
 	// we're using a local cron job to delete expired entries
-	LM_INFO("using sp-ul_db database interface, expires is not implemented");
+	LM_INFO("using sp-ul_db database interface, expires is not implemented\n");
 	//if (ul_db_layer_delete(_d, NULL, NULL, keys, ops, vals, 2) < 0) { //FIXME
 	return 0;
 }

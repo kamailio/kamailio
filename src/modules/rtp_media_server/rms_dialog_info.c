@@ -25,6 +25,7 @@ extern int in_rms_process;
 static void rms_action_free(rms_dialog_info_t *si)
 {
 	rms_action_t *a, *tmp;
+	if (!si->action.prev) return;
 	clist_foreach(&si->action, a, next)
 	{
 		tmp = a;
@@ -225,7 +226,7 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 	rms_sdp_info_t *sdp_info = &si->sdp_info_offer;
 	if(!rms_get_sdp_info(sdp_info, msg))
 		goto error;
-	si->media.pt = rms_sdp_check_payload(sdp_info);
+	si->media.pt = rms_sdp_select_payload(sdp_info);
 	if(!si->media.pt) {
 		tmb.t_reply(msg, 488, "incompatible media format");
 		goto error;

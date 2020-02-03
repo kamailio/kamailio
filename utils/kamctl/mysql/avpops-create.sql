@@ -1,7 +1,7 @@
 CREATE TABLE `usr_preferences` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `uuid` VARCHAR(64) DEFAULT '' NOT NULL,
-    `username` VARCHAR(128) DEFAULT 0 NOT NULL,
+    `username` VARCHAR(255) DEFAULT 0 NOT NULL,
     `domain` VARCHAR(64) DEFAULT '' NOT NULL,
     `attribute` VARCHAR(32) DEFAULT '' NOT NULL,
     `type` INT(11) DEFAULT 0 NOT NULL,

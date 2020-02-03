@@ -46,7 +46,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/char_msg_val.h"
 #include "exec_hf.h"
 

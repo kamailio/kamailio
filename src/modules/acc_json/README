@@ -38,8 +38,14 @@ Julien Chavanton
               3.5. acc_time_format (str)
               3.6. output_mqueue (integer)
               3.7. output_syslog (integer)
-              3.8. log_facility (integer)
-              3.9. log_level (integer)
+              3.8. acc_log_facility (integer)
+              3.9. acc_log_level (integer)
+              3.10. cdr_enable (str)
+              3.11. cdr_extra (str)
+              3.12. cdr_expired_dlg_enable (str)
+              3.13. cdr_output_mqueue (integer)
+              3.14. cdr_log_facility (integer)
+              3.15. cdr_log_level (integer)
 
    List of Examples
 
@@ -50,8 +56,14 @@ Julien Chavanton
    1.5. acc_time_format example
    1.6. output_mqueue usage example
    1.7. output_syslog example
-   1.8. log_facility example
-   1.9. log_level example
+   1.8. acc_log_facility example
+   1.9. acc_log_level example
+   1.10. cdr_enable example
+   1.11. cdr_extra example
+   1.12. cdr_expired_dlg_enable example
+   1.13. cdr_output_mqueue usage example
+   1.14. cdr_log_facility example
+   1.15. cdr_log_level example
 
 Chapter 1. Admin Guide
 
@@ -72,8 +84,14 @@ Chapter 1. Admin Guide
         3.5. acc_time_format (str)
         3.6. output_mqueue (integer)
         3.7. output_syslog (integer)
-        3.8. log_facility (integer)
-        3.9. log_level (integer)
+        3.8. acc_log_facility (integer)
+        3.9. acc_log_level (integer)
+        3.10. cdr_enable (str)
+        3.11. cdr_extra (str)
+        3.12. cdr_expired_dlg_enable (str)
+        3.13. cdr_output_mqueue (integer)
+        3.14. cdr_log_facility (integer)
+        3.15. cdr_log_level (integer)
 
 1. Overview
 
@@ -113,8 +131,14 @@ Chapter 1. Admin Guide
    3.5. acc_time_format (str)
    3.6. output_mqueue (integer)
    3.7. output_syslog (integer)
-   3.8. log_facility (integer)
-   3.9. log_level (integer)
+   3.8. acc_log_facility (integer)
+   3.9. acc_log_level (integer)
+   3.10. cdr_enable (str)
+   3.11. cdr_extra (str)
+   3.12. cdr_expired_dlg_enable (str)
+   3.13. cdr_output_mqueue (integer)
+   3.14. cdr_log_facility (integer)
+   3.15. cdr_log_level (integer)
 
 3.1. acc_flag (integer)
 
@@ -240,11 +264,11 @@ ts), "$var(nsq_res)");
    Example 1.7. output_syslog example
 ...
 modparam("acc_json", "output_syslog", 1)
-modparam("acc_json", "log_level", 2)
-modparam("acc_json", "log_facility", "LOG_DAEMON")
+modparam("acc_json", "acc_log_level", 2)
+modparam("acc_json", "acc_log_facility", "LOG_DAEMON")
 ...
 
-3.8. log_facility (integer)
+3.8. acc_log_facility (integer)
 
    Log facility to which accounting messages are issued to syslog. This
    allows to easily separate the accounting specific logging from the
@@ -252,9 +276,9 @@ modparam("acc_json", "log_facility", "LOG_DAEMON")
 
    Default value is LOG_DAEMON.
 
-   Example 1.8. log_facility example
+   Example 1.8. acc_log_facility example
 ...
-modparam("acc_json", "log_facility", "LOG_LOCAL0")
+modparam("acc_json", "acc_log_facility", "LOG_LOCAL0")
 
 # modify you syslog/rsyslog config
 # /etc/rsyslog.d/default.conf
@@ -264,13 +288,124 @@ modparam("acc_json", "log_facility", "LOG_LOCAL0")
 # local0.*                      /var/log/json_acc.log
 ...
 
-3.9. log_level (integer)
+3.9. acc_log_level (integer)
 
    Log level at which accounting messages are issued to syslog.
 
    Default value is 1 (L_NOTICE).
 
-   Example 1.9. log_level example
+   Example 1.9. acc_log_level example
 ...
-modparam("acc_json", "log_level", 2) # Set log_level to 2 (L_INFO)
+modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
+...
+
+3.10. cdr_enable (str)
+
+   Enable Call Data Record generation.
+
+   Default value is 0 (disabled).
+
+   Example 1.10. cdr_enable example
+...
+modparam("acc_json", "cdr_enable", 1)
+...
+
+3.11. cdr_extra (str)
+
+   Set of pseudo-variables defining custom CDR fields.
+
+   Default value is NULL.
+
+   Example 1.11. cdr_extra example
+...
+modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
+...
+
+3.12. cdr_expired_dlg_enable (str)
+
+   Should CDR-based logging be enabled in case of expired dialogs?
+
+   0 - off (default). 1 - on.
+
+   Example 1.12. cdr_expired_dlg_enable example
+...
+modparam("acc_json", "cdr_expired_dlg_enable", 1)
+...
+
+3.13. cdr_output_mqueue (integer)
+
+   Requires the mqueue module. The acc module will queue json cdr events
+   in the specified mqueue. Using a rtimer module exec you can access the
+   queue and process them.
+
+   You can also fetch the cdr events using mqueue.fetch over JSON-RPC.
+
+   Default value is not-set mqueue will not be required.
+
+   Example 1.13. cdr_output_mqueue usage example
+...
+# example using json_mqueue/http_client to publish to NSQD
+modparam("mqueue", "mqueue", "name=cdr_events;size=100000")
+modparam("acc_json", "cdr_enable", 1)
+modparam("acc_json", "cdr_output_mqueue", "cdr_events")
+modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id)")
+modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
+modparam("rtimer", "exec", "timer=nsqt;route=RUN_CDR_PUBLISH")
+modparam("http_client", "keep_connections", 1)
+modparam("http_client", "httpcon", "nsqd=>http://localhost:4151/pub?topic=acc")
+
+route[RUN_CDR_PUBLISH] {
+   $var(count) = 0;
+   while (mq_fetch("cdr_events")) {
+      $var(q_size) = mq_size("cdr_events");
+      $var(count) = $var(count) + 1;
+      xinfo("[RUN_CDR_PUBLISH][$var(q_size)][$var(count)][$mqk(cdr_events)][$mqv
+(cdr_events)]\n");
+      $var(res) = http_connect_raw("nsqd", "", "application/json", $mqv(cdr_even
+ts), "$var(nsq_res)");
+      if ($var(res) < 0) {
+         xerr("[RUN_CDR_PUBLISH][$var(res)] http_connect_raw: timeout or error !
+\n");
+         mq_add("cdr_events", "cdr_key", "$mqv(cdr_events)");
+      } else if ($var(res) < 200 || $var(res) > 299) {
+         xerr("[RUN_CDR_PUBLISH][$var(res)] http unexpected response code !\n");
+         mq_add("cdr_dead_letter_queue", "cdr_key", "$mqv(cdr_events)");
+         return;
+      }
+   }
+   if ($var(count) > 0 ) {
+      xinfo("[RUN_CDR_PUBLISH]done count[$var(count)]\n");
+   }
+}
+...
+
+3.14. cdr_log_facility (integer)
+
+   Log facility to which accounting messages are issued to syslog. This
+   allows to easily separate the accounting specific logging from the
+   other log messages.
+
+   Default value is LOG_DAEMON.
+
+   Example 1.14. cdr_log_facility example
+...
+modparam("acc_json", "cdr_log_facility", "LOG_LOCAL0")
+
+# modify you syslog/rsyslog config
+# /etc/rsyslog.d/default.conf
+# remove local0 from default log file
+# *.*;local0,auth,authpriv.none /var/log/syslog
+# add local0 to another log file
+# local0.*                      /var/log/json_cdr.log
+...
+
+3.15. cdr_log_level (integer)
+
+   Log level at which accounting messages are issued to syslog.
+
+   Default value is 1 (L_NOTICE).
+
+   Example 1.15. cdr_log_level example
+...
+modparam("acc_json", "cdr_log_level", 2) # Set cdr_log_level to 2 (L_INFO)
 ...

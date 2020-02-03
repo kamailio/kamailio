@@ -1,6 +1,6 @@
 {
   "name": "uacreg",
-  "version": 3,
+  "version": 4,
   "columns": [
     "id": {
       "type": "int",
@@ -70,6 +70,11 @@
     "reg_delay": {
       "type": "int",
       "default": 0,
+      "null": false
+    },
+    "socket": {
+      "type": "string",
+      "default": "",
       "null": false
     }
   ]

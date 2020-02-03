@@ -5,13 +5,17 @@
 #===================================================================
 
 ### version for this script
-VERSION='5.3.0'
+VERSION='5.4.0'
 
 PATH=$PATH:/usr/local/sbin/
 
 # for testing only, please don't enable this in production environments
 # as this introduce security risks
-TEST="false"
+if [ -z "$KAMCTL_TEST" ]; then
+	TEST="false"
+else
+	TEST="true"
+fi
 
 ### include config files
 
@@ -1791,6 +1795,11 @@ ksr_srv() {
 			mecho "list server rpc commands"
 			ctl_cmd_run system.listMethods
 			;;
+		version)
+			require_ctlengine
+			mecho "list server version"
+			ctl_cmd_run core.version
+			;;
 		*)
 			usage_ksr_srv
 			exit 1
@@ -2715,6 +2724,18 @@ usrloc() {
 				usage_usrloc
 				exit 1
 			fi
+			;;
+
+		dbclean)
+			require_dbengine
+			KSR_CLEAN_VAL=3600
+			if [ $# -eq 2 ] ; then
+				KSR_CLEAN_VAL=$2
+			fi
+			QUERY="delete from $USRLOC_TABLE where expires < SUBDATE(NOW(), INTERVAL $KSR_CLEAN_VAL SECOND);"
+			$DBCMD "$QUERY"
+
+			exit $?
 			;;
 
 		*)

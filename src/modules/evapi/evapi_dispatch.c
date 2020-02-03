@@ -37,6 +37,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/receive.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
@@ -150,8 +151,10 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	if((rt<0) && (_evapi_event_callback.s==NULL || _evapi_event_callback.len<=0))
 		return 0;
 
-	fmsg = faked_msg_next();
-	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
+	if(faked_msg_get_new(&tmsg)<0) {
+		LM_ERR("failed to get a new faked message\n");
+		return -1;
+	}
 	fmsg = &tmsg;
 	evapi_set_msg_env(fmsg, evenv);
 	backup_rt = get_route_type();
@@ -170,6 +173,9 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 	}
 	set_route_type(backup_rt);
 	evapi_set_msg_env(fmsg, NULL);
+	/* free the structure -- it is a clone of faked msg */
+	free_sip_msg(fmsg);
+	ksr_msg_env_reset();
 	return 0;
 }
 
@@ -670,7 +676,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 
 	bzero(&evapi_srv_addr, sizeof(evapi_srv_addr));
 	evapi_srv_addr.sin_family = h->h_addrtype;
-	evapi_srv_addr.sin_port   = htons((short)lport);
+	evapi_srv_addr.sin_port   = htons(lport);
 	evapi_srv_addr.sin_addr  = *(struct in_addr*)h->h_addr;
 
 	/* Set SO_REUSEADDR option on listening socket so that we don't
@@ -781,7 +787,11 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 		cfg_update();
 		LM_DBG("dispatching [%p] [%.*s] (%d)\n", emsg,
 				emsg->data.len, emsg->data.s, emsg->data.len);
-		evapi_dispatch_notify(emsg);
+		if(evapi_dispatch_notify(emsg) == 0) {
+			shm_free(emsg);
+			LM_WARN("message not delivered - no client connected\n");
+			return -1;
+		}
 		shm_free(emsg);
 	}
 	return 0;

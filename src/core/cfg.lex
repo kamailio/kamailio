@@ -329,6 +329,7 @@ DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 DNS_CACHE_REC_PREF	dns_cache_rec_pref
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
+BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
 /* blacklist */
 DST_BLST_INIT	dst_blacklist_init
 USE_DST_BLST		use_dst_blacklist
@@ -374,9 +375,11 @@ MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
 TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
+TCP_ACCEPT_UNIQUE	"tcp_accept_unique"
 TCP_SEND_TIMEOUT	"tcp_send_timeout"
 TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 TCP_CON_LIFETIME	"tcp_connection_lifetime"
+TCP_CONNECTION_MATCH	"tcp_connection_match"
 TCP_POLL_METHOD		"tcp_poll_method"
 TCP_MAX_CONNECTIONS	"tcp_max_connections"
 TLS_MAX_CONNECTIONS	"tls_max_connections"
@@ -466,6 +469,8 @@ LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 LATENCY_LIMIT_CFG		latency_limit_cfg
+
+URI_HOST_EXTRA_CHARS	"uri_host_extra_chars"
 
 MSG_TIME	msg_time
 ONSEND_RT_REPLY		"onsend_route_reply"
@@ -763,6 +768,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_REC_PREF; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
+<INITIAL>{BIND_IPV6_LINK_LOCAL}	{ count(); yylval.strval=yytext;
+								return BIND_IPV6_LINK_LOCAL; }
 <INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
 								return DST_BLST_INIT; }
 <INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;
@@ -811,6 +818,10 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{TCP_ACCEPT_ALIASES}	{ count(); yylval.strval=yytext;
 									return TCP_ACCEPT_ALIASES; }
+<INITIAL>{TCP_ACCEPT_UNIQUE}	{ count(); yylval.strval=yytext;
+									return TCP_ACCEPT_UNIQUE; }
+<INITIAL>{TCP_CONNECTION_MATCH}	{ count(); yylval.strval=yytext;
+									return TCP_CONNECTION_MATCH; }
 <INITIAL>{TCP_SEND_TIMEOUT}		{ count(); yylval.strval=yytext;
 									return TCP_SEND_TIMEOUT; }
 <INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;
@@ -971,6 +982,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
+<INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }
@@ -1933,14 +1945,24 @@ static void pp_ifdef()
 
 static void pp_else()
 {
+	if(pp_sptr==0) {
+		LM_WARN("invalid position for preprocessor directive 'else'"
+				" - at %s line %d\n", (finame)?finame:"cfg", line);
+		return;
+	}
 	pp_ifdef_stack[pp_sptr-1] ^= 1;
 	pp_update_state();
 }
 
 static void pp_endif()
 {
-	pp_sptr--;
 	pp_ifdef_level_update(-1);
+	if(pp_sptr==0) {
+		LM_WARN("invalid position for preprocessor directive 'endif'"
+				" - at %s line %d\n", (finame)?finame:"cfg", line);
+		return;
+	}
+	pp_sptr--;
 	pp_update_state();
 }
 

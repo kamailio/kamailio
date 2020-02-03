@@ -20,8 +20,6 @@
  */
 
 
-#include "defs.h"
-
 
 #include <stdio.h>
 #include "t_stats.h"
@@ -286,11 +284,7 @@ void tm_rpc_list(rpc_t* rpc, void* c)
 					"uas_request", (tcell->uas.request)?"yes":"no",
 					"tflags", (unsigned)tcell->flags,
 					"outgoings", (unsigned)tcell->nr_of_outgoings,
-#ifdef TM_DEL_UNREF
 					"ref_count", (unsigned)atomic_get(&tcell->ref_count),
-#else
-					"ref_count", tcell->ref_count,
-#endif
 					"lifetime", (unsigned)TICKS_TO_S(tcell->end_of_life)
 					);
 		}

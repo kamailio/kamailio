@@ -30,7 +30,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/pvapi.h"
 #include "../pv/pv_svar.h"
-#include "../../core/md5utils.h"
+#include "../../core/crypto/md5utils.h"
 
 
 /*!

@@ -47,6 +47,8 @@ static int w_phonenum_match_cn(struct sip_msg *msg, char *str1, char *str2,
 		char *str3);
 static int phonenum_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 
+static int phonenum_resid_param(modparam_t type, void* val);
+
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
 	{ {"phn", sizeof("phn")-1}, PVT_OTHER, pv_get_phonenum, 0,
@@ -64,6 +66,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"smode", PARAM_INT, &phonenum_smode},
+	{"resid", PARAM_STR|PARAM_USE_FUNC, &phonenum_resid_param},
 	{0, 0, 0}
 };
 
@@ -102,6 +105,21 @@ static void mod_destroy(void)
 	phonenum_destroy_pv();
 }
 
+/**
+ *
+ */
+static int phonenum_resid_param(modparam_t type, void* val)
+{
+	str rname;
+
+	rname = *((str*)val);
+	if(sr_phonenum_add_resid(&rname) < 0) {
+		LM_ERR("failed to register result container with id: %.*s\n",
+				rname.len, rname.s);
+		return -1;
+	}
+	return 0;
+}
 
 static int phonenum_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 {

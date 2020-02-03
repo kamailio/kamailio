@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		It provides a collection of features to make easier the integration
+		with systemd.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libsystemd</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Systemd Notifications</title>
+		<para>
+		If loaded, the module will generated systemd notifications when &kamailio;
+		starts and when &kamailio; shuts down. The content of these notifications
+		(sent with sd_notify(...)) are shown in the next example (_PID_ is
+		replaced by the PID of the main process).
+		</para>
+		<example>
+		<title><function>Systemd Notifications</function></title>
+		<programlisting format="linespecific">
+...
+READY=1\nMAINPID=_PID_
+...
+STOPPING=1
+...
+</programlisting>
+	    </example>
+	</section>
+
+</chapter>
+

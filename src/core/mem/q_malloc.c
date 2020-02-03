@@ -118,6 +118,7 @@ static  void qm_debug_check_frag(struct qm_block* qm, struct qm_frag* f,
 		const char* file, unsigned int line,
 		const char* efile, unsigned int eline)
 {
+	struct qm_frag *p;
 	if (f->check!=ST_CHECK_PATTERN){
 		LM_CRIT("BUG: qm: fragm. %p (address %p) "
 				"beginning overwritten (%lx)! Memory allocator was called "
@@ -147,6 +148,12 @@ static  void qm_debug_check_frag(struct qm_block* qm, struct qm_frag* f,
 				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f,
 				(char*)f+sizeof(struct qm_frag), file, line, f->file, f->line,
 				efile, eline);
+		if(PREV_FRAG_END(f)->check2==END_CHECK_PATTERN2) {
+			p = FRAG_PREV(f);
+			LM_CRIT("BUG: qm: prev. fragm. tail overwritten [%p:%p]"
+					" - fragment marked by %s:%lu\n", p,
+					(char*)p+sizeof(struct qm_frag), p->file, p->line);
+		}
 		qm_status(qm);
 		abort();
 	}
@@ -529,7 +536,7 @@ void qm_free(void* qmp, void* p)
 	qm->real_used-=size;
 
 #ifdef MEM_JOIN_FREE
-	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0)) {
+	if(likely(cfg_get(core, core_cfg, mem_join)!=0)) {
 		next=prev=0;
 		/* mark this fragment as used (might fall into the middle of joined frags)
 		 * to give us an extra chance of detecting a double free call (if the joined

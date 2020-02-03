@@ -7,7 +7,7 @@ CREATE TABLE `carrierroute` (
     `mask` INT(11) UNSIGNED DEFAULT 0 NOT NULL,
     `prob` FLOAT DEFAULT 0 NOT NULL,
     `strip` INT(11) UNSIGNED DEFAULT 0 NOT NULL,
-    `rewrite_host` VARCHAR(128) DEFAULT '' NOT NULL,
+    `rewrite_host` VARCHAR(255) DEFAULT '' NOT NULL,
     `rewrite_prefix` VARCHAR(64) DEFAULT '' NOT NULL,
     `rewrite_suffix` VARCHAR(64) DEFAULT '' NOT NULL,
     `description` VARCHAR(255) DEFAULT NULL
@@ -20,7 +20,7 @@ CREATE TABLE `carrierfailureroute` (
     `carrier` INT(10) UNSIGNED DEFAULT 0 NOT NULL,
     `domain` INT(10) UNSIGNED DEFAULT 0 NOT NULL,
     `scan_prefix` VARCHAR(64) DEFAULT '' NOT NULL,
-    `host_name` VARCHAR(128) DEFAULT '' NOT NULL,
+    `host_name` VARCHAR(255) DEFAULT '' NOT NULL,
     `reply_code` VARCHAR(3) DEFAULT '' NOT NULL,
     `flags` INT(11) UNSIGNED DEFAULT 0 NOT NULL,
     `mask` INT(11) UNSIGNED DEFAULT 0 NOT NULL,

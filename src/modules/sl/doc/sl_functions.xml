@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sl.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <title>Functions</title>
 
-    <section id="sl_send_reply">
+    <section id="sl.f.sl_send_reply">
 	<title>
 	    <function>sl_send_reply(code, reason)</function>
 	</title>
@@ -49,14 +49,14 @@ sl_send_reply("404", "Not found");
 	    </programlisting>
 	</example>
     </section>
-    
-	<section id="send_reply">
+
+	<section id="sl.f.send_reply">
 		<title>
 		<function moreinfo="none">send_reply(code, reason)</function>
 		</title>
 		<para>
-		For the current request, a reply is sent back having the given code 
-		and text reason. The reply is sent stateful or stateless, depending of 
+		For the current request, a reply is sent back having the given code
+		and text reason. The reply is sent stateful or stateless, depending of
 		the <acronym>TM</acronym> module: if a transaction exists for the current
 		request, then the reply is sent statefully, otherwise stateless.
 		</para>
@@ -88,7 +88,7 @@ send_reply("403", "Invalid user - $fU");
 		</example>
 	</section>
 
-    <section id="sl_reply_error">
+    <section id="sl.f.sl_reply_error">
 	<title>
 	    <function>sl_reply_error()</function>
 	</title>
@@ -107,9 +107,9 @@ sl_reply_error();
 	</example>
     </section>
 
-	<section id="sl_forward_reply">
+	<section id="sl.f.sl_forward_reply">
 		<title>
-		<function moreinfo="none">sl_forward _reply([ code, [ reason ] ])</function>
+		<function moreinfo="none">sl_forward_reply([ code, [ reason ] ])</function>
 		</title>
 		<para>
 		Forward statelessly the current received SIP reply, with the option to

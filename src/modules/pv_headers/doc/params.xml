@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="pv_headers.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+	<title>Parameters</title>
+	<section id="pv_headers.p.xavp_name">
+		<title><varname>xavp_name</varname> (string)</title>
+		<para>
+			Name of the XAVP there the collected headers are stored.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>headers</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "xavp_name", "pvh")
+...
+</programlisting>
+		<para>
+		Result:
+			$xavp(headers[0]=>From)
+			$xavp(headers[0]=>To)
+			$xavp(headers[0]=>Call-ID)
+		</para>
+		</example>
+	</section>
+	<section id="pv_headers.p.header_value_size">
+		<title><varname>header_value_size</varname> (int)</title>
+		<para>
+			Defines an internal maximum SIP header value size. Header values
+			longer than this setting will be stripped down when collected or applied.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1024.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_value_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "header_value_size", 512)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pv_headers.p.header_collect_flag">
+		<title><varname>header_collect_flag</varname> (int)</title>
+		<para>
+			Used to mark that headers are collected for the &sip; message, leading to
+			subsequent headers collection on this message to be declined with an error.
+			Should be used only in branches and replies.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 27.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_collect_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "header_collect_flag", 37)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pv_headers.p.header_apply_flag">
+		<title><varname>header_apply_flag</varname> (int)</title>
+		<para>
+			Used to mark that headers are applied for the &sip; message, leading to subsequent
+			headers applies on this message to be declined with an error.
+			Should be used only in branches and replies.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 28.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_apply_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "header_apply_flag", 38)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pv_headers.p.skip_headers">
+		<title><varname>skip_headers</varname> (string)</title>
+		<para>
+		A comma separated headers list that must be excluded from processing (they are skipped when
+		<link linked="pv_headers.f.pvh_apply_headers">pvh_apply_headers()</link>
+		changes the &sip; message headers).
+		</para>
+		<para>
+		If the parameter is set to an empty string then all the &sip; message headers are processed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>Record-Route,Via,Route,Content-Length,Max-Forwards,CSeq</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>skip_headers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "skip_headers", "Record-Route,Via,Route")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="pv_headers.p.split_headers">
+		<title><varname>split_headers</varname> (string)</title>
+		<para>
+		A comma separated headers list that must be split into multi headers if
+		their value is a comma separated list.
+		</para>
+		<para>
+		If the parameter is set to an empty string then no headers are split.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>split_headers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pv_headers", "split_headers", "Diversion")
+...
+</programlisting>
+		<para>
+		Result:
+			Received Diversion header:
+				Diversion: &lt;user1@test.local&gt;,&lt;user2@test.local&gt;,&lt;user3@test.local&gt;
+			After split:
+				Diversion: &lt;user1@test.local&gt;
+				Diversion: &lt;user2@test.local&gt;
+				Diversion: &lt;user3@test.local&gt;
+		</para>
+		<para>
+		Becomes handy if used together with <link linked="pv_headers.f.pvh_modify_header">pvh_modify_header()</link>
+		or <link linked="pv_headers.f.pvh_remove_header">pvh_remove_header()</link> to change or remove value 2 for instance.
+		</para>
+		</example>
+	</section>
+	<section id="pv_headers.p.auto_msg">
+		<title><varname>auto_msg</varname> (int)</title>
+		<para>
+		Defines wether the headers are automatically collected for incoming
+		messages, as well as automatically applied for forwarded messages.
+		</para>
+		<para>It is enabled by default and requires the 'tm' module to be loaded, otherwise the mode is disabled
+		and manual invocation of <link linked="pv_headers.f.pvh_collect_headers">pvh_collect_headers()</link>/<link linked="pv_headers.f.pvh_apply_headers">pvh_apply_headers()</link> is required.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>auto_msg</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pvh", "auto_msg", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>

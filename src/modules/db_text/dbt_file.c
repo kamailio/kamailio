@@ -124,7 +124,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 		return NULL;
 	}
 
-	buf = pkg_malloc(_db_text_read_buffer_size);
+	buf = pkg_malloc(_db_text_read_buffer_size+1);
 	if(!buf) {
 		LM_ERR("error allocating read buffer, %i\n", _db_text_read_buffer_size);
 		goto done;
@@ -173,6 +173,12 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 					if(c==EOF)
 						goto clean;
 					buf[bp++] = c;
+					if (bp==_db_text_read_buffer_size) {
+						LM_ERR("Buffer overflow for file [%s] row=[%d] col=[%d] c=[%c]."
+							" Please increase 'file_buffer_size' param!\n",
+							path, crow+1, ccol+1, c);
+						goto clean;
+					}
 					c = fgetc(fin);
 				}
 				colp = dbt_column_new(buf, bp);
@@ -453,6 +459,12 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 									}
 								}
 								buf[bp++] = c;
+								if (bp==_db_text_read_buffer_size) {
+									LM_ERR("Buffer overflow for file [%s] row=[%d] col=[%d] c=[%c]."
+										" Please increase 'file_buffer_size' param!\n",
+										path, crow+1, ccol+1, c);
+									goto clean;
+								}
 								c = fgetc(fin);
 							}
 							dtval.val.str_val.s = buf;

@@ -65,4 +65,12 @@ void crypto_generate_callid(str* callid);
  */
 int crypto_register_callid_func(void);
 
+
+/**
+ * \brief generate SHA1 hash over a given input string
+ * \param str to apply hash over
+ * \param SHA1 hash
+ */
+int crypto_generate_SHA1(str* in, str* hash);
+
 #endif /* CALLID_H */

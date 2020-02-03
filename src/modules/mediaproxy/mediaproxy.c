@@ -41,6 +41,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -191,7 +192,7 @@ static int mediaproxy_disabled = False;
 static str ice_candidate = str_init("none");
 
 static MediaproxySocket mediaproxy_socket = {
-		"/var/run/mediaproxy/dispatcher.sock", // name
+		"/run/mediaproxy/dispatcher.sock", // name
 		-1,									   // sock
 		500, // timeout in 500 miliseconds if there is no answer
 		0,   // time of the last failure
@@ -289,33 +290,6 @@ static void *strcasefind(
 	return NULL;
 }
 
-// returns string with whitespace trimmed from left end
-static INLINE void ltrim(str *string)
-{
-	while(string->len > 0 && isspace((int)*(string->s))) {
-		string->len--;
-		string->s++;
-	}
-}
-
-// returns string with whitespace trimmed from right end
-static INLINE void rtrim(str *string)
-{
-	char *ptr;
-
-	ptr = string->s + string->len - 1;
-	while(string->len > 0 && (*ptr == 0 || isspace((int)*ptr))) {
-		string->len--;
-		ptr--;
-	}
-}
-
-// returns string with whitespace trimmed from both ends
-static INLINE void trim(str *string)
-{
-	ltrim(string);
-	rtrim(string);
-}
 
 // returns a pointer to first CR or LF char found or the end of string
 static char *findendline(char *string, int len)

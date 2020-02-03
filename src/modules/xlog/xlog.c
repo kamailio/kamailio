@@ -212,7 +212,7 @@ static int mod_init(void)
 	_xlog_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(_xlog_buf==NULL)
 	{
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	return 0;
@@ -498,7 +498,7 @@ static int xdbg_fixup_helper(void** param, int param_no, int mode)
 	xm = (xl_msg_t*)pkg_malloc(sizeof(xl_msg_t));
 	if(xm==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(xm, 0, sizeof(xl_msg_t));
@@ -533,7 +533,7 @@ static int xlog_fixup_helper(void** param, int param_no, int mode)
 		xlp = (xl_level_p)pkg_malloc(sizeof(xl_level_t));
 		if(xlp == NULL)
 		{
-			LM_ERR("no more memory\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;
 		}
 		memset(xlp, 0, sizeof(xl_level_t));
@@ -592,7 +592,7 @@ static int xlog3_fixup_helper(void** param, int param_no)
 	facility = (int*)pkg_malloc(sizeof(int));
 	if(facility == NULL)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return E_UNSPEC;
 	}
 	*facility = str2facility(s.s);
@@ -936,6 +936,7 @@ int ki_xcrit(sip_msg_t *msg, str *lmsg)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_xlog_exports[] = {
 	{ str_init("xlog"), str_init("xdbg"),
 		SR_KEMIP_INT, ki_xdbg,
@@ -980,6 +981,7 @@ static sr_kemi_t sr_kemi_xlog_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

@@ -40,7 +40,7 @@ Options:
     -h          Help message
 address:
     [proto:]name[:port]   where proto is one of tcp, udp, unixs, unix or unixd
-                          e.g.:  tcp:localhost:2048 , unixs:/tmp/ser_ctl
+                          e.g.:  tcp:localhost:2049 , unixs:/tmp/ser_ctl
                           If the protocol is not specified, unixs will be
                           used if name is a filesystem path and udp if not.
                           "unixs" or "unix" stand for unix stream sockets
@@ -141,12 +141,12 @@ $ kamcmd cfg.cfg_set_int_now debug 5 # turn debug level to 5 (needs cfg)
 $ kamcmd # enters interactive mode
 
 Using a tcp socket
-(assumes modparam("ctl", "binrpc", "tcp:localhost:2048") in kamailio.cfg)
+(assumes modparam("ctl", "binrpc", "tcp:localhost:2049") in kamailio.cfg)
 
-$ kamcmd -s tcp:localhost:2048 core.version
+$ kamcmd -s tcp:localhost:2049 core.version
 Server: Kamailio (3.3.2 (i386/linux))
 
-$ kamcmd -s tcp:localhost:2048 SRV _sip._udp.iptel.org
+$ kamcmd -s tcp:localhost:2049 SRV _sip._udp.iptel.org
     name: _sip._udp.iptel.org
     type: SRV
     size (bytes): 104
@@ -161,7 +161,7 @@ $ kamcmd -s tcp:localhost:2048 SRV _sip._udp.iptel.org
     rr expires in (s): 67693
     rr error flags: 0
 
-kamcmd -s tcp:127.0.0.1:2048  # enters interactive mode over tcp
+kamcmd -s tcp:127.0.0.1:2049  # enters interactive mode over tcp
 
 For more examples see utils/kamcmd/EXAMPLES
  [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/kamcmd/EXAMPLES].

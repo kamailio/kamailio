@@ -292,6 +292,15 @@ int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct);
 int dlg_update_cseq(dlg_cell_t *dlg, unsigned int leg, str *cseq);
 
 /*!
+ * \brief Update or set the routeset for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param rr routeset
+ * \return 0 on success, -1 on failure
+ */
+int dlg_update_rr_set(struct dlg_cell * dlg, unsigned int leg, str *rr);
+
+/*!
  * \brief Set time-out route
  * \param dlg dialog
  * \param route name of route

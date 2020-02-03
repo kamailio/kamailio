@@ -58,6 +58,14 @@ int pv_xavp_get_value(struct sip_msg *msg, pv_param_t *param,
 			if(snprintf(_pv_xavp_buf, 128, "<<xavp:%p>>", avp->val.v.xavp)<0)
 				return pv_get_null(msg, param, res);
 		break;
+		case SR_XTYPE_VPTR:
+			if(snprintf(_pv_xavp_buf, 128, "<<vptr:%p>>", avp->val.v.vptr)<0)
+				return pv_get_null(msg, param, res);
+		break;
+		case SR_XTYPE_SPTR:
+			if(snprintf(_pv_xavp_buf, 128, "<<sptr:%p>>", avp->val.v.vptr)<0)
+				return pv_get_null(msg, param, res);
+		break;
 		case SR_XTYPE_DATA:
 			if(snprintf(_pv_xavp_buf, 128, "<<data:%p>>", avp->val.v.data)<0)
 				return pv_get_null(msg, param, res);

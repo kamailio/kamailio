@@ -56,7 +56,7 @@
 #include "../../core/kemi.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "../../modules/sanity/api.h"
 
@@ -121,15 +121,15 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"storage",			PARAM_STR, &_tps_storage},
-	{"db_url",			PARAM_STR, &_tps_db_url},
+	{"storage",		PARAM_STR, &_tps_storage},
+	{"db_url",		PARAM_STR, &_tps_db_url},
 	{"mask_callid",		PARAM_INT, &_tps_param_mask_callid},
 	{"sanity_checks",	PARAM_INT, &_tps_sanity_checks},
 	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{"clean_interval",	PARAM_INT, &_tps_clean_interval},
 	{"event_callback",	PARAM_STR, &_tps_eventrt_callback},
-	{"event_mode",		PARAM_STR, &_tps_eventrt_mode},
+	{"event_mode",		PARAM_INT, &_tps_eventrt_mode},
 	{"contact_host",	PARAM_STR, &_tps_contact_host},
 	{0,0,0}
 };
@@ -390,6 +390,7 @@ int tps_msg_sent(sr_event_param_t *evp)
 	str *obuf;
 	int dialog;
 	int local;
+	str nbuf = STR_NULL;
 
 	obuf = (str*)evp->data;
 
@@ -443,7 +444,15 @@ int tps_msg_sent(sr_event_param_t *evp)
 		tps_response_sent(&msg);
 	}
 
-	obuf->s = tps_msg_update(&msg, (unsigned int*)&obuf->len);
+	nbuf.s = tps_msg_update(&msg, (unsigned int*)&nbuf.len);
+	if(nbuf.s!=NULL) {
+		LM_DBG("new outbound buffer generated\n");
+		pkg_free(obuf->s);
+		obuf->s = nbuf.s;
+		obuf->len = nbuf.len;
+	} else {
+		LM_ERR("failed to generate new outbound buffer\n");
+	}
 
 done:
 	free_sip_msg(&msg);

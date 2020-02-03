@@ -160,8 +160,10 @@ kamailio_db_grant () # pars: <database name>
 	minfo "granting privileges to database $1 ..."
 
 	# Users: kamailio is the regular user, kamailioro only for reading
-	sql_query "" "GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
-		GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';"
+	sql_query "" "CREATE USER '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
+		GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST';
+		CREATE USER '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';
+		GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST';"
 
 	if [ $? -ne 0 ] ; then
 		merr "granting privileges to database $1 failed!"
@@ -169,8 +171,10 @@ kamailio_db_grant () # pars: <database name>
 	fi
 
 	if [ "$DBHOST" != "localhost" ] ; then
-		sql_query "" "GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'localhost' IDENTIFIED  BY '$DBRWPW';
-			GRANT SELECT ON $1.* TO '$DBROUSER'@'localhost' IDENTIFIED BY '$DBROPW';"
+		sql_query "" "CREATE USER '$DBRWUSER'@'localhost' IDENTIFIED BY '$DBRWPW';
+			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'localhost';
+			CREATE USER '$DBROUSER'@'localhost' IDENTIFIED BY '$DBROPW';
+			GRANT SELECT ON $1.* TO '$DBROUSER'@'localhost';"
 		if [ $? -ne 0 ] ; then
 			merr "granting localhost privileges to database $1 failed!"
 			exit 1
@@ -178,8 +182,10 @@ kamailio_db_grant () # pars: <database name>
 	fi
 
 	if [ ! -z "$DBACCESSHOST" ] ; then
-		sql_query "" "GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'$DBACCESSHOST' IDENTIFIED  BY '$DBRWPW';
-			GRANT SELECT ON $1.* TO '$DBROUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBROPW';"
+		sql_query "" "CREATE USER '$DBRWUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBRWPW';
+			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'$DBACCESSHOST';
+			CREATE USER '$DBROUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBROPW';
+			GRANT SELECT ON $1.* TO '$DBROUSER'@'$DBACCESSHOST';"
 		if [ $? -ne 0 ] ; then
 			merr "granting access host privileges to database $1 failed!"
 			exit 1
@@ -232,24 +238,45 @@ kamailio_create () # pars: <database name>
 		exit 1
 	fi
 
-	kamailio_db_create $1
+	if [ "$DBINITASK" = "yes" ]; then
+		get_answer "ask" "Create the database '$1'? (y/n): "
+	else
+		ANSWER="y"
+	fi
+	if [ "$ANSWER" = "y" ]; then
+		kamailio_db_create $1
+	fi
 
-	kamailio_db_grant $1
+	if [ "$DBINITASK" = "yes" ]; then
+		get_answer "ask" "Create database users with access privileges? (y/n): "
+	else
+		ANSWER="y"
+	fi
+	if [ "$ANSWER" = "y" ]; then
+		kamailio_db_grant $1
+	fi
 
-	standard_create $1
+	if [ "$DBINITASK" = "yes" ]; then
+		get_answer "ask" "Create the standard database tables? (y/n): "
+	else
+		ANSWER="y"
+	fi
+	if [ "$ANSWER" = "y" ]; then
+		standard_create $1
+	fi
 
-	get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+	get_answer $INSTALL_PRESENCE_TABLES "Create the presence related tables? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
 		presence_create $1
 	fi
 
-	get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+	get_answer $INSTALL_EXTRA_TABLES "Create the tables for $EXTRA_MODULES? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
 		HAS_EXTRA="yes"
 		extra_create $1
 	fi
 
-	get_answer $INSTALL_DBUID_TABLES "Install tables for $DBUID_MODULES? (y/n): "
+	get_answer $INSTALL_DBUID_TABLES "Create the tables for $DBUID_MODULES? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
 		HAS_EXTRA="yes"
 		dbuid_create $1

@@ -108,7 +108,7 @@ int secf_append_rule(int action, int type, str *value)
 	char *v = NULL;
 
 	if(action < 0 || action > 2) {
-		LM_ERR("Unkown action value %d", action);
+		LM_ERR("Unknown action value %d", action);
 		return -1;
 	}
 
@@ -147,7 +147,7 @@ int secf_append_rule(int action, int type, str *value)
 			last_node = &last->user;
 			break;
 		default:
-			LM_ERR("Unkown type value %d", type);
+			LM_ERR("Unknown type value %d", type);
 			return -1;
 	}
 

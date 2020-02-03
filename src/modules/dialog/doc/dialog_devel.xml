@@ -33,7 +33,7 @@
 		<listitem>
 			<para><emphasis>int type</emphasis> - types of callbacks; more
 			types may be register for the same callback function; only 
-			DLGCB_CREATED must be register alone. Possible types:
+			DLGCB_LOADED and DLGCB_CREATED must be registered alone. Possible types:
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>DLGCB_LOADED</emphasis>

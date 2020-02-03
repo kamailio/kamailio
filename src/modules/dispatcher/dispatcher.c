@@ -85,6 +85,7 @@ str ds_xavp_dst_grp = str_init("grp");
 str ds_xavp_dst_dstid = str_init("dstid");
 str ds_xavp_dst_attrs = str_init("attrs");
 str ds_xavp_dst_sock = str_init("sock");
+str ds_xavp_dst_socket = str_init("socket");
 
 str ds_xavp_ctx_cnt = str_init("cnt");
 
@@ -141,6 +142,9 @@ str ds_event_callback = STR_NULL;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 
+static int ds_reload_delta = 5;
+static time_t *ds_rpc_reload_time = NULL;
+
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -178,6 +182,16 @@ static int fixup_ds_list_exist(void** param,int param_no);
 static void destroy(void);
 
 static int ds_warn_fixup(void** param, int param_no);
+
+static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_dsv(pv_spec_p sp, str *in);
+
+static pv_export_t mod_pvs[] = {
+	{ {"dsv", (sizeof("dsv")-1)}, PVT_OTHER, pv_get_dsv, 0,
+		pv_parse_dsv, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 static cmd_export_t cmds[]={
 	{"ds_select",    (cmd_function)w_ds_select,            2,
@@ -271,6 +285,7 @@ static param_export_t params[]={
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
+	{"reload_delta",       PARAM_INT, &ds_reload_delta },
 	{0,0,0}
 };
 
@@ -282,7 +297,7 @@ struct module_exports exports= {
 	cmds,            /* cmd (cfg function) exports */
 	params,          /* param exports */
 	0,               /* exported rpc functions */
-	0,               /* exported pseudo-variables */
+	mod_pvs,         /* exported pseudo-variables */
 	0,               /* response handling function */
 	mod_init,        /* module init function */
 	child_init,      /* per-child init function */
@@ -343,7 +358,7 @@ static int mod_init(void)
 		ds_default_sockinfo =
 				grep_sock_info(&host, (unsigned short)port, proto);
 		if(ds_default_sockinfo == 0) {
-			LM_WARN("non-local socket <%.*s>\n", ds_default_socket.len,
+			LM_ERR("non-local socket <%.*s>\n", ds_default_socket.len,
 					ds_default_socket.s);
 			return -1;
 		}
@@ -451,6 +466,14 @@ static int mod_init(void)
 		LM_ERR("invalid ds_latency_estimator_alpha must be between 0 and 1000,"
 				" using default[%.3f]\n", ds_latency_estimator_alpha);
 	}
+
+	ds_rpc_reload_time = shm_malloc(sizeof(time_t));
+	if(ds_rpc_reload_time == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	*ds_rpc_reload_time = 0;
+
 	return 0;
 }
 
@@ -459,8 +482,6 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	kam_srand((11 + rank) * getpid() * 7);
-
 	return 0;
 }
 
@@ -477,6 +498,10 @@ static void destroy(void)
 		shm_free(ds_ping_reply_codes);
 	if(ds_ping_reply_codes_cnt)
 		shm_free(ds_ping_reply_codes_cnt);
+	if(ds_rpc_reload_time!=NULL) {
+		shm_free(ds_rpc_reload_time);
+		ds_rpc_reload_time = 0;
+	}
 }
 
 #define GET_VALUE(param_name, param, i_value, s_value, value_flags)        \
@@ -1011,9 +1036,8 @@ static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 
 	if(fixup_get_ivalue(msg, (gparam_p)param, &set) != 0) {
 		LM_ERR("cannot get set id param value\n");
-		return -1;
+		return -2;
 	}
-	LM_DBG("--- Looking for dispatcher set %d\n", set);
 	return ds_list_exist(set);
 }
 
@@ -1144,6 +1168,74 @@ int ds_ping_check_rplcode(int code)
 void ds_ping_reply_codes_update(str *gname, str *name)
 {
 	ds_parse_reply_codes();
+}
+
+/**
+ *
+ */
+static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ds_rctx_t *rctx;
+
+	if(param==NULL) {
+		return -1;
+	}
+	rctx = ds_get_rctx();
+	if(rctx==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_sintval(msg, param, res, rctx->code);
+		case 1:
+			if(rctx->reason.s!=NULL && rctx->reason.len>0) {
+				return pv_get_strval(msg, param, res, &rctx->reason);
+			}
+			return pv_get_null(msg, param, res);
+		case 2:
+			return pv_get_sintval(msg, param, res, rctx->flags);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_dsv(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 4:
+			if(strncmp(in->s, "code", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "flags", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "reason", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV key: %.*s\n", in->len, in->s);
+	return -1;
 }
 
 /* KEMI wrappers */
@@ -1373,6 +1465,19 @@ static const char *dispatcher_rpc_reload_doc[2] = {
  */
 static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 {
+
+	if(ds_rpc_reload_time==NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return;
+	}
+	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "Ongoing reload");
+		return;
+	}
+	*ds_rpc_reload_time = time(NULL);
+
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
 			rpc->fault(ctx, 500, "Reload Failed");

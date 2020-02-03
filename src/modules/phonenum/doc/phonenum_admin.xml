@@ -71,7 +71,7 @@
 	<section id="phonenum.p.smode">
 	    <title><varname>smode</varname> (int)</title>
 	    <para>
-		Phone number search mode.
+		Phone number search mode (not in use yet).
 	    </para>
 	    <para>
 		<emphasis>
@@ -87,7 +87,31 @@ modparam("phonenum", "smode", 0)
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="phonenum.p.resid">
+	    <title><varname>resid</varname> (str)</title>
+	    <para>
+		Preregister result container id during initialization, enabling the use
+		of the module in KEMI scripts. In native &kamailio;.cfg file, registration
+		is done when parsing config and finding variables.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote></quote> (empty).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>resid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("phonenum", "resid", "src")
+...
+if(phonenum_match("1-484-555-8888", "src")) {
+   ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 
     <section>
@@ -98,7 +122,7 @@ modparam("phonenum", "smode", 0)
 	    </title>
 	    <para>
 			Match num against the libphonenumber and set the attributes inside
-			the pvc container. The function has to be called before accessing
+			the pvc result container. The function has to be called before accessing
 			a key via: $phn(pvc=&gt;key).
 	    </para>
 	    <para>

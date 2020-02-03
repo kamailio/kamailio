@@ -29,7 +29,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
 #include "../../core/globals.h"
-#include "../../core/md5.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/crc.h"
 #include "../../core/ip_addr.h"
 #include "../../core/dset.h"
@@ -60,7 +60,7 @@
 #include "t_fwd.h"
 #endif
 
-#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
+#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC32_LEN) /* length of FROM tags */
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
 /* where to go for the local request route ("tm:local-request") */
@@ -106,10 +106,16 @@ int uac_init(void)
 /*
  * Generate a From tag
  */
-void generate_fromtag(str* tag, str* callid)
+void generate_fromtag(str* tag, str* callid, str* ruri)
 {
-	     /* calculate from tag from callid */
+	/* calculate from tag from callid and request uri */
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
+	if(ruri) {
+		crcitt_string_array(&from_tag[MD5_LEN + 5], ruri, 1);
+	} else {
+		/* prevent shorter tag in this case, to be changed */
+		crcitt_string_array(&from_tag[MD5_LEN + 5], callid, 1);
+	}
 	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
 }
@@ -233,6 +239,8 @@ static inline int t_run_local_req(
 	msg_ctx_id_t backup_ctxid;
 	int refresh_shortcuts = 0;
 	sr_kemi_eng_t *keng = NULL;
+	run_act_ctx_t ra_ctx;
+	run_act_ctx_t *bctx;
 	str evname = str_init("tm:local-request");
 
 	LM_DBG("executing event_route[tm:local-request]\n");
@@ -240,7 +248,7 @@ static inline int t_run_local_req(
 		return -1;
 	}
 	if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
-		LM_ERR("failed to set dst_uri");
+		LM_ERR("failed to set dst_uri\n");
 		free_sip_msg(&lreq);
 		return -1;
 	}
@@ -265,18 +273,24 @@ static inline int t_run_local_req(
 	tm_global_ctx_id.msgid=lreq.id;
 	tm_global_ctx_id.pid=lreq.pid;
 	set_t(new_cell, T_BR_UNDEFINED);
+  
+	init_run_actions_ctx(&ra_ctx);
+	
 	if(goto_on_local_req>=0) {
-		run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+		run_top_route(event_rt.rlist[goto_on_local_req], &lreq, &ra_ctx);
 	} else {
 		keng = sr_kemi_eng_get();
 		if(keng==NULL) {
 			LM_WARN("event callback (%s) set, but no cfg engine\n",
 					tm_event_callback.s);
 		} else {
+			bctx = sr_kemi_act_ctx_get();
+			sr_kemi_act_ctx_set(&ra_ctx);
 			if(sr_kemi_route(keng, &lreq, EVENT_ROUTE,
 						&tm_event_callback, &evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
+			sr_kemi_act_ctx_set(bctx);
 		}
 	}
 	/* restore original environment */
@@ -290,6 +304,12 @@ static inline int t_run_local_req(
 	tm_xdata_swap(new_cell, &backup_xd, 1);
 	setsflagsval(sflag_bk);
 
+	if (unlikely(ra_ctx.run_flags&DROP_R_F)) {
+		LM_DBG("tm:local-request dropped msg. to %.*s\n", 
+				lreq.dst_uri.len, lreq.dst_uri.s);
+		refresh_shortcuts = E_DROP;
+		goto clean;
+	}
 	/* rebuild the new message content */
 	if(lreq.force_send_socket != uac_r->dialog->send_sock) {
 		LM_DBG("Send socket updated to: %.*s",
@@ -344,6 +364,7 @@ normal_update:
 		}
 	}
 
+clean:
 	/* clean local msg structure */
 	if (unlikely(lreq.new_uri.s))
 	{
@@ -457,10 +478,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		new_cell->flags |= T_IS_INVITE_FLAG;
 		new_cell->flags|=T_AUTO_INV_100 &
 				(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
-#ifdef WITH_AS_SUPPORT
 		if (uac_r->cb_flags & TMCB_DONT_ACK)
 			new_cell->flags |= T_NO_AUTO_ACK;
-#endif
 		lifetime=cfg_get(tm, tm_cfg, tm_max_inv_lifetime);
 	}else
 		lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
@@ -473,11 +492,9 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	new_cell->fr_timeout=cfg_get(tm, tm_cfg, fr_timeout);
 	new_cell->fr_inv_timeout=cfg_get(tm, tm_cfg, fr_inv_timeout);
 	new_cell->end_of_life=get_ticks_raw()+lifetime;
-#ifdef TM_DIFF_RT_TIMEOUT
 	/* same as above for retransmission intervals */
 	new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);
 	new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);
-#endif
 
 	set_kr(REQ_FWDED);
 
@@ -494,9 +511,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #endif
 
 	if (!is_ack) {
-#ifdef TM_DEL_UNREF
 		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
-#endif
 		hi=dlg2hash(uac_r->dialog);
 		LOCK_HASH(hi);
 		insert_into_hash_table_unsafe(new_cell, hi);
@@ -514,6 +529,10 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	if (unlikely(goto_on_local_req>=0 || tm_event_callback.len>0)) {
 		refresh_shortcuts = t_run_local_req(&buf, &buf_len, uac_r, new_cell, request);
+		if (unlikely(refresh_shortcuts==E_DROP)) {
+			ret=E_DROP;
+			goto error1;
+		}			
 	}
 #endif
 
@@ -585,19 +604,16 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 
 error2:
-#ifdef TM_DEL_UNREF
 	if (is_ack) {
 		free_cell(new_cell);
 	} else {
-		if(atomic_get_int(&new_cell->ref_count)==0) {
+		if((new_cell->next_c == 0 && new_cell->prev_c == 0)
+				|| (atomic_get_int(&new_cell->ref_count)==0)) {
 			free_cell(new_cell);
 		} else {
 			UNREF_FREE(new_cell, 0);
 		}
 	}
-#else
-	free_cell(new_cell);
-#endif
 error3:
 	return ret;
 }
@@ -608,6 +624,7 @@ error3:
 int prepare_req_within(uac_req_t *uac_r,
 		struct retr_buf **dst_req)
 {
+	int ret = -1;
 	if (!uac_r || !uac_r->method || !uac_r->dialog) {
 		LM_ERR("Invalid parameter value\n");
 		goto err;
@@ -622,13 +639,17 @@ int prepare_req_within(uac_req_t *uac_r,
 	if ((uac_r->method->len == 6) && (!memcmp("CANCEL", uac_r->method->s, 6))) goto send;
 	uac_r->dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return t_uac_prepare(uac_r, dst_req, 0);
+	ret = t_uac_prepare(uac_r, dst_req, 0);
+	
+	if (unlikely(ret < 0 && ret == E_DROP)) {
+		ret = 0;
+	}
 
  err:
 	/* if (cbp) shm_free(cbp); */
 	/* !! never free cbp here because if t_uac_prepare fails, cbp is not freed
 	 * and thus caller has no chance to discover if it is freed or not !! */
-	return -1;
+	return ret;
 }
 
 static inline int send_prepared_request_impl(struct retr_buf *request, int retransmit, int branch)
@@ -714,7 +735,14 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	branch_bm_t added_branches = 1;
 
 	ret = t_uac_prepare(uac_r, &request, &cell);
-	if (ret < 0) return ret;
+	
+	if (ret < 0) {
+		if (unlikely(ret == E_DROP)) {
+			ret = 0;
+		}
+		return ret;
+	}
+
 	is_ack = (uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0) ? 1 : 0;
 
 	/* equivalent loop to the one in t_forward_nonack */
@@ -743,7 +771,6 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	return ret;
 }
 
-#ifdef WITH_AS_SUPPORT
 struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 					unsigned int branch, str *hdrs, str *body)
 {
@@ -835,7 +862,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 
 	if (! (local_ack = local_ack_rb(trans->uac[0].reply, trans, /*branch*/0,
 			hdrs, body))) {
-		LM_ERR("failed to build ACK retransmission buffer");
+		LM_ERR("failed to build ACK retransmission buffer\n");
 		RET_INVALID;
 	} else {
 		/* set the new buffer, but only if not already set (conc. invok.) */
@@ -875,7 +902,6 @@ fin:
 
 #undef RET_INVALID
 }
-#endif /* WITH_AS_SUPPORT */
 
 
 /*
@@ -960,7 +986,7 @@ int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	if (check_params(uac_r, to, from) < 0) goto err;
 
 	generate_callid(&callid);
-	generate_fromtag(&fromtag, &callid);
+	generate_fromtag(&fromtag, &callid, ruri);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &uac_r->dialog) < 0) {
 		LM_ERR("Error while creating new dialog\n");
@@ -1007,7 +1033,7 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	    generate_callid(&callid);
 	else
 	    callid = *uac_r->callid;
-	generate_fromtag(&fromtag, &callid);
+	generate_fromtag(&fromtag, &callid, ruri);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
 		LM_ERR("Error while creating temporary dialog\n");

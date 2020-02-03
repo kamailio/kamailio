@@ -1,1 +1,1 @@
-D /run/sipcapture 0700 kamailio daemon -
+D /run/sipcapture 0700 kamailio kamailio -
