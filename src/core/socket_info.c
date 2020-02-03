@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
@@ -99,6 +100,54 @@
 #define addr_info_listadd sock_listadd
 #define addr_info_listins sock_listins
 #define addr_info_listrm sock_listrm
+
+/**
+ * return the scope for IPv6 interface matching the ipval parameter
+ * - needed for binding to link local IPv6 addresses
+ */
+unsigned int ipv6_get_netif_scope(const char *ipval)
+{
+	struct ifaddrs *netiflist = NULL;
+	struct ifaddrs *netif = NULL;
+	char ipaddr[NI_MAXHOST];
+	unsigned int iscope = 0;
+	int i = 0;
+	int r = 0;
+
+	/* walk over the list of all network interface addresses */
+	if(getifaddrs(&netiflist)!=0) {
+		LM_ERR("failed to get network interfaces - errno: %d\n", errno);
+		return 0;
+	}
+	for(netif = netiflist; netif; netif = netif->ifa_next) {
+		/* only active and ipv6 */
+		if (netif->ifa_addr && (netif->ifa_flags & IFF_UP)
+					&& netif->ifa_addr->sa_family==AF_INET6) {
+			r = getnameinfo(netif->ifa_addr, sizeof(struct sockaddr_in6),
+					ipaddr, sizeof(ipaddr), NULL, 0, NI_NUMERICHOST);
+			if(r!=0) {
+				LM_ERR("failed to get the name info - ret: %d\n", r);
+				goto done;
+			}
+			/* strip the interface name after */
+			for(i=0; ipaddr[i]; i++) {
+				if(ipaddr[i]=='%') {
+					ipaddr[i]='\0';
+					break;
+				}
+			}
+			/* if the ips matche, get scope index from interface name */
+			if(strcmp(ipaddr, ipval)==0){
+				iscope=if_nametoindex(netif->ifa_name);
+				goto done;
+			}
+		}
+	}
+
+done:
+	freeifaddrs(netiflist);
+	return iscope;
+}
 
 inline static void addr_info_list_ins_lst(struct addr_info* lst,
 										struct addr_info* after)
