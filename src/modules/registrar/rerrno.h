@@ -66,6 +66,7 @@ typedef enum rerr {
 	R_OB_REQD,    /*!< Outbound required by UAC but not supported on server */
 	R_OB_UNSUP_EDGE, /*!< Outbound needed for this registration but not supported on edge proxy */
 	R_INV_REGID,  /*!< Invalid Reg-Id value */
+	R_LOW_EXP,    /*!< Expires lower than min value */
 
 } rerr_t;
 
