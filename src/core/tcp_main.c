@@ -1107,10 +1107,9 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 		}
 	} else if (bytes == 0) {
 		return 1; /* EOF? Return "no IP change" in any case */
-	}
-	else {
-		/* Wrong protocol */
-		return -1;
+	} else {
+		/* not haproxy protocol */
+		return 2;
 	}
 
 done:
@@ -1167,6 +1166,8 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 			goto error;
 		} else if (ret == 1) {
 			LM_DBG("PROXY protocol did not override IP addresses\n");
+		} else if (ret == 2) {
+			LM_DBG("PROXY protocol header not found\n");
 		}
 	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
