@@ -35,6 +35,7 @@
 
 MODULE_VERSION
 
+/* clang-format off */
 struct module_exports exports = {
 	"kemix",         /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -47,6 +48,7 @@ struct module_exports exports = {
 	0,               /* per-child init function */
 	0                /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
@@ -722,6 +724,28 @@ static int ki_kx_get_timestamp(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_callid(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
+			|| (msg->callid==NULL))) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->callid->body;
+	return &_sr_kemi_kx_xval;
+}
+
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -912,6 +936,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_timestamp"),
 		SR_KEMIP_INT, ki_kx_get_timestamp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_callid"),
+		SR_KEMIP_XVAL, ki_kx_get_callid,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
