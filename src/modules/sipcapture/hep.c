@@ -493,7 +493,7 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	ri.bind_address = si;
 
 	if(payload != NULL) {
-		/* and now recieve message */
+		/* and now receive message */
 		if(hg->proto_t->data == 5)
 			receive_logging_json_msg(payload, payload_len, hg, "rtcp_capture");
 		else if(hg->proto_t->data == 32)
