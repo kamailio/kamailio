@@ -2421,7 +2421,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip)
 			ri.bind_address = si;
 
 
-			/* and now recieve message */
+			/* and now receive message */
 			receive_msg(buf + offset, len, &ri);
 			if(si)
 				pkg_free(si);
