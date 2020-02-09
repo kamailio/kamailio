@@ -49,8 +49,6 @@ struct rtpp_node {
 	unsigned int		rn_weight;		/* for load balancing */
 	unsigned int		rn_displayed;		/* for delete at db reload */
 	unsigned int		rn_recheck_ticks;
-	int			rn_rep_supported;
-	int			rn_ptl_supported;
 	struct rtpp_node	*rn_next;
 };
 
