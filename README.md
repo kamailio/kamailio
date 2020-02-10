@@ -1,3 +1,5 @@
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kamailio/kamailio) 
+
 # Kamailio - The Open Source SIP Server
 
 [![Build Status](https://travis-ci.org/kamailio/kamailio.svg?branch=master)](https://travis-ci.org/kamailio/kamailio)
