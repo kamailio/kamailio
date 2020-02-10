@@ -1131,8 +1131,9 @@ modparam("dispatcher", "reload_delta", 1)
 			<listitem>
 				<para>
 				<quote>9</quote> - use weight based load distribution. You
-				have to set the attribute 'weight' per each address in
-				destination set.
+				have to set the attribute 'weight' for each address (gateway) in
+				destination set. For more see the description of the 'weight'
+				attribute in the 'Special Attributes' section.
 				</para>
 			</listitem>
 			<listitem>
