@@ -6,7 +6,7 @@
 #
 
 PORTNAME=	kamailio
-PORTVERSION=	5.1.9
+PORTVERSION=	5.1.10
 CATEGORIES=	net
 MASTER_SITES=	http://kamailio.org/pub/kamailio/${PORTVERSION}/src/
 DISTNAME=	${PORTNAME}-${PORTVERSION}-tls_src
