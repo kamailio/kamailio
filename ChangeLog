@@ -2,6 +2,38 @@
 
 ===================== Changes Since Version 5.1.9 ===========================
 
+commit f908daef33abdec7111f704d40b3acc3568bfbd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:25:44 2019 +0100
+
+    core: use pv_elem_t for vstr fixup value get
+
+    (cherry picked from commit 73e36b6a467491252e1f81be1b8da66d6c1a4b1b)
+
+commit 502fe8478aa9eb48b53aee1da97945c115996dfa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 15:41:04 2019 +0100
+
+    core: fixup helpers to get dynamic string parameter in own buffer
+
+    (cherry picked from commit 3e1438bebdf611b83574ab44c8ed3eb3c7067391)
+
+commit 37ffe9bcb52751f6f2aed76074784872af3f94c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:26:34 2019 +0100
+
+    core: pv - function to get the size of the value for strings with vars
+
+    - added silent mode for printing strings with vars
+
+    (cherry picked from commit 6ee9e9c9dc2d818a5ce6c6cf7828a68a1c8cb291)
+
+commit b2702ac38dbda23d08b8a139de9fb032df4329ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 10 11:21:55 2020 +0100
+
+    ChangeLog: content updated for v5.1.10
+
 commit 44866018a2e3dfb07a97397b4eb950e9c3162037
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Mon Feb 10 11:15:36 2020 +0100
