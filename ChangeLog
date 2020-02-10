@@ -1,3 +1,791 @@
+===================== 2020-02-10 Version 5.1.10 Released ==================
+
+===================== Changes Since Version 5.1.9 ===========================
+
+commit 44866018a2e3dfb07a97397b4eb950e9c3162037
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 10 11:15:36 2020 +0100
+
+    Makefile.defs: version set to 5.1.10
+
+commit 89a495012de85983a0dcb8cb10d205bf1e0f86d5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 10 11:07:12 2020 +0100
+
+    pkg/kamailio/deb: version set 5.1.10
+
+commit d681f31a49b2b5efef7bc20ab60cd129cc5b9265
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 10 10:21:07 2020 +0100
+
+    pkg: rpm/specs updated for v5.1.10
+
+commit a59f72f36463761bf47e6d98faaf624749644140
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Feb 3 11:53:55 2020 +0100
+
+    tm: use WARN log level for status rewrite by UAS (were decreased before SER tm integration)
+    
+    - use WARN log level for status rewrite by UAS (log level decreased before SER
+      tm integration, e.g. v1.5.x)
+    - for bad interconnection or gateways this might be reported frequently
+    
+    (cherry picked from commit e1a01699af450292859e4f2cd69b6a6d85246e5e)
+    (cherry picked from commit b370041ccfd86e15812e1a06ad803569654eac07)
+
+commit ebf8af806d5ad5f44d119f12131a446c0eea4019
+Author: Peter Lemenkov <lemenkov@gmail.com>
+Date:   Sun Feb 9 16:38:17 2020 +0100
+
+    rtpengine: Remove unused struct fields
+    
+    These two were copied directly from rtpproxy module but never used by
+    this module.
+    
+    Signed-off-by: Peter Lemenkov <lemenkov@gmail.com>
+    (cherry picked from commit 35b82c4acb4559fd14faa86fe1c58caf763d5fd0)
+
+commit c0fa8c174211164a3b7e1557978c2bb34c4106ae
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jan 28 09:31:48 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 82eac3c53275f7f56e106f13757429d203e34092
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 28 08:22:47 2020 +0100
+
+    permissions: safety checks when destroying module
+    
+    - avoid warning of freeing null pointers on failed startup
+    
+    (cherry picked from commit d98d8b653e5cf0ae358f6abac392ec44ee39548a)
+    (cherry picked from commit aa57ad455b0c0f907bfc5f2f9a0fc382344b7bdb)
+    (cherry picked from commit bad37f2dd4abd929d1603a836475e2baad61f4f9)
+
+commit 913f1be3736a5988991b83ac2ed7324b22287009
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 24 10:20:09 2020 +0100
+
+    core: msg translator - warning log made info for  multipart body processing
+    
+    - check boundary cannot find boundary value in content-type when the request
+    is turned into multipart body
+    - use different return code for this case
+    - a few realignmets for curly braces to be corherent across the
+    respective functions
+    
+    (cherry picked from commit 2c7ba53b2b6cc7dd5e3c24241d23e76fb052aa50)
+    (cherry picked from commit 0a90aecb5737f4001cad7bb20590823deea4390e)
+    (cherry picked from commit f9af11b1857a7bb63dbecee775b45c0ac57ca287)
+
+commit b03c1819fa09129a2757ef4cfd7a93f5d54772bf
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 21:12:48 2019 +0200
+
+    uri_db: spelling fix in variable name
+    
+    (cherry picked from commit 23b60ed9fbf9396bd531c76f57c133d5850c0764)
+    (cherry picked from commit 0e552e6c2efcf449e91040b781eafafca2a1e97a)
+
+commit dcecac9c05c9ffa67f01d02e52e2f8a86f3dadd9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 14:02:57 2019 +0200
+
+    nathelper: removed exe flag from c file
+    
+    (cherry picked from commit 82195c2a51c5020ca0024f59492a4e2faef0e15a)
+    (cherry picked from commit 2f0a0b785efc921cd82dee274b548516b1bb5d40)
+
+commit 13723ec030a7a73a0aab324b49615513f3eeaecd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 24 12:38:20 2019 +0200
+
+    statsc: debug message when fetching stats values
+    
+    (cherry picked from commit a463c53e767114567ff25f0fe50115da0e3d0045)
+    (cherry picked from commit a519a289cccf89a06bb7fa3857fef5505049a277)
+
+commit cefd208fc503ea31d0c0a33c8df5d13372d12b10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 28 10:00:28 2019 +0100
+
+    core: pad some fields in contained structs for 4 byte alignment
+    
+    - safety for sigbus on strict cpu architectures when accesing fields by
+    address
+    
+    (cherry picked from commit 1296bb2270985a1bf3af04f35e4cdae1fe4b184a)
+    (cherry picked from commit 3d6246d97385fbd3742c1d860b8f974a79f0ef8c)
+
+commit a37ff12c7745f30b436e84fcf3974e421dc6e5e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 31 09:54:22 2019 +0100
+
+    evapi: use local allocated buffer to get data parameter for event relay
+    
+    - use system malloc given that the data can be passed from jsonrpcs,
+    which uses system malloc as well
+    - try to grow the internall buffer as needed based on estimated size of
+    output for the data parameter
+    
+    (cherry picked from commit 63334e312d60a5d6a6470b0067c29db672d08c7c)
+    (cherry picked from commit b1bb24d3639c2869f825dd692a9b1346d1bb30b5)
+
+commit ede932b2086c93a2dc8bec003a1216dc60d87669
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Sat Nov 23 18:53:17 2019 +0100
+
+    app_sqlang: fix squirrel warning: ânArgsâ may be used uninitialized in this function
+    
+    (cherry picked from commit 7fad9c51f71854e0649fe76e273190e4b4f82438)
+    (cherry picked from commit 0b6cde5604fcbc3756311b1ddacc4d7a230d7152)
+
+commit 5d7c22cc96ef8d29f77788bce1ddfa34c8733f16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 19 15:34:00 2019 +0100
+
+    app_sqlang: imported latest squirrel interpreter
+    
+    (cherry picked from commit b0fc60403b539672c6a2638083e8955783c65e0b)
+    (cherry picked from commit 9bdcde18c932d81efd4d58a810b88e42d9fcdec8)
+
+commit 1c6d3704f79e1b27648d89abb847449d86bae131
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 30 18:27:40 2019 +0100
+
+    acc: better evaluation of error return for pv_printf_s()
+    
+    (cherry picked from commit 69ccdc25fbfaf01785127ecb051429e51df6cad5)
+    (cherry picked from commit 97627793db2963704202f252d45821d8c05acc1b)
+
+commit 8785c8f7014eb34903acf2a2d54a6204c97a6d01
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 3 10:30:09 2019 +0100
+
+    core: qmalloc - print details of prev fragment when its tail is overwritten
+    
+    - do it when check2 field is not touched
+    
+    (cherry picked from commit bf1ba8d2d4519af50d44acfce5f34535fd1db8e0)
+    (cherry picked from commit f7c990e2ca6c7b2d43cf15723c71ba38065236e8)
+
+commit cc73df39b316060f408f76fbf99bf3eced5fec60
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Sat Nov 9 01:17:44 2019 -0500
+
+    evapi: Removed cast of bind port to short, as this restricted ports to signed 16-bit int values (< 32768).
+    
+    htons() takes unsigned 16-bit integer and returns the same. When this value was cast to (short), higher ports could not be used.
+    
+    (cherry picked from commit e9545ae1e490ff768270d03ea28f14b751d2c132)
+    (cherry picked from commit 4935d3c3c9ff76f34670fe39e26df11f909d6453)
+
+commit 077f33fcf0476316880c8e3b7027c7d0276676de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 13:37:25 2019 +0100
+
+    rr: debug messages when record-route is inserted
+    
+    - some trailing whitespace removed
+    
+    (cherry picked from commit 027082793ccd4e849234e1dfa312c2148a8fd08d)
+    (cherry picked from commit c4431b1932a73fec7c9e75418f451c3745bd7ad5)
+
+commit 126a333fa758cd0b4947f465124dfe9a0fc8566a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 14 12:25:09 2019 +0100
+
+    uac: reset credentials structure for uac_req_send() authentication
+    
+    (cherry picked from commit 2b12754920704f49cd227c518e130cef4d76ea7d)
+    (cherry picked from commit 2c00d15ddb48436827fba7d1d3a0c5ae3ec3e864)
+
+commit bcd8d554d138d8df611a9b11ee18a33fb76920a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 11 10:51:33 2019 +0100
+
+    phonenum: use -std=c++11 cpp compile flag
+    
+    - required by the libphonenumber
+    
+    (cherry picked from commit 75c5a20a870985059f642ac1a6624655332dbca8)
+    (cherry picked from commit 0614a74d44c98deffada7a8c61edfe7453da260f)
+
+commit 0b7d450490a93eae2af785674297ca252a3a2e6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 16:47:40 2019 +0100
+
+    kex: docs - fixed rpc command name for shm memory details
+    
+    (cherry picked from commit 9e89a66b36d7aa691cf69d5b33b7ee31330693e9)
+    (cherry picked from commit c9b0ef608d2d6afe8b551057fed0ccb47b5fe985)
+
+commit 64341357b800a7ec7ee48365bf6615bf56bcf39f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 2 19:07:40 2019 +0100
+
+    rtproxy: docs - fixed section id value
+    
+    (cherry picked from commit e896f2c9286809b5ef81c4952577780002ee5df8)
+    (cherry picked from commit 0da0fee7d5cc7d3f07e5525b335d78f8a17e0a18)
+
+commit c7128983ace25979b19edb68e1a7c2927f6d5926
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 3 12:12:54 2019 +0100
+
+    permissions: fix crash if load_backends parameter is 1
+    
+    fixes #2151
+    
+    (cherry picked from commit d7f4493da751802dc47a694d251d34a85a7b3bf1)
+    (cherry picked from commit eae9d86fb1e579cb3a18577884f631014ad7b455)
+
+commit 4e75edbe0f4cfd5a7f10dcf98bb30855f00d518d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 19:31:19 2019 +0100
+
+    ims_isc: null terminate dst_uri field
+    
+    (cherry picked from commit a8cc28b6e0236b21569625baffa865ff4ce0a153)
+    (cherry picked from commit 29ca1231c624e79ded4d2cb633e7eeae77398d4a)
+
+commit 180ab2298e90bdc6d3a3407a14beeae154126b66
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 20 18:06:22 2019 +0100
+
+    core: make dst_uri null terminated
+    
+    (cherry picked from commit ca546d35c326666c6389c84ce45214bd2fc5c147)
+    (cherry picked from commit 73be78ff3585e521e9b2102d7473db8b8ef13481)
+
+commit fef069290dc93bd13754b000ba4db806d5c9b7e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 9 22:15:24 2019 +0100
+
+    tm: rework code to avoid compiler warnings
+    
+    - fix log message priting wrong string variable
+    
+    (cherry picked from commit 263b8ce5360716e44c6a7bcdbc65a76dfad67575)
+    (cherry picked from commit 1d8f795c111c0fe5f5f992d137d0d94d49144fb6)
+
+commit f5cb03e8da3c02982036afa1ad651ad510e533f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 19 13:39:22 2020 +0100
+
+    log_custom: send processing logs via udp
+    
+    (cherry picked from commit ec0dd71bd963d7bf5959521ff82b6a659efe699a)
+    (cherry picked from commit fb952a9351071bedadb61e6ea030a031f6fec6e3)
+
+commit 664cdd3938efb66f6d031a0d990d1c0d7c8c2072
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 19 16:30:28 2020 +0100
+
+    core: check logging protection before the level
+    
+    (cherry picked from commit 53ca8b50207ca35f16a2315efb1ed29448961da8)
+    (cherry picked from commit eb2f7ad9d50f9bdd7ad4c3688f0e04a9494d1e0c)
+
+commit 19810561dcf77fa792b0e73b25d1e3996216cec6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 20 16:08:16 2019 +0100
+
+    tls: set default tls method (version) to 1+
+    
+    - it was 1, but newer libssl doesn't have it anymore
+    - while older systems don't have newer version support
+    
+    (cherry picked from commit 1da196174d8cd7e82ce57d4de60197fc063e6b50)
+    (cherry picked from commit bd9fcd34420b6fef3e9f8838af7bfc73587626da)
+
+commit 95600a45c4ece0497f1664e38cf55dc97a9a96cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 24 14:39:17 2019 +0100
+
+    tls: docs - fix example for setting xavp_cfg
+    
+    (cherry picked from commit 4f42115ce29d446ad60b32af9ad370d9b2d847c2)
+    (cherry picked from commit b1a6e5838e23716c19051eff89912ebc1410c69c)
+
+commit 2c34cb0d769f177fab9a8730553ce18b2b8e5bce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 6 11:25:32 2020 +0100
+
+    tm: added missing $T(reply_reason)
+    
+    (cherry picked from commit bf57a7ab50949ddbeec787331548dfcb023c238f)
+    (cherry picked from commit 7d2fab4d6c2c918c9636d5bcee74cb53f8475ea8)
+
+commit 8d58e2e54ab24c9a4a17f20ca4ebe42e60b71f81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 7 10:11:42 2020 +0100
+
+    ipops: fix locating static index for dns pv
+    
+    - reported by GH #2179
+    
+    (cherry picked from commit a383caa12a1af2cbc0f135add643045a159f24f2)
+    (cherry picked from commit 732f2c04cbdbff537411118642c9f68340b66825)
+
+commit e4a02a70a973eb7c14f2c08488651679e8af370a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 18:12:56 2020 +0100
+
+    core: kemi - handle notice log level in KSR.log()
+    
+    (cherry picked from commit 73088fd871b4b1a292c67e80c55373ed1b891144)
+    (cherry picked from commit 765333402b2c012e0862d786202834e483f17cd6)
+
+commit b7e933bfc230355988e268569724e4605d2204fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 9 17:43:38 2020 +0100
+
+    auth_xkeys: proper debug log messages on valid match
+    
+    (cherry picked from commit 39802fd2efad4b710072244f360741312a7164f2)
+    (cherry picked from commit a9df08d48297fbaf2690b5035314d8f4093ab315)
+
+commit 431fa04f512d3eacd726d3e502b43821ce0a5170
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 15 17:06:36 2020 +0100
+
+    core: more details on error log on failed comp_num() expression
+    
+    (cherry picked from commit a85bdf58e3f1933a4a1d231b5de4fd9cf1393366)
+    (cherry picked from commit 2d6101227365f1f21b39ec4806b09f1c44df6348)
+
+commit f6c2f5a74bf14e00ba121550b5383dd4ed8d74a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 14:54:07 2020 +0100
+
+    corex: declare nio specific globals in c file
+    
+    (cherry picked from commit 512f89bec0b6ebd2b3c7c16b115f15dbd6de9a39)
+    (cherry picked from commit 045641ce82ba6150c72a3a25f967fea9a9e551f1)
+
+commit 16d5fde46d5e8102557ee3e0841afdd47bc5d952
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 21 17:20:19 2020 +0100
+
+    tls: proper match of config profile by server id
+    
+    (cherry picked from commit 40f87b7e46714a114e7c98be7e677b20f1deb694)
+    (cherry picked from commit 669266e775197760644c56be73a632db365f3d97)
+
+commit d6e63e224a2ce40034979e445e6fabf4340651c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 22 17:39:49 2020 +0100
+
+    seas: docs - removed mi_fifo from examples
+    
+    (cherry picked from commit 31b710b5ec402bf75b3babe5ffe440c429d3ec63)
+    (cherry picked from commit 7f66bb3beccdb9489388dec24be48d6a0e810876)
+
+commit 3cb40a54816228680db963d9d8f634478f3da5af
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Fri Nov 15 13:35:13 2019 +0100
+
+    core: add support for parsing http/2 replies parsing
+    
+    (cherry picked from commit 17be36102e3a1c286c69a5da193dd8405000ab62)
+    (cherry picked from commit 18444d619b87c3734f3078f09c50a4fef1f8a259)
+
+commit 2879e88b29b2063a95eaafbbaf30ebd9240a5271
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 9 12:38:14 2019 +0200
+
+    tm: skip resuming suspended transactions put on wait
+    
+    - transaction is expired in that moment, pending its destroy process
+    - GH #2055
+    
+    (cherry picked from commit 52afc7b70f8e4abfb347c84872ab7daa202a6a24)
+    (cherry picked from commit c44bd17c79bc0119ae201b826d84b9514700eda9)
+    (cherry picked from commit f36d6562e54acc2b2f72c04a628b8e85f36bc9dd)
+
+commit b2fcb29717143997c41b38a9ec53c68ae62b73a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 8 12:31:39 2019 +0200
+
+    avp: free allocated variable in case of error
+    
+    (cherry picked from commit 5a18155c0fe661e7488f75afa7b0ea7638932943)
+    (cherry picked from commit fc9ca0fcdff7ebc5399374038bc6a0aa02207229)
+    (cherry picked from commit 9230834aec2de5a078c0a4a81f33bd5483729898)
+
+commit d61677b635b06b980396115d195d2ffb0f7eb94e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 7 16:26:10 2019 +0200
+
+    http_async_client: use enough size to print pointer as string in build_hash_key()
+    
+    - use local string variables instead of allocation in pkg, because the values
+    are needed only inside the function
+    - use safer snprintf() instead of sprintf()
+    - GH #2091
+    
+    (cherry picked from commit 087654a5028cd800e17fcd9d1768135a60fd6706)
+    (cherry picked from commit 2ec8caa1ef9577fa4f21fb1fa2f9f6217a29f3eb)
+    (cherry picked from commit c419dfddfbfc7b250a4be18665d4ed779435ac2e)
+
+commit 7c1d6d348036eadf10a2e2b9f2254b467d4dd01e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 4 18:12:15 2019 +0200
+
+    xmlrpc: clean allocated buffer for reply when no more memory for reason value
+    
+    (cherry picked from commit 36a4b16117d79f1a30a9f929350f75ab8bfd5d2a)
+    (cherry picked from commit aa875e297bea05828f319d71fc68c44969931231)
+    (cherry picked from commit 1ccb215b96f3dc0bd49ea3feb00f9e8f1a5c1fda)
+
+commit c2fe99892cb69acec1e115a4f815dcc418b1dbb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 4 08:53:53 2019 +0200
+
+    core: str2int() test first if result is null, otherwise init it to 0
+    
+    (cherry picked from commit b83a165e2d0e34c9bca742708c1891eb114bae04)
+    (cherry picked from commit ac16e21715e57befcba386e74214fa482bdf97d7)
+    (cherry picked from commit d86c831a474e57acc6bd744eb52a24b3b7b9a3c0)
+
+commit 2973e7627814326e788cd810921fd8aa45035500
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 12:22:34 2019 +0200
+
+    pdt: init len variable to avoid using garbage value
+    
+    (cherry picked from commit 47e0649eca286bfc26c39dd1142169fc06eea077)
+    (cherry picked from commit fdb54474b7a7cbe953f7869be41459650493e551)
+
+commit 04716364068d9ae0f3c22ea51f10b8a14c187e9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 12:17:48 2019 +0200
+
+    speeddial: fix stripping domain prefix
+    
+    - increment the index after the value is adjusted
+    
+    (cherry picked from commit 6861995e417c40e9ab530d4c0bed97c57de184fd)
+    (cherry picked from commit 7829be6555b1da66a3802b713304cb28a5ff29a3)
+
+commit bef347143295ab029b99ed935e1087fefdea5e82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 10:28:13 2019 +0200
+
+    core: init local structs to avoid use of garbage values
+    
+    (cherry picked from commit dfe8db758f84f5e88e0cb35b80a65dcd48158897)
+    (cherry picked from commit 7c219b4a7a2e6a8448d72789587ca10f27fcf36c)
+
+commit bd2187dc6cb7ffb10bc6d3a79be2e6fa3407d7b9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:04:01 2019 +0200
+
+    jsonrpcc: removed old todo file
+    
+    (cherry picked from commit fa5f36454f2ef5fb4e55dd05f746430d9786e842)
+    (cherry picked from commit 3bd97b2ddaf537cad9f937485ec94391f78b17a1)
+
+commit be5035c883ecad52f29db4ee2d883b1646670858
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:02:56 2019 +0200
+
+    ims_qos: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit a6caed41166e555d7297abbae6017c5c54262662)
+    (cherry picked from commit 77c4bd3207173f7e43e67e553fb47f1f260c166e)
+
+commit 0c606c0b74cc0a5137d5e27224ce54c481d22889
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 09:01:29 2019 +0200
+
+    sms: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit 5631338036c405b1e8c7fe8a1e320db2eb63c3f9)
+    (cherry picked from commit 342e1dcdd8d59269efe93f4c3e7651d4019e2dd5)
+
+commit caeb0d30676eea074d89374016534814154a8543
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 1 08:59:44 2019 +0200
+
+    db_mysql: fixed typo in comments (timout -> timeout)
+    
+    (cherry picked from commit 75e0e0f4d693e207d2035f84c3e1ddc9cc715ec4)
+    (cherry picked from commit df08856b7570ee477e1aaa49d0550e8541f19f02)
+
+commit c85b70e398f6ff0ab6a8d61ab383ebd3f929d50b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 09:19:46 2019 +0200
+
+    db_cassandra: docs - note about the state of the module
+    
+    (cherry picked from commit 39b7b4073465fd5343297683c59d75510c87d195)
+    (cherry picked from commit 438df8714322ef9d100452a5f5f2c33304bb2957)
+
+commit a37c4ee2956892fa5b26b4c5095b6b3a459718dc
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Jan 12 12:17:11 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 1abedff2c6673bd5132589946935c59d1cf2654d
+Author: Sam Ware <sam.ware@gmail.com>
+Date:   Sat Jan 11 14:24:37 2020 -0600
+
+    xhttp_rpc: documentation correction
+    
+    - The documentation in the README file had the
+      wrong module name in the modparam in the
+      example for the xhttp_rpc_buf_size parameter.
+      Corrected this in section 4.2.
+    
+    (cherry picked from commit c9229d66136f41fda0082585c4a73baf503b2c2b)
+
+commit 5441eebe608f75b2bc6b1ef686907e07a7a78856
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat Dec 21 07:31:20 2019 +0300
+
+    pkg/kamailio/obs: simplified fedora packaging rules [skip ci]
+    
+    (cherry picked from commit 1fb5f81618dc142a51104c7b60d467eb1acd9261)
+
+commit 10b861bac1b53766db715ff7fb616297f0568c33
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 19 17:47:02 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 45f6263470bc6866352d450a606d094a45bcbb70
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 19 17:35:58 2019 +0100
+
+    dispatcher: small style fix in ds_probing_mode docs
+    
+    (cherry picked from commit faccbb1cf62bfb625d0bcc9d1a52727dcdd962ff)
+
+commit be488483b71ec4d1bc9eb98cc67b4c69fe8b650a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 17 07:49:57 2019 +0100
+
+    Makefile.defs: use dedicated vars for pthread mutex flags
+    
+    - CC_EXTRA_OPTS and LD_EXTRA_OPTS may be set from environment
+    
+    (cherry picked from commit be34082aac3e275058f4747c3706499848ccd86d)
+
+commit 51a3910dcfc231075870e8f7739521079a8c9a35
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Dec 9 19:31:58 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit b582d1d3b31a9806f41b036cc55713ed4b5d0c0e
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Dec 9 18:31:37 2019 +0300
+
+    rtpengine: doc typos
+    
+    (cherry picked from commit b86fa175e92be4a2ab36f198ebc47d8f9b7c9e2a)
+    (cherry picked from commit 61445fc12961d414141ed2115a6003c551884e74)
+    Adapted for 5.1
+
+commit 3b449df86955fdb34b65856656259ec6a3621dab
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 5 10:17:41 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit b31befe5dc51d05e2c9b94cd2cb5b5836f23644c
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Dec 5 10:05:14 2019 +0100
+
+    ims_usrloc_scscf: fix parameter example titles
+    
+    (cherry picked from commit 55233fffb6ed9165bc912565ec782624dbffaa26)
+
+commit 36d08a574628fc668224fcbf4c9bdaff883a9b3f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Dec 4 12:17:07 2019 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit c039af8752b553c65d375a00a017820f85ead41a
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Nov 29 19:40:03 2019 +0100
+
+    tm: extend t_newtran docs with a note about flag behaviour
+    
+    (cherry picked from commit f2f492bd580621dec23d0538b8785635a013497a)
+
+commit e5d94d3a8c9ce2962c03b130972715785652b605
+Author: Greg Troxel <gdt@lexort.com>
+Date:   Thu Nov 28 20:53:23 2019 -0500
+
+    utils: Change sh(1) "test ==" usage to "="
+    
+    The POSIX sh(1) specification says that strings are compared with
+    test(1) (also "[") with "=".  Bash accepts "==" and this leads to
+    non-portable code.  This commit simply changes "==" within test/[ to
+    "=".
+    
+    (cherry picked from commit e8b8251f6c7382f8e373c2b309422973a3bf730d)
+
+commit 1d3453e999902323d9515fc8ef79e00c2e6698ba
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 18 20:45:48 2019 +0300
+
+    utils/db_berkeley: fixed unused var
+    
+    kambdb_recover.c: In function 'load_metadata_columns':
+    kambdb_recover.c:819:6: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+      819 |  int ret,n,len;
+          |      ^~~
+    
+    (cherry picked from commit 792261b43d74518e6d67f807df60b6622ba2d9f8)
+
+commit 0f177325c54c7c06142907b8351f7293c7e43087
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 12:55:06 2019 +0200
+
+    lib/srdb1: detect if ipv6 address is between square brakets
+    
+    - if not, let it be host part with surrounding brakets, because it can
+    by a mysql conf group name
+    
+    (cherry picked from commit 2aa614d49f4917faec62534a51fcf8ddfc5fb870)
+
+commit 15a0eda04c05a895255a3dd9df15ff83298a1910
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 15 15:17:21 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4b480e6abac93bef6ae9a571db6e72192f3be4b2
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 15 15:13:09 2019 +0200
+
+    tls: fix missing TLSv1.2+ parameter documentation
+    
+    (cherry picked from commit 5e00109fabe3507f1c20cbef80348e72ddb78cc8)
+
+commit dc12160a76cc5f61616bfdc664c2dc7677611dc4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 21:46:40 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 167efd5eea2e9a918ecda4249fa5574cfba4e310
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 9 21:22:38 2019 +0200
+
+    uac: spelling fix in uac docs
+
+commit f7b7ef940083fc53228c3de1c091496daaefaaf8
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 9 18:01:43 2019 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit a600953cef1c1ab9bb4d30f485f51ba9c188f460
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Oct 7 17:04:54 2019 +0200
+
+    texopsx: extend docs with a small note about msg_apply_changes()
+    
+    (cherry picked from commit 899b826bcf2ebe0197fae5766962e0c193c585ec)
+
+commit 8cb302f39941b121875dd402ead726de6ec5a624
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 2 08:32:21 2019 +0200
+
+    app_perl: first destroy old interpreter before creating the new one
+    
+    - on interpreter reset, the new one may inherit globals from the old
+    one, if that is not yet destroyed
+    
+    (cherry picked from commit 58047ba61d0cbceebc8c85590970a573fc396aa5)
+    (cherry picked from commit 8c70c16d10ed46f4ba8cf002a5b1599a02b5cb93)
+
+commit 36e3ef7d07170000c8f95b9bb304fea0e7442f8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 27 12:22:24 2019 +0200
+
+    app_perl: log the number of reset cycles in debug message
+    
+    (cherry picked from commit 1fdabbf5ce5fd218a47b7d147ebec5c6c45c1cce)
+    (cherry picked from commit f14807f722e85feb8c7d98b08454a432837fecf7)
+
+commit 0d8cf56eb4fb98dd5a14a20bec2876bb09b4fbed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 26 23:09:37 2019 +0200
+
+    app_perl: set G_EVAL flag when executing perl_destroy_func
+    
+    - trap use of die in the perl libs to avoid having an exit when
+    reset_cycles is used
+    
+    (cherry picked from commit 9490ec06d3cf0cfd0b0cf2d0a5ef701ccdabcaba)
+    (cherry picked from commit 7e7621a93013174bf42ff0dd782a46d238c0943a)
+
+commit 31ee751409e0efdace1f76ee78cc85da78b049b8
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Oct 7 15:38:22 2019 +0200
+
+    core: workaround related to T_OPT for alpine linux musl C library (GH #2095)
+    
+    (cherry picked from commit cec1043a9c4daa39b4245b87f28fb5566e8627bd)
+
+commit 0b6785d8cffad33ff9ed05b1f345426e81fc0c4c
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 1 18:00:13 2019 +0200
+
+    core: fix compile error related to missing T_OPT in older (<2.25) glibc (GH #2087)
+    
+    (cherry picked from commit 325d1e6d53b3db3265d6f76ec34bb3d6a31419c4)
+
+commit f2920c4681e10b852e94a3378e1f6920597593ae
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Oct 1 16:38:20 2019 +0200
+
+    core: skip get_record for DNS extensions e.g. for EDNS0 (GH #2087)
+    
+    (cherry picked from commit aeea940adaddc12c1467a0ac8f5e34d14b1339be)
+
+commit 75a2451cb9fde8f8ec2d6f2d686cd9d093d4fee8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:25:51 2019 +0300
+
+    pkg/kamailio/obs: removed deprecated fedora dists [skip ci]
+    
+    (cherry picked from commit 827713c8abb15c50828d7b0597fdf1024a45cbd5)
+
+commit b57691a414675654253ddba295b19abf9e2362b8
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:47:07 2019 +0300
+
+    pkg/kamailio/obs: Added fedora rawhide packaging [skip ci]
+    
+    (cherry picked from commit 94a20e8f0005f16b371833b315f8d64457709328)
+
+commit df5f9bde1bc3246a250037397c8310e933740b90
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:27:05 2019 +0300
+
+    pkg/kamailio/obs: fixed rpm buils for CentOS dist on OBS [skip ci]
+    
+    (cherry picked from commit 3ac708b5d80faf1f7615eb884dba2ce2fc04bdf3)
+
+commit 4ad04d611262d331334bcfd130a071828114ce04
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 27 11:23:13 2019 +0300
+
+    pkg/kamailio/obs: set correct group name for systemd unit files [skip ci]
+    
+    (cherry picked from commit e9671df3f458ad40d913bd2ce0792340a5df5948)
+
+
 ===================== 2019-09-26 Version 5.1.9 Released ==================
 
 ===================== Changes Since Version 5.1.8 ===========================
