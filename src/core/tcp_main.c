@@ -1171,7 +1171,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		}
 	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
-	LM_DBG("on port %d, type %d\n", c->rcv.src_port, type);
+	LM_DBG("on port %d, type %d, socket %d\n", c->rcv.src_port, type, sock);
 	init_tcp_req(&c->req, (char*)c+sizeof(struct tcp_connection), rd_b_size);
 	c->id=(*connection_id)++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
@@ -2874,7 +2874,7 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 							int locked)
 {
 	int n;
-	
+
 	n=_tcpconn_write_nb(fd, c, buf, len);
 	if (unlikely(n<(int)len)){
 		/* on EAGAIN or ENOTCONN return success.
@@ -2882,12 +2882,12 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 		   connect() & send immediately) */
 		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK || errno==ENOTCONN){
 			if(n<0) {
-				LM_DBG("pending write on new connection %p "
-					"(%d/%d bytes written) (err: %d - %s)\n", c, n, len,
+				LM_DBG("pending write on new connection %p sock %d "
+					"(%d/%d bytes written) (err: %d - %s)\n", c, fd, n, len,
 					errno, strerror(errno));
 			} else {
-				LM_DBG("pending write on new connection %p "
-					"(%d/%d bytes written)\n", c, n, len);
+				LM_DBG("pending write on new connection %p sock %d "
+					"(%d/%d bytes written)\n", c, fd, n, len);
 			}
 			if (unlikely(n<0)) n=0;
 			else{
@@ -2901,8 +2901,9 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 				if (unlikely(_wbufq_insert(c, buf+n, len-n)<0)){
 					if (likely(!locked)) lock_release(&c->write_lock);
 					n=-1;
-					LM_ERR("%s: EAGAIN and write queue full or failed for %p\n",
-							su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)), c);
+					LM_ERR("%s: EAGAIN and write queue full or failed for %p"
+							" sock %d\n", su2a(&c->rcv.src_su,
+								sizeof(c->rcv.src_su)), c, fd);
 					goto error;
 				}
 			if (likely(!locked)) lock_release(&c->write_lock);
@@ -2939,12 +2940,12 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 		}
 		/* error: destroy it directly */
 		TCP_STATS_CONNECT_FAILED();
-		LM_ERR("%s: connect & send  for %p failed:" " %s (%d)\n",
+		LM_ERR("%s: connect & send for %p (sock %d) failed:" " %s (%d)\n",
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
-					c, strerror(errno), errno);
+					c, fd, strerror(errno), errno);
 		goto error;
 	}
-	LM_INFO("quick connect for %p\n", c);
+	LM_INFO("quick connect for %p sock %d\n", c, fd);
 	if (likely(c->state == S_CONN_CONNECT))
 		TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
 	if (unlikely(send_flags.f & SND_F_CON_CLOSE)){
