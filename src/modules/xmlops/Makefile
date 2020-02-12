@@ -9,20 +9,22 @@ NAME=xmlops.so
 LIBS=
 
 ifeq ($(CROSS_COMPILE),)
-XML2CFG=$(shell which xml2-config)
+PKGCFGTOOL=$(shell which xml2-config)
+ifeq ($(PKGCFGTOOL),)
+PKGCFGTOOL=$(shell \
+	if pkg-config --exists libxml-2.0; then \
+		echo 'pkg-config libxml-2.0'; \
+	fi)
+endif
 endif
 
-ifneq ($(XML2CFG),)
-
-	DEFS += $(shell $(XML2CFG) --cflags )
-	LIBS += $(shell $(XML2CFG) --libs)
-
+ifneq ($(PKGCFGTOOL),)
+	DEFS += $(shell $(PKGCFGTOOL) --cflags )
+	LIBS += $(shell $(PKGCFGTOOL) --libs)
 else
-
 	DEFS+=-I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
-
 endif
 
 include ../../Makefile.modules
