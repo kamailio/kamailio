@@ -147,7 +147,7 @@ int declare_attr_group(modparam_t type, char* _param)
 	
 	rt = pkg_malloc(param.len + sizeof(*rt) + 1);
 	if (!rt) {
-		ERR("can't allocate PKG memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(rt, 0, sizeof(*rt));
@@ -461,7 +461,7 @@ int init_extra_avp_locks()
 
 	locks = shm_malloc(sizeof(gen_lock_t) * LOCK_CNT);
 	if (!locks) {
-		ERR("can't allocate mutexes\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	for (i = 0; i < LOCK_CNT; i++) {
