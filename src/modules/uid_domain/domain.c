@@ -78,7 +78,8 @@ static int domain_add(domain_t* d, str* domain, unsigned int flags)
 	d->n++;
 	return 0;
 
- error:
+error:
+	SHM_MEM_ERROR;
 	ERR("Unable to add new domain name (out of memory)\n");
 	if (dom.s) shm_free(dom.s);
 	return -1;
@@ -145,7 +146,8 @@ static domain_t* new_domain(str* did, str* domain, unsigned int flags)
 
 	return d;
 
- error:
+error:
+	SHM_MEM_ERROR;
 	ERR("Unable to create new domain structure\n");
 	free_domain(d);
 	return 0;
@@ -355,7 +357,7 @@ int db_get_did(str* did, str* domain)
 			} else {
 				did->s = pkg_malloc(rec->fld[0].v.lstr.len);
 				if (!did->s) {
-					ERR("No memory left\n");
+					PKG_MEM_ERROR;
 					goto err;
 				}
 				memcpy(did->s, rec->fld[0].v.lstr.s, rec->fld[0].v.lstr.len);
@@ -389,7 +391,7 @@ int is_domain_local(str* domain)
 	 */
 	tmp.s = pkg_malloc(domain->len);
 	if (!tmp.s) {
-		ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(tmp.s, domain->s, domain->len);

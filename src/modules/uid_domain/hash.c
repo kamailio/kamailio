@@ -64,7 +64,7 @@ static struct hash_entry* new_hash_entry(str* key, domain_t* domain)
 
 	e = (struct hash_entry*)shm_malloc(sizeof(struct hash_entry));
 	if (!e) {
-		ERR("Not enough memory left\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	e->key = *key;
