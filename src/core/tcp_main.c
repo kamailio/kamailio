@@ -613,8 +613,8 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 					((*tcp_total_wq+size)>cfg_get(tcp, tcp_cfg, tcp_wq_max)) ||
 					(q->first &&
 					TICKS_LT(q->wr_timeout, t)) )){
-		LM_ERR("(%d bytes): write queue full or timeout "
-					" (%d, total %d, last write %d s ago)\n",
+		LM_ERR("(%u bytes): write queue full or timeout "
+					" (%u, total %u, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(t-(q->wr_timeout-
 								cfg_get(tcp, tcp_cfg, send_timeout))));
@@ -4947,6 +4947,7 @@ int init_tcp()
 		SHM_MEM_CRITICAL;
 		goto error;
 	}
+	*tcp_total_wq=0;
 #endif /* TCP_ASYNC */
 	/* alloc hashtables*/
 	tcpconn_aliases_hash=(struct tcp_conn_alias**)
