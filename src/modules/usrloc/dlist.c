@@ -556,7 +556,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	 */
 	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
 	if (ptr == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ptr, 0, sizeof(dlist_t));
@@ -564,7 +564,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	/* copy domain name as null terminated string */
 	ptr->name.s = (char*)shm_malloc(_n->len+1);
 	if (ptr->name.s == 0) {
-		LM_ERR("no more memory left\n");
+		SHM_MEM_ERROR;
 		shm_free(ptr);
 		return -2;
 	}

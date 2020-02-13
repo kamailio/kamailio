@@ -95,7 +95,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 
 	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!c) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(c, 0, sizeof(ucontact_t));
@@ -138,7 +138,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 
 	return c;
 error:
-	LM_ERR("no more shm memory\n");
+	SHM_MEM_ERROR;
 	if (c->path.s) shm_free(c->path.s);
 	if (c->received.s) shm_free(c->received.s);
 	if (c->user_agent.s) shm_free(c->user_agent.s);
@@ -245,7 +245,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		if ((_old)->len < (_new)->len) { \
 			ptr = (char*)shm_malloc((_new)->len); \
 			if (ptr == 0) { \
-				LM_ERR("no more shm memory\n"); \
+				SHM_MEM_ERROR; \
 				return -1; \
 			}\
 			memcpy(ptr, (_new)->s, (_new)->len);\
