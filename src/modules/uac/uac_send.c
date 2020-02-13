@@ -105,7 +105,7 @@ uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 	tp = (uac_send_info_t*)shm_malloc(sizeof(uac_send_info_t));
 	if(tp==NULL)
 	{
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	uac_send_info_copy(ur, tp);
