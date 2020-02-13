@@ -51,7 +51,7 @@ int pvh_collect_headers(struct sip_msg *msg, int is_auto)
 				return -1;
 			}
 		} else {
-			if(isbflagset(br_idx, FL_PV_HDRS_COLLECTED)) {
+			if(isbflagset(br_idx, FL_PV_HDRS_COLLECTED) == 1) {
 				LM_ERR("headers are already collected\n");
 				return -1;
 			}
