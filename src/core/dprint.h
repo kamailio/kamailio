@@ -194,8 +194,8 @@ void log_prefix_init(void);
 #define LOGV_PREFIX_STR ((log_prefix_val)?log_prefix_val->s:"")
 #define LOGV_PREFIX_LEN ((log_prefix_val)?log_prefix_val->len:0)
 
-#define LOGV_FUNCNAME_STR(vfuncname) (((void*)vfuncname)?vfuncname:"")
-#define LOGV_FUNCSUFFIX_STR(vfuncname) (((void*)vfuncname)?_FUNC_SUFFIX_:"")
+#define LOGV_FUNCNAME_STR(vfuncname) (((void*)vfuncname!=NULL)?vfuncname:"")
+#define LOGV_FUNCSUFFIX_STR(vfuncname) (((void*)vfuncname!=NULL)?_FUNC_SUFFIX_:"")
 
 /** @brief
  * General logging macros
