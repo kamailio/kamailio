@@ -1,0 +1,43 @@
+#!/sbin/openrc-run
+# Copyright 1999-2020 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+# $Header$
+
+extra_commands="checkconfig"
+
+depend() {
+	need net
+	use syslog
+}
+
+start() {
+	checkconfig_real || return $?
+
+	ebegin "Starting ${SVCNAME}"
+	start-stop-daemon --start --quiet --pidfile /var/run/${SVCNAME}.pid \
+		--exec /usr/sbin/kamailio -- ${KAMAILIO_OPTS} -P /var/run/${SVCNAME}.pid
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping ${SVCNAME}"
+	start-stop-daemon --stop --quiet --pidfile /var/run/${SVCNAME}.pid
+	eend $?
+}
+
+checkconfig() {
+        ebegin "Checking ${SVCNAME} config file"
+        checkconfig_real
+        eend $?
+}
+
+checkconfig_real() {
+	local TMPLOG=$(mktemp)
+        /usr/sbin/kamailio ${KAMAILIO_OPTS} -P /var/run/${SVCNAME}.pid -c >"${TMPLOG}" 2>&1
+	local ret=$?
+	if [ $ret -ne 0 ]; then
+                eerror "${SVCNAME} has detected a syntax error in your configuration file:"
+		cat ${TMPLOG}; rm ${TMPLOG}
+        fi
+	return $ret
+}
