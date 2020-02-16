@@ -857,37 +857,37 @@ void fm_status(void* qmp)
 
 	memlog=cfg_get(core, core_cfg, memlog);
 	mem_summary=cfg_get(core, core_cfg, mem_summary);
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", "fm_status (%p):\n", qm);
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ", "fm_status (%p):\n", qm);
 	if (!qm) return;
 
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", " heap size= %ld\n",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ", " heap size= %ld\n",
 			qm->size);
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			" used= %lu, used+overhead=%lu, free=%lu\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			" max used (+overhead)= %lu\n", qm->max_real_used);
 #endif
 
 	if (mem_summary & 16) return;
 
 	/*
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", "dumping all fragments:\n");
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ", "dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;((char*)f<(char*)qm->last_frag) && (i<10);
 			f=FRAG_NEXT(f), i++){
-		LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 				"    %3d. %c  address=%x  size=%d\n", i,
 				(f->u.reserved)?'a':'N',
 				(char*)f+sizeof(struct fm_frag), f->size);
 #ifdef DBG_F_MALLOC
-		LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 				"            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 	}
 */
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", "dumping free list:\n");
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ", "dumping free list:\n");
 	for(h=0,i=0,size=0;h<F_HASH_SIZE;h++){
 		unused=0;
 		for (f=qm->free_hash[h].first,j=0; f;
@@ -895,7 +895,7 @@ void fm_status(void* qmp)
 			if (!FRAG_WAS_USED(f)){
 				unused++;
 #ifdef DBG_F_MALLOC
-				LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+				LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 							"unused fragm.: hash = %3d, fragment %p,"
 							" address %p size %lu, created from %s: %s(%ld)\n",
 							h, f, (char*)f+sizeof(struct fm_frag), f->size,
@@ -903,7 +903,7 @@ void fm_status(void* qmp)
 #endif
 			};
 		}
-		if (j) LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+		if (j) LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 							"hash = %3d fragments no.: %5d, unused: %5d\n\t\t"
 							" bucket size: %9lu - %9lu (first %9lu)\n",
 							h, j, unused, UN_HASH(h),
@@ -916,7 +916,7 @@ void fm_status(void* qmp)
 		}
 		/*
 		{
-			LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+			LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 					"   %5d.[%3d:%3d] %c  address=%x  size=%d(%x)\n",
 					i, h, j,
 					(f->u.reserved)?'a':'N',
@@ -928,9 +928,9 @@ void fm_status(void* qmp)
 		}
 	*/
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"TOTAL: %6d free fragments = %6lu free bytes\n", i, size);
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"-----------------------------\n");
 }
 
@@ -1016,7 +1016,7 @@ void fm_sums(void* qmp)
 	if (!qm) return;
 
 	memlog=cfg_get(core, core_cfg, memlog);
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"summarizing all alloc'ed. fragments:\n");
 
 	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
@@ -1029,7 +1029,7 @@ void fm_sums(void* qmp)
 	}
 	x = root;
 	while(x){
-		LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 				" count=%6d size=%10lu bytes from %s: %s(%ld)\n",
 			x->count,x->size,
 			x->file, x->func, x->line
@@ -1038,7 +1038,7 @@ void fm_sums(void* qmp)
 		free(x);
 		x = root;
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"-----------------------------\n");
 
 }
@@ -1100,7 +1100,7 @@ void fm_sums(void *qmp)
 
 	qm = (struct fm_block*)qmp;
 	memlog=cfg_get(core, core_cfg, memlog);
-	LOG_(DEFAULT_FACILITY, memlog, "fm_sums: ", "not available (%p)\n", qm);
+	LOG_FP(DEFAULT_FACILITY, memlog, "fm_sums: ", "not available (%p)\n", qm);
 	return;
 }
 

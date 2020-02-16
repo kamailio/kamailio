@@ -359,7 +359,7 @@ int dbg_cfg_trace(sr_event_param_t *evp)
 	{
 		if(is_printable(_dbg_cfgtrace_level))
 		{
-			LOG__(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
+			LOG_FL(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
 					_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
 					"%s=[%s] c=[%s] l=%d a=%d n=%.*s\n",
 					get_current_route_type_name(), ZSW(a->rname),

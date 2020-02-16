@@ -35,7 +35,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/str.h"
 #include "../../core/socket_info.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 #include "../../core/counters.h"
 
 #include "dlg_hash.h"

@@ -224,7 +224,7 @@ static int mod_init(void)
 		}
 	}
 
-	if (ht_enable_dmq>0 && ht_dmq_initialize(ht_dmq_init_sync)!=0) {
+	if (ht_enable_dmq>0 && ht_dmq_initialize()!=0) {
 		LM_ERR("failed to initialize dmq integration\n");
 		return -1;
 	}
@@ -1001,6 +1001,31 @@ static sr_kemi_xval_t* ki_ht_getw(sip_msg_t *msg, str *htname, str *itname)
 /**
  *
  */
+static int ki_ht_is_null(sip_msg_t *msg, str *htname, str *itname)
+{
+	ht_t *ht = NULL;
+
+	/* find the hash htable */
+	ht = ht_get_table(htname);
+	if (ht == NULL) {
+		return 2;
+	}
+
+	if(ht->flags==PV_VAL_INT) {
+		/* htable defined with default value */
+		return -2;
+	}
+
+	if(ht_cell_exists(ht, itname)>0) {
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 {
 	int_str isvalue;
@@ -1177,6 +1202,52 @@ static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	}
 
 	return 0;
+}
+
+#define KSR_HT_KEMI_NOINTVAL -255
+static ht_cell_t *_htc_ki_local=NULL;
+
+static int ki_ht_add_op(sip_msg_t *msg, str *htname, str *itname, int itval)
+{
+	ht_t *ht;
+	ht_cell_t *htc=NULL;
+
+	ht = ht_get_table(htname);
+	if(ht==NULL) {
+		return KSR_HT_KEMI_NOINTVAL;
+	}
+
+	htc = ht_cell_value_add(ht, itname, itval, _htc_ki_local);
+	if(_htc_ki_local!=htc) {
+		ht_cell_pkg_free(_htc_ki_local);
+		_htc_ki_local=htc;
+	}
+	if(htc==NULL) {
+		return KSR_HT_KEMI_NOINTVAL;
+	}
+
+	if(htc->flags&AVP_VAL_STR) {
+		return KSR_HT_KEMI_NOINTVAL;
+	}
+
+	/* integer */
+	if (ht->dmqreplicate>0) {
+		if (ht_dmq_replicate_action(HT_DMQ_SET_CELL, htname, itname, 0,
+					&htc->value, 1)!=0) {
+			LM_ERR("dmq relication failed\n");
+		}
+	}
+	return htc->value.n;
+}
+
+static int ki_ht_inc(sip_msg_t *msg, str *htname, str *itname)
+{
+	return ki_ht_add_op(msg, htname, itname, 1);
+}
+
+static int ki_ht_dec(sip_msg_t *msg, str *htname, str *itname)
+{
+	return ki_ht_add_op(msg, htname, itname, -1);
 }
 
 #define RPC_DATE_BUF_LEN 21
@@ -1815,6 +1886,21 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 		SR_KEMIP_INT, ki_ht_setxs,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_is_null"),
+		SR_KEMIP_INT, ki_ht_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_inc"),
+		SR_KEMIP_INT, ki_ht_inc,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_dec"),
+		SR_KEMIP_INT, ki_ht_dec,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

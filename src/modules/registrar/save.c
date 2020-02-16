@@ -43,7 +43,7 @@
 #include "../../core/dset.h"
 #include "../../core/xavp.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../core/strutils.h"
 #include "../../core/parser/parse_require.h"
 #include "../../core/parser/parse_supported.h"
@@ -483,6 +483,10 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires, novariation);
+		if(rerrno == R_LOW_EXP) {
+			LM_DBG("expires lower than minimum value\n");
+			goto error;
+		}
 		/* Skip contacts with zero expires */
 		if (expires == 0)
 			continue;
@@ -680,6 +684,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires, novariation);
+		if(rerrno == R_LOW_EXP) {
+			LM_DBG("expires lower than minimum value\n");
+			goto error;
+		}
 
 		/* pack the contact info */
 		if ( (ci=pack_ci( 0, _c, expires, 0, _use_regid))==0 ) {

@@ -39,7 +39,7 @@
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
-#include "../../lib/srutils/tmrec.h"
+#include "../../core/utils/tmrec.h"
 #include "period.h"
 
 

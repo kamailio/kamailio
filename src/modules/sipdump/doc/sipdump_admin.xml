@@ -76,7 +76,7 @@
 	<section id="sipdump.p.enable">
 		<title><varname>enable</varname> (int)</title>
 		<para>
-			Enable storage.
+			Enable sipdump activity.
 		</para>
 		<para>
 		<emphasis>
@@ -88,6 +88,26 @@
 		<programlisting format="linespecific">
 ...
 modparam("sipdump", "enable", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.mode">
+		<title><varname>mode</varname> (int)</title>
+		<para>
+			Set the type of activity done by the module, the value can be set
+			based on flags: 1 - write to files; 2 - execute event route
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (write to files).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "mode", 3)
 ...
 </programlisting>
 		</example>
@@ -169,6 +189,31 @@ modparam("sipdump", "fprefix", "ksipdump-")
 </programlisting>
 		</example>
 	</section>
+	<section id="sipdump.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			Name of the KEMI function to be executed instead of the event route.
+		</para>
+		<para>
+		<emphasis>
+			Default value is not set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "event_callback", "ksr_sipdump_event")
+...
+-- event callback function implemented in Lua
+function ksr_sipdump_event(evname)
+	KSR.info("===== sipdump module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -226,6 +271,26 @@ sipdump_send("cfg");
 ...
 </programlisting>
 	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Event Routes</title>
+	<section>
+		<title>
+		<function moreinfo="none">sipdump:msg</function>
+		</title>
+		<para>
+			Executed when sipdump handles messages and mode parameter has flag 2 set.
+			The variable $sipdump(...) is available inside the event route.
+		</para>
+<programlisting  format="linespecific">
+...
+event_route[sipdump:msg] {
+    xinfo("[$sipdump(tag)] [[$sipdump(buf)]]\n");
+}
+...
+</programlisting>
 	</section>
 	</section>
 

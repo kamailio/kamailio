@@ -82,7 +82,7 @@ pv_xml_t *pv_xml_get_struct(str *name)
 	it = (pv_xml_t*)pkg_malloc(sizeof(pv_xml_t)+2*(pv_xml_buf_size+1));
 	if(it==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(it, 0, sizeof(pv_xml_t)+2*(pv_xml_buf_size+1));
@@ -444,8 +444,10 @@ int pv_parse_xml_name(pv_spec_p sp, str *in)
 		return -1;
 
 	pxs = (pv_xml_spec_t*)pkg_malloc(sizeof(pv_xml_spec_t));
-	if(pxs==NULL)
+	if(pxs==NULL) {
+		PKG_MEM_ERROR;
 		return -1;
+	}
 
 	memset(pxs, 0, sizeof(pv_xml_spec_t));
 
@@ -519,7 +521,7 @@ int pv_xml_ns_param(modparam_t type, void *val)
 
 	if(ns==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ns, 0, sizeof(param_t));

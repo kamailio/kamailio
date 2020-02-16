@@ -107,7 +107,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 5
 PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -dev2
+EXTRAVERSION = -dev3
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -1821,7 +1821,7 @@ ifeq ($(YACC),)
 endif
 YACC_FLAGS=-d -b core/cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS= -ldl -lresolv
+LIBS= -ldl -lresolv -lm
 LIB_PREFIX:=lib
 LIB_SUFFIX:=.so
 

@@ -19,7 +19,7 @@
 #include "../../core/ip_addr.h"
 #include "../../core/dprint.h"
 #include "../../core/dset.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "ul_rpc.h"
 #include "dlist.h"

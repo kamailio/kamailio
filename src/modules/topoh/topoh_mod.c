@@ -186,7 +186,7 @@ static int mod_init(void)
 	th_via_prefix.s = (char*)pkg_malloc(th_via_prefix.len+1);
 	if(th_via_prefix.s==NULL)
 	{
-		LM_ERR("via prefix parameter is invalid\n");
+		PKG_MEM_ERROR_FMT("via prefix parameter\n");
 		goto error;
 	}
 	/* 'sip:' + ip + ';' + param + '=' + prefix (+ '\0') */
@@ -195,7 +195,7 @@ static int mod_init(void)
 	th_uri_prefix.s = (char*)pkg_malloc(th_uri_prefix.len+1);
 	if(th_uri_prefix.s==NULL)
 	{
-		LM_ERR("uri prefix parameter is invalid\n");
+		PKG_MEM_ERROR_FMT("uri prefix parameter\n");
 		goto error;
 	}
 	/* build via prefix */

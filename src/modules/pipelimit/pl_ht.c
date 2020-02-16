@@ -516,7 +516,7 @@ void rpc_pl_list(rpc_t *rpc, void *c)
 	if(pipeid.len>0) {
 		it = pl_pipe_get(&pipeid, 1);
 		if (it==NULL) {
-			LM_ERR("no pipe: %.*s\n", pipeid.len, pipeid.s);
+			LM_DBG("no pipe: %.*s\n", pipeid.len, pipeid.s);
 			rpc->fault(c, 400, "Unknown pipe id %.*s", pipeid.len, pipeid.s);
 			return;
 		}

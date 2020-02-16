@@ -190,7 +190,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 			goto error;
 		}
 		pvi.s = p + 1;
-		pvi.len = pvs.s + pvs.len - pvi.s;
+		pvi.len = pvs.s + pvs.len - 1 - pvi.s;
 		pvs.len = p - pvs.s;
 	}
 	LM_DBG("dns [%.*s] - key [%.*s] index [%.*s]\n", pvc.len, pvc.s,
@@ -246,7 +246,8 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 			}
 			if(p!=pvi.s+pvi.len)
 			{
-				LM_ERR("invalid index [%.*s]\n", in->len, in->s);
+				LM_ERR("invalid index [%.*s] in [%.*s]\n", pvi.len, pvi.s,
+						in->len, in->s);
 				goto error;
 			}
 			dpv->nidx *= sign;

@@ -659,6 +659,28 @@ http_follow_redirect = no
 	</example>
 
 		</section>
+		<section id="http_client.p.netinterface">
+			<title><varname>netinterface</varname> (string)</title>
+			<para>
+			Set local network interface to be used for HTTP queries. It
+			can be interface name or IP address. For more details see:
+			https://curl.haxx.se/libcurl/c/CURLOPT_INTERFACE.html .
+			</para>
+			<para>
+			<emphasis>
+				Default value not set.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>netinterface</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "netinterface", "eth0")
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>

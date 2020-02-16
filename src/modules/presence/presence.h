@@ -34,7 +34,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/parser/parse_from.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "event_list.h"
 #include "hash.h"
 

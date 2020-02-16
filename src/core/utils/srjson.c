@@ -22,9 +22,9 @@
 
 /*!
  * \file
- * \brief srutils :: SRjson - JSON parser in C - MIT License
- * \ingroup srutils
- * Module: \ref srutils
+ * \brief core/utils :: SRjson - JSON parser in C - MIT License
+ * \ingroup core/utils
+ * Module: \ref core/utils
  * - addapted from cJSON to fit better within Kamailio/SER environment
  */
 

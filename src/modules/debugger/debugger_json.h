@@ -23,7 +23,7 @@
 #ifndef _DEBUGGER_JSON_H
 #define _DEBUGGER_JSON_H
 
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 #include "../../core/route_struct.h"
 
 int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,

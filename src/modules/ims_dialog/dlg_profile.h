@@ -34,8 +34,8 @@
 #include "../../core/locking.h"
 #include "../../core/str.h"
 #include "../../modules/tm/h_table.h"
-#include "../../lib/srutils/srjson.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/srjson.h"
+#include "../../core/utils/sruid.h"
 
 
 

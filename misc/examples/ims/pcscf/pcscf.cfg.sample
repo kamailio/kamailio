@@ -1,14 +1,14 @@
 # IP-Adress for incoming SIP-Traffic, in the following format:
 
 # SIP / UDP
-listen=udp:11.22.33.44:5060
+listen=udp:0.0.0.0:5060
 # SIP / TCP
-#listen=tcp:11.22.33.44:5060
+#listen=tcp:0.0.0.0:5060
 # SIP / TCP/TLS
-#listen=tls:11.22.33.44:5061
+#listen=tls:0.0.0.0:5061
 
 # IPSEC / UDP
-#!define IPSEC_LISTEN_ADDR "11.22.33.44"
+#!define IPSEC_LISTEN_ADDR "0.0.0.0"
 #!define IPSEC_CLIENT_PORT 5062
 #!define IPSEC_SERVER_PORT 5063
 
@@ -33,7 +33,7 @@ alias=pcscf.mnc001.mcc001.3gppnetwork.org
 ##!define XMLRPC_WHITELIST_3 "127.0.0.1"
 
 # Databases:
-#!define DB_URL "con1=>mysql://pcscf:heslo@127.0.0.1/pcscf"
+#!define DB_URL "mysql://pcscf:heslo@127.0.0.1/pcscf"
 ##!define DB_URL2 "con2=>mysql://pcscf:heslo@127.0.0.1/pcscf"
 
 #!define SQLOPS_DBURL "pcscf=>mysql://pcscf:heslo@127.0.0.1/pcscf"
@@ -109,4 +109,4 @@ alias=pcscf.mnc001.mcc001.3gppnetwork.org
 ##!define WITH_REGINFO
 ##!define WITH_RTPPING
 ##!define WITH_WEBSOCKET
-##!define WITH_IPSEC
+#!define WITH_IPSEC

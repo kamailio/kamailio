@@ -69,6 +69,8 @@ extern counter_handle_t connections; /* Number of connection definitions */
 extern counter_handle_t connok;		 /* Successful Connection attempts */
 extern counter_handle_t connfail;	/* Failed Connection attempts */
 
+extern char *default_netinterface;
+
 /* Curl  stream object  */
 typedef struct
 {

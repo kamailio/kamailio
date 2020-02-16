@@ -56,7 +56,7 @@ int xhttp_tr_eval_xhttpurl(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					(val->rs.len + 1) * sizeof(char));
 			if (_httpurl_str.s == NULL)
 			{
-				LM_ERR("allocating package memory\n");
+				PKG_MEM_ERROR;
 				memset(&_httpurl_str.s, 0, sizeof(str));
 				return -1;
 			}

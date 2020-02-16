@@ -44,7 +44,7 @@ int init_ulcb_list(void)
 	ulcb_list = (struct ulcb_head_list*)shm_malloc
 		( sizeof(struct ulcb_head_list) );
 	if (ulcb_list==0) {
-		LM_CRIT("no more shared mem\n");
+		SHM_MEM_CRITICAL;
 		return -1;
 	}
 	ulcb_list->first = 0;
@@ -92,7 +92,7 @@ int register_ulcb( int types, ul_cb f, void *param )
 
 	/* build a new callback structure */
 	if (!(cbp=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
-		LM_ERR("no more share mem\n");
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 

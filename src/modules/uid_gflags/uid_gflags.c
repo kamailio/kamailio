@@ -271,20 +271,20 @@ static int mod_init(void)
 {
 	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
 	if (!gflags) {
-		LM_ERR("no shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*gflags=initial;
 
 	avps_1 = shm_malloc(sizeof(*avps_1));
 	if (!avps_1) {
-		LM_ERR("can't allocate memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*avps_1 = NULL;
 	avps_2 = shm_malloc(sizeof(*avps_2));
 	if (!avps_2) {
-		LM_ERR("can't allocate memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*avps_2 = NULL;

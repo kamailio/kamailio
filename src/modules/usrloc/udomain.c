@@ -55,7 +55,7 @@ static char *build_stat_name( str* domain, char *var_name)
 	n = domain->len + 1 + strlen(var_name) + 1;
 	s = (char*)shm_malloc( n );
 	if (s==0) {
-		LM_ERR("no more shm mem\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memcpy( s, domain->s, domain->len);
@@ -90,14 +90,14 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	 */
 	*_d = (udomain_t*)shm_malloc(sizeof(udomain_t));
 	if (!(*_d)) {
-		LM_ERR("new_udomain(): No memory left\n");
+		SHM_MEM_ERROR;
 		goto error0;
 	}
 	memset(*_d, 0, sizeof(udomain_t));
 
 	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
 	if (!(*_d)->table) {
-		LM_ERR("no memory left 2\n");
+		SHM_MEM_ERROR;
 		goto error1;
 	}
 

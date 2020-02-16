@@ -414,7 +414,7 @@ static prom_lvalue_t* prom_metric_lvalue_create(prom_metric_t *p_m, str *l1, str
 	prom_lvalue_t *plv = NULL;
 	plv = (prom_lvalue_t*)shm_malloc(sizeof(*plv));
 	if (plv == NULL) {
-		LM_ERR("shm out of memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(plv, 0, sizeof(*plv));
@@ -684,7 +684,7 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 		/* Shared memory */
 		lb_node = (prom_lb_node_t*)shm_malloc(sizeof(*lb_node));
 		if (lb_node == NULL) {
-			LM_ERR("shm out of memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(lb_node, 0, sizeof(*lb_node));
@@ -693,7 +693,7 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 		/* Pkg memory */
 		lb_node = (prom_lb_node_t*)pkg_malloc(sizeof(*lb_node));
 		if (lb_node == NULL) {
-			LM_ERR("pkg out of memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(lb_node, 0, sizeof(*lb_node));
@@ -706,7 +706,7 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 		/* We left space for zero at the end. */
 		lb_node->n.s = (char*)shm_malloc(len + 1);
 		if (lb_node->n.s == NULL) {
-			LM_ERR("shm out of memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memcpy(lb_node->n.s, s, len);
@@ -717,7 +717,7 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 		/* We left space for zero at the end. */
 		lb_node->n.s = (char*)shm_malloc(len + 1);
 		if (lb_node->n.s == NULL) {
-			LM_ERR("shm out of memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memcpy(lb_node->n.s, s, len);
@@ -766,7 +766,7 @@ static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
 		/* Shared memory */
 		m_lb = (prom_lb_t*)shm_malloc(sizeof(*m_lb));
 		if (m_lb == NULL) {
-			LM_ERR("shm out of memory\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(m_lb, 0, sizeof(*m_lb));
@@ -775,7 +775,7 @@ static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
 		/* Pkg memory */
 		m_lb = (prom_lb_t*)pkg_malloc(sizeof(*m_lb));
 		if (m_lb == NULL) {
-			LM_ERR("pkg out of memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(m_lb, 0, sizeof(*m_lb));
@@ -871,7 +871,7 @@ int prom_counter_create(char *spec)
 	}
 	m_cnt = (prom_metric_t*)shm_malloc(sizeof(prom_metric_t));
 	if (m_cnt == NULL) {
-		LM_ERR("shm out of memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(m_cnt, 0, sizeof(*m_cnt));
@@ -969,7 +969,7 @@ int prom_gauge_create(char *spec)
 	}
 	m_gg = (prom_metric_t*)shm_malloc(sizeof(prom_metric_t));
 	if (m_gg == NULL) {
-		LM_ERR("shm out of memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(m_gg, 0, sizeof(*m_gg));

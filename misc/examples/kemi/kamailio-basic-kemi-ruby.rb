@@ -82,7 +82,7 @@ def ksr_route_reqinit()
   end
 
   if KSR::SANITY.sanity_check(1511, 7) < 0 then
-    KSR.err("Malformed SIP message from #{KSR::PV.get("$si")}:#{KSR::PV.get("$sp")}\n");
+    KSR.err("Malformed SIP message from #{KSR::PV.get('$si')}:#{KSR::PV.get('$sp')}\n");
     exit
   end
 end

@@ -1,0 +1,485 @@
+MQTT Module
+
+Thomas Weber
+
+   <thomas.weber@pascom.net>
+
+Edited by
+
+Thomas weber
+
+   <thomas.weber@pascom.net>
+
+   Copyright © 2019 Thomas Weber
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. host (str)
+              3.2. port (int)
+              3.3. keepalive (int)
+              3.4. id (str)
+              3.5. username (str)
+              3.6. password (str)
+              3.7. will_topic (str)
+              3.8. will (str)
+              3.9. event_callback (str)
+              3.10. ca_file (str)
+              3.11. ca_path (str)
+              3.12. tls_method (str)
+              3.13. certificate (str)
+              3.14. private_key (str)
+              3.15. cipher_list (str)
+              3.16. verify_certificate (str)
+
+        4. Functions
+
+              4.1. mqtt_subscribe(topic, qos)
+              4.2. mqtt_unsubscribe(topic)
+              4.3. mqtt_publish(topic, message, qos)
+
+        5. Event routes
+
+              5.1. mqtt:connected
+              5.2. mqtt:disconnected
+              5.3. mqtt:message
+
+        6. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set host parameter
+   1.2. Set port parameter
+   1.3. Set keepalive parameter
+   1.4. Set id parameter
+   1.5. Set username parameter
+   1.6. Set password parameter
+   1.7. Set will_topic parameter
+   1.8. Set will parameter
+   1.9. Set event_callback parameter
+   1.10. Set ca_file parameter
+   1.11. Set ca_path parameter
+   1.12. Set tls_method parameter
+   1.13. Set certificate parameter
+   1.14. Set private_key parameter
+   1.15. Set cipher_list parameter
+   1.16. Set verify_certificate parameter
+   1.17. mqtt_subscribe usage
+   1.18. mqtt_unsubscribe usage
+   1.19. mqtt_publish usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. host (str)
+        3.2. port (int)
+        3.3. keepalive (int)
+        3.4. id (str)
+        3.5. username (str)
+        3.6. password (str)
+        3.7. will_topic (str)
+        3.8. will (str)
+        3.9. event_callback (str)
+        3.10. ca_file (str)
+        3.11. ca_path (str)
+        3.12. tls_method (str)
+        3.13. certificate (str)
+        3.14. private_key (str)
+        3.15. cipher_list (str)
+        3.16. verify_certificate (str)
+
+   4. Functions
+
+        4.1. mqtt_subscribe(topic, qos)
+        4.2. mqtt_unsubscribe(topic)
+        4.3. mqtt_publish(topic, message, qos)
+
+   5. Event routes
+
+        5.1. mqtt:connected
+        5.2. mqtt:disconnected
+        5.3. mqtt:message
+
+   6. Exported pseudo-variables
+
+1. Overview
+
+   The MQTT module allows bidirectional publish/subscribe communication by
+   connecting Kamailio to a MQTT Broker.
+
+   Messages can be published from any point in the routing script. Also
+   the subscriptions can be fully controlled by scripting commands.
+
+2. Dependencies
+
+   2.1. External Libraries or Applications
+
+2.1. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libev - http://software.schmorp.de/pkg/libev
+     * libmosquitto - https://mosquitto.org
+
+3. Parameters
+
+   3.1. host (str)
+   3.2. port (int)
+   3.3. keepalive (int)
+   3.4. id (str)
+   3.5. username (str)
+   3.6. password (str)
+   3.7. will_topic (str)
+   3.8. will (str)
+   3.9. event_callback (str)
+   3.10. ca_file (str)
+   3.11. ca_path (str)
+   3.12. tls_method (str)
+   3.13. certificate (str)
+   3.14. private_key (str)
+   3.15. cipher_list (str)
+   3.16. verify_certificate (str)
+
+3.1. host (str)
+
+   MQTT Broker IP/Hostname.
+
+   No default, this parameter is mandatory.
+
+   Example 1.1. Set host parameter
+...
+modparam("mqtt", "host", "1.2.3.4")
+...
+
+3.2. port (int)
+
+   MQTT Broker port number.
+
+   Default value is 1883.
+
+   Example 1.2. Set port parameter
+...
+modparam("mqtt", "port", 1883)
+...
+
+3.3. keepalive (int)
+
+   The number of seconds after which the broker should send a PING message
+   to the kamailio if no other messages have been exchanged in that time.
+
+   Default value is 5.
+
+   Example 1.3. Set keepalive parameter
+...
+modparam("mqtt", "keepalive", 5)
+...
+
+3.4. id (str)
+
+   String to use as the mqtt client id. If NULL, a random client id will
+   be generated.
+
+   Default value is NULL.
+
+   Example 1.4. Set id parameter
+...
+modparam("mqtt", "id", "kamailio123")
+...
+
+3.5. username (str)
+
+   The username to send as a string or NULL to disable authentication.
+
+   Default value is NULL (no authentication). Must be used together with
+   password.
+
+   Example 1.5. Set username parameter
+...
+modparam("mqtt", "username", "kamailio-user")
+...
+
+3.6. password (str)
+
+   The password to send as a string or NULL to disable authentication.
+
+   Default value is NULL (no authentication). Must be used together with
+   username.
+
+   Example 1.6. Set password parameter
+...
+modparam("mqtt", "password", "supers3cre7")
+...
+
+3.7. will_topic (str)
+
+   The topic on which to publish the mqtt will.
+
+   Default value is NULL. Must be used together with will.
+
+   Example 1.7. Set will_topic parameter
+...
+modparam("mqtt", "will_topic", "kamailio123")
+...
+
+3.8. will (str)
+
+   The mqtt will payload to be published.
+
+   Default value is NULL. Must be used together with will_topic.
+
+   Example 1.8. Set will parameter
+...
+modparam("mqtt", "will", "gone")
+...
+
+3.9. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values are: 'mqtt:connected', 'mqtt:disconnected', 'mqtt:message'.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.9. Set event_callback parameter
+...
+modparam("mqtt", "event_callback", "ksr_mqtt_event")
+...
+-- event callback function implemented in Lua
+function ksr_mqtt_event(evname)
+        KSR.info("===== mqtt module triggered event: " .. evname .. "\n");
+        return 1;
+end
+
+-- event callback function implemented in Python
+function ksr_mqtt_event(self, msg, evname)
+        KSR.info("===== mqtt module triggered event: %s\n" % evname);
+        return 1;
+end
+...
+
+3.10. ca_file (str)
+
+   Path to a file containing the PEM encoded trusted CA certificate files.
+
+   Default value is NULL. Set either this parameter or ca_path if you want
+   to connect via TLS.
+
+   Example 1.10. Set ca_file parameter
+...
+modparam("mqtt", "ca_file", "/etc/ssl/certs/myca.pem")
+...
+
+3.11. ca_path (str)
+
+   Used to define a directory that contains PEM encoded CA certificates
+   that are trusted. For ca_path to work correctly, the certificates files
+   must have ".pem" as the file ending and you must run "openssl rehash
+   /your/ca_path" each time you add/remove a certificate.
+
+   Default value is NULL. Set either this parameter or ca_file if you want
+   to connect via TLS. ca_file and ca_path are mutual exclusive.
+
+   Example 1.11. Set ca_path parameter
+...
+modparam("mqtt", "ca_path", "/etc/ssl/certs")
+...
+
+3.12. tls_method (str)
+
+   The version of the SSL/TLS protocol to use as a string. If NULL, the
+   default value is used. The default value and the available values
+   depend on the version of openssl that libmosquitto was compiled
+   against.
+
+   Possible values:
+     * tlsv1.3 is available with openssl >= 1.1.1 together with
+       libmosquitto v1.6.8 and newer.
+     * For openssl >= 1.0.1, the available options are tlsv1.2, tlsv1.1
+       and tlsv1, with tlv1.2 as the default.
+     * For openssl < 1.0.1, only tlsv1 is available.
+
+   Default value is NULL.
+
+   Example 1.12. Set tls_method parameter
+...
+modparam("mqtt", "tls_method", "tlsv1.3")
+...
+
+3.13. certificate (str)
+
+   Path to a file containing the PEM encoded certificate file for a TLS
+   client connection.
+
+   Default value is NULL. If NULL, private_key must also be NULL and no
+   client certificate will be used.
+
+   Example 1.13. Set certificate parameter
+...
+modparam("mqtt", "certificate", "/etc/ssl/certs/myclient.pem")
+...
+
+3.14. private_key (str)
+
+   Path to a file containing the PEM encoded private key for a TLS client
+   connection.
+
+   Default value is NULL. If NULL, certificate must also be NULL and no
+   client certificate will be used.
+
+   Example 1.14. Set private_key parameter
+...
+modparam("mqtt", "private_key", "/etc/ssl/private/myclient.key")
+...
+
+3.15. cipher_list (str)
+
+   A string describing the ciphers available for use. See the cipher(1)
+   OpenSSL man page. If NULL, the libssl default ciphers will be used.
+
+   Default value is NULL.
+
+   Example 1.15. Set cipher_list parameter
+...
+modparam("mqtt", "cipher_list", "HIGH")
+...
+
+3.16. verify_certificate (str)
+
+   Configure verification of the server certificate. If value is set to 0,
+   it is impossible to guarantee that the host you are connecting to is
+   not impersonating your server.
+
+   This can be useful in initial server testing, but makes it possible for
+   a malicious third party to impersonate your server through DNS
+   spoofing, for example.
+
+   Do not disable verification in a real system as it makes the connection
+   encryption pointless.
+
+   Default value is 1.
+
+   Example 1.16. Set verify_certificate parameter
+...
+modparam("mqtt", "verify_certificate", "0")
+...
+
+4. Functions
+
+   4.1. mqtt_subscribe(topic, qos)
+   4.2. mqtt_unsubscribe(topic)
+   4.3. mqtt_publish(topic, message, qos)
+
+4.1.  mqtt_subscribe(topic, qos)
+
+   Subscribe to the given topic. Mqtt qos levels 0, 1 and 2 can be used.
+
+   The function is passing the task to mqtt dispatcher process, therefore
+   the SIP worker process is not blocked.
+
+   Incoming messages for this topic are then handled by the same process
+   and exposed to the event_route[mqtt:message].
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. mqtt_subscribe usage
+...
+mqtt_subscribe("kamailio/script", 0);
+...
+
+4.2.  mqtt_unsubscribe(topic)
+
+   Unsubscribe to a previously subscribed topic. The mqtt broker will stop
+   forwarding messages for this topic.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. mqtt_unsubscribe usage
+...
+mqtt_unsubscribe("kamailio/script");
+...
+
+4.3.  mqtt_publish(topic, message, qos)
+
+   Send out a message to a topic with a specified mqtt qos level (0, 1,
+   2). Again the actual sending is done in a mqtt dispatcher process and
+   will not block the SIP worker.
+
+   Example 1.19. mqtt_publish usage
+...
+mqtt_publish("kamailio/event", "some message", 0);
+...
+
+5. Event routes
+
+   5.1. mqtt:connected
+   5.2. mqtt:disconnected
+   5.3. mqtt:message
+
+5.1.  mqtt:connected
+
+   If defined, the module calls event_route[mqtt:connected] when a
+   outgoing broker connection is established.
+
+   MQTT subscriptions are not durable, so you should use this event route
+   to manage your subscriptions.
+...
+event_route[mqtt:connected] {
+        xlog("mqtt connected !\n");
+        mqtt_subscribe("kamailio/script", 0);
+}
+...
+
+5.2.  mqtt:disconnected
+
+   If defined, the module calls event_route[mqtt:disconnected] when the
+   broker connection is lost.
+
+   The module will automatically try to reconnect to the broker every 3
+   seconds.
+...
+event_route[mqtt:disconnected] {
+    xlog("Lost mqtt connection !\n");
+}
+...
+
+5.3.  mqtt:message
+
+   If defined, the module calls event_route[mqtt:message] when a message
+   is received from the broker.
+
+   All incoming messages are handled in a single mqtt dispatcher process.
+...
+event_route[mqtt:message] {
+        xlog("mqtt message received: $mqtt(topic) -> $mqtt(msg) !\n");
+}
+...
+
+6. Exported pseudo-variables
+
+     * $mqtt(topic) - Received topic (only in mqtt:message)
+     * $mqtt(msg) - Received message (only in mqtt:message)
+     * $mqtt(qos) - The received message QOS level: 0, 1 ,2 (only in
+       mqtt:message)
+
+   Exported pseudo-variables are documented at
+   https://www.kamailio.org/wiki/.

@@ -459,7 +459,7 @@ int ph_getDbUrlNodes(ph_framework_t *_ph_framework_data, xmlNodePtr framework_no
 			else
 				db_urls = (ph_db_url_t*)
 						shm_malloc(sizeof(ph_db_url_t));
-			if(db_urls==NULL) {LM_ERR("oom\n");return -1;}
+			if(db_urls==NULL) {SHM_MEM_ERROR;return -1;}
 			_ph_framework_data->ph_db_urls = db_urls;
 
 			ph_db_urls = _ph_framework_data->ph_db_urls;
@@ -566,7 +566,7 @@ int ph_getDbTableCols(ph_db_url_t *ph_db_urls, ph_db_table_t *db_tables,
 			else
 				cols = (ph_table_col_t*)
 					shm_malloc(sizeof(ph_table_col_t));
-			if(cols==NULL) {LM_ERR("oom\n");return -1;}
+			if(cols==NULL) {SHM_MEM_ERROR;return -1;}
 			db_tables->cols = cols;
 			cols = &db_tables->cols[db_tables->cols_size];
 			memset(cols, 0, sizeof(ph_table_col_t));
@@ -734,7 +734,7 @@ int ph_getDbTables(ph_framework_t *_ph_framework_data, xmlNodePtr framework_node
 			else
 				db_tables = (ph_db_table_t*)
 						shm_malloc(sizeof(ph_db_table_t));
-			if(db_tables==NULL) {LM_ERR("oom\n"); return -1;}
+			if(db_tables==NULL) {SHM_MEM_ERROR; return -1;}
 			_ph_framework_data->ph_db_tables = db_tables;
 
 			ph_db_tables = _ph_framework_data->ph_db_tables;
@@ -886,7 +886,7 @@ int ph_getColVals(ph_mod_t *module, ph_cmd_t *cmd,
 				vals = (str*)shm_malloc(sizeof(str));
 				ids = (str*)shm_malloc(sizeof(str));
 			}
-			if(vals==NULL||ids==NULL) {LM_ERR("oom\n"); return -1;}
+			if(vals==NULL||ids==NULL) {SHM_MEM_ERROR; return -1;}
 			col_vals = vals; col_ids = ids;
 			vals = &col_vals[size]; ids = &col_ids[size];
 			memset(vals, 0, sizeof(str)); memset(ids, 0, sizeof(str));
@@ -975,12 +975,12 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 					(size+1)*sizeof(db_key_t));
 			else
 				keys = (db_key_t*)shm_malloc(sizeof(db_key_t));
-			if (keys==NULL) {LM_ERR("oom\n");return -1;}
+			if (keys==NULL) {SHM_MEM_ERROR;return -1;}
 			cmd_keys = keys;
 			keys = &cmd_keys[size];
 			memset(keys, 0, sizeof(db_key_t));
 			key = (str*)shm_malloc(sizeof(str));
-			if (key==NULL) {LM_ERR("oom\n");return -1;}
+			if (key==NULL) {SHM_MEM_ERROR;return -1;}
 			/* get the col field */
 			field.s = ph_xmlNodeGetNodeContentByName(node->children,
 						XHTTP_PI_XML_FIELD_NODE);
@@ -1041,7 +1041,7 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 				else
 					types =
 					(db_type_t*)shm_malloc(sizeof(db_type_t));
-				if (types==NULL) {LM_ERR("oom\n");return -1;}
+				if (types==NULL) {SHM_MEM_ERROR;return -1;}
 				cmd_types = types;
 				types = &cmd_types[size];
 				memset(types, 0, sizeof(db_type_t));
@@ -1054,7 +1054,7 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 						(size+1)*sizeof(db_op_t));
 				else
 					ops = (db_op_t*)shm_malloc(sizeof(db_op_t));
-				if (ops==NULL) {LM_ERR("oom\n");return -1;}
+				if (ops==NULL) {SHM_MEM_ERROR;return -1;}
 				cmd_ops = ops;
 				ops = &cmd_ops[size];
 				memset(ops, 0, sizeof(db_op_t));
@@ -1112,7 +1112,7 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 				/* We need to copy the null string terminator */
 				op_len++;
 				_operator = shm_malloc(op_len);
-				if(_operator==NULL){LM_ERR("oom\n"); return -1;}
+				if(_operator==NULL){SHM_MEM_ERROR; return -1;}
 				memcpy(_operator, operator, op_len);
 				*ops = _operator;
 				xmlFree(operator); operator = NULL; op_len = 0;
@@ -1142,7 +1142,7 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 				else
 					vals =
 					(ph_vals_t*)shm_malloc(sizeof(ph_vals_t));
-				if(vals==NULL) {LM_ERR("oom\n");return -1;}
+				if(vals==NULL) {SHM_MEM_ERROR;return -1;}
 				cmd_vals = vals;
 				vals = &cmd_vals[size];
 				memset(vals, 0, sizeof(ph_vals_t));
@@ -1156,7 +1156,7 @@ int ph_getCols(ph_mod_t *module, ph_cmd_t *cmd,
 						(size+1)*sizeof(str));
 				else
 					linkCmd = (str*)shm_malloc(sizeof(str));
-				if(linkCmd==NULL) {LM_ERR("oom\n");return -1;}
+				if(linkCmd==NULL) {SHM_MEM_ERROR;return -1;}
 				cmd_linkCmd = linkCmd;
 				linkCmd = &cmd_linkCmd[size];
 				memset(linkCmd, 0, sizeof(str));
@@ -1242,7 +1242,7 @@ int ph_getCmds(ph_db_table_t *ph_db_tables, int ph_db_tables_size,
 					(modules->cmds_size+1)*sizeof(ph_cmd_t));
 			else
 				cmds = (ph_cmd_t*)shm_malloc(sizeof(ph_cmd_t));;
-			if (cmds==NULL) {LM_ERR("oom\n");return -1;}
+			if (cmds==NULL) {SHM_MEM_ERROR;return -1;}
 			modules->cmds = cmds;
 			cmds = &modules->cmds[modules->cmds_size];
 			memset(cmds, 0, sizeof(ph_cmd_t));
@@ -1619,7 +1619,7 @@ int ph_getMods(ph_framework_t *_ph_framework_data, xmlNodePtr framework_node)
 			else
 				modules = (ph_mod_t*)shm_malloc(sizeof(ph_mod_t));
 			if(modules==NULL){
-				LM_ERR("oom\n");
+				SHM_MEM_ERROR;
 				return -1;
 			}
 			_ph_framework_data->ph_modules = modules;
@@ -1898,7 +1898,7 @@ int ph_init_cmds(ph_framework_t **framework_data, const char* filename)
 	if(_framework_data==NULL){
 		_framework_data =
 		(ph_framework_t*)shm_malloc(sizeof(ph_framework_t));
-		if(_framework_data==NULL) {LM_ERR("oom\n");goto xml_error;}
+		if(_framework_data==NULL) {SHM_MEM_ERROR;goto xml_error;}
 		memset(_framework_data, 0, sizeof(ph_framework_t));
 
 		/* Extract the db_url nodes */
@@ -2862,7 +2862,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 
 		c_vals = (db_val_t*)pkg_malloc(command->c_keys_size*sizeof(db_val_t));
 		if(c_vals==NULL){
-			LM_ERR("oom\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(c_vals, 0, command->c_keys_size*sizeof(db_val_t));
@@ -2924,7 +2924,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 		if(command->c_keys_size){
 			c_vals = (db_val_t*)pkg_malloc(command->c_keys_size*sizeof(db_val_t));
 			if(c_vals==NULL){
-				LM_ERR("oom\n");
+				PKG_MEM_ERROR;
 				return -1;
 			}
 			memset(c_vals, 0, command->c_keys_size*sizeof(db_val_t));
@@ -2961,7 +2961,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 	if(command->q_keys_size && command->type!=DB_CAP_QUERY){
 		q_vals = (db_val_t*)pkg_malloc(command->q_keys_size*sizeof(db_val_t));
 		if(q_vals==NULL){
-			LM_ERR("oom\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(q_vals, 0, command->q_keys_size*sizeof(db_val_t));

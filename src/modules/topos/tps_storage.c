@@ -43,7 +43,7 @@
 #include "../../core/parser/parse_to.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "tps_storage.h"
 #include "api.h"

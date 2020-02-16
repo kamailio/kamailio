@@ -6,6 +6,4 @@ auto_gen=
 NAME=auth_xkeys.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 include ../../Makefile.modules

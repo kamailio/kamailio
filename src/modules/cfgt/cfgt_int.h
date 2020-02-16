@@ -25,7 +25,7 @@
 #include "../../core/locking.h"
 #include "../../core/route_struct.h"
 #include "../../core/str_hash.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 
 #define CFGT_HASH_SIZE 32
 

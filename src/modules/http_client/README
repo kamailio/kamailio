@@ -60,6 +60,7 @@ Hugh Waite
               3.17. query_maxdatasize (int)
               3.18. httpcon (string)
               3.19. config_file (string)
+              3.20. netinterface (string)
 
         4. Functions
 
@@ -122,10 +123,11 @@ Hugh Waite
    1.18. Set httpcon parameter
    1.19. Set config_file parameter
    1.20. Short http_client config file
-   1.21. http_connect() usage
-   1.22. http_connect_raw() usage
-   1.23. http_get_redirect() usage
-   1.24. http_client_query() usage
+   1.21. Set netinterface parameter
+   1.22. http_connect() usage
+   1.23. http_connect_raw() usage
+   1.24. http_get_redirect() usage
+   1.25. http_client_query() usage
 
 Chapter 1. Admin Guide
 
@@ -158,6 +160,7 @@ Chapter 1. Admin Guide
         3.17. query_maxdatasize (int)
         3.18. httpcon (string)
         3.19. config_file (string)
+        3.20. netinterface (string)
 
    4. Functions
 
@@ -254,6 +257,7 @@ Chapter 1. Admin Guide
    3.17. query_maxdatasize (int)
    3.18. httpcon (string)
    3.19. config_file (string)
+   3.20. netinterface (string)
 
 3.1. httpredirect (int)
 
@@ -647,6 +651,19 @@ client_key = default_key.pem
 client_cert = default_cert.pem
 http_follow_redirect = no
 
+3.20. netinterface (string)
+
+   Set local network interface to be used for HTTP queries. It can be
+   interface name or IP address. For more details see:
+   https://curl.haxx.se/libcurl/c/CURLOPT_INTERFACE.html .
+
+   Default value not set.
+
+   Example 1.21. Set netinterface parameter
+...
+modparam("http_client", "netinterface", "eth0")
+...
+
 4. Functions
 
    4.1. http_connect(connection, url, [content_type, data,] result)
@@ -677,7 +694,7 @@ http_follow_redirect = no
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.21. http_connect() usage
+   Example 1.22. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -718,7 +735,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.22. http_connect_raw() usage
+   Example 1.23. http_connect_raw() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -745,7 +762,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
        result - The name of a pseudo variable that will contain the last
        used URL.
 
-   Example 1.23. http_get_redirect() usage
+   Example 1.24. http_get_redirect() usage
 ...
 modparam("http_client", "httpredirect", 1);
 ...
@@ -780,7 +797,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.24. http_client_query() usage
+   Example 1.25. http_client_query() usage
 ...
 # GET-Request
 http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(

@@ -212,7 +212,7 @@ static int mod_init(void)
 	_xlog_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(_xlog_buf==NULL)
 	{
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	return 0;
@@ -235,15 +235,15 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 
 	if(line>0)
 		if(long_format==1)
-			LOG_(facility, level, _xlog_prefix,
+			LOG_FN(facility, level, _xlog_prefix,
 				"%s:%d:%.*s",
 				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
 				(xm->a)?xm->a->cline:0, txt.len, txt.s);
 		else
-			LOG_(facility, level, _xlog_prefix,
+			LOG_FN(facility, level, _xlog_prefix,
 				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
-		LOG_(facility, level, _xlog_prefix,
+		LOG_FN(facility, level, _xlog_prefix,
 			"%.*s", txt.len, txt.s);
 	return 1;
 }
@@ -498,7 +498,7 @@ static int xdbg_fixup_helper(void** param, int param_no, int mode)
 	xm = (xl_msg_t*)pkg_malloc(sizeof(xl_msg_t));
 	if(xm==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(xm, 0, sizeof(xl_msg_t));
@@ -533,7 +533,7 @@ static int xlog_fixup_helper(void** param, int param_no, int mode)
 		xlp = (xl_level_p)pkg_malloc(sizeof(xl_level_t));
 		if(xlp == NULL)
 		{
-			LM_ERR("no more memory\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;
 		}
 		memset(xlp, 0, sizeof(xl_level_t));
@@ -592,7 +592,7 @@ static int xlog3_fixup_helper(void** param, int param_no)
 	facility = (int*)pkg_malloc(sizeof(int));
 	if(facility == NULL)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return E_UNSPEC;
 	}
 	*facility = str2facility(s.s);
@@ -855,7 +855,7 @@ int ki_xlog_ex(sip_msg_t *msg, int llevel, str *lmsg)
 		pv_elem_free_all(xmodel);
 		return -1;
 	}
-	LOG_(xlog_facility, llevel, _xlog_prefix,
+	LOG_FN(xlog_facility, llevel, _xlog_prefix,
 			"%.*s", txt.len, txt.s);;
 	pv_elem_free_all(xmodel);
 	return 1;

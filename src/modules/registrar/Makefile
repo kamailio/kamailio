@@ -9,6 +9,4 @@ auto_gen=
 NAME=registrar.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 include ../../Makefile.modules

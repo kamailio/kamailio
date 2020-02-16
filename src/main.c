@@ -195,6 +195,7 @@ Options:\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
     --loadmodule=name load the module specified by name\n\
+    --log-engine=log engine name and data\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
     --modparam=modname:paramname:type:value set the module parameter\n\
@@ -1929,6 +1930,7 @@ int main(int argc, char** argv)
 		{"server-id",   required_argument, 0, KARGOPTVAL + 4},
 		{"loadmodule",  required_argument, 0, KARGOPTVAL + 5},
 		{"modparam",    required_argument, 0, KARGOPTVAL + 6},
+		{"log-engine",  required_argument, 0, KARGOPTVAL + 7},
 		{0, 0, 0, 0 }
 	};
 
@@ -1987,6 +1989,10 @@ int main(int argc, char** argv)
 			case 'X':
 					sr_memmng_pkg = optarg;
 					break;
+			case KARGOPTVAL+7:
+					ksr_slog_init(optarg);
+					break;
+
 			default:
 					if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
 						printf("version: %s\n", full_version);
@@ -2146,6 +2152,7 @@ int main(int argc, char** argv)
 			case 'Y':
 			case KARGOPTVAL+5:
 			case KARGOPTVAL+6:
+			case KARGOPTVAL+7:
 					break;
 
 			/* long options */

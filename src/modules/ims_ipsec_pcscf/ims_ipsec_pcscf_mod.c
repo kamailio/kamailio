@@ -41,6 +41,7 @@ str ipsec_listen_addr = STR_NULL;
 str ipsec_listen_addr6 = STR_NULL;
 int ipsec_client_port =  5062;
 int ipsec_server_port =  5063;
+int ipsec_reuse_server_port = 1;
 int ipsec_max_connections = 2;
 int spi_id_start = 100;
 int spi_id_range = 1000;
@@ -83,6 +84,7 @@ static param_export_t params[] = {
 	{"ipsec_listen_addr6",  	PARAM_STR, &ipsec_listen_addr6		},
 	{"ipsec_client_port",		INT_PARAM, &ipsec_client_port		},
 	{"ipsec_server_port",		INT_PARAM, &ipsec_server_port		},
+	{"ipsec_reuse_server_port",	INT_PARAM, &ipsec_reuse_server_port	},
 	{"ipsec_max_connections",	INT_PARAM, &ipsec_max_connections	},
 	{"ipsec_spi_id_start",		INT_PARAM, &spi_id_start			},
 	{"ipsec_spi_id_range",		INT_PARAM, &spi_id_range			},

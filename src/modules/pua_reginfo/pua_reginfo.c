@@ -25,7 +25,7 @@
 #include "../pua/pua_bind.h"
 /* Bindings to usrloc */
 #include "../usrloc/usrloc.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "pua_reginfo.h"
 #include "subscribe.h"

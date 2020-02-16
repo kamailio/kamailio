@@ -340,6 +340,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define MSG_400 "Bad Request"
 #define MSG_420 "Bad Extension"
 #define MSG_421 "Extension Required"
+#define MSG_423 "Interval Too Brief"
 #define MSG_439 "First Hop Lacks Outbound Support"
 #define MSG_500 "Server Internal Error"
 #define MSG_503 "Service Unavailable"
@@ -378,6 +379,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_OB_REQD     "No support for Outbound on server"        /* R_OB_REQD */
 #define EI_R_OB_UNSUP_EDGE "No support for Outbound on edge proxy"  /* R_OB_UNSUP_EDGE */
 #define	EI_R_INV_REGID   "Invalid Reg-Id number"                    /* R_INV_REGID */
+#define	EI_R_LOW_EXP     "Interval too brief"                       /* R_LOW_EXP */
 
 
 str error_info[] = {
@@ -415,6 +417,7 @@ str error_info[] = {
 	{EI_R_OB_REQD,    sizeof(EI_R_OB_REQD) - 1},
 	{EI_R_OB_UNSUP_EDGE, sizeof(EI_R_OB_UNSUP_EDGE) - 1},
 	{EI_R_INV_REGID,  sizeof(EI_R_INV_REGID) - 1},
+	{EI_R_LOW_EXP,    sizeof(EI_R_LOW_EXP) - 1},
 };
 
 int codes[] = {
@@ -452,6 +455,7 @@ int codes[] = {
 	420, /* R_OB_REQD */
 	439, /* R_OB_UNSUP_EDGE */
 	400, /* R_INV_REGID */
+	423, /* R_LOW_EXP */
 };
 
 
@@ -533,6 +537,28 @@ static int add_require(struct sip_msg* _m, str* _p)
 	memcpy(buf + REQUIRE_LEN, _p->s, _p->len);
 	memcpy(buf + REQUIRE_LEN + _p->len, CRLF, CRLF_LEN);
 	add_lump_rpl(_m, buf, REQUIRE_LEN + _p->len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
+}
+
+#define REG_MINEXP "Min-Expires: "
+#define REG_MINEXP_LEN (sizeof(REG_MINEXP) - 1)
+
+static int add_min_expires(struct sip_msg* _m)
+{
+	char* buf, *me_s;
+	int me_len;
+
+	me_s = int2str(cfg_get(registrar, registrar_cfg, min_expires), &me_len);
+	buf = (char*)pkg_malloc(REG_MINEXP_LEN + me_len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, REG_MINEXP, REG_MINEXP_LEN);
+	memcpy(buf + REG_MINEXP_LEN, me_s, me_len);
+	memcpy(buf + REG_MINEXP_LEN + me_len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, REG_MINEXP_LEN + me_len + CRLF_LEN,
 			LUMP_RPL_HDR | LUMP_RPL_NODUP);
 	return 0;
 }
@@ -664,6 +690,10 @@ int reg_send_reply(struct sip_msg* _m)
 		if (add_unsupported(_m, &outbound_str) < 0)
 			return -1;
 		break;
+	case R_LOW_EXP:
+		if (add_min_expires(_m) < 0)
+			return -1;
+		break;
 	default:
 		break;
 	}
@@ -674,6 +704,7 @@ int reg_send_reply(struct sip_msg* _m)
 	case 400: msg.s = MSG_400; msg.len = sizeof(MSG_400)-1;break;
 	case 420: msg.s = MSG_420; msg.len = sizeof(MSG_420)-1;break;
 	case 421: msg.s = MSG_421; msg.len = sizeof(MSG_421)-1;break;
+	case 423: msg.s = MSG_423; msg.len = sizeof(MSG_423)-1;break;
 	case 439: msg.s = MSG_439; msg.len = sizeof(MSG_439)-1;break;
 	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
 	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
