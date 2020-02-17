@@ -781,6 +781,21 @@ static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_nhuri(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+		return ki_kx_get_ruri(msg);
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->dst_uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static int ki_kx_get_timestamp(sip_msg_t *msg)
 {
 	return (int)time(NULL);
@@ -938,7 +953,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("kx"), str_init("get_nhuri"),
+		SR_KEMIP_XVAL, ki_kx_get_nhuri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("kx"), str_init("get_ua"),
 		SR_KEMIP_XVAL, ki_kx_get_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
