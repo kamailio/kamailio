@@ -39,7 +39,6 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h" /* for user2uid() */
-#include "../../core/rpc_lookup.h" /* for sercmd */
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
@@ -49,6 +48,7 @@
 #include "db_carrierroute.h"
 #include "config.h"
 #include "cr_db.h"
+#include "cr_rpc.h"
 #include <sys/stat.h>
 
 #define AVP_CR_URIS "_cr_uris"
@@ -142,7 +142,6 @@ static mi_export_t mi_cmds[] = {
 };
 #endif
 
-static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
 	"carrierroute",  /* module name */
@@ -171,7 +170,7 @@ static int mod_init(void) {
 	extern char* user; /*from main.c*/
 	int uid, gid;
 
-	if(rpc_register_array(rpc_methods)!=0) {
+	if(rpc_register_array(cr_rpc_methods)!=0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
@@ -282,35 +281,3 @@ static void mod_destroy(void) {
 	}
 	destroy_route_data();
 }
-
-static const char *rpc_cr_reload_routes_doc[2] = {
-	"Reload routes", 0
-};
-
-static void rpc_cr_reload_routes(rpc_t *rpc, void *c) {
-
-	if(mode == CARRIERROUTE_MODE_DB){
-		if (carrierroute_dbh==NULL) {
-			carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url);
-			if(carrierroute_dbh==0 ) {
-				LM_ERR("cannot initialize database connection\n");
-				return;
-			}
-		}
-	}
-
-	if ( (reload_route_data())!=0 ) {
-		LM_ERR("failed to load routing data\n");
-		return;
-	}
-}
-
-static const char *cr_rpc_dump_routes_doc[2] = {
-	"Dump routes", 0
-};
-
-static rpc_export_t rpc_methods[] = {
-	{ "cr.reload_routes",  rpc_cr_reload_routes, rpc_cr_reload_routes_doc, 0},
-	{ "cr.dump_routes",  cr_rpc_dump_routes, cr_rpc_dump_routes_doc, 0},
-	{0, 0, 0, 0}
-};
