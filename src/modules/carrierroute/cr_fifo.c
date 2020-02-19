@@ -1055,7 +1055,6 @@ struct mi_root* print_fifo_err(void) {
 	}
 	return rpl_tree;
 }
-#endif
 
 /**
  * Traverses the routing tree and prints route rules if present.
@@ -1241,3 +1240,4 @@ error:
 	release_data (rd);
 	return;
 }
+#endif
