@@ -433,7 +433,25 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 </programlisting>
 		</example>
 		</section>
-		
+
+	<section id="pua_dialoginfo.p.refresh_pubruri_avps_flag">
+		<title><varname>refresh_pubruri_avps_flag</varname> (int)</title>
+		<para>
+			If use_pubruri_avps is enabled, this message flag indicates whether to refresh R-Uri from avps before sending the PUBLISH requests.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>-1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>refresh_pubruri_avps_flag</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "refresh_pubruri_avps_flag", 11)
+...
+</programlisting>
+		</example>
+		</section>
+
 		<section>
 		<title><varname>pubruri_caller_avp</varname> (str)</title>
 		<para>

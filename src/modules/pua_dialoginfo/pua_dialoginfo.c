@@ -41,6 +41,7 @@
 #include "../../core/str_list.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
+#include "../../core/ut.h"
 #include "../../core/utils/sruid.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
@@ -59,6 +60,7 @@ MODULE_VERSION
 #define DEF_OVERRIDE_LIFETIME 0
 #define DEF_SEND_PUBLISH_FLAG -1
 #define DEF_USE_PUBRURI_AVPS 0
+#define DEF_REFRESH_PUBRURI_AVPS_FLAG -1
 #define DEF_PUBRURI_CALLER_AVP 0
 #define DEF_PUBRURI_CALLEE_AVP 0
 #define DEF_CALLEE_TRYING 0
@@ -95,6 +97,7 @@ int caller_confirmed       = DEF_CALLER_ALWAYS_CONFIRMED;
 int include_req_uri        = DEF_INCLUDE_REQ_URI;
 int send_publish_flag      = DEF_SEND_PUBLISH_FLAG;
 int use_pubruri_avps       = DEF_USE_PUBRURI_AVPS;
+int refresh_pubruri_avps_flag = DEF_REFRESH_PUBRURI_AVPS_FLAG;
 int callee_trying          = DEF_CALLEE_TRYING;
 int disable_caller_publish_flag = DEF_DISABLE_CALLER_PUBLISH_FLAG;
 int disable_callee_publish_flag = DEF_DISABLE_CALLEE_PUBLISH_FLAG;
@@ -124,6 +127,7 @@ static param_export_t params[]={
 	{"include_req_uri",     INT_PARAM, &include_req_uri },
 	{"send_publish_flag",   INT_PARAM, &send_publish_flag },
 	{"use_pubruri_avps",    INT_PARAM, &use_pubruri_avps },
+	{"refresh_pubruri_avps_flag",   INT_PARAM, &refresh_pubruri_avps_flag },
 	{"pubruri_caller_avp",  PARAM_STRING, &pubruri_caller_avp },
 	{"pubruri_callee_avp",  PARAM_STRING, &pubruri_callee_avp },
 	{"pubruri_caller_dlg_var",  PARAM_STR, &caller_dlg_var },
@@ -256,6 +260,58 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 }
 #endif
 
+static struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name);
+static int is_ruri_in_list(struct str_list *list, str *ruri);
+
+void refresh_pubruri_avps(struct dlginfo_cell *dlginfo, str *uri)
+{
+	struct str_list *pubruris = get_str_list(pubruri_caller_avp_type,
+			pubruri_caller_avp_name);
+	struct str_list *list, *next;
+	str target = STR_NULL;
+
+	if(pubruris) {
+		list = dlginfo->pubruris_caller;
+		while(list) {
+			if(is_ruri_in_list(pubruris, &list->s) == 0) {
+				LM_DBG("ruri:'%.*s' removed from pubruris_caller list\n",
+					list->s.len, list->s.s);
+				next = list->next; list->next = NULL;
+				dialog_publish_multi("terminated", list,
+						&(dlginfo->from_uri), uri, &(dlginfo->callid), 1,
+						10, 0, 0, &(dlginfo->from_contact),
+						&target, send_publish_flag==-1?1:0, &(dlginfo->uuid));
+				list->next = next;
+			}
+			list = list->next;
+		}
+		free_str_list_all(dlginfo->pubruris_caller);
+		dlginfo->pubruris_caller = pubruris;
+		LM_DBG("refreshed pubruris_caller info from avp\n");
+	}
+	pubruris = get_str_list(pubruri_callee_avp_type,
+			pubruri_callee_avp_name);
+	if(pubruris) {
+		list = dlginfo->pubruris_callee;
+		while(list) {
+			if(is_ruri_in_list(pubruris, &list->s) == 0) {
+				LM_DBG("ruri:'%.*s' removed from pubruris_callee list\n",
+					list->s.len, list->s.s);
+				next = list->next; list->next = NULL;
+				dialog_publish_multi("terminated", list,
+						uri, &(dlginfo->from_uri), &(dlginfo->callid), 0,
+						10, 0, 0, &target, &(dlginfo->from_contact),
+						send_publish_flag==-1?1:0, &(dlginfo->uuid));
+				list->next = next;
+			}
+			list = list->next;
+		}
+		free_str_list_all(dlginfo->pubruris_callee);
+		dlginfo->pubruris_callee = pubruris;
+		LM_DBG("refreshed pubruris_callee info from avp\n");
+	}
+}
+
 static void
 __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
@@ -292,6 +348,12 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 
 	if (dlginfo->disable_callee_publish) {
 		uri=callee_entity_when_publish_disabled;
+	}
+
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
+		|| (request->flags & (1<<refresh_pubruri_avps_flag))))
+	{
+		refresh_pubruri_avps(dlginfo, &uri);
 	}
 
 	switch (type) {
@@ -883,6 +945,19 @@ void free_dlginfo_cell(void *param) {
 	shm_free(param);
 }
 
+
+int is_ruri_in_list(struct str_list *list, str *ruri) {
+	struct str_list *pubruris = list;
+	LM_DBG("search:'%.*s'\n", ruri->len, ruri->s);
+	while(pubruris) {
+		LM_DBG("compare with:'%.*s'\n", pubruris->s.len, pubruris->s.s);
+		if(str_strcmp(&pubruris->s, ruri) == 0) {
+			return 1;
+		}
+		pubruris = pubruris->next;
+	}
+	return 0;
+}
 
 void free_str_list_all(struct str_list * del_current) {
 
