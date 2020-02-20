@@ -164,8 +164,6 @@ static const char *cr_rpc_dump_routes_doc[2] = {
 };
 
 
-
-
 static void cr_rpc_activate_host(rpc_t *rpc, void *ctx) {
 	int ret;
 	str argument;
@@ -245,6 +243,79 @@ static const char *cr_rpc_deactivate_host_doc[2] = {
 
 
 
+static void cr_rpc_add_host(rpc_t *rpc, void *ctx) {
+	int ret;
+	str argument;
+	rpc_opt_t options;
+
+	if (mode != CARRIERROUTE_MODE_FILE) {
+		rpc->fault(ctx, 500, "Not running in config file mode, cannot modify route from command line");
+		return;
+	}
+
+	if (rpc->scan(ctx, "S", &argument) < 1) {
+		rpc->fault(ctx, 500, "Get argument failed");
+		return;
+	}
+
+	if ((ret = get_rpc_opts(&argument, &options, opt_settings[OPT_ADD])) <  0) {
+		rpc->fault(ctx, 500, "Get options failed");
+		return;
+	}
+
+	options.status = 1;
+	options.cmd = OPT_ADD;
+
+	if (update_route_data(&options) < 0) {
+		rpc->fault(ctx, 500, "Update options failed");
+		return;
+	}
+
+	rpc->add(ctx, "s", "200 ok");
+	return;
+}
+
+static const char *cr_rpc_add_host_doc[2] = {
+	"Add carrierroute host", 0
+};
+
+
+
+static void cr_rpc_delete_host(rpc_t *rpc, void *ctx) {
+	int ret;
+	str argument;
+	rpc_opt_t options;
+
+	if (mode != CARRIERROUTE_MODE_FILE) {
+		rpc->fault(ctx, 500, "Not running in config file mode, cannot modify route from command line");
+		return;
+	}
+
+	if (rpc->scan(ctx, "S", &argument) < 1) {
+		rpc->fault(ctx, 500, "Get argument failed");
+		return;
+	}
+
+	if ((ret = get_rpc_opts(&argument, &options, opt_settings[OPT_REMOVE])) <  0) {
+		rpc->fault(ctx, 500, "Get options failed");
+		return;
+	}
+
+	options.cmd = OPT_REMOVE;
+
+	if (update_route_data(&options) < 0) {
+		rpc->fault(ctx, 500, "Update options failed");
+		return;
+	}
+
+	rpc->add(ctx, "s", "200 ok");
+	return;
+}
+
+static const char *cr_rpc_delete_host_doc[2] = {
+	"Remove carrierroute host", 0
+};
+
 
 static void cr_rpc_replace_host(rpc_t *rpc, void *ctx) {
 	int ret;
@@ -291,6 +362,8 @@ rpc_export_t cr_rpc_methods[] = {
 	{"cr.dump_routes",  cr_rpc_dump_routes, cr_rpc_dump_routes_doc, 0},
 	{"cr.activate_host",  cr_rpc_activate_host, cr_rpc_activate_host_doc, 0},
 	{"cr.deactivate_host",  cr_rpc_deactivate_host, cr_rpc_deactivate_host_doc, 0},
+	{"cr.add_host",  cr_rpc_add_host, cr_rpc_add_host_doc, 0},
+	{"cr.delete_host",  cr_rpc_delete_host, cr_rpc_delete_host_doc, 0},
 	{"cr.replace_host",  cr_rpc_replace_host, cr_rpc_replace_host_doc, 0},
 	{0, 0, 0, 0}
 };
