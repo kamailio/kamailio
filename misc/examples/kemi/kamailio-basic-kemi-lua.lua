@@ -122,26 +122,24 @@ function ksr_route_reqinit()
 		local srcip = KSR.kx.get_srcip();
 		if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 then
 			-- ip is already blocked
-			KSR.dbg("request from blocked IP - " .. KSR.pv.get("$rm")
+			KSR.dbg("request from blocked IP - " .. KSR.kx.get_method()
 					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.x.exit();
 		end
 		if KSR.pike.pike_check_req() < 0 then
-			KSR.err("ALERT: pike blocking " .. KSR.pv.get("$rm")
+			KSR.err("ALERT: pike blocking " .. KSR.kx.get_method()
 					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.htable.sht_seti("ipban", srcip, 1);
 			KSR.x.exit();
 		end
 	end
-	if KSR.corex.has_user_agent() > 0 then
-		local ua = KSR.kx.gete_ua();
-		if string.find(ua, "friendly-scanner")
+	local ua = KSR.kx.gete_ua();
+	if string.find(ua, "friendly-scanner")
 				or string.find(ua, "sipcli") then
-			KSR.sl.sl_send_reply(200, "OK");
-			KSR.x.exit();
-		end
+		KSR.sl.sl_send_reply(200, "OK");
+		KSR.x.exit();
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
@@ -252,8 +250,8 @@ function ksr_route_auth()
 
 	if KSR.is_REGISTER() or KSR.is_myself_furi() then
 		-- authenticate requests
-		if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 then
-			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
+		if KSR.auth_db.auth_check(KSR.kx.gete_fhost(), "subscriber", 1)<0 then
+			KSR.auth.auth_challenge(KSR.kx.gete_fhost(), 0);
 			KSR.x.exit();
 		end
 		-- user authenticated - remove auth header
@@ -338,7 +336,7 @@ end
 -- equivalent of branch_route[...]{}
 function ksr_branch_manage()
 	KSR.dbg("new branch [".. KSR.pv.get("$T_branch_idx")
-				.. "] to ".. KSR.pv.get("$ru") .. "\n");
+				.. "] to " .. KSR.kx.get_ruri() .. "\n");
 	ksr_route_natmanage();
 	return 1;
 end
@@ -347,7 +345,7 @@ end
 -- equivalent of onreply_route[...]{}
 function ksr_onreply_manage()
 	KSR.dbg("incoming reply\n");
-	local scode = KSR.pv.get("$rs");
+	local scode = KSR.kx.get_status();
 	if scode>100 and scode<299 then
 		ksr_route_natmanage();
 	end
