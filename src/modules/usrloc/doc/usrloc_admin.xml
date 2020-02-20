@@ -952,6 +952,14 @@ modparam("usrloc", "db_check_update", 1)
 			database. If set to 0, no dedicated timer is started, the one from
 			core will be used.
 		</para>
+
+		<para>
+			If the number of timer processes is greater than 1, the workload 
+			of synchronization and record expiration is split up among the 
+			multiple processes. (Each process is assigned a range of slots 
+			from the internal hash table, and is responsible for cleanup and
+			storage on those slots.)
+		</para>
 		<para>
 		<emphasis>
 			Default value is <quote>0</quote>.
