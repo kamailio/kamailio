@@ -285,8 +285,9 @@ static int mod_init(void)
 				ul_rm_expired_delay);
 		ul_rm_expired_delay = 0;
 	}
-	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
+	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0) {
 		return -1;
+	}
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -296,16 +297,16 @@ static int mod_init(void)
 	}
 #endif
 
-	if (rpc_register_array(ul_rpc)!=0)
-	{
+	if (rpc_register_array(ul_rpc)!=0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if(ul_hash_size<=1)
+	if(ul_hash_size<=1) {
 		ul_hash_size = 512;
-	else
+	} else {
 		ul_hash_size = 1<<ul_hash_size;
+	}
 
 	/* check matching mode */
 	switch (ul_matching_mode) {
@@ -319,13 +320,13 @@ static int mod_init(void)
 	}
 
 	/* Register cache timer */
-	if(ul_timer_procs<=0)
-	{
-		if (timer_interval > 0)
+	if(ul_timer_procs<=0) {
+		if (timer_interval > 0) {
 			register_timer(ul_core_timer, 0, timer_interval);
-	}
-	else
+		}
+	} else {
 		register_sync_timers(ul_timer_procs);
+	}
 
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
@@ -374,8 +375,9 @@ static int mod_init(void)
 		}
 	}
 
-	if (handle_lost_tcp && db_mode == DB_ONLY)
+	if (handle_lost_tcp && db_mode == DB_ONLY) {
 		LM_WARN("handle_lost_tcp option makes nothing in DB_ONLY mode\n");
+	}
 
 	if(db_mode != DB_ONLY) {
 		ul_set_xavp_contact_clone(1);
