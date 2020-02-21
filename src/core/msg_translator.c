@@ -3249,6 +3249,7 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	msg->set_global_port = tmp.set_global_port;
 	msg->flags = tmp.flags;
 	msg->msg_flags = tmp.msg_flags;
+	memcpy(msg->xflags, tmp.xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
 	msg->hash_index = tmp.hash_index;
 	msg->force_send_socket = tmp.force_send_socket;
 	msg->fwd_send_flags = tmp.fwd_send_flags;
