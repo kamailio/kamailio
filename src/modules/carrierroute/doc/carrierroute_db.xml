@@ -208,7 +208,7 @@ modparam("carrierroute", "carrierroute_rewrite_suffix_col", "rewrite_suffix")
   <section>
     <title><varname>carrierroute_description_col</varname> (string)</title>
     <para>A comment for the route entry, useful for larger routing tables.
-			  The comment is also displayed by the fifo cmd "cr_dump_routes".</para>
+			  The comment is also displayed by the rpc cmd "cr.dump_routes".</para>
     <example>
       <title>Set <varname>carrierroute_description_col</varname> parameter</title>
       <programlisting format="linespecific">
