@@ -42,7 +42,6 @@
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
-#include "cr_fifo.h"
 #include "cr_data.h"
 #include "cr_func.h"
 #include "db_carrierroute.h"
@@ -129,18 +128,6 @@ static param_export_t params[]= {
 	{0,0,0}
 };
 
-#ifdef MI_REMOVED
-static mi_export_t mi_cmds[] = {
-	{ "cr_reload_routes",   reload_fifo,     MI_NO_INPUT_FLAG, 0,  mi_child_init },
-	{ "cr_dump_routes",     dump_fifo,       MI_NO_INPUT_FLAG, 0,  0 },
-	{ "cr_replace_host",    replace_host,    0,                0,  0 },
-	{ "cr_deactivate_host", deactivate_host, 0,                0,  0 },
-	{ "cr_activate_host",   activate_host,   0,                0,  0 },
-	{ "cr_add_host",        add_host,        0,                0,  0 },
-	{ "cr_delete_host",     delete_host,     0,                0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-#endif
 
 
 struct module_exports exports = {
