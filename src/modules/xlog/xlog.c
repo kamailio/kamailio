@@ -235,15 +235,15 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 
 	if(line>0)
 		if(long_format==1)
-			LOG_(facility, level, _xlog_prefix,
+			LOG_FN(facility, level, _xlog_prefix,
 				"%s:%d:%.*s",
 				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
 				(xm->a)?xm->a->cline:0, txt.len, txt.s);
 		else
-			LOG_(facility, level, _xlog_prefix,
+			LOG_FN(facility, level, _xlog_prefix,
 				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
-		LOG_(facility, level, _xlog_prefix,
+		LOG_FN(facility, level, _xlog_prefix,
 			"%.*s", txt.len, txt.s);
 	return 1;
 }
@@ -855,7 +855,7 @@ int ki_xlog_ex(sip_msg_t *msg, int llevel, str *lmsg)
 		pv_elem_free_all(xmodel);
 		return -1;
 	}
-	LOG_(xlog_facility, llevel, _xlog_prefix,
+	LOG_FN(xlog_facility, llevel, _xlog_prefix,
 			"%.*s", txt.len, txt.s);;
 	pv_elem_free_all(xmodel);
 	return 1;

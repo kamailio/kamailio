@@ -163,7 +163,7 @@ int reg_active_init(int mode)
 	}
 	reg_active = (int*)shm_malloc(sizeof(int));
 	if(reg_active==NULL) {
-		LM_ERR("not enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*reg_active = mode;
@@ -190,7 +190,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable_gc_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
 	if(_reg_htable_gc_lock == NULL)
 	{
-		LM_ERR("no more shm for lock\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	if(lock_init(_reg_htable_gc_lock)==0)
@@ -202,7 +202,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable_gc = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable_gc==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		lock_destroy(_reg_htable_gc_lock);
 		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
@@ -214,7 +214,7 @@ int uac_reg_init_ht(unsigned int sz)
 		(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
 	if(_reg_htable_gc->entries==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc);
 		lock_destroy(_reg_htable_gc_lock);
 		shm_free((void*)_reg_htable_gc_lock);
@@ -226,7 +226,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc->entries);
 		shm_free(_reg_htable_gc);
 		lock_destroy(_reg_htable_gc_lock);
@@ -240,7 +240,7 @@ int uac_reg_init_ht(unsigned int sz)
 		(reg_entry_t*)shm_malloc(_reg_htable->htsize*sizeof(reg_entry_t));
 	if(_reg_htable->entries==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc->entries);
 		shm_free(_reg_htable_gc);
 		shm_free(_reg_htable);
@@ -452,7 +452,7 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ri, 0, sizeof(reg_item_t));
@@ -483,7 +483,7 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ri, 0, sizeof(reg_item_t));
@@ -537,7 +537,7 @@ int reg_ht_add(reg_uac_t *reg)
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(nr, 0, sizeof(reg_uac_t) + len);
@@ -1096,7 +1096,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
 	if(uuid==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	reg->timer_expires = tn;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2016-2020 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -31,7 +31,7 @@
 #include <lualib.h>
 #include "../../core/kemi.h"
 
-#define SR_KEMI_LUA_EXPORT_SIZE	1024
+#define SR_KEMI_LUA_EXPORT_SIZE	1536
 
 typedef struct sr_kemi_lua_export {
 	lua_CFunction pfunc;

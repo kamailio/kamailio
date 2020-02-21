@@ -57,14 +57,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*_r, 0, sizeof(urecord_t));
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		shm_free(*_r);
 		*_r = 0;
 		return -2;

@@ -114,7 +114,7 @@ typedef struct dlg_cell
 	unsigned int         dflags;		/*!< internal dialog memory flags */
 	unsigned int         iflags;		/*!< internal dialog persistent flags */
 	unsigned int         sflags;		/*!< script dialog persistent flags */
-	unsigned int         toroute;		/*!< index of route that is executed on timeout */
+	int                  toroute;		/*!< index of route that is executed on timeout */
 	str                  toroute_name;	/*!< name of route that is executed on timeout */
 	unsigned int         from_rr_nb;	/*!< information from record routing */
 	struct dlg_tl        tl;			/*!< dialog timer list */

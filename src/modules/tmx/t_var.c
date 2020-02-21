@@ -117,7 +117,7 @@ int pv_t_update_req(struct sip_msg *msg)
 		_pv_treq.buf = (char*)pkg_malloc(_pv_treq.buf_size*sizeof(char));
 		if(_pv_treq.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_treq.buf_size = 0;
 			return -1;
 		}
@@ -195,7 +195,7 @@ int pv_t_update_rpl(struct sip_msg *msg)
 		_pv_trpl.buf = (char*)pkg_malloc(_pv_trpl.buf_size*sizeof(char));
 		if(_pv_trpl.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_trpl.buf_size = 0;
 			return -1;
 		}
@@ -263,7 +263,7 @@ int pv_t_update_inv(struct sip_msg *msg)
 		_pv_tinv.buf = (char*)pkg_malloc(_pv_tinv.buf_size*sizeof(char));
 		if(_pv_tinv.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_tinv.buf_size = 0;
 			goto error;
 		}
@@ -368,8 +368,10 @@ int pv_parse_t_var_name(pv_spec_p sp, str *in)
 		return -1;
 
 	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if(pv==NULL)
+	if(pv==NULL) {
+		PKG_MEM_ERROR;
 		return -1;
+	}
 
 	memset(pv, 0, sizeof(pv_spec_t));
 

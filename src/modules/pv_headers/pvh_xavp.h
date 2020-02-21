@@ -33,6 +33,7 @@
 sr_xavp_t *pvh_xavp_new_value(str *name, sr_xval_t *val);
 int pvh_xavp_append_value(str *name, sr_xval_t *val, sr_xavp_t **start);
 int pvh_xavp_set_value(str *name, sr_xval_t *val, int idx, sr_xavp_t **start);
+sr_xavp_t *pvh_xavp_get(struct sip_msg *msg, str *xname);
 sr_xval_t *pvh_xavp_get_value(
 		struct sip_msg *msg, str *xname, str *name, int idx);
 sr_xavp_t *pvh_xavp_get_child(struct sip_msg *msg, str *xname, str *name);
@@ -48,6 +49,8 @@ int pvh_parse_header_name(pv_spec_p sp, str *hname);
 int pvh_get_header(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pvh_set_header(
 		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
+xavp_c_data_t *pvh_set_parsed(
+		struct sip_msg *msg, str *hname, str *cur, str *new);
 int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pvh_set_uri(
 		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
@@ -59,6 +62,6 @@ int pvh_set_reply_sr(
 
 int pvh_get_branch_index(struct sip_msg *msg, int *br_idx);
 int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst);
-int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname);
+int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname, str *br_xname);
 
 #endif /* PV_XAVP_H */

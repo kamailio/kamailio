@@ -340,7 +340,7 @@ str* build_authorization_hdr(int code, str *uri,
 	_uac_auth_hdr.s = (char*)pkg_malloc( len + 1);
 	if (_uac_auth_hdr.s==0)
 	{
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 

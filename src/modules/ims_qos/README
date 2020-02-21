@@ -146,7 +146,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The Following modules must be loaded before this module:
-     * Dialog2
+     * Dialog
      * Usrloc PCSCF
      * TM - Transaction Manager
      * CDP - C Diameter Peer

@@ -849,44 +849,44 @@ void qm_status(void* qmp)
 
 	memlog=cfg_get(core, core_cfg, memlog);
 	mem_summary=cfg_get(core, core_cfg, mem_summary);
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ", "(%p):\n", qm);
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ", "(%p):\n", qm);
 	if (!qm) return;
 
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ", "heap size= %lu\n",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ", "heap size= %lu\n",
 			qm->size);
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"used= %lu, used+overhead=%lu, free=%lu\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"max used (+overhead)= %lu\n", qm->max_real_used);
 
 	if (mem_summary & 16) return;
 
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"dumping all alloc'ed. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
 		if ((! f->u.is_free) || (cfg_get(core, core_cfg, mem_status_mode)!=0)){
-			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
 				i,
 				(f->u.is_free)?'A':'N',
 				(char*)f+sizeof(struct qm_frag), f, f->size, FRAG_WAS_USED(f));
 #ifdef DBG_QM_MALLOC
-			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"          %s from %s: %s(%ld)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"         start check=%lx, end check= %lx, %lx\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 			if (f->check!=ST_CHECK_PATTERN){
-				LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+				LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 						"         * beginning overwritten(%lx)!\n",
 						f->check);
 			}
 			if ((FRAG_END(f)->check1 != END_CHECK_PATTERN1)
 					|| (FRAG_END(f)->check2 != END_CHECK_PATTERN2)) {
-				LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+				LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 						"         * end overwritten(%lx, %lx)!\n",
 						FRAG_END(f)->check1, FRAG_END(f)->check2);
 			}
@@ -894,7 +894,7 @@ void qm_status(void* qmp)
 #endif
 		}
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"dumping free list stats :\n");
 	for(h=0,i=0;h<QM_HASH_SIZE;h++){
 		unused=0;
@@ -903,7 +903,7 @@ void qm_status(void* qmp)
 				if (!FRAG_WAS_USED(f)){
 					unused++;
 #ifdef DBG_QM_MALLOC
-					LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+					LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 						"unused fragm.: hash = %3d, fragment %p,"
 						" address %p size %lu, created from %s: %s(%lu)\n",
 						h, f, (char*)f+sizeof(struct qm_frag), f->size,
@@ -912,7 +912,7 @@ void qm_status(void* qmp)
 				}
 		}
 
-		if (j) LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+		if (j) LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 				"hash= %3d. fragments no.: %5d, unused: %5d\n"
 					"\t\t bucket size: %9lu - %9ld (first %9lu)\n",
 					h, j, unused, UN_HASH(h),
@@ -925,7 +925,7 @@ void qm_status(void* qmp)
 		}
 
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"-----------------------------\n");
 }
 
@@ -1001,7 +1001,7 @@ void qm_sums(void* qmp)
 	if (!qm) return;
 
 	memlog=cfg_get(core, core_cfg, memlog);
-	LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_sums: ",
 			"summarizing all alloc'ed. fragments:\n");
 
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;
@@ -1014,7 +1014,7 @@ void qm_sums(void* qmp)
 	}
 	x = root;
 	while(x){
-		LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "qm_sums: ",
 				" count=%6d size=%10lu bytes from %s: %s(%ld)\n",
 			x->count,x->size,
 			x->file, x->func, x->line
@@ -1023,7 +1023,7 @@ void qm_sums(void* qmp)
 		free(x);
 		x = root;
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "qm_sums: ",
 			"-----------------------------\n");
 }
 

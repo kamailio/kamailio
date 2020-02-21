@@ -2,11 +2,11 @@
 
 # generate the .h file
 
-KEMI_MAX_SIZE=1024
+KEMI_MAX_SIZE=1536
 
 cat > ../app_lua_kemi_export.h <<EOF
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2016-2020 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -55,7 +55,7 @@ EOF
 
 cat > ../app_lua_kemi_export.c <<EOF
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2016-2020 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *

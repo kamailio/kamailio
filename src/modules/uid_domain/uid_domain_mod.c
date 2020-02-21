@@ -245,7 +245,7 @@ static int allocate_tables(void)
 	domains_2 = (domain_t**)shm_malloc(sizeof(domain_t*));
 
 	if (!hash_1 || !hash_2 || !active_hash || !domains_1 || !domains_2) {
-		ERR("No memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(hash_1, 0, sizeof(struct hash_entry*) * HASH_SIZE);
@@ -444,7 +444,7 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
 
 	tmp.s = pkg_malloc(domain.len);
 	if (!tmp.s) {
-		ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(tmp.s, domain.s, domain.len);
@@ -480,7 +480,7 @@ static int get_did(str* did, str* domain)
 
 	tmp.s = pkg_malloc(domain->len);
 	if (!tmp.s) {
-		ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(tmp.s, domain->s, domain->len);

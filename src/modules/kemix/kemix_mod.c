@@ -35,6 +35,7 @@
 
 MODULE_VERSION
 
+/* clang-format off */
 struct module_exports exports = {
 	"kemix",         /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -47,6 +48,7 @@ struct module_exports exports = {
 	0,               /* per-child init function */
 	0                /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
@@ -337,6 +339,71 @@ static sr_kemi_xval_t* ki_kx_getw_fhost(sip_msg_t *msg)
 static sr_kemi_xval_t* ki_kx_gete_fhost(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_turi_attr(sip_msg_t *msg, int iattr, int xmode)
+{
+	sip_uri_t *uri;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	uri=parse_to_uri(msg);
+	if(uri==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	return ki_kx_get_xuri_attr(msg, uri, iattr, xmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_tuser(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_tuser(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_tuser(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_thost(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_thost(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_thost(sip_msg_t *msg)
+{
+	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
 }
 
 /**
@@ -714,10 +781,47 @@ static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_nhuri(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+		return ki_kx_get_ruri(msg);
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->dst_uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static int ki_kx_get_timestamp(sip_msg_t *msg)
 {
 	return (int)time(NULL);
 }
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_callid(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
+			|| (msg->callid==NULL))) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->callid->body;
+	return &_sr_kemi_kx_xval;
+}
+
 
 /**
  *
@@ -804,6 +908,36 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_tuser"),
+		SR_KEMIP_XVAL, ki_kx_get_tuser,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_tuser"),
+		SR_KEMIP_XVAL, ki_kx_gete_tuser,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_tuser"),
+		SR_KEMIP_XVAL, ki_kx_getw_tuser,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_thost"),
+		SR_KEMIP_XVAL, ki_kx_get_thost,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_thost"),
+		SR_KEMIP_XVAL, ki_kx_gete_thost,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_thost"),
+		SR_KEMIP_XVAL, ki_kx_getw_thost,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("kx"), str_init("get_duri"),
 		SR_KEMIP_XVAL, ki_kx_get_duri,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -819,7 +953,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("kx"), str_init("get_nhuri"),
+		SR_KEMIP_XVAL, ki_kx_get_nhuri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("kx"), str_init("get_ua"),
 		SR_KEMIP_XVAL, ki_kx_get_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -912,6 +1050,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_timestamp"),
 		SR_KEMIP_INT, ki_kx_get_timestamp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_callid"),
+		SR_KEMIP_XVAL, ki_kx_get_callid,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

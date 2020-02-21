@@ -63,6 +63,7 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/globals.h"
 #include "../../core/timer_ticks.h"
+#include "../../core/dset.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
@@ -920,6 +921,50 @@ error:
 static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2)
 {
 	return ki_t_get_status_code(msg);
+}
+
+static int ki_t_get_branch_index(sip_msg_t* msg)
+{
+	tm_cell_t *t = 0;
+	tm_ctx_t *tcx = 0;
+	int idx = T_BR_UNDEFINED;
+
+	if(msg==NULL) {
+		return -1;
+	}
+
+	/* statefull replies have the branch_index set */
+	if(msg->first_line.type == SIP_REPLY) {
+		tcx = tm_ctx_get();
+		if(tcx != NULL) {
+			idx = tcx->branch_index;
+		}
+	} else switch(route_type) {
+		case BRANCH_ROUTE:
+		case BRANCH_FAILURE_ROUTE:
+			/* branch and branch_failure routes have their index set */
+			tcx = tm_ctx_get();
+			if(tcx != NULL) {
+				idx = tcx->branch_index;
+			}
+			break;
+		case REQUEST_ROUTE:
+			/* take the branch number from the number of added branches */
+			idx = nr_branches;
+			break;
+		case FAILURE_ROUTE:
+			/* first get the transaction */
+			t = get_t();
+			if ( t == NULL || t == T_UNDEFINED ) {
+				return -1;
+			}
+			/* add the currently added branches to the number of
+			 * completed branches in the transaction
+			 */
+			idx = t->nr_of_outgoings + nr_branches;
+			break;
+	}
+	return idx;
 }
 
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
@@ -3159,6 +3204,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	},
 	{ str_init("tm"), str_init("t_get_status_code"),
 		SR_KEMIP_INT, ki_t_get_status_code,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_get_branch_index"),
+		SR_KEMIP_INT, ki_t_get_branch_index,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
