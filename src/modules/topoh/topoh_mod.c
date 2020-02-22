@@ -249,8 +249,14 @@ int th_prepare_msg(sip_msg_t *msg)
 			LM_DBG("non sip request message\n");
 			return 1;
 		}
-	} else if(msg->first_line.type!=SIP_REPLY) {
-		LM_DBG("non sip message\n");
+	} else if(msg->first_line.type==SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg))
+		{
+			LM_DBG("non sip reply message\n");
+			return 1;
+		}
+	} else {
+		LM_DBG("unknown sip message type %d\n", msg->first_line.type);
 		return 1;
 	}
 
