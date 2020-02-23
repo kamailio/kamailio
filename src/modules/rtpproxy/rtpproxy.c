@@ -1814,9 +1814,14 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	int method;
 	int nosdp;
 
+	if(route_type==BRANCH_FAILURE_ROUTE) {
+		/* do nothing in branch failure event route
+		 * - delete done on transaction failure route */
+		return 1;
+	}
+
 	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
-				|| (msg->cseq==NULL)))
-	{
+				|| (msg->cseq==NULL))) {
 		LM_ERR("no CSEQ header\n");
 		return -1;
 	}
@@ -1831,8 +1836,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
 		return unforce_rtp_proxy(msg, flags);
 
-	if(ip==NULL)
-	{
+	if(ip==NULL) {
 		cp = ip_addr2a(&msg->rcv.dst_ip);
 		strcpy(newip, cp);
 	}
