@@ -2560,7 +2560,7 @@ rtpengine_query();
         <function moreinfo="none">rtpengine_manage([flags])</function>
         </title>
 		<para>
-		Manage the RTPProxy session - it combines the functionality of
+		Manage the RTPEngine session - it combines the functionality of
 		rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
 		internally based on message type and method which one to execute.
 		</para>
@@ -2597,7 +2597,14 @@ rtpengine_query();
 			this function after resuming a suspended transaction (e.g., after
 			t_continue()), because the context of executed route is FAILURE
 			ROUTE (in other words, rtpengine_manage() in the route block of
-			t_continue() does the same as in failure_route).
+			t_continue() does the same as in failure_route; use a branch route
+			to engage rtpengine for a forwarded branch after resuming the
+			transaction).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			It does nothing if used inside event_route[tm:branch-failure:...]
 			</para>
 		</listitem>
 		<listitem>
