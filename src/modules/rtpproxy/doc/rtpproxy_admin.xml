@@ -685,7 +685,14 @@ rtpproxy_destroy();
 			this function after resuming a suspended transaction (e.g., after
 			t_continue()), because the context of executed route is FAILURE
 			ROUTE (in other words, rtpproxy_manage() in the route block of
-			t_continue() does the same as in failure_route).
+			t_continue() does the same as in failure_route; use a branch route
+			to engage rtpengine for a forwarded branch after resuming the
+			transaction).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			It does nothing if used inside event_route[tm:branch-failure:...]
 			</para>
 		</listitem>
 		<listitem>
