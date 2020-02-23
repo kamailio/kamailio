@@ -3589,9 +3589,14 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 	int nosdp;
 	tm_cell_t *t = NULL;
 
+	if(route_type==BRANCH_FAILURE_ROUTE) {
+		/* do nothing in branch failure event route
+		 * - delete done on transaction failure route */
+		return 1;
+	}
+
 	if (msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-	   (msg->cseq==NULL)))
-	{
+	   (msg->cseq==NULL))) {
 		LM_ERR("no CSEQ header\n");
 		return -1;
 	}
@@ -3599,7 +3604,7 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 	method = get_cseq(msg)->method_id;
 
 	if (!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
-	   || method==METHOD_BYE || method==METHOD_UPDATE))
+			|| method==METHOD_BYE || method==METHOD_UPDATE))
 		return -1;
 
 	if (method==METHOD_CANCEL || method==METHOD_BYE)
