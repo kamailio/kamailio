@@ -32,6 +32,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/digest/digest.h"
+#include "../../core/tcp_conn.h"
 
 MODULE_VERSION
 
@@ -822,6 +823,25 @@ static sr_kemi_xval_t* ki_kx_get_callid(sip_msg_t *msg)
 	return &_sr_kemi_kx_xval;
 }
 
+/**
+ *
+ */
+static int ki_kx_get_conid(sip_msg_t *msg)
+{
+	tcp_connection_t *con;
+	int conid;
+
+	if (msg == NULL)
+		return -1;
+
+	if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
+		return -1;
+
+	conid = con->id;
+	tcpconn_put(con);
+
+	return conid;
+}
 
 /**
  *
@@ -1055,6 +1075,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_callid"),
 		SR_KEMIP_XVAL, ki_kx_get_callid,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_conid"),
+		SR_KEMIP_INT, ki_kx_get_conid,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
