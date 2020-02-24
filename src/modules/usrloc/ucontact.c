@@ -666,7 +666,13 @@ int db_insert_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
-		LM_ERR("sql use_table failed\n");
+		if(_c->domain) {
+			LM_ERR("sql use_table failed for: %.*s\n",
+					(_c->domain->s)?_c->domain->len:0,
+					(_c->domain->s)?_c->domain->s:"");
+		} else {
+			LM_ERR("sql use_table failed - null\n");
+		}
 		return -1;
 	}
 
