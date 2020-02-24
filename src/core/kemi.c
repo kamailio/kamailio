@@ -1108,6 +1108,59 @@ static int sr_kemi_core_is_proto_sctp(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_proto(sip_msg_t *msg, str *sproto)
+{
+	int i;
+	if (msg==NULL || sproto==NULL || sproto->s==NULL || sproto->len<=0) {
+		return SR_KEMI_FALSE;
+	}
+	for(i=0; i<sproto->len; i++) {
+		switch(sproto->s[i]) {
+			case 'e':
+			case 'E':
+				if (msg->rcv.proto == PROTO_TLS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 's':
+			case 'S':
+				if (msg->rcv.proto == PROTO_SCTP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 't':
+			case 'T':
+				if (msg->rcv.proto == PROTO_TCP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'u':
+			case 'U':
+				if (msg->rcv.proto == PROTO_UDP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'v':
+			case 'V':
+				if (msg->rcv.proto == PROTO_WS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+
+			case 'w':
+			case 'W':
+				if (msg->rcv.proto == PROTO_WSS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+		}
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_is_af_ipv4(sip_msg_t *msg)
 {
 	if(msg==NULL || msg->rcv.bind_address==NULL) {
@@ -1715,6 +1768,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("is_SCTP"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_proto_sctp,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_proto"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init(""), str_init("is_IPv4"),
