@@ -55,6 +55,11 @@ Lucian Balaceanu
 
               5.1. cr.reload_routes
               5.2. cr.dump_routes
+              5.3. cr.add_host
+              5.4. cr.delete_host
+              5.5. cr.activate_host
+              5.6. cr.deactivate_host
+              5.7. cr.replace_host
 
         6. Configuration examples
         7. Installation and Running
@@ -194,6 +199,11 @@ Chapter 1. Admin Guide
 
         5.1. cr.reload_routes
         5.2. cr.dump_routes
+        5.3. cr.add_host
+        5.4. cr.delete_host
+        5.5. cr.activate_host
+        5.6. cr.deactivate_host
+        5.7. cr.replace_host
 
    6. Configuration examples
    7. Installation and Running
@@ -632,6 +642,11 @@ dstavp)
 
    5.1. cr.reload_routes
    5.2. cr.dump_routes
+   5.3. cr.add_host
+   5.4. cr.delete_host
+   5.5. cr.activate_host
+   5.6. cr.deactivate_host
+   5.7. cr.replace_host
 
 5.1.  cr.reload_routes
 
@@ -657,6 +672,75 @@ dstavp)
 
    Parameters:
      * none
+
+5.3.  cr.add_host
+
+   This command adds a new host to the route rules
+
+   Name: cr.add_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.add_host -- '-h test.domain.com:5060 -d proxy -p null -w
+       0.1'
+
+5.4.  cr.delete_host
+
+   This command deletes a host from the route rules
+
+   Name: cr.delete_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.delete_host -- '-h test.domain.com:5060 -d proxy -p null'
+
+5.5.  cr.activate_host
+
+   This command activates a host from the route rules
+
+   Name: cr.activate_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.activate_host -- '-h test.domain.com:5060 -d proxy -p
+       null'
+
+5.6.  cr.deactivate_host
+
+   This command deactivates a host from the route rules
+
+   Name: cr.deactivate_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.deactivate_host -- '-h test.domain.com:5060 -d proxy -p
+       null'
+
+5.7.  cr.replace_host
+
+   This command replaces a host from the route rules
+
+   Name: cr.replace_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.replace_host -- '-h test1.domain.com:5060 -d proxy -t
+       test2.domain.com:5060'
 
 6. Configuration examples
 
@@ -1128,7 +1212,7 @@ modparam("carrierroute", "carrierroute_rewrite_suffix_col", "rewrite_suffix")
 14. carrierroute_description_col (string)
 
    A comment for the route entry, useful for larger routing tables. The
-   comment is also displayed by the fifo cmd "cr_dump_routes".
+   comment is also displayed by the rpc cmd "cr.dump_routes".
 
    Example 2.14. Set carrierroute_description_col parameter
 ...
