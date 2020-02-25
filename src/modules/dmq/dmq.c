@@ -280,7 +280,7 @@ static int child_init(int rank)
 		for(i = 0; i < num_workers; i++) {
 			init_worker(&workers[i]);
 			LM_DBG("starting worker process %d\n", i);
-			newpid = fork_process(PROC_NOCHLDINIT, "DMQ WORKER", 0);
+			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
 			if(newpid < 0) {
 				LM_ERR("failed to fork process\n");
 				return -1;
