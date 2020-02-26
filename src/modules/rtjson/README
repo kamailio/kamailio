@@ -1,2 +1,267 @@
+RTJSON Module
 
+Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2015 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. xavp_cfg (str)
+
+        4. Functions
+
+              4.1. rtjson_init_routes(rtdoc)
+              4.2. rtjson_push_routes()
+              4.3. rtjson_next_route()
+              4.4. rtjson_update_branch()
+
+        5. JSON Routing Structure
+
+   List of Examples
+
+   1.1. Set xavp_cfg parameter
+   1.2. rtjson_init_routes usage
+   1.3. rtjson_push_routes usage
+   1.4. rtjson_next_route usage
+   1.5. rtjson_update_branch usage
+   1.6. JSON Routing Structure
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. xavp_cfg (str)
+
+   4. Functions
+
+        4.1. rtjson_init_routes(rtdoc)
+        4.2. rtjson_push_routes()
+        4.3. rtjson_next_route()
+        4.4. rtjson_update_branch()
+
+   5. JSON Routing Structure
+
+1. Overview
+
+   This module facilitates SIP routing based on JSON specifications.
+
+   The values for R-URI ($ru), outbound proxy ($du) and other attributes
+   used for SIP routing can be retrieved in a JSON document. It is able to
+   process attributes for more than one destination and prepare for
+   routing in serial or parallel fashion.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - (optional) transaction management.
+       uac - (optional) user agent operations.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. xavp_cfg (str)
+
+3.1. xavp_cfg (str)
+
+   The name of the xavp to be used internally by the module.
+
+   Default value is "rtjson".
+
+   Example 1.1. Set xavp_cfg parameter
+...
+modparam("rtjson", "xavp_cfg", "myxavp")
+...
+
+4. Functions
+
+   4.1. rtjson_init_routes(rtdoc)
+   4.2. rtjson_push_routes()
+   4.3. rtjson_next_route()
+   4.4. rtjson_update_branch()
+
+4.1.  rtjson_init_routes(rtdoc)
+
+   Initialize routing based on JSON document stored in rtdoc parameter.
+
+   The rtdoc parameter can be a static string or a dynamic string value
+   with config variables. It has to result in a valid JSON document with
+   the structure specified in chapter 'JSON Routing Structure'.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.2. rtjson_init_routes usage
+...
+rtjson_init_routes("$var(json)");
+...
+
+4.2.  rtjson_push_routes()
+
+   Push the routes given in JSON document to rtjson_init_routes(rtdoc) to
+   the internal fields used by Kamailio for routing.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.3. rtjson_push_routes usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+...
+
+4.3.  rtjson_next_route()
+
+   To be used in failure_route for serial forking, to push the next route
+   to the internal fields used by Kamailio for routing.
+
+   This function can be used from FAILURE_ROUTE.
+
+   Example 1.4. rtjson_next_route usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+t_on_failure("REROUTE");
+t_relay();
+...
+failure_route[REROUTE] {
+        rtjson_next_route();
+}
+...
+
+4.4.  rtjson_update_branch()
+
+   To be used in branch_route if the JSON document had attributes that
+   needs to be set for each branch.
+
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1.5. rtjson_update_branch usage
+...
+rtjson_init_routes("$var(json)");
+rtjson_push_routes();
+t_on_branch("OUTGOING");
+t_relay();
+...
+branch_route[OUTGOING] {
+        rtjson_update_branch();
+}
+...
+
+5. JSON Routing Structure
+
+   The format of the JSON document containing routing information.
+
+   Description of the fields in the JSON routing document:
+     * version - intended to enforce versioning checks (not enforced yet),
+       recommended to be set to "1.0".
+     * routing - can be "serial" or "parallel", corresponding to desired
+       routing type: serial or parallel forking.
+     * routes - an array with structures holding the attributes for
+       destinations. The attributes can be:
+          + uri - request URI
+          + dst_uri - outbound proxy URI
+          + path - Path URI vector
+          + socket - local socket
+          + headers - a structure with values for headers From and To
+            specified as display name and URI, plus extra headers to be
+            appended to SIP request. It requires uac module in order to
+            update From and To headers. Set by rtjson_update_branch() only
+            for serial routing.
+          + branch_flags - branch flags. Set by rtjson_update_branch()
+            only for serial routing.
+          + fr_timer - value for fr_timer parameter of tm module. Set by
+            rtjson_update_branch() only for serial routing.
+          + fr_inv_timer - value for fr_inv_timer parameter of tm module.
+            Set by rtjson_update_branch() only for serial routing.
+
+   Other fields can appear in the JSON routing document, being ignored by
+   rtjson functions. They can be processed directly in the configuration
+   files using json or jansson modules. For example, the document can
+   include the transaction identification tuple (index,label) that can be
+   used to resume the execution of a suspended transaction.
+
+   Example 1.6. JSON Routing Structure
+...
+{
+    "version": "1.0",
+    "routing": "serial",
+    "routes": [
+        {
+            "uri": "sip:bob@b.example.org:5060",
+            "dst_uri": "sip:192.0.2.1:5060",
+            "path": "<sip:192.0.2.2:5084>, <sip:192.0.2.2:5086>",
+            "socket": "udp:192.0.2.20:5060",
+            "headers": {
+                "from": {
+                    "display": "Alice",
+                    "uri": "sip:alice@a.example.org"
+                },
+                "to": {
+                    "display": "Bob",
+                    "uri": "sip:bob@b.example.org"
+                },
+                "extra": "X-Hdr-A: abc\r\nX-Hdr-B: bcd\r\n"
+            },
+            "branch_flags": 8,
+            "fr_timer": 5000,
+            "fr_inv_timer": 30000
+        },
+        {
+            "uri": "sip:bob@b.example.org:5060",
+            "dst_uri": "sip:192.0.2.10:5060",
+            "path": "<sip:192.0.2.2:5084>, <sip:192.0.2.2:5086>",
+            "socket": "udp:192.0.2.20:5060",
+            "headers": {
+                "from": {
+                    "display": "Alice",
+                        "uri": "sip:alice@a.example.org"
+                    },
+                    "to": {
+                        "display": "Bob",
+                        "uri": "sip:bob@b.example.org"
+                    },
+                    "extra": "P-Asserted-Identity: <sip:alice@a.example.org>\r\n
+"
+            },
+            "branch_flags": 8,
+            "fr_timer": 5000,
+            "fr_inv_timer": 30000
+        },
+    ]
+}
+...
