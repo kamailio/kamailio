@@ -536,7 +536,8 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
 static int w_xavp_copy(sip_msg_t *msg, char *src_name, char *src_idx, char *dst_name);
-static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx, char *dst_name, char *dst_idx);
+static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx,
+		char *dst_name, char *dst_idx);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
@@ -829,7 +830,8 @@ static int w_xavp_copy(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_d
 /**
  *
  */
-static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_dst_name, char *_dst_idx)
+static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx,
+		char *_dst_name, char *_dst_idx)
 {
 	str src_name;
 	int src_idx;
@@ -850,7 +852,8 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char
 	}
 	sr_xavp_t *src_xavp = xavp_get_by_index(&src_name, src_idx, NULL);
 	if(!src_xavp) {
-		LM_ERR("xavp_copy: missing can not find source xavp [%.*s]\n", src_name.len, src_name.s);
+		LM_ERR("xavp_copy: missing can not find source xavp [%.*s]\n",
+				src_name.len, src_name.s);
 		return -1;
 	}
 
@@ -869,12 +872,14 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char
 		}
 		dst_xavp = xavp_get_by_index(&dst_name, dst_idx, NULL);
 		if(!dst_xavp) {
-			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n", dst_name.len, dst_name.s);
+			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n",
+					dst_name.len, dst_name.s);
 			xavp_destroy_list(&new_xavp);
 			return -1;
 		}
 
-		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s, dst_idx);
+		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n",
+				src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s, dst_idx);
 		if(dst_idx == 0) {
 			if(xavp_add(new_xavp, NULL)<0) {
 				LM_ERR("error adding new xavp\n");
@@ -884,28 +889,32 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char
 		} else {
 			sr_xavp_t *prev_xavp = xavp_get_by_index(&dst_name, dst_idx-1, NULL);
 			if(!prev_xavp) {
-				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n", dst_name.len, dst_name.s, dst_idx);
+				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n",
+						dst_name.len, dst_name.s, dst_idx);
 				xavp_destroy_list(&new_xavp);
 				return -1;
 			}
 			xavp_add_after(new_xavp, prev_xavp);
 		}
 		if(xavp_rm(dst_xavp, NULL)<0) {
-			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n", dst_name.len, dst_name.s, dst_idx);
+			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n",
+					dst_name.len, dst_name.s, dst_idx);
 			return -1;
 		}
 	} else {
 		// Check if destination exist, if it does we will append, similar to XAVP assigment
 		dst_xavp = xavp_get(&dst_name, NULL);
 		if (!dst_xavp) {
-			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
+			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
 			if(xavp_add(new_xavp, NULL)<0) {
 				LM_ERR("error adding new xavp\n");
 				xavp_destroy_list(&dst_xavp);
 				return -1;
 			}
 		} else {
-			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
+			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
 			if(xavp_add_last(new_xavp, &dst_xavp)<0) {
 				LM_ERR("error appending new xavp\n");
 				xavp_destroy_list(&dst_xavp);
