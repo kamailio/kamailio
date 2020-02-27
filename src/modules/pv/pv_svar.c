@@ -239,3 +239,84 @@ void destroy_vars(void)
 	destroy_vars_list(script_vars);
 	destroy_vars_list(script_vars_null);
 }
+
+/**
+ *
+ */
+int ki_var_seti(sip_msg_t *msg, str *vname, int ival)
+{
+	int_str isv;
+	script_var_t *var = NULL;
+
+	var = add_var(vname, VAR_TYPE_ZERO);
+
+	if(var==NULL) {
+		LM_ERR("$var(%.*s) is not defined\n", vname->len, vname->s);
+		return -1;
+	}
+
+	isv.n = ival;
+	if(set_var_value(var, &isv, 0)==NULL) {
+		LM_ERR("error - cannot set $var(%.*s) to ival\n", vname->len, vname->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+int ki_var_sets(sip_msg_t *msg, str *vname, str *sval)
+{
+	int_str isv;
+	script_var_t *var = NULL;
+
+	var = add_var(vname, VAR_TYPE_ZERO);
+
+	if(var==NULL) {
+		LM_ERR("$var(%.*s) is not defined\n", vname->len, vname->s);
+		return -1;
+	}
+
+	isv.s = *sval;
+	if(set_var_value(var, &isv, VAR_VAL_STR)==NULL) {
+		LM_ERR("error - cannot set $var(%.*s) to sval\n", vname->len, vname->s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_var_xval = {0};
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_var_get(sip_msg_t *msg, str *vname)
+{
+	script_var_t *var = NULL;
+
+	memset(&_sr_kemi_var_xval, 0, sizeof(sr_kemi_xval_t));
+
+	var = get_var_by_name(vname);
+	if(var==NULL) {
+		LM_WARN("$var(%.*s) is not defined - return value 0\n",
+				vname->len, vname->s);
+		_sr_kemi_var_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_var_xval.v.n = 0;
+		return &_sr_kemi_var_xval;
+	}
+
+	if(var->v.flags&VAR_VAL_STR) {
+		_sr_kemi_var_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_var_xval.v.s = var->v.value.s;
+		return &_sr_kemi_var_xval;
+	} else {
+		_sr_kemi_var_xval.v.n = var->v.value.n;
+		_sr_kemi_var_xval.vtype = SR_KEMIP_INT;
+		return &_sr_kemi_var_xval;
+	}
+}
