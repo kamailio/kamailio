@@ -822,6 +822,108 @@ static int ki_xavp_print(sip_msg_t* msg)
 /**
  *
  */
+static int ki_xavp_copy_dst_mode(str *src_name, int src_idx, str *dst_name,
+		int dst_idx, int dimode)
+{
+	sr_xavp_t *src_xavp = NULL;
+	sr_xavp_t *dst_xavp = NULL;
+	sr_xavp_t *new_xavp = NULL;
+	sr_xavp_t *prev_xavp = NULL;
+
+	src_xavp = xavp_get_by_index(src_name, src_idx, NULL);
+	if(!src_xavp) {
+		LM_ERR("missing can not find source xavp [%.*s]\n",
+				src_name->len, src_name->s);
+		return -1;
+	}
+
+	LM_DBG("dst_name xavp [%.*s]\n", dst_name->len, dst_name->s);
+	new_xavp = xavp_clone_level_nodata_with_new_name(src_xavp, dst_name);
+	if (!new_xavp) {
+		LM_ERR("error cloning xavp\n");
+		return -1;
+	}
+
+	if (dimode) {
+		dst_xavp = xavp_get_by_index(dst_name, dst_idx, NULL);
+		if(!dst_xavp) {
+			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n",
+					dst_name->len, dst_name->s);
+			xavp_destroy_list(&new_xavp);
+			return -1;
+		}
+
+		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n",
+				src_name->len, src_name->s, src_idx,
+				dst_name->len, dst_name->s, dst_idx);
+		if(dst_idx == 0) {
+			if(xavp_add(new_xavp, NULL)<0) {
+				LM_ERR("error adding new xavp\n");
+				xavp_destroy_list(&new_xavp);
+				return -1;
+			}
+		} else {
+			prev_xavp = xavp_get_by_index(dst_name, dst_idx-1, NULL);
+			if(!prev_xavp) {
+				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n",
+						dst_name->len, dst_name->s, dst_idx);
+				xavp_destroy_list(&new_xavp);
+				return -1;
+			}
+			xavp_add_after(new_xavp, prev_xavp);
+		}
+		if(xavp_rm(dst_xavp, NULL)<0) {
+			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n",
+					dst_name->len, dst_name->s, dst_idx);
+			return -1;
+		}
+	} else {
+		/* check if destination exists,
+		 * if it does we will append, similar to XAVP assigment */
+		dst_xavp = xavp_get(dst_name, NULL);
+		if (!dst_xavp) {
+			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name->len, src_name->s, src_idx, dst_name->len,
+					dst_name->s);
+			if(xavp_add(new_xavp, NULL)<0) {
+				LM_ERR("error adding new xavp\n");
+				xavp_destroy_list(&dst_xavp);
+				return -1;
+			}
+		} else {
+			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name->len, src_name->s, src_idx,
+					dst_name->len, dst_name->s);
+			if(xavp_add_last(new_xavp, &dst_xavp)<0) {
+				LM_ERR("error appending new xavp\n");
+				xavp_destroy_list(&dst_xavp);
+				return -1;
+			}
+		}
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_copy(sip_msg_t *msg, str *src_name, int src_idx, str *dst_name)
+{
+	return ki_xavp_copy_dst_mode(src_name, src_idx, dst_name, 0, 0);
+}
+
+/**
+ *
+ */
+static int ki_xavp_copy_dst(sip_msg_t *msg, str *src_name, int src_idx,
+		str *dst_name, int dst_idx)
+{
+	return ki_xavp_copy_dst_mode(src_name, src_idx, dst_name, dst_idx, 0);
+}
+
+/**
+ *
+ */
 static int w_xavp_copy(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_dst_name)
 {
 	return w_xavp_copy_dst(msg, _src_name, _src_idx, _dst_name, NULL);
@@ -837,6 +939,7 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx,
 	int src_idx;
 	str dst_name;
 	int dst_idx;
+	int dimode;
 
 	if(get_str_fparam(&src_name, msg, (gparam_p)_src_name) != 0) {
 		LM_ERR("xavp_copy: missing source\n");
@@ -850,79 +953,17 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx,
 		LM_ERR("failed to get the src_idx value\n");
 		return -1;
 	}
-	sr_xavp_t *src_xavp = xavp_get_by_index(&src_name, src_idx, NULL);
-	if(!src_xavp) {
-		LM_ERR("xavp_copy: missing can not find source xavp [%.*s]\n",
-				src_name.len, src_name.s);
-		return -1;
-	}
-
-	sr_xavp_t *dst_xavp = NULL;
-	LM_DBG("xavp_copy: dst_name xavp [%.*s]\n", dst_name.len, dst_name.s);
-	sr_xavp_t *new_xavp = xavp_clone_level_nodata_with_new_name(src_xavp, &dst_name);
-	if (!new_xavp) {
-		LM_ERR("error cloning xavp\n");
-		return -1;
-	}
-
+	dst_idx = 0;
 	if (_dst_idx) {
 		if(get_int_fparam(&dst_idx, msg, (gparam_t*)_dst_idx)<0) {
 			LM_ERR("failed to get the dst_idx value\n");
 			return -1;
 		}
-		dst_xavp = xavp_get_by_index(&dst_name, dst_idx, NULL);
-		if(!dst_xavp) {
-			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n",
-					dst_name.len, dst_name.s);
-			xavp_destroy_list(&new_xavp);
-			return -1;
-		}
-
-		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n",
-				src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s, dst_idx);
-		if(dst_idx == 0) {
-			if(xavp_add(new_xavp, NULL)<0) {
-				LM_ERR("error adding new xavp\n");
-				xavp_destroy_list(&new_xavp);
-				return -1;
-			}
-		} else {
-			sr_xavp_t *prev_xavp = xavp_get_by_index(&dst_name, dst_idx-1, NULL);
-			if(!prev_xavp) {
-				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n",
-						dst_name.len, dst_name.s, dst_idx);
-				xavp_destroy_list(&new_xavp);
-				return -1;
-			}
-			xavp_add_after(new_xavp, prev_xavp);
-		}
-		if(xavp_rm(dst_xavp, NULL)<0) {
-			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n",
-					dst_name.len, dst_name.s, dst_idx);
-			return -1;
-		}
+		dimode = 1;
 	} else {
-		// Check if destination exist, if it does we will append, similar to XAVP assigment
-		dst_xavp = xavp_get(&dst_name, NULL);
-		if (!dst_xavp) {
-			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
-					src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
-			if(xavp_add(new_xavp, NULL)<0) {
-				LM_ERR("error adding new xavp\n");
-				xavp_destroy_list(&dst_xavp);
-				return -1;
-			}
-		} else {
-			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
-					src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
-			if(xavp_add_last(new_xavp, &dst_xavp)<0) {
-				LM_ERR("error appending new xavp\n");
-				xavp_destroy_list(&dst_xavp);
-				return -1;
-			}
-		}
+		dimode = 0;
 	}
-	return 1;
+	return ki_xavp_copy_dst_mode(&src_name, src_idx, &dst_name, dst_idx, dimode);
 }
 
 /**
@@ -1919,6 +1960,16 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		SR_KEMIP_INT, ki_avp_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_copy"),
+		SR_KEMIP_INT, ki_xavp_copy,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_copy_dst"),
+		SR_KEMIP_INT, ki_xavp_copy_dst,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
