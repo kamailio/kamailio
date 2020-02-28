@@ -314,6 +314,25 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 		</example>
 		</section>
 
+	<section>
+		<title><varname>include_req_uri</varname> (int)</title>
+		<para>
+			controls if R-URI is going to be used instead of To header value in
+			the PUBLISH as "identity" on "remote" node.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>. Disabled</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>include_req_uri</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "include_req_uri", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 		<section>
 		<title><varname>caller_confirmed</varname> (int)</title>
 		<para>
