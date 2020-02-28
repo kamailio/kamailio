@@ -282,7 +282,7 @@ static int child_init(int rank)
 			LM_DBG("starting worker process %d\n", i);
 			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
 			if(newpid < 0) {
-				LM_ERR("failed to form process\n");
+				LM_ERR("failed to fork process\n");
 				return -1;
 			} else if(newpid == 0) {
 				/* child - this will loop forever */
