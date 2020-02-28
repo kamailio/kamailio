@@ -546,8 +546,9 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		if (rpc->scan(c, "d", &ival) != 1) {
 			rpc->fault(c, 500, "Missing integer parameter value (Parameters: varname type value)");
 			return;
-	}
+		}
 		isv.n = ival;
+		LM_DBG("setting %.*s to int %d\n", varname.len, varname.s, ival);
 	} else  if (strcasecmp(type.s, "str") == 0 ) {
 		/* String value */
 		if (rpc->scan(c, "S", &value) != 1) {
@@ -556,6 +557,8 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		}
 		isv.s = value;
 		flags = VAR_VAL_STR;
+		LM_DBG("setting %.*s to str %.*s\n", varname.len, varname.s,
+				value.len, value.s);
 	} else {
 		rpc->fault(c, 500, "Unknown parameter type (Types: int or str)");
 		return;
