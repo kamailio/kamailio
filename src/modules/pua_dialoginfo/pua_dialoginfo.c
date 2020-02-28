@@ -87,6 +87,7 @@ static str caller_dlg_var = {0, 0}; /* pubruri_caller */
 static str callee_dlg_var = {0, 0}; /* pubruri_callee */
 static str caller_entity_when_publish_disabled = {0, 0}; /* pubruri_caller */
 static str callee_entity_when_publish_disabled = {0, 0}; /* pubruri_callee */
+static str local_identity_dlg_var = STR_NULL;
 
 /* Module parameter variables */
 int include_callid         = DEF_INCLUDE_CALLID;
@@ -132,6 +133,7 @@ static param_export_t params[]={
 	{"pubruri_callee_avp",  PARAM_STRING, &pubruri_callee_avp },
 	{"pubruri_caller_dlg_var",  PARAM_STR, &caller_dlg_var },
 	{"pubruri_callee_dlg_var",  PARAM_STR, &callee_dlg_var },
+	{"local_identity_dlg_var",  PARAM_STR, &local_identity_dlg_var },
 	{"callee_trying",       INT_PARAM, &callee_trying },
 	{"disable_caller_publish_flag",   INT_PARAM, &disable_caller_publish_flag },
 	{"disable_callee_publish_flag",   INT_PARAM, &disable_callee_publish_flag },
@@ -312,6 +314,17 @@ void refresh_pubruri_avps(struct dlginfo_cell *dlginfo, str *uri)
 	}
 }
 
+void refresh_local_identity(struct dlg_cell *dlg, str *uri) {
+	str *s = dlg_api.get_dlg_var(dlg, &local_identity_dlg_var);
+
+	if(s != NULL) {
+		uri->s = s->s;
+		uri->len = s->len;
+		LM_DBG("Found local_identity in dialog '%.*s'\n",
+				uri->len, uri->s);
+	}
+}
+
 static void
 __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
@@ -355,6 +368,10 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	{
 		lock_get(&dlginfo->lock);
 		refresh_pubruri_avps(dlginfo, &uri);
+	}
+
+	if(local_identity_dlg_var.len > 0) {
+		refresh_local_identity(dlg, &uri);
 	}
 
 	switch (type) {

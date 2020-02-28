@@ -620,6 +620,25 @@ modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
                 </example>
                 </section>
 
+		<section id="pua_dialoginfo.p.local_identity_dlg_var">
+		<title><varname>local_identity_dlg_var</varname> (str)</title>
+		<para>
+			PUBLISH-requests reporting dialog-information will use the value of
+			the dialog variable if exists
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>local_identity_dlg_var</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "local_identity_dlg_var", "local_identity")
+...
+</programlisting>
+		</example>
+		</section>
+
         <section id="pua_dialoginfo.p.attribute_display">
             <title><varname>attribute_display</varname> (int)</title>
             <para>
