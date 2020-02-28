@@ -11,9 +11,15 @@ void pdb_msg_dbg(struct pdb_msg msg) {
     LERR("id = %d\n", msg.hdr.id);
     LERR("len = %d\n", msg.hdr.length);
     LERR("payload = ");
-    for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
-        LERR("%02X ", msg.bdy.payload[i]);
+
+    if(msg.hdr.length > sizeof(msg.hdr)) {
+        for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
+            LERR("%02X ", msg.bdy.payload[i]);
+        }
+    } else {
+        LERR("Incorrect value in msg.hdr.length \n");
     }
+
     LERR("\n");
 
     return ;
