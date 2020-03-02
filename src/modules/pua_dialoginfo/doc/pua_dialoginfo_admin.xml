@@ -497,7 +497,7 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 		</section>
 		
 		<section id="pua_dialoginfo.p.pubruri_callee_dlg_var">
-		<title><varname>pubruri_callee_dlg_var</varname> (int)</title>
+		<title><varname>pubruri_callee_dlg_var</varname> (str)</title>
 		<para>
 			Must be set to the name of dialog variable where to store
 			the URI for callee, used to send the notifications. This is needed
