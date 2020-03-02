@@ -100,15 +100,10 @@ void destroy_dlg_callbacks(unsigned int types)
 	}
 }
 
-int register_dlgcb_nodlg(str *callid, str *ftag, str *ttag, 
-                        int types, dialog_cb f,
+
+int register_dlgcb_nodlg(struct dlg_cell *dlg, int types, dialog_cb f,
                         void *param, param_free_cb ff )
 {
-    struct dlg_cell *dlg;
-    
-    unsigned int dir = DLG_DIR_NONE;
-    dlg = get_dlg(callid, ftag, ttag, &dir); //increments ref count!
-    
     if (!dlg) {
         LM_ERR("Can't find dialog to register callback\n");
         return -1;
