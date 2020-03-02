@@ -435,7 +435,7 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 		</section>
 		
 		<section>
-		<title><varname>pubruri_caller_avp</varname> (int)</title>
+		<title><varname>pubruri_caller_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.  
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
@@ -455,7 +455,7 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 		</section>
 		
 		<section>
-		<title><varname>pubruri_callee_avp</varname> (int)</title>
+		<title><varname>pubruri_callee_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.  
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
