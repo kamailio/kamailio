@@ -48,10 +48,10 @@ Phil Lavin
               5.8. disable_caller_publish_flag (int)
               5.9. disable_callee_publish_flag (int)
               5.10. use_pubruri_avps (int)
-              5.11. pubruri_caller_avp (int)
-              5.12. pubruri_callee_avp (int)
+              5.11. pubruri_caller_avp (str)
+              5.12. pubruri_callee_avp (str)
               5.13. pubruri_caller_dlg_var (str)
-              5.14. pubruri_callee_dlg_var (int)
+              5.14. pubruri_callee_dlg_var (str)
               5.15. callee_trying (int)
 
         6. Functions
@@ -98,10 +98,10 @@ Chapter 1. Admin Guide
         5.8. disable_caller_publish_flag (int)
         5.9. disable_callee_publish_flag (int)
         5.10. use_pubruri_avps (int)
-        5.11. pubruri_caller_avp (int)
-        5.12. pubruri_callee_avp (int)
+        5.11. pubruri_caller_avp (str)
+        5.12. pubruri_callee_avp (str)
         5.13. pubruri_caller_dlg_var (str)
-        5.14. pubruri_callee_dlg_var (int)
+        5.14. pubruri_callee_dlg_var (str)
         5.15. callee_trying (int)
 
    6. Functions
@@ -281,10 +281,10 @@ Chapter 1. Admin Guide
    5.8. disable_caller_publish_flag (int)
    5.9. disable_callee_publish_flag (int)
    5.10. use_pubruri_avps (int)
-   5.11. pubruri_caller_avp (int)
-   5.12. pubruri_callee_avp (int)
+   5.11. pubruri_caller_avp (str)
+   5.12. pubruri_callee_avp (str)
    5.13. pubruri_caller_dlg_var (str)
-   5.14. pubruri_callee_dlg_var (int)
+   5.14. pubruri_callee_dlg_var (str)
    5.15. callee_trying (int)
 
 5.1. include_callid (int)
@@ -422,7 +422,7 @@ modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
 modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 ...
 
-5.11. pubruri_caller_avp (int)
+5.11. pubruri_caller_avp (str)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the caller (entity=caller) are sent using the
@@ -438,7 +438,7 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 ...
 
-5.12. pubruri_callee_avp (int)
+5.12. pubruri_callee_avp (str)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the callee (entity=callee) are sent using the
@@ -468,7 +468,7 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 ...
 
-5.14. pubruri_callee_dlg_var (int)
+5.14. pubruri_callee_dlg_var (str)
 
    Must be set to the name of dialog variable where to store the URI for
    callee, used to send the notifications. This is needed to restored the
