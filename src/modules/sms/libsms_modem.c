@@ -35,7 +35,6 @@ mailto:s.frings@mail.isis.de
 #define optz(_n,_l)     (buf+buf_len-(((_n)+(_l)>buf_len)?buf_len:(_n)+(_l)))
 
 /* global variables */
-int         sms_report_type;
 cds_report  cds_report_func;
 
 
