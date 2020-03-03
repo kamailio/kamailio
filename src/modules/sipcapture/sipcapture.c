@@ -294,7 +294,7 @@ enum hash_source source = hs_error;
 
 //unsigned int rr_idx = 0;
 
-struct hep_timeinfo *heptime;
+struct hep_timeinfo *heptime = NULL;
 
 /*! \brief
  * Exported functions
