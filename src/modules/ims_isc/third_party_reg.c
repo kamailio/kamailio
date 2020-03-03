@@ -45,7 +45,7 @@
 
 #include "third_party_reg.h"
 
-usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
+extern usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
 
 /*! \brief
  * Combines all Path HF bodies into one string.
