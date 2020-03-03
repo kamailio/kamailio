@@ -3387,8 +3387,14 @@ cmd:
 	}
 	| CFG_RESET error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| CFG_RESET LPAREN error RPAREN { $$=0; yyerror("bad arguments, string expected"); }
-	| ID {mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST,
-			0); } LPAREN func_params RPAREN	{
+	| ID {
+		if (mod_func_action != NULL) {
+			LM_ERR("function used inside params of another function: %s\n", $1);
+			yyerror("use of function execution inside params not allowed\n");
+			exit(-1);
+		}
+		mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0);
+		} LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data =
 			find_export_record($1, mod_func_action->val[1].u.number, rt);
 		if (mod_func_action->val[0].u.data == 0) {
@@ -3412,6 +3418,7 @@ cmd:
 		}
 		$$ = mod_func_action;
 		set_cfg_pos($$);
+		mod_func_action = NULL;
 	}
 	| ID error					{ yyerror("'('')' expected (function call)");}
 	;
