@@ -47,9 +47,9 @@
 #include "../../core/counters.h"
 #include "ims_auth_mod.h"
 
-stat_var* stat_mar_timeouts;
-stat_var* mar_replies_received;
-stat_var* mar_replies_response_time;
+extern stat_var* stat_mar_timeouts;
+extern stat_var* mar_replies_received;
+extern stat_var* mar_replies_response_time;
 
 int register_stats();
 unsigned long get_avg_mar_response_time();
