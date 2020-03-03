@@ -806,11 +806,14 @@ int set_path_vector(struct sip_msg* msg, str* path)
 
 void reset_path_vector(struct sip_msg* const msg)
 {
-	if (msg->path_vec.s) {
-		pkg_free(msg->path_vec.s);
+	if (!shm_address_in(msg->path_vec.s)) {
+		if (msg->path_vec.s)
+			pkg_free(msg->path_vec.s);
+		msg->path_vec.s = 0;
+		msg->path_vec.len = 0;
+	} else {
+		LM_WARN("Found path_vec that is not in pkg mem!\n");
 	}
-	msg->path_vec.s = 0;
-	msg->path_vec.len = 0;
 }
 
 
