@@ -136,21 +136,21 @@ extern char* yy_number_str;
 
 static void yyerror(char* s, ...);
 static void yyerror_at(struct cfg_pos* pos, char* s, ...);
-static char* tmp;
-static int i_tmp;
-static struct socket_id* lst_tmp;
-static struct name_lst*  nl_tmp;
-static int rt;  /* Type of route block for find_export */
-static str* str_tmp;
-static str s_tmp;
-static struct ip_addr* ip_tmp;
-static struct avp_spec* s_attr;
+static char* tmp = NULL;
+static int i_tmp = 0;
+static struct socket_id* lst_tmp = NULL;
+static struct name_lst* nl_tmp = NULL;
+static int rt = 0;  /* Type of route block for find_export */
+static str* str_tmp = NULL;
+static str s_tmp = STR_NULL;
+static struct ip_addr* ip_tmp = NULL;
+static struct avp_spec* s_attr = NULL;
 static select_t sel;
-static select_t* sel_ptr;
-static pv_spec_t* pv_spec;
-static struct action *mod_func_action;
-static struct lvalue* lval_tmp;
-static struct rvalue* rval_tmp;
+static select_t* sel_ptr = NULL;
+static pv_spec_t* pv_spec = NULL;
+static struct action *mod_func_action = NULL;
+static struct lvalue* lval_tmp = NULL;
+static struct rvalue* rval_tmp = NULL;
 
 static void warn(char* s, ...);
 static void warn_at(struct cfg_pos* pos, char* s, ...);
@@ -167,7 +167,7 @@ static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
 static void free_name_lst(struct name_lst* lst);
 static void free_socket_id_lst(struct socket_id* i);
 
-static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re, 
+static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re,
 									struct action* a, int* err);
 static int case_check_type(struct case_stms* stms);
 static int case_check_default(struct case_stms* stms);
