@@ -37,7 +37,7 @@
 
 static int count = 0;
 
-struct hep_timeinfo *heptime;
+extern struct hep_timeinfo *heptime;
 
 /* HEPv2 HEPv3 */
 int hepv2_received(char *buf, unsigned int len, struct receive_info *ri);
