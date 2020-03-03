@@ -62,6 +62,10 @@
 
 MODULE_VERSION
 
+stat_var* stat_mar_timeouts = NULL;
+stat_var* mar_replies_received = NULL;
+stat_var* mar_replies_response_time = NULL;
+
 static void destroy(void);
 static int mod_init(void);
 
