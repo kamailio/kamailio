@@ -65,10 +65,10 @@ typedef struct {
 	pid_list_t *head,*tail;
 } pid_list_head_t;
 
-pid_t *dp_first_pid;		/**< first pid that we started from		*/
+extern pid_t *dp_first_pid;		/**< first pid that we started from		*/
 
-pid_list_head_t *pid_list;	/**< list of local processes			*/
-gen_lock_t *pid_list_lock;	/**< lock for list of local processes	*/
+extern pid_list_head_t *pid_list;	/**< list of local processes			*/
+extern gen_lock_t *pid_list_lock;	/**< lock for list of local processes	*/
 
 int diameter_peer_init_str(str config_str);
 int diameter_peer_init(char *cfg_filename);
