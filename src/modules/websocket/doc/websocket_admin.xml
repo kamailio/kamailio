@@ -499,7 +499,7 @@ modparam("websocket", "timer_interval", 5)
 		</para>
 		<para><emphasis>Default value is 5.</emphasis></para>
 		<example>
-		<title>Set <varname>rm_timer_interval</varname>parameter</title>
+		<title>Set <varname>rm_delay_interval</varname>parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("websocket", "rm_delay_interval", 2)
