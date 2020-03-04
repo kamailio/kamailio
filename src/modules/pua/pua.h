@@ -48,7 +48,7 @@ extern str outbound_proxy;
 extern int check_remote_contact;
 extern int dbmode;
 
-int reginfo_increase_version;
+extern int reginfo_increase_version;
 
 extern int update_pua(ua_pres_t* p);
 extern int clean_puadb( int update_period, int min_expires );
