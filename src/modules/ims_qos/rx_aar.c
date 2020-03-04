@@ -71,7 +71,7 @@
 #define macro_name(_rc)	#_rc
 
 //extern struct tm_binds tmb;
-usrloc_api_t ul;
+extern usrloc_api_t ul;
 
 extern struct ims_qos_counters_h ims_qos_cnts_h;
 
