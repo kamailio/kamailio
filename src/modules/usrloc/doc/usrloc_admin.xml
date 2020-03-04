@@ -456,6 +456,26 @@ modparam("usrloc", "instance_column", "myinstance")
 		</example>
 	</section>
 
+	<section id="usrloc.p.reg_id_column">
+		<title><varname>reg_id_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for reg-id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>reg_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reg_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "reg_id_column", "r_id")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.server_id_column">
 		<title><varname>server_id_column</varname> (string)</title>
 		<para>
@@ -527,7 +547,7 @@ modparam("usrloc", "keepalive_column", "kalive")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>partitioncolumn</varname> parameter</title>
+		<title>Set <varname>partition_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "partition_column", "part")

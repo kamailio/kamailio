@@ -69,7 +69,7 @@
 	<title><varname>acc_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account a transaction in acc_json.
-		See output_mqueue and output_syslog
+		See acc_output_mqueue and acc_output_syslog
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -88,7 +88,7 @@ modparam("acc_json", "acc_flag", 2)
 		<title><varname>acc_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed calls in acc_json.
-		See output_mqueue and output_syslog
+		See acc_output_mqueue and acc_output_syslog
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -181,8 +181,8 @@ modparam("acc_json", "acc_time_format", "%Y/%m/%d %H:%M:%S")
 		</example>
 	</section>
 
-	<section id="acc_json.p.output_mqueue">
-		<title><varname>output_mqueue</varname> (integer)</title>
+	<section id="acc_json.p.acc_output_mqueue">
+		<title><varname>acc_output_mqueue</varname> (integer)</title>
 		<para>
                 Requires the mqueue module.
                 The acc module will queue json acc events in the specified mqueue.
@@ -195,13 +195,13 @@ modparam("acc_json", "acc_time_format", "%Y/%m/%d %H:%M:%S")
 		Default value is not-set mqueue will not be required.
 		</para>
 		<example>
-		<title>output_mqueue usage example</title>
+		<title>acc_output_mqueue usage example</title>
 		<programlisting format="linespecific">
 ...
 # example using json_mqueue/http_client to publish to NSQD
 max_while_loops=100000
 modparam("mqueue", "mqueue", "name=acc_events;size=100000")
-modparam("acc_json", "output_mqueue", "acc_events")
+modparam("acc_json", "acc_output_mqueue", "acc_events")
 modparam("acc_json", "acc_flag", 2)
 modparam("acc_json", "acc_extra", "caller_ip_port=$avp(caller_ip_port);")
 modparam("rtimer", "timer", "name=nsqt;interval=1;mode=1;")
@@ -234,8 +234,8 @@ route[RUN_ACC_PUBLISH] {
 		</example>
 	</section>	
 	
-	<section id="acc_json.p.output_syslog">
-		<title><varname>output_syslog</varname> (integer)</title>
+	<section id="acc_json.p.acc_output_syslog">
+		<title><varname>acc_output_syslog</varname> (integer)</title>
 		<para>
 		Control if the output of acc json should be sent to syslog.
                 This is not dependent on Kamailio global logging settings,
@@ -246,10 +246,10 @@ route[RUN_ACC_PUBLISH] {
 		Default value is not-set (no flag).
 		</para>
 		<example>
-		<title>output_syslog example</title>
+		<title>acc_output_syslog example</title>
 		<programlisting format="linespecific">
 ...
-modparam("acc_json", "output_syslog", 1)
+modparam("acc_json", "acc_output_syslog", 1)
 modparam("acc_json", "acc_log_level", 2)
 modparam("acc_json", "acc_log_facility", "LOG_DAEMON")
 ...
@@ -408,8 +408,13 @@ route[RUN_CDR_PUBLISH] {
 </programlisting>
 		</example>
 	</section>
-	
-<section id="acc_json.p.cdr_log_facility">
+	<section id="acc_json.p.cdr_output_syslog">
+		<title><varname>cdr_output_syslog</varname> (integer)</title>
+		<para>
+                The acc module will log json cdr events to syslog.
+		</para>
+	</section>
+	<section id="acc_json.p.cdr_log_facility">
 		<title><varname>cdr_log_facility</varname> (integer)</title>
 		<para>
 		Log facility to which accounting messages are issued to syslog.

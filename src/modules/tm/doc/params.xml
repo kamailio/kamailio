@@ -1440,7 +1440,7 @@ end
 	</section>
 
 	<section id="tm.p.event_callback_lres_sent">
-		<title><varname>event_callback_lres</varname> (str)</title>
+		<title><varname>event_callback_lres_sent</varname> (str)</title>
 		<para>
 			The name of the function in the kemi configuration file (embedded
 			scripting language such as Lua, Python, ...) to be executed instead
