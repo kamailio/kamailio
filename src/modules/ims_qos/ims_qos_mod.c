@@ -75,7 +75,11 @@
 
 MODULE_VERSION
 
-		extern gen_lock_t* process_lock; /* lock on the process table */
+extern gen_lock_t* process_lock; /* lock on the process table */
+
+stat_var* stat_aar_timeouts;
+stat_var* aar_replies_received;
+stat_var* aar_replies_response_time;
 
 str orig_session_key = str_init("originating");
 str term_session_key = str_init("terminating");
