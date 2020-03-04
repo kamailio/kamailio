@@ -73,7 +73,7 @@ Daniel-Constantin Mierla
               3.44. dns_reuse_rcv_socket (boolean)
               3.45. xavp_contact (string)
               3.46. event_callback (str)
-              3.47. event_callback_lres (str)
+              3.47. event_callback_lres_sent (str)
               3.48. relay_100 (str)
               3.49. rich_redirect (int)
 
@@ -328,7 +328,7 @@ Chapter 1. Admin Guide
         3.44. dns_reuse_rcv_socket (boolean)
         3.45. xavp_contact (string)
         3.46. event_callback (str)
-        3.47. event_callback_lres (str)
+        3.47. event_callback_lres_sent (str)
         3.48. relay_100 (str)
         3.49. rich_redirect (int)
 
@@ -700,7 +700,7 @@ failure_route["serial"]
    3.44. dns_reuse_rcv_socket (boolean)
    3.45. xavp_contact (string)
    3.46. event_callback (str)
-   3.47. event_callback_lres (str)
+   3.47. event_callback_lres_sent (str)
    3.48. relay_100 (str)
    3.49. rich_redirect (int)
 
@@ -1632,7 +1632,7 @@ function ksr_tm_event(evname)
 end
 ...
 
-3.47. event_callback_lres (str)
+3.47. event_callback_lres_sent (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
