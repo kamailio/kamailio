@@ -90,7 +90,7 @@ as "Subject" in the generated commit emails and it will also be used when
 generating the Changelog (e.g. git log --pretty=oneline).
 
 
-The first line (subjecthas to contain meaningful text about what that commit
+The first line (subject has to contain meaningful text about what that commit
 does, do not put just a reference to bug tracker or pull request items
 
 Please start always with the prefix of the component (subsystem) that is modified
