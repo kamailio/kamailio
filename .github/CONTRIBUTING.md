@@ -75,13 +75,20 @@ Please create the commit messages following the GIT convention:
   * start with one short line, preferably less then 50 chars summarizing the
   changes (this is referred later as "first line of the commit message")
   * then one empty line
-  * then a more detailed description
+  * then a more detailed description (the "commit message content")
+
+#### First Line Of The Commit Message ####
 
 Think of the first line as of an email "Subject" line. In fact it will be used
 as "Subject" in the generated commit emails and it will also be used when
 generating the Changelog (e.g. git log --pretty=oneline).
 
-Please start always with the prefix of the component (subsystem) that is modified by the commit, for example:
+
+The first line (subjecthas to contain meaningful text about what that commit
+does, do not put just a reference to bug tracker or pull request items
+
+Please start always with the prefix of the component (subsystem) that is modified
+by the commit, for example:
   * `core`: more fixup helper functions
     * `core`: tcp - support for haproxy protocol
     * `core`: mem - added faster malloc
@@ -90,13 +97,19 @@ Please start always with the prefix of the component (subsystem) that is modifie
   * `lib`: srutils - critical bug fix for abc case
   * `kamctl`: added support for management of module xyz
 
+At the end of the first line some CI flags can be added. Available at this
+moment:
+
+  * `[skip ci]` - skip continous integration builds for source code, recommended
+  to be added when updating documentation, example configs or other utilities.
+  Example:
+    * `msilo: docs - updated example for m_dump() function [skip ci]`
+
 #### Commit Message Content ####
 
-  * first line (subject line) has to contain meaningful text about what that commit
-  does, do not put just a reference to bug tracker or pull request items
-  * commit message must describe the changes done by the patch
+* commit message must describe the changes done by the patch
     * other details (e.g., how to reproduce, backtrace, sip packets, ...) belong
-    to content (comments) of the pull request. Example:
+    to content (comments) of the pull request. Example of a full commit message:
 ```
 core: added latency_limit_cfg global parameter
 
