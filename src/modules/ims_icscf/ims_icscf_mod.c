@@ -63,6 +63,13 @@ cdp_avp_bind_t *cdp_avp;
 sl_api_t slb;
 
 
+stat_var* stat_uar_timeouts = NULL;
+stat_var* stat_lir_timeouts = NULL;
+stat_var* uar_replies_received = NULL;
+stat_var* lir_replies_received = NULL;
+stat_var* uar_replies_response_time = NULL;
+stat_var* lir_replies_response_time = NULL;
+
 //module parameters
 char* ims_icscf_db_url="mysql://icscf:heslo@localhost/hssdata";     /**< DB URL */
 char* ims_icscf_db_nds_table="nds_trusted_domains";                         /**< NDS table in DB */
