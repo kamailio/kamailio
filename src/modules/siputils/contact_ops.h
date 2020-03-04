@@ -64,6 +64,9 @@ struct uri_format
 
 typedef struct uri_format contact_fields_t;
 
+int ki_encode_contact (sip_msg_t *msg, str *eprefix, str *eaddr);
+int ki_decode_contact(sip_msg_t *msg);
+int ki_decode_contact_header(sip_msg_t *msg);
 
 int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
 int decode_contact (struct sip_msg *msg, char *unused1,char *unused2);

@@ -44,7 +44,7 @@
 #include <string.h>
 
 
-int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
+int ki_encode_contact (sip_msg_t *msg, str *eprefix, str *eaddr)
 {
 	contact_body_t *cb;
 	contact_t *c;
@@ -85,7 +85,7 @@ int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	/* we visit each contact */
 	if(c != NULL) {
 		uri = c->uri;
-		res = encode_uri(uri, encoding_prefix, public_ip, separator, &newUri);
+		res = encode_uri(uri, eprefix->s, eaddr->s, separator, &newUri);
 
 		if(res != 0) {
 			LM_ERR("failed encoding contact.Code %d\n", res);
@@ -103,8 +103,7 @@ int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 			c = c->next;
 			uri = c->uri;
 
-			res = encode_uri(
-					uri, encoding_prefix, public_ip, separator, &newUri);
+			res = encode_uri(uri, eprefix->s, eaddr->s, separator, &newUri);
 			if(res != 0) {
 				LM_ERR("failed encode_uri.Code %d\n", res);
 #ifdef STRICT_CHECK
@@ -121,8 +120,20 @@ int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	return 1;
 }
 
-	int
-decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
+int encode_contact(sip_msg_t *msg, char *encoding_prefix, char *public_ip)
+{
+	str eprefix = STR_NULL;
+	str eaddr = STR_NULL;
+
+	eprefix.s = encoding_prefix;
+	eprefix.len = strlen(eprefix.s);
+	eaddr.s = public_ip;
+	eaddr.len = strlen(eaddr.s);
+
+	return ki_encode_contact(msg, &eprefix, &eaddr);
+}
+
+int ki_decode_contact(sip_msg_t *msg)
 {
 
 	str uri;
@@ -177,8 +188,12 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	return 1;
 }
 
-	int
-decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
+int decode_contact(sip_msg_t *msg, char *unused1, char *unused2)
+{
+	return ki_decode_contact(msg);
+}
+
+int ki_decode_contact_header(sip_msg_t *msg)
 {
 
 	contact_body_t *cb;
@@ -255,6 +270,10 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 }
 
 
+int decode_contact_header(sip_msg_t *msg, char *unused1, char *unused2)
+{
+	return ki_decode_contact_header(msg);
+}
 
 
 	int
