@@ -596,6 +596,7 @@ void tm_clean_lifetime(void)
 {
 	int r;
 	tm_cell_t *tcell;
+	tm_cell_t *bcell;
 	ticks_t texp;
 
 	texp = get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
@@ -612,7 +613,7 @@ void tm_clean_lifetime(void)
 			continue;
 		}
 
-		clist_foreach(&_tm_table->entries[r], tcell, next_c)
+		clist_foreach_safe(&_tm_table->entries[r], tcell, bcell, next_c)
 		{
 			if(TICKS_GT(texp, tcell->end_of_life)) {
 				tm_log_transaction(tcell, L_WARN, "[hard cleanup]");
