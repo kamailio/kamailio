@@ -55,7 +55,7 @@
 #include "../../core/locking.h"
 
 struct cdp_binds cdpb;
-cdp_avp_bind_t *cdp_avp;
+extern cdp_avp_bind_t *cdp_avp;
 
 /*this is the parcel to pass for CDP async for AAR*/
 typedef struct saved_transaction {

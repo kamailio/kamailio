@@ -64,8 +64,8 @@ struct AAA_AVP_List;
 struct AAAMessage;
 enum dialog_direction;
 
-int audio_default_bandwidth;
-int video_default_bandwidth;
+extern int audio_default_bandwidth;
+extern int video_default_bandwidth;
 
 
 /*helper*/

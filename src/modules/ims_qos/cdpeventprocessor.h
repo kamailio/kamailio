@@ -67,8 +67,8 @@ typedef struct {
 	int size;
 } cdp_cb_event_list_t;
 
-str early_qosrelease_reason;
-str confirmed_qosrelease_headers;
+extern str early_qosrelease_reason;
+extern str confirmed_qosrelease_headers;
 
 int init_cdp_cb_event_list();
 void destroy_cdp_cb_event_list();
