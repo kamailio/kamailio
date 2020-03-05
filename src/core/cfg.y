@@ -2893,7 +2893,7 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr rve_cmpop rval_expr %prec GT { $$=mk_rve2( $2, $1, $3);}
 		| rval_expr rve_equalop rval_expr %prec EQUAL_T {
 			/* comparing with $null => treat as defined or !defined */
-			if($3->op==RVE_RVAL_OP && $3->left.rval.type==RV_PVAR
+			if($3 != NULL && $3->op==RVE_RVAL_OP && $3->left.rval.type==RV_PVAR
 					&& $3->left.rval.v.pvs.type==PVT_NULL) {
 				if($2==RVE_DIFF_OP || $2==RVE_IDIFF_OP
 						|| $2==RVE_STRDIFF_OP) {
