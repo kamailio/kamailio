@@ -2641,7 +2641,7 @@ attr_mark:
 	ATTR_MARK {
 		s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
 		if (!s_attr) { yyerror("No memory left"); YYABORT; }
-		else { memset(s_attr, 0, (sizeof(struct avp_spec))); s_attr->type = 0; }
+		else { memset(s_attr, 0, (sizeof(struct avp_spec))); }
 	}
 	;
 attr_id:
