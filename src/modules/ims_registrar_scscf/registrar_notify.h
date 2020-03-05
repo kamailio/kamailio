@@ -96,13 +96,15 @@ typedef struct {
 } reg_notification_list;
 
 /** Events for subscriptions */
-enum {
+typedef enum {
     IMS_EVENT_NONE, /**< Generic, no event					*/
     IMS_EVENT_REG /**< Registration event					*/
-} IMS_Events;
+} IMS_Events_enum_t;
+
+extern IMS_Events_enum_t IMS_Events;
 
 /** Event types for "reg" to generated notifications after */
-enum {
+typedef enum {
     IMS_REGISTRAR_NONE, /**< no event - donothing 							*/
     IMS_REGISTRAR_SUBSCRIBE, /**< Initial SUBSCRIBE - just send all data - this should not be treated though */
     IMS_REGISTRAR_UNSUBSCRIBE, /**< Final UnSUBSCRIBE - just send a NOTIFY which will probably fail */
@@ -114,10 +116,11 @@ enum {
     IMS_REGISTRAR_CONTACT_EXPIRED, /**< A contact has expired and will be removed		*/
     IMS_REGISTRAR_CONTACT_UNREGISTERED, /**< User unregistered with Expires 0				*/
     IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
-} IMS_Registrar_events;
+} IMS_Registrar_events_enum_t;
 
+extern IMS_Registrar_events_enum_t IMS_Registrar_events;
 
-reg_notification_list *notification_list; //< List of pending notifications
+extern reg_notification_list *notification_list; //< List of pending notifications
 
 int can_subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 
