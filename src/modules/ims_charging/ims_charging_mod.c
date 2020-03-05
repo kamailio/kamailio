@@ -25,6 +25,8 @@
 
 MODULE_VERSION
 
+struct dlg_binds* dlgb_p;
+
 /* parameters */
 char* ro_destination_host_s = "hss.ims.smilecoms.com";
 char* ro_service_context_id_root_s = "32260@3gpp.org";
@@ -45,6 +47,8 @@ int voice_rating_group = 100;
 int video_service_identifier = 1001;
 int video_rating_group = 200;
 
+
+struct impu_data impu_data_t;
 
 /* DB params */
 static str db_url = str_init(DEFAULT_DB_URL);

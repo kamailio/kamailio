@@ -42,7 +42,9 @@ struct diameter_avp_value {
 struct impu_data {
     str identity;
     str contact;
-} impu_data_t;
+};
+
+extern struct impu_data impu_data_t;
 
 struct ro_session {
     volatile int ref;
