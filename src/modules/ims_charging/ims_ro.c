@@ -54,10 +54,10 @@ struct session_setup_data {
     unsigned int tlabel;
 };
 
-struct dlg_binds* dlgb_p;
+extern struct dlg_binds* dlgb_p;
 extern struct tm_binds tmb;
 
-int interim_request_credits;
+extern int interim_request_credits;
 
 extern int voice_service_identifier;
 extern int voice_rating_group;
