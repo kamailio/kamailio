@@ -5,7 +5,7 @@
 #include "ims_charging_stats.h"
 #include "../../core/parser/hf.h"
 
-struct cdp_binds cdpb;
+extern struct cdp_binds cdpb;
 
 extern int ro_db_mode;
 extern char *domain;
