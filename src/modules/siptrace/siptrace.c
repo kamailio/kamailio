@@ -210,7 +210,8 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"auth_key", PARAM_STR, &auth_key_str},
-	{"db_url", PARAM_STR, &db_url}, {"table", PARAM_STR, &siptrace_table},
+	{"db_url", PARAM_STR, &db_url},
+	{"table", PARAM_STR, &siptrace_table},
 	{"date_column", PARAM_STR, &date_column},
 	{"callid_column", PARAM_STR, &callid_column},
 	{"traced_user_column", PARAM_STR, &traced_user_column},
@@ -383,6 +384,12 @@ static int mod_init(void)
 			LM_ERR("bad duplicate_uri\n");
 			return -1;
 		}
+		if(!dup_uri->proto) {
+			dup_uri->proto = PROTO_UDP;
+		}
+		if(!dup_uri->port_no) {
+			dup_uri->port_no = SIP_PORT;
+		}
 	}
 
 	if(force_send_sock_str.s != 0) {
@@ -399,6 +406,12 @@ static int mod_init(void)
 				< 0) {
 			LM_ERR("bad force_send_sock\n");
 			return -1;
+		}
+		if(!force_send_sock_uri->proto) {
+			force_send_sock_uri->proto = PROTO_UDP;
+		}
+		if(!force_send_sock_uri->port_no) {
+			force_send_sock_uri->port_no = SIP_PORT;
 		}
 	}
 
@@ -784,13 +797,19 @@ static int parse_siptrace_uri(str* duri, dest_info_t* dst)
 			LM_ERR("bad dup uri\n");
 			return -1;
 		}
+		if(!uri.proto) {
+			uri.proto = PROTO_UDP;
+		}
+		if(!uri.port_no) {
+			uri.port_no = SIP_PORT;
+		}
 	}
 
 	init_dest_info(dst);
 
 	/* create a temporary proxy*/
-	dst->proto = PROTO_UDP;
-	p = mk_proxy(&uri.host, (uri.port_no) ? uri.port_no : SIP_PORT, dst->proto);
+	dst->proto = uri.proto;
+	p = mk_proxy(&uri.host, uri.port_no, dst->proto);
 	if(p == 0) {
 		LM_ERR("bad host name in uri\n");
 		return -1;

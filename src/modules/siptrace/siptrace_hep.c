@@ -170,9 +170,8 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 
 	if(!dst2) {
 		init_dest_info(&dst);
-		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		dst.proto = dup_uri->proto;
+		p = mk_proxy(&dup_uri->host, dup_uri->port_no, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			goto error;
@@ -189,9 +188,8 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 	if(force_send_sock_str.s) {
 		LM_DBG("force_send_sock activated, grep for the sock_info\n");
 		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
+				force_send_sock_uri->port_no,
+				force_send_sock_uri->proto);
 		if(!si) {
 			LM_WARN("cannot grep socket info\n");
 		} else {
@@ -289,9 +287,8 @@ int trace_send_hep2_duplicate(
 	if(!dst2) {
 		init_dest_info(&dst);
 		/* create a temporary proxy*/
-		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		dst.proto = dup_uri->proto;
+		p = mk_proxy(&dup_uri->host, dup_uri->port_no, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			goto error;
@@ -308,9 +305,8 @@ int trace_send_hep2_duplicate(
 	if(force_send_sock_str.s) {
 		LM_DBG("force_send_sock activated, grep for the sock_info\n");
 		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
+				force_send_sock_uri->port_no,
+				force_send_sock_uri->proto);
 		if(!si) {
 			LM_WARN("cannot grep socket info\n");
 		} else {
@@ -577,9 +573,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	gettimeofday(&tvb, &tz);
 
 	init_dest_info(&dst);
-	dst.proto = PROTO_UDP;
-	p = mk_proxy(&dup_uri->host,
-			(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+	dst.proto = dup_uri->proto;
+	p = mk_proxy(&dup_uri->host, dup_uri->port_no, dst.proto);
 	if(p == 0) {
 		LM_ERR("bad host name in uri\n");
 		goto error;
@@ -594,9 +589,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	if(force_send_sock_str.s) {
 		LM_DBG("force_send_sock activated, grep for the sock_info\n");
 		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
+				force_send_sock_uri->port_no,
+				force_send_sock_uri->proto);
 		if(!si) {
 			LM_WARN("cannot grep socket info\n");
 		} else {
