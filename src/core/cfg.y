@@ -2673,7 +2673,7 @@ attr_mark:
 	ATTR_MARK {
 		s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
 		if (!s_attr) { yyerror("No memory left"); YYABORT; }
-		else s_attr->type = 0;
+		else { memset(s_attr, 0, (sizeof(struct avp_spec))); s_attr->type = 0; }
 	}
 	;
 attr_id:
@@ -3712,6 +3712,7 @@ static struct name_lst* mk_name_lst(char* host, int flags)
 	if (l==0) {
 		PKG_MEM_CRITICAL;
 	} else {
+		memset(l, 0, sizeof(struct name_lst));
 		l->name=host;
 		l->flags=flags;
 		l->next=0;
@@ -3728,6 +3729,7 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 	if (l==0) {
 		PKG_MEM_CRITICAL;
 	} else {
+		memset(l, 0, sizeof(struct socket_id));
 		l->addr_lst=mk_name_lst(host, 0);
 		if (l->addr_lst==0){
 			pkg_free(l);
@@ -3763,6 +3765,7 @@ static struct socket_id* mk_listen_id2(struct name_lst* addr_l, int proto,
 	if (l==0) {
 		PKG_MEM_CRITICAL;
 	} else {
+		memset(l, 0, sizeof(struct socket_id));
 		l->flags=addr_l->flags;
 		l->port=port;
 		l->proto=proto;
