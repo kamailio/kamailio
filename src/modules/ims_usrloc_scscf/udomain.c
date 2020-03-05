@@ -73,8 +73,8 @@
 
 extern int unreg_validity;
 extern int db_mode;
-struct contact_list* contact_list;
-struct ims_subscription_list* ims_subscription_list;
+extern struct contact_list* contact_list;
+extern struct ims_subscription_list* ims_subscription_list;
 extern int subs_hash_size;
 
 extern int contact_delete_delay;
