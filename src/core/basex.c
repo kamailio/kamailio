@@ -427,7 +427,7 @@ static const int _ksr_b64url_decmap[] = {
 	-1, -1, -1, -1, -1, -1, -1, -1
 };
 
-int base64url_encode(char *in, int ilen, char *out, int osize)
+int base64url_enc(char *in, int ilen, char *out, int osize)
 {
 	int  left;
 	int  idx;
