@@ -3,10 +3,10 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="tm.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-    </sectioninfo>
 
     <title>Functions</title>
+    <sectioninfo>
+    </sectioninfo>
 
     <section id="tm.f.t_relay">
 	<title>
@@ -1890,4 +1890,21 @@ if($var(ts) == 500) { ... }
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.f.t_clean">
+	<title>
+	    <function>t_clean()</function>
+	</title>
+	<para>
+	Cleans active but very old transactions.  Returns true (1).  Can be
+    called from any route.
+	</para>
+	<example>
+	    <title><function>t_clean</function> usage</title>
+	    <programlisting>
+...
+t_clean();
+...
+	    </programlisting>
+	</example>
     </section>
+  </section>

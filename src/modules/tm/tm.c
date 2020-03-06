@@ -208,6 +208,7 @@ static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 		char* pnexthop, char* psock, char *phdrs, char* pbody);
 static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2);
 
+static int t_clean(struct sip_msg* msg, char* key, char* value);
 
 /* by default the fr timers avps are not set, so that the avps won't be
  * searched for nothing each time a new transaction is created */
@@ -411,6 +412,7 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contact_flow", t_next_contact_flow,            0, 0, 0,
 		REQUEST_ROUTE },
+	{"t_clean", t_clean, 0, 0, 0, ANY_ROUTE },
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0, 0},
@@ -2950,6 +2952,13 @@ static int ki_t_relay_to_proxy(sip_msg_t *msg, str *sproxy)
 static int ki_t_relay_to_flags(sip_msg_t *msg, int rflags)
 {
 	return ki_t_relay_to_proxy_flags(msg, NULL, rflags);
+}
+
+/* script function to clean active but very old transactions */
+static int t_clean(struct sip_msg* msg, char* key, char* value)
+{
+	tm_clean_lifetime();
+	return 1;
 }
 
 /**
