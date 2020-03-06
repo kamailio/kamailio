@@ -26,8 +26,8 @@
 
 /** callback functions */
 
-struct cdp_binds cdpb;
-cdp_avp_bind_t *cdp_avp;
+extern struct cdp_binds cdpb;
+extern cdp_avp_bind_t *cdp_avp;
 
 struct AAAMessage;
 
