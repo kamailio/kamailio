@@ -536,8 +536,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_ENCODEBASE64URL:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
-			i = base64url_enc((unsigned char *) val->rs.s, val->rs.len,
-					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			i = base64url_enc(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
 			if (i < 0)
 				return -1;
 			_tr_buffer[i] = '\0';
@@ -549,8 +549,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_DECODEBASE64URL:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
-			i = base64url_dec((unsigned char *) val->rs.s, val->rs.len,
-					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			i = base64url_dec(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
 			if (i < 0 || (i == 0 && val->rs.len > 0))
 				return -1;
 			_tr_buffer[i] = '\0';
@@ -562,8 +562,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_ENCODEBASE64URLT:
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
-			i = base64url_enc((unsigned char *) val->rs.s, val->rs.len,
-					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			i = base64url_enc(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
 			if (i < 0)
 				return -1;
 			if (i>1 && _tr_buffer[i-1] == '=') {
@@ -594,11 +594,11 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				st.len = val->rs.len + (4 - (val->rs.len % 4));
 				/* move to next buffer */
 				tr_set_crt_buffer();
-				i = base64url_dec((unsigned char *) st.s, st.len,
-						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+				i = base64url_dec(st.s, st.len,
+						_tr_buffer, TR_BUFFER_SIZE-1);
 			} else {
-				i = base64url_dec((unsigned char *) val->rs.s, val->rs.len,
-						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+				i = base64url_dec(val->rs.s, val->rs.len,
+						_tr_buffer, TR_BUFFER_SIZE-1);
 			}
 			if (i < 0 || (i == 0 && val->rs.len > 0))
 				return -1;
