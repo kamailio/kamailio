@@ -238,13 +238,13 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start* fl)
 				&& (fl->u.request.version.s[0]=='S'
 					|| fl->u.request.version.s[0]=='s')
 				&& !strncasecmp(fl->u.request.version.s+1,
-					SIP_VERSION+1, SIP_VERSION_LEN-1)) {
+					&SIP_VERSION[1], SIP_VERSION_LEN-1)) {
 			fl->flags|=FLINE_FLAG_PROTO_SIP;
 		} else if(fl->u.request.version.len >= HTTP_VERSION_LEN
 				&& (fl->u.request.version.s[0]=='H'
 					|| fl->u.request.version.s[0]=='h')
 				&& !strncasecmp(fl->u.request.version.s+1,
-					HTTP_VERSION+1, HTTP_VERSION_LEN-1)) {
+					&HTTP_VERSION[1], HTTP_VERSION_LEN-1)) {
 			fl->flags|=FLINE_FLAG_PROTO_HTTP;
 		}
 	}
