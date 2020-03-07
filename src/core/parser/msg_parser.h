@@ -128,7 +128,7 @@ typedef enum request_method {
 
 #define IFISMETHOD(methodname,firstchar)                                  \
 if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
-		strncasecmp( tmp+1, #methodname +1, methodname##_LEN-1)==0 &&     \
+		strncasecmp( tmp+1, &#methodname[1], methodname##_LEN-1)==0 &&     \
 		*(tmp+methodname##_LEN)==' ') {                                   \
 				fl->type=SIP_REQUEST;                                     \
 				fl->u.request.method.len=methodname##_LEN;                \
