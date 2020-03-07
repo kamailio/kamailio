@@ -31,7 +31,7 @@
 #include "janssonrpc_funcs.h"
 
 
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 
 int jsonrpc_request(struct sip_msg* _m,
 		char* _conn,
