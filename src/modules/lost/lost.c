@@ -1,7 +1,7 @@
 /*
  * lost module
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2020 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.

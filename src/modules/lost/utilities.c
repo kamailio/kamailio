@@ -1,7 +1,7 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2020 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -35,8 +35,6 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_uri.h"
@@ -94,6 +92,121 @@ void lost_rand_str(char *dest, size_t lgth)
 }
 
 /*
+ * lost_new_loc(urn)
+ * creates a new location object in private memory and returns a pointer
+ */
+p_loc_t lost_new_loc(str rurn)
+{
+	s_loc_t *ptr = NULL;
+
+	char *id = NULL;
+	char *urn = NULL;
+
+	ptr = (s_loc_t *)pkg_malloc(sizeof(s_loc_t));
+	if(ptr == NULL) {
+		goto err;
+	}
+
+	id = (char *)pkg_malloc(RANDSTRSIZE * sizeof(char) + 1);
+	if(id == NULL) {
+		pkg_free(ptr);
+		goto err;
+	}
+
+	urn = (char *)pkg_malloc(rurn.len + 1);
+	if(urn == NULL) {
+		pkg_free(id);
+		pkg_free(ptr);
+		goto err;
+	}
+
+	memset(urn, 0, rurn.len + 1);
+	memcpy(urn, rurn.s, rurn.len);
+	urn[rurn.len] = '\0';
+
+	lost_rand_str(id, RANDSTRSIZE);
+
+	ptr->identity = id;
+	ptr->urn = urn;
+	ptr->longitude = NULL;
+	ptr->latitude = NULL;
+	ptr->geodetic = NULL;
+	ptr->civic = NULL;
+	ptr->profile = NULL;
+	ptr->radius = 0;
+	ptr->recursive = LOST_RECURSION_TRUE;	/* set recursion to true */
+	ptr->boundary = 0;	/* set boundary to reference */
+
+	return ptr;
+
+err:
+	LM_ERR("no more private memory\n");
+	return NULL;
+}
+
+/*
+ * lost_new_held(uri, type, time, exact)
+ * creates a new held object in private memory and returns a pointer
+ */
+p_held_t lost_new_held(str s_uri, str s_type, str s_time, int exact)
+{
+	s_held_t *ptr = NULL;
+	
+	char *uri = NULL;
+	char *type = NULL;
+	char *time = NULL;
+
+	ptr = (s_held_t *)pkg_malloc(sizeof(s_held_t));
+	if(ptr == NULL) {
+		goto err;
+	}
+
+	uri = (char *)pkg_malloc(s_uri.len + 1);
+	if(uri == NULL) {
+		pkg_free(ptr);
+		goto err;
+	}
+
+	type = (char *)pkg_malloc(s_type.len + 1);
+	if(type == NULL) {
+		pkg_free(uri);
+		pkg_free(ptr);
+		goto err;
+	}
+
+	time = (char *)pkg_malloc(s_time.len + 1);
+	if(type == NULL) {
+		pkg_free(type);
+		pkg_free(uri);
+		pkg_free(ptr);
+		goto err;
+	}
+
+	memset(uri, 0, s_uri.len + 1);
+	memcpy(uri, s_uri.s, s_uri.len);
+	uri[s_uri.len] = '\0';
+
+	memset(type, 0, s_type.len + 1);
+	memcpy(type, s_type.s, s_type.len);
+	type[s_type.len] = '\0';
+
+	memset(time, 0, s_time.len + 1);
+	memcpy(time, s_time.s, s_time.len);
+	time[s_time.len] = '\0';
+
+	ptr->identity = uri;
+	ptr->type = type;
+	ptr->time = time;
+	ptr->exact = exact;
+
+	return ptr;
+
+err:
+	LM_ERR("no more private memory\n");
+	return NULL;
+}
+
+/*
  * lost_free_loc(ptr)
  * frees a location object
  */
@@ -101,9 +214,33 @@ void lost_free_loc(p_loc_t ptr)
 {
 	pkg_free(ptr->identity);
 	pkg_free(ptr->urn);
-	pkg_free(ptr->longitude);
-	pkg_free(ptr->latitude);
+	if (ptr->civic)
+    	pkg_free(ptr->civic);
+    if (ptr->geodetic)
+		pkg_free(ptr->geodetic);
+    if (ptr->longitude)
+		pkg_free(ptr->longitude);
+    if (ptr->latitude)
+		pkg_free(ptr->latitude);
+    if (ptr->profile)
+	    pkg_free(ptr->profile);
+  	
 	pkg_free(ptr);
+	ptr = NULL;
+}
+
+/*
+ * lost_free_loc(ptr)
+ * frees a held location request object
+ */
+void lost_free_held(p_held_t ptr)
+{
+	pkg_free(ptr->identity);
+	pkg_free(ptr->type);
+	pkg_free(ptr->time);
+
+	pkg_free(ptr);
+	ptr = NULL;
 }
 
 /*
@@ -122,67 +259,20 @@ void lost_free_string(str *string)
 }
 
 /*
- * lost_new_loc(urn)
- * creates a new location object in private memory and returns a pointer
- */
-p_loc_t lost_new_loc(str rurn)
-{
-	s_loc_t *ptr = NULL;;
-	char *id = NULL;
-	char *urn = NULL;
-
-	ptr = (s_loc_t *)pkg_malloc(sizeof(s_loc_t));
-	if(ptr == NULL) {
-		goto err;
-	}
-
-	id = (char *)pkg_malloc(RANDSTRSIZE * sizeof(char) + 1);
-	if(id == NULL) {
-		pkg_free(ptr);
-		goto err;
-	}
-
-	urn = (char *)pkg_malloc(rurn.len + 1);
-	if(urn == NULL) {
-		pkg_free(ptr);
-		pkg_free(id);
-		goto err;
-	}
-
-	memset(urn, 0, rurn.len + 1);
-	memcpy(urn, rurn.s, rurn.len);
-	urn[rurn.len] = '\0';
-
-	lost_rand_str(id, RANDSTRSIZE);
-
-	ptr->identity = id;
-	ptr->urn = urn;
-	ptr->longitude = NULL;
-	ptr->latitude = NULL;
-	ptr->radius = 0;
-	ptr->recursive = 0;
-
-	return ptr;
-
-err:	
-	LM_ERR("no more private memory\n");
-	return NULL;
-}
-
-/*
  * lost_get_content(node, name, lgth)
  * gets a nodes "name" content and returns string allocated in private memory
  */
 char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 {
 	xmlNodePtr cur = node;
-	char *content;
+	char *content = NULL;
 	char *cnt = NULL;
 	int len;
 
 	*lgth = 0;
+
 	content = xmlNodeGetNodeContentByName(cur, name, NULL);
-	if (content == NULL) {
+	if(content == NULL) {
 		LM_ERR("could not get XML node content\n");
 		return cnt;
 	} else {
@@ -216,8 +306,9 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 	int len;
 
 	*lgth = 0;
+
 	content = xmlNodeGetAttrContentByName(cur, name);
-	if (content == NULL) {
+	if(content == NULL) {
 		LM_ERR("could not get XML node content\n");
 		return cnt;
 	} else {
@@ -252,23 +343,32 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 	int len;
 
 	*lgth = 0;
+
 	parent = xmlNodeGetNodeByName(cur, name, NULL);
-	child = parent->children;
-
-	if(child) {
-		len = strlen((char *)child->name);
-		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
-		if(cnt == NULL) {
-			LM_ERR("no more private memory\n");
-			return cnt;
-		}
-
-		memset(cnt, 0, len + 1);
-		memcpy(cnt, child->name, len);
-		cnt[len] = '\0';
-
-		*lgth = strlen(cnt);
+	if(parent == NULL) {
+		LM_ERR("xmlNodeGetNodeByName() failed\n");
+		return cnt;
 	}
+
+	child = parent->children;
+	if(child == NULL) {
+		LM_ERR("%s has no children '%s'\n", parent->name, name);
+		return cnt;
+	}
+
+	len = strlen((char *)child->name);
+	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
+	if(cnt == NULL) {
+		LM_ERR("no more private memory\n");
+		return cnt;
+	}
+
+	memset(cnt, 0, len + 1);
+	memcpy(cnt, child->name, len);
+	cnt[len] = '\0';
+
+	*lgth = strlen(cnt);
+
 	return cnt;
 }
 
@@ -293,9 +393,8 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 		if((hf->type == HDR_OTHER_T)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
-			if(strncasecmp(
-					   hf->name.s, LOST_GEOLOC_HEADER, LOST_GEOLOC_HEADER_SIZE)
-					== 0) {
+			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
+							LOST_GEOLOC_HEADER_SIZE) == 0) {
 
 				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
 				if(res == NULL) {
@@ -315,6 +414,7 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 			break;
 		}
 	}
+
 	return res;
 }
 
@@ -331,7 +431,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	if (parse_headers(msg, HDR_PAI_F, 0) == -1) {
+	if(parse_headers(msg, HDR_PAI_F, 0) == -1) {
 		LM_ERR("could not parse P-A-I header\n");
 		return res;
 	}
@@ -340,27 +440,28 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 		if((hf->type == HDR_PAI_T)
 				&& (hf->name.len == LOST_PAI_HEADER_SIZE - 2)) {
 			/* possible hit */
-			if(strncasecmp(hf->name.s, LOST_PAI_HEADER, LOST_PAI_HEADER_SIZE)
-					== 0) {
+			if(strncasecmp(hf->name.s, LOST_PAI_HEADER,
+							LOST_PAI_HEADER_SIZE) == 0) {
 
 				LM_DBG("P-A-I body:  [%.*s]\n", hf->body.len, hf->body.s);
 
 				/* first, get some memory */
 				pai_body = pkg_malloc(sizeof(to_body_t));
-				if (pai_body == NULL) {
+				if(pai_body == NULL) {
 					LM_ERR("no more private memory\n");
 					return res;
 				}
 				/* parse P-A-I body */
 				memset(pai_body, 0, sizeof(to_body_t));
 				parse_to(hf->body.s, hf->body.s + hf->body.len + 1, pai_body);
-				if (pai_body->error == PARSE_ERROR) {
+				if(pai_body->error == PARSE_ERROR) {
 					LM_ERR("bad P-A-I header\n");
 					pkg_free(pai_body);
 					return res;
 				}
-				if (pai_body->error == PARSE_OK) {
-					res = (char *)pkg_malloc((pai_body->uri.len + 1) * sizeof(char));
+				if(pai_body->error == PARSE_OK) {
+					res = (char *)pkg_malloc(
+							(pai_body->uri.len + 1) * sizeof(char));
 					if(res == NULL) {
 						LM_ERR("no more private memory\n");
 						pkg_free(pai_body);
@@ -381,6 +482,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 			break;
 		}
 	}
+
 	return res;
 }
 
@@ -420,63 +522,267 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 
 		*lgth = strlen(res);
 	}
+
 	return res;
 }
 
 /*
- * lost_parse_location_info(node, loc)
- * parses locationResponse and writes results to location object
+ * lost_parse_geo(node, loc)
+ * parses locationResponse (pos|circle) and writes 
+ * results to location object
  */
-int lost_parse_location_info(xmlNodePtr node, p_loc_t loc)
+int lost_parse_geo(xmlNodePtr node, p_loc_t loc)
 {
+	xmlNodePtr cur = NULL;
+
 	char bufLat[BUFSIZE];
 	char bufLon[BUFSIZE];
-	int iRadius;
 	char *content = NULL;
-	int ret = -1;
 
-	xmlNodePtr cur = node;
+	char s_profile[] = LOST_PRO_GEO2D;
 
+	int iRadius = 0;
+	int len = 0;
+
+	cur = node;
+	/* find <pos> element */
 	content = xmlNodeGetNodeContentByName(cur, "pos", NULL);
-	if(content) {
-		sscanf(content, "%s %s", bufLat, bufLon);
 
-		loc->latitude = (char *)pkg_malloc(strlen((char *)bufLat) + 1);
-		snprintf(loc->latitude, strlen((char *)bufLat) + 1, "%s",
-				(char *)bufLat);
-
-		loc->longitude = (char *)pkg_malloc(strlen((char *)bufLon) + 1);
-		snprintf(loc->longitude, strlen((char *)bufLon) + 1, "%s",
-				(char *)bufLon);
-
-		loc->radius = 0;
-		ret = 0;
+	if(content == NULL) {
+		LM_WARN("could not find pos element\n");
+		return -1;
 	}
 
+	sscanf(content, "%s %s", bufLat, bufLon);
+	xmlFree(content);
+
+	len = strlen((char *)bufLat);
+	loc->latitude = (char *)pkg_malloc(len + 1);
+	if(loc->latitude == NULL)
+		goto err;
+
+	snprintf(loc->latitude, len, "%s", (char *)bufLat);
+
+	len = strlen((char *)bufLon);
+	loc->longitude = (char *)pkg_malloc(len + 1);
+	if(loc->longitude == NULL) {
+		pkg_free(loc->latitude);
+		goto err;
+	}
+
+	snprintf(loc->longitude, len, "%s", (char *)bufLon);
+
+	len = strlen((char *)bufLat) + strlen((char *)bufLon) + 1;
+	loc->geodetic = (char *)pkg_malloc(len + 1);
+	if(loc->longitude == NULL) {
+		pkg_free(loc->latitude);
+		pkg_free(loc->longitude);
+		goto err;
+	}
+	
+	snprintf(loc->geodetic, len, "%s %s", (char *)bufLat, (char *)bufLon);
+
+	/* find <radius> element */
 	content = xmlNodeGetNodeContentByName(cur, "radius", NULL);
-	if(content) {
-		iRadius = 0;
-
+	if(content != NULL) {
 		sscanf(content, "%d", &iRadius);
-		loc->radius = iRadius;
-		ret = 0;
+		xmlFree(content);
 	}
 
-	if(ret < 0) {
-		LM_ERR("could not parse location information\n");
+	/* write results */
+	loc->radius = iRadius;
+	loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+    strcpy(loc->profile, s_profile);
+
+	return 0;
+
+err:
+	LM_ERR("no more private memory\n");
+	return -1;
+}
+/*
+ * lost_xpath_location(doc, path, loc)
+ * performs xpath expression on locationResponse and writes 
+ * results (location-info child element) to location object
+ */
+int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
+{
+	xmlXPathObjectPtr result = NULL;
+	xmlNodeSetPtr nodes = NULL;
+	xmlNodePtr root = NULL;
+	xmlNodePtr cur = NULL;
+	xmlDocPtr new = NULL;
+	xmlChar *xpath = NULL;
+	xmlChar *xmlbuff = NULL;
+	xmlChar *cname = NULL;
+
+	const unsigned char s_point[] = LOST_PNT;
+	const unsigned char s_circle[] = LOST_CIR;
+	const unsigned char s_civic[] = LOST_CIV;
+
+	char *ptr = NULL;
+	char *s_profile = NULL;
+
+	int buffersize = 0;
+	int remove = 0;
+	int size = 0;
+	int len = 0;
+	int i = 0;
+	int nok = -1;
+
+	xpath = (xmlChar *)path;
+	/* get location via xpath expression */
+	result = xmlGetNodeSet(doc, xpath, BAD_CAST XPATH_NS);
+
+	if(result == NULL) {
+		LM_DBG("xmlGetNodeSet() returned no result\n");
+		return -1;
 	}
-	return ret;
+
+	nodes = result->nodesetval;
+	if(nodes) {
+		size = (nodes) ? nodes->nodeNr : 0;
+		for(i = 0; i < size; ++i) {
+			if(nodes->nodeTab[i]->type == XML_ELEMENT_NODE) {
+				cur = nodes->nodeTab[i];
+				/* check if child element is point, circle or civic */
+				while(nok < LOST_XPATH_DPTH) {
+					if(cur->children) {
+						nok++;
+						cname = BAD_CAST cur->name;
+						if(xmlStrcasecmp(cname, s_point) == 0) {
+							s_profile = LOST_PRO_GEO2D;
+							break;
+						}
+						if(xmlStrcasecmp(cname, s_circle) == 0) {
+							s_profile = LOST_PRO_GEO2D;
+							break;
+						}
+						if(xmlStrcasecmp(cname, s_civic) == 0) {
+							s_profile = LOST_PRO_CIVIC;
+							break;
+						}
+					}
+					/* nothing found ... try next DOM level */
+					cur = cur->children;
+				}
+
+				if(nok == 0) {
+					LM_DBG("xpath '%s' returned valid element (level %d/%d)\n",
+							xpath, nok, LOST_XPATH_DPTH - 1);
+				} else if(nok < LOST_XPATH_DPTH) {
+					/* malformed pidf-lo but still ok */
+					LM_WARN("xpath '%s' returned malformed pidf-lo (level "
+							"%d/%d)\n",
+							xpath, nok, LOST_XPATH_DPTH - 1);
+				} else {
+					/* really bad pidf-lo */
+					LM_WARN("xpath '%s' failed (level %d/%d)\n", xpath, nok,
+							LOST_XPATH_DPTH - 1);
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+				nok = -1;
+
+				if(!cur) {
+					LM_ERR("xpath xmlCopyNode() failed\n");
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+
+				root = xmlCopyNode(cur, 1);
+				if(!root) {
+					LM_ERR("xpath xmlCopyNode() failed\n");
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+				new = xmlNewDoc(BAD_CAST "1.0");
+				if(!new) {
+					LM_ERR("xpath xmlNewDoc() failed\n");
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+				xmlDocSetRootElement(new, root);
+				xmlDocDumpFormatMemory(new, &xmlbuff, &buffersize, 0);
+				if(!xmlbuff) {
+					LM_ERR("xpath xmlDocDumpFormatMemory() failed\n");
+					xmlFreeDoc(new);
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+				/* take the first location-info element only */
+				if(i == 0) {
+					remove = strlen("<?xml version='1.0'?>\n");
+					buffersize = buffersize - remove;
+					ptr = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
+					if(ptr == NULL) {
+						xmlFree(xmlbuff);
+						xmlFreeDoc(new);
+						xmlXPathFreeObject(result);
+						goto err;
+					}
+
+					loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+					if(loc->profile == NULL) {
+						pkg_free(ptr);
+						xmlFree(xmlbuff);
+						xmlFreeDoc(new);
+						xmlXPathFreeObject(result);
+						goto err;
+					}
+
+					memset(ptr, 0, buffersize);
+					memcpy(ptr, (char *)(xmlbuff + remove), buffersize);
+					ptr[buffersize] = '\0';
+					loc->civic = lost_trim_content(ptr, &len);
+
+					memset(loc->profile, 0, strlen(s_profile) + 1);
+					memcpy(loc->profile, (char *)s_profile, strlen(s_profile));
+				} else {
+					LM_WARN("xpath location-info element(%d) ignored\n", i + 1);
+				}
+				xmlFree(xmlbuff);
+				xmlFreeDoc(new);
+			}
+		}
+	}
+	xmlXPathFreeObject(result);
+
+	return 0;
+
+err:
+	LM_ERR("no more private memory\n");
+	return -1;
 }
 
 /*
- * lost_held_location_request(id, lgth)
+ * lost_parse_location_info(node, loc)
+ * wrapper to call xpath or simple pos|circle parser (last resort)
+ */
+int lost_parse_location_info(xmlNodePtr root, p_loc_t loc)
+{
+
+	if(lost_xpath_location(root->doc, LOST_XPATH_GP, loc) == 0) {
+		return 0;
+	}
+
+	LM_WARN("xpath expression failed ... trying pos|circle\n");
+
+	if(lost_parse_geo(root, loc) == 0) {
+		return 0;
+	}
+
+	return -1;
+}
+
+/*
+ * lost_held_location_request(id, lgth, responsetime, exact, type)
  * assembles and returns locationRequest string (allocated in private memory)
  */
-char *lost_held_location_request(char *id, int *lgth)
+char *lost_held_location_request(p_held_t held, int *lgth)
 {
 	int buffersize = 0;
 
-	char buf[BUFSIZE];
 	char *doc = NULL;
 
 	xmlChar *xmlbuff = NULL;
@@ -518,12 +824,15 @@ https://tools.ietf.org/html/rfc6155
 	/* properties */
 	xmlNewProp(ptrLocationRequest, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held");
-	xmlNewProp(ptrLocationRequest, BAD_CAST "responseTime", BAD_CAST "8");
+	xmlNewProp(ptrLocationRequest, BAD_CAST "responseTime",
+				BAD_CAST held->time);
 	/* locationType - element */
 	ptrLocationType = xmlNewChild(ptrLocationRequest, NULL,
-			BAD_CAST "locationType", BAD_CAST "geodetic locationURI");
+			BAD_CAST "locationType", BAD_CAST held->type);
 	/* properties */
-	xmlNewProp(ptrLocationType, BAD_CAST "exact", BAD_CAST "false");
+	xmlNewProp(ptrLocationType, BAD_CAST "exact",
+			(held->exact == HELD_EXACT_TRUE) ?
+			BAD_CAST "true" : BAD_CAST "false");
 	/* device - element */
 	ptrDevice = xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "device", NULL);
 	if(!ptrDevice) {
@@ -535,8 +844,7 @@ https://tools.ietf.org/html/rfc6155
 	xmlNewProp(ptrDevice, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held:id");
 	/* uri - element */
-	snprintf(buf, BUFSIZE, "%s", id);
-	xmlNewChild(ptrDevice, NULL, BAD_CAST "uri", BAD_CAST buf);
+	xmlNewChild(ptrDevice, NULL, BAD_CAST "uri", BAD_CAST held->identity);
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
 	if(!xmlbuff) {
@@ -584,8 +892,10 @@ char *lost_find_service_request(p_loc_t loc, int *lgth)
 	xmlNodePtr ptrPoint = NULL;
 	xmlNodePtr ptrCircle = NULL;
 	xmlNodePtr ptrRadius = NULL;
+	xmlNodePtr ptrNode = NULL;
 
 	xmlKeepBlanksDefault(1);
+
 	*lgth = 0;
 
 	/*
@@ -624,17 +934,30 @@ https://tools.ietf.org/html/rfc5222
 			BAD_CAST "urn:ietf:params:xml:ns:lost1");
 	xmlNewProp(ptrFindService, BAD_CAST "xmlns:p2",
 			BAD_CAST "http://www.opengis.net/gml");
-	xmlNewProp(
-			ptrFindService, BAD_CAST "serviceBoundary", BAD_CAST "reference");
-	xmlNewProp(ptrFindService, BAD_CAST "recursive", BAD_CAST "true");
+	xmlNewProp(ptrFindService, BAD_CAST "serviceBoundary",
+			(loc->boundary == 1) ? BAD_CAST "value" : BAD_CAST "reference");
+	xmlNewProp(ptrFindService, BAD_CAST "recursive",
+			(loc->recursive == 1) ? BAD_CAST "true" : BAD_CAST "false");
 	/* location - element */
 	ptrLocation = xmlNewChild(ptrFindService, NULL, BAD_CAST "location", NULL);
 	xmlNewProp(ptrLocation, BAD_CAST "id", BAD_CAST loc->identity);
-	xmlNewProp(ptrLocation, BAD_CAST "profile", BAD_CAST "geodetic-2d");
+	xmlNewProp(ptrLocation, BAD_CAST "profile", BAD_CAST loc->profile);
 	/* set pos */
 	snprintf(buf, BUFSIZE, "%s %s", loc->latitude, loc->longitude);
+	/* xpath result */
+	if(loc->civic) {
+		xmlParseInNodeContext(
+				ptrLocation, loc->civic, strlen(loc->civic), 0, &ptrNode);
+		if(!ptrNode) {
+			LM_ERR("locationRequest xmlParseInNodeContext() failed\n");
+			xmlFreeDoc(request);
+			return doc;
+		} else {
+			xmlAddChild(ptrLocation, ptrNode);
+		}
+	}
 	/* Point */
-	if(loc->radius == 0) {
+	else if(loc->radius == 0) {
 		ptrPoint = xmlNewChild(ptrLocation, NULL, BAD_CAST "Point", NULL);
 		if(!ptrPoint) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
@@ -647,8 +970,9 @@ https://tools.ietf.org/html/rfc5222
 				BAD_CAST "urn:ogc:def:crs:EPSG::4326");
 		/* pos */
 		xmlNewChild(ptrPoint, NULL, BAD_CAST "pos", BAD_CAST buf);
-	} else {
-		/* circle - Point */
+	}
+	/* circle - Point */
+	else {
 		ptrCircle = xmlNewChild(ptrLocation, NULL, BAD_CAST "gs:Circle", NULL);
 		if(!ptrCircle) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");

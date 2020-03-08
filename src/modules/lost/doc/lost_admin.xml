@@ -17,9 +17,9 @@
         SIP requests may be forwarded based on a location provided with the
         request or retrieved from a specific location server using an identity
         (HELD). This module implements the basic functionality to get or parse
-        location information and to query a mapping service (LOST) in order to
-        get next hop based on location and service urn either specified or
-        provided with the request. 
+        location information (civic and geodetic) and to query a mapping service
+        (LOST) in order to get next hop based on location and service urn either
+        specified or provided with the request. 
         </para>
         <para>
         This module implements protocol functions that use the http_client api
@@ -42,7 +42,7 @@
         The function lost_query allows &kamailio; to assemble a LOST
         findService request  as defined in RFC5222
         (<ulink url="https://tools.ietf.org/html/rfc5255"/>) to query 
-        routing information for a given (geodetic) location and a service
+        routing information for a given (geodetic or civic) location and a service
         URN. Both, PIDF-LO and service URN may be provided as function parameter,
         or are taken from the request message if applicable. The findServiceResponse
         is parsed and represented asdisplay name and SIP URI typically used as next
@@ -217,19 +217,19 @@ $var(res) = lost_held_query("heldsrv", "$var(id)" , "$var(pidf)", "$var(url)", "
 # LOST findService request - pidf-lo and urn as parameter
 $var(id) = "urn:service:sos";
 $var(res) = lost_query("lostsrv", "$var(pidf)", "$var(urn)", "$var(uri)", "$var(name)", "$var(err)");
-xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(uri)\n");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(name)\n");
 ...
 # LOST findService request - pidf-lo as parameter, urn taken from request line
 $var(res) = lost_query("lostsrv", "$var(pidf)", "", "$var(uri)", "$var(name)", "$var(err)");
-xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(uri)\n");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(name)\n");
 ...
 # LOST findService request - urn as parameter, pidf-lo taken from message body
 $var(res) = lost_query("lostsrv", "", "$var(urn)", "$var(uri)", "$var(name)", "$var(err)");
-xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(uri)\n");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(name\n");
 ...
 # LOST findService request - pidf-lo and urn taken from message
 $var(res) = lost_query("lostsrv", "$var(uri)", "$var(name)", "$var(err)");
-xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(uri)\n");
+xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $var(name)\n");
 ...
 				</programlisting>
 			</example>
@@ -259,7 +259,7 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
             the HTTP response (query_params.oneline = 1), but the lost module requires the complete
             response message, which requires query_params.oneline set to 0. In the case lost_query
             is used with the default http_client API, dereferencing location via HTTP provided with
-			the Geolocation header causes an error. Therefore, to work properlu=y, it requires to set
+			the Geolocation header causes an error. Therefore, to work properly, it requires to set
 			<ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result">
 			http_client module parameter query_result to 0</ulink>.
         </para>

@@ -1,7 +1,7 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2020 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -37,32 +37,69 @@
 #define LOST_PAI_HEADER "P-Asserted-Identity: "
 #define LOST_PAI_HEADER_SIZE strlen(LOST_PAI_HEADER)
 
+#define LOST_RECURSION_TRUE 1
+#define LOST_RECURSION_FALSE 0
+#define LOST_XPATH_DPTH 3
+#define LOST_XPATH_GP "//gp:location-info/*"
+
+#define XPATH_NS                                         \
+	"gp=urn:ietf:params:xml:ns:pidf:geopriv10"           \
+	" "                                                  \
+	"xmlns=urn:ietf:params:xml:ns:pidf"                  \
+	" "                                                  \
+	"ca=urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr" \
+	" "                                                  \
+	"gm=http://www.opengis.net/gml"
+
+#define LOST_PRO_GEO2D "geodetic-2d"
+#define LOST_PRO_CIVIC "civic"
+
+#define LOST_PNT "Point"
+#define LOST_CIR "Circle"
+#define LOST_CIV "civicAddress"
+
+#define HELD_TYPE "geodetic locationURI"
+#define HELD_TIME "3"
+#define HELD_EXACT_TRUE 1
+#define HELD_EXACT_FALSE 0
+
 #define BUFSIZE 128	/* temporary buffer to hold geolocation */
 #define RANDSTRSIZE 16 /* temporary id in a findService request */
 
-#define LOSTFREE(x) pkg_free(x); x = NULL;
-
-typedef struct
+typedef struct LOC
 {
-	char *identity;
-	char *urn;
-	char *longitude;
-	char *latitude;
-	char *uri;
-	char *ref;
-	int radius;
-	int recursive;
+	char *identity;		/* location idendity (findServiceRequest) */
+	char *urn;			/* service URN (findServiceRequest) */ 
+	char *civic;		/* civic address (findServiceRequest) */
+	char *geodetic;		/* geodetic location (findServiceRequest) */
+	char *longitude;	/* geo longitude */
+	char *latitude;		/* geo latitude */
+	char *profile;		/* location profile (findServiceRequest) */
+	int radius;			/* geo radius (findServiceRequest) */
+	int recursive;		/* recursion true|false (findServiceRequest)*/
+	int boundary;       /* boundary ref|value (findServiceRequest)*/
 } s_loc_t, *p_loc_t;
+
+typedef struct HELD
+{
+	char *identity;		/* location idendity (locationRequest) */
+	char *type;			/* location type (locationRequest) */ 
+	char *time;			/* response time (locationRequest) */
+	int exact;			/* exact true|false (locationRequest)*/
+} s_held_t, *p_held_t;
+
 
 void lost_rand_str(char *, size_t);
 void lost_free_loc(p_loc_t);
+void lost_free_held(p_held_t);
 void lost_free_string(str *);
 
-int lost_get_location_object(p_loc_t, xmlDocPtr, xmlNodePtr);
-int lost_parse_location_info(xmlNodePtr node, p_loc_t loc);
+int lost_parse_location_info(xmlNodePtr, p_loc_t);
+int lost_xpath_location(xmlDocPtr, char *, p_loc_t);
+int lost_parse_geo(xmlNodePtr, p_loc_t);
 
 char *lost_find_service_request(p_loc_t, int *);
-char *lost_held_location_request(char *, int *);
+char *lost_held_location_request(p_held_t, int *);
 char *lost_get_content(xmlNodePtr, const char *, int *);
 char *lost_get_property(xmlNodePtr, const char *, int *);
 char *lost_get_geolocation_header(struct sip_msg *, int *);
@@ -72,5 +109,6 @@ char *lost_get_childname(xmlNodePtr, const char *, int *);
 char *lost_trim_content(char *, int *);
 
 p_loc_t lost_new_loc(str);
+p_held_t lost_new_held(str, str, str, int);
 
 #endif

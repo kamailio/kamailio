@@ -35,16 +35,25 @@
 
 #include "../../core/str.h"
 #include <libxml/parser.h>
+#include <libxml/xmlmemory.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+
+#define BUFSIZE 128	/* temporary buffer to hold geolocation */
+#define RANDSTRSIZE 16 /* temporary id in a findService request */
 
 xmlNodePtr xmlNodeGetNodeByName(
 		xmlNodePtr node, const char *name, const char *ns);
 xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns);
 xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name);
+xmlXPathObjectPtr xmlGetNodeSet(xmlDocPtr doc, xmlChar *xpath, xmlChar *ns);
 
 char *xmlDocGetNodeContentByName(
 		xmlDocPtr doc, const char *name, const char *ns);
 char *xmlNodeGetNodeContentByName(
 		xmlNodePtr root, const char *name, const char *ns);
 char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name);
+
+int xmlRegisterNamespaces(xmlXPathContextPtr context, const xmlChar *ns);
 
 #endif

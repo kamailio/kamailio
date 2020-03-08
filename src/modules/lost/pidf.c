@@ -100,7 +100,7 @@ xmlNodePtr xmlNodeGetNodeByName(
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
 			if(!ns || (cur->ns &&
 				xmlStrcasecmp(cur->ns->prefix, (unsigned char *)ns) == 0))
-			return cur;
+				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
 		if(match)
@@ -134,4 +134,83 @@ char *xmlDocGetNodeContentByName(
 		return (char *)xmlNodeGetContent(node->children);
 	else
 		return NULL;
+}
+
+xmlXPathObjectPtr xmlGetNodeSet(xmlDocPtr doc, xmlChar *xpath, xmlChar *ns)
+{
+
+	xmlXPathContextPtr context = NULL;
+	xmlXPathObjectPtr result = NULL;
+
+	context = xmlXPathNewContext(doc);
+	if(context == NULL) {
+		return NULL;
+	}
+
+	if((ns != NULL) && (xmlRegisterNamespaces(context, ns) < 0)) {
+		xmlXPathFreeContext(context);
+		return NULL;
+	}
+
+	result = xmlXPathEvalExpression(xpath, context);
+	xmlXPathFreeContext(context);
+
+	if(result == NULL) {
+		LM_ERR("xmlXPathEvalExpression() failed\n");
+		return NULL;
+	}
+	if(xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		xmlXPathFreeObject(result);
+		LM_DBG("xmlXPathEvalExpression() returned no result\n");
+		return NULL;
+	}
+
+	return result;
+}
+
+int xmlRegisterNamespaces(xmlXPathContextPtr context, const xmlChar *ns)
+{
+	xmlChar *nsListDup;
+	xmlChar *prefix;
+	xmlChar *href;
+	xmlChar *next;
+
+	nsListDup = xmlStrdup(ns);
+	if(nsListDup == NULL) {
+		return -1;
+	}
+
+	next = nsListDup;
+	while(next != NULL) {
+		/* skip spaces */
+		while((*next) == ' ')
+			next++;
+		if((*next) == '\0')
+			break;
+
+		/* find prefix */
+		prefix = next;
+		next = (xmlChar *)xmlStrchr(next, '=');
+		if(next == NULL) {
+			xmlFree(nsListDup);
+			return -1;
+		}
+		*(next++) = '\0';
+
+		/* find href */
+		href = next;
+		next = (xmlChar *)xmlStrchr(next, ' ');
+		if(next != NULL) {
+			*(next++) = '\0';
+		}
+
+		/* register namespace */
+		if(xmlXPathRegisterNs(context, prefix, href) != 0) {
+			xmlFree(nsListDup);
+			return -1;
+		}
+	}
+
+	xmlFree(nsListDup);
+	return 0;
 }
