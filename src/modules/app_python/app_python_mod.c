@@ -54,6 +54,8 @@ static void mod_destroy(void);
 
 PyObject *_sr_apy_handler_obj = NULL;
 
+PyObject *format_exc_obj = NULL;
+
 char *dname = NULL, *bname = NULL;
 
 int _apy_process_rank = 0;
