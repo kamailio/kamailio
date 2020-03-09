@@ -1100,6 +1100,46 @@ request_route {
 		</programlisting>
 		</example>
 	</section>
+
+
+	<section id="registrar.p.use_expired_contacts">
+		<title><varname>use_expired_contacts</varname> (int)</title>
+
+		<para>
+			Allow/Disallow the usage of the expired contacts.
+		</para>
+
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>0</emphasis> Disallow the usage of the expired contacts.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>1</emphasis> Allow the usage of the expired contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+		<emphasis>
+			Default value is 0 (Disallow).
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Set <varname>use_expired_contacts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "use_expired_contacts", 1)
+...
+
+kamcmd cfg.set_now_int registrar use_expired_contacts 1
+kamcmd cfg.set_now_int registrar use_expired_contacts 0
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	

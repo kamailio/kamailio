@@ -248,6 +248,7 @@ static param_export_t params[] = {
 	{"event_callback",     PARAM_STR, &reg_event_callback				},
 	{"lookup_filter_mode", INT_PARAM, &reg_lookup_filter_mode			},
 	{"min_expires_mode",   PARAM_INT, &reg_min_expires_mode				},
+	{"use_expired_contacts",  INT_PARAM, &default_registrar_cfg.use_expired_contacts	 },
 	{0, 0, 0}
 };
 
