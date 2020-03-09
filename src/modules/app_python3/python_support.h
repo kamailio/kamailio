@@ -25,7 +25,7 @@
 #include <Python.h>
 #include <stdarg.h>
 
-PyObject *format_exc_obj;
+extern PyObject *format_exc_obj;
 
 void python_handle_exception(const char *, ...);
 
