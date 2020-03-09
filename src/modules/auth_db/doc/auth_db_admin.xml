@@ -300,6 +300,24 @@ modparam("auth_db", "version_table", 0)
 		</example>
 	</section>
 
+	<section id="auth_db.p.force_generate_avps">
+		<title><varname>force_generate_avps</varname> (integer)</title>
+		<para>
+			If set to different than 0, the module will fetch user DB attributes even if authentication failed.
+		</para>
+		<para>
+			Default value is <quote>0</quote> (don't fetch user DB attributes if authentication failed).
+		</para>
+		<example>
+		<title><varname>force_generate_avps</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_db", "force_generate_avps", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
