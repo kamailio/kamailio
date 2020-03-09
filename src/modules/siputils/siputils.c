@@ -553,12 +553,12 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	},
 	{ str_init("siputils"), str_init("decode_contact"),
 		SR_KEMIP_INT, ki_decode_contact,
-		{ SR_KEMIP_NULL, SR_KEMIP_NULL, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("decode_contact_header"),
 		SR_KEMIP_INT, ki_decode_contact_header,
-		{ SR_KEMIP_NULL, SR_KEMIP_NULL, SR_KEMIP_NONE,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
