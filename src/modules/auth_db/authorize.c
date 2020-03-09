@@ -294,13 +294,21 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 		goto end;
 	}
 
+	/* Even when user failed to authenticate */
+	if (force_generate_avps) {
+		generate_avps(msg, result);
+	}
+
 	/* Recalculate response, it must be same to authorize successfully */
 	rauth = auth_api.check_response(&(cred->digest), method, ha1);
 	if(rauth==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
-				generate_avps(msg, result);
+				/* Only when user succeded to authenticate */
+				if (!force_generate_avps) {
+					generate_avps(msg, result);
+				}
 				break;
 			default:
 				ret = AUTH_ERROR;
