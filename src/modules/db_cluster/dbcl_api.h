@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -86,7 +86,7 @@ int db_cluster_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _
 /*! \brief
  * Delete a row from table
  */
-int db_cluster_delete(const db1_con_t* _h, const db_key_t* _k, const 
+int db_cluster_delete(const db1_con_t* _h, const db_key_t* _k, const
 	db_op_t* _o, const db_val_t* _v, const int _n);
 
 

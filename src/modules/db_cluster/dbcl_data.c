@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -407,7 +407,7 @@ int dbcl_init_dbf(dbcl_cls_t *cls)
 			{
 				if(db_bind_mod(&cls->rlist[i].clist[j]->db_url,
 							&cls->rlist[i].clist[j]->dbf)<0)
-				{	
+				{
 					LM_ERR("unable to bind database module\n");
 					return -1;
 				}
@@ -420,7 +420,7 @@ int dbcl_init_dbf(dbcl_cls_t *cls)
 			{
 				if(db_bind_mod(&cls->wlist[i].clist[j]->db_url,
 							&cls->wlist[i].clist[j]->dbf)<0)
-				{	
+				{
 					LM_ERR("unable to bind database module\n");
 					return -1;
 				}
@@ -447,8 +447,8 @@ int dbcl_init_connections(dbcl_cls_t *cls)
 				LM_DBG("setting up read connection [%.*s]\n",
 							cls->rlist[i].clist[j]->name.len,
 							cls->rlist[i].clist[j]->name.s);
-				cls->rlist[i].clist[j]->dbh = 
-					cls->rlist[i].clist[j]->dbf.init(&cls->rlist[i].clist[j]->db_url);	
+				cls->rlist[i].clist[j]->dbh =
+					cls->rlist[i].clist[j]->dbf.init(&cls->rlist[i].clist[j]->db_url);
 				if(cls->rlist[i].clist[j]->dbh==NULL)
 				{
 					LM_WARN("cannot connect to database - connection [%.*s]\n",
@@ -465,8 +465,8 @@ int dbcl_init_connections(dbcl_cls_t *cls)
 				LM_DBG("setting up write connection [%.*s]\n",
 							cls->wlist[i].clist[j]->name.len,
 							cls->wlist[i].clist[j]->name.s);
-				cls->wlist[i].clist[j]->dbh = 
-					cls->wlist[i].clist[j]->dbf.init(&cls->wlist[i].clist[j]->db_url);	
+				cls->wlist[i].clist[j]->dbh =
+					cls->wlist[i].clist[j]->dbf.init(&cls->wlist[i].clist[j]->db_url);
 				if(cls->wlist[i].clist[j]->dbh==NULL)
 				{
 					LM_WARN("cannot connect to database - connection [%.*s]\n",
@@ -494,7 +494,6 @@ int dbcl_close_connections(dbcl_cls_t *cls)
 			if(cls->rlist[i].clist[j] != NULL && cls->rlist[i].clist[j]->flags!=0
 					&& cls->rlist[i].clist[j]->dbh != NULL)
 			{
-				
 				cls->rlist[i].clist[j]->dbf.close(cls->rlist[i].clist[j]->dbh);
 				cls->rlist[i].clist[j]->dbh = NULL;
 			}
