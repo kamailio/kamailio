@@ -69,8 +69,12 @@ Chapter 1. Admin Guide
    robin write and read.
 
    The following database commands are considered to be write operations:
-   INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE. The
-   read operations are done for database commands: QUERY and RAW-QUERY.
+   INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE,
+   INSERT-ASYNC. The read operations are done for database commands: QUERY
+   and RAW-QUERY.
+
+   Note: if INSERT-ASYNC is not implemented by DB connector module, then
+   standard INSERT operation is done.
 
 2. Dependencies
 
