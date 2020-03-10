@@ -95,6 +95,7 @@ int db_cluster_bind_api(db_func_t *dbb)
 	dbb->update           = db_cluster_update;
 	dbb->replace          = db_cluster_replace;
 	dbb->last_inserted_id = db_cluster_last_inserted_id;
+	dbb->insert_async     = db_cluster_insert_async;
 	dbb->insert_update    = db_cluster_insert_update;
 	dbb->insert_delayed   = db_cluster_insert_delayed;
 	dbb->affected_rows    = db_cluster_affected_rows;

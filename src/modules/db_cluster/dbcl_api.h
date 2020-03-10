@@ -117,6 +117,13 @@ int db_cluster_affected_rows(const db1_con_t* _h);
 
 
 /*! \brief
+ * Async insert a row into table
+ */
+int db_cluster_insert_async(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n);
+
+
+/*! \brief
  * Insert a row into table, update on duplicate key
  */
 int db_cluster_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
