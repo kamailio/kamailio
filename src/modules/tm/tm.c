@@ -2961,6 +2961,13 @@ static int t_clean(struct sip_msg* msg, char* key, char* value)
 	return 1;
 }
 
+/* kemi function to clean active but very old transactions */
+static int ki_t_clean(sip_msg_t* msg)
+{
+	tm_clean_lifetime();
+	return 1;
+}
+
 /**
  *
  */
@@ -3221,6 +3228,12 @@ static sr_kemi_t tm_kemi_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("tm"), str_init("t_clean"),
+		SR_KEMIP_INT, ki_t_clean,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
