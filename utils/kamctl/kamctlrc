@@ -136,7 +136,7 @@
 # CTLENGINE="RPCFIFO"
 
 ## path to FIFO file for engine RPCFIFO
-# RPCFIFOPATH="/run/kamailio/kamailio_rpc_fifo"
+# RPCFIFOPATH="/run/kamailio/kamailio_rpc.fifo"
 
 ## check ACL names; default on (1); off (0)
 # VERIFY_ACL=1
