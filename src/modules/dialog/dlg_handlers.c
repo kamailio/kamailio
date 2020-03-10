@@ -1789,6 +1789,16 @@ int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate)
 		if (dlg0==0) {
 			LM_ALERT("after event route - dialog not found [%u:%u] (%d/%d) (%p) (%.*s)\n",
 					h_entry, h_id, ostate, nstate, dlg, evname.len, evname.s);
+			if (nstate == DLG_STATE_DELETED) {
+				if (ostate == DLG_STATE_UNCONFIRMED) {
+					if_update_stat(dlg_enable_stats, failed_dlgs, 1);
+				} else if (ostate == DLG_STATE_EARLY) {
+					if_update_stat(dlg_enable_stats, early_dlgs, -1);
+					if_update_stat(dlg_enable_stats, failed_dlgs, 1);
+				} else if (ostate != DLG_STATE_DELETED) {
+					if_update_stat(dlg_enable_stats, active_dlgs, -1);
+				}
+			}
 			return -1;
 		} else {
 			dlg_release(dlg0);
