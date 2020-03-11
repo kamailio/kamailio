@@ -1385,6 +1385,77 @@ int contact_port_ip_match(str *c1, str *c2) {
     return 0;
 }
 
+/*!
+ * \brief Extract ip and port from contact alias if exists
+ * \param contact contact string 1
+ * \param port_ip extracted ip and port
+ * \return 0 on successfull, 1 failed
+ */
+static int extract_alias_ip_port(str* contact, str* port_ip) {
+	char* p, *port_s;
+	int tmp_len;
+
+	port_ip->s = contact->s;
+	port_ip->len = contact->len;
+
+	// if NULL -> alias is not present
+	if (port_ip->len > 6 && (p = _strnistr(port_ip->s, "alias=", port_ip->len)) != NULL) {
+		// strip all before 'alias=' and 'alias=' itself
+		// this is the length of 'IP~PORT~PROTO' string
+		port_ip->len -= (p - port_ip->s + 6);
+		// this is the IP's starting position
+		port_ip->s = p + 6;
+
+		LM_DBG("alias->len=%d [%.*s]\n", port_ip->len, port_ip->len, port_ip->s);
+
+		// find the firs '~' separates IP from PORT
+		// if NULL -> alias contains only IP
+		if ((p = memchr(port_ip->s, '~', port_ip->len))) {
+			// this is the temporary length of 'PORT~PROTO' string
+			tmp_len = port_ip->s + port_ip->len - p - 1;
+			// set PORT starting position
+			port_s = p + 1;
+
+			LM_DBG("port~proto->len=%d [%.*s]\n", tmp_len, tmp_len, port_s);
+
+			// find the second '~' separates PORT from PROTO
+			if ((p = memchr(port_s, '~', tmp_len))) {
+				// strip '~PROTO' string
+				tmp_len = (port_ip->len + port_ip->s - p);
+
+				port_ip->len -= (port_ip->len + port_ip->s - p);
+
+				LM_DBG("~proto->len=%d [%.*s]\n", tmp_len, tmp_len, p);
+			}else{
+				LM_DBG("No alias proto in contact[%.*s]\n", contact->len, contact->s);
+			}
+		}else{
+			LM_DBG("No alias port~proto in contact[%.*s]\n", contact->len, contact->s);
+		}
+	}else{
+		LM_DBG("No alias in contact [%.*s]\n", contact->len, contact->s);
+	}
+
+	return 0;
+}
+
+/*!
+ * \brief Match the aliases of two contacts - compare only ip and port portion, without proto
+ * \param c1 contact string 1
+ * \param c2 contact string 2
+ * \return 1 on successfull match, 0 when they not match
+ */
+static int alias_port_ip_match(str *c1, str *c2) {
+	str ip_port1, ip_port2;
+	extract_alias_ip_port(c1, &ip_port1);
+	extract_alias_ip_port(c2, &ip_port2);
+	LM_DBG("Matching contact alias ip and port - comparing [%.*s] and [%.*s]\n", ip_port1.len, ip_port1.s, ip_port2.len, ip_port2.s);
+	if ((ip_port1.len == ip_port2.len) && !memcmp(ip_port1.s, ip_port2.s, ip_port1.len)) {
+		return 1;
+	}
+	return 0;
+}
+
 static str subs_terminated = {"terminated", 10};
 static str subs_active = {"active;expires=", 15};
 
@@ -1671,12 +1742,12 @@ static void process_xml_for_contact(str* buf, str* pad, ucontact_t* ptr) {
  * @returns the str with the XML content
  * if its a new subscription we do things like subscribe to updates on IMPU, etc
  */
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *explit_dereg_contact, int num_explit_dereg_contact, unsigned int reginfo_version) {
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *explit_dereg_contact, str* watcher_contact, int num_explit_dereg_contact, unsigned int reginfo_version) {
     str x = {0, 0};
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
     impurecord_t *r;
-    int i, k, res;
+    int i, k, res, added_contacts;
     ucontact_t* ptr;
 
     buf.s = bufc;
@@ -1760,11 +1831,32 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
         }
 
 		impucontact = r->linked_contacts.head;
-        while (impucontact) {
+		added_contacts = 0;
+		while (impucontact) {
 			ptr = impucontact->contact;
-            process_xml_for_contact(&buf, &pad, ptr);
+
+			// Prevent multiple contacts in Notify message body <registration> tags
+			// 1. Compare contact->contact IP and PORT with subscriber->watcher_contact IP and PORT
+			// 2. Compare contact->contact alias IP and PORT with subscriber->watcher_contact alias IP and PORT without PROTO
+			// This is because of IPv6 and IPv4 family
+			// When we have a case like: UE <--IPv6--> P-CSCF <--IPv4--> S-CSCF
+			// Then scscf contact->contact alias proto is 2(IPv6) but scscf subscriber->watcher_contact alias proto is 1(IPv4)
+			if(contact_port_ip_match(&ptr->c, watcher_contact) && alias_port_ip_match(&ptr->c, watcher_contact)){
+				process_xml_for_contact(&buf, &pad, ptr);
+				++added_contacts;
+			}
 			impucontact = impucontact->next;
-        }
+		}
+
+		// For pcscf or other AS subscriptions add all contacts
+		if(added_contacts == 0) {
+			impucontact = r->linked_contacts.head;
+			while (impucontact) {
+				ptr = impucontact->contact;
+				process_xml_for_contact(&buf, &pad, ptr);
+				impucontact = impucontact->next;
+			}
+		}
 
         STR_APPEND(buf, registration_e);
 
@@ -1971,7 +2063,7 @@ void send_notification(reg_notification * n) {
     LM_DBG("Have a notification to send for the following IMPUs using domain [%.*s]\n", domain->name->len, domain->name->s);
 
 
-    content = generate_reginfo_full(domain, n->impus, n->num_impus, n->explit_dereg_contact, n->num_explit_dereg_contact, n->reginfo_s_version);
+    content = generate_reginfo_full(domain, n->impus, n->num_impus, n->explit_dereg_contact, &n->watcher_contact, n->num_explit_dereg_contact, n->reginfo_s_version);
 
     if (content.len > MAX_REGINFO_SIZE) {
         LM_ERR("content size (%d) exceeds MAX_REGINFO_SIZE (%d)!\n", content.len, MAX_REGINFO_SIZE);
