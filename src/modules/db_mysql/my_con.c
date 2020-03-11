@@ -67,7 +67,7 @@ int my_con_connect(db_con_t* con)
 
 	if (my_connect_to) {
 		if (mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT,
-					(char*)&my_connect_to))
+					(const void*)&my_connect_to))
 			WARN("failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
 
@@ -77,12 +77,12 @@ int my_con_connect(db_con_t* con)
 			(my_client_ver < 50000))) {
 		if (my_send_to) {
 			if (mysql_options(mcon->con, MYSQL_OPT_WRITE_TIMEOUT ,
-						(char*)&my_send_to))
+						(const void*)&my_send_to))
 				WARN("failed to set MYSQL_OPT_WRITE_TIMEOUT\n");
 		}
 		if (my_recv_to){
 			if (mysql_options(mcon->con, MYSQL_OPT_READ_TIMEOUT ,
-						(char*)&my_recv_to))
+						(const void*)&my_recv_to))
 				WARN("failed to set MYSQL_OPT_READ_TIMEOUT\n");
 		}
 	}

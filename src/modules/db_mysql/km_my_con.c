@@ -71,7 +71,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	egrp = 0;
 	memset(ptr, 0, sizeof(struct my_con));
 	ptr->ref = 1;
-	
+
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
 	        PKG_MEM_ERROR;
@@ -94,7 +94,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		}
 		// read [client] and [<grp>] sections in the order
 		// given in my.cnf
-		mysql_options(ptr->con, MYSQL_READ_DEFAULT_GROUP, grp);
+		mysql_options(ptr->con, MYSQL_READ_DEFAULT_GROUP, (const void*)grp);
 	}
 	else {
 		host = id->host;
@@ -109,14 +109,14 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	}
 
 	// set connect, read and write timeout, the value counts three times
-	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const char *)&db_mysql_timeout_interval);
-	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const char *)&db_mysql_timeout_interval);
-	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&db_mysql_timeout_interval);
 #if MYSQL_VERSION_ID > 50012
 	/* set reconnect flag if enabled */
 	if (db_mysql_auto_reconnect) {
 		rec = 1;
-		mysql_options(ptr->con, MYSQL_OPT_RECONNECT, &rec);
+		mysql_options(ptr->con, MYSQL_OPT_RECONNECT, (const void*)&rec);
 	}
 #else
 	if (db_mysql_auto_reconnect)
