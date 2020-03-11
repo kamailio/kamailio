@@ -118,7 +118,7 @@ modparam("siptrace", "db_url", "&exampledb;")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sip_trace</varname> parameter</title>
+		<title>Set <varname>table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("siptrace", "table", "strace")
