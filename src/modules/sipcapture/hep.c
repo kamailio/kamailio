@@ -481,7 +481,7 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	si->addr_info_lst = 0;
 
 	si->address_str.s = ip_addr2a(&si->address);
-	;
+
 	si->address_str.len = strlen(si->address_str.s);
 
 	si->port_no_str.s = int2str(si->port_no, &tmp_len);
