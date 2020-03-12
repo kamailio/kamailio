@@ -42,7 +42,6 @@
 
 
 /*! contact matching mode */
-int matching_mode = CONTACT_ONLY;
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
 
@@ -594,7 +593,9 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 	no_callid = 0;
 	*_co = 0;
 
-	switch (matching_mode) {
+	int matching_mode_cfg = cfg_get(p_usrloc, p_usrloc_cfg, matching_mode);
+
+	switch (matching_mode_cfg) {
 		case CONTACT_ONLY:
 			ptr = contact_match( _r->contacts, _c);
 			break;
@@ -606,7 +607,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 			ptr = contact_path_match( _r->contacts, _c, _path);
 			break;
 		default:
-			LM_CRIT("unknown matching_mode %d\n", matching_mode);
+			LM_CRIT("unknown matching_mode %d\n", matching_mode_cfg);
 			return -1;
 	}
 

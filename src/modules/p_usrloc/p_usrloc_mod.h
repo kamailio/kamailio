@@ -99,7 +99,6 @@ extern int default_dbt;
 extern str domain_db;
 extern int expire;
 
-extern int matching_mode;
 
 extern str write_db_url;
 extern str read_db_url;

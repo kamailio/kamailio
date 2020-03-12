@@ -216,7 +216,7 @@ static param_export_t params[] = {
 	{"path_column",       PARAM_STR, &path_col      },
 	{"socket_column",     PARAM_STR, &sock_col      },
 	{"methods_column",    PARAM_STR, &methods_col   },
-	{"matching_mode",     INT_PARAM, &matching_mode   },
+	{"matching_mode",     INT_PARAM, &default_p_usrloc_cfg.matching_mode},
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
@@ -299,6 +299,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int matching_mode_cfg = cfg_get(p_usrloc, p_usrloc_cfg, matching_mode);
+
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
@@ -325,13 +327,13 @@ static int mod_init(void)
 	        return -1;
 	}
 	/* check matching mode */
-	switch (matching_mode) {
+	switch (matching_mode_cfg) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
 			break;
 		default:
-			LM_ERR("invalid matching mode %d\n", matching_mode);
+			LM_ERR("invalid matching mode %d\n", matching_mode_cfg);
 	}
 
 	if(ul_init_locks()!=0)
