@@ -75,7 +75,7 @@ Camille Oudot
    List of Examples
 
    1.1. Set db_url parameter
-   1.2. Set sip_trace parameter
+   1.2. Set table parameter
    1.3. Set trace_flag parameter
    1.4. Set trace_on parameter
    1.5. Set traced_user_avp parameter
@@ -222,7 +222,7 @@ modparam("siptrace", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Default value is “sip_trace”.
 
-   Example 1.2. Set sip_trace parameter
+   Example 1.2. Set table parameter
 ...
 modparam("siptrace", "table", "strace")
 ...
@@ -283,7 +283,7 @@ modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 3.7. duplicate_uri (str)
 
    The address in form of a SIP URI where to send a duplicate of traced
-   message. It uses UDP all the time.
+   message.
 
    Default value is "NULL".
 
