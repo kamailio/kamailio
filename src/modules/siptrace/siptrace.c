@@ -1890,7 +1890,7 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 
 	if(dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN,
 				trace_dialog_transaction, xavp->val.v.vptr, 0) != 0) {
-		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
+		LM_ERR("Failed to register DLGCB_REQ_WITHIN callback!\n");
 		return;
 	}
 
