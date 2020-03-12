@@ -32,6 +32,7 @@ struct cfg_group_p_usrloc {
 	unsigned int	failover_level;
 	unsigned int	db_ops_ruid;
 	unsigned int	db_update_as_insert;
+	unsigned int	matching_mode;
 };
 
 extern struct cfg_group_p_usrloc	default_p_usrloc_cfg;

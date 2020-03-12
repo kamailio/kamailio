@@ -34,7 +34,8 @@ struct cfg_group_p_usrloc	default_p_usrloc_cfg = {
 		DEFAULT_ERR_THRESHOLD,	/* db_err_threshold */
 		DEFAULT_FAILOVER_LEVEL,	/* failover_level */
 		0,	/* db_ops_ruid */
-		1	/* db_update_as_insert */
+		1,	/* db_update_as_insert */
+		CONTACT_ONLY	/* matching_mode */
 	    };
 
 void	*p_usrloc_cfg = &default_p_usrloc_cfg;
@@ -50,5 +51,7 @@ cfg_def_t	p_usrloc_cfg_def[] = {
 		"Set this if you want to update / delete from DB using ruid value "},
 	{"db_update_as_insert",		CFG_VAR_INT | CFG_ATOMIC, 	0, 1, 0, 0,
 		"Set this parameter if you want to do INSERT DB operations instead of UPDATE DB operations. "},
+	{"matching_mode",	CFG_VAR_INT | CFG_ATOMIC, 	0, 0, 0, 0,
+		"Specified which contact maching algorithm to be used (0 - Contact only / 1 - Contact and Call-ID / 2 - Contact and Path)"},
 	{0, 0, 0, 0, 0, 0}
 };
