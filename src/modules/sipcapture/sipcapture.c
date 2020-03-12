@@ -388,7 +388,7 @@ static param_export_t params[] = {
 	{"raw_moni_capture_on", INT_PARAM, &moni_capture_on},
 	{"db_insert_mode", INT_PARAM, &db_insert_mode},
 	{"raw_interface", PARAM_STR, &raw_interface},
-	{"promiscious_on", INT_PARAM, &promisc_on},
+	{"promiscuous_on", INT_PARAM, &promisc_on},
 	{"raw_moni_bpf_on", INT_PARAM, &bpf_on},
 	{"callid_aleg_header", PARAM_STR, &callid_aleg_header},
 	{"custom_field1_header", PARAM_STR, &custom_field1_header},
@@ -824,7 +824,7 @@ static int mod_init(void)
 	c = capture_modes_root;
 
 	while(c) {
-		/*for the default capture_mode, don't add it's name to the stat name*/
+		/*for the default capture_mode, don't add its name to the stat name*/
 		def = (capture_def && c == capture_def) ? 1 : 0;
 		stat_name = (char *)shm_malloc(
 				sizeof(char)
