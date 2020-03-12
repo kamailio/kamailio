@@ -365,7 +365,7 @@ modparam("sipcapture", "raw_sock_children", 6)
                 </emphasis>
                 </para>
                 <example>
-                <title>Set <varname>promiscous_on</varname> parameter</title>
+                <title>Set <varname>promiscuous_on</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("sipcapture", "promiscuous_on", 1)
