@@ -679,8 +679,6 @@ modparam("usrloc", "db_update_as_insert", 1)
     </example>
     </section>
 
-    </section>
-
     	<section>
 		<title><varname>default_db_url</varname>(str)</title>
 		<para>
@@ -700,6 +698,8 @@ modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
 </programlisting>
 	    </example>
 	</section>
+
+    </section>
 
     <section>
     <title> Changes from usrloc module </title>
