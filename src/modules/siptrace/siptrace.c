@@ -833,6 +833,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		str *corid, char *dir, enum siptrace_type_t trace_type)
 {
 	siptrace_info_t* info = NULL;
+	char *p = NULL;
 
 	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
 		int alloc_size = sizeof(siptrace_info_t);
@@ -876,17 +877,18 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		}
 		memset(info, 0, alloc_size);
 
+		p = (char *)(info + 1);
 		/* could use the dest_info we've already parsed but there's no way to pass
 		 * it to DLGCB_CREATED callback so the only thing to do is keep
 		 * it as uri, serialize in a dlg_var and parse again in DLGCB_CREATED */
 		if(corid) {
-			info->correlation_id.s = (char *)(info + 1);
+			info->correlation_id.s = p;
 			info->correlation_id.len = corid->len;
 			memcpy(info->correlation_id.s, corid->s, corid->len);
 		}
 		if (duri) {
 			info->uriState = STRACE_RAW_URI;
-			info->u.dup_uri.s = (char *)info->correlation_id.s + info->correlation_id.len;
+			info->u.dup_uri.s = p + ((info->correlation_id.s)?info->correlation_id.len:0);
 			memcpy(info->u.dup_uri.s, duri->s, duri->len);
 			info->u.dup_uri.len = duri->len;
 		} else {
