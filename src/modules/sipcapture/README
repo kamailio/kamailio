@@ -85,7 +85,7 @@ Alexandr Dubovikov
    1.11. Set raw_socket_listen parameter
    1.12. Set raw_interface parameter
    1.13. Set raw_sock_children parameter
-   1.14. Set promiscous_on parameter
+   1.14. Set promiscuous_on parameter
    1.15. Set raw_moni_bpf_on parameter
    1.16. Set capture_node parameter
    1.17. Set insert_retries parameter
@@ -396,7 +396,7 @@ modparam("sipcapture", "raw_sock_children", 6)
 
    Default value is "0".
 
-   Example 1.14. Set promiscous_on parameter
+   Example 1.14. Set promiscuous_on parameter
 ...
 modparam("sipcapture", "promiscuous_on", 1)
 ...
