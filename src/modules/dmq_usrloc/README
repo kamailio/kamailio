@@ -47,7 +47,7 @@ Julien Chavanton
 
    1.1. Set enable parameter
    1.2. Set sync parameter
-   1.3. Set batch size parameter
+   1.3. Set batch_size parameter
    1.4. Set batch_usleep parameter
    1.5. Set batch_msg_size parameter
    1.6. Set batch_msg_contacts parameter
@@ -135,7 +135,7 @@ modparam("dmq_usrloc", "sync", 0)
 
    Default value is 0.
 
-   Example 1.3. Set batch size parameter
+   Example 1.3. Set batch_size parameter
 ...
 modparam("dmq_usrloc", "batch_size", 4000)
 ...
