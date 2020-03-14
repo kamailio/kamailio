@@ -35,7 +35,7 @@ Emmanuel Schmidbauer
               4.4. nsqd_port(int)
               4.5. consumer_use_nsqd(int)
               4.6. consumer_event_key(str)
-              4.7. consumer_event_sub_key(str)
+              4.7. consumer_event_subkey(str)
               4.8. max_in_flight(int)
               4.9. consumer_workers(int)
               4.10. topic_channel(str)
@@ -51,7 +51,7 @@ Emmanuel Schmidbauer
    1.4. Set nsqd_port parameter
    1.5. Set consumer_use_nsqd parameter
    1.6. Set consumer_event_key parameter
-   1.7. Set consumer_event_sub_key parameter
+   1.7. Set consumer_event_subkey parameter
    1.8. Set max_in_flight parameter
    1.9. Set consumer_workers parameter
    1.10. Set topic_channel parameter
@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
         4.4. nsqd_port(int)
         4.5. consumer_use_nsqd(int)
         4.6. consumer_event_key(str)
-        4.7. consumer_event_sub_key(str)
+        4.7. consumer_event_subkey(str)
         4.8. max_in_flight(int)
         4.9. consumer_workers(int)
         4.10. topic_channel(str)
@@ -152,7 +152,7 @@ Chapter 1. Admin Guide
    4.4. nsqd_port(int)
    4.5. consumer_use_nsqd(int)
    4.6. consumer_event_key(str)
-   4.7. consumer_event_sub_key(str)
+   4.7. consumer_event_subkey(str)
    4.8. max_in_flight(int)
    4.9. consumer_workers(int)
    4.10. topic_channel(str)
@@ -237,7 +237,7 @@ modparam("nsq", "consumer_use_nsqd", 1)
 modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
 ...
 
-4.7. consumer_event_sub_key(str)
+4.7. consumer_event_subkey(str)
 
    The default name of the field in json payload to compose the event name
    2nd part
@@ -246,9 +246,9 @@ modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
 
    Default value is “Event-Name”.
 
-   Example 1.7. Set consumer_event_sub_key parameter
+   Example 1.7. Set consumer_event_subkey parameter
 ...
-modparam("nsq", "consumer_event_sub_key", "My-JSON-SubField-Name")
+modparam("nsq", "consumer_event_subkey", "My-JSON-SubField-Name")
 ...
 
 4.8. max_in_flight(int)
@@ -320,7 +320,7 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
    Example 1.12. Define the event routes
 ...
 modparam("nsq", "consumer_event_key", "Event-Category")
-modparam("nsq", "consumer_event_sub_key", "Event-Name")
+modparam("nsq", "consumer_event_subkey", "Event-Name")
 ...
 
 event_route[nsq:consumer-event-presence-update]
@@ -348,7 +348,7 @@ nsqE{json.parse,From})");
 event_route[nsq:consumer-event-event-category-event-name]
 {
         # event-category is the name of the consumer_event_key parameter
-        # event-name is the name of the consumer_event_sub_key parameter
+        # event-name is the name of the consumer_event_subkey parameter
         # this event route is executed if we can't find the previous
         ...
 }

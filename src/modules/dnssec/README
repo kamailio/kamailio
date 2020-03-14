@@ -21,7 +21,7 @@ Marius Zbihlei
 
    List of Examples
 
-   1.1. Set enable_full_lr parameter
+   1.1. Set general_query_flags parameter
 
 Chapter 1. Admin Guide
 
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
 
    Default value is 0(no changes)
 
-   Example 1.1. Set enable_full_lr parameter
+   Example 1.1. Set general_query_flags parameter
  ...
  modparam("dnssec", "general_query_flags", 1) # QUERY_DONT_VALIDATE disable vali
 dation
