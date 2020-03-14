@@ -59,9 +59,7 @@
 	<section>
 	<title>Parameters</title>
 	<section id="tmx.p.precheck_trans">
-		<title>
-		<function moreinfo="none">precheck_trans</function>
-		</title>
+		<title><varname>precheck_trans</varname> (int)</title>
 		<para>
 		Enable/disable transaction pre-check via t_precheck_trans()
 		function. If set to 0, the internal structures are not created
@@ -71,7 +69,7 @@
 		Default value is <emphasis>1</emphasis> (enabled).
 		</para>
 		<example>
-		<title><function>precheck_trans</function> usage</title>
+		<title><varname>precheck_trans</varname> (int)</title>
 		<programlisting format="linespecific">
 ...
 modparam("tmx", "precheck_trans", 0)
