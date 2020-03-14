@@ -163,7 +163,7 @@ modparam("xcap_server", "xcap_table", "xcapdocs")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>url_match</varname> parameter</title>
+		<title>Set <varname>xcap_root</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("xcap_server", "xcap_root", "/xcap-root/")
@@ -215,7 +215,7 @@ modparam("xcap_server", "xml_ns",
 		</example>
 	</section>
 	<section id="xcap_server.p.directory_scheme">
-		<title><varname>directory_scheme (int)</varname></title>
+		<title><varname>directory_scheme</varname> (int)</title>
 		<para>
 			Allows the scheme used in
 			org.openmobilealliance.xcap-directory listings to be
@@ -253,7 +253,7 @@ modparam("xcap_server", "directory_scheme", 0)
 		</example>
 	</section>
 	<section id="xcap_server.p.directory_hostname">
-		<title><varname>directory_hostname (str)</varname></title>
+		<title><varname>directory_hostname</varname> (string)</title>
 		<para>
 			Allows the hostname (and port) used in
 			org.openmobilealliance.xcap-directory listings to be
