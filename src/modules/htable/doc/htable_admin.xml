@@ -414,7 +414,7 @@ $ kamcmd htable.dump htable
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>hash_size</varname> parameter</title>
+		<title>Set <varname>htable</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
