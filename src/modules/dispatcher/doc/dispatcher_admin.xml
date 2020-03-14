@@ -221,6 +221,27 @@ modparam("dispatcher", "priority_col", "dstpriority")
 		</example>
 	</section>
 
+	<section id="dispatcher.p.attrs_col">
+		<title><varname>attrs_col</varname> (string)</title>
+		<para>
+			The column's name in the database storing the attributes for
+			destination URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>attrs</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>attrs_col</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "attrs_col", "dstattrs")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.force_dst">
 		<title><varname>force_dst</varname> (int)</title>
 		<para>
