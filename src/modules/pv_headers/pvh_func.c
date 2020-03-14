@@ -93,8 +93,8 @@ int pvh_collect_headers(struct sip_msg *msg, int is_auto)
 				&& strchr(val.s, ',') != NULL) {
 
 			if(pvh_split_values(&val, hvals, &d_size, 1) < 0) {
-				LM_ERR("could not parse Diversion header comma separated "
-					   "value");
+				LM_ERR("could not parse %.*s header comma separated "
+					   "value", name.len, name.s);
 				return -1;
 			}
 
