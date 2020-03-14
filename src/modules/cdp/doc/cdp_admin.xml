@@ -127,7 +127,24 @@ modparam("cdp", "latency_threshold", 1000)
       </example>
     </section>
     <section>
-      <title>workerq_length_threshold_percentage (int)</title>
+      <title><varname>workerq_latency_threshold</varname> (int)</title>
+
+      <para>The time in ms above which a log error is written to log file for
+      putting tasks into task queue.</para>
+
+      <para><emphasis> Default value is <quote>100</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>workerq_latency_threshold</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "workerq_latency_threshold", 250)
+...
+	</programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>workerq_length_threshold_percentage</varname> (int)</title>
 
       <para>The threshold of the length of the worker queue as a percentage of 
 	  the maximum queue size - when exceeded a warning is written to the log
