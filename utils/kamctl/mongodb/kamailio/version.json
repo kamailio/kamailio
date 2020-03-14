@@ -2,6 +2,11 @@
   "name": "version",
   "version": 1,
   "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
     "table_name": {
       "type": "string",
       "default": null,

@@ -1,13 +1,13 @@
 METADATA_COLUMNS
-table_name(str) table_version(int)
+id(int) table_name(str) table_version(int)
 METADATA_KEY
-0 
+1 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
 0
 METADATA_DEFAULTS
-NIL|0
+NIL|NIL|0
 version|
 version|1
 acc|
@@ -64,8 +64,6 @@ imc_members|
 imc_members|1
 imc_rooms|
 imc_rooms|1
-METADATA_DEFAULTS
-NIL|NIL|''|NIL|NIL|NULL|NULL|NULL|NULL|'2030-05-28 21:32:15'|1.0|'Default-Call-ID'|1|'2000-01-01 00:00:01'|0|0|''|NULL|NULL|NULL
 lcr_gw|
 lcr_gw|3
 lcr_rule|
