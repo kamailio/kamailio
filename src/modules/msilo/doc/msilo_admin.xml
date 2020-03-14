@@ -807,3 +807,18 @@ m_dump("$fu");
 	</section>
 </chapter>
 
+</programlisting>
+		</example>
+    </section>
+	<section id="msilo.p.sc_stored_hdrs">
+		<title><varname>sc_stored_hdrs</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the extra headers.
+		</para>
+		<para>Default value is <quote>extra_hdrs</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_stored_hdrs</quote> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("msilo", "sc_stored_hdrs", "extra_headers")
+...
