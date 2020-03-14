@@ -134,7 +134,7 @@ modparam("dmq_usrloc", "sync", 0)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>batch size</varname> parameter</title>
+		<title>Set <varname>batch_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("dmq_usrloc", "batch_size", 4000)
