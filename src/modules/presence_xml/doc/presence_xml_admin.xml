@@ -190,6 +190,25 @@ modparam("presence_xml", "disable_bla", 1)
 		</example>
 	</section>
 
+	<section id="presence_xml.p.disable_xcapdiff">
+		<title><varname>disable_xcapdiff</varname>(int)</title>
+		<para>
+		Set this parameter to disable the handling of the "xcap-diff" event.
+		</para>
+		<para>
+		<emphasis>Default value: <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>disable_xcapdiff</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "disable_xcapdiff", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="presence_xml.p.force_active">
 		<title><varname>force_active</varname> (int)</title>
 		<para>
