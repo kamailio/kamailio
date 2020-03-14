@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
               3.4. buf_size (int)
               3.5. xml_ns (str)
               3.6. directory_scheme (int)
-              3.7. directory_hostname (str)
+              3.7. directory_hostname (string)
 
         4. Functions
 
@@ -46,7 +46,7 @@ Daniel-Constantin Mierla
 
    1.1. Set the “db_url” parameter
    1.2. Set the “xcap_table” parameter
-   1.3. Set url_match parameter
+   1.3. Set xcap_root parameter
    1.4. Set the “buf_size” parameter
    1.5. Set xml_ns parameter
    1.6. Set directory_scheme parameter
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
         3.4. buf_size (int)
         3.5. xml_ns (str)
         3.6. directory_scheme (int)
-        3.7. directory_hostname (str)
+        3.7. directory_hostname (string)
 
    4. Functions
 
@@ -140,7 +140,7 @@ Chapter 1. Admin Guide
    3.4. buf_size (int)
    3.5. xml_ns (str)
    3.6. directory_scheme (int)
-   3.7. directory_hostname (str)
+   3.7. directory_hostname (string)
 
 3.1. db_url (string)
 
@@ -170,7 +170,7 @@ modparam("xcap_server", "xcap_table", "xcapdocs")
 
    Default value is '/xcap-root/'.
 
-   Example 1.3. Set url_match parameter
+   Example 1.3. Set xcap_root parameter
 ...
 modparam("xcap_server", "xcap_root", "/xcap-root/")
 ...
@@ -223,7 +223,7 @@ modparam("xcap_server", "xml_ns",
 modparam("xcap_server", "directory_scheme", 0)
 ...
 
-3.7. directory_hostname (str)
+3.7. directory_hostname (string)
 
    Allows the hostname (and port) used in
    org.openmobilealliance.xcap-directory listings to be set to a specific
