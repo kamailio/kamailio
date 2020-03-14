@@ -260,7 +260,7 @@ modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
 		</section>
 
 		<section>
-			<title><varname>consumer_event_sub_key</varname>(str)</title>
+			<title><varname>consumer_event_subkey</varname>(str)</title>
 			<para>
 				The default name of the field in json payload to compose the event name 2nd part
 			</para>
@@ -271,10 +271,10 @@ modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
 				<emphasis>Default value is <quote>Event-Name</quote>.</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>consumer_event_sub_key</varname> parameter</title>
+				<title>Set <varname>consumer_event_subkey</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("nsq", "consumer_event_sub_key", "My-JSON-SubField-Name")
+modparam("nsq", "consumer_event_subkey", "My-JSON-SubField-Name")
 ...
 </programlisting>
 			</example>
@@ -384,7 +384,7 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
 <programlisting format="linespecific">
 ...
 modparam("nsq", "consumer_event_key", "Event-Category")
-modparam("nsq", "consumer_event_sub_key", "Event-Name")
+modparam("nsq", "consumer_event_subkey", "Event-Name")
 ...
 
 event_route[nsq:consumer-event-presence-update]
@@ -408,7 +408,7 @@ event_route[nsq:consumer-event-presence]
 event_route[nsq:consumer-event-event-category-event-name]
 {
 	# event-category is the name of the consumer_event_key parameter
-	# event-name is the name of the consumer_event_sub_key parameter
+	# event-name is the name of the consumer_event_subkey parameter
 	# this event route is executed if we can't find the previous
 	...
 }
