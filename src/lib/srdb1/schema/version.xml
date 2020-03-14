@@ -10,17 +10,35 @@
     <name>version</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>
+			This table is used by Kamailio modules to check if the structure
+			of database tables has the expected number.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
 
     <column id="table_name">
         <name>table_name</name>
         <type>string</type>
         <size>32</size>
         <natural/>
+        <description>Table name</description>
     </column>
     <column id="table_version">
         <name>table_version</name>
         <type>unsigned int</type>
         <default>0</default>
+        <description>Version number</description>
     </column>
     <index>
         <name>table_name_idx</name>
