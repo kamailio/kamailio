@@ -182,7 +182,7 @@
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>backend(string)</varname></title>
+		<title><varname>backend</varname> (string)</title>
 		<para>
 		The mode you are using the module; it can be either "component" or "server".
 		</para>
