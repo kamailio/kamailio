@@ -440,7 +440,7 @@ ldap_client_bind_timeout = 500
       <title>Parameters</title>
 
       <section>
-        <title>config_file (string)</title>
+        <title><varname>config_file</varname> (string)</title>
 
         <para>Full path to LDAP configuration file.</para>
 
