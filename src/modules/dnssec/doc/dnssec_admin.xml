@@ -114,7 +114,7 @@
        <para><emphasis> Default value is 0(no changes)</emphasis></para>
  
        <example>
-         <title>Set <varname>enable_full_lr</varname> parameter</title>
+         <title>Set <varname>general_query_flags</varname> parameter</title>
  
          <programlisting format="linespecific">
  ...
