@@ -203,7 +203,7 @@ modparam("lcr","db_url","&exampledb;")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>gw_table</varname> module parameter</title>
+		<title>Setting <varname>lcr_gw_table</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "lcr_gw_table","gw")
