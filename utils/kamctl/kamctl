@@ -2918,7 +2918,7 @@ kamailio_trap() {
 		exit
 	fi
 	DATE=`/bin/date +%Y%m%d_%H%M%S`
-	LOG_FILE=/tmp/gdb_kamailio_$DATE
+	LOG_FILE=/tmp/gdb_kamailio_${DATE}.txt
 	minfo "Trap file: $LOG_FILE"
 	ctl_cmd_run core.psx > $LOG_FILE
 	echo -n "Trapping Kamailio with gdb: "
