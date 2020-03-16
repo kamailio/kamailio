@@ -80,6 +80,7 @@ MODULE_VERSION
 #define INSTANCE_COL   "instance"
 #define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
+#define UNIQ_COL       "uniq"
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
@@ -143,6 +144,7 @@ str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the
 str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
 str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
+str uniq_col        = str_init(UNIQ_COL);		/*!< Name of column containing the uniq value*/
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
@@ -247,7 +249,7 @@ static param_export_t params[] = {
 	{"write_on_master_db",   INT_PARAM, &db_master_write     },
 	{"connection_expires",   INT_PARAM, &connection_expires  },
 	{"alg_location",         INT_PARAM, &alg_location },
-    {"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
+	{"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
 	{"db_update_as_insert",  INT_PARAM, &default_p_usrloc_cfg.db_update_as_insert},
 	{"mdb_availability_control", INT_PARAM, &mdb_availability_control},
 	{0, 0, 0}

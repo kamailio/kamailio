@@ -18,7 +18,8 @@ CREATE TABLE location (
     socket VARCHAR(64) DEFAULT NULL,
     methods INT(11) DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
-    reg_id INTEGER DEFAULT 0 NOT NULL
+    reg_id INTEGER DEFAULT 0 NOT NULL,
+    uniq VARCHAR(255) DEFAULT NULL
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
