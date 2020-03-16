@@ -619,18 +619,19 @@ modparam("p_usrloc", "default_db_type", "cluster")
 
 3.25. db_ops_ruid (int)
 
-   If set to 1, database queries for update or delete are done using ruid
-   value. If it is set to 0, the old style using aor, contact and call-id
-   is done.
+   Defines how database queries are done:
+     * 0 uses the old style using aor, contact and call-id
+     * 1 uses ruid value
+     * 2 uses the new style using aor, contact and call-id
 
-   Default value is “0”.
+   Default value is 0
 
    Can be set at runtime, e.g.:
                 $ kamcmd cfg.set_now_int p_usrloc db_ops_ruid 1
 
    Example 1.25. Set db_ops_ruid parameter
 ...
-modparam("p_usrloc", "db_ops_ruid", 0)
+modparam("p_usrloc", "db_ops_ruid", 2)
 ...
 
 3.26. db_update_as_insert (string)
