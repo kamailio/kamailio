@@ -84,6 +84,7 @@ extern str methods_col;
 extern str instance_col;
 extern str reg_id_col;
 extern str last_mod_col;
+extern str uniq_col;
 
 extern int db_mode;
 extern int use_domain;
