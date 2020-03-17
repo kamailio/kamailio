@@ -258,6 +258,40 @@ int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 {
 	subs_t *new_rec = NULL;
 
+	if (pres_delete_same_subs) {
+		subs_t* rec = NULL, *prev_rec = NULL;
+
+		lock_get(&htable[hash_code].lock);
+		/* search if there is another record with the same pres_uri & callid */
+		rec = htable[hash_code].entries->next;
+		while (rec) {
+			if (subs->pres_uri.len == rec->pres_uri.len && subs->callid.len == rec->callid.len &&
+					memcmp(subs->pres_uri.s, rec->pres_uri.s, subs->pres_uri.len) == 0 &&
+					memcmp(subs->callid.s, rec->callid.s, subs->callid.len) == 0) {
+				LM_NOTICE("Found another record with the same pres_uri[%.*s] and callid[%.*s]\n",
+					subs->pres_uri.len, subs->pres_uri.s, subs->callid.len, subs->callid.s);
+				/* delete this record */
+
+				if (prev_rec)
+					prev_rec->next = rec->next;
+				else
+					htable[hash_code].entries->next = rec->next;
+
+				if (subs_dbmode != NO_DB)
+					delete_db_subs(&rec->to_tag, &rec->from_tag, &rec->callid);
+
+				if (rec->contact.s!=NULL)
+					shm_free(rec->contact.s);
+
+				shm_free(rec);
+				break;
+			}
+			prev_rec = rec;
+			rec = rec->next;
+		}
+		lock_release(&htable[hash_code].lock);
+	}
+
 	new_rec = mem_copy_subs_noc(subs);
 	if(new_rec == NULL) {
 		LM_ERR("copying in share memory a subs_t structure\n");

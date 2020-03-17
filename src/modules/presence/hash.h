@@ -56,6 +56,8 @@ struct presentity;
 #define PKG_MEM_TYPE 1 << 1
 #define SHM_MEM_TYPE 1 << 2
 
+extern int pres_delete_same_subs;
+
 /* subscribe hash entry */
 struct subscription;
 
@@ -135,5 +137,7 @@ int update_phtable(struct presentity *presentity, str pres_uri, str body);
 int delete_phtable(str *pres_uri, int event);
 
 void destroy_phtable(void);
+
+int delete_db_subs(str* to_tag, str* from_tag, str* callid);
 
 #endif
