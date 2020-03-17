@@ -951,6 +951,26 @@ modparam("presence", "pres_subs_mode", 0)
 	</example>
 </section>
 
+<section id="presence.p.delete_same_subs">
+	<title><varname>delete_same_subs</varname> (integer)</title>
+	<para>
+		Enable deleting of subscriptions with the same presence uri and callid.
+	</para>
+	<para>
+		<emphasis>
+			Default value is 0 (disabled behavior).
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>delete_same_subs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "delete_same_subs", 1)
+...
+</programlisting>
+	</example>
+</section>
+
 </section>
 
 <section>

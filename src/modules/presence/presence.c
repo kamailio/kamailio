@@ -169,6 +169,7 @@ str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
 int pres_enable_dmq = 0;
+int pres_delete_same_subs = 0;
 
 int db_table_lock_type = 1;
 db_locking_t db_table_lock = DB_LOCKING_WRITE;
@@ -245,6 +246,7 @@ static param_export_t params[]={
 	{ "cseq_offset",            PARAM_INT, &pres_cseq_offset},
 	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},
 	{ "pres_subs_mode",         PARAM_INT, &_pres_subs_mode},
+	{ "delete_same_subs",       PARAM_INT, &pres_delete_same_subs},
 	{0,0,0}
 };
 /* clang-format on */
