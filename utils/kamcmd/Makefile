@@ -137,7 +137,11 @@ $(NAME).o:
 .PHONY: msg
 msg:
 	@if [ "$(use_readline)" = "1" ]; then \
-		echo; echo "readline detected ($(readline_path)):"; \
+		if [ "$(BUILDER)" = "" ]; then \
+			echo; echo "readline detected ($(readline_path)):"; \
+		else \
+			echo; echo "readline detected via pkg-config"; \
+		fi; \
 		echo "command completion enabled"; echo ; \
 	else \
 		echo ; \
