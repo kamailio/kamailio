@@ -2012,7 +2012,7 @@ ifeq ($(OS), netbsd)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	LIBS=
+	LIBS=-lm
 endif
 
 # OS X support, same as freebsd
