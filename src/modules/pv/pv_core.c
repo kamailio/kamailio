@@ -2558,7 +2558,9 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
 	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	if(backup != '\0') {
+		val->rs.s[val->rs.len] = '\0';
+	}
 	act.type = SET_PORT_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
@@ -2567,7 +2569,9 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 		val->rs.s[val->rs.len] = backup;
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	if(backup != '\0') {
+		val->rs.s[val->rs.len] = backup;
+	}
 
 	return 0;
 error:
