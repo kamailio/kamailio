@@ -301,7 +301,7 @@ void cfgutils_rpc_set_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_reset_gflag(rpc_t* rpc, void* ctx)
 {
-	long int flag;
+	unsigned int flag;
 	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -314,7 +314,7 @@ void cfgutils_rpc_reset_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_is_gflag(rpc_t* rpc, void* ctx)
 {
-	long int flag;
+	unsigned int flag;
 	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -328,7 +328,7 @@ void cfgutils_rpc_is_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_get_gflags(rpc_t* rpc, void* ctx)
 {
-	static unsigned int flags;
+	unsigned int flags;
 
 	flags = *gflags;
 
