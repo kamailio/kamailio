@@ -210,9 +210,18 @@ endif
 
 endif
 
+# dlopen requires -ldl on some systems, but not others.  Until there
+# is clarity on which require -ldl, add just enough ifeq to fix
+# systems known not to use it.
+ifeq ($(OS), netbsd)
+LIBDL=""
+else
+LIBDL="-ldl"
+endif
+
 ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
 CC_PMUTEX_OPTS = -pthread -DKSR_PTHREAD_MUTEX_SHARED
-LD_PMUTEX_OPTS = -pthread -rdynamic -ldl -Wl,-Bsymbolic-functions
+LD_PMUTEX_OPTS = -pthread -rdynamic $(LIBDL) -Wl,-Bsymbolic-functions
 else
 CC_PMUTEX_OPTS =
 LD_PMUTEX_OPTS =
@@ -2056,7 +2065,7 @@ ifeq ($(OS), netbsd)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	LIBS=
+	LIBS=-lm
 endif
 
 # OS X support, same as freebsd
