@@ -230,11 +230,12 @@ static int mod_init(void)
 	}
 
 	/* allocate workers array */
-	workers = shm_malloc(num_workers * sizeof(*workers));
+	workers = shm_malloc(num_workers * sizeof(dmq_worker_t));
 	if(workers == NULL) {
 		LM_ERR("error in shm_malloc\n");
 		return -1;
 	}
+	memset(workers, 0, num_workers * sizeof(dmq_worker_t));
 
 	dmq_init_callback_done = shm_malloc(sizeof(int));
 	if(!dmq_init_callback_done) {
@@ -275,14 +276,24 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	int i, newpid;
+
+	if(rank == PROC_INIT) {
+		for(i = 0; i < num_workers; i++) {
+			if (init_worker(&workers[i]) < 0) {
+				LM_ERR("failed to init struct for worker[%d]\n", i);
+				return -1;
+			}
+		}
+		return 0;
+	}
+
 	if(rank == PROC_MAIN) {
 		/* fork worker processes */
 		for(i = 0; i < num_workers; i++) {
-			init_worker(&workers[i]);
 			LM_DBG("starting worker process %d\n", i);
 			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
 			if(newpid < 0) {
-				LM_ERR("failed to fork process\n");
+				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
 				/* child - this will loop forever */
@@ -307,7 +318,7 @@ static int child_init(int rank)
 		}
 		return 0;
 	}
-	if(rank == PROC_INIT || rank == PROC_TCP_MAIN) {
+	if(rank == PROC_TCP_MAIN) {
 		/* do nothing for the main process */
 		return 0;
 	}
