@@ -224,7 +224,7 @@ error:
 /**
  * @brief init dmq worker
  */
-void init_worker(dmq_worker_t *worker)
+int init_worker(dmq_worker_t *worker)
 {
 	memset(worker, 0, sizeof(*worker));
 	if(worker_usleep <= 0) {
@@ -233,6 +233,11 @@ void init_worker(dmq_worker_t *worker)
 		lock_get(&worker->lock);
 	}
 	worker->queue = alloc_job_queue();
+	if(worker->queue==NULL) {
+		LM_ERR("queue could not be initialized\n");
+		return -1;
+	}
+	return 0;
 }
 
 /**

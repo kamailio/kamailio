@@ -56,7 +56,7 @@ struct dmq_worker
 
 typedef struct dmq_worker dmq_worker_t;
 
-void init_worker(dmq_worker_t *worker);
+int init_worker(dmq_worker_t *worker);
 int add_dmq_job(struct sip_msg *, dmq_peer_t *);
 void worker_loop(int id);
 
