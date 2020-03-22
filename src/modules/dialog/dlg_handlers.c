@@ -674,11 +674,20 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 	pv_value_t pv_val;
 
 	if( timeout_avp ) {
-		if ( pv_get_spec_value( req, timeout_avp, &pv_val)==0 &&
-				pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
-			return pv_val.ri;
+		if ( pv_get_spec_value( req, timeout_avp, &pv_val)==0) {
+			if(pv_val.flags&PV_VAL_INT) {
+				if(pv_val.ri>0 ) {
+					return pv_val.ri;
+				} else {
+					LM_DBG("invalid AVP value\n");
+				}
+			} else {
+				LM_DBG("invalid AVP type\n");
+			}
 		}
-		LM_DBG("invalid AVP value, using default timeout\n");
+		LM_DBG("unable to get valid AVP value, using default timeout\n");
+	} else {
+		LM_DBG("using default timeout\n");
 	}
 	return default_timeout;
 }
