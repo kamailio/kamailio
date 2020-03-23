@@ -243,7 +243,7 @@ static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpengine_set_store()*/
 static int rtpp_set_count = 0;
 static unsigned int current_msg_id = (unsigned int)-1;
-/* RTP proxy balancing list */
+/* RTPEngine balancing list */
 static struct rtpp_set_head * rtpp_set_list =0;
 static struct rtpp_set * active_rtpp_set =0;
 static struct rtpp_set * selected_rtpp_set_1 =0;
@@ -808,7 +808,7 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 		if(!rtpp_list)
 		{
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("no shm memory left to create new rtpproxy set %u\n", my_current_id);
+			LM_ERR("no shm memory left to create new rtpengine set %u\n", my_current_id);
 			return NULL;
 		}
 		memset(rtpp_list, 0, sizeof(struct rtpp_set));
@@ -816,14 +816,14 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 		rtpp_list->rset_lock = lock_alloc();
 		if (!rtpp_list->rset_lock) {
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("no shm memory left to create rtpproxy set lock\n");
+			LM_ERR("no shm memory left to create rtpengine set lock\n");
 			shm_free(rtpp_list);
 			rtpp_list = NULL;
 			return NULL;
 		}
 		if (lock_init(rtpp_list->rset_lock) == 0) {
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("could not init rtpproxy set lock\n");
+			LM_ERR("could not init rtpengine set lock\n");
 			lock_dealloc((void*)rtpp_list->rset_lock);
 			rtpp_list->rset_lock = NULL;
 			shm_free(rtpp_list);
@@ -861,17 +861,17 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 }
 
 
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
+int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 			unsigned int weight, int disabled, unsigned int ticks, int isDB)
 {
-	/* Make rtp proxies list. */
+	/* Make rtpengine instances list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
 	struct rtpp_node *rtpp_node;
 	unsigned int local_weight, port;
 	str s1;
 
-	p = rtpproxy;
+	p = rtpengine;
 	plim = p + strlen(p);
 
 	for(;;) {
@@ -1046,7 +1046,7 @@ static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, 
 	rtp_proxies = strstr(p, "==");
 	if(rtp_proxies){
 		if(*(rtp_proxies +2)=='\0'){
-			LM_ERR("script error -invalid rtp proxy list!\n");
+			LM_ERR("script error -invalid rtpengine list!\n");
 			return -1;
 		}
 
@@ -1198,7 +1198,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	}
 	_rtpe_list_version->vertime = tnow;
 
-	if (init_rtpproxy_db() < 0) {
+	if (init_rtpengine_db() < 0) {
 		// fail reloading from database
 		rpc->fault(ctx, 500, "Failed reloading db");
 		return;
@@ -1546,14 +1546,14 @@ mod_init(void)
 		}
 
 		if (lock_init(rtpp_set_list->rset_head_lock) == 0) {
-			LM_ERR("could not init rtpproxy list of proxysets lock\n");
+			LM_ERR("could not init lock sets for rtpengine list\n");
 			return -1;
 		}
 	}
 
 	if (rtpp_db_url.s == NULL)
 	{
-		/* storing the list of rtp proxy sets in shared memory*/
+		/* storing the list of rtpengine sets in shared memory*/
 		for(i=0;i<rtpp_sets;i++){
 			if(rtpengine_add_rtpengine_set(rtpp_strings[i], 1, 0, 0) !=0){
 				for(;i<rtpp_sets;i++)
@@ -1568,10 +1568,10 @@ mod_init(void)
 	}
 	else
 	{
-		LM_INFO("Loading rtp proxy definitions from DB\n");
-		if ( init_rtpproxy_db() < 0)
+		LM_INFO("Loading rtpengine definitions from DB\n");
+		if ( init_rtpengine_db() < 0)
 		{
-			LM_ERR("error while loading rtp proxies from database\n");
+			LM_ERR("error while loading rtpengine instances from database\n");
 			return -1;
 		}
 	}
@@ -1810,7 +1810,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			}
 
 			if (connect(rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
-				LM_ERR("can't connect to a RTP proxy\n");
+				LM_ERR("can't connect to a RTPEngine instance\n");
 				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
@@ -1898,7 +1898,7 @@ child_init(int rank)
 	}
 	memset(queried_nodes_ptr, 0, MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 
-	/* Iterate known RTP proxies - create sockets */
+	/* Iterate known RTPEngine instances - create sockets */
 	if(rank==PROC_SIPINIT) {
 		/* probe rtpengines only in first worker */
 		if (build_rtpp_socks(0, 1))
@@ -2620,7 +2620,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		goto error;
 	}
 
-	LM_INFO("rtp proxy <%s> found, support for it %senabled\n",
+	LM_INFO("rtpengine instance <%s> found, support for it %senabled\n",
 		node->rn_url.s, force == 0 ? "re-" : "");
 
 	bencode_buffer_free(&bencbuf);
@@ -2669,7 +2669,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 			close(fd);
-			LM_ERR("can't connect to RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't connect to RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 
@@ -2678,7 +2678,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
-			LM_ERR("can't send command to RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't send command to RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 		do {
@@ -2686,7 +2686,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		close(fd);
 		if (len <= 0) {
-			LM_ERR("can't read reply from RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't read reply from RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 	} else {
@@ -2709,7 +2709,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
 				bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n",
+				LM_ERR("can't send command \"%.*s\" to RTPEngine <%s>\n",
 					cmd.len, cmd.s, node->rn_url.s);
 				goto badproxy;
 			}
@@ -2721,7 +2721,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
 					bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-					LM_ERR("can't read reply for command \"%.*s\" from RTP proxy <%s>\n",
+					LM_ERR("can't read reply for command \"%.*s\" from RTPEngine <%s>\n",
 						cmd.len, cmd.s, node->rn_url.s);
 					goto badproxy;
 				}
@@ -2740,7 +2740,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		if (i == rtpengine_retr) {
 			bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-			LM_ERR("timeout waiting reply for command \"%.*s\" from RTP proxy <%s>\n",
+			LM_ERR("timeout waiting reply for command \"%.*s\" from RTPEngine <%s>\n",
 				cmd.len, cmd.s, node->rn_url.s);
 			goto badproxy;
 		}
@@ -3028,7 +3028,7 @@ set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 
 	active_rtpp_set = select_rtpp_set(setid_val.n);
 	if(active_rtpp_set == NULL) {
-		LM_ERR("could not locate rtpproxy set %u\n", setid_val.n);
+		LM_ERR("could not locate engine set %u\n", setid_val.n);
 		return -1;
 	}
 
