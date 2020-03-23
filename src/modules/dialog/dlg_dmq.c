@@ -99,7 +99,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 {
 	int content_length;
 	str body;
-	dlg_cell_t *dlg;
+	dlg_cell_t *dlg = NULL;
 	int unref = 0;
 	int ret;
 	srjson_doc_t jdoc, prof_jdoc;
@@ -216,7 +216,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		}
 	}
 
-	dlg = dlg_get_by_iuid(&iuid);
+	dlg = dlg_get_by_iuid_mode(&iuid, 1);
 	if (dlg) {
 		LM_DBG("found dialog [%u:%u] at %p\n", iuid.h_entry, iuid.h_id, dlg);
 		unref++;
@@ -237,6 +237,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 					LM_ERR("inconsistent hash data from peer: "
 						"make sure all Kamailio's use the same hash size\n");
 					shm_free(dlg);
+					dlg = NULL;
 					goto error;
 				}
 
@@ -391,8 +392,14 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		case DLG_DMQ_NONE:
 			break;
 	}
-	if (dlg && unref)
-		dlg_unref(dlg, unref);
+	if (dlg) {
+		if(unref) {
+			dlg_unref(dlg, unref);
+		}
+		if(newdlg == 0) {
+			dlg_cell_unlock(dlg);
+		}
+	}
 
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_200_rpl;
@@ -407,6 +414,11 @@ invalid2:
 	return 0;
 
 error:
+	if (dlg) {
+		if(newdlg == 0) {
+			dlg_cell_unlock(dlg);
+		}
+	}
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_500_rpl;
 	resp->resp_code = 500;
