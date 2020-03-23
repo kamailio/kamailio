@@ -202,6 +202,21 @@ extern dlg_table_t *d_table;
 		} while(0)
 
 /*!
+ * \brief Set a dialog lock (re-entrant)
+ * \param _dlg dialog cell
+ */
+#define dlg_cell_lock(_dlg) \
+	dlg_lock(d_table, &(d_table->entries[(_dlg)->h_entry]))
+
+/*!
+ * \brief Set a dialog lock (re-entrant)
+ * \param _dlg dialog cell
+ */
+#define dlg_cell_unlock(_dlg) \
+	dlg_unlock(d_table, &(d_table->entries[(_dlg)->h_entry]))
+
+
+/*!
  * \brief Unlink a dialog from the list without locking
  * \see unref_dlg_unsafe
  * \param d_entry unlinked entry
