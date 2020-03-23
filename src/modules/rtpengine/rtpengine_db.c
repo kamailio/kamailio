@@ -97,7 +97,7 @@ static int rtpp_load_db(void)
 	rows = RES_ROWS(res);
 	if (n_rows == 0)
 	{
-		LM_WARN("No rtpproxy instances in database\n");
+		LM_WARN("No rtpengine instances in database\n");
 		rtpp_dbf.free_result(rtpp_db_handle, res);
 		return 0;
 	}
@@ -137,7 +137,7 @@ static int rtpp_load_db(void)
 	return 0;
 }
 
-int init_rtpproxy_db(void)
+int init_rtpengine_db(void)
 {
 	int ret;
 	if (rtpp_db_url.s == NULL)
