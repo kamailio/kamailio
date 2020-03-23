@@ -119,11 +119,12 @@ void free_ppublic(ppublic_t* _p)
 // Keep them in sync!
 void free_security(security_t* _p)
 {
-    if (!_p)
+    if (!_p) {
         return;
+    }
 
-	if(_p->sec_header.s)
-		shm_free(_p->sec_header.s);
+    if(_p->sec_header.s)
+        shm_free(_p->sec_header.s);
 
     switch (_p->type)
     {
