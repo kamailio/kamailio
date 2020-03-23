@@ -662,7 +662,15 @@ via_add_srv("1");
 		<title><function>via_add_xavp_params</function> usage</title>
 		<programlisting format="linespecific">
 ...
-via_add_xavp_params("1");
+xavp_via_params="xvia"
+...
+request_route {
+    ...
+	$xavp(xvia=&gt;srvid) = "1";
+	$xavp(xvia[0]=&gt;myval) = "xyz";
+    via_add_xavp_params("1");
+    ...
+}
 ...
 </programlisting>
 		</example>
@@ -690,7 +698,15 @@ via_add_xavp_params("1");
 		<title><function>via_use_xavp_fields</function> usage</title>
 		<programlisting format="linespecific">
 ...
-via_use_xavp_fields("1");
+xavp_via_fields="mvia"
+...
+request_route {
+    ...
+	$xavp(mvia=&gt;address) = "10.10.10.10";
+	$xavp(mvia[0]=&gt;port) = "5060";
+    via_use_xavp_fields("1");
+    ...
+}
 ...
 </programlisting>
 		</example>
