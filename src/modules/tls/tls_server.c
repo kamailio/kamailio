@@ -885,10 +885,10 @@ redo_wr:
 				ERR("protocol level error\n");
 				TLS_ERR(err_src);
 				memset(ip_buf, 0, sizeof(buf));
-				buf_print_ip(ip_buf, &(c->rcv.src_ip), sizeof(ip_buf));
+				ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
 				ERR("source IP: %s\n", ip_buf);
 				memset(ip_buf, 0, sizeof(buf));
-				buf_print_ip(ip_buf, &(c->rcv.dst_ip), sizeof(ip_buf));
+				ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
 				ERR("destination IP: %s\n", ip_buf);
 
 				goto error;
@@ -1283,10 +1283,10 @@ ssl_read_skipped:
 			ERR("protocol level error\n");
 			TLS_ERR(err_src);
 			memset(ip_buf, 0, sizeof(ip_buf));
-			buf_print_ip(ip_buf, &(c->rcv.src_ip), sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
 			ERR("source IP: %s\n", ip_buf);
 			memset(ip_buf, 0, sizeof(ip_buf));
-			buf_print_ip(ip_buf, &(c->rcv.dst_ip), sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
 			ERR("destination IP: %s\n", ip_buf);
 
 			goto error;
