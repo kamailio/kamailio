@@ -752,6 +752,7 @@ int tls_encode_f(struct tcp_connection *c,
 	struct tls_mbuf rd, wr;
 	int ssl_error;
 	char* err_src;
+	char ip_buf[64];
 	const char* buf;
 	unsigned int len;
 	int x;
@@ -881,7 +882,15 @@ redo_wr:
 				break; /* or goto end */
 			case SSL_ERROR_SSL:
 				/* protocol level error */
+				ERR("protocol level error\n");
 				TLS_ERR(err_src);
+				memset(ip_buf, 0, sizeof(buf));
+				buf_print_ip(ip_buf, &(c->rcv.src_ip), sizeof(ip_buf));
+				ERR("source IP: %s\n", ip_buf);
+				memset(ip_buf, 0, sizeof(buf));
+				buf_print_ip(ip_buf, &(c->rcv.dst_ip), sizeof(ip_buf));
+				ERR("destination IP: %s\n", ip_buf);
+
 				goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
@@ -994,6 +1003,7 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	struct tls_rd_buf* enc_rd_buf;
 	int n, flush_flags;
 	char* err_src;
+	char ip_buf[64];
 	int x;
 	int tls_dbg;
 
@@ -1270,7 +1280,15 @@ ssl_read_skipped:
 			goto bug;
 		case SSL_ERROR_SSL:
 			/* protocol level error */
+			ERR("protocol level error\n");
 			TLS_ERR(err_src);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			buf_print_ip(ip_buf, &(c->rcv.src_ip), sizeof(ip_buf));
+			ERR("source IP: %s\n", ip_buf);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			buf_print_ip(ip_buf, &(c->rcv.dst_ip), sizeof(ip_buf));
+			ERR("destination IP: %s\n", ip_buf);
+
 			goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 		case SSL_ERROR_WANT_CONNECT:
