@@ -58,8 +58,12 @@
 #define LOST_CIR "Circle"
 #define LOST_CIV "civicAddress"
 
-#define HELD_TYPE "geodetic locationURI"
-#define HELD_TIME "3"
+#define HELD_TYPE_ANY "any"
+#define HELD_TYPE_CIV "civic"
+#define HELD_TYPE_GEO "geodetic"
+#define HELD_TYPE_URI "locationURI"
+#define HELD_TYPE_SEP " "
+
 #define HELD_EXACT_TRUE 1
 #define HELD_EXACT_FALSE 0
 
@@ -84,10 +88,9 @@ typedef struct HELD
 {
 	char *identity;		/* location idendity (locationRequest) */
 	char *type;			/* location type (locationRequest) */ 
-	char *time;			/* response time (locationRequest) */
+	int time;			/* response time (locationRequest) */
 	int exact;			/* exact true|false (locationRequest)*/
 } s_held_t, *p_held_t;
-
 
 void lost_rand_str(char *, size_t);
 void lost_free_loc(p_loc_t);
@@ -109,6 +112,6 @@ char *lost_get_childname(xmlNodePtr, const char *, int *);
 char *lost_trim_content(char *, int *);
 
 p_loc_t lost_new_loc(str);
-p_held_t lost_new_held(str, str, str, int);
+p_held_t lost_new_held(str, str, int, int);
 
 #endif

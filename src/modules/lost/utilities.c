@@ -134,8 +134,8 @@ p_loc_t lost_new_loc(str rurn)
 	ptr->civic = NULL;
 	ptr->profile = NULL;
 	ptr->radius = 0;
-	ptr->recursive = LOST_RECURSION_TRUE;	/* set recursion to true */
-	ptr->boundary = 0;	/* set boundary to reference */
+	ptr->recursive = LOST_RECURSION_TRUE; /* set recursion to true */
+	ptr->boundary = 0;					  /* set boundary to reference */
 
 	return ptr;
 
@@ -148,13 +148,12 @@ err:
  * lost_new_held(uri, type, time, exact)
  * creates a new held object in private memory and returns a pointer
  */
-p_held_t lost_new_held(str s_uri, str s_type, str s_time, int exact)
+p_held_t lost_new_held(str s_uri, str s_type, int time, int exact)
 {
 	s_held_t *ptr = NULL;
-	
+
 	char *uri = NULL;
 	char *type = NULL;
-	char *time = NULL;
 
 	ptr = (s_held_t *)pkg_malloc(sizeof(s_held_t));
 	if(ptr == NULL) {
@@ -174,14 +173,6 @@ p_held_t lost_new_held(str s_uri, str s_type, str s_time, int exact)
 		goto err;
 	}
 
-	time = (char *)pkg_malloc(s_time.len + 1);
-	if(type == NULL) {
-		pkg_free(type);
-		pkg_free(uri);
-		pkg_free(ptr);
-		goto err;
-	}
-
 	memset(uri, 0, s_uri.len + 1);
 	memcpy(uri, s_uri.s, s_uri.len);
 	uri[s_uri.len] = '\0';
@@ -189,10 +180,6 @@ p_held_t lost_new_held(str s_uri, str s_type, str s_time, int exact)
 	memset(type, 0, s_type.len + 1);
 	memcpy(type, s_type.s, s_type.len);
 	type[s_type.len] = '\0';
-
-	memset(time, 0, s_time.len + 1);
-	memcpy(time, s_time.s, s_time.len);
-	time[s_time.len] = '\0';
 
 	ptr->identity = uri;
 	ptr->type = type;
@@ -214,17 +201,17 @@ void lost_free_loc(p_loc_t ptr)
 {
 	pkg_free(ptr->identity);
 	pkg_free(ptr->urn);
-	if (ptr->civic)
-    	pkg_free(ptr->civic);
-    if (ptr->geodetic)
+	if(ptr->civic)
+		pkg_free(ptr->civic);
+	if(ptr->geodetic)
 		pkg_free(ptr->geodetic);
-    if (ptr->longitude)
+	if(ptr->longitude)
 		pkg_free(ptr->longitude);
-    if (ptr->latitude)
+	if(ptr->latitude)
 		pkg_free(ptr->latitude);
-    if (ptr->profile)
-	    pkg_free(ptr->profile);
-  	
+	if(ptr->profile)
+		pkg_free(ptr->profile);
+
 	pkg_free(ptr);
 	ptr = NULL;
 }
@@ -237,7 +224,6 @@ void lost_free_held(p_held_t ptr)
 {
 	pkg_free(ptr->identity);
 	pkg_free(ptr->type);
-	pkg_free(ptr->time);
 
 	pkg_free(ptr);
 	ptr = NULL;
@@ -394,7 +380,7 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-							LOST_GEOLOC_HEADER_SIZE) == 0) {
+					   LOST_GEOLOC_HEADER_SIZE)	== 0) {
 
 				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
 				if(res == NULL) {
@@ -441,7 +427,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 				&& (hf->name.len == LOST_PAI_HEADER_SIZE - 2)) {
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_PAI_HEADER,
-							LOST_PAI_HEADER_SIZE) == 0) {
+						LOST_PAI_HEADER_SIZE) == 0) {
 
 				LM_DBG("P-A-I body:  [%.*s]\n", hf->body.len, hf->body.s);
 
@@ -579,7 +565,7 @@ int lost_parse_geo(xmlNodePtr node, p_loc_t loc)
 		pkg_free(loc->longitude);
 		goto err;
 	}
-	
+
 	snprintf(loc->geodetic, len, "%s %s", (char *)bufLat, (char *)bufLon);
 
 	/* find <radius> element */
@@ -592,7 +578,7 @@ int lost_parse_geo(xmlNodePtr node, p_loc_t loc)
 	/* write results */
 	loc->radius = iRadius;
 	loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
-    strcpy(loc->profile, s_profile);
+	strcpy(loc->profile, s_profile);
 
 	return 0;
 
@@ -783,6 +769,7 @@ char *lost_held_location_request(p_held_t held, int *lgth)
 {
 	int buffersize = 0;
 
+	char buf[BUFSIZE];
 	char *doc = NULL;
 
 	xmlChar *xmlbuff = NULL;
@@ -797,6 +784,7 @@ char *lost_held_location_request(p_held_t held, int *lgth)
 
 	/*
 https://tools.ietf.org/html/rfc6155
+https://tools.ietf.org/html/rfc5985
 
 <?xml version="1.0" encoding="UTF-8"?>
 <locationRequest xmlns="urn:ietf:params:xml:ns:geopriv:held" responseTime="8">
@@ -824,15 +812,18 @@ https://tools.ietf.org/html/rfc6155
 	/* properties */
 	xmlNewProp(ptrLocationRequest, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held");
-	xmlNewProp(ptrLocationRequest, BAD_CAST "responseTime",
-				BAD_CAST held->time);
-	/* locationType - element */
+	/* responseTime - element (optional) */
+	if(held->time > 0) {
+		snprintf(buf, BUFSIZE, "%d", held->time);
+		xmlNewProp(ptrLocationRequest, BAD_CAST "responseTime", BAD_CAST buf);
+	}
+	/* locationType - element (optional) */
 	ptrLocationType = xmlNewChild(ptrLocationRequest, NULL,
 			BAD_CAST "locationType", BAD_CAST held->type);
 	/* properties */
 	xmlNewProp(ptrLocationType, BAD_CAST "exact",
-			(held->exact == HELD_EXACT_TRUE) ?
-			BAD_CAST "true" : BAD_CAST "false");
+			(held->exact == HELD_EXACT_TRUE) ? BAD_CAST "true"
+											 : BAD_CAST "false");
 	/* device - element */
 	ptrDevice = xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "device", NULL);
 	if(!ptrDevice) {

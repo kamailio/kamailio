@@ -45,12 +45,12 @@
         routing information for a given (geodetic or civic) location and a service
         URN. Both, PIDF-LO and service URN may be provided as function parameter,
         or are taken from the request message if applicable. The findServiceResponse
-        is parsed and represented asdisplay name and SIP URI typically used as next
+        is parsed and represented as display name and SIP URI typically used as next
         hop in a Route header.
         </para>
         <para>
         The http_client module use the CURL library setting up connections.
-        The CURL library by default use the system configured DNS resolvers,
+        The CURL library by default use the system configured DNS resolver,
         not the Kamailio resolver.
         </para>
         <para>
@@ -98,9 +98,81 @@
 	<section id="lost.p.general">
 		<title>Parameters</title>
         <para>
-        This module has no specific paramater but uses <emphasis>http_client</emphasis> therfore according
-        parameters may apply.
+        Besides parameters listed, this module uses <emphasis>http_client</emphasis> therefore
+        according parameters may apply.
         </para>
+        <section id="lost.p.exact_type">
+            <title><varname>exact_type</varname> (int)</title>
+            <para>
+            Indicates to the location server that the contents of the "location_type" parameter must
+            be strictly followed. Values are 0 (false) or 1 (true).
+            </para>
+            <para>
+            Default: 0 (false)
+            </para>
+            <example>
+            <title>Set <varname>exact_type</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "exact_type", 1)
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.response_time">
+            <title><varname>response_time</varname> (int)</title>
+            <para>
+            A time value indicating to the location server how long the client is
+            prepared to wait for a response.
+            </para>
+            <para>
+            The value is expressed as a non-negative integer in units of
+            milliseconds. Note: The time value is indicative only. 
+            </para>
+            <para>
+            Default: 0 (response time not set)
+            </para>
+            <example>
+            <title>Set <varname>response_time</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "response_time", 5000)
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.location_type">
+            <title><varname>location_type</varname> (string)</title>
+            <para>
+            The "locationType" element contains a list of types that are requested.
+            Values are "any", "geodetic", "civic" or "locationURI" and combinations.
+            </para>
+			<itemizedlist>
+                <listitem><para>
+                    <emphasis>any</emphasis> - returns location information in all forms available
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>geodetic</emphasis> - returns a location by value in the form of a geodetic location
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>civic</emphasis> - returns a location by value in the form of a civic address
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>locationURI</emphasis> - returns a set of location URIs (location by reference)
+                </para></listitem>
+            </itemizedlist>
+            <para>
+            Default: "geodetic locationURI".
+            </para>
+            <example>
+            <title>Set <varname>location_type</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("http_client", "location_type, "civic geodetic locationURI")
+    ...
+                </programlisting>
+            </example>
+        </section>
 	</section>
 	<section>
 	    <title>Functions</title>
@@ -115,7 +187,7 @@
 			    <itemizedlist>
 				    <listitem><para>
 						<emphasis>con</emphasis> - the name of an existing
-						HTTP connection, definied by a httpcon modparam
+						HTTP connection, defined by a httpcon modparam
 				    </para></listitem>
                     <listitem><para>
 						<emphasis>id</emphasis> - the device id used in the HELD
@@ -172,7 +244,7 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 			<itemizedlist>
                 <listitem><para>
                     <emphasis>con</emphasis> - the name of an existing
-                    HTTP connection definied by a httpcon modparam
+                    HTTP connection defined by a httpcon modparam
                 </para></listitem>
                 <listitem><para>
                     <emphasis>pidf-lo</emphasis> - the PIDF-LO used to create the
@@ -256,12 +328,10 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
         </para>
         <para>
             Note: http_client_query exported by the http_client API returns by default the first line of
-            the HTTP response (query_params.oneline = 1), but the lost module requires the complete
-            response message, which requires query_params.oneline set to 0. In the case lost_query
-            is used with the default http_client API, dereferencing location via HTTP provided with
-			the Geolocation header causes an error. Therefore, to work properly, it requires to set
-			<ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result">
-			http_client module parameter query_result to 0</ulink>.
+            the HTTP response, but the lost module requires the complete response message, otherwise
+            dereferencing location via the HTTP URL provided with the Geolocation header causes an error.
+            Therefore, to work properly, it is required to set the http_client module parameter query_result to 0. More details at:
+            <ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result"></ulink>.
         </para>
     </section>
 </chapter>

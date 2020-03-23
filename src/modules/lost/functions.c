@@ -49,7 +49,14 @@
 #define LOST_CLIENT_ERROR 400
 #define LOST_SERVER_ERROR 500
 
+#define HELD_DEFAULT_TYPE "geodetic locationURI"
+#define HELD_DEFAULT_TYPE_LEN (sizeof(HELD_DEFAULT_TYPE) - 1)
+
 extern httpc_api_t httpapi;
+
+extern int held_resp_time;
+extern int held_exact_type;
+extern str held_loc_type;
 
 char mtheld[] = "application/held+xml;charset=utf-8";
 char mtlost[] = "application/lost+xml;charset=utf-8";
@@ -59,10 +66,99 @@ char name_element[] = "displayName";
 char errors_element[] = "errors";
 
 /*
+ * lost_held_type(type, exact, lgth)
+ * verifies module params and returns valid HELD loaction type
+ * allocated in private memory
+ */
+char *lost_held_type(char *type, int *exact, int *lgth)
+{
+	char *ret = NULL;
+	char *tmp = NULL;
+	int len = 0;
+
+	ret = (char *)pkg_malloc(1);
+	memset(ret, 0, 1);
+	*lgth = 0;
+
+	if(strstr(type, HELD_TYPE_ANY)) {
+		len = strlen(ret) + strlen(HELD_TYPE_ANY) + 1;
+		tmp = pkg_realloc(ret, len);
+		if(!tmp) {
+			LM_ERR("no more private memory\n");
+			goto err;
+		}
+		ret = tmp;
+		strcat(ret, HELD_TYPE_ANY);
+		*exact = 0;
+	} else {
+		if(strstr(type, HELD_TYPE_CIV)) {
+			len = strlen(ret) + strlen(HELD_TYPE_CIV) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL) {
+				LM_ERR("no more private memory\n");
+				goto err;
+			}
+			ret = tmp;
+			strcat(ret, HELD_TYPE_CIV);
+		}
+		if(strstr(type, HELD_TYPE_GEO)) {
+			if(strlen(ret) > 1) {
+				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
+				tmp = pkg_realloc(ret, len);
+				if(tmp == NULL) {
+					LM_ERR("no more private memory\n");
+					goto err;
+				}
+				ret = tmp;
+				strcat(ret, HELD_TYPE_SEP);
+			}
+			len = strlen(ret) + strlen(HELD_TYPE_GEO) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL) {
+				LM_ERR("no more private memory\n");
+				goto err;
+			}
+			ret = tmp;
+			strcat(ret, HELD_TYPE_GEO);
+		}
+		if(strstr(type, HELD_TYPE_URI)) {
+			if(strlen(ret) > 1) {
+				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
+				tmp = pkg_realloc(ret, len);
+				if(tmp == NULL) {
+					LM_ERR("no more private memory\n");
+					goto err;
+				}
+				ret = tmp;
+				strcat(ret, HELD_TYPE_SEP);
+			}
+			len = strlen(ret) + strlen(HELD_TYPE_URI) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL) {
+				LM_ERR("no more private memory\n");
+				goto err;
+			}
+			ret = tmp;
+			strcat(ret, HELD_TYPE_URI);
+		}
+	}
+
+	*lgth = strlen(ret);
+	return ret;
+
+err:
+	if(ret) {
+		pkg_free(ret);
+	}
+	*lgth = 0;
+	return NULL;
+}
+
+/*
  * lost_function_held(msg, con, pidf, url, err, id)
  * assembles and runs HELD locationRequest, parses results
  */
-int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
+int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		char *_err, char *_id)
 {
 	pv_spec_t *pspidf;
@@ -77,6 +173,7 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root = NULL;
+	xmlNodePtr cur_node = NULL;
 
 	str did = {NULL, 0};
 	str que = {NULL, 0};
@@ -85,15 +182,20 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	str err = {NULL, 0};
 	str res = {NULL, 0};
 	str idhdr = {NULL, 0};
-
-	str rtype = {HELD_TYPE, strlen(HELD_TYPE)};
-	str rtime = {HELD_TIME, strlen(HELD_TIME)};
+	str pidfuri = {NULL, 0};
+	str rtype = {HELD_DEFAULT_TYPE, HELD_DEFAULT_TYPE_LEN};
 
 	int curlres = 0;
+	int presence = 0;
 
 	if(_con == NULL || _pidf == NULL || _url == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
 		goto err;
+	}
+	/* module parameter */
+	if(held_loc_type.len > 0) {
+		rtype.s = held_loc_type.s;
+		rtype.len = held_loc_type.len;
 	}
 	/* connection from parameter */
 	if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
@@ -141,7 +243,8 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	}
 
 	/* assemble locationRequest */
-	held = lost_new_held(did, rtype, rtime, HELD_EXACT_TRUE);
+	held = lost_new_held(did, rtype, held_resp_time, held_exact_type);
+
 	if(!held) {
 		LM_ERR("held object allocation failed\n");
 		lost_free_string(&idhdr);
@@ -157,6 +260,7 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 
 	if(que.len == 0) {
 		LM_ERR("held request document error\n");
+		que.s = NULL;
 		goto err;
 	}
 
@@ -194,16 +298,67 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		LM_ERR("empty xml document\n");
 		goto err;
 	}
-	/* check the root element, shall be locationResponse, or errors */
+	/* check the root element ... shall be locationResponse, or errors */
 	if(!xmlStrcmp(root->name, (const xmlChar *)"locationResponse")) {
 
 		LM_DBG("HELD location response [%.*s]\n", res.len, res.s);
 
-		/* get the locationUri element */
-		geo.s = lost_get_content(root, (char *)"locationURI", &geo.len);
-		if(!geo.s) {
-			LM_ERR("no locationURI element found\n");
-			goto err;
+		for(cur_node = root->children; cur_node; cur_node = cur_node->next) {
+			if(cur_node->type == XML_ELEMENT_NODE) {
+				if(!xmlStrcmp(
+						   cur_node->name, (const xmlChar *)"locationUriSet")) {
+
+					LM_DBG("*** node '%s' found\n", cur_node->name);
+
+					/* get the locationUri element */
+					geo.s = lost_get_content(
+							root, (char *)HELD_TYPE_URI, &geo.len);
+					if(geo.len == 0) {
+						LM_WARN("%s element not found\n", HELD_TYPE_URI);
+						geo.s = NULL;
+					}
+				}
+				if(!xmlStrcmp(cur_node->name, (const xmlChar *)"presence")) {
+
+					LM_DBG("*** node '%s' found\n", cur_node->name);
+
+					/* respnse contains presence node */
+					presence = 1;
+				}
+			}
+		}
+
+		/* if we do not have a presence node but a location URI */
+		/* dereference pidf.lo at location server via HTTP GET */
+		if((presence == 0) && (geo.len > 0)) {
+
+			LM_INFO("presence node not found in HELD response, trying URI "
+					"...\n");
+
+			curlres =
+					httpapi.http_client_query(_m, geo.s, &pidfuri, NULL, NULL);
+			/* only HTTP 2xx responses are accepted */
+			if(curlres >= 300 || curlres < 100) {
+				LM_ERR("dereferencing location failed: %d\n", curlres);
+				/* free memory */
+				pidfuri.s = NULL;
+				pidfuri.len = 0;
+				goto err;
+			}
+
+			if(pidfuri.len == 0) {
+
+				LM_WARN("HELD location request failed [%.*s]\n", geo.len,
+						geo.s);
+
+			} else {
+
+				LM_DBG("HELD location response [%.*s]\n", pidfuri.len,
+						pidfuri.s);
+
+				res.s = pidfuri.s;
+				res.len = pidfuri.len;
+			}
 		}
 	} else if(!xmlStrcmp(root->name, (const xmlChar *)"error")) {
 
@@ -454,7 +609,8 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		LM_WARN("invalid xml (pidf-lo): [%.*s]\n", pidf.len, pidf.s);
 		doc = xmlRecoverMemory(pidf.s, pidf.len);
 		if(!doc) {
-			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len, pidf.s);
+			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len,
+					pidf.s);
 			goto err;
 		}
 
