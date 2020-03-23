@@ -265,8 +265,6 @@ int mk_net_str(struct net* dst, str* s);
 
 void print_ip(char* prefix, struct ip_addr* ip, char* suffix);
 void stdout_print_ip(struct ip_addr* ip);
-void buf_print_ip(char *buf, struct ip_addr* ip, unsigned int len);
-
 void print_net(struct net* net);
 
 char* get_proto_name(unsigned int proto);
