@@ -200,7 +200,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 	<para>
 		Insert new header value before an existing header, if no index acquired insert before first
 		hf header. Note that a header may consist of comma delimited list of values.
-		To insert value behind last value use <function>appenf_hf_value</function>.
+		To insert a value behind the last value use <function>append_hf_value</function>.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
