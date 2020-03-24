@@ -247,9 +247,9 @@ Chapter 3. Developer Guide
 
    Example 3.1. Tree of IP addresses
            / 193 - 175 - 132 - 164
-tree root /                  \ 142
+tree root /                \ - 142
           \ 195 - 37 - 78 - 163
-           \ 79 - 134
+                   \ - 79 - 134
 
    To detect the whole address, step by step, from the root to the leafs,
    the nodes corresponding to each byte of the ip address are expanded. In
