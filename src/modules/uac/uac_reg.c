@@ -1131,6 +1131,19 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	/* Callback parameter */
 	uac_r.cbp = (void*)uuid;
 
+	if(reg->socket.s != NULL && reg->socket.len > 0) {
+		/* custom socket */
+		LM_DBG("using custom socket %.*s to send request\n",
+			reg->socket.len, reg->socket.s);
+		uac_r.ssock = &reg->socket;
+	} else {
+		/* default socket */
+		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+			LM_DBG("using configured default_socket to send request\n");
+			uac_r.ssock = &uac_default_socket;
+		}
+	}
+
 	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
 				&& reg->cseq > 0 && reg->cseq < 2147483638
 				&& reg->callid.len > 0)
@@ -1150,19 +1163,6 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 		ret = uac_tmb.t_request_within(&uac_r);
 	} else {
-		/* custom socket */
-		if(reg->socket.s != NULL && reg->socket.len > 0) {
-			LM_DBG("using custom socket %.*s to send request\n",
-				reg->socket.len, reg->socket.s);
-			uac_r.ssock = &reg->socket;
-		}
-		/* default socket */
-		else {
-			if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-				LM_DBG("using configured default_socket to send request\n");
-				uac_r.ssock = &uac_default_socket;
-			}
-		}
 		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
 				&s_ruri, /* Request-URI */
 				&s_turi, /* To */
