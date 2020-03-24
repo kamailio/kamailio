@@ -2304,6 +2304,7 @@ inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 						return 0;
 				}
 				memcpy(p_addr[i], ip, len);
+				rr_no++;
 	}
 	if (i==0){
 		LM_DBG("no good records found (%d) for %.*s (%d)\n",
