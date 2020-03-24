@@ -39,11 +39,11 @@
 
 static unsigned int g_max_hits = 0;
 
-static void traverse_subtree( struct ip_node *node, int depth, int options )
+static void traverse_subtree( pike_ip_node_t *node, int depth, int options )
 {
 	static unsigned char ip_addr[MAX_DEPTH];
 
-	struct ip_node *foo;
+	pike_ip_node_t *foo;
 
 	DBG("pike:rpc traverse_subtree, depth: %d, byte: %d", depth, node->byte);
 

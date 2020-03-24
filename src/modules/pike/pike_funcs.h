@@ -28,7 +28,7 @@
 
 void pike_counter_init(void);
 int  pike_check_req(sip_msg_t *msg);
-int  w_pike_check_req(struct sip_msg *msg, char *foo, char *bar);
+int  w_pike_check_req(sip_msg_t *msg, char *foo, char *bar);
 void clean_routine(unsigned int, void*);
 void swap_routine(unsigned int, void*);
 

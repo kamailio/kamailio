@@ -23,7 +23,7 @@
 
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
-extern rpc_export_t pike_rpc_methods[];
 
+extern rpc_export_t pike_rpc_methods[];
 
 #endif

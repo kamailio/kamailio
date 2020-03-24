@@ -52,14 +52,14 @@ void pike_exit(void);
 
 
 /* parameters */
-static int time_unit = 2;
-static int max_reqs  = 30;
-int timeout   = 120;
+static int pike_time_unit = 2;
+static int pike_max_reqs  = 30;
+int pike_timeout   = 120;
 int pike_log_level = L_WARN;
 
 /* global variables */
-gen_lock_t*             timer_lock=0;
-struct list_link*       timer = 0;
+gen_lock_t       *pike_timer_lock = 0;
+pike_list_link_t *pike_timer = 0;
 
 
 static cmd_export_t cmds[]={
@@ -68,10 +68,10 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"sampling_time_unit",    INT_PARAM,  &time_unit},
-	{"reqs_density_per_unit", INT_PARAM,  &max_reqs},
-	{"remove_latency",        INT_PARAM,  &timeout},
-	{"pike_log_level",        INT_PARAM, &pike_log_level},
+	{"sampling_time_unit",    INT_PARAM,  &pike_time_unit},
+	{"reqs_density_per_unit", INT_PARAM,  &pike_max_reqs},
+	{"remove_latency",        INT_PARAM,  &pike_timeout},
+	{"pike_log_level",        INT_PARAM,  &pike_log_level},
 	{0,0,0}
 };
 
@@ -102,34 +102,34 @@ static int pike_init(void)
 	}
 
 	/* alloc the timer lock */
-	timer_lock=lock_alloc();
-	if (timer_lock==0) {
+	pike_timer_lock=lock_alloc();
+	if (pike_timer_lock==0) {
 		LM_ERR(" alloc locks failed!\n");
 		goto error1;
 	}
 	/* init the lock */
-	if (lock_init(timer_lock)==0){
+	if (lock_init(pike_timer_lock)==0){
 		LM_ERR(" init lock failed\n");
 		goto error1;
 	}
 
 	/* init the IP tree */
-	if ( init_ip_tree(max_reqs)!=0 ) {
+	if ( init_ip_tree(pike_max_reqs)!=0 ) {
 		LM_ERR(" ip_tree creation failed!\n");
 		goto error2;
 	}
 
 	/* init timer list */
-	timer = (struct list_link*)shm_malloc(sizeof(struct list_link));
-	if (timer==0) {
-		LM_ERR(" cannot alloc shm mem for timer!\n");
+	pike_timer = (pike_list_link_t*)shm_malloc(sizeof(pike_list_link_t));
+	if (pike_timer==0) {
+		LM_ERR("cannot alloc shm mem for timer!\n");
 		goto error3;
 	}
-	timer->next = timer->prev = timer;
+	pike_timer->next = pike_timer->prev = pike_timer;
 
 	/* registering timing functions  */
 	register_timer( clean_routine , 0, 1 );
-	register_timer( swap_routine , 0, time_unit );
+	register_timer( swap_routine , 0, pike_time_unit );
 
 	/* Register counter */
 	pike_counter_init();
@@ -138,10 +138,10 @@ static int pike_init(void)
 error3:
 	destroy_ip_tree();
 error2:
-	lock_destroy(timer_lock);
+	lock_destroy(pike_timer_lock);
 error1:
-	if (timer_lock) lock_dealloc(timer_lock);
-	timer_lock = 0;
+	if (pike_timer_lock) lock_dealloc(pike_timer_lock);
+	pike_timer_lock = 0;
 	return -1;
 }
 
@@ -150,15 +150,15 @@ error1:
 void pike_exit(void)
 {
 	/* destroy semaphore */
-	if (timer_lock) {
-		lock_destroy(timer_lock);
-		lock_dealloc(timer_lock);
+	if (pike_timer_lock) {
+		lock_destroy(pike_timer_lock);
+		lock_dealloc(pike_timer_lock);
 	}
 
 	/* empty the timer list head */
-	if (timer) {
-		shm_free(timer);
-		timer = 0;
+	if (pike_timer) {
+		shm_free(pike_timer);
+		pike_timer = 0;
 	}
 
 	/* destroy the IP tree */
