@@ -19,10 +19,10 @@
     <example>
 	<title>Tree of &ip; addresses</title>
 	<programlisting format="linespecific">
-	   / 193 - 175 - 132 - 164
-tree root /                  \ 142
-	  \ 195 - 37 - 78 - 163
-	   \ 79 - 134
+           / 193 - 175 - 132 - 164
+tree root /                \ - 142
+          \ 195 - 37 - 78 - 163
+                   \ - 79 - 134
 </programlisting>
 	</example>
     <para>
