@@ -238,8 +238,8 @@ ot exists add new header
 
    Insert new header value before an existing header, if no index acquired
    insert before first hf header. Note that a header may consist of comma
-   delimited list of values. To insert value behind last value use
-   appenf_hf_value.
+   delimited list of values. To insert a value behind the last value use
+   append_hf_value.
 
    Meaning of the parameters is as follows:
      * hf - Header field to be appended. Format: HFNAME [ [IDX] ]. If
