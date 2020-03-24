@@ -49,6 +49,7 @@ db.getCollection("version").insert({ table_name: "rls_watchers", table_version: 
 db.getCollection("version").insert({ table_name: "rtpengine", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "rtpproxy", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "sca_subscriptions", table_version: NumberInt(2) });
+db.getCollection("version").insert({ table_name: "secfilter", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "silo", table_version: NumberInt(8) });
 db.getCollection("version").insert({ table_name: "sip_trace", table_version: NumberInt(4) });
 db.getCollection("version").insert({ table_name: "speed_dial", table_version: NumberInt(2) });
