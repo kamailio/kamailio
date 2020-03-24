@@ -110,6 +110,8 @@ rtpproxy|
 rtpproxy|1
 sca_subscriptions|
 sca_subscriptions|2
+secfilter|
+secfilter|1
 silo|
 silo|8
 sip_trace|
