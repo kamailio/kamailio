@@ -80,9 +80,10 @@ Ovidiu Sas
               6.4. htable.seti htable key value
               6.5. htable.dump htable
               6.6. htable.reload htable
-              6.7. htable.flush htable
-              6.8. htable.listTables
-              6.9. htable.stats
+              6.7. htable.store htable
+              6.8. htable.flush htable
+              6.9. htable.listTables
+              6.10. htable.stats
 
         7. Event routes
 
@@ -183,9 +184,10 @@ Chapter 1. Admin Guide
         6.4. htable.seti htable key value
         6.5. htable.dump htable
         6.6. htable.reload htable
-        6.7. htable.flush htable
-        6.8. htable.listTables
-        6.9. htable.stats
+        6.7. htable.store htable
+        6.8. htable.flush htable
+        6.9. htable.listTables
+        6.10. htable.stats
 
    7. Event routes
 
@@ -977,9 +979,10 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.4. htable.seti htable key value
    6.5. htable.dump htable
    6.6. htable.reload htable
-   6.7. htable.flush htable
-   6.8. htable.listTables
-   6.9. htable.stats
+   6.7. htable.store htable
+   6.8. htable.flush htable
+   6.9. htable.listTables
+   6.10. htable.stats
 
 6.1.  htable.get htable key
 
@@ -1063,7 +1066,7 @@ kamcmd htable.sets test x[0] 123
 
    Lists all the values in a hash table
 
-   Name: dhtable.dump
+   Name: htable.dump
 
    Parameters:
      * htable : Name of the hash table to dump
@@ -1077,7 +1080,7 @@ kamcmd htable.dump ipban
 
    Reload hash table from database.
 
-   Name: dhtable.reload
+   Name: htable.reload
 
    Parameters:
      * htable : Name of the hash table to reload
@@ -1087,7 +1090,21 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-6.7.  htable.flush htable
+6.7.  htable.store htable
+
+   Store hash table to database.
+
+   Name: htable.store
+
+   Parameters:
+     * htable : Name of the hash table to store
+
+   Example:
+...
+kamcmd htable.store ipban
+...
+
+6.8.  htable.flush htable
 
    Empty the hash table
 
@@ -1101,7 +1118,7 @@ kamcmd htable.reload ipban
 kamcmd htable.flush ipban
 ...
 
-6.8.  htable.listTables
+6.9.  htable.listTables
 
    Lists all defined tables
 
@@ -1115,7 +1132,7 @@ kamcmd htable.flush ipban
 kamcmd htable.listTables
 ...
 
-6.9.  htable.stats
+6.10.  htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.
