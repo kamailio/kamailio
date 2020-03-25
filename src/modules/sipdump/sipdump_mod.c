@@ -137,7 +137,10 @@ static int mod_init(void)
 		if (sipdump_event_route_idx>=0 && event_rt.rlist[sipdump_event_route_idx]==0) {
 			sipdump_event_route_idx = -1; /* disable */
 		}
-		faked_msg_init();
+		if(faked_msg_init() <0) {
+			LM_ERR("cannot initialize faked msg structure\n");
+			return -1;
+		}
 	}
 
 	if(sipdump_mode & SIPDUMP_MODE_WFILE) {
