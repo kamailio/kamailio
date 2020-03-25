@@ -118,6 +118,7 @@ enum {
 struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
+		       *t38,
 		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
 	str call_id, from_tag, to_tag;
 };
@@ -2125,6 +2126,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			bencode_list_add_str(ng_flags->sdes, &s);
 			goto next;
 		}
+		if (str_key_val_prefix(&key, "T38", &val, &s) || str_key_val_prefix(&key, "T.38", &val, &s)) {
+			bencode_list_add_str(ng_flags->t38, &s);
+			goto next;
+		}
 		if (str_key_val_prefix(&key, "rtcp-mux", &val, &s)) {
 			bencode_list_add_str(ng_flags->rtcp_mux, &s);
 			goto next;
@@ -2402,6 +2407,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		ng_flags.replace = bencode_list(bencbuf);
 		ng_flags.rtcp_mux = bencode_list(bencbuf);
 		ng_flags.sdes = bencode_list(bencbuf);
+		ng_flags.t38 = bencode_list(bencbuf);
 		ng_flags.codec = bencode_dictionary(bencbuf);
 
 		if (read_sdp_pvar!= NULL) {
@@ -2455,6 +2461,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
 	if (ng_flags.sdes && ng_flags.sdes->child)
 		bencode_dictionary_add(ng_flags.dict, "SDES", ng_flags.sdes);
+	if (ng_flags.t38 && ng_flags.t38->child)
+		bencode_dictionary_add(ng_flags.dict, "T.38", ng_flags.t38);
 
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
