@@ -1285,9 +1285,14 @@ static const char* htable_flush_doc[2] = {
 	0
 };
 static const char* htable_reload_doc[2] = {
-	"Reload hash table.",
+	"Reload hash table from database.",
 	0
 };
+static const char* htable_store_doc[2] = {
+	"Store hash table to database.",
+	0
+};
+
 
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
@@ -1754,6 +1759,56 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 	return;
 }
 
+/*! \brief RPC htable.store command to store content of a hash table to db */
+static void htable_rpc_store(rpc_t* rpc, void* c)
+{
+	str htname;
+	ht_t *ht;
+
+	if(ht_db_url.len<=0) {
+		rpc->fault(c, 500, "No htable db_url");
+		return;
+	}
+	if(ht_db_init_con()!=0) {
+		rpc->fault(c, 500, "Failed to init htable db connection");
+		return;
+	}
+	if(ht_db_open_con()!=0) {
+		rpc->fault(c, 500, "Failed to open htable db connection");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &htname) < 1) {
+		ht_db_close_con();
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL) {
+		ht_db_close_con();
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	if(ht->dbtable.s==NULL || ht->dbtable.len<=0) {
+		ht_db_close_con();
+		rpc->fault(c, 500, "No database htable");
+		return;
+	}
+	LM_DBG("sync db table [%.*s] from ht [%.*s]\n",
+			ht->dbtable.len, ht->dbtable.s,
+			ht->name.len, ht->name.s);
+	ht_db_delete_records(&ht->dbtable);
+	if(ht_db_save_table(ht, &ht->dbtable)!=0) {
+		LM_ERR("failed syncing hash table [%.*s] to db\n",
+					ht->name.len, ht->name.s);
+		ht_db_close_con();
+		rpc->fault(c, 500, "Storing htable failed");
+		return;
+	}
+	ht_db_close_con();
+	return;
+}
+
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
@@ -1762,6 +1817,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
+	{"htable.store", htable_rpc_store, htable_store_doc, 0},
 	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
 	{"htable.flush", htable_rpc_flush, htable_flush_doc, 0},
 	{0, 0, 0, 0}
