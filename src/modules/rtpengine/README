@@ -2097,6 +2097,18 @@ rtpengine_offer();
             here will still be accepted and used for transcoding on the
             offering side.Useful only in combination with codec-transcode.
             all keyword can be used to mask all offered codecs
+          + T.38=decode - If the offered SDP contains a media section
+            advertising T.38 over UDPTL, translate it to a regular audio
+            media section over RTP. By default, PCMU and PCMA will be used
+            as audio codecs, but that can be overriden using the codec
+            options described above. Other transport protocols (e.g. SRTP)
+            can also be selected in the same way. If the offered SDP does
+            not contain a T.38 section, then this flag has no effect.
+          + T.38=force - Any audio media section (over RTP) in the offered
+            SDP will be translated into a T.38 section over UDPTL.
+          + T.38=stop - Stops a previously established T.38 to audio
+            gateway and reverts the session back to media passthrough.
+            This is useful when handling a rejected T.38 offer.
        Check also the documentation of RTPEngine, these flags are
        documented there as well: https://github.com/sipwise/rtpengine.
 
