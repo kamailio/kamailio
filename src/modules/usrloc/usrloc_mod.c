@@ -116,6 +116,11 @@ int ul_version_table = 1;
 
 str ul_xavp_contact_name = {0};
 
+str ul_ka_from = str_init("sip:server@kamailio.org");
+str ul_ka_domain = str_init("kamailio.org");
+str ul_ka_method = str_init("OPTIONS");
+int ul_ka_mode = 0;
+
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;
 
@@ -242,6 +247,10 @@ static param_export_t params[] = {
 	{"db_timer_clean",      PARAM_INT, &ul_db_timer_clean},
 	{"rm_expired_delay",    PARAM_INT, &ul_rm_expired_delay},
 	{"version_table",       PARAM_INT, &ul_version_table},
+	{"ka_mode",             PARAM_INT, &ul_ka_mode},
+	{"ka_from",             PARAM_STR, &ul_ka_from},
+	{"ka_domain",             PARAM_STR, &ul_ka_domain},
+	{"ka_method",             PARAM_STR, &ul_ka_method},
 	{0, 0, 0}
 };
 

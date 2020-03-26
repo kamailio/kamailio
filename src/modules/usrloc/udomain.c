@@ -41,6 +41,7 @@
 #include "utime.h"
 #include "usrloc.h"
 #include "ul_callback.h"
+#include "ul_keepalive.h"
 #include "urecord.h"
 
 extern int ul_rm_expired_delay;
@@ -1228,6 +1229,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 				ptr = ptr->next;
 				mem_delete_urecord(_d, t);
 			} else {
+				ul_ka_urecord(ptr);
 				ptr = ptr->next;
 			}
 		}
