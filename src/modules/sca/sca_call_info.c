@@ -1988,7 +1988,7 @@ int sca_call_info_update(
 			rc = -1;
 			goto done;
 		}
-	} else if(rc < 0) {
+	} else if(rc < 0 && !sca->cfg->contact_fallback) {
 		LM_ERR("Bad Contact\n");
 		goto done;
 	}
@@ -2036,6 +2036,13 @@ int sca_call_info_update(
 
 	LM_DBG("to_aor[%.*s] from_aor[%.*s]\n", STR_FMT(&to_aor),
 			STR_FMT(&from_aor));
+
+	if(contact_uri.s == NULL && sca->cfg->contact_fallback) {
+		contact_uri.s = sca->cfg->contact_fallback->s;
+		contact_uri.len = sca->cfg->contact_fallback->len;
+		LM_DBG("No Contact header, using default owner[%.*s]\n",
+				STR_FMT(&contact_uri));
+	}
 
 	// early check to see if we're dealing with any SCA endpoints
 	if(sca_uri_is_shared_appearance(sca, &from_aor)) {

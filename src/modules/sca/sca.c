@@ -151,6 +151,7 @@ int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
 int onhold_bflag = -1;
 str server_address = STR_NULL;
+str contact_fallback = STR_NULL;
 str from_uri_avp_param = STR_NULL;
 str to_uri_avp_param = STR_NULL;
 
@@ -165,6 +166,7 @@ static param_export_t params[] = {
 		{"line_seize_max_expires", INT_PARAM, &line_seize_max_expires},
 		{"purge_expired_interval", INT_PARAM, &purge_expired_interval},
 		{"onhold_bflag", INT_PARAM, &onhold_bflag},
+		{"contact_fallback", PARAM_STR, &contact_fallback},
 		{"server_address", PARAM_STR, &server_address},
 		{"from_uri_avp", PARAM_STR, &from_uri_avp_param},
 		{"to_uri_avp", PARAM_STR, &to_uri_avp_param},
@@ -335,6 +337,10 @@ static int sca_set_config(sca_mod *scam)
 
 	if(server_address.s) {
 		scam->cfg->server_address = &server_address;
+	}
+
+	if(contact_fallback.s) {
+		scam->cfg->contact_fallback = &contact_fallback;
 	}
 
 	if(from_uri_avp_param.s) {

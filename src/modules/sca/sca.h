@@ -41,6 +41,7 @@ struct _sca_config
 	int purge_expired_interval;
 	int onhold_bflag;
 	str *server_address;
+	str *contact_fallback;
 	avp_flags_t from_uri_avp_type;
 	avp_name_t from_uri_avp;
 	avp_flags_t to_uri_avp_type;
