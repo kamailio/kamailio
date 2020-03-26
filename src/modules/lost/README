@@ -198,7 +198,8 @@ Chapter 1. Admin Guide
      * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
      * url - the location reference returned in the HELD locationRequest
        response - this reference may be added as Geolocation header value
-       and forwarded downstream
+       and forwarded downstream Note: to work properly, it is required to
+       include "locationURI" in the location_type parameter.
      * error - any error code returned in the HELD locationRequest
        response
 
