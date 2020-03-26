@@ -489,11 +489,11 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 }
 
 
-
 /**
  *
  */
-int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
+int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
+		unsigned int rtrip)
 {
 	dlist_t *p;
 	urecord_t *r;
@@ -523,7 +523,7 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
 							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len))
 					{
 						/* found */
-						c->last_keepalive = time(NULL);
+						c->last_keepalive = tval;
 						LM_DBG("updated keepalive for [%.*s:%u] to %u\n",
 								_ruid->len, _ruid->s, _aorhash,
 								(unsigned int)c->last_keepalive);
@@ -537,6 +537,14 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
+{
+	return ul_update_keepalive(_aorhash, _ruid, time(NULL), 0);
 }
 
 /*!

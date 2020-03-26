@@ -88,7 +88,8 @@ typedef struct ucontact {
 	str uniq;               /*!< Uniq header field */
 	struct socket_info *sock; /*!< received socket */
 	time_t last_modified;   /*!< When the record was last modified */
-	time_t last_keepalive;  /*!< last keepalive timestamp */
+	time_t last_keepalive;  /*!< Last keepalive timestamp */
+	unsigned int ka_roundtrip; /*!< Keepalive roundtrip in microseconds */
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
 	unsigned int reg_id;    /*!< reg-id parameters */
@@ -192,6 +193,8 @@ int ul_set_keepalive_timeout(int _to);
 typedef int (*ul_refresh_keepalive_t)(unsigned int _aorhash, str *_ruid);
 int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid);
 
+int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
+		unsigned int rtrip);
 
 typedef void (*ul_set_max_partition_t)(unsigned int m);
 

@@ -410,7 +410,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	LM_DBG("reply for keepalive of [%.*s:%u] roundtrip: %u.%06usec\n",
 			ruid.len, ruid.s, aorhash, tvdiff/1000000, tvdiff%1000000);
 
-	ul_refresh_keepalive(aorhash, &ruid);
+	ul_update_keepalive(aorhash, &ruid, tvn.tv_sec, tvdiff);
 
 	return 0;
 }
