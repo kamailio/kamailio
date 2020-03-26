@@ -74,7 +74,7 @@ typedef struct LOC
 {
 	char *identity;		/* location idendity (findServiceRequest) */
 	char *urn;			/* service URN (findServiceRequest) */ 
-	char *civic;		/* civic address (findServiceRequest) */
+	char *xpath;		/* civic address (findServiceRequest) */
 	char *geodetic;		/* geodetic location (findServiceRequest) */
 	char *longitude;	/* geo longitude */
 	char *latitude;		/* geo latitude */

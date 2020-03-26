@@ -83,10 +83,7 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 	if(strstr(type, HELD_TYPE_ANY)) {
 		len = strlen(ret) + strlen(HELD_TYPE_ANY) + 1;
 		tmp = pkg_realloc(ret, len);
-		if(!tmp) {
-			LM_ERR("no more private memory\n");
-			goto err;
-		}
+		if(tmp == NULL) goto err;
 		ret = tmp;
 		strcat(ret, HELD_TYPE_ANY);
 		*exact = 0;
@@ -94,10 +91,7 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 		if(strstr(type, HELD_TYPE_CIV)) {
 			len = strlen(ret) + strlen(HELD_TYPE_CIV) + 1;
 			tmp = pkg_realloc(ret, len);
-			if(tmp == NULL) {
-				LM_ERR("no more private memory\n");
-				goto err;
-			}
+			if(tmp == NULL) goto err;
 			ret = tmp;
 			strcat(ret, HELD_TYPE_CIV);
 		}
@@ -105,19 +99,13 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 			if(strlen(ret) > 1) {
 				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
 				tmp = pkg_realloc(ret, len);
-				if(tmp == NULL) {
-					LM_ERR("no more private memory\n");
-					goto err;
-				}
+				if(tmp == NULL) goto err;
 				ret = tmp;
 				strcat(ret, HELD_TYPE_SEP);
 			}
 			len = strlen(ret) + strlen(HELD_TYPE_GEO) + 1;
 			tmp = pkg_realloc(ret, len);
-			if(tmp == NULL) {
-				LM_ERR("no more private memory\n");
-				goto err;
-			}
+			if(tmp == NULL) goto err;
 			ret = tmp;
 			strcat(ret, HELD_TYPE_GEO);
 		}
@@ -125,19 +113,13 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 			if(strlen(ret) > 1) {
 				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
 				tmp = pkg_realloc(ret, len);
-				if(tmp == NULL) {
-					LM_ERR("no more private memory\n");
-					goto err;
-				}
+				if(tmp == NULL) goto err;
 				ret = tmp;
 				strcat(ret, HELD_TYPE_SEP);
 			}
 			len = strlen(ret) + strlen(HELD_TYPE_URI) + 1;
 			tmp = pkg_realloc(ret, len);
-			if(tmp == NULL) {
-				LM_ERR("no more private memory\n");
-				goto err;
-			}
+			if(tmp == NULL) goto err;
 			ret = tmp;
 			strcat(ret, HELD_TYPE_URI);
 		}
@@ -147,7 +129,8 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 	return ret;
 
 err:
-	if(ret) {
+	LM_ERR("no more private memory\n");
+	if (ret != NULL) {
 		pkg_free(ret);
 	}
 	*lgth = 0;
@@ -208,7 +191,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			LM_ERR("cannot get device id\n");
 			goto err;
 		}
-		if(!did.s) {
+		if(did.len == 0) {
 			LM_ERR("no device id found\n");
 			goto err;
 		}
@@ -245,7 +228,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	/* assemble locationRequest */
 	held = lost_new_held(did, rtype, held_resp_time, held_exact_type);
 
-	if(!held) {
+	if(held == NULL) {
 		LM_ERR("held object allocation failed\n");
 		lost_free_string(&idhdr);
 		goto err;
@@ -253,10 +236,10 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	que.s = lost_held_location_request(held, &que.len);
 
 	/* free memory */
-	lost_free_held(held);
-	lost_free_string(&idhdr);
 	did.s = NULL;
 	did.len = 0;
+	lost_free_held(held);
+	lost_free_string(&idhdr);
 
 	if(que.len == 0) {
 		LM_ERR("held request document error\n");
@@ -271,8 +254,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	/* only HTTP 2xx responses are accepted */
 	if(curlres >= 300 || curlres < 100) {
 		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
-		res.s = NULL;
-		res.len = 0;
+		lost_free_string(&res);
 		goto err;
 	}
 
@@ -283,10 +265,10 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	/* read and parse the returned xml */
 	doc = xmlReadMemory(res.s, res.len, 0, NULL,
 			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
-	if(!doc) {
+	if(doc == NULL) {
 		LM_WARN("invalid xml document: [%.*s]\n", res.len, res.s);
 		doc = xmlRecoverMemory(res.s, res.len);
-		if(!doc) {
+		if(doc == NULL) {
 			LM_ERR("xml document recovery failed on: [%.*s]\n", res.len, res.s);
 			goto err;
 		}
@@ -294,19 +276,19 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		LM_DBG("xml document recovered\n");
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root) {
+	if(root == NULL) {
 		LM_ERR("empty xml document\n");
 		goto err;
 	}
 	/* check the root element ... shall be locationResponse, or errors */
-	if(!xmlStrcmp(root->name, (const xmlChar *)"locationResponse")) {
+	if(xmlStrcmp(root->name, (const xmlChar *)"locationResponse") == 0) {
 
 		LM_DBG("HELD location response [%.*s]\n", res.len, res.s);
 
 		for(cur_node = root->children; cur_node; cur_node = cur_node->next) {
 			if(cur_node->type == XML_ELEMENT_NODE) {
-				if(!xmlStrcmp(
-						   cur_node->name, (const xmlChar *)"locationUriSet")) {
+				if(xmlStrcmp(cur_node->name,
+							(const xmlChar *)"locationUriSet") == 0) {
 
 					LM_DBG("*** node '%s' found\n", cur_node->name);
 
@@ -318,11 +300,12 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 						geo.s = NULL;
 					}
 				}
-				if(!xmlStrcmp(cur_node->name, (const xmlChar *)"presence")) {
+				if(xmlStrcmp(cur_node->name,
+							(const xmlChar *)"presence") == 0) {
 
 					LM_DBG("*** node '%s' found\n", cur_node->name);
 
-					/* respnse contains presence node */
+					/* response contains presence node */
 					presence = 1;
 				}
 			}
@@ -341,8 +324,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			if(curlres >= 300 || curlres < 100) {
 				LM_ERR("dereferencing location failed: %d\n", curlres);
 				/* free memory */
-				pidfuri.s = NULL;
-				pidfuri.len = 0;
+				lost_free_string(&pidfuri);
 				goto err;
 			}
 
@@ -360,13 +342,13 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 				res.len = pidfuri.len;
 			}
 		}
-	} else if(!xmlStrcmp(root->name, (const xmlChar *)"error")) {
+	} else if(xmlStrcmp(root->name, (const xmlChar *)"error") == 0) {
 
 		LM_DBG("HELD error response [%.*s]\n", res.len, res.s);
 
 		/* get the error patterm */
 		err.s = lost_get_property(root, (char *)"code", &err.len);
-		if(!err.s) {
+		if(err.len == 0) {
 			LM_ERR("error - code property not found: [%.*s]\n", res.len, res.s);
 			goto err;
 		}
@@ -406,8 +388,9 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	if(doc)
+	if(doc != NULL) {
 		xmlFreeDoc(doc);
+	}
 
 	return LOST_CLIENT_ERROR;
 }
@@ -570,8 +553,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 					if(curlres >= 300 || curlres < 100) {
 						LM_ERR("http GET failed with error: %d\n", curlres);
 						/* free memory */
-						pidfhdr.s = NULL;
-						pidfhdr.len = 0;
+						lost_free_string(&pidfhdr);
 						goto err;
 					}
 
@@ -579,8 +561,6 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 					if(pidfhdr.len == 0) {
 						LM_ERR("dereferencing location failed\n");
-						/* free memory */
-
 						goto err;
 					}
 					pidf.s = pidfhdr.s;
@@ -605,10 +585,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	doc = xmlReadMemory(pidf.s, pidf.len, 0, NULL,
 			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
 
-	if(!doc) {
+	if(doc == NULL) {
 		LM_WARN("invalid xml (pidf-lo): [%.*s]\n", pidf.len, pidf.s);
 		doc = xmlRecoverMemory(pidf.s, pidf.len);
-		if(!doc) {
+		if(doc == NULL) {
 			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len,
 					pidf.s);
 			goto err;
@@ -618,7 +598,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	}
 
 	root = xmlDocGetRootElement(doc);
-	if(!root) {
+	if(root == NULL) {
 		LM_ERR("empty pidf-lo document\n");
 		goto err;
 	}
@@ -626,7 +606,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 			|| (!xmlStrcmp(root->name, (const xmlChar *)"locationResponse"))) {
 		/* get the geolocation: point or circle, urn, ... */
 		loc = lost_new_loc(urn);
-		if(!loc) {
+		if(loc == NULL) {
 			LM_ERR("location object allocation failed\n");
 			goto err;
 		}
@@ -642,9 +622,9 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	}
 
 	/* free memory */
-	lost_free_string(&pidfhdr);
 	pidf.s = NULL;
 	pidf.len = 0;
+	lost_free_string(&pidfhdr);
 
 	/* check if connection exits */
 	if(httpapi.http_connection_exists(&con) == 0) {
@@ -654,9 +634,8 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	/* assemble findService request */
 	res.s = lost_find_service_request(loc, &res.len);
 	/* free memory */
-	if(loc)
-		lost_free_loc(loc);
-
+	lost_free_loc(loc);
+	loc = NULL;
 	xmlFreeDoc(doc);
 	doc = NULL;
 
@@ -672,8 +651,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	/* only HTTP 2xx responses are accepted */
 	if(curlres >= 300 || curlres < 100) {
 		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
-		ret.s = NULL;
-		ret.len = 0;
+		lost_free_string(&ret);
 		goto err;
 	}
 
@@ -682,7 +660,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	/* free memory */
 	lost_free_string(&res);
 
-	if(!ret.s) {
+	if(ret.len == 0) {
 		LM_ERR("findService request failed\n");
 		goto err;
 	}
@@ -693,10 +671,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	doc = xmlReadMemory(ret.s, ret.len, 0, 0,
 			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
 
-	if(!doc) {
+	if(doc == NULL) {
 		LM_ERR("invalid xml document: [%.*s]\n", ret.len, ret.s);
 		doc = xmlRecoverMemory(ret.s, ret.len);
-		if(!doc) {
+		if(doc == NULL) {
 			LM_ERR("xml document recovery failed on: [%.*s]\n", ret.len, ret.s);
 			goto err;
 		}
@@ -704,7 +682,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		LM_DBG("xml document recovered\n");
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root) {
+	if(root == NULL) {
 		LM_ERR("empty xml document: [%.*s]\n", ret.len, ret.s);
 		/* free memory */
 		lost_free_string(&ret);
@@ -784,10 +762,12 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	if(loc)
+	if(loc != NULL) {
 		lost_free_loc(loc);
-	if(doc)
+	}
+	if(doc != NULL) {
 		xmlFreeDoc(doc);
+	}
 
 	return LOST_CLIENT_ERROR;
 }

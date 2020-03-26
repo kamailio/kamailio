@@ -201,6 +201,8 @@
 						<emphasis>url</emphasis> - the location reference returned
                         in the HELD locationRequest response - this reference may be
                         added as Geolocation header value and forwarded downstream
+                        Note: to work properly, it is required to include "locationURI"
+                        in the location_type parameter.
                     </para></listitem>
                     <listitem><para>
 						<emphasis>error</emphasis> - any error code returned in the

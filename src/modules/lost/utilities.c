@@ -131,7 +131,7 @@ p_loc_t lost_new_loc(str rurn)
 	ptr->longitude = NULL;
 	ptr->latitude = NULL;
 	ptr->geodetic = NULL;
-	ptr->civic = NULL;
+	ptr->xpath = NULL;
 	ptr->profile = NULL;
 	ptr->radius = 0;
 	ptr->recursive = LOST_RECURSION_TRUE; /* set recursion to true */
@@ -201,8 +201,8 @@ void lost_free_loc(p_loc_t ptr)
 {
 	pkg_free(ptr->identity);
 	pkg_free(ptr->urn);
-	if(ptr->civic)
-		pkg_free(ptr->civic);
+	if(ptr->xpath)
+		pkg_free(ptr->xpath);
 	if(ptr->geodetic)
 		pkg_free(ptr->geodetic);
 	if(ptr->longitude)
@@ -607,6 +607,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 	const unsigned char s_civic[] = LOST_CIV;
 
 	char *ptr = NULL;
+	char *tmp = NULL;
 	char *s_profile = NULL;
 
 	int buffersize = 0;
@@ -626,14 +627,23 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 	}
 
 	nodes = result->nodesetval;
-	if(nodes) {
-		size = (nodes) ? nodes->nodeNr : 0;
+	if(nodes != NULL) {
+		size = nodes->nodeNr;
 		for(i = 0; i < size; ++i) {
+			if(nodes->nodeTab[i] == NULL) {
+				LM_WARN("xpath '%s' failed\n", xpath);
+				xmlXPathFreeObject(result);
+				return -1;
+			}
 			if(nodes->nodeTab[i]->type == XML_ELEMENT_NODE) {
 				cur = nodes->nodeTab[i];
 				/* check if child element is point, circle or civic */
 				while(nok < LOST_XPATH_DPTH) {
-					if(cur->children) {
+					if(cur->children == NULL) {
+						/* no additional DOM level */
+						break;
+					} else {
+						/* check current DOM level */
 						nok++;
 						cname = BAD_CAST cur->name;
 						if(xmlStrcasecmp(cname, s_point) == 0) {
@@ -648,49 +658,49 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 							s_profile = LOST_PRO_CIVIC;
 							break;
 						}
+						/* nothing found ... try next DOM level */
+						cur = cur->children;
 					}
-					/* nothing found ... try next DOM level */
-					cur = cur->children;
 				}
 
 				if(nok == 0) {
 					LM_DBG("xpath '%s' returned valid element (level %d/%d)\n",
-							xpath, nok, LOST_XPATH_DPTH - 1);
+							xpath, nok, LOST_XPATH_DPTH);
 				} else if(nok < LOST_XPATH_DPTH) {
 					/* malformed pidf-lo but still ok */
 					LM_WARN("xpath '%s' returned malformed pidf-lo (level "
 							"%d/%d)\n",
-							xpath, nok, LOST_XPATH_DPTH - 1);
+							xpath, nok, LOST_XPATH_DPTH);
 				} else {
 					/* really bad pidf-lo */
 					LM_WARN("xpath '%s' failed (level %d/%d)\n", xpath, nok,
-							LOST_XPATH_DPTH - 1);
+							LOST_XPATH_DPTH);
 					xmlXPathFreeObject(result);
 					return -1;
 				}
-				nok = -1;
 
-				if(!cur) {
+				if(cur == NULL) {
 					LM_ERR("xpath xmlCopyNode() failed\n");
 					xmlXPathFreeObject(result);
 					return -1;
 				}
 
 				root = xmlCopyNode(cur, 1);
-				if(!root) {
+				if(root == NULL) {
 					LM_ERR("xpath xmlCopyNode() failed\n");
 					xmlXPathFreeObject(result);
 					return -1;
 				}
+
 				new = xmlNewDoc(BAD_CAST "1.0");
-				if(!new) {
+				if(new == NULL) {
 					LM_ERR("xpath xmlNewDoc() failed\n");
 					xmlXPathFreeObject(result);
 					return -1;
 				}
 				xmlDocSetRootElement(new, root);
 				xmlDocDumpFormatMemory(new, &xmlbuff, &buffersize, 0);
-				if(!xmlbuff) {
+				if(xmlbuff == NULL) {
 					LM_ERR("xpath xmlDocDumpFormatMemory() failed\n");
 					xmlFreeDoc(new);
 					xmlXPathFreeObject(result);
@@ -698,6 +708,18 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 				}
 				/* take the first location-info element only */
 				if(i == 0) {
+					/* return the current profile */
+					loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+					if(loc->profile == NULL) {
+						xmlFree(xmlbuff);
+						xmlFreeDoc(new);
+						xmlXPathFreeObject(result);
+						goto err;
+					}
+					memset(loc->profile, 0, strlen(s_profile) + 1);
+					memcpy(loc->profile, s_profile, strlen(s_profile));
+
+					/* remove xml header from location element */
 					remove = strlen("<?xml version='1.0'?>\n");
 					buffersize = buffersize - remove;
 					ptr = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
@@ -708,22 +730,28 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 						goto err;
 					}
 
-					loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
-					if(loc->profile == NULL) {
+					memset(ptr, 0, buffersize);
+					memcpy(ptr, (char *)(xmlbuff + remove), buffersize);
+					ptr[buffersize] = '\0';
+					
+					/* trim the result */
+					tmp = lost_trim_content(ptr, &len);
+
+					/* return the location DOM */
+					loc->xpath = (char *)pkg_malloc(len + 1);
+					if(loc->xpath == NULL) {
 						pkg_free(ptr);
+						ptr = NULL;
 						xmlFree(xmlbuff);
 						xmlFreeDoc(new);
 						xmlXPathFreeObject(result);
 						goto err;
 					}
-
-					memset(ptr, 0, buffersize);
-					memcpy(ptr, (char *)(xmlbuff + remove), buffersize);
-					ptr[buffersize] = '\0';
-					loc->civic = lost_trim_content(ptr, &len);
-
-					memset(loc->profile, 0, strlen(s_profile) + 1);
-					memcpy(loc->profile, (char *)s_profile, strlen(s_profile));
+					memset(loc->xpath, 0, len + 1);
+					memcpy(loc->xpath, tmp, len);
+					/* free memory */
+					pkg_free(ptr);
+					ptr = NULL;
 				} else {
 					LM_WARN("xpath location-info element(%d) ignored\n", i + 1);
 				}
@@ -731,6 +759,10 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 				xmlFreeDoc(new);
 			}
 		}
+	} else {
+		LM_WARN("xpath '%s' failed\n", xpath);
+		xmlXPathFreeObject(result);
+		return -1;
 	}
 	xmlXPathFreeObject(result);
 
@@ -797,13 +829,13 @@ https://tools.ietf.org/html/rfc5985
 
 	/* create request */
 	request = xmlNewDoc(BAD_CAST "1.0");
-	if(!request) {
+	if(request == NULL) {
 		LM_ERR("locationRequest xmlNewDoc() failed\n");
 		return doc;
 	}
 	/* locationRequest - element */
 	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST "locationRequest");
-	if(!ptrLocationRequest) {
+	if(ptrLocationRequest == NULL) {
 		LM_ERR("locationRequest xmlNewNode() failed\n");
 		xmlFreeDoc(request);
 		return doc;
@@ -826,7 +858,7 @@ https://tools.ietf.org/html/rfc5985
 											 : BAD_CAST "false");
 	/* device - element */
 	ptrDevice = xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "device", NULL);
-	if(!ptrDevice) {
+	if(ptrDevice == NULL) {
 		LM_ERR("locationRequest xmlNewChild() failed\n");
 		xmlFreeDoc(request);
 		return doc;
@@ -838,7 +870,7 @@ https://tools.ietf.org/html/rfc5985
 	xmlNewChild(ptrDevice, NULL, BAD_CAST "uri", BAD_CAST held->identity);
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
-	if(!xmlbuff) {
+	if(xmlbuff == NULL) {
 		LM_ERR("locationRequest xmlDocDumpFormatMemory() failed\n");
 		xmlFreeDoc(request);
 		return doc;
@@ -908,13 +940,13 @@ https://tools.ietf.org/html/rfc5222
  */
 	/* create request */
 	request = xmlNewDoc(BAD_CAST "1.0");
-	if(!request) {
+	if(request == NULL) {
 		LM_ERR("findService request xmlNewDoc() failed\n");
 		return doc;
 	}
 	/* findService - element */
 	ptrFindService = xmlNewNode(NULL, BAD_CAST "findService");
-	if(!ptrFindService) {
+	if(ptrFindService == NULL) {
 		LM_ERR("findService xmlNewNode() failed\n");
 		xmlFreeDoc(request);
 		return doc;
@@ -936,10 +968,10 @@ https://tools.ietf.org/html/rfc5222
 	/* set pos */
 	snprintf(buf, BUFSIZE, "%s %s", loc->latitude, loc->longitude);
 	/* xpath result */
-	if(loc->civic) {
+	if(loc->xpath != NULL) {
 		xmlParseInNodeContext(
-				ptrLocation, loc->civic, strlen(loc->civic), 0, &ptrNode);
-		if(!ptrNode) {
+				ptrLocation, loc->xpath, strlen(loc->xpath), 0, &ptrNode);
+		if(ptrNode == NULL) {
 			LM_ERR("locationRequest xmlParseInNodeContext() failed\n");
 			xmlFreeDoc(request);
 			return doc;
@@ -950,7 +982,7 @@ https://tools.ietf.org/html/rfc5222
 	/* Point */
 	else if(loc->radius == 0) {
 		ptrPoint = xmlNewChild(ptrLocation, NULL, BAD_CAST "Point", NULL);
-		if(!ptrPoint) {
+		if(ptrPoint == NULL) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
 			xmlFreeDoc(request);
 			return doc;
@@ -965,7 +997,7 @@ https://tools.ietf.org/html/rfc5222
 	/* circle - Point */
 	else {
 		ptrCircle = xmlNewChild(ptrLocation, NULL, BAD_CAST "gs:Circle", NULL);
-		if(!ptrCircle) {
+		if(ptrCircle == NULL) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
 			xmlFreeDoc(request);
 			return doc;
@@ -982,7 +1014,7 @@ https://tools.ietf.org/html/rfc5222
 		snprintf(buf, BUFSIZE, "%d", loc->radius);
 		ptrRadius = xmlNewChild(
 				ptrCircle, NULL, BAD_CAST "gs:radius", BAD_CAST buf);
-		if(!ptrRadius) {
+		if(ptrRadius == NULL) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
 			xmlFreeDoc(request);
 			return doc;
@@ -995,7 +1027,7 @@ https://tools.ietf.org/html/rfc5222
 	xmlNewChild(ptrFindService, NULL, BAD_CAST "service", BAD_CAST buf);
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
-	if(!xmlbuff) {
+	if(xmlbuff == NULL) {
 		LM_ERR("findService request xmlDocDumpFormatMemory() failed\n");
 		xmlFreeDoc(request);
 		return doc;
