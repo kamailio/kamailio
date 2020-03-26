@@ -24,8 +24,11 @@
 #ifndef _UL_KEEPALIVE_H_
 #define _UL_KEEPALIVE_H_
 
+#include "../../core/parser/msg_parser.h"
+
 #include "urecord.h"
 
 int ul_ka_urecord(urecord_t *ur);
+int ul_ka_reply_received(sip_msg_t *msg);
 
 #endif

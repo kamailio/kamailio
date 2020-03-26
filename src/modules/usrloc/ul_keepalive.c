@@ -43,9 +43,9 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst);
 /**
  * 
 _KAMETHOD_ _URI_ SIP/2.0\r\n
-Via: SIP/2.0/_PROTO_ _IP_:_PORT_\r\n
+Via: SIP/2.0/_PROTO_ _IP_:_PORT_;branch=z9hG4bKx._GCNT_._BCNT_.0\r\n
 __KAROUTES__
-From: <_KAFROM_>;tag=_KAFROMTAG_\r\n
+From: <_KAFROM_>;tag=_RUID_-_AORHASH_-_TIMESEC_-_TIMEUSEC_-_GCNT_._BCNT_\r\n
 To: <sip:_AOR_>\r\n
 Call-ID: _KACALLID_\r\n
 CSeq: 1 _KAMETHOD_\r\n
@@ -73,6 +73,9 @@ extern unsigned int nat_bflag;
 
 static unsigned int _ul_ka_counter = 0;
 
+/**
+ *
+ */
 int ul_ka_urecord(urecord_t *ur)
 {
 	ucontact_t *uc;
@@ -205,6 +208,9 @@ int ul_ka_urecord(urecord_t *ur)
 	return 0;
 }
 
+/**
+ *
+ */
 static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 { 
 	if (kadst->proto == PROTO_UDP) {
@@ -236,4 +242,175 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 				kadst->proto);
 		return -1;
 	}
+}
+
+/**
+ *
+ */
+unsigned long ul_ka_fromhex(str *shex, int *err)
+{
+    unsigned long v = 0;
+	int i;
+
+	*err = 0;
+    for (i=0; i<shex->len; i++) {
+        char b = shex->s[i];
+        if (b >= '0' && b <= '9') b = b - '0';
+        else if (b >= 'a' && b <='f') b = b - 'a' + 10;
+        else if (b >= 'A' && b <='F') b = b - 'A' + 10;
+		else { *err = 1; return 0; };
+        v = (v << 4) | (b & 0xF);
+    }
+    return v;
+}
+
+/**
+ *
+ */
+int ul_ka_reply_received(sip_msg_t *msg)
+{
+	to_body_t *fb;
+	str ruid;
+	str tok;
+	int err;
+	unsigned int aorhash;
+	char *p;
+	struct timeval tvm;
+	struct timeval tvn;
+	unsigned int tvdiff;
+
+	if(msg->cseq == NULL) {
+		if((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || (msg->cseq == NULL)) {
+			LM_ERR("invalid CSeq header\n");
+			return -1;
+		}
+	}
+
+	if(get_cseq(msg)->method.len != ul_ka_method.len) {
+		return 1;
+	}
+	if(strncmp(get_cseq(msg)->method.s, ul_ka_method.s, ul_ka_method.len) != 0) {
+		return 1;
+	}
+
+	/* there must be no second via */
+	if(!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || (msg->via2 == 0)
+			   || (msg->via2->error != PARSE_OK))) {
+		return 1;
+	}
+
+	/* from uri check */
+	if((parse_from_header(msg)) < 0) {
+		LM_ERR("cannot parse From header\n");
+		return -1;
+	}
+
+	fb = get_from(msg);
+	if(fb->uri.len != ul_ka_from.len
+			|| strncmp(fb->uri.s, ul_ka_from.s, ul_ka_from.len) != 0) {
+		return 1;
+	}
+
+	/* from-tag is: ruid-aorhash-tmsec-tmusec-counter */
+	if(fb->tag_value.len <= 8) {
+		return 1;
+	}
+
+	LM_DBG("checking keepalive reply [%.*s]\n", fb->tag_value.len,
+			fb->tag_value.s);
+
+	/* todo: macro/function to tokenize */
+	/* skip counter */
+	p = q_memrchr(fb->tag_value.s, '-', fb->tag_value.len);
+	if(p == NULL) {
+		LM_DBG("from tag format mismatch [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		return 1;
+	}
+
+	/* tv_usec hash */
+	tok.len = p - fb->tag_value.s;
+	p = q_memrchr(fb->tag_value.s, '-', tok.len);
+	if(p == NULL) {
+		LM_DBG("from tag format mismatch [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		return 1;
+	}
+	tok.s = p + 1;
+	tok.len = fb->tag_value.s + tok.len - tok.s;
+	if(tok.len <= 0) {
+		LM_DBG("empty token\n");
+		return 1;
+	}
+	LM_DBG("tv usec string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
+	tvm.tv_usec = ul_ka_fromhex(&tok, &err);
+	if(err==1) {
+		LM_DBG("invalid tv usec value\n");
+		return 1;
+	}
+	LM_DBG("tv usec is [%u]\n", tvm.tv_usec);
+
+	/* tv_sec hash */
+	tok.len = p - fb->tag_value.s;
+	p = q_memrchr(fb->tag_value.s, '-', tok.len);
+	if(p == NULL) {
+		LM_DBG("from tag format mismatch [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		return 1;
+	}
+	tok.s = p + 1;
+	tok.len = fb->tag_value.s + tok.len - tok.s;
+	if(tok.len <= 0) {
+		LM_DBG("empty token\n");
+		return 1;
+	}
+	LM_DBG("tv sec string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
+	tvm.tv_sec = ul_ka_fromhex(&tok, &err);
+	if(err==1) {
+		LM_DBG("invalid tv sec value\n");
+		return 1;
+	}
+	LM_DBG("tv sec is [%lu]\n", tvm.tv_sec);
+
+	/* aor hash */
+	tok.len = p - fb->tag_value.s;
+	p = q_memrchr(fb->tag_value.s, '-', tok.len);
+	if(p == NULL) {
+		LM_DBG("from tag format mismatch [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		return 1;
+	}
+	tok.s = p + 1;
+	tok.len = fb->tag_value.s + tok.len - tok.s;
+	if(tok.len <= 0) {
+		LM_DBG("empty token\n");
+		return 1;
+	}
+	LM_DBG("aor hash string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
+	aorhash = ul_ka_fromhex(&tok, &err);
+	if(err==1) {
+		LM_DBG("invalid aor hash value\n");
+		return 1;
+	}
+	LM_DBG("aor hash is [%u]\n", aorhash);
+
+	ruid.s = fb->tag_value.s;
+	ruid.len = tok.s - ruid.s - 1;
+
+	if(ruid.len <= 0) {
+		LM_DBG("cannot get ruid in [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		return 1;
+	}
+
+	gettimeofday(&tvn, NULL);
+	tvdiff = (tvn.tv_sec - tvm.tv_sec) * 1000000
+					+ (tvn.tv_usec - tvm.tv_usec);
+
+	LM_DBG("reply for keepalive of [%.*s:%u] roundtrip: %u.%06usec\n",
+			ruid.len, ruid.s, aorhash, tvdiff/1000000, tvdiff%1000000);
+
+	ul_refresh_keepalive(aorhash, &ruid);
+
+	return 0;
 }

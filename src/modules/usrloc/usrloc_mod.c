@@ -55,6 +55,7 @@
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_rpc.h"
 #include "ul_callback.h"
+#include "ul_keepalive.h"
 #include "usrloc.h"
 
 MODULE_VERSION
@@ -96,6 +97,7 @@ static void ul_core_timer(unsigned int ticks, void* param);  /*!< Core timer han
 static void ul_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 static void ul_db_clean_timer(unsigned int ticks, void* param); /*!< DB clean timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
+static int ul_sip_reply_received(sip_msg_t *msg); /*!< SIP response handling */
 
 #define UL_PRELOAD_SIZE	8
 static char* ul_preload_list[UL_PRELOAD_SIZE];
@@ -268,7 +270,7 @@ struct module_exports exports = {
 	params,          /*!< exported parameters */
 	0,               /*!< exported rpc functions */
 	0,               /*!< exported pseudo-variables */
-	0,               /*!< response handling function */
+	ul_sip_reply_received, /*!< response handling function */
 	mod_init,        /*!< module init function */
 	child_init,      /*!< child init function */
 	destroy          /*!< destroy function */
@@ -484,6 +486,17 @@ static void destroy(void)
 	destroy_ulcb_list();
 }
 
+/*! \brief
+ * Callback to handle the SIP replies
+ */
+static int ul_sip_reply_received(sip_msg_t *msg)
+{
+	if(ul_ka_mode == 0) {
+		return 1;
+	}
+	ul_ka_reply_received(msg);
+	return 1;
+}
 
 /*! \brief
  * Core timer handler
