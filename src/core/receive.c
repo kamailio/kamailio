@@ -223,15 +223,15 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
  */
 int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 {
-	struct sip_msg *msg;
+	struct sip_msg *msg = NULL;
 	struct run_act_ctx ctx;
-	struct run_act_ctx *bctx;
-	int ret;
+	struct run_act_ctx *bctx = NULL;
+	int ret = -1;
 	struct timeval tvb, tve;
 	struct timezone tz;
 	unsigned int diff = 0;
-	str inb;
-	sr_net_info_t netinfo;
+	str inb = STR_NULL;
+	sr_net_info_t netinfo = {0};
 	sr_kemi_eng_t *keng = NULL;
 	sr_event_param_t evp = {0};
 	unsigned int cidlockidx = 0;
