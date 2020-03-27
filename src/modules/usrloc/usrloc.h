@@ -82,8 +82,8 @@ typedef struct ucontact {
 	str callid;             /*!< Call-ID header field of registration */
 	int cseq;               /*!< CSeq value */
 	cstate_t state;         /*!< State of the contact (\ref cstate) */
-	unsigned int flags;     /*!< Various flags (NAT, ping type, etc) */
-	unsigned int cflags;    /*!< Custom contact flags (from script) */
+	unsigned int flags;     /*!< Various internal flags (sync, etc) */
+	unsigned int cflags;    /*!< Custom contact flags (from script - bflags) */
 	str user_agent;         /*!< User-Agent header field */
 	str uniq;               /*!< Uniq header field */
 	struct socket_info *sock; /*!< received socket */
