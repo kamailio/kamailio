@@ -93,6 +93,7 @@ Carsten Bock
               3.51. ka_method (str)
               3.52. ka_from (str)
               3.53. ka_domain (str)
+              3.54. ka_filter (int)
 
         4. RPC Commands
 
@@ -193,6 +194,7 @@ Carsten Bock
    1.51. ka_method parameter usage
    1.52. ka_from parameter usage
    1.53. ka_domain parameter usage
+   1.54. ka_filter parameter usage
 
 Chapter 1. Admin Guide
 
@@ -262,6 +264,7 @@ Chapter 1. Admin Guide
         3.51. ka_method (str)
         3.52. ka_from (str)
         3.53. ka_domain (str)
+        3.54. ka_filter (int)
 
    4. RPC Commands
 
@@ -394,6 +397,7 @@ Chapter 1. Admin Guide
    3.51. ka_method (str)
    3.52. ka_from (str)
    3.53. ka_domain (str)
+   3.54. ka_filter (int)
 
 3.1. nat_bflag (int)
 
@@ -1066,14 +1070,15 @@ modparam("usrloc", "version_table", 0)
 3.50. ka_mode (int)
 
    Keepalive mode - control the internal keepalive mechanism. With this
-   feature enable, the module sends periodically (based on timer interval)
-   SIP requests to location contacts and measures the round trip in
-   microseconds (the round trip value can be seen in the response of the
-   RPC command 'ul.dump').
+   feature enabled, the module sends periodically (based on timer
+   interval) SIP requests to location contacts and measures the round trip
+   in microseconds (the round trip value can be seen in the response of
+   the RPC command 'ul.dump').
 
    Its value is a set of flags:
      * 0 - if the value is zero, no keepalive is sent
-     * 1 - if set to 1, the keepalive is enabled for all contacts
+     * 1 (bit 1 set) - if set to 1, the keepalive is enabled for all
+       contacts
      * 2 (bit 2 set) - the keepalive is sent only for natted contacts
        (nat_bflag set)
      * 4 (bit 3 set) - the keepalive is sent only for UDP contacts
@@ -1132,6 +1137,22 @@ modparam("usrloc", "ka_from", "sip:server@mydomain.com")
    Example 1.53. ka_domain parameter usage
 ...
 modparam("usrloc", "ka_domain", "mydomain.com")
+...
+
+3.54. ka_filter (int)
+
+   Set filters for keepalive processing.
+
+   Its value is a set of flags:
+     * 0 - if the value is zero, no filter is enabled for keepalives
+     * 1 (bit 1 set) - keepalives sent only to records matching the
+       server_id global parameter.
+
+   Default value is “0” (no filter).
+
+   Example 1.54. ka_filter parameter usage
+...
+modparam("usrloc", "ka_filter", 1)
 ...
 
 4. RPC Commands
