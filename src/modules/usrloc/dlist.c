@@ -46,7 +46,7 @@
 extern int ul_version_table;
 
 /*! \brief Global list of all registered domains */
-dlist_t* root = 0;
+dlist_t *_ksr_ul_root = 0;
 
 unsigned int _ul_max_partition = 0;
 
@@ -65,7 +65,7 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 {
 	dlist_t* ptr;
 
-	ptr = root;
+	ptr = _ksr_ul_root;
 	while(ptr) {
 		if ((_n->len == ptr->name.len) &&
 		    !memcmp(_n->s, ptr->name.s, _n->len)) {
@@ -165,7 +165,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	/* TODO: use part_idx and part_max on keys1 */
 
-	for (dom = root; dom!=NULL ; dom=dom->next) {
+	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
 		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
 			LM_ERR("sql use_table failed\n");
 			return -1;
@@ -350,7 +350,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(c->c.len);
 
-	for (p = root; p != NULL; p = p->next) {
+	for (p = _ksr_ul_root; p != NULL; p = p->next) {
 
 		for(i=0; i<p->d->size; i++) {
 
@@ -502,7 +502,7 @@ int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
 
 	/* todo: get location domain via param */
 
-	for (p = root; p != NULL; p = p->next)
+	for (p = _ksr_ul_root; p != NULL; p = p->next)
 	{
 		i = _aorhash&(p->d->size-1);
 		lock_ulslot(p->d, i);
@@ -671,8 +671,8 @@ int register_udomain(const char* _n, udomain_t** _d)
 		con = 0;
 	}
 
-	d->next = root;
-	root = d;
+	d->next = _ksr_ul_root;
+	_ksr_ul_root = d;
 	
 	*_d = d->d;
 	return 0;
@@ -694,9 +694,9 @@ void free_all_udomains(void)
 {
 	dlist_t* ptr;
 
-	while(root) {
-		ptr = root;
-		root = root->next;
+	while(_ksr_ul_root) {
+		ptr = _ksr_ul_root;
+		_ksr_ul_root = _ksr_ul_root->next;
 
 		free_udomain(ptr->d);
 		shm_free(ptr->name.s);
@@ -713,7 +713,7 @@ void print_all_udomains(FILE* _f)
 {
 	dlist_t* ptr;
 	
-	ptr = root;
+	ptr = _ksr_ul_root;
 
 	fprintf(_f, "===Domain list===\n");
 	while(ptr) {
@@ -734,7 +734,7 @@ unsigned long get_number_of_users(void)
 
 	dlist_t* current_dlist;
 	
-	current_dlist = root;
+	current_dlist = _ksr_ul_root;
 
 	while (current_dlist)
 	{
@@ -758,10 +758,10 @@ int synchronize_all_udomains(int istart, int istep)
 	get_act_time(); /* Get and save actual time */
 
 	if (db_mode==DB_ONLY) {
-		for( ptr=root ; ptr ; ptr=ptr->next)
+		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
 			res |= db_timer_udomain(ptr->d);
 	} else {
-		for( ptr=root ; ptr ; ptr=ptr->next)
+		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
 			mem_timer_udomain(ptr->d, istart, istep);
 	}
 
@@ -779,7 +779,7 @@ int ul_db_clean_udomains(void)
 
 	get_act_time(); /* Get and save actual time */
 
-	for( ptr=root ; ptr ; ptr=ptr->next)
+	for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
 		res |= db_timer_udomain(ptr->d);
 
 	return res;

@@ -453,7 +453,7 @@ static int child_init(int _rank)
 	/* _rank==PROC_SIPINIT is used even when fork is disabled */
 	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY && db_load) {
 		/* if cache is used, populate domains from DB */
-		for( ptr=root ; ptr ; ptr=ptr->next) {
+		for(ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {
 				LM_ERR("child(%d): failed to preload domain '%.*s'\n",
 						_rank, ptr->name.len, ZSW(ptr->name.s));

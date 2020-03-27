@@ -246,7 +246,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 		return;
 	}
 	
-	for( dl=root ; dl ; dl=dl->next ) {
+	for( dl=_ksr_ul_root ; dl ; dl=dl->next ) {
 		dom = dl->d;
 
 		if (rpc->struct_add(dah, "{", "Domain", &dh) < 0)
@@ -338,7 +338,7 @@ static inline udomain_t* rpc_find_domain(str* table)
 {
 	dlist_t* dom;
 
-	for( dom=root ; dom ; dom=dom->next ) {
+	for( dom=_ksr_ul_root ; dom ; dom=dom->next ) {
 		if ((dom->name.len == table->len) &&
 				!memcmp(dom->name.s, table->s, table->len))
 			return dom->d;
