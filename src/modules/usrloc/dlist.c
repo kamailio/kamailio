@@ -524,9 +524,10 @@ int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
 					{
 						/* found */
 						c->last_keepalive = tval;
-						LM_DBG("updated keepalive for [%.*s:%u] to %u\n",
+						c->ka_roundtrip = rtrip;
+						LM_DBG("updated keepalive for [%.*s:%u] to %u (rtrip: %u)\n",
 								_ruid->len, _ruid->s, _aorhash,
-								(unsigned int)c->last_keepalive);
+								(unsigned int)c->last_keepalive, c->ka_roundtrip);
 						unlock_ulslot(p->d, i);
 						return 0;
 					}

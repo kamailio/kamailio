@@ -200,6 +200,11 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding last_keepalive");
 		return -1;
 	}
+	if(rpc->struct_add(vh, "d", "KA-Roundtrip", (int)c->ka_roundtrip)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding keepalive roundtrip");
+		return -1;
+	}
 	if(rpc->struct_add(vh, "d", "Last-Modified", (int)c->last_modified)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding last_modified");
