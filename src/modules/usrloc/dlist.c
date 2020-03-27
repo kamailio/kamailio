@@ -40,10 +40,13 @@
 #include "udomain.h"           /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"
+#include "ul_keepalive.h"
 #include "usrloc_mod.h"
 
 
 extern int ul_version_table;
+extern int ul_ka_mode;
+extern int ul_ka_filter;
 
 /*! \brief Global list of all registered domains */
 dlist_t *_ksr_ul_root = 0;
@@ -77,6 +80,186 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 	}
 	
 	return 1;
+}
+
+/*!
+ * \brief Keepalive routine for all contacts from the database
+ */
+int ul_ka_db_records(int partidx)
+{
+	db1_res_t* res = NULL;
+	db_row_t *row = NULL;
+	db_key_t keys1[4]; /* where */
+	db_val_t vals1[4];
+	db_op_t  ops1[4];
+	db_key_t keys2[8]; /* select */
+	int n[2] = {2, 8}; /* number of dynamic values used on key1/key2 */
+	dlist_t *dom = NULL;
+	urecord_t ur;
+	ucontact_t uc;
+	int port = 0;
+	int proto = 0;
+	str host = STR_NULL;
+	char *p = NULL;
+#define ULKA_AURBUF_SIZE 1024
+	char aorbuf[ULKA_AURBUF_SIZE];
+	int i = 0;
+
+	/* select fields */
+	keys2[0] = &received_col;
+	keys2[1] = &contact_col;
+	keys2[2] = &sock_col;
+	keys2[3] = &cflags_col;
+	keys2[4] = &path_col;
+	keys2[5] = &ruid_col;
+	keys2[6] = &user_col;
+	keys2[7] = &domain_col;
+
+	/* where fields */
+	keys1[0] = &expires_col;
+	ops1[0] = OP_GT;
+	vals1[0].nul = 0;
+	UL_DB_EXPIRES_SET(&vals1[0], time(0));
+
+	keys1[1] = &partition_col;
+	ops1[1] = OP_EQ;
+	vals1[1].type = DB1_INT;
+	vals1[1].nul = 0;
+	if(_ul_max_partition>0)
+		vals1[1].val.int_val = partidx;
+	else
+		vals1[1].val.int_val = 0;
+
+	if (ul_ka_mode & ULKA_NAT) {
+		keys1[n[0]] = &keepalive_col;
+		ops1[n[0]] = OP_EQ;
+		vals1[n[0]].type = DB1_INT;
+		vals1[n[0]].nul = 0;
+		vals1[n[0]].val.int_val = 1;
+		n[0]++;
+	}
+	if(ul_ka_filter&GAU_OPT_SERVER_ID) {
+		keys1[n[0]] = &srv_id_col;
+		ops1[n[0]] = OP_EQ;
+		vals1[n[0]].type = DB1_INT;
+		vals1[n[0]].nul = 0;
+		vals1[n[0]].val.int_val = server_id;
+		n[0]++;
+	}
+
+	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
+		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
+			LM_ERR("sql use_table failed\n");
+			return -1;
+		}
+		if (ul_dbf.query(ul_dbh, keys1, ops1, vals1, keys2,
+							n[0], n[1], NULL, &res) <0 ) {
+			LM_ERR("query error\n");
+			return -1;
+		}
+		if( RES_ROW_N(res)==0 ) {
+			ul_dbf.free_result(ul_dbh, res);
+			continue;
+		}
+
+		for(i = 0; i < RES_ROW_N(res); i++) {
+			row = RES_ROWS(res) + i;
+			memset(&ur, 0, sizeof(urecord_t));
+			memset(&uc, 0, sizeof(ucontact_t));
+
+			/* received */
+			uc.received.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if ( VAL_NULL(ROW_VALUES(row)) || uc.received.s==0 || uc.received.s[0]==0 ) {
+				uc.received.s = NULL;
+				uc.received.len = 0;
+			} else {
+				uc.received.len = strlen(uc.received.s);
+			}
+
+			/* contact */
+			uc.c.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
+			if (VAL_NULL(ROW_VALUES(row)+1) || uc.c.s==0 || uc.c.s[0]==0) {
+				LM_ERR("empty contact -> skipping\n");
+				continue;
+			} else {
+				uc.c.len = strlen(uc.c.s);
+			}
+
+			/* path */
+			uc.path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
+			if (VAL_NULL(ROW_VALUES(row)+4) || uc.path.s==0 || uc.path.s[0]==0){
+				uc.path.s = NULL;
+				uc.path.len = 0;
+			} else {
+				uc.path.len = strlen(uc.path.s);
+			}
+
+			/* ruid */
+			uc.ruid.s = (char*)VAL_STRING(ROW_VALUES(row)+5);
+			if (VAL_NULL(ROW_VALUES(row)+5) || uc.ruid.s==0 || uc.ruid.s[0]==0){
+				uc.ruid.s = NULL;
+				uc.ruid.len = 0;
+			} else {
+				uc.ruid.len = strlen(uc.ruid.s);
+			}
+			/* sock */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
+			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
+				uc.sock = 0;
+			} else {
+				if (parse_phostport(p, &host.s, &host.len,
+							&port, &proto)!=0) {
+					LM_ERR("bad socket <%s>...set to 0\n", p);
+					uc.sock = 0;
+				} else {
+					uc.sock = grep_sock_info( &host, (unsigned short)port, proto);
+					if (uc.sock==0) {
+						LM_DBG("non-local socket <%s>...set to 0\n", p);
+					}
+				}
+			}
+
+			/* flags */
+			uc.cflags = VAL_BITMAP(ROW_VALUES(row) + 3);
+
+			/* aor from username and domain */
+			ur.aor.s = aorbuf;
+			ur.domain = &dom->name;
+
+			/* user */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 6);
+			if (VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0) {
+				LM_ERR("empty username -> skipping\n");
+				continue;
+			}
+			ur.aor.len = strlen(p);
+			if(ur.aor.len >= ULKA_AURBUF_SIZE) {
+				LM_DBG("long username ->skipping\n");
+				continue;
+			}
+			strcpy(aorbuf, p);
+
+			/* domain */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
+			if (!(VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0)) {
+				if(ur.aor.len + strlen(p) >= ULKA_AURBUF_SIZE - 1) {
+					LM_DBG("long aor ->skipping\n");
+					continue;
+				}
+				aorbuf[ur.aor.len] = '@';
+				strcpy(aorbuf + ur.aor.len + 1, p);
+				ur.aor.len = strlen(aorbuf);
+			}
+			ur.aorhash = ul_get_aorhash(&ur.aor);
+			ur.contacts = &uc;
+
+			ul_ka_urecord(&ur);
+		} /* row cycle */
+
+		ul_dbf.free_result(ul_dbh, res);
+	} /* domain cycle */
+
+	return 0;
 }
 
 /*!
@@ -758,11 +941,16 @@ int synchronize_all_udomains(int istart, int istep)
 	get_act_time(); /* Get and save actual time */
 
 	if (db_mode==DB_ONLY) {
-		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
-			res |= db_timer_udomain(ptr->d);
+		if(istart == 0) {
+			for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
+				res |= db_timer_udomain(ptr->d);
+			}
+		}
+		ul_ka_db_records((unsigned int)istart);
 	} else {
-		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
+		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			mem_timer_udomain(ptr->d, istart, istep);
+		}
 	}
 
 	return res;

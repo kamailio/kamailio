@@ -122,6 +122,7 @@ str ul_ka_from = str_init("sip:server@kamailio.org");
 str ul_ka_domain = str_init("kamailio.org");
 str ul_ka_method = str_init("OPTIONS");
 int ul_ka_mode = 0;
+int ul_ka_filter = 0;
 
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;
@@ -253,6 +254,7 @@ static param_export_t params[] = {
 	{"ka_from",             PARAM_STR, &ul_ka_from},
 	{"ka_domain",           PARAM_STR, &ul_ka_domain},
 	{"ka_method",           PARAM_STR, &ul_ka_method},
+	{"ka_filter",           PARAM_INT, &ul_ka_filter},
 	{0, 0, 0}
 };
 
@@ -392,6 +394,11 @@ static int mod_init(void)
 
 	if(db_mode != DB_ONLY) {
 		ul_set_xavp_contact_clone(1);
+	}
+
+	/* set max partition number for timers processing of db records */
+	if((ul_ka_mode != ULKA_NONE) && (ul_timer_procs > 1)) {
+		ul_set_max_partition((unsigned int)ul_timer_procs);
 	}
 
 	init_flag = 1;
