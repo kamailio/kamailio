@@ -1229,9 +1229,12 @@ modparam("usrloc", "rm_expired_delay", 30)
 	<section id="usrloc.p.server_id_filter">
 		<title><varname>server_id_filter</varname> (int)</title>
 		<para>
-			Enable (1) or disable (0) filter records by server_id on load and during cleaning of expired db records.
-                        It could be useful when you want to use the same location table for several kamailio instances which are configured to work in db_mode=1 or db_mode=2 (cache modes).
-                        Otherwise one instance of proxy cleans records made by another proxy and that breaks its cache.
+			Enable (1) or disable (0) filter records by server_id on load and
+			during cleaning of expired db records. It could be useful when you
+			want to use the same location table for several kamailio instances
+			which are configured to work in db_mode=1 or db_mode=2 (cache modes).
+			Otherwise one instance of proxy cleans records made by another proxy
+			and that breaks its cache.
 		</para>
 		<para>
 		<emphasis>
@@ -1271,7 +1274,7 @@ modparam("usrloc", "version_table", 0)
 		<title><varname>ka_mode</varname> (int)</title>
 		<para>
 		Keepalive mode - control the internal keepalive mechanism. With this feature
-		enable, the module sends periodically (based on timer interval) SIP requests
+		enabled, the module sends periodically (based on timer interval) SIP requests
 		to location contacts and measures the round trip in microseconds (the
 		round trip value can be seen in the response of the RPC command 'ul.dump'). 
 		</para>
@@ -1286,7 +1289,7 @@ modparam("usrloc", "version_table", 0)
 		</listitem>
 		<listitem>
 			<para>
-			1 - if set to 1, the keepalive is enabled for all contacts
+			1 (bit 1 set) - if set to 1, the keepalive is enabled for all contacts
 			</para>
 		</listitem>
 		<listitem>
@@ -1349,7 +1352,7 @@ modparam("usrloc", "ka_method", "NOTIFY")
 		</example>
 	</section>
 
-	<section id="usrloc.p.from">
+	<section id="usrloc.p.ka_from">
 		<title><varname>ka_from</varname> (str)</title>
 		<para>
 		The SIP URI to be set in the From header of the keepalive requests.
@@ -1367,7 +1370,7 @@ modparam("usrloc", "ka_from", "sip:server@mydomain.com")
 		</example>
 	</section>
 
-	<section id="usrloc.p.domain">
+	<section id="usrloc.p.ka_domain">
 		<title><varname>ka_domain</varname> (str)</title>
 		<para>
 		The domain to be set in To header URI if the multi-domain is not enabled.
@@ -1382,6 +1385,40 @@ modparam("usrloc", "ka_from", "sip:server@mydomain.com")
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "ka_domain", "mydomain.com")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_filter">
+		<title><varname>ka_filter</varname> (int)</title>
+		<para>
+		Set filters for keepalive processing.
+		</para>
+		<para>
+		Its value is a set of flags:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - if the value is zero, no filter is enabled for keepalives
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 (bit 1 set) - keepalives sent only to records matching the
+			server_id global parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>0</quote> (no filter).
+		</para>
+		<example>
+		<title><varname>ka_filter</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_filter", 1)
 ...
 		</programlisting>
 		</example>
