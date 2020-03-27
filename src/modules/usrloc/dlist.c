@@ -222,6 +222,9 @@ int ul_ka_db_records(int partidx)
 			/* flags */
 			uc.cflags = VAL_BITMAP(ROW_VALUES(row) + 3);
 
+			/* server id */
+			uc.server_id = server_id;
+
 			/* aor from username and domain */
 			ur.aor.s = aorbuf;
 			ur.domain = &dom->name;

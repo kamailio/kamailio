@@ -31,6 +31,7 @@
 #include "../../core/ut.h"
 #include "../../core/resolve.h"
 #include "../../core/forward.h"
+#include "../../core/globals.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -69,6 +70,7 @@ extern str ul_ka_from;
 extern str ul_ka_domain;
 extern str ul_ka_method;
 extern int ul_ka_mode;
+extern int ul_ka_filter;
 extern unsigned int nat_bflag;
 
 static unsigned int _ul_ka_counter = 0;
@@ -111,6 +113,9 @@ int ul_ka_urecord(urecord_t *ur)
 	_ul_ka_counter++;
 	for (uc = ur->contacts; uc != NULL; uc = uc->next) {
 		if (uc->c.len <= 0) {
+			continue;
+		}
+		if((ul_ka_filter&GAU_OPT_SERVER_ID) && (uc->server_id != server_id)) {
 			continue;
 		}
 		if(ul_ka_mode & ULKA_NAT) {
