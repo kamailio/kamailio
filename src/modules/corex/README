@@ -10,8 +10,6 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Muhammad Shahzad Shafi
 
    <shahzad@voip-demos.com>
@@ -574,7 +572,15 @@ via_add_srv("1");
 
    Example 1.23. via_add_xavp_params usage
 ...
-via_add_xavp_params("1");
+xavp_via_params="xvia"
+...
+request_route {
+    ...
+        $xavp(xvia=>srvid) = "1";
+        $xavp(xvia[0]=>myval) = "xyz";
+    via_add_xavp_params("1");
+    ...
+}
 ...
 
 4.20. via_use_xavp_fields(flags)
@@ -589,7 +595,15 @@ via_add_xavp_params("1");
 
    Example 1.24. via_use_xavp_fields usage
 ...
-via_use_xavp_fields("1");
+xavp_via_fields="mvia"
+...
+request_route {
+    ...
+        $xavp(mvia=>address) = "10.10.10.10";
+        $xavp(mvia[0]=>port) = "5060";
+    via_use_xavp_fields("1");
+    ...
+}
 ...
 
 5. RPC Commands
