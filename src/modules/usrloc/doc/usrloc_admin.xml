@@ -1267,6 +1267,126 @@ modparam("usrloc", "version_table", 0)
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_mode">
+		<title><varname>ka_mode</varname> (int)</title>
+		<para>
+		Keepalive mode - control the internal keepalive mechanism. With this feature
+		enable, the module sends periodically (based on timer interval) SIP requests
+		to location contacts and measures the round trip in microseconds (the
+		round trip value can be seen in the response of the RPC command 'ul.dump'). 
+		</para>
+		<para>
+		Its value is a set of flags:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - if the value is zero, no keepalive is sent
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 - if set to 1, the keepalive is enabled for all contacts
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			2 (bit 2 set) - the keepalive is sent only for natted contacts
+			(nat_bflag set)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			4 (bit 3 set) - the keepalive is sent only for UDP contacts
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		For example, if set to 6, then keepalive is sent only natted UDP contacs.
+		</para>
+		<para>
+		Note: the internal keepalive of usrloc module conflicts in some way with
+		the keepalive done by nathelper module. It is recommended to enable only
+		one.
+		</para>
+		<para>
+		Note: the internal keepalive is for the moment implemented only for
+		contact records stored in memory.
+		</para>
+		<para>
+		Note: it is recommeder to set 'timer_procs' parameter in order to have
+		dedicated timer processes for usrloc module and off-load the keepalive
+		sending process from the core timers.
+		</para>
+		<para>
+		Default value is <quote>0 (keepalive disabled)</quote>.
+		</para>
+		<example>
+		<title><varname>ka_mode</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_method">
+		<title><varname>ka_method</varname> (str)</title>
+		<para>
+		The SIP method type for keepalive requests.
+		</para>
+		<para>
+		Default value is <quote>OPTIONS</quote>.
+		</para>
+		<example>
+		<title><varname>ka_method</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_method", "NOTIFY")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.from">
+		<title><varname>ka_from</varname> (str)</title>
+		<para>
+		The SIP URI to be set in the From header of the keepalive requests.
+		</para>
+		<para>
+		Default value is <quote>sip:server@kamailio.org</quote>.
+		</para>
+		<example>
+		<title><varname>ka_from</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_from", "sip:server@mydomain.com")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.domain">
+		<title><varname>ka_domain</varname> (str)</title>
+		<para>
+		The domain to be set in To header URI if the multi-domain is not enabled.
+		If multi-domain is enabled, then the domain from the location record is
+		used and this parameter is ignored.
+		</para>
+		<para>
+		Default value is <quote>kamailio.org</quote>.
+		</para>
+		<example>
+		<title><varname>ka_domain</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_domain", "mydomain.com")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
