@@ -251,8 +251,8 @@ static param_export_t params[] = {
 	{"version_table",       PARAM_INT, &ul_version_table},
 	{"ka_mode",             PARAM_INT, &ul_ka_mode},
 	{"ka_from",             PARAM_STR, &ul_ka_from},
-	{"ka_domain",             PARAM_STR, &ul_ka_domain},
-	{"ka_method",             PARAM_STR, &ul_ka_method},
+	{"ka_domain",           PARAM_STR, &ul_ka_domain},
+	{"ka_method",           PARAM_STR, &ul_ka_method},
 	{0, 0, 0}
 };
 

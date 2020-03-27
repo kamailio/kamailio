@@ -97,7 +97,7 @@ int ul_ka_urecord(urecord_t *ur)
 	int i;
 	struct timeval tv;
 
-	if (ul_ka_mode == 0) {
+	if (ul_ka_mode == ULKA_NONE) {
 		return 0;
 	}
 	LM_DBG("keepalive for aor: %.*s\n", ur->aor.len, ur->aor.s);
@@ -113,7 +113,7 @@ int ul_ka_urecord(urecord_t *ur)
 		if (uc->c.len <= 0) {
 			continue;
 		}
-		if(ul_ka_mode == 2) {
+		if(ul_ka_mode & ULKA_NAT) {
 			/* keepalive for natted contacts only */
 			if (nat_bflag == 0) {
 				continue;
@@ -145,8 +145,14 @@ int ul_ka_urecord(urecord_t *ur)
 		dproto = duri.proto;
 		he = sip_resolvehost(&duri.host, &duri.port_no, &dproto);
 		if(he == NULL) {
-			LM_ERR("can't resolve_host\n");
+			LM_ERR("cannot resolve destination\n");
 			continue;
+		}
+		if(ul_ka_mode & ULKA_UDP) {
+			if(dproto != PROTO_UDP) {
+				LM_DBG("skipping non-udp contact - proto %d\n", (int)dproto);
+				continue;
+			}
 		}
 		init_dest_info(&idst);
 		hostent2su(&idst.to, he, 0, duri.port_no);
