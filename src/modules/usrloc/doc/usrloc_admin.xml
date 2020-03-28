@@ -1424,6 +1424,50 @@ modparam("usrloc", "ka_filter", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_loglevel">
+		<title><varname>ka_loglevel</varname> (int)</title>
+		<para>
+		The level to print the log message when the keepalive response is
+		received. It should be a value between LOG_ALERT
+		</para>
+		<para>
+		Default value is <quote>kamailio.org</quote>.
+		</para>
+		<example>
+		<title><varname>ka_loglevel</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_loglevel", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_logmsg">
+		<title><varname>ka_logmsg</varname> (str)</title>
+		<para>
+		The formatted log specification to be added to the message printed when
+		the keepalive is received and roundtrip time is computed. The log
+		message starts with "keepalive roundtrip: %u.%06u sec - ruid [%.*s]",
+		then concatenates the value of this parameter and the end of line.
+		</para>
+		<para>
+		The value of this parameter can contain script variables that are
+		evaluated with the SIP response.
+		</para>
+		<para>
+		Default value is <quote> to-uri: [$tu] src-uri: [$su]</quote>.
+		</para>
+		<example>
+		<title><varname>ka_logmsg</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_logmsg", " to-uri: [$tu] src-uri: [$su]")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
