@@ -123,6 +123,9 @@ str ul_ka_domain = str_init("kamailio.org");
 str ul_ka_method = str_init("OPTIONS");
 int ul_ka_mode = 0;
 int ul_ka_filter = 0;
+int ul_ka_loglevel = 255;
+str ul_ka_logmsg = str_init(" to-uri: [$tu] src-uri: [$su]");
+pv_elem_t *ul_ka_logfmt = NULL;
 
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;
@@ -255,6 +258,7 @@ static param_export_t params[] = {
 	{"ka_domain",           PARAM_STR, &ul_ka_domain},
 	{"ka_method",           PARAM_STR, &ul_ka_method},
 	{"ka_filter",           PARAM_INT, &ul_ka_filter},
+	{"ka_loglevel",         PARAM_INT, &ul_ka_loglevel},
 	{0, 0, 0}
 };
 
@@ -396,9 +400,17 @@ static int mod_init(void)
 		ul_set_xavp_contact_clone(1);
 	}
 
-	/* set max partition number for timers processing of db records */
-	if((ul_ka_mode != ULKA_NONE) && (ul_timer_procs > 1)) {
-		ul_set_max_partition((unsigned int)ul_timer_procs);
+	if(ul_ka_mode != ULKA_NONE) {
+		/* set max partition number for timers processing of db records */
+		if (ul_timer_procs > 1) {
+			ul_set_max_partition((unsigned int)ul_timer_procs);
+		}
+		if(ul_ka_logmsg.len > 0) {
+			if(pv_parse_format(&ul_ka_logmsg, &ul_ka_logfmt) < 0) {
+				LM_ERR("failed parsing ka log message format\n");
+				return -1;
+			}
+		}
 	}
 
 	init_flag = 1;

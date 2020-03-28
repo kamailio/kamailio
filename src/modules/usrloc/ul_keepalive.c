@@ -32,6 +32,7 @@
 #include "../../core/resolve.h"
 #include "../../core/forward.h"
 #include "../../core/globals.h"
+#include "../../core/pvar.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -71,6 +72,9 @@ extern str ul_ka_domain;
 extern str ul_ka_method;
 extern int ul_ka_mode;
 extern int ul_ka_filter;
+extern int ul_ka_loglevel;
+extern pv_elem_t *ul_ka_logfmt;
+
 extern unsigned int nat_bflag;
 
 static unsigned int _ul_ka_counter = 0;
@@ -417,11 +421,19 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	gettimeofday(&tvn, NULL);
 	tvdiff = (tvn.tv_sec - tvm.tv_sec) * 1000000
 					+ (tvn.tv_usec - tvm.tv_usec);
-
-	LM_DBG("reply for keepalive of [%.*s:%u] roundtrip: %u.%06usec\n",
-			ruid.len, ruid.s, aorhash, tvdiff/1000000, tvdiff%1000000);
-
 	ul_update_keepalive(aorhash, &ruid, tvn.tv_sec, tvdiff);
+
+	if(ul_ka_loglevel != 255 && ul_ka_logfmt != NULL) {
+		if (pv_printf_s(msg, ul_ka_logfmt, &tok) == 0) {
+			LOG(ul_ka_loglevel, "keepalive roundtrip: %u.%06u sec - ruid [%.*s]%.*s\n",
+					tvdiff/1000000, tvdiff%1000000, ruid.len, ruid.s,
+					tok.len, tok.s);
+			return 0;
+		}
+	}
+
+	LM_DBG("response of keepalive for ruid [%.*s] aorhash [%u] roundtrip: %u.%06u secs\n",
+			ruid.len, ruid.s, aorhash, tvdiff/1000000, tvdiff%1000000);
 
 	return 0;
 }
