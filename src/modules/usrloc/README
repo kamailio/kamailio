@@ -94,6 +94,8 @@ Carsten Bock
               3.52. ka_from (str)
               3.53. ka_domain (str)
               3.54. ka_filter (int)
+              3.55. ka_loglevel (int)
+              3.56. ka_logmsg (str)
 
         4. RPC Commands
 
@@ -195,6 +197,8 @@ Carsten Bock
    1.52. ka_from parameter usage
    1.53. ka_domain parameter usage
    1.54. ka_filter parameter usage
+   1.55. ka_loglevel parameter usage
+   1.56. ka_logmsg parameter usage
 
 Chapter 1. Admin Guide
 
@@ -265,6 +269,8 @@ Chapter 1. Admin Guide
         3.52. ka_from (str)
         3.53. ka_domain (str)
         3.54. ka_filter (int)
+        3.55. ka_loglevel (int)
+        3.56. ka_logmsg (str)
 
    4. RPC Commands
 
@@ -398,6 +404,8 @@ Chapter 1. Admin Guide
    3.52. ka_from (str)
    3.53. ka_domain (str)
    3.54. ka_filter (int)
+   3.55. ka_loglevel (int)
+   3.56. ka_logmsg (str)
 
 3.1. nat_bflag (int)
 
@@ -1153,6 +1161,35 @@ modparam("usrloc", "ka_domain", "mydomain.com")
    Example 1.54. ka_filter parameter usage
 ...
 modparam("usrloc", "ka_filter", 1)
+...
+
+3.55. ka_loglevel (int)
+
+   The level to print the log message when the keepalive response is
+   received. It should be a value between LOG_ALERT
+
+   Default value is “kamailio.org”.
+
+   Example 1.55. ka_loglevel parameter usage
+...
+modparam("usrloc", "ka_loglevel", 1)
+...
+
+3.56. ka_logmsg (str)
+
+   The formatted log specification to be added to the message printed when
+   the keepalive is received and roundtrip time is computed. The log
+   message starts with "keepalive roundtrip: %u.%06u sec - ruid [%.*s]",
+   then concatenates the value of this parameter and the end of line.
+
+   The value of this parameter can contain script variables that are
+   evaluated with the SIP response.
+
+   Default value is “ to-uri: [$tu] src-uri: [$su]”.
+
+   Example 1.56. ka_logmsg parameter usage
+...
+modparam("usrloc", "ka_logmsg", " to-uri: [$tu] src-uri: [$su]")
 ...
 
 4. RPC Commands
