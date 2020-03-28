@@ -107,78 +107,6 @@ char *tr_set_crt_buffer(void)
 
 /* -- helper functions */
 
-/* Converts a hex character to its integer value */
-static char pv_from_hex(char ch)
-{
-	return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
-}
-
-/* Converts an integer value to its hex character */
-static char pv_to_hex(char code)
-{
-	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
-}
-
-/*! \brief
- *  URL Encodes a string for use in a HTTP query
- */
-static int urlencode_param(str *sin, str *sout)
-{
-	char *at, *p;
-
-	if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
-			sin->len<0 || sout->len < 3*sin->len+1)
-		return -1;
-
-	at = sout->s;
-	p  = sin->s;
-
-	while (p < sin->s+sin->len) {
-		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
-			*at++ = *p;
-		else if (*p == ' ')
-			*at++ = '+';
-		else
-			*at++ = '%', *at++ = pv_to_hex(*p >> 4), *at++ = pv_to_hex(*p & 15);
-		p++;
-	}
-
-	*at = 0;
-	sout->len = at - sout->s;
-	LM_DBG("urlencoded string is <%s>\n", sout->s);
-
-	return 0;
-}
-
-/* URL Decode a string */
-static int urldecode_param(str *sin, str *sout) {
-	char *at, *p;
-
-	at = sout->s;
-	p  = sin->s;
-
-	while (p < sin->s+sin->len) {
-		if (*p == '%') {
-			if (p[1] && p[2]) {
-				*at++ = pv_from_hex(p[1]) << 4 | pv_from_hex(p[2]);
-				p += 2;
-			}
-		} else if (*p == '+') {
-			*at++ = ' ';
-		} else {
-			*at++ = *p;
-		}
-		p++;
-	}
-
-	*at = 0;
-	sout->len = at - sout->s;
-
-	LM_DBG("urldecoded string is <%s>\n", sout->s);
-	return 0;
-}
-
 /* Encode 7BIT PDU */
 static int pdu_7bit_encode(str sin) {
 	int i, j;
@@ -215,8 +143,8 @@ static int pdu_7bit_decode(str sin) {
 	unsigned char oldfill = 0;
 	j = 0;
 	for(i = 0; i < sin.len; i += 2) {
-		_tr_buffer[j] = (unsigned char)pv_from_hex(sin.s[i]) << 4;
-		_tr_buffer[j] |= (unsigned char)pv_from_hex(sin.s[i+1]);
+		_tr_buffer[j] = (unsigned char)hex_to_char(sin.s[i]) << 4;
+		_tr_buffer[j] |= (unsigned char)hex_to_char(sin.s[i+1]);
 		fill = (unsigned char)_tr_buffer[j];
 		fill >>= (8 - nleft);
 		_tr_buffer[j] <<= (nleft -1 );
@@ -1246,7 +1174,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				return -1;
 			st.s = _tr_buffer;
 			st.len = TR_BUFFER_SIZE;
-			if (urlencode_param(&val->rs, &st) < 0)
+			if (urlencode(&val->rs, &st) < 0)
 				return -1;
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
@@ -1260,7 +1188,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				return -1;
 			st.s = _tr_buffer;
 			st.len = TR_BUFFER_SIZE;
-			if (urldecode_param(&val->rs, &st) < 0)
+			if (urldecode(&val->rs, &st) < 0)
 				return -1;
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
