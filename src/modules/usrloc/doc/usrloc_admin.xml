@@ -1428,10 +1428,10 @@ modparam("usrloc", "ka_filter", 1)
 		<title><varname>ka_loglevel</varname> (int)</title>
 		<para>
 		The level to print the log message when the keepalive response is
-		received. It should be a value between LOG_ALERT
+		received. It should be a value between -5 (L_ALERT) and 3 (L_DBG).
 		</para>
 		<para>
-		Default value is <quote>kamailio.org</quote>.
+		Default value is <quote>255</quote> (disabled).
 		</para>
 		<example>
 		<title><varname>ka_loglevel</varname> parameter usage</title>
@@ -1456,13 +1456,13 @@ modparam("usrloc", "ka_loglevel", 1)
 		evaluated with the SIP response.
 		</para>
 		<para>
-		Default value is <quote> to-uri: [$tu] src-uri: [$su]</quote>.
+		Default value is <quote> to-uri: [$tu] remote-addr: [$sas]</quote>.
 		</para>
 		<example>
 		<title><varname>ka_logmsg</varname> parameter usage</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "ka_logmsg", " to-uri: [$tu] src-uri: [$su]")
+modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 ...
 		</programlisting>
 		</example>
