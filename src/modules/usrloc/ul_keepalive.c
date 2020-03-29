@@ -61,7 +61,7 @@ Content-Length: 0\r\n\r\n"
 #define ULKA_MSG "%.*s %.*s SIP/2.0\r\n" \
   "Via: SIP/2.0/%.*s %.*s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
   "%.*s%.*s" \
-  "From: <%.*s>;tag=%.*s-%x-%lx-%x-%x.%x\r\n" \
+  "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
   "To: <sip:%.*s%s%.*s>\r\n" \
   "Call-ID: " ULKA_CALLID_PREFIX "%u.%u\r\n" \
   "CSeq: 80 %.*s\r\n" \
@@ -203,7 +203,8 @@ int ul_ka_urecord(urecord_t *ur)
 				(uc->path.len>0)?"\r\n":"",
 				ul_ka_from.len, ul_ka_from.s,
 				uc->ruid.len, uc->ruid.s, ur->aorhash,
-				tv.tv_sec, tv.tv_usec, _ul_ka_counter, bcnt,
+				(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
+				_ul_ka_counter, bcnt,
 				ur->aor.len, ur->aor.s,
 				(aortype==1)?"":"@",
 				(aortype==1)?0:ul_ka_domain.len, (aortype==1)?"":ul_ka_domain.s,
@@ -363,7 +364,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 		LM_DBG("invalid tv usec value\n");
 		return 1;
 	}
-	LM_DBG("tv usec is [%u]\n", tvm.tv_usec);
+	LM_DBG("tv usec is [%lu]\n", (unsigned long)tvm.tv_usec);
 
 	/* tv_sec hash */
 	tok.len = p - fb->tag_value.s;
@@ -385,7 +386,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 		LM_DBG("invalid tv sec value\n");
 		return 1;
 	}
-	LM_DBG("tv sec is [%lu]\n", tvm.tv_sec);
+	LM_DBG("tv sec is [%lu]\n", (unsigned long)tvm.tv_sec);
 
 	/* aor hash */
 	tok.len = p - fb->tag_value.s;
