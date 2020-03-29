@@ -124,7 +124,7 @@ str ul_ka_method = str_init("OPTIONS");
 int ul_ka_mode = 0;
 int ul_ka_filter = 0;
 int ul_ka_loglevel = 255;
-str ul_ka_logmsg = str_init(" to-uri: [$tu] src-uri: [$su]");
+str ul_ka_logmsg = str_init(" to-uri: [$tu] remote-addr: [$sas]");
 pv_elem_t *ul_ka_logfmt = NULL;
 
 /* sruid to get internal uid for mi/rpc commands */
