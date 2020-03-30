@@ -1673,7 +1673,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		if (t->flags & T_CANCELED) goto canceled;
 		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-			t->uac[branch_ret].request.dst.id = p_msg->otcpid;
 		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
 		}
@@ -1700,7 +1699,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		 * branch result */
 		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-			t->uac[branch_ret].request.dst.id = obranch.otcpid;
 		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
 		}
