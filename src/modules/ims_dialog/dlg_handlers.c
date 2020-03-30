@@ -1965,4 +1965,3 @@ struct dlg_cell *dlg_get_msg_dialog(sip_msg_t *msg) {
     return dlg;
 }
 
-
