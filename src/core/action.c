@@ -385,11 +385,17 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 			else if (a->type==FORWARD_TCP_T) {
 				dst.proto= PROTO_TCP;
+				if(msg->msg_flags & FL_USE_OTCPID) {
+					dst.id = msg->otcpid;
+				}
 			}
 #endif
 #ifdef USE_TLS
 			else if (a->type==FORWARD_TLS_T) {
 				dst.proto= PROTO_TLS;
+				if(msg->msg_flags & FL_USE_OTCPID) {
+					dst.id = msg->otcpid;
+				}
 			}
 #endif
 #ifdef USE_SCTP
