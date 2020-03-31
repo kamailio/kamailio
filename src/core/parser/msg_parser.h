@@ -111,16 +111,16 @@ typedef enum request_method {
 #define FL_SIPTRACE          (1<<24) /*!< message to be traced in stateless replies */
 #define FL_ROUTE_ADDR        (1<<25) /*!< request has Route address for next hop */
 
-/* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
+/* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
 
-/* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
+/* WARNING: Value (1 << 29) is reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
-/* WARNING: Value (1 << 30) is temporarily reserved for use in kamailio
+/* WARNING: Value (1 << 30) is reserved for use in kamailio
  * media proxy module (flag FL_USE_MEDIA_PROXY)! */
 
-/* WARNING: Value (1 << 31) is temporarily reserved for use in kamailio
+/* WARNING: Value (1 << 31) is reserved for use in kamailio
  * nat_traversal module (flag FL_DO_KEEPALIVE)! */
 
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
