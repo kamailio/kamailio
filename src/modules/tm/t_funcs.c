@@ -285,6 +285,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
 		LM_DBG("forwarding ACK statelessly\n");
 		init_dest_info(&dst);
+		if(p_msg->msg_flags & FL_USE_OTCPID) {
+			dst.id = p_msg->otcpid;
+		}
 		if (proxy==0) {
 			dst.proto=proto;
 			if (get_uri_send_info(GET_NEXT_HOP(p_msg), &host, &port,
