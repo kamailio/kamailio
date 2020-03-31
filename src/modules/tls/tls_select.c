@@ -41,6 +41,7 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/strutils.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"
@@ -58,6 +59,8 @@ enum {
 	CERT_SELFSIGNED,  /* self-signed certificate test */
 	CERT_NOTBEFORE,   /* Select validity end from certificate */
 	CERT_NOTAFTER,    /* Select validity start from certificate */
+	CERT_RAW,         /* Select raw PEM-encoded certificate */
+	CERT_URLENCODED,  /* Select urlencoded PEM-encoded certificate */
 	COMP_CN,          /* Common name */
 	COMP_O,           /* Organization name */
 	COMP_OU,          /* Organization unit */
@@ -85,21 +88,23 @@ enum {
 	PV_CERT_SELFSIGNED = 1<<7,   /* self-signed certificate test */
 	PV_CERT_NOTBEFORE  = 1<<8,   /* Select validity end from certificate */
 	PV_CERT_NOTAFTER   = 1<<9,   /* Select validity start from certificate */
+	PV_CERT_RAW        = 1<<10,  /* Select raw PEM-encoded certificate */
+	PV_CERT_URLENCODED = 1<<11,  /* Select urlencoded PEM-encoded certificate */
 
-	PV_COMP_CN = 1<<10,          /* Common name */
-	PV_COMP_O  = 1<<11,          /* Organization name */
-	PV_COMP_OU = 1<<12,          /* Organization unit */
-	PV_COMP_C  = 1<<13,          /* Country name */
-	PV_COMP_ST = 1<<14,          /* State */
-	PV_COMP_L  = 1<<15,          /* Locality/town */
+	PV_COMP_CN = 1<<12,          /* Common name */
+	PV_COMP_O  = 1<<13,          /* Organization name */
+	PV_COMP_OU = 1<<14,          /* Organization unit */
+	PV_COMP_C  = 1<<15,          /* Country name */
+	PV_COMP_ST = 1<<16,          /* State */
+	PV_COMP_L  = 1<<17,          /* Locality/town */
 
-	PV_COMP_HOST = 1<<16,        /* hostname from subject/alternative */
-	PV_COMP_URI  = 1<<17,        /* URI from subject/alternative */
-	PV_COMP_E    = 1<<18,        /* Email address */
-	PV_COMP_IP   = 1<<19,        /* IP from subject/alternative */
-	PV_COMP_UID  = 1<<20,        /* UserID*/
+	PV_COMP_HOST = 1<<18,        /* hostname from subject/alternative */
+	PV_COMP_URI  = 1<<19,        /* URI from subject/alternative */
+	PV_COMP_E    = 1<<20,        /* Email address */
+	PV_COMP_IP   = 1<<21,        /* IP from subject/alternative */
+	PV_COMP_UID  = 1<<22,        /* UserID*/
 
-	PV_TLSEXT_SNI = 1<<21,       /* Peer's server name (TLS extension) */
+	PV_TLSEXT_SNI = 1<<23,       /* Peer's server name (TLS extension) */
 };
 
 
@@ -682,6 +687,120 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
+static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
+{
+#define MAX_CERT_SIZE 16384
+	/* buf2 holds the urlencoded version of buf, which can be up to 3 times its size */
+	static char buf[MAX_CERT_SIZE];
+	static char buf2[MAX_CERT_SIZE*3+1];
+	X509* cert;
+	struct tcp_connection* c;
+	size_t   len;
+	BIO     *mem;
+	str     temp_str;
+
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	mem = BIO_new(BIO_s_mem());
+	if (!mem) {
+		ERR("Error while creating memory BIO\n");
+		goto err;
+	}
+
+	/* Write a certificate to a BIO */
+	if (!PEM_write_bio_X509(mem, cert)) {
+		goto err;
+	}
+
+	len = BIO_pending(mem);
+	if (len > MAX_CERT_SIZE) {
+		ERR("certificate is too long\n");
+		goto err;
+	}
+
+	if (BIO_read(mem, buf, len) <= 0) {
+		ERR("problem reading data out of BIO");
+		goto err;
+	}
+
+	if (urlencoded)
+	{
+		temp_str.len = len;
+		temp_str.s = buf;
+		res->s = buf2;
+		res->len = MAX_CERT_SIZE*3+1;
+
+		if (urlencode(&temp_str, res) < 0) {
+			ERR("Problem with urlencode()\n");
+			goto err;
+		}
+	}
+	else
+	{
+		res->s = buf;
+		res->len = len;
+	}
+
+	BIO_free(mem);
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return 0;
+
+ err:
+	if (mem) BIO_free(mem);
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return -1;
+}
+
+
+static int sel_ssl_cert(str* res, select_t* s, sip_msg_t* msg)
+{
+	int local, urlencoded;
+
+	switch(s->params[s->n - 2].v.i) {
+	case CERT_PEER: local = 0; break;
+	case CERT_LOCAL: local = 1; break;
+	case CERT_RAW: urlencoded = 0; break;
+	case CERT_URLENCODED: urlencoded = 1; break;
+	default:
+		BUG("Bug in call to sel_ssl_cert\n");
+		return -1;
+	}
+
+	return get_ssl_cert(res, local, urlencoded, msg);
+}
+
+
+static int pv_ssl_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int local, urlencoded;
+
+	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
+		local = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
+		local = 1;
+	} else {
+		BUG("bug in call to pv_ssl_cert\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (param->pvn.u.isname.name.n & PV_CERT_RAW) {
+		urlencoded = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_URLENCODED) {
+		urlencoded = 1;
+	} else {
+		BUG("bug in call to pv_ssl_cert\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (get_ssl_cert(&res->rs, local, urlencoded, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
 {
@@ -1082,6 +1201,11 @@ select_row_t tls_sel[] = {
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("version"), sel_cert_version, 0},
 
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("rawCert"), sel_ssl_cert, CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("raw_cert"), sel_ssl_cert, CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("URLEncodedCert"), sel_ssl_cert, CERT_URLENCODED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"), sel_ssl_cert, CERT_URLENCODED},
+
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("sn"),            sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serialNumber"),  sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serial_number"), sel_sn, 0},
@@ -1162,6 +1286,19 @@ pv_export_t tls_pv[] = {
 	{{"tls_cipher_bits", sizeof("tls_cipher_bits")-1},
 		PVT_OTHER,  pv_bits, 0,
 		0, 0, 0, 0 },
+	/* raw and urlencoded versions of peer and local certificates */
+	{{"tls_peer_raw_cert", sizeof("tls_peer_raw_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER | PV_CERT_RAW},
+	{{"tls_my_raw_cert", sizeof("tls_my_raw_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_RAW},
+	{{"tls_peer_urlencoded_cert", sizeof("tls_peer_urlencoded_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER | PV_CERT_URLENCODED},
+	{{"tls_my_urlencoded_cert", sizeof("tls_my_urlencoded_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_URLENCODED},
 	/* general certificate parameters for peer and local */
 	{{"tls_peer_version", sizeof("tls_peer_version")-1},
 		PVT_OTHER, pv_cert_version, 0,
