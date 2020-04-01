@@ -93,6 +93,9 @@ static pv_export_t mod_pvs[] = {
 	{ {"xavp", sizeof("xavp")-1}, /* xavp */
 		PVT_XAVP, pv_get_xavp, pv_set_xavp,
 		pv_parse_xavp_name, 0, 0, 0 },
+	{ {"xavu", sizeof("xavu")-1}, /* xavu */
+		PVT_XAVU, pv_get_xavu, pv_set_xavu,
+		pv_parse_xavp_name, 0, 0, 0 },
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
 	{{"hdr", (sizeof("hdr")-1)}, PVT_HDR, pv_get_hdr, 0, pv_parse_hdr_name,

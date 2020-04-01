@@ -19,6 +19,7 @@
 #include "../../core/dprint.h"
 #include "../../core/xavp.h"
 #include "../../core/pvapi.h"
+#include "../../core/trim.h"
 #include "../../core/parser/parse_param.h"
 
 #include "pv_xavp.h"
@@ -758,4 +759,160 @@ int pv_xavp_to_var(str *xname) {
 		xavp = xavp_get_next(xavp);
 	} while(xavp);
 	return 1;
+}
+
+void pv_xavu_name_destroy(pv_xavu_name_t *xname)
+{
+	return;
+}
+
+int pv_parse_xavu_name(pv_spec_t *sp, str *in)
+{
+	pv_xavu_name_t *xname=NULL;
+	str s;
+	int i;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	xname = (pv_xavu_name_t*)pkg_malloc(sizeof(pv_xavu_name_t));
+	if(xname==NULL) {
+		LM_ERR("not enough pkg mem\n");
+		return -1;
+	}
+
+	memset(xname, 0, sizeof(pv_xavu_name_t));
+
+	s = *in;
+	trim(&s);
+	xname->name.s = s.s;
+	xname->name.len = s.len;
+	for(i=0; i<s.len; i++) {
+		if(s.s[i] == '=') {
+			break;
+		}
+	}
+	if(i==s.len) {
+		goto done;
+	}
+	if(i>=s.len-2) {
+		goto error;
+	}
+	xname->name.len = i;
+
+	i++;
+	if(s.s[i]!='>') {
+		goto error;
+	}
+	i++;
+
+	LM_DBG("xavp sublist [%.*s] - key [%.*s]\n", xname->name.len,
+			xname->name.s, s.len - i, s.s + i);
+
+	xname->next = (pv_xavu_name_t*)pkg_malloc(sizeof(pv_xavu_name_t));
+	if(xname->next==NULL) {
+		LM_ERR("not enough pkg mem\n");
+		goto error;
+	}
+	memset(xname->next, 0, sizeof(pv_xavu_name_t));
+
+	xname->next->name.s = s.s + i;
+	xname->next->name.len = s.len - i;
+
+done:
+	sp->pvp.pvn.u.dname = (void*)xname;
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	return 0;
+
+error:
+	if(xname!=NULL) {
+		pv_xavu_name_destroy(xname);
+		pkg_free(xname);
+	}
+	return -1;
+}
+
+int pv_get_xavu(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	pv_xavu_name_t *xname=NULL;
+	sr_xavp_t *avu=NULL;
+
+	if(param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	xname = (pv_xavu_name_t*)param->pvn.u.dname;
+
+	avu = xavu_lookup(&xname->name, NULL);
+	if(avu==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	if(xname->next==NULL) {
+		return pv_xavp_get_value(msg, param, res, avu);
+	}
+	if(avu->val.type != SR_XTYPE_XAVP) {
+		return pv_get_null(msg, param, res);
+	}
+
+	avu = xavu_lookup(&xname->next->name, &avu->val.v.xavp);
+	if(avu==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_xavp_get_value(msg, param, res, avu);
+}
+
+/**
+ * $xavu(name1=>name2)
+ */
+int pv_set_xavu(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	pv_xavu_name_t *xname=NULL;
+	sr_xavp_t *avu=NULL;
+	sr_xval_t xval;
+
+	if(param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	xname = (pv_xavu_name_t*)param->pvn.u.dname;
+
+	if((val==NULL) || (val->flags&PV_VAL_NULL)) {
+		if(xname->next==NULL) {
+			xavu_rm_by_name(&xname->name, NULL);
+			return 0;
+		}
+		
+		avu = xavu_lookup(&xname->name, NULL);
+		if(avu!=NULL && avu->val.type==SR_XTYPE_XAVP) {
+			xavu_rm_by_name(&xname->next->name, &avu->val.v.xavp);
+		}
+		return 0;
+	} /* NULL assignment */
+
+	/* build xavp value */
+	memset(&xval, 0, sizeof(sr_xval_t));
+
+	if(val->flags&PV_TYPE_INT) {
+		xval.type = SR_XTYPE_INT;
+		xval.v.i = val->ri;
+	} else {
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = val->rs;
+	}
+
+	if(xname->next==NULL) {
+		/* set root xavu value */
+		if(xavu_set_xval(&xname->name, &xval, NULL)==NULL) {
+			return -1;
+		}
+		return 0;
+	}
+
+	/* set child xavu value */
+	if(xavu_set_child_xval(&xname->name, &xname->next->name, &xval)==NULL) {
+		return -1;
+	}
+	return 0;
 }
