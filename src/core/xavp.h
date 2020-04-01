@@ -114,6 +114,7 @@ int xavp_set_child_sval(str *rname, str *cname, str *sval);
 
 /** xavu api */
 void xavu_print_list_content(sr_xavp_t **head, int level);
+void xavu_print_list(sr_xavp_t **head);
 #define xavu_destroy_list_unsafe xavp_destroy_list_unsafe
 #define xavu_destroy_list xavp_destroy_list
 void xavu_reset_list(void);

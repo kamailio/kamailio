@@ -1102,6 +1102,11 @@ void xavu_print_list_content(sr_xavp_t **head, int level)
 	xavx_print_list_content("XAVU", head, _xavu_list_crt, level);
 }
 
+void xavu_print_list(sr_xavp_t **head)
+{
+	xavu_print_list_content(head, 0);
+}
+
 /**
  *
  */
