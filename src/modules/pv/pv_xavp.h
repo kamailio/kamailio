@@ -33,6 +33,7 @@ int pv_set_xavu(struct sip_msg* msg, pv_param_t *param,
 int pv_parse_xavu_name(pv_spec_p sp, str *in);
 
 int pv_xavp_print(struct sip_msg* msg, char* s1, char *s2);
+int pv_xavu_print(struct sip_msg* msg, char* s1, char *s2);
 
 int xavp_params_explode(str *params, str *xname);
 

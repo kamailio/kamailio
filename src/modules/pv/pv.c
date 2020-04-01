@@ -572,6 +572,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0,
 		ANY_ROUTE },
+	{"pv_xavu_print",  (cmd_function)pv_xavu_print,  0, 0, 0,
+		ANY_ROUTE },
 	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE },
 	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
@@ -819,6 +821,12 @@ static int ki_xavp_to_var(sip_msg_t *msg, str *xname)
 static int ki_xavp_print(sip_msg_t* msg)
 {
 	xavp_print_list(NULL);
+	return 1;
+}
+
+static int ki_xavu_print(sip_msg_t* msg)
+{
+	xavu_print_list(NULL);
 	return 1;
 }
 
@@ -1856,6 +1864,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("pv_xavp_print"),
 		SR_KEMIP_INT, ki_xavp_print,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("pv_xavu_print"),
+		SR_KEMIP_INT, ki_xavu_print,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

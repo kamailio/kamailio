@@ -568,6 +568,12 @@ int pv_xavp_print(sip_msg_t* msg, char* s1, char *s2)
 	return 1;
 }
 
+int pv_xavu_print(sip_msg_t* msg, char* s1, char *s2)
+{
+	xavu_print_list(NULL);
+	return 1;
+}
+
 /**
  *
  */
