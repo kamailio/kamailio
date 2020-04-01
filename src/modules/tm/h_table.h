@@ -308,6 +308,7 @@ typedef struct tm_xdata
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
 	sr_xavp_t *xavps_list;
+	sr_xavp_t *xavus_list;
 } tm_xdata_t;
 
 
@@ -324,6 +325,7 @@ typedef struct tm_xlinks
 	struct usr_avp **domain_avps_from;
 	struct usr_avp **domain_avps_to;
 	sr_xavp_t **xavps_list;
+	sr_xavp_t **xavus_list;
 } tm_xlinks_t;
 
 
@@ -397,6 +399,7 @@ typedef struct cell
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
 	sr_xavp_t *xavps_list;
+	sr_xavp_t *xavus_list;
 
 	/* protection against concurrent reply processing */
 	ser_lock_t reply_mutex;
