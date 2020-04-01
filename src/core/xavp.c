@@ -570,60 +570,66 @@ sr_xavp_t **xavp_get_crt_list(void)
 	return _xavp_list_crt;
 }
 
-void xavp_print_list_content(sr_xavp_t **head, int level)
+void xavx_print_list_content(char *name, sr_xavp_t **head, sr_xavp_t **rlist, int level)
 {
 	sr_xavp_t *avp=0;
 	sr_xavp_t *start=0;
 
-	if(head!=NULL)
+	if(head!=NULL) {
 		start = *head;
-	else
-		start=*_xavp_list_crt;
-	LM_INFO("+++++ start XAVP list: %p (%p) (level=%d)\n", start, head, level);
+	} else {
+		start=*rlist;
+	}
+	LM_INFO("+++++ start %s list: %p (%p) (level=%d)\n", name, start, head, level);
 	avp = start;
 	while(avp)
 	{
-		LM_INFO("     *** (l:%d - %p) XAVP name: %s\n", level, avp, avp->name.s);
-		LM_INFO("     XAVP id: %u\n", avp->id);
-		LM_INFO("     XAVP value type: %d\n", avp->val.type);
+		LM_INFO("     *** (l:%d - %p) %s name: %s\n", level, avp, name, avp->name.s);
+		LM_INFO("     %s id: %u\n", name, avp->id);
+		LM_INFO("     %s value type: %d\n", name, avp->val.type);
 		switch(avp->val.type) {
 			case SR_XTYPE_NULL:
-				LM_INFO("     XAVP value: <null>\n");
+				LM_INFO("     %s value: <null>\n", name);
 			break;
 			case SR_XTYPE_INT:
-				LM_INFO("     XAVP value (int): %d\n", avp->val.v.i);
+				LM_INFO("     %s value (int): %d\n", name, avp->val.v.i);
 			break;
 			case SR_XTYPE_STR:
-				LM_INFO("     XAVP value (str): %s\n", avp->val.v.s.s);
+				LM_INFO("     %s value (str): %s\n", name, avp->val.v.s.s);
 			break;
 			case SR_XTYPE_TIME:
-				LM_INFO("     XAVP value (time): %lu\n",
+				LM_INFO("     %s value (time): %lu\n", name,
 						(long unsigned int)avp->val.v.t);
 			break;
 			case SR_XTYPE_LONG:
-				LM_INFO("     XAVP value (long): %ld\n", avp->val.v.l);
+				LM_INFO("     %s value (long): %ld\n", name, avp->val.v.l);
 			break;
 			case SR_XTYPE_LLONG:
-				LM_INFO("     XAVP value (llong): %lld\n", avp->val.v.ll);
+				LM_INFO("     %s value (llong): %lld\n", name, avp->val.v.ll);
 			break;
 			case SR_XTYPE_XAVP:
-				LM_INFO("     XAVP value: <xavp:%p>\n", avp->val.v.xavp);
-				xavp_print_list_content(&avp->val.v.xavp, level+1);
+				LM_INFO("     %s value: <xavp:%p>\n", name, avp->val.v.xavp);
+				xavx_print_list_content(name, &avp->val.v.xavp, rlist, level+1);
 			break;
 			case SR_XTYPE_VPTR:
-				LM_INFO("     XAVP value: <vptr:%p>\n", avp->val.v.vptr);
+				LM_INFO("     %s value: <vptr:%p>\n", name, avp->val.v.vptr);
 			break;
 			case SR_XTYPE_SPTR:
-				LM_INFO("     XAVP value: <sptr:%p>\n", avp->val.v.vptr);
+				LM_INFO("     %s value: <sptr:%p>\n", name, avp->val.v.vptr);
 			break;
 			case SR_XTYPE_DATA:
-				LM_INFO("     XAVP value: <data:%p>\n", avp->val.v.data);
+				LM_INFO("     %s value: <data:%p>\n", name, avp->val.v.data);
 			break;
 		}
 		LM_INFO("     *** (l:%d - %p) end\n", level, avp);
 		avp = avp->next;
 	}
-	LM_INFO("----- end XAVP list: %p (level=%d)\n", start, level);
+	LM_INFO("----- end %s list: %p (level=%d)\n", name, start, level);
+}
+
+void xavp_print_list_content(sr_xavp_t **head, int level)
+{
+	xavx_print_list_content("XAVP", head, _xavp_list_crt, level);
 }
 
 void xavp_print_list(sr_xavp_t **head)
@@ -1088,6 +1094,13 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
  */
 /*** XAVU - eXtended Attribute Value Unique pair - implementation ***/
 
+/**
+ *
+ */
+void xavu_print_list_content(sr_xavp_t **head, int level)
+{
+	xavx_print_list_content("XAVU", head, _xavu_list_crt, level);
+}
 
 /**
  *
@@ -1164,7 +1177,7 @@ sr_xavp_t *xavu_get(str *name, sr_xavp_t *start)
 	return xavu_get_internal(name, (start)?&start:NULL, NULL);
 }
 
-sr_xavp_t *xavp_lookup(str *name, sr_xavp_t **start)
+sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start)
 {
 	return xavu_get_internal(name, start, NULL);
 }
