@@ -617,6 +617,25 @@ pv_xavp_print();
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.pv_xavu_print">
+			<title>
+				<function moreinfo="none">pv_xavu_print()</function>
+			</title>
+			<para>
+				Print all XAVUs to the syslog using INFO log level.
+			</para>
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_xavu_print()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pv_xavu_print();
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.pv_var_to_xavp">
 			<title>
 				<function moreinfo="none">pv_var_to_xavp(varname, xname)</function>
