@@ -34,6 +34,11 @@ static sr_xavp_t *_xavp_list_head = 0;
 /*! Pointer to XAVP current list */
 static sr_xavp_t **_xavp_list_crt = &_xavp_list_head;
 
+/*! XAVU list head */
+static sr_xavp_t *_xavu_list_head = 0;
+/*! Pointer to XAVP current list */
+static sr_xavp_t **_xavu_list_crt = &_xavu_list_head;
+
 /*! Helper functions */
 static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv);
 static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx);
@@ -1076,4 +1081,329 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 		avp = avp->next;
 	}
 	return rlen;
+}
+
+/**
+ *
+ */
+/*** XAVU - eXtended Attribute Value Unique pair - implementation ***/
+
+
+/**
+ *
+ */
+void xavu_reset_list(void)
+{
+	assert(_xavu_list_crt!=0 );
+
+	if (_xavu_list_crt!=&_xavu_list_head)
+		_xavu_list_crt=&_xavu_list_head;
+	xavp_destroy_list(_xavu_list_crt);
+}
+
+/**
+ *
+ */
+sr_xavp_t **xavu_set_list(sr_xavp_t **head)
+{
+	sr_xavp_t **avu;
+
+	assert(_xavu_list_crt!=0);
+
+	avu = _xavu_list_crt;
+	_xavu_list_crt = head;
+	return avu;
+}
+
+/**
+ *
+ */
+sr_xavp_t **xavu_get_crt_list(void)
+{
+	assert(_xavu_list_crt!=0);
+	return _xavu_list_crt;
+}
+
+/**
+ *
+ */
+static sr_xavp_t *xavu_get_internal(str *name, sr_xavp_t **list, sr_xavp_t **prv)
+{
+	sr_xavp_t *avu;
+	unsigned int id;
+
+	if(name==NULL || name->s==NULL) {
+		return NULL;
+	}
+
+	id = get_hash1_raw(name->s, name->len);
+
+	if(list && *list) {
+		avu = *list;
+	} else {
+		avu = *_xavu_list_crt;
+	}
+	while(avu) {
+		if(avu->id==id && avu->name.len==name->len
+				&& strncmp(avu->name.s, name->s, name->len)==0) {
+			return avu;
+		}
+		if(prv) {
+			*prv = avu;
+		}
+		avu = avu->next;
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_get(str *name, sr_xavp_t *start)
+{
+	return xavu_get_internal(name, (start)?&start:NULL, NULL);
+}
+
+sr_xavp_t *xavp_lookup(str *name, sr_xavp_t **start)
+{
+	return xavu_get_internal(name, start, NULL);
+}
+
+/**
+ *
+ */
+int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head)
+{
+	sr_xavp_t *avu;
+	sr_xavp_t *prv=0;
+
+	if(head!=NULL)
+		avu = *head;
+	else
+		avu=*_xavu_list_crt;
+
+	while(avu) {
+		if(avu==xa) {
+			if(prv) {
+				prv->next=avu->next;
+			} else if(head!=NULL) {
+				*head = avu->next;
+			} else {
+				*_xavu_list_crt = avu->next;
+			}
+			xavp_free(avu);
+			return 1;
+		}
+		prv=avu; avu=avu->next;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int xavu_rm_by_name(str *name, sr_xavp_t **head)
+{
+	sr_xavp_t *avu;
+	sr_xavp_t *foo;
+	sr_xavp_t *prv=0;
+	unsigned int id;
+
+
+	if(name==NULL || name->s==NULL) {
+		return -1;
+	}
+
+	id = get_hash1_raw(name->s, name->len);
+	if(head!=NULL) {
+		avu = *head;
+	} else {
+		avu = *_xavu_list_crt;
+	}
+	while(avu) {
+		foo = avu;
+		avu = avu->next;
+		if(foo->id==id && foo->name.len==name->len
+				&& strncmp(foo->name.s, name->s, name->len)==0) {
+			if(prv!=NULL) {
+				prv->next=foo->next;
+			} else if(head!=NULL) {
+				*head = foo->next;
+			} else {
+				*_xavu_list_crt = foo->next;
+			}
+			xavp_free(foo);
+		} else {
+			prv = foo;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	sr_xavp_t *avu;
+	sr_xavp_t *crt;
+	sr_xavp_t *prv=0;
+
+	if(val==NULL) {
+		return NULL;
+	}
+
+	avu = xavp_new_value(name, val);
+	if (avu==NULL) {
+		return NULL;
+	}
+
+	/* find the current value */
+	crt = xavu_get_internal(name, list, &prv);
+	if(crt==NULL) {
+		/* add a new one in the list */
+		avu->next = *_xavu_list_crt;
+		*_xavu_list_crt = avu;
+		return avu;
+	}
+
+	/* replace the current value with the new */
+	avu->next = crt->next;
+	if(prv) {
+		prv->next = avu;
+	} else if(list) {
+		*list = avu;
+	} else {
+		*_xavu_list_crt = avu;
+	}
+
+	xavp_free(crt);
+
+	return avu;
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_ival(str *rname, int ival)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = ival;
+
+	return xavu_set_xval(rname, &xval, NULL);
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_sval(str *rname, str *sval)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = *sval;
+
+	return xavu_set_xval(rname, &xval, NULL);
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_xavu_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	sr_xavp_t *ravu=0;
+	sr_xavp_t *cavu=0;
+	sr_xval_t rval;
+
+	cavu = xavp_new_value(name, val);
+	if (cavu==NULL) {
+		return NULL;
+	}
+
+	memset(&rval, 0, sizeof(sr_xval_t));
+	rval.type = SR_XTYPE_XAVP;
+	rval.v.xavp = cavu;
+
+	ravu = xavp_new_value(rname, &rval);
+	if (ravu==NULL) {
+		xavp_destroy_list(&cavu);
+		return NULL;
+	}
+
+	/* Prepend new value to the list */
+	if(list) {
+		ravu->next = *list;
+		*list = ravu;
+	} else {
+		ravu->next = *_xavu_list_crt;
+		*_xavu_list_crt = ravu;
+	}
+
+	return ravu;
+}
+
+/**
+ * Set the value of the  xavu rname with child xavu cname
+ * - set if it exits; add if it doesn't exist
+ * - config operations:
+ *   $xavu(rxname=>cname) = xval;
+ */
+sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
+{
+	sr_xavp_t *ravu=NULL;
+	sr_xavp_t *cavu=NULL;
+
+	ravu = xavu_get(rname, NULL);
+	if(ravu) {
+		if(ravu->val.type != SR_XTYPE_XAVP) {
+			/* first root xavp does not have xavp list value - remove it */
+			xavp_rm(ravu, NULL);
+			/* add a new xavp in the root list with a child */
+			return xavu_set_xavu_value(rname, cname, xval, NULL);
+		} else {
+			/* first root xavp has an xavp list value */
+			cavu = xavu_get(cname, ravu->val.v.xavp);
+			if(cavu) {
+				/* child xavp with same name - remove it */
+				/* todo: update in place for int or if allocated size fits */
+				xavp_rm(cavu, &ravu->val.v.xavp);
+			}
+			return xavp_add_value(cname, xval, &ravu->val.v.xavp);
+		}
+	} else {
+		/* no xavp with rname in root list found */
+		return xavu_set_xavu_value(rname, cname, xval, NULL);
+	}
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = ival;
+
+	return xavu_set_child_xval(rname, cname, &xval);
+}
+
+/**
+ *
+ */
+sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval)
+{
+	sr_xval_t xval;
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = *sval;
+
+	return xavu_set_child_xval(rname, cname, &xval);
 }

@@ -112,4 +112,21 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen);
 int xavp_set_child_ival(str *rname, str *cname, int ival);
 int xavp_set_child_sval(str *rname, str *cname, str *sval);
 
+/** xavu api */
+#define xavu_destroy_list_unsafe xavp_destroy_list_unsafe
+#define xavu_destroy_list xavp_destroy_list
+void xavu_reset_list(void);
+sr_xavp_t **xavu_set_list(sr_xavp_t **head);
+sr_xavp_t **xavu_get_crt_list(void);
+sr_xavp_t *xavu_get(str *name, sr_xavp_t *start);
+sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start);
+int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head);
+int xavu_rm_by_name(str *name, sr_xavp_t **head);
+sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavu_set_ival(str *rname, int ival);
+sr_xavp_t *xavu_set_sval(str *rname, str *sval);
+sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval);
+sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival);
+sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval);
+
 #endif
