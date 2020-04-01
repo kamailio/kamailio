@@ -55,9 +55,10 @@ Daniel-Constantin Mierla
               4.15. sbranch_append()
               4.16. sbranch_reset()
               4.17. pv_xavp_print()
-              4.18. pv_var_to_xavp(varname, xname)
-              4.19. pv_xavp_to_var(xname)
-              4.20. pv_evalx(dst, fmt)
+              4.18. pv_xavu_print()
+              4.19. pv_var_to_xavp(varname, xname)
+              4.20. pv_xavp_to_var(xname)
+              4.21. pv_evalx(dst, fmt)
 
         5. RPC Commands
 
@@ -86,11 +87,12 @@ Daniel-Constantin Mierla
    1.18. sbranch_append() usage
    1.19. sbranch_append() usage
    1.20. pv_xavp_print() usage
-   1.21. pv_var_to_xavp() usage
-   1.22. pv_xavp_to_var() usage
+   1.21. pv_xavu_print() usage
+   1.22. pv_var_to_xavp() usage
    1.23. pv_xavp_to_var() usage
-   1.24. pv.shvSet usage
-   1.25. pv.shvGet usage
+   1.24. pv_xavp_to_var() usage
+   1.25. pv.shvSet usage
+   1.26. pv.shvGet usage
 
 Chapter 1. Admin Guide
 
@@ -129,9 +131,10 @@ Chapter 1. Admin Guide
         4.15. sbranch_append()
         4.16. sbranch_reset()
         4.17. pv_xavp_print()
-        4.18. pv_var_to_xavp(varname, xname)
-        4.19. pv_xavp_to_var(xname)
-        4.20. pv_evalx(dst, fmt)
+        4.18. pv_xavu_print()
+        4.19. pv_var_to_xavp(varname, xname)
+        4.20. pv_xavp_to_var(xname)
+        4.21. pv_evalx(dst, fmt)
 
    5. RPC Commands
 
@@ -240,9 +243,10 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.15. sbranch_append()
    4.16. sbranch_reset()
    4.17. pv_xavp_print()
-   4.18. pv_var_to_xavp(varname, xname)
-   4.19. pv_xavp_to_var(xname)
-   4.20. pv_evalx(dst, fmt)
+   4.18. pv_xavu_print()
+   4.19. pv_var_to_xavp(varname, xname)
+   4.20. pv_xavp_to_var(xname)
+   4.21. pv_evalx(dst, fmt)
 
 4.1. pv_isset(pvar)
 
@@ -562,7 +566,18 @@ sbranch_reset();
 pv_xavp_print();
 ...
 
-4.18.  pv_var_to_xavp(varname, xname)
+4.18.  pv_xavu_print()
+
+   Print all XAVUs to the syslog using INFO log level.
+
+   Function can be used from ANY_ROUTE.
+
+   Example 1.21. pv_xavu_print() usage
+...
+pv_xavu_print();
+...
+
+4.19.  pv_var_to_xavp(varname, xname)
 
    Copy the script variable value into an xavp.
 
@@ -574,7 +589,7 @@ pv_xavp_print();
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.21. pv_var_to_xavp() usage
+   Example 1.22. pv_var_to_xavp() usage
 ...
 $var("temp") = 3;
 $var("foo") = "foo indeed";
@@ -588,7 +603,7 @@ $xavp("ok[0]=>temp") now is 3
 $xavp("ok[0]=>foo") now is "foo indeed"
 ...
 
-4.19.  pv_xavp_to_var(xname)
+4.20.  pv_xavp_to_var(xname)
 
    Copy xavp values into vars. Reverse of pv_var_to_xavp().
 
@@ -596,7 +611,7 @@ $xavp("ok[0]=>foo") now is "foo indeed"
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.22. pv_xavp_to_var() usage
+   Example 1.23. pv_xavp_to_var() usage
 ...
 $xavp("bar=>temp") = 3;
 $xavp("bar[0]=>foo") = "foo indeed";
@@ -606,7 +621,7 @@ $var("temp") now is 3
 $var("foo") now is "foo indeed"
 ...
 
-4.20.  pv_evalx(dst, fmt)
+4.21.  pv_evalx(dst, fmt)
 
    The fmt string is evaluated twice for exiting variables, the result is
    stored in dst variable. The dst must be the name of a writable
@@ -615,7 +630,7 @@ $var("foo") now is "foo indeed"
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.23. pv_xavp_to_var() usage
+   Example 1.24. pv_xavp_to_var() usage
 ...
 $var(x) = "test";
 $var(y) = "$var(x)"
@@ -640,7 +655,7 @@ pv_evalx("$var(z)", "$var(y) one");
           + “str”: string value
      * _value_: value to be set
 
-   Example 1.24. pv.shvSet usage
+   Example 1.25. pv.shvSet usage
 ...
 $ kamcmd pv.shvSet debug int 3
 ...
@@ -654,7 +669,7 @@ $ kamcmd pv.shvSet debug int 3
 
    If no name is given, all shared variables are listed.
 
-   Example 1.25. pv.shvGet usage
+   Example 1.26. pv.shvGet usage
 ...
 $ kamcmd pv.shvGet debug
 ...
