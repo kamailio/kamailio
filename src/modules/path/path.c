@@ -56,6 +56,8 @@ const static char *proto_strings[] = {
 	[PROTO_WSS] = "%3Btransport%3Dws",
 };
 
+extern int path_sockname_mode;
+
 static char *path_strzdup(char *src, int len)
 {
 	char *res;
@@ -187,7 +189,8 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 
 	l = insert_new_lump_before(l, prefix, prefix_len, 0);
 	if (!l) goto out3;
-	l = insert_subst_lump_before(l, SUBST_SND_ALL, 0);
+	l = insert_subst_lump_before(l,
+			(path_sockname_mode)?SUBST_SND_ALL_EX:SUBST_SND_ALL, 0);
 	if (!l) goto out2;
 	l = insert_new_lump_before(l, suffix, cp - suffix, 0);
 	if (!l) goto out2;
@@ -197,7 +200,8 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 		if(dp==NULL) goto out1;
 		l = insert_new_lump_before(l, dp, prefix_len, 0);
 		if (!l) goto out1;
-		l = insert_subst_lump_before(l, SUBST_RCV_ALL, 0);
+		l = insert_subst_lump_before(l,
+				(path_sockname_mode)?SUBST_RCV_ALL_EX:SUBST_RCV_ALL, 0);
 		if (!l) goto out1;
 		dp = path_strzdup(suffix, cp - suffix);
 		if(dp==NULL) goto out1;
