@@ -1474,6 +1474,219 @@ static sr_kemi_xval_t* ki_xavp_child_getw(sip_msg_t *msg, str *rname, str *cname
 /**
  *
  */
+static int ki_xavu_is_null(sip_msg_t *msg, str *rname)
+{
+	sr_xavp_t *xavu=NULL;
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_rm(sip_msg_t *msg, str *rname)
+{
+	int ret;
+
+	ret = xavu_rm_by_name(rname, NULL);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_rm(sip_msg_t *msg, str *rname, str *cname)
+{
+	int ret;
+
+	ret = xavu_rm_child_by_name(rname, cname);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int ki_xavu_seti(sip_msg_t *msg, str *rname, int ival)
+{
+	sr_xavp_t *xavp = NULL;
+
+	xavp = xavu_set_ival(rname, ival);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_sets(sip_msg_t *msg, str *rname, str *sval)
+{
+	sr_xavp_t *xavp = NULL;
+
+	xavp = xavu_set_sval(rname, sval);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_seti(sip_msg_t *msg, str *rname, str *cname,
+		int ival)
+{
+	sr_xavp_t *xavu = NULL;
+
+	xavu = xavu_set_child_ival(rname, cname, ival);
+
+	return (xavu!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_sets(sip_msg_t *msg, str *rname, str *cname,
+		str *sval)
+{
+	sr_xavp_t *xavu = NULL;
+
+	xavu = xavu_set_child_sval(rname, cname, sval);
+
+	return (xavu!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_get_mode(sip_msg_t *msg, str *rname, int rmode)
+{
+	sr_xavp_t *xavu=NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	return ki_xavp_get_xval(xavu, rmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_get(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_gete(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_getw(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+{
+	sr_xavp_t *xavu=NULL;
+
+	xavu = xavp_get_by_index(rname, 0, NULL);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type != SR_XTYPE_XAVP) {
+		return 1;
+	}
+	xavu = xavp_get_by_index(cname, 0, &xavu->val.v.xavp);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_get_mode(sip_msg_t *msg, str *rname,
+		str *cname, int rmode)
+{
+	sr_xavp_t *xavu=NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	if(xavu->val.type != SR_XTYPE_XAVP) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	xavu = xavp_get_by_index(cname, 0, &xavu->val.v.xavp);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	return ki_xavp_get_xval(xavu, rmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_get(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_gete(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_getw(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2)
 {
 	if(sbranch_set_ruri(msg)<0)
@@ -1949,6 +2162,76 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("xavp_child_getw"),
 		SR_KEMIP_XVAL, ki_xavp_child_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_seti"),
+		SR_KEMIP_INT, ki_xavu_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_sets"),
+		SR_KEMIP_INT, ki_xavu_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_get"),
+		SR_KEMIP_XVAL, ki_xavu_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_gete"),
+		SR_KEMIP_XVAL, ki_xavu_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_getw"),
+		SR_KEMIP_XVAL, ki_xavu_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_rm"),
+		SR_KEMIP_INT, ki_xavu_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_is_null"),
+		SR_KEMIP_INT, ki_xavu_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_seti"),
+		SR_KEMIP_INT, ki_xavu_child_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_sets"),
+		SR_KEMIP_INT, ki_xavu_child_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_rm"),
+		SR_KEMIP_INT, ki_xavu_child_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_is_null"),
+		SR_KEMIP_INT, ki_xavu_child_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_get"),
+		SR_KEMIP_XVAL, ki_xavu_child_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_gete"),
+		SR_KEMIP_XVAL, ki_xavu_child_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_getw"),
+		SR_KEMIP_XVAL, ki_xavu_child_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
