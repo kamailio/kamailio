@@ -36,6 +36,7 @@
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_param.h"
 #include "../../core/mem/mem.h"
 #include "../../core/dset.h"
 #include "loose.h"
@@ -61,6 +62,7 @@ static msg_ctx_id_t routed_msg_id = {0};
 static str routed_params = {0,0};
 
 extern int rr_force_send_socket;
+extern int rr_sockname_mode;
 
 /*!
  * \brief Test whether we are processing pre-loaded route set by looking at the To tag
@@ -749,7 +751,44 @@ static inline int after_strict(struct sip_msg* _m)
 static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
 		rr_t* rt, int rr2on)
 {
-	socket_info_t *si;
+	socket_info_t *si = NULL;
+	param_hooks_t phooks;
+	param_t* plist = NULL;
+	param_t *pit=NULL;
+	str s;
+
+
+	if(rr_sockname_mode!=0 && puri->params.len>0) {
+		s = puri->params;
+		if(s.s[s.len-1]==';') {
+			s.len--;
+		}
+		if (parse_params(&s, CLASS_ANY, &phooks, &plist)<0) {
+			LM_ERR("bad sip uri parameters: %.*s\n", s.len, s.s);
+			return;
+		}
+		for (pit = plist; pit; pit=pit->next) {
+			if (pit->name.len==SOCKNAME_PARAM_LEN
+					&& strncasecmp(pit->name.s, SOCKNAME_PARAM,
+							SOCKNAME_PARAM_LEN)==0) {
+				if(pit->body.len>0) {
+					si = ksr_get_socket_by_name(&pit->body);
+					if(si != NULL) {
+						LM_DBG("found socket with name: %.*s\n",
+								pit->body.len, pit->body.s);
+						set_force_socket(_m, si);
+						free_params(plist);
+						return;
+					} else {
+						LM_DBG("failed to find socket with name: %.*s\n",
+								pit->body.len, pit->body.s);
+					}
+				}
+			}
+		}
+		LM_DBG("use of sockname parameter enabled, but failed to find it\n");
+		free_params(plist);
+	}
 
 	if ((si = grep_sock_info(&puri->host,
 				puri->port_no?puri->port_no:proto_default_port(puri->proto),
