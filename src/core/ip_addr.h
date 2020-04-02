@@ -116,6 +116,7 @@ typedef struct socket_info {
 	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
 	int workers; /* number of worker processes for this socket */
 	int workers_tcpidx; /* index of workers in tcp children array */
+	str sockname; /* socket name given in config listen value */
 	struct advertise_info useinfo; /* details to be used in SIP msg */
 #ifdef USE_MCAST
 	str mcast; /* name of interface that should join multicast group*/

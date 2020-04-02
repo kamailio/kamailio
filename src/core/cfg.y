@@ -325,6 +325,7 @@ extern char *default_routename;
 %token XAVPVIAFIELDS
 %token LISTEN
 %token ADVERTISE
+%token STRNAME
 %token ALIAS
 %token SR_AUTO_ALIASES
 %token DNS
@@ -1454,6 +1455,18 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
+	| LISTEN EQUAL id_lst STRNAME STRING {
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
+			if (add_listen_iface_name(lst_tmp->addr_lst->name,
+									lst_tmp->addr_lst->next,
+									lst_tmp->port, lst_tmp->proto, $5,
+									lst_tmp->flags)!=0) {
+				LM_CRIT("cfg. parser: failed to add listen address\n");
+				break;
+			}
+		}
+		free_socket_id_lst($3);
+	}
 	| LISTEN EQUAL id_lst ADVERTISE listen_id COLON NUMBER {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
 			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
@@ -1467,12 +1480,38 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
+	| LISTEN EQUAL id_lst ADVERTISE listen_id COLON NUMBER STRNAME STRING {
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
+			if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
+									lst_tmp->addr_lst->next,
+									lst_tmp->port, lst_tmp->proto,
+									$5, $7, $9,
+									lst_tmp->flags)!=0) {
+				LM_CRIT("cfg. parser: failed to add listen address\n");
+				break;
+			}
+		}
+		free_socket_id_lst($3);
+	}
 	| LISTEN EQUAL id_lst ADVERTISE listen_id {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
 			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
 									$5, 0,
+									lst_tmp->flags)!=0) {
+				LM_CRIT("cfg. parser: failed to add listen address\n");
+				break;
+			}
+		}
+		free_socket_id_lst($3);
+	}
+	| LISTEN EQUAL id_lst ADVERTISE listen_id STRNAME STRING {
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
+			if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
+									lst_tmp->addr_lst->next,
+									lst_tmp->port, lst_tmp->proto,
+									$5, 0, $7,
 									lst_tmp->flags)!=0) {
 				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;

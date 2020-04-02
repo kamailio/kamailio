@@ -297,6 +297,7 @@ XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
+STRNAME		name|NAME
 ALIAS		alias
 SR_AUTO_ALIASES	auto_aliases
 DNS		 dns
@@ -711,6 +712,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
+<INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
 									return SR_AUTO_ALIASES; }
