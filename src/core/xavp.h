@@ -124,6 +124,7 @@ sr_xavp_t *xavu_get(str *name, sr_xavp_t *start);
 sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start);
 int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head);
 int xavu_rm_by_name(str *name, sr_xavp_t **head);
+int xavu_rm_child_by_name(str *rname, str *cname);
 sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavu_set_ival(str *rname, int ival);
 sr_xavp_t *xavu_set_sval(str *rname, str *sval);

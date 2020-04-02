@@ -1261,6 +1261,21 @@ int xavu_rm_by_name(str *name, sr_xavp_t **head)
 /**
  *
  */
+int xavu_rm_child_by_name(str *rname, str *cname)
+{
+	sr_xavp_t *avu=NULL;
+
+	avu = xavu_lookup(rname, NULL);
+
+	if(avu == NULL || avu->val.type!=SR_XTYPE_XAVP) {
+		return 0;
+	}
+	return xavu_rm_by_name(cname, &avu->val.v.xavp);
+}
+
+/**
+ *
+ */
 sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avu;
