@@ -46,6 +46,7 @@ Bogdan-Andrei Iancu
               4.6. custom_user_avp (avp string)
               4.7. force_send_socket (int)
               4.8. ignore_sips (int)
+              4.9. sockname_mode (int)
 
         5. Functions
 
@@ -89,16 +90,17 @@ Bogdan-Andrei Iancu
    1.8. custom_user_avp usage
    1.9. Set force_send_socket parameter
    1.10. Set ignore_sips parameter
-   1.11. loose_route usage
-   1.12. record_route usage
-   1.13. remove_record_route usage
-   1.14. record_route_preset usage
-   1.15. record_route_advertised_address usage
-   1.16. add_rr_param usage
-   1.17. check_route_param usage
-   1.18. is_direction usage
-   1.19. rr_next_hop_route usage
-   1.20. $route_uri
+   1.11. Set sockname_mode parameter
+   1.12. loose_route usage
+   1.13. record_route usage
+   1.14. remove_record_route usage
+   1.15. record_route_preset usage
+   1.16. record_route_advertised_address usage
+   1.17. add_rr_param usage
+   1.18. check_route_param usage
+   1.19. is_direction usage
+   1.20. rr_next_hop_route usage
+   1.21. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -124,6 +126,7 @@ Chapter 1. Admin Guide
         4.6. custom_user_avp (avp string)
         4.7. force_send_socket (int)
         4.8. ignore_sips (int)
+        4.9. sockname_mode (int)
 
    5. Functions
 
@@ -220,6 +223,7 @@ UAC                       Kamailio PROXY                          UAS
    4.6. custom_user_avp (avp string)
    4.7. force_send_socket (int)
    4.8. ignore_sips (int)
+   4.9. sockname_mode (int)
 
 4.1. enable_full_lr (integer)
 
@@ -360,6 +364,18 @@ modparam("rr", "force_send_socket", 1)
 modparam("rr", "ignore_sips", 1)
 ...
 
+4.9. sockname_mode (int)
+
+   If set to 1, the Record-Route URI is built to contain socket name in
+   'sn' parameter.
+
+   Default value is 0.
+
+   Example 1.11. Set sockname_mode parameter
+...
+modparam("rr", "sockname_mode", 1)
+...
+
 5. Functions
 
    5.1. loose_route()
@@ -414,7 +430,7 @@ modparam("rr", "ignore_sips", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. loose_route usage
+   Example 1.12. loose_route usage
 ...
 loose_route();
 ...
@@ -441,7 +457,7 @@ loose_route();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.12. record_route usage
+   Example 1.13. record_route usage
 ...
 record_route();
 ...
@@ -455,7 +471,7 @@ record_route();
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.13. remove_record_route usage
+   Example 1.14. remove_record_route usage
 ...
 remove_record_route();
 ...
@@ -483,7 +499,7 @@ remove_record_route();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.14. record_route_preset usage
+   Example 1.15. record_route_preset usage
 ...
 record_route_preset("1.2.3.4:5090");
 ...
@@ -510,7 +526,7 @@ record_route_preset("1.2.3.4:5090");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.15. record_route_advertised_address usage
+   Example 1.16. record_route_advertised_address usage
 ...
 record_route_advertised_address("1.2.3.4:5080");
 ...
@@ -529,7 +545,7 @@ record_route_advertised_address("1.2.3.4:5080");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.16. add_rr_param usage
+   Example 1.17. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
 ...
@@ -545,7 +561,7 @@ add_rr_param(";nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. check_route_param usage
+   Example 1.18. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
@@ -572,7 +588,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.18. is_direction usage
+   Example 1.19. is_direction usage
 ...
 if (is_direction("downstream")) {
     xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
@@ -589,7 +605,7 @@ if (is_direction("downstream")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. rr_next_hop_route usage
+   Example 1.20. rr_next_hop_route usage
 ...
 if(loose_route) {
     if(rr_next_hop_route()) {
@@ -607,7 +623,7 @@ if(loose_route) {
 
    Returns the URI of the top route-header.
 
-   Example 1.20. $route_uri
+   Example 1.21. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
