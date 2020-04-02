@@ -250,6 +250,9 @@ static pv_export_t mod_pvs[] = {
 	{{"fs", (sizeof("fs")-1)}, /* */
 		PVT_OTHER, pv_get_force_sock, pv_set_force_sock,
 		0, 0, 0, 0},
+	{{"fsn", (sizeof("fsn")-1)}, /* */
+		PVT_OTHER, pv_get_force_sock_name, pv_set_force_sock_name,
+		0, 0, 0, 0},
 	{{"ft", (sizeof("ft")-1)}, /* */
 		PVT_OTHER, pv_get_from_attr, 0,
 		0, 0, pv_init_iname, 4},

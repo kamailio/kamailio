@@ -1021,6 +1021,21 @@ int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &msg->force_send_socket->sock_str);
 }
 
+int pv_get_force_sock_name(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL) {
+		return -1;
+	}
+
+	if (msg->force_send_socket==0
+				|| msg->force_send_socket->sockname.s == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_strval(msg, param, res, &msg->force_send_socket->sockname);
+}
+
 int pv_get_useragent(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -2647,6 +2662,40 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		set_force_socket(msg, si);
 	} else {
 		LM_WARN("no socket found to match [%.*s]\n",
+				val->rs.len, val->rs.s);
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+int pv_set_force_sock_name(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	struct socket_info *si;
+
+	if(msg==NULL || param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(val==NULL || (val->flags&PV_VAL_NULL)) {
+		reset_force_socket(msg);
+		return 0;
+	}
+
+	if(!(val->flags&PV_VAL_STR) || val->rs.len<=0) {
+		LM_ERR("str value required to set the force send sock\n");
+		goto error;
+	}
+
+	LM_DBG("trying to set send-socket to name [%.*s]\n", val->rs.len, val->rs.s);
+	si = ksr_get_socket_by_name(&val->rs);
+	if (si!=NULL) {
+		set_force_socket(msg, si);
+	} else {
+		LM_WARN("no socket found to match name [%.*s]\n",
 				val->rs.len, val->rs.s);
 	}
 
