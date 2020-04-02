@@ -313,6 +313,26 @@ modparam("rr", "ignore_sips", 1)
 </programlisting>
       </example>
     </section>
+	<section id="rr.p.sockname_mode">
+		<title><varname>sockname_mode</varname> (int)</title>
+		<para>
+		If set to 1, the Record-Route URI is built to contain socket name in 'sn'
+		parameter.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sockname_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "sockname_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
   </section>
 
   <section>
