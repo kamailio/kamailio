@@ -592,7 +592,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	#define RCVCOMP_LUMP_LEN
 	#define SENDCOMP_LUMP_LEN
 #endif /*USE_COMP */
-	
+
 #define SUBST_LUMP_LEN(subst_l) \
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
@@ -644,6 +644,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_RCV_ALL: \
+			case SUBST_RCV_ALL_EX: \
 				if (msg->rcv.bind_address){ \
 					new_len+=recv_address_str->len; \
 					if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -679,6 +680,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						LM_CRIT("unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ msg->rcv.bind_address->sockname.len; \
+					} \
 					RCVCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -732,6 +738,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_SND_ALL: \
+			case SUBST_SND_ALL_EX: \
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
 					if ((send_sock->address.af==AF_INET6) && \
@@ -767,6 +774,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+								&& send_sock->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ send_sock->sockname.len; \
+					} \
 					SENDCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -1003,6 +1015,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_RCV_ALL: \
+		case SUBST_RCV_ALL_EX: \
 			if (msg->rcv.bind_address){  \
 				/* address */ \
 				if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -1066,6 +1079,15 @@ void process_lumps( struct sip_msg* msg,
 					default: \
 						LM_CRIT("unknown proto %d\n", msg->rcv.bind_address->proto); \
 				} \
+				if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+								SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, msg->rcv.bind_address->sockname.s, \
+							msg->rcv.bind_address->sockname.len); \
+					offset+=msg->rcv.bind_address->sockname.len; \
+				} \
 				RCVCOMP_PARAM_ADD \
 			}else{  \
 				/*FIXME*/ \
@@ -1101,6 +1123,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_SND_ALL: \
+		case SUBST_SND_ALL_EX: \
 			if (send_sock){  \
 				/* address */ \
 				if ((send_sock->address.af==AF_INET6)\
@@ -1163,6 +1186,15 @@ void process_lumps( struct sip_msg* msg,
 						break; \
 					default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
+				} \
+				if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+							&& send_sock->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+							SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, send_sock->sockname.s, \
+							send_sock->sockname.len); \
+					offset+=send_sock->sockname.len; \
 				} \
 				SENDCOMP_PARAM_ADD \
 			}else{  \

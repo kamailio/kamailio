@@ -35,11 +35,12 @@
 
 
 enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD, LUMP_ADD_SUBST, LUMP_ADD_OPT };
-enum lump_subst{ SUBST_NOP=0,                     /* do nothing */
-				 SUBST_RCV_IP,    SUBST_SND_IP,   /* add ip address */
-				 SUBST_RCV_PORT,  SUBST_SND_PORT, /* add port no */
-				 SUBST_RCV_PROTO, SUBST_SND_PROTO,/* add protocol(udp,tcp,tls)*/
-				 SUBST_RCV_ALL,   SUBST_SND_ALL   /*  ip:port;transport=proto */
+enum lump_subst{ SUBST_NOP=0,                       /* do nothing */
+				 SUBST_RCV_IP,     SUBST_SND_IP,    /* add ip address */
+				 SUBST_RCV_PORT,   SUBST_SND_PORT,  /* add port no */
+				 SUBST_RCV_PROTO,  SUBST_SND_PROTO, /* add protocol(udp,tcp,tls)*/
+				 SUBST_RCV_ALL,    SUBST_SND_ALL,   /* ip:port;transport=proto */
+				 SUBST_RCV_ALL_EX, SUBST_SND_ALL_EX /* ip:port;transport=proto;sn=xyz */
 				};
 				/* Where:
 				   SND = sending, e.g the src ip of the outgoing message
