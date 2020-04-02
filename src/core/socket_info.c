@@ -687,6 +687,40 @@ found:
 	return si;
 }
 
+socket_info_t* ksr_get_socket_by_name(str *sockname)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->sockname.s == NULL) {
+				continue;
+			}
+			LM_DBG("checking if sockname %.*s matches %.*s\n",
+					sockname->len, sockname->s,
+					si->sockname.len, si->sockname.s);
+			if (sockname->len == si->sockname.len
+					&& strncasecmp(sockname->s, si->sockname.s,
+							sockname->len)==0) {
+				return si;
+			}
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
 /* checks if the proto:port is one of the ports we listen on
  * and returns the corresponding socket_info structure.
  * if proto==0 (PROTO_NONE) the protocol is ignored
