@@ -70,6 +70,7 @@
 #define RR_PARAM_BUF_SIZE 512 /*!< buffer for RR parameter */
 
 extern int rr_ignore_sips;
+extern int rr_sockname_mode;
 
 /*!
  * \brief RR param buffer
@@ -207,6 +208,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	char *p;
 	char *rr_prefix;
 	int rr_prefix_len;
+	int rr_lump_type;
 
 	if(_sips==0) {
 		rr_prefix = RR_PREFIX_SIP;
@@ -281,7 +283,10 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	if (!(_l = insert_new_lump_after(_l, prefix, prefix_len, 0)))
 		goto lump_err;
 	prefix = 0;
-	_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_ALL:SUBST_SND_ALL, 0);
+	rr_lump_type = (_inbound)?
+					(rr_sockname_mode?SUBST_RCV_ALL_EX:SUBST_RCV_ALL)
+					:(rr_sockname_mode?SUBST_SND_ALL_EX:SUBST_SND_ALL);
+	_l = insert_subst_lump_after(_l, rr_lump_type, 0);
 	if (_l ==0 )
 		goto lump_err;
 	if (enable_double_rr) {

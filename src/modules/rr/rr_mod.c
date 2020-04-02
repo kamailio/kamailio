@@ -62,6 +62,7 @@ int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
 int rr_ignore_sips = 0; /*!< ignore sips schema when building record-route */
+int rr_sockname_mode = 0; /*!< add socket name to R-R header */
 
 ob_api_t rr_obb;
 
@@ -136,6 +137,7 @@ static param_export_t params[] ={
 	{"custom_user_avp",     PARAM_STR, &custom_user_spec},
 	{"force_send_socket",   PARAM_INT, &rr_force_send_socket},
 	{"ignore_sips",         PARAM_INT, &rr_ignore_sips},
+	{"sockname_mode",       PARAM_INT, &rr_sockname_mode},
 	{0, 0, 0 }
 };
 
