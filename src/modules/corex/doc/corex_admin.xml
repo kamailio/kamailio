@@ -559,6 +559,33 @@ set_send_socket("udp:127.0.0.1:5060");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.set_send_socket_name">
+		<title><function moreinfo="none">set_send_socket_name(sname)</function></title>
+		<para>
+			Set the socket for sending out.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>sname</emphasis> - the name of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_send_socket_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_send_socket_name("sock1");
+...
+</programlisting>
+		</example>
+		</section>
 		<section id="corex.f.set_recv_socket">
 		<title><function moreinfo="none">set_recv_socket(saddr)</function></title>
 		<para>
@@ -582,6 +609,33 @@ set_send_socket("udp:127.0.0.1:5060");
 		<programlisting format="linespecific">
 ...
 set_recv_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_recv_socket_name">
+		<title><function moreinfo="none">set_recv_socket_name(sname)</function></title>
+		<para>
+			Switch local socket used for receiving the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>sname</emphasis> - the name of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_recv_socket_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_recv_socket_name("sock1");
 ...
 </programlisting>
 		</example>
