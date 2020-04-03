@@ -51,11 +51,13 @@ Muhammad Shahzad Shafi
               4.13. isxflagset(flag)
               4.14. resetxflag(flag)
               4.15. set_send_socket(saddr)
-              4.16. set_recv_socket(saddr)
-              4.17. set_source_address(saddr)
-              4.18. via_add_srvid(flags)
-              4.19. via_add_xavp_params(flags)
-              4.20. via_use_xavp_fields(flags)
+              4.16. set_send_socket_name(sname)
+              4.17. set_recv_socket(saddr)
+              4.18. set_recv_socket_name(sname)
+              4.19. set_source_address(saddr)
+              4.20. via_add_srvid(flags)
+              4.21. via_add_xavp_params(flags)
+              4.22. via_use_xavp_fields(flags)
 
         5. RPC Commands
 
@@ -93,13 +95,15 @@ Muhammad Shahzad Shafi
    1.17. isxflagset usage
    1.18. resetxflag usage
    1.19. set_send_socket usage
-   1.20. set_recv_socket usage
-   1.21. set_source_address usage
-   1.22. via_add_srvid usage
-   1.23. via_add_xavp_params usage
-   1.24. via_use_xavp_fields usage
-   1.25. event_route[network:msg] use cases
-   1.26. Sample PERL code for do_compress and do_uncompress
+   1.20. set_send_socket_name usage
+   1.21. set_recv_socket usage
+   1.22. set_recv_socket_name usage
+   1.23. set_source_address usage
+   1.24. via_add_srvid usage
+   1.25. via_add_xavp_params usage
+   1.26. via_use_xavp_fields usage
+   1.27. event_route[network:msg] use cases
+   1.28. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -135,11 +139,13 @@ Chapter 1. Admin Guide
         4.13. isxflagset(flag)
         4.14. resetxflag(flag)
         4.15. set_send_socket(saddr)
-        4.16. set_recv_socket(saddr)
-        4.17. set_source_address(saddr)
-        4.18. via_add_srvid(flags)
-        4.19. via_add_xavp_params(flags)
-        4.20. via_use_xavp_fields(flags)
+        4.16. set_send_socket_name(sname)
+        4.17. set_recv_socket(saddr)
+        4.18. set_recv_socket_name(sname)
+        4.19. set_source_address(saddr)
+        4.20. via_add_srvid(flags)
+        4.21. via_add_xavp_params(flags)
+        4.22. via_use_xavp_fields(flags)
 
    5. RPC Commands
 
@@ -274,11 +280,13 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.13. isxflagset(flag)
    4.14. resetxflag(flag)
    4.15. set_send_socket(saddr)
-   4.16. set_recv_socket(saddr)
-   4.17. set_source_address(saddr)
-   4.18. via_add_srvid(flags)
-   4.19. via_add_xavp_params(flags)
-   4.20. via_use_xavp_fields(flags)
+   4.16. set_send_socket_name(sname)
+   4.17. set_recv_socket(saddr)
+   4.18. set_recv_socket_name(sname)
+   4.19. set_source_address(saddr)
+   4.20. via_add_srvid(flags)
+   4.21. via_add_xavp_params(flags)
+   4.22. via_use_xavp_fields(flags)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -515,7 +523,22 @@ resetxflag("1");
 set_send_socket("udp:127.0.0.1:5060");
 ...
 
-4.16. set_recv_socket(saddr)
+4.16. set_send_socket_name(sname)
+
+   Set the socket for sending out.
+
+   Meaning of the parameters is as follows:
+     * sname - the name of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. set_send_socket_name usage
+...
+set_send_socket_name("sock1");
+...
+
+4.17. set_recv_socket(saddr)
 
    Switch local socket used for receiving the message.
 
@@ -525,12 +548,27 @@ set_send_socket("udp:127.0.0.1:5060");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. set_recv_socket usage
+   Example 1.21. set_recv_socket usage
 ...
 set_recv_socket("udp:127.0.0.1:5060");
 ...
 
-4.17. set_source_address(saddr)
+4.18. set_recv_socket_name(sname)
+
+   Switch local socket used for receiving the message.
+
+   Meaning of the parameters is as follows:
+     * sname - the name of the local socket (listen address). Can be a
+       static string or contain pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. set_recv_socket_name usage
+...
+set_recv_socket_name("sock1");
+...
+
+4.19. set_source_address(saddr)
 
    Set the source address for the message.
 
@@ -540,12 +578,12 @@ set_recv_socket("udp:127.0.0.1:5060");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. set_source_address usage
+   Example 1.23. set_source_address usage
 ...
 set_source_address("udp:127.0.0.1:5080");
 ...
 
-4.18. via_add_srvid(flags)
+4.20. via_add_srvid(flags)
 
    Control if srvid parameter is added or not to local Via. If yes, the
    value is server_id, added only if it is different than 0.
@@ -555,12 +593,12 @@ set_source_address("udp:127.0.0.1:5080");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. via_add_srvid usage
+   Example 1.24. via_add_srvid usage
 ...
 via_add_srv("1");
 ...
 
-4.19. via_add_xavp_params(flags)
+4.21. via_add_xavp_params(flags)
 
    Control if fields of the xavp with the name specified by
    xavp_via_params global parameter are added or not to local Via.
@@ -570,7 +608,7 @@ via_add_srv("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. via_add_xavp_params usage
+   Example 1.25. via_add_xavp_params usage
 ...
 xavp_via_params="xvia"
 ...
@@ -583,7 +621,7 @@ request_route {
 }
 ...
 
-4.20. via_use_xavp_fields(flags)
+4.22. via_use_xavp_fields(flags)
 
    Control if fields of the xavp with the name specified by
    xavp_via_fields global parameter are used or not to build local Via.
@@ -593,7 +631,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. via_use_xavp_fields usage
+   Example 1.26. via_use_xavp_fields usage
 ...
 xavp_via_fields="mvia"
 ...
@@ -740,7 +778,7 @@ request_route {
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.25. event_route[network:msg] use cases
+   Example 1.27. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -771,7 +809,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.26. Sample PERL code for do_compress and do_uncompress
+   Example 1.28. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
