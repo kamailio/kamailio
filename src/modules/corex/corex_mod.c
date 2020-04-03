@@ -54,7 +54,9 @@ static int w_isxflagset(struct sip_msg *msg, char *flag, char *s2);
 static int w_resetxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_send_socket_name(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_recv_socket_name(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
@@ -114,7 +116,11 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE },
 	{"set_send_socket", (cmd_function)w_set_send_socket, 1, fixup_spve_null,
 		0, ANY_ROUTE },
+	{"set_send_socket_name", (cmd_function)w_set_send_socket_name, 1, fixup_spve_null,
+		0, ANY_ROUTE },
 	{"set_recv_socket", (cmd_function)w_set_recv_socket, 1, fixup_spve_null,
+		0, ANY_ROUTE },
+	{"set_recv_socket_name", (cmd_function)w_set_recv_socket_name, 1, fixup_spve_null,
 		0, ANY_ROUTE },
 	{"set_source_address", (cmd_function)w_set_source_address, 1, fixup_spve_null,
 		0, ANY_ROUTE },
@@ -609,7 +615,7 @@ static int w_setxflag(sip_msg_t *msg, char *flag, char *s2)
 /**
  *
  */
-static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode)
+static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode, int sfmt)
 {
 	socket_info_t *si;
 	int port, proto;
@@ -625,14 +631,19 @@ static int ki_set_socket_helper(sip_msg_t *msg, str *ssock, int smode)
 		return 1;
 	}
 
-	if (parse_phostport(ssock->s, &host.s, &host.len, &port, &proto) < 0) {
-		LM_ERR("invalid socket specification [%.*s] (%d)\n",
+	LM_DBG("trying to set %s-socket to %s [%.*s] (%d)\n",
+				(smode==0)?"snd":"rcv", (sfmt==0)?"addr":"name",
 				ssock->len, ssock->s, smode);
-		goto error;
+	if(sfmt == 0) {
+		if (parse_phostport(ssock->s, &host.s, &host.len, &port, &proto) < 0) {
+			LM_ERR("invalid socket specification [%.*s] (%d)\n",
+					ssock->len, ssock->s, smode);
+			goto error;
+		}
+		si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
+	} else {
+		si = ksr_get_socket_by_name(ssock);
 	}
-	LM_DBG("trying to set %s-socket to [%.*s] (%d)\n",
-				(smode==0)?"snd":"rcv", ssock->len, ssock->s, smode);
-	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL) {
 		if(smode==0) {
 			/* send socket */
@@ -660,7 +671,7 @@ error:
  */
 static int ki_set_send_socket(sip_msg_t *msg, str *ssock)
 {
-	return ki_set_socket_helper(msg, ssock, 0);
+	return ki_set_socket_helper(msg, ssock, 0, 0);
 }
 
 /**
@@ -679,9 +690,30 @@ static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2)
 /**
  *
  */
+static int ki_set_send_socket_name(sip_msg_t *msg, str *ssock)
+{
+	return ki_set_socket_helper(msg, ssock, 0, 1);
+}
+
+/**
+ *
+ */
+static int w_set_send_socket_name(sip_msg_t *msg, char *psock, char *p2)
+{
+	str ssock;
+	if (fixup_get_svalue(msg, (gparam_t*)psock, &ssock) != 0 || ssock.len<=0) {
+		LM_ERR("cannot get socket address value\n");
+		return -1;
+	}
+	return ki_set_send_socket_name(msg, &ssock);
+}
+
+/**
+ *
+ */
 static int ki_set_recv_socket(sip_msg_t *msg, str *ssock)
 {
-	return ki_set_socket_helper(msg, ssock, 1);
+	return ki_set_socket_helper(msg, ssock, 1, 0);
 }
 
 /**
@@ -695,6 +727,27 @@ static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2)
 		return -1;
 	}
 	return ki_set_recv_socket(msg, &ssock);
+}
+
+/**
+ *
+ */
+static int ki_set_recv_socket_name(sip_msg_t *msg, str *ssock)
+{
+	return ki_set_socket_helper(msg, ssock, 1, 1);
+}
+
+/**
+ *
+ */
+static int w_set_recv_socket_name(sip_msg_t *msg, char *psock, char *p2)
+{
+	str ssock;
+	if (fixup_get_svalue(msg, (gparam_t*)psock, &ssock) != 0 || ssock.len<=0) {
+		LM_ERR("cannot get socket address value\n");
+		return -1;
+	}
+	return ki_set_recv_socket_name(msg, &ssock);
 }
 
 /**
@@ -914,8 +967,18 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("corex"), str_init("set_send_socket_name"),
+		SR_KEMIP_INT, ki_set_send_socket_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("corex"), str_init("set_recv_socket"),
 		SR_KEMIP_INT, ki_set_recv_socket,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_recv_socket_name"),
+		SR_KEMIP_INT, ki_set_recv_socket_name,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
