@@ -1658,10 +1658,6 @@ static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps
 		return;
 	}
 
-	if(trace_is_off(ps->req)) {
-		LM_DBG("trace off...\n");
-		return;
-	}
 
 	sip_trace(ps->req, (info->uriState == STRACE_PARSED_URI) ? &info->u.dest_info : NULL,
 			NULL, NULL);
