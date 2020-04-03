@@ -833,6 +833,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		str *corid, char *dir, enum siptrace_type_t trace_type)
 {
 	siptrace_info_t* info = NULL;
+  struct cell *t_invite;
 	char *p = NULL;
 
 	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
@@ -849,6 +850,20 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			goto trace_current;
 		}
 
+    /* if sip_trace is called over an incoming CANCEL, skip
+     * capturing it if the cancelled transaction is already being traced
+     */
+	  if (msg->REQ_METHOD==METHOD_CANCEL) {
+			t_invite=tmb.t_lookup_original(msg);
+			if (t_invite!=T_NULL_CELL) {
+				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
+						LM_DBG("Transaction is already been traced, skipping.\n");
+						tmb.t_unref(msg);
+						return 1;
+				}
+				tmb.t_unref(msg);
+			}
+		}
 		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
 			LM_WARN("DIALOG module not loaded! Tracing only current message!\n");
 			goto trace_current;
