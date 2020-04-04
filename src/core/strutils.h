@@ -45,6 +45,7 @@ int cmpi_str(str *s1, str *s2);
 int cmp_hdrname_str(str *s1, str *s2);
 int cmp_hdrname_strzn(str *s1, char *s2, size_t n);
 int cmp_uri_str(str *s1, str *s2);
+int cmp_uri_light_str(str *s1, str *s2);
 int cmp_aor_str(str *s1, str *s2);
 
 /* str regexp replace */
