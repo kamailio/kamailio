@@ -58,6 +58,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/mod_fix.h"
 #include "../../core/script_cb.h"
+#include "../../core/strutils.h"
 #include "../../core/timer_proc.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
@@ -247,6 +248,7 @@ bool have_dlg_api = false;
 
 static int dialog_flag = -1;
 static unsigned dialog_default_timeout = 12 * 3600; // 12 hours
+static int natt_contact_match = 0;
 
 stat_var *keepalive_endpoints = 0;
 stat_var *registered_endpoints = 0;
@@ -288,6 +290,8 @@ static param_export_t parameters[] = {
 	{"keepalive_extra_headers", PARAM_STRING,
 			&keepalive_params.extra_headers},
 	{"keepalive_state_file", PARAM_STRING, &keepalive_state_file},
+	{"contact_match", PARAM_INT, &natt_contact_match},
+
 	{0, 0, 0}
 };
 
@@ -943,7 +947,11 @@ static time_t get_register_expire(
 				r_contact_body = (contact_body_t *)r_hdr->parsed;
 				for(r_contact = r_contact_body->contacts; r_contact;
 						r_contact = r_contact->next) {
-					if(STR_MATCH_STR(contact->uri, r_contact->uri)) {
+					if((natt_contact_match==0
+								&& STR_MATCH_STR(contact->uri, r_contact->uri))
+							|| (natt_contact_match==1
+								&& cmp_uri_light_str(&contact->uri,
+									&r_contact->uri)==0)){
 						expires_param = r_contact->expires;
 						if(expires_param && expires_param->body.len
 								&& str2int(&expires_param->body, &exp) == 0)
@@ -1801,6 +1809,10 @@ static int mod_init(void)
 	sl_cbelem_t slcb;
 	int *param;
 	modparam_t type;
+
+	if(natt_contact_match!=0) {
+		natt_contact_match = 1;
+	}
 
 	if(keepalive_interval <= 0) {
 		LM_NOTICE(
