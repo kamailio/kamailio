@@ -498,6 +498,36 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_s
       </example>
     </section>
 
+    <section>
+    <title><varname>contact_match</varname> (integer)</title>
+      <para>
+		  Control how to match the contact URIs between requests and replies.
+	  </para>
+      <para>
+		  If set to 0, do string comparison. Use this mode when the contact URI
+		  is not changed by registrar or proxy servers.
+	  </para>
+      <para>
+		  If set to 1, do light URI comparison (match URI type, user, host,
+		  port and proto). Use this mode when the contact URI can be changed
+		  by registrar or proxy servers (e.g., new parameters added, or the
+		  order of parameters changed).
+      </para>
+      <para>
+        <emphasis>
+          Default value is <quote>0</quote>.
+        </emphasis>
+      </para>
+      <example>
+      <title>Setting the <varname>contact_match</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nat_traversal", "contact_match", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section id="nat_traversal.f.client_nat_test">
