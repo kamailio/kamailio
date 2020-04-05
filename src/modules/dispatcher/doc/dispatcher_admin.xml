@@ -891,7 +891,7 @@ DEST: {
 		</emphasis>
 		</para>
 		<para>If parameter "ds_default_sockname" is set, then this parameter
-		is ignored.</para>.
+		is ignored.</para>
 		<example>
 		<title>Set the <quote>ds_default_socket</quote> parameter</title>
  <programlisting format="linespecific">
@@ -915,7 +915,7 @@ DEST: {
 		</emphasis>
 		</para>
 		<para>This parameter is used even if "ds_default_socket" parameter is set
-		(this parameter has higher priority).
+		(this parameter has higher priority).</para>
 		<example>
 		<title>Set the <quote>ds_default_sockname</quote> parameter</title>
  <programlisting format="linespecific">
