@@ -369,6 +369,10 @@ modparam("dispatcher", "force_dst", 1)
 			(value 2).
 			</listitem>
 			<listitem>
+			sockname - the sockname string - it is added only if xavp_dst_mode has bit 3 set
+			(value 3).
+			</listitem>
+			<listitem>
 			dstid - the destination unique id (in case of call load distribution algorithm).
 			</listitem>
 			<listitem>
@@ -1311,6 +1315,7 @@ DEST: {
 		WEIGHT: 50
 		RWEIGHT: 50
 		SOCKET: 
+		SOCKNAME: 
 	}
 	LATENCY: {
 		AVG: 20.104000
@@ -2040,6 +2045,11 @@ DEST: {
 					'socket' - used to set the sending socket for the gateway.
 					It is used for sending the SIP traffic as well as
 					OPTIONS keepalives.
+				</listitem>
+				<listitem>
+					'sockname' - used to set by name the sending socket for the
+					gateway. It is used for sending the SIP traffic as well as
+					OPTIONS keepalives and has priority over 'socket' attribute.
 				</listitem>
 				<listitem>
 					'ping_from' - used to set the From URI in OPTIONS keepalives.
