@@ -503,10 +503,12 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	request->flags |= nhtype;
 
 #ifdef SO_REUSEPORT
-	if (cfg_get(tcp, tcp_cfg, reuse_port) && 
-			uac_r->ssock!=NULL && uac_r->ssock->len>0 &&
-			request->dst.send_sock->proto == PROTO_TCP) {
-		request->dst.send_flags.f |= SND_F_FORCE_SOCKET;
+	if (cfg_get(tcp, tcp_cfg, reuse_port)
+			&& request->dst.send_sock->proto == PROTO_TCP) { 
+		if((uac_r->ssockname!=NULL && uac_r->ssockname->len>0)
+				|| (uac_r->ssock!=NULL && uac_r->ssock->len>0)) {
+			request->dst.send_flags.f |= SND_F_FORCE_SOCKET;
+		}
 	}
 #endif
 
@@ -922,10 +924,14 @@ int req_within(uac_req_t *uac_r)
 		goto err;
 	}
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	/* handle alias parameter in uri
@@ -1002,10 +1008,14 @@ int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	if (next_hop) uac_r->dialog->dst_uri = *next_hop;
 	w_calculate_hooks(uac_r->dialog);
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	return t_uac(uac_r);
@@ -1062,10 +1072,14 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	 */
 	uac_r->dialog = dialog;
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	res = t_uac(uac_r);
