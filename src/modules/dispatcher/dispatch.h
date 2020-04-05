@@ -68,6 +68,7 @@
 
 #define DS_XAVP_DST_SKIP_ATTRS	1
 #define DS_XAVP_DST_ADD_SOCKSTR	(1<<1)
+#define DS_XAVP_DST_ADD_SOCKNAME	(1<<2)
 
 #define DS_XAVP_CTX_SKIP_CNT	1
 
@@ -102,6 +103,7 @@ extern str ds_xavp_dst_dstid;
 extern str ds_xavp_dst_attrs;
 extern str ds_xavp_dst_sock;
 extern str ds_xavp_dst_socket;
+extern str ds_xavp_dst_sockname;
 
 extern str ds_xavp_ctx_cnt;
 
@@ -123,6 +125,7 @@ extern int inactive_threshold; /*!< number of successful requests,
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
 extern str ds_default_socket;
+extern str ds_default_sockname;
 extern struct socket_info *ds_default_sockinfo;
 
 int ds_init_data(void);
@@ -179,6 +182,7 @@ typedef struct _ds_attrs {
 	str body;
 	str duid;
 	str socket;
+	str sockname;
 	int maxload;
 	int weight;
 	int rweight;

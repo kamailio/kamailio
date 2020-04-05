@@ -177,7 +177,8 @@ int ds_hash_load_destroy(void)
 /**
  * Recursivly iterate over ds_set and execute callback
  */
-void ds_iter_set(ds_set_t *node, void (*ds_action_cb)(ds_set_t *node, int i, void *arg), void *ds_action_arg)
+void ds_iter_set(ds_set_t *node, void (*ds_action_cb)(ds_set_t *node, int i, void *arg),
+		void *ds_action_arg)
 {
 	if(!node)
 		return;
@@ -308,6 +309,9 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "socket", 6) == 0) {
 			dest->attrs.socket = pit->body;
+		} else if(pit->name.len == 8
+				  && strncasecmp(pit->name.s, "sockname", 8) == 0) {
+			dest->attrs.sockname = pit->body;
 		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "rweight", 7) == 0) {
 			tmp_rweight = 0;
@@ -402,8 +406,15 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 		goto err;
 	}
 
-	/* check socket attribute */
-	if(dp->attrs.socket.s && dp->attrs.socket.len > 0) {
+	/* set send socket by name or address */
+	if(dp->attrs.sockname.s && dp->attrs.sockname.len > 0) {
+		dp->sock = ksr_get_socket_by_name(&dp->attrs.sockname);
+		if(dp->sock == 0) {
+			LM_ERR("non-local socket name <%.*s>\n", dp->attrs.sockname.len,
+					dp->attrs.sockname.s);
+			goto err;
+		}
+	} else if(dp->attrs.socket.s && dp->attrs.socket.len > 0) {
 		/* parse_phostport(...) expects 0-terminated string
 		 * - after socket parameter is either ';' or '\0' */
 		if(dp->attrs.socket.s[dp->attrs.socket.len] != '\0') {
@@ -1746,8 +1757,8 @@ int ds_load_unset(struct sip_msg *msg)
 /**
  *
  */
-static inline int ds_push_dst(
-		struct sip_msg *msg, str *uri, struct socket_info *sock, int mode)
+static inline int ds_push_dst(sip_msg_t *msg, str *uri, socket_info_t *sock,
+		int mode)
 {
 	struct action act;
 	struct run_act_ctx ra_ctx;
@@ -1933,7 +1944,18 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 			nxval.v.s = dsidx->dlist[pos].attrs.socket;
 			if(xavp_add_value(&ds_xavp_dst_socket, &nxval, &nxavp)==NULL) {
 				xavp_destroy_list(&nxavp);
-				LM_ERR("failed to add destination attrs xavp field\n");
+				LM_ERR("failed to add socket address attrs xavp field\n");
+				return -1;
+			}
+		}
+		if((ds_xavp_dst_mode & DS_XAVP_DST_ADD_SOCKNAME)
+				&& (dsidx->dlist[pos].attrs.sockname.len > 0)) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = dsidx->dlist[pos].attrs.sockname;
+			if(xavp_add_value(&ds_xavp_dst_sockname, &nxval, &nxavp)==NULL) {
+				xavp_destroy_list(&nxavp);
+				LM_ERR("failed to add socket name attrs xavp field\n");
 				return -1;
 			}
 		}
@@ -3295,9 +3317,15 @@ void ds_ping_set(ds_set_t *node)
 			 *		transaction_cb cb, void* cbp); */
 			set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
 					ds_options_callback, (void *)(long)node->id);
-			if(node->dlist[j].attrs.socket.s != NULL
+			if(node->dlist[j].attrs.sockname.s != NULL
+					&& node->dlist[j].attrs.sockname.len > 0) {
+				uac_r.ssockname = &node->dlist[j].attrs.sockname;
+			} else if(node->dlist[j].attrs.socket.s != NULL
 					&& node->dlist[j].attrs.socket.len > 0) {
 				uac_r.ssock = &node->dlist[j].attrs.socket;
+			} else if(ds_default_sockname.s != NULL
+					  && ds_default_sockname.len > 0) {
+				uac_r.ssockname = &ds_default_sockname;
 			} else if(ds_default_socket.s != NULL
 					  && ds_default_socket.len > 0) {
 				uac_r.ssock = &ds_default_socket;
