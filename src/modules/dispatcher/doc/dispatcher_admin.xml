@@ -886,11 +886,39 @@ DEST: {
 			script <emphasis>listen</emphasis> directive is used.
 		</emphasis>
 		</para>
+		<para>If parameter "ds_default_sockname" is set, then this parameter
+		is ignored.</para>.
 		<example>
 		<title>Set the <quote>ds_default_socket</quote> parameter</title>
  <programlisting format="linespecific">
  ...
  modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
+ ...
+ </programlisting>
+		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_default_sockname">
+		<title><varname>ds_default_sockname</varname> (str)</title>
+		<para>
+			Default socket name to be used for sending pings and dispatching requests
+			when a gateway has no send socket configured.
+		</para>
+		<para>
+		<emphasis>
+			By default no default socket is defined, the first configuration
+			script <emphasis>listen</emphasis> directive is used.
+		</emphasis>
+		</para>
+		<para>This parameter is used even if "ds_default_socket" parameter is set
+		(this parameter has higher priority).
+		<example>
+		<title>Set the <quote>ds_default_sockname</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ listen=udp:1.2.3.4:5060 name "sock1"
+ ...
+ modparam("dispatcher", "ds_default_sockname", "sock1")
  ...
  </programlisting>
 		</example>
