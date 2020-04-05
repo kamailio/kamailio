@@ -833,8 +833,10 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		str *corid, char *dir, enum siptrace_type_t trace_type)
 {
 	siptrace_info_t* info = NULL;
-  struct cell *t_invite;
+	struct cell *t_invite, *orig_t;
 	char *p = NULL;
+	int canceled;
+	int ret = 0;
 
 	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
 		int alloc_size = sizeof(siptrace_info_t);
@@ -853,17 +855,38 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
     /* if sip_trace is called over an incoming CANCEL, skip
      * capturing it if the cancelled transaction is already being traced
      */
-	  if (msg->REQ_METHOD==METHOD_CANCEL) {
+		if (msg->REQ_METHOD==METHOD_CANCEL) {
 			t_invite=tmb.t_lookup_original(msg);
 			if (t_invite!=T_NULL_CELL) {
 				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
-						LM_DBG("Transaction is already been traced, skipping.\n");
-						tmb.t_unref(msg);
-						return 1;
+					LM_DBG("Transaction is already been traced, skipping.\n");
+					tmb.t_unref(msg);
+					return 1;
 				}
 				tmb.t_unref(msg);
 			}
 		}
+	  
+		/* if sip_trace is called over an incoming ACK, skip
+		 * capturing it if it's an ACK for a negative reply for
+		 * an already traced transaction
+		 */
+		if (msg->REQ_METHOD==METHOD_ACK) {
+			orig_t = tmb.t_gett();
+			if(tmb.t_lookup_request(msg,0,&canceled)) {
+				t_invite = tmb.t_gett();
+				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
+					LM_DBG("Transaction is already been traced, skipping.\n");
+					ret = 1;
+				}
+				tmb.t_release_transaction( t_invite );
+				tmb.t_unref(msg);
+				tmb.t_sett(orig_t, T_BR_UNDEFINED);
+				if (ret)
+					return 1;
+			}
+		}
+
 		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
 			LM_WARN("DIALOG module not loaded! Tracing only current message!\n");
 			goto trace_current;
