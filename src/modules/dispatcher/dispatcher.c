@@ -102,13 +102,14 @@ static int ds_ping_interval = 0;
 int ds_ping_latency_stats = 0;
 int ds_latency_estimator_alpha_i = 900;
 float ds_latency_estimator_alpha = 0.9f;
-int ds_probing_mode  = DS_PROBE_NONE;
+int ds_probing_mode = DS_PROBE_NONE;
 
 static str ds_ping_reply_codes_str= STR_NULL;
 static int** ds_ping_reply_codes = NULL;
 static int* ds_ping_reply_codes_cnt;
 
-str ds_default_socket       = STR_NULL;
+str ds_default_socket = STR_NULL;
+str ds_default_sockname = STR_NULL;
 struct socket_info * ds_default_sockinfo = NULL;
 
 int ds_hash_size = 0;
@@ -280,6 +281,7 @@ static param_export_t params[]={
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
 	{"outbound_proxy",     PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
+	{"ds_default_sockname",PARAM_STR, &ds_default_sockname},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
@@ -347,23 +349,34 @@ static int mod_init(void)
 	cfg_get(dispatcher, dispatcher_cfg, inactive_threshold) =
 			inactive_threshold;
 
-	if(ds_default_socket.s && ds_default_socket.len > 0) {
-		if(parse_phostport(
-				   ds_default_socket.s, &host.s, &host.len, &port, &proto)
-				!= 0) {
-			LM_ERR("bad socket <%.*s>\n", ds_default_socket.len,
-					ds_default_socket.s);
-			return -1;
-		}
-		ds_default_sockinfo =
-				grep_sock_info(&host, (unsigned short)port, proto);
+	if(ds_default_sockname.s && ds_default_sockname.len > 0) {
+		ds_default_sockinfo = ksr_get_socket_by_name(&ds_default_sockname);
 		if(ds_default_sockinfo == 0) {
-			LM_ERR("non-local socket <%.*s>\n", ds_default_socket.len,
-					ds_default_socket.s);
+			LM_ERR("non-local socket name <%.*s>\n", ds_default_sockname.len,
+					ds_default_sockname.s);
 			return -1;
 		}
-		LM_INFO("default dispatcher socket set to <%.*s>\n",
-				ds_default_socket.len, ds_default_socket.s);
+		LM_INFO("default dispatcher socket set by name to <%.*s>\n",
+				ds_default_sockname.len, ds_default_sockname.s);
+	} else {
+		if(ds_default_socket.s && ds_default_socket.len > 0) {
+			if(parse_phostport(
+					ds_default_socket.s, &host.s, &host.len, &port, &proto)
+					!= 0) {
+				LM_ERR("bad socket <%.*s>\n", ds_default_socket.len,
+						ds_default_socket.s);
+				return -1;
+			}
+			ds_default_sockinfo =
+					grep_sock_info(&host, (unsigned short)port, proto);
+			if(ds_default_sockinfo == 0) {
+				LM_ERR("non-local socket <%.*s>\n", ds_default_socket.len,
+						ds_default_socket.s);
+				return -1;
+			}
+			LM_INFO("default dispatcher socket set to <%.*s>\n",
+					ds_default_socket.len, ds_default_socket.s);
+		}
 	}
 
 	if(ds_init_data() != 0)
@@ -1559,7 +1572,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddS",
+			if(rpc->struct_add(wh, "SSdddSS",
 						"BODY", &(node->dlist[j].attrs.body),
 						"DUID", (node->dlist[j].attrs.duid.s)
 									? &(node->dlist[j].attrs.duid) : &data,
@@ -1567,7 +1580,9 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 						"WEIGHT", node->dlist[j].attrs.weight,
 						"RWEIGHT", node->dlist[j].attrs.rweight,
 						"SOCKET", (node->dlist[j].attrs.socket.s)
-									? &(node->dlist[j].attrs.socket) : &data)
+									? &(node->dlist[j].attrs.socket) : &data,
+						"SOCKNAME", (node->dlist[j].attrs.sockname.s)
+									? &(node->dlist[j].attrs.sockname) : &data)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
