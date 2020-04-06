@@ -183,8 +183,7 @@ modparam("siptrace", "trace_on", 1)
 		<title>Set <varname>traced_user_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("siptrace", "traced_user_avp", "$avp(i:123)")
-modparam("siptrace", "traced_user_avp", "$avp(s:user)")
+modparam("siptrace", "traced_user_avp", "$avp(user)")
 ...
 </programlisting>
 		</example>
@@ -238,12 +237,12 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 		<title><varname>trace_to_database</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable inserts to the database from this
-		&kamailio;. 
+		&kamailio;.
 		</para>
 		<para>
-		In case we only want to send the SIP messages to the 
-		<quote>duplicate_uri</quote> and not store the information to the local 
-		database we can set this to "0".  
+		In case we only want to send the SIP messages to the
+		<quote>duplicate_uri</quote> and not store the information to the local
+		database we can set this to "0".
 		</para>
 		<para>
 		<emphasis>
@@ -325,7 +324,7 @@ modparam("siptrace", "trace_sl_acks", 0)
 		side.
 		</para>
 		<para>
-		<emphasis>Note:</emphasis> The headers are first read, then written. This allows 
+		<emphasis>Note:</emphasis> The headers are first read, then written. This allows
 		relaying the information over more than two &kamailio; servers by setting both
 		<varname>xheaders_write</varname> and <varname>xheaders_read</varname>
 		to "1" on the servers in the middle.
@@ -387,7 +386,7 @@ modparam("siptrace", "hep_mode_on", 1)
 </programlisting>
                 </example>
         </section>
-        
+
 	<section id="siptrace.p.hep_version">
                 <title><varname>hep_version</varname> (integer)</title>
                 <para>
@@ -480,6 +479,10 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
                 If set to 0, no automatic mirroring of SIP traffic via HEP.
                 </para>
                 <para>
+                The trace_on parameter still has to be set, allowing also to control
+                this mode of mirroring via RPC commands.
+                </para>
+                <para>
                 Default value is <emphasis>0</emphasis>.
                 </para>
                 <example>
@@ -487,6 +490,7 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
                 parameter</title>
                 <programlisting format="linespecific">
 ...
+modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
 ...
 </programlisting>
@@ -674,7 +678,7 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with siptrace, you have to setup the database 
+		Before running &kamailio; with siptrace, you have to setup the database
 		tables where the module will store the data. For that, if the
 		table were not created by the installation script or you choose
 		to install everything by yourself you can use the siptrace-create.sql
@@ -714,6 +718,6 @@ onsend_route {
 </programlisting>
 	</example>
 	</section>
-	
+
 </chapter>
 
