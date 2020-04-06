@@ -64,8 +64,7 @@ MODULE_VERSION
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
 #define trace_is_off(_msg)                        \
-	 ((((_msg)->msg_flags & FL_SIPTRACE) == 0) \
-		|| ((trace_flag != 0) && (_msg->flags & trace_flag) == 0))
+	 (((_msg)->msg_flags & FL_SIPTRACE) == 0) 
 
 #define is_null_pv(_str) \
 	(!str_strcmp(&_str, pv_get_null_str()))
@@ -98,6 +97,7 @@ static int w_hlog2(struct sip_msg *, char *correlationid, char *message);
 static int sip_trace_store_db(siptrace_data_t *sto);
 
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps);
+static void trace_cancel_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps);
 static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps);
@@ -833,7 +833,10 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		str *corid, char *dir, enum siptrace_type_t trace_type)
 {
 	siptrace_info_t* info = NULL;
+	struct cell *t_invite, *orig_t;
 	char *p = NULL;
+	int canceled;
+	int ret = 0;
 
 	if (trace_type == SIPTRACE_TRANSACTION || trace_type == SIPTRACE_DIALOG) {
 		int alloc_size = sizeof(siptrace_info_t);
@@ -847,6 +850,41 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		if (tmb.t_gett == NULL) {
 			LM_WARN("TM module not loaded! Tracing only current message!\n");
 			goto trace_current;
+		}
+
+    /* if sip_trace is called over an incoming CANCEL, skip
+     * capturing it if the cancelled transaction is already being traced
+     */
+		if (msg->REQ_METHOD==METHOD_CANCEL) {
+			t_invite=tmb.t_lookup_original(msg);
+			if (t_invite!=T_NULL_CELL) {
+				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
+					LM_DBG("Transaction is already been traced, skipping.\n");
+					tmb.t_unref(msg);
+					return 1;
+				}
+				tmb.t_unref(msg);
+			}
+		}
+	  
+		/* if sip_trace is called over an incoming ACK, skip
+		 * capturing it if it's an ACK for a negative reply for
+		 * an already traced transaction
+		 */
+		if (msg->REQ_METHOD==METHOD_ACK) {
+			orig_t = tmb.t_gett();
+			if(tmb.t_lookup_request(msg,0,&canceled)) {
+				t_invite = tmb.t_gett();
+				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
+					LM_DBG("Transaction is already been traced, skipping.\n");
+					ret = 1;
+				}
+				tmb.t_release_transaction( t_invite );
+				tmb.t_unref(msg);
+				tmb.t_sett(orig_t, T_BR_UNDEFINED);
+				if (ret)
+					return 1;
+			}
 		}
 
 		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
@@ -1254,6 +1292,31 @@ static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2)
 	return ki_sip_trace_mode(msg, &smode);
 }
 
+static void trace_cancel_in(struct cell *t, int type, struct tmcb_params *ps)
+{
+	siptrace_info_t* info;
+	sip_msg_t *msg;
+
+	if(t == NULL || ps == NULL) {
+		LM_ERR("unexpected parameter values\n");
+		return;
+	}
+
+	if(ps->flags & TMCB_RETR_F) {
+		LM_DBG("retransmission - ignoring\n");
+		return;
+	}
+
+	info = (siptrace_info_t *)(*ps->param);
+	msg = ps->req;
+	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_READY, trace_onreply_out, info, 0) <= 0) {
+		LM_ERR("can't register trace_onreply_out\n");
+		return;
+	}
+	msg->msg_flags |= FL_SIPTRACE;
+	sip_trace_helper(msg, NULL, NULL, NULL, NULL, 1);
+}
+
 static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 {
 	siptrace_data_t sto;
@@ -1296,19 +1359,9 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	 * and can register a callback for the reply */
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
-	if (unlikely(type == TMCB_E2ECANCEL_IN)) {
-		msg->msg_flags |= FL_SIPTRACE;
-
-		if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_READY, trace_onreply_out, info, 0)
-					<= 0) {
-			LM_ERR("can't register trace_onreply_out\n");
-			return;
-		}
-	} else {
-		if(traced_user_avp.n != 0)
-			sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
-					&sto.avp_value, &sto.state);
-	}
+	if(traced_user_avp.n != 0)
+		sto.avp = search_first_avp(traced_user_avp_type, traced_user_avp,
+				&sto.avp_value, &sto.state);
 
 	if((sto.avp == NULL) && trace_is_off(msg)) {
 		LM_DBG("trace off...\n");
@@ -1318,16 +1371,11 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	if(sip_trace_prepare(msg) < 0)
 		return;
 
-	if (unlikely(type == TMCB_E2ECANCEL_IN)) {
-		sto.body.s = msg->buf;
-		sto.body.len = msg->len;
+	if(ps->send_buf.len > 0) {
+		sto.body = ps->send_buf;
 	} else {
-		if(ps->send_buf.len > 0) {
-			sto.body = ps->send_buf;
-		} else {
-			sto.body.s = "No request buffer";
-			sto.body.len = sizeof("No request buffer") - 1;
-		}
+		sto.body.s = "No request buffer";
+		sto.body.len = sizeof("No request buffer") - 1;
 	}
 
 	sto.callid = msg->callid->body;
@@ -1658,10 +1706,6 @@ static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps
 		return;
 	}
 
-	if(trace_is_off(ps->req)) {
-		LM_DBG("trace off...\n");
-		return;
-	}
 
 	sip_trace(ps->req, (info->uriState == STRACE_PARSED_URI) ? &info->u.dest_info : NULL,
 			NULL, NULL);
@@ -1870,7 +1914,7 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tra
 		return;
 	}
 
-	if(tmb.register_tmcb(msg, 0, TMCB_E2ECANCEL_IN, trace_onreq_out, info, 0) <= 0) {
+	if(tmb.register_tmcb(msg, 0, TMCB_E2ECANCEL_IN, trace_cancel_in, info, 0) <= 0) {
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
