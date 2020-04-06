@@ -756,7 +756,7 @@ static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
 
 static int sel_ssl_cert(str* res, select_t* s, sip_msg_t* msg)
 {
-	int local, urlencoded;
+	int local=0, urlencoded=0;
 
 	switch(s->params[s->n - 2].v.i) {
 	case CERT_PEER: local = 0; break;
