@@ -160,9 +160,9 @@ Chapter 1. Admin Guide
 
    The tracing can be turned on/off using Kamailio RPC commands.
 
-   kamctl fifo sip_trace on
+   kamctl rpc siptrace.status on
 
-   kamctl fifo sip_trace off
+   kamctl rpc siptrace.status off
 
 2. Dependencies
 
@@ -260,8 +260,7 @@ modparam("siptrace", "trace_on", 1)
 
    Example 1.5. Set traced_user_avp parameter
 ...
-modparam("siptrace", "traced_user_avp", "$avp(i:123)")
-modparam("siptrace", "traced_user_avp", "$avp(s:user)")
+modparam("siptrace", "traced_user_avp", "$avp(user)")
 ...
 
 3.6. trace_table_avp (str)
@@ -444,10 +443,14 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 
    If set to 0, no automatic mirroring of SIP traffic via HEP.
 
+   The trace_on parameter still has to be set, allowing also to control
+   this mode of mirroring via RPC commands.
+
    Default value is 0.
 
    Example 1.18. Set trace_mode parameter
 ...
+modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
 ...
 
