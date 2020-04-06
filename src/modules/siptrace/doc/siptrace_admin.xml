@@ -43,10 +43,10 @@
 	The tracing can be turned on/off using Kamailio <acronym>RPC</acronym> commands.
 	</para>
 	<para>
-	&ctltool; fifo sip_trace on
+	&ctltool; rpc siptrace.status on
 	</para>
 	<para>
-	&ctltool; fifo sip_trace off
+	&ctltool; rpc siptrace.status off
 	</para>
 	</section>
 	<section>
