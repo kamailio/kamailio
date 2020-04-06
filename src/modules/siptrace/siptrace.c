@@ -2014,6 +2014,10 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	if(evp->data == 0)
 		return -1;
 
+	if(trace_on_flag != NULL && *trace_on_flag==0) {
+		return 0;
+	}
+
 	nd = (sr_net_info_t *)evp->data;
 	if(nd->rcv == NULL || nd->data.s == NULL || nd->data.len <= 0)
 		return -1;
@@ -2062,6 +2066,10 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 
 	if(evp->data == 0)
 		return -1;
+
+	if(trace_on_flag != NULL && *trace_on_flag==0) {
+		return 0;
+	}
 
 	nd = (sr_net_info_t *)evp->data;
 	if(nd->dst == NULL || nd->data.s == NULL || nd->data.len <= 0)
