@@ -1316,6 +1316,7 @@ DEST: {
 		RWEIGHT: 50
 		SOCKET: 
 		SOCKNAME: 
+		OBPROXY: 
 	}
 	LATENCY: {
 		AVG: 20.104000
@@ -2054,6 +2055,10 @@ DEST: {
 				<listitem>
 					'ping_from' - used to set the From URI in OPTIONS keepalives.
 					It overwrites the general ds_ping_from parameter.
+				</listitem>
+				<listitem>
+					'obproxy' - SIP URI of outbound proxy to be used when sending pings.
+					It overwrites the general ds_outbound_proxy parameter.
 				</listitem>
 			</itemizedlist>
 		</para>
