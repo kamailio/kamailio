@@ -147,6 +147,8 @@ int trace_flag_param = -1;
 int trace_flag = 0;
 
 int trace_on = 0;
+int *trace_on_flag = NULL;
+
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
@@ -167,9 +169,6 @@ sip_uri_t *trace_send_sock_uri = 0;
 str trace_dup_uri_str = {0, 0};
 sip_uri_t *trace_dup_uri = 0;
 
-int *trace_on_flag = NULL;
-int *trace_to_database_flag = NULL;
-
 int *xheaders_write_flag = NULL;
 int *xheaders_read_flag = NULL;
 
@@ -189,6 +188,7 @@ static db_func_t db_funcs;		  /*!< Database functions */
 /*! \brief
  * Exported functions
  */
+/* clang-format off */
 static cmd_export_t cmds[] = {
 	{"sip_trace", (cmd_function)w_sip_trace0, 0, 0, 0,
 		ANY_ROUTE},
@@ -206,11 +206,13 @@ static cmd_export_t cmds[] = {
 		fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
+/* clang-format on */
 
 
 /*! \brief
  * Exported parameters
  */
+/* clang-format off */
 static param_export_t params[] = {
 	{"auth_key", PARAM_STR, &hep_auth_key_str},
 	{"db_url", PARAM_STR, &db_url},
@@ -241,20 +243,26 @@ static param_export_t params[] = {
 	{"hep_version", INT_PARAM, &hep_version},
 	{"hep_capture_id", INT_PARAM, &hep_capture_id},
 	{"trace_delayed", INT_PARAM, &trace_delayed},
-	{"trace_mode", PARAM_INT, &_siptrace_mode}, {0, 0, 0}
+	{"trace_mode", PARAM_INT, &_siptrace_mode},
+	{0, 0, 0}
 };
+/* clang-format on */
 
 #ifdef STATISTICS
 stat_var *siptrace_req;
 stat_var *siptrace_rpl;
 
+/* clang-format off */
 stat_export_t siptrace_stats[] = {
 	{"traced_requests", 0, &siptrace_req},
-	{"traced_replies", 0, &siptrace_rpl}, {0, 0, 0}
+	{"traced_replies", 0, &siptrace_rpl},
+	{0, 0, 0}
 };
+/* clang-format on */
 #endif
 
 /*! \brief module exports */
+/* clang-format off */
 struct module_exports exports = {
 	"siptrace",     /*!< module name */
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
@@ -267,6 +275,7 @@ struct module_exports exports = {
 	child_init,		/*!< child initialization function */
 	destroy			/*!< destroy function */
 };
+/* clang-format on */
 
 
 /*! \brief Initialize siptrace module */
@@ -296,27 +305,18 @@ static int mod_init(void)
 		trace_flag = 1 << trace_flag_param;
 	}
 
-	trace_to_database_flag = (int *)shm_malloc(sizeof(int));
-	if(trace_to_database_flag == NULL) {
-		LM_ERR("no more shm memory left\n");
-		return -1;
-	}
-
-	*trace_to_database_flag = trace_to_database;
-
 	if(hep_version != 1 && hep_version != 2 && hep_version != 3) {
 		LM_ERR("unsupported version of HEP");
 		return -1;
 	}
 
 	/* Find a database module if needed */
-	if((_siptrace_mode & SIPTRACE_MODE_DB)
-			|| (trace_to_database_flag != NULL && *trace_to_database_flag != 0)) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB) || (trace_to_database != 0)) {
 		if(db_bind_mod(&db_url, &db_funcs)) {
 			LM_ERR("unable to bind database module\n");
 			return -1;
 		}
-		if(trace_to_database_flag && !DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
+		if(!DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
 			LM_ERR("database modules does not provide all functions needed"
 				   " by module\n");
 			return -1;
@@ -470,8 +470,7 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if((_siptrace_mode & SIPTRACE_MODE_DB)
-			|| (trace_to_database_flag != NULL && *trace_to_database_flag != 0)) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB) || (trace_to_database != 0)) {
 		db_con = db_funcs.init(&db_url);
 		if(!db_con) {
 			LM_ERR("unable to connect to database. Please check "
@@ -496,13 +495,6 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	if(trace_to_database_flag != NULL) {
-		if(db_con != NULL) {
-			db_funcs.close(db_con);
-		}
-		shm_free(trace_to_database_flag);
-	}
-
 	if(trace_on_flag) {
 		shm_free(trace_on_flag);
 	}
@@ -564,8 +556,9 @@ static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 
 static int sip_trace_store_db(siptrace_data_t *sto)
 {
-	if(trace_to_database_flag == NULL || *trace_to_database_flag == 0)
+	if((trace_to_database == 0) && ((_siptrace_mode & SIPTRACE_MODE_DB) == 0)) {
 		goto done;
+	}
 
 	if(db_con == NULL) {
 		LM_DBG("database connection not initialized\n");
