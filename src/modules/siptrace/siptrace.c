@@ -119,6 +119,12 @@ static inline int trace_parse_raw_uri(siptrace_info_t* info);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
 int siptrace_net_data_send(sr_event_param_t *evp);
+
+#define SIPTRACE_INIT_MODE_ALL 0
+#define SIPTRACE_INIT_MODE_CORECB 1
+#define SIPTRACE_INIT_MODE_SCRIPT 2
+
+static int _siptrace_init_mode = 0;
 static int _siptrace_mode = 0;
 
 
@@ -243,6 +249,7 @@ static param_export_t params[] = {
 	{"hep_version", INT_PARAM, &hep_version},
 	{"hep_capture_id", INT_PARAM, &hep_capture_id},
 	{"trace_delayed", INT_PARAM, &trace_delayed},
+	{"trace_init_mode", PARAM_INT, &_siptrace_init_mode},
 	{"trace_mode", PARAM_INT, &_siptrace_mode},
 	{0, 0, 0}
 };
@@ -297,20 +304,19 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(trace_flag_param!=-1) {
-		if(trace_flag_param < -1 || trace_flag_param > (int)MAX_FLAG) {
-			LM_ERR("invalid trace flag %d\n", trace_flag_param);
-			return -1;
-		}
-		trace_flag = 1 << trace_flag_param;
-	}
-
 	if(hep_version != 1 && hep_version != 2 && hep_version != 3) {
 		LM_ERR("unsupported version of HEP");
 		return -1;
 	}
 
-	/* Find a database module if needed */
+	trace_on_flag = (int *)shm_malloc(sizeof(int));
+	if(trace_on_flag == NULL) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	*trace_on_flag = trace_on;
+
+	/* find a database module if needed */
 	if((_siptrace_mode & SIPTRACE_MODE_DB) || (trace_to_database != 0)) {
 		if(db_bind_mod(&db_url, &db_funcs)) {
 			LM_ERR("unable to bind database module\n");
@@ -320,60 +326,6 @@ static int mod_init(void)
 			LM_ERR("database modules does not provide all functions needed"
 				   " by module\n");
 			return -1;
-		}
-	}
-
-	trace_on_flag = (int *)shm_malloc(sizeof(int));
-	if(trace_on_flag == NULL) {
-		LM_ERR("no more shm memory left\n");
-		return -1;
-	}
-
-	*trace_on_flag = trace_on;
-
-	xheaders_write_flag = (int *)shm_malloc(sizeof(int));
-	xheaders_read_flag = (int *)shm_malloc(sizeof(int));
-	if(!(xheaders_write_flag && xheaders_read_flag)) {
-		LM_ERR("no more shm memory left\n");
-		return -1;
-	}
-	*xheaders_write_flag = xheaders_write;
-	*xheaders_read_flag = xheaders_read;
-
-	/* register callbacks to TM */
-	if(load_tm_api(&tmb) != 0) {
-		LM_WARN("can't load tm api. Will not install tm callbacks.\n");
-	}
-
-	if (load_dlg_api(&dlgb) < 0) {
-		LM_INFO("can't load dlg api. Will not install dialog callbacks.\n");
-	} else {
-		if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, trace_dialog, NULL, NULL) != 0) {
-			LM_ERR("failed to register dialog callbacks! Tracing dialogs won't be available\n");
-		}
-	}
-
-	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
-		LM_WARN("cannot bind to SL API. Will not install sl callbacks.\n");
-	} else {
-		/* register sl callbacks */
-		memset(&slcb, 0, sizeof(sl_cbelem_t));
-
-		slcb.type = SLCB_REPLY_READY;
-		slcb.cbf = trace_sl_onreply_out;
-		if(slb.register_cb(&slcb) != 0) {
-			LM_ERR("can't register for SLCB_REPLY_READY\n");
-			return -1;
-		}
-
-		if(trace_sl_acks) {
-			slcb.type = SLCB_ACK_FILTERED;
-			slcb.cbf = trace_sl_ack_in;
-			if(slb.register_cb(&slcb) != 0) {
-				LM_ERR("can't register for SLCB_ACK_FILTERED\n");
-				return -1;
-			}
 		}
 	}
 
@@ -418,48 +370,110 @@ static int mod_init(void)
 		}
 	}
 
-	if(traced_user_avp_str.s && traced_user_avp_str.len > 0) {
-		if(pv_parse_spec(&traced_user_avp_str, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					traced_user_avp_str.len, traced_user_avp_str.s);
-			return -1;
-		}
-
-		if(pv_get_avp_name(
-				   0, &avp_spec.pvp, &traced_user_avp, &traced_user_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s] - invalid AVP definition\n", traced_user_avp_str.len,
-					traced_user_avp_str.s);
-			return -1;
-		}
-	} else {
-		traced_user_avp.n = 0;
-		traced_user_avp_type = 0;
+	xheaders_write_flag = (int *)shm_malloc(sizeof(int));
+	xheaders_read_flag = (int *)shm_malloc(sizeof(int));
+	if(!(xheaders_write_flag && xheaders_read_flag)) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
 	}
-	if(trace_table_avp_str.s && trace_table_avp_str.len > 0) {
-		if(pv_parse_spec(&trace_table_avp_str, &avp_spec) == 0
-				|| avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-					trace_table_avp_str.len, trace_table_avp_str.s);
-			return -1;
+	*xheaders_write_flag = xheaders_write;
+	*xheaders_read_flag = xheaders_read;
+
+	if(_siptrace_init_mode==SIPTRACE_INIT_MODE_ALL
+			|| _siptrace_init_mode==SIPTRACE_INIT_MODE_SCRIPT) {
+		if(trace_flag_param!=-1) {
+			if(trace_flag_param < -1 || trace_flag_param > (int)MAX_FLAG) {
+				LM_ERR("invalid trace flag %d\n", trace_flag_param);
+				return -1;
+			}
+			trace_flag = 1 << trace_flag_param;
 		}
 
-		if(pv_get_avp_name(
-				   0, &avp_spec.pvp, &trace_table_avp, &trace_table_avp_type)
-				!= 0) {
-			LM_ERR("[%.*s] - invalid AVP definition\n", trace_table_avp_str.len,
-					trace_table_avp_str.s);
-			return -1;
+		/* register callbacks to TM */
+		if(load_tm_api(&tmb) != 0) {
+			LM_WARN("can't load tm api. Will not install tm callbacks.\n");
 		}
-	} else {
-		trace_table_avp.n = 0;
-		trace_table_avp_type = 0;
+
+		if (load_dlg_api(&dlgb) < 0) {
+			LM_INFO("can't load dlg api. Will not install dialog callbacks.\n");
+		} else {
+			if (dlgb.register_dlgcb(NULL, DLGCB_CREATED, trace_dialog, NULL, NULL) != 0) {
+				LM_ERR("failed to register dialog callbacks! Tracing dialogs won't be available\n");
+			}
+		}
+
+		/* bind the SL API */
+		if(sl_load_api(&slb) != 0) {
+			LM_WARN("cannot bind to SL API. Will not install sl callbacks.\n");
+		} else {
+			/* register sl callbacks */
+			memset(&slcb, 0, sizeof(sl_cbelem_t));
+
+			slcb.type = SLCB_REPLY_READY;
+			slcb.cbf = trace_sl_onreply_out;
+			if(slb.register_cb(&slcb) != 0) {
+				LM_ERR("can't register for SLCB_REPLY_READY\n");
+				return -1;
+			}
+
+			if(trace_sl_acks) {
+				slcb.type = SLCB_ACK_FILTERED;
+				slcb.cbf = trace_sl_ack_in;
+				if(slb.register_cb(&slcb) != 0) {
+					LM_ERR("can't register for SLCB_ACK_FILTERED\n");
+					return -1;
+				}
+			}
+		}
+		if(traced_user_avp_str.s && traced_user_avp_str.len > 0) {
+			if(pv_parse_spec(&traced_user_avp_str, &avp_spec) == 0
+					|| avp_spec.type != PVT_AVP) {
+				LM_ERR("malformed or non AVP %.*s AVP definition\n",
+						traced_user_avp_str.len, traced_user_avp_str.s);
+				return -1;
+			}
+
+			if(pv_get_avp_name(
+					   0, &avp_spec.pvp, &traced_user_avp, &traced_user_avp_type)
+					!= 0) {
+				LM_ERR("[%.*s] - invalid AVP definition\n", traced_user_avp_str.len,
+						traced_user_avp_str.s);
+				return -1;
+			}
+		} else {
+			traced_user_avp.n = 0;
+			traced_user_avp_type = 0;
+		}
+		if(trace_table_avp_str.s && trace_table_avp_str.len > 0) {
+			if(pv_parse_spec(&trace_table_avp_str, &avp_spec) == 0
+					|| avp_spec.type != PVT_AVP) {
+				LM_ERR("malformed or non AVP %.*s AVP definition\n",
+						trace_table_avp_str.len, trace_table_avp_str.s);
+				return -1;
+			}
+
+			if(pv_get_avp_name(
+					   0, &avp_spec.pvp, &trace_table_avp, &trace_table_avp_type)
+					!= 0) {
+				LM_ERR("[%.*s] - invalid AVP definition\n", trace_table_avp_str.len,
+						trace_table_avp_str.s);
+				return -1;
+			}
+		} else {
+			trace_table_avp.n = 0;
+			trace_table_avp_type = 0;
+		}
 	}
 
-	if(_siptrace_mode != SIPTRACE_MODE_NONE) {
-		sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
-		sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
+	if(_siptrace_init_mode==SIPTRACE_INIT_MODE_ALL
+			|| _siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
+		if(_siptrace_mode != SIPTRACE_MODE_NONE) {
+			sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
+			sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
+		} else if(_siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
+			LM_ERR("invalid config options for core callbacks tracing\n");
+			return -1;
+		}
 	}
 	return 0;
 }
