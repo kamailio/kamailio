@@ -416,6 +416,33 @@ loose_route();
       </example>
     </section>
 
+	<section id="rr.f.loose_route_preloaded">
+      <title><function moreinfo="none">loose_route_preloaded()</function></title>
+
+	  <para>The function is similar to `loose_route()`, but it returns 1 (true)
+	  when the Route header is preloaded (is in an initial request) and -1
+	  (false) if processing of the Route header failed or it is for requests
+	  within dialog.</para>
+      <para>It is a convenient function to use for routing initial requests on
+      an edge proxy that adds Path header to REGISTER requests.
+      </para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>loose_route_preloaded</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(!loose_route_preloaded()) {
+   sl_send_reply("404" "Preloaded route expected");
+   exit;
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+
     <section id="rr.f.record_route">
       <title><function moreinfo="none">record_route([sparams])</function></title>
 
