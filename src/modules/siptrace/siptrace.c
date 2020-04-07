@@ -68,8 +68,8 @@ MODULE_VERSION
 #define SIPTRACE_ANYADDR "any:255.255.255.255:5060"
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
-#define trace_is_off(_msg)                        \
-	 (((_msg)->msg_flags & FL_SIPTRACE) == 0) 
+#define trace_is_off(_msg) \
+	 (((_msg)->msg_flags & FL_SIPTRACE) == 0)
 
 #define is_null_pv(_str) \
 	(!str_strcmp(&_str, pv_get_null_str()))
@@ -93,8 +93,8 @@ static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char
 static int fixup_siptrace(void **param, int param_no);
 static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2);
 
-static int parse_siptrace_uri(str* duri, dest_info_t* dst);
-static enum siptrace_type_t parse_siptrace_flag(str* sflags);
+static int siptrace_parse_uri(str* duri, dest_info_t* dst);
+static enum siptrace_type_t siptrace_parse_flag(str* sflags);
 
 static int w_hlog1(struct sip_msg *, char *message, char *);
 static int w_hlog2(struct sip_msg *, char *correlationid, char *message);
@@ -110,13 +110,12 @@ static void trace_sl_onreply_out(sl_cbp_t *slcb);
 static void trace_sl_ack_in(sl_cbp_t *slcb);
 
 
-
 static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tran);
 static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
 static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_cb_params *params);
-static void free_trace_info(void* trace_info);
-static int  add_info_xavp(siptrace_info_t* info);
-static inline int parse_raw_uri(siptrace_info_t* info);
+static void trace_free_info(void* trace_info);
+static int  trace_add_info_xavp(siptrace_info_t* info);
+static inline int trace_parse_raw_uri(siptrace_info_t* info);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
 int siptrace_net_data_send(sr_event_param_t *evp);
@@ -138,8 +137,8 @@ static str direction_column = str_init("direction");	 /* 09 */
 static str time_us_column = str_init("time_us");		 /* 10 */
 static str totag_column = str_init("totag");			 /* 11 */
 
-#define XAVP_TRACE_INFO_NAME "trace_info"
-static str xavp_trace_info_name_s = str_init(XAVP_TRACE_INFO_NAME);
+#define TRACE_XAVP_INFO_NAME "trace_info"
+static str trace_xavp_info_name_s = str_init(TRACE_XAVP_INFO_NAME);
 
 #define NR_KEYS 12
 #define SIP_TRACE_TABLE_VERSION 4
@@ -153,19 +152,20 @@ int trace_sl_acks = 1;
 int trace_to_database = 1;
 int trace_delayed = 0;
 
+int hep_mode_on = 0;
 int hep_version = 1;
 int hep_capture_id = 1;
 int hep_vendor_id = 0;
-str auth_key_str = {0, 0};
+str hep_auth_key_str = {0, 0};
 
 int xheaders_write = 0;
 int xheaders_read = 0;
 
-str force_send_sock_str = {0, 0};
-struct sip_uri *force_send_sock_uri = 0;
+str trace_send_sock_str = {0, 0};
+sip_uri_t *trace_send_sock_uri = 0;
 
-str dup_uri_str = {0, 0};
-struct sip_uri *dup_uri = 0;
+str trace_dup_uri_str = {0, 0};
+sip_uri_t *trace_dup_uri = 0;
 
 int *trace_on_flag = NULL;
 int *trace_to_database_flag = NULL;
@@ -183,10 +183,8 @@ static str trace_table_avp_str = {NULL, 0};
 
 static str trace_local_ip = {NULL, 0};
 
-int hep_mode_on = 0;
-
-db1_con_t *db_con = NULL; /*!< database connection */
-db_func_t db_funcs;		  /*!< Database functions */
+static db1_con_t *db_con = NULL; /*!< database connection */
+static db_func_t db_funcs;		  /*!< Database functions */
 
 /*! \brief
  * Exported functions
@@ -214,7 +212,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"auth_key", PARAM_STR, &auth_key_str},
+	{"auth_key", PARAM_STR, &hep_auth_key_str},
 	{"db_url", PARAM_STR, &db_url},
 	{"table", PARAM_STR, &siptrace_table},
 	{"date_column", PARAM_STR, &date_column},
@@ -232,14 +230,14 @@ static param_export_t params[] = {
 	{"trace_on", INT_PARAM, &trace_on},
 	{"traced_user_avp", PARAM_STR, &traced_user_avp_str},
 	{"trace_table_avp", PARAM_STR, &trace_table_avp_str},
-	{"duplicate_uri", PARAM_STR, &dup_uri_str},
+	{"duplicate_uri", PARAM_STR, &trace_dup_uri_str},
 	{"trace_to_database", INT_PARAM, &trace_to_database},
 	{"trace_local_ip", PARAM_STR, &trace_local_ip},
 	{"trace_sl_acks", INT_PARAM, &trace_sl_acks},
 	{"xheaders_write", INT_PARAM, &xheaders_write},
 	{"xheaders_read", INT_PARAM, &xheaders_read},
 	{"hep_mode_on", INT_PARAM, &hep_mode_on},
-	{"force_send_sock", PARAM_STR, &force_send_sock_str},
+	{"force_send_sock", PARAM_STR, &trace_send_sock_str},
 	{"hep_version", INT_PARAM, &hep_version},
 	{"hep_capture_id", INT_PARAM, &hep_capture_id},
 	{"trace_delayed", INT_PARAM, &trace_delayed},
@@ -379,45 +377,44 @@ static int mod_init(void)
 		}
 	}
 
-	if(dup_uri_str.s != 0) {
-		dup_uri = (struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
-		if(dup_uri == 0) {
+	if(trace_dup_uri_str.s != 0) {
+		trace_dup_uri = (sip_uri_t*)pkg_malloc(sizeof(sip_uri_t));
+		if(trace_dup_uri == 0) {
 			LM_ERR("no more pkg memory left\n");
 			return -1;
 		}
-		memset(dup_uri, 0, sizeof(struct sip_uri));
-		if(parse_uri(dup_uri_str.s, dup_uri_str.len, dup_uri) < 0) {
+		memset(trace_dup_uri, 0, sizeof(sip_uri_t));
+		if(parse_uri(trace_dup_uri_str.s, trace_dup_uri_str.len, trace_dup_uri) < 0) {
 			LM_ERR("bad duplicate_uri\n");
 			return -1;
 		}
-		if(!dup_uri->proto) {
-			dup_uri->proto = PROTO_UDP;
+		if(!trace_dup_uri->proto) {
+			trace_dup_uri->proto = PROTO_UDP;
 		}
-		if(!dup_uri->port_no) {
-			dup_uri->port_no = SIP_PORT;
+		if(!trace_dup_uri->port_no) {
+			trace_dup_uri->port_no = SIP_PORT;
 		}
 	}
 
-	if(force_send_sock_str.s != 0) {
-		force_send_sock_str.len = strlen(force_send_sock_str.s);
-		force_send_sock_uri =
-				(struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
-		if(force_send_sock_uri == 0) {
+	if(trace_send_sock_str.s != 0) {
+		trace_send_sock_str.len = strlen(trace_send_sock_str.s);
+		trace_send_sock_uri = (sip_uri_t*)pkg_malloc(sizeof(sip_uri_t));
+		if(trace_send_sock_uri == 0) {
 			LM_ERR("no more pkg memory left\n");
 			return -1;
 		}
-		memset(force_send_sock_uri, 0, sizeof(struct sip_uri));
-		if(parse_uri(force_send_sock_str.s, force_send_sock_str.len,
-				   force_send_sock_uri)
+		memset(trace_send_sock_uri, 0, sizeof(sip_uri_t));
+		if(parse_uri(trace_send_sock_str.s, trace_send_sock_str.len,
+				   trace_send_sock_uri)
 				< 0) {
-			LM_ERR("bad force_send_sock\n");
+			LM_ERR("bad send sock address\n");
 			return -1;
 		}
-		if(!force_send_sock_uri->proto) {
-			force_send_sock_uri->proto = PROTO_UDP;
+		if(!trace_send_sock_uri->proto) {
+			trace_send_sock_uri->proto = PROTO_UDP;
 		}
-		if(!force_send_sock_uri->port_no) {
-			force_send_sock_uri->port_no = SIP_PORT;
+		if(!trace_send_sock_uri->port_no) {
+			trace_send_sock_uri->port_no = SIP_PORT;
 		}
 	}
 
@@ -703,7 +700,7 @@ error:
 	return -1;
 }
 
-enum siptrace_type_t parse_siptrace_flag(str* sflags)
+enum siptrace_type_t siptrace_parse_flag(str* sflags)
 {
 	int idx;
 	enum siptrace_type_t trace_type = SIPTRACE_NONE;
@@ -756,7 +753,7 @@ static int fixup_siptrace(void **param, int param_no)
 		sflags.s = (char *)*param;
 		sflags.len = strlen(sflags.s);
 
-		trace_type = parse_siptrace_flag(&sflags);
+		trace_type = siptrace_parse_flag(&sflags);
 		if (trace_type == SIPTRACE_NONE) {
 			LM_ERR("Failed to parse trace type!\n");
 			return -1;
@@ -776,12 +773,12 @@ static int fixup_siptrace(void **param, int param_no)
 
 /**
  *
- * parse_siptrace_uri (to replace siptrace_fixup and ki_sip_trace_dst_cid beginning)
+ * siptrace_parse_uri (to replace siptrace_fixup and ki_sip_trace_dst_cid beginning)
  * parse_siptrace_type
  *
  */
 
-static int parse_siptrace_uri(str* duri, dest_info_t* dst)
+static int siptrace_parse_uri(str* duri, dest_info_t* dst)
 {
 	sip_uri_t uri;
 	proxy_l_t *p = NULL;
@@ -792,8 +789,8 @@ static int parse_siptrace_uri(str* duri, dest_info_t* dst)
 	}
 
 	if (duri == NULL || duri->len <= 0) {
-		if(dup_uri) {
-			uri = *dup_uri;
+		if(trace_dup_uri) {
+			uri = *trace_dup_uri;
 		} else {
 			LM_ERR("Missing duplicate URI\n");
 			return -1;
@@ -950,7 +947,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 				/* serialize what's in info */
 				/* save correlation id in siptrace_info avp
 				 * we want to have traced user avp value at the moment of sip_trace function call*/
-				if (add_info_xavp(info) < 0) {
+				if (trace_add_info_xavp(info) < 0) {
 					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
 					return -1;
 				} else {
@@ -959,8 +956,8 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			}
 
 			/**
-			 * WARNING: don't move trace_transaction before  add_info_xavp()
-			 * add_info_xavp() expects the URI in RAW format, unparsed
+			 * WARNING: don't move trace_transaction before trace_add_info_xavp()
+			 * trace_add_info_xavp() expects the URI in RAW format, unparsed
 			 * trace_transaction() parses the URI if it finds it in raw format;
 			 * a BUG will be thrown if this happens
 			 */
@@ -986,14 +983,14 @@ static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* s
 	enum siptrace_type_t trace_type;
 
 	if(duri) {
-		if (parse_siptrace_uri(duri, &dst) < 0) {
+		if (siptrace_parse_uri(duri, &dst) < 0) {
 			LM_ERR("failed to parse siptrace uri!\n");
 			return -1;
 		}
 	}
 
 	if (sflag) {
-		trace_type = parse_siptrace_flag(sflag);
+		trace_type = siptrace_parse_flag(sflag);
 		if (trace_type == SIPTRACE_NONE) {
 			LM_ERR("Invalid flags <%.*s>\n", sflag->len, sflag->s);
 		}
@@ -1067,16 +1064,16 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 		}
 
 		if (dup_uri_param_str.s == 0 || (is_null_pv(dup_uri_param_str))) {
-			if (dup_uri_str.s == 0 || dup_uri_str.len == 0) {
+			if (trace_dup_uri_str.s == 0 || trace_dup_uri_str.len == 0) {
 				LM_ERR("no duplicate_uri modparam nor duplicate uri sip_trace() argument provided!\n");
 				return -1;
 			}
 
-			dup_uri_param_str = dup_uri_str;
+			dup_uri_param_str = trace_dup_uri_str;
 		}
 
 		/* if arg dest uri is null  dup_uri_param_str will have length 0 and global dup_uri will be used */
-		if (parse_siptrace_uri(&dup_uri_param_str, &dest_info) < 0) {
+		if (siptrace_parse_uri(&dup_uri_param_str, &dest_info) < 0) {
 			LM_ERR("failed to parse uri!\n");
 			return -1;
 		}
@@ -1730,7 +1727,7 @@ static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps
  * params marked with * are optional
  *
  */
-static int add_info_xavp(siptrace_info_t* info)
+static int trace_add_info_xavp(siptrace_info_t* info)
 {
 	sr_xval_t xval;
 
@@ -1749,7 +1746,7 @@ static int add_info_xavp(siptrace_info_t* info)
 	xval.v.vptr = (void *)info;
 
 	/* save data into avp */
-	if (xavp_add_value(&xavp_trace_info_name_s, &xval, NULL) == NULL) {
+	if (xavp_add_value(&trace_xavp_info_name_s, &xval, NULL) == NULL) {
 		shm_free(info);
 		LM_ERR("Failed to add xavp!\n");
 		return -1;
@@ -1758,7 +1755,7 @@ static int add_info_xavp(siptrace_info_t* info)
 	return 0;
 }
 
-static inline int parse_raw_uri(siptrace_info_t* info)
+static inline int trace_parse_raw_uri(siptrace_info_t* info)
 {
 	dest_info_t dest_info;
 
@@ -1773,7 +1770,7 @@ static inline int parse_raw_uri(siptrace_info_t* info)
 	}
 
 	/* parse uri and get dest_info structure */
-	if (parse_siptrace_uri(&info->u.dup_uri, &dest_info) < 0) {
+	if (siptrace_parse_uri(&info->u.dup_uri, &dest_info) < 0) {
 		LM_ERR("failed to parse uri!\n");
 		return -1;
 	}
@@ -1888,7 +1885,7 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tra
 	/* trace current message on out */
 	msg->msg_flags |= FL_SIPTRACE;
 	if (info->uriState == STRACE_RAW_URI) {
-		if (parse_raw_uri(info) < 0) {
+		if (trace_parse_raw_uri(info) < 0) {
 			LM_ERR("failed to parse trace destination uri!\n");
 			return;
 		}
@@ -1907,7 +1904,7 @@ static void trace_transaction(sip_msg_t* msg, siptrace_info_t* info, int dlg_tra
 
 	/* trace reply on out */
 	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info,
-							dlg_tran ? 0 : free_trace_info)
+							dlg_tran ? 0 : trace_free_info)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_out\n");
 		return;
@@ -1948,15 +1945,15 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 		return;
 	}
 
-	xavp = xavp_get(&xavp_trace_info_name_s, NULL);
+	xavp = xavp_get(&trace_xavp_info_name_s, NULL);
 	if (!xavp) {
 		/* this actually happens when only the transaction is traced
 		 * FL_SIPTRACE is set from trace_onreq_out
 		 * but xavp is set only for dialogs so this will avoid
 		 * registering dialog callbacks which is the desired behavior */
 		LM_DBG("%.*s xavp not registered! "
-				"Probably incoming E2E CANCEL!\n", xavp_trace_info_name_s.len,
-				xavp_trace_info_name_s.s);
+				"Probably incoming E2E CANCEL!\n", trace_xavp_info_name_s.len,
+				trace_xavp_info_name_s.s);
 		return;
 	}
 
@@ -1967,7 +1964,7 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 	}
 
 	if(dlgb.register_dlgcb(dlg, DLGCB_TERMINATED,
-				trace_dialog_transaction, xavp->val.v.vptr, free_trace_info) != 0) {
+				trace_dialog_transaction, xavp->val.v.vptr, trace_free_info) != 0) {
 		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
 		return;
 	}
@@ -2003,7 +2000,7 @@ static void trace_dialog_transaction(struct dlg_cell* dlg, int type, struct dlg_
 	sip_trace(params->req, &info->u.dest_info, &info->correlation_id, NULL);
 }
 
-static void free_trace_info(void* trace_info)
+static void trace_free_info(void* trace_info)
 {
 	if (!trace_info) return;
 

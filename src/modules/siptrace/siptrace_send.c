@@ -38,8 +38,8 @@
 
 extern int *xheaders_write_flag;
 extern int *xheaders_read_flag;
-extern str dup_uri_str;
-extern sip_uri_t *dup_uri;
+extern str trace_dup_uri_str;
+extern sip_uri_t *trace_dup_uri;
 
 /**
  *
@@ -267,7 +267,7 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 		return -1;
 
 	/* either modparam dup_uri or siptrace param dst2 */
-	if((dup_uri_str.s == 0 || dup_uri == NULL) && (dst2 == NULL)) {
+	if((trace_dup_uri_str.s == 0 || trace_dup_uri == NULL) && (dst2 == NULL)) {
 		LM_WARN("Neither dup_uri modparam or siptrace destination uri param used!\n");
 		return 0;
 	}
@@ -277,8 +277,8 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 	if(!dst2) {
 		/* create a temporary proxy from dst param */
 		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		p = mk_proxy(&trace_dup_uri->host,
+				(trace_dup_uri->port_no) ? trace_dup_uri->port_no : SIP_PORT, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			return -1;
