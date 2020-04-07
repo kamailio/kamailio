@@ -40,6 +40,8 @@ extern int trace_xheaders_write;
 extern int trace_xheaders_read;
 extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
+extern str trace_send_sock_str;
+extern sip_uri_t *trace_send_sock_uri;
 
 /**
  *
@@ -280,7 +282,7 @@ int sip_trace_xheaders_free(struct _siptrace_data *sto)
 int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 {
 	dest_info_t dst;
-	dest_info_t pdst;
+	dest_info_t *pdst = NULL;
 	proxy_l_t *p = NULL;
 
 	if(buf == NULL || len <= 0) {
