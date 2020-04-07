@@ -277,13 +277,15 @@ int sip_trace_xheaders_free(struct _siptrace_data *sto)
 /**
  *
  */
-int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
+int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 {
-	struct dest_info dst;
-	struct proxy_l *p = NULL;
+	dest_info_t dst;
+	dest_info_t pdst;
+	proxy_l_t *p = NULL;
 
-	if(buf == NULL || len <= 0)
+	if(buf == NULL || len <= 0) {
 		return -1;
+	}
 
 	/* either modparam dup_uri or siptrace param dst2 */
 	if((trace_dup_uri_str.s == 0 || trace_dup_uri == NULL) && (dst2 == NULL)) {
@@ -304,17 +306,39 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 		}
 		hostent2su(
 				&dst.to, &p->host, p->addr_idx, (p->port) ? p->port : SIP_PORT);
+		pdst = &dst;
+	} else {
+		pdst = dst2;
+	}
 
-		dst.send_sock = get_send_socket(0, &dst.to, dst.proto);
-		if(dst.send_sock == 0) {
-			LM_ERR("can't forward to af %d, proto %d no corresponding"
+	if(pdst->send_sock == NULL) {
+		if(trace_send_sock_str.s) {
+			LM_DBG("send sock activated, grep for the sock_info\n");
+			pdst->send_sock = grep_sock_info(&trace_send_sock_uri->host,
+					trace_send_sock_uri->port_no,
+					trace_send_sock_uri->proto);
+			if(!pdst->send_sock) {
+				LM_WARN("cannot grep socket info\n");
+			} else {
+				LM_DBG("found socket while grep: [%.*s] [%.*s]\n",
+						pdst->send_sock->name.len,
+						pdst->send_sock->name.s, pdst->send_sock->address_str.len,
+						pdst->send_sock->address_str.s);
+			}
+		}
+	}
+
+	if(pdst->send_sock == NULL) {
+		pdst->send_sock = get_send_socket(0, &pdst->to, pdst->proto);
+		if(pdst->send_sock == 0) {
+			LM_ERR("cannot forward to af %d, proto %d - no corresponding"
 				   " listening socket\n",
-					dst.to.s.sa_family, dst.proto);
+					pdst->to.s.sa_family, pdst->proto);
 			goto error;
 		}
 	}
 
-	if(msg_send((dst2) ? dst2 : &dst, buf, len) < 0) {
+	if(msg_send(pdst, buf, len) < 0) {
 		LM_ERR("cannot send duplicate message\n");
 		goto error;
 	}
