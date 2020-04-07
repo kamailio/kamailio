@@ -44,13 +44,6 @@
 #include "rr_mod.h"
 
 
-#define RR_ERROR -1		/*!< An error occurred while processing route set */
-#define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
-#define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
-#define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
-#define FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
-#define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
-
 #define RR_ROUTE_PREFIX ROUTE_PREFIX "<"
 #define RR_ROUTE_PREFIX_LEN (sizeof(RR_ROUTE_PREFIX)-1)
 
@@ -622,7 +615,7 @@ static inline int after_strict(struct sip_msg* _m)
 			}
 			if (res > 0) { /* No next route found */
 				LM_DBG("after_strict: No next URI found\n");
-				return NOT_RR_DRIVEN;
+				return RR_NOT_DRIVEN;
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -862,7 +855,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 
 		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
 			LM_INFO("failed to process outbound flow-token\n");
-			return FLOW_TOKEN_BROKEN;
+			return RR_FLOW_TOKEN_BROKEN;
 		}
 
 		if (rr_force_send_socket && !use_ob) {
@@ -937,7 +930,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #ifdef ENABLE_USER_CHECK
 		/* check if it the ignored user */
 		if(uri_is_myself < 0)
-			return NOT_RR_DRIVEN;
+			return RR_NOT_DRIVEN;
 #endif
 		LM_DBG("Topmost URI is NOT myself\n");
 		routed_params.s = NULL;
@@ -997,7 +990,7 @@ done:
 /*!
  * \brief Do loose routing as per RFC3261
  * \param _m SIP message
- * \return -1 on failure, 1 on success
+ * \return negative on failure or preloaded, 1 on success
  */
 int loose_route(struct sip_msg* _m)
 {

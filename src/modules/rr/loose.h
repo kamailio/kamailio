@@ -36,6 +36,13 @@
 #define RR_FLOW_DOWNSTREAM  (1<<0)
 #define RR_FLOW_UPSTREAM    (1<<1)
 
+#define RR_ERROR -1		/*!< An error occurred while processing route set */
+#define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
+#define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
+#define RR_NOT_DRIVEN -1	/*!< The next hop is not determined from the route set */
+#define RR_FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
+#define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
+
 
 /*!
  * \brief Do loose routing as per RFC3261
