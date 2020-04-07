@@ -156,7 +156,7 @@ Chapter 1. Admin Guide
        configuration file. In this case the original message is processed
        along with it's corresponding transaction/dialog if certain flags
        are used.
-     * by setting “trace_mode” to mirror all traffic.
+     * by setting “trace_mode” to mirror or store to db all traffic.
 
    The tracing can be turned on/off using Kamailio RPC commands.
 
@@ -435,13 +435,19 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 
 3.18. trace_mode (integer)
 
-   If set to 1, the module uses core events triggered when receiving or
-   sending SIP traffic to mirror traffic to a SIP capture server using
-   HEP. It will automatically do the mirroring of all SIP traffic. It is
-   no longer needed to set the siptrace flag per request or execute
-   sip_trace(), if it is done, then there mirroring is duplicated.
+   If not set to 0, the module uses core events triggered when receiving
+   or sending SIP traffic to store it to database or mirror it to a SIP
+   capture server using HEP or UDP forwarding. It will automatically do
+   the handling of all SIP traffic. It is no longer needed to set the
+   siptrace flag per request or execute sip_trace(), if it is done, then
+   the storing and mirroring is duplicated.
 
-   If set to 0, no automatic mirroring of SIP traffic via HEP.
+   The value of the parameter can be a combination of next values:
+     * 0 - no automatic mirroring or storing of SIP traffic.
+     * 1 (1st bit set) - mirror the traffic to HEP server.
+     * 2 (2nd bit set) - store the traffic to database server.
+     * 4 (3rd bit set) - mirro the traffic to the SIP URI specified by
+       duplicate_uri.
 
    The trace_on parameter still has to be set, allowing also to control
    this mode of mirroring via RPC commands.
@@ -452,6 +458,8 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 ...
 modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
+...
+modparam("siptrace", "trace_mode", 3)
 ...
 
 3.19. auth_key (integer)
