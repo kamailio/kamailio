@@ -36,8 +36,8 @@
 #include "siptrace_send.h"
 
 
-extern int *xheaders_write_flag;
-extern int *xheaders_read_flag;
+extern int trace_xheaders_write;
+extern int trace_xheaders_read;
 extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
 
@@ -85,14 +85,15 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	int eoh_offset = 0;
 	char *new_eoh = NULL;
 
-	if(xheaders_write_flag == NULL || *xheaders_write_flag == 0)
+	if(trace_xheaders_write == 0) {
 		return 0;
+	}
 
 	// Memory for the message with some additional headers.
 	// It gets free()ed in sip_trace_xheaders_free().
 	buf = pkg_malloc(sto->body.len + XHEADERS_BUFSIZE);
 	if(buf == NULL) {
-		LM_ERR("sip_trace_xheaders_write: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 
@@ -102,7 +103,7 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	buf[sto->body.len] = '\0';
 	eoh = strstr(buf, "\r\n\r\n");
 	if(eoh == NULL) {
-		LM_ERR("sip_trace_xheaders_write: malformed message\n");
+		LM_ERR("malformed message\n");
 		goto error;
 	}
 	eoh += 2; // the first \r\n belongs to the last header => skip it
@@ -121,7 +122,7 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 					(unsigned long long)sto->tv.tv_usec, sto->method.len,
 					sto->method.s, sto->dir);
 	if(bytes_written >= XHEADERS_BUFSIZE) {
-		LM_ERR("sip_trace_xheaders_write: string too long\n");
+		LM_ERR("string too long\n");
 		goto error;
 	}
 
@@ -136,8 +137,9 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	sto->body.len += bytes_written;
 	return 0;
 error:
-	if(buf != NULL)
+	if(buf != NULL) {
 		pkg_free(buf);
+	}
 	return -1;
 }
 
@@ -152,8 +154,9 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	char *xheaders = NULL;
 	long long unsigned int tv_sec, tv_usec;
 
-	if(xheaders_read_flag == NULL || *xheaders_read_flag == 0)
+	if(trace_xheaders_read == 0) {
 		return 0;
+	}
 
 	// Find the end-of-header marker \r\n\r\n
 	searchend = sto->body.s + sto->body.len - 3;
@@ -164,7 +167,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 		eoh = memchr(eoh + 1, '\r', searchend - eoh);
 	}
 	if(eoh == NULL) {
-		LM_ERR("sip_trace_xheaders_read: malformed message\n");
+		LM_ERR("malformed message\n");
 		return -1;
 	}
 
@@ -175,7 +178,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	*eoh = '\0';
 	xheaders = strstr(sto->body.s, "\r\nX-Siptrace-Fromip: ");
 	if(xheaders == NULL) {
-		LM_ERR("sip_trace_xheaders_read: message without x-headers "
+		LM_ERR("message without x-headers "
 			   "from %.*s, callid %.*s\n",
 				sto->fromip.len, sto->fromip.s, sto->callid.len, sto->callid.s);
 		return -1;
@@ -188,7 +191,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	sto->method.s = pkg_malloc(51);
 	sto->dir = pkg_malloc(4);
 	if(!(sto->fromip.s && sto->toip.s && sto->method.s && sto->dir)) {
-		LM_ERR("sip_trace_xheaders_read: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		goto erroraftermalloc;
 	}
 
@@ -202,7 +205,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 			   sto->fromip.s, sto->toip.s, &tv_sec, &tv_usec, sto->method.s,
 			   sto->dir)
 			== EOF) {
-		LM_ERR("sip_trace_xheaders_read: malformed x-headers\n");
+		LM_ERR("malformed x-headers\n");
 		goto erroraftermalloc;
 	}
 	sto->fromip.len = strlen(sto->fromip.s);
@@ -221,14 +224,22 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	return 0;
 
 erroraftermalloc:
-	if(sto->fromip.s)
+	if(sto->fromip.s) {
 		pkg_free(sto->fromip.s);
-	if(sto->toip.s)
+		sto->fromip.s = 0;
+	}
+	if(sto->toip.s) {
 		pkg_free(sto->toip.s);
-	if(sto->method.s)
+		sto->toip.s = 0;
+	}
+	if(sto->method.s) {
 		pkg_free(sto->method.s);
-	if(sto->dir)
+		sto->method.s = 0;
+	}
+	if(sto->dir) {
 		pkg_free(sto->dir);
+		sto->dir = 0;
+	}
 	return -1;
 }
 
@@ -237,18 +248,26 @@ erroraftermalloc:
  */
 int sip_trace_xheaders_free(struct _siptrace_data *sto)
 {
-	if(xheaders_write_flag != NULL && *xheaders_write_flag != 0) {
-		if(sto->body.s)
+	if(trace_xheaders_write != 0) {
+		if(sto->body.s) {
 			pkg_free(sto->body.s);
+			sto->body.s = 0;
+		}
 	}
 
-	if(xheaders_read_flag != NULL && *xheaders_read_flag != 0) {
-		if(sto->fromip.s)
+	if(trace_xheaders_read != 0) {
+		if(sto->fromip.s) {
 			pkg_free(sto->fromip.s);
-		if(sto->toip.s)
+			sto->fromip.s = 0;
+		}
+		if(sto->toip.s) {
 			pkg_free(sto->toip.s);
-		if(sto->dir)
+			sto->toip.s = 0;
+		}
+		if(sto->dir) {
 			pkg_free(sto->dir);
+			sto->dir = 0;
+		}
 	}
 
 	return 0;

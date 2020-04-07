@@ -166,17 +166,14 @@ int hep_capture_id = 1;
 int hep_vendor_id = 0;
 str hep_auth_key_str = {0, 0};
 
-int xheaders_write = 0;
-int xheaders_read = 0;
+int trace_xheaders_write = 0;
+int trace_xheaders_read = 0;
 
 str trace_send_sock_str = {0, 0};
 sip_uri_t *trace_send_sock_uri = 0;
 
 str trace_dup_uri_str = {0, 0};
 sip_uri_t *trace_dup_uri = 0;
-
-int *xheaders_write_flag = NULL;
-int *xheaders_read_flag = NULL;
 
 static unsigned short traced_user_avp_type = 0;
 static int_str traced_user_avp;
@@ -242,8 +239,8 @@ static param_export_t params[] = {
 	{"trace_to_database", INT_PARAM, &trace_to_database},
 	{"trace_local_ip", PARAM_STR, &trace_local_ip},
 	{"trace_sl_acks", INT_PARAM, &trace_sl_acks},
-	{"xheaders_write", INT_PARAM, &xheaders_write},
-	{"xheaders_read", INT_PARAM, &xheaders_read},
+	{"xheaders_write", INT_PARAM, &trace_xheaders_write},
+	{"xheaders_read", INT_PARAM, &trace_xheaders_read},
 	{"hep_mode_on", INT_PARAM, &hep_mode_on},
 	{"force_send_sock", PARAM_STR, &trace_send_sock_str},
 	{"hep_version", INT_PARAM, &hep_version},
@@ -369,15 +366,6 @@ static int mod_init(void)
 			trace_send_sock_uri->port_no = SIP_PORT;
 		}
 	}
-
-	xheaders_write_flag = (int *)shm_malloc(sizeof(int));
-	xheaders_read_flag = (int *)shm_malloc(sizeof(int));
-	if(!(xheaders_write_flag && xheaders_read_flag)) {
-		LM_ERR("no more shm memory left\n");
-		return -1;
-	}
-	*xheaders_write_flag = xheaders_write;
-	*xheaders_read_flag = xheaders_read;
 
 	if(_siptrace_init_mode==SIPTRACE_INIT_MODE_ALL
 			|| _siptrace_init_mode==SIPTRACE_INIT_MODE_SCRIPT) {
