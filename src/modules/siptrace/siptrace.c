@@ -60,6 +60,11 @@
 
 MODULE_VERSION
 
+#define SIPTRACE_MODE_NONE 0
+#define SIPTRACE_MODE_HEP (1)
+#define SIPTRACE_MODE_DB  (1<<1)
+#define SIPTRACE_MODE_URI (1<<2)
+
 #define SIPTRACE_ANYADDR "any:255.255.255.255:5060"
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
@@ -307,7 +312,8 @@ static int mod_init(void)
 	}
 
 	/* Find a database module if needed */
-	if(trace_to_database_flag != NULL && *trace_to_database_flag != 0) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB)
+			|| (trace_to_database_flag != NULL && *trace_to_database_flag != 0)) {
 		if(db_bind_mod(&db_url, &db_funcs)) {
 			LM_ERR("unable to bind database module\n");
 			return -1;
@@ -454,7 +460,7 @@ static int mod_init(void)
 		trace_table_avp_type = 0;
 	}
 
-	if(_siptrace_mode == 1) {
+	if(_siptrace_mode != SIPTRACE_MODE_NONE) {
 		sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
 		sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
 	}
@@ -467,7 +473,8 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if(trace_to_database_flag != NULL && *trace_to_database_flag != 0) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB)
+			|| (trace_to_database_flag != NULL && *trace_to_database_flag != 0)) {
 		db_con = db_funcs.init(&db_url);
 		if(!db_con) {
 			LM_ERR("unable to connect to database. Please check "
@@ -2010,6 +2017,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	siptrace_data_t sto;
+	sip_msg_t tmsg;
 
 	if(evp->data == 0)
 		return -1;
@@ -2019,8 +2027,9 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	}
 
 	nd = (sr_net_info_t *)evp->data;
-	if(nd->rcv == NULL || nd->data.s == NULL || nd->data.len <= 0)
+	if(nd->rcv == NULL || nd->data.s == NULL || nd->data.len <= 0) {
 		return -1;
+	}
 
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
@@ -2051,7 +2060,52 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	sto.dir = "in";
 
-	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
+	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
+		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
+	}
+
+	if(_siptrace_mode & SIPTRACE_MODE_DB) {
+		memset(&tmsg, 0, sizeof(sip_msg_t));
+		tmsg.buf = sto.body.s;
+		tmsg.len = sto.body.len;
+
+		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
+			LM_DBG("msg buffer parsing failed!");
+			goto afterdb;
+		}
+
+		if(sip_trace_prepare(&tmsg) < 0) {
+			free_sip_msg(&tmsg);
+			goto afterdb;
+		}
+
+		sto.callid = tmsg.callid->body;
+		if(tmsg.first_line.type == SIP_REQUEST) {
+			sto.method = tmsg.first_line.u.request.method;
+		} else {
+			sto.method = get_cseq(&tmsg)->method;
+		}
+
+		if(tmsg.first_line.type == SIP_REPLY) {
+			sto.status = tmsg.first_line.u.reply.status;
+		} else {
+			sto.status.s = "";
+			sto.status.len = 0;
+		}
+		sto.fromtag = get_from(&tmsg)->tag_value;
+		sto.totag = get_to(&tmsg)->tag_value;
+
+		gettimeofday(&sto.tv, NULL);
+		sip_trace_store_db(&sto);
+
+		free_sip_msg(&tmsg);
+	}
+
+afterdb:
+	if(_siptrace_mode & SIPTRACE_MODE_URI) {
+		trace_send_duplicate(sto.body.s, sto.body.len, NULL);
+	}
+
 	return 0;
 }
 
@@ -2063,6 +2117,7 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	sr_net_info_t *nd;
 	dest_info_t new_dst;
 	siptrace_data_t sto;
+	sip_msg_t tmsg;
 
 	if(evp->data == 0)
 		return -1;
@@ -2116,7 +2171,52 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 
 	sto.dir = "out";
 
-	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
+	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
+		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
+	}
+
+	if(_siptrace_mode & SIPTRACE_MODE_DB) {
+		memset(&tmsg, 0, sizeof(sip_msg_t));
+		tmsg.buf = sto.body.s;
+		tmsg.len = sto.body.len;
+
+		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
+			LM_DBG("msg buffer parsing failed!");
+			goto afterdb;
+		}
+
+		if(sip_trace_prepare(&tmsg) < 0) {
+			free_sip_msg(&tmsg);
+			goto afterdb;
+		}
+
+		sto.callid = tmsg.callid->body;
+		if(tmsg.first_line.type == SIP_REQUEST) {
+			sto.method = tmsg.first_line.u.request.method;
+		} else {
+			sto.method = get_cseq(&tmsg)->method;
+		}
+
+		if(tmsg.first_line.type == SIP_REPLY) {
+			sto.status = tmsg.first_line.u.reply.status;
+		} else {
+			sto.status.s = "";
+			sto.status.len = 0;
+		}
+		sto.fromtag = get_from(&tmsg)->tag_value;
+		sto.totag = get_to(&tmsg)->tag_value;
+
+		gettimeofday(&sto.tv, NULL);
+		sip_trace_store_db(&sto);
+
+		free_sip_msg(&tmsg);
+	}
+
+afterdb:
+	if(_siptrace_mode & SIPTRACE_MODE_URI) {
+		trace_send_duplicate(sto.body.s, sto.body.len, NULL);
+	}
+
 	return 0;
 
 error:
