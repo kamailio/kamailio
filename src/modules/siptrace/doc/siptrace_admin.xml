@@ -491,6 +491,7 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
                 </para>
 				</listitem>
 				</itemizedlist>
+				</para>
                 <para>
                 Default value is <emphasis>0</emphasis>.
                 </para>
