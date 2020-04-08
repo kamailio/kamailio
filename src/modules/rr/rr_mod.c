@@ -419,6 +419,23 @@ static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, ch
 	return 1;
 }
 
+/**
+ *
+ */
+static int ki_record_route_advertised_address(sip_msg_t *msg, str *addr)
+{
+	if (msg->msg_flags & FL_RR_ADDED) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+
+	if ( record_route_advertised_address(msg, addr) < 0)
+		return -1;
+
+	msg->msg_flags |= FL_RR_ADDED;
+	return 1;
+}
+
 
 static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
 {
@@ -804,6 +821,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("record_route_preset"),
 		SR_KEMIP_INT, ki_record_route_preset,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("record_route_advertised_address"),
+		SR_KEMIP_INT, ki_record_route_advertised_address,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
