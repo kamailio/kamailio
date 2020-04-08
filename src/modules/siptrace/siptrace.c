@@ -69,7 +69,7 @@ MODULE_VERSION
 #define SIPTRACE_ANYADDR_LEN (sizeof(SIPTRACE_ANYADDR) - 1)
 
 #define trace_is_off(_msg) \
-	 (((_msg)->msg_flags & FL_SIPTRACE) == 0)
+		(((_msg)->msg_flags & FL_SIPTRACE) == 0)
 
 #define is_null_pv(_str) \
 	(!str_strcmp(&_str, pv_get_null_str()))
@@ -321,7 +321,7 @@ static int mod_init(void)
 		}
 		if(!DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
 			LM_ERR("database modules does not provide all functions needed"
-				   " by module\n");
+					" by module\n");
 			return -1;
 		}
 	}
@@ -354,7 +354,7 @@ static int mod_init(void)
 		}
 		memset(trace_send_sock_uri, 0, sizeof(sip_uri_t));
 		if(parse_uri(trace_send_sock_str.s, trace_send_sock_str.len,
-				   trace_send_sock_uri)
+					trace_send_sock_uri)
 				< 0) {
 			LM_ERR("bad send sock address\n");
 			return -1;
@@ -422,7 +422,7 @@ static int mod_init(void)
 			}
 
 			if(pv_get_avp_name(
-					   0, &avp_spec.pvp, &traced_user_avp, &traced_user_avp_type)
+						0, &avp_spec.pvp, &traced_user_avp, &traced_user_avp_type)
 					!= 0) {
 				LM_ERR("[%.*s] - invalid AVP definition\n", traced_user_avp_str.len,
 						traced_user_avp_str.s);
@@ -441,7 +441,7 @@ static int mod_init(void)
 			}
 
 			if(pv_get_avp_name(
-					   0, &avp_spec.pvp, &trace_table_avp, &trace_table_avp_type)
+						0, &avp_spec.pvp, &trace_table_avp, &trace_table_avp_type)
 					!= 0) {
 				LM_ERR("[%.*s] - invalid AVP definition\n", trace_table_avp_str.len,
 						trace_table_avp_str.s);
@@ -476,7 +476,7 @@ static int child_init(int rank)
 		db_con = db_funcs.init(&db_url);
 		if(!db_con) {
 			LM_ERR("unable to connect to database. Please check "
-				   "configuration.\n");
+					"configuration.\n");
 			return -1;
 		}
 		if(DB_CAPABILITY(db_funcs, DB_CAP_QUERY)) {
@@ -851,9 +851,9 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			goto trace_current;
 		}
 
-    /* if sip_trace is called over an incoming CANCEL, skip
-     * capturing it if the cancelled transaction is already being traced
-     */
+	/* if sip_trace is called over an incoming CANCEL, skip
+	 * capturing it if the cancelled transaction is already being traced
+	 */
 		if (msg->REQ_METHOD==METHOD_CANCEL) {
 			t_invite=tmb.t_lookup_original(msg);
 			if (t_invite!=T_NULL_CELL) {
@@ -865,7 +865,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 				tmb.t_unref(msg);
 			}
 		}
-	  
+
 		/* if sip_trace is called over an incoming ACK, skip
 		 * capturing it if it's an ACK for a negative reply for
 		 * an already traced transaction
@@ -1110,18 +1110,6 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 	if(msg == NULL) {
 		LM_DBG("nothing to trace\n");
 		return -1;
-	}
-
-	if(dst) {
-		if(dst->send_sock == 0) {
-			dst->send_sock = get_send_socket(0, &dst->to, dst->proto);
-			if(dst->send_sock == 0) {
-				LM_ERR("can't forward to af %d, proto %d no corresponding"
-					   " listening socket\n",
-						dst->to.s.sa_family, dst->proto);
-				return -1;
-			}
-		}
 	}
 
 	memset(&sto, 0, sizeof(siptrace_data_t));
