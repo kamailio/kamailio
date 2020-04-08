@@ -43,6 +43,7 @@ extern int hep_vendor_id;
 extern str hep_auth_key_str;
 extern str trace_send_sock_str;
 extern sip_uri_t *trace_send_sock_uri;
+extern socket_info_t *trace_send_sock_info;
 extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
 
@@ -588,13 +589,18 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 
 	if(trace_send_sock_str.s) {
 		LM_DBG("send sock activated, grep for the sock_info\n");
-		si = grep_sock_info(&trace_send_sock_uri->host,
-				trace_send_sock_uri->port_no,
-				trace_send_sock_uri->proto);
-		if(!si) {
-			LM_WARN("cannot grep socket info\n");
+		if(trace_send_sock_info) {
+			si = trace_send_sock_info;
 		} else {
-			LM_DBG("found socket while grep: [%.*s] [%.*s]\n", si->name.len,
+			si = grep_sock_info(&trace_send_sock_uri->host,
+					trace_send_sock_uri->port_no,
+					trace_send_sock_uri->proto);
+		}
+		if(!si) {
+			LM_WARN("local socket not found for: [%.*s]\n",
+					trace_send_sock_str.len, trace_send_sock_str.s);
+		} else {
+			LM_DBG("using local send socket: [%.*s] [%.*s]\n", si->name.len,
 					si->name.s, si->address_str.len, si->address_str.s);
 			dst.send_sock = si;
 		}

@@ -171,6 +171,7 @@ int trace_xheaders_read = 0;
 
 str trace_send_sock_str = {0, 0};
 sip_uri_t *trace_send_sock_uri = 0;
+socket_info_t *trace_send_sock_info = 0;
 
 str trace_dup_uri_str = {0, 0};
 sip_uri_t *trace_dup_uri = 0;
@@ -365,6 +366,9 @@ static int mod_init(void)
 		if(!trace_send_sock_uri->port_no) {
 			trace_send_sock_uri->port_no = SIP_PORT;
 		}
+		trace_send_sock_info = grep_sock_info(&trace_send_sock_uri->host,
+				trace_send_sock_uri->port_no,
+				trace_send_sock_uri->proto);
 	}
 
 	if(_siptrace_init_mode==SIPTRACE_INIT_MODE_ALL

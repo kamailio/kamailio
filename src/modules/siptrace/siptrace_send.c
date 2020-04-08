@@ -42,6 +42,7 @@ extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
 extern str trace_send_sock_str;
 extern sip_uri_t *trace_send_sock_uri;
+extern socket_info_t *trace_send_sock_info;
 
 /**
  *
@@ -316,13 +317,18 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 	if(pdst->send_sock == NULL) {
 		if(trace_send_sock_str.s) {
 			LM_DBG("send sock activated, grep for the sock_info\n");
-			pdst->send_sock = grep_sock_info(&trace_send_sock_uri->host,
-					trace_send_sock_uri->port_no,
-					trace_send_sock_uri->proto);
-			if(!pdst->send_sock) {
-				LM_WARN("cannot grep socket info\n");
+			if(trace_send_sock_info) {
+				pdst->send_sock = trace_send_sock_info;
 			} else {
-				LM_DBG("found socket while grep: [%.*s] [%.*s]\n",
+				pdst->send_sock = grep_sock_info(&trace_send_sock_uri->host,
+						trace_send_sock_uri->port_no,
+						trace_send_sock_uri->proto);
+			}
+			if(!pdst->send_sock) {
+				LM_WARN("local socket not found for: [%.*s]\n",
+						trace_send_sock_str.len, trace_send_sock_str.s);
+			} else {
+				LM_DBG("using local send socket: [%.*s] [%.*s]\n",
 						pdst->send_sock->name.len,
 						pdst->send_sock->name.s, pdst->send_sock->address_str.len,
 						pdst->send_sock->address_str.s);
