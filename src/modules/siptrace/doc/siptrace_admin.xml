@@ -449,22 +449,46 @@ modparam("siptrace", "trace_delayed", 1)
 </programlisting>
                 </example>
         </section>
-	<section id="siptrace.p.force_send_sock">
-                <title><varname>force_send_sock</varname> (str)</title>
+	<section id="siptrace.p.send_sock_name">
+                <title><varname>send_sock_name</varname> (str)</title>
+                <para>
+			The name of the local listen socket from where to send
+			the duplicated traffic via SIP or HEP. In the absence of this parameter
+			&kamailio; automatically picks an interface. It has priority over
+			'send_sock_addr' parameter.
+                </para>
+                <example>
+                <title>Set <varname>send_sock_name</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "send_sock_name", "sock1")
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="siptrace.p.send_sock_addr">
+                <title><varname>send_sock_addr</varname> (str)</title>
                 <para>
 			The local interface in the form of SIP URI from where to send
 			the duplicated traffic. In the absence of this parameter
 			&kamailio; automatically picks an interface.
                 </para>
                 <example>
-                <title>Set <varname>force_send_sock</varname> parameter</title>
+                <title>Set <varname>send_sock_addr</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
-modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
+modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
 ...
 </programlisting>
                 </example>
         </section>
+	<section id="siptrace.p.force_send_sock">
+                <title><varname>force_send_sock</varname> (str)</title>
+				<para>It is the same as 'send_sock_addr' parameter, this being
+				kept for backward compatibility when 'send_sock_name' and
+				'send_sock_addr' were introduced.</para>
+        </section>
+
 	<section id="siptrace.p.trace_init_mode">
                 <title><varname>trace_init_mode</varname> (integer)</title>
 				<para>
