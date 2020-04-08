@@ -3075,7 +3075,7 @@ static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 				rpc->fault(c, 500, "Failed to create the structure");
 				return;
 			}
-			if(rpc->struct_add(h, "ddSSSSSd",
+			if(rpc->struct_add(h, "ddSSSSSdddd",
 					"h_entry", dlg->h_entry,
 					"h_id", dlg->h_id,
 					"from_uri", &dlg->from_uri,
@@ -3083,6 +3083,9 @@ static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 					"call-id", &dlg->callid,
 					"from_tag", &dlg->tag[DLG_CALLER_LEG],
 					"to_tag", &dlg->tag[DLG_CALLER_LEG],
+					"init_ts", dlg->init_ts,
+					"start_ts", dlg->start_ts,
+					"end_ts", dlg->end_ts,
 					"state", dlg->state) < 0) {
 				rpc->fault(c, 500, "Failed to add fields");
 				return;
