@@ -874,16 +874,18 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			orig_t = tmb.t_gett();
 			if(tmb.t_lookup_request(msg,0,&canceled)) {
 				t_invite = tmb.t_gett();
-				if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
-					LM_DBG("Transaction is already been traced, skipping.\n");
-					ret = 1;
+				if (t_invite!=T_NULL_CELL) {
+					if (t_invite->uas.request->msg_flags & FL_SIPTRACE) {
+						LM_DBG("Transaction is already been traced, skipping.\n");
+						ret = 1;
+					}
+					tmb.t_release_transaction( t_invite );
+					tmb.t_unref(msg);
 				}
-				tmb.t_release_transaction( t_invite );
-				tmb.t_unref(msg);
-				tmb.t_sett(orig_t, T_BR_UNDEFINED);
-				if (ret)
-					return 1;
 			}
+			tmb.t_sett(orig_t, T_BR_UNDEFINED);
+			if (ret)
+				return 1;
 		}
 
 		if (trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
