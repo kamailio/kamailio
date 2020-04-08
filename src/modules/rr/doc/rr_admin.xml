@@ -47,12 +47,12 @@
 
     <itemizedlist>
       <listitem>
-        <para>add_rr_param() - see <xref linkend="add-rr-param-id"/></para>
+        <para>add_rr_param() - see <xref linkend="rr.f.add_rr_param"/></para>
       </listitem>
 
       <listitem>
         <para>check_route_param() - see <xref
-        linkend="check-route-param-id"/></para>
+        linkend="rr.f.check_route_param"/></para>
       </listitem>
     </itemizedlist>
 
@@ -547,8 +547,8 @@ record_route_advertised_address("1.2.3.4:5080");
       <para>Adds a parameter to the Record-Route URI (param must be in
       <quote>;name=value</quote> format. The function may be called also
       before or after the record_route() or record_route_advertised_address()
-      calls (see <xref linkend="record-route-id"/> or <xref
-      linkend="record-route-adv-addr-id"/>)).</para>
+      calls (see <xref linkend="rr.f.record_route"/> or <xref
+      linkend="rr.f.record_route_adv_addr"/>)).</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -581,7 +581,7 @@ add_rr_param(";nat=yes");
       <para>The function checks if the URI parameters of the local Route
       header (corresponding to the local server) matches the given regular
       expression. It must be call after loose_route() (see <xref
-      linkend="loose-route-id"/>).</para>
+      linkend="rr.f.loose_route"/>).</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -612,9 +612,9 @@ if (check_route_param("nat=yes")) {
 
       <para>The function checks the flow direction of in-dialog requests. This
       function uses the <quote>ftag</quote> parameter from the Route header,
-      therefore the append_fromtag (see <xref linkend="append-fromtag-id"/>
+      therefore the append_fromtag (see <xref linkend="rr.p.append_fromtag"/>
       module parameter must be enabled. Also this must be called only after
-      loose_route() (see <xref linkend="loose-route-id"/>).</para>
+      loose_route() (see <xref linkend="rr.f.loose_route"/>).</para>
 
       <para>The function returns true if the <quote>dir</quote> is the same
       with the request's flow direction.</para>
