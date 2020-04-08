@@ -170,6 +170,7 @@ int trace_xheaders_write = 0;
 int trace_xheaders_read = 0;
 
 str trace_send_sock_str = {0, 0};
+str trace_send_sock_name_str = {0, 0};
 sip_uri_t *trace_send_sock_uri = 0;
 socket_info_t *trace_send_sock_info = 0;
 
@@ -244,6 +245,8 @@ static param_export_t params[] = {
 	{"xheaders_read", INT_PARAM, &trace_xheaders_read},
 	{"hep_mode_on", INT_PARAM, &hep_mode_on},
 	{"force_send_sock", PARAM_STR, &trace_send_sock_str},
+	{"send_sock_addr", PARAM_STR, &trace_send_sock_str},
+	{"send_sock_name", PARAM_STR, &trace_send_sock_name_str},
 	{"hep_version", INT_PARAM, &hep_version},
 	{"hep_capture_id", INT_PARAM, &hep_capture_id},
 	{"trace_delayed", INT_PARAM, &trace_delayed},
@@ -346,7 +349,11 @@ static int mod_init(void)
 		}
 	}
 
-	if(trace_send_sock_str.s != 0) {
+	if(trace_send_sock_name_str.s != 0) {
+		trace_send_sock_info = ksr_get_socket_by_name(&trace_send_sock_name_str);
+		trace_send_sock_str.s = NULL;
+		trace_send_sock_str.len = 0;
+	} else if(trace_send_sock_str.s != 0) {
 		trace_send_sock_str.len = strlen(trace_send_sock_str.s);
 		trace_send_sock_uri = (sip_uri_t*)pkg_malloc(sizeof(sip_uri_t));
 		if(trace_send_sock_uri == 0) {

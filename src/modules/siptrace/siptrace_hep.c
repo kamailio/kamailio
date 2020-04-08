@@ -43,6 +43,7 @@ extern int hep_vendor_id;
 extern str hep_auth_key_str;
 extern str trace_send_sock_str;
 extern sip_uri_t *trace_send_sock_uri;
+extern str trace_send_sock_name_str;
 extern socket_info_t *trace_send_sock_info;
 extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
@@ -535,7 +536,6 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	struct timezone tz;
 	struct dest_info dst;
 	struct proxy_l *p = NULL;
-	struct socket_info *si;
 
 	if(!correlationid) {
 		if(msg->callid == NULL && ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
@@ -587,22 +587,24 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);
 
-	if(trace_send_sock_str.s) {
-		LM_DBG("send sock activated, grep for the sock_info\n");
+	if(trace_send_sock_name_str.s) {
+		dst.send_sock = trace_send_sock_info;
+	} else if(trace_send_sock_str.s) {
+		LM_DBG("send sock activated - find the sock info\n");
 		if(trace_send_sock_info) {
-			si = trace_send_sock_info;
+			dst.send_sock = trace_send_sock_info;
 		} else {
-			si = grep_sock_info(&trace_send_sock_uri->host,
+			dst.send_sock = grep_sock_info(&trace_send_sock_uri->host,
 					trace_send_sock_uri->port_no,
 					trace_send_sock_uri->proto);
 		}
-		if(!si) {
+		if(!dst.send_sock) {
 			LM_WARN("local socket not found for: [%.*s]\n",
 					trace_send_sock_str.len, trace_send_sock_str.s);
 		} else {
-			LM_DBG("using local send socket: [%.*s] [%.*s]\n", si->name.len,
-					si->name.s, si->address_str.len, si->address_str.s);
-			dst.send_sock = si;
+			LM_DBG("using local send socket: [%.*s] [%.*s]\n",
+					dst.send_sock->name.len, dst.send_sock->name.s,
+					dst.send_sock->address_str.len, dst.send_sock->address_str.s);
 		}
 	}
 

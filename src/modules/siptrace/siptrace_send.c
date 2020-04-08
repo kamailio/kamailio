@@ -41,6 +41,7 @@ extern int trace_xheaders_read;
 extern str trace_dup_uri_str;
 extern sip_uri_t *trace_dup_uri;
 extern str trace_send_sock_str;
+extern str trace_send_sock_name_str;
 extern sip_uri_t *trace_send_sock_uri;
 extern socket_info_t *trace_send_sock_info;
 
@@ -315,7 +316,9 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 	}
 
 	if(pdst->send_sock == NULL) {
-		if(trace_send_sock_str.s) {
+		if(trace_send_sock_name_str.s) {
+			pdst->send_sock = trace_send_sock_info;
+		} else if(trace_send_sock_str.s) {
 			LM_DBG("send sock activated, grep for the sock_info\n");
 			if(trace_send_sock_info) {
 				pdst->send_sock = trace_send_sock_info;
