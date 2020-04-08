@@ -237,8 +237,8 @@ replaced with tokens like a.b.c.d, f.g.h.j).
 Kamailio Main License: *GPLv2*.
 
 Each source code file refers to the license and copyright details in the top
-of the file. Most of the code is licensed under GPLv2, some parts of the code
-are licensed under BSD.
+of the file. Most of the code is licensed under GPLv2 (with the "any later
+version" clause), some parts of the code are licensed under BSD.
 
 ### License Of New Code Contributions ###
 
