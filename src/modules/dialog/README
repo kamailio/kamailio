@@ -2237,16 +2237,32 @@ kamcmd dlg.is_alive callid123 fromtag123 totag123
 
 9.16. dlg.briefing
 
-   Lists fewer attributes for dialog records in memory.
+   Lists fewer attributes for dialog records in memory. The dialog hash
+   entry and id are added always, the rest of them are a matter of 'attrs'
+   parameter.
 
    Name: dlg.briefing
 
    Parameters:
-     * none - no parameter
+     * attrs - (optional) a list of characters (flags) representing the
+       fields to be added to the response. If is missing, its default
+       value is 'ftcFT' (note the characters are case sensitive).
+       The characters can be:
+          + f - From URI
+          + t - To URI
+          + c - Call-ID
+          + F - From tag
+          + T - To tag
+          + I - Init time
+          + S - Start time
+          + E - End time
+          + s - State
 
    RPC Command Example:
 ...
 kamctl rpc dlg.briefing
+...
+kamctl rpc dlg.briefing "ft"
 ...
 
 10. Exported Variables
