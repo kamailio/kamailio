@@ -3064,9 +3064,17 @@ static const char *rpc_dlg_briefing_doc[2] = {
  */
 static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 {
-	dlg_cell_t *dlg;
-	unsigned int i;
-	void *h;
+	dlg_cell_t *dlg = NULL;
+	unsigned int i = 0;
+	int n = 0;
+	str fmt = STR_NULL;
+	void *h = NULL;
+
+	n = rpc->scan(c, "S", &fmt);
+	if (n < 1) {
+		fmt.s = "ftcFT";
+		fmt.len = 5;
+	}
 
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
@@ -3075,22 +3083,81 @@ static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 				rpc->fault(c, 500, "Failed to create the structure");
 				return;
 			}
-			if(rpc->struct_add(h, "ddSSSSSdddd",
+			if(rpc->struct_add(h, "dd",
 					"h_entry", dlg->h_entry,
-					"h_id", dlg->h_id,
-					"from_uri", &dlg->from_uri,
-					"to_uri", &dlg->to_uri,
-					"call-id", &dlg->callid,
-					"from_tag", &dlg->tag[DLG_CALLER_LEG],
-					"to_tag", &dlg->tag[DLG_CALLER_LEG],
-					"init_ts", dlg->init_ts,
-					"start_ts", dlg->start_ts,
-					"end_ts", dlg->end_ts,
-					"state", dlg->state) < 0) {
+					"h_id", dlg->h_id) < 0) {
 				rpc->fault(c, 500, "Failed to add fields");
 				return;
 
 			}
+			for(n=0; n<fmt.len; n++) {
+				switch(fmt.s[n]) {
+					case 'f':
+						if(rpc->struct_add(h, "S",
+									"from_uri", &dlg->from_uri) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 't':
+						if(rpc->struct_add(h, "S",
+									"to_uri", &dlg->to_uri) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'c':
+						if(rpc->struct_add(h, "S",
+									"call-id", &dlg->callid) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'F':
+						if(rpc->struct_add(h, "S",
+									"from_tag", &dlg->tag[DLG_CALLER_LEG]) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'T':
+						if(rpc->struct_add(h, "S",
+									"to_tag", &dlg->tag[DLG_CALLER_LEG]) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'I':
+						if(rpc->struct_add(h, "d",
+									"init_ts", dlg->init_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'S':
+						if(rpc->struct_add(h, "d",
+									"start_ts", dlg->start_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'E':
+						if(rpc->struct_add(h, "d",
+									"end_ts", dlg->end_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 's':
+						if(rpc->struct_add(h, "d",
+									"state", dlg->state) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+				}
+			}
+
 		}
 		dlg_unlock( d_table, &(d_table->entries[i]) );
 	}
