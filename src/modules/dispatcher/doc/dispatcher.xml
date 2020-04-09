@@ -59,6 +59,11 @@
                 <surname>Chavanton</surname>
                 <email>jchavanton@gmail.com</email>
             </editor>
+            <editor>
+                <firstname>Federico</firstname>
+                <surname>Cabiddu</surname>
+                <email>federico.cabiddu@gmail.com</email>
+            </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2004</year>
@@ -84,6 +89,10 @@
             <year>2017, 2018</year>
             <holder>Julien chavanton, Flowroute</holder>
         </copyright>
+	<copyright>
+        <year>2020</year>
+        <holder>Federico Cabiddu, Libon</holder>
+   </copyright>
    </bookinfo>
     <toc></toc>
     

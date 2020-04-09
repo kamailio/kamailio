@@ -324,6 +324,9 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 9
 				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
 			dest->attrs.ping_from = pit->body;
+		} else if(pit->name.len == 7 
+				  && strncasecmp(pit->name.s, "obproxy", 7) == 0) {
+			dest->attrs.obproxy = pit->body;
 		}
 	}
 	if(params_list)
@@ -3295,6 +3298,7 @@ void ds_ping_set(ds_set_t *node)
 	uac_req_t uac_r;
 	int i, j;
 	str ping_from;
+	str obproxy;
 
 	if(!node)
 		return;
@@ -3342,10 +3346,20 @@ void ds_ping_set(ds_set_t *node)
 				LM_DBG("Default ping_from: %.*s\n", ping_from.len, ping_from.s);
 			}
 
+			if(node->dlist[j].attrs.obproxy.s != NULL
+					&& node->dlist[j].attrs.obproxy.len > 0) {
+				obproxy = node->dlist[j].attrs.obproxy;
+				LM_DBG("outbound proxy: %.*s\n", obproxy.len, obproxy.s);
+			}
+			else {
+				obproxy = ds_outbound_proxy;
+				LM_DBG("Default outbound proxy: %.*s\n", ds_outbound_proxy.len, ds_outbound_proxy.s);
+			}
+
 			gettimeofday(&node->dlist[j].latency_stats.start, NULL);
 
 			if(tmb.t_request(&uac_r, &node->dlist[j].uri, &node->dlist[j].uri,
-					   &ping_from, &ds_outbound_proxy)
+					   &ping_from, &obproxy)
 					< 0) {
 				LM_ERR("unable to ping [%.*s]\n", node->dlist[j].uri.len,
 						node->dlist[j].uri.s);

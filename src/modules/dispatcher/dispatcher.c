@@ -1573,7 +1573,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSS",
+			if(rpc->struct_add(wh, "SSdddSSS",
 						"BODY", &(node->dlist[j].attrs.body),
 						"DUID", (node->dlist[j].attrs.duid.s)
 									? &(node->dlist[j].attrs.duid) : &data,
@@ -1583,7 +1583,9 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 						"SOCKET", (node->dlist[j].attrs.socket.s)
 									? &(node->dlist[j].attrs.socket) : &data,
 						"SOCKNAME", (node->dlist[j].attrs.sockname.s)
-									? &(node->dlist[j].attrs.sockname) : &data)
+									? &(node->dlist[j].attrs.sockname) : &data,
+						"OBPROXY", (node->dlist[j].attrs.obproxy.s)
+									? &(node->dlist[j].attrs.obproxy) : &data)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
