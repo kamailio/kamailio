@@ -241,8 +241,11 @@ end
 
 -- IP authorization and user uthentication
 function ksr_route_auth()
+	if not KSR.auth then
+		return 1;
+	end
 
-	if not KSR.is_REGISTER() then
+	if KSR.permissions and not KSR.is_REGISTER() then
 		if KSR.permissions.allow_source_address(1)>0 then
 			-- source IP allowed
 			return 1;
@@ -274,6 +277,9 @@ end
 
 -- Caller NAT detection
 function ksr_route_natdetect()
+	if not KSR.nathelper then
+		return 1;
+	end
 	KSR.force_rport();
 	if KSR.nathelper.nat_uac_test(19)>0 then
 		if KSR.is_REGISTER() then
@@ -288,6 +294,9 @@ end
 
 -- RTPProxy control
 function ksr_route_natmanage()
+	if not KSR.rtpproxy then
+		return 1;
+	end
 	if KSR.siputils.is_request()>0 then
 		if KSR.siputils.has_totag()>0 then
 			if KSR.rr.check_route_param("nat=yes")>0 then
@@ -318,6 +327,9 @@ end
 
 -- URI update for dialog requests
 function ksr_route_dlguri()
+	if not KSR.nathelper then
+		return 1;
+	end
 	if not KSR.isdsturiset() then
 		KSR.nathelper.handle_ruri_alias();
 	end
