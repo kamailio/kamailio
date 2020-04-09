@@ -28,6 +28,10 @@ Julien Chavanton
 
    <jchavanton@gmail.com>
 
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -39,6 +43,8 @@ Julien Chavanton
    Copyright © 2015 Alessandro Arrichiello, Hewlett Packard
 
    Copyright © 2017, 2018 Julien chavanton, Flowroute
+
+   Copyright © 2020 Federico Cabiddu, Libon
      __________________________________________________________________
 
    Table of Contents
@@ -1137,6 +1143,7 @@ DEST: {
                 RWEIGHT: 50
                 SOCKET:
                 SOCKNAME:
+                OBPROXY:
         }
         LATENCY: {
                 AVG: 20.104000
@@ -1634,6 +1641,8 @@ kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
        keepalives and has priority over 'socket' attribute.
      * 'ping_from' - used to set the From URI in OPTIONS keepalives. It
        overwrites the general ds_ping_from parameter.
+     * 'obproxy' - SIP URI of outbound proxy to be used when sending
+       pings. It overwrites the general ds_outbound_proxy parameter.
 
 6.1.2. File Format
 
