@@ -577,12 +577,12 @@ static int sip_trace_insert_db(db_key_t *db_keys, db_val_t *db_vals,
 		int db_nkeys, char *dtext)
 {
 	LM_DBG("storing info - %s\n", dtext);
-	if(trace_db_mode = 2 && db_funcs.insert_async != NULL) {
+	if(trace_db_mode == 2 && db_funcs.insert_async != NULL) {
 		if(db_funcs.insert_async(db_con, db_keys, db_vals, db_nkeys) < 0) {
 			LM_ERR("error storing trace - async - %s\n", dtext);
 			return -1;
 		}
-	} else if(trace_db_mode != 1 && db_funcs.insert_delayed != NULL) {
+	} else if(trace_db_mode == 1 && db_funcs.insert_delayed != NULL) {
 		if(db_funcs.insert_delayed(db_con, db_keys, db_vals, db_nkeys) < 0) {
 			LM_ERR("error storing trace - delayed - %s\n", dtext);
 			return -1;
@@ -907,7 +907,8 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		}
 
 		if (msg->first_line.type != SIP_REQUEST ||
-				(trace_type == SIPTRACE_DIALOG && msg->first_line.u.request.method_value != METHOD_INVITE)) {
+				(trace_type == SIPTRACE_DIALOG
+				 && msg->first_line.u.request.method_value != METHOD_INVITE)) {
 			LM_WARN("When tracing a %s sip_trace() has to be initiated on the %s\n",
 					trace_type == SIPTRACE_TRANSACTION ? "transaction" : "dialog",
 					trace_type == SIPTRACE_TRANSACTION ? "request message" : "initial invite");
@@ -956,7 +957,8 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 			} else {
 				/* serialize what's in info */
 				/* save correlation id in siptrace_info avp
-				 * we want to have traced user avp value at the moment of sip_trace function call*/
+				 * we want to have traced user avp value at the moment
+				 * of sip_trace function call */
 				if (trace_add_info_xavp(info) < 0) {
 					LM_ERR("failed to serialize siptrace info! Won't trace dialog!\n");
 					return -1;
@@ -985,7 +987,8 @@ trace_current:
 }
 
 /**
- * Send sip trace with destination and correlation id and specify what messages to be traced
+ * Send sip trace with destination and correlation id
+ * and specify what messages to be traced
  */
 static int ki_sip_trace_dst_cid_flag(sip_msg_t *msg, str *duri, str *cid, str* sflag)
 {
@@ -1116,6 +1119,30 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 			(correlation_id)?&correlation_id_str:NULL, NULL, trace_type);
 }
 
+/**
+ * link call-id, method, from-tag and to-tag
+ */
+static int sip_trace_msg_attrs(sip_msg_t *msg, siptrace_data_t *sto)
+{
+	if(sip_trace_prepare(msg) < 0) {
+		return -1;
+	}
+
+	sto->callid = msg->callid->body;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		sto->method = msg->first_line.u.request.method;
+	} else {
+		sto->method = get_cseq(msg)->method;
+	}
+
+	sto->fromtag = get_from(msg)->tag_value;
+	sto->totag = get_to(msg)->tag_value;
+
+	return 0;
+
+}
+
 static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		str *correlation_id_str, char *dir)
 {
@@ -1138,20 +1165,8 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 		return -1;
 	}
 
-	if(sip_trace_prepare(msg) < 0)
+	if(sip_trace_msg_attrs(msg, &sto) < 0) {
 		return -1;
-
-	sto.callid = msg->callid->body;
-
-	if(msg->first_line.type == SIP_REQUEST) {
-		sto.method = msg->first_line.u.request.method;
-	} else {
-		if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq == NULL
-				|| msg->cseq->parsed == NULL) {
-			LM_ERR("cannot parse cseq header\n");
-			return -1;
-		}
-		sto.method = get_cseq(msg)->method;
 	}
 
 	if(msg->first_line.type == SIP_REPLY) {
@@ -1232,9 +1247,6 @@ static int sip_trace(sip_msg_t *msg, dest_info_t *dst,
 
 		sto.dir = "out";
 	}
-
-	sto.fromtag = get_from(msg)->tag_value;
-	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	if(msg->first_line.type == SIP_REPLY) {
@@ -1357,8 +1369,8 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		}
 	}
 
-	/* for incoming cancel this is the only play(i've found) where I have the CANCEL transaction
-	 * and can register a callback for the reply */
+	/* for incoming cancel this is the only place where can get the CANCEL
+	 * transaction and can register a callback for the reply */
 	memset(&sto, 0, sizeof(siptrace_data_t));
 
 	if(traced_user_avp.n != 0)
@@ -1370,8 +1382,9 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	if(sip_trace_prepare(msg) < 0)
+	if(sip_trace_msg_attrs(msg, &sto) < 0) {
 		return;
+	}
 
 	if(ps->send_buf.len > 0) {
 		sto.body = ps->send_buf;
@@ -1379,8 +1392,6 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		sto.body.s = "No request buffer";
 		sto.body.len = sizeof("No request buffer") - 1;
 	}
-
-	sto.callid = msg->callid->body;
 
 	if(ps->send_buf.len > 10) {
 		sto.method.s = ps->send_buf.s;
@@ -1453,9 +1464,6 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		sto.dir = "out";
 	}
 
-	sto.fromtag = get_from(msg)->tag_value;
-	sto.totag = get_to(msg)->tag_value;
-
 #ifdef STATISTICS
 	sto.stat = siptrace_req;
 #endif
@@ -1501,15 +1509,12 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	if(sip_trace_prepare(msg) < 0)
+	if(sip_trace_msg_attrs(msg, &sto) < 0) {
 		return;
+	}
 
 	sto.body.s = msg->buf;
 	sto.body.len = msg->len;
-
-	sto.callid = msg->callid->body;
-
-	sto.method = get_cseq(msg)->method;
 
 	sto.status.s = int2strbuf(ps->code, statusbuf, INT2STR_MAX_LEN, &sto.status.len);
 	if(sto.status.s == 0) {
@@ -1545,18 +1550,17 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 
 	sto.dir = "in";
 
-	sto.fromtag = get_from(msg)->tag_value;
-	sto.totag = get_to(msg)->tag_value;
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;
 #endif
 
 	if (info->uriState == STRACE_RAW_URI) {
-		LM_BUG("uriState must be either UNUSED or PARSED here! must be a bug! Message won't be traced!\n");
+		LM_BUG("uriState must be either UNUSED or PARSED here - skip tracing!\n");
 		return;
 	}
 
-	sip_trace_store(&sto, info->uriState == STRACE_PARSED_URI ? &info->u.dest_info : NULL, NULL);
+	sip_trace_store(&sto, (info->uriState == STRACE_PARSED_URI)
+			? &info->u.dest_info : NULL, NULL);
 	return;
 }
 
@@ -1605,8 +1609,9 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 		faked = 1;
 	}
 
-	if(sip_trace_prepare(msg) < 0)
+	if(sip_trace_msg_attrs(msg, &sto) < 0) {
 		return;
+	}
 
 	if(faked == 0) {
 		if(ps->send_buf.len > 0) {
@@ -1632,9 +1637,6 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 			sto.body.len = sizeof("No reply buffer") - 1;
 		}
 	}
-
-	sto.callid = msg->callid->body;
-	sto.method = get_cseq(msg)->method;
 
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
 		sto.fromip = trace_local_ip;
@@ -1677,8 +1679,6 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	sto.dir = "out";
-	sto.fromtag = get_from(msg)->tag_value;
-	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;
@@ -1813,14 +1813,12 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 
 	msg = req;
 
-	if(sip_trace_prepare(msg) < 0)
+	if(sip_trace_msg_attrs(msg, &sto) < 0) {
 		return;
+	}
 
 	sto.body.s = (slcbp->reply) ? slcbp->reply->s : "";
 	sto.body.len = (slcbp->reply) ? slcbp->reply->len : 0;
-
-	sto.callid = msg->callid->body;
-	sto.method = msg->first_line.u.request.method;
 
 	if(trace_local_ip.len > 0) {
 		sto.fromip = trace_local_ip;
@@ -1862,8 +1860,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	}
 
 	sto.dir = "out";
-	sto.fromtag = get_from(msg)->tag_value;
-	sto.totag = get_to(msg)->tag_value;
 
 #ifdef STATISTICS
 	sto.stat = siptrace_rpl;
@@ -2069,16 +2065,9 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 			goto afterdb;
 		}
 
-		if(sip_trace_prepare(&tmsg) < 0) {
+		if(sip_trace_msg_attrs(&tmsg, &sto) < 0) {
 			free_sip_msg(&tmsg);
 			goto afterdb;
-		}
-
-		sto.callid = tmsg.callid->body;
-		if(tmsg.first_line.type == SIP_REQUEST) {
-			sto.method = tmsg.first_line.u.request.method;
-		} else {
-			sto.method = get_cseq(&tmsg)->method;
 		}
 
 		if(tmsg.first_line.type == SIP_REPLY) {
@@ -2087,8 +2076,6 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 			sto.status.s = "";
 			sto.status.len = 0;
 		}
-		sto.fromtag = get_from(&tmsg)->tag_value;
-		sto.totag = get_to(&tmsg)->tag_value;
 
 		gettimeofday(&sto.tv, NULL);
 		sip_trace_store_db(&sto);
@@ -2180,16 +2167,9 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 			goto afterdb;
 		}
 
-		if(sip_trace_prepare(&tmsg) < 0) {
+		if(sip_trace_msg_attrs(&tmsg, &sto) < 0) {
 			free_sip_msg(&tmsg);
 			goto afterdb;
-		}
-
-		sto.callid = tmsg.callid->body;
-		if(tmsg.first_line.type == SIP_REQUEST) {
-			sto.method = tmsg.first_line.u.request.method;
-		} else {
-			sto.method = get_cseq(&tmsg)->method;
 		}
 
 		if(tmsg.first_line.type == SIP_REPLY) {
@@ -2198,8 +2178,6 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 			sto.status.s = "";
 			sto.status.len = 0;
 		}
-		sto.fromtag = get_from(&tmsg)->tag_value;
-		sto.totag = get_to(&tmsg)->tag_value;
 
 		gettimeofday(&sto.tv, NULL);
 		sip_trace_store_db(&sto);
