@@ -567,6 +567,24 @@ static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 	return ret;
 }
 
+static int sip_trace_insert_db(db_key_t *db_keys, db_val_t *db_vals,
+		int db_nkeys, char *dtext)
+{
+	LM_DBG("storing info - %s\n", dtext);
+	if(trace_delayed != 0 && db_funcs.insert_delayed != NULL) {
+		if(db_funcs.insert_delayed(db_con, db_keys, db_vals, db_nkeys) < 0) {
+			LM_ERR("error storing trace - %s\n", dtext);
+			return -1;
+		}
+	} else {
+		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+			LM_ERR("error storing trace - %s\n", dtext);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static int sip_trace_store_db(siptrace_data_t *sto)
 {
 	if((trace_to_database == 0) && ((_siptrace_mode & SIPTRACE_MODE_DB) == 0)) {
@@ -646,17 +664,8 @@ static int sip_trace_store_db(siptrace_data_t *sto)
 		db_vals[9].val.str_val.s = "";
 		db_vals[9].val.str_val.len = 0;
 
-		LM_DBG("storing info...\n");
-		if(trace_delayed != 0 && db_funcs.insert_delayed != NULL) {
-			if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-				LM_ERR("error storing trace\n");
-				goto error;
-			}
-		} else {
-			if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-				LM_ERR("error storing trace\n");
-				goto error;
-			}
+		if(sip_trace_insert_db(db_keys, db_vals, NR_KEYS, "no user") < 0) {
+			goto error;
 		}
 #ifdef STATISTICS
 		update_stat(sto->stat, 1);
@@ -668,34 +677,16 @@ static int sip_trace_store_db(siptrace_data_t *sto)
 
 	db_vals[9].val.str_val = sto->avp_value.s;
 
-	LM_DBG("storing info...\n");
-	if(trace_delayed != 0 && db_funcs.insert_delayed != NULL) {
-		if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-			LM_ERR("error storing trace\n");
-			goto error;
-		}
-	} else {
-		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-			LM_ERR("error storing trace\n");
-			goto error;
-		}
+	if(sip_trace_insert_db(db_keys, db_vals, NR_KEYS, "first user") < 0) {
+		goto error;
 	}
 
 	sto->avp = search_next_avp(&sto->state, &sto->avp_value);
 	while(sto->avp != NULL) {
 		db_vals[9].val.str_val = sto->avp_value.s;
 
-		LM_DBG("storing info...\n");
-		if(trace_delayed != 0 && db_funcs.insert_delayed != NULL) {
-			if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-				LM_ERR("error storing trace\n");
-				goto error;
-			}
-		} else {
-			if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-				LM_ERR("error storing trace\n");
-				goto error;
-			}
+		if(sip_trace_insert_db(db_keys, db_vals, NR_KEYS, "extra user") < 0) {
+			goto error;
 		}
 		sto->avp = search_next_avp(&sto->state, &sto->avp_value);
 	}
