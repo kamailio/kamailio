@@ -54,13 +54,14 @@ Camille Oudot
               3.13. hep_mode_on (integer)
               3.14. hep_version (integer)
               3.15. hep_capture_id (integer)
-              3.16. trace_delayed (integer)
-              3.17. send_sock_name (str)
-              3.18. send_sock_addr (str)
-              3.19. force_send_sock (str)
-              3.20. trace_init_mode (integer)
-              3.21. trace_mode (integer)
-              3.22. auth_key (integer)
+              3.16. trace_db_mode (integer)
+              3.17. trace_delayed (integer)
+              3.18. send_sock_name (str)
+              3.19. send_sock_addr (str)
+              3.20. force_send_sock (str)
+              3.21. trace_init_mode (integer)
+              3.22. trace_mode (integer)
+              3.23. auth_key (integer)
 
         4. Functions
 
@@ -92,16 +93,17 @@ Camille Oudot
    1.13. Set hep_mode_on parameter
    1.14. Set hep_version parameter
    1.15. Set hep_capture_id parameter
-   1.16. Set trace_delayed parameter
-   1.17. Set send_sock_name parameter
-   1.18. Set send_sock_addr parameter
-   1.19. Set trace_init_mode parameter
-   1.20. Set trace_mode parameter
-   1.21. Set auth_key parameter
-   1.22. sip_trace() usage
-   1.23. sip_trace_mode() usage
-   1.24. hlog() usage
-   1.25. Send relayed ACK message
+   1.16. Set trace_db_mode parameter
+   1.17. Set trace_delayed parameter
+   1.18. Set send_sock_name parameter
+   1.19. Set send_sock_addr parameter
+   1.20. Set trace_init_mode parameter
+   1.21. Set trace_mode parameter
+   1.22. Set auth_key parameter
+   1.23. sip_trace() usage
+   1.24. sip_trace_mode() usage
+   1.25. hlog() usage
+   1.26. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -130,13 +132,14 @@ Chapter 1. Admin Guide
         3.13. hep_mode_on (integer)
         3.14. hep_version (integer)
         3.15. hep_capture_id (integer)
-        3.16. trace_delayed (integer)
-        3.17. send_sock_name (str)
-        3.18. send_sock_addr (str)
-        3.19. force_send_sock (str)
-        3.20. trace_init_mode (integer)
-        3.21. trace_mode (integer)
-        3.22. auth_key (integer)
+        3.16. trace_db_mode (integer)
+        3.17. trace_delayed (integer)
+        3.18. send_sock_name (str)
+        3.19. send_sock_addr (str)
+        3.20. force_send_sock (str)
+        3.21. trace_init_mode (integer)
+        3.22. trace_mode (integer)
+        3.23. auth_key (integer)
 
    4. Functions
 
@@ -208,13 +211,14 @@ Chapter 1. Admin Guide
    3.13. hep_mode_on (integer)
    3.14. hep_version (integer)
    3.15. hep_capture_id (integer)
-   3.16. trace_delayed (integer)
-   3.17. send_sock_name (str)
-   3.18. send_sock_addr (str)
-   3.19. force_send_sock (str)
-   3.20. trace_init_mode (integer)
-   3.21. trace_mode (integer)
-   3.22. auth_key (integer)
+   3.16. trace_db_mode (integer)
+   3.17. trace_delayed (integer)
+   3.18. send_sock_name (str)
+   3.19. send_sock_addr (str)
+   3.20. force_send_sock (str)
+   3.21. trace_init_mode (integer)
+   3.22. trace_mode (integer)
+   3.23. auth_key (integer)
 
 3.1. db_url (str)
 
@@ -421,48 +425,65 @@ modparam("siptrace", "hep_version", 3)
 modparam("siptrace", "hep_capture_id", 234)
 ...
 
-3.16. trace_delayed (integer)
+3.16. trace_db_mode (integer)
 
-   Use “INSERT DELAYED” to store to database when it is available, instead
-   of “INSERT”.
+   If set to 1, the module uses “INSERT DELAYED” to store to database
+   (when it is available, otherwise falls back to “INSERT”).
 
-   Default value is 0 (off).
+   If set to 2, the module uses “ASYNC-INSERT” to store to database (when
+   it is available, otherwise falls back to “INSERT”).
 
-   Example 1.16. Set trace_delayed parameter
+   Default value is 0 (use “INSERT”).
+
+   Example 1.16. Set trace_db_mode parameter
+...
+modparam("siptrace", "trace_db_mode", 1)
+...
+
+3.17. trace_delayed (integer)
+
+   Kept for backward compatibily, use trace_db_mode instead.
+
+   If set to non-zero, ot sets trace_db_mode paremter to 1 when the module
+   is initialized.
+
+   Default value is 0.
+
+   Example 1.17. Set trace_delayed parameter
 ...
 modparam("siptrace", "trace_delayed", 1)
 ...
 
-3.17. send_sock_name (str)
+3.18. send_sock_name (str)
 
    The name of the local listen socket from where to send the duplicated
    traffic via SIP or HEP. In the absence of this parameter Kamailio
    automatically picks an interface. It has priority over 'send_sock_addr'
    parameter.
 
-   Example 1.17. Set send_sock_name parameter
+   Example 1.18. Set send_sock_name parameter
 ...
 modparam("siptrace", "send_sock_name", "sock1")
 ...
 
-3.18. send_sock_addr (str)
+3.19. send_sock_addr (str)
 
    The local interface in the form of SIP URI from where to send the
    duplicated traffic. In the absence of this parameter Kamailio
    automatically picks an interface.
 
-   Example 1.18. Set send_sock_addr parameter
+   Example 1.19. Set send_sock_addr parameter
 ...
 modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
 ...
 
-3.19. force_send_sock (str)
+3.20. force_send_sock (str)
 
    It is the same as 'send_sock_addr' parameter, this being kept for
    backward compatibility when 'send_sock_name' and 'send_sock_addr' were
    introduced.
 
-3.20. trace_init_mode (integer)
+3.21. trace_init_mode (integer)
 
    Control what tracing modes are initialized.
 
@@ -475,12 +496,12 @@ modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
 
    Default value is 0.
 
-   Example 1.19. Set trace_init_mode parameter
+   Example 1.20. Set trace_init_mode parameter
 ...
 modparam("siptrace", "trace_init_mode", 1)
 ...
 
-3.21. trace_mode (integer)
+3.22. trace_mode (integer)
 
    If not set to 0, the module uses core events triggered when receiving
    or sending SIP traffic to store it to database or mirror it to a SIP
@@ -501,7 +522,7 @@ modparam("siptrace", "trace_init_mode", 1)
 
    Default value is 0.
 
-   Example 1.20. Set trace_mode parameter
+   Example 1.21. Set trace_mode parameter
 ...
 modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
@@ -509,13 +530,13 @@ modparam("siptrace", "trace_mode", 1)
 modparam("siptrace", "trace_mode", 3)
 ...
 
-3.22. auth_key (integer)
+3.23. auth_key (integer)
 
    A string with an authorization key. Supported on HEPv3 only.
 
    Default value is empty.
 
-   Example 1.21. Set auth_key parameter
+   Example 1.22. Set auth_key parameter
 ...
 modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 ...
@@ -548,7 +569,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.22. sip_trace() usage
+   Example 1.23. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -574,7 +595,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.23. sip_trace_mode() usage
+   Example 1.24. sip_trace_mode() usage
 ...
 sip_trace_mode("t");
 ...
@@ -591,7 +612,7 @@ sip_trace_mode("t");
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.24. hlog() usage
+   Example 1.25. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -644,7 +665,7 @@ kamcmd siptrace.status check
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.25. Send relayed ACK message
+   Example 1.26. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {
