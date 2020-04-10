@@ -430,14 +430,42 @@ modparam("siptrace", "hep_capture_id", 234)
 </programlisting>
                 </example>
         </section>
-	<section id="siptrace.p.trace_delayed">
-                <title><varname>trace_delayed</varname> (integer)</title>
+	<section id="siptrace.p.trace_db_mode">
+                <title><varname>trace_db_mode</varname> (integer)</title>
                 <para>
-		Use <quote>INSERT DELAYED</quote> to store to database when it is available,
-		instead of <quote>INSERT</quote>.
+				If set to 1, the module uses <quote>INSERT DELAYED</quote> to
+				store to database (when it is available, otherwise falls back
+				to <quote>INSERT</quote>).
                 </para>
                 <para>
-                Default value is <emphasis>0 (off)</emphasis>.
+				If set to 2, the module uses <quote>ASYNC-INSERT</quote> to
+				store to database (when it is available, otherwise falls back
+				to <quote>INSERT</quote>).
+                </para>
+                <para>
+                Default value is <emphasis>0 (use <quote>INSERT</quote>)</emphasis>.
+                </para>
+                <example>
+                <title>Set <varname>trace_db_mode</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "trace_db_mode", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="siptrace.p.trace_delayed">
+                <title><varname>trace_delayed</varname> (integer)</title>
+				<para>
+					Kept for backward compatibily, use trace_db_mode instead.
+                </para>
+                <para>
+					If set to non-zero, ot sets trace_db_mode paremter to 1
+					when the module is initialized.
+                </para>
+                <para>
+                Default value is <emphasis>0</emphasis>.
                 </para>
                 <example>
                 <title>Set <varname>trace_delayed</varname>
