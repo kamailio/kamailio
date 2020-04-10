@@ -158,7 +158,8 @@ int *trace_on_flag = NULL;
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
-int trace_delayed = 0;
+int trace_db_delayed = 0;
+int trace_db_mode = 0;
 
 int hep_mode_on = 0;
 int hep_version = 1;
@@ -249,7 +250,8 @@ static param_export_t params[] = {
 	{"send_sock_name", PARAM_STR, &trace_send_sock_name_str},
 	{"hep_version", INT_PARAM, &hep_version},
 	{"hep_capture_id", INT_PARAM, &hep_capture_id},
-	{"trace_delayed", INT_PARAM, &trace_delayed},
+	{"trace_delayed", INT_PARAM, &trace_db_delayed},
+	{"trace_db_mode", INT_PARAM, &trace_db_mode},
 	{"trace_init_mode", PARAM_INT, &_siptrace_init_mode},
 	{"trace_mode", PARAM_INT, &_siptrace_mode},
 	{0, 0, 0}
@@ -299,6 +301,10 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+
+	if(trace_db_delayed!=0) {
+		trace_db_mode = 1;
+	}
 
 	if(siptrace_init_rpc() != 0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -571,9 +577,14 @@ static int sip_trace_insert_db(db_key_t *db_keys, db_val_t *db_vals,
 		int db_nkeys, char *dtext)
 {
 	LM_DBG("storing info - %s\n", dtext);
-	if(trace_delayed != 0 && db_funcs.insert_delayed != NULL) {
+	if(trace_db_mode = 2 && db_funcs.insert_async != NULL) {
+		if(db_funcs.insert_async(db_con, db_keys, db_vals, db_nkeys) < 0) {
+			LM_ERR("error storing trace - async - %s\n", dtext);
+			return -1;
+		}
+	} else if(trace_db_mode != 1 && db_funcs.insert_delayed != NULL) {
 		if(db_funcs.insert_delayed(db_con, db_keys, db_vals, db_nkeys) < 0) {
-			LM_ERR("error storing trace - %s\n", dtext);
+			LM_ERR("error storing trace - delayed - %s\n", dtext);
 			return -1;
 		}
 	} else {
