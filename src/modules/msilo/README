@@ -1,2 +1,886 @@
+MSILO Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Juha Heinanen
+
+   <jh@tutpro.com>
+
+   Copyright © 2003 FhG FOKUS
+
+   Copyright © 2009 Juha Heinanen
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio modules
+              2.2. External libraries or applications
+
+        3. Parameters
+
+              3.1. db_url (string)
+              3.2. db_table (string)
+              3.3. sc_mid (string)
+              3.4. sc_from (string)
+              3.5. sc_to (string)
+              3.6. sc_uri_user (string)
+              3.7. sc_uri_host (string)
+              3.8. sc_body (string)
+              3.9. sc_ctype (string)
+              3.10. sc_exp_time (string)
+              3.11. sc_inc_time (string)
+              3.12. sc_snd_time (string)
+              3.13. sc_stored_hdrs (string)
+              3.14. from_address (string)
+              3.15. contact_hdr (string)
+              3.16. extra_hdrs (string)
+              3.17. offline_message (string)
+              3.18. content_type_hdr (string)
+              3.19. reminder (string)
+              3.20. outbound_proxy (string)
+              3.21. expire_time (int)
+              3.22. check_time (int)
+              3.23. send_time (int)
+              3.24. clean_period (int)
+              3.25. use_contact (int)
+              3.26. snd_time_avp (str)
+              3.27. add_date (int)
+              3.28. max_messages (int)
+              3.29. add_contact (int)
+              3.30. extra_hdrs_avp (str)
+              3.31. skip_notification_flag (int)
+
+        4. Functions
+
+              4.1. m_store([owner])
+              4.2. m_dump([owner])
+
+        5. Statistics
+
+              5.1. stored_messages
+              5.2. dumped_messages
+              5.3. failed_messages
+              5.4. dumped_reminders
+              5.5. failed_reminders
+
+        6. Installation and Running
+
+              6.1. Kamailio config file
+
+   List of Examples
+
+   1.1. Set the “db_url” parameter
+   1.2. Set the “db_table” parameter
+   1.3. Set the “sc_mid” parameter
+   1.4. Set the “sc_from” parameter
+   1.5. Set the “sc_to” parameter
+   1.6. Set the “sc_uri_user” parameter
+   1.7. Set the “sc_uri_host” parameter
+   1.8. Set the “sc_body” parameter
+   1.9. Set the “sc_ctype” parameter
+   1.10. Set the “sc_exp_time” parameter
+   1.11. Set the “sc_inc_time” parameter
+   1.12. Set the “sc_snd_time” parameter
+   1.13. Set the “sc_stored_hdrs” parameter
+   1.14. Set the “from_address” parameter
+   1.15. Set the “contact_hdr” parameter
+   1.16. Set the “extra_hdrs” parameter
+   1.17. Set the “offline_message” parameter
+   1.18. Set the “content_type_hdr” parameter
+   1.19. Set the “reminder” parameter
+   1.20. Set the “outbound_proxy” parameter
+   1.21. Set the “expire_time” parameter
+   1.22. Set the “check_time” parameter
+   1.23. Set the “send_time” parameter
+   1.24. Set the “clean_period” parameter
+   1.25. Set the “use_contact” parameter
+   1.26. Set the “snd_time_avp” parameter
+   1.27. Set the “add_date” parameter
+   1.28. Set the “max_messages” parameter
+   1.29. Set the “add_contact” parameter
+   1.30. Set the “extra_hdrs_avp” parameter
+   1.31. Set the “skip_notification_flag” parameter
+   1.32. m_store usage
+   1.33. m_dump usage
+   1.34. Kamailio config script - sample msilo usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio modules
+        2.2. External libraries or applications
+
+   3. Parameters
+
+        3.1. db_url (string)
+        3.2. db_table (string)
+        3.3. sc_mid (string)
+        3.4. sc_from (string)
+        3.5. sc_to (string)
+        3.6. sc_uri_user (string)
+        3.7. sc_uri_host (string)
+        3.8. sc_body (string)
+        3.9. sc_ctype (string)
+        3.10. sc_exp_time (string)
+        3.11. sc_inc_time (string)
+        3.12. sc_snd_time (string)
+        3.13. sc_stored_hdrs (string)
+        3.14. from_address (string)
+        3.15. contact_hdr (string)
+        3.16. extra_hdrs (string)
+        3.17. offline_message (string)
+        3.18. content_type_hdr (string)
+        3.19. reminder (string)
+        3.20. outbound_proxy (string)
+        3.21. expire_time (int)
+        3.22. check_time (int)
+        3.23. send_time (int)
+        3.24. clean_period (int)
+        3.25. use_contact (int)
+        3.26. snd_time_avp (str)
+        3.27. add_date (int)
+        3.28. max_messages (int)
+        3.29. add_contact (int)
+        3.30. extra_hdrs_avp (str)
+        3.31. skip_notification_flag (int)
+
+   4. Functions
+
+        4.1. m_store([owner])
+        4.2. m_dump([owner])
+
+   5. Statistics
+
+        5.1. stored_messages
+        5.2. dumped_messages
+        5.3. failed_messages
+        5.4. dumped_reminders
+        5.5. failed_reminders
+
+   6. Installation and Running
+
+        6.1. Kamailio config file
+
+1. Overview
+
+   This module provides offline message storage for Kamailio SIP Server
+   Platform. It stores received messages for an offline user and sends
+   them when the user comes back online. It can also send reminders and
+   auto-expire messages.
+
+   For each message, the modules stores “Request-URI” (“R-URI”) only if it
+   is a complete address of record (“username@hostname”), URI from “To”
+   header, URI from “From” header, incoming time, expiration time, content
+   type and body of the message. If “R-URI” is not an address of record
+   (it might be the contact address for current SIP session) the URI from
+   “To” header will be used as R-URI.
+
+   When the expiration time is passed, the message is discarded from
+   database. Expiration time is computed based on incoming time and one of
+   the module's parameters.
+
+   Every time when a user registers with Kamailio, the module is looking
+   in database for offline messages intended for that user. All of them
+   will be sent to contact address provided in REGISTER request and then
+   be deleted.
+
+   It may happen that the SIP user registering use a SIP User Agent that
+   has no support for MESSAGE requests. In this case the “failure_route”
+   should be used to re-store the undelivered requests.
+
+   Another functionality provided by the MSILO module is to send messages
+   at a certain time -- the reminder functionality. Using config logic, a
+   received message can be stored and delivered at a time specified while
+   storing with the 'snd_time_avp'.
+
+2. Dependencies
+
+   2.1. Kamailio modules
+   2.2. External libraries or applications
+
+2.1. Kamailio modules
+
+   The following modules must be loaded before this module:
+     * database module - mysql, dbtext or other module that implements the
+       “db” interface and provides support for storing/receiving data
+       to/from a database system.
+     * TM--transaction module-- used to send SIP requests.
+
+2.2. External libraries or applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module:
+     * none.
+
+3. Parameters
+
+   3.1. db_url (string)
+   3.2. db_table (string)
+   3.3. sc_mid (string)
+   3.4. sc_from (string)
+   3.5. sc_to (string)
+   3.6. sc_uri_user (string)
+   3.7. sc_uri_host (string)
+   3.8. sc_body (string)
+   3.9. sc_ctype (string)
+   3.10. sc_exp_time (string)
+   3.11. sc_inc_time (string)
+   3.12. sc_snd_time (string)
+   3.13. sc_stored_hdrs (string)
+   3.14. from_address (string)
+   3.15. contact_hdr (string)
+   3.16. extra_hdrs (string)
+   3.17. offline_message (string)
+   3.18. content_type_hdr (string)
+   3.19. reminder (string)
+   3.20. outbound_proxy (string)
+   3.21. expire_time (int)
+   3.22. check_time (int)
+   3.23. send_time (int)
+   3.24. clean_period (int)
+   3.25. use_contact (int)
+   3.26. snd_time_avp (str)
+   3.27. add_date (int)
+   3.28. max_messages (int)
+   3.29. add_contact (int)
+   3.30. extra_hdrs_avp (str)
+   3.31. skip_notification_flag (int)
+
+3.1. db_url (string)
+
+   Database URL.
+
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
+
+   Example 1.1. Set the “db_url” parameter
+...
+modparam("msilo", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.2. db_table (string)
+
+   The name of table where to store the messages.
+
+   Default value is “silo”.
+
+   Example 1.2. Set the “db_table” parameter
+...
+modparam("msilo", "db_table", "silo")
+...
+
+3.3. sc_mid (string)
+
+   The name of the column in silo table used to store the message id.
+
+   Default value is “mid”.
+
+   Example 1.3. Set the “sc_mid” parameter
+...
+modparam("msilo", "sc_mid", "other_mid")
+...
+
+3.4. sc_from (string)
+
+   The name of the column in silo table, storing the source address.
+
+   Default value is “src_addr”.
+
+   Example 1.4. Set the “sc_from” parameter
+...
+modparam("msilo", "sc_from", "source_address")
+...
+
+3.5. sc_to (string)
+
+   The name of the column in silo table, storing the destination address.
+
+   Default value is “dst_addr”.
+
+   Example 1.5. Set the “sc_to” parameter
+...
+modparam("msilo", "sc_to", "destination_address")
+...
+
+3.6. sc_uri_user (string)
+
+   The name of the column in silo table, storing the user name.
+
+   Default value is “username”.
+
+   Example 1.6. Set the “sc_uri_user” parameter
+...
+modparam("msilo", "sc_uri_user", "user")
+...
+
+3.7. sc_uri_host (string)
+
+   The name of the column in silo table, storing the domain.
+
+   Default value is “domain”.
+
+   Example 1.7. Set the “sc_uri_host” parameter
+...
+modparam("msilo", "sc_uri_host", "domain")
+...
+
+3.8. sc_body (string)
+
+   The name of the column storing the message body in silo table.
+
+   Default value is “body”.
+
+   Example 1.8. Set the “sc_body” parameter
+...
+modparam("msilo", "sc_body", "message_body")
+...
+
+3.9. sc_ctype (string)
+
+   The name of the column in silo table, storing content type.
+
+   Default value is “ctype”.
+
+   Example 1.9. Set the “sc_ctype” parameter
+...
+modparam("msilo", "sc_ctype", "content_type")
+...
+
+3.10. sc_exp_time (string)
+
+   The name of the column in silo table, storing the expire time of the
+   message.
+
+   Default value is “exp_time”.
+
+   Example 1.10. Set the “sc_exp_time” parameter
+...
+modparam("msilo", "sc_exp_time", "expire_time")
+...
+
+3.11. sc_inc_time (string)
+
+   The name of the column in silo table, storing the incoming time of the
+   message.
+
+   Default value is “inc_time”.
+
+   Example 1.11. Set the “sc_inc_time” parameter
+...
+modparam("msilo", "sc_inc_time", "incoming_time")
+...
+
+3.12. sc_snd_time (string)
+
+   The name of the column in silo table, storing the send time for the
+   reminder.
+
+   Default value is “snd_time”.
+
+   Example 1.12. Set the “sc_snd_time” parameter
+...
+modparam("msilo", "sc_snd_time", "send_reminder_time")
+...
+
+3.13. sc_stored_hdrs (string)
+
+   The name of the column in silo table, storing the extra headers.
+
+   Default value is “extra_hdrs”.
+
+   Example 1.13. Set the “sc_stored_hdrs” parameter
+...
+modparam("msilo", "sc_stored_hdrs", "extra_headers")
+...
+
+3.14. from_address (string)
+
+   The SIP address used to inform users that destination of their message
+   is not online and the message will be delivered next time when that
+   user goes online. If the parameter is not set, the module will not send
+   any notification. This parameter may contain pseudo-variables.
+
+   Default value is “NULL”.
+
+   Example 1.14. Set the “from_address” parameter
+...
+modparam("msilo", "from_address", "sip:registrar@example.org")
+modparam("msilo", "from_address", "sip:$rU@example.org")
+...
+
+3.15. contact_hdr (string)
+
+   The value of the “Contact” header (including header name and ending
+   \r\n) to be added in notification messages. It can contain
+   pseudo-variables.
+
+   Default value is “NULL”.
+
+   Example 1.15. Set the “contact_hdr” parameter
+...
+modparam("msilo", "contact_hdr", "Contact: <sip:null@example.com>\r\n")
+...
+
+3.16. extra_hdrs (string)
+
+   Extra headers (each ending with \r\n) to be added in messages sent from
+   silo by m_dump. It can contain pseudo-variables.
+
+   Default value is “NULL”.
+
+   Example 1.16. Set the “extra_hdrs” parameter
+...
+modparam("msilo", "extra_hdrs", "X-Extra: $tu\r\nY-Extra: foo\r\n")
+...
+
+3.17. offline_message (string)
+
+   The body of the notification message. It can contain pseudo-variables.
+
+   Default value is “NULL”.
+
+   Example 1.17. Set the “offline_message” parameter
+...
+modparam("msilo", "offline_message", "*** User $rU is offline!")
+modparam("msilo", "offline_message", "<em>I am offline!</em>")
+...
+
+3.18. content_type_hdr (string)
+
+   The value of the Content-Type header (including header name and ending
+   \r\n) to be added in notification messages. It must reflect what the
+   'offline_message' contains. It can contain pseudo-variables.
+
+   Default value is “NULL”.
+
+   Example 1.18. Set the “content_type_hdr” parameter
+...
+modparam("msilo", "content_type_hdr", "Content-Type: text/plain\r\n")
+modparam("msilo", "content_type_hdr", "Content-Type: text/html\r\n")
+...
+
+3.19. reminder (string)
+
+   The SIP address used to send reminder messages. If this value is not
+   set, the reminder feature is disabled.
+
+   Default value is “NULL”.
+
+   Example 1.19. Set the “reminder” parameter
+...
+modparam("msilo", "reminder", "sip:registrar@example.org")
+...
+
+3.20. outbound_proxy (string)
+
+   The SIP address used as next hop when sending the message. Very useful
+   when using Kamailio with a domain name not in DNS, or when using a
+   separate Kamailio instance for msilo processing. If not set, the
+   message will be sent to the address in destination URI.
+
+   Default value is “NULL”.
+
+   Example 1.20. Set the “outbound_proxy” parameter
+...
+modparam("msilo", "outbound_proxy", "sip:kamailio.org;transport=tcp")
+...
+
+3.21. expire_time (int)
+
+   Expire time of stored messages - seconds. When this time passed, the
+   message is silently discarded from database.
+
+   Default value is “259200 (72 hours = 3 days)”.
+
+   Example 1.21. Set the “expire_time” parameter
+...
+modparam("msilo", "expire_time", 36000)
+...
+
+3.22. check_time (int)
+
+   Timer interval to check if dumped messages are sent OK - seconds. The
+   module keeps each request send by itself for a new online user and if
+   the reply is 2xx then the message is deleted from database.
+
+   Default value is “60”.
+
+   Example 1.22. Set the “check_time” parameter
+...
+modparam("msilo", "check_time", 10)
+...
+
+3.23. send_time (int)
+
+   Timer interval in seconds to check if there are reminder messages. The
+   module takes all reminder messages that must be sent at that moment or
+   before that moment.
+
+   If the value is 0, the reminder feature is disabled.
+
+   Default value is “0”.
+
+   Example 1.23. Set the “send_time” parameter
+...
+modparam("msilo", "send_time", 60)
+...
+
+3.24. clean_period (int)
+
+   Number of “check_time” cycles when to check if there are expired
+   messages in database.
+
+   Default value is “10”.
+
+   Example 1.24. Set the “clean_period” parameter
+...
+modparam("msilo", "clean_period", 3)
+...
+
+3.25. use_contact (int)
+
+   Turns on/off the usage of the “Contact” address to send notification
+   back to sender whose message is stored by MSILO.
+
+   Default value is “1 (0 = off, 1 = on)”.
+
+   Example 1.25. Set the “use_contact” parameter
+...
+modparam("msilo", "use_contact", 0)
+...
+
+3.26. snd_time_avp (str)
+
+   The name of an AVP which may contain the time when to sent the received
+   message as reminder.The AVP is used ony by m_store().
+
+   If the parameter is not set, the module does not look for this AVP. If
+   the value is set to a valid AVP name, then the module expects in the
+   AVP to be a time value in format “YYYYMMDDHHMMSS” (e.g.,
+   20060101201500).
+
+   Default value is “null”.
+
+   Example 1.26. Set the “snd_time_avp” parameter
+...
+modparam("msilo", "snd_time_avp", "$avp(i:123)")
+...
+
+3.27. add_date (int)
+
+   Whether to add as prefix the date when the message was stored.
+
+   Default value is “1” (1==on/0==off).
+
+   Example 1.27. Set the “add_date” parameter
+...
+modparam("msilo", "add_date", 0)
+...
+
+3.28. max_messages (int)
+
+   Maximum number of stored message for an AoR. Value 0 equals to no
+   limit.
+
+   Default value is 0.
+
+   Example 1.28. Set the “max_messages” parameter
+...
+modparam("msilo", "max_messages", 0)
+...
+
+3.29. add_contact (int)
+
+   Whether to add contact header to generated messages. The contact
+   address is the From URI.
+
+   Default value is “0” (1==on; 0==off as per RFC3428).
+
+   Example 1.29. Set the “add_contact” parameter
+...
+modparam("msilo", "add_contact", 1)
+...
+
+3.30. extra_hdrs_avp (str)
+
+   Name of an AVP which may contain extra headers that are stored with the
+   message when m_store() is called. These extra headers (if any) are then
+   included in MESSAGE request generated by m_dump().
+
+   If the parameter is not set, m_store() does not look for extra headers
+   from any AVP.
+
+   Default value is “null”.
+
+   Example 1.30. Set the “extra_hdrs_avp” parameter
+...
+modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
+...
+
+3.31. skip_notification_flag (int)
+
+   Flag to mark the message for which no notification should be sent back
+   to sender when storing in msilo. Valid value is in between 0 and 31.
+
+   Default value is “-1” (feature disabled).
+
+   Example 1.31. Set the “skip_notification_flag” parameter
+...
+modparam("msilo", "skip_notification_flag", 18)
+...
+setflag(18);
+m_store(...);
+...
+
+4. Functions
+
+   4.1. m_store([owner])
+   4.2. m_dump([owner])
+
+4.1. m_store([owner])
+
+   The method stores certain parts of the current SIP request (it should
+   be called when the request type is MESSAGE and the destination user is
+   offline or his UA does not support MESSAGE requests). If the user is
+   registered with a UA which does not support MESSAGE requests you should
+   not use mode=“0” if you have changed the request uri with the contact
+   address of user's UA.
+
+   Meaning of the parameters is as follows:
+     * owner - is a string that must contain a SIP URI in whose inbox the
+       message will be stored. It can have any pseudo variable. If "owner"
+       is missing, the SIP address is taken from R-URI.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.32. m_store usage
+...
+m_store();
+m_store("$tu");
+...
+
+4.2. m_dump([owner])
+
+   The method sends stored messages for the SIP user that has registered
+   to the contact address in the registration. The method should be called
+   when a REGISTER request is received and the “Expire” header has a value
+   greater than zero.
+
+   Meaning of the parameters is as follows:
+     * owner - is a string that must contain a SIP URI whose inbox will be
+       dumped. It can have any pseudo variable. If "owner" is missing, the
+       SIP address is taken from To URI.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.33. m_dump usage
+...
+m_dump();
+m_dump("$fu");
+...
+
+5. Statistics
+
+   5.1. stored_messages
+   5.2. dumped_messages
+   5.3. failed_messages
+   5.4. dumped_reminders
+   5.5. failed_reminders
+
+5.1. stored_messages
+
+   The number of messages stored by msilo.
+
+5.2. dumped_messages
+
+   The number of dumped messages.
+
+5.3. failed_messages
+
+   The number of failed dumped messages.
+
+5.4. dumped_reminders
+
+   The number of dumped reminder messages.
+
+5.5. failed_reminders
+
+   The number of failed reminder messages.
+
+6. Installation and Running
+
+   6.1. Kamailio config file
+
+6.1. Kamailio config file
+
+   Next picture displays a sample usage of msilo.
+
+   Example 1.34. Kamailio config script - sample msilo usage
+...
+#
+# MSILO usage example
+#
+#
 
 
+debug=9           # debug level (cmd line: -dddddddddd)
+fork=no           # don't fork
+log_stderror=yes  # log to stderr (cmd line: -E)
+
+
+children=2        # number of children
+check_via=no      # (cmd. line: -v)
+dns=off           # (cmd. line: -r)
+rev_dns=off       # (cmd. line: -R)
+port=5060
+
+listen=10.0.0.2   # listen address
+
+# ------------------ module loading ----------------------------------
+mpath="/usr/local/lib/kamailio/modules/"
+
+loadmodule "textops.so"
+
+loadmodule "sl.so"
+loadmodule "mysql.so"
+loadmodule "maxfwd.so"
+loadmodule "msilo.so"
+loadmodule "tm.so"
+loadmodule "registrar.so"
+loadmodule "usrloc.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# -- registrar params --
+
+modparam("registrar", "default_expires", 120)
+
+# -- registrar params --
+
+modparam("usrloc", "db_mode", 0)
+
+# -- msilo params --
+
+modparam("msilo","db_url","mysql://kamailio:kamailiorw@localhost/kamailio")
+modparam("msilo","from_address","sip:registrar@kamailio.org")
+modparam("msilo","contact_hdr","Contact: registrar@192.168.1.2:5060;msilo=yes\r\
+n")
+modparam("msilo","content_type_hdr","Content-Type: text/plain\r\n")
+modparam("msilo","offline_message","*** User $rU is offline!")
+
+
+route{
+    if ( !mf_process_maxfwd_header("10") )
+    {
+        sl_send_reply("483","To Many Hops");
+        exit;
+    };
+
+
+    if (uri==myself) {
+    {
+        # for testing purposes, simply okay all REGISTERs
+        if (method=="REGISTER")
+        {
+            save("location");
+            log("REGISTER received -> dumping messages with MSILO\n");
+
+            # MSILO - dumping user's offline messages
+            if (m_dump())
+            {
+                log("MSILO: offline messages dumped - if they were\n");
+            }else{
+                log("MSILO: no offline messages dumped\n");
+            };
+            exit;
+        };
+
+        # domestic SIP destinations are handled using our USRLOC DB
+
+        if(!lookup("location"))
+        {
+            if (! t_newtran())
+            {
+                sl_reply_error();
+                exit;
+            };
+            # we do not care about anything else but MESSAGEs
+            if (!method=="MESSAGE")
+            {
+                if (!t_reply("404", "Not found"))
+                {
+                    sl_reply_error();
+                };
+                exit;
+            };
+            log("MESSAGE received -> storing using MSILO\n");
+            # MSILO - storing as offline message
+            if (m_store("$ru"))
+            {
+                log("MSILO: offline message stored\n");
+                if (!t_reply("202", "Accepted"))
+                {
+                    sl_reply_error();
+                };
+            }else{
+                log("MSILO: offline message NOT stored\n");
+                if (!t_reply("503", "Service Unavailable"))
+                {
+                    sl_reply_error();
+                };
+            };
+            exit;
+        };
+        # if the downstream UA does not support MESSAGE requests
+        # go to failure_route[1]
+        t_on_failure("1");
+        t_relay();
+        exit;
+    };
+
+    # forward anything else
+    t_relay();
+}
+
+failure_route[1] {
+    # forwarding failed -- check if the request was a MESSAGE
+    if (!method=="MESSAGE")
+    {
+        exit;
+    };
+
+    log(1,"MSILO:the downstream UA doesn't support MESSAGEs\n");
+    # we have changed the R-URI with the contact address, ignore it now
+    if (m_store("$ou"))
+    {
+        log("MSILO: offline message stored\n");
+        t_reply("202", "Accepted");
+    }else{
+        log("MSILO: offline message NOT stored\n");
+        t_reply("503", "Service Unavailable");
+    };
+}
+
+
+
+...
