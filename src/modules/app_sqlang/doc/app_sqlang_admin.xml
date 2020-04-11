@@ -209,7 +209,7 @@ if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
         <title>RPC Commands</title>
         <section id="app_sqlang.r.reload">
             <title>
-            <function moreinfo="none">app_swlang.reload</function>
+            <function moreinfo="none">app_sqlang.reload</function>
             </title>
             <para>
 			Marks the need to reload the SQLang script pointed by 'load'
