@@ -12,7 +12,7 @@ NAME=app_python3.so
 PYTHON3?=python3
 
 LIBS=${shell \
-	tmp_py3_libs=$$(${PYTHON3}-config --ldflags --embed) || \
+	tmp_py3_libs=$$(${PYTHON3}-config --ldflags --embed 2>/dev/null) || \
 	tmp_py3_libs=$$(${PYTHON3}-config --ldflags); \
 	echo $$tmp_py3_libs}
 
