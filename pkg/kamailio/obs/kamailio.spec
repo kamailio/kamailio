@@ -1113,6 +1113,10 @@ UUID module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
+# python3 does not exist in RHEL 6 and similar dist.
+%if 0%{?rhel} == 6
+sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
+%endif
 
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
