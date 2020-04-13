@@ -1394,6 +1394,272 @@ static sr_kemi_xval_t* ki_xavp_getw(sip_msg_t *msg, str *rname)
 	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
 }
 
+sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp);
+/**
+ * SR_KEMIP_ARRAY with values of xavp=>name
+ */
+sr_kemi_dict_item_t* ki_xavp_dict_name(sr_xavp_t *xavp, str name)
+{
+	sr_kemi_dict_item_t *ini = NULL;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
+	sr_xavp_t *avp = xavp;
+
+	ini = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+	if(ini==NULL) {
+		PKG_MEM_ERROR;
+		return NULL;
+	}
+	memset(ini, 0, sizeof(sr_kemi_xval_t));
+	ini->vtype = SR_KEMIP_ARRAY;
+	while(avp!=NULL&&!STR_EQ(avp->name,name))
+	{
+		avp = avp->next;
+	}
+
+	while(avp!=NULL){
+		switch(avp->val.type) {
+			case SR_XTYPE_XAVP:
+			break;
+			default:
+				val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+				if(val==NULL) {
+					PKG_MEM_ERROR;
+					goto error;
+				}
+				memset(val, 0, sizeof(sr_kemi_xval_t));
+			break;
+		}
+		switch(avp->val.type) {
+			case SR_XTYPE_NULL:
+				val->vtype = SR_KEMIP_NULL;
+			break;
+			case SR_XTYPE_INT:
+				val->vtype = SR_KEMIP_INT;
+				val->v.n = avp->val.v.i;
+			break;
+			case SR_XTYPE_STR:
+				val->vtype = SR_KEMIP_STR;
+				val->v.s.s = avp->val.v.s.s;
+				val->v.s.len = avp->val.v.s.len;
+			break;
+			case SR_XTYPE_TIME:
+			case SR_XTYPE_LONG:
+			case SR_XTYPE_LLONG:
+			case SR_XTYPE_DATA:
+				val->vtype = SR_KEMIP_NULL;
+				LM_WARN("XAVP type:%d value not supported\n", avp->val.type);
+			break;
+			case SR_XTYPE_XAVP:
+				val = ki_xavp_dict(avp->val.v.xavp);
+			break;
+			default:
+				val->vtype = SR_KEMIP_NULL;
+				LM_ERR("xavp:%.*s unknown type: %d\n",
+					avp->name.len, avp->name.s, avp->val.type);
+			break;
+		}
+		if(last) {
+			last->next = val;
+		} else {
+			ini->v.dict = val;
+			last = val;
+		}
+		avp = xavp_get_next(avp);
+	}
+	return ini;
+error:
+	while(ini) {
+		last = ini;
+		ini = ini->next;
+		pkg_free(last);
+	}
+	return NULL;
+}
+
+/**
+ * SR_KEMIP_DICT of xavp
+ */
+sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp) {
+	sr_xavp_t *avp = NULL;
+	struct str_list *keys;
+	struct str_list *k;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *ini = NULL;
+	sr_kemi_dict_item_t *last = NULL;
+
+	if(xavp->val.type!=SR_XTYPE_XAVP) {
+		LM_ERR("%s not xavp?\n", xavp->name.s);
+		return NULL;
+	}
+	avp = xavp->val.v.xavp;
+	if((keys = xavp_get_list_key_names(xavp)) != NULL) {
+		do {
+			val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+			if(val==NULL) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+			memset(val, 0, sizeof(sr_kemi_xval_t));
+			val->vtype = SR_KEMIP_DICT;
+			val->name.s = keys->s.s;
+			val->name.len = keys->s.len;
+			val->v.dict = ki_xavp_dict_name(avp, keys->s);
+			if(last) {
+				last->next = val;
+			} else {
+				ini = val;
+				last = ini;
+			}
+			k = keys;
+			keys = keys->next;
+			pkg_free(k);
+		} while(keys!=NULL);
+	}
+	return ini;
+error:
+	while(keys!=NULL) {
+		k = keys;
+		keys = keys->next;
+		pkg_free(k);
+	}
+	while(ini) {
+		val = ini;
+		ini = ini->next;
+		pkg_free(val);
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t*
+ki_xavp_getd_helper(sip_msg_t *msg, str *rname, int *_indx)
+{
+	sr_xavp_t *xavp=NULL;
+	int xavp_size = 0;
+	int indx = 0;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+	if(_indx) {
+		indx = *_indx;
+		/* we're going to retrive just one */
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_DICT;
+	} else {
+		/* we're going to retrive all */
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_ARRAY;
+	}
+	xavp_size = xavp_count(rname, NULL);
+	if(indx<0)
+	{
+		if((indx*-1)>xavp_size)
+		{
+			sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+			return &_sr_kemi_pv_xval;
+		}
+		indx = xavp_size + indx;
+	}
+
+	xavp = xavp_get_by_index(rname, indx, NULL);
+	if(xavp==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_pv_xval;
+	}
+	do {
+		val = ki_xavp_dict(xavp);
+		if(last) {
+			last->next = val;
+		} else {
+			_sr_kemi_pv_xval.v.dict = val;
+		}
+		if(val) last = val;
+		if(_indx) {
+			xavp = NULL;
+		} else {
+			indx = indx + 1;
+			xavp = xavp_get_by_index(rname, indx, NULL);
+		}
+	} while(xavp!=NULL);
+	return &_sr_kemi_pv_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t*
+ki_xavp_getd(sip_msg_t *msg, str *rname)
+{
+	return ki_xavp_getd_helper(msg, rname, NULL);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t*
+ki_xavp_getd_p1(sip_msg_t *msg, str *rname, int indx)
+{
+	return ki_xavp_getd_helper(msg, rname, &indx);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t*
+ki_xavp_get_keys(sip_msg_t *msg, str *rname, int indx) {
+	sr_xavp_t *xavp=NULL;
+	struct str_list *keys, *k;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	xavp = xavp_get_by_index(rname, indx, NULL);
+	if(xavp==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_pv_xval;
+	}
+	keys = xavp_get_list_key_names(xavp);
+	_sr_kemi_pv_xval.vtype = SR_KEMIP_ARRAY;
+	while(keys!=NULL){
+		k = keys;
+		val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+		if(val==NULL) {
+			PKG_MEM_ERROR;
+			goto error;
+		}
+		memset(val, 0, sizeof(sr_kemi_xval_t));
+		val->vtype = SR_KEMIP_STR;
+		val->v.s.len = k->s.len;
+		val->v.s.s = k->s.s;
+		keys = k->next;
+		pkg_free(k);
+		if(last) {
+			last->next = val;
+		} else {
+			_sr_kemi_pv_xval.v.dict = val;
+		}
+		last = val;
+	}
+	return &_sr_kemi_pv_xval;
+error:
+	while(keys!=NULL) {
+		k = keys;
+		keys = keys->next;
+		pkg_free(k);
+	}
+	last = _sr_kemi_pv_xval.v.dict;
+	while(last) {
+		val = last;
+		last = last->next;
+		pkg_free(val);
+	}
+	sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+	return &_sr_kemi_pv_xval;
+}
+
 /**
  *
  */
@@ -2121,6 +2387,21 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("xavp_getw"),
 		SR_KEMIP_XVAL, ki_xavp_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getd"),
+		SR_KEMIP_XVAL, ki_xavp_getd,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getd_p1"),
+		SR_KEMIP_XVAL, ki_xavp_getd_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_get_keys"),
+		SR_KEMIP_XVAL, ki_xavp_get_keys,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pvx"), str_init("xavp_rm"),
