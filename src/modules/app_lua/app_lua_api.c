@@ -806,6 +806,85 @@ int sr_kemi_lua_return_int(lua_State* L, sr_kemi_t *ket, int rc)
 	return app_lua_return_false(L);
 }
 
+void sr_kemi_lua_push_dict_item(lua_State *L, sr_kemi_dict_item_t *item);
+
+/**
+ * creates and push a table to the lua stack with
+ * the elements of the list
+ */
+void sr_kemi_lua_push_array(lua_State *L, sr_kemi_dict_item_t *item) {
+	int i = 1;
+	sr_kemi_dict_item_t *k;
+	if(!item) {
+		LM_CRIT("BUG: dict field empty\n");
+		return;
+	}
+	if (item->vtype == SR_KEMIP_ARRAY) {
+		k = item->v.dict;
+	} else {
+		k = item;
+	}
+	if(k) {
+		lua_newtable(L);
+	}
+	while(k){
+		lua_pushnumber(L, i++);
+		sr_kemi_lua_push_dict_item(L, k);
+		lua_settable(L, -3);
+		k = k->next;
+	}
+}
+
+void sr_kemi_lua_push_dict(lua_State *L, sr_kemi_dict_item_t *item) {
+	sr_kemi_dict_item_t *k = item;
+	if(!item) {
+		LM_CRIT("BUG: dict field empty\n");
+		return;
+	}
+	lua_newtable(L);
+	while(k){
+		sr_kemi_lua_push_dict_item(L, k->v.dict);
+		lua_setfield(L, -2, k->name.s);
+		k = k->next;
+	}
+}
+
+void
+sr_kemi_lua_push_dict_item(lua_State *L, sr_kemi_dict_item_t *item)
+{
+	switch(item->vtype) {
+		case SR_KEMIP_NONE:
+			LM_CRIT("BUG: vtype is NONE\n");
+			lua_pushnil(L);
+		break;
+		case SR_KEMIP_INT:
+			lua_pushinteger(L, item->v.n);
+		break;
+		case SR_KEMIP_STR:
+			lua_pushlstring(L, item->v.s.s, item->v.s.len);
+		break;
+		case SR_KEMIP_BOOL:
+			if(item->v.n!=SR_KEMI_FALSE) {
+				lua_pushboolean(L, SRLUA_TRUE);
+			} else {
+				lua_pushboolean(L, SRLUA_FALSE);
+			}
+		break;
+		case SR_KEMIP_NULL:
+			lua_pushnil(L);
+		break;
+		case SR_KEMIP_ARRAY:
+			sr_kemi_lua_push_array(L, item);
+		break;
+		case SR_KEMIP_DICT:
+			sr_kemi_lua_push_dict(L, item);
+		break;
+		default:
+			LM_DBG("unknown type:%d\n", item->vtype);
+			/* unknown type - return false */
+			lua_pushboolean(L, SRLUA_FALSE);
+	}
+}
 
 /**
  *
@@ -834,6 +913,14 @@ int sr_kemi_lua_return_xval(lua_State* L, sr_kemi_t *ket, sr_kemi_xval_t *rx)
 			return 1;
 		case SR_KEMIP_NULL:
 			lua_pushnil(L);
+			return 1;
+		case SR_KEMIP_ARRAY:
+			sr_kemi_lua_push_array(L, rx->v.dict);
+			sr_kemi_xval_free(rx);
+			return 1;
+		case SR_KEMIP_DICT:
+			sr_kemi_lua_push_dict_item(L, rx->v.dict);
+			sr_kemi_xval_free(rx);
 			return 1;
 		default:
 			/* unknown type - return false */
