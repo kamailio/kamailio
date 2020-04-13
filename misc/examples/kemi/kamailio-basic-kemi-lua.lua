@@ -222,10 +222,10 @@ function ksr_route_location()
 	if rc<0 then
 		KSR.tm.t_newtran();
 		if rc==-1 or rc==-3 then
-			KSR.sl.send_reply("404", "Not Found");
+			KSR.sl.send_reply(404, "Not Found");
 			KSR.x.exit();
 		elseif rc==-2 then
-			KSR.sl.send_reply("405", "Method Not Allowed");
+			KSR.sl.send_reply(405, "Method Not Allowed");
 			KSR.x.exit();
 		end
 	end
