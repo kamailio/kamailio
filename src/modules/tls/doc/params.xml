@@ -160,7 +160,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 	    <title>Set <varname>private_key</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
+modparam("tls", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
 ...
 	    </programlisting>
 	</example>
