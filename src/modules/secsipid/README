@@ -172,8 +172,8 @@ request_route {
 ...
 request_route {
     ...
-    secsipid_add_identity("$fU", "$rU", "A", "", "http://kamailio.org/stir/$rd/c
-ert.pem", "/secsipid/$rd/key.pem"));
+    secsipid_add_identity("$fU", "$rU", "A", "",
+        "http://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem"));
     ...
 }
 ...
@@ -197,8 +197,8 @@ ert.pem", "/secsipid/$rd/key.pem"));
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
 make liba
-cp secsipid.h libsecsipid.h libsecsipid.a /path/to/kamailio/src/modules/secsipid
-/
+cp secsipid.h libsecsipid.h libsecsipid.a \
+    /path/to/kamailio/src/modules/secsipid/
 cd /path/to/kamailio/
 make modules modules=src/modules/secsipid/
 ...
