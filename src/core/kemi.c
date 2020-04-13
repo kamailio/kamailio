@@ -2393,6 +2393,34 @@ void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 /**
  *
  */
+void sr_kemi_dict_item_free(sr_kemi_dict_item_t *item)
+{
+	sr_kemi_dict_item_t *v;
+
+	while(item) {
+		if (item->vtype == SR_KEMIP_ARRAY || item->vtype == SR_KEMIP_DICT) {
+			sr_kemi_dict_item_free(item->v.dict);
+		}
+		v = item;
+		item = item->next;
+		pkg_free(v);
+	}
+}
+
+/**
+ *
+ */
+void sr_kemi_xval_free(sr_kemi_xval_t *xval)
+{
+	if(xval && (xval->vtype == SR_KEMIP_ARRAY || xval->vtype == SR_KEMIP_DICT))
+	{
+		sr_kemi_dict_item_free(xval->v.dict);
+	}
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* sr_kemi_pv_get_mode(sip_msg_t *msg, str *pvn, int rmode)
 {
 	pv_spec_t *pvs;
