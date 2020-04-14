@@ -103,7 +103,7 @@ extern sruid_t pres_sruid;
 
 extern db_locking_t pres_db_table_lock;
 
-int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc);
+int update_watchers_status(str *pres_uri, pres_ev_t *ev, str *rules_doc);
 int pres_auth_status(struct sip_msg *msg, str watcher_uri, str presentity_uri);
 int _api_pres_refresh_watchers(str *pres, str *event, int type);
 

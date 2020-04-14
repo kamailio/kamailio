@@ -625,7 +625,7 @@ int delete_phtable(str *pres_uri, int event)
 	return 0;
 }
 
-int update_phtable(presentity_t *presentity, str pres_uri, str body)
+int update_phtable(presentity_t *presentity, str *pres_uri, str *body)
 {
 	char *sphere = NULL;
 	unsigned int hash_code;
@@ -641,11 +641,11 @@ int update_phtable(presentity_t *presentity, str pres_uri, str body)
 	}
 
 	/* search for record in hash table */
-	hash_code = core_case_hash(&pres_uri, NULL, phtable_size);
+	hash_code = core_case_hash(pres_uri, NULL, phtable_size);
 
 	lock_get(&pres_htable[hash_code].lock);
 
-	p = search_phtable(&pres_uri, presentity->event->evp->type, hash_code);
+	p = search_phtable(pres_uri, presentity->event->evp->type, hash_code);
 	if(p == NULL) {
 		lock_release(&pres_htable[hash_code].lock);
 		goto done;

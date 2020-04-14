@@ -53,8 +53,8 @@ struct presentity;
 		size += source.len;                   \
 	} while(0)
 
-#define PKG_MEM_TYPE 1 << 1
-#define SHM_MEM_TYPE 1 << 2
+#define PKG_MEM_TYPE (1 << 1)
+#define SHM_MEM_TYPE (1 << 2)
 
 extern int pres_delete_same_subs;
 
@@ -132,7 +132,7 @@ pres_entry_t *search_phtable(str *pres_uri, int event, unsigned int hash_code);
 
 int insert_phtable(str *pres_uri, int event, char *sphere);
 
-int update_phtable(struct presentity *presentity, str pres_uri, str body);
+int update_phtable(struct presentity *presentity, str *pres_uri, str *body);
 
 int delete_phtable(str *pres_uri, int event);
 

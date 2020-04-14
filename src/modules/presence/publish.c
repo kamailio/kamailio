@@ -387,7 +387,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 
 		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE
 				&& get_content_type(msg) == SUBTYPE_PIDFXML) {
-			sphere = extract_sphere(body);
+			sphere = extract_sphere(&body);
 		}
 	}
 	memset(&puri, 0, sizeof(struct sip_uri));
@@ -538,7 +538,7 @@ int update_hard_presentity(
 		xmlDocPtr doc;
 
 		if(pres_sphere_enable) {
-			sphere = extract_sphere(*pidf_doc);
+			sphere = extract_sphere(pidf_doc);
 		}
 
 		doc = xmlParseMemory(pidf_doc->s, pidf_doc->len);

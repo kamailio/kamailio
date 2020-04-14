@@ -124,7 +124,6 @@ static int fixup_presence(void **param, int param_no);
 static int fixup_subscribe(void **param, int param_no);
 static int update_pw_dialogs(
 		subs_t *subs, unsigned int hash_code, subs_t **subs_array);
-int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc);
 static int w_pres_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2);
 static int w_pres_refresh_watchers(
 		struct sip_msg *msg, char *puri, char *pevent, char *ptype);
@@ -658,7 +657,7 @@ int pres_refresh_watchers(
 			goto error;
 		}
 
-		if(update_watchers_status(*pres, ev, rules_doc) < 0) {
+		if(update_watchers_status(pres, ev, rules_doc) < 0) {
 			LM_ERR("failed to update watchers\n");
 			goto error;
 		}
@@ -824,7 +823,7 @@ int pres_db_delete_status(subs_t *s)
 	return 0;
 }
 
-int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc)
+int update_watchers_status(str *pres_uri, pres_ev_t *ev, str *rules_doc)
 {
 	subs_t subs;
 	db_key_t query_cols[6], result_cols[5];
@@ -863,7 +862,7 @@ int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc)
 	}
 
 	memset(&subs, 0, sizeof(subs_t));
-	subs.pres_uri = pres_uri;
+	subs.pres_uri = *pres_uri;
 	subs.event = ev;
 	subs.auth_rules_doc = rules_doc;
 
@@ -871,7 +870,7 @@ int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc)
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].val.str_val = pres_uri;
+	query_vals[n_query_cols].val.str_val = *pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
@@ -905,7 +904,7 @@ int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc)
 	}
 
 	LM_DBG("found %d record-uri in watchers_table\n", result->n);
-	hash_code = core_case_hash(&pres_uri, &ev->name, shtable_size);
+	hash_code = core_case_hash(pres_uri, &ev->name, shtable_size);
 	subs.db_flag = hash_code;
 
 	/* must do a copy as sphere_check requires database queries */
@@ -1627,7 +1626,7 @@ static int ki_pres_update_watchers(
 		return -1;
 	}
 	ret = 1;
-	if(update_watchers_status(*pres_uri, ev, rules_doc) < 0) {
+	if(update_watchers_status(pres_uri, ev, rules_doc) < 0) {
 		LM_ERR("updating watchers in presence\n");
 		ret = -1;
 	}

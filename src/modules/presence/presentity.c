@@ -1103,7 +1103,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			if(pres_sphere_enable
 					&& presentity->event->evp->type == EVENT_PRESENCE) {
 				if(publ_cache_enabled
-						&& update_phtable(presentity, pres_uri, *body) < 0) {
+						&& update_phtable(presentity, &pres_uri, body) < 0) {
 					LM_ERR("failed to update sphere for presentity\n");
 					goto error;
 				}
@@ -1374,7 +1374,7 @@ int pres_htable_restore(void)
 			if(pres_sphere_enable && event == EVENT_PRESENCE) {
 				body.s = (char *)row_vals[body_col].val.string_val;
 				body.len = strlen(body.s);
-				sphere = extract_sphere(body);
+				sphere = extract_sphere(&body);
 			}
 
 			if(insert_phtable(&uri, event, sphere) < 0) {
@@ -1401,7 +1401,7 @@ error:
 	return -1;
 }
 
-char *extract_sphere(str body)
+char *extract_sphere(str *body)
 {
 
 	/* check for a rpid sphere element */
@@ -1410,7 +1410,7 @@ char *extract_sphere(str body)
 	char *cont, *sphere = NULL;
 
 
-	doc = xmlParseMemory(body.s, body.len);
+	doc = xmlParseMemory(body->s, body->len);
 	if(doc == NULL) {
 		LM_ERR("failed to parse xml body\n");
 		return NULL;
@@ -1580,7 +1580,7 @@ char *get_sphere(str *pres_uri)
 		goto error;
 	}
 
-	sphere = extract_sphere(body);
+	sphere = extract_sphere(&body);
 
 	pa_dbf.free_result(pa_db, result);
 
@@ -1872,7 +1872,7 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 	pres = new_presentity(realm, user, expires, ev, etag, sender);
 
 	if(pres_sphere_enable) {
-		sphere = extract_sphere(*body);
+		sphere = extract_sphere(body);
 	}
 	if(pres) {
 		ret = update_presentity(

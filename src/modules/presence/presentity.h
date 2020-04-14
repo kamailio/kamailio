@@ -68,7 +68,7 @@ char *generate_ETag(int publ_count);
 
 int pres_htable_restore(void);
 
-char *extract_sphere(str body);
+char *extract_sphere(str *body);
 
 char *get_sphere(str *pres_uri);
 typedef char *(*pres_get_sphere_t)(str *pres_uri);
