@@ -102,6 +102,7 @@ str pres_server_address = {0, 0};
 evlist_t *pres_evlist = NULL;
 int pres_subs_remove_match = 0;
 int _pres_subs_mode = 1;
+static int pres_timer_mode = 1;
 
 int pres_uri_match = 0;
 /* sip uri match function pointer */
@@ -241,6 +242,8 @@ static param_export_t params[]={
 	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},
 	{ "pres_subs_mode",         PARAM_INT, &_pres_subs_mode},
 	{ "delete_same_subs",       PARAM_INT, &pres_delete_same_subs},
+	{ "timer_mode",             PARAM_INT, &pres_timer_mode},
+
 	{0,0,0}
 };
 /* clang-format on */
@@ -423,12 +426,21 @@ static int mod_init(void)
 
 	pres_startup_time = (int)time(NULL);
 	if(pres_clean_period > 0) {
-		register_timer(msg_presentity_clean, 0, pres_clean_period);
-		register_timer(msg_watchers_clean, 0, pres_clean_period);
+		if(pres_timer_mode==0) {
+			register_timer(msg_presentity_clean, 0, pres_clean_period);
+			register_timer(msg_watchers_clean, 0, pres_clean_period);
+		} else {
+			sr_wtimer_add(msg_presentity_clean, 0, pres_clean_period);
+			sr_wtimer_add(msg_watchers_clean, 0, pres_clean_period);
+		}
 	}
 
 	if(pres_db_update_period > 0) {
-		register_timer(timer_db_update, 0, pres_db_update_period);
+		if(pres_timer_mode==0) {
+			register_timer(timer_db_update, 0, pres_db_update_period);
+		} else {
+			sr_wtimer_add(timer_db_update, 0, pres_db_update_period);
+		}
 	}
 
 	if(pres_waitn_time <= 0) {
