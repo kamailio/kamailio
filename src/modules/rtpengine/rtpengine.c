@@ -2401,8 +2401,9 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, "load limit");
 
 	body.s = NULL;
+	ng_flags.flags = bencode_list(bencbuf);
+
 	if (op == OP_OFFER || op == OP_ANSWER) {
-		ng_flags.flags = bencode_list(bencbuf);
 		ng_flags.direction = bencode_list(bencbuf);
 		ng_flags.replace = bencode_list(bencbuf);
 		ng_flags.rtcp_mux = bencode_list(bencbuf);
@@ -2427,11 +2428,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body_intermediate);
 		else
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
-	}
-	else if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
-			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING)
-	{
-		ng_flags.flags = bencode_list(bencbuf);
 	}
 
 	/*** parse flags & build dictionary ***/
