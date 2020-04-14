@@ -448,7 +448,7 @@ static int xcap_doc_updated(int doc_type, str xid, char *doc)
 	rules_doc.s = doc;
 	rules_doc.len = strlen(doc);
 
-	if(pres_update_watchers(xid, &ev, &rules_doc) < 0) {
+	if(pres_update_watchers(&xid, &ev, &rules_doc) < 0) {
 		LM_ERR("updating watchers in presence\n");
 		return -1;
 	}
