@@ -951,6 +951,27 @@ modparam("presence", "delete_same_subs", 1)
 	</example>
 </section>
 
+<section id="presence.p.timer_mode">
+	<title><varname>timer_mode</varname> (integer)</title>
+	<para>
+	Specify what timer process to be used. If set to 0, the core main timer
+	is used. If set to 1, the core secondary timer is used.
+	</para>
+	<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>timer_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "timer_mode", 0)
+...
+</programlisting>
+	</example>
+</section>
+
 </section>
 
 <section>
