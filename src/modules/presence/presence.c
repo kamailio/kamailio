@@ -81,8 +81,8 @@ MODULE_VERSION
 #define P_TABLE_VERSION 5
 #define ACTWATCH_TABLE_VERSION 12
 
-static int clean_period = 100;
-static int db_update_period = 100;
+static int pres_clean_period = 100;
+static int pres_db_update_period = 100;
 int pres_local_log_level = L_INFO;
 
 static char *pres_log_facility_str =
@@ -97,20 +97,20 @@ str active_watchers_table = str_init("active_watchers");
 str watchers_table = str_init("watchers");
 
 int pres_fetch_rows = 500;
-int library_mode = 0;
-str server_address = {0, 0};
-evlist_t *EvList = NULL;
+static int pres_library_mode = 0;
+str pres_server_address = {0, 0};
+evlist_t *pres_evlist = NULL;
 int pres_subs_remove_match = 0;
 int _pres_subs_mode = 1;
 
-/* sip uri match */
+int pres_uri_match = 0;
+/* sip uri match function pointer */
 sip_uri_match_f presence_sip_uri_match;
 static int sip_uri_case_sensitive_match(str *s1, str *s2);
 static int sip_uri_case_insensitive_match(str *s1, str *s2);
-int pres_uri_match = 0;
 
 /* to tag prefix */
-char *to_tag_pref = "10";
+char *pres_totag_pref = "10";
 
 /* TM bind */
 struct tm_binds tmb;
@@ -142,22 +142,22 @@ static int presence_init_rpc(void);
 static int w_pres_has_subscribers(struct sip_msg *_msg, char *_sp1, char *_sp2);
 static int fixup_has_subscribers(void **param, int param_no);
 
-int counter = 0;
-int pid = 0;
-char prefix = 'a';
-int startup_time = 0;
+int pres_counter = 0;
+int pres_pid = 0;
+char pres_prefix = 'a';
+int pres_startup_time = 0;
 str pres_db_url = {0, 0};
-int expires_offset = 0;
+int pres_expires_offset = 0;
 int pres_cseq_offset = 0;
-uint32_t min_expires = 0;
-int min_expires_action = 1;
-uint32_t max_expires = 3600;
+uint32_t pres_min_expires = 0;
+int pres_min_expires_action = 1;
+uint32_t pres_max_expires = 3600;
 int shtable_size = 9;
 shtable_t subs_htable = NULL;
-int subs_dbmode = WRITE_BACK;
-int sphere_enable = 0;
-int timeout_rm_subs = 1;
-int send_fast_notify = 1;
+int pres_subs_dbmode = WRITE_BACK;
+int pres_sphere_enable = 0;
+int pres_timeout_rm_subs = 1;
+int pres_send_fast_notify = 1;
 int publ_cache_enabled = 1;
 int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
@@ -170,8 +170,8 @@ str pres_retrieve_order_by = str_init("priority");
 int pres_enable_dmq = 0;
 int pres_delete_same_subs = 0;
 
-int db_table_lock_type = 1;
-db_locking_t db_table_lock = DB_LOCKING_WRITE;
+int pres_db_table_lock_type = 1;
+db_locking_t pres_db_table_lock = DB_LOCKING_WRITE;
 
 int *pres_notifier_id = NULL;
 
@@ -213,28 +213,28 @@ static param_export_t params[]={
 	{ "presentity_table",       PARAM_STR, &presentity_table},
 	{ "active_watchers_table",  PARAM_STR, &active_watchers_table},
 	{ "watchers_table",         PARAM_STR, &watchers_table},
-	{ "clean_period",           INT_PARAM, &clean_period },
-	{ "db_update_period",       INT_PARAM, &db_update_period },
+	{ "clean_period",           INT_PARAM, &pres_clean_period },
+	{ "db_update_period",       INT_PARAM, &pres_db_update_period },
 	{ "waitn_time",             INT_PARAM, &pres_waitn_time },
 	{ "notifier_poll_rate",     INT_PARAM, &pres_notifier_poll_rate },
 	{ "notifier_processes",     INT_PARAM, &pres_notifier_processes },
 	{ "force_delete",           INT_PARAM, &pres_force_delete },
 	{ "startup_mode",           INT_PARAM, &pres_startup_mode },
-	{ "to_tag_pref",            PARAM_STRING, &to_tag_pref },
-	{ "expires_offset",         INT_PARAM, &expires_offset },
-	{ "max_expires",            INT_PARAM, &max_expires },
-	{ "min_expires",            INT_PARAM, &min_expires },
-	{ "min_expires_action",     INT_PARAM, &min_expires_action },
-	{ "server_address",         PARAM_STR, &server_address},
+	{ "to_tag_pref",            PARAM_STRING, &pres_totag_pref },
+	{ "expires_offset",         INT_PARAM, &pres_expires_offset },
+	{ "max_expires",            INT_PARAM, &pres_max_expires },
+	{ "min_expires",            INT_PARAM, &pres_min_expires },
+	{ "min_expires_action",     INT_PARAM, &pres_min_expires_action },
+	{ "server_address",         PARAM_STR, &pres_server_address},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
-	{ "subs_db_mode",           INT_PARAM, &subs_dbmode},
+	{ "subs_db_mode",           INT_PARAM, &pres_subs_dbmode},
 	{ "publ_cache",             INT_PARAM, &publ_cache_enabled},
-	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
-	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
-	{ "send_fast_notify",       INT_PARAM, &send_fast_notify},
+	{ "enable_sphere_check",    INT_PARAM, &pres_sphere_enable},
+	{ "timeout_rm_subs",        INT_PARAM, &pres_timeout_rm_subs},
+	{ "send_fast_notify",       INT_PARAM, &pres_send_fast_notify},
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
-	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
+	{ "db_table_lock_type",     INT_PARAM, &pres_db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
 	{ "local_log_facility",     PARAM_STR, &pres_log_facility_str},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
@@ -295,16 +295,18 @@ static int mod_init(void)
 	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(pres_db_url.s), pres_db_url.len,
 			pres_db_url.s);
 
-	if(pres_db_url.s == NULL)
-		library_mode = 1;
+	if(pres_db_url.s == NULL || pres_db_url.len == 0) {
+		LM_DBG("db url is not set - switch to library mode\n");
+		pres_library_mode = 1;
+	}
 
-	EvList = init_evlist();
-	if(!EvList) {
+	pres_evlist = init_evlist();
+	if(!pres_evlist) {
 		LM_ERR("unsuccessful initialize event list\n");
 		return -1;
 	}
 
-	if(library_mode == 1) {
+	if(pres_library_mode == 1) {
 		LM_DBG("Presence module used for API library purpose only\n");
 		return 0;
 	}
@@ -313,26 +315,31 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(expires_offset < 0)
-		expires_offset = 0;
+	if(pres_expires_offset < 0) {
+		pres_expires_offset = 0;
+	}
 
-	if(to_tag_pref == NULL || strlen(to_tag_pref) == 0)
-		to_tag_pref = "10";
+	if(pres_totag_pref == NULL || strlen(pres_totag_pref) == 0) {
+		pres_totag_pref = "10";
+	}
 
-	if(max_expires == 0)
-		max_expires = 3600;
+	if(pres_max_expires <= 0) {
+		pres_max_expires = 3600;
+	}
 
-	if(min_expires > max_expires)
-		min_expires = max_expires;
+	if(pres_min_expires > pres_max_expires) {
+		pres_min_expires = pres_max_expires;
+	}
 
-	if(min_expires_action < 1 || min_expires_action > 2) {
+	if(pres_min_expires_action < 1 || pres_min_expires_action > 2) {
 		LM_ERR("min_expires_action must be 1 = RFC 6665/3261 Reply 423, 2 = "
 			   "force min_expires value\n");
 		return -1;
 	}
 
-	if(server_address.s == NULL)
+	if(pres_server_address.s == NULL || pres_server_address.len==0) {
 		LM_DBG("server_address parameter not set in configuration file\n");
+	}
 
 	/* bind the SL API */
 	if(sl_load_api(&slb) != 0) {
@@ -380,7 +387,7 @@ static int mod_init(void)
 		goto dberror;
 	}
 
-	if(subs_dbmode != NO_DB
+	if(pres_subs_dbmode != NO_DB
 			&& db_check_table_version(&pa_dbf, pa_db, &active_watchers_table,
 					   ACTWATCH_TABLE_VERSION)
 					   < 0) {
@@ -388,7 +395,7 @@ static int mod_init(void)
 		goto dberror;
 	}
 
-	if(subs_dbmode != DB_ONLY) {
+	if(pres_subs_dbmode != DB_ONLY) {
 		if(shtable_size < 1)
 			shtable_size = 512;
 		else
@@ -423,23 +430,27 @@ static int mod_init(void)
 		}
 	}
 
-	startup_time = (int)time(NULL);
-	if(clean_period > 0) {
-		register_timer(msg_presentity_clean, 0, clean_period);
-		register_timer(msg_watchers_clean, 0, clean_period);
+	pres_startup_time = (int)time(NULL);
+	if(pres_clean_period > 0) {
+		register_timer(msg_presentity_clean, 0, pres_clean_period);
+		register_timer(msg_watchers_clean, 0, pres_clean_period);
 	}
 
-	if(db_update_period > 0)
-		register_timer(timer_db_update, 0, db_update_period);
+	if(pres_db_update_period > 0) {
+		register_timer(timer_db_update, 0, pres_db_update_period);
+	}
 
-	if(pres_waitn_time <= 0)
+	if(pres_waitn_time <= 0) {
 		pres_waitn_time = 5;
+	}
 
-	if(pres_notifier_poll_rate <= 0)
+	if(pres_notifier_poll_rate <= 0) {
 		pres_notifier_poll_rate = 10;
+	}
 
-	if(pres_notifier_processes < 0 || subs_dbmode != DB_ONLY)
+	if(pres_notifier_processes < 0 || pres_subs_dbmode != DB_ONLY) {
 		pres_notifier_processes = 0;
+	}
 
 	if(pres_notifier_processes > 0) {
 		if((pres_notifier_id =
@@ -468,8 +479,9 @@ static int mod_init(void)
 		pres_local_log_facility = cfg_get(core, core_cfg, log_facility);
 	}
 
-	if(db_table_lock_type != 1)
-		db_table_lock = DB_LOCKING_NONE;
+	if(pres_db_table_lock_type != 1) {
+		pres_db_table_lock = DB_LOCKING_NONE;
+	}
 
 	pa_dbf.close(pa_db);
 	pa_db = NULL;
@@ -496,13 +508,15 @@ dberror:
  */
 static int child_init(int rank)
 {
-	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_TCP_MAIN) {
 		return 0;
+	}
 
-	pid = my_pid();
+	pres_pid = my_pid();
 
-	if(library_mode)
+	if(pres_library_mode) {
 		return 0;
+	}
 
 	if(sruid_init(&pres_sruid, '-', "pres", SRUID_INC) < 0) {
 		return -1;
@@ -568,7 +582,7 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
-	if(subs_htable && subs_dbmode == WRITE_BACK) {
+	if(subs_htable && pres_subs_dbmode == WRITE_BACK) {
 		/* open database connection */
 		pa_db = pa_dbf.init(&pres_db_url);
 		if(!pa_db) {
@@ -594,7 +608,7 @@ static void destroy(void)
 
 static int fixup_presence(void **param, int param_no)
 {
-	if(library_mode) {
+	if(pres_library_mode) {
 		LM_ERR("Bad config - you can not call 'handle_publish' function"
 			   " (db_url not set)\n");
 		return -1;
@@ -608,7 +622,7 @@ static int fixup_presence(void **param, int param_no)
 static int fixup_subscribe(void **param, int param_no)
 {
 
-	if(library_mode) {
+	if(pres_library_mode) {
 		LM_ERR("Bad config - you can not call 'handle_subscribe' function"
 			   " (db_url not set)\n");
 		return -1;
@@ -903,7 +917,7 @@ int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc)
 	subs.db_flag = hash_code;
 
 	/* must do a copy as sphere_check requires database queries */
-	if(sphere_enable) {
+	if(pres_sphere_enable) {
 		n = result->n;
 		ws_list = (ws_t *)pkg_malloc(n * sizeof(ws_t));
 		if(ws_list == NULL) {
@@ -1248,7 +1262,7 @@ static int update_pw_dialogs_dbonlymode(subs_t *subs, subs_t **subs_array)
 
 		s.expires = row_vals[r_expires_col].val.int_val;
 
-		if(s.expires > (int)time(NULL) + expires_offset)
+		if(s.expires > (int)time(NULL) + pres_expires_offset)
 			s.expires -= (int)time(NULL);
 		else
 			s.expires = 0;
@@ -1335,8 +1349,9 @@ static int update_pw_dialogs(
 
 	LM_DBG("start\n");
 
-	if(subs_dbmode == DB_ONLY)
+	if(pres_subs_dbmode == DB_ONLY) {
 		return (update_pw_dialogs_dbonlymode(subs, subs_array));
+	}
 
 	lock_get(&subs_htable[hash_code].lock);
 

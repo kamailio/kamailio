@@ -272,16 +272,19 @@ int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 					subs->pres_uri.len, subs->pres_uri.s, subs->callid.len, subs->callid.s);
 				/* delete this record */
 
-				if (prev_rec)
+				if (prev_rec) {
 					prev_rec->next = rec->next;
-				else
+				} else {
 					htable[hash_code].entries->next = rec->next;
+				}
 
-				if (subs_dbmode != NO_DB)
+				if (pres_subs_dbmode != NO_DB) {
 					delete_db_subs(&rec->to_tag, &rec->from_tag, &rec->callid);
+				}
 
-				if (rec->contact.s!=NULL)
+				if (rec->contact.s!=NULL) {
 					shm_free(rec->contact.s);
+				}
 
 				shm_free(rec);
 				break;

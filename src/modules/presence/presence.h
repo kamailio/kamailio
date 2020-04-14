@@ -67,21 +67,21 @@ extern str presentity_table;
 extern str active_watchers_table;
 extern str watchers_table;
 
-extern int counter;
-extern int pid;
-extern int startup_time;
-extern char *to_tag_pref;
-extern int expires_offset;
+extern int pres_counter;
+extern int pres_pid;
+extern int pres_startup_time;
+extern char *pres_totag_pref;
+extern int pres_expires_offset;
 extern int pres_cseq_offset;
-extern str server_address;
-extern uint32_t min_expires;
-extern int min_expires_action;
-extern uint32_t max_expires;
-extern int subs_dbmode;
+extern str pres_server_address;
+extern uint32_t pres_min_expires;
+extern int pres_min_expires_action;
+extern uint32_t pres_max_expires;
+extern int pres_subs_dbmode;
 extern int publ_cache_enabled;
-extern int sphere_enable;
-extern int timeout_rm_subs;
-extern int send_fast_notify;
+extern int pres_sphere_enable;
+extern int pres_timeout_rm_subs;
+extern int pres_send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;
 
@@ -102,7 +102,7 @@ extern phtable_t *pres_htable;
 
 extern sruid_t pres_sruid;
 
-extern db_locking_t db_table_lock;
+extern db_locking_t pres_db_table_lock;
 
 int update_watchers_status(str pres_uri, pres_ev_t *ev, str *rules_doc);
 int pres_auth_status(struct sip_msg *msg, str watcher_uri, str presentity_uri);

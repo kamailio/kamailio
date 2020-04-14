@@ -156,7 +156,7 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 				}
 			} else if(pres_notifier_processes > 0) {
 				if(pa_dbf.start_transaction) {
-					if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+					if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 						LM_ERR("in start_transaction\n");
 						goto error;
 					}
@@ -274,7 +274,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 	reply_code = 500;
 	reply_str = pu_500_rpl;
 
-	counter++;
+	pres_counter++;
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("parsing headers\n");
 		reply_code = 400;
@@ -345,8 +345,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		LM_DBG("'expires' not found; default=%d\n", event->default_expires);
 		lexpire = event->default_expires;
 	}
-	if(lexpire > max_expires)
-		lexpire = max_expires;
+	if(lexpire > pres_max_expires) {
+		lexpire = pres_max_expires;
+	}
 
 	/* get pres_uri from Request-URI*/
 	if(parse_sip_msg_uri(msg) < 0) {
@@ -384,7 +385,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		}
 		body.len = get_content_length(msg);
 
-		if(sphere_enable && event->evp->type == EVENT_PRESENCE
+		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE
 				&& get_content_type(msg) == SUBTYPE_PIDFXML) {
 			sphere = extract_sphere(body);
 		}
@@ -536,8 +537,9 @@ int update_hard_presentity(
 		LM_DBG("INSERT/REPLACE\n");
 		xmlDocPtr doc;
 
-		if(sphere_enable)
+		if(pres_sphere_enable) {
 			sphere = extract_sphere(*pidf_doc);
+		}
 
 		doc = xmlParseMemory(pidf_doc->s, pidf_doc->len);
 		if(doc == NULL) {

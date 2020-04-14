@@ -33,7 +33,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "event_list.h"
 
-extern char prefix;
+extern char pres_prefix;
 
 typedef struct presentity
 {

@@ -294,7 +294,7 @@ int get_wi_subs_db(subs_t *subs, watcher_t *watchers)
 	query_ops[n_query_cols] = OP_GT;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) + expires_offset;
+	query_vals[n_query_cols].val.int_val = (int)time(NULL) + pres_expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col = n_result_cols++] = &str_status_col;
@@ -387,7 +387,7 @@ str *get_wi_notify_body(subs_t *subs, subs_t *watcher_subs)
 		goto done;
 	}
 
-	if(subs_dbmode == DB_ONLY) {
+	if(pres_subs_dbmode == DB_ONLY) {
 		if(get_wi_subs_db(subs, watchers) < 0) {
 			LM_ERR("getting watchers from database\n");
 			goto error;
@@ -1131,7 +1131,7 @@ int get_subs_db(
 
 		s.event = event;
 		s.local_cseq = row_vals[cseq_col].val.int_val + 1;
-		if(row_vals[expires_col].val.int_val < (int)time(NULL) + expires_offset)
+		if(row_vals[expires_col].val.int_val < (int)time(NULL) + pres_expires_offset)
 			s.expires = 0;
 		else
 			s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
@@ -1169,11 +1169,10 @@ subs_t *get_subs_dialog(str *pres_uri, pres_ev_t *event, str *sender)
 	subs_t *s_array = NULL;
 	int n = 0;
 
-	/* if subs_dbmode!=DB_ONLY, should take the subscriptions from the hashtable only
-	   in DB_ONLY mode should take all dialogs from db
-	*/
+	/* if pres_subs_dbmode!=DB_ONLY, should take the subscriptions from the
+		hashtable only in DB_ONLY mode should take all dialogs from db */
 
-	if(subs_dbmode == DB_ONLY) {
+	if(pres_subs_dbmode == DB_ONLY) {
 		if(get_subs_db(pres_uri, event, sender, &s_array, &n) < 0) {
 			LM_ERR("getting dialogs from database\n");
 			goto error;
@@ -1578,7 +1577,7 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 				&subs->pres_uri, &subs->event->name, shtable_size);
 
 		/* if subscriptions are held also in memory, update the subscription hashtable */
-		if(subs_dbmode != DB_ONLY) {
+		if(pres_subs_dbmode != DB_ONLY) {
 			if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE) < 0) {
 				/* subscriptions are held only in memory, and hashtable update failed */
 				LM_ERR("updating subscription record in hash table\n");
@@ -1587,8 +1586,8 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 		}
 		/* if DB_ONLY mode or WRITE_THROUGH update in database */
 		if(subs->recv_event != PRES_SUBSCRIBE_RECV
-				&& ((subs_dbmode == DB_ONLY && pres_notifier_processes == 0)
-						   || subs_dbmode == WRITE_THROUGH)) {
+				&& ((pres_subs_dbmode == DB_ONLY && pres_notifier_processes == 0)
+						   || pres_subs_dbmode == WRITE_THROUGH)) {
 			LM_DBG("updating subscription to database\n");
 			if(update_subs_db(subs, LOCAL_TYPE) < 0) {
 				LM_ERR("updating subscription in database\n");
@@ -1764,7 +1763,7 @@ void p_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	run_notify_reply_event(t, ps);
 
 	if(ps->code == 404 || ps->code == 481
-			|| (ps->code == 408 && timeout_rm_subs
+			|| (ps->code == 408 && pres_timeout_rm_subs
 					   && subs->status != TERMINATED_STATUS)
 			|| pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
@@ -2601,7 +2600,7 @@ static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 				goto error;
 			} else if(num_other_watchers == 0)
 				attempt_delete_presentities = 1;
-		} else if(!send_fast_notify)
+		} else if(!pres_send_fast_notify)
 			goto done;
 	}
 
@@ -2692,7 +2691,7 @@ int process_dialogs(int round, int presence_winfo)
 	}
 
 	if(pa_dbf.start_transaction) {
-		if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
@@ -2796,7 +2795,7 @@ int process_dialogs(int round, int presence_winfo)
 		}
 
 		if(pa_dbf.start_transaction) {
-			if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+			if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 				LM_ERR("in start_transaction\n");
 				goto error;
 			}
@@ -2856,7 +2855,7 @@ int process_dialogs(int round, int presence_winfo)
 		cached_updated_winfo = sub.updated_winfo =
 				VAL_INT(&dvalues[updated_winfo_col]);
 
-		if(VAL_INT(&dvalues[expires_col]) > now + expires_offset)
+		if(VAL_INT(&dvalues[expires_col]) > now + pres_expires_offset)
 			sub.expires = VAL_INT(&dvalues[expires_col]) - now;
 		else
 			sub.expires = 0;

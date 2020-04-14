@@ -120,7 +120,7 @@ typedef struct pres_entry
 	struct pres_entry *next;
 } pres_entry_t;
 
-typedef struct pres_htable
+typedef struct pres_phtable
 {
 	pres_entry_t *entries;
 	gen_lock_t lock;

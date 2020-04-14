@@ -69,8 +69,8 @@ char *generate_ETag(int publ_count)
 		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(etag, 0, ETAG_LEN * sizeof(char));
-	size = snprintf(etag, ETAG_LEN, "%c.%d.%d.%d.%d", prefix, startup_time, pid,
-			counter, publ_count);
+	size = snprintf(etag, ETAG_LEN, "%c.%d.%d.%d.%d", pres_prefix,
+			pres_startup_time, pres_pid, pres_counter, publ_count);
 	if(size < 0) {
 		LM_ERR("unsuccessful snprintf\n ");
 		pkg_free(etag);
@@ -105,7 +105,7 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	hdr_append.s = buf;
 	hdr_append.s[0] = '\0';
 	hdr_append.len = snprintf(hdr_append.s, buf_len, "Expires: %d\r\n",
-			((lexpire == 0) ? 0 : (lexpire - expires_offset)));
+			((lexpire == 0) ? 0 : (lexpire - pres_expires_offset)));
 	if(hdr_append.len < 0) {
 		LM_ERR("unsuccessful snprintf\n");
 		goto error;
@@ -703,7 +703,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			}
 
 			if(pa_dbf.start_transaction) {
-				if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+				if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 					LM_ERR("in start_transaction\n");
 					goto error;
 				}
@@ -752,7 +752,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			}
 
 			if(pa_dbf.start_transaction) {
-				if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+				if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 					LM_ERR("in start_transaction\n");
 					goto error;
 				}
@@ -796,7 +796,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 		}
 
 		if(pa_dbf.start_transaction) {
-			if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+			if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 				LM_ERR("in start_transaction\n");
 				goto error;
 			}
@@ -1100,7 +1100,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			n_update_cols++;
 
 			/* updated stored sphere */
-			if(sphere_enable
+			if(pres_sphere_enable
 					&& presentity->event->evp->type == EVENT_PRESENCE) {
 				if(publ_cache_enabled
 						&& update_phtable(presentity, pres_uri, *body) < 0) {
@@ -1315,8 +1315,9 @@ int pres_htable_restore(void)
 	result_cols[domain_col = n_result_cols++] = &str_domain_col;
 	result_cols[event_col = n_result_cols++] = &str_event_col;
 	result_cols[expires_col = n_result_cols++] = &str_expires_col;
-	if(sphere_enable)
+	if(pres_sphere_enable) {
 		result_cols[body_col = n_result_cols++] = &str_body_col;
+	}
 
 	if(pa_dbf.use_table(pa_db, &presentity_table) < 0) {
 		LM_ERR("unsuccessful use table sql operation\n");
@@ -1370,7 +1371,7 @@ int pres_htable_restore(void)
 			}
 			/* insert in hash_table*/
 
-			if(sphere_enable && event == EVENT_PRESENCE) {
+			if(pres_sphere_enable && event == EVENT_PRESENCE) {
 				body.s = (char *)row_vals[body_col].val.string_val;
 				body.len = strlen(body.s);
 				sphere = extract_sphere(body);
@@ -1483,8 +1484,9 @@ char *get_sphere(str *pres_uri)
 	static str query_str;
 
 
-	if(!sphere_enable)
+	if(!pres_sphere_enable) {
 		return NULL;
+	}
 
 	if(publ_cache_enabled) {
 		/* search in hash table*/
@@ -1869,7 +1871,7 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 
 	pres = new_presentity(realm, user, expires, ev, etag, sender);
 
-	if(sphere_enable) {
+	if(pres_sphere_enable) {
 		sphere = extract_sphere(*body);
 	}
 	if(pres) {

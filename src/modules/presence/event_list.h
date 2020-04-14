@@ -150,7 +150,7 @@ typedef int (*get_event_list_t)(str **ev_list);
 
 void destroy_evlist(void);
 
-extern evlist_t *EvList;
+extern evlist_t *pres_evlist;
 
 pres_ev_t *search_event(event_t *event);
 typedef pres_ev_t *(*search_event_t)(event_t *event);
