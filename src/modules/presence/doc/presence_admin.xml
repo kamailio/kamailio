@@ -345,26 +345,6 @@ modparam("presence", "startup_mode", 0)
 		</example>
 	</section>
 
-	<section id="presence.p.to_tag_pref">
-		<title><varname>to_tag_pref</varname> (str)</title>
-		<para>
-		The prefix used when generating to_tag when sending replies for
-		SUBSCRIBE requests.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>10</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>to_tag_pref</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "to_tag_pref", 'pres')
-...
-	</programlisting>
-		</example>
-	</section>
-
 	<section id="presence.p.expires_offset">
 		<title><varname>expires_offset</varname> (int)</title>
 		<para>
