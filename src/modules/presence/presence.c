@@ -109,9 +109,6 @@ sip_uri_match_f presence_sip_uri_match;
 static int sip_uri_case_sensitive_match(str *s1, str *s2);
 static int sip_uri_case_insensitive_match(str *s1, str *s2);
 
-/* to tag prefix */
-char *pres_totag_pref = "10";
-
 /* TM bind */
 struct tm_binds tmb;
 /* SL API structure */
@@ -220,7 +217,6 @@ static param_export_t params[]={
 	{ "notifier_processes",     INT_PARAM, &pres_notifier_processes },
 	{ "force_delete",           INT_PARAM, &pres_force_delete },
 	{ "startup_mode",           INT_PARAM, &pres_startup_mode },
-	{ "to_tag_pref",            PARAM_STRING, &pres_totag_pref },
 	{ "expires_offset",         INT_PARAM, &pres_expires_offset },
 	{ "max_expires",            INT_PARAM, &pres_max_expires },
 	{ "min_expires",            INT_PARAM, &pres_min_expires },
@@ -317,10 +313,6 @@ static int mod_init(void)
 
 	if(pres_expires_offset < 0) {
 		pres_expires_offset = 0;
-	}
-
-	if(pres_totag_pref == NULL || strlen(pres_totag_pref) == 0) {
-		pres_totag_pref = "10";
 	}
 
 	if(pres_max_expires <= 0) {

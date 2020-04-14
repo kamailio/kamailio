@@ -70,7 +70,6 @@ extern str watchers_table;
 extern int pres_counter;
 extern int pres_pid;
 extern int pres_startup_time;
-extern char *pres_totag_pref;
 extern int pres_expires_offset;
 extern int pres_cseq_offset;
 extern str pres_server_address;
