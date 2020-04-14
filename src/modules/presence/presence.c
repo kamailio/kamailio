@@ -81,7 +81,6 @@ MODULE_VERSION
 #define P_TABLE_VERSION 5
 #define ACTWATCH_TABLE_VERSION 12
 
-char *log_buf = NULL;
 static int clean_period = 100;
 static int db_update_period = 100;
 int pres_local_log_level = L_INFO;
