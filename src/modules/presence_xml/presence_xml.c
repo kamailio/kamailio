@@ -26,7 +26,8 @@
  */
 
 /*!
- * \defgroup presence_xml Presence_xml :: This module implements a range of XML-based SIP event packages for presence
+ * \defgroup presence_xml Presence_xml :: This module implements a range
+ *   of XML-based SIP event packages for presence
  */
 
 
@@ -76,13 +77,7 @@ static int w_presxml_check_activities(
 		sip_msg_t *msg, char *presentity_uri, char *activities);
 
 /** module variables ***/
-add_event_t pres_add_event;
-update_watchers_t pres_update_watchers;
-pres_get_sphere_t pres_get_sphere;
-
-contains_event_t pres_contains_event;
-pres_get_presentity_t pres_get_presentity;
-pres_free_presentity_t pres_free_presentity;
+presence_api_t psapi = {0};
 
 /* Module parameter variables */
 str xcap_table = str_init("xcap");
@@ -167,11 +162,9 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	bind_presence_t bind_presence;
-	presence_api_t pres;
-
-	if(passive_mode == 1)
+	if(passive_mode == 1) {
 		return 0;
+	}
 
 	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(presxml_db_url.s),
 			presxml_db_url.len, presxml_db_url.s);
@@ -182,24 +175,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	bind_presence = (bind_presence_t)find_export("bind_presence", 1, 0);
-	if(!bind_presence) {
-		LM_ERR("Can't bind presence\n");
-		return -1;
-	}
-	if(bind_presence(&pres) < 0) {
-		LM_ERR("Can't bind to presence module\n");
+	if(presence_load_api(&psapi) != 0) {
+		LM_ERR("cannot bind to presence api\n");
 		return -1;
 	}
 
-	pres_get_sphere = pres.get_sphere;
-	pres_add_event = pres.add_event;
-	pres_update_watchers = pres.update_watchers_status;
-	pres_contains_event = pres.contains_event;
-	pres_get_presentity = pres.get_presentity;
-	pres_free_presentity = pres.free_presentity;
-	if(pres_add_event == NULL || pres_update_watchers == NULL) {
-		LM_ERR("Can't import add_event\n");
+	if(psapi.add_event == NULL || psapi.update_watchers_status == NULL) {
+		LM_ERR("requited presence api not available\n");
 		return -1;
 	}
 	if(xml_add_events() < 0) {
@@ -448,7 +430,7 @@ static int xcap_doc_updated(int doc_type, str xid, char *doc)
 	rules_doc.s = doc;
 	rules_doc.len = strlen(doc);
 
-	if(pres_update_watchers(&xid, &ev, &rules_doc) < 0) {
+	if(psapi.update_watchers_status(&xid, &ev, &rules_doc) < 0) {
 		LM_ERR("updating watchers in presence\n");
 		return -1;
 	}

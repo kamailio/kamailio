@@ -1,5 +1,5 @@
 /*
- * presence_xml module -  
+ * presence_xml module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -62,14 +62,18 @@ void free_xml_body(char *body)
 
 #define PRESENCE_EMPTY_BODY \
 	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
-<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\"> \
+<presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\
+ xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\"\
+ xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\"\
+ xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\"> \
 <tuple xmlns=\"urn:ietf:params:xml:ns:pidf\" id=\"615293b33c62dec073e05d9421e9f48b\">\
 <status>\
 <basic>open</basic>\
 </status>\
 </tuple>\
 <note xmlns=\"urn:ietf:params:xml:ns:pidf\">Available</note>\
-<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
+<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\"\
+ xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
 <rpid:activities/>\
 <dm:note>Available</dm:note>\
 </dm:person>\

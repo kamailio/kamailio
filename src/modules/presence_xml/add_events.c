@@ -68,7 +68,7 @@ int xml_add_events(void)
 		event.default_expires = 3600;
 		event.get_rules_doc = pres_get_rules_doc;
 		event.get_pidf_doc = pres_get_pidf_doc;
-		if(pres_add_event(&event) < 0) {
+		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event presence\n");
 			return -1;
 		}
@@ -87,7 +87,7 @@ int xml_add_events(void)
 		event.free_body = free_xml_body;
 		event.default_expires = 3600;
 
-		if(pres_add_event(&event) < 0) {
+		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event presence.winfo\n");
 			return -1;
 		}
@@ -107,7 +107,7 @@ int xml_add_events(void)
 		event.type = PUBL_TYPE;
 		event.free_body = free_xml_body;
 		event.default_expires = 3600;
-		if(pres_add_event(&event) < 0) {
+		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event dialog;sla\n");
 			return -1;
 		}
@@ -125,7 +125,7 @@ int xml_add_events(void)
 
 		event.type = PUBL_TYPE;
 		event.default_expires = 3600;
-		if(pres_add_event(&event) < 0) {
+		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event xcap-diff\n");
 			return -1;
 		}

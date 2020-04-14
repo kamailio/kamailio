@@ -1,5 +1,5 @@
 /*
- * presence_xml module - 
+ * presence_xml module
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -240,7 +240,7 @@ xmlNodePtr get_rule_node(subs_t *subs, xmlDocPtr xcap_tree)
 			/* check to see if matches presentity current sphere */
 			/* ask presence for sphere information */
 
-			char *sphere = pres_get_sphere(&subs->pres_uri);
+			char *sphere = psapi.get_sphere(&subs->pres_uri);
 			if(sphere) {
 				char *attr = (char *)xmlNodeGetContent(sphere_node);
 				if(xmlStrcasecmp((unsigned char *)attr, (unsigned char *)sphere)
@@ -254,7 +254,7 @@ xmlNodePtr get_rule_node(subs_t *subs, xmlDocPtr xcap_tree)
 				xmlFree(attr);
 			}
 
-			/* if the user has not define a sphere -> 
+			/* if the user has not define a sphere ->
 			 *						consider the condition true*/
 		}
 
