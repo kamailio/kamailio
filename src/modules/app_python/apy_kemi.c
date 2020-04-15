@@ -187,6 +187,8 @@ PyObject *sr_kemi_apy_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 			return sr_apy_kemi_return_none();
 		case SR_KEMIP_DICT:
 			LM_ERR("unsupported return type: map\n");
+			sr_kemi_xval_free(rx);
+			return sr_apy_kemi_return_none();
 		case SR_KEMIP_XVAL:
 			/* unknown content - return false */
 			return sr_kemi_apy_return_false();
