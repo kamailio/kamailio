@@ -176,6 +176,16 @@ int sr_kemi_jsdt_return_xval(duk_context *J, sr_kemi_t *ket, sr_kemi_xval_t *rx)
 				duk_push_boolean(J, SRJSDT_FALSE);
 			}
 			return 1;
+		case SR_KEMIP_ARRAY:
+			LM_ERR("unsupported return type: array\n");
+			sr_kemi_xval_free(rx);
+			duk_push_string(J, NULL);
+			return 1;
+		case SR_KEMIP_DICT:
+			LM_ERR("unsupported return type: map\n");
+			sr_kemi_xval_free(rx);
+			duk_push_string(J, NULL);
+			return 1;
 		case SR_KEMIP_XVAL:
 			/* unknown content - return false */
 			duk_push_boolean(J, SRJSDT_FALSE);
