@@ -1250,6 +1250,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	branch_bm_t cancel_bm;
 #ifndef E2E_CANCEL_HOP_BY_HOP
 	branch_bm_t tmp_bm;
+	int reply_status;
 #endif /* E2E_CANCEL_HOP_BY_HOP */
 	struct cancel_reason* reason;
 	int free_reason;
@@ -1390,9 +1391,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				if (cfg_get(tm, tm_cfg, cancel_b_flags) &
 						F_CANCEL_B_FAKE_REPLY){
 					LOCK_REPLIES(t_invite);
-					if (relay_reply(t_invite, FAKED_REPLY, i,
-								487, &tmp_bm, 1) == RPS_ERROR) {
+					reply_status = relay_reply(t_invite, FAKED_REPLY, i,
+								487, &tmp_bm, 1);
+					if(reply_status == RPS_ERROR) {
 						lowest_error = -1;
+					} else if(reply_status == RPS_TGONE) {
+						break;
 					}
 				}
 			}

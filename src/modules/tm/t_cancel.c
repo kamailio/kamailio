@@ -213,6 +213,7 @@ int cancel_branch( struct cell *t, int branch,
 	int ret;
 	struct cancel_info tmp_cd;
 	void* pcbuf;
+	int reply_status;
 
 	crb=&t->uac[branch].local_cancel;
 	irb=&t->uac[branch].request;
@@ -243,8 +244,9 @@ int cancel_branch( struct cell *t, int branch,
 					&& !(irb->flags&F_RB_RELAYREPLY)
 					&& !(t->flags&T_ADMIN_REPLY)) {
 				LOCK_REPLIES(t);
-				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1) ==
-										RPS_ERROR){
+				reply_status = relay_reply(t, FAKED_REPLY, branch, 487,
+						&tmp_cd, 1);
+				if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
 					return -1;
 				}
 			}
@@ -264,8 +266,9 @@ int cancel_branch( struct cell *t, int branch,
 				if (flags & F_CANCEL_B_FAKE_REPLY){
 					stop_rb_timers( irb ); /* stop even the fr timer */
 					LOCK_REPLIES(t);
-					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1)==
-											RPS_ERROR){
+					reply_status = relay_reply(t, FAKED_REPLY, branch, 487,
+							&tmp_cd, 1);
+					if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
 						return -1;
 					}
 					return 0; /* should be inactive after the 487 */

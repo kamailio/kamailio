@@ -222,6 +222,9 @@ str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
 str _tm_event_callback_lres_sent = {NULL, 0};
 
+unsigned long tm_exec_time_check = 0; /* microseconds */
+int tm_exec_time_check_param = 5000; /* milliseconds */
+
 int tm_failure_exec_mode = 0;
 
 int tm_dns_reuse_rcv_socket = 0;
@@ -476,6 +479,7 @@ static param_export_t params[]={
 	{"relay_100",           PARAM_INT, &default_tm_cfg.relay_100             },
 	{"rich_redirect" ,      PARAM_INT, &tm_rich_redirect                     },
 	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent    },
+	{"exec_time_check" ,    PARAM_INT, &tm_exec_time_check_param             },
 	{0,0,0}
 };
 
@@ -706,6 +710,10 @@ static int mod_init(void)
 
 	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n",
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
+
+	if(tm_exec_time_check_param > 0) {
+		tm_exec_time_check = (unsigned long)tm_exec_time_check_param * 1000;
+	}
 
 	/* checking if we have sufficient bitmap capacity for given
 	 * maximum number of  branches */

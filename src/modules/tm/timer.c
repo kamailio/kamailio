@@ -294,14 +294,21 @@ static void fake_reply(struct cell *t, int branch, int code)
 		reply_status =
 				relay_reply(t, FAKED_REPLY, branch, code, &cancel_data, 0);
 	}
-/* now when out-of-lock do the cancel I/O */
-	if(do_cancel_branch)
+	if(reply_status==RPS_TGONE) {
+		return;
+	}
+
+	/* now when out-of-lock do the cancel I/O */
+	if(do_cancel_branch) {
 		cancel_branch(t, branch, &cancel_data.reason, 0);
+	}
+
 	/* it's cleaned up on error; if no error occurred and transaction
-	   completed regularly, I have to clean-up myself
-	*/
-	if(reply_status == RPS_COMPLETED)
+	 * completed regularly, I have to clean-up myself
+	 */
+	if(reply_status == RPS_COMPLETED) {
 		put_on_wait(t);
+	}
 }
 
 

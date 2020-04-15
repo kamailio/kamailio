@@ -1637,6 +1637,55 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 	return t_lookup_ident_filter(trans, hash_index, label, 0);
 }
 
+/** find a transaction based on its identifier (hash_index:label).
+ * @param trans - double pointer to cell structure, that will be filled
+ *                with the result (a pointer to an existing transaction or
+ *                0).
+ * @param hash_index - searched transaction hash_index (part of the ident).
+ * @param label - searched transaction label (part of the ident).
+ * @param filter - if 1, skip transaction put on-wait (terminated state).
+ * @return transaction cell pointer
+ * Note: it does not sets T and T_branch, nor reference the transaction,
+ *   useful to quickly check if a transaction still exists
+ */
+tm_cell_t *t_find_ident_filter(unsigned int hash_index, unsigned int label,
+		int filter)
+{
+	tm_cell_t *p_cell;
+	tm_entry_t *hash_bucket;
+
+	if(unlikely(hash_index >= TABLE_ENTRIES)){
+		LM_ERR("invalid hash_index=%u\n", hash_index);
+		return NULL;
+	}
+
+	LOCK_HASH(hash_index);
+
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
+	/* all the transactions from the entry are compared */
+	clist_foreach(hash_bucket, p_cell, next_c) {
+		prefetch_loc_r(p_cell->next_c, 1);
+		if(p_cell->label == label) {
+			if(filter==1) {
+				if(t_on_wait(p_cell)) {
+					/* transaction in terminated state */
+					UNLOCK_HASH(hash_index);
+					LM_DBG("transaction in terminated phase - skipping\n");
+					return NULL;
+				}
+			}
+			UNLOCK_HASH(hash_index);
+			LM_DBG("transaction found\n");
+			return p_cell;
+		}
+	}
+
+	UNLOCK_HASH(hash_index);
+	LM_DBG("transaction not found\n");
+
+	return NULL;
+}
+
 /** check if a transaction is local or not.
  * Check if the transaction corresponding to the current message
  * is local or not.
