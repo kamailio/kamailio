@@ -769,6 +769,14 @@ VALUE sr_kemi_ruby_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 			} else {
 				return Qfalse;
 			}
+		case SR_KEMIP_ARRAY:
+			LM_ERR("unsupported return type: array\n");
+			sr_kemi_xval_free(rx);
+			return Qnil;
+		case SR_KEMIP_DICT:
+			LM_ERR("unsupported return type: map\n");
+			sr_kemi_xval_free(rx);
+			return Qnil;
 		case SR_KEMIP_XVAL:
 			/* unknown content - return false */
 			return Qfalse;
