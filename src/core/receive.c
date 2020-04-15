@@ -228,7 +228,6 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	struct run_act_ctx *bctx = NULL;
 	int ret = -1;
 	struct timeval tvb, tve;
-	struct timezone tz;
 	unsigned int diff = 0;
 	str inb = STR_NULL;
 	sr_net_info_t netinfo = {0};
@@ -379,7 +378,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		/*	skip: */
 		LM_DBG("preparing to run routing scripts...\n");
 		if(exectime) {
-			gettimeofday(&tvb, &tz);
+			gettimeofday(&tvb, NULL);
 		}
 		/* execute pre-script callbacks, if any; -jiri */
 		/* if some of the callbacks said not to continue with
@@ -429,7 +428,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		}
 
 		if(exectime) {
-			gettimeofday(&tve, &tz);
+			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
 			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
@@ -451,7 +450,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		}
 
 		if(exectime) {
-			gettimeofday(&tvb, &tz);
+			gettimeofday(&tvb, NULL);
 		}
 
 		/* execute pre-script callbacks, if any; -jiri */
@@ -510,7 +509,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		forward_reply(msg);
 	skip_send_reply:
 		if(exectime) {
-			gettimeofday(&tve, &tz);
+			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
 			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
