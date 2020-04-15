@@ -38,10 +38,10 @@
 #include "add_events.h"
 #include "presence_xml.h"
 
-extern int disable_presence;
-extern int disable_winfo;
-extern int disable_bla;
-extern int disable_xcapdiff;
+extern int pxml_disable_presence;
+extern int pxml_disable_winfo;
+extern int pxml_disable_bla;
+extern int pxml_disable_xcapdiff;
 
 static str pu_415_rpl = str_init("Unsupported media type");
 
@@ -49,7 +49,7 @@ int xml_add_events(void)
 {
 	pres_ev_t event;
 
-	if(!disable_presence) {
+	if(!pxml_disable_presence) {
 		/* constructing presence event */
 		memset(&event, 0, sizeof(pres_ev_t));
 		event.name.s = "presence";
@@ -75,7 +75,7 @@ int xml_add_events(void)
 		LM_DBG("added 'presence' event to presence module\n");
 	}
 
-	if(!disable_winfo) {
+	if(!pxml_disable_winfo) {
 		/* constructing presence.winfo event */
 		memset(&event, 0, sizeof(pres_ev_t));
 		event.name.s = "presence.winfo";
@@ -94,7 +94,7 @@ int xml_add_events(void)
 		LM_DBG("added 'presence.winfo' event to presence module\n");
 	}
 
-	if(!disable_bla) {
+	if(!pxml_disable_bla) {
 		/* constructing bla event */
 		memset(&event, 0, sizeof(pres_ev_t));
 		event.name.s = "dialog;sla";
@@ -114,7 +114,7 @@ int xml_add_events(void)
 		LM_DBG("added 'dialog;sla' event to presence module\n");
 	}
 
-	if(!disable_xcapdiff) {
+	if(!pxml_disable_xcapdiff) {
 		/* constructing xcap-diff event */
 		memset(&event, 0, sizeof(pres_ev_t));
 		event.name.s = "xcap-diff";

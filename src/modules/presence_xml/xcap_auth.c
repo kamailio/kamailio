@@ -54,8 +54,8 @@ int pres_watcher_allowed(subs_t *subs)
 	char *sub_handling = NULL;
 	int ret = 0;
 
-	/* if force_active set status to active*/
-	if(force_active) {
+	/* if pxml_force_active set status to active*/
+	if(pxml_force_active) {
 		subs->status = ACTIVE_STATUS;
 		subs->reason.s = NULL;
 		subs->reason.len = 0;
@@ -400,7 +400,7 @@ int get_rules_doc(
 	static str tmp4 = str_init("domain");
 	static str tmp5 = str_init("doc");
 
-	if(force_active) {
+	if(pxml_force_active) {
 		*rules_doc = NULL;
 		return 0;
 	}
@@ -439,8 +439,9 @@ int get_rules_doc(
 
 	result_cols[xcap_doc_col = n_result_cols++] = &tmp5;
 
-	if(pxml_dbf.use_table(pxml_db, &xcap_table) < 0) {
-		LM_ERR("in use_table-[table]= %.*s\n", xcap_table.len, xcap_table.s);
+	if(pxml_dbf.use_table(pxml_db, &pxml_xcap_table) < 0) {
+		LM_ERR("in use_table-[table]= %.*s\n", pxml_xcap_table.len,
+				pxml_xcap_table.s);
 		return -1;
 	}
 
@@ -461,10 +462,10 @@ int get_rules_doc(
 			   "\t[domain]= %.*s\t[doc_type]= %d\n",
 				user->len, user->s, domain->len, domain->s, type);
 
-		if(!integrated_xcap_server && type != PRES_RULES) {
+		if(!pxml_integrated_xcap_server && type != PRES_RULES) {
 			LM_WARN("Cannot retrieve non pres-rules documents from"
 					"external XCAP server\n");
-		} else if(!integrated_xcap_server) {
+		} else if(!pxml_integrated_xcap_server) {
 			if(http_get_rules_doc(*user, *domain, &body) < 0) {
 				LM_ERR("sending http GET request to xcap server\n");
 				goto error;

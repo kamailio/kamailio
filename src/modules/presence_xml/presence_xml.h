@@ -44,12 +44,12 @@ typedef struct xcap_serv
 extern sl_api_t slb;
 extern presence_api_t psapi;
 
-extern str xcap_table;
+extern str pxml_xcap_table;
 extern db1_con_t *pxml_db;
 extern db_func_t pxml_dbf;
-extern int force_active;
+extern int pxml_force_active;
 extern int pidf_manipulation;
-extern int integrated_xcap_server;
+extern int pxml_integrated_xcap_server;
 extern xcap_serv_t *xs_list;
 extern xcapGetNewDoc_t xcap_GetNewDoc;
 
