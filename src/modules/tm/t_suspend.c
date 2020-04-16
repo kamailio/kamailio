@@ -312,7 +312,6 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 						if(sr_kemi_route(keng, faked_req, FAILURE_ROUTE, cbname,
 								&evname)<0) {
 							LM_ERR("error running event route kemi callback\n");
-							return -1;
 						}
 					} else {
 						LM_DBG("event callback (%.*s) set, but no cfg engine\n",
