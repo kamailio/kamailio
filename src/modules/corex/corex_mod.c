@@ -29,6 +29,7 @@
 #include "../../core/resolve.h"
 #include "../../core/lvalue.h"
 #include "../../core/pvar.h"
+#include "../../core/fmsg.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_uri.h"
 
@@ -61,6 +62,7 @@ static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
+static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -129,6 +131,8 @@ static cmd_export_t cmds[]={
 	{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1, fixup_igp_null,
 		0, ANY_ROUTE },
 	{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1, fixup_igp_null,
+		0, ANY_ROUTE },
+	{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0,
 		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
@@ -930,6 +934,28 @@ static int ki_has_user_agent(sip_msg_t *msg)
 /**
  *
  */
+static int ki_is_faked_msg(sip_msg_t *msg)
+{
+	if(faked_msg_match(msg)) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2)
+{
+	if(faked_msg_match(msg)) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("append_branch"),
@@ -1020,6 +1046,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("sendx"),
 		SR_KEMIP_INT, ki_sendx,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("is_faked_msg"),
+		SR_KEMIP_INT, ki_is_faked_msg,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
