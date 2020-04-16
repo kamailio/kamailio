@@ -137,18 +137,26 @@ static int cblen = 0;
 static int natping_interval = 0;
 struct socket_info *force_socket = 0;
 
+static int nh_nat_addr_mode = 1;
 
 /* clang-format off */
-static struct {
+typedef struct nh_netaddr {
 	const char *cnetaddr;
 	uint32_t netaddr;
 	uint32_t mask;
-} nets_1918[] = {
+} nh_netaddr_t;
+
+static nh_netaddr_t nh_nets_1918[] = {
 	{"10.0.0.0",    0, 0xffffffffu << 24},
 	{"172.16.0.0",  0, 0xffffffffu << 20},
 	{"192.168.0.0", 0, 0xffffffffu << 16},
 	{"100.64.0.0",  0, 0xffffffffu << 22}, /* rfc6598 - cg-nat */
 	{"192.0.0.0",   0, 0xffffffffu <<  3}, /* rfc7335 - IPv4 Service Continuity Prefix */
+	{NULL, 0, 0}
+};
+
+static nh_netaddr_t nh_nets_extra[] = {
+	{"192.0.0.0",   0, 0xffffffffu <<  8}, /* rfc7335 - IETF Protocol Assignments */
 	{NULL, 0, 0}
 };
 /* clang-format on */
@@ -249,6 +257,7 @@ static param_export_t params[] = {
 	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
 	{"append_sdp_oldmediaip", INT_PARAM, &sdp_oldmediaip        },
 	{"filter_server_id",      INT_PARAM, &nh_filter_srvid },
+	{"nat_addr_mode",         INT_PARAM, &nh_nat_addr_mode },
 
 	{0, 0, 0}
 };
@@ -527,10 +536,17 @@ static int mod_init(void)
 	}
 
 	/* Prepare 1918 networks list */
-	for(i = 0; nets_1918[i].cnetaddr != NULL; i++) {
-		if(inet_aton(nets_1918[i].cnetaddr, &addr) != 1)
+	for(i = 0; nh_nets_1918[i].cnetaddr != NULL; i++) {
+		if(inet_aton(nh_nets_1918[i].cnetaddr, &addr) != 1)
 			abort();
-		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
+		nh_nets_1918[i].netaddr = ntohl(addr.s_addr) & nh_nets_1918[i].mask;
+	}
+
+	/* Prepare reserved/extra networks list */
+	for(i = 0; nh_nets_extra[i].cnetaddr != NULL; i++) {
+		if(inet_aton(nh_nets_extra[i].cnetaddr, &addr) != 1)
+			abort();
+		nh_nets_extra[i].netaddr = ntohl(addr.s_addr) & nh_nets_extra[i].mask;
 	}
 
 	register_select_table(sel_declaration);
@@ -1259,9 +1275,16 @@ static inline int is1918addr_n(uint32_t netaddr)
 	uint32_t hl;
 
 	hl = ntohl(netaddr);
-	for(i = 0; nets_1918[i].cnetaddr != NULL; i++) {
-		if((hl & nets_1918[i].mask) == nets_1918[i].netaddr) {
+	for(i = 0; nh_nets_1918[i].cnetaddr != NULL; i++) {
+		if((hl & nh_nets_1918[i].mask) == nh_nets_1918[i].netaddr) {
 			return 1;
+		}
+	}
+	if(nh_nat_addr_mode==1) {
+		for(i = 0; nh_nets_extra[i].cnetaddr != NULL; i++) {
+			if((hl & nh_nets_extra[i].mask) == nh_nets_extra[i].netaddr) {
+				return 1;
+			}
 		}
 	}
 	return 0;
