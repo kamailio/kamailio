@@ -466,6 +466,52 @@ modparam("nathelper", "filter_server_id", 1)
 		</example>
 	</section>
 
+	<section id="nathelper.p.nat_addr_mode">
+		<title><varname>nat_addr_mode</varname> (int)</title>
+		<para>
+			If set to 0, only default private net addresses are checked by
+			nat_uac_test(). If set to 1, other reserved net addresses are
+			checked by nat_uac_test() as well.
+		</para>
+		<para>Default private net addresses are:</para>
+		<itemizedlist>
+			<listitem>
+				<para>10.0.0.0/8</para>
+			<listitem>
+			<listitem>
+				<para>172.16.0.0/12</para>
+			<listitem>
+			<listitem>
+				<para>192.168.0.0/16</para>
+			<listitem>
+			<listitem>
+				<para>100.64.0.0/10 - RFC6598 - Carrier Grade NAT</para>
+			<listitem>
+			<listitem>
+				<para>192.0.0.0/29 - RFC7335 - IPv4 Service Continuity Prefix</para>
+			<listitem>
+		<itemizedlist>
+		<para>Reserved net addresses are:</para>
+		<itemizedlist>
+			<listitem>
+				<para>192.0.0.0/24 - RFC7335 - IETF Protocol Assignments</para>
+			<listitem>
+		<itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>nat_addr_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "nat_addr_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
