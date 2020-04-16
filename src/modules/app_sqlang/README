@@ -36,7 +36,7 @@ Daniel-Constantin Mierla
 
         5. RPC Commands
 
-              5.1. app_swlang.reload
+              5.1. app_sqlang.reload
               5.2. app_sqlang.api_list
 
         6. Example of usage
@@ -72,7 +72,7 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. app_swlang.reload
+        5.1. app_sqlang.reload
         5.2. app_sqlang.api_list
 
    6. Example of usage
@@ -201,10 +201,10 @@ if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
 
 5. RPC Commands
 
-   5.1. app_swlang.reload
+   5.1. app_sqlang.reload
    5.2. app_sqlang.api_list
 
-5.1.  app_swlang.reload
+5.1.  app_sqlang.reload
 
    Marks the need to reload the SQLang script pointed by 'load'
    parameter.The actual reload is done by every working process when the

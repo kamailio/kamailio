@@ -36,6 +36,7 @@ Dan Pascu
               4.3. keepalive_from (string)
               4.4. keepalive_extra_headers (string)
               4.5. keepalive_state_file (string)
+              4.6. contact_match (integer)
 
         5. Exported functions
 
@@ -69,12 +70,13 @@ Dan Pascu
    1.3. Setting the keepalive_from parameter
    1.4. Setting the keepalive_extra_headers parameter
    1.5. Setting the keepalive_state_file parameter
-   1.6. Using the client_nat_test function
-   1.7. Using the fix_contact function
-   1.8. Using the nat_keepalive function
-   1.9. Using $keepalive.socket in multi-proxy environments
-   1.10. Using $source_uri to set the received AVP on registrars
-   1.11. Using $source_uri in multi-proxy environments
+   1.6. Setting the contact_match parameter
+   1.7. Using the client_nat_test function
+   1.8. Using the fix_contact function
+   1.9. Using the nat_keepalive function
+   1.10. Using $keepalive.socket in multi-proxy environments
+   1.11. Using $source_uri to set the received AVP on registrars
+   1.12. Using $source_uri in multi-proxy environments
 
 Chapter 1. Admin Guide
 
@@ -99,6 +101,7 @@ Chapter 1. Admin Guide
         4.3. keepalive_from (string)
         4.4. keepalive_extra_headers (string)
         4.5. keepalive_state_file (string)
+        4.6. contact_match (integer)
 
    5. Exported functions
 
@@ -399,6 +402,7 @@ Chapter 1. Admin Guide
    4.3. keepalive_from (string)
    4.4. keepalive_extra_headers (string)
    4.5. keepalive_state_file (string)
+   4.6. contact_match (integer)
 
 4.1. keepalive_interval (integer)
 
@@ -497,6 +501,25 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_s
 tate")
 ...
 
+4.6. contact_match (integer)
+
+   Control how to match the contact URIs between requests and replies.
+
+   If set to 0, do string comparison. Use this mode when the contact URI
+   is not changed by registrar or proxy servers.
+
+   If set to 1, do light URI comparison (match URI type, user, host, port
+   and proto). Use this mode when the contact URI can be changed by
+   registrar or proxy servers (e.g., new parameters added, or the order of
+   parameters changed).
+
+   Default value is “0”.
+
+   Example 1.6. Setting the contact_match parameter
+...
+modparam("nat_traversal", "contact_match", 1)
+...
+
 5. Exported functions
 
    5.1. client_nat_test(type)
@@ -526,7 +549,7 @@ tate")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.6. Using the client_nat_test function
+   Example 1.7. Using the client_nat_test function
 ...
 if (client_nat_test("3")) {
     .....
@@ -542,7 +565,7 @@ if (client_nat_test("3")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.7. Using the fix_contact function
+   Example 1.8. Using the fix_contact function
 ...
 if (client_nat_test("3")) {
     fix_contact();
@@ -570,7 +593,7 @@ if (client_nat_test("3")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. Using the nat_keepalive function
+   Example 1.9. Using the nat_keepalive function
 ...
 if ((method=="REGISTER" || method=="SUBSCRIBE" ||
     (method=="INVITE" && !has_totag())) && client_nat_test("3"))
@@ -642,7 +665,7 @@ if ((method=="REGISTER" || method=="SUBSCRIBE" ||
    being relayed back to the user agent by P1 which has the NAT open with
    it.
 
-   Example 1.9. Using $keepalive.socket in multi-proxy environments
+   Example 1.10. Using $keepalive.socket in multi-proxy environments
 ...
 # This code runs on P1 which has received an INVITE from P2 to forward
 # it to the user agent behind NAT (because P1 has the NAT open with it).
@@ -673,7 +696,7 @@ if (method=="INVITE" && $hdr(X-Scope)=="nat-relay") {
    so that P2 can include it later for incoming INVITE requests to this
    user agent.
 
-   Example 1.10. Using $source_uri to set the received AVP on registrars
+   Example 1.11. Using $source_uri to set the received AVP on registrars
 ...
 modparam("registrar", "received_avp", "$avp(s:received_uri)")
 modparam("registrar", "tcp_persistent_flag", 10)
@@ -709,7 +732,7 @@ if (method=="REGISTER") {
 }
 ...
 
-   Example 1.11. Using $source_uri in multi-proxy environments
+   Example 1.12. Using $source_uri in multi-proxy environments
 ...
 # This code runs on P1 which received the REGISTER request and has to
 # forward it to the registrar P2.
