@@ -1394,7 +1394,11 @@ static sr_kemi_xval_t* ki_xavp_getw(sip_msg_t *msg, str *rname)
 	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
 }
 
+/**
+ *
+ */
 sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp);
+
 /**
  * SR_KEMIP_ARRAY with values of xavp=>name
  */
@@ -1480,7 +1484,8 @@ error:
 /**
  * SR_KEMIP_DICT of xavp
  */
-sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp) {
+sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp)
+{
 	sr_xavp_t *avp = NULL;
 	struct str_list *keys;
 	struct str_list *k;
@@ -1534,8 +1539,7 @@ error:
 /**
  *
  */
-static sr_kemi_xval_t*
-ki_xavp_getd_helper(sip_msg_t *msg, str *rname, int *_indx)
+static sr_kemi_xval_t* ki_xavp_getd_helper(sip_msg_t *msg, str *rname, int *_indx)
 {
 	sr_xavp_t *xavp=NULL;
 	int xavp_size = 0;
@@ -1589,8 +1593,7 @@ ki_xavp_getd_helper(sip_msg_t *msg, str *rname, int *_indx)
 /**
  *
  */
-static sr_kemi_xval_t*
-ki_xavp_getd(sip_msg_t *msg, str *rname)
+static sr_kemi_xval_t* ki_xavp_getd(sip_msg_t *msg, str *rname)
 {
 	return ki_xavp_getd_helper(msg, rname, NULL);
 }
@@ -1598,8 +1601,7 @@ ki_xavp_getd(sip_msg_t *msg, str *rname)
 /**
  *
  */
-static sr_kemi_xval_t*
-ki_xavp_getd_p1(sip_msg_t *msg, str *rname, int indx)
+static sr_kemi_xval_t* ki_xavp_getd_p1(sip_msg_t *msg, str *rname, int indx)
 {
 	return ki_xavp_getd_helper(msg, rname, &indx);
 }
@@ -1607,8 +1609,8 @@ ki_xavp_getd_p1(sip_msg_t *msg, str *rname, int indx)
 /**
  *
  */
-static sr_kemi_xval_t*
-ki_xavp_get_keys(sip_msg_t *msg, str *rname, int indx) {
+static sr_kemi_xval_t* ki_xavp_get_keys(sip_msg_t *msg, str *rname, int indx)
+{
 	sr_xavp_t *xavp=NULL;
 	struct str_list *keys, *k;
 	sr_kemi_dict_item_t *val;
