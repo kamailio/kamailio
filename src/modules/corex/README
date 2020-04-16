@@ -58,6 +58,7 @@ Muhammad Shahzad Shafi
               4.20. via_add_srvid(flags)
               4.21. via_add_xavp_params(flags)
               4.22. via_use_xavp_fields(flags)
+              4.23. is_faked_msg()
 
         5. RPC Commands
 
@@ -102,8 +103,9 @@ Muhammad Shahzad Shafi
    1.24. via_add_srvid usage
    1.25. via_add_xavp_params usage
    1.26. via_use_xavp_fields usage
-   1.27. event_route[network:msg] use cases
-   1.28. Sample PERL code for do_compress and do_uncompress
+   1.27. is_faked_msg usage
+   1.28. event_route[network:msg] use cases
+   1.29. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -146,6 +148,7 @@ Chapter 1. Admin Guide
         4.20. via_add_srvid(flags)
         4.21. via_add_xavp_params(flags)
         4.22. via_use_xavp_fields(flags)
+        4.23. is_faked_msg()
 
    5. RPC Commands
 
@@ -287,6 +290,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.20. via_add_srvid(flags)
    4.21. via_add_xavp_params(flags)
    4.22. via_use_xavp_fields(flags)
+   4.23. is_faked_msg()
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -644,6 +648,27 @@ request_route {
 }
 ...
 
+4.23.  is_faked_msg()
+
+   Returns 1 (native config true) if the SIP message under processing is
+   the internal faked msg structure. Returns -1 (native config false) if
+   the SIP message under processing is received from the network.
+
+   The function should be useful in event route blocks or async route
+   blocks where it can be processed either a message from the network or
+   the internal faked message.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.27. is_faked_msg usage
+...
+event_route[dispatcher:dst-down] {
+    if (is_faked_msg()) {
+        xinfo("Running with faked message\n");
+    }
+}
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -778,7 +803,7 @@ request_route {
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.27. event_route[network:msg] use cases
+   Example 1.28. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -809,7 +834,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.28. Sample PERL code for do_compress and do_uncompress
+   Example 1.29. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
