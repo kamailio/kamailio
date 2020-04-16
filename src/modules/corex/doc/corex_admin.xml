@@ -765,6 +765,36 @@ request_route {
 </programlisting>
 		</example>
 		</section>
+	<section id="corex.f.is_faked_msg">
+		<title>
+			<function moreinfo="none">is_faked_msg()</function>
+		</title>
+        <para>
+			Returns 1 (native config true) if the SIP message under processing
+			is the internal faked msg structure. Returns -1 (native config false)
+			if the SIP message under processing is received from the network.
+        </para>
+        <para>
+			The function should be useful in event route blocks or async route
+			blocks where it can be processed either a message from the network
+			or the internal faked message.
+        </para>
+        <para>
+        This function can be used in ANY_ROUTE.
+        </para>
+        <example>
+        <title><function>is_faked_msg</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[dispatcher:dst-down] {
+    if (is_faked_msg()) {
+        xinfo("Running with faked message\n");
+    }
+}
+...
+</programlisting>
+        </example>
+    </section>
 	</section>
 
 	<section>
