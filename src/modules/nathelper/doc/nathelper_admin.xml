@@ -477,26 +477,26 @@ modparam("nathelper", "filter_server_id", 1)
 		<itemizedlist>
 			<listitem>
 				<para>10.0.0.0/8</para>
-			<listitem>
+			</listitem>
 			<listitem>
 				<para>172.16.0.0/12</para>
-			<listitem>
+			</listitem>
 			<listitem>
 				<para>192.168.0.0/16</para>
-			<listitem>
+			</listitem>
 			<listitem>
 				<para>100.64.0.0/10 - RFC6598 - Carrier Grade NAT</para>
-			<listitem>
+			</listitem>
 			<listitem>
 				<para>192.0.0.0/29 - RFC7335 - IPv4 Service Continuity Prefix</para>
-			<listitem>
-		<itemizedlist>
+			</listitem>
+		</itemizedlist>
 		<para>Reserved net addresses are:</para>
 		<itemizedlist>
 			<listitem>
 				<para>192.0.0.0/24 - RFC7335 - IETF Protocol Assignments</para>
-			<listitem>
-		<itemizedlist>
+			</listitem>
+		</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is <quote>1</quote>.
