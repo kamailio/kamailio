@@ -140,4 +140,38 @@ void destroy_phtable(void);
 
 int delete_db_subs(str* to_tag, str* from_tag, str* callid);
 
+typedef struct ps_presentity {
+	int bsize;
+	int hashid;
+	str user;
+	str domain;
+	str ruid;
+	str sender;
+	str event;
+	str etag;
+	int expires;
+	int received_time;
+	int priority;
+	str body;
+	struct ps_presentity *next;
+	struct ps_presentity *prev;
+} ps_presentity_t;
+
+typedef struct ps_pslot {
+	ps_presentity_t *plist;
+	gen_lock_t lock;
+} ps_pslot_t;
+
+typedef struct ps_ptable {
+	int ssize;
+	ps_pslot_t *slots;
+} ps_ptable_t;
+
+int ps_ptable_init(int ssize);
+void ps_ptable_destroy(void);
+int ps_ptable_insert(ps_presentity_t *pt);
+int ps_ptable_update(ps_presentity_t *pt);
+ps_presentity_t *ps_ptable_get_list(str *user, str *domain);
+ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag);
+
 #endif

@@ -699,3 +699,426 @@ done:
 		pkg_free(sphere);
 	return ret;
 }
+
+/* in-memory presentity records */
+
+static ps_ptable_t *_ps_ptable = NULL;
+
+#define PS_PRESENTITY_FIELD_COPY(field) do { \
+		if (pt->field.s) { \
+			ptn->field.s = p; \
+			memcpy(ptn->field.s, pt->field.s, pt->field.len); \
+		} \
+		ptn->field.len = pt->field.len; \
+		p += pt->field.len + 1; \
+	} while(0)
+
+/**
+ *
+ */
+ps_presentity_t *ps_presentity_new(ps_presentity_t *pt, int mtype)
+{
+	int bsize = 0;
+	ps_presentity_t *ptn = NULL;
+	char *p = NULL;
+
+	if(pt==NULL) {
+		return NULL;
+	}
+	bsize = sizeof(ps_presentity_t)
+			+ pt->user.len + 1
+			+ pt->domain.len + 1
+			+ pt->etag.len + 1
+			+ pt->event.len + 1
+			+ pt->ruid.len + 1
+			+ pt->sender.len + 1
+			+ pt->body.len + 1;
+	if(mtype==0) {
+		ptn = (ps_presentity_t*)shm_malloc(bsize);
+	} else {
+		ptn = (ps_presentity_t*)pkg_malloc(bsize);
+	}
+	if(ptn==NULL) {
+		if(mtype==0) {
+			SHM_MEM_ERROR;
+		} else {
+			PKG_MEM_ERROR;
+		}
+		return NULL;
+	}
+	memset(ptn, 0, bsize);
+
+	ptn->bsize = bsize;
+	ptn->hashid = core_case_hash(&pt->user, &pt->domain, 0);
+	ptn->expires = pt->expires;
+	ptn->received_time = pt->received_time;
+	ptn->priority = pt->priority;
+
+	p = (char*)ptn + sizeof(ps_presentity_t);
+	PS_PRESENTITY_FIELD_COPY(user);
+	PS_PRESENTITY_FIELD_COPY(domain);
+	PS_PRESENTITY_FIELD_COPY(etag);
+	PS_PRESENTITY_FIELD_COPY(event);
+	PS_PRESENTITY_FIELD_COPY(ruid);
+	PS_PRESENTITY_FIELD_COPY(sender);
+	PS_PRESENTITY_FIELD_COPY(body);
+
+	return ptn;
+}
+
+/**
+ *
+ */
+void ps_presentity_free(ps_presentity_t *pt, int mtype)
+{
+	if(pt==NULL) {
+		return;
+	}
+	if(mtype==0) {
+		shm_free(pt);
+	} else {
+		pkg_free(pt);
+	}
+}
+
+/**
+ *
+ */
+void ps_presentity_list_free(ps_presentity_t *pt, int mtype)
+{
+	ps_presentity_t *ptc = NULL;
+	ps_presentity_t *ptn = NULL;
+
+	if(pt==NULL) {
+		return;
+	}
+
+	ptn = pt;
+	while(ptn!=NULL) {
+		ptc = ptn;
+		ptn = ptn->next;
+		ps_presentity_free(ptc, mtype);
+	}
+}
+
+#define PS_PRESENTITY_FIELD_SHIFT(field) do { \
+		if (pt->field.s) { \
+			ptn->field.s = p; \
+		} \
+		p += pt->field.len + 1; \
+	} while(0)
+
+/**
+ *
+ */
+ps_presentity_t *ps_presentity_dup(ps_presentity_t *pt, int mtype)
+{
+	ps_presentity_t *ptn = NULL;
+	char *p = NULL;
+
+	if(pt==NULL) {
+		return NULL;
+	}
+	if(mtype==0) {
+		ptn = (ps_presentity_t*)shm_malloc(pt->bsize);
+	} else {
+		ptn = (ps_presentity_t*)pkg_malloc(pt->bsize);
+	}
+	if(ptn==NULL) {
+		if(mtype==0) {
+			SHM_MEM_ERROR;
+		} else {
+			PKG_MEM_ERROR;
+		}
+		return NULL;
+	}
+
+	memcpy((void*)ptn, pt, pt->bsize);
+
+	p = (char*)ptn + sizeof(ps_presentity_t);
+	PS_PRESENTITY_FIELD_SHIFT(user);
+	PS_PRESENTITY_FIELD_SHIFT(domain);
+	PS_PRESENTITY_FIELD_SHIFT(etag);
+	PS_PRESENTITY_FIELD_SHIFT(event);
+	PS_PRESENTITY_FIELD_SHIFT(ruid);
+	PS_PRESENTITY_FIELD_SHIFT(sender);
+	PS_PRESENTITY_FIELD_SHIFT(body);
+
+	ptn->next = NULL;
+	ptn->prev = NULL;
+
+	return ptn;
+}
+
+/**
+ *
+ */
+int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode)
+{
+	if(pta->hashid != ptb->hashid) {
+		return 0;
+	}
+
+	if(pta->user.len != ptb->user.len || pta->domain.len != ptb->domain.len) {
+		return 0;
+	}
+
+	if(mmode == 0) {
+		if(pta->etag.len != ptb->etag.len || pta->event.len != ptb->event.len) {
+			return 0;
+		}
+	}
+
+	if(strncmp(pta->user.s, ptb->user.s, pta->user.len)!=0) {
+		return 0;
+	}
+
+	if(strncmp(pta->domain.s, ptb->domain.s, pta->domain.len)!=0) {
+		return 0;
+	}
+
+	if(mmode==0) {
+		if(strncmp(pta->etag.s, ptb->etag.s, pta->etag.len)!=0) {
+			return 0;
+		}
+
+		if(strncmp(pta->event.s, ptb->event.s, pta->event.len)!=0) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+int ps_ptable_init(int ssize)
+{
+	size_t tsize = 0;
+	int i = 0;
+
+	if(_ps_ptable!=NULL) {
+		return 0;
+	}
+	tsize = sizeof(ps_ptable_t) + (ssize * sizeof(ps_pslot_t));
+	_ps_ptable = (ps_ptable_t*)shm_malloc(tsize);
+	if(_ps_ptable==NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(_ps_ptable, 0, tsize);
+	_ps_ptable->ssize = ssize;
+	_ps_ptable->slots = (ps_pslot_t*)((char*)_ps_ptable + sizeof(ps_ptable_t));
+	for(i=0; i<ssize; i++) {
+		if(lock_init(&_ps_ptable->slots[i].lock) == 0) {
+			LM_ERR("initializing lock on slot [%d]\n", i);
+			goto error;
+		}
+	}
+
+	return 0;
+
+error:
+	i--;
+	while(i>=0) {
+		lock_destroy(&_ps_ptable->slots[i].lock);
+		i--;
+	}
+	shm_free(_ps_ptable);
+	_ps_ptable = NULL;
+	return -1;
+}
+
+/**
+ *
+ */
+void ps_ptable_destroy(void)
+{
+	int i = 0;
+	ps_presentity_t *pt = NULL;
+	ps_presentity_t *ptn = NULL;
+
+	if(_ps_ptable==NULL) {
+		return;
+	}
+	for(i=0; i<_ps_ptable->ssize; i++) {
+		lock_destroy(&_ps_ptable->slots[i].lock);
+		while(pt!=NULL) {
+			ptn = pt->next;
+			ps_presentity_free(pt, 0);
+			pt = ptn;
+		}
+	}
+	shm_free(_ps_ptable);
+	_ps_ptable = NULL;
+	return;
+}
+
+/**
+ *
+ */
+int ps_ptable_insert(ps_presentity_t *pt)
+{
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	int idx = 0;
+
+	/* copy struct to fill in missing fields */
+	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+
+	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+
+	if(ptc.ruid.s == NULL) {
+		if(sruid_next(&pres_sruid) < 0) {
+			return -1;
+		}
+		ptc.ruid = pres_sruid.uid;
+	}
+
+	ptn = ps_presentity_new(&ptc, 0);
+	if(ptn==NULL) {
+		return -1;
+	}
+
+	idx = ptn->hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	if(_ps_ptable->slots[idx].plist == NULL) {
+		_ps_ptable->slots[idx].plist = ptn;
+	} else {
+		_ps_ptable->slots[idx].plist->prev = ptn;
+		ptn->next = _ps_ptable->slots[idx].plist;
+		_ps_ptable->slots[idx].plist = ptn;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	return 0;
+}
+
+/**
+ *
+ */
+int ps_ptable_update(ps_presentity_t *pt)
+{
+	return 0;
+}
+
+/**
+ *
+ */
+int ps_ptable_remove(ps_presentity_t *pt)
+{
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	int idx = 0;
+
+	/* copy struct to fill in missing fields */
+	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+
+	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+	idx = ptn->hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+			if(ptn->next) {
+				ptn->next->prev = ptn->prev;
+			}
+			if(ptn->prev) {
+				ptn->prev->next = ptn->next;
+			} else {
+				_ps_ptable->slots[idx].plist = ptn->next;
+			}
+			break;
+		}
+		ptn = ptn->next;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	if(ptn != NULL) {
+		ps_presentity_free(ptn, 0);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
+{
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptl = NULL;
+	ps_presentity_t *ptd = NULL;
+	ps_presentity_t *pte = NULL;
+	int idx = 0;
+
+	memset(&ptc, 0, sizeof(ps_presentity_t));
+
+	ptc.user = *user;
+	ptc.domain = *domain;
+	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
+	idx = ptc.hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if(ps_presentity_match(ptn, &ptc, 1)==1) {
+			ptd = ps_presentity_dup(ptn, 1);
+			if(ptd == NULL) {
+				break;
+			}
+			if(pte==NULL) {
+				ptl = ptd;
+			} else {
+				pte->next = ptd;
+				ptd->prev = pte;
+			}
+			pte = ptd;
+		}
+		ptn = ptn->next;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	if(ptd==NULL && ptl != NULL) {
+		ps_presentity_list_free(ptl, 1);
+		return NULL;
+	}
+
+	return ptl;
+}
+
+/**
+ *
+ */
+ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag)
+{
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptd = NULL;
+	int idx = 0;
+
+	memset(&ptc, 0, sizeof(ps_presentity_t));
+
+	ptc.user = *user;
+	ptc.domain = *domain;
+	ptc.event = *event;
+	ptc.etag = *etag;
+	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
+	idx = ptc.hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+			ptd = ps_presentity_dup(ptn, 1);
+			break;
+		}
+		ptn = ptn->next;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	return ptd;
+}
