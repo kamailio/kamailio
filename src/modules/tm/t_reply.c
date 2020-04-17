@@ -1952,40 +1952,42 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			goto error02;
 		}
 
-		/* attempt to copy the message to UAS's shmem:
-		 * - copy to-tag for ACK matching as well
-		 *   -  allocate little a bit more for provisional as
-		 *   larger messages are likely to follow and we will be
-		 *   able to reuse the memory frag
-		*/
-		if (res_len<=0) {
-			LM_ERR("invalid new buffer len\n");
-			goto error03;
-		}
-		uas_rb->buffer = (char*)shm_resize( uas_rb->buffer, res_len +
-			(msg_status<200 ?  REPLY_OVERBUFFER_LEN : 0));
-		if (!uas_rb->buffer) {
-			LM_ERR("cannot alloc reply shmem\n");
-			goto error03;
-		}
-		uas_rb->rbtype = relayed_code;
-		uas_rb->buffer_len = res_len;
-		memcpy( uas_rb->buffer, buf, res_len );
-		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
-			update_local_tags(t, &bm, uas_rb->buffer, buf);
-			t_stats_rpl_generated();
-		}
+		if (reply_status != RPS_PUSHED_AFTER_COMPLETION) {
+			/* attempt to copy the message to UAS's shmem:
+			 * - copy to-tag for ACK matching as well
+			 *   -  allocate little a bit more for provisional as
+			 *   larger messages are likely to follow and we will be
+			 *   able to reuse the memory frag
+			*/
+			if (res_len<=0) {
+				LM_ERR("invalid new buffer len\n");
+				goto error03;
+			}
+			uas_rb->buffer = (char*)shm_resize( uas_rb->buffer, res_len +
+				(msg_status<200 ?  REPLY_OVERBUFFER_LEN : 0));
+			if (!uas_rb->buffer) {
+				LM_ERR("cannot alloc reply shmem\n");
+				goto error03;
+			}
+			uas_rb->rbtype = relayed_code;
+			uas_rb->buffer_len = res_len;
+			memcpy( uas_rb->buffer, buf, res_len );
+			if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
+				update_local_tags(t, &bm, uas_rb->buffer, buf);
+				t_stats_rpl_generated();
+			}
 
-		/* update the status ... */
-		t->uas.status = relayed_code;
-		t->relayed_reply_branch = relay;
+			/* update the status ... */
+			t->uas.status = relayed_code;
+			t->relayed_reply_branch = relay;
 
-		if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
-				&& relayed_code>=200 && relayed_code < 300
-				&& has_tran_tmcbs( t,
-					TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
-					|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
-			totag_retr=update_totag_set(t, relayed_msg);
+			if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
+					&& relayed_code>=200 && relayed_code < 300
+					&& has_tran_tmcbs( t,
+						TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
+						|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
+				totag_retr=update_totag_set(t, relayed_msg);
+			}
 		}
 	} /* if relay ... */
 
@@ -2010,7 +2012,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		if (likely(uas_rb->dst.send_sock)) {
 			if (onsend_route_enabled(SIP_REPLY) && p_msg
-						&& (p_msg != FAKED_REPLY)) {
+						&& (p_msg != FAKED_REPLY) && (reply_status != RPS_PUSHED_AFTER_COMPLETION)) {
 				if (run_onsend(p_msg, &uas_rb->dst, buf, res_len)==0){
 					su2ip_addr(&ip, &(uas_rb->dst.to));
 					LM_ERR("reply to %s:%d(%d) dropped"
@@ -2026,7 +2028,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
 				LM_DBG("reply buffer sent out\n");
 				if (unlikely(!totag_retr
-							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
+							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT) && (reply_status != RPS_PUSHED_AFTER_COMPLETION))){
 					LOCK_REPLIES( t );
 					if(relayed_code==uas_rb->rbtype) {
 						run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
@@ -2038,7 +2040,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 					}
 					UNLOCK_REPLIES( t );
 				}
-				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
+				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT) && (reply_status != RPS_PUSHED_AFTER_COMPLETION))){
 					INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
 									relayed_msg, uas_rb, &uas_rb->dst, buf,
 									res_len,
