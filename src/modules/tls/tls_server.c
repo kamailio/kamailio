@@ -627,7 +627,7 @@ err:
  * @param sock - socket (unused for now).
  * @return  0 on success, < 0 on error.
  */
-int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
+int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
@@ -640,7 +640,7 @@ int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 
 /** clean the extra data upon connection shut down.
  */
-void tls_h_tcpconn_clean(struct tcp_connection *c)
+void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	struct tls_extra_data* extra;
 	/*
@@ -668,7 +668,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 
 /** perform one-way shutdown, do not wait for notify from the remote peer.
  */
-void tls_h_close(struct tcp_connection *c, int fd)
+void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 {
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
 	struct tls_mbuf rd, wr;
@@ -740,7 +740,7 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
  *                     the message.
  * @return *plen on success (>=0), < 0 on error.
  */
-int tls_encode_f(struct tcp_connection *c,
+int tls_h_encode_f(struct tcp_connection *c,
 						const char** pbuf, unsigned int* plen,
 						const char** rest_buf, unsigned int* rest_len,
 						snd_flags_t* send_flags)
@@ -991,7 +991,7 @@ ssl_eof:
  *         tcp connection flags and might set c->state and r->error on
  *         EOF or error).
  */
-int tls_read_f(struct tcp_connection* c, int* flags)
+int tls_h_read_f(struct tcp_connection* c, int* flags)
 {
 	struct tcp_req* r;
 	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;

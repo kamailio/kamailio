@@ -268,15 +268,15 @@ struct module_exports exports = {
 
 
 static struct tls_hooks tls_h = {
-	tls_read_f,
-	tls_encode_f,
-	tls_h_tcpconn_init,
-	tls_h_tcpconn_clean,
-	tls_h_close,
-	tls_h_init_si,
-	init_tls_h,
-	destroy_tls_h,
-	tls_mod_pre_init_h,
+	tls_h_read_f,
+	tls_h_encode_f,
+	tls_h_tcpconn_init_f,
+	tls_h_tcpconn_clean_f,
+	tls_h_tcpconn_close_f,
+	tls_h_init_si_f,
+	tls_h_mod_init_f,
+	tls_h_mod_destroy_f,
+	tls_h_mod_pre_init_f,
 };
 
 
@@ -396,7 +396,7 @@ static int mod_init(void)
 	}
 	return 0;
 error:
-	destroy_tls_h();
+	tls_h_mod_destroy_f();
 	return -1;
 }
 

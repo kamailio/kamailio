@@ -1,6 +1,6 @@
 /*
  * TLS module - main server part
- * 
+ *
  * Copyright (C) 2005-2010 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
@@ -55,8 +55,8 @@ struct tls_extra_data {
 	tls_domains_cfg_t* cfg; /* Configuration used for this connection */
 	SSL* ssl;               /* SSL context used for the connection */
 	BIO* rwbio;             /* bio used for read/write
-							   (openssl code might add buffering BIOs so
-							    it's better to remember our original BIO) */
+							 * (openssl code might add buffering BIOs so
+							 * it's better to remember our original BIO) */
 	tls_ct_q* ct_wq;
 	struct tls_rd_buf* enc_rd_buf;
 	unsigned int flags;
@@ -69,26 +69,25 @@ struct tls_extra_data {
 
 
 /*
- * Called when new tcp connection is accepted 
+ * Called when new tcp connection is accepted
  */
-int tls_h_tcpconn_init(struct tcp_connection *c, int sock);
+int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock);
 
 /*
- * clean the extra data upon connection shut down 
+ * clean the extra data upon connection shut down
  */
-void tls_h_tcpconn_clean(struct tcp_connection *c);
+void tls_h_tcpconn_clean_f(struct tcp_connection *c);
 
 /*
- * shut down the TLS connection 
+ * shut down the TLS connection
  */
-void tls_h_close(struct tcp_connection *c, int fd);
+void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd);
 
-int tls_encode_f(struct tcp_connection *c,
-					const char ** pbuf, unsigned int* plen,
-						const char** rest_buf, unsigned int* rest_len,
-						snd_flags_t* send_flags) ;
+int tls_h_encode_f(struct tcp_connection *c, const char ** pbuf,
+		unsigned int* plen, const char** rest_buf, unsigned int* rest_len,
+		snd_flags_t* send_flags) ;
 
-int tls_read_f(struct tcp_connection *c, int* flags);
+int tls_h_read_f(struct tcp_connection *c, int* flags);
 
 int tls_h_fix_read_conn(struct tcp_connection *c);
 

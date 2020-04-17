@@ -330,7 +330,7 @@ static void ser_free(void *ptr, const char *fname, int fline)
 /*
  * Initialize TLS socket
  */
-int tls_h_init_si(struct socket_info *si)
+int tls_h_init_si_f(struct socket_info *si)
 {
 	int ret;
 	/*
@@ -620,7 +620,7 @@ int tls_pre_init(void)
  * tls mod pre-init function
  * - executed before any mod_init()
  */
-int tls_mod_pre_init_h(void)
+int tls_h_mod_pre_init_f(void)
 {
 	if(tls_mod_preinitialized==1) {
 		LM_DBG("already mod pre-initialized\n");
@@ -642,7 +642,7 @@ int tls_mod_pre_init_h(void)
 /*
  * First step of TLS initialization
  */
-int init_tls_h(void)
+int tls_h_mod_init_f(void)
 {
 	/*struct socket_info* si;*/
 	long ssl_version;
@@ -852,9 +852,9 @@ int tls_check_sockets(tls_domains_cfg_t* cfg)
 
 
 /*
- * TLS cleanup when SER exits
+ * TLS cleanup when application exits
  */
-void destroy_tls_h(void)
+void tls_h_mod_destroy_f(void)
 {
 	LM_DBG("tls module final tls destroy\n");
 	if(tls_mod_preinitialized > 0)

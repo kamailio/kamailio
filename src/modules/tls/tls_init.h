@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module
  *
  * Copyright (C) 2005,2006 iptelorg GmbH
@@ -64,24 +64,24 @@ int tls_pre_init(void);
 /**
  * just once, prepare for init of all modules
  */
-int tls_mod_pre_init_h(void);
+int tls_h_mod_pre_init_f(void);
 
 /*
  * just once, initialize the tls subsystem after all mod inits
  */
-int init_tls_h(void);
+int tls_h_mod_init_f(void);
 
 
 /*
- * just once before cleanup 
+ * just once before final cleanup
  */
-void destroy_tls_h(void);
+void tls_h_mod_destroy_f(void);
 
 
 /*
- * for each socket 
+ * for each socket
  */
-int tls_h_init_si(struct socket_info *si);
+int tls_h_init_si_f(struct socket_info *si);
 
 /*
  * Make sure that all server domains in the configuration have corresponding
