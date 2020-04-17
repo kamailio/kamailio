@@ -212,7 +212,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 	strncpy(q_id, aq->id, strlen(aq->id));
-	
+
 	q_id[strlen(aq->id)] = '\0';
 
 	cfg_update();
@@ -227,16 +227,10 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 			free_async_query(aq);
 			return;
 		}
-		// we bring the list of AVPs of the transaction to the current context
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
-		if (t)
+		if (t) {
 			tmb.unref_cell(t);
+		}
 
 		LM_DBG("resuming transaction (%d:%d)\n", tindex, tlabel);
 
