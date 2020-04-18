@@ -167,6 +167,10 @@ typedef struct ps_ptable {
 	ps_pslot_t *slots;
 } ps_ptable_t;
 
+ps_presentity_t *ps_presentity_new(ps_presentity_t *pt, int mtype);
+void ps_presentity_free(ps_presentity_t *pt, int mtype);
+void ps_presentity_list_free(ps_presentity_t *pt, int mtype);
+int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode);
 int ps_ptable_init(int ssize);
 void ps_ptable_destroy(void);
 int ps_ptable_insert(ps_presentity_t *pt);

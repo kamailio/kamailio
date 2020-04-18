@@ -1001,6 +1001,56 @@ int ps_ptable_insert(ps_presentity_t *pt)
  */
 int ps_ptable_update(ps_presentity_t *pt)
 {
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	int idx = 0;
+
+	/* copy struct to fill in missing fields */
+	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+
+	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+
+	if(ptc.ruid.s == NULL) {
+		if(sruid_next(&pres_sruid) < 0) {
+			return -1;
+		}
+		ptc.ruid = pres_sruid.uid;
+	}
+
+	idx = ptn->hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+			if(ptn->next) {
+				ptn->next->prev = ptn->prev;
+			}
+			if(ptn->prev) {
+				ptn->prev->next = ptn->next;
+			} else {
+				_ps_ptable->slots[idx].plist = ptn->next;
+			}
+			break;
+		}
+		ptn = ptn->next;
+	}
+
+	ptn = ps_presentity_new(&ptc, 0);
+	if(ptn==NULL) {
+		lock_release(&_ps_ptable->slots[idx].lock);
+		return -1;
+	}
+
+	if(_ps_ptable->slots[idx].plist == NULL) {
+		_ps_ptable->slots[idx].plist = ptn;
+	} else {
+		_ps_ptable->slots[idx].plist->prev = ptn;
+		ptn->next = _ps_ptable->slots[idx].plist;
+		_ps_ptable->slots[idx].plist = ptn;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
 	return 0;
 }
 
