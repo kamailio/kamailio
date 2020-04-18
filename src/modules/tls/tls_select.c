@@ -756,16 +756,18 @@ static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
 
 static int sel_ssl_cert(str* res, select_t* s, sip_msg_t* msg)
 {
-	int local=0, urlencoded=0;
+	int i, local = 0, urlencoded = 0;
 
-	switch(s->params[s->n - 2].v.i) {
-	case CERT_PEER: local = 0; break;
-	case CERT_LOCAL: local = 1; break;
-	case CERT_RAW: urlencoded = 0; break;
-	case CERT_URLENCODED: urlencoded = 1; break;
-	default:
-		BUG("Bug in call to sel_ssl_cert\n");
-		return -1;
+	for(i = 1; i <= s->n - 1; i++) {
+		switch(s->params[i].v.i) {
+		case CERT_PEER:       local = 0; break;
+		case CERT_LOCAL:      local = 1; break;
+		case CERT_RAW:        urlencoded = 0; break;
+		case CERT_URLENCODED: urlencoded = 1; break;
+		default:
+			BUG("Bug in call to sel_ssl_cert\n");
+			return -1;
+		}
 	}
 
 	return get_ssl_cert(res, local, urlencoded, msg);
@@ -1201,10 +1203,10 @@ select_row_t tls_sel[] = {
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("version"), sel_cert_version, 0},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("rawCert"), sel_ssl_cert, CERT_RAW},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("raw_cert"), sel_ssl_cert, CERT_RAW},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("URLEncodedCert"), sel_ssl_cert, CERT_URLENCODED},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"), sel_ssl_cert, CERT_URLENCODED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("rawCert"), sel_ssl_cert, DIVERSION | CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("raw_cert"), sel_ssl_cert, DIVERSION | CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("URLEncodedCert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("sn"),            sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serialNumber"),  sel_sn, 0},
