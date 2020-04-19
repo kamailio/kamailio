@@ -638,7 +638,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 
 		/* insert new record in hash_table */
 
-		if(publ_cache_enabled
+		if(publ_cache_mode==PS_PCACHE_HYBRID
 				&& insert_phtable(
 						   &pres_uri, presentity->event->evp->type, sphere)
 						   < 0) {
@@ -980,7 +980,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			}
 
 			/* delete from hash table */
-			if(publ_cache_enabled
+			if(publ_cache_mode == PS_PCACHE_HYBRID
 					&& delete_phtable(&pres_uri, presentity->event->evp->type)
 							   < 0) {
 				LM_ERR("deleting record from hash table\n");
@@ -1102,7 +1102,7 @@ int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
 			/* updated stored sphere */
 			if(pres_sphere_enable
 					&& presentity->event->evp->type == EVENT_PRESENCE) {
-				if(publ_cache_enabled
+				if(publ_cache_mode == PS_PCACHE_HYBRID
 						&& update_phtable(presentity, &pres_uri, body) < 0) {
 					LM_ERR("failed to update sphere for presentity\n");
 					goto error;
@@ -1488,7 +1488,7 @@ char *get_sphere(str *pres_uri)
 		return NULL;
 	}
 
-	if(publ_cache_enabled) {
+	if(publ_cache_mode == PS_PCACHE_HYBRID) {
 		/* search in hash table*/
 		hash_code = core_case_hash(pres_uri, NULL, phtable_size);
 

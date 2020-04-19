@@ -155,7 +155,7 @@ int pres_subs_dbmode = WRITE_BACK;
 int pres_sphere_enable = 0;
 int pres_timeout_rm_subs = 1;
 int pres_send_fast_notify = 1;
-int publ_cache_enabled = 1;
+int publ_cache_mode = PS_PCACHE_HYBRID;
 int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
 int pres_notifier_processes = 1;
@@ -225,7 +225,7 @@ static param_export_t params[]={
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
 	{ "subs_db_mode",           INT_PARAM, &pres_subs_dbmode},
-	{ "publ_cache",             INT_PARAM, &publ_cache_enabled},
+	{ "publ_cache",             INT_PARAM, &publ_cache_mode},
 	{ "enable_sphere_check",    INT_PARAM, &pres_sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &pres_timeout_rm_subs},
 	{ "send_fast_notify",       INT_PARAM, &pres_send_fast_notify},
@@ -406,7 +406,7 @@ static int mod_init(void)
 		}
 	}
 
-	if(publ_cache_enabled) {
+	if(publ_cache_mode==PS_PCACHE_HYBRID) {
 		if(phtable_size < 1)
 			phtable_size = 256;
 		else

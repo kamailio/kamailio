@@ -52,6 +52,10 @@
 #define NO_UPDATE_TYPE -1
 #define UPDATED_TYPE 1
 
+#define PS_PCACHE_NONE 0
+#define PS_PCACHE_HYBRID 1
+#define PS_PCACHE_RECORD 1
+
 /** TM bind */
 extern struct tm_binds tmb;
 
@@ -77,7 +81,7 @@ extern uint32_t pres_min_expires;
 extern int pres_min_expires_action;
 extern uint32_t pres_max_expires;
 extern int pres_subs_dbmode;
-extern int publ_cache_enabled;
+extern int publ_cache_mode;
 extern int pres_sphere_enable;
 extern int pres_timeout_rm_subs;
 extern int pres_send_fast_notify;

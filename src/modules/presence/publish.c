@@ -140,7 +140,7 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 			}
 
 			/* delete from hash table */
-			if(publ_cache_enabled
+			if(publ_cache_mode==PS_PCACHE_HYBRID
 					&& delete_phtable(&uri, pres.event->evp->type) < 0) {
 				LM_ERR("deleting from presentity hash table\n");
 				goto error;

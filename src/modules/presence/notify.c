@@ -609,7 +609,7 @@ str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
 	}
 
 	/* if in db_only mode, get the presentity information from database - skip htable search */
-	if(publ_cache_enabled) {
+	if(publ_cache_mode == PS_PCACHE_HYBRID) {
 		/* search in hash table if any record exists */
 		hash_code = core_case_hash(&pres_uri, NULL, phtable_size);
 		if(search_phtable(&pres_uri, event->evp->type, hash_code) == NULL) {
