@@ -406,12 +406,14 @@ static int mod_init(void)
 		}
 	}
 
-	if(publ_cache_mode==PS_PCACHE_HYBRID) {
+	if(publ_cache_mode==PS_PCACHE_HYBRID || publ_cache_mode==PS_PCACHE_RECORD) {
 		if(phtable_size < 1)
 			phtable_size = 256;
 		else
 			phtable_size = 1 << phtable_size;
+	}
 
+	if(publ_cache_mode==PS_PCACHE_HYBRID) {
 		pres_htable = new_phtable();
 		if(pres_htable == NULL) {
 			LM_ERR("initializing presentity hash table\n");
@@ -420,6 +422,10 @@ static int mod_init(void)
 
 		if(pres_htable_restore() < 0) {
 			LM_ERR("filling in presentity hash table from database\n");
+			goto dberror;
+		}
+	} else if(publ_cache_mode==PS_PCACHE_RECORD) {
+		if(ps_ptable_init(phtable_size) < 0) {
 			goto dberror;
 		}
 	}
@@ -594,19 +600,25 @@ static void destroy(void)
 			timer_db_update(0, 0);
 	}
 
-	if(subs_htable)
+	if(subs_htable) {
 		destroy_shtable(subs_htable, shtable_size);
+	}
 
-	if(pres_htable)
+	if(pres_htable) {
 		destroy_phtable();
+	}
 
-	if(pa_db && pa_dbf.close)
+	if(pa_db && pa_dbf.close) {
 		pa_dbf.close(pa_db);
+	}
 
-	if(pres_notifier_id != NULL)
+	if(pres_notifier_id != NULL) {
 		shm_free(pres_notifier_id);
+	}
 
 	destroy_evlist();
+
+	ps_ptable_destroy();
 }
 
 static int fixup_presence(void **param, int param_no)
