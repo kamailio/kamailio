@@ -840,7 +840,6 @@ static int get_verified_cert_chain(STACK_OF(X509)** chain, struct tcp_connection
 		goto err;
 	}
 
-	tcpconn_put(*c);
 	return 0;
 err:
 	tcpconn_put(*c);
