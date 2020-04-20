@@ -687,19 +687,11 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
+static int cert_to_buf(X509 *cert, char **bufptr, size_t *len)
 {
 #define MAX_CERT_SIZE 16384
-	/* buf2 holds the urlencoded version of buf, which can be up to 3 times its size */
 	static char buf[MAX_CERT_SIZE];
-	static char buf2[MAX_CERT_SIZE*3+1];
-	X509* cert;
-	struct tcp_connection* c;
-	size_t   len;
-	BIO     *mem;
-	str     temp_str;
-
-	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+	BIO     *mem = NULL;
 
 	mem = BIO_new(BIO_s_mem());
 	if (!mem) {
@@ -712,14 +704,42 @@ static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
 		goto err;
 	}
 
-	len = BIO_pending(mem);
-	if (len > MAX_CERT_SIZE) {
+	*len = BIO_pending(mem);
+	if (*len > MAX_CERT_SIZE) {
 		ERR("certificate is too long\n");
 		goto err;
 	}
 
-	if (BIO_read(mem, buf, len) <= 0) {
+	if (BIO_read(mem, buf, *len) <= 0) {
 		ERR("problem reading data out of BIO");
+		goto err;
+	}
+
+	*bufptr = buf;
+
+	BIO_free(mem);
+	return 0;
+err:
+
+	if (mem) BIO_free(mem);
+	return -1;
+}
+
+
+static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
+{
+	char *buf = NULL;
+	/* buf2 holds the urlencoded version of buf, which can be up to 3 times its size */
+	static char buf2[MAX_CERT_SIZE*3+1];
+	X509* cert;
+	struct tcp_connection* c;
+	size_t   len;
+	str     temp_str;
+
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	if (cert_to_buf(cert, &buf, &len) < 0) {
+		ERR("cert to buf failed\n");
 		goto err;
 	}
 
@@ -741,13 +761,11 @@ static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
 		res->len = len;
 	}
 
-	BIO_free(mem);
 	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
  err:
-	if (mem) BIO_free(mem);
 	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return -1;
@@ -802,6 +820,74 @@ static int pv_ssl_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	res->flags = PV_VAL_STR;
 	return 0;
 }
+
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
+/* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
+static int get_verified_cert_chain(STACK_OF(X509)** chain, struct tcp_connection** c, struct sip_msg* msg)
+{
+	SSL* ssl;
+
+	*chain = 0;
+	*c = get_cur_connection(msg);
+	if (!(*c)) {
+		INFO("TLS connection not found\n");
+		return -1;
+	}
+	ssl = get_ssl(*c);
+	if (!ssl) goto err;
+	*chain = SSL_get0_verified_chain(ssl);
+	if (!*chain) {
+		ERR("Unable to retrieve peer TLS verified chain from SSL structure\n");
+		goto err;
+	}
+
+	return 0;
+err:
+	tcpconn_put(*c);
+	return -1;
+}
+
+
+static int sel_ssl_verified_cert_chain(str* res, select_t* s, sip_msg_t* msg)
+{
+	char *buf = NULL;
+	struct tcp_connection* c;
+	size_t   len;
+	STACK_OF(X509)* chain;
+	X509* cert;
+	int i;
+
+	if (get_verified_cert_chain(&chain, &c, msg) < 0) return -1;
+
+	if (s->params[s->n-1].type == SEL_PARAM_INT) {
+		i = s->params[s->n-1].v.i;
+	} else
+		return -1;
+
+	if (i < 0 || i >= sk_X509_num(chain))
+		return -1;
+
+	cert = sk_X509_value(chain, i);
+	if (!cert)
+		return -1;
+
+	if (cert_to_buf(cert, &buf, &len) < 0) {
+		ERR("cert to buf failed\n");
+		goto err;
+	}
+
+	res->s = buf;
+	res->len = len;
+
+	tcpconn_put(c);
+	return 0;
+
+err:
+	tcpconn_put(c);
+	return -1;
+}
+#endif /* (OPENSSL_VERSION_NUMBER >= 0x10100001L) */
 
 
 static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
@@ -1207,6 +1293,10 @@ select_row_t tls_sel[] = {
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("raw_cert"), sel_ssl_cert, DIVERSION | CERT_RAW},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("URLEncodedCert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified_cert_chain"), sel_ssl_verified_cert_chain, CONSUME_NEXT_INT},
+#endif
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("sn"),            sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serialNumber"),  sel_sn, 0},
