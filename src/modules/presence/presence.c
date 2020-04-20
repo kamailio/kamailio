@@ -435,9 +435,15 @@ static int mod_init(void)
 		if(pres_timer_mode==0) {
 			register_timer(msg_presentity_clean, 0, pres_clean_period);
 			register_timer(msg_watchers_clean, 0, pres_clean_period);
+			if(publ_cache_mode==PS_PCACHE_RECORD) {
+				register_timer(ps_ptable_timer_clean, 0, pres_clean_period);
+			}
 		} else {
 			sr_wtimer_add(msg_presentity_clean, 0, pres_clean_period);
 			sr_wtimer_add(msg_watchers_clean, 0, pres_clean_period);
+			if(publ_cache_mode==PS_PCACHE_RECORD) {
+				sr_wtimer_add(ps_ptable_timer_clean, 0, pres_clean_period);
+			}
 		}
 	}
 

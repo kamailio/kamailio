@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "../../core/mem/shm_mem.h"
 #include "../../core/hashes.h"
 #include "../../core/dprint.h"
@@ -999,7 +1000,7 @@ int ps_ptable_insert(ps_presentity_t *pt)
 /**
  *
  */
-int ps_ptable_update(ps_presentity_t *pt)
+int ps_ptable_replace(ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
@@ -1052,6 +1053,70 @@ int ps_ptable_update(ps_presentity_t *pt)
 	lock_release(&_ps_ptable->slots[idx].lock);
 
 	return 0;
+}
+
+/**
+ *
+ */
+int ps_ptable_update(ps_presentity_t *pt)
+{
+	ps_presentity_t ptc;
+	ps_presentity_t *ptn = NULL;
+	int idx = 0;
+
+	/* copy struct to fill in missing fields */
+	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+
+	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+
+	if(ptc.ruid.s == NULL) {
+		if(sruid_next(&pres_sruid) < 0) {
+			return -1;
+		}
+		ptc.ruid = pres_sruid.uid;
+	}
+
+	idx = ptn->hashid % _ps_ptable->ssize;
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+			if(ptn->next) {
+				ptn->next->prev = ptn->prev;
+			}
+			if(ptn->prev) {
+				ptn->prev->next = ptn->next;
+			} else {
+				_ps_ptable->slots[idx].plist = ptn->next;
+			}
+			break;
+		}
+		ptn = ptn->next;
+	}
+
+	if(ptn == NULL) {
+		lock_release(&_ps_ptable->slots[idx].lock);
+		return 0; /* affected items */
+	}
+	ps_presentity_free(ptn, 0);
+
+	ptn = ps_presentity_new(&ptc, 0);
+	if(ptn==NULL) {
+		lock_release(&_ps_ptable->slots[idx].lock);
+		return -1;
+	}
+
+	if(_ps_ptable->slots[idx].plist == NULL) {
+		_ps_ptable->slots[idx].plist = ptn;
+	} else {
+		_ps_ptable->slots[idx].plist->prev = ptn;
+		ptn->next = _ps_ptable->slots[idx].plist;
+		_ps_ptable->slots[idx].plist = ptn;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	return 1; /* affected items */
 }
 
 /**
@@ -1171,4 +1236,45 @@ ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *eta
 	lock_release(&_ps_ptable->slots[idx].lock);
 
 	return ptd;
+}
+
+/**
+ *
+ */
+ps_presentity_t *ps_ptable_get_expired(int eval)
+{
+	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptl = NULL;
+	ps_presentity_t *ptd = NULL;
+	ps_presentity_t *pte = NULL;
+	int i = 0;
+
+	for(i=0; i<_ps_ptable->ssize; i++) {
+		lock_get(&_ps_ptable->slots[i].lock);
+		ptn = _ps_ptable->slots[i].plist;
+		while(ptn!=NULL) {
+			if(ptn->expires > 0 && ptn->expires <= eval) {
+				ptd = ps_presentity_dup(ptn, 1);
+				if(ptd == NULL) {
+					break;
+				}
+				if(pte==NULL) {
+					ptl = ptd;
+				} else {
+					pte->next = ptd;
+					ptd->prev = pte;
+				}
+				pte = ptd;
+			}
+			ptn = ptn->next;
+		}
+		lock_release(&_ps_ptable->slots[i].lock);
+	}
+
+	if(ptd==NULL && ptl != NULL) {
+		ps_presentity_list_free(ptl, 1);
+		return NULL;
+	}
+
+	return ptl;
 }

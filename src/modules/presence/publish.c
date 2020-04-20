@@ -248,6 +248,90 @@ error:
 }
 
 /**
+ *
+ */
+void ps_ptable_timer_clean(unsigned int ticks, void *param)
+{
+	presentity_t pres;
+	ps_presentity_t *ptlist = NULL;
+	ps_presentity_t *ptn = NULL;
+	int eval = 0;
+	str uri = STR_NULL;
+	str *rules_doc = NULL;
+
+	eval = (int)time(NULL);
+	ptlist = ps_ptable_get_expired(eval);
+
+	if(ptlist==NULL) {
+		return;
+	}
+
+	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
+		memset(&pres, 0, sizeof(presentity_t));
+
+		pres.user = ptn->user;
+		pres.domain = ptn->domain;
+		pres.etag = ptn->etag;
+		pres.event = contains_event(&ptn->event, NULL);
+		if(pres.event == NULL || pres.event->evp == NULL) {
+			LM_ERR("event not found\n");
+			goto error;
+		}
+
+		if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
+			LM_ERR("constructing uri\n");
+			goto error;
+		}
+
+		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+				pres.user.len, pres.user.s, pres.domain.len, pres.domain.s);
+
+		if(pres_force_delete == 1) {
+			if(ps_ptable_remove(ptn) <0) {
+				LM_ERR("Deleting presentity\n");
+				goto error;
+			}
+		} else {
+			if(pres.event->get_rules_doc
+					&& pres.event->get_rules_doc(
+								&pres.user, &pres.domain, &rules_doc)
+								< 0) {
+				LM_ERR("getting rules doc\n");
+				goto error;
+			}
+			if(publ_notify(&pres, uri, NULL, &pres.etag, rules_doc) < 0) {
+				LM_ERR("sending Notify request\n");
+				goto error;
+			}
+			if(rules_doc) {
+				if(rules_doc->s)
+					pkg_free(rules_doc->s);
+				pkg_free(rules_doc);
+				rules_doc = NULL;
+			}
+		}
+
+		pkg_free(uri.s);
+		uri.s = NULL;
+	}
+
+error:
+	if(ptlist != NULL) {
+		ps_presentity_list_free(ptlist, 1);
+	}
+	if(uri.s) {
+		pkg_free(uri.s);
+	}
+	if(rules_doc) {
+		if(rules_doc->s) {
+			pkg_free(rules_doc->s);
+		}
+		pkg_free(rules_doc);
+	}
+	return;
+}
+
+/**
  * PUBLISH request handling
  *
  */
@@ -432,10 +516,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		goto error;
 	}
 
-	/* querry the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere,
-			   NULL, NULL, 0)
-			< 0) {
+	/* query the database and update or insert */
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply,
+			sphere, NULL, NULL, 0) < 0) {
 		LM_ERR("when updating presentity\n");
 		goto error;
 	}

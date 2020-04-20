@@ -543,9 +543,9 @@ int ps_match_dialog_state(presentity_t *presentity, char *vstate)
 	return rmatch;
 }
 
-int update_presentity(struct sip_msg *msg, presentity_t *presentity, str *body,
-		int new_t, int *sent_reply, char *sphere, str *etag_override, str *ruid,
-		int replace)
+static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
+		str *body, int new_t, int *sent_reply, char *sphere, str *etag_override,
+		str *ruid, int replace)
 {
 	db_key_t query_cols[14], rquery_cols[2], update_keys[9], result_cols[7];
 	db_op_t query_ops[14], rquery_ops[2];
@@ -1294,6 +1294,492 @@ error:
 	return ret;
 }
 
+static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
+		str *body, int new_t, int *sent_reply, char *sphere, str *etag_override,
+		str *ruid, int replace)
+{
+	char *dot = NULL;
+	str etag = STR_NULL;
+	str crt_etag = STR_NULL;
+	str *rules_doc = NULL;
+	str pres_uri = STR_NULL;
+	str old_body = STR_NULL;
+	str sender = STR_NULL;
+	int is_dialog = 0;
+	int bla_update_publish = 1;
+	int affected_rows = 0;
+	int ret = -1;
+	int cache_record_exists = 0;
+	int num_watchers = 0;
+	char *old_dialog_id = NULL;
+	char *dialog_id = NULL;
+	str crt_ruid = STR_NULL;
+	str p_ruid = STR_NULL;
+	ps_presentity_t ptc;
+	ps_presentity_t *ptx = NULL;
+
+	if(sent_reply) {
+		*sent_reply = 0;
+	}
+	memset(&ptc, 0, sizeof(ps_presentity_t));
+
+	/* here pres_notifier_processes == 0 -- used for db-only */
+	if(presentity->event->req_auth) {
+		/* get rules_document */
+		if(presentity->event->get_rules_doc(
+				   &presentity->user, &presentity->domain, &rules_doc)
+				< 0) {
+			LM_ERR("getting rules doc\n");
+			goto error;
+		}
+	}
+
+	if(uandd_to_uri(presentity->user, presentity->domain, &pres_uri) < 0) {
+		LM_ERR("constructing uri from user and domain\n");
+		goto error;
+	}
+
+	ptc.user = presentity->user;
+	ptc.domain = presentity->domain;
+	ptc.event = presentity->event->name;
+	ptc.etag = presentity->etag;
+
+	if(new_t) {
+		LM_DBG("new presentity with etag %.*s\n", presentity->etag.len,
+				presentity->etag.s);
+
+		if(ruid) {
+			/* use the provided ruid */
+			p_ruid = *ruid;
+		} else {
+			/* generate a new ruid */
+			if(sruid_next(&pres_sruid) < 0)
+				goto error;
+			p_ruid = pres_sruid.uid;
+		}
+		if(presentity->sender) {
+			ptc.sender = *presentity->sender;
+		} else {
+			ptc.sender.s = "";
+			ptc.sender.len = 0;
+		}
+		ptc.body = *body;
+		ptc.received_time = presentity->received_time;
+		ptc.priority = presentity->priority;
+		ptc.ruid = p_ruid;
+
+		LM_DBG("adding new htable record\n");
+		if(presentity->expires == -1) {
+			replace = 1;
+		}
+		if(!replace) {
+			/* A real PUBLISH */
+			ptc.expires = presentity->expires + (int)time(NULL);
+			if(presentity->event->evp->type == EVENT_DIALOG) {
+				check_if_dialog(*body, &is_dialog, &dialog_id);
+				if(dialog_id) {
+					if(delete_presentity_if_dialog_id_exists(
+							   presentity, dialog_id)
+							< 0) {
+						free(dialog_id);
+						dialog_id = NULL;
+						goto error;
+					}
+
+					free(dialog_id);
+					dialog_id = NULL;
+				}
+			}
+			LM_DBG("inserting presentity into hash table\n");
+			if(ps_ptable_insert(&ptc) < 0) {
+				LM_ERR("inserting new record in database\n");
+				goto error;
+			}
+		} else {
+			/* A hard-state PUBLISH */
+			ptc.expires = -1;
+			if(presentity->expires != -1) {
+				ptc.expires = presentity->expires + (int)time(NULL);
+			}
+			/* update/replace in memory */
+			if(ps_ptable_replace(&ptc) <0) {
+				LM_ERR("replacing record in database\n");
+				goto error;
+			}
+		}
+		if(publ_send200ok(msg, presentity->expires, presentity->etag) < 0) {
+			LM_ERR("sending 200OK\n");
+			goto error;
+		}
+		if(sent_reply) {
+			*sent_reply = 1;
+		}
+		goto send_notify;
+	} else {
+		LM_DBG("updating existing presentity with etag %.*s\n",
+				presentity->etag.len, presentity->etag.s);
+
+		if(ruid) {
+			p_ruid = *ruid;
+		}
+		if(EVENT_DIALOG_SLA(presentity->event->evp)) {
+			ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
+					&ptc.etag);
+			if(ptx == NULL) {
+				goto send_412;
+			}
+			cache_record_exists = 1;
+			if(!p_ruid.s && ptx->ruid.s) {
+				crt_ruid.len = ptx->ruid.len;
+				crt_ruid.s = (char *)pkg_malloc(sizeof(char) * crt_ruid.len);
+				if(!crt_ruid.s) {
+					LM_ERR("no private memory\n");
+					goto error;
+				}
+				memcpy(crt_ruid.s, ptx->ruid.s, crt_ruid.len);
+				p_ruid = crt_ruid;
+			}
+
+			old_body = ptx->body;
+			if(check_if_dialog(*body, &is_dialog, &dialog_id) < 0) {
+				LM_ERR("failed to check if dialog stored\n");
+				if(dialog_id) {
+					free(dialog_id);
+					dialog_id = NULL;
+				}
+				goto error;
+			}
+
+			free(dialog_id);
+
+			if(is_dialog == 1) {
+				/* if the new body has a dialog - overwrite */
+				goto after_dialog_check;
+			}
+			if(check_if_dialog(old_body, &is_dialog, &old_dialog_id) < 0) {
+				LM_ERR("failed to check if dialog stored\n");
+				if(old_dialog_id) {
+					free(old_dialog_id);
+					old_dialog_id = NULL;
+				}
+				goto error;
+			}
+
+			/* if the old body has no dialog - overwrite */
+			if(is_dialog == 0) {
+				if(old_dialog_id) {
+					free(old_dialog_id);
+					old_dialog_id = NULL;
+				}
+				goto after_dialog_check;
+			}
+
+			if(old_dialog_id) {
+				free(old_dialog_id);
+				old_dialog_id = NULL;
+			}
+
+			sender = ptx->sender;
+
+			LM_DBG("old_sender = %.*s\n", sender.len, sender.s);
+			if(presentity->sender) {
+				if(!(presentity->sender->len == sender.len
+						   && presence_sip_uri_match(
+									  presentity->sender, &sender)
+									  == 0))
+					bla_update_publish = 0;
+			}
+after_dialog_check:
+			ps_presentity_free(ptx, 1);
+			ptx = NULL;
+		}
+
+		if(presentity->expires <= 0) {
+
+			if(!cache_record_exists) {
+				ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
+						&ptc.etag);
+				if(ptx == NULL) {
+					goto send_412;
+				}
+				cache_record_exists = 1;
+				if(!p_ruid.s && ptx->ruid.s) {
+					crt_ruid.len = ptx->ruid.len;
+					crt_ruid.s = (char *)pkg_malloc(sizeof(char) * crt_ruid.len);
+					if(!crt_ruid.s) {
+						LM_ERR("no private memory\n");
+						goto error;
+					}
+					memcpy(crt_ruid.s, ptx->ruid.s, crt_ruid.len);
+					p_ruid = crt_ruid;
+				}
+				ps_presentity_free(ptx, 1);
+				ptx = NULL;
+			}
+			if(publ_send200ok(msg, presentity->expires, presentity->etag) < 0) {
+				LM_ERR("sending 200OK reply\n");
+				goto error;
+			}
+			if(sent_reply) {
+				*sent_reply = 1;
+			}
+
+			if(publ_notify(presentity, pres_uri, body, &presentity->etag,
+						   rules_doc)
+						< 0) {
+				LM_ERR("while sending notify\n");
+				goto error;
+			}
+			if(num_watchers == 0) {
+				if(delete_presentity(presentity, &p_ruid) < 0) {
+					LM_ERR("Deleting presentity\n");
+					goto error;
+				}
+
+				LM_DBG("deleted from db %.*s\n", presentity->user.len,
+						presentity->user.s);
+			}
+			goto done;
+		}
+
+		/* if event dialog and is_dialog -> if sender not the same as
+		 * old sender do not overwrite */
+		if(EVENT_DIALOG_SLA(presentity->event->evp)
+				&& bla_update_publish == 0) {
+			LM_DBG("drop Publish for BLA from a different sender that"
+				   " wants to overwrite an existing dialog\n");
+			LM_DBG("sender = %.*s\n", presentity->sender->len,
+					presentity->sender->s);
+			if(publ_send200ok(msg, presentity->expires, presentity->etag) < 0) {
+				LM_ERR("sending 200OK reply\n");
+				goto error;
+			}
+			if(sent_reply)
+				*sent_reply = 1;
+			goto done;
+		}
+
+		if(presentity->event->etag_not_new == 0 || etag_override) {
+			if(etag_override) {
+				/* use the supplied etag */
+				LM_DBG("updating with supplied etag %.*s\n", etag_override->len,
+						etag_override->s);
+				crt_etag = *etag_override;
+				goto after_etag_generation;
+			}
+
+			/* generate another etag */
+			unsigned int publ_nr;
+			str str_publ_nr = {0, 0};
+
+			dot = presentity->etag.s + presentity->etag.len;
+			while(*dot != '.' && str_publ_nr.len < presentity->etag.len) {
+				str_publ_nr.len++;
+				dot--;
+			}
+			if(str_publ_nr.len == presentity->etag.len) {
+				LM_ERR("wrong etag\n");
+				goto error;
+			}
+			str_publ_nr.s = dot + 1;
+			str_publ_nr.len--;
+
+			if(str2int(&str_publ_nr, &publ_nr) < 0) {
+				LM_ERR("converting string to int\n");
+				goto error;
+			}
+			etag.s = generate_ETag(publ_nr + 1);
+			if(etag.s == NULL) {
+				LM_ERR("while generating etag\n");
+				goto error;
+			}
+			etag.len = (strlen(etag.s));
+
+			crt_etag = etag;
+
+after_etag_generation:
+			ptc.etag = crt_etag;
+		} else {
+			crt_etag = presentity->etag;
+		}
+
+		if(presentity->event->evp->type == EVENT_DIALOG) {
+			if(ps_match_dialog_state(presentity, "terminated") == 1) {
+				LM_WARN("Trying to update an already terminated state."
+						" Skipping update.\n");
+
+				/* send 200OK */
+				if(publ_send200ok(msg, presentity->expires, crt_etag) < 0) {
+					LM_ERR("sending 200OK reply\n");
+					goto error;
+				}
+				if(sent_reply) {
+					*sent_reply = 1;
+				}
+				goto done;
+			}
+		}
+
+		ptc.expires = presentity->expires + (int)time(NULL);
+		ptc.received_time = presentity->received_time;
+		ptc.priority = presentity->priority;
+		if(body && body->s) {
+			ptc.body = *body;
+		}
+		if(presentity->sender) {
+			ptc.sender = *presentity->sender;
+		}
+
+		/* if there is no support for affected_rows and no previous query has been done,
+		 * or dmq replication is enabled and we don't already know the ruid, do query */
+		if((!cache_record_exists)
+				|| (pres_enable_dmq > 0 && !p_ruid.s)) {
+			ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
+					&ptc.etag);
+			if(ptx == NULL) {
+				goto send_412;
+			}
+			cache_record_exists = 1;
+			affected_rows = 1;
+			if(!p_ruid.s && ptx->ruid.s) {
+				crt_ruid.len = ptx->ruid.len;
+				crt_ruid.s = (char *)pkg_malloc(sizeof(char) * crt_ruid.len);
+				if(!crt_ruid.s) {
+					LM_ERR("no private memory\n");
+					goto error;
+				}
+				memcpy(crt_ruid.s, ptx->ruid.s, crt_ruid.len);
+				p_ruid = crt_ruid;
+			}
+			LM_DBG("existing ruid %.*s\n", p_ruid.len, p_ruid.s);
+			ps_presentity_free(ptx, 1);
+			ptx = NULL;
+		}
+		affected_rows = ps_ptable_update(&ptc);
+		if(affected_rows < 0) {
+			LM_ERR("updating published info in database\n");
+			goto error;
+		}
+		affected_rows = 1;
+		/* if either affected_rows (if exists) or select query show that there is no line in database*/
+		if((!affected_rows && !cache_record_exists) || (!cache_record_exists)) {
+			goto send_412;
+		}
+
+		/* send 200OK */
+		if(publ_send200ok(msg, presentity->expires, crt_etag) < 0) {
+			LM_ERR("sending 200OK reply\n");
+			goto error;
+		}
+		if(sent_reply) {
+			*sent_reply = 1;
+		}
+
+		if(!body) {
+			goto done;
+		}
+	}
+
+send_notify:
+
+	/* send notify with presence information */
+	if(publ_notify(presentity, pres_uri, body, NULL, rules_doc) < 0) {
+		LM_ERR("while sending notify\n");
+		goto error;
+	}
+
+done:
+
+	if(pres_enable_dmq > 0 && p_ruid.s != NULL) {
+		pres_dmq_replicate_presentity(
+				presentity, body, new_t, &crt_etag, sphere, &p_ruid, NULL);
+	}
+
+	if(etag.s) {
+		pkg_free(etag.s);
+	}
+	etag.s = NULL;
+
+	if(crt_ruid.s) {
+		pkg_free(crt_ruid.s);
+	}
+	crt_ruid.s = NULL;
+
+	if(rules_doc) {
+		if(rules_doc->s) {
+			pkg_free(rules_doc->s);
+		}
+		pkg_free(rules_doc);
+		rules_doc = NULL;
+	}
+	if(pres_uri.s) {
+		pkg_free(pres_uri.s);
+		pres_uri.s = NULL;
+	}
+
+	return 0;
+
+send_412:
+
+	if(!ruid) {
+		LM_ERR("No E_Tag match %*s\n", presentity->etag.len,
+				presentity->etag.s);
+	} else {
+		LM_ERR("No ruid match %*s\n", ruid->len, ruid->s);
+	}
+
+	if(msg != NULL) {
+		if(slb.freply(msg, 412, &pu_412_rpl) < 0) {
+			LM_ERR("sending '412 Conditional request failed' reply\n");
+			goto error;
+		}
+	}
+	if(sent_reply) {
+		*sent_reply = 1;
+	}
+	ret = 0;
+
+error:
+	if(ptx) {
+		ps_presentity_free(ptx, 1);
+	}
+	if(etag.s) {
+		pkg_free(etag.s);
+	}
+	if(rules_doc) {
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
+	if(pres_uri.s) {
+		pkg_free(pres_uri.s);
+	}
+	if(crt_ruid.s) {
+		pkg_free(crt_ruid.s);
+	}
+
+	return ret;
+}
+
+/**
+ *
+ */
+int update_presentity(sip_msg_t *msg, presentity_t *presentity, str *body,
+		int new_t, int *sent_reply, char *sphere, str *etag_override, str *ruid,
+		int replace)
+{
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		return ps_cache_update_presentity(msg, presentity, body, new_t,
+				sent_reply, sphere, etag_override, ruid, replace);
+	} else {
+		return ps_db_update_presentity(msg, presentity, body, new_t,
+				sent_reply, sphere, etag_override, ruid, replace);
+	}
+}
+
+/**
+ *
+ */
 int pres_htable_restore(void)
 {
 	/* query all records from presentity table and insert records
@@ -1742,7 +2228,10 @@ error:
 	return ret;
 }
 
-int delete_presentity(presentity_t *pres, str *ruid)
+/**
+ *
+ */
+int ps_db_delete_presentity(presentity_t *pres, str *ruid)
 {
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
@@ -1797,6 +2286,39 @@ int delete_presentity(presentity_t *pres, str *ruid)
 
 error:
 	return -1;
+}
+
+/**
+ *
+ */
+int ps_cache_delete_presentity(presentity_t *pres, str *ruid)
+{
+	ps_presentity_t ptc;
+
+	memset(&ptc, 0, sizeof(ps_presentity_t));
+
+	ptc.user = pres->user;
+	ptc.domain = pres->domain;
+	ptc.event = pres->event->name;
+	ptc.etag = pres->etag;
+
+	if(ps_ptable_remove(&ptc) < 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int delete_presentity(presentity_t *pres, str *ruid)
+{
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		return ps_cache_delete_presentity(pres, ruid);
+	} else {
+		return ps_db_delete_presentity(pres, ruid);
+	}
 }
 
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
