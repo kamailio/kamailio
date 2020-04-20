@@ -294,8 +294,10 @@ static int mod_init(void)
 			pres_db_url.s);
 
 	if(pres_db_url.s == NULL || pres_db_url.len == 0) {
-		LM_DBG("db url is not set - switch to library mode\n");
-		pres_library_mode = 1;
+		if(publ_cache_mode != PS_PCACHE_RECORD) {
+			LM_DBG("db url is not set - switch to library mode\n");
+			pres_library_mode = 1;
+		}
 	}
 
 	pres_evlist = init_evlist();
@@ -347,65 +349,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(pres_db_url.s == NULL) {
-		LM_ERR("database url not set!\n");
-		return -1;
-	}
-
-	/* binding to database module  */
-	if(db_bind_mod(&pres_db_url, &pa_dbf)) {
-		LM_ERR("Database module not found\n");
-		return -1;
-	}
-
-	if(!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
-		LM_ERR("Database module does not implement all functions"
-			   " needed by presence module\n");
-		return -1;
-	}
-
-	pa_db = pa_dbf.init(&pres_db_url);
-	if(!pa_db) {
-		LM_ERR("Connection to database failed\n");
-		return -1;
-	}
-
-	/*verify table versions */
-	if((db_check_table_version(
-				&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION)
-			   < 0)
-			|| (db_check_table_version(
-						&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION)
-					   < 0)) {
-		DB_TABLE_VERSION_ERROR(presentity_table);
-		goto dberror;
-	}
-
-	if(pres_subs_dbmode != NO_DB
-			&& db_check_table_version(&pa_dbf, pa_db, &active_watchers_table,
-					   ACTWATCH_TABLE_VERSION)
-					   < 0) {
-		DB_TABLE_VERSION_ERROR(active_watchers_table);
-		goto dberror;
-	}
-
-	if(pres_subs_dbmode != DB_ONLY) {
-		if(shtable_size < 1)
-			shtable_size = 512;
-		else
-			shtable_size = 1 << shtable_size;
-
-		subs_htable = new_shtable(shtable_size);
-		if(subs_htable == NULL) {
-			LM_ERR(" initializing subscribe hash table\n");
-			goto dberror;
-		}
-		if(restore_db_subs() < 0) {
-			LM_ERR("restoring subscribe info from database\n");
-			goto dberror;
-		}
-	}
-
 	if(publ_cache_mode==PS_PCACHE_HYBRID || publ_cache_mode==PS_PCACHE_RECORD) {
 		if(phtable_size < 1)
 			phtable_size = 256;
@@ -413,22 +356,86 @@ static int mod_init(void)
 			phtable_size = 1 << phtable_size;
 	}
 
-	if(publ_cache_mode==PS_PCACHE_HYBRID) {
-		pres_htable = new_phtable();
-		if(pres_htable == NULL) {
-			LM_ERR("initializing presentity hash table\n");
+	if(publ_cache_mode==PS_PCACHE_RECORD) {
+		if(ps_ptable_init(phtable_size) < 0) {
+			return -1;
+		}
+	}
+
+	if(publ_cache_mode != PS_PCACHE_RECORD || pres_subs_dbmode != NO_DB) {
+		if(pres_db_url.s == NULL) {
+			LM_ERR("database url not set!\n");
+			return -1;
+		}
+
+		/* binding to database module  */
+		if(db_bind_mod(&pres_db_url, &pa_dbf)) {
+			LM_ERR("Database module not found\n");
+			return -1;
+		}
+
+		if(!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
+			LM_ERR("Database module does not implement all functions"
+				   " needed by presence module\n");
+			return -1;
+		}
+
+		pa_db = pa_dbf.init(&pres_db_url);
+		if(!pa_db) {
+			LM_ERR("Connection to database failed\n");
+			return -1;
+		}
+
+		/*verify table versions */
+		if((db_check_table_version(
+					&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION)
+				   < 0)
+				|| (db_check_table_version(
+							&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION)
+						   < 0)) {
+			DB_TABLE_VERSION_ERROR(presentity_table);
 			goto dberror;
 		}
 
-		if(pres_htable_restore() < 0) {
-			LM_ERR("filling in presentity hash table from database\n");
+		if(pres_subs_dbmode != NO_DB
+				&& db_check_table_version(&pa_dbf, pa_db, &active_watchers_table,
+						   ACTWATCH_TABLE_VERSION)
+						   < 0) {
+			DB_TABLE_VERSION_ERROR(active_watchers_table);
 			goto dberror;
 		}
-	} else if(publ_cache_mode==PS_PCACHE_RECORD) {
-		if(ps_ptable_init(phtable_size) < 0) {
-			goto dberror;
+
+		if(pres_subs_dbmode != DB_ONLY) {
+			if(shtable_size < 1)
+				shtable_size = 512;
+			else
+				shtable_size = 1 << shtable_size;
+
+			subs_htable = new_shtable(shtable_size);
+			if(subs_htable == NULL) {
+				LM_ERR(" initializing subscribe hash table\n");
+				goto dberror;
+			}
+			if(restore_db_subs() < 0) {
+				LM_ERR("restoring subscribe info from database\n");
+				goto dberror;
+			}
+		}
+
+		if(publ_cache_mode==PS_PCACHE_HYBRID) {
+			pres_htable = new_phtable();
+			if(pres_htable == NULL) {
+				LM_ERR("initializing presentity hash table\n");
+				goto dberror;
+			}
+
+			if(pres_htable_restore() < 0) {
+				LM_ERR("filling in presentity hash table from database\n");
+				goto dberror;
+			}
 		}
 	}
+
 
 	pres_startup_time = (int)time(NULL);
 	if(pres_clean_period > 0) {
@@ -498,8 +505,10 @@ static int mod_init(void)
 		pres_db_table_lock = DB_LOCKING_NONE;
 	}
 
-	pa_dbf.close(pa_db);
-	pa_db = NULL;
+	if(pa_db) {
+		pa_dbf.close(pa_db);
+		pa_db = NULL;
+	}
 
 	goto_on_notify_reply = route_lookup(&event_rt, "presence:notify-reply");
 	if(goto_on_notify_reply >= 0 && event_rt.rlist[goto_on_notify_reply] == 0)
@@ -513,8 +522,10 @@ static int mod_init(void)
 	return 0;
 
 dberror:
-	pa_dbf.close(pa_db);
-	pa_db = NULL;
+	if(pa_db) {
+		pa_dbf.close(pa_db);
+		pa_db = NULL;
+	}
 	return -1;
 }
 
@@ -535,6 +546,10 @@ static int child_init(int rank)
 
 	if(sruid_init(&pres_sruid, '-', "pres", SRUID_INC) < 0) {
 		return -1;
+	}
+
+	if(publ_cache_mode == PS_PCACHE_RECORD && pres_subs_dbmode == NO_DB) {
+		return 0;
 	}
 
 	if(rank == PROC_MAIN) {
