@@ -525,12 +525,20 @@ modparam("presence", "subs_db_mode", 1)
 	<section id="presence.p.publ_cache">
 		<title><varname>publ_cache</varname> (int)</title>
 		<para>
-		To improve performance, the presence module holds by default a
-		publish cache that says if a certain publication exists in database.
-		This is only a list of URI + event, so it does not use much memory.
-		The cache is used when a Subscription is received to check if there
-		is any published state in database. This way unnecessary queries in
-		presentity table are avoided.
+		To improve performance, the presence module can operate in a couple of
+		modes related to how PUBLISH data is stored. If publ_cache is 0,
+		then no information is store in memory.
+		</para>
+		<para>
+		If publ_cache is 1, then the module keeps in memory an index of the
+		records stored in database, In this mode it keeps only the list of URIs
+		and events, so it does not use much memory. The cache is used when a
+		Subscription is received to check if there is any published state in
+		database. This way unnecessary queries in presentity table are avoided.
+		</para>
+		<para>
+		If publ_cache is 2, then the module keeps everything related to PUBLISH
+		requests in memory, not storing anything in the database.
 		</para>
 		<para>
 		Setting this parameter to 0 will disable the usage of the publish
