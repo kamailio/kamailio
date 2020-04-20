@@ -54,7 +54,7 @@
 
 #define PS_PCACHE_NONE 0
 #define PS_PCACHE_HYBRID 1
-#define PS_PCACHE_RECORD 1
+#define PS_PCACHE_RECORD 2
 
 /** TM bind */
 extern struct tm_binds tmb;
