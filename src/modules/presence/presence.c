@@ -1932,7 +1932,7 @@ rpc_export_t presence_rpc[] = {
 	{"presence.updateWatchers", rpc_presence_update_watchers,
 			rpc_presence_update_watchers_doc, 0},
 	{"presence.presentity_list", rpc_presence_presentity_list,
-			rpc_presence_presentity_list_doc, 0},
+			rpc_presence_presentity_list_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
