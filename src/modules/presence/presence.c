@@ -350,15 +350,38 @@ static int mod_init(void)
 	}
 
 	if(publ_cache_mode==PS_PCACHE_HYBRID || publ_cache_mode==PS_PCACHE_RECORD) {
-		if(phtable_size < 1)
+		if(phtable_size < 1) {
 			phtable_size = 256;
-		else
+		} else {
 			phtable_size = 1 << phtable_size;
+		}
 	}
 
 	if(publ_cache_mode==PS_PCACHE_RECORD) {
 		if(ps_ptable_init(phtable_size) < 0) {
 			return -1;
+		}
+	}
+
+	if(pres_subs_dbmode != DB_ONLY) {
+		if(shtable_size < 1) {
+			shtable_size = 512;
+		} else {
+			shtable_size = 1 << shtable_size;
+		}
+
+		subs_htable = new_shtable(shtable_size);
+		if(subs_htable == NULL) {
+			LM_ERR(" initializing subscribe hash table\n");
+			goto dberror;
+		}
+	}
+
+	if(publ_cache_mode==PS_PCACHE_HYBRID) {
+		pres_htable = new_phtable();
+		if(pres_htable == NULL) {
+			LM_ERR("initializing presentity hash table\n");
+			goto dberror;
 		}
 	}
 
@@ -405,17 +428,8 @@ static int mod_init(void)
 			goto dberror;
 		}
 
-		if(pres_subs_dbmode != DB_ONLY) {
-			if(shtable_size < 1)
-				shtable_size = 512;
-			else
-				shtable_size = 1 << shtable_size;
 
-			subs_htable = new_shtable(shtable_size);
-			if(subs_htable == NULL) {
-				LM_ERR(" initializing subscribe hash table\n");
-				goto dberror;
-			}
+		if(pres_subs_dbmode != DB_ONLY) {
 			if(restore_db_subs() < 0) {
 				LM_ERR("restoring subscribe info from database\n");
 				goto dberror;
@@ -423,13 +437,7 @@ static int mod_init(void)
 		}
 
 		if(publ_cache_mode==PS_PCACHE_HYBRID) {
-			pres_htable = new_phtable();
-			if(pres_htable == NULL) {
-				LM_ERR("initializing presentity hash table\n");
-				goto dberror;
-			}
-
-			if(pres_htable_restore() < 0) {
+			if(pres_htable_db_restore() < 0) {
 				LM_ERR("filling in presentity hash table from database\n");
 				goto dberror;
 			}
