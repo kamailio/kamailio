@@ -180,5 +180,6 @@ int ps_ptable_remove(ps_presentity_t *pt);
 ps_presentity_t *ps_ptable_get_list(str *user, str *domain);
 ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag);
 ps_presentity_t *ps_ptable_get_expired(int eval);
+ps_ptable_t *ps_ptable_get(void);
 
 #endif

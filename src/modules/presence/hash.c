@@ -705,6 +705,11 @@ done:
 
 static ps_ptable_t *_ps_ptable = NULL;
 
+ps_ptable_t *ps_ptable_get(void)
+{
+	return _ps_ptable;
+}
+
 #define PS_PRESENTITY_FIELD_COPY(field) do { \
 		if (pt->field.s) { \
 			ptn->field.s = p; \
@@ -945,6 +950,7 @@ void ps_ptable_destroy(void)
 	}
 	for(i=0; i<_ps_ptable->ssize; i++) {
 		lock_destroy(&_ps_ptable->slots[i].lock);
+		pt = _ps_ptable->slots[i].plist;
 		while(pt!=NULL) {
 			ptn = pt->next;
 			ps_presentity_free(pt, 0);
