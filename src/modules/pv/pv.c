@@ -1402,7 +1402,7 @@ sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp);
 /**
  * SR_KEMIP_ARRAY with values of xavp=>name
  */
-sr_kemi_dict_item_t* ki_xavp_dict_name(sr_xavp_t *xavp, str name)
+sr_kemi_dict_item_t* ki_xavp_dict_name(sr_xavp_t *xavp, str *name)
 {
 	sr_kemi_dict_item_t *ini = NULL;
 	sr_kemi_dict_item_t *val;
@@ -1416,7 +1416,7 @@ sr_kemi_dict_item_t* ki_xavp_dict_name(sr_xavp_t *xavp, str name)
 	}
 	memset(ini, 0, sizeof(sr_kemi_xval_t));
 	ini->vtype = SR_KEMIP_ARRAY;
-	while(avp!=NULL&&!STR_EQ(avp->name,name))
+	while(avp!=NULL&&!STR_EQ(avp->name,*name))
 	{
 		avp = avp->next;
 	}
@@ -1467,8 +1467,8 @@ sr_kemi_dict_item_t* ki_xavp_dict_name(sr_xavp_t *xavp, str name)
 			last->next = val;
 		} else {
 			ini->v.dict = val;
-			last = val;
 		}
+		last = val;
 		avp = xavp_get_next(avp);
 	}
 	return ini;
@@ -1509,13 +1509,13 @@ sr_kemi_dict_item_t* ki_xavp_dict(sr_xavp_t *xavp)
 			val->vtype = SR_KEMIP_DICT;
 			val->name.s = keys->s.s;
 			val->name.len = keys->s.len;
-			val->v.dict = ki_xavp_dict_name(avp, keys->s);
+			val->v.dict = ki_xavp_dict_name(avp, &keys->s);
 			if(last) {
 				last->next = val;
 			} else {
 				ini = val;
-				last = ini;
 			}
+			last = val;
 			k = keys;
 			keys = keys->next;
 			pkg_free(k);
