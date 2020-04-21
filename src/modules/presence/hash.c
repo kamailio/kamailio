@@ -992,7 +992,7 @@ int ps_ptable_insert(ps_presentity_t *pt)
 		return -1;
 	}
 
-	idx = ptn->hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptn->hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	if(_ps_ptable->slots[idx].plist == NULL) {
@@ -1028,7 +1028,7 @@ int ps_ptable_replace(ps_presentity_t *pt)
 		ptc.ruid = pres_sruid.uid;
 	}
 
-	idx = ptc.hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1090,7 +1090,7 @@ int ps_ptable_update(ps_presentity_t *pt)
 		ptc.ruid = pres_sruid.uid;
 	}
 
-	idx = ptc.hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1146,7 +1146,7 @@ int ps_ptable_remove(ps_presentity_t *pt)
 	memcpy(&ptc, pt, sizeof(ps_presentity_t));
 
 	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
-	idx = ptc.hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1189,7 +1189,7 @@ ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
 	ptc.user = *user;
 	ptc.domain = *domain;
 	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
-	idx = ptc.hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1236,7 +1236,7 @@ ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *eta
 	ptc.event = *event;
 	ptc.etag = *etag;
 	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
-	idx = ptc.hashid & (_ps_ptable->ssize - 1);
+	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
