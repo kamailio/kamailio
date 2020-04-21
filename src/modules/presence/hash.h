@@ -30,6 +30,8 @@
 #ifndef PS_HASH_H
 #define PS_HASH_H
 
+#include <stdint.h>
+
 #include "../../core/lock_ops.h"
 
 struct presentity;
@@ -141,8 +143,8 @@ void destroy_phtable(void);
 int delete_db_subs(str* to_tag, str* from_tag, str* callid);
 
 typedef struct ps_presentity {
-	int bsize;
-	int hashid;
+	uint32_t bsize;
+	uint32_t hashid;
 	str user;
 	str domain;
 	str ruid;

@@ -1392,7 +1392,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			}
 			LM_DBG("inserting presentity into hash table\n");
 			if(ps_ptable_insert(&ptc) < 0) {
-				LM_ERR("inserting new record in database\n");
+				LM_ERR("inserting new record in memory\n");
 				goto error;
 			}
 		} else {

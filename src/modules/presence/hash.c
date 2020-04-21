@@ -701,7 +701,11 @@ done:
 	return ret;
 }
 
-/* in-memory presentity records */
+/**
+ * ==============================
+ *  in-memory presentity records
+ * ==============================
+ */
 
 static ps_ptable_t *_ps_ptable = NULL;
 
@@ -724,7 +728,7 @@ ps_ptable_t *ps_ptable_get(void)
  */
 ps_presentity_t *ps_presentity_new(ps_presentity_t *pt, int mtype)
 {
-	int bsize = 0;
+	uint32_t bsize = 0;
 	ps_presentity_t *ptn = NULL;
 	char *p = NULL;
 
@@ -969,7 +973,7 @@ int ps_ptable_insert(ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
 	memcpy(&ptc, pt, sizeof(ps_presentity_t));
@@ -988,7 +992,7 @@ int ps_ptable_insert(ps_presentity_t *pt)
 		return -1;
 	}
 
-	idx = ptn->hashid % _ps_ptable->ssize;
+	idx = ptn->hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	if(_ps_ptable->slots[idx].plist == NULL) {
@@ -1010,7 +1014,7 @@ int ps_ptable_replace(ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
 	memcpy(&ptc, pt, sizeof(ps_presentity_t));
@@ -1024,7 +1028,7 @@ int ps_ptable_replace(ps_presentity_t *pt)
 		ptc.ruid = pres_sruid.uid;
 	}
 
-	idx = ptc.hashid % _ps_ptable->ssize;
+	idx = ptc.hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1041,6 +1045,10 @@ int ps_ptable_replace(ps_presentity_t *pt)
 			break;
 		}
 		ptn = ptn->next;
+	}
+
+	if(ptn!=NULL) {
+		ps_presentity_free(ptn, 0);
 	}
 
 	ptn = ps_presentity_new(&ptc, 0);
@@ -1068,7 +1076,7 @@ int ps_ptable_update(ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
 	memcpy(&ptc, pt, sizeof(ps_presentity_t));
@@ -1082,7 +1090,7 @@ int ps_ptable_update(ps_presentity_t *pt)
 		ptc.ruid = pres_sruid.uid;
 	}
 
-	idx = ptc.hashid % _ps_ptable->ssize;
+	idx = ptc.hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1132,13 +1140,13 @@ int ps_ptable_remove(ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
 	memcpy(&ptc, pt, sizeof(ps_presentity_t));
 
 	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
-	idx = ptc.hashid % _ps_ptable->ssize;
+	idx = ptc.hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1174,14 +1182,14 @@ ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
 	ps_presentity_t *ptl = NULL;
 	ps_presentity_t *ptd = NULL;
 	ps_presentity_t *pte = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	memset(&ptc, 0, sizeof(ps_presentity_t));
 
 	ptc.user = *user;
 	ptc.domain = *domain;
 	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
-	idx = ptc.hashid % _ps_ptable->ssize;
+	idx = ptc.hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
@@ -1219,7 +1227,7 @@ ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *eta
 	ps_presentity_t ptc;
 	ps_presentity_t *ptn = NULL;
 	ps_presentity_t *ptd = NULL;
-	int idx = 0;
+	uint32_t idx = 0;
 
 	memset(&ptc, 0, sizeof(ps_presentity_t));
 
@@ -1228,7 +1236,7 @@ ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *eta
 	ptc.event = *event;
 	ptc.etag = *etag;
 	ptc.hashid = core_case_hash(&ptc.user, &ptc.domain, 0);
-	idx = ptc.hashid % _ps_ptable->ssize;
+	idx = ptc.hashid & (_ps_ptable->ssize - 1);
 
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
