@@ -85,6 +85,7 @@ Juha Heinanen
               5.1. presence.cleanup
               5.2. presence.refreshWatchers
               5.3. presence.updateWatchers
+              5.4. presence.presentity_list
 
         6. Exported Variables
 
@@ -232,6 +233,7 @@ Chapter 1. Admin Guide
         5.1. presence.cleanup
         5.2. presence.refreshWatchers
         5.3. presence.updateWatchers
+        5.4. presence.presentity_list
 
    6. Exported Variables
 
@@ -1045,6 +1047,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
    5.1. presence.cleanup
    5.2. presence.refreshWatchers
    5.3. presence.updateWatchers
+   5.4. presence.presentity_list
 
 5.1. presence.cleanup
 
@@ -1104,6 +1107,23 @@ kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
    RPC Command Format:
 ...
 kamcmd presence.updateWatchers sip:alice@domain.com presence
+...
+
+5.4. presence.presentity_list
+
+   List the presentity records stored in memory.
+
+   Name: presence.presentity_list
+
+   Parameters:
+     * mode - (optional) it can be 'full' to print all the fields of
+       presentity record. If missine, only a selected set of fields are
+       printed in the response.
+
+   RPC Command Format:
+...
+kamctl rpc presence.presentity_list
+kamctl rpc presence.presentity_list full
 ...
 
 6. Exported Variables
