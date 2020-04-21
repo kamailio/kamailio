@@ -265,7 +265,6 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 	if(ptlist==NULL) {
 		return;
 	}
-
 	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
 		memset(&pres, 0, sizeof(presentity_t));
 
@@ -316,6 +315,12 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 	}
 
 error:
+	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
+		if(ps_ptable_remove(ptn) <0) {
+			LM_ERR("failed deleting presentity item\n");
+		}
+	}
+
 	if(ptlist != NULL) {
 		ps_presentity_list_free(ptlist, 1);
 	}
