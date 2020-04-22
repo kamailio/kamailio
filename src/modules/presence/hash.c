@@ -1010,22 +1010,25 @@ int ps_ptable_insert(ps_presentity_t *pt)
 /**
  *
  */
-int ps_ptable_replace(ps_presentity_t *pt)
+int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
+	ps_presentity_t ptv;
 	ps_presentity_t *ptn = NULL;
 	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
-	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+	memcpy(&ptc, ptm, sizeof(ps_presentity_t));
+	memcpy(&ptv, pt, sizeof(ps_presentity_t));
 
 	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+	ptv.hashid = core_case_hash(&pt->user, &pt->domain, 0);
 
-	if(ptc.ruid.s == NULL) {
+	if(ptv.ruid.s == NULL) {
 		if(sruid_next(&pres_sruid) < 0) {
 			return -1;
 		}
-		ptc.ruid = pres_sruid.uid;
+		ptv.ruid = pres_sruid.uid;
 	}
 
 	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
@@ -1051,7 +1054,7 @@ int ps_ptable_replace(ps_presentity_t *pt)
 		ps_presentity_free(ptn, 0);
 	}
 
-	ptn = ps_presentity_new(&ptc, 0);
+	ptn = ps_presentity_new(&ptv, 0);
 	if(ptn==NULL) {
 		lock_release(&_ps_ptable->slots[idx].lock);
 		return -1;
@@ -1072,22 +1075,25 @@ int ps_ptable_replace(ps_presentity_t *pt)
 /**
  *
  */
-int ps_ptable_update(ps_presentity_t *pt)
+int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 {
 	ps_presentity_t ptc;
+	ps_presentity_t ptv;
 	ps_presentity_t *ptn = NULL;
 	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
-	memcpy(&ptc, pt, sizeof(ps_presentity_t));
+	memcpy(&ptc, ptm, sizeof(ps_presentity_t));
+	memcpy(&ptv, pt, sizeof(ps_presentity_t));
 
-	ptc.hashid = core_case_hash(&pt->user, &pt->domain, 0);
+	ptc.hashid = core_case_hash(&ptm->user, &ptm->domain, 0);
+	ptv.hashid = core_case_hash(&pt->user, &pt->domain, 0);
 
-	if(ptc.ruid.s == NULL) {
+	if(ptv.ruid.s == NULL) {
 		if(sruid_next(&pres_sruid) < 0) {
 			return -1;
 		}
-		ptc.ruid = pres_sruid.uid;
+		ptv.ruid = pres_sruid.uid;
 	}
 
 	idx = core_hash_idx(ptc.hashid, _ps_ptable->ssize);
@@ -1115,7 +1121,7 @@ int ps_ptable_update(ps_presentity_t *pt)
 	}
 	ps_presentity_free(ptn, 0);
 
-	ptn = ps_presentity_new(&ptc, 0);
+	ptn = ps_presentity_new(&ptv, 0);
 	if(ptn==NULL) {
 		lock_release(&_ps_ptable->slots[idx].lock);
 		return -1;

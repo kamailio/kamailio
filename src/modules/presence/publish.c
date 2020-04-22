@@ -381,8 +381,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 			reply_str = pu_400a_rpl;
 			goto error;
 		}
-	} else
+	} else {
 		goto unsupported_event;
+	}
 
 	/* search event in the list */
 	event = search_event((event_t *)msg->event->parsed);
@@ -472,7 +473,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 			reply_str = pu_400a_rpl;
 			goto error;
 		}
-		body.len = get_content_length(msg);
+		body.len = msg->buf + msg->len - body.s;
 
 		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE
 				&& get_content_type(msg) == SUBTYPE_PIDFXML) {
@@ -512,7 +513,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 	}
 
 	/* now we have all the necessary values */
-	/* fill in the filds of the structure */
+	/* fill in the fields of the structure */
 
 	presentity = new_presentity(
 			&pres_domain, &pres_user, lexpire, event, &etag, sender);
@@ -528,14 +529,18 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		goto error;
 	}
 
-	if(presentity)
+	if(presentity) {
 		pkg_free(presentity);
-	if(etag.s)
+	}
+	if(etag.s) {
 		pkg_free(etag.s);
-	if(sender)
+	}
+	if(sender) {
 		pkg_free(sender);
-	if(sphere)
+	}
+	if(sphere) {
 		pkg_free(sphere);
+	}
 
 	return 1;
 
@@ -543,8 +548,9 @@ unsupported_event:
 
 	LM_WARN("Missing or unsupported event header field value\n");
 
-	if(msg->event && msg->event->body.s && msg->event->body.len > 0)
+	if(msg->event && msg->event->body.s && msg->event->body.len > 0) {
 		LM_ERR("    event=[%.*s]\n", msg->event->body.len, msg->event->body.s);
+	}
 
 	reply_code = BAD_EVENT_CODE;
 	reply_str = pu_489_rpl;
@@ -556,14 +562,18 @@ error:
 		}
 	}
 
-	if(presentity)
+	if(presentity) {
 		pkg_free(presentity);
-	if(etag.s)
+	}
+	if(etag.s) {
 		pkg_free(etag.s);
-	if(sender)
+	}
+	if(sender) {
 		pkg_free(sender);
-	if(sphere)
+	}
+	if(sphere) {
 		pkg_free(sphere);
+	}
 
 	return -1;
 }

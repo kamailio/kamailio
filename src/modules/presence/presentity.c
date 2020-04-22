@@ -1316,12 +1316,14 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 	str crt_ruid = STR_NULL;
 	str p_ruid = STR_NULL;
 	ps_presentity_t ptc;
+	ps_presentity_t ptm;
 	ps_presentity_t *ptx = NULL;
 
 	if(sent_reply) {
 		*sent_reply = 0;
 	}
 	memset(&ptc, 0, sizeof(ps_presentity_t));
+	memset(&ptm, 0, sizeof(ps_presentity_t));
 
 	/* here pres_notifier_processes == 0 -- used for db-only */
 	if(presentity->event->req_auth) {
@@ -1343,6 +1345,11 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 	ptc.domain = presentity->domain;
 	ptc.event = presentity->event->name;
 	ptc.etag = presentity->etag;
+
+	ptm.user = presentity->user;
+	ptm.domain = presentity->domain;
+	ptm.event = presentity->event->name;
+	ptm.etag = presentity->etag;
 
 	if(new_t) {
 		LM_DBG("new presentity with etag %.*s\n", presentity->etag.len,
@@ -1402,7 +1409,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 				ptc.expires = presentity->expires + (int)time(NULL);
 			}
 			/* update/replace in memory */
-			if(ps_ptable_replace(&ptc) <0) {
+			if(ps_ptable_replace(&ptm, &ptc) <0) {
 				LM_ERR("replacing record in database\n");
 				goto error;
 			}
@@ -1423,9 +1430,10 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			p_ruid = *ruid;
 		}
 		if(EVENT_DIALOG_SLA(presentity->event->evp)) {
-			ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
-					&ptc.etag);
+			ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
+					&ptm.etag);
 			if(ptx == NULL) {
+				LM_DBG("presentity record not found\n");
 				goto send_412;
 			}
 			cache_record_exists = 1;
@@ -1497,9 +1505,10 @@ after_dialog_check:
 		if(presentity->expires <= 0) {
 
 			if(!cache_record_exists) {
-				ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
-						&ptc.etag);
+				ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
+						&ptm.etag);
 				if(ptx == NULL) {
+					LM_DBG("presentity record not found\n");
 					goto send_412;
 				}
 				cache_record_exists = 1;
@@ -1560,6 +1569,9 @@ after_dialog_check:
 		}
 
 		if(presentity->event->etag_not_new == 0 || etag_override) {
+			unsigned int publ_nr;
+			str str_publ_nr = {0, 0};
+
 			if(etag_override) {
 				/* use the supplied etag */
 				LM_DBG("updating with supplied etag %.*s\n", etag_override->len,
@@ -1569,8 +1581,7 @@ after_dialog_check:
 			}
 
 			/* generate another etag */
-			unsigned int publ_nr;
-			str str_publ_nr = {0, 0};
+			LM_DBG("generating a new etag (%d)\n", presentity->event->etag_not_new);
 
 			dot = presentity->etag.s + presentity->etag.len;
 			while(*dot != '.' && str_publ_nr.len < presentity->etag.len) {
@@ -1634,13 +1645,13 @@ after_etag_generation:
 		 * or dmq replication is enabled and we don't already know the ruid, do query */
 		if((!cache_record_exists)
 				|| (pres_enable_dmq > 0 && !p_ruid.s)) {
-			ptx = ps_ptable_get_item(&ptc.user, &ptc.domain, &ptc.event,
-					&ptc.etag);
+			ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
+					&ptm.etag);
 			if(ptx == NULL) {
+				LM_DBG("presentity record not found\n");
 				goto send_412;
 			}
 			cache_record_exists = 1;
-			affected_rows = 1;
 			if(!p_ruid.s && ptx->ruid.s) {
 				crt_ruid.len = ptx->ruid.len;
 				crt_ruid.s = (char *)pkg_malloc(sizeof(char) * crt_ruid.len);
@@ -1655,14 +1666,14 @@ after_etag_generation:
 			ps_presentity_free(ptx, 1);
 			ptx = NULL;
 		}
-		affected_rows = ps_ptable_update(&ptc);
+		affected_rows = ps_ptable_update(&ptm, &ptc);
 		if(affected_rows < 0) {
 			LM_ERR("updating published info in database\n");
 			goto error;
 		}
-		affected_rows = 1;
 		/* if either affected_rows (if exists) or select query show that there is no line in database*/
-		if((!affected_rows && !cache_record_exists) || (!cache_record_exists)) {
+		if(affected_rows==0) {
+			LM_DBG("no presentity record found to be updated\n");
 			goto send_412;
 		}
 
@@ -1780,7 +1791,7 @@ int update_presentity(sip_msg_t *msg, presentity_t *presentity, str *body,
 /**
  *
  */
-int pres_htable_restore(void)
+int pres_htable_db_restore(void)
 {
 	/* query all records from presentity table and insert records
 	 * in presentity table */
