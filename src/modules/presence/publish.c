@@ -59,7 +59,7 @@ struct p_modif
 	str uri;
 };
 
-void msg_presentity_clean(unsigned int ticks, void *param)
+void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 {
 	db_key_t db_keys[2], result_cols[4];
 	db_val_t db_vals[2], *values;
@@ -72,6 +72,10 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 	presentity_t pres;
 	str uri = {0, 0}, event, *rules_doc = NULL;
 	static str query_str;
+
+	if(pa_db == NULL) {
+		return;
+	}
 
 	LM_DBG("cleaning expired presentity information\n");
 	if(pa_dbf.use_table(pa_db, &presentity_table) < 0) {

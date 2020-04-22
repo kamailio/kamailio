@@ -1269,6 +1269,10 @@ ps_presentity_t *ps_ptable_get_expired(int eval)
 	ps_presentity_t *pte = NULL;
 	int i = 0;
 
+	if(_ps_ptable == NULL) {
+		return NULL;
+	}
+
 	for(i=0; i<_ps_ptable->ssize; i++) {
 		lock_get(&_ps_ptable->slots[i].lock);
 		ptn = _ps_ptable->slots[i].plist;

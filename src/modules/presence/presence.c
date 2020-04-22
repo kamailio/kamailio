@@ -448,14 +448,14 @@ static int mod_init(void)
 	pres_startup_time = (int)time(NULL);
 	if(pres_clean_period > 0) {
 		if(pres_timer_mode==0) {
-			register_timer(msg_presentity_clean, 0, pres_clean_period);
-			register_timer(msg_watchers_clean, 0, pres_clean_period);
+			register_timer(ps_presentity_db_timer_clean, 0, pres_clean_period);
+			register_timer(ps_watchers_db_timer_clean, 0, pres_clean_period);
 			if(publ_cache_mode==PS_PCACHE_RECORD) {
 				register_timer(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
 		} else {
-			sr_wtimer_add(msg_presentity_clean, 0, pres_clean_period);
-			sr_wtimer_add(msg_watchers_clean, 0, pres_clean_period);
+			sr_wtimer_add(ps_presentity_db_timer_clean, 0, pres_clean_period);
+			sr_wtimer_add(ps_watchers_db_timer_clean, 0, pres_clean_period);
 			if(publ_cache_mode==PS_PCACHE_RECORD) {
 				sr_wtimer_add(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
@@ -1841,8 +1841,9 @@ void rpc_presence_cleanup(rpc_t *rpc, void *c)
 {
 	LM_DBG("rpc_presence_cleanup:start\n");
 
-	(void)msg_watchers_clean(0, 0);
-	(void)msg_presentity_clean(0, 0);
+	(void)ps_watchers_db_timer_clean(0, 0);
+	(void)ps_presentity_db_timer_clean(0, 0);
+	(void)ps_ptable_timer_clean(0, 0);
 	(void)timer_db_update(0, 0);
 
 	rpc->rpl_printf(c, "Reload OK");

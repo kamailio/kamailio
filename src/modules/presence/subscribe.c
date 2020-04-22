@@ -702,11 +702,15 @@ error:
 	return -1;
 }
 
-void msg_watchers_clean(unsigned int ticks, void *param)
+void ps_watchers_db_timer_clean(unsigned int ticks, void *param)
 {
 	db_key_t db_keys[2];
 	db_val_t db_vals[2];
 	db_op_t db_ops[2];
+
+	if(pa_db == NULL) {
+		return;
+	}
 
 	LM_DBG("cleaning pending subscriptions\n");
 
