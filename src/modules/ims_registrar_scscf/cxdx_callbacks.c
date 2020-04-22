@@ -93,7 +93,7 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 			impucontact->contact->state = CONTACT_DELETE_PENDING;
 			if (r->shead) {
 				//send NOTIFY to all subscribers of this IMPU.
-				notify_subscribers(r, 0, 0);
+				notify_subscribers(r, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
 			}
 			impucontact->contact->state = CONTACT_DELETED;
 			ul.unlock_contact_slot_i(impucontact->contact->sl);
@@ -122,7 +122,7 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 				impucontact->contact->state = CONTACT_DELETE_PENDING;
 				if (r->shead) {
 					//send NOTIFY to all subscribers of this IMPU.
-					notify_subscribers(r, 0, 0);
+					notify_subscribers(r, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
 				}
 				impucontact->contact->state = CONTACT_DELETED;
 				ul.unlock_contact_slot_i(impucontact->contact->sl);

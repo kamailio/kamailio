@@ -161,6 +161,6 @@ void notify_destroy();
 int aor_to_contact(str* aor, str* contact);
 int contact_port_ip_match(str *c1, str *c2);
 
-int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact);
+int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type);
 
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_

@@ -534,8 +534,8 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
     }
 }
 
-int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact) {
-    event_reg(0, impurecord, IMS_REGISTRAR_CONTACT_UNREGISTERED, 0, 0, explit_dereg_contact, num_explit_dereg_contact);
+int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type) {
+    event_reg(0, impurecord, event_type, 0, 0, explit_dereg_contact, num_explit_dereg_contact);
 
     return 0;
 }
@@ -593,7 +593,7 @@ int process_contact(ims_subscription* subscription, udomain_t * _d, int expires,
                         ucontact->state = CONTACT_DELETE_PENDING;
                         if (implicit_impurecord->shead) {
                             //send NOTIFY to all subscribers of this IMPU.
-                            notify_subscribers(implicit_impurecord, 0, 0);
+                            notify_subscribers(implicit_impurecord, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
                         }
                         ul.unlock_contact_slot(&contact_uri);
                         //                        if (ul.unlink_contact_from_impu(implicit_impurecord, ucontact, 1, 0 /*implicit dereg of contact from IMPU*/) != 0) {
