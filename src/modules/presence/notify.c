@@ -891,7 +891,7 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 		ptm.expires = (int)time(NULL);
 	}
 
-	ptlist = ps_ptable_search(&ptm, pres_retrieve_order);
+	ptlist = ps_ptable_search(&ptm, 1, pres_retrieve_order);
 
 	if(ptlist == NULL) {
 		LM_DBG("the query returned no result\n[username]= %.*s"

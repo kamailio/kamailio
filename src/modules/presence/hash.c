@@ -1238,7 +1238,7 @@ ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
 /**
  *
  */
-ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int rmode)
+ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode)
 {
 	ps_presentity_t *ptn = NULL;
 	ps_presentity_t *ptl = NULL;
@@ -1253,7 +1253,7 @@ ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int rmode)
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if((ps_presentity_match(ptn, ptm, 1)==1)
+		if((ps_presentity_match(ptn, ptm, mmode)==1)
 				&& (ptm->expires==0 || ptn->expires > ptm->expires)) {
 			ptd = ps_presentity_dup(ptn, 1);
 			if(ptd == NULL) {
