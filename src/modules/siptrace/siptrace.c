@@ -1496,6 +1496,7 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	siptrace_data_t sto;
 	siptrace_info_t* info;
 	int faked = 0;
+	int parsed_f = 0;
 	struct sip_msg *msg;
 	struct sip_msg *req;
 	struct ip_addr to_ip;
@@ -1534,6 +1535,11 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	if(msg == NULL || msg == FAKED_REPLY) {
 		msg = t->uas.request;
 		faked = 1;
+		/* check if from header has been already parsed.
+		 * If not we have to parse it in pkg memory and free it at the end.
+		 */
+		if (msg->from && msg->from->parsed == NULL)
+			parsed_f = 1;
 	}
 
 	if(sip_trace_prepare(msg) < 0)
@@ -1617,10 +1623,16 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 
 	if (info->uriState == STRACE_RAW_URI) {
 		LM_BUG("uriState must be either UNUSED or PARSED here! must be a bug! Message won't be traced!\n");
-		return;
+		goto end;
 	}
 
 	sip_trace_store(&sto, info->uriState == STRACE_PARSED_URI ? &info->u.dest_info : NULL, NULL);
+
+end:
+	if (faked && parsed_f) {
+		free_from(msg->from->parsed);
+		msg->from->parsed = NULL;
+	}
 }
 
 static void trace_tm_neg_ack_in(struct cell *t, int type, struct tmcb_params *ps)
