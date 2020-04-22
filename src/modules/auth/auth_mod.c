@@ -342,7 +342,7 @@ static int mod_init(void)
 			}
 #ifdef USE_NC
 			else{
-				LM_INFO("qop set, but nonce-count (nc_enabled) support"
+				LM_INFO("qop set, but nonce-count (nonce_count) support"
 						" disabled\n");
 			}
 #endif
