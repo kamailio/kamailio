@@ -861,7 +861,10 @@ ps_presentity_t *ps_presentity_dup(ps_presentity_t *pt, int mtype)
 }
 
 /**
- *
+ * match presentity with various conditions
+ *   0 - only user and domain
+ *   1 - match also event
+ *   2 - match also etag
  */
 int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode)
 {
@@ -873,8 +876,14 @@ int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode)
 		return 0;
 	}
 
-	if(mmode == 0) {
-		if(pta->etag.len != ptb->etag.len || pta->event.len != ptb->event.len) {
+	if(mmode > 0) {
+		if(pta->event.len != ptb->event.len) {
+			return 0;
+		}
+	}
+
+	if(mmode > 1) {
+		if(pta->etag.len != ptb->etag.len) {
 			return 0;
 		}
 	}
@@ -887,16 +896,17 @@ int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode)
 		return 0;
 	}
 
-	if(mmode==0) {
-		if(strncmp(pta->etag.s, ptb->etag.s, pta->etag.len)!=0) {
-			return 0;
-		}
-
+	if(mmode > 0) {
 		if(strncmp(pta->event.s, ptb->event.s, pta->event.len)!=0) {
 			return 0;
 		}
 	}
 
+	if(mmode > 1) {
+		if(strncmp(pta->etag.s, ptb->etag.s, pta->etag.len)!=0) {
+			return 0;
+		}
+	}
 	return 1;
 }
 
@@ -1036,7 +1046,7 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+		if(ps_presentity_match(ptn, &ptc, 2)==1) {
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}
@@ -1101,7 +1111,7 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+		if(ps_presentity_match(ptn, &ptc, 2)==1) {
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}
@@ -1157,7 +1167,7 @@ int ps_ptable_remove(ps_presentity_t *pt)
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+		if(ps_presentity_match(ptn, &ptc, 2)==1) {
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}
@@ -1200,7 +1210,7 @@ ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if(ps_presentity_match(ptn, &ptc, 1)==1) {
+		if(ps_presentity_match(ptn, &ptc, 0)==1) {
 			ptd = ps_presentity_dup(ptn, 1);
 			if(ptd == NULL) {
 				break;
@@ -1228,6 +1238,89 @@ ps_presentity_t *ps_ptable_get_list(str *user, str *domain)
 /**
  *
  */
+ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int rmode)
+{
+	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptl = NULL;
+	ps_presentity_t *ptd = NULL;
+	ps_presentity_t *pte = NULL;
+	uint32_t idx = 0;
+	int pmax = 0;
+
+	ptm->hashid = core_case_hash(&ptm->user, &ptm->domain, 0);
+	idx = core_hash_idx(ptm->hashid, _ps_ptable->ssize);
+
+	lock_get(&_ps_ptable->slots[idx].lock);
+	ptn = _ps_ptable->slots[idx].plist;
+	while(ptn!=NULL) {
+		if((ps_presentity_match(ptn, ptm, 1)==1)
+				&& (ptm->expires==0 || ptn->expires > ptm->expires)) {
+			ptd = ps_presentity_dup(ptn, 1);
+			if(ptd == NULL) {
+				break;
+			}
+			if(pte==NULL) {
+				ptl = ptd;
+			} else {
+				pte->next = ptd;
+				ptd->prev = pte;
+			}
+			pte = ptd;
+		}
+		ptn = ptn->next;
+	}
+	lock_release(&_ps_ptable->slots[idx].lock);
+
+	if(ptd==NULL && ptl != NULL) {
+		ps_presentity_list_free(ptl, 1);
+		return NULL;
+	}
+
+	if(rmode==1) {
+		/* order list by priority */
+		pte = NULL;
+		while(ptl!=NULL) {
+			pmax = 0;
+			ptn = ptl;
+			ptd = ptl;
+			while(ptn!=NULL) {
+				if(ptn->priority >= pmax) {
+					pmax = ptn->priority;
+					ptd = ptn;
+				}
+				ptn = ptn->next;
+			}
+			if(ptd == ptl) {
+				ptl = ptl->next;
+				if(ptl) {
+					ptl->prev = NULL;
+				}
+				ptd->next = pte;
+				pte->prev = ptd;
+				pte = ptd;
+			} else {
+				if(ptd->prev) {
+					ptd->prev->next = ptd->next;
+				}
+				if(ptd->next) {
+					ptd->next->prev = ptd->prev;
+				}
+				ptd->next = pte;
+				ptd->prev = NULL;
+				pte->prev = ptd;
+				pte = ptd;
+			}
+		}
+		return pte;
+	}
+
+	/* default ordered by received time */
+	return ptl;
+}
+
+/**
+ *
+ */
 ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag)
 {
 	ps_presentity_t ptc;
@@ -1247,7 +1340,7 @@ ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *eta
 	lock_get(&_ps_ptable->slots[idx].lock);
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn!=NULL) {
-		if(ps_presentity_match(ptn, &ptc, 0)==1) {
+		if(ps_presentity_match(ptn, &ptc, 2)==1) {
 			ptd = ps_presentity_dup(ptn, 1);
 			break;
 		}

@@ -579,7 +579,8 @@ error:
 	return NULL;
 }
 
-str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
+str *ps_db_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
+		str *contact)
 {
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
@@ -860,6 +861,214 @@ error:
 		pkg_free(body_array);
 	}
 	return NULL;
+}
+
+str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
+		str *contact)
+{
+	sip_uri_t uri;
+	ps_presentity_t ptm;
+	ps_presentity_t *pti;
+	ps_presentity_t *ptlist = NULL;
+	int n = 0;
+	int i = 0;
+	str **body_array = NULL;
+	str *notify_body = NULL;
+	str *body;
+	int size = 0;
+	int build_off_n = -1;
+
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri) < 0) {
+		LM_ERR("while parsing uri\n");
+		return NULL;
+	}
+	memset(&ptm, 0, sizeof(ps_presentity_t));
+
+	ptm.user = uri.user;
+	ptm.domain = uri.host;
+	ptm.event = event->name;
+	if(pres_startup_mode == 1) {
+		ptm.expires = (int)time(NULL);
+	}
+
+	ptlist = ps_ptable_search(&ptm, pres_retrieve_order);
+
+	if(ptlist == NULL) {
+		LM_DBG("the query returned no result\n[username]= %.*s"
+			   "\t[domain]= %.*s\t[event]= %.*s\n",
+				uri.user.len, uri.user.s, uri.host.len, uri.host.s,
+				event->name.len, event->name.s);
+
+		if(event->agg_nbody) {
+			notify_body = event->agg_nbody(&uri.user, &uri.host, NULL, 0, -1);
+			if(notify_body) {
+				goto done;
+			}
+		}
+		return NULL;
+	}
+
+	if(event->agg_nbody == NULL) {
+		LM_DBG("event does not require aggregation\n");
+		pti = ptlist;
+		while(pti->next) {
+			pti = pti->next;
+		}
+
+		/* if event BLA - check if sender is the same as contact */
+		/* if so, send an empty dialog info document */
+		if(EVENT_DIALOG_SLA(event->evp) && contact) {
+			if(pti->sender.s == NULL || pti->sender.len <= 0) {
+				LM_DBG("no sender address\n");
+				goto after_sender_check;
+			}
+
+			if(pti->sender.len == contact->len
+					&& presence_sip_uri_match(&pti->sender, contact) == 0) {
+				notify_body = build_empty_bla_body(pres_uri);
+				ps_presentity_list_free(ptlist, 1);
+				return notify_body;
+			}
+		}
+
+	after_sender_check:
+		if(pti->body.s == NULL || pti->body.len <= 0) {
+			LM_ERR("NULL notify body record\n");
+			goto error;
+		}
+
+		notify_body = (str *)pkg_malloc(sizeof(str));
+		if(notify_body == NULL) {
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memset(notify_body, 0, sizeof(str));
+		notify_body->s = (char *)pkg_malloc((pti->body.len+1) * sizeof(char));
+		if(notify_body->s == NULL) {
+			pkg_free(notify_body);
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(notify_body->s, pti->body.s, pti->body.len);
+		notify_body->len = pti->body.len;
+		ps_presentity_list_free(ptlist, 1);
+
+		return notify_body;
+	}
+
+	LM_DBG("event requires aggregation\n");
+
+	n = 0;
+	pti = ptlist;
+	while(pti) {
+		n++;
+		pti = pti->next;
+	}
+	body_array = (str **)pkg_malloc((n + 2) * sizeof(str *));
+	if(body_array == NULL) {
+		ERR_MEM(PKG_MEM_STR);
+	}
+	memset(body_array, 0, (n + 2) * sizeof(str *));
+
+	if(etag != NULL) {
+		LM_DBG("searched etag = %.*s len= %d\n", etag->len, etag->s,
+				etag->len);
+		LM_DBG("etag not NULL\n");
+		pti = ptlist;
+		i = 0;
+		while(pti) {
+			LM_DBG("etag = %.*s len= %d\n", pti->etag.len, pti->etag.s,
+					pti->etag.len);
+			if((pti->etag.len == etag->len)
+					&& (strncmp(pti->etag.s, etag->s, pti->etag.len) == 0)) {
+				LM_DBG("found etag\n");
+				build_off_n = i;
+			}
+			if(pti->body.s == NULL || pti->body.len <= 0) {
+				LM_ERR("Empty notify body record\n");
+				goto error;
+			}
+
+			size = sizeof(str) + (pti->body.len +1) * sizeof(char);
+			body = (str *)pkg_malloc(size);
+			if(body == NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memset(body, 0, size);
+			size = sizeof(str);
+			body->s = (char *)body + size;
+			memcpy(body->s, pti->body.s, pti->body.len);
+			body->len = pti->body.len;
+
+			body_array[i] = body;
+			i++;
+			pti = pti->next;
+		}
+	} else {
+		pti = ptlist;
+		i = 0;
+		while(pti) {
+			if(pti->body.s == NULL || pti->body.len <= 0) {
+				LM_ERR("Empty notify body record\n");
+				goto error;
+			}
+
+			size = sizeof(str) + (pti->body.len+1) * sizeof(char);
+			body = (str *)pkg_malloc(size);
+			if(body == NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memset(body, 0, size);
+			size = sizeof(str);
+			body->s = (char *)body + size;
+			memcpy(body->s, pti->body.s, pti->body.len);
+			body->len = pti->body.len;
+
+			body_array[i] = body;
+			i++;
+			pti = pti->next;
+		}
+	}
+
+	ps_presentity_list_free(ptlist, 1);
+
+	notify_body = event->agg_nbody(
+			&uri.user, &uri.host, body_array, n, build_off_n);
+
+done:
+	if(body_array != NULL) {
+		for(i = 0; i < n; i++) {
+			if(body_array[i]) {
+				pkg_free(body_array[i]);
+			}
+		}
+		pkg_free(body_array);
+	}
+	return notify_body;
+
+error:
+	if(ptlist != NULL) {
+		ps_presentity_list_free(ptlist, 1);
+	}
+
+	if(body_array != NULL) {
+		for(i = 0; i < n; i++) {
+			if(body_array[i])
+				pkg_free(body_array[i]);
+			else
+				break;
+		}
+
+		pkg_free(body_array);
+	}
+	return NULL;
+}
+
+str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
+{
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		return ps_cache_get_p_notify_body(pres_uri, event, etag, contact);
+	} else {
+		return ps_db_get_p_notify_body(pres_uri, event, etag, contact);
+	}
 }
 
 void free_notify_body(str *body, pres_ev_t *ev)
