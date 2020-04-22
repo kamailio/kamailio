@@ -1383,7 +1383,7 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	if(sip_trace_msg_attrs(msg, &sto) < 0) {
-		return;
+		return; 
 	}
 
 	if(ps->send_buf.len > 0) {
@@ -1616,7 +1616,7 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	if(sip_trace_msg_attrs(msg, &sto) < 0) {
-		return;
+		goto end;
 	}
 
 	if(faked == 0) {
@@ -1662,7 +1662,7 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	sto.status.s = int2strbuf(ps->code, statusbuf, INT2STR_MAX_LEN, &sto.status.len);
 	if(sto.status.s == 0) {
 		LM_ERR("failure to get the status string\n");
-		return;
+		goto end;
 	}
 
 	memset(&to_ip, 0, sizeof(struct ip_addr));
@@ -1700,7 +1700,7 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 end:
 	if (faked && parsed_f) {
 		free_from(msg->from->parsed);
-    msg->from->parsed = NULL;
+		msg->from->parsed = NULL;
 	}
 }
 
