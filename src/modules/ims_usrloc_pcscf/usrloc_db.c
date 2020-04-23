@@ -213,7 +213,7 @@ int db_update_pcontact(pcontact_t* _c)
 int db_delete_pcontact(pcontact_t* _c)
 {
 	LM_DBG("Trying to delete contact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
-	db_val_t values[1];
+	db_val_t values[2];
 	db_key_t match_keys[2] = { &aor_col, &received_port_col };
 
 	VAL_TYPE(values) = DB1_STR;
