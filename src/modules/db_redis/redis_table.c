@@ -491,7 +491,7 @@ int db_redis_parse_keys(km_redis_con_t *con) {
     char *start;
     char *end;
 
-    str table_name;
+    str table_name = str_init("");
     str type_name;
     str column_name;
     str version_code;
@@ -550,7 +550,8 @@ int db_redis_parse_keys(km_redis_con_t *con) {
 
                 table_entry = str_hash_get(&con->tables, table_name.s, table_name.len);
                 if (!table_entry) {
-                    LM_ERR("No table schema found for table '%.*s', fix config by adding one to the 'schema' mod-param!\n",
+                    LM_ERR("No table schema found for table '%.*s', fix config"
+                    		" by adding one to the 'schema' mod-param!\n",
                             table_name.len, table_name.s);
                     goto err;
                 }
@@ -558,6 +559,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 table->version_code = version_code;
                 break;
             case DBREDIS_KEYS_TYPE_ST:
+            	if(!table) {
+            		LM_ERR("invalid definition, table not set\n");
+            		goto err;
+				}
                 while(p != end && *p != ':')
                     ++p;
                 if (p == end) {
@@ -631,8 +636,6 @@ int db_redis_parse_keys(km_redis_con_t *con) {
             case DBREDIS_KEYS_END_ST:
                 LM_DBG("done parsing keys definition\n");
                 return 0;
-
-
         }
     } while (p != end);
 
