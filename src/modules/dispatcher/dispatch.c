@@ -2247,6 +2247,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		}
 		/* max load exceeded per destination */
 		if(rstate->alg == DS_ALG_CALLLOAD
+				&& idx->dlist[i].attrs.maxload != 0
 				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
 			continue;
 		}
@@ -2268,6 +2269,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		}
 		/* max load exceeded per destination */
 		if(rstate->alg == DS_ALG_CALLLOAD
+				&& idx->dlist[i].attrs.maxload != 0
 				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
 			continue;
 		}
