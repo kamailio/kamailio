@@ -126,12 +126,17 @@ void worker_loop(int id)
 					}
 				}
 				/* send the reply */
-				if(slb.freply(current_job->msg, peer_response.resp_code,
-						   &peer_response.reason)
-						< 0) {
-					LM_ERR("error sending reply\n");
+				if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
+						&& peer_response.reason.len>0) {
+					if(slb.freply(current_job->msg, peer_response.resp_code,
+							   &peer_response.reason)
+							< 0) {
+						LM_ERR("error sending reply\n");
+					} else {
+						LM_DBG("done sending reply\n");
+					}
 				} else {
-					LM_DBG("done sending reply\n");
+					LM_WARN("no reply sent\n");
 				}
 				worker->jobs_processed++;
 
