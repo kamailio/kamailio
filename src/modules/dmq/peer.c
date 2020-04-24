@@ -99,5 +99,11 @@ dmq_peer_t *find_peer(str peer_id)
 int empty_peer_callback(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node)
 {
+	static str _dmq_202_reason = str_init("Accepted DMQ");
+
+	memset(resp, 0, sizeof(peer_reponse_t));
+	resp->resp_code = 202;
+	resp->reason = _dmq_202_reason;
+
 	return 0;
 }
