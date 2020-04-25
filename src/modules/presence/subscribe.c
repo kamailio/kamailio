@@ -46,8 +46,8 @@ int get_stored_info(
 		struct sip_msg *msg, subs_t *subs, int *error_ret, str *reply_str);
 int get_database_info(
 		struct sip_msg *msg, subs_t *subs, int *error_ret, str *reply_str);
-int get_db_subs_auth(subs_t *subs, int *found);
-int insert_db_subs_auth(subs_t *subs);
+static int ps_get_subs_auth(subs_t *subs, int *found);
+static int ps_insert_subs_auth(subs_t *subs);
 
 static str su_200_rpl = str_init("OK");
 static str pu_481_rpl = str_init("Subscription does not exist");
@@ -1069,8 +1069,9 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 			reply_str = pu_400_rpl;
 			goto error;
 		}
-	} else
+	} else {
 		goto bad_event;
+	}
 
 	/* search event in the list */
 	parsed_event = (event_t *)msg->event->parsed;
@@ -1149,11 +1150,11 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		subs.updated = NO_UPDATE_TYPE;
 		subs.updated_winfo = NO_UPDATE_TYPE;
 
-		if(!event->req_auth)
+		if(!event->req_auth) {
 			subs.status = ACTIVE_STATUS;
-		else {
+		} else {
 			/* query in watchers_table */
-			if(get_db_subs_auth(&subs, &found) < 0) {
+			if(ps_get_subs_auth(&subs, &found) < 0) {
 				LM_ERR("getting subscription status from watchers table\n");
 				goto error;
 			}
@@ -1184,7 +1185,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 					goto error;
 				}
 
-				if(insert_db_subs_auth(&subs) < 0) {
+				if(ps_insert_subs_auth(&subs) < 0) {
 					LM_ERR("while inserting record in watchers table\n");
 					goto error;
 				}
@@ -2668,7 +2669,7 @@ error:
 	return -1;
 }
 
-int get_db_subs_auth(subs_t *subs, int *found)
+static int ps_get_db_subs_auth(subs_t *subs, int *found)
 {
 	db_key_t db_keys[5];
 	db_val_t db_vals[5];
@@ -2755,7 +2756,20 @@ error:
 	return -1;
 }
 
-int insert_db_subs_auth(subs_t *subs)
+static int ps_get_subs_auth(subs_t *subs, int *found)
+{
+	if(pa_db==NULL) {
+		/* expecting the cache only mode -- watchers considered active */
+		subs->reason.s = NULL;
+		subs->status = ACTIVE_STATUS;
+		*found = 1;
+		return 0;
+	} else {
+		return ps_get_db_subs_auth(subs, found);
+	}
+}
+
+static int ps_insert_db_subs_auth(subs_t *subs)
 {
 	db_key_t db_keys[10];
 	db_val_t db_vals[10];
@@ -2835,6 +2849,17 @@ int insert_db_subs_auth(subs_t *subs)
 
 error:
 	return -1;
+}
+
+static int ps_insert_subs_auth(subs_t *subs)
+{
+	if(pa_db==NULL) {
+		/* expecting the cache only mode
+		 * - no insert, watchers considered active */
+		return 0;
+	} else {
+		return ps_insert_db_subs_auth(subs);
+	}
 }
 
 int get_subscribers_count_from_mem(struct sip_msg *msg, str pres_uri, str event)
