@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -38,13 +38,12 @@ int ser_error=-1;
 /* previous error */
 int prev_ser_error=-1;
 
-int err2reason_phrase( 
-	int int_error,   /* current internal ser error */
-	int *sip_error,  /* the sip error code to which ser 	
-					    ser error will be turned */
-	char *phrase,    /* resulting error text */
-	int etl, 		/* error text buffer length */
-	char *signature ) /* extra text to be appended */
+int err2reason_phrase(
+	int int_error,	/* current internal error */
+	int *sip_error,	/* corresponding sip response code */
+	char *phrase,	/* resulting error text */
+	int etl,		/* error text buffer length */
+	char *signature)	/* extra text to be appended */
 {
 
 	char *error_txt;
@@ -83,28 +82,28 @@ int err2reason_phrase(
 			*sip_error=-E_BAD_SERVER;
 			break;
 
-	        case E_Q_INV_CHAR:
+		case E_Q_INV_CHAR:
 			error_txt="Invalid character in q parameter";
 			*sip_error=-E_BAD_REQ;
 			break;
 
-	        case E_Q_EMPTY:
+		case E_Q_EMPTY:
 			error_txt="Empty q parameter";
 			*sip_error=-E_BAD_REQ;
 			break;;
 
-	        case E_Q_TOO_BIG:
-			error_txt="q parameter too big";
+		case E_Q_TOO_BIG:
+			error_txt="Q parameter too big";
 			*sip_error=-E_BAD_REQ;
 			break;
 
-	        case E_Q_DEC_MISSING:
+		case E_Q_DEC_MISSING:
 			error_txt="Decimal part missing in q";
 			*sip_error=-E_BAD_REQ;
 			break;
 
 		case E_CANCELED:
-			error_txt="transaction canceled";
+			error_txt="Transaction canceled";
 			*sip_error=-int_error;
 			break;
 
@@ -124,17 +123,17 @@ int err2reason_phrase(
 			*sip_error=500;
 			break;
 	}
-	return snprintf( phrase, etl, "%s (%d/%s)", error_txt, 
-		-int_error, signature );
+	return snprintf(phrase, etl, "%s (%d/%s)", error_txt,
+		-int_error, signature);
 }
 
-char *error_text( int code )
+char *error_text(int code)
 {
 	switch(code) {
 
 		case 100: return "Trying";
 		case 180: return "Ringing";
-		case 181: return "Call is Being Forwarded";
+		case 181: return "Call Is Being Forwarded";
 		case 182: return "Queued";
 		case 183: return "Session Progress";
 
@@ -151,9 +150,9 @@ char *error_text( int code )
 		case 402: return "Payment Required";
 		case 403: return "Forbidden";
 		case 404: return "Not Found";
-		case 405: return "Method not Allowed";
+		case 405: return "Method Not Allowed";
 		case 406: return "Not Acceptable";
-		case 407: return "Proxy authentication Required";
+		case 407: return "Proxy Authentication Required";
 		case 408: return "Request Timeout";
 		case 410: return "Gone";
 		case 413: return "Request Entity Too Large";
@@ -164,7 +163,7 @@ char *error_text( int code )
 		case 421: return "Extension Required";
 		case 423: return "Interval Too Brief";
 		case 480: return "Temporarily Unavailable";
-		case 481: return "Call/Transaction Does not Exist";
+		case 481: return "Call/Transaction Does Not Exist";
 		case 482: return "Loop Detected";
 		case 483: return "Too Many Hops";
 		case 484: return "Address Incomplete";
@@ -173,18 +172,18 @@ char *error_text( int code )
 		case 487: return "Request Terminated";
 		case 488: return "Not Acceptable Here";
 		case 491: return "Request Pending";
-	
+
 		case 500: return "Server Internal Error";
 		case 501: return "Not Implemented";
 		case 502: return "Bad Gateway";
 		case 503: return "Service Unavailable";
-		case 504: return "Server Time-out";
-		case 505: return "Version not Supported";
+		case 504: return "Server Time-Out";
+		case 505: return "Version Not Supported";
 		case 513: return "Message Too Large";
 
 		case 600: return "Busy Everywhere";
 		case 603: return "Decline";
-		case 604: return "Does not Exist Anywhere";
+		case 604: return "Does Not Exist Anywhere";
 		case 606: return "Not Acceptable";
 
 	}
@@ -198,7 +197,7 @@ char *error_text( int code )
 	else return "Unspecified";
 }
 
-void get_reply_status( str *status, struct sip_msg *reply, int code )
+void get_reply_status(str *status, struct sip_msg *reply, int code)
 {
 	str phrase;
 
@@ -215,7 +214,7 @@ void get_reply_status( str *status, struct sip_msg *reply, int code )
 	} else {
 		phrase=reply->first_line.u.reply.reason;
 	}
-	status->len=phrase.len+3/*code*/+1/*space*/; 
+	status->len=phrase.len+3/*code*/+1/*space*/;
 	status->s=pkg_malloc(status->len+1/*ZT */);
 	if (!status->s) {
 		PKG_MEM_ERROR;
