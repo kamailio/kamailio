@@ -542,9 +542,7 @@ int redisc_append_cmd(str *srv, str *res, str *cmd, ...)
 		LM_ERR("no redis reply id found: %.*s\n", res->len, res->s);
 		goto error_cmd;
 	}
-
-	c = cmd->s[cmd->len];
-	cmd->s[cmd->len] = '\0';
+	STR_VTOZ(cmd->s[cmd->len], c);
 	rsrv->piped.commands[rsrv->piped.pending_commands].len = redisvFormatCommand(
 			&rsrv->piped.commands[rsrv->piped.pending_commands].s,
 			cmd->s,
@@ -557,7 +555,7 @@ int redisc_append_cmd(str *srv, str *res, str *cmd, ...)
 	rsrv->piped.replies[rsrv->piped.pending_commands]=rpl;
 	rsrv->piped.pending_commands++;
 
-	cmd->s[cmd->len] = c;
+	STR_ZTOV(cmd->s[cmd->len], c);
 	va_end(ap);
 	return 0;
 
@@ -883,8 +881,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		goto error;
 	}
 
-	c = cmd->s[cmd->len];
-	cmd->s[cmd->len] = '\0';
+	STR_VTOZ(cmd->s[cmd->len], c);
 
 	rsrv = redisc_get_server(srv);
 	if(rsrv==NULL)
@@ -949,7 +946,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 			redis_count_err_and_disable(rsrv);
 			LM_ERR("unable to reconnect to redis server: %.*s\n",
 					srv->len, srv->s);
-			cmd->s[cmd->len] = c;
+			STR_ZTOV(cmd->s[cmd->len], c);
 			goto error_exec;
 		}
 	}
@@ -983,12 +980,12 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 			} else {
 				LM_ERR("unable to reconnect to redis server: %.*s\n",
 						srv->len, srv->s);
-				cmd->s[cmd->len] = c;
+				STR_ZTOV(cmd->s[cmd->len], c);
 				goto error_exec;
 			}
 		}
 	}
-	cmd->s[cmd->len] = c;
+	STR_ZTOV(cmd->s[cmd->len], c);
 	rsrv->disable.consecutive_errors = 0;
 	va_end(ap);
 	va_end(ap2);
@@ -1000,12 +997,12 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	return 0;
 
 error_exec:
-	cmd->s[cmd->len] = c;
+	STR_ZTOV(cmd->s[cmd->len], c);
 	ret = -1;
 	goto error;
 
 srv_disabled:
-	cmd->s[cmd->len] = c;
+	STR_ZTOV(cmd->s[cmd->len], c);
 	ret = -2;
 	goto error;
 
