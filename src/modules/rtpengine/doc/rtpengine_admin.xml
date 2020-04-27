@@ -2163,15 +2163,6 @@ rtpengine_offer();
 				supports two network interfaces instead of multiple, arbitrarily named ones.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>auto-bridge</emphasis> - this flag an alternative to the
-				<quote>internal</quote> and <quote>external</quote> flags
-				in order to do automatic bridging between IPv4 on the
-				"internal network" and IPv6 on the "external network". Instead of
-				explicitly instructing the &rtp; proxy to select a particular address
-				family, the distinction is done by the given IP in the &sdp; body by
-				the &rtp; proxy itself. Not supported by Sipwise rtpengine.
-				</para></listitem>
-				<listitem><para>
 				<emphasis>address-family=...</emphasis> - instructs the &rtp; proxy that the
 				recipient of this &sdp; body expects to see addresses of a particular family.
 				Possible values are <quote>IP4</quote> and <quote>IP6</quote>. For example,
