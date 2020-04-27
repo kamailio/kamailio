@@ -1920,13 +1920,6 @@ rtpengine_offer();
             “direction=external” respectively. Useful for brevity or as
             legacy option if the RTP proxy only supports two network
             interfaces instead of multiple, arbitrarily named ones.
-          + auto-bridge - this flag an alternative to the “internal” and
-            “external” flags in order to do automatic bridging between
-            IPv4 on the "internal network" and IPv6 on the "external
-            network". Instead of explicitly instructing the RTP proxy to
-            select a particular address family, the distinction is done by
-            the given IP in the SDP body by the RTP proxy itself. Not
-            supported by Sipwise rtpengine.
           + address-family=... - instructs the RTP proxy that the
             recipient of this SDP body expects to see addresses of a
             particular family. Possible values are “IP4” and “IP6”. For
