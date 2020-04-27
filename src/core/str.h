@@ -137,7 +137,7 @@ typedef struct _str str;
 		if (v != '\0') { \
 			c = v; \
 		} \
-	}
+	} while(0)
 
 /** @} */
 
