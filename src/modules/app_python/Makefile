@@ -29,5 +29,9 @@ endif
 
 DEFS+=-I${PYTHON_INCDIR}
 
+ifeq ($(CC_NAME), gcc)
+DEFS+= -fno-strict-aliasing
+endif
+
 include ../../Makefile.modules
 
