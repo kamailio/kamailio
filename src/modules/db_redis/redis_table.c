@@ -495,13 +495,13 @@ int db_redis_parse_keys(km_redis_con_t *con) {
     str type_name;
     str column_name;
 
-    struct str_hash_entry *table_entry;
-    redis_table_t *table;
-    redis_type_t *type;
-    redis_type_t *type_target;
-    redis_key_t *key;
-    redis_key_t **key_target;
-    redis_key_t *key_location;
+    struct str_hash_entry *table_entry = NULL;
+    redis_table_t *table = NULL;
+    redis_type_t *type = NULL;
+    redis_type_t *type_target = NULL;
+    redis_key_t *key = NULL;
+    redis_key_t **key_target = NULL;
+    redis_key_t *key_location = NULL;
 
     enum {
         DBREDIS_KEYS_TABLE_ST,
@@ -641,13 +641,13 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     struct dirent* dent;
     char *dir_name;
 
-    str table_name;
+    str table_name = str_init("");
     str column_name;
     str type_name;
 
-    struct str_hash_entry *table_entry;
-    struct str_hash_entry *column_entry;
-    redis_table_t *table;
+    struct str_hash_entry *table_entry = NULL;
+    struct str_hash_entry *column_entry = NULL;
+    redis_table_t *table = NULL;
 
     char full_path[_POSIX_PATH_MAX + 1];
     int path_len;
