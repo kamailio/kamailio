@@ -1575,7 +1575,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 	int is_local_ip_any;
 	
 #ifdef EXTRA_DEBUG
-	LM_DBG("%d  port %d\n", id, port);
+	LM_DBG("id=%d  port=%d\n", id, port);
 	if (ip) print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
 	if (likely(id)){
@@ -1586,8 +1586,13 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 			print_ip("ip=", &c->rcv.src_ip, "\n");
 #endif
 			if ((id==c->id)&&(c->state!=S_CONN_BAD)) {
-				LM_DBG("found connection by id: %d\n", id);
-				return c;
+				if(!port || port == c->rcv.src_port) {
+					LM_DBG("found connection by id: %d\n", id);
+					return c;
+				}
+				else {
+					LM_DBG("ignoring id %d (port=%d, c->rcv.src_port=%d\n", c->id, port ,c->rcv.src_port);
+				}
 			}
 		}
 	}else if (likely(ip)){
