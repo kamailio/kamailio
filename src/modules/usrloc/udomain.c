@@ -61,7 +61,7 @@ static char *build_stat_name( str* domain, char *var_name)
 	}
 	memcpy( s, domain->s, domain->len);
 	p = s + domain->len;
-	*(p++) = '_';
+	*(p++) = KSR_STATS_NAMESEP;
 	memcpy( p , var_name, strlen(var_name));
 	p += strlen(var_name);
 	*(p++) = 0;
