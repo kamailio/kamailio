@@ -211,4 +211,6 @@
 
 #define DEFAULT_MAX_WHILE_LOOPS 100		/*!< Maximum allowed iterations for a while (to catch runaways) */
 
+#define KSR_STATS_NAMESEP '_' 
+
 #endif
