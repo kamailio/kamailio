@@ -67,15 +67,14 @@ void ka_check_timer(unsigned int ticks, void *param)
 			ka_dest = ka_dest->next) {
 		LM_DBG("ka_check_timer dest:%.*s\n", ka_dest->uri.len, ka_dest->uri.s);
 
+		if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
+			continue;
+		}
+
 		/* Send ping using TM-Module.
 		 * int request(str* m, str* ruri, str* to, str* from, str* h,
 		 *		str* b, str *oburi,
 		 *		transaction_cb cb, void* cbp); */
-
-		if(ka_dest->counter>ka_counter_del){
-			continue;
-		}
-
 		set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
 				ka_options_callback, (void *)ka_dest);
 
