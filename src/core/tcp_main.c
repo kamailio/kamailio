@@ -2029,7 +2029,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			if (likely(port)){
 				/* try again w/o id */
 				if(tcp_connection_match==TCPCONN_MATCH_STRICT) {
-					c=tcpconn_lookup(dst->id, &ip, port, from, try_local_port, con_lifetime);
+					c=tcpconn_lookup(0, &ip, port, from, try_local_port, con_lifetime);
 				} else {
 					c=tcpconn_get(0, &ip, port, from, con_lifetime);
 				}
