@@ -2424,17 +2424,16 @@ int pv_set_ruri(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_URI_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2479,17 +2478,16 @@ int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_USER_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2518,17 +2516,16 @@ int pv_set_ruri_host(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_HOST_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2572,21 +2569,16 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	if(backup != '\0') {
-		val->rs.s[val->rs.len] = '\0';
-	}
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_PORT_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	if(backup != '\0') {
-		val->rs.s[val->rs.len] = backup;
-	}
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2646,15 +2638,14 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		goto error;
 	}
 
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	if (parse_phostport(val->rs.s, &host.s, &host.len, &port, &proto) < 0)
 	{
 		LM_ERR("invalid socket specification\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 	LM_DBG("trying to set send-socket to [%.*s]\n", val->rs.len, val->rs.s);
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL)
