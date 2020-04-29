@@ -420,23 +420,16 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 	} else if(dp->attrs.socket.s && dp->attrs.socket.len > 0) {
 		/* parse_phostport(...) expects 0-terminated string
 		 * - after socket parameter is either ';' or '\0' */
-		if(dp->attrs.socket.s[dp->attrs.socket.len] != '\0') {
-			c = dp->attrs.socket.s[dp->attrs.socket.len];
-			dp->attrs.socket.s[dp->attrs.socket.len] = '\0';
-		}
+		STR_VTOZ(dp->attrs.socket.s[dp->attrs.socket.len], c);
 		if(parse_phostport(
 				   dp->attrs.socket.s, &host.s, &host.len, &port, &proto)
 				!= 0) {
 			LM_ERR("bad socket <%.*s>\n", dp->attrs.socket.len,
 					dp->attrs.socket.s);
-			if(c != 0) {
-				dp->attrs.socket.s[dp->attrs.socket.len] = c;
-			}
+			STR_ZTOV(dp->attrs.socket.s[dp->attrs.socket.len], c);
 			goto err;
 		}
-		if(c != 0) {
-			dp->attrs.socket.s[dp->attrs.socket.len] = c;
-		}
+		STR_ZTOV(dp->attrs.socket.s[dp->attrs.socket.len], c);
 		dp->sock = grep_sock_info(&host, (unsigned short)port, proto);
 		if(dp->sock == 0) {
 			LM_ERR("non-local socket <%.*s>\n", dp->attrs.socket.len,
