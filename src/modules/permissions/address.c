@@ -54,9 +54,17 @@ struct domain_name_list ***domain_list_table = NULL; /* Ptr to current domain na
 static struct domain_name_list **domain_list_table_1 = NULL; /* Ptr to domain name table 1 */
 static struct domain_name_list **domain_list_table_2 = NULL; /* Ptr to domain name table 2 */
 
-
 static db1_con_t* db_handle = 0;
 static db_func_t perm_dbf;
+
+extern str address_file;
+
+typedef struct address_tables_group {
+	struct addr_list **address_table;
+	struct subnet *subnet_table;
+	struct domain_name_list **domain_table;
+
+} address_tables_group_t;
 
 static inline ip_addr_t *strtoipX(str *ips)
 {
@@ -71,27 +79,84 @@ static inline ip_addr_t *strtoipX(str *ips)
 	}
 }
 
+int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
+		str *ips, unsigned int mask, unsigned int port, str *tagv)
+{
+	ip_addr_t *ipa;
+
+	ipa = strtoipX(ips);
+	if (ipa==NULL) {
+		LM_DBG("Domain name: %.*s\n", ips->len, ips->s);
+		/* return -1; */
+	} else {
+		if(ipa->af == AF_INET6) {
+			if((int)mask<0 || mask>128) {
+				LM_DBG("failure during IP mask check for v6\n");
+				return -1;
+			}
+			if(mask == 0) {
+				mask = 128;
+			}
+		} else {
+			if((int)mask<0 || mask>32) {
+				LM_DBG("failure during IP mask check for v4\n");
+				return -1;
+			}
+			if(mask == 0) {
+				mask = 32;
+			}
+		}
+	}
+
+	if (ipa!=NULL) {
+		if ( (ipa->af==AF_INET6 && mask==128) || (ipa->af==AF_INET && mask==32) ) {
+			if (addr_hash_table_insert(atg->address_table, gid, ipa, port, tagv)
+					== -1) {
+				LM_ERR("hash table problem\n");
+				return -1;
+			}
+			LM_DBG("Tuple <%u, %.*s, %u> inserted into address hash table\n",
+					gid, ips->len, ips->s, port);
+		} else {
+			if (subnet_table_insert(atg->subnet_table, gid, ipa, mask,
+						port, tagv)
+					== -1) {
+				LM_ERR("subnet table problem\n");
+				return -1;
+			}
+			LM_DBG("Tuple <%u, %.*s, %u, %u> inserted into subnet table\n",
+					gid, ips->len, ips->s, port, mask);
+		}
+	} else {
+		if (domain_name_table_insert(atg->domain_table, gid, ips,
+					port, tagv)
+				== -1) {
+			LM_ERR("domain name table problem\n");
+			return -1;
+		}
+		LM_DBG("Tuple <%u, %.*s, %u> inserted into domain name table\n",
+				gid, ips->len, ips->s, port);
+	}
+	return 0;
+}
+
 /*
- * Reload addr table to new hash table and when done, make new hash table
+ * Reload addr table from database to new hash table and when done, make new hash table
  * current one.
  */
-int reload_address_table(void)
+int reload_address_db_table(address_tables_group_t *atg)
 {
 	db_key_t cols[5];
 	db1_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
 
-	struct addr_list **new_hash_table;
-	struct subnet *new_subnet_table;
-	struct domain_name_list **new_domain_name_table;
 	int i;
 	unsigned int gid;
 	unsigned int port;
 	unsigned int mask;
 	str ips;
-	ip_addr_t *ipa;
-	char *tagv;
+	str tagv;
 
 	cols[0] = &grp_col;
 	cols[1] = &ip_addr_col;
@@ -108,34 +173,6 @@ int reload_address_table(void)
 		LM_ERR("failed to query database\n");
 		return -1;
 	}
-
-	/* Choose new hash table and free its old contents */
-	if (*addr_hash_table == addr_hash_table_1) {
-		empty_addr_hash_table(addr_hash_table_2);
-		new_hash_table = addr_hash_table_2;
-	} else {
-		empty_addr_hash_table(addr_hash_table_1);
-		new_hash_table = addr_hash_table_1;
-	}
-
-	/* Choose new subnet table */
-	if (*subnet_table == subnet_table_1) {
-		empty_subnet_table(subnet_table_2);
-		new_subnet_table = subnet_table_2;
-	} else {
-		empty_subnet_table(subnet_table_1);
-		new_subnet_table = subnet_table_1;
-	}
-
-	/* Choose new domain name table */
-	if (*domain_list_table == domain_list_table_1) {
-		empty_domain_name_table(domain_list_table_2);
-		new_domain_name_table = domain_list_table_2;
-	} else {
-		empty_domain_name_table(domain_list_table_1);
-		new_domain_name_table = domain_list_table_1;
-	}
-
 
 	row = RES_ROWS(res);
 
@@ -179,67 +216,16 @@ int reload_address_table(void)
 		ips.len = strlen(ips.s);
 		mask = VAL_UINT(val + 2);
 		port = VAL_UINT(val + 3);
-		tagv = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
-		ipa = strtoipX(&ips);
-		if ( ipa==NULL )
-		{
-			LM_DBG("Domain name: %.*s\n", ips.len, ips.s);
-			//	goto dberror;
-		} else {
-			if(ipa->af == AF_INET6) {
-				if((int)mask<0 || mask>128) {
-					LM_DBG("failure during IP mask check for v6\n");
-					goto dberror;
-				}
-			} else {
-				if((int)mask<0 || mask>32) {
-					LM_DBG("failure during IP mask check for v4\n");
-					goto dberror;
-				}
-			}
+		tagv.s = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
+		if(tagv.s!=NULL) {
+			tagv.len = strlen(tagv.s);
 		}
-
-		if ( ipa ) {
-			if ( (ipa->af==AF_INET6 && mask==128) || (ipa->af==AF_INET && mask==32) ) {
-				if (addr_hash_table_insert(new_hash_table, gid, ipa, port, tagv)
-						== -1) {
-					LM_ERR("hash table problem\n");
-					perm_dbf.free_result(db_handle, res);
-					return -1;
-				}
-				LM_DBG("Tuple <%u, %s, %u> inserted into address hash table\n",
-						gid, ips.s, port);
-			} else {
-				if (subnet_table_insert(new_subnet_table, gid, ipa, mask,
-							port, tagv)
-						== -1) {
-					LM_ERR("subnet table problem\n");
-					perm_dbf.free_result(db_handle, res);
-					return -1;
-				}
-				LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet table\n",
-						gid, ips.s, port, mask);
-			}
-		} else {
-			if (domain_name_table_insert(new_domain_name_table, gid, &ips,
-						port, tagv)
-					== -1) {
-				LM_ERR("domain name table problem\n");
-				perm_dbf.free_result(db_handle, res);
-				return -1;
-			}
-			LM_DBG("Tuple <%u, %s, %u> inserted into domain name table\n",
-					gid, ips.s, port);
+		if(reload_address_insert(atg, gid, &ips, mask, port, &tagv)<0) {
+			goto dberror;
 		}
 	}
 
 	perm_dbf.free_result(db_handle, res);
-
-	*addr_hash_table = new_hash_table;
-	*subnet_table = new_subnet_table;
-	*domain_list_table = new_domain_name_table;
-
-	LM_DBG("address table reloaded successfully.\n");
 
 	return 1;
 
@@ -249,33 +235,215 @@ dberror:
 	return -1;
 }
 
+/**
+ * macros for parsing address file
+ */
+#define PERM_FADDR_SKIPWS(p) do { \
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n')) { \
+			p++; \
+		} \
+	} while(0)
+
+#define PERM_FADDR_PARSESTR(p, vstr) do { \
+		vstr.s = p; \
+		while(*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n' \
+				&& *p != '#') { \
+			p++; \
+		} \
+		vstr.len = p - vstr.s; \
+	} while(0)
+
+#define PERM_FADDR_PARSENUM(p, vnum) do { \
+		vnum = 0; \
+		while(*p >= '0' && *p <= '9') { \
+			vnum = vnum * 10 + (*p - '0'); \
+			p++; \
+		} \
+	} while(0)
+
+/* end-of-data jump at start of comment or end-of-line */
+#define PERM_FADDR_EODJUMP(p, jumplabel) do { \
+		if(*p == '\0' || *p == '#') { \
+			goto jumplabel; \
+		} \
+	} while(0)
+
+/*
+ * Reload addr table from file to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_address_file_table(address_tables_group_t *atg)
+{
+	char line[1024], *p;
+	FILE *f = NULL;
+	int i = 0;
+	int n = 0;
+	unsigned int gid;
+	unsigned int mask;
+	unsigned int port;
+	str ips;
+	str tagv;
+
+	f = fopen(address_file.s, "r");
+	if(f == NULL) {
+		LM_ERR("can't open list file [%s]\n", address_file.s);
+		return -1;
+	}
+
+	p = fgets(line, 1024, f);
+	while(p) {
+		i++;
+		gid = 0;
+		ips.s = NULL;
+		ips.len = 0;
+		mask = 0;
+		port = 0;
+		tagv.s = NULL;
+		tagv.len = 0;
+
+		/* comment line */
+		PERM_FADDR_SKIPWS(p);
+		PERM_FADDR_EODJUMP(p, next_line);
+
+		/* group id */
+		PERM_FADDR_PARSENUM(p, gid);
+
+		PERM_FADDR_SKIPWS(p);
+		PERM_FADDR_EODJUMP(p, error);
+
+		/* address - ip/domain */
+		PERM_FADDR_PARSESTR(p, ips);
+
+		PERM_FADDR_SKIPWS(p);
+		PERM_FADDR_EODJUMP(p, add_record);
+
+		/* mask */
+		PERM_FADDR_PARSENUM(p, mask);
+
+		PERM_FADDR_SKIPWS(p);
+		PERM_FADDR_EODJUMP(p, add_record);
+
+		/* port */
+		PERM_FADDR_PARSENUM(p, port);
+
+		PERM_FADDR_SKIPWS(p);
+		PERM_FADDR_EODJUMP(p, add_record);
+
+		/* tag */
+		PERM_FADDR_PARSESTR(p, tagv);
+
+add_record:
+		if(reload_address_insert(atg, gid, &ips, mask, port, &tagv)<0) {
+			goto error;
+		}
+		n++;
+
+next_line:
+		p = fgets(line, 1024, f);
+	}
+
+	LM_DBG("processed file: %s (%d lines)- added %d records\n", address_file.s,
+			i, n);
+
+	fclose(f);
+	return 1;
+
+error:
+	if(f != NULL) {
+		fclose(f);
+	}
+	return -1;
+
+}
+
+/*
+ * Reload addr table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_address_table(void)
+{
+	int ret = 0;
+	address_tables_group_t atg;
+
+	/* Choose new hash table and free its old contents */
+	if (*addr_hash_table == addr_hash_table_1) {
+		empty_addr_hash_table(addr_hash_table_2);
+		atg.address_table = addr_hash_table_2;
+	} else {
+		empty_addr_hash_table(addr_hash_table_1);
+		atg.address_table = addr_hash_table_1;
+	}
+
+	/* Choose new subnet table */
+	if (*subnet_table == subnet_table_1) {
+		empty_subnet_table(subnet_table_2);
+		atg.subnet_table = subnet_table_2;
+	} else {
+		empty_subnet_table(subnet_table_1);
+		atg.subnet_table = subnet_table_1;
+	}
+
+	/* Choose new domain name table */
+	if (*domain_list_table == domain_list_table_1) {
+		empty_domain_name_table(domain_list_table_2);
+		atg.domain_table = domain_list_table_2;
+	} else {
+		empty_domain_name_table(domain_list_table_1);
+		atg.domain_table = domain_list_table_1;
+	}
+
+	if(address_file.s==NULL) {
+		ret = reload_address_db_table(&atg);
+	} else {
+		ret = reload_address_file_table(&atg);
+	}
+	if(ret!=1) {
+		return ret;
+	}
+
+	*addr_hash_table = atg.address_table;
+	*subnet_table = atg.subnet_table;
+	*domain_list_table = atg.domain_table;
+
+	LM_DBG("address table reloaded successfully.\n");
+
+
+	return ret;
+}
+
 /*
  * Wrapper to reload addr table from mi or rpc
  * we need to open the db_handle
  */
 int reload_address_table_cmd(void)
 {
-	if(!db_url.s) {
-		LM_ERR("db_url not set\n");
-		return -1;
-	}
-
-	if (!db_handle) {
-		db_handle = perm_dbf.init(&db_url);
-		if (!db_handle) {
-			LM_ERR("unable to connect database\n");
+	if(address_file.s==NULL) {
+		if(!db_url.s) {
+			LM_ERR("db_url not set\n");
 			return -1;
+		}
+
+		if (!db_handle) {
+			db_handle = perm_dbf.init(&db_url);
+			if (!db_handle) {
+				LM_ERR("unable to connect database\n");
+				return -1;
+			}
 		}
 	}
 
 	if (reload_address_table () != 1) {
-		perm_dbf.close(db_handle);
-		db_handle = 0;
+		if(address_file.s==NULL) {
+			perm_dbf.close(db_handle);
+			db_handle = 0;
+		}
 		return -1;
 	}
 
-	perm_dbf.close(db_handle);
-	db_handle = 0;
+	if(address_file.s==NULL) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+	}
 
 	return 1;
 }
@@ -285,36 +453,38 @@ int reload_address_table_cmd(void)
  */
 int init_addresses(void)
 {
-	if (!db_url.s) {
-		LM_INFO("db_url parameter of permissions module not set, "
-				"disabling allow_address\n");
-		return 0;
-	} else {
-		if (db_bind_mod(&db_url, &perm_dbf) < 0) {
-			LM_ERR("load a database support module\n");
-			return -1;
-		}
-
-		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
-			LM_ERR("database module does not implement 'query' function\n");
-			return -1;
-		}
-	}
-
 	addr_hash_table_1 = addr_hash_table_2 = 0;
 	addr_hash_table = 0;
 
-	db_handle = perm_dbf.init(&db_url);
-	if (!db_handle) {
-		LM_ERR("unable to connect database\n");
-		return -1;
-	}
+	if(address_file.s==NULL) {
+		if (!db_url.s) {
+			LM_INFO("db_url parameter of permissions module not set, "
+					"disabling allow_address\n");
+			return 0;
+		} else {
+			if (db_bind_mod(&db_url, &perm_dbf) < 0) {
+				LM_ERR("load a database support module\n");
+				return -1;
+			}
 
-	if(db_check_table_version(&perm_dbf, db_handle, &address_table, TABLE_VERSION) < 0) {
-		DB_TABLE_VERSION_ERROR(address_table);
-		perm_dbf.close(db_handle);
-		db_handle = 0;
-		return -1;
+			if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
+				LM_ERR("database module does not implement 'query' function\n");
+				return -1;
+			}
+		}
+
+		db_handle = perm_dbf.init(&db_url);
+		if (!db_handle) {
+			LM_ERR("unable to connect database\n");
+			return -1;
+		}
+
+		if(db_check_table_version(&perm_dbf, db_handle, &address_table, TABLE_VERSION) < 0) {
+			DB_TABLE_VERSION_ERROR(address_table);
+			perm_dbf.close(db_handle);
+			db_handle = 0;
+			return -1;
+		}
 	}
 
 	addr_hash_table_1 = new_addr_hash_table();
@@ -366,8 +536,10 @@ int init_addresses(void)
 		goto error;
 	}
 
-	perm_dbf.close(db_handle);
-	db_handle = 0;
+	if(address_file.s==NULL) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+	}
 
 	return 0;
 
@@ -410,8 +582,10 @@ error:
 		domain_list_table = 0;
 	}
 
-	perm_dbf.close(db_handle);
-	db_handle = 0;
+	if(address_file.s==NULL) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+	}
 	return -1;
 }
 

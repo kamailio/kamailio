@@ -80,6 +80,8 @@ str ip_addr_col = str_init("ip_addr");     /* Name of ip address column */
 str mask_col = str_init("mask");           /* Name of mask column */
 str port_col = str_init("port");           /* Name of port column */
 
+static str address_file_param = STR_NULL;  /* Path to file with address records */
+str address_file = STR_NULL;			   /* Full path to file with address records */
 
 /*
  * By default we check all branches
@@ -177,6 +179,7 @@ static param_export_t params[] = {
 	{"peer_tag_avp",       PARAM_STR, &tag_avp_param   },
 	{"peer_tag_mode",      INT_PARAM, &peer_tag_mode     },
 	{"address_table",      PARAM_STR, &address_table   },
+	{"address_file",       PARAM_STR, &address_file_param   },
 	{"grp_col",            PARAM_STR, &grp_col         },
 	{"ip_addr_col",        PARAM_STR, &ip_addr_col     },
 	{"mask_col",           PARAM_STR, &mask_col        },
@@ -630,6 +633,14 @@ static int mod_init(void)
 	}
 
 	if(_perm_load_backends&PERM_LOAD_ADDRESSDB) {
+		if(address_file_param.s!=NULL && address_file_param.len>0) {
+			address_file.s = get_pathname(address_file_param.s);
+			if(address_file.s==NULL) {
+				LM_ERR("failed to set full path to address file\n");
+				return -1;
+			}
+			address_file.len = strlen(address_file.s);
+		}
 		if (init_addresses() != 0) {
 			LM_ERR("failed to initialize the allow_address function\n");
 			return -1;
