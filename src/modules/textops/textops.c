@@ -1208,13 +1208,12 @@ static int replace_hdrs_helper(sip_msg_t* msg, regex_t *re, str *val)
 		return -1;
 	}
 
-	bk = lbuf.s[lbuf.len];
-	lbuf.s[lbuf.len] = '\0';
+	STR_VTOZ(lbuf.s[lbuf.len], bk);
 	if (regexec(re, lbuf.s, 1, &pmatch, 0)!=0) {
-		lbuf.s[lbuf.len] = bk;
+		STR_ZTOV(lbuf.s[lbuf.len], bk);
 		return -1;
 	}
-	lbuf.s[lbuf.len] = bk;
+	STR_ZTOV(lbuf.s[lbuf.len], bk);
 
 	off=lbuf.s-msg->buf;
 
@@ -1328,10 +1327,9 @@ static int subst_helper_f(sip_msg_t* msg, struct subst_expr* se)
 	off=begin-msg->buf;
 	ret=-1;
 
-	c = msg->buf[msg->len];
-	msg->buf[msg->len] = '\0';
+	STR_VTOZ(msg->buf[msg->len], c);
 	lst=subst_run(se, begin, msg, &nmatches);
-	msg->buf[msg->len] = c;
+	STR_ZTOV(msg->buf[msg->len], c);
 
 	if (lst==0)
 		goto error; /* not found */
@@ -1490,10 +1488,9 @@ static int subst_body_helper_f(struct sip_msg* msg, struct subst_expr* se)
 	off=begin-msg->buf;
 	ret=-1;
 
-	c = body.s[body.len];
-	body.s[body.len] = '\0';
+	STR_VTOZ(body.s[body.len], c);
 	lst=subst_run(se, begin, msg, &nmatches);
-	body.s[body.len] = c;
+	STR_ZTOV(body.s[body.len], c);
 
 	if (lst==0)
 		goto error; /* not found */
@@ -1731,14 +1728,13 @@ static int remove_hf_re(sip_msg_t* msg, regex_t *re)
 	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0)
 		{
@@ -1792,19 +1788,18 @@ static int remove_hf_exp(sip_msg_t* msg, regex_t *mre, regex_t *sre)
 
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(sre, hf->name.s, 1, &pmatch, 0)==0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
 		if (regexec(mre, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0)
 		{
@@ -1891,14 +1886,13 @@ static int is_present_hf_re_helper(sip_msg_t* msg, regex_t *re)
 	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		return 1;
 	}
 
@@ -4189,10 +4183,9 @@ static int search_hf_helper_f(sip_msg_t* msg, gparam_t *ghp, regex_t* re, char* 
 		if(flags==NULL || *flags!='l')
 		{
 			body = hf->body;
-			c = body.s[body.len];
-			body.s[body.len] = '\0';
+			STR_VTOZ(body.s[body.len], c);
 			ret = regexec((regex_t*) re, body.s, 1, &pmatch, 0);
-			body.s[body.len] = c;
+			STR_ZTOV(body.s[body.len], c);
 			if(ret==0)
 			{
 				/* match */
@@ -4210,10 +4203,9 @@ static int search_hf_helper_f(sip_msg_t* msg, gparam_t *ghp, regex_t* re, char* 
 	{
 		hf = hfl;
 		body = hf->body;
-		c = body.s[body.len];
-		body.s[body.len] = '\0';
+		STR_VTOZ(body.s[body.len], c);
 		ret = regexec((regex_t*) re, body.s, 1, &pmatch, 0);
-		body.s[body.len] = c;
+		STR_ZTOV(body.s[body.len], c);
 		if(ret==0)
 			return 1;
 	}
@@ -4278,15 +4270,14 @@ static int subst_hf_helper_f(sip_msg_t *msg, gparam_t *gp,
 		if(flags==NULL || *flags!='l')
 		{
 			body = hf->body;
-			c = body.s[body.len];
-			body.s[body.len] = '\0';
+			STR_VTOZ(body.s[body.len], c);
 
 			begin=body.s;
 
 			off=begin-msg->buf;
 			if (lst) replace_lst_free(lst);
 			lst=subst_run(se, begin, msg, &nmatches);
-			body.s[body.len] = c;
+			STR_ZTOV(body.s[body.len], c);
 			if(lst==0 && flags!=NULL && *flags=='f')
 				goto error; /* not found */
 			if(lst!=0)
@@ -4327,15 +4318,14 @@ static int subst_hf_helper_f(sip_msg_t *msg, gparam_t *gp,
 	{
 		hf= hfl;
 		body = hf->body;
-		c = body.s[body.len];
-		body.s[body.len] = '\0';
+		STR_VTOZ(body.s[body.len], c);
 
 		begin=body.s;
 
 		off=begin-msg->buf;
 		if (lst) replace_lst_free(lst);
 		lst=subst_run(se, begin, msg, &nmatches);
-		body.s[body.len] = c;
+		STR_ZTOV(body.s[body.len], c);
 		if(lst==0)
 			goto error; /* not found */
 		ret=1;
