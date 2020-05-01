@@ -60,6 +60,7 @@ struct cfg_group_core default_core_cfg = {
 	L_WARN, 	/*!<  print only msg. < L_WARN */
 	LOG_DAEMON,	/*!< log_facility -- see syslog(3) */
 	L_DBG+1,    /*!< memdbg */
+  KSR_STATS_NAMESEP, /*  stats_name_separator */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	0, /*!< dst blacklist is disabled by default */
@@ -185,6 +186,8 @@ cfg_def_t core_cfg_def[] = {
 		"syslog facility, see \"man 3 syslog\""},
 	{"memdbg",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for memory debugging messages"},
+	{"stats_name_separator",	CFG_VAR_STRING,	0, 0, 0, 0,
+		"separator used for building stats names"},
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	{"use_dst_blacklist",	CFG_VAR_INT,	0, 1, use_dst_blacklist_fixup, 0,

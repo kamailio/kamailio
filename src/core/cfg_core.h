@@ -48,6 +48,7 @@ struct cfg_group_core {
 	int	debug;
 	int	log_facility;
 	int memdbg; /*!< log level for memory debugging messages */
+  char *stats_name_separator;
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	int	use_dst_blacklist; /*!< 1 if blacklist is enabled */
