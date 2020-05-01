@@ -41,7 +41,7 @@
 static int     tag_avp_type;
 static int_str tag_avp;
 
-extern int peer_tag_mode;
+extern int perm_peer_tag_mode;
 
 
 extern int _perm_max_subnets;
@@ -321,7 +321,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 					return -1;
 				}
 			}
-			if (!peer_tag_mode)
+			if (!perm_peer_tag_mode)
 				return 1;
 			count++;
 		}

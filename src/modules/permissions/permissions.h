@@ -44,21 +44,21 @@ typedef struct rule_file {
  */
 #define MAX_RULE_FILES 64
 
-extern str db_url;        /* Database URL */
-extern int db_mode;       /* Database usage mode: 0=no cache, 1=cache */
-extern str trusted_table; /* Name of trusted table */
-extern str source_col;    /* Name of source address column */
-extern str proto_col;     /* Name of protocol column */
-extern str from_col;      /* Name of from pattern column */
-extern str ruri_col;      /* Name of RURI pattern column */
-extern str tag_col;       /* Name of tag column */
-extern str priority_col;  /* Name of priority column */
-extern str address_table; /* Name of address table */
-extern str grp_col;       /* Name of address group column */
-extern str ip_addr_col;   /* Name of ip address column */
-extern str mask_col;      /* Name of mask column */
-extern str port_col;      /* Name of port column */
-extern int peer_tag_mode; /* Matching mode */
+extern str perm_db_url;        /* Database URL */
+extern int perm_db_mode;       /* Database usage mode: 0=no cache, 1=cache */
+extern str perm_trusted_table; /* Name of trusted table */
+extern str perm_source_col;    /* Name of source address column */
+extern str perm_proto_col;     /* Name of protocol column */
+extern str perm_from_col;      /* Name of from pattern column */
+extern str perm_ruri_col;      /* Name of RURI pattern column */
+extern str perm_tag_col;       /* Name of tag column */
+extern str perm_priority_col;  /* Name of priority column */
+extern str perm_address_table; /* Name of address table */
+extern str perm_grp_col;       /* Name of address group column */
+extern str perm_ip_addr_col;   /* Name of ip address column */
+extern str perm_mask_col;      /* Name of mask column */
+extern str perm_port_col;      /* Name of port column */
+extern int perm_peer_tag_mode; /* Matching mode */
 
 /* backends to be loaded */
 #define PERM_LOAD_ADDRESSDB	(1<<0)
@@ -75,7 +75,7 @@ typedef struct int_or_pvar {
 #define DISABLE_CACHE 0
 #define ENABLE_CACHE 1
 
-extern char *allow_suffix;
+extern char *perm_allow_suffix;
 int allow_test(char *file, char *uri, char *contact);
 
 #endif

@@ -27,15 +27,15 @@
 
 
 /* Pointer to current address hash table pointer */
-extern struct addr_list ***addr_hash_table;
+extern struct addr_list ***perm_addr_table;
 
 
 /* Pointer to current subnet table */
-extern struct subnet **subnet_table;
+extern struct subnet **perm_subnet_table;
 
 
 /* Pointer to current domain name table */
-extern struct domain_name_list ***domain_list_table;
+extern struct domain_name_list ***perm_domain_table;
 
 /*
  * Initialize data structures

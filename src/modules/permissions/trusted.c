@@ -38,12 +38,12 @@
 
 #define TABLE_VERSION 6
 
-struct trusted_list ***hash_table = 0;    /* Pointer to current hash table pointer */
-struct trusted_list **hash_table_1 = 0;   /* Pointer to hash table 1 */
-struct trusted_list **hash_table_2 = 0;   /* Pointer to hash table 2 */
+struct trusted_list ***perm_trust_table = 0;    /* Pointer to current hash table pointer */
+struct trusted_list **perm_trust_table_1 = 0;   /* Pointer to hash table 1 */
+struct trusted_list **perm_trust_table_2 = 0;   /* Pointer to hash table 2 */
 
 
-static db1_con_t* db_handle = 0;
+static db1_con_t* perm_db_handle = 0;
 static db_func_t perm_dbf;
 
 
@@ -65,38 +65,38 @@ int reload_trusted_table(void)
 
 	char *pattern, *ruri_pattern, *tag;
 
-	if (hash_table == 0) {
+	if (perm_trust_table == 0) {
 		LM_ERR("in-memory hash table not initialized\n");
 		return -1;
 	}
 
-	if (db_handle == 0) {
+	if (perm_db_handle == 0) {
 		LM_ERR("no connection to database\n");
 		return -1;
 	}
 
-	cols[0] = &source_col;
-	cols[1] = &proto_col;
-	cols[2] = &from_col;
-	cols[3] = &ruri_col;
-	cols[4] = &tag_col;
-	cols[5] = &priority_col;
+	cols[0] = &perm_source_col;
+	cols[1] = &perm_proto_col;
+	cols[2] = &perm_from_col;
+	cols[3] = &perm_ruri_col;
+	cols[4] = &perm_tag_col;
+	cols[5] = &perm_priority_col;
 
-	if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
+	if (perm_dbf.use_table(perm_db_handle, &perm_trusted_table) < 0) {
 		LM_ERR("failed to use trusted table\n");
 		return -1;
 	}
 
-	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 6, 0, &res) < 0) {
+	if (perm_dbf.query(perm_db_handle, NULL, 0, NULL, cols, 0, 6, 0, &res) < 0) {
 		LM_ERR("failed to query database\n");
 		return -1;
 	}
 
 	/* Choose new hash table and free its old contents */
-	if (*hash_table == hash_table_1) {
-		new_hash_table = hash_table_2;
+	if (*perm_trust_table == perm_trust_table_1) {
+		new_hash_table = perm_trust_table_2;
 	} else {
-		new_hash_table = hash_table_1;
+		new_hash_table = perm_trust_table_1;
 	}
 	empty_hash_table(new_hash_table);
 
@@ -143,7 +143,7 @@ int reload_trusted_table(void)
 						(char *)VAL_STRING(val + 1),
 						pattern, ruri_pattern, tag, priority) == -1) {
 				LM_ERR("hash table problem\n");
-				perm_dbf.free_result(db_handle, res);
+				perm_dbf.free_result(perm_db_handle, res);
 				empty_hash_table(new_hash_table);
 				return -1;
 			}
@@ -152,16 +152,16 @@ int reload_trusted_table(void)
 					pattern, ruri_pattern, tag);
 		} else {
 			LM_ERR("database problem\n");
-			perm_dbf.free_result(db_handle, res);
+			perm_dbf.free_result(perm_db_handle, res);
 			empty_hash_table(new_hash_table);
 			return -1;
 		}
 	}
 
-	perm_dbf.free_result(db_handle, res);
+	perm_dbf.free_result(perm_db_handle, res);
 
-	old_hash_table = *hash_table;
-	*hash_table = new_hash_table;
+	old_hash_table = *perm_trust_table;
+	*perm_trust_table = new_hash_table;
 	empty_hash_table(old_hash_table);
 
 	LM_DBG("trusted table reloaded successfully.\n");
@@ -176,12 +176,12 @@ int reload_trusted_table(void)
 int init_trusted(void)
 {
 	/* Check if hash table needs to be loaded from trusted table */
-	if (!db_url.s) {
+	if (!perm_db_url.s) {
 		LM_INFO("db_url parameter of permissions module not set, "
 				"disabling allow_trusted\n");
 		return 0;
 	} else {
-		if (db_bind_mod(&db_url, &perm_dbf) < 0) {
+		if (db_bind_mod(&perm_db_url, &perm_dbf) < 0) {
 			LM_ERR("load a database support module\n");
 			return -1;
 		}
@@ -192,60 +192,61 @@ int init_trusted(void)
 		}
 	}
 
-	hash_table_1 = hash_table_2 = 0;
-	hash_table = 0;
+	perm_trust_table_1 = perm_trust_table_2 = 0;
+	perm_trust_table = 0;
 
-	if (db_mode == ENABLE_CACHE) {
-		db_handle = perm_dbf.init(&db_url);
-		if (!db_handle) {
+	if (perm_db_mode == ENABLE_CACHE) {
+		perm_db_handle = perm_dbf.init(&perm_db_url);
+		if (!perm_db_handle) {
 			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 
-		if(db_check_table_version(&perm_dbf, db_handle, &trusted_table, TABLE_VERSION) < 0) {
-			DB_TABLE_VERSION_ERROR(trusted_table);
-			perm_dbf.close(db_handle);
-			db_handle = 0;
+		if(db_check_table_version(&perm_dbf, perm_db_handle, &perm_trusted_table,
+					TABLE_VERSION) < 0) {
+			DB_TABLE_VERSION_ERROR(perm_trusted_table);
+			perm_dbf.close(perm_db_handle);
+			perm_db_handle = 0;
 			return -1;
 		}
 
-		hash_table_1 = new_hash_table();
-		if (!hash_table_1) return -1;
+		perm_trust_table_1 = new_hash_table();
+		if (!perm_trust_table_1) return -1;
 
-		hash_table_2  = new_hash_table();
-		if (!hash_table_2) goto error;
+		perm_trust_table_2  = new_hash_table();
+		if (!perm_trust_table_2) goto error;
 
-		hash_table = (struct trusted_list ***)shm_malloc
+		perm_trust_table = (struct trusted_list ***)shm_malloc
 			(sizeof(struct trusted_list **));
-		if (!hash_table) goto error;
+		if (!perm_trust_table) goto error;
 
-		*hash_table = hash_table_1;
+		*perm_trust_table = perm_trust_table_1;
 
 		if (reload_trusted_table() == -1) {
 			LM_CRIT("reload of trusted table failed\n");
 			goto error;
 		}
 
-		perm_dbf.close(db_handle);
-		db_handle = 0;
+		perm_dbf.close(perm_db_handle);
+		perm_db_handle = 0;
 	}
 	return 0;
 
 error:
-	if (hash_table_1) {
-		free_hash_table(hash_table_1);
-		hash_table_1 = 0;
+	if (perm_trust_table_1) {
+		free_hash_table(perm_trust_table_1);
+		perm_trust_table_1 = 0;
 	}
-	if (hash_table_2) {
-		free_hash_table(hash_table_2);
-		hash_table_2 = 0;
+	if (perm_trust_table_2) {
+		free_hash_table(perm_trust_table_2);
+		perm_trust_table_2 = 0;
 	}
-	if (hash_table) {
-		shm_free(hash_table);
-		hash_table = 0;
+	if (perm_trust_table) {
+		shm_free(perm_trust_table);
+		perm_trust_table = 0;
 	}
-	perm_dbf.close(db_handle);
-	db_handle = 0;
+	perm_dbf.close(perm_db_handle);
+	perm_db_handle = 0;
 	return -1;
 }
 
@@ -255,26 +256,26 @@ error:
  */
 int init_child_trusted(int rank)
 {
-	if (db_mode == ENABLE_CACHE)
+	if (perm_db_mode == ENABLE_CACHE)
 		return 0;
 
 	if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
 		return 0;
 
-	if (!db_url.s) {
+	if (!perm_db_url.s) {
 		return 0;
 	}
 
-	db_handle = perm_dbf.init(&db_url);
-	if (!db_handle) {
+	perm_db_handle = perm_dbf.init(&perm_db_url);
+	if (!perm_db_handle) {
 		LM_ERR("unable to connect database\n");
 		return -1;
 	}
 
-	if (db_check_table_version(&perm_dbf, db_handle, &trusted_table,
+	if (db_check_table_version(&perm_dbf, perm_db_handle, &perm_trusted_table,
 				TABLE_VERSION) < 0) {
-		DB_TABLE_VERSION_ERROR(trusted_table);
-		perm_dbf.close(db_handle);
+		DB_TABLE_VERSION_ERROR(perm_trusted_table);
+		perm_dbf.close(perm_db_handle);
 		return -1;
 	}
 
@@ -287,9 +288,9 @@ int init_child_trusted(int rank)
  */
 void clean_trusted(void)
 {
-	if (hash_table_1) free_hash_table(hash_table_1);
-	if (hash_table_2) free_hash_table(hash_table_2);
-	if (hash_table) shm_free(hash_table);
+	if (perm_trust_table_1) free_hash_table(perm_trust_table_1);
+	if (perm_trust_table_2) free_hash_table(perm_trust_table_2);
+	if (perm_trust_table) shm_free(perm_trust_table);
 }
 
 
@@ -435,7 +436,7 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r, char* uri)
 					return -1;
 				}
 			}
-			if (!peer_tag_mode)
+			if (!perm_peer_tag_mode)
 				return 1;
 			count++;
 		}
@@ -459,21 +460,21 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto, char *from_uri)
 	db_val_t vals[1];
 	db_key_t cols[4];
 
-	if (db_mode == DISABLE_CACHE) {
-		db_key_t order = &priority_col;
+	if (perm_db_mode == DISABLE_CACHE) {
+		db_key_t order = &perm_priority_col;
 
-		if (db_handle == 0) {
+		if (perm_db_handle == 0) {
 			LM_ERR("no connection to database\n");
 			return -1;
 		}
 
-		keys[0] = &source_col;
-		cols[0] = &proto_col;
-		cols[1] = &from_col;
-		cols[2] = &ruri_col;
-		cols[3] = &tag_col;
+		keys[0] = &perm_source_col;
+		cols[0] = &perm_proto_col;
+		cols[1] = &perm_from_col;
+		cols[2] = &perm_ruri_col;
+		cols[3] = &perm_tag_col;
 
-		if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
+		if (perm_dbf.use_table(perm_db_handle, &perm_trusted_table) < 0) {
 			LM_ERR("failed to use trusted table\n");
 			return -1;
 		}
@@ -482,22 +483,22 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto, char *from_uri)
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = src_ip;
 
-		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 4, order,
+		if (perm_dbf.query(perm_db_handle, keys, 0, vals, cols, 1, 4, order,
 					&res) < 0){
 			LM_ERR("failed to query database\n");
 			return -1;
 		}
 
 		if (RES_ROW_N(res) == 0) {
-			perm_dbf.free_result(db_handle, res);
+			perm_dbf.free_result(perm_db_handle, res);
 			return -1;
 		}
 
 		result = match_res(msg, proto, res, from_uri);
-		perm_dbf.free_result(db_handle, res);
+		perm_dbf.free_result(perm_db_handle, res);
 		return result;
 	} else {
-		return match_hash_table(*hash_table, msg, src_ip, proto, from_uri);
+		return match_hash_table(*perm_trust_table, msg, src_ip, proto, from_uri);
 	}
 }
 
@@ -637,26 +638,26 @@ int allow_trusted_3(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp,
 
 int reload_trusted_table_cmd(void)
 {
-	if(!db_url.s) {
+	if(!perm_db_url.s) {
 		LM_ERR("db_url not set\n");
 		return -1;
 	}
 
-	if (!db_handle) {
-		db_handle = perm_dbf.init(&db_url);
-		if (!db_handle) {
+	if (!perm_db_handle) {
+		perm_db_handle = perm_dbf.init(&perm_db_url);
+		if (!perm_db_handle) {
 			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 	}
 	if (reload_trusted_table () != 1) {
-		perm_dbf.close(db_handle);
-		db_handle = 0;
+		perm_dbf.close(perm_db_handle);
+		perm_db_handle = 0;
 		return -1;
 	}
 
-	perm_dbf.close(db_handle);
-	db_handle = 0;
+	perm_dbf.close(perm_db_handle);
+	perm_db_handle = 0;
 
 	return 1;
 }

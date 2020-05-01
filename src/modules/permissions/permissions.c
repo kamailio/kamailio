@@ -46,47 +46,47 @@
 
 MODULE_VERSION
 
-static rule_file_t allow[MAX_RULE_FILES]; /* Parsed allow files */
-static rule_file_t deny[MAX_RULE_FILES];  /* Parsed deny files */
-static int rules_num = 0;  /* Number of parsed allow/deny files */
+static rule_file_t perm_allow[MAX_RULE_FILES]; /* Parsed allow files */
+static rule_file_t perm_deny[MAX_RULE_FILES];  /* Parsed deny files */
+static int perm_rules_num = 0;  /* Number of parsed allow/deny files */
 
 
 /* Module parameter variables */
-static char* default_allow_file = DEFAULT_ALLOW_FILE;
-static char* default_deny_file = DEFAULT_DENY_FILE;
-char* allow_suffix = ".allow";
-static char* deny_suffix = ".deny";
+static char* perm_default_allow_file = DEFAULT_ALLOW_FILE;
+static char* perm_default_deny_file = DEFAULT_DENY_FILE;
+char* perm_allow_suffix = ".allow";
+static char* perm_deny_suffix = ".deny";
 
 
 /* for allow_trusted and allow_address function */
-str db_url = {NULL, 0};                    /* Don't connect to the database by default */
+str perm_db_url = {NULL, 0};                    /* Don't connect to the database by default */
 
 /* for allow_trusted function */
-int db_mode = DISABLE_CACHE;               /* Database usage mode: 0=no cache, 1=cache */
-str trusted_table = str_init("trusted");   /* Name of trusted table */
-str source_col = str_init("src_ip");       /* Name of source address column */
-str proto_col = str_init("proto");         /* Name of protocol column */
-str from_col = str_init("from_pattern");   /* Name of from pattern column */
-str ruri_col = str_init("ruri_pattern");   /* Name of RURI pattern column */
-str tag_col = str_init("tag");             /* Name of tag column */
-str priority_col = str_init("priority");   /* Name of priority column */
-str tag_avp_param = {NULL, 0};             /* Peer tag AVP spec */
-int peer_tag_mode = 0;                     /* Add tags form all mathcing peers to avp */
+int perm_db_mode = DISABLE_CACHE;               /* Database usage mode: 0=no cache, 1=cache */
+str perm_trusted_table = str_init("trusted");   /* Name of trusted table */
+str perm_source_col = str_init("src_ip");       /* Name of source address column */
+str perm_proto_col = str_init("proto");         /* Name of protocol column */
+str perm_from_col = str_init("from_pattern");   /* Name of from pattern column */
+str perm_ruri_col = str_init("ruri_pattern");   /* Name of RURI pattern column */
+str perm_tag_col = str_init("tag");             /* Name of tag column */
+str perm_priority_col = str_init("priority");   /* Name of priority column */
+str perm_tag_avp_param = {NULL, 0};             /* Peer tag AVP spec */
+int perm_peer_tag_mode = 0;                     /* Add tags form all mathcing peers to avp */
 
 /* for allow_address function */
-str address_table = str_init("address");   /* Name of address table */
-str grp_col = str_init("grp");             /* Name of address group column */
-str ip_addr_col = str_init("ip_addr");     /* Name of ip address column */
-str mask_col = str_init("mask");           /* Name of mask column */
-str port_col = str_init("port");           /* Name of port column */
+str perm_address_table = str_init("address");   /* Name of address table */
+str perm_grp_col = str_init("grp");             /* Name of address group column */
+str perm_ip_addr_col = str_init("ip_addr");     /* Name of ip address column */
+str perm_mask_col = str_init("mask");           /* Name of mask column */
+str perm_port_col = str_init("port");           /* Name of port column */
 
-static str address_file_param = STR_NULL;  /* Path to file with address records */
-str address_file = STR_NULL;			   /* Full path to file with address records */
+static str perm_address_file_param = STR_NULL;  /* Path to file with address records */
+str perm_address_file = STR_NULL;			   /* Full path to file with address records */
 
 /*
  * By default we check all branches
  */
-static int check_all_branches = 1;
+static int perm_check_all_branches = 1;
 
 
 int _perm_max_subnets = 512;
@@ -162,30 +162,30 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"default_allow_file", PARAM_STRING, &default_allow_file},
-	{"default_deny_file",  PARAM_STRING, &default_deny_file },
-	{"check_all_branches", INT_PARAM, &check_all_branches},
-	{"allow_suffix",       PARAM_STRING, &allow_suffix      },
-	{"deny_suffix",        PARAM_STRING, &deny_suffix       },
-	{"db_url",             PARAM_STR, &db_url          },
-	{"db_mode",            INT_PARAM, &db_mode           },
-	{"trusted_table",      PARAM_STR, &trusted_table   },
-	{"source_col",         PARAM_STR, &source_col      },
-	{"proto_col",          PARAM_STR, &proto_col       },
-	{"from_col",           PARAM_STR, &from_col        },
-	{"ruri_col",           PARAM_STR, &ruri_col        },
-	{"tag_col",            PARAM_STR, &tag_col         },
-	{"priority_col",       PARAM_STR, &priority_col    },
-	{"peer_tag_avp",       PARAM_STR, &tag_avp_param   },
-	{"peer_tag_mode",      INT_PARAM, &peer_tag_mode     },
-	{"address_table",      PARAM_STR, &address_table   },
-	{"address_file",       PARAM_STR, &address_file_param   },
-	{"grp_col",            PARAM_STR, &grp_col         },
-	{"ip_addr_col",        PARAM_STR, &ip_addr_col     },
-	{"mask_col",           PARAM_STR, &mask_col        },
-	{"port_col",           PARAM_STR, &port_col        },
-	{"max_subnets",        PARAM_INT, &_perm_max_subnets },
-	{"load_backends",      PARAM_INT, &_perm_load_backends },
+	{"default_allow_file", PARAM_STRING, &perm_default_allow_file},
+	{"default_deny_file",  PARAM_STRING, &perm_default_deny_file },
+	{"check_all_branches", INT_PARAM, &perm_check_all_branches   },
+	{"allow_suffix",       PARAM_STRING, &perm_allow_suffix      },
+	{"deny_suffix",        PARAM_STRING, &perm_deny_suffix       },
+	{"db_url",             PARAM_STR, &perm_db_url          },
+	{"db_mode",            INT_PARAM, &perm_db_mode         },
+	{"trusted_table",      PARAM_STR, &perm_trusted_table   },
+	{"source_col",         PARAM_STR, &perm_source_col      },
+	{"proto_col",          PARAM_STR, &perm_proto_col       },
+	{"from_col",           PARAM_STR, &perm_from_col        },
+	{"ruri_col",           PARAM_STR, &perm_ruri_col        },
+	{"tag_col",            PARAM_STR, &perm_tag_col         },
+	{"priority_col",       PARAM_STR, &perm_priority_col    },
+	{"peer_tag_avp",       PARAM_STR, &perm_tag_avp_param   },
+	{"peer_tag_mode",      INT_PARAM, &perm_peer_tag_mode   },
+	{"address_table",      PARAM_STR, &perm_address_table   },
+	{"address_file",       PARAM_STR, &perm_address_file_param   },
+	{"grp_col",            PARAM_STR, &perm_grp_col         },
+	{"ip_addr_col",        PARAM_STR, &perm_ip_addr_col     },
+	{"mask_col",           PARAM_STR, &perm_mask_col        },
+	{"port_col",           PARAM_STR, &perm_port_col        },
+	{"max_subnets",        PARAM_INT, &_perm_max_subnets    },
+	{"load_backends",      PARAM_INT, &_perm_load_backends  },
 	{0, 0, 0}
 };
 
@@ -264,7 +264,7 @@ static int find_index(rule_file_t* array, char* pathname)
 {
 	int i;
 
-	for(i = 0; i < rules_num; i++) {
+	for(i = 0; i < perm_rules_num; i++) {
 		if (!strcmp(pathname, array[i].filename)) return i;
 	}
 
@@ -332,7 +332,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 	int br_idx;
 
 	/* turn off control, allow any routing */
-	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+	if ((!perm_allow[idx].rules) && (!perm_deny[idx].rules)) {
 		LM_DBG("no rules => allow any routing\n");
 		return 1;
 	}
@@ -383,19 +383,19 @@ static int check_routing(struct sip_msg* msg, int idx)
 
 	LM_DBG("looking for From: %s Request-URI: %s\n", from_str, ruri_str);
 	/* rule exists in allow file */
-	if (search_rule(allow[idx].rules, from_str, ruri_str)) {
-		if (check_all_branches) goto check_branches;
+	if (search_rule(perm_allow[idx].rules, from_str, ruri_str)) {
+		if (perm_check_all_branches) goto check_branches;
 		LM_DBG("allow rule found => routing is allowed\n");
 		return 1;
 	}
 
 	/* rule exists in deny file */
-	if (search_rule(deny[idx].rules, from_str, ruri_str)) {
+	if (search_rule(perm_deny[idx].rules, from_str, ruri_str)) {
 		LM_DBG("deny rule found => routing is denied\n");
 		return -1;
 	}
 
-	if (!check_all_branches) {
+	if (!perm_check_all_branches) {
 		LM_DBG("neither allow nor deny rule found => routing is allowed\n");
 		return 1;
 	}
@@ -410,11 +410,11 @@ check_branches:
 		}
 		LM_DBG("looking for From: %s Branch: %s\n", from_str, uri_str);
 
-		if (search_rule(allow[idx].rules, from_str, uri_str)) {
+		if (search_rule(perm_allow[idx].rules, from_str, uri_str)) {
 			continue;
 		}
 
-		if (search_rule(deny[idx].rules, from_str, uri_str)) {
+		if (search_rule(perm_deny[idx].rules, from_str, uri_str)) {
 			LM_DBG("deny rule found for one of branches => routing"
 					"is denied\n");
 			return -1;
@@ -436,9 +436,9 @@ static int load_fixup(void** param, int param_no)
 	rule_file_t* table;
 
 	if (param_no == 1) {
-		table = allow;
+		table = perm_allow;
 	} else {
-		table = deny;
+		table = perm_deny;
 	}
 
 	pathname = get_pathname(*param);
@@ -446,15 +446,15 @@ static int load_fixup(void** param, int param_no)
 
 	if (idx == -1) {
 		/* Not opened yet, open the file and parse it */
-		table[rules_num].filename = pathname;
-		table[rules_num].rules = parse_config_file(pathname);
-		if (table[rules_num].rules) {
+		table[perm_rules_num].filename = pathname;
+		table[perm_rules_num].rules = parse_config_file(pathname);
+		if (table[perm_rules_num].rules) {
 			LM_DBG("file (%s) parsed\n", pathname);
 		} else {
 			LM_INFO("file (%s) not parsed properly => empty rule set\n", pathname);
 		}
-		*param = (void*)(long)rules_num;
-		if (param_no == 2) rules_num++;
+		*param = (void*)(long)perm_rules_num;
+		if (param_no == 2) perm_rules_num++;
 	} else {
 		/* File already parsed, re-use it */
 		LM_DBG("file (%s) already loaded, re-using\n", pathname);
@@ -478,10 +478,10 @@ static int single_fixup(void** param, int param_no)
 	if (param_no != 1) return 0;
 
 	param_len = strlen((char*)*param);
-	if (strlen(allow_suffix) > strlen(deny_suffix)) {
-		suffix_len = strlen(allow_suffix);
+	if (strlen(perm_allow_suffix) > strlen(perm_deny_suffix)) {
+		suffix_len = strlen(perm_allow_suffix);
 	} else {
-		suffix_len = strlen(deny_suffix);
+		suffix_len = strlen(perm_deny_suffix);
 	}
 
 	buffer = pkg_malloc(param_len + suffix_len + 1);
@@ -491,11 +491,11 @@ static int single_fixup(void** param, int param_no)
 	}
 
 	strcpy(buffer, (char*)*param);
-	strcat(buffer, allow_suffix);
+	strcat(buffer, perm_allow_suffix);
 	tmp = buffer;
 	ret = load_fixup(&tmp, 1);
 
-	strcpy(buffer + param_len, deny_suffix);
+	strcpy(buffer + param_len, perm_deny_suffix);
 	tmp = buffer;
 	ret |= load_fixup(&tmp, 2);
 
@@ -520,10 +520,10 @@ static int double_fixup(void** param, int param_no)
 
 	if (param_no == 1) { /* basename */
 		param_len = strlen((char*)*param);
-		if (strlen(allow_suffix) > strlen(deny_suffix)) {
-			suffix_len = strlen(allow_suffix);
+		if (strlen(perm_allow_suffix) > strlen(perm_deny_suffix)) {
+			suffix_len = strlen(perm_allow_suffix);
 		} else {
-			suffix_len = strlen(deny_suffix);
+			suffix_len = strlen(perm_deny_suffix);
 		}
 
 		buffer = pkg_malloc(param_len + suffix_len + 1);
@@ -533,11 +533,11 @@ static int double_fixup(void** param, int param_no)
 		}
 
 		strcpy(buffer, (char*)*param);
-		strcat(buffer, allow_suffix);
+		strcat(buffer, perm_allow_suffix);
 		tmp = buffer;
 		ret = load_fixup(&tmp, 1);
 
-		strcpy(buffer + param_len, deny_suffix);
+		strcpy(buffer + param_len, perm_deny_suffix);
 		tmp = buffer;
 		ret |= load_fixup(&tmp, 2);
 
@@ -593,34 +593,34 @@ static int mod_init(void)
 	}
 
 	if(_perm_load_backends&PERM_LOAD_ALLOWFILE) {
-		allow[0].filename = get_pathname(default_allow_file);
-		allow[0].rules = parse_config_file(allow[0].filename);
-		if (allow[0].rules) {
-			LM_DBG("default allow file (%s) parsed\n", allow[0].filename);
+		perm_allow[0].filename = get_pathname(perm_default_allow_file);
+		perm_allow[0].rules = parse_config_file(perm_allow[0].filename);
+		if (perm_allow[0].rules) {
+			LM_DBG("default allow file (%s) parsed\n", perm_allow[0].filename);
 		} else {
 			LM_INFO("default allow file (%s) not found => empty rule set\n",
-					allow[0].filename);
+					perm_allow[0].filename);
 		}
 	} else {
-		allow[0].filename = NULL;
-		allow[0].rules = NULL;
+		perm_allow[0].filename = NULL;
+		perm_allow[0].rules = NULL;
 	}
 
 	if(_perm_load_backends&PERM_LOAD_DENYFILE) {
-		deny[0].filename = get_pathname(default_deny_file);
-		deny[0].rules = parse_config_file(deny[0].filename);
-		if (deny[0].rules) {
-			LM_DBG("default deny file (%s) parsed\n", deny[0].filename);
+		perm_deny[0].filename = get_pathname(perm_default_deny_file);
+		perm_deny[0].rules = parse_config_file(perm_deny[0].filename);
+		if (perm_deny[0].rules) {
+			LM_DBG("default deny file (%s) parsed\n", perm_deny[0].filename);
 		} else {
 			LM_INFO("default deny file (%s) not found => empty rule set\n",
-					deny[0].filename);
+					perm_deny[0].filename);
 		}
 	} else {
-		deny[0].filename = NULL;
-		deny[0].rules = NULL;
+		perm_deny[0].filename = NULL;
+		perm_deny[0].rules = NULL;
 	}
 
-	if (init_tag_avp(&tag_avp_param) < 0) {
+	if (init_tag_avp(&perm_tag_avp_param) < 0) {
 		LM_ERR("failed to process peer_tag_avp AVP param\n");
 		return -1;
 	}
@@ -633,13 +633,13 @@ static int mod_init(void)
 	}
 
 	if(_perm_load_backends&PERM_LOAD_ADDRESSDB) {
-		if(address_file_param.s!=NULL && address_file_param.len>0) {
-			address_file.s = get_pathname(address_file_param.s);
-			if(address_file.s==NULL) {
+		if(perm_address_file_param.s!=NULL && perm_address_file_param.len>0) {
+			perm_address_file.s = get_pathname(perm_address_file_param.s);
+			if(perm_address_file.s==NULL) {
 				LM_ERR("failed to set full path to address file\n");
 				return -1;
 			}
-			address_file.len = strlen(address_file.s);
+			perm_address_file.len = strlen(perm_address_file.s);
 		}
 		if (init_addresses() != 0) {
 			LM_ERR("failed to initialize the allow_address function\n");
@@ -647,12 +647,12 @@ static int mod_init(void)
 		}
 	}
 
-	if ((db_mode != DISABLE_CACHE) && (db_mode != ENABLE_CACHE)) {
-		LM_ERR("invalid db_mode value: %d\n", db_mode);
+	if ((perm_db_mode != DISABLE_CACHE) && (perm_db_mode != ENABLE_CACHE)) {
+		LM_ERR("invalid db_mode value: %d\n", perm_db_mode);
 		return -1;
 	}
 
-	rules_num = 1;
+	perm_rules_num = 1;
 	return 0;
 }
 
@@ -674,12 +674,12 @@ static void mod_exit(void)
 {
 	int i;
 
-	for(i = 0; i < rules_num; i++) {
-		if(allow[i].rules) free_rule(allow[i].rules);
-		if(allow[i].filename) pkg_free(allow[i].filename);
+	for(i = 0; i < perm_rules_num; i++) {
+		if(perm_allow[i].rules) free_rule(perm_allow[i].rules);
+		if(perm_allow[i].filename) pkg_free(perm_allow[i].filename);
 
-		if(deny[i].rules) free_rule(deny[i].rules);
-		if(deny[i].filename) pkg_free(deny[i].filename);
+		if(perm_deny[i].rules) free_rule(perm_deny[i].rules);
+		if(perm_deny[i].filename) pkg_free(perm_deny[i].filename);
 	}
 
 	clean_trusted();
@@ -728,7 +728,7 @@ static int check_register(struct sip_msg* msg, int idx)
 	contact_t* c;
 
 	/* turn off control, allow any routing */
-	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+	if ((!perm_allow[idx].rules) && (!perm_deny[idx].rules)) {
 		LM_DBG("no rules => allow any registration\n");
 		return 1;
 	}
@@ -793,12 +793,12 @@ static int check_register(struct sip_msg* msg, int idx)
 		LM_DBG("looking for To: %s Contact: %s\n", to_str, contact_str);
 
 		/* rule exists in allow file */
-		if (search_rule(allow[idx].rules, to_str, contact_str)) {
-			if (check_all_branches) goto skip_deny;
+		if (search_rule(perm_allow[idx].rules, to_str, contact_str)) {
+			if (perm_check_all_branches) goto skip_deny;
 		}
 
 		/* rule exists in deny file */
-		if (search_rule(deny[idx].rules, to_str, contact_str)) {
+		if (search_rule(perm_deny[idx].rules, to_str, contact_str)) {
 			LM_DBG("deny rule found => Register denied\n");
 			return -1;
 		}
@@ -845,7 +845,7 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	sp = (pv_spec_t *)_sp;
 
 	/* turn off control, allow any uri */
-	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+	if ((!perm_allow[idx].rules) && (!perm_deny[idx].rules)) {
 		LM_DBG("no rules => allow any uri\n");
 		return 1;
 	}
@@ -896,13 +896,13 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 
 	LM_DBG("looking for From: %s URI: %s\n", from_str, uri_str);
 	/* rule exists in allow file */
-	if (search_rule(allow[idx].rules, from_str, uri_str)) {
+	if (search_rule(perm_allow[idx].rules, from_str, uri_str)) {
 		LM_DBG("allow rule found => URI is allowed\n");
 		return 1;
 	}
 
 	/* rule exists in deny file */
-	if (search_rule(deny[idx].rules, from_str, uri_str)) {
+	if (search_rule(perm_deny[idx].rules, from_str, uri_str)) {
 		LM_DBG("deny rule found => URI is denied\n");
 		return -1;
 	}
@@ -927,7 +927,7 @@ int allow_test(char *file, char *uri, char *contact)
 		return 0;
 	}
 
-	idx = find_index(allow, pathname);
+	idx = find_index(perm_allow, pathname);
 	if (idx == -1) {
 		LM_ERR("File <%s> has not been loaded\n", pathname);
 		pkg_free(pathname);
@@ -937,7 +937,7 @@ int allow_test(char *file, char *uri, char *contact)
 	pkg_free(pathname);
 
 	/* turn off control, allow any routing */
-	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+	if ((!perm_allow[idx].rules) && (!perm_deny[idx].rules)) {
 		LM_DBG("No rules => Allowed\n");
 		return 1;
 	}
@@ -945,13 +945,13 @@ int allow_test(char *file, char *uri, char *contact)
 	LM_DBG("Looking for URI: %s, Contact: %s\n", uri, contact);
 
 	/* rule exists in allow file */
-	if (search_rule(allow[idx].rules, uri, contact)) {
+	if (search_rule(perm_allow[idx].rules, uri, contact)) {
 		LM_DBG("Allow rule found => Allowed\n");
 		return 1;
 	}
 
 	/* rule exists in deny file */
-	if (search_rule(deny[idx].rules, uri, contact)) {
+	if (search_rule(perm_deny[idx].rules, uri, contact)) {
 		LM_DBG("Deny rule found => Denied\n");
 		return 0;
 	}
