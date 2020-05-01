@@ -352,11 +352,10 @@ static int keep_hf_helper(sip_msg_t *msg, regex_t *re)
 				return -1;
 			}
 		} else {
-			c = hf->name.s[hf->name.len];
-			hf->name.s[hf->name.len] = '\0';
+			STR_VTOZ(hf->name.s[hf->name.len], c);
 			if(regexec(re, hf->name.s, 1, &pmatch, 0) != 0) {
 				/* no match => remove */
-				hf->name.s[hf->name.len] = c;
+				STR_ZTOV(hf->name.s[hf->name.len], c);
 				l = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
 				if(l == 0) {
 					LM_ERR("cannot remove header [%.*s]\n", hf->name.len,
@@ -364,7 +363,7 @@ static int keep_hf_helper(sip_msg_t *msg, regex_t *re)
 					return -1;
 				}
 			} else {
-				hf->name.s[hf->name.len] = c;
+				STR_ZTOV(hf->name.s[hf->name.len], c);
 			}
 		}
 	}
