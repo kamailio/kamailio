@@ -46,7 +46,7 @@ int bind_usrloc(usrloc_api_t* api)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (init_flag==0) {
+	if (ul_init_flag==0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
 				" before being initialized\n");
 		return -1;
@@ -76,9 +76,9 @@ int bind_usrloc(usrloc_api_t* api)
 	api->refresh_keepalive        = ul_refresh_keepalive;
 	api->set_max_partition        = ul_set_max_partition;
 
-	api->use_domain = use_domain;
-	api->db_mode    = db_mode;
-	api->nat_flag   = nat_bflag;
+	api->use_domain = ul_use_domain;
+	api->db_mode    = ul_db_mode;
+	api->nat_flag   = ul_nat_bflag;
 
 	return 0;
 }

@@ -41,28 +41,28 @@
 
 #define UL_TABLE_VERSION 9
 
-extern str ruid_col;
-extern str user_col;
-extern str domain_col;
-extern str contact_col;
-extern str expires_col;
-extern str q_col;
-extern str callid_col;
-extern str cseq_col;
-extern str flags_col;
-extern str cflags_col;
-extern str user_agent_col;
-extern str received_col;
-extern str path_col;
-extern str sock_col;
-extern str methods_col;
-extern str instance_col;
-extern str reg_id_col;
-extern str srv_id_col;
-extern str con_id_col;
-extern str keepalive_col;
-extern str partition_col;
-extern str last_mod_col;
+extern str ul_ruid_col;
+extern str ul_user_col;
+extern str ul_domain_col;
+extern str ul_contact_col;
+extern str ul_expires_col;
+extern str ul_q_col;
+extern str ul_callid_col;
+extern str ul_cseq_col;
+extern str ul_flags_col;
+extern str ul_cflags_col;
+extern str ul_user_agent_col;
+extern str ul_received_col;
+extern str ul_path_col;
+extern str ul_sock_col;
+extern str ul_methods_col;
+extern str ul_instance_col;
+extern str ul_reg_id_col;
+extern str ul_srv_id_col;
+extern str ul_con_id_col;
+extern str ul_keepalive_col;
+extern str ul_partition_col;
+extern str ul_last_mod_col;
 
 extern str ulattrs_user_col;
 extern str ulattrs_domain_col;
@@ -73,27 +73,27 @@ extern str ulattrs_avalue_col;
 extern str ulattrs_last_mod_col;
 
 
-extern str db_url;
-extern int timer_interval;
-extern int db_mode;
-extern int db_insert_update;
-extern int use_domain;
-extern int desc_time_order;
-extern int cseq_delay;
+extern str ul_db_url;
+extern int ul_timer_interval;
+extern int ul_db_mode;
+extern int ul_db_insert_update;
+extern int ul_use_domain;
+extern int ul_desc_time_order;
+extern int ul_cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
 extern int ul_db_update_as_insert;
 extern int ul_db_check_update;
 extern int ul_keepalive_timeout;
-extern int handle_lost_tcp;
-extern int close_expired_tcp;
-extern int skip_remote_socket;
+extern int ul_handle_lost_tcp;
+extern int ul_close_expired_tcp;
+extern int ul_skip_remote_socket;
 
 
 /*! nat branch flag */
-extern unsigned int nat_bflag;
+extern unsigned int ul_nat_bflag;
 /*! flag to protect against wrong initialization */
-extern unsigned int init_flag;
+extern unsigned int ul_init_flag;
 
 extern str ul_xavp_contact_name;
 

@@ -359,7 +359,7 @@ static inline int rpc_fix_aor(str *aor)
 	char *p;
 
 	p = memchr( aor->s, '@', aor->len);
-	if (use_domain) {
+	if (ul_use_domain) {
 		if (p==NULL)
 			return -1;
 	} else {
@@ -421,7 +421,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	get_act_time();
+	ul_get_act_time();
 	rpl_tree = 0;
 
 	if (rpc->add(ctx, "{", &th) < 0)
@@ -443,7 +443,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 
 	/* We have contacts, list them */
 	for( con=rec->contacts ; con ; con=con->next) {
-		if (VALID_CONTACT( con, act_time)) {
+		if (VALID_CONTACT(con, ul_act_time)) {
 			rpl_tree++;
 			if (rpc_dump_contact(rpc, ctx, ih, con) == -1) {
 				release_urecord(rec);
@@ -700,14 +700,14 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		}
 	}
 
-	get_act_time();
+	ul_get_act_time();
 
 	ci.callid = &rpc_ul_cid;
 	ci.user_agent = &rpc_ul_ua;
 	ci.cseq = RPC_UL_CSEQ;
 	/* 0 expires means permanent contact */
 	if (ci.expires!=0)
-		ci.expires += act_time;
+		ci.expires += ul_act_time;
 
 	if (c) {
 		if (update_ucontact( r, c, &ci) < 0)
@@ -747,7 +747,7 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}
@@ -757,7 +757,7 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if (user_col.len + domain_col.len + table.len + 32 > QUERY_LEN) {
+	if (ul_user_col.len + ul_domain_col.len + table.len + 32 > QUERY_LEN) {
 		rpc->fault(ctx, 500, "Too long database query");
 		return;
 	}
@@ -774,8 +774,8 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 	memset(query, 0, QUERY_LEN);
 	query_str.len = snprintf(query, QUERY_LEN,
 			"SELECT COUNT(DISTINCT %.*s, %.*s) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
-			user_col.len, user_col.s,
-			domain_col.len, domain_col.s,
+			ul_user_col.len, ul_user_col.s,
+			ul_domain_col.len, ul_domain_col.s,
 			table.len, table.s);
 	query_str.s = query;
 	if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0 || res==NULL) {
@@ -803,7 +803,7 @@ static void ul_rpc_db_contacts(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}
@@ -857,7 +857,7 @@ static void ul_rpc_db_expired_contacts(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}

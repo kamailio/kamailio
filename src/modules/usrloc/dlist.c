@@ -75,10 +75,10 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 			*_d = ptr;
 			return 0;
 		}
-		
+
 		ptr = ptr->next;
 	}
-	
+
 	return 1;
 }
 
@@ -106,22 +106,22 @@ int ul_ka_db_records(int partidx)
 	int i = 0;
 
 	/* select fields */
-	keys2[0] = &received_col;
-	keys2[1] = &contact_col;
-	keys2[2] = &sock_col;
-	keys2[3] = &cflags_col;
-	keys2[4] = &path_col;
-	keys2[5] = &ruid_col;
-	keys2[6] = &user_col;
-	keys2[7] = &domain_col;
+	keys2[0] = &ul_received_col;
+	keys2[1] = &ul_contact_col;
+	keys2[2] = &ul_sock_col;
+	keys2[3] = &ul_cflags_col;
+	keys2[4] = &ul_path_col;
+	keys2[5] = &ul_ruid_col;
+	keys2[6] = &ul_user_col;
+	keys2[7] = &ul_domain_col;
 
 	/* where fields */
-	keys1[0] = &expires_col;
+	keys1[0] = &ul_expires_col;
 	ops1[0] = OP_GT;
 	vals1[0].nul = 0;
 	UL_DB_EXPIRES_SET(&vals1[0], time(0));
 
-	keys1[1] = &partition_col;
+	keys1[1] = &ul_partition_col;
 	ops1[1] = OP_EQ;
 	vals1[1].type = DB1_INT;
 	vals1[1].nul = 0;
@@ -131,7 +131,7 @@ int ul_ka_db_records(int partidx)
 		vals1[1].val.int_val = 0;
 
 	if (ul_ka_mode & ULKA_NAT) {
-		keys1[n[0]] = &keepalive_col;
+		keys1[n[0]] = &ul_keepalive_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -139,7 +139,7 @@ int ul_ka_db_records(int partidx)
 		n[0]++;
 	}
 	if(ul_ka_filter&GAU_OPT_SERVER_ID) {
-		keys1[n[0]] = &srv_id_col;
+		keys1[n[0]] = &ul_srv_id_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -310,20 +310,20 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	aorhash = 0;
 
 	/* select fields */
-	keys2[0] = &received_col;
-	keys2[1] = &contact_col;
-	keys2[2] = &sock_col;
-	keys2[3] = &cflags_col;
-	keys2[4] = &path_col;
-	keys2[5] = &ruid_col;
+	keys2[0] = &ul_received_col;
+	keys2[1] = &ul_contact_col;
+	keys2[2] = &ul_sock_col;
+	keys2[3] = &ul_cflags_col;
+	keys2[4] = &ul_path_col;
+	keys2[5] = &ul_ruid_col;
 
 	/* where fields */
-	keys1[0] = &expires_col;
+	keys1[0] = &ul_expires_col;
 	ops1[0] = OP_GT;
 	vals1[0].nul = 0;
 	UL_DB_EXPIRES_SET(&vals1[0], time(0));
 
-	keys1[1] = &partition_col;
+	keys1[1] = &ul_partition_col;
 	ops1[1] = OP_EQ;
 	vals1[1].type = DB1_INT;
 	vals1[1].nul = 0;
@@ -332,8 +332,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	else
 		vals1[1].val.int_val = 0;
 
-	if (flags & nat_bflag) {
-		keys1[n[0]] = &keepalive_col;
+	if (flags & ul_nat_bflag) {
+		keys1[n[0]] = &ul_keepalive_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -341,7 +341,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 		n[0]++;
 	}
 	if(options&GAU_OPT_SERVER_ID) {
-		keys1[n[0]] = &srv_id_col;
+		keys1[n[0]] = &ul_srv_id_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -668,7 +668,7 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max,
 								int options)
 {
-	if (db_mode==DB_ONLY)
+	if (ul_db_mode==DB_ONLY)
 		return get_all_db_ucontacts( buf, len, flags, part_idx, part_max, options);
 	else
 		return get_all_mem_ucontacts( buf, len, flags, part_idx, part_max, options);
@@ -826,7 +826,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 		*_d = d->d;
 		return 0;
 	}
-	
+
 	if (new_dlist(&s, &d) < 0) {
 		LM_ERR("failed to create new domain\n");
 		return -1;
@@ -835,8 +835,8 @@ int register_udomain(const char* _n, udomain_t** _d)
 	/* Test tables from database if we are gonna
 	 * to use database
 	 */
-	if (db_mode != NO_DB) {
-		con = ul_dbf.init(&db_url);
+	if (ul_db_mode != NO_DB) {
+		con = ul_dbf.init(&ul_db_url);
 		if (!con) {
 			LM_ERR("failed to open database connection\n");
 			goto dberror;
@@ -859,7 +859,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 
 	d->next = _ksr_ul_root;
 	_ksr_ul_root = d;
-	
+
 	*_d = d->d;
 	return 0;
 
@@ -898,7 +898,7 @@ void free_all_udomains(void)
 void print_all_udomains(FILE* _f)
 {
 	dlist_t* ptr;
-	
+
 	ptr = _ksr_ul_root;
 
 	fprintf(_f, "===Domain list===\n");
@@ -919,12 +919,12 @@ unsigned long get_number_of_users(void)
 	long numberOfUsers = 0;
 
 	dlist_t* current_dlist;
-	
+
 	current_dlist = _ksr_ul_root;
 
 	while (current_dlist)
 	{
-		numberOfUsers += get_stat_val(current_dlist->d->users); 
+		numberOfUsers += get_stat_val(current_dlist->d->users);
 		current_dlist  = current_dlist->next;
 	}
 
@@ -941,9 +941,9 @@ int synchronize_all_udomains(int istart, int istep)
 	int res = 0;
 	dlist_t* ptr;
 
-	get_act_time(); /* Get and save actual time */
+	ul_get_act_time(); /* Get and save actual time */
 
-	if (db_mode==DB_ONLY) {
+	if (ul_db_mode==DB_ONLY) {
 		if(istart == 0) {
 			for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 				res |= db_timer_udomain(ptr->d);
@@ -968,7 +968,7 @@ int ul_db_clean_udomains(void)
 	int res = 0;
 	dlist_t* ptr;
 
-	get_act_time(); /* Get and save actual time */
+	ul_get_act_time(); /* Get and save actual time */
 
 	for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
 		res |= db_timer_udomain(ptr->d);

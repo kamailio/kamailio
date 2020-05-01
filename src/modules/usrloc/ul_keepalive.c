@@ -75,7 +75,7 @@ extern int ul_ka_filter;
 extern int ul_ka_loglevel;
 extern pv_elem_t *ul_ka_logfmt;
 
-extern unsigned int nat_bflag;
+extern unsigned int ul_nat_bflag;
 
 static unsigned int _ul_ka_counter = 0;
 
@@ -124,10 +124,10 @@ int ul_ka_urecord(urecord_t *ur)
 		}
 		if(ul_ka_mode & ULKA_NAT) {
 			/* keepalive for natted contacts only */
-			if (nat_bflag == 0) {
+			if (ul_nat_bflag == 0) {
 				continue;
 			}
-			if ((uc->cflags & nat_bflag) != nat_bflag) {
+			if ((uc->cflags & ul_nat_bflag) != ul_nat_bflag) {
 				continue;
 			}
 		}
@@ -228,7 +228,7 @@ int ul_ka_urecord(urecord_t *ur)
  *
  */
 static int ul_ka_send(str *kamsg, dest_info_t *kadst)
-{ 
+{
 	if (kadst->proto == PROTO_UDP) {
 		return udp_send(kadst, kamsg->s, kamsg->len);
 	}
