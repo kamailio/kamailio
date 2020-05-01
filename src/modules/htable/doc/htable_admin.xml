@@ -341,11 +341,17 @@ $ kamcmd htable.dump htable
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>size</emphasis> - number specifying the size of hash
-			table.  Larger value means less collisions. The number of entries
-			(aka slots or buckets) in the table is 2^size. The possible range
+			<emphasis>size</emphasis> - number to control how many slots
+			(buckets) to create for the hash table. Larger value means more
+			slots with higher probability for less collisions. The actual number
+			slots (or buckets) created for the table is 2^size. The possible range
 			for this value is from 2 to 31, smaller or larger values will be
-			increased to 3 (8 slots) or decreased to 14 (16384 slots).
+			increased to 3 (8 slots) or decreased to 14 (16384 slots). Note
+			that each slot can store more than one item, when there are
+			collisions of hash ids computed for keys. The items in the same
+			slot are stored in a linked list. In other words, the size is not
+			setting a limit of how many items can be stored in a hash table, as
+			long as there is enough free shared memory, new items can be added.
 		</para>
 		</listitem>
 		<listitem>
