@@ -608,23 +608,25 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 	struct socket_info** list;
 	struct addr_info* ai;
 	unsigned short c_proto;
-	
+
 	hname=*host;
-	if ((hname.len>2)&&((*hname.s)=='[')&&(hname.s[hname.len-1]==']')){
-		/* ipv6 reference, skip [] */
+	if ((hname.len>2) && ((*hname.s)=='[') && (hname.s[hname.len-1]==']')) {
+		/* ipv6 - skip [] */
 		hname.s++;
 		hname.len-=2;
 	}
 
 	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 retry:
-	do{
+	do {
 		/* get the proper sock_list */
 		list=get_sock_info_list(c_proto);
-	
-		if (list==0) /* disabled or unknown protocol */
+
+		if (list==0) {
+			/* disabled or unknown protocol */
 			continue;
-		for (si=*list; si; si=si->next){
+		}
+		for (si=*list; si; si=si->next) {
 			LM_DBG("checking if host==us: %d==%d && [%.*s] == [%.*s]\n",
 						hname.len,
 						si->name.len,
@@ -638,31 +640,34 @@ retry:
 					continue;
 				}
 			}
-			if (si_hname_cmp(&hname, &si->name, &si->address_str, 
-								&si->address, si->flags)==0)
+			if (si_hname_cmp(&hname, &si->name, &si->address_str,
+								&si->address, si->flags)==0) {
 				goto found;
-			if(si->useinfo.name.s!=NULL)
-			{
+			}
+			if(si->useinfo.name.s!=NULL) {
 				LM_DBG("checking advertise if host==us:"
 						" %d==%d && [%.*s] == [%.*s]\n",
 						hname.len,
 						si->useinfo.name.len,
 						hname.len, hname.s,
 						si->useinfo.name.len, si->useinfo.name.s
-				);
+					);
 				if (si_hname_cmp(&hname, &si->useinfo.name,
 							&si->useinfo.address_str, &si->useinfo.address,
-							si->flags)==0)
+							si->flags)==0) {
 					goto found;
+				}
 			}
 			/* try among the extra addresses */
-			for (ai=si->addr_info_lst; ai; ai=ai->next)
-				if (si_hname_cmp(&hname, &ai->name, &ai->address_str, 
-									&ai->address, ai->flags)==0)
+			for (ai=si->addr_info_lst; ai; ai=ai->next) {
+				if (si_hname_cmp(&hname, &ai->name, &ai->address_str,
+									&ai->address, ai->flags)==0) {
 					goto found;
+				}
+			}
 		}
 
-	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+	} while( (proto==0) && (c_proto=next_proto(c_proto)) );
 
 #ifdef USE_TLS
 	if (unlikely(c_proto == PROTO_WS)) {
@@ -681,8 +686,8 @@ found:
  * if proto==0 (PROTO_NONE) the protocol is ignored
  * returns  0 if not found
  */
-struct socket_info* grep_sock_info_by_port(unsigned short port, 
-											unsigned short proto)
+struct socket_info* grep_sock_info_by_port(unsigned short port,
+		unsigned short proto)
 {
 	struct socket_info* si;
 	struct socket_info** list;
@@ -692,22 +697,24 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 		goto not_found;
 	}
 	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
-	do{
+	do {
 		/* get the proper sock_list */
 		list=get_sock_info_list(c_proto);
-	
+
 		if (list==0) /* disabled or unknown protocol */
 			continue;
-		
+
 		for (si=*list; si; si=si->next){
 			LM_DBG("checking if port %d matches port %d\n", si->port_no, port);
 			if (si->port_no==port) {
 				goto found;
 			}
 		}
-	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+	} while( (proto==0) && (c_proto=next_proto(c_proto)) );
+
 not_found:
 	return 0;
+
 found:
 	return si;
 }

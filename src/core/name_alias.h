@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -35,17 +35,15 @@
 #include "mem/mem.h"
 
 
-
-struct host_alias{
+typedef struct host_alias{
 	str alias;
 	unsigned short port;
 	unsigned short proto;
 	struct host_alias* next;
-};
+} host_alias_t;
 
 
 extern struct host_alias* aliases;
-
 
 
 /** returns 1 if  name is in the alias list; if port=0, port no is ignored
@@ -53,21 +51,25 @@ extern struct host_alias* aliases;
 static inline int grep_aliases(char* name, int len, unsigned short port,
 								unsigned short proto)
 {
-	struct  host_alias* a;
-	
-	if ((len>2)&&((*name)=='[')&&(name[len-1]==']')){
+	struct host_alias* a;
+
+	if ((len>2)&&((*name)=='[')&&(name[len-1]==']')) {
 		/* ipv6 reference, skip [] */
 		name++;
 		len-=2;
 	}
-	for(a=aliases;a;a=a->next)
-		if ((a->alias.len==len) && ((a->port==0) || (port==0) || 
-				(a->port==port)) && ((a->proto==0) || (proto==0) || 
-				(a->proto==proto)) && (strncasecmp(a->alias.s, name, len)==0))
+	for(a=aliases;a;a=a->next) {
+		LM_DBG("matching (%d:%.*s:%d) vs. (%d:%.*s:%d)\n",
+				proto, len, name, port, a->proto, a->alias.len, a->alias.s,
+				a->port);
+		if ((a->alias.len==len) && ((a->port==0) || (port==0) ||
+				(a->port==port)) && ((a->proto==0) || (proto==0) ||
+				(a->proto==proto)) && (strncasecmp(a->alias.s, name, len)==0)) {
 			return 1;
+		}
+	}
 	return 0;
 }
-
 
 
 /** adds an alias to the list (only if it isn't already there)
@@ -75,25 +77,33 @@ static inline int grep_aliases(char* name, int len, unsigned short port,
  * if proto==0, the alias will match all the protocols
  * returns 1 if a new alias was added, 0 if a matching alias was already on
  * the list and  -1 on error */
-static inline int add_alias(char* name, int len, unsigned short port, 
+static inline int add_alias(char* name, int len, unsigned short port,
 								unsigned short proto)
 {
 	struct host_alias* a;
-	
-	if ((port) && (proto)){
+
+	if ((port) && (proto)) {
 		/* don't add if there is already an alias matching it */
-		if (grep_aliases(name,len, port, proto)) return 0;
-	}else{
+		if (grep_aliases(name,len, port, proto)) {
+			return 0;
+		}
+	} else {
 		/* don't add if already in the list with port or proto ==0*/
-		for(a=aliases;a;a=a->next)
-			if ((a->alias.len==len) && (a->port==port) && (a->proto==proto) &&
-					(strncasecmp(a->alias.s, name, len)==0))
+		for(a=aliases;a;a=a->next) {
+			if ((a->alias.len==len) && (a->port==port) && (a->proto==proto)
+					&& (strncasecmp(a->alias.s, name, len)==0)) {
 				return 0;
+			}
+		}
 	}
 	a=(struct host_alias*)pkg_malloc(sizeof(struct host_alias));
-	if(a==0) goto error;
+	if(a==0) {
+		goto error;
+	}
 	a->alias.s=(char*)pkg_malloc(len+1);
-	if (a->alias.s==0) goto error;
+	if (a->alias.s==0) {
+		goto error;
+	}
 	a->alias.len=len;
 	memcpy(a->alias.s, name, len);
 	a->alias.s[len]=0; /* null terminate for easier printing*/
@@ -104,10 +114,10 @@ static inline int add_alias(char* name, int len, unsigned short port,
 	return 1;
 error:
 	PKG_MEM_ERROR;
-	if (a) pkg_free(a);
+	if (a) {
+		pkg_free(a);
+	}
 	return -1;
 }
-
-
 
 #endif

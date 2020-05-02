@@ -406,15 +406,23 @@ int run_check_self_func(str* host, unsigned short port, unsigned short proto)
  */
 int check_self(str* host, unsigned short port, unsigned short proto)
 {
-	if (grep_sock_info(host, port, proto)) goto found;
-	/* try to look into the aliases*/
-	if (grep_aliases(host->s, host->len, port, proto)==0){
-		LM_DBG("host != me\n");
-		return (_check_self_func_list==NULL)?0:run_check_self_func(host,
-														port, proto);
+	int ret = 1;
+	if (grep_sock_info(host, port, proto)) {
+		goto done;
 	}
-found:
-	return 1;
+	/* try to look into the aliases*/
+	if (grep_aliases(host->s, host->len, port, proto)==0) {
+		ret = (_check_self_func_list==NULL)?0:run_check_self_func(host,
+					port, proto);
+	}
+
+done:
+	if(ret==1) {
+		LM_DBG("host (%d:%.*s:%d) == me\n", proto, host->len, host->s, port);
+	} else {
+		LM_DBG("host (%d:%.*s:%d) != me\n", proto, host->len, host->s, port);
+	}
+	return ret;
 }
 
 /** checks if the proto:port is one of the ports we listen on;
@@ -423,11 +431,14 @@ found:
  */
 int check_self_port(unsigned short port, unsigned short proto)
 {
-	if (grep_sock_info_by_port(port, proto))
-		/* as aliases do not contain different ports we can skip them */
+	/* aliases do not contain different ports we can skip them */
+	if (grep_sock_info_by_port(port, proto)) {
+		LM_DBG("proto:port (%d:%d) == me\n", proto, port);
 		return 1;
-	else
+	} else {
+		LM_DBG("proto:port (%d:%d) != me\n", proto, port);
 		return 0;
+	}
 }
 
 
