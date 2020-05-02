@@ -346,6 +346,7 @@ IP_FREE_BIND		ip_free_bind|ipfreebind|ip_nonlocal_bind
 
 PORT	port
 STAT	statistics
+STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
@@ -793,6 +794,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{IP_FREE_BIND}	{ count(); yylval.strval=yytext; return IP_FREE_BIND; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
+<INITIAL>{STATS_NAMESEP}	{ count(); yylval.strval=yytext; return STATS_NAMESEP; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }

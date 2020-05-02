@@ -86,6 +86,7 @@ counter_array_t* _cnts_vals = 0;
 int _cnts_row_len; /* number of elements per row */
 static int cnts_no; /* number of registered counters */
 static int cnts_max_rows; /* set to 0 if not yet fully init */
+char *ksr_stats_namesep = KSR_STATS_NAMESEP;
 
 
 int counters_initialized(void)
