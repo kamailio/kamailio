@@ -917,7 +917,7 @@ assign_stm:
 	| PORT EQUAL error    { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }
-	| STATS_NAMESEP EQUAL STRING { default_core_cfg.stats_name_separator=$3; }
+	| STATS_NAMESEP EQUAL STRING { ksr_stats_namesep=$3; }
 	| STATS_NAMESEP EQUAL error { yyerror("string value expected"); }
 	| SOCKET_WORKERS EQUAL NUMBER { socket_workers=$3; }
 	| SOCKET_WORKERS EQUAL error { yyerror("number expected"); }

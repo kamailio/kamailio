@@ -217,6 +217,8 @@ extern str _ksr_xavp_via_fields;
 
 extern char *_sr_uri_host_extra_chars;
 
+extern char *ksr_stats_namesep;
+
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
 extern unsigned int dns_timer_interval; /* gc timer interval in s */
