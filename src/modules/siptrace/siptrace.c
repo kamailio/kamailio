@@ -2077,6 +2077,24 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 			goto afterdb;
 		}
 
+		if(tmsg.first_line.type==SIP_REQUEST) {
+			if(!IS_SIP(&tmsg)) {
+				LM_DBG("non sip request message\n");
+				free_sip_msg(&tmsg);
+				goto afterdb;
+			}
+		} else if(tmsg.first_line.type==SIP_REPLY) {
+			if(!IS_SIP_REPLY(&tmsg)) {
+				LM_DBG("non sip reply message\n");
+				free_sip_msg(&tmsg);
+				goto afterdb;
+			}
+		} else {
+			LM_DBG("unknown sip message type %d\n", tmsg.first_line.type);
+			free_sip_msg(&tmsg);
+			goto afterdb;
+		}
+
 		if(sip_trace_msg_attrs(&tmsg, &sto) < 0) {
 			free_sip_msg(&tmsg);
 			goto afterdb;
@@ -2176,6 +2194,24 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 
 		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
 			LM_DBG("msg buffer parsing failed!");
+			goto afterdb;
+		}
+
+		if(tmsg.first_line.type==SIP_REQUEST) {
+			if(!IS_SIP(&tmsg)) {
+				LM_DBG("non sip request message\n");
+				free_sip_msg(&tmsg);
+				goto afterdb;
+			}
+		} else if(tmsg.first_line.type==SIP_REPLY) {
+			if(!IS_SIP_REPLY(&tmsg)) {
+				LM_DBG("non sip reply message\n");
+				free_sip_msg(&tmsg);
+				goto afterdb;
+			}
+		} else {
+			LM_DBG("unknown sip message type %d\n", tmsg.first_line.type);
+			free_sip_msg(&tmsg);
 			goto afterdb;
 		}
 
