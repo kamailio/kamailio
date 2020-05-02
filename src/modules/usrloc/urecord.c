@@ -44,7 +44,7 @@
 /*! contact matching mode */
 int ul_matching_mode = CONTACT_ONLY;
 /*! retransmission detection interval in seconds */
-int cseq_delay = 20;
+int ul_cseq_delay = 20;
 
 /*!
  * \brief Create and initialize new record structure
@@ -801,7 +801,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 				return -1;
 			if (_cseq==ptr->cseq) {
 				ul_get_act_time();
-				return (ptr->last_modified+cseq_delay>ul_act_time)?-2:-1;
+				return (ptr->last_modified+ul_cseq_delay>ul_act_time)?-2:-1;
 			}
 		}
 		*_co = ptr;
