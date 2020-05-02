@@ -161,9 +161,12 @@ kamailio_db_grant () # pars: <database name>
 
 	# Users: kamailio is the regular user, kamailioro only for reading
 	sql_query "" "CREATE USER '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
-		GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST';
-		CREATE USER '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';
-		GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST';"
+		GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST';"
+
+	if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+		sql_query "" "CREATE USER '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';
+			GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST';"
+	fi
 
 	if [ $? -ne 0 ] ; then
 		merr "granting privileges to database $1 failed!"
@@ -172,9 +175,11 @@ kamailio_db_grant () # pars: <database name>
 
 	if [ "$DBHOST" != "localhost" ] ; then
 		sql_query "" "CREATE USER '$DBRWUSER'@'localhost' IDENTIFIED BY '$DBRWPW';
-			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'localhost';
-			CREATE USER '$DBROUSER'@'localhost' IDENTIFIED BY '$DBROPW';
-			GRANT SELECT ON $1.* TO '$DBROUSER'@'localhost';"
+			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'localhost';"
+		if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+			sql_query "" "CREATE USER '$DBROUSER'@'localhost' IDENTIFIED BY '$DBROPW';
+				GRANT SELECT ON $1.* TO '$DBROUSER'@'localhost';"
+		fi
 		if [ $? -ne 0 ] ; then
 			merr "granting localhost privileges to database $1 failed!"
 			exit 1
@@ -183,9 +188,11 @@ kamailio_db_grant () # pars: <database name>
 
 	if [ ! -z "$DBACCESSHOST" ] ; then
 		sql_query "" "CREATE USER '$DBRWUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBRWPW';
-			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'$DBACCESSHOST';
-			CREATE USER '$DBROUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBROPW';
-			GRANT SELECT ON $1.* TO '$DBROUSER'@'$DBACCESSHOST';"
+			GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'$DBACCESSHOST';"
+		if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+			sql_query "" "CREATE USER '$DBROUSER'@'$DBACCESSHOST' IDENTIFIED BY '$DBROPW';
+				GRANT SELECT ON $1.* TO '$DBROUSER'@'$DBACCESSHOST';"
+		fi
 		if [ $? -ne 0 ] ; then
 			merr "granting access host privileges to database $1 failed!"
 			exit 1
@@ -203,8 +210,11 @@ kamailio_db_revoke () # pars: <database name>
 	minfo "revoking privileges to database $1 ..."
 
 	# Users: kamailio is the regular user, kamailioro only for reading
-	sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '${DBRWUSER}'@'$DBHOST';
-		REVOKE SELECT ON $1.* FROM '${DBROUSER}'@'$DBHOST';"
+	sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '${DBRWUSER}'@'$DBHOST';"
+
+	if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+		sql_query "" "REVOKE SELECT ON $1.* FROM '${DBROUSER}'@'$DBHOST';"
+	fi
 
 	if [ $? -ne 0 ] ; then
 		merr "revoking privileges to database $1 failed!"
@@ -212,8 +222,10 @@ kamailio_db_revoke () # pars: <database name>
 	fi
 
 	if [ "$DBHOST" != "localhost" ] ; then
-		sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '$DBRWUSER'@'localhost';
-			REVOKE SELECT ON $1.* FROM '$DBROUSER'@'localhost';"
+		sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '$DBRWUSER'@'localhost';"
+		if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+			sql_query "" "REVOKE SELECT ON $1.* FROM '$DBROUSER'@'localhost';"
+		fi
 		if [ $? -ne 0 ] ; then
 			merr "granting localhost privileges to database $1 failed!"
 			exit 1
@@ -221,8 +233,10 @@ kamailio_db_revoke () # pars: <database name>
 	fi
 
 	if [ ! -z "$DBACCESSHOST" ] ; then
-		sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '$DBRWUSER'@'$DBACCESSHOST';
-			REVOKE SELECT ON $1.* FROM '$DBROUSER'@'$DBACCESSHOST';"
+		sql_query "" "REVOKE ALL PRIVILEGES ON $1.* FROM '$DBRWUSER'@'$DBACCESSHOST';"
+		if [ "${DBRWUSER}" != "${DBROUSER}" ] ; then
+			sql_query "" "REVOKE SELECT ON $1.* FROM '$DBROUSER'@'$DBACCESSHOST';"
+		fi
 		if [ $? -ne 0 ] ; then
 			merr "granting access host privileges to database $1 failed!"
 			exit 1
