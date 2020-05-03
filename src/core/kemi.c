@@ -2377,16 +2377,24 @@ static sr_kemi_t _sr_kemi_hdr[] = {
  */
 void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 {
-	if(rmode==SR_KEMI_XVAL_NULL_PRINT) {
-		xval->vtype = SR_KEMIP_STR;
-		xval->v.s = *pv_get_null_str();
-	} else if(rmode==SR_KEMI_XVAL_NULL_EMPTY) {
-		xval->vtype = SR_KEMIP_STR;
-		xval->v.s = *pv_get_empty_str();
-	} else {
-		xval->vtype = SR_KEMIP_NULL;
-		xval->v.s.s = NULL;
-		xval->v.s.len = 0;
+	switch(rmode) {
+		case SR_KEMI_XVAL_NULL_PRINT:
+			xval->vtype = SR_KEMIP_STR;
+			xval->v.s = *pv_get_null_str();
+			return;
+		case SR_KEMI_XVAL_NULL_EMPTY:
+			xval->vtype = SR_KEMIP_STR;
+			xval->v.s = *pv_get_empty_str();
+			return;
+		case SR_KEMI_XVAL_NULL_ZERO:
+			xval->vtype = SR_KEMIP_INT;
+			xval->v.n = 0;
+			return;
+		default:
+			xval->vtype = SR_KEMIP_NULL;
+			xval->v.s.s = NULL;
+			xval->v.s.len = 0;
+			return;
 	}
 }
 
