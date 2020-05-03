@@ -362,7 +362,7 @@ class kamailio:
     # Manage failure routing cases
     # -- equivalent of failure_route[...]{}
     def ksr_failure_manage(self, msg):
-        if self.ksr_route_natmanage()==-255 : return 1;
+        if self.ksr_route_natmanage(msg)==-255 : return 1;
 
         if KSR.tm.t_is_canceled()>0 :
             return 1;
