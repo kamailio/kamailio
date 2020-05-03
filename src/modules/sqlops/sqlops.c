@@ -540,7 +540,8 @@ static sr_kemi_xval_t _ksr_kemi_sqlops_xval = {0};
 /**
  *
  */
-static sr_kemi_xval_t* ki_sqlops_result_get(sip_msg_t *msg, str *resid, int row, int col)
+static sr_kemi_xval_t* ki_sqlops_result_get_mode(sip_msg_t *msg, str *resid,
+		int row, int col, int rmode)
 {
 	sql_result_t *res = NULL;
 
@@ -548,37 +549,67 @@ static sr_kemi_xval_t* ki_sqlops_result_get(sip_msg_t *msg, str *resid, int row,
 
 	if (resid == NULL || resid->s == NULL || resid->len == 0) {
 		LM_ERR("invalid result name\n");
-		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, SR_KEMI_XVAL_NULL_NONE);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
 		return &_ksr_kemi_sqlops_xval;
 	}
 
 	res = sql_get_result(resid);
 	if(res==NULL) {
 		LM_ERR("invalid result container [%.*s]\n", resid->len, resid->s);
-		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, SR_KEMI_XVAL_NULL_NONE);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
 		return &_ksr_kemi_sqlops_xval;
 	}
 
 	if(row >= res->nrows) {
-		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, SR_KEMI_XVAL_NULL_NONE);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
 		return &_ksr_kemi_sqlops_xval;
 	}
 	if(col >= res->ncols) {
-		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, SR_KEMI_XVAL_NULL_NONE);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
 		return &_ksr_kemi_sqlops_xval;
 	}
 	if(res->vals[row][col].flags&PV_VAL_NULL) {
-		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, SR_KEMI_XVAL_NULL_NONE);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
 		return &_ksr_kemi_sqlops_xval;
 	}
 	if(res->vals[row][col].flags&PV_VAL_INT) {
-		_ksr_kemi_sqlops_xval.vtype = SR_KEMIP_STR;
+		_ksr_kemi_sqlops_xval.vtype = SR_KEMIP_INT;
 		_ksr_kemi_sqlops_xval.v.n = res->vals[row][col].value.n;
 		return &_ksr_kemi_sqlops_xval;
 	}
 	_ksr_kemi_sqlops_xval.vtype = SR_KEMIP_STR;
 	_ksr_kemi_sqlops_xval.v.s = res->vals[row][col].value.s;
 	return &_ksr_kemi_sqlops_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_get(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_gete(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_getz(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_ZERO);
 }
 
 /**
@@ -623,6 +654,16 @@ static sr_kemi_t sr_kemi_sqlops_exports[] = {
 	},
 	{ str_init("sqlops"), str_init("sql_result_get"),
 		SR_KEMIP_XVAL, ki_sqlops_result_get,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_gete"),
+		SR_KEMIP_XVAL, ki_sqlops_result_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_getz"),
+		SR_KEMIP_XVAL, ki_sqlops_result_getz,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
