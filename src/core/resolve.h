@@ -122,6 +122,7 @@ struct naptr_rdata {
 	unsigned char services_len;
 	unsigned char regexp_len;
 	unsigned char repl_len; /* not currently used */
+	unsigned char skip_record;
 	
 	char str_table[1]; /* contains all the strings */
 };
