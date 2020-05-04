@@ -356,7 +356,7 @@ class DBText(object):
         # test that the value is string, if not return it as is
         try:
             value.find('a')
-        except:
+        except Exception:
             return value
 
         escaped = value
@@ -377,7 +377,7 @@ class DBText(object):
         # test that the value is string, if not return it as is
         try:
             value.find('a')
-        except:
+        except Exception:
             return value
 
         escaped = value
@@ -988,21 +988,19 @@ class DBText(object):
         if not val and not self.header[col]['null']:
             raise ExecuteError(col + ' cannot be empty or null')
 
-        if (self.header[col]['type'].lower() == 'int' or
-           self.header[col]['type'].lower() == 'double'):
+        hdr_t = self.header[col]['type'].lower()
+        if hdr_t == 'int' or hdr_t == 'double':
             try:
                 if val:
                     val = eval(val)
-            except (NameError, e):
+            except NameError as e:
                 raise ExecuteError('Failed to parse %s in %s '
                                    '(unable to convert to type %s): %s' %
-                                   (col, self.table, self.header[col]['type'],
-                                    e))
-            except (SyntaxError, e):
+                                   (col, self.table, hdr_t, e))
+            except SyntaxError as e:
                 raise ExecuteError('Failed to parse %s in %s '
                                    '(unable to convert to type %s): %s' %
-                                   (col, self.table, self.header[col]['type'],
-                                    e))
+                                   (col, self.table, hdr_t, e))
 
         return val
 
@@ -1083,7 +1081,7 @@ class DBText(object):
             # save a copy of the data before modifying
             self.orig_data = self.data[:]
 
-        except (IOError, e):
+        except IOError as e:
             raise ExecuteError('Unable to open table %s: %s' % (self.table, e))
 
         Debug('Header is: %s' % self.header)
@@ -1230,7 +1228,7 @@ def main(argv):
                     print('Updated %s, rows affected: %d' % (conn.table, row))
                 else:
                     print(row)
-    except (Error, e):
+    except Error as e:
         print(e)
         sys.exit(1)
 
