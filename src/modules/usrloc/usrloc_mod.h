@@ -26,8 +26,8 @@
  *  \ingroup usrloc
  */
 
-#ifndef UL_MOD_H
-#define UL_MOD_H
+#ifndef _USRLOC_MOD_H_
+#define _USRLOC_MOD_H_
 
 
 #include "../../lib/srdb1/db.h"
@@ -129,4 +129,4 @@ extern int ul_expires_type;
 
 #define UL_DB_EXPIRES_GET(r)  ((ul_expires_type==1)?(time_t)VAL_BIGINT(r):VAL_TIME(r))
 
-#endif /* UL_MOD_H */
+#endif /* _USRLOC_MOD_H_ */
