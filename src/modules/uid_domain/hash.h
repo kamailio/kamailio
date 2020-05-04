@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _HASH_H
-#define _HASH_H
+#ifndef _UID_DOMAIN_HASH_H_
+#define _UID_DOMAIN_HASH_H_
 
 #include <stdio.h>
 #include "uid_domain_mod.h"
