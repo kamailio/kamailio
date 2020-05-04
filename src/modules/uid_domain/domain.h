@@ -19,8 +19,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef _DOMAIN_H
-#define _DOMAIN_H
+#ifndef _UID_DOMAIN_H_
+#define _UID_DOMAIN_H_
 
 #include <time.h>
 #include <stdio.h>
