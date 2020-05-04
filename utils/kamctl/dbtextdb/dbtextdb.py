@@ -60,6 +60,10 @@ class DBText(object):
         if not os.path.isdir(location):
             raise ParseError(location + ' is not a directory')
 
+    def __del__(self):
+        if getattr(self, 'fd', False):
+            self.fd.close()
+
     def _ParseOrderBy(self):
         """Parse out the column name to be used for ordering the dataset.
 
@@ -438,6 +442,8 @@ class DBText(object):
         self.command = ''     # which command are we executing
         self.strings = []     # list of string literals parsed from the query
         self.parens = []      # list of parentheses parsed from the query
+        if getattr(self, 'fd', False):
+            self.fd.close()
 
     def ParseQuery(self, query):
         """External wrapper for the query parsing routines.
