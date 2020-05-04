@@ -3634,11 +3634,11 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 
 	method = get_cseq(msg)->method_id;
 
-	if (!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
-			|| method==METHOD_BYE || method==METHOD_UPDATE))
+	if (!(method & (METHOD_INVITE|METHOD_ACK|METHOD_CANCEL|METHOD_BYE
+					|METHOD_UPDATE|METHOD_PRACK)))
 		return -1;
 
-	if (method==METHOD_CANCEL || method==METHOD_BYE)
+	if (method & (METHOD_CANCEL|METHOD_BYE))
 		return rtpengine_delete(msg, flags);
 
 	if (msg->msg_flags & FL_SDP_BODY)
@@ -3647,7 +3647,7 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 		nosdp = parse_sdp(msg);
 
 	if (msg->first_line.type == SIP_REQUEST) {
-		if(method==METHOD_ACK && nosdp==0)
+		if((method & (METHOD_ACK|METHOD_PRACK)) && nosdp==0)
 			return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
 		if(method==METHOD_UPDATE && nosdp==0)
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
@@ -3715,7 +3715,8 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 
 	if (msg->first_line.type == SIP_REQUEST)
-		if (msg->first_line.u.request.method_value != METHOD_ACK)
+		if (!(msg->first_line.u.request.method_value
+					& (METHOD_ACK | METHOD_PRACK)))
 			return -1;
 
 	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_answer_wrap, str1, 2, OP_ANSWER);
