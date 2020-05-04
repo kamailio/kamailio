@@ -146,11 +146,11 @@ class DBText(object):
         # check if there is a function modifier on the columns
         if self.tokens[0] == 'COUNT':
             self.count = True
-        if col_end == 1:
-            raise ParseError('COUNT must be followed by column name[s]')
-        if not self.tokens[1].startswith(self._paren_placeholder):
-            raise ParseError('COUNT must be followed by ()')
-        cols_str = self._ReplaceParens(self.tokens[1])
+            if col_end == 1:
+                raise ParseError('COUNT must be followed by column name[s]')
+            if not self.tokens[1].startswith(self._paren_placeholder):
+                raise ParseError('COUNT must be followed by ()')
+            cols_str = self._ReplaceParens(self.tokens[1])
 
         cols = cols_str.split(',')
         for col in cols:
@@ -300,7 +300,7 @@ class DBText(object):
             if self.tokens.pop(0) != 'SET':
                 raise ParseError('UPDATE command must be followed by SET')
 
-        self.targets = self._ParsePairs(' '.join(self.tokens), ',')
+            self.targets = self._ParsePairs(' '.join(self.tokens), ',')
 
         # INSERT
         if self.command == 'INSERT':
@@ -570,19 +570,19 @@ class DBText(object):
                         string = '%s%s' % (string, c)
                         continue  # wait for matching delim
 
-                started -= 1
-                if not started:
-                    values.append(string)
-                    new_args = '%s %s' % (new_args, '%s%d' % (placeholder,
-                                                              my_id))
-                    my_id += 1
-                    string = ''
+                    started -= 1
+                    if not started:
+                        values.append(string)
+                        new_args = '%s %s' % (new_args, '%s%d' % (placeholder,
+                                                                  my_id))
+                        my_id += 1
+                        string = ''
 
-        else:
-            if not started:
-                new_args = '%s%s' % (new_args, c)
             else:
-                string = '%s%s' % (string, c)
+                if not started:
+                    new_args = '%s%s' % (new_args, c)
+                else:
+                    string = '%s%s' % (string, c)
 
         if started:
             if mode == 'parens':
@@ -714,8 +714,8 @@ class DBText(object):
             elif self.header[col]['auto']:
                 new_row[col] = self._GetNextAuto(col)
 
-        else:
-            raise ExecuteError(col + ' cannot be empty or null')
+            else:
+                raise ExecuteError(col + ' cannot be empty or null')
 
         self.data.append(new_row)
         return [1]
