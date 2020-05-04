@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _DOMAIN_API_H
-#define _DOMAIN_API_H
+#ifndef _UID_DOMAIN_API_H_
+#define _UID_DOMAIN_API_H_
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
