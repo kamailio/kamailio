@@ -1,17 +1,18 @@
 /*
+ * pv_headers
  *
- * PV Headers
+ * Copyright (C)
+ * 2020 Victor Seva <vseva@sipwise.com>
+ * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
- * Copyright (C) 2018 Kirill Solomko <ksolomko@sipwise.com>
+ * This file is part of Kamailio, a free SIP server.
  *
- * This file is part of SIP Router, a free SIP server.
- *
- * SIP Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP Router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,15 +23,75 @@
  *
  */
 
-#include <stdlib.h>
-
-#include "../../core/hashes.h"
-#include "../../core/route_struct.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../core/strutils.h"
 
 #include "pvh_xavp.h"
 #include "pvh_str.h"
 #include "pvh_hash.h"
+#include "pvh_hdr.h"
+
+static str reply_counter = str_init("reply_counter");
+
+sr_xavp_t *pvh_xavp_get_child_with_ival(
+		str *rname, str *cname, sr_xavp_t *start)
+{
+	sr_xavp_t *ravp = NULL;
+	sr_xavp_t *vavp = NULL;
+
+	ravp = xavp_get(rname, start);
+	if(ravp == NULL || ravp->val.type != SR_XTYPE_XAVP)
+		return NULL;
+
+	vavp = xavp_get(cname, ravp->val.v.xavp);
+	if(vavp == NULL || vavp->val.type != SR_XTYPE_INT)
+		return NULL;
+
+	return vavp;
+}
+
+/**
+ * We keep a $xavp(xavp_helper_xname=>reply_counter) with the number of replies
+ * so we will use $xavp(xavp_name.r.<id>) on reply_route
+ */
+int pvh_reply_append(sr_xavp_t **start)
+{
+	sr_xavp_t *xavp = NULL;
+	sr_xval_t xval;
+
+	xavp = pvh_xavp_get_child_with_ival(
+			&xavp_helper_xname, &reply_counter, start ? *start : NULL);
+	if(xavp) {
+		xavp->val.v.i++;
+		LM_DBG("reply message: %d\n", xavp->val.v.i);
+		return xavp->val.v.i;
+	}
+
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = 0;
+
+	xavp = xavp_get(&xavp_helper_xname, start ? *start : NULL);
+	if(xavp == NULL) {
+		if(xavp_add_xavp_value(&xavp_helper_xname, &reply_counter, &xval,
+				   start ? start : NULL)
+				== NULL) {
+			LM_ERR("can't create xavp:%.*s\n", xavp_helper_xname.len,
+					xavp_helper_xname.s);
+			return -1;
+		}
+		LM_DBG("xavp_name:%.*s created\n", xavp_helper_xname.len,
+				xavp_helper_xname.s);
+	} else {
+		if(xavp_add_value(&reply_counter, &xval, &xavp->val.v.xavp) == NULL) {
+			LM_ERR("can't add reply_counter value\n");
+			return -1;
+		}
+		LM_DBG("added value\n");
+	}
+	LM_DBG("reply message: %d\n", xval.v.i);
+	return xval.v.i;
+}
 
 sr_xavp_t *pvh_xavp_new_value(str *name, sr_xval_t *val)
 {
@@ -109,10 +170,8 @@ int pvh_xavp_set_value(str *name, sr_xval_t *val, int idx, sr_xavp_t **start)
 sr_xavp_t *pvh_xavp_get(struct sip_msg *msg, str *xname)
 {
 	sr_xavp_t *xavp = NULL;
-	str br_xname = STR_NULL;
-
-	if(pvh_str_new(&br_xname, header_name_size) < 0)
-		return NULL;
+	char t[header_name_size];
+	str br_xname = {t, header_name_size};
 
 	pvh_get_branch_xname(msg, xname, &br_xname);
 	if((xavp = xavp_get(&br_xname, NULL)) == NULL) {
@@ -120,8 +179,10 @@ sr_xavp_t *pvh_xavp_get(struct sip_msg *msg, str *xname)
 			goto end;
 		if((xavp = xavp_get(xname, NULL)) == NULL)
 			goto end;
-		/*	LM_DBG("br_xname:%.*s is not there, using xname:%.*s\n", br_xname.len,
-			br_xname.s, xname->len, xname->s); */
+		if(xname != &xavp_parsed_xname) {
+			LM_DBG("br_xname:%.*s is not there, using xname:%.*s\n",
+					br_xname.len, br_xname.s, xname->len, xname->s);
+		}
 	}
 
 	if(xavp->val.type != SR_XTYPE_XAVP) {
@@ -131,93 +192,16 @@ sr_xavp_t *pvh_xavp_get(struct sip_msg *msg, str *xname)
 	}
 
 end:
-	pvh_str_free(&br_xname);
 	return xavp;
 }
 
-sr_xval_t *pvh_xavp_get_value(
-		struct sip_msg *msg, str *xname, str *name, int idx)
+int pvh_free_xavp(str *xname)
 {
 	sr_xavp_t *xavp = NULL;
-	sr_xavp_t *sub = NULL;
-
-	if((xavp = pvh_xavp_get(msg, xname)) != NULL) {
-		/*	LM_DBG("xavp:%.*s name:%.*s idx:%d\n", xavp->name.len, xavp->name.s,
-				name->len, name->s, idx); */
-		sub = xavp_get_by_index(name, idx, &xavp->val.v.xavp);
-	}
-
-	return sub ? &sub->val : NULL;
-}
-
-sr_xavp_t *pvh_xavp_get_child(struct sip_msg *msg, str *xname, str *name)
-{
-	sr_xavp_t *xavp = NULL;
-	str br_xname = STR_NULL;
-
-	if(pvh_str_new(&br_xname, header_name_size) < 0)
-		return NULL;
-
-	pvh_get_branch_xname(msg, xname, &br_xname);
-	xavp = xavp_get_child(&br_xname, name);
-	if(xavp == NULL) {
-		if(cmp_str(xname, &br_xname) != 0) {
-			xavp = xavp_get_child(xname, name);
-			/*
-			if(xavp) {
-				LM_DBG("br_xname:%.*s is not there, using xname:%.*s\n",
-					br_xname.len, br_xname.s, xname->len, xname->s);
-			} */
-		}
-	}
-
-	pvh_str_free(&br_xname);
-	return xavp;
-}
-
-int pvh_xavp_is_null(sr_xavp_t *avp)
-{
-	if(avp == NULL)
-		return 1;
-
-	if(avp->val.type == SR_XTYPE_NULL
-			|| (avp->val.type == SR_XTYPE_STR
-					   && (strncasecmp(avp->val.v.s.s, "NULL", 4) == 0))) {
-		return 1;
-	}
-
-	return 0;
-}
-
-void pvh_xavp_free_data(void *p, sr_xavp_sfree_f sfree)
-{
-	xavp_c_data_t *c_data = NULL;
-
-	if((c_data = (xavp_c_data_t *)p) != NULL) {
-		pvh_free_to_params(c_data->to_params, sfree);
-		sfree(c_data->value.s);
-		c_data->value.s = NULL;
-		sfree(c_data);
-		c_data = NULL;
-	}
-}
-
-int pvh_xavp_keys_count(sr_xavp_t **start)
-{
-	sr_xavp_t *xavp = NULL;
-	int cnt = 0;
-
-	if(*start == NULL)
-		return 0;
-
-	xavp = *start;
-
-	while(xavp) {
-		cnt++;
-		xavp = xavp->next;
-	}
-
-	return cnt;
+	xavp_rm_by_name(xname, 1, NULL);
+	if((xavp = xavp_get(xname, NULL)) != NULL)
+		xavp_rm(xavp, NULL);
+	return 1;
 }
 
 void pvh_free_to_params(struct to_param *param, sr_xavp_sfree_f sfree)
@@ -270,6 +254,86 @@ int pvh_parse_header_name(pv_spec_p sp, str *hname)
 	return 0;
 }
 
+sr_xval_t *pvh_xavp_get_value(
+		struct sip_msg *msg, str *xname, str *name, int idx)
+{
+	sr_xavp_t *xavp = NULL;
+	sr_xavp_t *sub = NULL;
+
+	if((xavp = pvh_xavp_get(msg, xname)) != NULL) {
+		/*	LM_DBG("xavp:%.*s name:%.*s idx:%d\n", xavp->name.len, xavp->name.s,
+				name->len, name->s, idx); */
+		sub = xavp_get_by_index(name, idx, &xavp->val.v.xavp);
+	}
+
+	return sub ? &sub->val : NULL;
+}
+
+sr_xavp_t *pvh_xavp_get_child(struct sip_msg *msg, str *xname, str *name)
+{
+	sr_xavp_t *xavp = NULL;
+	char t[header_name_size];
+	str br_xname = {t, header_name_size};
+
+	pvh_get_branch_xname(msg, xname, &br_xname);
+	xavp = xavp_get_child(&br_xname, name);
+	if(xavp == NULL) {
+		if(cmp_str(xname, &br_xname) != 0) {
+			xavp = xavp_get_child(xname, name);
+			if(xavp) {
+				LM_DBG("br_xname:%.*s is not there, using xname:%.*s\n",
+						br_xname.len, br_xname.s, xname->len, xname->s);
+			}
+		}
+	}
+	return xavp;
+}
+
+int pvh_xavp_is_null(sr_xavp_t *avp)
+{
+	if(avp == NULL)
+		return 1;
+
+	if(avp->val.type == SR_XTYPE_NULL
+			|| (avp->val.type == SR_XTYPE_STR
+					   && (strncasecmp(avp->val.v.s.s, "NULL", 4) == 0))) {
+		return 1;
+	}
+
+	return 0;
+}
+
+void pvh_xavp_free_data(void *p, sr_xavp_sfree_f sfree)
+{
+	xavp_c_data_t *c_data = NULL;
+
+	if((c_data = (xavp_c_data_t *)p) != NULL) {
+		pvh_free_to_params(c_data->to_params, sfree);
+		sfree(c_data->value.s);
+		c_data->value.s = NULL;
+		sfree(c_data);
+		c_data = NULL;
+	}
+}
+
+int pvh_xavp_keys_count(sr_xavp_t **start)
+{
+	sr_xavp_t *xavp = NULL;
+	int cnt = 0;
+
+	if(*start == NULL)
+		return 0;
+
+	xavp = *start;
+
+	while(xavp) {
+		cnt++;
+		xavp = xavp->next;
+	}
+
+	return cnt;
+}
+
 int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 		sr_xtype_t type, int idx, int append)
 {
@@ -277,17 +341,14 @@ int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 	sr_xavp_t *root = NULL;
 	sr_xval_t root_xval;
 	sr_xval_t xval;
-	str br_xname = STR_NULL;
-	int br_idx;
+	char t[header_name_size];
+	str br_xname = {t, header_name_size};
 
 	if(xname == NULL || name == NULL) {
 		LM_ERR("missing xavp/pv name\n");
 		return -1;
 	}
 
-	pvh_get_branch_index(msg, &br_idx);
-	if(pvh_str_new(&br_xname, header_name_size) < 0)
-		return -1;
 	pvh_get_branch_xname(msg, xname, &br_xname);
 	LM_DBG("br_xname: %.*s name: %.*s\n", br_xname.len, br_xname.s, name->len,
 			name->s);
@@ -302,7 +363,7 @@ int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 		xval.v.data = (sr_data_t *)shm_malloc(sizeof(sr_data_t));
 		if(xval.v.data == NULL) {
 			SHM_MEM_ERROR;
-			goto err;
+			return -1;
 		}
 		memset(xval.v.data, 0, sizeof(sr_data_t));
 		xval.v.data->p = data;
@@ -311,10 +372,8 @@ int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 
 	root = xavp_get(&br_xname, NULL);
 
-	if(root == NULL && br_idx > 0) {
-		LM_DBG("clone xavp:%.*s br_xname:%.*s\n", xname->len, xname->s,
-				br_xname.len, br_xname.s);
-		pvh_clone_branch_xavp(msg, xname, &br_xname);
+	if(root == NULL && _branch > 0) {
+		pvh_clone_branch_xavp(msg, xname);
 		root = xavp_get(&br_xname, NULL);
 	}
 
@@ -328,7 +387,7 @@ int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 
 		if((root = xavp_add_value(&br_xname, &root_xval, NULL)) == NULL) {
 			LM_ERR("error create xavp %s\n", br_xname.s);
-			goto err;
+			return -1;
 		}
 		xavp = &root->val.v.xavp;
 	} else if(xavp_get_child(&br_xname, name) == NULL) {
@@ -339,30 +398,16 @@ int pvh_set_xavp(struct sip_msg *msg, str *xname, str *name, void *data,
 		if(pvh_xavp_append_value(name, &xval, xavp) < 0) {
 			LM_ERR("error append xavp=>name %s=>%.*s\n", br_xname.s, name->len,
 					name->s);
-			goto err;
+			return -1;
 		}
 	} else {
 		if(pvh_xavp_set_value(name, &xval, idx, xavp) < 0) {
 			LM_ERR("error modify xavp=>name %s=>%.*s idx=%d\n", br_xname.s,
 					name->len, name->s, idx);
-			goto err;
+			return -1;
 		}
 	}
 
-	pvh_str_free(&br_xname);
-	return 1;
-
-err:
-	pvh_str_free(&br_xname);
-	return -1;
-}
-
-int pvh_free_xavp(str *xname)
-{
-	sr_xavp_t *xavp = NULL;
-	xavp_rm_by_name(xname, 1, NULL);
-	if((xavp = xavp_get(xname, NULL)) != NULL)
-		xavp_rm(xavp, NULL);
 	return 1;
 }
 
@@ -394,7 +439,6 @@ int pvh_get_branch_index(struct sip_msg *msg, int *br_idx)
 
 int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 {
-	int br_idx;
 	int os = 0;
 	char br_idx_s[32];
 	char br_idx_len = 0;
@@ -406,9 +450,8 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 	memcpy(dst->s, xname->s, xname->len);
 	os += xname->len;
 
-	pvh_get_branch_index(msg, &br_idx);
-	if(br_idx > 0) {
-		snprintf(br_idx_s, 32, "%d", br_idx - 1);
+	if(_branch > 0) {
+		snprintf(br_idx_s, 32, "%d", _branch - 1);
 		br_idx_len = strlen(br_idx_s);
 		memcpy(dst->s + os, ".", 1);
 		os += 1;
@@ -416,8 +459,10 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 		os += br_idx_len;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
-		memcpy(dst->s + os, ".r", 2);
-		os += 2;
+		snprintf(br_idx_s, 32, ".r.%d", _reply_counter);
+		br_idx_len = strlen(br_idx_s);
+		memcpy(dst->s + os, br_idx_s, br_idx_len);
+		os += br_idx_len;
 	}
 	dst->len = os;
 	dst->s[dst->len] = '\0';
@@ -425,12 +470,15 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 	return 1;
 }
 
-int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname, str *br_xname)
+int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname)
 {
 	sr_xavp_t *xavp = NULL;
 	sr_xavp_t *br_xavp = NULL;
 	sr_xavp_t *sub = NULL;
 	sr_xval_t root_xval;
+	char t[header_name_size];
+	str br_xname = {t, header_name_size};
+	int i = 0;
 
 	if((xavp = xavp_get(xname, NULL)) == NULL) {
 		LM_ERR("cannot clone xavp from non existing %s\n", xname->s);
@@ -447,17 +495,18 @@ int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname, str *br_xname)
 		return -1;
 	}
 
+	pvh_get_branch_xname(msg, xname, &br_xname);
+
 	memset(&root_xval, 0, sizeof(sr_xval_t));
 	root_xval.type = SR_XTYPE_XAVP;
 	root_xval.v.xavp = NULL;
 
-	if((br_xavp = xavp_add_value(br_xname, &root_xval, NULL)) == NULL) {
-		LM_ERR("error create xavp %s\n", br_xname->s);
+	if((br_xavp = xavp_add_value(&br_xname, &root_xval, NULL)) == NULL) {
+		LM_ERR("error create xavp %s\n", br_xname.s);
 		return -1;
 	}
 
-	if(strncmp(xname->s, xavp_parsed_xname.s, xname->len) == 0) {
-		LM_DBG("skip clone\n");
+	if(cmp_str(xname, &xavp_parsed_xname) == 0) {
 		return 1;
 	}
 
@@ -471,8 +520,10 @@ int pvh_clone_branch_xavp(struct sip_msg *msg, str *xname, str *br_xname)
 			LM_ERR("cannot clone xavp %s\n", sub->name.s);
 			return -1;
 		}
+		++i;
 	} while((sub = sub->next) != NULL);
-
+	LM_DBG("cloned %.*s[%d] => %.*s\n", xname->len, xname->s, i, br_xname.len,
+			br_xname.s);
 	return 1;
 }
 
@@ -663,12 +714,10 @@ int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	str sval = STR_NULL;
 	int ival = 0;
 	int is_strint = 0;
-	str hname = STR_NULL;
+	char t[header_name_size];
+	str hname = {t, header_name_size - 1};
 
 	p_no = param->pvn.u.isname.name.n;
-	if(pvh_str_new(&hname, header_name_size) < 0)
-		goto err;
-
 	if(p_no >= 1 && p_no <= 5)
 		pvh_str_copy(&hname, &_hdr_from, header_name_size);
 	else if(p_no >= 6 && p_no <= 10)
@@ -689,8 +738,7 @@ int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		c_data = (xavp_c_data_t *)xval_pd->v.data->p;
 	}
 
-	if(c_data != NULL
-			&& strncmp(xval->v.s.s, c_data->value.s, c_data->value.len) != 0) {
+	if(c_data != NULL && cmp_str(&xval->v.s, &c_data->value) != 0) {
 		/*	LM_DBG("xval:%.*s != c_data->value:%.*s\n", xval->v.s.len, xval->v.s.s,
 				c_data->value.len, c_data->value.s); */
 		c_data = NULL;
@@ -726,13 +774,11 @@ int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			LM_ERR("unknown get uri op\n");
 	}
 	/*	LM_DBG("p_no:%d sval:%.*s\n", p_no, sval.len, sval.s); */
-	pvh_str_free(&hname);
 	return sval.s ? is_strint ? pv_get_strintval(msg, param, res, &sval, ival)
 							  : pv_get_strval(msg, param, res, &sval)
 				  : pv_get_null(msg, param, res);
 
 err:
-	pvh_str_free(&hname);
 	return pv_get_null(msg, param, res);
 }
 
@@ -743,12 +789,11 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	pv_elem_p pv_format = NULL;
 	int p_no = 0;
 	enum action_type a_type;
-	str hname;
+	char t[header_name_size];
+	str hname = {t, header_name_size - 1};
 	str fval;
 
 	p_no = param->pvn.u.isname.name.n;
-	if(pvh_str_new(&hname, header_name_size) < 0)
-		goto err;
 	if(p_no >= 1 && p_no <= 5)
 		pvh_str_copy(&hname, &_hdr_from, header_name_size);
 	else if(p_no >= 6 && p_no <= 10)
@@ -814,13 +859,11 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 			< 0)
 		goto err;
 
-	pvh_str_free(&hname);
 	if(pv_format)
 		pv_elem_free_all(pv_format);
 	return 1;
 
 err:
-	pvh_str_free(&hname);
 	if(pv_format)
 		pv_elem_free_all(pv_format);
 	return -1;
@@ -986,7 +1029,6 @@ int pvh_get_reply_sr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	sr_xval_t *xval = NULL;
 	int p_no = 0;
-	str rhname = {"@Reply-Reason", 13};
 
 	p_no = param->pvn.u.isname.name.n;
 
@@ -1000,7 +1042,7 @@ int pvh_get_reply_sr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					&msg->first_line.u.reply.status);
 			break;
 		case 2: // reason
-			xval = pvh_xavp_get_value(msg, &xavp_name, &rhname, 0);
+			xval = pvh_xavp_get_value(msg, &xavp_name, &_hdr_reply_reason, 0);
 			return pv_get_strval(msg, param, res,
 					xval && xval->v.s.s ? &xval->v.s
 										: &msg->first_line.u.reply.reason);
@@ -1018,7 +1060,6 @@ int pvh_set_reply_sr(
 	pv_elem_p pv_format = NULL;
 	int p_no = 0;
 	unsigned int code = 0;
-	str rhname = {"@Reply-Reason", 13};
 	str fval;
 
 	p_no = param->pvn.u.isname.name.n;
@@ -1069,7 +1110,8 @@ int pvh_set_reply_sr(
 			msg->first_line.u.reply.status.s[0] = code + '0';
 			break;
 		case 2: // reason
-			if(pvh_set_xavp(msg, &xavp_name, &rhname, &fval, SR_XTYPE_STR, 0, 0)
+			if(pvh_set_xavp(msg, &xavp_name, &_hdr_reply_reason, &fval,
+					   SR_XTYPE_STR, 0, 0)
 					< 0) {
 				LM_ERR("set reply: cannot set reply reason\n");
 				goto err;
