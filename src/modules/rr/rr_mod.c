@@ -303,16 +303,16 @@ static int ki_loose_route_preloaded(sip_msg_t *msg)
 }
 
 /**
- * common wrapper for record_route(msg, params)
+ * common wrapper for record_route(msg, sparams)
  */
-static int ki_record_route_params(sip_msg_t *msg, str *params)
+static int ki_record_route_params(sip_msg_t *msg, str *sparams)
 {
 	if (msg->msg_flags & FL_RR_ADDED) {
 		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
 
-	if ( record_route( msg, params )<0 )
+	if ( record_route( msg, sparams )<0 )
 		return -1;
 
 	if(get_route_type()!=BRANCH_ROUTE)
