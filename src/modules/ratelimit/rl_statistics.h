@@ -27,8 +27,8 @@
  */
 
 
-#ifndef _KSTATISTICS_H_
-#define _KSTATISTICS_H_
+#ifndef _RL_KSTATISTICS_H_
+#define _RL_KSTATISTICS_H_
 
 #include "../../core/counters.h"
 
