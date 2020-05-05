@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef _APP_JSDT_API_H_
-#define _APP_JSDT_API_H_
+#ifndef _APP_SQLANG_API_H_
+#define _APP_SQLANG_API_H_
 
 #include <squirrel.h>
 
