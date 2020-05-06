@@ -62,8 +62,8 @@ int bind_keepalive(keepalive_api_t *api)
 /*
  * Add a new destination in keepalive pool
  */
-int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
-		void *user_attr)
+int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
+    ka_statechanged_f callback, void *user_attr)
 {
 	struct sip_uri _uri;
 	ka_dest_t *dest=0,*hollow=0;
@@ -106,6 +106,20 @@ int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 	dest->flags = flags;
 	dest->statechanged_clb = callback;
 	dest->user_attr = user_attr;
+
+    dest->timer = timer_alloc();
+	if (dest->timer == NULL) {
+		LM_ERR("failed allocating timer\n");
+		goto err;
+  	}
+
+	timer_init(dest->timer, ka_check_timer, dest, 0);
+
+    int actual_ping_interval =  ping_interval == 0 ? ka_ping_interval : ping_interval;
+	if(timer_add(dest->timer, MS_TO_TICKS(actual_ping_interval * 1000)) < 0){
+		LM_ERR("failed to start timer\n");
+		goto err;
+	}
 
 	dest->next = ka_destinations_list->first;
 	ka_destinations_list->first = dest;
@@ -232,6 +246,12 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 int free_destination(ka_dest_t *dest){
 
 	if(dest){
+        if(timer_del(dest->timer) < 0){
+          LM_ERR("failed to remove timer for destination <%.*s>\n", dest->uri.len, dest->uri.s);
+          return -1;
+        }
+
+        timer_free(dest->timer);
 		if(dest->uri.s)
 			shm_free(dest->uri.s);
 

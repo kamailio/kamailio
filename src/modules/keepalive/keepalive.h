@@ -38,6 +38,8 @@
 #define KA_PROBING_DST 8  /*!< checking destination */
 #define KA_STATES_ALL 15  /*!< all bits for the states of destination */
 
+extern int ka_ping_interval;
+
 #define ds_skip_dst(flags) ((flags) & (KA_INACTIVE_DST | KA_DISABLED_DST))
 
 #define KA_PROBE_NONE 0
@@ -64,6 +66,7 @@ typedef struct _ka_dest
 	struct ip_addr ip_address; /*!< IP-Address of the entry */
 	unsigned short int port;   /*!< Port of the URI */
 	unsigned short int proto;  /*!< Protocol of the URI */
+	struct timer_ln *timer;
 	struct _ka_dest *next;
 } ka_dest_t;
 
@@ -76,8 +79,10 @@ typedef struct _ka_destinations_list
 extern ka_destinations_list_t *ka_destinations_list;
 extern int ka_counter_del;
 
-int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
-		void *user_attr);
+ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param);
+
+int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
+        ka_statechanged_f callback, void *user_attr);
 int ka_destination_state(str *uri);
 int ka_str_copy(str *src, str *dest, char *prefix);
 int free_destination(ka_dest_t *dest) ;

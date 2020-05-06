@@ -122,7 +122,7 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if(ka_add_dest(&sip_adress,&table_name,0,0,0) < 0 ){
+	if(ka_add_dest(&sip_adress,&table_name,0,ka_ping_interval,0,0) < 0 ){
 		LM_ERR("couldn't add data to list \n"  );
 		rpc->fault(ctx, 500, "couldn't add data to list");
 		return;

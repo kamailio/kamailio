@@ -46,6 +46,5 @@
     
     <xi:include href="keepalive_admin.xml"/>
     <xi:include href="keepalive_devel.xml"/>
-    
-    
+
 </book>
