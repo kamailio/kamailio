@@ -1246,7 +1246,7 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 	ht_cell_t *htc;	/*!< One HT cell */
 	void* th;
 	void* vh;
-	struct tm *_expire_t;
+	struct tm _expire_t;
 	char expire_buf[RPC_DATE_BUF_LEN]="NEVER";
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
@@ -1281,9 +1281,9 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 	}
 
 	if (htc->expire) {
-		_expire_t = localtime(&htc->expire);
+		localtime_r(&htc->expire, &_expire_t);
 		strftime(expire_buf, RPC_DATE_BUF_LEN - 1,
-			"%Y-%m-%d %H:%M:%S", _expire_t);
+			"%Y-%m-%d %H:%M:%S", &_expire_t);
 	}
 
 	if(htc->flags&AVP_VAL_STR) {
