@@ -444,8 +444,8 @@ modparam("siptrace", "trace_db_mode", 1)
 
    Kept for backward compatibily, use trace_db_mode instead.
 
-   If set to non-zero, ot sets trace_db_mode paremter to 1 when the module
-   is initialized.
+   If set to non-zero, ot sets trace_db_mode parameter to 1 when the
+   module is initialized.
 
    Default value is 0.
 
