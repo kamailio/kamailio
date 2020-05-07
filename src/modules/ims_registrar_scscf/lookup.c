@@ -61,13 +61,12 @@
  */
 int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     impurecord_t* r;
-    str aor;
+    str aor, tmp_aor;
     ucontact_t* ptr = 0;
     int res;
     int ret;
     str path_dst;
     flag_t old_bflags;
-    int i = 0;
     int ue_type;    /*0=any, 1=3gpp, 2=sip */
 	impu_contact_t *impucontact;
 
@@ -91,29 +90,35 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
             ue_type=0;
     }
 
-    if (_m->new_uri.s) {
-			aor.s = pkg_malloc(_m->new_uri.len);
-			if (aor.s == NULL) {
-				LM_ERR("memory allocation failure\n");
-				return -1;
-			}
-			memcpy(aor.s, _m->new_uri.s, _m->new_uri.len);
-			aor.len = _m->new_uri.len;
-		} else {
-			aor.s = pkg_malloc(_m->first_line.u.request.uri.len);
-			if (aor.s == NULL) {
-				LM_ERR("memory allocation failure\n");
-				return -1;
-			}
-			memcpy(aor.s, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-			aor.len = _m->first_line.u.request.uri.len;
-		}
+	if (parse_sip_msg_uri(_m) < 0) {
+		LM_ERR("Error while parsing the Request-URI\n");
+		return -1;
+	}
 
-    for (i = 4; i < aor.len; i++)
-        if (aor.s[i] == ':' || aor.s[i] == ';' || aor.s[i] == '?') {
-            aor.len = i;
-            break;
-        }
+	if (_m->new_uri.s) {
+		tmp_aor = _m->new_uri;
+	} else {
+		tmp_aor = _m->first_line.u.request.uri;
+	}
+
+	aor.s = pkg_malloc(tmp_aor.len);
+	if (aor.s == NULL) {
+		LM_ERR("memory allocation failure\n");
+		return -1;
+	}
+
+	// build aor
+	// add 'sip:' or 'tel:'
+	memcpy(aor.s, tmp_aor.s, 4);
+	aor.len = 4;
+	// add user part
+	memcpy(aor.s + aor.len, _m->parsed_uri.user.s, _m->parsed_uri.user.len);
+	aor.len += _m->parsed_uri.user.len;
+	// add '@'
+	aor.s[aor.len++] = '@';
+	// add host part
+	memcpy(aor.s + aor.len, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
+	aor.len += _m->parsed_uri.host.len;
 
     LM_DBG("Looking for <%.*s>\n", aor.len, aor.s);
 
