@@ -129,6 +129,9 @@ static void ka_options_callback(
 
 		ka_dest->state = state;
 	}
+	if(ka_dest->response_clb != NULL) {
+		ka_dest->response_clb(&ka_dest->uri, ps, ka_dest->user_attr);
+	}
 }
 
 /*
