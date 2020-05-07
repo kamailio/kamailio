@@ -385,8 +385,8 @@ static inline void process_impurecord(impurecord_t* _r) {
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s,
                     (unsigned int) (s->expires - time(NULL)));
             sl = core_hash(&s->call_id, &s->to_tag, sub_dialog_hash_size);
-            LM_DBG("Hash size: <%i>", sub_dialog_hash_size);
-            LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> ftag <%.*s> and hash code <%i>", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, sl);
+            LM_DBG("Hash size: <%i>\n", sub_dialog_hash_size);
+            LM_DBG("Searching sub dialog hash info with call_id: <%.*s> and ttag <%.*s> ftag <%.*s> and hash code <%i>\n", s->call_id.len, s->call_id.s, s->to_tag.len, s->to_tag.s, s->from_tag.len, s->from_tag.s, sl);
             /* search the record in hash table */
             lock_get(&sub_dialog_table[sl].lock);
             sub_dialog = pres_search_shtable(sub_dialog_table, s->call_id, s->to_tag, s->from_tag, sl);
@@ -433,7 +433,7 @@ static inline void process_impurecord(impurecord_t* _r) {
 				mustdeleteimpu = 0;
 				hascontacts = 1;
 			} else {
-				LM_WARN("Bogus state for contact [%.*s] - state: %d... ignoring", ptr->c.len, ptr->c.s, ptr->state);
+				LM_WARN("Bogus state for contact [%.*s] - state: %d... ignoring\n", ptr->c.len, ptr->c.s, ptr->state);
 				mustdeleteimpu = 0;
 				hascontacts = 1;
 			}
@@ -567,7 +567,7 @@ int insert_scontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
 
     //    /*DB?*/
     if (db_mode == WRITE_THROUGH && db_insert_ucontact(_r, *_c) != 0) {
-        LM_ERR("error inserting contact into db");
+        LM_ERR("error inserting contact into db\n");
         return -1;
     }
 
@@ -931,7 +931,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
 
     //make usre we have IMPU or enough data to find it...
     if (!impu_rec && (!public_identity || !public_identity->len || !public_identity->s)) {
-        LM_WARN("can't call update_impurecord with no details of IMPU..n");
+        LM_WARN("can't call update_impurecord with no details of IMPU..\n");
         return -1;
     }
 
@@ -1040,7 +1040,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
             ref_subscription_unsafe(subs_ptr);
             (*_r)->s = subs_ptr;
         } else {
-            LM_DBG("new subscription is the same as the old one....not doing anything");
+            LM_DBG("new subscription is the same as the old one....not doing anything\n");
             //check that the service profile and associated impus are in the subscription, if not, add...
             /* if (compare_subscription(subs_ptr, *s) != 0) {
                 unref_subscription((*_r)->s); //different subscription which we don't have lock on yet.
@@ -1053,7 +1053,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
     run_ul_callbacks((*_r)->cbs, UL_IMPU_UPDATE, *_r, NULL);
 
     if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, &(*_r)->public_identity, (*_r)->reg_state, (*_r)->barring, &(*_r)->s, &(*_r)->ccf1, &(*_r)->ccf2, &(*_r)->ecf1, &(*_r)->ecf2, _r) != 0) {
-        LM_ERR("error inserting IMPU [%.*s] into db... continuing", (*_r)->public_identity.len, (*_r)->public_identity.s);
+        LM_ERR("error inserting IMPU [%.*s] into db... continuing\n", (*_r)->public_identity.len, (*_r)->public_identity.s);
     }
 
     if (subscription_locked) {
@@ -1142,7 +1142,7 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 		impu_contact_ptr = impu->linked_contacts.head;
 		while (impu_contact_ptr) {
 				if (impu_contact_ptr->contact->is_3gpp) {
-						LM_DBG("Found first 3GPP contact");
+						LM_DBG("Found first 3GPP contact\n");
 						break;
 				}
 				impu_contact_ptr = impu_contact_ptr->next;
@@ -1169,7 +1169,7 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 					//a housekeeper thread do it
 					locked = 1;
 			} else {
-							LM_ERR("Could not get lock to remove link from of contact from impu....");
+							LM_ERR("Could not get lock to remove link from of contact from impu...\n");
 							//TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
 			}
 			if (locked == 1) {
@@ -1205,7 +1205,7 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
                 //a housekeeper thread do it
                 locked = 1;
         } else {
-                        LM_ERR("Could not get lock to remove link from of contact from impu....");
+                        LM_ERR("Could not get lock to remove link from of contact from impu...\n");
                         //TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
         }
         if (locked == 1) {
@@ -1253,7 +1253,7 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
 				//a housekeeper thread do it
 				locked = 1;
 			} else {
-				LM_ERR("Could not get lock to remove link from of contact from impu....");
+				LM_ERR("Could not get lock to remove link from of contact from impu...\n");
 				//TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
 			}
 			if (locked == 1) {

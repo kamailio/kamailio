@@ -332,7 +332,8 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
 							}
                         }
                     } else if (contact_ptr->state != CONTACT_DELETED) {
-                        LM_DBG("expiring contact [%.*s].... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n", contact_ptr->aor.len, contact_ptr->aor.s);
+                        LM_DBG("expiring contact [%.*s](%.*s).... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n",
+								contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s);
                         contact_ptr->state = CONTACT_EXPIRE_PENDING_NOTIFY;
                         ref_contact_unsafe(contact_ptr);
                         expired_contacts[num_expired_contacts] = contact_ptr;
@@ -399,11 +400,13 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
             slot = expired_contacts[i]->sl;
             lock_contact_slot_i(slot);
             if (expired_contacts[i]->state != CONTACT_DELAYED_DELETE) {
-                LM_DBG("Setting contact state to CONTACT_DELETED for contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
+                LM_DBG("Setting contact state to CONTACT_DELETED for contact [%.*s](%.*s)\n",
+						expired_contacts[i]->aor.len, expired_contacts[i]->aor.s, expired_contacts[i]->c.len, expired_contacts[i]->c.s);
                 expired_contacts[i]->state = CONTACT_DELETED;
                 unref_contact_unsafe(expired_contacts[i]);
             } else {
-                LM_DBG("deleting contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
+                LM_DBG("deleting contact [%.*s](%.*s)\n",
+						expired_contacts[i]->aor.len, expired_contacts[i]->aor.s, expired_contacts[i]->c.len, expired_contacts[i]->c.s);
                 delete_scontact(expired_contacts[i]);
             }
             unlock_contact_slot_i(slot);
@@ -577,7 +580,7 @@ int insert_impurecord(struct udomain* _d, str* public_identity, str* private_ide
 
     /*DB?*/
     if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) != 0) {
-        LM_ERR("error inserting contact into db");
+        LM_ERR("error inserting contact into db\n");
         goto error;
     }
 
