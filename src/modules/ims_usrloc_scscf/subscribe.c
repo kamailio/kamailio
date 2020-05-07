@@ -288,7 +288,9 @@ int add_subscriber(impurecord_t* urec,
 
     if (!s) return -1;
 
-    LM_DBG("Adding new subscription to IMPU record list\n");
+    LM_DBG("Adding new subscription p-uri[%.*s] w-contact[%.*s] to IMPU record [%.*s] list\n",
+			s->presentity_uri.len, s->presentity_uri.s, s->watcher_contact.len, s->watcher_contact.s, urec->public_identity.len, urec->public_identity.s);
+			
     s->next = 0;
     s->prev = urec->stail;
     if (urec->stail) urec->stail->next = s;
