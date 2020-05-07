@@ -439,7 +439,8 @@ error:
  * called to deliver new event into notification process
  * return 0 on success. anything else failure
  */
-int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *explit_dereg_contact, int num_explit_dereg_contact) {
+int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *contact_uri,
+                str *explit_dereg_contact, int num_explit_dereg_contact) {
     impurecord_t* r;
     int num_impus;
     str* impu_list = 0;
@@ -484,7 +485,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
             ul.unlock_udomain((udomain_t*) _d, presentity_uri);
             LM_DBG("About to create notification\n");
 
-            create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
+            create_notifications(_d, r_passed, presentity_uri, watcher_contact, contact_uri, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
             if (impu_list) {
                     pkg_free(impu_list);
             }
@@ -498,7 +499,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
         case IMS_REGISTRAR_CONTACT_REFRESHED:
         case IMS_REGISTRAR_CONTACT_EXPIRED:
             if (!r_passed || presentity_uri || watcher_contact || _d) {
-                LM_ERR("this is a contact change passed from ul callback: r_passed and c_passed should both be valid and presentity_uri, watcher_contact and _d should be 0 for ul callback");
+                LM_ERR("this is a contact change passed from ul callback: r_passed and c_passed should both be valid and presentity_uri, watcher_contact and _d should be 0 for ul callback\n");
                 return 0;
             }
             //this is a ulcallback so r_passed domain is already locked
@@ -521,7 +522,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
 				return 0;
             }
             LM_DBG("About to create notification\n");
-            create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
+            create_notifications(_d, r_passed, presentity_uri, watcher_contact, contact_uri, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
             if (impu_list) {
                     pkg_free(impu_list);
             }
@@ -535,7 +536,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
 }
 
 int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type) {
-    event_reg(0, impurecord, event_type, 0, 0, explit_dereg_contact, num_explit_dereg_contact);
+    event_reg(0, impurecord, event_type, 0, 0, 0, explit_dereg_contact, num_explit_dereg_contact);
 
     return 0;
 }
@@ -1220,7 +1221,7 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         subscribe_reply(msg, 200, MSG_REG_SUBSCRIBE_OK, &expires, &scscf_name_str);
 
         //do reg event every time you get a subscribe
-        if (event_reg(domain, 0, event_type, &presentity_uri, &watcher_contact, 0, 0) != 0) {
+        if (event_reg(domain, 0, event_type, &presentity_uri, &watcher_contact, 0, 0, 0) != 0) {
             LM_ERR("failed adding notification for reg events\n");
             ret = CSCF_RETURN_ERROR;
             goto doneorerror;
@@ -1466,13 +1467,15 @@ static str subs_active = {"active;expires=", 15};
  * @param content - the body content
  * @param expires - the remaining subcription expiration time in seconds
  */
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact) {
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str *contact_uri,
+                            str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact) {
 
     reg_notification *n;
     reg_subscriber *s;
     impurecord_t* r;
     int local_cseq = 0;
     int version = 0;
+    int create_notification;
 
     str subscription_state = {"active;expires=10000000000", 26},
     content_type = {"application/reginfo+xml", 23};
@@ -1503,7 +1506,9 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
 
     s = r->shead;
     while (s) {
-        LM_DBG("Scrolling through reg subscribers for this IMPU\n");
+        LM_DBG("Scrolling through reg subscribers for this IMPU [%.*s]\n", r->public_identity.len, r->public_identity.s);
+
+        create_notification = 0;
 
         if (s->expires > act_time) {
             subscription_state.s = (char*) pkg_malloc(32 * sizeof (char*));
@@ -1527,23 +1532,16 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
             if (contact_match(watcher_contact, &s->watcher_contact) &&
                     (presentity_uri->len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, presentity_uri->s, presentity_uri->len) == 0)) {
                 LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed.\n");
-                LM_DBG("About to make new notification! We always increment the local cseq and version before we send a new notification\n");
-
-                local_cseq = s->local_cseq + 1;
-                version = s->version + 1;
-                ul.update_subscriber(r, &s, 0, &local_cseq, &version);
-
-                n = new_notification(subscription_state, content_type, &impus, num_impus, s, &explit_dereg_contact, num_explit_dereg_contact);
-                if (n) {
-                    n->_d = _t;
-                    LM_DBG("Notification exists - about to add it\n");
-                    add_notification(n);
-                } else {
-                    LM_DBG("Notification does not exist\n");
-                }
+                create_notification = 1;
             }
         } else {
-
+            if (event_type == IMS_REGISTRAR_CONTACT_REGISTERED) {
+                if(contact_match(contact_uri, &s->watcher_contact) &&
+                    (r_passed->public_identity.len == s->presentity_uri.len) && (memcmp(s->presentity_uri.s, r_passed->public_identity.s, r_passed->public_identity.len) == 0)) {
+                    LM_DBG("This is a fix to ensure that we only send full reg info XML to the UE that just subscribed.\n");
+                    create_notification = 1;
+                }
+            } else {
             //TODO: we must make this optimisation to not send NOTIFYs back to UE's *(they may have disappeared)
             //            if (event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED && !ue_unsubscribe_on_dereg /*&&
             //                    (contact_port_ip_match(&c_passed->c, &s->watcher_contact) */
@@ -1552,6 +1550,12 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
             //                //then we do not send notifications
             //                LM_DBG("This is a UNREGISTER event for a UE that subscribed to its own state that does not unsubscribe to dereg - therefore no notification");
             //            } else {
+            //            }
+				create_notification = 1;
+			}
+        }
+
+        if(create_notification) {
             LM_DBG("About to make new notification! We always increment the local cseq and version before we send a new notification\n");
 
             local_cseq = s->local_cseq + 1;
@@ -1563,12 +1567,11 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
                 n->_d = _t;
                 LM_DBG("Notification exists - about to add it\n");
                 add_notification(n);
-
             } else {
                 LM_DBG("Notification does not exist\n");
             }
-            //            }
         }
+
         s = s->next;
 
         if (subscription_state.s) {

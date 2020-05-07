@@ -94,6 +94,6 @@ void ul_contact_changed(impurecord_t* r, ucontact_t* c, int type, void* param) {
 //    
     if (type == UL_IMPU_DELETE_CONTACT) {
         LM_DBG("Received notification of UL CONTACT DELETE\n");
-        event_reg(0, r, IMS_REGISTRAR_CONTACT_UNREGISTERED, 0, 0, 0, 0);
+        event_reg(0, r, IMS_REGISTRAR_CONTACT_UNREGISTERED, 0, 0, 0, 0, 0);
     }
 }
