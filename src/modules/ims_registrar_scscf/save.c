@@ -830,7 +830,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             //now build the contact buffer to be include in the reply message and unlock
             build_contact(impu_rec, contact_header);
             build_p_associated_uri(*s);
-            notify_subscribers(impu_rec, 0, 0);
+            notify_subscribers(impu_rec, 0, 0, IMS_REGISTRAR_CONTACT_REGISTERED);
             ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_RE_REGISTRATION:
@@ -913,7 +913,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             if (ul.update_impurecord(_d, public_identity, 0, reg_state, -1 /*do not change send sar on delete */, 0 /*this is explicit so barring must be 0*/, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec) != 0) {
                 LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
             }
-            notify_subscribers(impu_rec, 0, 0);
+            notify_subscribers(impu_rec, 0, 0, IMS_REGISTRAR_CONTACT_REGISTERED);
 	    ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_USER_DEREGISTRATION:
@@ -1011,7 +1011,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         //                                s = s->next;
                         //                            }
                         //                        }
-                        notify_subscribers(tmp_impu_rec, (str*) explicit_dereg_contact, num_explicit_dereg_contact);
+                        notify_subscribers(tmp_impu_rec, (str*) explicit_dereg_contact, num_explicit_dereg_contact, IMS_REGISTRAR_CONTACT_UNREGISTERED);
 
                         for (h = msg->contact; h; h = h->next) {
                             if (h->type == HDR_CONTACT_T && h->parsed) {
