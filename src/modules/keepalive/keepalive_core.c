@@ -48,47 +48,41 @@ static void ka_options_callback(struct cell *t, int type,
 
 extern str ka_ping_from;
 /*! \brief
- * Timer for checking probing destinations
+ * Callback run from timer,  for probing a destination
  *
  * This timer is regularly fired.
  */
-void ka_check_timer(unsigned int ticks, void *param)
+ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param)
 {
 	ka_dest_t *ka_dest;
 	str ka_ping_method = str_init("OPTIONS");
 	str ka_outbound_proxy = {0, 0};
 	uac_req_t uac_r;
 
-	LM_DBG("ka check timer\n");
+	ka_dest = (ka_dest_t *)param;
 
-	ka_lock_destination_list();
+    LM_DBG("ka_check_timer dest:%.*s\n", ka_dest->uri.len, ka_dest->uri.s);
 
-	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
-			ka_dest = ka_dest->next) {
-		LM_DBG("ka_check_timer dest:%.*s\n", ka_dest->uri.len, ka_dest->uri.s);
+    if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
+        return (ticks_t)(0); /* stops the timer */
+    }
 
-		if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
-			continue;
-		}
+    /* Send ping using TM-Module.
+     * int request(str* m, str* ruri, str* to, str* from, str* h,
+     *		str* b, str *oburi,
+     *		transaction_cb cb, void* cbp); */
+    set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
+            ka_options_callback, (void *)ka_dest);
 
-		/* Send ping using TM-Module.
-		 * int request(str* m, str* ruri, str* to, str* from, str* h,
-		 *		str* b, str *oburi,
-		 *		transaction_cb cb, void* cbp); */
-		set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
-				ka_options_callback, (void *)ka_dest);
+    if(tmb.t_request(&uac_r, &ka_dest->uri, &ka_dest->uri, &ka_ping_from,
+               &ka_outbound_proxy)
+            < 0) {
+        LM_ERR("unable to ping [%.*s]\n", ka_dest->uri.len, ka_dest->uri.s);
+    }
 
-		if(tmb.t_request(&uac_r, &ka_dest->uri, &ka_dest->uri, &ka_ping_from,
-				   &ka_outbound_proxy)
-				< 0) {
-			LM_ERR("unable to ping [%.*s]\n", ka_dest->uri.len, ka_dest->uri.s);
-		}
+    ka_dest->last_checked = time(NULL);
 
-		ka_dest->last_checked = time(NULL);
-	}
-	ka_unlock_destination_list();
-
-	return;
+	return (ticks_t)(-1); /* periodical */
 }
 
 /*! \brief

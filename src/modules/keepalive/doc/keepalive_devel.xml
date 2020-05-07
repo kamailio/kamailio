@@ -30,7 +30,7 @@
 
 	<section id="dev-add_destination">
 		<title>
-		<function moreinfo="none">add_destination(uri, owner, flags, [callback, [user_attr]])</function>
+		<function moreinfo="none">add_destination(uri, owner, flags, ping_interval, [callback, [user_attr]])</function>
 		</title>
 		<para>
 			This function registers a new destination to monitor. 
@@ -61,6 +61,11 @@
 		<listitem>
 			<para>
 				<emphasis>flags (integer)</emphasis> - destination flags (<emphasis>unused for now, use 0 value</emphasis>)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>ping_interval (integer)</emphasis> - Pinging <emphasis>interval</emphasis> in seconds for this destination
 			</para>
 		</listitem>
 		<listitem>
@@ -133,7 +138,7 @@ void my_callback(str uri, int state, void *user_attr) {
 str dest  = str_init("sip:192.168.10.21:5060");
 str owner = str_init("mymodule");
 
-if (ka_api.add_destination(dest, owner, 0, my_callback, NULL) != 0) {
+if (ka_api.add_destination(dest, owner, 0, 60, my_callback, NULL) != 0) {
     LM_ERR("can't add destination\n");
     goto error;
 }

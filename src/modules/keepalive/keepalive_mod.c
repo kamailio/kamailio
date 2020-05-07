@@ -51,7 +51,6 @@ static void mod_destroy(void);
 static int ka_mod_add_destination(modparam_t type, void *val);
 int ka_init_rpc(void);
 int ka_alloc_destinations_list();
-extern void ka_check_timer(unsigned int ticks, void *param);
 static int w_cmd_is_alive(struct sip_msg *msg, char *str1, char *str2);
 static int fixup_add_destination(void** param, int param_no);
 static int w_add_destination(sip_msg_t *msg, char *uri, char *owner);
@@ -125,11 +124,6 @@ static int mod_init(void)
 	if(ka_alloc_destinations_list() < 0)
 		return -1;
 
-	if(register_timer(ka_check_timer, NULL, ka_ping_interval) < 0) {
-		LM_ERR("failed registering timer\n");
-		return -1;
-	}
-
 	return 0;
 }
 
@@ -186,7 +180,7 @@ static int w_add_destination(sip_msg_t *msg, char *uri, char *owner)
 		return -1;
 	}
 
-	return ka_add_dest(&suri, &sowner, 0, 0, 0);
+	return ka_add_dest(&suri, &sowner, 0, ka_ping_interval, 0, 0);
 }
 
 /*!
@@ -197,7 +191,7 @@ static int ki_add_destination(sip_msg_t *msg, str *uri, str *owner)
 	if(ka_alloc_destinations_list() < 0)
 		return -1;
 
-	return ka_add_dest(uri, owner, 0, 0, 0);
+	return ka_add_dest(uri, owner, 0, ka_ping_interval, 0, 0);
 }
 
 /*!
@@ -247,7 +241,7 @@ static int ka_mod_add_destination(modparam_t type, void *val)
 	str owner = str_init("_params");
 	LM_DBG("adding destination %.*s\n", dest.len, dest.s);
 
-	return ka_add_dest(&dest, &owner, 0, 0, 0);
+	return ka_add_dest(&dest, &owner, 0, ka_ping_interval, 0, 0);
 }
 
 /*

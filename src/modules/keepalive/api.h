@@ -38,7 +38,7 @@ typedef int ka_state;
 #define KA_STATE_DOWN 2
 
 typedef int (*ka_add_dest_f)(str *uri, str *owner, int flags,
-		ka_statechanged_f callback, void *user_attr);
+        int ping_interval, ka_statechanged_f callback, void *user_attr);
 typedef ka_state (*ka_dest_state_f)(str *uri);
 typedef int (*ka_del_destination_f)(str *uri, str *owner);
 typedef int (*ka_find_destination_f)(str *uri, str *owner,ka_dest_t **target,ka_dest_t **head);
