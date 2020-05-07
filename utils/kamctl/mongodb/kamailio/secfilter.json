@@ -9,12 +9,12 @@
     },
     "action": {
       "type": "int",
-      "default": "",
+      "default": 0,
       "null": false
     },
     "type": {
       "type": "int",
-      "default": "",
+      "default": 0,
       "null": false
     },
     "data": {

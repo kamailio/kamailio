@@ -1,7 +1,7 @@
 CREATE TABLE secfilter (
     id NUMBER(10) PRIMARY KEY,
-    action NUMBER(5) DEFAULT '',
-    type NUMBER(5) DEFAULT '',
+    action NUMBER(5) DEFAULT 0 NOT NULL,
+    type NUMBER(5) DEFAULT 0 NOT NULL,
     data VARCHAR2(64) DEFAULT ''
 );
 
