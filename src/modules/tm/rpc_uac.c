@@ -408,7 +408,7 @@ static void rpc_uac_callback(struct cell* t, int type, struct tmcb_params* ps)
  * If all the parameters are ok it will call t_uac() using them.
  * Note: this version will  wait for the transaction final reply
  * only if reply_wait is set to 1. Otherwise the rpc reply will be sent
- * immediately and it will be success if the paremters were ok and t_uac did
+ * immediately and it will be success if the parameters were ok and t_uac did
  * not report any error.
  * Note: reply waiting (reply_wait==1) is not yet supported.
  * @param rpc - rpc handle
