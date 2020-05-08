@@ -38,7 +38,7 @@
 #define SREV_NET_DATA_RECV		14
 #define SREV_NET_DATA_SEND		15
 
-#define SREV_CB_LIST_SIZE	3
+#define SREV_CB_LIST_SIZE	8
 
 typedef struct sr_event_param {
 	void *data;
