@@ -1296,7 +1296,9 @@ ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode)
 					ptl->prev = NULL;
 				}
 				ptd->next = pte;
-				pte->prev = ptd;
+				if(pte) {
+					pte->prev = ptd;
+				}
 				pte = ptd;
 			} else {
 				if(ptd->prev) {
@@ -1307,7 +1309,9 @@ ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode)
 				}
 				ptd->next = pte;
 				ptd->prev = NULL;
-				pte->prev = ptd;
+				if(pte) {
+					pte->prev = ptd;
+				}
 				pte = ptd;
 			}
 		}
