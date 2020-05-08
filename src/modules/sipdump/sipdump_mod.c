@@ -337,8 +337,14 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 	sdi.tag.s = "snd";
 	sdi.tag.len = 3;
 
-	sdi.src_ip = evp->dst->send_sock->address_str;
-	sdi.src_port = (int)evp->dst->send_sock->port_no;
+	if(evp->dst->send_sock==NULL || evp->dst->send_sock->address_str.s==NULL) {
+		sdi.src_ip.len = 7;
+		sdi.src_ip.s = "0.0.0.0";
+		sdi.src_port = 0;
+	} else {
+		sdi.src_ip = evp->dst->send_sock->address_str;
+		sdi.src_port = (int)evp->dst->send_sock->port_no;
+	}
 	su2ip_addr(&ip, &evp->dst->to);
 	sdi.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
 	sdi.dst_ip.s = dstip_buf;
