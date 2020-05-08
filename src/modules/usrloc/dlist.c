@@ -101,8 +101,8 @@ int ul_ka_db_records(int partidx)
 	int proto = 0;
 	str host = STR_NULL;
 	char *p = NULL;
-#define ULKA_AURBUF_SIZE 1024
-	char aorbuf[ULKA_AURBUF_SIZE];
+#define ULKA_AORBUF_SIZE 1024
+	char aorbuf[ULKA_AORBUF_SIZE];
 	int i = 0;
 
 	/* select fields */
@@ -231,12 +231,12 @@ int ul_ka_db_records(int partidx)
 
 			/* user */
 			p  = (char*)VAL_STRING(ROW_VALUES(row) + 6);
-			if (VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0) {
+			if (VAL_NULL(ROW_VALUES(row)+6) || p==0 || p[0]==0) {
 				LM_ERR("empty username -> skipping\n");
 				continue;
 			}
 			ur.aor.len = strlen(p);
-			if(ur.aor.len >= ULKA_AURBUF_SIZE) {
+			if(ur.aor.len >= ULKA_AORBUF_SIZE) {
 				LM_DBG("long username ->skipping\n");
 				continue;
 			}
@@ -244,8 +244,8 @@ int ul_ka_db_records(int partidx)
 
 			/* domain */
 			p  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
-			if (!(VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0)) {
-				if(ur.aor.len + strlen(p) >= ULKA_AURBUF_SIZE - 1) {
+			if (!(VAL_NULL(ROW_VALUES(row)+7) || p==0 || p[0]==0)) {
+				if(ur.aor.len + strlen(p) >= ULKA_AORBUF_SIZE - 2) {
 					LM_DBG("long aor ->skipping\n");
 					continue;
 				}
