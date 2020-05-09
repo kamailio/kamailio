@@ -428,9 +428,9 @@ int udp_rcv_loop()
 	static char buf [BUF_SIZE+1];
 #endif
 	char *tmp;
-	union sockaddr_union* from;
-	unsigned int fromlen;
-	struct receive_info ri;
+	union sockaddr_union* fromaddr;
+	unsigned int fromaddrlen;
+	receive_info_t rcvi;
 	sr_event_param_t evp = {0};
 #define UDP_RCV_PRINTBUF_SIZE 512
 #define UDP_RCV_PRINT_LEN 100
@@ -440,17 +440,18 @@ int udp_rcv_loop()
 	int l;
 
 
-	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
-	if (from==0){
+	fromaddr=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
+	if (fromaddr==0){
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	memset(from, 0 , sizeof(union sockaddr_union));
-	ri.bind_address=bind_address; /* this will not change, we do it only once*/
-	ri.dst_port=bind_address->port_no;
-	ri.dst_ip=bind_address->address;
-	ri.proto=PROTO_UDP;
-	ri.proto_reserved1=ri.proto_reserved2=0;
+	memset(fromaddr, 0,sizeof(union sockaddr_union));
+	memset(&rcvi, 0, sizeof(receive_info_t));
+	/* these do not change, set only once*/
+	rcvi.bind_address=bind_address;
+	rcvi.dst_port=bind_address->port_no;
+	rcvi.dst_ip=bind_address->address;
+	rcvi.proto=PROTO_UDP;
 
 	/* initialize the config framework */
 	if (cfg_child_init()) goto error;
@@ -463,9 +464,9 @@ int udp_rcv_loop()
 			goto error;
 		}
 #endif
-		fromlen=sockaddru_len(bind_address->su);
-		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0, &from->s,
-											&fromlen);
+		fromaddrlen=sizeof(union sockaddr_union);
+		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0,
+				(struct sockaddr*)fromaddr, &fromaddrlen);
 		if (len==-1){
 			if (errno==EAGAIN){
 				LM_DBG("packet with bad checksum received\n");
@@ -475,6 +476,11 @@ int udp_rcv_loop()
 			if ((errno==EINTR)||(errno==EWOULDBLOCK)|| (errno==ECONNREFUSED))
 				continue; /* goto skip;*/
 			else goto error;
+		}
+		if(fromaddrlen != (unsigned int)sockaddru_len(bind_address->su)) {
+			LM_ERR("ignoring data - unexpected from addr len: %u != %u\n",
+					fromaddrlen, (unsigned int)sockaddru_len(bind_address->su));
+			continue;
 		}
 		/* we must 0-term the messages, receive_msg expects it */
 		buf[len]=0; /* no need to save the previous char */
@@ -498,16 +504,16 @@ int udp_rcv_loop()
 			LM_DBG("received on udp socket: (%d/%d/%d) [[%.*s]]\n",
 					j, i, len, j, printbuf);
 		}
-		ri.src_su=*from;
-		su2ip_addr(&ri.src_ip, from);
-		ri.src_port=su_getport(from);
+		rcvi.src_su=*fromaddr;
+		su2ip_addr(&rcvi.src_ip, fromaddr);
+		rcvi.src_port=su_getport(fromaddr);
 
 		if(unlikely(sr_event_enabled(SREV_NET_DGRAM_IN)))
 		{
 			void *sredp[3];
 			sredp[0] = (void*)buf;
 			sredp[1] = (void*)(&len);
-			sredp[2] = (void*)(&ri);
+			sredp[2] = (void*)(&rcvi);
 			evp.data = (void*)sredp;
 			if(sr_event_exec(SREV_NET_DGRAM_IN, &evp)<0) {
 				/* data handled by callback - continue to next packet */
@@ -517,8 +523,8 @@ int udp_rcv_loop()
 #ifndef NO_ZERO_CHECKS
 		if (!unlikely(sr_event_enabled(SREV_STUN_IN)) || (unsigned char)*buf != 0x00) {
 			if (len<MIN_UDP_PACKET) {
-				tmp=ip_addr2a(&ri.src_ip);
-				LM_DBG("probing packet received from %s %d\n", tmp, htons(ri.src_port));
+				tmp=ip_addr2a(&rcvi.src_ip);
+				LM_DBG("probing packet received from %s %d\n", tmp, htons(rcvi.src_port));
 				continue;
 			}
 		}
@@ -530,8 +536,8 @@ int udp_rcv_loop()
 			continue;
 		}
 #endif
-		if (ri.src_port==0){
-			tmp=ip_addr2a(&ri.src_ip);
+		if (rcvi.src_port==0){
+			tmp=ip_addr2a(&rcvi.src_ip);
 			LM_INFO("dropping 0 port packet from %s\n", tmp);
 			continue;
 		}
@@ -540,24 +546,24 @@ int udp_rcv_loop()
 		cfg_update();
 		if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*buf == 0x00) {
 			/* stun_process_msg releases buf memory if necessary */
-			if ((stun_process_msg(buf, len, &ri)) != 0) {
+			if ((stun_process_msg(buf, len, &rcvi)) != 0) {
 				continue; /* some error occurred */
 			}
 		} else {
 			/* receive_msg must free buf too!*/
-			receive_msg(buf, len, &ri);
+			receive_msg(buf, len, &rcvi);
 		}
 
 	/* skip: do other stuff */
 
 	}
 	/*
-	if (from) pkg_free(from);
+	if (fromaddr) pkg_free(fromaddr);
 	return 0;
 	*/
 
 error:
-	if (from) pkg_free(from);
+	if (fromaddr) pkg_free(fromaddr);
 	return -1;
 }
 
