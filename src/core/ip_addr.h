@@ -71,6 +71,7 @@ union sockaddr_union{
 	struct sockaddr     s;
 	struct sockaddr_in  sin;
 	struct sockaddr_in6 sin6;
+	struct sockaddr_storage sas;
 };
 
 
