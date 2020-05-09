@@ -275,7 +275,7 @@ static int load_pcres(int action)
 	/* Read the file and extract the patterns */
 	memset(line, 0, FILE_MAX_LINE);
 	i = -1;
-	while (fgets(line, FILE_MAX_LINE, f) != NULL) {
+	while (fgets(line, FILE_MAX_LINE-4, f) != NULL) {
 
 		/* Ignore comments and lines starting by space, tab, CR, LF */
 		if(isspace(line[0]) || line[0]=='#') {
@@ -306,7 +306,7 @@ static int load_pcres(int action)
 		}
 
 		/* Check if the patter size is too big (aprox) */
-		if (strlen(patterns[i]) + strlen(line) >= group_max_size - 2) {
+		if (strlen(patterns[i]) + strlen(line) >= group_max_size - 4) {
 			LM_ERR("pattern max file exceeded\n");
 			fclose(f);
 			goto err;
