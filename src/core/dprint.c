@@ -521,7 +521,7 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
 			len += 2;
 		} else if (s_in->s[i] < 32) {
-			len += 5;
+			len += 6;
 		} else {
 			len++;
 		}
@@ -542,9 +542,9 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 	p2 = s_out->s;
 	p1 = s_in->s;
 	while (p1 < s_in->s + s_in->len) {
-		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\')
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\') {
 			*p2++ = *p1++;
-		else {
+		} else {
 			*p2++ = '\\';
 			switch (token = *p1++) {
 			case '\\':
@@ -569,9 +569,10 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 				*p2++ = 't';
 				break;
 			default:
+				/* escape and print */
 				snprintf(p2, 6, "u%04x", token);
 				p2 += 5;
-				break;	/* escape and print */
+				break;
 			}
 		}
 	}
