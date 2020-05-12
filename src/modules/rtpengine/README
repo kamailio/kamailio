@@ -426,14 +426,13 @@ Chapter 1. Admin Guide
    of nodes. There is no locking when setting the nodes enabled/disabled
    (to keep the memory access as fast as possible). Thus, problems related
    to node state might appear for concurrent processes that might set the
-   nodes enabled/disabled(e.g. by fifo command). This robustness problems
+   nodes enabled/disabled(e.g. by fifo command). These robustness problems
    are overcome as follows.
 
    If the current process sees the selected node as disabled, the node is
-   force tested before the current process actually takes the disabled
-   decision. If the test succeeds, the process will set the node as
-   enabled (but other concurrent process might still see it as disabled).
-   .
+   force tested before the current process actually accepts the disabled
+   state. If the test succeeds, the process will set the node as enabled
+   (but other concurrent process might still see it as disabled).
 
    If the current process sees the selected node as enabled, it does no
    additional checks and sends the command which will fail in case the
@@ -583,7 +582,7 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
    to all rtpengines, else no rtpengine will be queried until its
    rtpengine_disable_tout timeout passes.
 
-   Default value is “1”.
+   Default value is “1” (enabled).
 
    Can be set at runtime, e.g.:
                         $ kamcmd cfg.set_now_int rtpengine aggressive_redetectio
@@ -612,10 +611,10 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 
 4.5. rtpengine_allow_op (integer)
 
-   Enable this to allow finishing the current sessions while denying new
-   sessions for the manually deactivated nodes via kamctl command i.e.
-   "disabled(permanent)" nodes. Probably the manually deactivated machine
-   is still running(did not crash).
+   Enable this setting to allow finishing the current sessions while
+   denying new sessions for the manually deactivated nodes via kamctl
+   command i.e. "disabled(permanent)" nodes. Probably the manually
+   deactivated machine is still running(did not crash).
 
    This is useful when deactivating a node for maintenance and reject new
    sessions but allow current ones to finish.
@@ -624,7 +623,8 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
    node is deleted from the table and the table reloaded (see
    nh_reload_rtpp) the node actually is disabled(permanent) and hidden for
    display. Next time the same node will be added in the table, and the
-   content reloaded, it will be updated and re-displayed.
+   database content reloaded, the re-activated node will be updated and
+   re-displayed.
 
    Default value is “0” to keep the current behaviour.
 
@@ -764,7 +764,9 @@ modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 
 4.14. hash_table_size (integer)
 
-   Size of the hash table. Default value is 256.
+   To maintain information about a selected rtp machine node for a given
+   call, entries are added in a hashtable of (callid, node) pairs. This
+   parameter sets the size of the hash table. Default value is 256.
 
    NOTE: If configured size is less than 1, the size will be defaulted to
    1.
@@ -779,11 +781,11 @@ modparam("rtpengine", "hash_table_size", 123)
    Number of seconds after an rtpengine hash table entry is marked for
    deletion. By default, this parameter is set to 3600 (seconds).
 
-   To maintain information about a selected rtp machine node, for a given
+   To maintain information about a selected rtp machine node for a given
    call, entries are added in a hashtable of (callid, node) pairs. When
-   command comes, lookup callid. If found, return chosen node. If not
-   found, choose a new node, insert it in the hastable and return the
-   chosen node.
+   command comes the callid is looked up in this table. If found, the
+   chosen node is used. If not found, choose a new node, insert the callid
+   in the hashtable and return the chosen node.
 
    NOTE: In the current implementation, the actual deletion happens on the
    fly, while insert/remove/lookup the hastable, only for the entries in
@@ -799,10 +801,11 @@ modparam("rtpengine", "hash_table_tout", 300)
 
 4.16. db_url (string)
 
-   The rtpengine datablase url. If present and valid, it activates
-   database mode. Node information is read from database, not from config.
+   The rtpengine database url. If present and valid, it activates database
+   mode. In this mode the node information is read from database, not from
+   configuration modparam parameters.
 
-   By default, the datablase url is NULL (not set).
+   By default, the database url is NULL (not set).
 
    Example 1.16. Set db_url parameter
 ...
@@ -812,7 +815,7 @@ modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
 4.17. table_name (string)
 
    The rtpengine table name. If database mode is activated (i.e. valid
-   db_url), set the name of rtpengine table, on startup.
+   db_url), sets the name of the rtpengine table, on startup.
 
    By default, the rtpengine table name is "rtpengine".
 
@@ -853,9 +856,10 @@ mysql> select * from version;
 
 4.18. setid_col (string)
 
-   Column name in the rtpengine table. If database mode is activated (i.e.
-   valid db_url), set the setid of rtp nodes according to this column, on
-   startup. The MySQL value for this column should be INT UNSIGNED.
+   Column name for the "setid" in the rtpengine table. If database mode is
+   activated (i.e. valid db_url), set the setid of rtp nodes according to
+   this column, on startup. The MySQL value for this column should be INT
+   UNSIGNED.
 
    By default, the column name is "setid".
 
@@ -866,9 +870,10 @@ modparam("rtpengine", "setid_col", "setid_column_name")
 
 4.19. url_col (string)
 
-   Column name in the rtpengine table. If database mode is activated (i.e.
-   valid db_url), set the url of rtp nodes according to this column, on
-   startup. The MySQL value for this column should be VARCHAR.
+   Column name for the url in the rtpengine table. If database mode is
+   activated (i.e. valid db_url), set the url of rtp nodes according to
+   this column, on startup. The MySQL value for this column should be
+   VARCHAR.
 
    By default, the column name is "url".
 
@@ -879,10 +884,10 @@ modparam("rtpengine", "url_col", "url_column_name")
 
 4.20. weight_col (string)
 
-   Column name in the rtpengine table. If database mode is activated (i.e.
-   valid db_url), set the weight of rtp nodes according to this column, on
-   startup. The column value has priority over the URL weight. The MySQL
-   value for this column should be INT UNSIGNED.
+   Column name for weight in the rtpengine table. If database mode is
+   activated (i.e. valid db_url), set the weight of rtp nodes according to
+   this column, on startup. The column value has priority over the URL
+   weight. The MySQL value for this column should be INT UNSIGNED.
 
    By default, the column name is "weight".
 
@@ -1799,12 +1804,12 @@ modparam("rtpengine", "control_cmd_tos", 144)
 4.72. hash_algo (integer)
 
    Hashing algorithm to be used in node selection algorithm. Now there are
-   2 possibilities: legacy alogrithm - 0(very basic hash over callid) or
+   2 possibilities: legacy algorithm - 0(very basic hash over callid) or
    SHA1 - 1(apply sha1 over the callid and calculate hash).
 
    Default value is 0, legacy algorithm.
 
-   The values not falling into the range “0-1” .
+   The values not falling into the range “0-1” are ignored.
 
    Example 1.73. Set control_cmd_tos parameter
 ...
@@ -2084,7 +2089,7 @@ rtpengine_offer();
             encoding can be added in this manner. More details about this
             are found in the rtpengine README.
           + codec-strip=... - strips given codec from sdp
-          + codec-offer=... - offer given codec from sdp.More details
+          + codec-offer=... - offer given codec from sdp. More details
             about this are found in the rtpengine README.
           + codec-mask=... - Similar to strip except that codecs listed
             here will still be accepted and used for transcoding on the
@@ -2166,7 +2171,7 @@ ranscode=PCMA"))
 5.4.  rtpengine_info([flags])
 
    Send an updated offer to rtpengine. This is meant to be used when
-   processing Tricke ICE SDP Fragments that are carried in SIP INFO
+   processing Trickle ICE SDP Fragments that are carried in SIP INFO
    messages and are proxied to endpoints that do not support ICE. With a
    matching content type, the SDP fragment is used to update rtpengine's
    list of ICE candidates. No new SDP is returned and so the SIP INFO
@@ -2184,7 +2189,7 @@ rtpengine_info();
 
 5.5.  rtpengine_delete([flags])
 
-   Tears down the RTPProxy session for the current call. This populates
+   Tears down the RTP proxy session for the current call. This populates
    the statistics pseudovariables (such “mos_min_pv” etc).
 
    See rtpengine_offer() function description above for the meaning of the
@@ -2436,7 +2441,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    “volume” is specified in absolute decibels, with a default of -8 db.
 
    Multiple consecutive DTMF events can be queued up by calling this
-   function multiple times consecutively. Rtpengine will play out the DTMF
+   function multiple times consecutively. RTPengine will play out the DTMF
    events in sequence, separated by a default pause of 100 ms. An
    alternative pause length can be given through the “pause” option,
    between 100 and 5000 ms.
@@ -2506,11 +2511,11 @@ $ kamcmd rtpengine.reload
    recheck_ticks are grater than 0, the proxy is considered disabled
    temporary, and it is not taken into consideration for sending data.
    When the recheck_ticks are 0, the proxy is retested when trying to send
-   data(not automatically retested), and data can be send to it on
+   data (not automatically retested), and data can be send to it on
    success.
 
-   NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
-   escape the :: from the IPv6 address. See the example below.
+   NOTE: If you specify an IPv6 RTP, the proxy url must be prefixed with
+   :: to escape the :: from the IPv6 address. See the example below.
 
    Example 1.94.  rtpengine.enable usage
 ...
