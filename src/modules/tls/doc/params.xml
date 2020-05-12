@@ -65,7 +65,7 @@
 				<para>
 				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients.
 				Note: you shouldn't use SSLv2 for anything which should be secure.
-				Newer versions of libssl don't include support for it anymore.
+				Newer versions of OpenSSL libraries don't include support for it anymore.
 				</para>
 			</listitem>
 			<listitem>
@@ -84,7 +84,7 @@
 				is a concern."
 				</para>
 				<para>
-				Note: For older libssl version, this option allows SSLv2, with hello
+				Note: For older OpenSSL library versions, this option allows SSLv2, with hello
 				messages done over SSLv2. You shouldn't use SSLv2 or SSLv3 for anything
 				which should be secure.
 				</para>
