@@ -370,24 +370,24 @@ static int DecodePhoneNumber(char* buffer, int len, str phone) {
 // Generate a 7 Byte Long Time
 static void EncodeTime(char * buffer) {
 	time_t ts;
-	struct tm * now;
+	struct tm now;
 	int i = 0;
 
 	time(&ts);
 	/* Get GMT time */
-	now = gmtime(&ts);
+	gmtime_r(&ts, &now);
 
-	i = now->tm_year % 100;
+	i = now.tm_year % 100;
 	buffer[0] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
-	i = now->tm_mon + 1;
+	i = now.tm_mon + 1;
 	buffer[1] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
-	i = now->tm_mday;
+	i = now.tm_mday;
 	buffer[2] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
-	i = now->tm_hour;
+	i = now.tm_hour;
 	buffer[3] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
-	i = now->tm_min;
+	i = now.tm_min;
 	buffer[4] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
-	i = now->tm_sec;
+	i = now.tm_sec;
 	buffer[5] = (unsigned char)((((i % 10) << 4) | (i / 10)) & 0xff);
 	buffer[6] = 0; // Timezone, we use no time offset.
 }
