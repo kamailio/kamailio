@@ -3668,7 +3668,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 							_wbufq_non_empty(tcpconn) )){
 				if (unlikely(TICKS_GE(t, tcpconn->wbuf_q.wr_timeout))){
 					LM_DBG("wr. timeout on CONN_RELEASE for %p refcnt= %d\n",
-							tcpconn, atomic_get(&tcpconn->refcnt));
+							(void*)tcpconn, atomic_get(&tcpconn->refcnt));
 					/* timeout */
 					if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
