@@ -79,15 +79,14 @@
 		There is no locking when setting the nodes enabled/disabled (to keep the
 		memory access as fast as possible). Thus, problems related to node state
 		might appear for concurrent processes that might set the nodes
-		enabled/disabled(e.g. by fifo command). This robustness problems are overcome as follows.
+		enabled/disabled(e.g. by fifo command). These robustness problems are overcome as follows.
 	</para>
 
 	<para>
 		If the current process sees the selected node as disabled, the node is
 		<emphasis>force tested</emphasis> before the current process actually
-		takes the disabled decision. If the test succeeds, the process will set
+		accepts the disabled state. If the test succeeds, the process will set
 		the node as enabled (but other concurrent process might still see it as disabled).
-.
 	</para>
 
 	<para>
@@ -206,7 +205,7 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1</quote>.
+			Default value is <quote>1</quote> (enabled).
 		</emphasis>
 		</para>
 		<para>
@@ -252,17 +251,20 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 	<section id="rtpengine.p.rtpengine_allow_op">
 		<title><varname>rtpengine_allow_op</varname> (integer)</title>
 		<para>
-		Enable this to allow finishing the current sessions while denying new sessions for the
+		Enable this setting to allow finishing the current sessions while denying new sessions for the
 		<emphasis>manually deactivated nodes </emphasis> via kamctl command i.e. "disabled(permanent)" nodes.
 		Probably the manually deactivated machine is still running(did not crash).
 		</para>
 		<para>
-		This is <emphasis>useful</emphasis> when deactivating a node for maintenance and reject new sessions but allow current ones to finish.
+		This is <emphasis>useful</emphasis> when deactivating a node for maintenance and
+		reject new sessions but allow current ones to finish.
 		</para>
 		<para>
 		The behaviour is the same for a rtpengine deleted table node.
-		When the node is deleted from the table and the table reloaded (see nh_reload_rtpp) the node actually is disabled(permanent) and hidden for display.
-		Next time the same node will be added in the table, and the content reloaded, it will be updated and re-displayed.
+		When the node is deleted from the table and the table reloaded (see nh_reload_rtpp)
+		the node actually is disabled(permanent) and hidden for display.
+		Next time the same node will be added in the table, and the database content
+		reloaded, the re-activated node will be updated and re-displayed.
 		</para>
 		<para>
 		<emphasis>
@@ -427,9 +429,9 @@ route {
 		<title><varname>write_sdp_pv</varname> (string)</title>
 		<para>
 			If this parameter is set to a valid AVP or script var specifier, the
-            SDP returned by rtpengine in the offer/answer operations
-            is returned in the specified variable instead of the
-            message body.
+            		SDP returned by rtpengine in the offer/answer operations
+            		is returned in the specified variable instead of the
+            		message body.
 		</para>
 		<para>
 			There is no default value.
@@ -471,7 +473,8 @@ modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 	<section id="rtpengine.p.hash_table_size">
 		<title><varname>hash_table_size</varname> (integer)</title>
 		<para>
-			Size of the hash table. Default value is 256.
+			To maintain information about a selected rtp machine node for a given call, entries are added in a hashtable of (callid, node) pairs.
+			This parameter sets the size of the hash table. Default value is 256.
 		</para>
 		<para>
 			NOTE: If configured size is <emphasis>less than</emphasis> 1, the size will be defaulted to 1.
@@ -493,15 +496,20 @@ modparam("rtpengine", "hash_table_size", 123)
 			By default, this parameter is set to 3600 (seconds).
 		</para>
 		<para>
-			To maintain information about a selected rtp machine node, for a given call, entries are added in a hashtable of (callid, node) pairs.
-			When command comes, lookup callid. If found, return chosen node. If not found, choose a new node, insert it in the hastable and return the chosen node.
+			To maintain information about a selected rtp machine node for a given call,
+			entries are added in a hashtable of (callid, node) pairs.
+			When command comes the callid is looked up in this table. If found, the
+			chosen node is used. If not found, choose a new node, insert the callid in
+			the hashtable and return the chosen node.
 		</para>
 		<para>
 			NOTE: In the current implementation, the actual deletion happens <emphasis>on the fly</emphasis>,
-			while insert/remove/lookup the hastable, <emphasis>only</emphasis> for the entries in the insert/remove/lookup path.
+			while insert/remove/lookup the hastable, <emphasis>only</emphasis>
+			for the entries in the insert/remove/lookup path.
 		</para>
 		<para>
-			NOTE: When configuring this parameter, one should consider maximum call time VS share memory for unfinished calls.
+			NOTE: When configuring this parameter, one should consider maximum call time
+			VS share memory for unfinished calls.
 		</para>
 		<example>
 		<title>Set <varname>hash_table_tout</varname> parameter</title>
@@ -519,11 +527,11 @@ modparam("rtpengine", "hash_table_tout", 300)
 	<section id="rtpengine.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-			The rtpengine datablase url. If present and valid, it activates database mode.
-			Node information is read from database, not from config.
+			The rtpengine database url. If present and valid, it activates database mode.
+			In this mode the node information is read from database, not from configuration modparam parameters.
 		</para>
 		<para>
-			By default, the datablase url is NULL (not set).
+			By default, the database url is NULL (not set).
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
@@ -540,7 +548,7 @@ modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
 		<title><varname>table_name</varname> (string)</title>
 		<para>
 			The rtpengine table name. If database mode is activated (i.e. valid db_url),
-			set the name of rtpengine table, on startup.
+			sets the name of the rtpengine table, on startup.
 		</para>
 		<para>
 			By default, the rtpengine table name is "rtpengine".
@@ -594,7 +602,8 @@ mysql> select * from version;
 	<section id="rtpengine.p.setid_col">
 		<title><varname>setid_col</varname> (string)</title>
 		<para>
-			Column name in the rtpengine table. If database mode is activated (i.e. valid db_url),
+			Column name for the "setid" in the rtpengine table.
+			If database mode is activated (i.e. valid db_url),
 			set the setid of rtp nodes according to this column, on startup.
 			The MySQL value for this column should be INT UNSIGNED.
 		</para>
@@ -615,7 +624,7 @@ modparam("rtpengine", "setid_col", "setid_column_name")
 	<section id="rtpengine.p.url_col">
 		<title><varname>url_col</varname> (string)</title>
 		<para>
-			Column name in the rtpengine table. If database mode is activated (i.e. valid db_url),
+			Column name for the url in the rtpengine table. If database mode is activated (i.e. valid db_url),
 			set the url of rtp nodes according to this column, on startup.
 			The MySQL value for this column should be VARCHAR.
 		</para>
@@ -636,7 +645,7 @@ modparam("rtpengine", "url_col", "url_column_name")
 	<section id="rtpengine.p.weight_col">
 		<title><varname>weight_col</varname> (string)</title>
 		<para>
-			Column name in the rtpengine table. If database mode is activated (i.e. valid db_url),
+			Column name for weight in the rtpengine table. If database mode is activated (i.e. valid db_url),
 			set the weight of rtp nodes according to this column, on startup. The column value has
 			priority over the URL weight.
 			The MySQL value for this column should be INT UNSIGNED.
@@ -1990,7 +1999,8 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 	<section id="rtpengine.p.control_cmd_tos">
 		<title><varname>control_cmd_tos</varname> (integer)</title>
 		<para>
-			The parameter is used to set the value of <quote>type of service (tos)</quote> for the control commands (such as rtpengine_offer(), rtpengine_answer() etc).
+			The parameter is used to set the value of <quote>type of service (tos)</quote> for the
+			control commands (such as rtpengine_offer(), rtpengine_answer() etc).
 		</para>
 		<para>
 			There is no default value. By default this feature is not used.
@@ -2012,13 +2022,13 @@ modparam("rtpengine", "control_cmd_tos", 144)
 		<title><varname>hash_algo</varname> (integer)</title>
 		<para>
 			Hashing algorithm to be used in node selection algorithm. Now there are 2 possibilities: legacy
-			alogrithm - 0(very basic hash over callid) or SHA1 - 1(apply sha1 over the callid and calculate hash).
+			algorithm - 0(very basic hash over callid) or SHA1 - 1(apply sha1 over the callid and calculate hash).
 		</para>
 		<para>
 			Default value is 0, legacy algorithm.
 		</para>
 		<para>
-			The values not falling into the range <quote>0-1</quote> .
+			The values not falling into the range <quote>0-1</quote> are ignored.
 		</para>
 		<example>
 		<title>Set <varname>control_cmd_tos</varname> parameter</title>
@@ -2076,24 +2086,24 @@ rtpengine_offer();
 </programlisting>
 		</example>
 	</section>
-        <section id="rtpengine.f.rtpengine_offer">
-                <title>
-                <function moreinfo="none">rtpengine_offer([flags])</function>
-                </title>
-                <para>
-                Rewrites &sdp; body to ensure that media is passed through
-                an &rtp; proxy. To be invoked
+	<section id="rtpengine.f.rtpengine_offer">
+		<title>
+		<function moreinfo="none">rtpengine_offer([flags])</function>
+		</title>
+		<para>
+		Rewrites &sdp; body to ensure that media is passed through
+		an &rtp; proxy. To be invoked
 		on INVITE for the cases the &sdp; bodies are in INVITE and 200 OK and on 200 OK
 		when &sdp; bodies are in 200 OK and ACK.
-                </para>
-                <para>
+		</para>
+		<para>
 		The function will return true on success and false (-1) on various failures,
 		like using rtp_engine_offer() on a SIP MESSAGE request or communication with
 		rtpengine fails.
-                </para>
+		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
-		<listitem>
+			<listitem>
 			<para>
 			<emphasis>flags</emphasis> - flags to turn on some features.
 			</para>
@@ -2387,7 +2397,8 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>codec-offer=...</emphasis> - offer given codec from sdp.More details about this are found in the rtpengine README.
+				<emphasis>codec-offer=...</emphasis> - offer given codec from sdp.
+				More details about this are found in the rtpengine README.
 				</para></listitem>
 
 				<listitem><para>
@@ -2421,7 +2432,7 @@ rtpengine_offer();
 		</itemizedlist>
 		<para>
 		This function can be used from ANY_ROUTE.
-                </para>
+		</para>
 		<example>
 		<title><function>rtpengine_offer</function> usage</title>
 		<programlisting format="linespecific">
@@ -2465,10 +2476,10 @@ if (has_body("application/sdp")) {
 </programlisting>
                 </example>
 	</section>
-        <section id="rtpengine.f.rtpengine_answer">
-                <title>
-                <function moreinfo="none">rtpengine_answer([flags])</function>
-                </title>
+	<section id="rtpengine.f.rtpengine_answer">
+		<title>
+			<function moreinfo="none">rtpengine_answer([flags])</function>
+		</title>
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through
 		an &rtp; proxy. To be invoked
@@ -2484,19 +2495,19 @@ if (has_body("application/sdp")) {
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-		 <title><function>rtpengine_answer</function> usage</title>
+		<title><function>rtpengine_answer</function> usage</title>
 		<para>
 		See rtpengine_offer() function example above for example.
 		</para>
 		</example>
-        </section>
+	</section>
 	<section id="rtpengine.f.rtpengine_info">
 		<title>
 		<function moreinfo="none">rtpengine_info([flags])</function>
 		</title>
 		<para>
 		Send an updated offer to rtpengine. This is meant to be used when processing
-		Tricke ICE &sdp; Fragments that are carried in &sip; INFO messages
+		Trickle ICE &sdp; Fragments that are carried in &sip; INFO messages
 		and are proxied to endpoints that do not support ICE. With a matching
 		content type, the &sdp; fragment is used to update rtpengine's list of ICE
 		candidates. No new &sdp; is returned and so the &sip; INFO message should
@@ -2523,7 +2534,7 @@ rtpengine_info();
 		<function moreinfo="none">rtpengine_delete([flags])</function>
 		</title>
 		<para>
-		Tears down the RTPProxy session for the current call.
+		Tears down the RTP proxy session for the current call.
 		This populates the statistics pseudovariables (such <quote>mos_min_pv</quote> etc).
 		</para>
 		<para>
@@ -2567,10 +2578,10 @@ rtpengine_query();
 		</example>
 	</section>
 
-    <section id="rtpengine.f.rtpengine_manage">
-        <title>
-        <function moreinfo="none">rtpengine_manage([flags])</function>
-        </title>
+	<section id="rtpengine.f.rtpengine_manage">
+	<title>
+		<function moreinfo="none">rtpengine_manage([flags])</function>
+	</title>
 		<para>
 		Manage the RTPEngine session - it combines the functionality of
 		rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
@@ -2931,7 +2942,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
 		</para>
 		<para>
 		Multiple consecutive DTMF events can be queued up by calling this function multiple
-		times consecutively. Rtpengine will play out the DTMF events in sequence, separated
+		times consecutively. RTPengine will play out the DTMF events in sequence, separated
 		by a default pause of 100 ms. An alternative pause length can be given through the
 		<quote>pause</quote> option, between 100 and 5000 ms.
 		</para>
@@ -2974,7 +2985,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 	<section>
 		<title>RPC Commands</title>
 
-	    <section id="rtpengine.r.reload">
+	<section id="rtpengine.r.reload">
 			<title>rtpengine.reload</title>
 			<para>
 				Reloads the database node table content <emphasis>if configured</emphasis>.
@@ -3005,22 +3016,24 @@ $ &kamcmd; rtpengine.reload
 			The second parameter value must be a number in decimal.
 			</para>
 			<para>
-            When try to enable the &rtp; proxy, an application ping command is sent to it.
-            If it fails, the proxy is not enabled.
-            Displays <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to enable/disable.
+				When try to enable the &rtp; proxy, an application ping command is sent to it.
+				If it fails, the proxy is not enabled.
+				Displays <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to enable/disable.
 			</para>
 			<para>
 			NOTE: If a &rtp; proxy is defined multiple times (in the same or diferent sets), all of its instances will be enabled/disabled.
 			</para>
 			<para>
 			NOTE: If a &rtp; proxy is in the disabled permanent state and one tries to enable it, even if the ping fails,
-            it is moved to a disabled temporary state and a recheck_ticks are given to it.
-            While the recheck_ticks are grater than 0, the proxy is considered disabled temporary, and it is not taken into consideration for sending data.
-            When the recheck_ticks are 0, the proxy is retested <emphasis>when trying to send data</emphasis>(not automatically retested), and data can be send to it on success.
+			it is moved to a disabled temporary state and a recheck_ticks are given to it.
+			While the recheck_ticks are grater than 0, the proxy is considered disabled temporary,
+			and it is not taken into consideration for sending data.
+			When the recheck_ticks are 0, the proxy is retested <emphasis>when trying to send data</emphasis>
+			(not automatically retested), and data can be send to it on success.
 			</para>
 			<para>
-			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
-            to escape the :: from the IPv6 address. See the example below.
+			NOTE: If you specify an IPv6 &rtp;, the proxy url must be prefixed  with <emphasis>::</emphasis>
+			to escape the :: from the IPv6 address. See the example below.
 			</para>
 			<example>
 			<title>
@@ -3035,23 +3048,23 @@ $ &kamcmd; rtpengine.enable all 1
 			</example>
 		</section>
 
-	    <section id="rtpengine.r.show">
+		<section id="rtpengine.r.show">
 			<title><function moreinfo="none">rtpengine.show proxy_url/all</function></title>
 			<para>
 			Displays all the &rtp; proxies and their information: set and
 			status (disabled or not, weight and recheck_ticks). If a &rtp; proxy has been disabled by
-            nh_enable_rtpp mi command a "(permanent)" quote will appear when printing the disabled status.
-            This is to differentiate from a temporary disable due to the proxy being not found responsive
-            by kamailio. In addition, when disabled permanent, recheck_ticks have no meaning and "N\A"
-            is printed instead of the value.
+			nh_enable_rtpp mi command a "(permanent)" quote will appear when printing the disabled status.
+			This is to differentiate from a temporary disable due to the proxy being not found responsive
+			by kamailio. In addition, when disabled permanent, recheck_ticks have no meaning and "N\A"
+			is printed instead of the value.
 			</para>
 			<para>
-            It takes either a specific &rtp; proxy url (exactly as defined in
+			It takes either a specific &rtp; proxy url (exactly as defined in
 			the config file) or the keyword <emphasis>all</emphasis> as a parameter.
 			</para>
 			<para>
 			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
-            to escape the :: from the IPv6 address. See the example below.
+			to escape the :: from the IPv6 address. See the example below.
 			</para>
 			<example>
 			<title>
@@ -3066,21 +3079,21 @@ $ &kamcmd; rtpengine.show all
 			</example>
 		</section>
 
-	    <section id="rtpengine.m.ping">
+		<section id="rtpengine.m.ping">
 			<title><function moreinfo="none">rtpengine.ping proxy_url/all</function></title>
 			<para>
-            Sends an application ping command to the &rtp; proxy. If the proxy does not respond,
-            it will be disabled, but not permanent. If the proxy responds, no action is taken.
-            Displays the ping result, i.e.
-            <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to ping.
+			Sends an application ping command to the &rtp; proxy. If the proxy does not respond,
+			it will be disabled, but not permanent. If the proxy responds, no action is taken.
+			Displays the ping result, i.e.
+			<emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to ping.
 			</para>
 			<para>
-            It takes either a specific &rtp; proxy url (exactly as defined in
+			It takes either a specific &rtp; proxy url (exactly as defined in
 			the config file) or the keyword <emphasis>all</emphasis> as a parameter.
 			</para>
 			<para>
 			NOTE: When specify the IPv6 &rtp; proxy url one must prefix it with <emphasis>::</emphasis>
-            to escape the :: from the IPv6 address. See the example below.
+			to escape the :: from the IPv6 address. See the example below.
 			</para>
 			<example>
 			<title>
