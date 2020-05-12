@@ -63,7 +63,7 @@ int bind_keepalive(keepalive_api_t *api)
  * Add a new destination in keepalive pool
  */
 int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
-    ka_statechanged_f callback, void *user_attr)
+    ka_statechanged_f statechanged_clb, ka_response_f response_clb, void *user_attr)
 {
 	struct sip_uri _uri;
 	ka_dest_t *dest=0,*hollow=0;
@@ -104,7 +104,8 @@ int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
 		goto err;
 
 	dest->flags = flags;
-	dest->statechanged_clb = callback;
+	dest->statechanged_clb = statechanged_clb;
+	dest->response_clb = response_clb;
 	dest->user_attr = user_attr;
 
     dest->timer = timer_alloc();

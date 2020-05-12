@@ -31,6 +31,7 @@
 #include <time.h>
 #include "../../core/sr_module.h"
 #include "../../core/locking.h"
+#include "../tm/tm_load.h"
 
 #define KA_INACTIVE_DST 1 /*!< inactive destination */
 #define KA_TRYING_DST 2   /*!< temporary trying destination */
@@ -48,6 +49,8 @@ extern int ka_ping_interval;
 #define KA_PROBE_ONLYFLAGGED 3
 
 typedef void (*ka_statechanged_f)(str *uri, int state, void *user_attr);
+typedef void (*ka_response_f)(
+		str *uri, struct tmcb_params *ps, void *user_attr);
 
 
 typedef struct _ka_dest
@@ -62,6 +65,7 @@ typedef struct _ka_dest
 
 	void *user_attr;
 	ka_statechanged_f statechanged_clb;
+	ka_response_f response_clb;
 	struct socket_info *sock;
 	struct ip_addr ip_address; /*!< IP-Address of the entry */
 	unsigned short int port;   /*!< Port of the URI */
@@ -82,7 +86,8 @@ extern int ka_counter_del;
 ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param);
 
 int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
-        ka_statechanged_f callback, void *user_attr);
+        ka_statechanged_f statechanged_clb, ka_response_f response_clb,
+        void *user_attr);
 int ka_destination_state(str *uri);
 int ka_str_copy(str *src, str *dest, char *prefix);
 int free_destination(ka_dest_t *dest) ;

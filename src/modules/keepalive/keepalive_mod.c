@@ -180,7 +180,7 @@ static int w_add_destination(sip_msg_t *msg, char *uri, char *owner)
 		return -1;
 	}
 
-	return ka_add_dest(&suri, &sowner, 0, ka_ping_interval, 0, 0);
+	return ka_add_dest(&suri, &sowner, 0, ka_ping_interval, 0, 0, 0);
 }
 
 /*!
@@ -191,7 +191,7 @@ static int ki_add_destination(sip_msg_t *msg, str *uri, str *owner)
 	if(ka_alloc_destinations_list() < 0)
 		return -1;
 
-	return ka_add_dest(uri, owner, 0, ka_ping_interval, 0, 0);
+	return ka_add_dest(uri, owner, 0, ka_ping_interval, 0, 0, 0);
 }
 
 /*!
@@ -241,7 +241,7 @@ static int ka_mod_add_destination(modparam_t type, void *val)
 	str owner = str_init("_params");
 	LM_DBG("adding destination %.*s\n", dest.len, dest.s);
 
-	return ka_add_dest(&dest, &owner, 0, ka_ping_interval, 0, 0);
+	return ka_add_dest(&dest, &owner, 0, ka_ping_interval, 0, 0, 0);
 }
 
 /*
