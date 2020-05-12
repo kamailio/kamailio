@@ -81,6 +81,7 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
     const char *s;
     const str *tmpstr;
     int vtype = VAL_TYPE(v);
+    struct tm _time;
     _str->s = NULL;
     _str->len = 32; // default for numbers
 
@@ -144,7 +145,8 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
             LM_DBG("converting datetime value %ld to str\n", VAL_TIME(v));
             _str->s = (char*)pkg_malloc(_str->len);
             if (!_str->s) goto memerr;
-            strftime(_str->s, _str->len, "%Y-%m-%d %H:%M:%S", localtime(&(VAL_TIME(v))));
+            localtime_r(&(VAL_TIME(v)), &_time);
+            strftime(_str->s, _str->len, "%Y-%m-%d %H:%M:%S", &_time);
             _str->len = strlen(_str->s);
             break;
         case DB1_DOUBLE:
