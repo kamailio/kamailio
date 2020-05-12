@@ -96,6 +96,7 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 		_dtime = ctime(&dest->last_down);
 		_dtime[strlen(_dtime) - 1] = '\0';
 		rpc->struct_add(sub, "s", "last down", _dtime);
+		rpc->struct_add(sub, "d", "state", (int) dest->state);
 	}
 
 	return;
