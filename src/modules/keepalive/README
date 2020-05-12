@@ -56,7 +56,7 @@ Yasin CANER
         1. Available Functions
 
               1.1. add_destination(uri, owner, flags, ping_interval,
-                      [callback, [user_attr]])
+                      [statechanged_clb, response_clb, [user_attr]])
 
               1.2. Examples
 
@@ -324,8 +324,8 @@ Chapter 2. Developer Guide
 
    1. Available Functions
 
-        1.1. add_destination(uri, owner, flags, ping_interval, [callback,
-                [user_attr]])
+        1.1. add_destination(uri, owner, flags, ping_interval,
+                [statechanged_clb, response_clb, [user_attr]])
 
         1.2. Examples
 
@@ -338,13 +338,13 @@ Chapter 2. Developer Guide
 
 1. Available Functions
 
-   1.1. add_destination(uri, owner, flags, ping_interval, [callback,
-          [user_attr]])
+   1.1. add_destination(uri, owner, flags, ping_interval,
+          [statechanged_clb, response_clb, [user_attr]])
 
    1.2. Examples
 
-1.1.  add_destination(uri, owner, flags, ping_interval, [callback,
-[user_attr]])
+1.1.  add_destination(uri, owner, flags, ping_interval, [statechanged_clb,
+response_clb, [user_attr]])
 
    This function registers a new destination to monitor. Monitoring of the
    destination starts as soon as it returns with success (0 value).
@@ -361,7 +361,7 @@ Chapter 2. Developer Guide
      * flags (integer) - destination flags (unused for now, use 0 value)
      * ping_interval (integer) - Pinging interval in seconds for this
        destination
-     * callback (ka_statechanged_f, optional) - callback function,
+     * statechanged_clb (ka_statechanged_f, optional) - callback function,
        executed on destination's state change.
        The callback function is of type void (*ka_statechanged_f)(str
        *uri, int state, void *user_attr);. Use NULL to set no callback.
@@ -370,9 +370,17 @@ Chapter 2. Developer Guide
             waiting first ping replies or timeout)
           + 1 - destination is UP
           + 2 - destination is DOWN
-     * user_attr (void * pointer, optional) - If callback function is
-       setup, this parameter will be forwarded to it, as last parameter.
-       Use NULL to set no user_attr parameter.
+     * response_clb (ka_response_f, optional) - callback function,
+       executed on destination's response provided.
+       The callback function is of type void (*ka_response_f)(str *uri,
+       struct tmcb_params *ps, void *user_attr);. Use NULL to set no
+       callback.
+       ps is a pack structure with all params passed to callback function.
+       Defined in t_hooks.h
+     * user_attr (void * pointer, optional) - If any callback function is
+       setup, this parameter will be forwarded to it (or both callbacks in
+       both are defined), as last parameter. Use NULL to set no user_attr
+       parameter.
 
    Returned values:
      * 0 if ok
@@ -395,17 +403,18 @@ if (bind_keepalive( &ka_api ) != 0) {
 }
 ...
 ...
-/* callback function */
-void my_callback(str uri, int state, void *user_attr) {
-
+/* callback function (on state changed) */
+void my_state_changed_clb(str uri, int state, void *user_attr) {
         printf("%.*s new state is: %d\n", uri.len, uri.str, state)
 }
 
-/* register a new destination */
-str dest  = str_init("sip:192.168.10.21:5060");
-str owner = str_init("mymodule");
+/* callback function (on each response received) */
+void my_response_clb(str *uri, struct tmcb_params *ps, void *user_attr) {
+        printf("response [%d] from %.*s\n", ps->code, uri.len, uri.str)
+}
 
-if (ka_api.add_destination(dest, owner, 0, 60, my_callback, NULL) != 0) {
+if (ka_api.add_destination(dest, owner, 0, 60, my_state_changed_clb,
+                                my_response_clb, NULL) != 0) {
     LM_ERR("can't add destination\n");
     goto error;
 }
