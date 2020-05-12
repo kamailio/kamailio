@@ -137,7 +137,8 @@ static int sipdump_write_meta(char *fpath)
 	int len;
 	int i;
 	FILE *mfile = NULL;
-	struct tm *ti;
+	struct tm ti;
+	char t_buf[26] = {0};
 
 	len = strlen(fpath);
 	if(len>=SIPDUMP_FPATH_SIZE-1) {
@@ -156,14 +157,14 @@ static int sipdump_write_meta(char *fpath)
 		LM_ERR("failed to open meta file %s\n", mpath);
 		return -1;
 	}
-	ti = localtime(&up_since);
+	localtime_r(&up_since, &ti);
 	fprintf(mfile,
 			"v: 1.0\n"
 			"version: %s %s\n"
 			"start: %s"
 			"nrprocs: %d\n",
 			ver_name, ver_version,
-			asctime(ti),
+			asctime_r(&ti, t_buf),
 			*process_count
 		);
 	for (i=0; i<*process_count; i++) {
@@ -182,7 +183,7 @@ static int sipdump_write_meta(char *fpath)
 static int sipdump_rotate_file(void)
 {
 	time_t tv;
-	struct tm *ti = NULL;
+	struct tm ti;
 	int n;
 
 	tv = time(NULL);
@@ -197,12 +198,12 @@ static int sipdump_rotate_file(void)
 	if(_sipdump_file != NULL) {
 		fclose(_sipdump_file);
 	}
-	ti = localtime(&tv);
+	localtime_r(&tv, &ti);
 	n = snprintf(_sipdump_fpath+_sipdump_fpath_prefix.len,
 			SIPDUMP_FPATH_SIZE-_sipdump_fpath_prefix.len,
 			"%d-%02d-%02d--%02d-%02d-%02d.data",
-			1900+ti->tm_year, ti->tm_mon, ti->tm_mday,
-			ti->tm_hour, ti->tm_min, ti->tm_sec);
+			1900+ti.tm_year, ti.tm_mon, ti.tm_mday,
+			ti.tm_hour, ti.tm_min, ti.tm_sec);
 	LM_DBG("writing to file: %s (%d)\n", _sipdump_fpath, n);
 	_sipdump_file = fopen( _sipdump_fpath, "w" );
 	if(_sipdump_file==NULL) {
