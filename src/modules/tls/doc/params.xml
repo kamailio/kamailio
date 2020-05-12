@@ -982,7 +982,7 @@ modparam("tls", "session_cache", 1)
 		The value for session ID context, making sense when session caching is enabled.
 	</para>
 	<para>
-		By default TLS session_id is "sip-router-tls-3.1".
+		By default TLS session_id is "kamailio-tls-5.x.y".
 	</para>
 	<example>
 		<title>Set <varname>session_id</varname> parameter</title>
