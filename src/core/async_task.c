@@ -277,8 +277,8 @@ int async_task_run(int idx)
 			continue;
 		}
 		if(ptask->exec!=NULL) {
-			LM_DBG("task executed [%p] (%p/%p)\n", ptask,
-					ptask->exec, ptask->param);
+			LM_DBG("task executed [%p] (%p/%p)\n", (void*)ptask,
+					(void*)ptask->exec, (void*)ptask->param);
 			ptask->exec(ptask->param);
 		}
 		shm_free(ptask);
