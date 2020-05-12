@@ -1950,17 +1950,15 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	size_t len;
 	char time_str[MAX_TIME];
 	time_t now;
-	struct tm *bd_time;
+	struct tm bd_time;
 
 	now=time(0);
-
-	bd_time=gmtime(&now);
-	if (bd_time==NULL) {
+	if (gmtime_r(&now, &bd_time)==NULL) {
 		LM_ERR("gmtime failed\n");
 		return -1;
 	}
 
-	len=strftime(time_str, MAX_TIME, TIME_FORMAT, bd_time);
+	len=strftime(time_str, MAX_TIME, TIME_FORMAT, &bd_time);
 	if (len>MAX_TIME-2 || len==0) {
 		LM_ERR("unexpected time length\n");
 		return -1;
@@ -1983,14 +1981,12 @@ static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
 {
 	str time_str = {0, 0};
 	time_t now;
-	struct tm *bd_time;
+	struct tm bd_time;
 	struct hdr_field *hf = msg->headers;
 	struct lump *anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
 
 	now=time(0);
-
-	bd_time=gmtime(&now);
-	if (bd_time==NULL) {
+	if (gmtime_r(&now, &bd_time)==NULL) {
 		LM_ERR("gmtime failed\n");
 		goto error;
 	}
@@ -2000,7 +1996,7 @@ static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
 		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
-	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, bd_time);
+	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, &bd_time);
 	if (time_str.len>MAX_TIME-2 || time_str.len==0) {
 		LM_ERR("unexpected time length\n");
 		goto error;
