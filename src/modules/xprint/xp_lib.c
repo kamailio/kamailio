@@ -164,7 +164,7 @@ static int xl_get_times(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 }
 static int xl_get_timef(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	char *ch = NULL;
+	char ch[26] = {0};
 
 	if(msg==NULL || res==NULL)
 		return -1;
@@ -174,7 +174,7 @@ static int xl_get_timef(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 		msg_id = msg->id;
 	}
 
-	ch = ctime(&msg_tm);
+	ctime_r(&msg_tm, ch);
 
 	res->s = ch;
 	res->len = strlen(ch)-1;
