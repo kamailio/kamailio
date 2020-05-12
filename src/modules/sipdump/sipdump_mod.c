@@ -204,10 +204,11 @@ typedef struct sipdump_info {
 int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 {
 	struct timeval tv;
-	struct tm *ti;
+	struct tm ti;
+	char t_buf[26] = {0};
 
 	gettimeofday(&tv, NULL);
-	ti = localtime(&tv.tv_sec);
+	localtime_r(&tv.tv_sec, &ti);
 	obuf->len = snprintf(_sipdump_wbuf, SIPDUMP_WBUF_SIZE,
 		"====================\n"
 		"tag: %.*s\n"
@@ -227,7 +228,7 @@ int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
 		my_pid(),
 		process_no,
 		(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
-		asctime(ti),
+		asctime_r(&ti, t_buf),
 		sdi->proto.len, sdi->proto.s, sdi->af.len, sdi->af.s,
 		sdi->src_ip.len, sdi->src_ip.s, sdi->src_port,
 		sdi->dst_ip.len, sdi->dst_ip.s, sdi->dst_port,
