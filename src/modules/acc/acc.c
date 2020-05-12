@@ -195,7 +195,7 @@ int acc_log_request( struct sip_msg *rq)
 	int m;
 	int o;
 	int i;
-	struct tm *t;
+	struct tm t;
 	double dtime;
 
 	/* get default values */
@@ -262,12 +262,12 @@ int acc_log_request( struct sip_msg *rq)
 				acc_time_attr.s, dtime, log_msg);
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
-			t = localtime(&acc_env.ts);
+			localtime_r(&acc_env.ts, &t);
 		} else {
-			t = gmtime(&acc_env.ts);
+			gmtime_r(&acc_env.ts, &t);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<=0) {
+					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
@@ -412,7 +412,7 @@ int acc_db_request( struct sip_msg *rq)
 	int n;
 	int i;
 	int o;
-	struct tm *t;
+	struct tm t;
 	double dtime;
 
 	/* formated database columns */
@@ -435,12 +435,12 @@ int acc_db_request( struct sip_msg *rq)
 		i++;
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
-			t = localtime(&acc_env.ts);
+			localtime_r(&acc_env.ts, &t);
 		} else {
-			t = gmtime(&acc_env.ts);
+			gmtime_r(&acc_env.ts, &t);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<=0) {
+					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
