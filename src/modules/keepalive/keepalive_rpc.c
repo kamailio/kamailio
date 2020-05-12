@@ -78,24 +78,19 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 {
 	void *sub;
 	ka_dest_t *dest;
-	char *_ctime;
-	char *_utime;
-	char *_dtime;
+	char t_buf[26] = {0};
 
 	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
 		rpc->add(ctx, "{", &sub);
 
 		rpc->struct_add(sub, "SS", "uri", &dest->uri, "owner", &dest->owner);
 
-		_ctime = ctime(&dest->last_checked);
-		_ctime[strlen(_ctime) - 1] = '\0';
-		rpc->struct_add(sub, "s", "last checked", _ctime);
-		_utime = ctime(&dest->last_up);
-		_utime[strlen(_utime) - 1] = '\0';
-		rpc->struct_add(sub, "s", "last up", _utime);
-		_dtime = ctime(&dest->last_down);
-		_dtime[strlen(_dtime) - 1] = '\0';
-		rpc->struct_add(sub, "s", "last down", _dtime);
+		ctime_r(&dest->last_checked, t_buf);
+		rpc->struct_add(sub, "s", "last checked", t_buf);
+		ctime_r(&dest->last_up, t_buf);
+		rpc->struct_add(sub, "s", "last up", t_buf);
+		ctime_r(&dest->last_down, t_buf);
+		rpc->struct_add(sub, "s", "last down", t_buf);
 		rpc->struct_add(sub, "d", "state", (int) dest->state);
 	}
 
