@@ -1309,7 +1309,7 @@ modparam("tls", "private_key", "/engine:my_HSM_key_label")
 modparam("tls", "engine", "pkcs11")
 modparam("tls", "private_key", "/engine:pkcs11:token=MYTOKEN;object=MYKEYLABEL")
 
-modparam("tls", "engine_conf", "/usr/local/etc/kamailio/openssl.cnf")
+modparam("tls", "engine_config", "/usr/local/etc/kamailio/openssl.cnf")
 modparam("tls", "engine_algorithms", "ALL")
 ...
                 </programlisting>
