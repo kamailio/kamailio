@@ -1337,6 +1337,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	str str_vals[4], hdr_str, body_str;
 	str extra_hdrs_str = {0};
 	time_t stime;
+	char t_buf[26] = {0};
 
 	if(ms_reminder.s==NULL)
 	{
@@ -1384,14 +1385,13 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		goto done;
 	}
 
+	ctime_r((const time_t*)&ttime, t_buf);
 	if (RES_ROW_N(db_res) <= 0)
 	{
-		LM_DBG("no message for <%.*s>!\n", 24, ctime((const time_t*)&ttime));
+		LM_DBG("no message for <%.*s>!\n", 24, t_buf);
 		goto done;
 	}
-
-	LM_DBG("dumping [%d] messages for <%.*s>!!!\n", RES_ROW_N(db_res), 24,
-			ctime((const time_t*)&ttime));
+	LM_DBG("dumping [%d] messages for <%.*s>!!!\n", RES_ROW_N(db_res), 24, t_buf);
 
 	for(i = 0; i < RES_ROW_N(db_res); i++)
 	{
