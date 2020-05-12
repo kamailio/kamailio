@@ -470,7 +470,7 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 	srjson_t *nj = NULL;
 	char buf[JSONRPC_PRINT_VALUE_BUF_LEN];
 	time_t dt;
-	struct tm* t;
+	struct tm t;
 	str *sp;
 
 	switch(fmt) {
@@ -488,9 +488,9 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 		break;
 	case 't':
 		dt = va_arg(*ap, time_t);
-		t = gmtime(&dt);
+		gmtime_r(&dt, &t);
 		if (strftime(buf, JSONRPC_PRINT_VALUE_BUF_LEN,
-				"%Y%m%dT%H:%M:%S", t) == 0) {
+				"%Y%m%dT%H:%M:%S", &t) == 0) {
 			LM_ERR("Error while converting time\n");
 			return NULL;
 		}
