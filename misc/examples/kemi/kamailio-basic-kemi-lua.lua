@@ -239,7 +239,7 @@ function ksr_route_location()
 end
 
 
--- IP authorization and user uthentication
+-- IP authorization and user authentication
 function ksr_route_auth()
 	if not KSR.auth then
 		return 1;
