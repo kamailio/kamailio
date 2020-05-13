@@ -6,15 +6,9 @@ Edited by
 
 Miklos Tirpak
 
-Edited by
-
 Bogdan-Andrei Iancu
 
-Edited by
-
 Juha Heinanen
-
-Edited by
 
 Emmanuel Schmidbauer
 
@@ -528,7 +522,8 @@ modparam("permissions", "ip_addr_col", "ip_address")
 
    Name of address table column containing the network mask of the
    address. Possible values are 0-32 for IPv4 and 0-128 for IPv6
-   addresses.
+   addresses. If the value is 0, the network mask is set to 32 for IPv4
+   addresses and to 128 for IPv6 addresses.
 
    Default value is “mask”.
 
