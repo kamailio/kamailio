@@ -136,7 +136,7 @@
 								  more bytes available */
 #define E_BINRPC_EOP		-5	/* end of packet reached */
 #define E_BINRPC_NOTINIT	-6  /* parse ctx not initialized */
-#define E_BINRPC_TYPE		-7  /* unkown type for record, or requested
+#define E_BINRPC_TYPE		-7  /* unknown type for record, or requested
 								   type doesn't match record type */
 #define E_BINRPC_RECORD		-8  /* bad record (unexpected, bad struct a.s.o)*/
 #define E_BINRPC_BUG		-9  /* internal error, bug */
