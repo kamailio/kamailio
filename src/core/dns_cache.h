@@ -70,7 +70,7 @@ enum dns_errors{
 					              -- returned only by the dns_resolve*
 								  functions when called iteratively,; it
 								  signals the end of the ip/records list */
-					E_DNS_UNKNOWN /**< unkown error */,
+					E_DNS_UNKNOWN /**< unknown error */,
 					E_DNS_INTERNAL_ERR /**< internal error */,
 					E_DNS_BAD_SRV_ENTRY,
 					E_DNS_NO_SRV /**< unresolvable srv record */,
