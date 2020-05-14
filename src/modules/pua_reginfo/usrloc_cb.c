@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -57,7 +57,7 @@ void pua_reginfo_update_self_op(int v)
 }
 
 str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
-	xmlDocPtr  doc = NULL; 
+	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr registration_node = NULL;
 	xmlNodePtr contact_node = NULL;
@@ -78,11 +78,12 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	root_node = xmlNewNode(NULL, BAD_CAST "reginfo");
 	if(root_node==0) {
 		LM_ERR("Unable to create reginfo-XML-Element\n");
+		xmlFreeDoc(doc);
 		return NULL;
 	}
 	/* This is our Root-Element: */
-    	xmlDocSetRootElement(doc, root_node);
-	
+	xmlDocSetRootElement(doc, root_node);
+
 	xmlNewProp(root_node, BAD_CAST "xmlns",	BAD_CAST "urn:ietf:params:xml:ns:reginfo");
 
 	/* we set the version to 0 but it should be set to the correct value in the pua module */
@@ -163,7 +164,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			memset(buf, 0, sizeof(buf));
 	                snprintf(buf, sizeof(buf), "%.*s", ptr->received.len, ptr->received.s);
          	       	xmlNewProp(contact_node, BAD_CAST "received", BAD_CAST buf);
-			
+
 			/* path Attribute */
 			memset(buf, 0, sizeof(buf));
 			snprintf(buf, sizeof(buf), "%.*s", ptr->path.len, ptr->path.s);
@@ -216,7 +217,7 @@ error:
 	}
 	if(doc) xmlFreeDoc(doc);
 	return NULL;
-}	
+}
 
 void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	str* body= NULL;
@@ -240,7 +241,7 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
-	
+
 	/* Debug Output: */
 	LM_DBG("AOR: %.*s (%.*s)\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
 	if(type & UL_CONTACT_INSERT) LM_DBG("type= UL_CONTACT_INSERT\n");
@@ -292,7 +293,7 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		}
 		uri.len = snprintf(uri.s, uri.len, "sip:%.*s", record->aor.len, record->aor.s);
 	}
-	
+
 	/* Build the XML-Body: */
 	body = build_reginfo_full(record, uri, c, type);
 
@@ -315,8 +316,8 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	publ.id.len = id_buf_len;
 	publ.content_type = content_type;
 	publ.expires = 3600;
-	
-	/* make UPDATE_TYPE, as if this "publish dialog" is not found 
+
+	/* make UPDATE_TYPE, as if this "publish dialog" is not found
 	   by pua it will fallback to INSERT_TYPE anyway */
 	publ.flag|= UPDATE_TYPE;
 	publ.source_flag |= REGINFO_PUBLISH;
@@ -328,7 +329,7 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 
 	if(pua.send_publish(&publ) < 0) {
 		LM_ERR("Error while sending publish\n");
-	}	
+	}
 error:
 	if (uri.s) pkg_free(uri.s);
 	if(body) {
@@ -338,4 +339,4 @@ error:
 	if(record) ul.release_urecord(record);
 
 	return;
-}	
+}
