@@ -261,7 +261,7 @@ error:
  *
  * Can not be used to build other type of requests!
  */
-char *build_local_reparse(struct cell *Trans,unsigned int branch,
+char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
 #ifdef CANCEL_REASON_SUPPORT
 	, struct cancel_reason *reason
@@ -285,7 +285,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
 
-	if (!invite_buf || !invite_len) {
+	if (!invite_buf || invite_len<=0) {
 		LM_ERR("INVITE is missing\n");
 		goto error;
 	}

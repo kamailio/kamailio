@@ -476,8 +476,12 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	}
 	/* ... and build it now */
 	shbuf=build_req_buf_from_sip_req( i_req, &len, dst, BUILD_IN_SHM);
-	if (!shbuf) {
+	if (!shbuf || len<=0) {
 		LM_ERR("could not build request\n");
+		if(shbuf) {
+			shm_free(shbuf);
+			shbuf = NULL;
+		}
 		ret=E_OUT_OF_MEM;
 		goto error01;
 	}
@@ -885,7 +889,11 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	shbuf=print_uac_request_from_buf( t, request, branch, uri,
 			&len, &t->uac[branch].request.dst,
 			buf, buf_len);
-	if (!shbuf) {
+	if (!shbuf || len<=0) {
+		if(shbuf) {
+			shm_free(shbuf);
+			shbuf = NULL;
+		}
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -1113,7 +1121,11 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 				, 0
 #endif /* CANCEL_REASON_SUPPORT */
 				);
-		if (unlikely(!shbuf)) {
+		if (unlikely(!shbuf) || len<=0) {
+			if(shbuf) {
+				shm_free(shbuf);
+				shbuf = NULL;
+			}
 			LM_ERR("printing e2e cancel failed\n");
 			ret=ser_error=E_OUT_OF_MEM;
 			goto error;
