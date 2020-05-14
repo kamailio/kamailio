@@ -26,6 +26,7 @@
 
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
+#include "../../core/str.h"
 
 #include "jansson_path.h"
 #include "jansson_funcs.h"
@@ -33,13 +34,13 @@
 
 int janssonmod_get_helper(sip_msg_t* msg, str *path_s, str *src_s, pv_spec_t *dst_pv)
 {
-
+	char c;
 	pv_value_t dst_val;
 	json_t* json = NULL;
 	json_error_t parsing_error;
-
+	STR_VTOZ(src_s->s[src_s->len], c);
 	json = json_loads(src_s->s, JSON_REJECT_DUPLICATES, &parsing_error);
-
+	STR_ZTOV(src_s->s[src_s->len], c);
 	if(!json) {
 		ERR("failed to parse json: %.*s\n", src_s->len, src_s->s);
 		ERR("json error at line %d, col %d: %s\n",
@@ -98,7 +99,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 	str type_s;
 	str value_s;
 	str path_s;
-
+	char c;
 	pv_spec_t* result_pv;
 	pv_value_t result_val;
 
@@ -126,14 +127,11 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 		result_val.rs.len = strlen("{}");
 	}
 
-/*
-	ALERT("type is: %.*s\n", type_s.len, type_s.s);
-	ALERT("path is: %.*s\n", path_s.len, path_s.s);
-	ALERT("value is: %.*s\n", value_s.len, value_s.s);
-	ALERT("result is: %.*s\n", result_val.rs.len, result_val.rs.s);
-*/
 
-	char* result = result_val.rs.s;
+	LM_DBG("type is: %.*s\n", type_s.len, type_s.s);
+	LM_DBG("path is: %.*s\n", path_s.len, path_s.s);
+	LM_DBG("value is: %.*s\n", value_s.len, value_s.s);
+	LM_DBG("result is: %.*s\n", result_val.rs.len, result_val.rs.s);
 
 	json_t* result_json = NULL;
 	json_t* value = NULL;
@@ -143,14 +141,18 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 
 	/* check the type */
 	if(STR_EQ_STATIC(type_s, "object") || STR_EQ_STATIC(type_s, "obj")){
+		STR_VTOZ(value_s.s[value_s.len], c);
 		value = json_loads(value_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
+		STR_ZTOV(value_s.s[value_s.len], c);
 		if(value && !json_is_object(value)) {
 			ERR("value to add is not an object - \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
 	}else if(STR_EQ_STATIC(type_s, "array")) {
+		STR_VTOZ(value_s.s[value_s.len], c);
 		value = json_loads(value_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
+		STR_ZTOV(value_s.s[value_s.len], c);
 		if(value && !json_is_array(value)) {
 			ERR("value to add is not an array - \"%s\"\n", path_s.s);
 			goto fail;
@@ -211,9 +213,9 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 	}
 
 	char* path = path_s.s;
-
-	result_json = json_loads(result, JSON_REJECT_DUPLICATES, &parsing_error);
-
+	STR_VTOZ(result_val.rs.s[result_val.rs.len], c);
+	result_json = json_loads(result_val.rs.s, JSON_REJECT_DUPLICATES, &parsing_error);
+	STR_ZTOV(result_val.rs.s[result_val.rs.len], c);
 	if(!result_json) {
 		ERR("result has json error at line %d: %s\n",
 				parsing_error.line, parsing_error.text);
@@ -240,6 +242,7 @@ fail:
 
 int janssonmod_array_size(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
 {
+	char c;
 	str src_s;
 	str path_s;
 	pv_spec_t *dst_pv;
@@ -259,9 +262,9 @@ int janssonmod_array_size(struct sip_msg* msg, char* path_in, char* src_in, char
 
 	json_t* json = NULL;
 	json_error_t parsing_error;
-
+	STR_VTOZ(src_s.s[src_s.len], c);
 	json = json_loads(src_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
-
+	STR_ZTOV(src_s.s[src_s.len], c);
 	if(!json) {
 		ERR("json error at line %d: %s\n",
 				parsing_error.line, parsing_error.text);
