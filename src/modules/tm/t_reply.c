@@ -484,12 +484,16 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	rb->rbtype=code;
 
 	trans->uas.status = code;
+	if(len<=0) {
+		LM_ERR("invalid new buffer len\n");
+		goto error3;
+	}
 	buf_len = rb->buffer ? len : len + REPLY_OVERBUFFER_LEN;
 	rb->buffer = (char*)shm_resize( rb->buffer, buf_len );
 	/* puts the reply's buffer to uas.response */
 	if (! rb->buffer ) {
-			LM_ERR("cannot allocate shmem buffer\n");
-			goto error3;
+		LM_ERR("cannot allocate shmem buffer\n");
+		goto error3;
 	}
 	update_local_tags(trans, bm, rb->buffer, buf);
 
@@ -1951,6 +1955,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 *   larger messages are likely to follow and we will be
 		 *   able to reuse the memory frag
 		*/
+		if (res_len<=0) {
+			LM_ERR("invalid new buffer len\n");
+			goto error03;
+		}
 		uas_rb->buffer = (char*)shm_resize( uas_rb->buffer, res_len +
 			(msg_status<200 ?  REPLY_OVERBUFFER_LEN : 0));
 		if (!uas_rb->buffer) {

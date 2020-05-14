@@ -290,8 +290,12 @@ int cancel_branch( struct cell *t, int branch,
 								, reason
 								);
 	}
-	if (!cancel) {
+	if (!cancel || len<=0) {
 		LM_ERR("attempt to build a CANCEL failed\n");
+		if(cancel) {
+			shm_free(cancel);
+			cancel = NULL;
+		}
 		/* remove BUSY_BUFFER -- mark cancel buffer as not used */
 		pcbuf=&crb->buffer; /* workaround for type punning warnings */
 		atomic_set_long(pcbuf, 0);
@@ -497,8 +501,12 @@ unsigned int t_uac_cancel( str *headers, str *body,
 	cancel->dst.proto           = invite->dst.proto;
 	//cancel->dst.proto_reserved1 = invite->dst.proto_reserved1;
 
-	if(!(buf = build_uac_cancel(headers,body,t_invite,0,&len,
-					&(cancel->dst)))){
+	buf = build_uac_cancel(headers, body, t_invite, 0, &len, &(cancel->dst));
+	if(!buf || len<=0) {
+		if(buf) {
+			shm_free(buf);
+			buf = NULL;
+		}
 		ret=0;
 		LM_ERR("attempt to build a CANCEL failed\n");
 		goto error1;

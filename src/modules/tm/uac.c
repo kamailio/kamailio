@@ -505,7 +505,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 	buf = build_uac_req(uac_r->method, uac_r->headers, uac_r->body, uac_r->dialog, 0, new_cell,
 		&buf_len, &dst);
-	if (!buf) {
+	if (!buf || buf_len<=0) {
 		LM_ERR("Error while building message\n");
 		ret=E_OUT_OF_MEM;
 		goto error1;
@@ -749,19 +749,23 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	struct dest_info dst;
 
 	buf_len = (unsigned)sizeof(struct retr_buf);
-	if (! (buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body,
-			&buf_len, &dst))) {
+	buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body,
+			&buf_len, &dst);
+	if (!buffer || buf_len<=0) {
+		if(buffer) {
+			shm_free(buffer);
+		}
 		return 0;
-	} else {
-		/* 'buffer' now points into a contiguous chunk of memory with enough
-		 * room to hold both the retr. buffer and the string raw buffer: it
-		 * points to the begining of the string buffer; we iterate back to get
-		 * the begining of the space for the retr. buffer. */
-		lack = &((struct retr_buf *)buffer)[-1];
-		lack->buffer = buffer;
-		lack->buffer_len = buf_len;
-		lack->dst = dst;
 	}
+	/* 'buffer' now points into a contiguous chunk of memory with enough
+	 * room to hold both the retr. buffer and the string raw buffer: it
+	 * points to the begining of the string buffer; we iterate back to get
+	 * the begining of the space for the retr. buffer. */
+	lack = &((struct retr_buf *)buffer)[-1];
+	lack->buffer = buffer;
+	lack->buffer_len = buf_len;
+	lack->dst = dst;
+
 
 	/* TODO: need next 2? */
 	lack->rbtype = TYPE_LOCAL_ACK;
