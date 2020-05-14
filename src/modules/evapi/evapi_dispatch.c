@@ -606,7 +606,7 @@ void evapi_recv_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		return;
 	}
 
-	LM_DBG("received [%p] [%.*s] (%d)\n", emsg,
+	LM_DBG("received [%p] [%.*s] (%d)\n", (void*)emsg,
 			emsg->data.len, emsg->data.s, emsg->data.len);
 	evapi_dispatch_notify(emsg);
 	shm_free(emsg);
@@ -774,8 +774,8 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 		emsg->unicast = unicast;
 	}
 
-	LM_DBG("sending [%p] [%.*s] (%d)\n", emsg, emsg->data.len, emsg->data.s,
-			emsg->data.len);
+	LM_DBG("sending [%p] [%.*s] (%d)\n", (void*)emsg, emsg->data.len,
+			emsg->data.s, emsg->data.len);
 	if(_evapi_notify_sockets[1]!=-1) {
 		len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t*));
 		if(len<=0) {
@@ -785,7 +785,7 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 		}
 	} else {
 		cfg_update();
-		LM_DBG("dispatching [%p] [%.*s] (%d)\n", emsg,
+		LM_DBG("dispatching [%p] [%.*s] (%d)\n", (void*)emsg,
 				emsg->data.len, emsg->data.s, emsg->data.len);
 		if(evapi_dispatch_notify(emsg) == 0) {
 			shm_free(emsg);
@@ -855,7 +855,7 @@ int evapi_relay(str *event, str *data)
 		LM_ERR("failed to pass the pointer to evapi dispatcher\n");
 		return -1;
 	}
-	LM_DBG("sent [%p] [%.*s] (%d)\n", sbuf, sbuf->len, sbuf->s, sbuf->len);
+	LM_DBG("sent [%p] [%.*s] (%d)\n", (void*)sbuf, sbuf->len, sbuf->s, sbuf->len);
 	return 0;
 }
 #endif
