@@ -82,7 +82,7 @@ ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param)
 
     ka_dest->last_checked = time(NULL);
 
-	return (ticks_t)(-1); /* periodical */
+	return ka_dest->ping_interval; /* periodical, but based on dest->ping_interval, not on initial_timeout */
 }
 
 /*! \brief

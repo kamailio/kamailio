@@ -107,6 +107,7 @@ int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
 	dest->statechanged_clb = statechanged_clb;
 	dest->response_clb = response_clb;
 	dest->user_attr = user_attr;
+	dest->ping_interval = MS_TO_TICKS((ping_interval == 0 ? ka_ping_interval : ping_interval) * 1000) ;
 
     dest->timer = timer_alloc();
 	if (dest->timer == NULL) {
@@ -116,8 +117,7 @@ int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
 
 	timer_init(dest->timer, ka_check_timer, dest, 0);
 
-    int actual_ping_interval =  ping_interval == 0 ? ka_ping_interval : ping_interval;
-	if(timer_add(dest->timer, MS_TO_TICKS(actual_ping_interval * 1000)) < 0){
+	if(timer_add(dest->timer, MS_TO_TICKS(KA_FIRST_TRY_DELAY)) < 0){
 		LM_ERR("failed to start timer\n");
 		goto err;
 	}
