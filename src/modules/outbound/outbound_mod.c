@@ -156,7 +156,7 @@ static void destroy(void)
 static unsigned char unenc_flow_token[UNENC_FLOW_TOKEN_MAX_LENGTH];
 static unsigned char hmac_sha1[EVP_MAX_MD_SIZE];
 
-int encode_flow_token(str *flow_token, struct receive_info rcv)
+int encode_flow_token(str *flow_token, struct receive_info *rcv)
 {
 	int pos = FLOW_TOKEN_START_POS, i;
 
@@ -168,19 +168,19 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 
 	/* Encode protocol information */
 	unenc_flow_token[pos++] =
-		(rcv.dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv.proto;
+		(rcv->dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv->proto;
 
 	/* Encode destination address */
-	for (i = 0; i < (rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
-		unenc_flow_token[pos++] = rcv.dst_ip.u.addr[i];
-	unenc_flow_token[pos++] = (rcv.dst_port >> 8) & 0xff;
-	unenc_flow_token[pos++] =  rcv.dst_port       & 0xff;
+	for (i = 0; i < (rcv->dst_ip.af == AF_INET6 ? 16 : 4); i++)
+		unenc_flow_token[pos++] = rcv->dst_ip.u.addr[i];
+	unenc_flow_token[pos++] = (rcv->dst_port >> 8) & 0xff;
+	unenc_flow_token[pos++] =  rcv->dst_port       & 0xff;
 
 	/* Encode source address */
-	for (i = 0; i < (rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
-		unenc_flow_token[pos++] = rcv.src_ip.u.addr[i];
-	unenc_flow_token[pos++] = (rcv.src_port >> 8) & 0xff;
-	unenc_flow_token[pos++] =  rcv.src_port       & 0xff;
+	for (i = 0; i < (rcv->src_ip.af == AF_INET6 ? 16 : 4); i++)
+		unenc_flow_token[pos++] = rcv->src_ip.u.addr[i];
+	unenc_flow_token[pos++] = (rcv->src_port >> 8) & 0xff;
+	unenc_flow_token[pos++] =  rcv->src_port       & 0xff;
 
 	/* HMAC-SHA1 the calculated flow-token, truncate to 80 bits, and
 	   prepend onto the flow-token */
