@@ -78,7 +78,7 @@ static int handleOutbound(sip_msg_t* _m, str *user, path_param_t *param)
 	if (path_obb.use_outbound != NULL && path_obb.use_outbound(_m)) {
 		struct via_body *via;
 
-		if (path_obb.encode_flow_token(user, _m->rcv) != 0) {
+		if (path_obb.encode_flow_token(user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
