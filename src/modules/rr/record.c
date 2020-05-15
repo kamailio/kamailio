@@ -393,7 +393,7 @@ int record_route(struct sip_msg* _m, str *params)
 			}
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
@@ -524,7 +524,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 			return -1;
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
@@ -776,7 +776,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			return -1;
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
