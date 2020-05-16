@@ -310,7 +310,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 			(unsigned char *)reply_key.s, base64_enc_len(SHA_DIGEST_LENGTH));
 
 	/* Add the connection to the WebSocket connection table */
-	wsconn_add(msg->rcv, sub_protocol);
+	wsconn_add(&msg->rcv, sub_protocol);
 
 	/* Make sure Kamailio core sends future messages on this connection
 	   directly to this module */
