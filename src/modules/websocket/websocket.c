@@ -210,8 +210,8 @@ static int mod_init(void)
 	}
 
 	if(ws_ping_application_data.len < 1 || ws_ping_application_data.len > 125) {
-		ws_ping_application_data.s = DEFAULT_PING_APPLICATION_DATA + 8;
-		ws_ping_application_data.len = DEFAULT_PING_APPLICATION_DATA_LEN - 8;
+		ws_ping_application_data.s = DEFAULT_PING_APPLICATION_DATA;
+		ws_ping_application_data.len = DEFAULT_PING_APPLICATION_DATA_LEN;
 	}
 
 	if(ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
