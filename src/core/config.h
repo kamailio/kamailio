@@ -77,12 +77,15 @@
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_LENGTH_LEN (sizeof(CONTENT_LENGTH)-1)
 
-#define USER_AGENT "User-Agent: " NAME \
+#define SRVAPP_SIGNATURE NAME \
 		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
+#define SRVAPP_SIGNATURE_LEN (sizeof(SRVAPP_SIGNATURE)-1)
+
+
+#define USER_AGENT "User-Agent: " SRVAPP_SIGNATURE
 #define USER_AGENT_LEN (sizeof(USER_AGENT)-1)
 
-#define SERVER_HDR "Server: " NAME \
-		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
+#define SERVER_HDR "Server: " SRVAPP_SIGNATURE
 #define SERVER_HDR_LEN (sizeof(SERVER_HDR)-1)
 
 #define MAX_WARNING_LEN  256
