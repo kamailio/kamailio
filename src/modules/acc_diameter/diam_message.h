@@ -26,8 +26,8 @@
  * - Module: \ref acc
  */
 
-#ifndef _AAA_DIAMETER_MSG_H
-#define _AAA_DIAMETER_MSG_H
+#ifndef _ACC_DIAM_MESSAGE_H_
+#define _ACC_DIAM_MESSAGE_H_
 
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
