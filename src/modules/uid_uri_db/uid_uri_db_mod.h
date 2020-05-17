@@ -27,8 +27,8 @@
  */
 
 
-#ifndef URIDB_MOD_H
-#define URIDB_MOD_H
+#ifndef _UID_URI_DB_MOD_H_
+#define _UID_URI_DB_MOD_H_
 
 #include "../../lib/srdb2/db.h"
 #include "../../core/str.h"
