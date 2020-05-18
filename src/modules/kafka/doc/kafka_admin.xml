@@ -189,6 +189,40 @@ kafka_send("my_topic", "test message");
 		  </programlisting>
 		</example>
 	  </section>
+	  <section id="kafka.f.kafka_send_key">
+		<title>
+		  <function moreinfo="none">kafka_send_key(topic, msg, key)</function>
+		</title>
+		<para>
+		  Send a message with an associated key to a specific topic via Kafka server.
+		</para>
+		<para>
+		  This function returns -1 for all sort of errors. (So execution of script continues)
+		</para>
+		<para>
+		  Parameters:
+		  <itemizedlist>
+			<listitem><emphasis>topic</emphasis>: (string) name of the topic.
+			It is mandatory.</listitem>
+			<listitem><emphasis>msg</emphasis>: (string) message to send.
+			It is mandatory.</listitem>
+			<listitem><emphasis>key</emphasis>: (string) associate this key with the message.
+			It is mandatory.</listitem>
+		  </itemizedlist>
+		</para>
+		<para>
+		  Available via KEMI framework as <emphasis>kafka.send_key</emphasis>.
+		</para>
+		<example>
+		  <title><function>kafka_send_key</function> usage</title>
+		  <programlisting format="linespecific">
+...
+# Send "test message" to topic "my_topic" with key "my_key"			
+kafka_send_key("my_topic", "test message", "my_key");
+...
+		  </programlisting>
+		</example>
+	  </section>
 	</section>
 	<section>
 	  <title><acronym>RPC</acronym> Commands</title>
