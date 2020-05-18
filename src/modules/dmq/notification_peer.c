@@ -27,8 +27,8 @@
 #define MAXDMQURILEN 255
 #define MAXDMQHOSTS 30
 
-str notification_content_type = str_init("text/plain");
-dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
+str dmq_notification_content_type = str_init("text/plain");
+dmq_resp_cback_t dmq_notification_resp_callback = {&notification_resp_callback_f, 0};
 
 int *dmq_init_callback_done = 0;
 
@@ -41,7 +41,7 @@ int add_notification_peer()
 	dmq_peer_t not_peer;
 
 	memset(&not_peer, 0, sizeof(dmq_peer_t));
-	not_peer.callback = dmq_notification_callback;
+	not_peer.callback = dmq_notification_callback_f;
 	not_peer.init_callback = NULL;
 	not_peer.description.s = "notification_peer";
 	not_peer.description.len = 17;
@@ -53,14 +53,14 @@ int add_notification_peer()
 		goto error;
 	}
 	/* add itself to the node list */
-	self_node = add_dmq_node(node_list, &dmq_server_address);
-	if(!self_node) {
+	dmq_self_node = add_dmq_node(dmq_node_list, &dmq_server_address);
+	if(!dmq_self_node) {
 		LM_ERR("error adding self node\n");
 		goto error;
 	}
 	/* local node - only for self */
-	self_node->local = 1;
-	self_node->status = DMQ_NODE_ACTIVE;
+	dmq_self_node->local = 1;
+	dmq_self_node->status = DMQ_NODE_ACTIVE;
 	return 0;
 error:
 	return -1;
@@ -296,8 +296,8 @@ dmq_node_t *add_server_and_notify(str *paddr)
 	* o process list
 	**********/
 
-	if(!multi_notify) {
-		pfirst = add_dmq_node(node_list, paddr);
+	if(!dmq_multi_notify) {
+		pfirst = add_dmq_node(dmq_node_list, paddr);
 	} else {
 		/**********
 		* o init data area
@@ -319,8 +319,8 @@ dmq_node_t *add_server_and_notify(str *paddr)
 		for(index = 0; index < host_cnt; index++) {
 			pstr->s = puri_list[index];
 			pstr->len = strlen(puri_list[index]);
-			if(!find_dmq_node_uri(node_list, pstr)) { // check for duplicates
-				pnode = add_dmq_node(node_list, pstr);
+			if(!find_dmq_node_uri(dmq_node_list, pstr)) { // check for duplicates
+				pnode = add_dmq_node(dmq_node_list, pstr);
 				if(pnode && !pfirst) {
 					pfirst = pnode;
 				}
@@ -436,11 +436,11 @@ int run_init_callbacks()
 {
 	dmq_peer_t *crt;
 
-	if(peer_list == 0) {
+	if(dmq_peer_list == 0) {
 		LM_WARN("peer list is null\n");
 		return 0;
 	}
-	crt = peer_list->peers;
+	crt = dmq_peer_list->peers;
 	while(crt) {
 		if(crt->init_callback) {
 			crt->init_callback();
@@ -454,7 +454,7 @@ int run_init_callbacks()
 /**
  * @brief dmq notification callback
  */
-int dmq_notification_callback(
+int dmq_notification_callback_f(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node)
 {
 	int nodes_recv;
@@ -474,14 +474,14 @@ int dmq_notification_callback(
 			maxforwards--;
 		}
 	}
-	nodes_recv = extract_node_list(node_list, msg);
+	nodes_recv = extract_node_list(dmq_node_list, msg);
 	LM_DBG("received %d new or changed nodes\n", nodes_recv);
 	response_body = build_notification_body();
 	if(response_body == NULL) {
 		LM_ERR("no response body\n");
 		goto error;
 	}
-	resp->content_type = notification_content_type;
+	resp->content_type = dmq_notification_content_type;
 	resp->reason = dmq_200_rpl;
 	resp->body = *response_body;
 	resp->resp_code = 200;
@@ -490,8 +490,8 @@ int dmq_notification_callback(
 	if(nodes_recv > 0 && maxforwards > 0) {
 		/* maxforwards is set to 0 so that the message is will not be in a spiral */
 		bcast_dmq_message(dmq_notification_peer, response_body, 0,
-				&notification_callback, maxforwards,
-				&notification_content_type);
+				&dmq_notification_resp_callback, maxforwards,
+				&dmq_notification_content_type);
 	}
 	pkg_free(response_body);
 	if(dmq_init_callback_done && !*dmq_init_callback_done) {
@@ -533,8 +533,8 @@ str *build_notification_body()
 		return NULL;
 	}
 	/* we add each server to the body - each on a different line */
-	lock_get(&node_list->lock);
-	cur_node = node_list->nodes;
+	lock_get(&dmq_node_list->lock);
+	cur_node = dmq_node_list->nodes;
 	while(cur_node) {
 		if (cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
 			LM_DBG("body_len = %d - clen = %d\n", body->len, clen);
@@ -550,11 +550,11 @@ str *build_notification_body()
 		}
 		cur_node = cur_node->next;
 	}
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	body->len = clen;
 	return body;
 error:
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	pkg_free(body->s);
 	pkg_free(body);
 	return NULL;
@@ -573,7 +573,8 @@ int request_nodelist(dmq_node_t *node, int forward)
 		return -1;
 	}
 	ret = bcast_dmq_message1(dmq_notification_peer, body, NULL,
-			&notification_callback, forward, &notification_content_type, 1);
+			&dmq_notification_resp_callback, forward,
+			&dmq_notification_content_type, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;
@@ -591,8 +592,8 @@ int notification_resp_callback_f(
 	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
 	if(code == 200) {
 		/* be sure that the node that answered is in active state */
-		update_dmq_node_status(node_list, node, DMQ_NODE_ACTIVE);
-		nodes_recv = extract_node_list(node_list, msg);
+		update_dmq_node_status(dmq_node_list, node, DMQ_NODE_ACTIVE);
+		nodes_recv = extract_node_list(dmq_node_list, msg);
 		LM_DBG("received %d new or changed nodes\n", nodes_recv);
 		if(dmq_init_callback_done && !*dmq_init_callback_done) {
 			*dmq_init_callback_done = 1;
@@ -601,18 +602,18 @@ int notification_resp_callback_f(
 	} else if(code == 408) {
 		if(STR_EQ(node->orig_uri, dmq_notification_address)) {
 			LM_ERR("not deleting notification_peer\n");
-			update_dmq_node_status(node_list, node, DMQ_NODE_PENDING);	
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);	
 			return 0;
 		}
 		if (node->status == DMQ_NODE_DISABLED) {
 			/* deleting node - the server did not respond */
 			LM_ERR("deleting server %.*s because of failed request\n",
 				STR_FMT(&node->orig_uri));
-			ret = del_dmq_node(node_list, node);
+			ret = del_dmq_node(dmq_node_list, node);
 			LM_DBG("del_dmq_node returned %d\n", ret);
 		} else {
 			/* put the node in disabled state and wait for the next ping before deleting it */
-			update_dmq_node_status(node_list, node, DMQ_NODE_DISABLED);
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_DISABLED);
 		}
 	}
 	return 0;
