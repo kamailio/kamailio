@@ -48,6 +48,8 @@ extern int ka_ping_interval;
 #define KA_PROBE_INACTIVE 2
 #define KA_PROBE_ONLYFLAGGED 3
 
+#define KA_FIRST_TRY_DELAY 500 /* First OPTIONS send is done 500 millis after adding the destination */
+
 typedef void (*ka_statechanged_f)(str *uri, int state, void *user_attr);
 typedef void (*ka_response_f)(
 		str *uri, struct tmcb_params *ps, void *user_attr);
@@ -62,6 +64,7 @@ typedef struct _ka_dest
 	int state;
 	time_t last_checked, last_up, last_down;
 	int counter;	// counts unreachable attemps
+	ticks_t ping_interval;  /*!< Actual interval between OPTIONS  */
 
 	void *user_attr;
 	ka_statechanged_f statechanged_clb;
@@ -70,7 +73,7 @@ typedef struct _ka_dest
 	struct ip_addr ip_address; /*!< IP-Address of the entry */
 	unsigned short int port;   /*!< Port of the URI */
 	unsigned short int proto;  /*!< Protocol of the URI */
-	struct timer_ln *timer;
+	struct timer_ln *timer;    /*!< Timer firing the OPTIONS test */
 	struct _ka_dest *next;
 } ka_dest_t;
 
