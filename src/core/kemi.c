@@ -1047,6 +1047,38 @@ static int sr_kemi_core_is_method_kdmq(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_method_get(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_GET);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_post(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_POST);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_put(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_PUT);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_delete(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_DELETE);
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_is_proto_udp(sip_msg_t *msg)
 {
 	return (msg->rcv.proto == PROTO_UDP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
@@ -1671,6 +1703,26 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_KDMQ"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_method_kdmq,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_GET"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_get,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_POST"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_post,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_PUT"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_put,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_DELETE"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_delete,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
