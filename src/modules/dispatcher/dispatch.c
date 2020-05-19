@@ -79,6 +79,22 @@
 #define DS_ALG_RELWEIGHT 11
 #define DS_ALG_PARALLEL 12
 
+/* increment call load */
+#define DS_LOAD_INC(dgrp, didx) do { \
+		lock_get(&(dgrp)->lock); \
+		(dgrp)->dlist[didx].dload++; \
+		lock_release(&(dgrp)->lock); \
+	} while(0)
+
+/* decrement call load */
+#define DS_LOAD_DEC(dgrp, didx) do { \
+		lock_get(&(dgrp)->lock); \
+		if(likely((dgrp)->dlist[didx].dload > 0)) { \
+			(dgrp)->dlist[didx].dload--; \
+		} \
+		lock_release(&(dgrp)->lock); \
+	} while(0)
+
 static int _ds_table_version = DS_TABLE_VERSION;
 
 static ds_ht_t *_dsht_load = NULL;
@@ -1506,6 +1522,7 @@ int ds_get_leastloaded(ds_set_t *dset)
 
 	k = -1;
 	t = 0x7fffffff; /* high load */
+	lock_get(&dset->lock); \
 	for(j = 0; j < dset->nr; j++) {
 		if(!ds_skip_dst(dset->dlist[j].flags)
 				&& (dset->dlist[j].attrs.maxload == 0
@@ -1517,6 +1534,7 @@ int ds_get_leastloaded(ds_set_t *dset)
 			}
 		}
 	}
+	lock_release(&dset->lock); \
 	return k;
 }
 
@@ -1538,7 +1556,7 @@ int ds_load_add(struct sip_msg *msg, ds_set_t *dset, int setid, int dst)
 				msg->callid->body.s);
 		return -1;
 	}
-	dset->dlist[dst].dload++;
+	DS_LOAD_INC(dset, dst);
 	return 0;
 }
 
@@ -1606,8 +1624,7 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	if(idx->dlist[olddst].dload > 0)
-		idx->dlist[olddst].dload--;
+	DS_LOAD_DEC(idx, olddst);
 
 	if(ds_load_add(msg, idx, set, newdst) < 0) {
 		LM_ERR("unable to replace destination load [%.*s / %.*s]\n", duid->len,
@@ -1646,8 +1663,7 @@ int ds_load_remove_byid(int set, str *duid)
 		return -1;
 	}
 
-	if(idx->dlist[olddst].dload > 0)
-		idx->dlist[olddst].dload--;
+	DS_LOAD_DEC(idx, olddst);
 
 	return 0;
 }
