@@ -271,5 +271,6 @@ void ds_avl_destroy(ds_set_t **node);
 int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
 
 ds_rctx_t* ds_get_rctx(void);
+unsigned int ds_get_hash(str *x, str *y);
 
 #endif

@@ -1816,6 +1816,49 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_hash_doc[2] = {
+		"Compute the hash if the values", 0};
+
+
+/*
+ * RPC command to compute the hash of the values
+ */
+static void dispatcher_rpc_hash(rpc_t *rpc, void *ctx)
+{
+	int n = 0;
+	unsigned int hashid = 0;
+	int nslots = 0;
+	str val1 = STR_NULL;
+	str val2 = STR_NULL;
+	void *th;
+
+	n = rpc->scan(ctx, "dS*S", &nslots, &val1, &val2);
+	if(n < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(n==2) {
+		val2.s = NULL;
+		val2.s = 0;
+	}
+
+	hashid = ds_get_hash(&val1, &val2);
+
+	/* add entry node */
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	if(rpc->struct_add(th, "uu", "hashid", hashid,
+				"slot", (nslots>0)?(hashid%nslots):0)
+			< 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+		return;
+	}
+
+	return;
+}
+
 /* clang-format off */
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
@@ -1830,6 +1873,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_add_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
+	{"dispatcher.hash",   dispatcher_rpc_hash,
+		dispatcher_rpc_hash_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
