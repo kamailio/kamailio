@@ -61,6 +61,32 @@
     <section>
 	<title>Parameters</title>
 
+	<section id="mqueue.p.db_url">
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+			The <acronym>URL</acronym> to connect to database for loading values in mqueue table at start up and/or saving values at shutdown.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (do not connect).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "db_url", "&defaultdb;")
+
+# Example of table in sqlite, you have the set the fields to support the length according to the data that will be present in the mqueue
+CREATE TABLE mqueue_name (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+key character varying(64) DEFAULT "" NOT NULL,
+val character varying(4096) DEFAULT "" NOT NULL
+);
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="mqueue.p.mqueue">
 	    <title><varname>mqueue</varname> (string)</title>
 	    <para>
@@ -93,6 +119,16 @@
 				Specifies the maximum number of items in queue.
 				If exceeded the oldest one is removed.
 				If not set the queue will be limitless.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>dbmode</emphasis>: If set to 1, the content of the queue
+				is written to database table when the SIP server is stopped
+				(i.e., ensure persistency over restarts).
+				If set to 2, it is written at shutdown but not read at startup.
+				If set to 3, it is read at sartup but not written at shutdown.
+				Default value is 0 (no db table interaction).
 				</para>
 			</listitem>
 			</itemizedlist>

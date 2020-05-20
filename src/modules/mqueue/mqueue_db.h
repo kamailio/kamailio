@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Elena-Ramona Modroiu (asipto.com)
+ * Copyright (C) 2020 Julien Chavanton
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -7,6 +7,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
+ *
  *
  * This file is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,32 +20,14 @@
  *
  */
 
-		       
-#ifndef _MQUEUE_EXT_API_H_
-#define _MQUEUE_EXT_API_H_
+#ifndef _MQUEUE_DB_H_
+#define _MQUEUE_DB_H_
 
-typedef int (*mq_add_f)(str*, str*, str*);
-typedef struct mq_api {
-	mq_add_f add;
-} mq_api_t;
+#include "../../lib/srdb1/db.h"
+#include "mqueue_api.h"
 
-typedef int (*bind_mq_f)(mq_api_t* api);
+extern str mqueue_db_url;
 
-static inline int load_mq_api(mq_api_t *api)
-{
-	bind_mq_f bindmq;
-
-	bindmq = (bind_mq_f)find_export("bind_mq", 1, 0);
-	if(bindmq == 0) {
-		LM_ERR("cannot find bind_mq\n");
-		return -1;
-	}
-	if(bindmq(api)<0)
-	{
-		LM_ERR("cannot bind mq api\n");
-		return -1;
-	}
-	return 0;
-}
-
+int mqueue_db_load_queue(str *name);
+int mqueue_db_save_queue(str *name);
 #endif
