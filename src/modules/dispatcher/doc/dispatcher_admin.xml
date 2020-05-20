@@ -1996,9 +1996,9 @@ DEST: {
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &kamctl; rpc dispatcher.hash _nslots_ _val1_ [_val2_]
-&kamctl; rpc dispatcher.hash 0 alice server.com
-&kamctl; rpc dispatcher.hash 4 bob server.com
+# prototype: kamctl rpc dispatcher.hash _nslots_ _val1_ [_val2_]
+kamctl rpc dispatcher.hash 0 alice server.com
+kamctl rpc dispatcher.hash 4 bob server.com
 ...
 </programlisting>
     </section>
