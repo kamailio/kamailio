@@ -1962,6 +1962,46 @@ DEST: {
 ...
 </programlisting>
     </section>
+		<section id="dispatcher.r.hash">
+		<title>
+		<function moreinfo="none">dispatcher.hash</function>
+		</title>
+		<para>
+		Compute the hash id corresponding to the string parameter values.
+		</para>
+		<para>
+		Return the hash id and the corresponding slot, if 'nslots' parameter
+		is not 0.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.hash</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_nslots_: number of slots</para></listitem>
+			<listitem><para>_val1_: string value</para></listitem>
+			<listitem><para>_val2_: (optional) string value</para></listitem>
+		</itemizedlist>
+		<para>
+		It can be useful to find what address in a destination group (setid) is
+		going to be used when hashing a value or a URI. For a URI, the
+		corresponding username and domain have to be provided as _val1_ and
+		_val2_. If the URI has a port different than 5060 (or 5061 for TLS),
+		then the _val2_ has to be 'domain:port'. The _nslots_ has to be the
+		number of addresses in the group (setid). The returned 'slot' value
+		represents the index of the address to be used for routing.
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &kamctl; rpc dispatcher.hash _nslots_ _val1_ [_val2_]
+&kamctl; rpc dispatcher.hash 0 alice server.com
+&kamctl; rpc dispatcher.hash 4 bob server.com
+...
+</programlisting>
+    </section>
 
    </section>
 
