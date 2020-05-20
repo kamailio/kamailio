@@ -618,9 +618,10 @@ void evapi_recv_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
 int evapi_run_dispatcher(char *laddr, int lport)
 {
 	int evapi_srv_sock;
-	struct sockaddr_in evapi_srv_addr;
 	struct ev_loop *loop;
-	struct hostent *h = NULL;
+	struct addrinfo ai_hints;
+	struct addrinfo *ai_res = NULL;
+	int ai_ret = 0;
 	struct ev_io io_server;
 	struct ev_io io_notify;
 	int yes_true = 1;
@@ -646,38 +647,36 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		return -1;
 	}
 
-	h = gethostbyname(laddr);
-	if (h == NULL || (h->h_addrtype != AF_INET && h->h_addrtype != AF_INET6)) {
-		LM_ERR("cannot resolve local server address [%s]\n", laddr);
+	memset(&ai_hints, 0, sizeof(struct addrinfo));
+	ai_hints.ai_family = AF_UNSPEC;		/* allow IPv4 or IPv6 */
+	ai_hints.ai_socktype = SOCK_STREAM;	/* stream socket */
+	ai_ret = getaddrinfo(laddr, NULL, &ai_hints, &ai_res);
+	if (ai_ret != 0) {
+		LM_ERR("getaddrinfo failed: %d %s\n", ai_ret, gai_strerror(ai_ret));
 		return -1;
 	}
-	if(h->h_addrtype == AF_INET) {
-		evapi_srv_sock = socket(PF_INET, SOCK_STREAM, 0);
-	} else {
-		evapi_srv_sock = socket(PF_INET6, SOCK_STREAM, 0);
-	}
-	if( evapi_srv_sock < 0 )
-	{
-		LM_ERR("cannot create server socket (family %d)\n", h->h_addrtype);
+	evapi_srv_sock = socket(ai_res->ai_family, ai_res->ai_socktype,
+			ai_res->ai_protocol);
+	if( evapi_srv_sock < 0 ) {
+		LM_ERR("cannot create server socket (family %d)\n", ai_res->ai_family);
+		freeaddrinfo(ai_res);
 		return -1;
 	}
+
 	/* set non-blocking flag */
 	fflags = fcntl(evapi_srv_sock, F_GETFL);
 	if(fflags<0) {
 		LM_ERR("failed to get the srv socket flags\n");
 		close(evapi_srv_sock);
+		freeaddrinfo(ai_res);
 		return -1;
 	}
 	if (fcntl(evapi_srv_sock, F_SETFL, fflags | O_NONBLOCK)<0) {
 		LM_ERR("failed to set srv socket flags\n");
 		close(evapi_srv_sock);
+		freeaddrinfo(ai_res);
 		return -1;
 	}
-
-	bzero(&evapi_srv_addr, sizeof(evapi_srv_addr));
-	evapi_srv_addr.sin_family = h->h_addrtype;
-	evapi_srv_addr.sin_port   = htons(lport);
-	evapi_srv_addr.sin_addr  = *(struct in_addr*)h->h_addr;
 
 	/* Set SO_REUSEADDR option on listening socket so that we don't
 	 * have to wait for connections in TIME_WAIT to go away before
@@ -688,15 +687,16 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		&yes_true, sizeof(int)) < 0) {
 		LM_ERR("cannot set SO_REUSEADDR option on descriptor\n");
 		close(evapi_srv_sock);
+		freeaddrinfo(ai_res);
 		return -1;
 	}
 
-	if (bind(evapi_srv_sock, (struct sockaddr*)&evapi_srv_addr,
-				sizeof(evapi_srv_addr)) < 0) {
+	if (bind(evapi_srv_sock, ai_res->ai_addr, ai_res->ai_addrlen) < 0) {
 		LM_ERR("cannot bind to local address and port [%s:%d]\n", laddr, lport);
 		close(evapi_srv_sock);
 		return -1;
 	}
+	freeaddrinfo(ai_res);
 	if (listen(evapi_srv_sock, 4) < 0) {
 		LM_ERR("listen error\n");
 		close(evapi_srv_sock);
