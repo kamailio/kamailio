@@ -37,6 +37,7 @@
 #include "../../core/kemi.h"
 
 #include "mqueue_api.h"
+#include "mqueue_db.h"
 #include "api.h"
 
 MODULE_VERSION
@@ -53,6 +54,7 @@ static int fixup_mq_add(void** param, int param_no);
 static int bind_mq(mq_api_t* api);
 
 static int mqueue_rpc_init(void);
+
 
 static pv_export_t mod_pvs[] = {
 	{ {"mqk", sizeof("mqk")-1}, PVT_OTHER, pv_get_mqk, 0,
@@ -80,6 +82,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"db_url",          PARAM_STR, &mqueue_db_url},
 	{"mqueue",          PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param},
 	{0, 0, 0}
 };
@@ -205,6 +208,7 @@ int mq_param(modparam_t type, void *val)
 	param_t *pit=NULL;
 	str qname = {0, 0};
 	int msize = 0;
+	int dbmode = 0;
 
 	if(val==NULL)
 		return -1;
@@ -229,6 +233,9 @@ int mq_param(modparam_t type, void *val)
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "size", 4)==0) {
 			str2sint(&pit->body, &msize);
+		} else if(pit->name.len==6
+				&& strncasecmp(pit->name.s, "dbmode", 6)==0) {
+			str2sint(&pit->body, &dbmode);
 		}  else {
 			LM_ERR("unknown param: %.*s\n", pit->name.len, pit->name.s);
 			free_params(params_list);
@@ -247,6 +254,16 @@ int mq_param(modparam_t type, void *val)
 		free_params(params_list);
 		return -1;
 	}
+	LM_INFO("mqueue param: [%.*s|%d]\n", qname.len, qname.s, dbmode);
+	if(dbmode == 1 || dbmode == 2) {
+		if(mqueue_db_load_queue(&qname)<0)
+		{
+			LM_ERR("error loading mqueue: %.*s from DB\n", qname.len, qname.s);
+			free_params(params_list);
+			return -1;
+		}
+	}
+	mq_set_dbmode(&qname, dbmode);
 	free_params(params_list);
 	return 0;
 }

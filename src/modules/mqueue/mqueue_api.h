@@ -44,6 +44,7 @@ typedef struct _mq_head
 	str name;
 	int msize;
 	int csize;
+	int dbmode;
 	gen_lock_t lock;
 	mq_item_t *ifirst;
 	mq_item_t *ilast;
@@ -61,7 +62,6 @@ typedef struct _mq_pv
 } mq_pv_t;
 
 mq_pv_t *mq_pv_get(str *name);
-
 int pv_parse_mq_name(pv_spec_p sp, str *in);
 int pv_get_mqk(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -79,6 +79,7 @@ void mq_pv_free(str *name);
 int mq_item_add(str *qname, str *key, str *val);
 
 int _mq_get_csize(str *);
+int mq_set_dbmode(str *, int dbmode);
 
 #endif
 
