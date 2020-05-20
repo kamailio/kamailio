@@ -125,6 +125,7 @@ Federico Cabiddu
               5.4. dispatcher.ping_active
               5.5. dispatcher.add
               5.6. dispatcher.remove
+              5.7. dispatcher.hash
 
         6. Installation and Running
 
@@ -276,6 +277,7 @@ Chapter 1. Admin Guide
         5.4. dispatcher.ping_active
         5.5. dispatcher.add
         5.6. dispatcher.remove
+        5.7. dispatcher.hash
 
    6. Installation and Running
 
@@ -1453,6 +1455,7 @@ onreply_route {
    5.4. dispatcher.ping_active
    5.5. dispatcher.add
    5.6. dispatcher.remove
+   5.7. dispatcher.hash
 
 5.1.  dispatcher.set_state
 
@@ -1579,6 +1582,35 @@ kamcmd dispatcher.add 3 sip:127.0.0.1:5075 8
 # prototype: kamcmd dispatcher.remove _group_ _address_
 kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
 kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
+...
+
+5.7.  dispatcher.hash
+
+   Compute the hash id corresponding to the string parameter values.
+
+   Return the hash id and the corresponding slot, if 'nslots' parameter is
+   not 0.
+
+   Name: dispatcher.hash
+
+   Parameters:
+     * _nslots_: number of slots
+     * _val1_: string value
+     * _val2_: (optional) string value
+
+   It can be useful to find what address in a destination group (setid) is
+   going to be used when hashing a value or a URI. For a URI, the
+   corresponding username and domain have to be provided as _val1_ and
+   _val2_. If the URI has a port different than 5060 (or 5061 for TLS),
+   then the _val2_ has to be 'domain:port'. The _nslots_ has to be the
+   number of addresses in the group (setid). The returned 'slot' value
+   represents the index of the address to be used for routing.
+
+   Example:
+...
+# prototype:  rpc dispatcher.hash _nslots_ _val1_ [_val2_]
+ rpc dispatcher.hash 0 alice server.com
+ rpc dispatcher.hash 4 bob server.com
 ...
 
 6. Installation and Running
