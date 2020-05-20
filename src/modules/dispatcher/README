@@ -1608,9 +1608,9 @@ kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 
    Example:
 ...
-# prototype:  rpc dispatcher.hash _nslots_ _val1_ [_val2_]
- rpc dispatcher.hash 0 alice server.com
- rpc dispatcher.hash 4 bob server.com
+# prototype: kamctl rpc dispatcher.hash _nslots_ _val1_ [_val2_]
+kamctl rpc dispatcher.hash 0 alice server.com
+kamctl rpc dispatcher.hash 4 bob server.com
 ...
 
 6. Installation and Running
