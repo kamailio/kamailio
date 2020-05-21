@@ -187,12 +187,12 @@ int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
 	tcell->cseq_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
 
 	LM_DBG("cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return 0;
 
 error:
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return -1;
 }
@@ -378,7 +378,7 @@ clean:
 		lreq.dst_uri.s=0;
 		lreq.dst_uri.len=0;
 	}
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return refresh_shortcuts;
 }
@@ -546,7 +546,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				LM_ERR("failed to parse headers on uas for failover\n");
 			} else {
 				new_cell->uas.request = sip_msg_cloner(&lreq, &sip_msg_len);
-				lreq.buf=0; /* covers the obsolete DYN_BUF */
+				lreq.buf=0;
 				free_sip_msg(&lreq);
 				if (!new_cell->uas.request) {
 					LM_ERR("no more shmem\n");
