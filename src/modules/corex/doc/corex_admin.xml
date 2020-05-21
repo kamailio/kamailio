@@ -30,7 +30,7 @@
 		follow the requirements of the core contributions.
 	</para>
 	<para>
-		This module now also provides access to network input / output data through
+		This module now also provides access to network input / output (nio) data through
 		event_route[network:msg]. The raw data received from a remote host or about to
 		be sent to a remote host is available in variable $mb. The script writer may
 		manipulate this data and save the final result in an AVP defined by msg_avp
@@ -96,8 +96,8 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
-    <section id="corex.p.network_io_intercept">
-        <title><varname>network_io_intercept</varname> (int)</title>
+    <section id="corex.p.nio_intercept">
+        <title><varname>nio_intercept</varname> (int)</title>
         <para>
             If set to non-zero then raw data received from a remote host or about to
 			be sent to a remote host is made available in event_route[network:msg].
@@ -110,19 +110,19 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>network_io_intercept</varname> parameter</title>
+        <title>Set <varname>nio_intercept</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "network_io_intercept", 1)
+modparam("corex", "nio_intercept", 1)
 ...
 </programlisting>
         </example>
     </section>
-    <section id="corex.p.min_msg_len">
-        <title><varname>min_msg_len</varname> (int)</title>
+    <section id="corex.p.nio_min_msg_len">
+        <title><varname>nio_min_msg_len</varname> (int)</title>
         <para>
             Minimum content length of the packet to execute the event_route[network:msg].
-			This only works if network_io_intercept parameter is set to non-zero.
+			This only works if nio_intercept parameter is set to non-zero.
         </para>
         <para>
         <emphasis>
@@ -130,20 +130,20 @@ modparam("corex", "network_io_intercept", 1)
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>min_msg_len</varname> parameter</title>
+        <title>Set <varname>nio_min_msg_len</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "min_msg_len", 32)
+modparam("corex", "nio_min_msg_len", 32)
 ...
 </programlisting>
         </example>
     </section>
-    <section id="corex.p.msg_avp">
-        <title><varname>msg_avp</varname> (string)</title>
+    <section id="corex.p.nio_msg_avp">
+        <title><varname>nio_msg_avp</varname> (string)</title>
         <para>
             AVP name to store modified content to be set in the packet. If not set in
             event_route[network:msg], then all changes are lost and original contents
-            are used. This only works if network_io_intercept parameter is to set non-zero.
+            are used. This only works if nio_intercept parameter is to set non-zero.
         </para>
         <para>
         <emphasis>
@@ -151,10 +151,10 @@ modparam("corex", "min_msg_len", 32)
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>msg_avp</varname> parameter</title>
+        <title>Set <varname>nio_msg_avp</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "msg_avp", "$avp(msg)")
+modparam("corex", "nio_msg_avp", "$avp(msg)")
 ...
 </programlisting>
         </example>
@@ -316,7 +316,7 @@ sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $T
             Returns true if contents of message buffer $mb are the data received from
             remote host, otherwise false indicating that the contents of $mb are data
             that is about to be sent out to remote host. This only works if
-			network_io_intercept parameter is set to non-zero.
+			nio_intercept parameter is set to non-zero.
         </para>
         <para>
         This function can be used from event_route[network:msg].
@@ -977,7 +977,7 @@ event_route[dispatcher:dst-down] {
 			by server can be decrypted at client app.
         </para>
         <para>
-			Next is a basic usage example where encoding and decoding is done using PERL,
+			Next is a basic usage example where encoding and decoding is done using PERL.
         </para>
         <example>
         <title><function>event_route[network:msg]</function> use cases</title>
@@ -991,9 +991,9 @@ modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
 modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
 
 # ----- corex params -----
-modparam("corex", "network_io_intercept", 32)
-modparam("corex", "min_msg_len", 32)
-modparam("corex", "msg_avp", "$avp(msg)")
+modparam("corex", "nio_intercept", 32)
+modparam("corex", "nio_min_msg_len", 32)
+modparam("corex", "nio_msg_avp", "$avp(msg)")
 ...
 event_route[network:msg] {
 	if (is_incoming()) {
