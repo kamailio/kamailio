@@ -141,9 +141,9 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"alias_subdomains",		STR_PARAM|USE_FUNC_PARAM,
 		(void*)corex_alias_subdomains_param},
-	{"network_io_intercept",	INT_PARAM, &nio_intercept},
-	{"min_msg_len",				INT_PARAM, &nio_min_msg_len},
-	{"msg_avp",					PARAM_STR, &nio_msg_avp_param},
+	{"nio_intercept",	INT_PARAM, &nio_intercept},
+	{"nio_min_msg_len",	INT_PARAM, &nio_min_msg_len},
+	{"nio_msg_avp",		PARAM_STR, &nio_msg_avp_param},
 
 	{0, 0, 0}
 };
