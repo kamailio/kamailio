@@ -422,11 +422,7 @@ error:
 int udp_rcv_loop()
 {
 	unsigned len;
-#ifdef DYN_BUF
-	char* buf;
-#else
 	static char buf [BUF_SIZE+1];
-#endif
 	char *tmp;
 	union sockaddr_union* fromaddr;
 	unsigned int fromaddrlen;
@@ -457,13 +453,6 @@ int udp_rcv_loop()
 	if (cfg_child_init()) goto error;
 
 	for(;;){
-#ifdef DYN_BUF
-		buf=pkg_malloc(BUF_SIZE+1);
-		if (buf==0){
-			PKG_MEM_ERROR;
-			goto error;
-		}
-#endif
 		fromaddrlen=sizeof(union sockaddr_union);
 		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0,
 				(struct sockaddr*)fromaddr, &fromaddrlen);

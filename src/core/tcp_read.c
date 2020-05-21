@@ -1375,12 +1375,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
 #ifdef TCP_CLONE_RCVBUF
-#ifdef DYN_BUF
-	char *buf = NULL;
-#else
 	static char *buf = NULL;
 	static unsigned int bsize = 0;
-#endif
 	int blen;
 
 	/* cloning is disabled via parameter */
@@ -1404,13 +1400,6 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(blen < BUF_SIZE)
 		blen = BUF_SIZE;
 
-#ifdef DYN_BUF
-	buf=pkg_malloc(blen+1);
-	if (buf==0) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-#else
 	/* allocate buffer when needed
 	 * - no buffer yet
 	 * - existing buffer too small (min size is BUF_SIZE - to accomodate most
@@ -1431,7 +1420,6 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		}
 		bsize = blen;
 	}
-#endif
 
 	memcpy(buf, tcpbuf, len);
 	buf[len] = '\0';

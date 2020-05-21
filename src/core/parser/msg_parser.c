@@ -711,10 +711,7 @@ void free_sip_msg(struct sip_msg* const msg)
 	if (msg->body_lumps)  free_lump_list(msg->body_lumps);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
 	msg_ldata_reset(msg);
-	/* don't free anymore -- now a pointer to a static buffer */
-#	ifdef DYN_BUF
-	pkg_free(msg->buf);
-#	endif
+	/* no free of msg->buf -- a pointer to a static buffer */
 }
 
 /**
