@@ -1661,14 +1661,10 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 }
 
 
-static const char *dispatcher_rpc_set_state_doc[2] = {
-		"Set the state of a destination address", 0};
-
-
 /*
- * RPC command to set the state of a destination address
+ * RPC command to set the state of a destination address or duid
  */
-static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
+static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
 {
 	int group;
 	str dest;
@@ -1712,15 +1708,44 @@ static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
 	if(dest.len == 3 && strncmp(dest.s, "all", 3) == 0) {
 		ds_reinit_state_all(group, stval);
 	} else {
-		if(ds_reinit_state(group, &dest, stval) < 0) {
-			rpc->fault(ctx, 500, "State Update Failed");
-			return;
+		if (mattr==1) {
+			if(ds_reinit_duid_state(group, &dest, stval) < 0) {
+				rpc->fault(ctx, 500, "State Update Failed");
+				return;
+			}
+		} else {
+			if(ds_reinit_state(group, &dest, stval) < 0) {
+				rpc->fault(ctx, 500, "State Update Failed");
+				return;
+			}
 		}
 	}
 
 	return;
 }
 
+
+static const char *dispatcher_rpc_set_state_doc[2] = {
+		"Set the state of a destination by address", 0};
+
+/*
+ * RPC command to set the state of a destination address
+ */
+static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_set_state_helper(rpc, ctx, 0);
+}
+
+static const char *dispatcher_rpc_set_duid_state_doc[2] = {
+		"Set the state of a destination by duid", 0};
+
+/*
+ * RPC command to set the state of a destination duid
+ */
+static void dispatcher_rpc_set_duid_state(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_set_state_helper(rpc, ctx, 1);
+}
 
 static const char *dispatcher_rpc_ping_active_doc[2] = {
 		"Manage setting on/off the pinging (keepalive) of destinations", 0};
@@ -1867,6 +1892,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_list_doc,   0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
+	{"dispatcher.set_duid_state",   dispatcher_rpc_set_duid_state,
+		dispatcher_rpc_set_duid_state_doc,   0},
 	{"dispatcher.ping_active",   dispatcher_rpc_ping_active,
 		dispatcher_rpc_ping_active_doc, 0},
 	{"dispatcher.add",   dispatcher_rpc_add,
