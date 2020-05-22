@@ -1808,6 +1808,28 @@ onreply_route {
 ...
 </programlisting>
     </section>
+	<section>
+	<section id="dispatcher.r.set_duid_state">
+		<title>
+		<function moreinfo="none">dispatcher.set_duid_state</function>
+		</title>
+		<para>
+		Sets the state for a destination by matching on 'duid' attribute. The
+		parameters first two parameter 'state' and 'group' are the same like
+		for RPC command 'dispatcher.set_state'. The third parameter 'duid' is
+		the value to be matched against the 'duid' attribute of dispatcher
+		destinations.
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &sercmd; dispatcher.set_duid_state _state_ _group_ _duid_
+&sercmd; dispatcher.set_duid_state ip 2 xyz
+...
+</programlisting>
+    </section>
 	<section id="dispatcher.r.list">
 		<title>
 		<function moreinfo="none">dispatcher.list</function>
