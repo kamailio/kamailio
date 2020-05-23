@@ -1153,6 +1153,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with http_async_client}
     khttp_async \
 %endif
+    kxhttp_prom \
 %if %{with ims}
     kims \
 %endif
@@ -1244,6 +1245,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with http_async_client}
     khttp_async \
 %endif
+    kxhttp_prom \
 %if %{with ims}
     kims \
 %endif
