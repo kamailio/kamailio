@@ -2,6 +2,11 @@
   "name": "matrix",
   "version": 1,
   "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
     "first": {
       "type": "int",
       "default": null,
