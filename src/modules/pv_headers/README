@@ -12,7 +12,7 @@ Victor Seva
    Sipwise GmbH
    <vseva@sipwise.com>
 
-   Copyright � 2018 Sipwise GmbH
+   Copyright © 2018 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -106,7 +106,7 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * uac.
      * tm.
-       Needed only if "auto_msg" parameter is set to 1.
+       Needed only if “auto_msg” parameter is set to 1.
 
 2.2. External Libraries or Applications
 
@@ -128,7 +128,7 @@ Chapter 1. Admin Guide
 
    Name of the XAVP there the collected headers are stored.
 
-   Default value is "headers".
+   Default value is “headers”.
 
    Example 1.1. Set xavp_name parameter
 ...
@@ -186,7 +186,7 @@ modparam("pv_headers", "header_apply_flag", 38)
    headers are processed.
 
    Default value is
-   "Record-Route,Via,Route,Content-Length,Max-Forwards,CSeq".
+   “Record-Route,Via,Route,Content-Length,Max-Forwards,CSeq”.
 
    Example 1.5. Set skip_headers parameter
 ...
@@ -200,7 +200,7 @@ modparam("pv_headers", "skip_headers", "Record-Route,Via,Route")
 
    If the parameter is set to an empty string then no headers are split.
 
-   Default value is "".
+   Default value is “”.
 
    Example 1.6. Set split_headers parameter
 ...
@@ -276,46 +276,46 @@ modparam("pvh", "auto_msg", 1)
 
 4.4.  pvh_check_header(hname)
 
-   Checks if the header "hname" already exists in the XAVP.
+   Checks if the header “hname” already exists in the XAVP.
 
    This function can be used from ANY_ROUTE but only after
-   pvh_collect_headers() or with "auto_msg" parameter enabled.
+   pvh_collect_headers() or with “auto_msg” parameter enabled.
 
 4.5.  pvh_append_header(hname, hvalue)
 
-   Appends a new header "hname" with the value "hvalue" into the XAVP.
+   Appends a new header “hname” with the value “hvalue” into the XAVP.
    Please note that subsequent "pv_append_header" calls will result in
    multiple headers.
 
-   If the provided "hvalue" is $null then the header is added into the
+   If the provided “hvalue” is $null then the header is added into the
    XAVP but it is not going to be added into the message.
 
    This function can be used from ANY_ROUTE but only after
-   pvh_collect_headers() or with "auto_msg" parameter enabled.
+   pvh_collect_headers() or with “auto_msg” parameter enabled.
 
 4.6.  pvh_modify_header(hname, hvalue, [idx])
 
-   Modifies an existing header in the XAVP "hname" with the value "hvalue"
+   Modifies an existing header in the XAVP “hname” with the value “hvalue”
    into the XAVP. Index order is top to bottom. Please note that
    subsequent pvh_append_header calls will result in multiple headers.
 
-   Please note that if the header "hname"does not exist it will be
+   Please note that if the header “hname”does not exist it will be
    explicitly appended. If there are multiple headers with the same name
-   and "idx" is omitted, only the first one will be affected.
+   and “idx” is omitted, only the first one will be affected.
 
    This function can be used from ANY_ROUTE but only after
-   pvh_collect_headers() or with "auto_msg" parameter enabled.
+   pvh_collect_headers() or with “auto_msg” parameter enabled.
 
 4.7.  pvh_remove_header(hname, [idx])
 
-   Removes an existing header "hname" from the XAVP. Index order is top to
+   Removes an existing header “hname” from the XAVP. Index order is top to
    bottom.
 
-   If there are multiple headers with the same name and "idx" is omitted,
+   If there are multiple headers with the same name and “idx” is omitted,
    all of them will be removed.
 
    This function can be used from ANY_ROUTE but only after
-   pvh_collect_headers() or with "auto_msg" parameter enabled.
+   pvh_collect_headers() or with “auto_msg” parameter enabled.
 
 5. Exported Variables
 
