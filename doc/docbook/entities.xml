@@ -13,6 +13,8 @@
 
 <!ENTITY kamwiki "https://www.kamailio.org/wiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
+<!ENTITY kamctl "kamctl">
+<!ENTITY kamcli "kamcli">
 <!ENTITY kamcmd "kamcmd">
 
 <!ENTITY kamailiohome "https://www.kamailio.org/">
