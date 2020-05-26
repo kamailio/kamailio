@@ -700,6 +700,7 @@ typedef struct tm_faked_env {
 	avp_list_t* backup_uri_to;
 	sr_xavp_t **backup_xavps;
 	sr_xavp_t **backup_xavus;
+	sr_xavp_t **backup_xavis;
 	struct socket_info* backup_si;
 	struct lump *backup_add_rm;
 	struct lump *backup_body_lumps;
@@ -791,6 +792,8 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 				= xavp_set_list(&t->xavps_list);
 		_tm_faked_env[_tm_faked_env_idx].backup_xavus
 				= xavu_set_list(&t->xavus_list);
+		_tm_faked_env[_tm_faked_env_idx].backup_xavis
+				= xavi_set_list(&t->xavis_list);
 		/* set default send address to the saved value */
 		_tm_faked_env[_tm_faked_env_idx].backup_si = bind_address;
 		bind_address = t->uac[0].request.dst.send_sock;
@@ -827,6 +830,7 @@ int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env)
 				_tm_faked_env[_tm_faked_env_idx].backup_uri_to);
 		xavp_set_list(_tm_faked_env[_tm_faked_env_idx].backup_xavps);
 		xavu_set_list(_tm_faked_env[_tm_faked_env_idx].backup_xavus);
+		xavi_set_list(_tm_faked_env[_tm_faked_env_idx].backup_xavis);
 		bind_address = _tm_faked_env[_tm_faked_env_idx].backup_si;
 		/* restore lump lists */
 		if(t!=NULL) {
@@ -2290,6 +2294,7 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_uri_from, *backup_uri_to;
 	sr_xavp_t **backup_xavps;
 	sr_xavp_t **backup_xavus;
+	sr_xavp_t **backup_xavis;
 	int replies_locked = 0;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
@@ -2480,6 +2485,7 @@ int reply_received( struct sip_msg  *p_msg )
 				&t->domain_avps_to );
 		backup_xavps = xavp_set_list(&t->xavps_list);
 		backup_xavus = xavu_set_list(&t->xavus_list);
+		backup_xavis = xavi_set_list(&t->xavis_list);
 		setbflagsval(0, uac->branch_flags);
 		if(msg_status>last_uac_status) {
 			/* current response (msg) status is higher that the last received
@@ -2525,6 +2531,7 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 		xavp_set_list(backup_xavps);
 		xavu_set_list(backup_xavus);
+		xavi_set_list(backup_xavis);
 		/* handle a possible DROP in the script, but only if this
 		 * is not a final reply (final replies already stop the timers
 		 * and droping them might leave a transaction living forever) */
