@@ -574,6 +574,12 @@ int pv_xavu_print(sip_msg_t* msg, char* s1, char *s2)
 	return 1;
 }
 
+int pv_xavi_print(sip_msg_t* msg, char* s1, char *s2)
+{
+	xavi_print_list(NULL);
+	return 1;
+}
+
 /**
  *
  */
@@ -920,5 +926,415 @@ int pv_set_xavu(struct sip_msg* msg, pv_param_t *param,
 	if(xavu_set_child_xval(&xname->name, &xname->next->name, &xval)==NULL) {
 		return -1;
 	}
+	return 0;
+}
+
+void pv_xavi_name_destroy(pv_xavp_name_t *xname)
+{
+	return;
+}
+
+int pv_parse_xavi_name(pv_spec_p sp, str *in)
+{
+	pv_xavp_name_t *xname=NULL;
+	char *p;
+	str s;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	xname = (pv_xavp_name_t*)pkg_malloc(sizeof(pv_xavp_name_t));
+	if(xname==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memset(xname, 0, sizeof(pv_xavp_name_t));
+
+	s = *in;
+
+	p = pv_xavp_fill_ni(&s, xname);
+	if(p==NULL)
+		goto error;
+
+	if(*p!='=')
+		goto done;
+	p++;
+	if(*p!='>')
+		goto error;
+	p++;
+
+	s.len = in->len - (int)(p - in->s);
+	s.s = p;
+	LM_DBG("xavi sublist [%.*s] - key [%.*s]\n", xname->name.len,
+			xname->name.s, s.len, s.s);
+
+	xname->next = (pv_xavp_name_t*)pkg_malloc(sizeof(pv_xavp_name_t));
+	if(xname->next==NULL) {
+		LM_ERR("not enough pkg mem\n");
+		goto error;
+	}
+	memset(xname->next, 0, sizeof(pv_xavp_name_t));
+
+	p = pv_xavp_fill_ni(&s, xname->next);
+	if(p==NULL)
+		goto error;
+
+done:
+	sp->pvp.pvn.u.dname = (void*)xname;
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	return 0;
+
+error:
+	if(xname!=NULL) {
+		pv_xavi_name_destroy(xname);
+		pkg_free(xname);
+	}
+	return -1;
+}
+
+int pv_get_xavi(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	pv_xavp_name_t *xname=NULL;
+	sr_xavp_t *avi=NULL;
+	int idxf = 0;
+	int idx = 0;
+	int count;
+	char *p, *p_ini;
+	int p_size;
+
+	if(param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	xname = (pv_xavp_name_t*)param->pvn.u.dname;
+
+	if(xname->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavi_count(&xname->name, NULL);
+		idx = count + idx;
+	}
+	avi = xavi_get_by_index(&xname->name, idx, NULL);
+	if(avi==NULL)
+		return pv_get_null(msg, param, res);
+	if(xname->next==NULL)
+		return pv_xavp_get_value(msg, param, res, avi);
+	if(avi->val.type != SR_XTYPE_XAVP)
+		return pv_get_null(msg, param, res);
+
+	idx = 0;
+	idxf = 0;
+	if(xname->next->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->next->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+	}
+	/* fix the index */
+	if(idx<0)
+	{
+		count = xavi_count(&xname->next->name, &avi->val.v.xavp);
+		idx = count + idx;
+	}
+	avi = xavi_get_by_index(&xname->next->name, idx, &avi->val.v.xavp);
+	if(avi==NULL)
+		return pv_get_null(msg, param, res);
+	/* get all values of second key */
+	if(idxf==PV_IDX_ALL)
+	{
+		p_ini = pv_get_buffer();
+		p = p_ini;
+		p_size = pv_get_buffer_size();
+		do {
+			if(p!=p_ini)
+			{
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
+				{
+					LM_ERR("local buffer length exceeded\n");
+					return pv_get_null(msg, param, res);
+				}
+				memcpy(p, PV_FIELD_DELIM, PV_FIELD_DELIM_LEN);
+				p += PV_FIELD_DELIM_LEN;
+			}
+			if(pv_xavp_get_value(msg, param, res, avi)<0)
+			{
+				LM_ERR("can get value\n");
+				return pv_get_null(msg, param, res);
+			}
+			if(p-p_ini+res->rs.len+1>p_size)
+			{
+				LM_ERR("local buffer length exceeded!\n");
+				return pv_get_null(msg, param, res);
+			}
+			memcpy(p, res->rs.s, res->rs.len);
+			p += res->rs.len;
+		} while ((avi=xavi_get_next(avi))!=0);
+		res->rs.s = p_ini;
+		res->rs.len = p - p_ini;
+		return 0;
+	}
+	return pv_xavp_get_value(msg, param, res, avi);
+}
+
+/**
+ * $xavi(name1[idx1]=>name2[idx2])
+ */
+int pv_set_xavi(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	pv_xavp_name_t *xname=NULL;
+	sr_xavp_t *avi=NULL;
+	sr_xavp_t *list=NULL;
+	sr_xval_t xval;
+	int idxf = 0;
+	int idx = 0;
+	int idxf1 = 0;
+	int idx1 = 0;
+	int count;
+
+	if(param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	xname = (pv_xavp_name_t*)param->pvn.u.dname;
+
+	if(xname->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg, &xname->index.pvp, &idx, &idxf)!=0)
+		{
+			LM_ERR("invalid index\n");
+			return -1;
+		}
+	}
+
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
+	{
+		if(xname->next==NULL)
+		{
+			if(xname->index.type==PVT_EXTRA) {
+				if(idxf==PV_IDX_ALL) {
+					xavi_rm_by_name(&xname->name, 1, NULL);
+					return 0;
+				}
+			}
+			if(idx==0) {
+				xavi_rm_by_name(&xname->name, 0, NULL);
+				return 0;
+			}
+			/* fix the index */
+			if(idx<0)
+			{
+				count = xavi_count(&xname->name, NULL);
+				idx = count + idx + 1;
+			}
+			xavi_rm_by_index(&xname->name, idx, NULL);
+			return 0;
+		}
+
+		if(xname->next->index.type==PVT_EXTRA)
+		{
+			/* get the index */
+			if(pv_get_spec_index(msg,&xname->next->index.pvp,&idx1,&idxf1)!=0)
+			{
+				LM_ERR("invalid index!\n");
+				return -1;
+			}
+		}
+
+		if(idxf==PV_IDX_ALL) {
+			/* iterate */
+			avi = xavi_get(&xname->name, NULL);
+			while(avi) {
+				if(avi->val.type==SR_XTYPE_XAVP) {
+					if(xname->next->index.type==PVT_EXTRA) {
+						if(idxf1==PV_IDX_ALL) {
+							xavi_rm_by_name(&xname->next->name, 1,
+									&avi->val.v.xavp);
+						} else {
+							/* fix the index */
+							idx = idx1;
+							if(idx<0)
+							{
+								count = xavi_count(&xname->next->name,
+										&avi->val.v.xavp);
+								idx = count + idx1 + 1;
+							}
+							xavi_rm_by_index(&xname->next->name, idx,
+									&avi->val.v.xavp);
+						}
+					} else {
+						xavi_rm_by_name(&xname->next->name, 0,
+								&avi->val.v.xavp);
+					}
+				}
+				avi = xavi_get_next(avi);
+			}
+			return 0;
+		}
+
+		if(idx==0) {
+			avi = xavi_get(&xname->name, NULL);
+		} else {
+			/* fix the index */
+			if(idx<0)
+			{
+				count = xavi_count(&xname->name, NULL);
+				idx = count + idx + 1;
+			}
+			avi = xavi_get_by_index(&xname->name, idx, NULL);
+		}
+		if(avi) {
+			if(avi->val.type==SR_XTYPE_XAVP) {
+				if(xname->next->index.type==PVT_EXTRA) {
+					if(idxf1==PV_IDX_ALL) {
+						xavi_rm_by_name(&xname->next->name, 1,
+								&avi->val.v.xavp);
+					} else {
+						/* fix the index */
+						idx = idx1;
+						if(idx<0)
+						{
+							count = xavi_count(&xname->next->name,
+									&avi->val.v.xavp);
+							idx = count + idx1 + 1;
+						}
+						xavi_rm_by_index(&xname->next->name, idx,
+								&avi->val.v.xavp);
+					}
+				} else {
+					xavi_rm_by_name(&xname->next->name, 0,
+							&avi->val.v.xavp);
+				}
+			}
+		}
+		return 0;
+	} /* NULL assignment */
+
+	/* build xavi value */
+	memset(&xval, 0, sizeof(sr_xval_t));
+
+	if(val->flags&PV_TYPE_INT)
+	{
+		xval.type = SR_XTYPE_INT;
+		xval.v.i = val->ri;
+	} else {
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = val->rs;
+	}
+
+	/* where to add */
+	if(xname->next==NULL)
+	{
+		/* xavi with single value */
+		if(xname->index.type==PVT_EXTRA) {
+			if(idxf==PV_IDX_ALL) {
+				/* ignore: should iterate and set same value to all xavis
+				 * with same name?!?! */
+				return -1;
+			}
+			/* fix the index */
+			if(idx<0)
+			{
+				count = xavi_count(&xname->name, NULL);
+				idx = count + idx + 1;
+			}
+			/* set the value */
+			if(xavi_set_value(&xname->name, idx, &xval, NULL)==NULL)
+				return -1;
+			return 0;
+		}
+		/* add new value */
+		if(xavi_add_value(&xname->name, &xval, NULL)==NULL)
+			return -1;
+		return 0;
+	}
+
+	/* xavi with xavp list value */
+	if(xname->next->index.type==PVT_EXTRA)
+	{
+		/* get the index */
+		if(pv_get_spec_index(msg,&xname->next->index.pvp,&idx1,&idxf1)!=0)
+		{
+			LM_ERR("invalid index!\n");
+			return -1;
+		}
+	}
+
+	if(xname->index.type==PVT_EXTRA)
+	{
+		/* set the value */
+		if(idxf==PV_IDX_ALL) {
+			/* ignore: should iterate and set same value to all xavis
+			 * with same name?!?! */
+			return 0;
+		}
+
+		if(idx==0) {
+			avi = xavi_get(&xname->name, NULL);
+		} else {
+			/* fix the index */
+			if(idx<0)
+			{
+				count = xavi_count(&xname->name, NULL);
+				idx = count + idx + 1;
+			}
+			avi = xavi_get_by_index(&xname->name, idx, NULL);
+		}
+		if(avi==NULL)
+			return 0;
+
+		if(avi->val.type!=SR_XTYPE_XAVP)
+			return -1;
+
+		if(xname->next->index.type==PVT_EXTRA) {
+			if(idxf1==PV_IDX_ALL) {
+				/* ignore: should iterate and set same value to all xavis
+				 * with same name?!?! */
+				return 0;
+			}
+			/* fix the index */
+			idx = idx1;
+			if(idx<0)
+			{
+				count = xavi_count(&xname->next->name,
+						&avi->val.v.xavp);
+				idx = count + idx1 + 1;
+			}
+			/* set value */
+			xavi_set_value(&xname->next->name, idx, &xval, &avi->val.v.xavp);
+			return 0;
+		}
+		/* add new value in sublist */
+		if(xavi_add_value(&xname->next->name, &xval, &avi->val.v.xavp)==NULL)
+			return -1;
+		return 0;
+	}
+	/* add new xavi with xavp list */
+	if(xavi_add_value(&xname->next->name, &xval, &list)==NULL)
+		return -1;
+
+	/* build xavi value */
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_XAVP;
+	xval.v.xavp = list;
+	xavi_add_value(&xname->name, &xval, NULL);
+
 	return 0;
 }
