@@ -96,6 +96,60 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
+	<section id="corex.p.dns_cache">
+	    <title><varname>dns_cache</varname> (string)</title>
+	    <para>
+		Add A or AAAA records to internal DNS cache at startup. It can be set
+		many times to add more than one record.
+	    </para>
+	    <para>
+		The format of the value follows the SIP params style:
+		"attr1=val1;attr2=val2;...". The attributes can be:
+	    </para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>type</emphasis> - it can be "A" (IPv4) or "AAAA" (IPv6)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>name</emphasis> - the domain name
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>addr</emphasis> - the IP address
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>ttl</emphasis> - TTL value
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> - can be: 1 - the domain is unresolvable
+			(like blacklisted); 2 - the record is permanent (never times out,
+			never deleted, never overwritten)
+			</para>
+		</listitem>
+		</itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>dns_cache</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "dns_cache", "type=A;name=kamailio.org;addr=193.22.119.66;ttl=3600000;flags=0")
+modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400::2;ttl=3600000;flags=0")
+...
+</programlisting>
+	    </example>
+	</section>
     <section id="corex.p.nio_intercept">
         <title><varname>nio_intercept</varname> (int)</title>
         <para>
