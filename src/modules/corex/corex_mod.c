@@ -31,7 +31,9 @@
 #include "../../core/pvar.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/dns_cache.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_param.h"
 
 #include "corex_lib.h"
 #include "corex_rpc.h"
@@ -67,6 +69,7 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 static int fixup_file_op(void** param, int param_no);
 
 int corex_alias_subdomains_param(modparam_t type, void *val);
+int corex_dns_cache_param(modparam_t type, void *val);
 
 static int  mod_init(void);
 static int  child_init(int);
@@ -141,6 +144,8 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"alias_subdomains",		STR_PARAM|USE_FUNC_PARAM,
 		(void*)corex_alias_subdomains_param},
+	{"dns_cache",		PARAM_STR|USE_FUNC_PARAM,
+		(void*)corex_dns_cache_param},
 	{"nio_intercept",	INT_PARAM, &nio_intercept},
 	{"nio_min_msg_len",	INT_PARAM, &nio_min_msg_len},
 	{"nio_msg_avp",		PARAM_STR, &nio_msg_avp_param},
@@ -304,8 +309,87 @@ int corex_alias_subdomains_param(modparam_t type, void *val)
 	return corex_add_alias_subdomains((char*)val);
 error:
 	return -1;
-
 }
+
+int corex_dns_cache_param(modparam_t type, void *val)
+{
+	str sval;
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str dns_name = STR_NULL;
+	str dns_addr = STR_NULL;
+	unsigned short dns_type = 0;
+	int dns_ttl = 0;
+	int dns_flags = 0;
+
+	if(val==NULL) {
+		LM_ERR("invalid parameter\n");
+		goto error;
+	}
+	sval = *((str*)val);
+	if(sval.s==NULL || sval.len<=0) {
+		LM_ERR("invalid parameter value\n");
+		goto error;
+	}
+
+	if(sval.s[sval.len-1]==';') {
+		sval.len--;
+	}
+	if (parse_params(&sval, CLASS_ANY, &phooks, &params_list)<0) {
+		return -1;
+	}
+
+	for (pit = params_list; pit; pit=pit->next) {
+		if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "name", 4)==0) {
+			dns_name = pit->body;
+		} else if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "addr", 4)==0) {
+			dns_addr = pit->body;
+		} else if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "type", 4)==0) {
+			if((pit->body.len == 1) && ((pit->body.s[0]=='a')
+						|| (pit->body.s[0]=='A'))) {
+				dns_type = T_A;
+			} else if((pit->body.len == 4)
+					&& strncasecmp(pit->name.s, "aaaa", 4)==0) {
+				dns_type = T_AAAA;
+			}
+		} else if(pit->name.len==3
+				&& strncasecmp(pit->name.s, "ttl", 3)==0) {
+			if(dns_ttl==0) {
+				if (str2sint(&pit->body, &dns_ttl) < 0) {
+					LM_ERR("invalid ttl: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		} else if(pit->name.len==5
+				&& strncasecmp(pit->name.s, "flags", 5)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_flags) < 0) {
+					LM_ERR("invalid flags: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		}
+	}
+
+	if (dns_cache_add_record(dns_type,
+				&dns_name,
+				dns_ttl,
+				&dns_addr,
+				0 /* priority */,
+				0 /* weight */,
+				0 /* port */,
+				dns_flags) == 0) {
+		return 0;
+	}
+
+error:
+	return -1;
+}
+
 
 typedef struct _msg_iflag_name {
 	str name;
