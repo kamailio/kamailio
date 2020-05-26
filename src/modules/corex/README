@@ -30,9 +30,10 @@ Muhammad Shahzad Shafi
         3. Parameters
 
               3.1. alias_subdomains (string)
-              3.2. nio_intercept (int)
-              3.3. nio_min_msg_len (int)
-              3.4. nio_msg_avp (string)
+              3.2. dns_cache (string)
+              3.3. nio_intercept (int)
+              3.4. nio_min_msg_len (int)
+              3.5. nio_msg_avp (string)
 
         4. Functions
 
@@ -78,34 +79,35 @@ Muhammad Shahzad Shafi
    List of Examples
 
    1.1. Set alias_subdomains parameter
-   1.2. Set nio_intercept parameter
-   1.3. Set nio_min_msg_len parameter
-   1.4. Set nio_msg_avp parameter
-   1.5. append_branch usage
-   1.6. send_udp usage
-   1.7. send_tcp usage
-   1.8. send_data usage
-   1.9. sendx usage
-   1.10. is_incoming usage
-   1.11. msg_iflag_set usage
-   1.12. msg_iflag_reset usage
-   1.13. msg_iflag_is_set usage
-   1.14. file_read usage
-   1.15. file_write usage
-   1.16. setxflag usage
-   1.17. isxflagset usage
-   1.18. resetxflag usage
-   1.19. set_send_socket usage
-   1.20. set_send_socket_name usage
-   1.21. set_recv_socket usage
-   1.22. set_recv_socket_name usage
-   1.23. set_source_address usage
-   1.24. via_add_srvid usage
-   1.25. via_add_xavp_params usage
-   1.26. via_use_xavp_fields usage
-   1.27. is_faked_msg usage
-   1.28. event_route[network:msg] use cases
-   1.29. Sample PERL code for do_compress and do_uncompress
+   1.2. Set dns_cache parameter
+   1.3. Set nio_intercept parameter
+   1.4. Set nio_min_msg_len parameter
+   1.5. Set nio_msg_avp parameter
+   1.6. append_branch usage
+   1.7. send_udp usage
+   1.8. send_tcp usage
+   1.9. send_data usage
+   1.10. sendx usage
+   1.11. is_incoming usage
+   1.12. msg_iflag_set usage
+   1.13. msg_iflag_reset usage
+   1.14. msg_iflag_is_set usage
+   1.15. file_read usage
+   1.16. file_write usage
+   1.17. setxflag usage
+   1.18. isxflagset usage
+   1.19. resetxflag usage
+   1.20. set_send_socket usage
+   1.21. set_send_socket_name usage
+   1.22. set_recv_socket usage
+   1.23. set_recv_socket_name usage
+   1.24. set_source_address usage
+   1.25. via_add_srvid usage
+   1.26. via_add_xavp_params usage
+   1.27. via_use_xavp_fields usage
+   1.28. is_faked_msg usage
+   1.29. event_route[network:msg] use cases
+   1.30. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -120,9 +122,10 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. alias_subdomains (string)
-        3.2. nio_intercept (int)
-        3.3. nio_min_msg_len (int)
-        3.4. nio_msg_avp (string)
+        3.2. dns_cache (string)
+        3.3. nio_intercept (int)
+        3.4. nio_min_msg_len (int)
+        3.5. nio_msg_avp (string)
 
    4. Functions
 
@@ -206,9 +209,10 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. alias_subdomains (string)
-   3.2. nio_intercept (int)
-   3.3. nio_min_msg_len (int)
-   3.4. nio_msg_avp (string)
+   3.2. dns_cache (string)
+   3.3. nio_intercept (int)
+   3.4. nio_min_msg_len (int)
+   3.5. nio_msg_avp (string)
 
 3.1. alias_subdomains (string)
 
@@ -225,7 +229,32 @@ modparam("corex", "alias_subdomains", "kamailio.org")
 modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 ...
 
-3.2. nio_intercept (int)
+3.2. dns_cache (string)
+
+   Add A or AAAA records to internal DNS cache at startup. It can be set
+   many times to add more than one record.
+
+   The format of the value follows the SIP params style:
+   "attr1=val1;attr2=val2;...". The attributes can be:
+     * type - it can be "A" (IPv4) or "AAAA" (IPv6)
+     * name - the domain name
+     * addr - the IP address
+     * ttl - TTL value
+     * flags - can be: 1 - the domain is unresolvable (like blacklisted);
+       2 - the record is permanent (never times out, never deleted, never
+       overwritten)
+
+   Default value is “NULL”.
+
+   Example 1.2. Set dns_cache parameter
+...
+modparam("corex", "dns_cache", "type=A;name=kamailio.org;addr=193.22.119.66;ttl=
+3600000;flags=0")
+modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400:
+:2;ttl=3600000;flags=0")
+...
+
+3.3. nio_intercept (int)
 
    If set to non-zero then raw data received from a remote host or about
    to be sent to a remote host is made available in
@@ -234,12 +263,12 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 
    Default value is 0, i.e. do not allow access to network io data.
 
-   Example 1.2. Set nio_intercept parameter
+   Example 1.3. Set nio_intercept parameter
 ...
 modparam("corex", "nio_intercept", 1)
 ...
 
-3.3. nio_min_msg_len (int)
+3.4. nio_min_msg_len (int)
 
    Minimum content length of the packet to execute the
    event_route[network:msg]. This only works if nio_intercept parameter is
@@ -247,12 +276,12 @@ modparam("corex", "nio_intercept", 1)
 
    Default value is 0.
 
-   Example 1.3. Set nio_min_msg_len parameter
+   Example 1.4. Set nio_min_msg_len parameter
 ...
 modparam("corex", "nio_min_msg_len", 32)
 ...
 
-3.4. nio_msg_avp (string)
+3.5. nio_msg_avp (string)
 
    AVP name to store modified content to be set in the packet. If not set
    in event_route[network:msg], then all changes are lost and original
@@ -261,7 +290,7 @@ modparam("corex", "nio_min_msg_len", 32)
 
    Default value is empty.
 
-   Example 1.4. Set nio_msg_avp parameter
+   Example 1.5. Set nio_msg_avp parameter
 ...
 modparam("corex", "nio_msg_avp", "$avp(msg)")
 ...
@@ -308,7 +337,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
 
    This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 
-   Example 1.5. append_branch usage
+   Example 1.6. append_branch usage
 ...
     append_branch();
     append_branch("$avp(uri)", "0.5");
@@ -328,7 +357,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
 
    This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 
-   Example 1.6. send_udp usage
+   Example 1.7. send_udp usage
 ...
         send_udp();
         send_udp("10.20.15.10");
@@ -341,7 +370,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    This function is identical to send_udp() described above, except that
    it sends the SIP message using the TCP protocol instead of UDP.
 
-   Example 1.7. send_tcp usage
+   Example 1.8. send_tcp usage
 ...
         send_tcp();
         send_tcp("10.20.15.10");
@@ -357,7 +386,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. send_data usage
+   Example 1.9. send_data usage
 ...
         send_data("sip:example.com:5070;transport=sctp", "Message at $Ts");
 ...
@@ -372,7 +401,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. sendx usage
+   Example 1.10. sendx usage
 ...
 sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $T
 s");
@@ -387,7 +416,7 @@ s");
 
    This function can be used from event_route[network:msg].
 
-   Example 1.10. is_incoming usage
+   Example 1.11. is_incoming usage
 ...
 event_route[network:msg] {
     if (is_incoming()) {
@@ -412,7 +441,7 @@ event_route[network:msg] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. msg_iflag_set usage
+   Example 1.12. msg_iflag_set usage
 ...
     msg_iflag_set("UAC_AUTH");
 ...
@@ -423,7 +452,7 @@ event_route[network:msg] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. msg_iflag_reset usage
+   Example 1.13. msg_iflag_reset usage
 ...
     msg_iflag_reset("UAC_AUTH");
 ...
@@ -434,7 +463,7 @@ event_route[network:msg] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. msg_iflag_is_set usage
+   Example 1.14. msg_iflag_is_set usage
 ...
     if(msg_iflag_is_set("UAC_AUTH")) { ... }
 ...
@@ -445,7 +474,7 @@ event_route[network:msg] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. file_read usage
+   Example 1.15. file_read usage
 ...
 if(file_read("/tmp/data.txt", "$var(data)")) { ... }
 ...
@@ -456,7 +485,7 @@ if(file_read("/tmp/data.txt", "$var(data)")) { ... }
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. file_write usage
+   Example 1.16. file_write usage
 ...
 if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 ...
@@ -471,7 +500,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16. setxflag usage
+   Example 1.17. setxflag usage
 ...
 setxflag("1");
 ...
@@ -489,7 +518,7 @@ setxflag("$var(flag)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. isxflagset usage
+   Example 1.18. isxflagset usage
 ...
 if(isxflagset("1"))
 {
@@ -507,7 +536,7 @@ if(isxflagset("1"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.18. resetxflag usage
+   Example 1.19. resetxflag usage
 ...
 resetxflag("1");
 ...
@@ -522,7 +551,7 @@ resetxflag("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. set_send_socket usage
+   Example 1.20. set_send_socket usage
 ...
 set_send_socket("udp:127.0.0.1:5060");
 ...
@@ -537,7 +566,7 @@ set_send_socket("udp:127.0.0.1:5060");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. set_send_socket_name usage
+   Example 1.21. set_send_socket_name usage
 ...
 set_send_socket_name("sock1");
 ...
@@ -552,7 +581,7 @@ set_send_socket_name("sock1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. set_recv_socket usage
+   Example 1.22. set_recv_socket usage
 ...
 set_recv_socket("udp:127.0.0.1:5060");
 ...
@@ -567,7 +596,7 @@ set_recv_socket("udp:127.0.0.1:5060");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. set_recv_socket_name usage
+   Example 1.23. set_recv_socket_name usage
 ...
 set_recv_socket_name("sock1");
 ...
@@ -582,7 +611,7 @@ set_recv_socket_name("sock1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. set_source_address usage
+   Example 1.24. set_source_address usage
 ...
 set_source_address("udp:127.0.0.1:5080");
 ...
@@ -597,7 +626,7 @@ set_source_address("udp:127.0.0.1:5080");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. via_add_srvid usage
+   Example 1.25. via_add_srvid usage
 ...
 via_add_srv("1");
 ...
@@ -612,7 +641,7 @@ via_add_srv("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. via_add_xavp_params usage
+   Example 1.26. via_add_xavp_params usage
 ...
 xavp_via_params="xvia"
 ...
@@ -635,7 +664,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. via_use_xavp_fields usage
+   Example 1.27. via_use_xavp_fields usage
 ...
 xavp_via_fields="mvia"
 ...
@@ -660,7 +689,7 @@ request_route {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.27. is_faked_msg usage
+   Example 1.28. is_faked_msg usage
 ...
 event_route[dispatcher:dst-down] {
     if (is_faked_msg()) {
@@ -803,7 +832,7 @@ event_route[dispatcher:dst-down] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.28. event_route[network:msg] use cases
+   Example 1.29. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -834,7 +863,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.29. Sample PERL code for do_compress and do_uncompress
+   Example 1.30. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
