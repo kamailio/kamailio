@@ -259,6 +259,8 @@ void free_cell_helper(
 		xavp_destroy_list_unsafe(&dead_cell->xavps_list);
 	if(dead_cell->xavus_list)
 		xavu_destroy_list_unsafe(&dead_cell->xavus_list);
+	if(dead_cell->xavis_list)
+		xavi_destroy_list_unsafe(&dead_cell->xavis_list);
 
 	memset(dead_cell, 0, sizeof(tm_cell_t));
 	/* the cell's body */
@@ -372,6 +374,10 @@ struct cell *build_cell(struct sip_msg *p_msg)
 	new_cell->xavus_list = *xold;
 	*xold = 0;
 
+	xold = xavi_set_list(&new_cell->xavis_list);
+	new_cell->xavis_list = *xold;
+	*xold = 0;
+
 	/* We can just store pointer to domain avps in the transaction context,
 	 * because they are read-only */
 	new_cell->domain_avps_from =
@@ -430,11 +436,13 @@ error:
 	destroy_avp_list(&new_cell->uri_avps_to);
 	xavp_destroy_list(&new_cell->xavps_list);
 	xavu_destroy_list(&new_cell->xavus_list);
+	xavi_destroy_list(&new_cell->xavis_list);
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();
 	xavp_reset_list();
 	xavu_reset_list();
+	xavi_reset_list();
 	return NULL;
 }
 
@@ -531,6 +539,7 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 		x->xavps_list = xavp_set_list(&t->xavps_list);
 		x->xavus_list = xavu_set_list(&t->xavus_list);
+		x->xavis_list = xavi_set_list(&t->xavis_list);
 	} else if(mode == 1) {
 		/* restore original avp list */
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from);
@@ -541,6 +550,7 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, x->domain_avps_to);
 		xavp_set_list(x->xavps_list);
 		xavu_set_list(x->xavus_list);
+		xavi_set_list(x->xavis_list);
 	}
 }
 
@@ -559,6 +569,7 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, bakxd->domain_avps_to);
 		xavp_set_list(bakxd->xavps_list);
 		xavu_set_list(bakxd->xavus_list);
+		xavi_set_list(bakxd->xavis_list);
 		return;
 	}
 
@@ -577,6 +588,7 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &newxd->domain_avps_to);
 		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
 		bakxd->xavus_list = xavu_set_list(&newxd->xavus_list);
+		bakxd->xavis_list = xavi_set_list(&newxd->xavis_list);
 		return;
 	}
 }
