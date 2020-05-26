@@ -1026,7 +1026,11 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 			d->ctx[i] = SSL_CTX_new((SSL_METHOD*)ssl_methods[d->method - 1]);
 		}
 		if (d->ctx[i] == NULL) {
-			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			unsigned long e = 0;
+			e = ERR_peek_last_error();
+			ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+					tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+					ERR_reason_error_string(e));
 			return -1;
 		}
 		if(d->method>TLS_USE_TLSvRANGE) {
@@ -1036,7 +1040,11 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 		/* libssl >= 1.1.0 */
 		d->ctx[i] = SSL_CTX_new(sr_tls_methods[d->method - 1].TLSMethod);
 		if (d->ctx[i] == NULL) {
-			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			unsigned long e = 0;
+			e = ERR_peek_last_error();
+			ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+					tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+					ERR_reason_error_string(e));
 			return -1;
 		}
 		if(d->method>TLS_USE_TLSvRANGE) {
