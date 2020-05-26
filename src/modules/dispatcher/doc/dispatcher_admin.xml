@@ -1938,15 +1938,19 @@ DEST: {
 			<listitem><para>_flags_ (optional): as described in the list file format,
 			default 0</para></listitem>
 
+			<listitem><para>_attrs_ (optional): as described in the list file format,
+			default ""</para></listitem>
+
 		</itemizedlist>
 		<para>
 		Example:
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_
+# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_ _attrs_
 &sercmd; dispatcher.add 2 sip:127.0.0.1:5080
 &sercmd; dispatcher.add 3 sip:127.0.0.1:5075 8
+&sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
 ...
 </programlisting>
     </section>

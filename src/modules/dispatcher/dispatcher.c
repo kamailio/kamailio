@@ -1800,15 +1800,16 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 {
 	int group, flags;
 	str dest;
+  str attrs;
 
 	flags = 0;
 
-	if(rpc->scan(ctx, "dS*d", &group, &dest, &flags) < 2) {
+	if(rpc->scan(ctx, "dS*d", &group, &dest, &flags, &attrs) < 3) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
 
-	if(ds_add_dst(group, &dest, flags) != 0) {
+	if(ds_add_dst(group, &dest, flags, &attrs) != 0) {
 		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
 		return;
 	}
