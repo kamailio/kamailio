@@ -280,6 +280,8 @@ int async_task_run(int idx)
 			LM_DBG("task executed [%p] (%p/%p)\n", (void*)ptask,
 					(void*)ptask->exec, (void*)ptask->param);
 			ptask->exec(ptask->param);
+		} else {
+			LM_DBG("task with no callback function - ignoring\n");
 		}
 		shm_free(ptask);
 	}
