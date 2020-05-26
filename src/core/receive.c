@@ -561,4 +561,5 @@ void ksr_msg_env_reset(void)
 	reset_avps();
 	xavp_reset_list();
 	xavu_reset_list();
+	xavi_reset_list();
 }
