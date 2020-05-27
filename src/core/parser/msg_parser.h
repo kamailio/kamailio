@@ -268,6 +268,7 @@ typedef struct ocd_flow {
  * - add to msg_ldata_reset() if a field uses dynamic memory */
 typedef struct msg_ldata {
 	ocd_flow_t flow;
+	void *vdata;
 } msg_ldata_t;
 
 /*! \brief The SIP message */
