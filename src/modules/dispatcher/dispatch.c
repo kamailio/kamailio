@@ -2426,10 +2426,6 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 	setn = _ds_list_nr;
 	priority = 0;
 
-	if (attrs->len == 0) {
-		attrs->s = 0;
-	}
-
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
 

@@ -1798,15 +1798,19 @@ static const char *dispatcher_rpc_add_doc[2] = {
  */
 static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 {
-	int group, flags;
+	int group, flags, nparams;
 	str dest;
-  str attrs;
+	str attrs;
 
 	flags = 0;
 
-	if(rpc->scan(ctx, "dS*d", &group, &dest, &flags, &attrs) < 3) {
+	nparams = rpc->scan(ctx, "dS*dS", &group, &dest, &flags, &attrs);
+	if(nparams < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
+	} else if (nparams < 3) {
+		attrs.s = 0;
+		attrs.len = 0;
 	}
 
 	if(ds_add_dst(group, &dest, flags, &attrs) != 0) {
