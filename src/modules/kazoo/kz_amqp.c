@@ -1242,21 +1242,21 @@ int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, c
 			return -1;
 		}
 
-		return ki_kz_amqp_publish(msg, (char*)&exchange_s, (char*)&routing_key_s, (char*)&pl_s);
+		return ki_kz_amqp_publish(msg, &exchange_s, &routing_key_s, &pl_s);
 };
 
-int ki_kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload)
 {
 	  char *pl = ((str*)payload)->s;
 	  struct json_object *j = json_tokener_parse(pl);
 
 	  if (j==NULL) {
-	  	  LM_ERR("empty or invalid JSON payload : %.*s\n", ((str*)payload)->len, ((str*)payload)->s);
+	  	  LM_ERR("empty or invalid JSON payload : %.*s\n", payload->len, payload->s);
 	  	  return -1;
 	  }
-	  
+
 	  json_object_put(j);
-	  return kz_amqp_pipe_send((str*)exchange, (str*)routing_key, (str*)payload);
+	  return kz_amqp_pipe_send(exchange, routing_key, payload);
 }
 
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
@@ -1801,16 +1801,16 @@ kz_amqp_exchange_binding_ptr kz_amqp_exchange_binding_from_json(json_object* JOb
 int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 {
 	str payload_s = STR_NULL;
-    
+
 	if (fixup_get_svalue(msg, (gparam_p)payload, &payload_s) != 0) {
 		LM_ERR("cannot get payload value\n");
 		return -1;
 	}
 
-	return ki_kz_amqp_subscribe(msg, (char*)(&payload_s));
+	return ki_kz_amqp_subscribe(msg, &payload_s);
 }
 
-int ki_kz_amqp_subscribe(struct sip_msg* msg, char* payload)
+int ki_kz_amqp_subscribe(struct sip_msg* msg, str* payload)
 {
 	str exchange_s = STR_NULL;
 	str queue_s = STR_NULL;
@@ -1833,12 +1833,11 @@ int ki_kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	kz_amqp_bind_ptr bind = NULL;
 	kz_amqp_binding_ptr binding = NULL;
 
-	char* pl = ((str*)payload)->s;
+	char* pl = payload->s;
 	json_obj = kz_json_parse(pl);
 
 	if (json_obj == NULL)
 		return -1;
-    
 
 	json_extract_field("exchange", exchange_s);
 	json_extract_field("queue", queue_s);
