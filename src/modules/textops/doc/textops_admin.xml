@@ -1024,8 +1024,8 @@ append_urihf("CC-Diversion: ", "\r\n");
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>hf_name</emphasis> - Header field name.(long or
-			compact form)
+			<para><emphasis>hf_name</emphasis> - Header field name (long or
+			compact form). It can be only a static string value.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1037,7 +1037,25 @@ append_urihf("CC-Diversion: ", "\r\n");
 		<title><function>is_present_hf</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_present_hf("From")) log(1, "From HF Present");
+if (is_present_hf("From")) xlog("From HF Present");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.is_present_hf_pv">
+		<title>
+		<function moreinfo="none">is_present_hf_pv(hf_name)</function>
+		</title>
+		<para>
+		Same as is_present_hf() function, but the parameter can contain
+		variables.
+		</para>
+		<example>
+		<title><function>is_present_hf_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf_pv("$var(hname)")) xinfo("Header $var(hname) is present\n");
 ...
 </programlisting>
 		</example>
@@ -1055,7 +1073,7 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>hf_name_re</emphasis> - Regular expression to
-				match header field name.
+				match header field name. It can be only a static string value.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1067,7 +1085,27 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		<title><function>is_present_hf_re</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
+if (is_present_hf_re("^P-"))
+    xlog("There are headers starting with P-\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.is_present_hf_re_pv">
+		<title>
+		<function moreinfo="none">is_present_hf_re_pv(hf_name_re)</function>
+		</title>
+		<para>
+		Same as is_present_hf_re() function, but the parameter can contain
+		variables.
+		</para>
+		<example>
+		<title><function>is_present_hf_re_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf_re_pv_("^$var(prefix)"))
+    xlog("There are headers starting with $var(prefix)\n");
 ...
 </programlisting>
 		</example>
@@ -1255,7 +1293,8 @@ if(is_method("OPTION|UPDATE"))
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>hname</emphasis> - header name to be removed.
-			</para>
+			It can be only a static string (because of the optimizations
+			done at startup to speed up execution at runtime).</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -1271,9 +1310,26 @@ if(remove_hf("User-Agent"))
     # User Agent header removed
 }
 # compact form: remove "Contact" or "m" header
-remove_hf("Contact")
+remove_hf("Contact");
 # compact form: remove "Contact" or "m" header
-remove_hf("m")
+remove_hf("m");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.remove_hf_pv">
+		<title>
+		<function moreinfo="none">remove_hf_pv(hname)</function>
+		</title>
+		<para>
+		Same as remove_hf() function, but the parameter can contain variables.
+		</para>
+		<example>
+		<title><function>remove_hf_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_hf_pv("$var(hname)");
 ...
 </programlisting>
 		</example>
@@ -1308,6 +1364,26 @@ remove_hf("m")
 if(remove_hf_re("^P-"))
 {
     # All headers starting with "P-" removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.remove_hf_re_pv">
+		<title>
+		<function moreinfo="none">remove_hf_re_pv(re)</function>
+		</title>
+		<para>
+		Same as remove_hf_re() function, but the parameter can contain variables.
+		</para>
+		<example>
+		<title><function>remove_hf_re_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_re_pv("^$var(prefix)"))
+{
+    # All headers starting with $var(prefix) value removed
 }
 ...
 </programlisting>
@@ -1350,6 +1426,27 @@ if(remove_hf_exp("^P-", "^P-Keep-"))
 {
     # All headers starting with "P-" removed,
     # except the ones starting with "P-Keep-"
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.remove_hf_exp_pv">
+		<title>
+		<function moreinfo="none">remove_hf_exp_pv(expmatch, expskip)</function>
+		</title>
+		<para>
+		Same as remove_hf_exp() function, but the parameters can contain variabes.
+		</para>
+		<example>
+		<title><function>remove_hf_exp_pv</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_exp_pv("^$var(match)", "^$var(keep)"))
+{
+    # All headers starting with $var(match) value removed,
+    # except the ones starting with $var(keep) value
 }
 ...
 </programlisting>
