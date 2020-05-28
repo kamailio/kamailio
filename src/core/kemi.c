@@ -1991,7 +1991,7 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 /**
  *
  */
-static int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
+int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
 {
 	struct lump* anchor;
 	hdr_field_t *hf;
