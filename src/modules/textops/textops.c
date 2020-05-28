@@ -139,6 +139,11 @@ static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
+static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo);
+static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
+static int remove_hf_exp_pv_f(sip_msg_t* msg, char* ematch, char* eskip);
+static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo);
+static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
 static int regex_substring_f(struct sip_msg *msg,  char *input, char *regex,
 		char *matched_index, char *match_count, char *dst);
@@ -241,6 +246,21 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"is_present_hf_re", (cmd_function)is_present_hf_re_f,1,
 		fixup_regexp_null, fixup_free_regexp_null,
+		ANY_ROUTE},
+	{"remove_hf_pv",     (cmd_function)remove_hf_pv_f,    1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"remove_hf_re_pv",  (cmd_function)remove_hf_re_pv_f, 1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"remove_hf_exp_pv", (cmd_function)remove_hf_exp_pv_f,2,
+		fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"is_present_hf_pv", (cmd_function)is_present_hf_pv_f,1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"is_present_hf_re_pv", (cmd_function)is_present_hf_re_pv_f,1,
+		fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"subst",            (cmd_function)subst_f,           1,
 		fixup_substre, 0,
@@ -1904,6 +1924,74 @@ static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	return is_present_hf_re_helper(msg, (regex_t*)key);
 }
 
+/*
+ * Convert char* header_name to str* parameter
+ */
+static int ki_hname_gparam(str *hname, gparam_t *gp)
+{
+	char hbuf[256];
+	struct hdr_field hdr;
+
+	if(hname->len<=0) {
+		LM_ERR("invalid header name\n");
+		return -1;
+	}
+
+	if(hname->len>252) {
+		LM_ERR("header name too long: %d (%.*s...)\n",
+			hname->len, 32, hname->s);
+		return -1;
+	}
+	strncpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	memset(gp, 0, sizeof(gparam_t));
+
+	gp->v.str = *hname;
+
+	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
+		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
+				hdr.type, gp->v.str.len, gp->v.str.s);
+		gp->v.str.s = NULL;
+		gp->v.i = hdr.type;
+		gp->type = GPARAM_TYPE_INT;
+	} else {
+		gp->type = GPARAM_TYPE_STR;
+		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
+	}
+
+	return 0;
+}
+
+static int ki_is_present_hf(sip_msg_t *msg, str *hname)
+{
+	gparam_t ghp;
+
+	if(hname==NULL || hname->len<=0)
+		return -1;
+	if(ki_hname_gparam(hname, &ghp)<0)
+		return -1;
+
+	return is_present_hf_helper_f(msg, &ghp);
+}
+
+static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str hname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &hname)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_is_present_hf(msg, &hname);
+}
+
 static int ki_is_present_hf_re(sip_msg_t* msg, str *ematch)
 {
 	regex_t mre;
@@ -1918,6 +2006,60 @@ static int ki_is_present_hf_re(sip_msg_t* msg, str *ematch)
 	regfree(&mre);
 
 	return ret;
+}
+
+static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str ematch = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_is_present_hf_re(msg, &ematch) ;
+}
+
+static int ki_remove_hf(sip_msg_t* msg, str *hname)
+{
+	return sr_kemi_hdr_remove(msg, hname);
+}
+
+static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo)
+{
+	str hname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phf, &hname)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf(msg, &hname);
+}
+
+static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str ematch = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf_re(msg, &ematch);
+}
+
+static int remove_hf_exp_pv_f(sip_msg_t* msg, char* pematch, char* peskip)
+{
+	str ematch = STR_NULL;
+	str eskip = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pematch, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)peskip, &eskip)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf_exp(msg, &ematch, &eskip);
 }
 
 static int fixup_substre(void** param, int param_no)
@@ -4421,50 +4563,6 @@ static int ki_search_body(sip_msg_t *msg, str *sre)
 	return ret;
 }
 
-/*
- * Convert char* header_name to str* parameter
- */
-static int ki_hname_gparam(str *hname, gparam_t *gp)
-{
-	char hbuf[256];
-	struct hdr_field hdr;
-
-	if(hname->len<=0) {
-		LM_ERR("invalid header name\n");
-		return -1;
-	}
-
-	if(hname->len>252) {
-		LM_ERR("header name too long: %d (%.*s...)\n",
-			hname->len, 32, hname->s);
-		return -1;
-	}
-	strncpy(hbuf, hname->s, hname->len);
-	hbuf[hname->len] = ':';
-	hbuf[hname->len+1] = '\0';
-
-	memset(gp, 0, sizeof(gparam_t));
-
-	gp->v.str = *hname;
-
-	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
-		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
-		return -1;
-	}
-
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
-		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
-				hdr.type, gp->v.str.len, gp->v.str.s);
-		gp->v.str.s = NULL;
-		gp->v.i = hdr.type;
-		gp->type = GPARAM_TYPE_INT;
-	} else {
-		gp->type = GPARAM_TYPE_STR;
-		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
-	}
-
-	return 0;
-}
 
 /**
  *
@@ -4492,18 +4590,6 @@ static int ki_search_hf(sip_msg_t *msg, str *hname, str *sre, str *flags)
 	ret = search_hf_helper_f(msg, &ghp, &re, (flags)?flags->s:NULL);
 	regfree(&re);
 	return ret;
-}
-
-static int ki_is_present_hf(sip_msg_t *msg, str *hname)
-{
-	gparam_t ghp;
-
-	if(hname==NULL || hname->len<=0)
-		return -1;
-	if(ki_hname_gparam(hname, &ghp)<0)
-		return -1;
-
-	return is_present_hf_helper_f(msg, &ghp);
 }
 
 static int ki_subst(sip_msg_t *msg, str *subst)
@@ -4675,6 +4761,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("subst_hf"),
 		SR_KEMIP_INT, ki_subst_hf,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf"),
+		SR_KEMIP_INT, ki_remove_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("remove_hf_re"),
