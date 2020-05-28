@@ -2419,15 +2419,16 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 }
 
 /* add dispatcher entry to in-memory dispatcher list */
-int ds_add_dst(int group, str *address, int flags)
+int ds_add_dst(int group, str *address, int flags, str *attrs)
 {
 	int setn, priority;
-	str attrs;
 
 	setn = _ds_list_nr;
 	priority = 0;
-	attrs.s = 0;
-	attrs.len = 0;
+
+	if (attrs->len == 0) {
+		attrs->s = 0;
+	}
 
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
@@ -2436,7 +2437,7 @@ int ds_add_dst(int group, str *address, int flags)
 	ds_iter_set(_ds_list, &ds_add_dest_cb, NULL);
 
 	// add new destination
-	if(add_dest2list(group, *address, flags, priority, &attrs,
+	if(add_dest2list(group, *address, flags, priority, attrs,
 			*next_idx, &setn) != 0) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
 		if(ds_load_mode==1) {
