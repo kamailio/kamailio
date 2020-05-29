@@ -34,6 +34,7 @@
 #include "../../core/kemi.h"
 
 #include "crypto_uuid.h"
+#include "crypto_evcb.h"
 #include "api.h"
 
 #include <openssl/evp.h>
@@ -58,17 +59,33 @@ static int fixup_crypto_aes_encrypt(void** param, int param_no);
 static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* outb);
 static int fixup_crypto_aes_decrypt(void** param, int param_no);
 
+static int w_crypto_nio_in(sip_msg_t* msg, char* p1, char* p2);
+static int w_crypto_nio_out(sip_msg_t* msg, char* p1, char* p2);
+static int w_crypto_nio_encrypt(sip_msg_t* msg, char* p1, char* p2);
+static int w_crypto_nio_decrypt(sip_msg_t* msg, char* p1, char* p2);
+
 #define CRYPTO_SALT_BSIZE	16
 static char _crypto_salt[CRYPTO_SALT_BSIZE];
 static char *_crypto_salt_param = "k8hTm4aZ";
 
 static int _crypto_register_callid = 0;
+static int _crypto_register_evcb = 0;
+
+str _crypto_kevcb_netio = STR_NULL;
 
 static cmd_export_t cmds[]={
 	{"crypto_aes_encrypt", (cmd_function)w_crypto_aes_encrypt, 3,
 		fixup_crypto_aes_encrypt, 0, ANY_ROUTE},
 	{"crypto_aes_decrypt", (cmd_function)w_crypto_aes_decrypt, 3,
 		fixup_crypto_aes_decrypt, 0, ANY_ROUTE},
+	{"crypto_nio_in", (cmd_function)w_crypto_nio_in, 0,
+		0, 0, ANY_ROUTE},
+	{"crypto_nio_out", (cmd_function)w_crypto_nio_out, 0,
+		0, 0, ANY_ROUTE},
+	{"crypto_nio_encrypt", (cmd_function)w_crypto_nio_encrypt, 0,
+		0, 0, ANY_ROUTE},
+	{"crypto_nio_decrypt", (cmd_function)w_crypto_nio_decrypt, 0,
+		0, 0, ANY_ROUTE},
 	{"load_crypto",        (cmd_function)load_crypto, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -76,6 +93,9 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{ "salt",            PARAM_STRING, &_crypto_salt_param },
 	{ "register_callid", PARAM_INT, &_crypto_register_callid },
+	{ "register_evcb",   PARAM_INT, &_crypto_register_evcb },
+	{ "kevcb_netio",     PARAM_STR, &_crypto_kevcb_netio },
+
 	{ 0, 0, 0 }
 };
 
@@ -126,6 +146,10 @@ static int mod_init(void)
 		}
 		LM_DBG("registered crypto callid callback\n");
 	}
+	if(_crypto_register_evcb!=0) {
+		crypto_evcb_enable();
+	}
+
 	return 0;
 }
 
@@ -579,6 +603,38 @@ int crypto_aes_test(void)
 	EVP_CIPHER_CTX_free(en);
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int w_crypto_nio_in(sip_msg_t* msg, char* p1, char* p2)
+{
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_crypto_nio_out(sip_msg_t* msg, char* p1, char* p2)
+{
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_crypto_nio_encrypt(sip_msg_t* msg, char* p1, char* p2)
+{
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_crypto_nio_decrypt(sip_msg_t* msg, char* p1, char* p2)
+{
+	return 1;
 }
 
 /**
