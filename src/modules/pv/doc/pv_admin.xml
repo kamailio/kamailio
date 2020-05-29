@@ -443,6 +443,32 @@ xavp_child_seti("x", "y", "$var(n)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavi_child_seti">
+			<title>
+				<function moreinfo="none">xavi_child_seti(rname, cname, ival)</function>
+			</title>
+			<para>
+				Set the value of $xavi(rname=&gt;cname) to integer value ival.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVI in the root list.
+				The second parameter name of child XAVI. The third parameter
+				can be an integer number or a variable holding an integer.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavi_child_seti</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(n) = 10;
+xavi_child_seti("WhatEver", "FoO", "$var(n)");
+# results in: $xavi(whatever=&gt;foo) is 10
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavp_child_sets">
 			<title>
 				<function moreinfo="none">xavp_child_sets(rname, cname, sval)</function>
@@ -465,6 +491,32 @@ xavp_child_seti("x", "y", "$var(n)");
 $var(n) = 10;
 xavp_child_sets("x", "y", "Count: $var(n)");
 # results in: $xavp(x=&gt;y) is "Count: 10"
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavi_child_sets">
+			<title>
+				<function moreinfo="none">xavi_child_sets(rname, cname, sval)</function>
+			</title>
+			<para>
+				Set the value of $xavi(rname=&gt;cname) to string value sval.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVI in the root list.
+				The second parameter name of child XAVI. The third parameter
+				can be a static or dynamic (with variables) string.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavi_child_sets</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(n) = 10;
+xavi_child_sets("WhatEver", "FoO", "Count: $var(n)");
+# results in: $xavi(whatever=&gt;foo) is "Count: 10"
 ...
 				</programlisting>
 			</example>
@@ -493,7 +545,30 @@ xavp_rm("x");
 				</programlisting>
 			</example>
 		</section>
-
+		<section id="pv.f.xavi_rm">
+			<title>
+				<function moreinfo="none">xavi_rm(rname)</function>
+			</title>
+			<para>
+				Remove the value of $xavi(rname).
+			</para>
+			<para>
+				The parameter has to be the name of XAVI in the root list.
+				It can be static or dynamic string (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavi_rm</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavi_rm("WhatEver");
+# same result as: $xavi(whatever) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavp_child_rm">
 			<title>
 				<function moreinfo="none">xavp_child_rm(rname, cname)</function>
@@ -515,6 +590,31 @@ xavp_rm("x");
 ...
 xavp_child_rm("x", "y");
 # same result as: $xavp(x=&gt;y) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavi_child_rm">
+			<title>
+				<function moreinfo="none">xavi_child_rm(rname, cname)</function>
+			</title>
+			<para>
+				Remove the value of $xavi(rname=&gt;cname).
+			</para>
+			<para>
+				The first parameter has to be the name of XAVI in the root list.
+				The second parameter name of child XAVI. Both parameters can be
+				static or dynamic strings (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavi_child_rm</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavi_child_rm("WhatEver", "FoO");
+# same result as: $xavi(whatever=&gt;foo) = $null;
 ...
 				</programlisting>
 			</example>
@@ -632,6 +732,25 @@ pv_xavp_print();
 				<programlisting format="linespecific">
 ...
 pv_xavu_print();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.pv_xavi_print">
+			<title>
+				<function moreinfo="none">pv_xavi_print()</function>
+			</title>
+			<para>
+				Print all XAVIs to the syslog using INFO log level.
+			</para>
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_xavi_print()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pv_xavi_print();
 ...
 				</programlisting>
 			</example>
