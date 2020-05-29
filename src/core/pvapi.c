@@ -857,6 +857,7 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 	tr = 0;
 	pvstate = 0;
 	memset(e, 0, sizeof(pv_spec_t));
+	e->pvp.pvi.type = PV_IDX_NONE;
 	p = in->s;
 	p++;
 	if(*p==PV_LNBRACKET)
@@ -1366,6 +1367,12 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 	}
 	if(ip->pvi.type == PV_IDX_INT)
 	{
+		*idx = ip->pvi.u.ival;
+		return 0;
+	}
+	if(ip->pvi.type == PV_IDX_NONE)
+	{
+		*flags = PV_IDX_NONE;
 		*idx = ip->pvi.u.ival;
 		return 0;
 	}
