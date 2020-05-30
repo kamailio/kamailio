@@ -875,6 +875,25 @@ static int ki_kx_get_msglen(sip_msg_t *msg)
 /**
  *
  */
+static int ki_kx_get_msgtype(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		return -1;
+	}
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		return 1;
+	} else if(msg->first_line.type == SIP_REPLY) {
+		return 2;
+	}
+
+	return 0;
+}
+
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -1119,6 +1138,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_msglen"),
 		SR_KEMIP_INT, ki_kx_get_msglen,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_msgtype"),
+		SR_KEMIP_INT, ki_kx_get_msgtype,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
