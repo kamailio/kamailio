@@ -195,6 +195,23 @@ int pv_get_msgtype(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, type);
 }
 
+int pv_get_msgtypes(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	char *types = "xx";
+
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		types = "rq";
+	} else if(msg->first_line.type == SIP_REPLY) {
+		types = "rp";
+	}
+
+	return pv_get_strzval(msg, param, res, types);
+}
+
 int pv_get_version(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
