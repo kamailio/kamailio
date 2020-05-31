@@ -328,12 +328,6 @@ static pv_export_t mod_pvs[] = {
 	{{"rb", (sizeof("rb")-1)}, /* */
 		PVT_MSG_BODY, pv_get_msg_body, 0,
 		0, 0, 0, 0},
-	/* {{"rc", (sizeof("rc")-1)},
-		PVT_OTHER, pv_get_return_code, 0,
-		0, 0, 0, 0},
-	{{"retcode", (sizeof("retcode")-1)},
-		PVT_OTHER, pv_get_return_code, 0,
-		0, 0, 0, 0}, */
 	{{"rd", (sizeof("rd")-1)}, /* */
 		PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host,
 		0, 0, pv_init_iname, 2},
