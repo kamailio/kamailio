@@ -58,6 +58,7 @@ typedef struct _crypto_evroutes {
 static crypto_evroutes_t _crypto_rts;
 
 extern str _crypto_kevcb_netio;
+extern str _crypto_netio_key;
 
 static int _crypto_evcb_enabled = 0;
 
@@ -161,6 +162,10 @@ int crypto_nio_received(sr_event_param_t *evp)
 
 	LM_DBG("sent event callback - ret:%d - flags:%d\n", ret, evenv.mflags);
 
+	if(evenv.mflags & CRYPTO_NIO_DECRYPT) {
+		LM_DBG("decrypting\n");
+	}
+
     return 0;
 }
 
@@ -182,7 +187,11 @@ int crypto_nio_sent(sr_event_param_t *evp)
 
 	LM_DBG("sent event callback - ret:%d - flags:%d\n", ret, evenv.mflags);
 
-    return 0;
+	if(evenv.mflags & CRYPTO_NIO_ENCRYPT) {
+		LM_DBG("encrypting\n");
+	}
+
+	return 0;
 }
 
 /**
