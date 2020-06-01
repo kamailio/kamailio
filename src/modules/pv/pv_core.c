@@ -1806,7 +1806,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	if ((avp=search_first_avp(name_type, avp_name, &avp_value, &state))==0)
 		return pv_get_null(msg, param, res);
 	res->flags = PV_VAL_STR;
-	if(idxf==0 && idx==0)
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
 	{
 		if(avp->flags & AVP_VAL_STR)
 		{
@@ -1964,7 +1964,7 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 
 	/* get the value */
 	res->flags = PV_VAL_STR;
-	if(idxf==0 && idx==0)
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
 	{
 		res->rs  = hf->body;
 		return 0;
