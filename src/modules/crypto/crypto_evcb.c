@@ -31,6 +31,7 @@
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 #include "../../core/events.h"
+#include "../../core/onsend.h"
 
 
 #define CRYPTO_NIO_OUT (1<<0)
@@ -92,6 +93,7 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
 	sr_kemi_eng_t *keng = NULL;
+	onsend_info_t onsnd_info = {0};
 
 	if(evenv==0) {
 		LM_ERR("crypto env not set\n");
@@ -107,6 +109,16 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 		return -1;
 	}
 	fmsg = &tmsg;
+
+	if(evenv->mflags & CRYPTO_NIO_OUT) {
+		onsnd_info.to = &evenv->evp->dst->to;
+		onsnd_info.send_sock = evenv->evp->dst->send_sock;
+		onsnd_info.buf = fmsg->buf;
+		onsnd_info.len = fmsg->len;
+		onsnd_info.msg = fmsg;
+		p_onsend = &onsnd_info;
+	}
+
 	crypto_set_msg_env(fmsg, evenv);
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
@@ -125,6 +137,10 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 	crypto_set_msg_env(fmsg, NULL);
 	/* free the structure -- it is a clone of faked msg */
 	free_sip_msg(fmsg);
+
+	if(evenv->mflags & CRYPTO_NIO_OUT) {
+		p_onsend = NULL;
+	}
 	return 0;
 }
 
@@ -174,6 +190,13 @@ int crypto_nio_sent(sr_event_param_t *evp)
  */
 int crypto_nio_in(sip_msg_t* msg)
 {
+	crypto_env_t *evenv;
+
+	evenv = crypto_get_msg_env(msg);
+	if(evenv->mflags & CRYPTO_NIO_OUT) {
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -182,7 +205,14 @@ int crypto_nio_in(sip_msg_t* msg)
  */
 int crypto_nio_out(sip_msg_t* msg)
 {
-	return 1;
+	crypto_env_t *evenv;
+
+	evenv = crypto_get_msg_env(msg);
+	if(evenv->mflags & CRYPTO_NIO_OUT) {
+		return 1;
+	}
+
+	return -1;
 }
 
 /**
@@ -190,6 +220,12 @@ int crypto_nio_out(sip_msg_t* msg)
  */
 int crypto_nio_encrypt(sip_msg_t* msg)
 {
+	crypto_env_t *evenv;
+
+	evenv = crypto_get_msg_env(msg);
+
+	evenv->mflags |= CRYPTO_NIO_ENCRYPT;
+
 	return 1;
 }
 
@@ -198,5 +234,11 @@ int crypto_nio_encrypt(sip_msg_t* msg)
  */
 int crypto_nio_decrypt(sip_msg_t* msg)
 {
+	crypto_env_t *evenv;
+
+	evenv = crypto_get_msg_env(msg);
+
+	evenv->mflags |= CRYPTO_NIO_DECRYPT;
+
 	return 1;
 }
