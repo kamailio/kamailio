@@ -19,6 +19,54 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../../core/dprint.h"
+
+#include "crypto_aes.h"
+
+static char _crypto_salt[CRYPTO_SALT_BSIZE];
+static int _crypto_salt_set = 0;
+
+/**
+ *
+ */
+int crypto_set_salt(char *psalt)
+{
+	int i;
+	char k;
+
+	memset(_crypto_salt, 0, CRYPTO_SALT_BSIZE*sizeof(char));
+	if(psalt!=NULL) {
+		if(strlen(psalt)<8) {
+			LM_ERR("salt parameter must be at least 8 characters\n");
+			return -1;
+		}
+		k = 97;
+		for(i=0; i<strlen(psalt); i++) {
+			if(i>=CRYPTO_SALT_BSIZE) break;
+			_crypto_salt[i] = (psalt[i]*7 + k + k*(i+1))%0xff;
+			k = _crypto_salt[i];
+		}
+		_crypto_salt_set = 1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+char *crypto_get_salt(void)
+{
+	if(_crypto_salt_set == 0) {
+		return NULL;
+	}
+	return _crypto_salt;
+}
+
 /**
  * Create an 256 bit key and IV using the supplied key_data and salt.
  * Fills in the encryption and decryption ctx objects and returns 0 on success

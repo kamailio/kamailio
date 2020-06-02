@@ -24,6 +24,12 @@
 
 #include <openssl/evp.h>
 
+#define AES_BLOCK_SIZE 256
+#define CRYPTO_SALT_BSIZE 16
+
+int crypto_set_salt(char *psalt);
+char *crypto_get_salt(void);
+
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
 		unsigned char *salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
 

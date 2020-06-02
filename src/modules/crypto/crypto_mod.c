@@ -38,10 +38,6 @@
 #include "crypto_evcb.h"
 #include "api.h"
 
-
-
-#define AES_BLOCK_SIZE 256
-
 MODULE_VERSION
 
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
@@ -65,8 +61,6 @@ static int w_crypto_nio_out(sip_msg_t* msg, char* p1, char* p2);
 static int w_crypto_nio_encrypt(sip_msg_t* msg, char* p1, char* p2);
 static int w_crypto_nio_decrypt(sip_msg_t* msg, char* p1, char* p2);
 
-#define CRYPTO_SALT_BSIZE	16
-static char _crypto_salt[CRYPTO_SALT_BSIZE];
 static char *_crypto_salt_param = "k8hTm4aZ";
 
 static int _crypto_register_callid = 0;
@@ -121,23 +115,15 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	int i;
-	char k;
-	memset(_crypto_salt, 0, CRYPTO_SALT_BSIZE*sizeof(char));
+
 	if(_crypto_salt_param==NULL || _crypto_salt_param[0]==0) {
 		_crypto_salt_param = NULL;
-	} else {
-		if(strlen(_crypto_salt_param)<8) {
-			LM_ERR("salt parameter must be at least 8 characters\n");
-			return -1;
-		}
-		k = 97;
-		for(i=0; i<strlen(_crypto_salt_param); i++) {
-			if(i>=CRYPTO_SALT_BSIZE) break;
-			_crypto_salt[i] = (_crypto_salt_param[i]*7 + k + k*(i+1))%0xff;
-			k = _crypto_salt[i];
-		}
 	}
+
+	if(crypto_set_salt(_crypto_salt_param) < 0) {
+		return -1;
+	}
+
 	if(_crypto_register_callid!=0) {
 		if(crypto_init_callid()<0) {
 			LM_ERR("failed to init callid callback\n");
@@ -149,6 +135,7 @@ static int mod_init(void)
 		}
 		LM_DBG("registered crypto callid callback\n");
 	}
+
 	if(_crypto_register_evcb!=0) {
 		crypto_evcb_enable();
 	}
@@ -195,7 +182,7 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)keys->s, keys->len,
-				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), en, NULL)) {
+				(unsigned char*)crypto_get_salt(), en, NULL)) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
@@ -314,7 +301,7 @@ static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)keys->s, keys->len,
-				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), NULL, de)) {
+				(unsigned char*)crypto_get_salt(), NULL, de)) {
 		EVP_CIPHER_CTX_free(de);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;

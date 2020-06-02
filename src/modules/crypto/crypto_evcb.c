@@ -33,6 +33,7 @@
 #include "../../core/events.h"
 #include "../../core/onsend.h"
 
+#include "crypto_aes.h"
 
 #define CRYPTO_NIO_OUT (1<<0)
 #define CRYPTO_NIO_ENCRYPT (1<<1)
@@ -111,6 +112,10 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 	}
 	fmsg = &tmsg;
 
+	if(evenv->evp->rcv != NULL) {
+		fmsg->rcv = *evenv->evp->rcv;
+	}
+
 	if(evenv->mflags & CRYPTO_NIO_OUT) {
 		onsnd_info.to = &evenv->evp->dst->to;
 		onsnd_info.send_sock = evenv->evp->dst->send_sock;
@@ -152,6 +157,9 @@ int crypto_nio_received(sr_event_param_t *evp)
 {
 	int ret;
 	crypto_env_t evenv;
+	EVP_CIPHER_CTX *de=NULL;
+	str dtext;
+	str *obuf;
 
 	memset(&evenv, 0, sizeof(crypto_env_t));
 
@@ -162,10 +170,51 @@ int crypto_nio_received(sr_event_param_t *evp)
 
 	LM_DBG("sent event callback - ret:%d - flags:%d\n", ret, evenv.mflags);
 
-	if(evenv.mflags & CRYPTO_NIO_DECRYPT) {
-		LM_DBG("decrypting\n");
+	if(!(evenv.mflags & CRYPTO_NIO_DECRYPT)) {
+		goto done;
+	}
+	LM_DBG("decrypting\n");
+
+	de = EVP_CIPHER_CTX_new();
+	if(de==NULL) {
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
 	}
 
+	/* gen key and iv. init the cipher ctx object */
+	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
+				(unsigned char*)crypto_get_salt(), NULL, de)) {
+		EVP_CIPHER_CTX_free(de);
+		LM_ERR("couldn't initialize AES cipher\n");
+		return -1;
+	}
+
+	obuf = (str*)evp->data;
+	dtext.len = obuf->len;
+	dtext.s = (char *)crypto_aes_decrypt(de, (unsigned char *)obuf->s,
+			&dtext.len);
+	if(dtext.s==NULL) {
+		EVP_CIPHER_CTX_free(de);
+		LM_ERR("AES decryption failed\n");
+		return -1;
+	}
+
+	if(dtext.len>=BUF_SIZE) {
+		LM_ERR("new buffer overflow (%d)\n", dtext.len);
+		free(dtext.s);
+		EVP_CIPHER_CTX_free(de);
+		return -1;
+	}
+
+	obuf->len = dtext.len;
+	memcpy(obuf->s, dtext.s, obuf->len);
+	obuf->s[obuf->len] = '\0';
+
+	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_free(de);
+	free(dtext.s);
+
+done:
     return 0;
 }
 
@@ -176,6 +225,10 @@ int crypto_nio_sent(sr_event_param_t *evp)
 {
 	int ret;
 	crypto_env_t evenv;
+	EVP_CIPHER_CTX *en = NULL;
+	str etext;
+	str nbuf;
+	str *obuf;
 
 	memset(&evenv, 0, sizeof(crypto_env_t));
 
@@ -187,10 +240,55 @@ int crypto_nio_sent(sr_event_param_t *evp)
 
 	LM_DBG("sent event callback - ret:%d - flags:%d\n", ret, evenv.mflags);
 
-	if(evenv.mflags & CRYPTO_NIO_ENCRYPT) {
-		LM_DBG("encrypting\n");
+	if(!(evenv.mflags & CRYPTO_NIO_ENCRYPT)) {
+		goto done;
 	}
 
+	LM_DBG("encrypting\n");
+	en = EVP_CIPHER_CTX_new();
+	if(en==NULL) {
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
+	}
+
+	/* gen key and iv. init the cipher ctx object */
+	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
+				(unsigned char*)crypto_get_salt(), en, NULL)) {
+		EVP_CIPHER_CTX_free(en);
+		LM_ERR("couldn't initialize AES cipher\n");
+		return -1;
+	}
+
+	obuf = (str*)evp->data;
+
+	etext.len = obuf->len;
+	etext.s = (char *)crypto_aes_encrypt(en, (unsigned char *)obuf->s, &etext.len);
+	if(etext.s==NULL) {
+		EVP_CIPHER_CTX_free(en);
+		LM_ERR("AES encryption failed\n");
+		return -1;
+	}
+
+	nbuf.s = (char*)pkg_malloc(etext.len + 1);
+	if(nbuf.s==NULL) {
+		EVP_CIPHER_CTX_free(en);
+		PKG_MEM_ERROR;
+		free(etext.s);
+		return -1;
+	}
+	pkg_free(obuf->s);
+	nbuf.len = etext.len;
+	memcpy(nbuf.s, etext.s, nbuf.len);
+	nbuf.s[nbuf.len] = '\0';
+
+	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_free(en);
+	free(etext.s);
+
+	obuf->s = nbuf.s;
+	obuf->len = nbuf.len;
+
+done:
 	return 0;
 }
 
