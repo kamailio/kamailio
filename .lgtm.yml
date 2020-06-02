@@ -8,6 +8,7 @@ extraction:
       - "libcurl4-openssl-dev"
       - "libjansson-dev"
       - "libhiredis-dev"
+      - "libevent-dev"
       - "liblua5.1-0-dev"
       - "libpcre3-dev"
       - "libncurses5-dev"
@@ -24,6 +25,6 @@ extraction:
     after_prepare:
     - "export PKG_CONFIG_PATH=$LGTM_WORKSPACE/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
     configure:
-      command: "make include_modules='app_lua app_python3 db_mysql db_postgres db_redis dialplan http_client jansson lcr ndb_redis presence presence_xml presence_dialoginfo pua pua_dialoginfo topos_redis uuid websocket xmlops' cfg"
+      command: "make include_modules='app_lua app_python3 cnxcc db_mysql db_postgres db_redis dialplan http_client jansson lcr ndb_redis presence presence_xml presence_dialoginfo pua pua_dialoginfo topos_redis uuid websocket xmlops' cfg"
     index:
       build_command: "make all"
