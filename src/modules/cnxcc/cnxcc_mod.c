@@ -27,32 +27,28 @@
 #include <sys/ipc.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
 #include <ctype.h>
 
 #include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../core/dprint.h"
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
-#include "../../core/shm_init.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../core/pvar.h"
-#include "../../core/locking.h"
+
 #include "../../core/lock_ops.h"
-#include "../../core/str_hash.h"
 #include "../../core/timer_proc.h"
-#include "../../modules/tm/tm_load.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_cseq.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/contact/contact.h"
-#include "../../core/parser/parse_rr.h"
-#include "../../core/mod_fix.h"
+
+#include "../tm/tm_load.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
-#include "../../core/fmsg.h"
+
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
@@ -170,7 +166,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"dlg_flag", INT_PARAM,	&_data.ctrl_flag },
 	{"credit_check_period", INT_PARAM,	&_data.check_period },
-	{"redis", STR_PARAM, &_data.redis_cnn_str.s },
+	{"redis", PARAM_STR, &_data.redis_cnn_str },
 	{ 0, 0, 0 }
 };
 /* clang-format on */
@@ -262,9 +258,6 @@ static int __mod_init(void)
 		return -1;
 	}
 
-	if(_data.redis_cnn_str.s)
-		_data.redis_cnn_str.len = strlen(_data.redis_cnn_str.s);
-
 	_data.time.credit_data_by_client =
 			shm_malloc(sizeof(struct str_hash_table));
 	_data.time.call_data_by_cid = shm_malloc(sizeof(struct str_hash_table));
@@ -284,15 +277,11 @@ static int __mod_init(void)
 	memset(_data.channel.call_data_by_cid, 0, sizeof(struct str_hash_table));
 
 	_data.stats = (stats_t *)shm_malloc(sizeof(stats_t));
-
 	if(!_data.stats) {
-		LM_ERR("Error allocating shared memory stats\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
-
-	_data.stats->active = 0;
-	_data.stats->dropped = 0;
-	_data.stats->total = 0;
+	memset(_data.stats, 0, sizeof(stats_t));
 
 	if(__init_hashtable(_data.time.credit_data_by_client) != 0)
 		return -1;
@@ -312,9 +301,7 @@ static int __mod_init(void)
 	if(__init_hashtable(_data.channel.call_data_by_cid) != 0)
 		return -1;
 
-
 	cnxcc_lock_init(_data.lock);
-
 	cnxcc_lock_init(_data.time.lock);
 	cnxcc_lock_init(_data.money.lock);
 	cnxcc_lock_init(_data.channel.lock);
@@ -433,21 +420,22 @@ static int __child_init(int rank)
 
 static int __init_hashtable(struct str_hash_table *ht)
 {
-	if(__shm_str_hash_alloc(ht, HT_SIZE) != 0) {
-		LM_ERR("Error allocating shared memory hashtable\n");
+	if(ht == NULL)
 		return -1;
-	}
+
+	if(__shm_str_hash_alloc(ht, HT_SIZE) != 0)
+		return -1;
 
 	str_hash_init(ht);
 	return 0;
 }
 
 static void __dialog_created_callback(
-		struct dlg_cell *cell, int type, struct dlg_cb_params *params)
+		struct dlg_cell *cell, int type, struct dlg_cb_params *_params)
 {
 	struct sip_msg *msg = NULL;
 
-	msg = params->direction == SIP_REPLY ? params->rpl : params->req;
+	msg = _params->direction == SIP_REPLY ? _params->rpl : _params->req;
 
 	if(msg == NULL) {
 		LM_ERR("Error getting direction of SIP msg\n");
@@ -471,7 +459,7 @@ static void __dialog_created_callback(
 }
 
 static void __dialog_confirmed_callback(
-		struct dlg_cell *cell, int type, struct dlg_cb_params *params)
+		struct dlg_cell *cell, int type, struct dlg_cb_params *_params)
 {
 	LM_DBG("Dialog confirmed for CID [%.*s]\n", cell->callid.len,
 			cell->callid.s);
@@ -480,7 +468,7 @@ static void __dialog_confirmed_callback(
 }
 
 static void __dialog_terminated_callback(
-		struct dlg_cell *cell, int type, struct dlg_cb_params *params)
+		struct dlg_cell *cell, int type, struct dlg_cb_params *_params)
 {
 	LM_DBG("Dialog terminated for CID [%.*s]\n", cell->callid.len,
 			cell->callid.s);
@@ -915,7 +903,7 @@ static void __start_billing(
 	 * Store from-tag value
 	 */
 	if(shm_str_dup(&call->sip_data.from_tag, &tags[0]) != 0) {
-		LM_ERR("No more pkg memory\n");
+		SHM_MEM_ERROR;
 		goto exit;
 	}
 
@@ -923,13 +911,13 @@ static void __start_billing(
 	 * Store to-tag value
 	 */
 	if(shm_str_dup(&call->sip_data.to_tag, &tags[1]) != 0) {
-		LM_ERR("No more pkg memory\n");
+		SHM_MEM_ERROR;
 		goto exit;
 	}
 
 	if(shm_str_dup(&call->sip_data.from_uri, from_uri) != 0
 			|| shm_str_dup(&call->sip_data.to_uri, to_uri) != 0) {
-		LM_ERR("No more pkg memory\n");
+		SHM_MEM_ERROR;
 		goto exit;
 	}
 
@@ -1089,9 +1077,10 @@ static int __shm_str_hash_alloc(struct str_hash_table *ht, int size)
 {
 	ht->table = shm_malloc(sizeof(struct str_hash_head) * size);
 
-	if(!ht->table)
+	if(!ht->table) {
+		SHM_MEM_ERROR;
 		return -1;
-
+	}
 	ht->size = size;
 	return 0;
 }
@@ -1110,7 +1099,7 @@ int terminate_call(call_t *call)
 			call->dlg_h_entry);
 
 	data = &call->sip_data;
-	if(faked_msg_init_with_dlg_info(&data->callid, &data->from_uri,
+	if(cnxcc_faked_msg_init_with_dlg_info(&data->callid, &data->from_uri,
 			   &data->from_tag, &data->to_uri, &data->to_tag, &dmsg)
 			!= 0) {
 		LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len,
@@ -1197,7 +1186,7 @@ static credit_data_t *__get_or_create_credit_data_entry(
 	return (credit_data_t *)e->u.p;
 
 no_memory:
-	LM_ERR("No shared memory left\n");
+	SHM_MEM_ERROR;
 	return NULL;
 }
 
@@ -1205,17 +1194,13 @@ static credit_data_t *__alloc_new_credit_data(
 		str *client_id, credit_type_t type)
 {
 	credit_data_t *credit_data = shm_malloc(sizeof(credit_data_t));
-	;
-
 	if(credit_data == NULL)
 		goto no_memory;
-
 	memset(credit_data, 0, sizeof(credit_data_t));
 
 	cnxcc_lock_init(credit_data->lock);
 
 	credit_data->call_list = shm_malloc(sizeof(call_t));
-
 	if(credit_data->call_list == NULL)
 		goto no_memory;
 
@@ -1231,7 +1216,6 @@ static credit_data_t *__alloc_new_credit_data(
 
 	if(_data.redis) {
 		credit_data->str_id = shm_malloc(client_id->len + 1);
-
 		if(!credit_data->str_id)
 			goto no_memory;
 
@@ -1239,14 +1223,7 @@ static credit_data_t *__alloc_new_credit_data(
 		snprintf(credit_data->str_id, client_id->len + 1, "%.*s",
 				client_id->len, client_id->s);
 	}
-
-	credit_data->max_amount = 0;
-	credit_data->concurrent_calls = 0;
-	credit_data->consumed_amount = 0;
-	credit_data->ended_calls_consumed_amount = 0;
-	credit_data->number_of_calls = 0;
 	credit_data->type = type;
-	credit_data->deallocating = 0;
 
 	if(!_data.redis)
 		return credit_data;
@@ -1257,7 +1234,7 @@ static credit_data_t *__alloc_new_credit_data(
 	return credit_data;
 
 no_memory:
-	LM_ERR("No shared memory left\n");
+	SHM_MEM_ERROR;
 error:
 	return NULL;
 }
@@ -1277,25 +1254,16 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 
 	call = shm_malloc(sizeof(call_t));
 	if(call == NULL) {
-		LM_ERR("No shared memory left\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
+	memset(call, 0, sizeof(call_t));
 
 	if((!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) != 0)
 			|| shm_str_dup(&call->sip_data.callid, &msg->callid->body) != 0) {
 		LM_ERR("Error processing CALLID hdr\n");
 		goto error;
 	}
-
-	call->sip_data.to_uri.s = NULL;
-	call->sip_data.to_uri.len = 0;
-	call->sip_data.to_tag.s = NULL;
-	call->sip_data.to_tag.len = 0;
-
-	call->sip_data.from_uri.s = NULL;
-	call->sip_data.from_uri.len = 0;
-	call->sip_data.from_tag.s = NULL;
-	call->sip_data.from_tag.len = 0;
 
 	call->consumed_amount = initial_pulse * cost_per_second;
 	call->connect_amount = connect_cost;
@@ -1356,22 +1324,13 @@ static call_t *__alloc_new_call_by_time(
 		LM_ERR("No shared memory left\n");
 		goto error;
 	}
+	memset(call, 0, sizeof(call_t));
 
 	if((!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) != 0)
 			|| shm_str_dup(&call->sip_data.callid, &msg->callid->body) != 0) {
 		LM_ERR("Error processing CALLID hdr\n");
 		goto error;
 	}
-
-	call->sip_data.to_uri.s = NULL;
-	call->sip_data.to_uri.len = 0;
-	call->sip_data.to_tag.s = NULL;
-	call->sip_data.to_tag.len = 0;
-
-	call->sip_data.from_uri.s = NULL;
-	call->sip_data.from_uri.len = 0;
-	call->sip_data.from_tag.s = NULL;
-	call->sip_data.from_tag.len = 0;
 
 	call->consumed_amount = 0;
 	call->confirmed = FALSE;
@@ -1423,25 +1382,16 @@ static call_t *alloc_new_call_by_channel(
 
 	call = shm_malloc(sizeof(call_t));
 	if(call == NULL) {
-		LM_ERR("No shared memory left\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
+	memset(call, 0, sizeof(call_t));
 
 	if((!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) != 0)
 			|| shm_str_dup(&call->sip_data.callid, &msg->callid->body) != 0) {
 		LM_ERR("Error processing CALLID hdr\n");
 		goto error;
 	}
-
-	call->sip_data.to_uri.s = NULL;
-	call->sip_data.to_uri.len = 0;
-	call->sip_data.to_tag.s = NULL;
-	call->sip_data.to_tag.len = 0;
-
-	call->sip_data.from_uri.s = NULL;
-	call->sip_data.from_uri.len = 0;
-	call->sip_data.from_tag.s = NULL;
-	call->sip_data.from_tag.len = 0;
 
 	call->consumed_amount = 0;
 	call->confirmed = FALSE;
@@ -1534,14 +1484,13 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 	}
 
 	e = shm_malloc(sizeof(struct str_hash_entry));
-
 	if(e == NULL) {
-		LM_ERR("No shared memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
 	if(shm_str_dup(&e->key, cid) != 0) {
-		LM_ERR("No shared memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -1961,6 +1910,10 @@ static int __set_max_time(sip_msg_t *msg, char *pclient, char *pmaxsecs)
 static int ki_update_max_time(sip_msg_t *msg, str *sclient, int secs)
 {
 	credit_data_t *credit_data = NULL;
+	struct str_hash_table *ht = NULL;
+	struct str_hash_entry *e = NULL;
+	double update_fraction = secs;
+	call_t *call = NULL, *tmp_call = NULL;
 
 	set_ctrl_flag(msg);
 
@@ -1985,12 +1938,7 @@ static int ki_update_max_time(sip_msg_t *msg, str *sclient, int secs)
 			sclient->len, sclient->s, secs, msg->callid->body.len,
 			msg->callid->body.s);
 
-
-	struct str_hash_table *ht = NULL;
-	struct str_hash_entry *e = NULL;
 	ht = _data.time.credit_data_by_client;
-	double update_fraction = secs;
-	call_t *call = NULL, *tmp_call = NULL;
 
 	cnxcc_lock(_data.time.lock);
 	e = str_hash_get(ht, sclient->s, sclient->len);

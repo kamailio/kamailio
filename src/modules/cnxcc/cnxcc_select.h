@@ -23,6 +23,9 @@
 #ifndef CNXCC_SELECT_H_
 #define CNXCC_SELECT_H_
 
+#include "../../core/str.h"
+#include "../../core/select.h"
+
 int sel_root(str *res, select_t *s, struct sip_msg *msg);
 int sel_channels(str *res, select_t *s, struct sip_msg *msg);
 int sel_channels_count(str *res, select_t *s, struct sip_msg *msg);
