@@ -110,6 +110,72 @@ modparam("crypto", "register_callid", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="crypto.p.register_evcb">
+		<title><varname>register_evcb</varname> (int)</title>
+		<para>
+			Set it to 1 in order to register the event route callbacks, in
+			case AES encryption/decryption of SIP traffic is wanted. The
+			event_route[crypto:netio] or corresponding KEMI callback are
+			executed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>register_evcb</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "register_evcb", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="crypto.p.kevcb_netio">
+		<title><varname>kevcb_netio</varname> (str)</title>
+		<para>
+			Name of the KEMI callbac functio for netio events. It receives a
+			string parameter with event route name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is not set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>kevcb_netio</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "kevcb_netio", "ksr_crypto_netio")
+...
+function ksr_crypto_netio(evname)
+  ...
+end
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="crypto.p.netio_key">
+		<title><varname>netio_key</varname> (str)</title>
+		<para>
+			The shared secret used to encrypt/decrypt network traffic.
+		</para>
+		<para>
+		<emphasis>
+			Default value is not set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>netio_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "netio_key", "strong-password-here")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -155,6 +221,144 @@ crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 		<programlisting format="linespecific">
 ...
 crypto_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.crypto_netio_in">
+	    <title>
+		<function moreinfo="none">crypto_netio_in)</function>
+	    </title>
+	    <para>
+		Return 1 (true) if it is an incoming net message, or -1 (false) otherwise.
+		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_netio_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[crypto:netio] {
+  if(crypto_netio_in()) {
+    crypto_netio_decrypt();
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.crypto_netio_out">
+	    <title>
+		<function moreinfo="none">crypto_netio_out()</function>
+	    </title>
+	    <para>
+		Return 1 (true) if it is an outgoing net message, or -1 (false) otherwise.
+		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_netio_out</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[crypto:netio] {
+  if(crypto_netio_out()) {
+    crypto_netio_encrypt();
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.crypto_netio_encrypt">
+	    <title>
+		<function moreinfo="none">crypto_netio_encrypt()</function>
+	    </title>
+	    <para>
+		Mark the network message for encryption.
+		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_netio_encrypt</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[crypto:netio] {
+  if(crypto_netio_out()) {
+    crypto_netio_encrypt();
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.crypto_netio_decrypt">
+	    <title>
+		<function moreinfo="none">crypto_netio_decrypt()</function>
+	    </title>
+	    <para>
+		Mark the network message for decryption.
+		</para>
+		<para>
+		This function can be used from EVENT_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_netio_decrypt</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[crypto:netio] {
+  if(crypto_netio_in()) {
+    crypto_netio_decrypt();
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Event Routes</title>
+	<section id="async.ev.crypto_netio">
+	    <title>
+		<function moreinfo="none">event_route[crypto:netio]</function>
+	    </title>
+	    <para>
+		</para>
+		<example>
+		<title><function>event_route[crypto:netio]</function> usage</title>
+		<programlisting format="linespecific">
+...
+# ----- crypto params -----
+modparam("crypto", "register_evcb", 1)
+modparam("crypto", "netio_key", "strong-password-here")
+...
+event_route[crypto:netio] {
+	if(crypto_netio_in()) {
+		if(src_port==5060) {
+			crypto_netio_decrypt();
+		}
+	} else {
+		if($sndto(port)==5060) {
+			crypto_netio_encrypt();
+		}
+	}
+}
+
+# Main SIP request routing logic
+request_route {
+	sl_send_reply("200", "ok");
+	if(src_port==5060) {
+		$du = "sip:127.0.0.1:9";
+		forward();
+	} else {
+		$du = "sip:127.0.0.1:5060";
+		forward();
+	}
+	exit;
+}
 ...
 </programlisting>
 	    </example>
