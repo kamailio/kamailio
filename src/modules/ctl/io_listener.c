@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -43,7 +43,7 @@
 #include <sys/uio.h> /* iovec */
 
 #define IO_STREAM_CONN_TIMEOUT		S_TO_TICKS(120)
-#define IO_LISTEN_TIMEOUT			10 /* in s,  how often the timer 
+#define IO_LISTEN_TIMEOUT			10 /* in s,  how often the timer
 										  will be run */
 
 #define IO_LISTEN_TX_TIMEOUT	10 /* ms */
@@ -86,16 +86,16 @@ typedef int (*send_ev_f)(void* send_h , struct iovec* v, size_t count);
 
 
 
-static io_wait_h io_h;
+static io_wait_h ctl_io_h;
 static int io_read_connections=0;
 static struct stream_connection stream_conn_lst; /* list head */
 
-static struct stream_connection* s_conn_new(int sock, 
+static struct stream_connection* s_conn_new(int sock,
 											struct ctrl_socket* cs,
 											union sockaddr_u* from)
 {
 	struct stream_connection* s_c;
-	
+
 	s_c=ctl_malloc(sizeof(struct stream_connection));
 	if (s_c){
 		memset(s_c, 0, sizeof(struct stream_connection));
@@ -139,11 +139,11 @@ inline static int sendv_disc(struct send_handle* sh, struct iovec* v,
 	char* p;
 	char* end;
 	int r;
-	
+
 	p=buf;
 	end=p+DGRAM_BUF_SIZE;
 	for (r=0; r<count; r++){
-		if ((p+v[r].iov_len)>end) 
+		if ((p+v[r].iov_len)>end)
 			goto error_overflow;
 		memcpy(p, v[r].iov_base, v[r].iov_len);
 		p+=v[r].iov_len;
@@ -162,7 +162,7 @@ error_overflow:
 int sock_send_v(void *h, struct iovec* v, size_t count)
 {
 	struct send_handle* sh;
-	
+
 	sh=(struct send_handle*)h;
 	if (sh->type==S_CONNECTED)
 		return tsend_dgram_ev(sh->fd, v, count, IO_LISTEN_TX_TIMEOUT);
@@ -179,7 +179,7 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 	int poll_method;
 	struct ctrl_socket *cs;
 	int type;
-	
+
 	clist_init(&stream_conn_lst, next, prev);
 	type=F_T_RESERVED;
 #if 0
@@ -198,7 +198,7 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 	poll_method = 0; /* make check for TCP poll method fail */
 	poll_err = NULL;
 #endif
-	
+
 	/* set an appropiate poll method */
 	if (poll_err || (poll_method==0)){
 		poll_method=choose_poll_method();
@@ -213,8 +213,8 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 			LOG(L_INFO, "io_listen_loop:  using %s io watch method (config)\n",
 					poll_method_name(poll_method));
 	}
-	
-	if (init_io_wait(&io_h, max_fd_no, poll_method)<0)
+
+	if (init_io_wait(&ctl_io_h, max_fd_no, poll_method)<0)
 		goto error;
 	/* add all the sockets we listen on for connections */
 	for (cs=cs_lst; cs; cs=cs->next){
@@ -239,12 +239,12 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 #endif
 			case UNKNOWN_SOCK:
 				LOG(L_CRIT, "BUG: io_listen_loop: bad control socket transport"
-						" %d\n", cs->transport); 
+						" %d\n", cs->transport);
 				goto error;
 		}
 		DBG("io_listen_loop: adding socket %d, type %d, transport"
 					" %d (%s)\n", cs->fd, type, cs->transport, cs->name);
-		if (io_watch_add(&io_h, cs->fd, POLLIN, type, cs)<0){
+		if (io_watch_add(&ctl_io_h, cs->fd, POLLIN, type, cs)<0){
 			LOG(L_CRIT, "ERROR: io_listen_loop: init: failed to add"
 					"listen socket to the fd list\n");
 			goto error;
@@ -255,56 +255,56 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 	if (cfg_child_init()) goto error;
 
 	/* main loop */
-	switch(io_h.poll_method){
+	switch(ctl_io_h.poll_method){
 		case POLL_POLL:
 			while(1){
-				io_wait_loop_poll(&io_h, IO_LISTEN_TIMEOUT, 0);
+				io_wait_loop_poll(&ctl_io_h, IO_LISTEN_TIMEOUT, 0);
 			}
 			break;
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
 			while(1){
-				io_wait_loop_select(&io_h, IO_LISTEN_TIMEOUT, 0);
+				io_wait_loop_select(&ctl_io_h, IO_LISTEN_TIMEOUT, 0);
 			}
 			break;
 #endif
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			while(1){
-				io_wait_loop_sigio_rt(&io_h, IO_LISTEN_TIMEOUT);
+				io_wait_loop_sigio_rt(&ctl_io_h, IO_LISTEN_TIMEOUT);
 			}
 			break;
 #endif
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
 			while(1){
-				io_wait_loop_epoll(&io_h, IO_LISTEN_TIMEOUT, 0);
+				io_wait_loop_epoll(&ctl_io_h, IO_LISTEN_TIMEOUT, 0);
 			}
 			break;
 		case POLL_EPOLL_ET:
 			while(1){
-				io_wait_loop_epoll(&io_h, IO_LISTEN_TIMEOUT, 1);
+				io_wait_loop_epoll(&ctl_io_h, IO_LISTEN_TIMEOUT, 1);
 			}
 			break;
 #endif
 #ifdef HAVE_KQUEUE
 		case POLL_KQUEUE:
 			while(1){
-				io_wait_loop_kqueue(&io_h, IO_LISTEN_TIMEOUT, 0);
+				io_wait_loop_kqueue(&ctl_io_h, IO_LISTEN_TIMEOUT, 0);
 			}
 			break;
 #endif
 #ifdef HAVE_DEVPOLL
 		case POLL_DEVPOLL:
 			while(1){
-				io_wait_loop_devpoll(&io_h, IO_LISTEN_TIMEOUT, 0);
+				io_wait_loop_devpoll(&ctl_io_h, IO_LISTEN_TIMEOUT, 0);
 			}
 			break;
 #endif
 		default:
 			LOG(L_CRIT, "BUG: io_listen_loop: no support for poll method "
-					" %s (%d)\n", 
-					poll_method_name(io_h.poll_method), io_h.poll_method);
+					" %s (%d)\n",
+					poll_method_name(ctl_io_h.poll_method), ctl_io_h.poll_method);
 			goto error;
 	}
 /* should never reach this point under normal (non-error) circumstances */
@@ -316,12 +316,12 @@ error:
 
 /* handles an io event on one of the watched dgram connections
  * (it can read the whole packet)
- * 
+ *
  * params: cs - pointer to the control socket for which we have an io ev.
  * returns:  handle_* return convention:
  *         -1 on error, or when we are not interested any more on reads
  *            from this fd (e.g.: we are closing it )
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -337,7 +337,7 @@ static int handle_ctrl_dgram(struct ctrl_socket* cs)
 	int ret;
 	struct send_handle sh;
 	void* saved_state;
-	
+
 	saved_state=0; /* we get always a new datagram */
 	sh.fd=cs->fd;
 	sh.type=S_DISCONNECTED;
@@ -375,12 +375,12 @@ error:
 
 
 /* handles an new connect on one of the watched stream connections
- * 
+ *
  * params: cs - pointer to the control socket for which we have an io ev.
  * returns:  handle_* return convention:
  *         -1 on error, or when we are not interested any more on accepts
  *            from this fd (e.g.: we are closing it )
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -395,7 +395,7 @@ static int handle_new_connect(struct ctrl_socket* cs)
 	unsigned int from_len;
 	int new_sock;
 	struct stream_connection* s_conn;
-	
+
 	from_len=(cs->transport==UDP_SOCK)?sockaddru_len(cs->u.sa_in):
 				sizeof(cs->u.sa_un);
 again:
@@ -430,7 +430,7 @@ again:
 	s_conn=s_conn_new(new_sock, cs, &from);
 	if (s_conn){
 		s_conn_add(s_conn);
-		io_watch_add(&io_h, s_conn->fd, POLLIN, F_T_READ_STREAM, s_conn);
+		io_watch_add(&ctl_io_h, s_conn->fd, POLLIN, F_T_READ_STREAM, s_conn);
 	}else{
 		LOG(L_ERR, "ERROR: io listen: handle_new_connect:"
 				" s_conn_new failed\n");
@@ -449,14 +449,14 @@ error:
 
 
 /* handles a read event on one of the accepted connections
- * 
+ *
  * params: s_c - pointer to the stream_connection for which we have an io ev.
- *         idx - index in the fd_array -> pass this to io_watch_del for 
+ *         idx - index in the fd_array -> pass this to io_watch_del for
  *               faster deletes
  * returns:  handle_* return convention:
  *         -1 on error, or when we are not interested any more on reads
  *            from this fd (e.g.: we are closing it )
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -472,7 +472,7 @@ static int handle_stream_read(struct stream_connection* s_c, int idx)
 	int bytes_processed;
 	struct stream_req* r;
 	struct send_handle sh;
-	
+
 	sh.fd=s_c->fd;
 	sh.type=S_CONNECTED;
 	sh.from_len=0;
@@ -540,17 +540,17 @@ skip:
 	/* everything went fine, we just have to read more */
 	s_c->expire=get_ticks_raw()+IO_STREAM_CONN_TIMEOUT; /* update timeout*/
 	return 1;
-	
+
 no_read:
 	/* false alarm */
 	return 0;
 close_connection:
-	io_watch_del(&io_h, s_c->fd, idx, IO_FD_CLOSING);
+	io_watch_del(&ctl_io_h, s_c->fd, idx, IO_FD_CLOSING);
 	close(s_c->fd);
 	s_conn_rm(s_c);
 	return 0;
 error_read:
-	io_watch_del(&io_h, s_c->fd, idx, IO_FD_CLOSING);
+	io_watch_del(&ctl_io_h, s_c->fd, idx, IO_FD_CLOSING);
 	close(s_c->fd);
 	s_conn_rm(s_c);
 	return -1;
@@ -560,15 +560,15 @@ error_read:
 
 
 #ifdef USE_FIFO
-/* handles a read event on one of the fifos 
- * 
+/* handles a read event on one of the fifos
+ *
  * params: s_c - pointer to the stream_connection for which we have an io ev.
- *         idx - index in the fd_array -> pass this to io_watch_del for 
+ *         idx - index in the fd_array -> pass this to io_watch_del for
  *               faster deletes
  * returns:  handle_* return convention:
  *         -1 on error, or when we are not interested any more on reads
  *            from this fd (e.g.: we are closing it )
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -585,7 +585,7 @@ static int handle_fifo_read(struct ctrl_socket* cs, int idx)
 	struct stream_req* r;
 	struct send_handle sh;
 	struct stream_connection* sc;
-	
+
 	sh.fd=-1;
 	sh.type=S_FIFO;
 	sh.from_len=0;
@@ -681,7 +681,7 @@ error:
  * params:  fm  - pointer to a fd hash entry
  *          idx - index in the fd_array (or -1 if not known)
  * return: -1 on error
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -731,7 +731,7 @@ void io_listen_who_rpc(rpc_t* rpc, void* ctx)
 	struct ip_addr ip;
 	int port;
 	int i;
-	
+
 	i=0;
 	/* check if called from another process */
 	if (stream_conn_lst.next==0){
@@ -757,7 +757,7 @@ void io_listen_who_rpc(rpc_t* rpc, void* ctx)
 			case UNIXD_SOCK:
 #ifdef USE_FIFO
 			case FIFO_SOCK:
-#endif		
+#endif
 				rpc->add(ctx, "ss", "<anonymous unix socket>", "" );
 				rpc->add(ctx, "ss", sc->parent->name, "");
 				break;
@@ -765,7 +765,7 @@ void io_listen_who_rpc(rpc_t* rpc, void* ctx)
 				rpc->add(ctx, "ssss", "<bug unknown protocol>",
 								"", "", "", "");
 		}
-		
+
 		/* idle time
 		 * rpc->add(ctx, "d", TICKS_TO_MS(get_ticks_raw()-
 								(sc->expire-IO_STREAM_CONN_TIMEOUT)));*/
