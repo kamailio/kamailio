@@ -190,7 +190,7 @@ static int pdb_msg_format_send(struct pdb_msg *msg,
 
 
 /* two chars to short-int without caring of memory alignment in char buffer */
-#define PDB_BUFTOSHORT(_b, _n) (((short int)_b[_n]) << 8) | (0x00ff & _b[_n+1])
+#define PDB_BUFTOSHORT(_sv, _b, _n) memcpy(&(_sv), (char*)(_b) + (_n), sizeof(short int))
 
 /*!
  * \return 1 if query for the number succeded and the avp with the corresponding carrier id was set,
@@ -347,7 +347,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
                                 case PDB_CODE_OK:
                                     msg.bdy.payload[sizeof(struct pdb_bdy) - 1] = '\0';
                                     if (strcmp(msg.bdy.payload, number.s) == 0) {
-                                        _id = PDB_BUFTOSHORT(msg.bdy.payload, reqlen); /* make gcc happy */
+                                        PDB_BUFTOSHORT(_id, msg.bdy.payload, reqlen); /* make gcc happy */
                                         carrierid=ntohs(_id); /* convert to host byte order */
                                         goto found;
                                     }
@@ -370,7 +370,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
                         default:
                             buf[sizeof(struct pdb_msg) - 1] = '\0';
                             if (strncmp(buf, number.s, number.len) == 0) {
-                                _id = PDB_BUFTOSHORT(buf, reqlen); /* make gcc happy */
+                                PDB_BUFTOSHORT(_id, buf, reqlen); /* make gcc happy */
                                 carrierid=ntohs(_id); /* convert to host byte order */
                                 goto found;
                             }
