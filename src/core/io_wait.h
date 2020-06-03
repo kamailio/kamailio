@@ -109,12 +109,12 @@ typedef int fd_type;
 
 /* maps a fd to some other structure; used in almost all cases
  * except epoll and maybe kqueue or /dev/poll */
-struct fd_map{
+typedef struct fd_map {
 	int fd;               /* fd no */
 	fd_type type;         /* "data" type */
 	void* data;           /* pointer to the corresponding structure */
 	short events;         /* events we are interested int */
-};
+} fd_map_t;
 
 
 #ifdef HAVE_KQUEUE
@@ -132,7 +132,7 @@ struct fd_map{
 
 
 /* handler structure */
-struct io_wait_handler{
+typedef struct io_wait_handler {
 	enum poll_types poll_method;
 	int flags;
 	struct fd_map* fd_hash;
@@ -172,13 +172,12 @@ struct io_wait_handler{
 	fd_set master_wset; /* write set */
 	int max_fd_select; /* maximum select used fd */
 #endif
-};
-
-typedef struct io_wait_handler io_wait_h;
+} io_wait_h;
 
 
 /* get the corresponding fd_map structure pointer */
 #define get_fd_map(h, fd)		(&(h)->fd_hash[(fd)])
+
 /* remove a fd_map structure from the hash; the pointer must be returned
  * by get_fd_map or hash_fd_map*/
 #define unhash_fd_map(pfm)	\
@@ -321,7 +320,7 @@ inline static int io_watch_add(	io_wait_h* h,
 		h->fd_array[h->fd_no].events=(ev); /* useless for select */ \
 		h->fd_array[h->fd_no].revents=0;     /* useless for select */ \
 	}while(0)
-	
+
 #define set_fd_flags(f) \
 	do{ \
 			flags=fcntl(fd, F_GETFL); \
@@ -336,8 +335,7 @@ inline static int io_watch_add(	io_wait_h* h,
 				goto error; \
 			} \
 	}while(0)
-	
-	
+
 	struct fd_map* e;
 	int flags;
 #ifdef HAVE_EPOLL
@@ -353,7 +351,7 @@ inline static int io_watch_add(	io_wait_h* h,
 	int idx;
 	int check_io;
 	struct pollfd pf;
-	
+
 	check_io=0; /* set to 1 if we need to check for pre-existing queued
 				   io/data on the fd */
 	idx=-1;
@@ -378,13 +376,13 @@ inline static int io_watch_add(	io_wait_h* h,
 	/*  hash sanity check */
 	e=get_fd_map(h, fd);
 	if (unlikely(e && (e->type!=0 /*F_NONE*/))){
-		LM_ERR("trying to overwrite entry %d"
-			" watched for %x in the hash(%d, %d, %p) with (%d, %d, %p)\n",
-			fd, events, e->fd, e->type, e->data, fd, type, data);
+		LM_ERR("trying to overwrite entry %d watched for %x"
+			" in the hash %p (fd:%d, type:%d, data:%p) with (%d, %d, %p)\n",
+			fd, events, h, e->fd, e->type, e->data, fd, type, data);
 		e=0;
 		goto error;
 	}
-	
+
 	if (unlikely((e=hash_fd_map(h, fd, events, type, data))==0)){
 		LM_ERR("failed to hash the fd %d\n", fd);
 		goto error;
