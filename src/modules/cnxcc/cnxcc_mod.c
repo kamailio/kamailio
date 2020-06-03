@@ -91,6 +91,8 @@ static int __init_hashtable(struct str_hash_table *ht);
  */
 static int __shm_str_hash_alloc(struct str_hash_table *ht, int size);
 static void __free_credit_data_hash_entry(struct str_hash_entry *e);
+static void __free_credit_data(credit_data_t *credit_data, hash_tables_t *hts,
+		struct str_hash_entry *cd_entry);
 
 /*
  * PV management functions
@@ -123,6 +125,7 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 		int initial_pulse, int final_pulse);
 static void __notify_call_termination(sip_msg_t *msg);
 static void __free_call(call_t *call);
+static void __delete_call(call_t *call, credit_data_t *credit_data);
 static int __has_to_tag(struct sip_msg *msg);
 static credit_data_t *__alloc_new_credit_data(
 		str *client_id, credit_type_t type);
@@ -619,7 +622,6 @@ static void __stop_billing(str *callid)
 		LM_ERR("[%.*s] call pointer is null\n", callid->len, callid->s);
 		return;
 	}
-
 	if(hts == NULL) {
 		LM_ERR("[%.*s] result hashtable pointer is null\n", callid->len,
 				callid->s);
@@ -627,13 +629,9 @@ static void __stop_billing(str *callid)
 	}
 
 	cnxcc_lock(hts->lock);
-
-	/*
-	 * Search credit_data by client_id
-	 */
+	// Search credit_data by client_id
 	cd_entry = str_hash_get(
 			hts->credit_data_by_client, call->client_id.s, call->client_id.len);
-
 	if(cd_entry == NULL) {
 		LM_ERR("Credit data not found for CID [%.*s], client-ID [%.*s]\n",
 				callid->len, callid->s, call->client_id.len, call->client_id.s);
@@ -642,117 +640,24 @@ static void __stop_billing(str *callid)
 	}
 
 	credit_data = (credit_data_t *)cd_entry->u.p;
-
 	if(credit_data == NULL) {
 		LM_ERR("[%.*s]: credit_data pointer is null\n", callid->len, callid->s);
 		cnxcc_unlock(hts->lock);
 		return;
 	}
-
 	cnxcc_unlock(hts->lock);
-
-	/*
-	 * Update calls statistics
-	 */
-	cnxcc_lock(_data.lock);
-
-	_data.stats->active--;
-	_data.stats->total--;
-
-	cnxcc_unlock(_data.lock);
-
-	cnxcc_lock(credit_data->lock);
 
 	LM_DBG("Call [%.*s] of client-ID [%.*s], ended\n", callid->len, callid->s,
 			call->client_id.len, call->client_id.s);
+	cnxcc_lock(credit_data->lock);
+	__delete_call(call, credit_data);
 
-	/*
-	 * This call just ended and we need to remove it from the summ.
-	 */
-	if(call->confirmed) {
-		credit_data->concurrent_calls--;
-		credit_data->ended_calls_consumed_amount += call->consumed_amount;
-
-		if(_data.redis) {
-			redis_incr_by_int(credit_data, "concurrent_calls", -1);
-			redis_incr_by_double(credit_data, "ended_calls_consumed_amount",
-					call->consumed_amount);
-		}
-	}
-
-	credit_data->number_of_calls--;
-
-	if(_data.redis)
-		redis_incr_by_int(credit_data, "number_of_calls", -1);
-
-	if(credit_data->concurrent_calls < 0) {
-		LM_ERR("[BUG]: number of concurrent calls dropped to negative value: "
-			   "%d\n",
-				credit_data->concurrent_calls);
-	}
-
-	if(credit_data->number_of_calls < 0) {
-		LM_ERR("[BUG]: number of calls dropped to negative value: %d\n",
-				credit_data->number_of_calls);
-	}
-
-	/*
-	 * Remove (and free) the call from the list of calls of the current credit_data
-	 */
-	clist_rm(call, next, prev);
-
-	/* return if credit_data is being deallocated.
-	 * the call and the credit data will be freed by terminate_all_calls()
-	 */
-	if(credit_data->deallocating) {
-		return;
-	}
-
-	__free_call(call);
 	/*
 	 * In case there are no active calls for a certain client, we remove the client-id from the hash table.
 	 * This way, we can save memory for useful clients.
-	 *
 	 */
 	if(credit_data->number_of_calls == 0) {
-		LM_DBG("Removing client [%.*s] and its calls from the list\n",
-				credit_data->call_list->client_id.len,
-				credit_data->call_list->client_id.s);
-
-		credit_data->deallocating = 1;
-		cnxcc_lock(hts->lock);
-
-		if(_data.redis) {
-			redis_clean_up_if_last(credit_data);
-			shm_free(credit_data->str_id);
-		}
-
-		/*
-		 * Remove the credit_data_t from the hash table
-		 */
-		str_hash_del(cd_entry);
-
-		cnxcc_unlock(hts->lock);
-
-		/*
-		 * Free client_id in list's root
-		 */
-		shm_free(credit_data->call_list->client_id.s);
-		shm_free(credit_data->call_list);
-
-		/*
-		 * Release the lock since we are going to free the entry down below
-		 */
-		cnxcc_unlock(credit_data->lock);
-
-		/*
-		 * Free the whole entry
-		 */
-		__free_credit_data_hash_entry(cd_entry);
-
-		/*
-		 * return without releasing the acquired lock over credit_data. Why? Because we just freed it.
-		 */
+		__free_credit_data(credit_data, hts, cd_entry);
 		return;
 	}
 
@@ -945,6 +850,78 @@ exit:
 	cnxcc_unlock(call->lock);
 }
 
+static void __delete_call(call_t *call, credit_data_t *credit_data)
+{
+	// Update calls statistics
+	cnxcc_lock(_data.lock);
+	_data.stats->active--;
+	_data.stats->total--;
+	cnxcc_unlock(_data.lock);
+
+	// This call just ended and we need to remove it from the summ.
+	if(call->confirmed) {
+		credit_data->concurrent_calls--;
+		credit_data->ended_calls_consumed_amount += call->consumed_amount;
+
+		if(_data.redis) {
+			redis_incr_by_int(credit_data, "concurrent_calls", -1);
+			redis_incr_by_double(credit_data, "ended_calls_consumed_amount",
+					call->consumed_amount);
+		}
+	}
+
+	credit_data->number_of_calls--;
+
+	if(_data.redis)
+		redis_incr_by_int(credit_data, "number_of_calls", -1);
+
+	if(credit_data->concurrent_calls < 0) {
+		LM_BUG("number of concurrent calls dropped to negative value: %d\n",
+				credit_data->concurrent_calls);
+	}
+
+	if(credit_data->number_of_calls < 0) {
+		LM_BUG("number of calls dropped to negative value: %d\n",
+				credit_data->number_of_calls);
+	}
+
+	// Remove (and free) the call from the list of calls of the current credit_data
+	clist_rm(call, next, prev);
+	__free_call(call);
+}
+
+// must be called with lock held on credit_data
+static void __free_credit_data(credit_data_t *credit_data, hash_tables_t *hts,
+		struct str_hash_entry *cd_entry)
+{
+	if(credit_data->deallocating) {
+		LM_DBG("deallocating, skip\n");
+		return;
+	}
+	LM_DBG("Removing client [%.*s] and its calls from the list\n",
+			credit_data->call_list->client_id.len,
+			credit_data->call_list->client_id.s);
+	credit_data->deallocating = 1;
+	cnxcc_lock(hts->lock);
+	if(_data.redis) {
+		redis_clean_up_if_last(credit_data);
+		shm_free(credit_data->str_id);
+	}
+	// Remove the credit_data_t from the hash table
+	str_hash_del(cd_entry);
+	cnxcc_unlock(hts->lock);
+
+	// Free client_id in list's root
+	shm_free(credit_data->call_list->client_id.s);
+	shm_free(credit_data->call_list);
+
+	// Release the lock since we are going to free the entry down below
+	cnxcc_unlock(credit_data->lock);
+
+	// Free the whole entry
+	__free_credit_data_hash_entry(cd_entry);
+}
+
 // must be called with lock held on credit_data
 /* terminate all calls and remove credit_data */
 void terminate_all_calls(credit_data_t *credit_data)
@@ -952,6 +929,7 @@ void terminate_all_calls(credit_data_t *credit_data)
 	call_t *call = NULL, *tmp = NULL;
 	struct str_hash_entry *cd_entry = NULL;
 	hash_tables_t *hts = NULL;
+	unsigned int pending = 0;
 
 	switch(credit_data->type) {
 		case CREDIT_MONEY:
@@ -973,57 +951,44 @@ void terminate_all_calls(credit_data_t *credit_data)
 			credit_data->call_list->client_id.len);
 
 	if(cd_entry == NULL) {
-		LM_WARN("credit data itme not found\n");
+		LM_WARN("credit data item not found\n");
 		return;
 	}
+	// tell __stop_billing() not to __free_credit_data
 	credit_data->deallocating = 1;
 
 	clist_foreach_safe(credit_data->call_list, call, tmp, next)
 	{
 		if(call->sip_data.callid.s != NULL) {
-			LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len,
-					call->sip_data.callid.s);
+			if(call->confirmed) {
+				LM_DBG("Killing call with CID [%.*s]\n",
+						call->sip_data.callid.len, call->sip_data.callid.s);
 
-			/*
-			 * Update number of calls forced to end
-			 */
-			_data.stats->dropped++;
-			terminate_call(call);
-			__free_call(call);
+				// Update number of calls forced to end
+				_data.stats->dropped++;
+				terminate_call(call);
+				// call memory will be cleaned by __stop_billing() when
+				// __dialog_terminated_callback() is triggered
+			} else {
+				LM_DBG("Non confirmed call with CID[%.*s], setting "
+					   "max_amount:%f to 0\n",
+						call->sip_data.callid.len, call->sip_data.callid.s,
+						call->max_amount);
+				call->max_amount = 0;
+				pending = 1;
+			}
 		} else {
 			LM_WARN("invalid call structure %p\n", call);
 		}
 	}
 
-	cnxcc_lock(hts->lock);
-
-	if(_data.redis) {
-		redis_clean_up_if_last(credit_data);
-		shm_free(credit_data->str_id);
+	credit_data->deallocating = 0;
+	if(!pending) {
+		__free_credit_data(credit_data, hts, cd_entry);
+	} else {
+		LM_DBG("credit data item left\n");
+		cnxcc_unlock(credit_data->lock);
 	}
-
-	/*
-     * Remove the credit_data_t from the hash table
-	 */
-	str_hash_del(cd_entry);
-
-	cnxcc_unlock(hts->lock);
-
-	/*
-	 * Free client_id in list's root
-	 */
-	shm_free(credit_data->call_list->client_id.s);
-	shm_free(credit_data->call_list);
-
-	/*
-	 * Release the lock since we are going to free the entry down below
-	 */
-	cnxcc_unlock(credit_data->lock);
-
-	/*
-	 * Free the whole entry
-	 */
-	__free_credit_data_hash_entry(cd_entry);
 }
 
 /*
@@ -1123,8 +1088,8 @@ int terminate_call(call_t *call)
 	}
 
 	if(!_dlgbinds.terminate_dlg(cell, NULL)) {
-		LM_DBG("dlg_end_dlg sent to call [%.*s]\n", call->sip_data.callid.len,
-				call->sip_data.callid.s);
+		LM_DBG("dlg_end_dlg sent to call [%.*s]\n", cell->callid.len,
+				cell->callid.s);
 
 		if(_data.cs_route_number >= 0)
 			__notify_call_termination(dmsg);
