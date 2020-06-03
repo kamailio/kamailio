@@ -42,7 +42,7 @@
 #define IO_LISTEN_TIMEOUT	10
 #define CONNECT_TIMEOUT	500 /* ms */
 
-static io_wait_h io_h;
+static io_wait_h erl_io_h;
 
 cnode_handler_t *enode = NULL;
 csockfd_handler_t *csocket_handler = NULL;
@@ -177,7 +177,7 @@ int init_cnode_sockets(int cnode_id)
 
 	LM_DBG("using %s as the I/O watch method (auto detected)\n", poll_method_name(poll_method));
 
-	if (init_io_wait(&io_h,get_max_open_fds(),poll_method))
+	if (init_io_wait(&erl_io_h,get_max_open_fds(),poll_method))
 	{
 		LM_CRIT("init_io_wait failed\n");
 		return -1;
@@ -195,7 +195,7 @@ int init_cnode_sockets(int cnode_id)
 		return -1;
 	}
 
-	if (io_watch_add(&io_h,phandler->sockfd,POLLIN,ERL_CSOCKFD_H,phandler)) {
+	if (io_watch_add(&erl_io_h,phandler->sockfd,POLLIN,ERL_CSOCKFD_H,phandler)) {
 		LM_CRIT("io_watch_add failed\n");
 		return -1;
 	}
@@ -213,7 +213,7 @@ int init_cnode_sockets(int cnode_id)
 		/* continue even failed to connect, connection can be established
 		 * from Erlang side too */
 		io_handler_del(phandler);
-	} else if (io_watch_add(&io_h,phandler->sockfd,POLLIN,ERL_CNODE_H,phandler)){
+	} else if (io_watch_add(&erl_io_h,phandler->sockfd,POLLIN,ERL_CNODE_H,phandler)){
 		LM_CRIT("io_watch_add failed\n");
 		return -1;
 	}
@@ -231,7 +231,7 @@ int init_cnode_sockets(int cnode_id)
 		return -1;
 	}
 
-	if (io_watch_add(&io_h,phandler->sockfd,POLLIN,ERL_EPMD_H,phandler)){
+	if (io_watch_add(&erl_io_h,phandler->sockfd,POLLIN,ERL_EPMD_H,phandler)){
 		LM_CRIT("io_watch_add failed\n");
 		return -1;
 	}
@@ -263,10 +263,10 @@ void cnode_main_loop(int cnode_id)
 	enode_name = erlang_nodename.s?&erlang_nodename:&erlang_node_sname;
 
 	/* main loop */
-	switch(io_h.poll_method){
+	switch(erl_io_h.poll_method){
 		case POLL_POLL:
 			while(1){
-				r = io_wait_loop_poll(&io_h, IO_LISTEN_TIMEOUT, 0);
+				r = io_wait_loop_poll(&erl_io_h, IO_LISTEN_TIMEOUT, 0);
 				if(!r && enode_connect()) {
 					LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 				}
@@ -275,7 +275,7 @@ void cnode_main_loop(int cnode_id)
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
 			while(1){
-				r = io_wait_loop_select(&io_h, IO_LISTEN_TIMEOUT, 0);
+				r = io_wait_loop_select(&erl_io_h, IO_LISTEN_TIMEOUT, 0);
 				if(!r && enode_connect()) {
 					LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 				}
@@ -285,7 +285,7 @@ void cnode_main_loop(int cnode_id)
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			while(1){
-				r = io_wait_loop_sigio_rt(&io_h, IO_LISTEN_TIMEOUT);
+				r = io_wait_loop_sigio_rt(&erl_io_h, IO_LISTEN_TIMEOUT);
 				if(!r && enode_connect()) {
 					LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 				}
@@ -295,7 +295,7 @@ void cnode_main_loop(int cnode_id)
 #ifdef HAVE_EPOLL
 			case POLL_EPOLL_LT:
 				while(1){
-					r = io_wait_loop_epoll(&io_h, IO_LISTEN_TIMEOUT, 0);
+					r = io_wait_loop_epoll(&erl_io_h, IO_LISTEN_TIMEOUT, 0);
 					if(!r && enode_connect()) {
 						LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 					}
@@ -303,7 +303,7 @@ void cnode_main_loop(int cnode_id)
 				break;
 			case POLL_EPOLL_ET:
 				while(1){
-					r = io_wait_loop_epoll(&io_h, IO_LISTEN_TIMEOUT, 1);
+					r = io_wait_loop_epoll(&erl_io_h, IO_LISTEN_TIMEOUT, 1);
 					if(!r && enode_connect()) {
 						LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 					}
@@ -313,7 +313,7 @@ void cnode_main_loop(int cnode_id)
 #ifdef HAVE_KQUEUE
 			case POLL_KQUEUE:
 				while(1){
-					r = io_wait_loop_kqueue(&io_h, IO_LISTEN_TIMEOUT, 0);
+					r = io_wait_loop_kqueue(&erl_io_h, IO_LISTEN_TIMEOUT, 0);
 					if(!r && enode_connect()) {
 						LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 					}
@@ -323,7 +323,7 @@ void cnode_main_loop(int cnode_id)
 #ifdef HAVE_DEVPOLL
                 case POLL_DEVPOLL:
                 	while(1){
-						r = io_wait_loop_devpoll(&io_h, IO_LISTEN_TIMEOUT, 0);
+						r = io_wait_loop_devpoll(&erl_io_h, IO_LISTEN_TIMEOUT, 0);
 						if(!r && enode_connect()) {
 							LM_ERR("failed reconnect to %.*s\n",STR_FMT(enode_name));
 						}
@@ -332,8 +332,8 @@ void cnode_main_loop(int cnode_id)
 #endif
                 default:
                 	LM_CRIT("BUG: io_listen_loop: no support for poll method "
-                			" %s (%d)\n", poll_method_name(io_h.poll_method),
-							io_h.poll_method);
+                			" %s (%d)\n", poll_method_name(erl_io_h.poll_method),
+							erl_io_h.poll_method);
                 	goto error;
         }
 
@@ -362,7 +362,7 @@ int handle_io(struct fd_map* fm, short events, int idx)
 	phandler = (handler_common_t*)fm->data;
 
 	if (phandler->handle_f(phandler)) {
-		io_watch_del(&io_h,fm->fd,idx,IO_FD_CLOSING);
+		io_watch_del(&erl_io_h,fm->fd,idx,IO_FD_CLOSING);
 		io_handler_del(phandler);
 		if (fm->type == ERL_WORKER_H) {
 			LM_CRIT("error on unix socket, not recoverable error -- aborting\n");
@@ -384,7 +384,7 @@ int handle_io(struct fd_map* fm, short events, int idx)
 			return -1;
 		}
 		LM_DBG("add new handler type=%d\n",type);
-		if (io_watch_add(&io_h,phandler->new->sockfd,POLLIN,type,(void*)phandler->new)) {
+		if (io_watch_add(&erl_io_h,phandler->new->sockfd,POLLIN,type,(void*)phandler->new)) {
 			LM_ERR("failed to add new handler\n");
 			return -1;
 		}
@@ -575,7 +575,7 @@ int enode_connect() {
 		/* continue even failed to connect, connection can be established
 		 * from Erlang side too */
 		io_handler_del(phandler);
-	} else if (io_watch_add(&io_h,phandler->sockfd,POLLIN,ERL_CNODE_H,phandler)){
+	} else if (io_watch_add(&erl_io_h,phandler->sockfd,POLLIN,ERL_CNODE_H,phandler)){
 		LM_CRIT("io_watch_add failed\n");
 		erl_close_socket(phandler->sockfd);
 		io_handler_del(phandler);
