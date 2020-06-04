@@ -137,6 +137,10 @@ static int mod_init(void)
 	}
 
 	if(_crypto_register_evcb!=0) {
+		if(_crypto_netio_key.s==NULL || _crypto_netio_key.len<=0) {
+			LM_ERR("crypto netio key parameter is not set\n");
+			return -1;
+		}
 		crypto_evcb_enable();
 	}
 
