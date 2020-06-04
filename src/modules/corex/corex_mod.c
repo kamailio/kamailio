@@ -68,6 +68,8 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
+static sr_kemi_xval_t _sr_kemi_corex_xval = {0};
+
 int corex_alias_subdomains_param(modparam_t type, void *val);
 int corex_dns_cache_param(modparam_t type, void *val);
 
@@ -486,60 +488,122 @@ static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
 /**
  *
  */
+static int corex_file_read(sip_msg_t *msg, str *fname, str *fdata)
+{
+
+	FILE *f;
+	long fsize;
+
+	LM_DBG("reading from file: %.*s\n", fname->len, fname->s);
+
+	fdata->s = NULL;
+	fdata->len = 0;
+
+	f = fopen(fname->s, "r");
+	if(f==NULL) {
+		LM_ERR("cannot open file: %.*s\n", fname->len, fname->s);
+		return -1;
+	}
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
+	if(fsize<0) {
+		LM_ERR("ftell failed on file: %.*s\n", fname->len, fname->s);
+		fclose(f);
+		return -1;
+	}
+	fseek(f, 0, SEEK_SET);
+
+	fdata->s = pkg_malloc(fsize + 1);
+	if(fdata->s==NULL) {
+		LM_ERR("no more pkg memory\n");
+		fclose(f);
+		return -1;
+	}
+	if(fread(fdata->s, fsize, 1, f) != fsize) {
+		if(ferror(f)) {
+			LM_ERR("error reading from file: %.*s\n",
+				fname->len, fname->s);
+		}
+	}
+	fclose(f);
+
+	fdata->s[fsize] = 0;
+	fdata->len = (int)fsize;
+
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_file_read(sip_msg_t *msg, char *fn, char *vn)
 {
 	str fname;
 	pv_spec_t *vp;
 	pv_value_t val;
 
-	FILE *f;
-	long fsize;
-	char *content;
-
 	fname.len = 0;
 	if (fixup_get_svalue(msg, (gparam_p)fn, &fname) != 0 || fname.len<=0) {
 		LM_ERR("cannot get file path\n");
 		return -1;
 	}
-	LM_DBG("reading from file: %.*s\n", fname.len, fname.s);
 	vp = (pv_spec_t*)vn;
 
-	f = fopen(fname.s, "r");
-	if(f==NULL) {
-		LM_ERR("cannot open file: %.*s\n", fname.len, fname.s);
+	if(corex_file_read(msg, &fname, &val.rs) < 0) {
 		return -1;
 	}
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
-	if(fsize<0) {
-		LM_ERR("ftell failed on file: %.*s\n", fname.len, fname.s);
-		fclose(f);
-		return -1;
-	}
-	fseek(f, 0, SEEK_SET);
 
-	content = pkg_malloc(fsize + 1);
-	if(content==NULL) {
-		LM_ERR("no more pkg memory\n");
-		fclose(f);
-		return -1;
-	}
-	if(fread(content, fsize, 1, f) != fsize) {
-		if(ferror(f)) {
-			LM_ERR("error reading from file: %.*s\n",
-				fname.len, fname.s);
-		}
-	}
-	fclose(f);
-	content[fsize] = 0;
-
-
-	val.rs.s = content;
-	val.rs.len = fsize;
 	LM_DBG("file content: [[%.*s]]\n", val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	vp->setf(msg, &vp->pvp, (int)EQ_T, &val);
-	pkg_free(content);
+	pkg_free(val.rs.s);
+
+	return 1;
+}
+
+
+static str _corex_file_read_data = STR_NULL;
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_file_read(sip_msg_t *msg, str *fname)
+{
+	memset(&_sr_kemi_corex_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(_corex_file_read_data.s != NULL) {
+		pkg_free(_corex_file_read_data.s);
+		_corex_file_read_data.s = NULL;
+	}
+
+	if(corex_file_read(msg, fname, &_corex_file_read_data) < 0) {
+		sr_kemi_xval_null(&_sr_kemi_corex_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_corex_xval;
+	}
+
+	LM_DBG("file content: [[%.*s]]\n", _corex_file_read_data.len,
+			_corex_file_read_data.s);
+
+	_sr_kemi_corex_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_corex_xval.v.s = _corex_file_read_data;
+	return &_sr_kemi_corex_xval;
+}
+
+/**
+ *
+ */
+static int ki_file_write(sip_msg_t *msg, str *fname, str *fdata)
+{
+	FILE *f;
+
+	LM_DBG("writing to file: %.*s\n", fname->len, fname->s);
+	f = fopen(fname->s, "w");
+	if(f==NULL) {
+		LM_ERR("cannot open file: %.*s\n", fname->len, fname->s);
+		return -1;
+	}
+	fwrite(fdata->s, 1, fdata->len, f);
+	fclose(f);
 
 	return 1;
 }
@@ -551,7 +615,6 @@ static int w_file_write(sip_msg_t *msg, char *fn, char *vn)
 {
 	str fname;
 	str content;
-	FILE *f;
 
 	fname.len = 0;
 	if (fixup_get_svalue(msg, (gparam_p)fn, &fname) != 0 || fname.len<=0) {
@@ -563,17 +626,7 @@ static int w_file_write(sip_msg_t *msg, char *fn, char *vn)
 		LM_ERR("cannot get the content\n");
 		return -1;
 	}
-
-	LM_DBG("writing to file: %.*s\n", fname.len, fname.s);
-	f = fopen(fname.s, "w");
-	if(f==NULL) {
-		LM_ERR("cannot open file: %.*s\n", fname.len, fname.s);
-		return -1;
-	}
-	fwrite(content.s, 1, content.len, f);
-	fclose(f);
-
-	return 1;
+	return ki_file_write(msg, &fname, &content);
 }
 
 /**
@@ -1135,6 +1188,16 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("is_faked_msg"),
 		SR_KEMIP_INT, ki_is_faked_msg,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("file_read"),
+		SR_KEMIP_XVAL, ki_file_read,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("file_write"),
+		SR_KEMIP_INT, ki_file_write,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
