@@ -38,9 +38,9 @@ typedef struct _xavp_c_data
 
 extern uac_api_t uac;
 
-extern str xavp_name;
-extern str xavp_parsed_xname;
-extern str xavp_helper_xname;
+extern str xavi_name;
+extern str xavi_parsed_xname;
+extern str xavi_helper_xname;
 
 extern unsigned int header_name_size;
 extern unsigned int header_value_size;

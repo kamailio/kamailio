@@ -42,9 +42,9 @@ MODULE_VERSION
 uac_api_t uac;
 static tm_api_t tmb;
 
-str xavp_name = str_init(XAVP_NAME);
-str xavp_helper_xname = str_init("modparam_pv_headers");
-str xavp_parsed_xname = str_init("parsed_pv_headers");
+str xavi_name = str_init(XAVP_NAME);
+str xavi_helper_xname = str_init("modparam_pv_headers");
+str xavi_parsed_xname = str_init("parsed_pv_headers");
 unsigned int header_name_size = 255;
 unsigned int header_value_size = 1024;
 int FL_PV_HDRS_COLLECTED = 27;
@@ -71,14 +71,43 @@ static int handle_msg_branch_cb(
 static int handle_msg_reply_cb(
 		struct sip_msg *msg, unsigned int flags, void *cb);
 
+/**
+ *
+ */
+static int pvh_get_branch_index(struct sip_msg *msg, int *br_idx)
+{
+	int os = 0;
+	int len = 0;
+	char parsed_br_idx[header_value_size];
+
+	if(msg->add_to_branch_len > header_value_size) {
+		LM_ERR("branch name is too long\n");
+		return -1;
+	}
+
+	os = msg->add_to_branch_len;
+	while(os > 0 && memcmp(msg->add_to_branch_s + os - 1, ".", 1))
+		os--;
+	len = msg->add_to_branch_len - os;
+	if(os > 0 && len > 0) {
+		memcpy(parsed_br_idx, msg->add_to_branch_s + os, len);
+		parsed_br_idx[len] = '\0';
+		*br_idx = atoi(parsed_br_idx) + 1;
+	} else {
+		*br_idx = 0;
+	}
+
+	return 1;
+}
+
 static int w_pvh_collect_headers(struct sip_msg *msg, char *p1, char *p2)
 {
-	sr_xavp_t **backup_xavps = NULL;
+	sr_xavp_t **backup_xavis = NULL;
 
 	if(pvh_get_branch_index(msg, &_branch) < 0)
 		return -1;
 	if(msg->first_line.type == SIP_REPLY) {
-		if((_reply_counter = pvh_reply_append(backup_xavps)) < 0) {
+		if((_reply_counter = pvh_reply_append(backup_xavis)) < 0) {
 			return -1;
 		}
 	}
@@ -87,12 +116,12 @@ static int w_pvh_collect_headers(struct sip_msg *msg, char *p1, char *p2)
 
 static int ki_pvh_collect_headers(struct sip_msg *msg)
 {
-	sr_xavp_t **backup_xavps = NULL;
+	sr_xavp_t **backup_xavis = NULL;
 
 	if(pvh_get_branch_index(msg, &_branch) < 0)
 		return -1;
 	if(msg->first_line.type == SIP_REPLY) {
-		if((_reply_counter = pvh_reply_append(backup_xavps)) < 0) {
+		if((_reply_counter = pvh_reply_append(backup_xavis)) < 0) {
 			return -1;
 		}
 	}
@@ -230,7 +259,7 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"xavp_name", PARAM_STR, &xavp_name},
+	{"xavi_name", PARAM_STR, &xavi_name},
 	{"header_value_size", PARAM_INT, &header_value_size},
 	{"header_collect_flag", PARAM_INT, &FL_PV_HDRS_COLLECTED},
 	{"header_apply_flag", PARAM_INT, &FL_PV_HDRS_APPLIED},
@@ -419,7 +448,7 @@ int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 	if(flags & PRE_SCRIPT_CB) {
 		pvh_get_branch_index(msg, &_branch);
 		LM_DBG("msg:%p set branch:%d\n", msg, _branch);
-		pvh_clone_branch_xavp(msg, &xavp_name);
+		pvh_clone_branch_xavi(msg, &xavi_name);
 	}
 
 	return 1;
@@ -428,7 +457,7 @@ int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
 	tm_cell_t *t = NULL;
-	sr_xavp_t **backup_xavps = NULL;
+	sr_xavp_t **backup_xavis = NULL;
 	sr_xavp_t **list = NULL;
 
 	if(pvh_parse_msg(msg) != 0)
@@ -442,10 +471,10 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 		if(t == NULL || t == T_UNDEFINED) {
 			LM_DBG("cannot lookup the transaction\n");
 		} else {
-			LM_DBG("T:%p t_check-branch:%d xavp_list:%p branches:%d\n", t,
-					_branch, &t->xavps_list, t->nr_of_outgoings);
-			list = &t->xavps_list;
-			backup_xavps = xavp_set_list(&t->xavps_list);
+			LM_DBG("T:%p t_check-branch:%d xavi_list:%p branches:%d\n", t,
+					_branch, &t->xavis_list, t->nr_of_outgoings);
+			list = &t->xavis_list;
+			backup_xavis = xavi_set_list(&t->xavis_list);
 		}
 	}
 
@@ -457,9 +486,9 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 		return -1;
 	}
 	pvh_collect_headers(msg);
-	if(backup_xavps) {
-		xavp_set_list(backup_xavps);
-		LM_DBG("restored backup_xavps:%p\n", *backup_xavps);
+	if(backup_xavis) {
+		xavi_set_list(backup_xavis);
+		LM_DBG("restored backup_xavis:%p\n", *backup_xavis);
 	}
 	if(t) {
 		tmb.unref_cell(t);

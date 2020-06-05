@@ -80,7 +80,7 @@ int pvh_str_hash_add_key(struct str_hash_table *ht, str *key)
 		goto err;
 	pvh_str_copy(&e->key, key, key->len + 1);
 
-	str_hash_add(ht, e);
+	str_hash_case_add(ht, e);
 	return 1;
 
 err:
@@ -116,7 +116,7 @@ int pvh_skip_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_get(&skip_headers, hname->s, hname->len))
+	if(str_hash_case_get(&skip_headers, hname->s, hname->len))
 		return 1;
 
 	return 0;
@@ -127,7 +127,7 @@ int pvh_single_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_get(&single_headers, hname->s, hname->len))
+	if(str_hash_case_get(&single_headers, hname->s, hname->len))
 		return 1;
 
 	return 0;
