@@ -534,7 +534,8 @@ static int sip_trace_store(siptrace_data_t *sto, dest_info_t *dst,
 		trace_send_hep_duplicate(
 				&sto->body, &sto->fromip, &sto->toip, dst, correlation_id_str);
 	} else {
-		if(dst) {
+		/* sip_trace_mode() will not set a destination, uses duplicate_uri */
+		if(dst || trace_to_database == 0) {
 			trace_send_duplicate(sto->body.s, sto->body.len, dst);
 		}
 	}
@@ -996,10 +997,13 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 	dest_info_t dest_info;
 	enum siptrace_type_t trace_type;
 
-	if (dest) {
-		if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_param_str) != 0) {
-			LM_ERR("unable to parse the dest URI string\n");
-			return -1;
+	/* to support tracing to database without destination parameter - old mode */
+	if (dest || trace_to_database == 0) {
+		if (dest) {
+			if(fixup_get_svalue(msg, (gparam_t *)dest, &dup_uri_param_str) != 0) {
+				LM_ERR("unable to parse the dest URI string\n");
+				return -1;
+			}
 		}
 
 		if (dup_uri_param_str.s == 0 || (is_null_pv(dup_uri_param_str))) {
