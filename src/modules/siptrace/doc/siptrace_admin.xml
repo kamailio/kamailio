@@ -643,7 +643,9 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 		<para>
 		Store or forward the current processed SIP message/transaction/dialog in database.
 		It is stored in the form prior applying changes made to it. Based on mode, one can trace
-		the current message('m' - default), the current transaction('t') or the current dialog('d').
+		the current message('m'), the current transaction('t') or the current dialog('d').
+		If no mode is given, it falls back to the default mode - transaction tracking when
+		trace_flag is set, otherwise only the current message.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -795,12 +797,12 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with siptrace, you have to setup the database
-		tables where the module will store the data. For that, if the
-		table were not created by the installation script or you choose
-		to install everything by yourself you can use the siptrace-create.sql
-		<acronym>SQL</acronym> script in the database directories in the
-		kamailio/scripts folder as template.
+		Before running &kamailio; with siptrace and activated trace_to_database
+		parameter, you have to setup the database tables where the module will
+		store the data. For that, if the table were not created by the
+		installation script or you choose to install everything by yourself
+		you can use the siptrace-create.sql <acronym>SQL</acronym> script in
+		the database directories in the kamailio/scripts folder as template.
 		You can also find the complete database documentation on the
 		project webpage, &kamailiodbdocslink;.
 		</para>
