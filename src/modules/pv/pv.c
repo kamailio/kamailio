@@ -272,6 +272,9 @@ static pv_export_t mod_pvs[] = {
 	{{"from.user", (sizeof("from.user")-1)}, /* */
 		PVT_OTHER, pv_get_from_attr, pv_set_from_username,
 		0, 0, pv_init_iname, 2},
+	{{"fUl", (sizeof("fUl")-1)}, /* */
+		PVT_OTHER, pv_get_from_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"mb", (sizeof("mb")-1)}, /* */
 		PVT_OTHER, pv_get_msg_buf, 0,
 		0, 0, 0, 0},
@@ -314,6 +317,9 @@ static pv_export_t mod_pvs[] = {
 	{{"oU", (sizeof("oU")-1)}, /* */
 		PVT_OTHER, pv_get_ouri_attr, 0,
 		0, 0, pv_init_iname, 1},
+	{{"oUl", (sizeof("oUl")-1)}, /* */
+		PVT_OTHER, pv_get_ouri_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"pd", (sizeof("pd")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
 		0, pv_parse_index, pv_init_iname, 3},
@@ -383,6 +389,9 @@ static pv_export_t mod_pvs[] = {
 	{{"ruri.user", (sizeof("ruri.user")-1)}, /* */
 		PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user,
 		0, 0, pv_init_iname, 1},
+	{{"rUl", (sizeof("rUl")-1)}, /* */
+		PVT_RURI_USERNAME, pv_get_ruri_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"rv", (sizeof("rv")-1)}, /* */
 		PVT_OTHER, pv_get_version, 0,
 		0, 0, 0, 0},
@@ -470,6 +479,9 @@ static pv_export_t mod_pvs[] = {
 	{{"to.user", (sizeof("to.user")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
 		0, 0, pv_init_iname, 2},
+	{{"tUl", (sizeof("tUl")-1)}, /* */
+		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
+		0, 0, pv_init_iname, 6},
 	{{"true", (sizeof("true")-1)}, /* */
 		PVT_OTHER, pv_get_true, 0,
 		0, 0, 0, 0},

@@ -323,6 +323,10 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 	} else if(param->pvn.u.isname.name.n==5) /* uri scheme */ {
 		return pv_get_strintval(msg, param, res, &pv_uri_scheme[parsed_uri->type],
 				(int)parsed_uri->type);
+	} else if(param->pvn.u.isname.name.n==6) /* username length */ {
+		if(parsed_uri->user.s==NULL || parsed_uri->user.len<=0)
+			return pv_get_sintval(msg, param, res, 0);
+		return pv_get_sintval(msg, param, res, parsed_uri->user.len);
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
@@ -452,6 +456,11 @@ int pv_get_xto_attr(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		}
 		return pv_get_strval(msg, param, res, &uri->host);
+	} else if(param->pvn.u.isname.name.n==6) /* username length */ {
+		if(uri->user.s==NULL || uri->user.len<=0) {
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		return pv_get_sintval(msg, param, res, uri->user.len);
 	}
 
 	LM_ERR("unknown specifier\n");
