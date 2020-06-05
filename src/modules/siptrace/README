@@ -424,7 +424,8 @@ modparam("siptrace", "trace_delayed", 1)
 
    The local interface in the form of SIP URI from where to send the
    duplicated traffic. In the absence of this parameter Kamailio
-   automatically picks an interface.
+   automatically picks an interface. This parameter is only used for HEP
+   forwarding, not for SIP forwarding mode.
 
    Example 1.17. Set force_send_sock parameter
 ...
