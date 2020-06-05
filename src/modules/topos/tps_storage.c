@@ -355,8 +355,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 		if(msg->first_line.type==SIP_REPLY) {
 			if(msg->first_line.u.reply.statuscode>=100
-					&& msg->first_line.u.reply.statuscode<200
-					&& msg->first_line.u.reply.statuscode!=183) {
+					&& msg->first_line.u.reply.statuscode<200) {
 				/* provisional response with no mandatory contact header */
 				return 0;
 			}
