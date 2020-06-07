@@ -851,7 +851,7 @@ int ds_load_list(char *lfile)
 	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	ds_ht_clear_slots(_dsht_load);
+	
 	ds_log_sets();
 	return 0;
 
@@ -1096,7 +1096,6 @@ int ds_load_db(void)
 	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	ds_ht_clear_slots(_dsht_load);
 
 	ds_log_sets();
 
@@ -1587,22 +1586,24 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 				break;
 		}
 	}
+	/* old destination has not been found: has been removed meanwhile? */
 	if(olddst == -1) {
-		ds_unlock_cell(_dsht_load, &msg->callid->body);
-		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
+		LM_WARN("old destination address not found for [%d, %.*s]\n", set,
 				it->duid.len, it->duid.s);
-		return -1;
-	}
+	} 
 	if(newdst == -1) {
+		/* new destination has not been found: has been removed meanwhile? */
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
 		LM_ERR("new destination address not found for [%d, %.*s]\n", set,
 				duid->len, duid->s);
-		return -1;
+		return -2;
 	}
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	DS_LOAD_DEC(idx, olddst);
+	
+	if(olddst != -1)
+		DS_LOAD_DEC(idx, olddst);
 
 	if(ds_load_add(msg, idx, set, newdst) < 0) {
 		LM_ERR("unable to replace destination load [%.*s / %.*s]\n", duid->len,
@@ -2310,6 +2311,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 {
 
+	int ret;
 	socket_info_t *sock = NULL;
 	sr_xavp_t *rxavp = NULL;
 	sr_xavp_t *lxavp = NULL;
@@ -2322,6 +2324,7 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		}
 	}
 
+next_dst:
 	rxavp = xavp_get(&ds_xavp_dst, NULL);
 	if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
 		LM_DBG("no xavp with previous destination record\n");
@@ -2369,12 +2372,18 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		return 1;
 	}
 	if(upos == DS_USE_NEXT) {
-		if(ds_load_replace(msg, &lxavp->val.v.s) < 0) {
-			LM_ERR("cannot update load distribution\n");
-			return -1;
+		ret = ds_load_replace(msg, &lxavp->val.v.s);
+		switch(ret) {
+			case 0:
+				break;
+			case -2:
+				LM_ERR("cannot update load with %.*s, skipping dst.\n", lxavp->val.v.s.len, lxavp->val.v.s.s);
+				goto next_dst;
+			default:
+				LM_ERR("cannot update load distribution\n");
+				return -1;
 		}
 	}
-
 	return 1;
 }
 
