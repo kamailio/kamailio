@@ -181,7 +181,7 @@ static SQInteger _string_printf(HSQUIRRELVM v)
         return -1;
 
     SQPRINTFUNCTION printfunc = sq_getprintfunc(v);
-    if(printfunc) printfunc(v,dest);
+    if(printfunc) printfunc(v,_SC("%s"),dest);
 
     return 0;
 }
