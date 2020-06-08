@@ -742,6 +742,30 @@ static sr_kemi_xval_t* ki_kx_getw_body(sip_msg_t *msg)
 /**
  *
  */
+static int ki_kx_get_bodylen(sip_msg_t *msg)
+{
+	str s;
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL) {
+		return 0;
+	}
+
+	s.s = get_body(msg);
+
+	if(s.s == NULL) {
+		return 0;
+	}
+	s.len = msg->buf + msg->len - s.s;
+	if(s.len <=0) {
+		return 0;
+	}
+
+	return s.len;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_duri_mode(sip_msg_t *msg, int xmode)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -1113,6 +1137,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("gete_body"),
 		SR_KEMIP_XVAL, ki_kx_gete_body,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_bodylen"),
+		SR_KEMIP_INT, ki_kx_get_bodylen,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
