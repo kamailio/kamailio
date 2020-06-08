@@ -121,6 +121,7 @@ int cdr_start_on_confirmed = 0;
 int cdr_expired_dlg_enable = 0;
 static char* cdr_facility_str = 0;
 static char* cdr_log_extra_str = 0;
+str cdr_skip = {NULL, 0};
 
 str cdr_start_str = str_init("start_time");
 str cdr_end_str = str_init("end_time");
@@ -206,6 +207,7 @@ static param_export_t params[] = {
 	{"log_extra",            PARAM_STRING, &log_extra_str        },
 	/* cdr specific */
 	{"cdr_enable",           INT_PARAM, &cdr_enable                 },
+	{"cdr_skip",             PARAM_STR, &cdr_skip                   },
 	{"cdr_log_enable",         INT_PARAM, &cdr_log_enable           },
 	{"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
 	{"cdr_facility",         PARAM_STRING, &cdr_facility_str           },

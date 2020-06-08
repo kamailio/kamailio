@@ -1037,6 +1037,23 @@ modparam("acc", "cdr_enable", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.cdr_skip">
+		<title><varname>cdr_skip</varname> (string)</title>
+		<para>
+		Skip cdr generation for dialogs with this dlg_var set.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>cdr_skip example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_skip", "nocdr")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="acc.p.cdr_expired_dlg_enable">
 		<title><varname>cdr_expired_dlg_enable</varname> (integer)</title>
 		<para>
