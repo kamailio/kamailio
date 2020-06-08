@@ -392,6 +392,16 @@ static int write_cdr( struct dlg_cell* dialog,
 		return -1;
 	}
 
+	/* Skip cdr if cdr_skip dlg_var exists */
+	if (cdr_skip.len > 0) {
+		str* nocdr_val = 0;
+		nocdr_val = dlgb.get_dlg_var( dialog, &cdr_skip);
+		if ( nocdr_val ){
+			LM_DBG( "cdr_skip dlg_var set, skip cdr!");
+			return 0;
+		}
+	}
+
 	ret = log_write_cdr(dialog, message);
 	ret |= db_write_cdr(dialog, message);
 	return ret;

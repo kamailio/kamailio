@@ -53,6 +53,7 @@ extern int cdr_extra_nullable;
 extern int cdr_start_on_confirmed;
 extern int cdr_log_facility;
 extern int cdr_expired_dlg_enable;
+extern str cdr_skip;
 
 extern int db_flag;
 extern int db_missed_flag;
