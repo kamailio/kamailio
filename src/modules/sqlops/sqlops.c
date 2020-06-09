@@ -492,6 +492,60 @@ static int ki_sqlops_query(sip_msg_t *msg, str *scon, str *squery, str *sres)
 	return sqlops_do_query(scon, squery, sres);
 }
 
+static int ki_sqlops_pvquery(sip_msg_t *msg, str *scon, str *squery, str *sres)
+{
+	pv_elem_t *query = NULL;
+	pvname_list_t *pv_res = NULL;
+	pvname_list_t *pvl = NULL;
+	sql_con_t *con = NULL;
+	int i, res;
+
+	if (scon == NULL || scon->s == NULL || scon->len<=0) {
+		LM_ERR("invalid connection name\n");
+		return -1;
+	}
+
+	con = sql_get_connection(scon);
+	if(con==NULL) {
+		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
+		return -1;
+	}
+
+	if(pv_parse_format(squery, &query)<0)
+	{
+		LM_ERR("invalid query string [%s]\n", squery->s);
+		return -1;
+	}
+
+	/* parse result variables into list of pv_spec_t's */
+	pv_res = parse_pvname_list(sres, 0);
+	if(pv_res==NULL)
+	{
+		LM_ERR("invalid result parameter [%s]\n", sres->s);
+		pv_elem_free_all(query);
+		return -1;
+	}
+	/* check if all result variables are writable */
+	pvl = pv_res;
+	i = 1;
+	while (pvl) {
+		if (pvl->sname.setf == NULL)
+		{
+			LM_ERR("result variable [%d] is read-only\n", i);
+			pv_elem_free_all(query);
+			free_pvname_list(pv_res);
+			return -1;
+		}
+		i++;
+		pvl = pvl->next;
+	}
+	res = sql_do_pvquery(msg, con, query, pv_res);
+
+	pv_elem_free_all(query);
+	free_pvname_list(pv_res);
+	return res;
+}
+
 static int ki_sqlops_query_async(sip_msg_t *msg, str *scon, str *squery)
 {
 	sql_con_t *con = NULL;
@@ -559,6 +613,11 @@ static sr_kemi_t sr_kemi_sqlops_exports[] = {
 	{ str_init("sqlops"), str_init("sql_is_null"),
 		SR_KEMIP_INT, ki_sqlops_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_pvquery"),
+		SR_KEMIP_INT, ki_sqlops_pvquery,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("sqlops"), str_init("sql_xquery"),
