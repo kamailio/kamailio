@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_read.h"
 #include "tls_domain.h"
 #include "tls_ct_wrq.h"
 
@@ -87,7 +88,7 @@ int tls_h_encode_f(struct tcp_connection *c, const char ** pbuf,
 		unsigned int* plen, const char** rest_buf, unsigned int* rest_len,
 		snd_flags_t* send_flags) ;
 
-int tls_h_read_f(struct tcp_connection *c, int* flags);
+int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t* flags);
 
 int tls_h_fix_read_conn(struct tcp_connection *c);
 
