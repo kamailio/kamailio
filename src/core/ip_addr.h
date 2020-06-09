@@ -77,8 +77,14 @@ union sockaddr_union{
 };
 
 
-enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4,
-	SI_IS_ANY=8, SI_IS_MHOMED=16 };
+enum si_flags {
+	SI_NONE         = 0,
+	SI_IS_IP        = (1<<0),
+	SI_IS_LO        = (1<<1),
+	SI_IS_MCAST     = (1<<2),
+	SI_IS_ANY       = (1<<3),
+	SI_IS_MHOMED    = (1<<4),
+};
 
 typedef struct addr_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
