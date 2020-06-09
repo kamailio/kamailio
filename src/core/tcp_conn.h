@@ -121,6 +121,27 @@ enum conn_cmds {
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
 
+/* tcp_req flags */
+enum tcp_req_flags {
+	F_TCP_REQ_HAS_CLEN      = (1<<0),
+	F_TCP_REQ_COMPLETE      = (1<<1),
+#ifdef READ_HTTP11
+	F_TCP_REQ_BCHUNKED      = (1<<2),
+#endif
+#ifdef READ_MSRP
+	F_TCP_REQ_MSRP_NO       = (1<<3),
+	F_TCP_REQ_MSRP_FRAME    = (1<<4),
+	F_TCP_REQ_MSRP_BODY     = (1<<5),
+#endif
+	F_TCP_REQ_HEP3          = (1<<6),
+};
+
+#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
+#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
+#ifdef READ_HTTP11
+#define TCP_REQ_BCHUNKED(tr)  ((tr)->flags & F_TCP_REQ_BCHUNKED)
+#endif
+
 struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
@@ -135,31 +156,11 @@ struct tcp_req{
 #ifdef READ_HTTP11
 	int chunk_size;
 #endif
-	unsigned int flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
+	enum tcp_req_flags flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
 };
-
-/* tcp_req flags */
-#define F_TCP_REQ_HAS_CLEN 1
-#define F_TCP_REQ_COMPLETE 2
-#ifdef READ_HTTP11
-#define F_TCP_REQ_BCHUNKED 4
-#endif
-#ifdef READ_MSRP
-#define F_TCP_REQ_MSRP_NO     8
-#define F_TCP_REQ_MSRP_FRAME  16
-#define F_TCP_REQ_MSRP_BODY   32
-#endif
-#define F_TCP_REQ_HEP3        64
-
-#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
-#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
-#ifdef READ_HTTP11
-#define TCP_REQ_BCHUNKED(tr)  ((tr)->flags & F_TCP_REQ_BCHUNKED)
-#endif
-
 
 struct tcp_connection;
 
