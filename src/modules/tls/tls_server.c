@@ -991,7 +991,7 @@ ssl_eof:
  *         tcp connection flags and might set c->state and r->error on
  *         EOF or error).
  */
-int tls_h_read_f(struct tcp_connection* c, int* flags)
+int tls_h_read_f(struct tcp_connection* c, rd_conn_flags_t* flags)
 {
 	struct tcp_req* r;
 	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;

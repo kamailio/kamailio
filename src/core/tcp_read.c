@@ -218,7 +218,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
  * EOF checking should be done by checking the RD_CONN_EOF flag.
  */
 int tcp_read_data(int fd, struct tcp_connection *c,
-					char* buf, int b_size, int* flags)
+					char* buf, int b_size, rd_conn_flags_t* flags)
 {
 	int bytes_read;
 
@@ -329,7 +329,7 @@ again:
  * (to distinguish from reads that would block which could return 0)
  * RD_CONN_SHORT_READ is also set in *flags for short reads.
  * sets also r->error */
-int tcp_read(struct tcp_connection *c, int* flags)
+int tcp_read(struct tcp_connection *c, rd_conn_flags_t* flags)
 {
 	int bytes_free, bytes_read;
 	struct tcp_req *r;
@@ -369,7 +369,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_connection *c, int* read_flags)
+int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes, remaining;
 	char *p;
@@ -1082,7 +1082,7 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #endif
 
 #ifdef READ_WS
-static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
+static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	uint32_t size, pos, mask_present, len;
@@ -1237,7 +1237,7 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 }
 #endif
 
-static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
+static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	uint32_t size, len;
@@ -1429,7 +1429,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif /* TCP_CLONE_RCVBUF */
 }
 
-int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
+int tcp_read_req(struct tcp_connection* con, int* bytes_read, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	int total_bytes;
@@ -1712,7 +1712,7 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 {
 	int ret;
 	int n;
-	int read_flags;
+	rd_conn_flags_t read_flags;
 	struct tcp_connection* con;
 	int s;
 	long resp;
