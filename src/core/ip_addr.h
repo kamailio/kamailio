@@ -134,9 +134,11 @@ typedef struct socket_info {
 
 
 /* send flags */
-#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
-#define SND_F_CON_CLOSE			2 /* close the connection after sending */
-#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
+enum send_flags {
+	SND_F_FORCE_CON_REUSE   = (1 << 0), /* reuse an existing connection or fail */
+	SND_F_CON_CLOSE         = (1 << 1), /* close the connection after sending */
+	SND_F_FORCE_SOCKET      = (1 << 2), /* send socket in dst is forced */
+};
 
 typedef struct snd_flags {
 	unsigned short f;          /* snd flags */
