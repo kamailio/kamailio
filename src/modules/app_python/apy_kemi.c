@@ -1806,9 +1806,9 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					" took too long [%u us] (file:%s func:%s line:%d)\n",
 					(ket->mname.len>0)?ket->mname.s:"",
 					(ket->mname.len>0)?".":"", ket->fname.s, tdiff,
-					(pframe)?PyString_AsString(pframe->f_code->co_filename):"",
-					(pframe)?PyString_AsString(pframe->f_code->co_name):"",
-					(pframe)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
+					(pframe && pframe->f_code)?PyString_AsString(pframe->f_code->co_filename):"",
+					(pframe && pframe->f_code)?PyString_AsString(pframe->f_code->co_name):"",
+					(pframe && pframe->f_code)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
 		}
 	}
 
