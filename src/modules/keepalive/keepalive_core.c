@@ -119,7 +119,6 @@ static void ka_options_callback(
 		ka_dest->counter++;
 	}
 
-	LM_DBG("new state is: %d\n", state);
 	if(state != ka_dest->state) {
 		ka_run_route(msg, &uri, state_routes[state]);
 
@@ -127,6 +126,7 @@ static void ka_options_callback(
 			ka_dest->statechanged_clb(&ka_dest->uri, state, ka_dest->user_attr);
 		}
 
+		LM_DBG("new state is: %d\n", state);
 		ka_dest->state = state;
 	}
 	if(ka_dest->response_clb != NULL) {
