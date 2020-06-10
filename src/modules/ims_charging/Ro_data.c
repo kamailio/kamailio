@@ -93,6 +93,8 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
     ims_information_t *x = 0;
     ioi_list_element_t * ioi_elem = 0;
 
+    LM_DBG("create new IMS information\n");
+
     mem_new(x, sizeof (ims_information_t), pkg);
 
     x->event_type = event_type;
@@ -115,8 +117,9 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
         WL_APPEND(&(x->calling_party_address), sl);
     }
 
-    if (called_party && called_party->s)
+    if (called_party && called_party->s) {
         str_dup_ptr(x->called_party_address, *called_party, pkg);
+    }
     
     if (incoming_trunk_id && incoming_trunk_id->s)
         str_dup_ptr(x->incoming_trunk_id, *incoming_trunk_id, pkg);
@@ -154,6 +157,7 @@ service_information_t * new_service_information(ims_information_t * ims_info, su
     service_information_t * x = 0;
     subscription_id_list_element_t * sl = 0;
 
+    LM_DBG("create new service information\n");
     mem_new(x, sizeof (service_information_t), pkg);
 
     x->ims_information = ims_info;
@@ -177,7 +181,7 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     Ro_CCR_t *x = 0;
 
     service_information_t * service_info = 0;
-
+    LM_DBG("create new Ro CCR\n");
     mem_new(x, sizeof (Ro_CCR_t), pkg);
 
     if (cfg.origin_host.s && cfg.origin_host.len > 0)
@@ -198,9 +202,11 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     if (cfg.service_context_id && cfg.service_context_id->s)
         str_dup_ptr(x->service_context_id, *(cfg.service_context_id), pkg);
 
-    if (ims_info)
+    if (ims_info) {
         if (!(service_info = new_service_information(ims_info, subscription)))
             goto error;
+        LM_DBG("Created service information\n");
+    }
 
     x->service_information = service_info;
     service_info = 0;

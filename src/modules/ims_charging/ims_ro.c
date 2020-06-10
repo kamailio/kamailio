@@ -147,6 +147,7 @@ int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
 
 int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned int cc_request_number) {
     char x[4];
+    LM_DBG("add cc request %d\n", cc_request_type);
     set_4bytes(x, cc_request_type);
     int success = Ro_add_avp(msg, x, 4, AVP_CC_Request_Type, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
@@ -160,6 +161,7 @@ int Ro_add_cc_request(AAAMessage *msg, unsigned int cc_request_type, unsigned in
 int Ro_add_event_timestamp(AAAMessage *msg, time_t now) {
     char x[4];
     str s = {x, 4};
+    LM_DBG("add Event-Timestamp\n");
     uint32_t ntime = htonl(now + EPOCH_UNIX_TO_EPOCH_NTP);
     memcpy(x, &ntime, sizeof (uint32_t));
 
@@ -190,6 +192,7 @@ int Ro_add_user_equipment_info(AAAMessage *msg, unsigned int type, str value) {
 int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
+    LM_DBG("add termination cause %d\n", term_code);
     uint32_t code = htonl(term_code);
     memcpy(x, &code, sizeof (uint32_t));
 
@@ -199,6 +202,7 @@ int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
 int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
     char x[4];
     str s = {x, 4};
+    LM_DBG("add vendor specific termination cause %d\n", term_code);
     uint32_t code = htonl(term_code);
     memcpy(x, &code, sizeof (uint32_t));
 
@@ -206,6 +210,7 @@ int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_
 }
 
 int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
+    LM_DBG("add vendor specific termination reason: %.*s\n", reason->len, reason->s);
     return Ro_add_avp(msg, reason->s, reason->len, VS_TERMREASON, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
@@ -217,6 +222,7 @@ int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, 
     AAA_AVP_LIST used_list, mscc_list;
     str used_group;
 
+    LM_DBG("add multiple service credit control stop, used unit %d\n", used_unit);
     // Add Multiple-Services AVP Indicator
     set_4bytes(x, 1);
     Ro_add_avp(msg, x, 4, AVP_Multiple_Services_Indicator, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
@@ -270,6 +276,7 @@ int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int request
     mscc_list.head = 0;
     mscc_list.tail = 0;
 
+    LM_DBG("add multiple service credit control, requested unit %d\n", requested_unit);
     set_4bytes(x, requested_unit);
     Ro_add_avp_list(&list, x, 4, AVP_CC_Time, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
     group = cdpb.AAAGroupAVPS(list);
@@ -310,6 +317,8 @@ int Ro_add_subscription_id(AAAMessage *msg, unsigned int type, str *subscription
     list.head = 0;
     list.tail = 0;
 
+    LM_DBG("add Subscription-Id type %d, id %.*s\n", type, subscription_id->len, subscription_id->s);
+
     set_4bytes(x, type);
     Ro_add_avp_list(&list, x, 4, AVP_Subscription_Id_Type, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
@@ -338,14 +347,18 @@ int Ro_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id, unsign
     list.head = 0;
     list.tail = 0;
 
+    LM_DBG("add Vendor-Specific-Application-Id %d\n", vendor_id);
+
     set_4bytes(x, vendor_id);
     Ro_add_avp_list(&list, x, 4, AVP_Vendor_Id, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
     if (auth_id) {
+        LM_DBG("adding Auth-Application-Id %d\n", auth_id);
         set_4bytes(x, auth_id);
         Ro_add_avp_list(&list, x, 4, AVP_Auth_Application_Id, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
     }
     if (acct_id) {
+        LM_DBG("adding Acct-Application-Id %d\n", acct_id);
         set_4bytes(x, acct_id);
         Ro_add_avp_list(&list, x, 4, AVP_Acct_Application_Id, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
     }
@@ -468,9 +481,9 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid,
             &orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id, pani)))
         goto error;
+    LM_DBG("created IMS information\n");
     event_type = 0;
     time_stamps = 0;
-
 
     subscr.id.s = subscription_id.s;
     subscr.id.len = subscription_id.len;
@@ -576,7 +589,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
             &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, &ro_session->pani)))
         goto error;
 
-    LM_DBG("Created IMS information\n");
+    LM_DBG("created IMS information\n");
 
     event_type = 0;
 
@@ -1163,6 +1176,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
         LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
         goto error;
     }
+    LM_DBG("new session created\n");
 
     ssd->action = action;
     ssd->tindex = tindex;
