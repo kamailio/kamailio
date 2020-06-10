@@ -120,7 +120,7 @@ int init_ro_db(const str *db_url, int dlg_hash_size, int db_update_period, int f
 }
 
 int load_ro_info_from_db(int hash_size, int fetch_num_rows) {
-    LM_WARN("not supported yet");
+    LM_WARN("not supported yet\n");
     return 0;
 }
 

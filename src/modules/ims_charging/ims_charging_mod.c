@@ -502,7 +502,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	
 
 	if (msg->first_line.type != SIP_REQUEST) {
-	    LM_ERR("Ro_CCR() called from SIP reply.");
+	    LM_ERR("Ro_CCR() called from SIP reply.\n");
 	    return RO_RETURN_ERROR;;
 	}
 	
@@ -519,12 +519,12 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	if (dir == RO_ORIG_DIRECTION) {
 		//get caller IMPU from asserted identity
 		if ((identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
-			LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
+			LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity\n");
 			identity = dlg->from_uri;
 		}
 		//get caller contact from contact header - if not present then skip this
 		if ((contact = cscf_get_contact(msg)).len == 0) {
-		    LM_WARN("Can not get contact from message - will not get callbacks if this IMPU is removed to terminate call");
+		    LM_WARN("Can not get contact from message - will not get callbacks if this IMPU is removed to terminate call\n");
 			goto send_ccr;
 		}
 		
@@ -532,7 +532,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	} else if (dir == RO_TERM_DIRECTION){
 		//get callee IMPU from called part id - if not present then skip this
 		if ((identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
-			LM_DBG("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call");
+			LM_DBG("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call\n");
 			goto send_ccr;
 		}
 		//get callee contact from request URI
