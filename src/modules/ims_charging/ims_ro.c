@@ -380,10 +380,10 @@ int get_sip_header_info(struct sip_msg * req,
 
     if (get_custom_user(req, asserted_id_uri) == -1) {
 	    if ((*asserted_id_uri = cscf_get_asserted_identity(req, 0)).len == 0) {
-		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
+		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr\n");
 
 		if (!cscf_get_from_uri(req, asserted_id_uri)) {
-		    LM_ERR("Error assigning P-Asserted-Identity using From hdr");
+		    LM_ERR("Error assigning P-Asserted-Identity using From hdr\n");
 		    goto error;
 		}
 	    }
@@ -739,7 +739,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
     }
 
     if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code [%d] - reservation failed", ro_cca_data->resultcode);
+        LM_ERR("Got bad CCA result code [%d] - reservation failed\n", ro_cca_data->resultcode);
         error_or_timeout = 1;
         goto error;
     } else {
@@ -1073,7 +1073,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     //getting asserted identity
     if (get_custom_user(msg, &asserted_identity) == -1) {
       if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
-          LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
+          LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity\n");
           asserted_identity = dlg->from_uri;
           if (asserted_identity.len > 0 && asserted_identity.s) {
               p=(char*)memchr(asserted_identity.s, ';',asserted_identity.len);
@@ -1085,7 +1085,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     //getting called asserted identity
     if ((called_asserted_identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
-        LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity");
+        LM_DBG("No P-Called-Identity hdr found. Using request URI for called_asserted_identity\n");
         called_asserted_identity = cscf_get_public_identity_from_requri(msg);
         free_called_asserted_identity = 1;
     }
@@ -1113,11 +1113,11 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     str mac = {0, 0};
     if (get_mac_avp_value(msg, &mac) != 0)
-        LM_DBG(RO_MAC_AVP_NAME" was not set. Using default.");
+        LM_DBG(RO_MAC_AVP_NAME" was not set. Using default.\n");
 
     //by default we use voice service id and rate group
     //then we check SDP - if we find video then we use video service id and rate group
-    LM_DBG("Setting default SID to %d and RG to %d for voice",
+    LM_DBG("Setting default SID to %d and RG to %d for voice\n",
             voice_service_identifier, voice_rating_group);
     active_service_identifier = voice_service_identifier;
     active_rating_group = voice_rating_group;
@@ -1141,7 +1141,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
             int intportA = atoi(msg_sdp_stream->port.s);
             if (intportA != 0 && strncasecmp(msg_sdp_stream->media.s, "video", 5) == 0) {
-                LM_DBG("This SDP has a video component and src ports not equal to 0 - so we set default SID to %d and RG to %d for video",
+                LM_DBG("This SDP has a video component and src ports not equal to 0 - so we set default SID to %d and RG to %d for video\n",
                         video_service_identifier, video_rating_group);
                 active_service_identifier = video_service_identifier;
                 active_rating_group = video_rating_group;
@@ -1342,7 +1342,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
 		if (fui_action == AVP_Final_Unit_Action_Redirect) {
 			if (ro_cca_data->mscc->final_unit_action->redirect_server) {
-				LM_DBG("FUI with action: [%d]", ro_cca_data->mscc->final_unit_action->action);
+				LM_DBG("FUI with action: [%d]\n", ro_cca_data->mscc->final_unit_action->action);
 
 				if (ro_cca_data->mscc->final_unit_action->action == AVP_Final_Unit_Action_Redirect) {
 					LM_DBG("Have REDIRECT action with address type of [%d]\n", ro_cca_data->mscc->final_unit_action->redirect_server->address_type);
@@ -1376,7 +1376,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
             ro_cca_data->mscc->validity_time);
 
     if (ro_cca_data->mscc->granted_service_unit->cc_time <= 0) {
-        LM_DBG("got zero GSU.... reservation failed");
+        LM_DBG("got zero GSU.... reservation failed\n");
         error_code = RO_RETURN_FALSE;
         goto error1;
     }
@@ -1482,7 +1482,7 @@ static int create_cca_return_code(int result) {
             if (result >= 0)
                 break;
 
-            LM_ERR("Unknown result code: %d", result);
+            LM_ERR("Unknown result code: %d\n", result);
             avp_val.s.s = "??";
     }
 
