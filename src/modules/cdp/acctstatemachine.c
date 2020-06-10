@@ -40,7 +40,7 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
 	AAA_AVP *mscc_avp = mscc_avp_list.head;
 
 	while (mscc_avp != NULL ) {
-		LM_DBG("MSCC AVP code is [%i] and data length is [%i]", mscc_avp->code, mscc_avp->data.len);
+		LM_DBG("MSCC AVP code is [%i] and data length is [%i]\n", mscc_avp->code, mscc_avp->data.len);
 		switch (mscc_avp->code) {
 			case AVP_Granted_Service_Unit:
 				y = AAAUngroupAVPS(mscc_avp->data);

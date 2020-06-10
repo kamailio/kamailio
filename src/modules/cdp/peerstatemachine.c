@@ -695,7 +695,7 @@ int count_Supported_Vendor_Id_AVPS(AAAMessage *msg)
 			break;
 		avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
 	}
-	LM_DBG("Found %i Supported_Vendor AVPS", avp_vendor_cnt);
+	LM_DBG("Found %i Supported_Vendor AVPS\n", avp_vendor_cnt);
 	return avp_vendor_cnt;
 }
 
