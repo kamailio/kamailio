@@ -76,7 +76,7 @@ struct tm_binds tmb;
 
 /* Only used if we want to force the Ro peer usually this is configured at a stack level and the first request uses realm routing */
 //char* rx_forced_peer_s = "";
-str ro_forced_peer;
+str ro_forced_peer = str_init("");
 int ro_auth_expiry = 7200;
 int cdp_event_latency = 1; /*flag: report slow processing of CDP callback events or not - default enabled */
 int cdp_event_threshold = 500; /*time in ms above which we should report slow processing of CDP callback event - default 500ms*/
