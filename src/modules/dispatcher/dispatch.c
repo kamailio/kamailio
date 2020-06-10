@@ -353,7 +353,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 /**
  *
  */
-ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
+ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
@@ -419,6 +419,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 
 	dp->flags = flags;
 	dp->priority = priority;
+	dp->dload = dload;
 
 	if(ds_set_attrs(dp, attrs) < 0) {
 		LM_ERR("cannot set attributes!\n");
@@ -498,14 +499,14 @@ err:
  *
  */
 int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
-		int list_idx, int *setn)
+		int list_idx, int *setn, int dload)
 {
 	ds_dest_t *dp = NULL;
 	ds_set_t *sp = NULL;
 	ds_dest_t *dp0 = NULL;
 	ds_dest_t *dp1 = NULL;
 
-	dp = pack_dest(uri, flags, priority, attrs);
+	dp = pack_dest(uri, flags, priority, attrs, dload);
 	if(!dp)
 		goto err;
 
@@ -854,7 +855,7 @@ int ds_load_list(char *lfile)
 		attrs.len = p - attrs.s;
 
 add_destination:
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
 				!= 0) {
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -1104,7 +1105,7 @@ int ds_load_db(void)
 			}
 		}
 		LM_DBG("attributes string: [%.*s]\n", attrs.len, (attrs.s)?attrs.s:"");
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
 				!= 0) {
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
@@ -2420,7 +2421,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
-			&setn) != 0) {
+			&setn, node->dlist[i].dload) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
 	}
@@ -2443,7 +2444,7 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 
 	// add new destination
 	if(add_dest2list(group, *address, flags, priority, attrs,
-			*next_idx, &setn) != 0) {
+			*next_idx, &setn, 0) != 0) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
 		if(ds_load_mode==1) {
 			goto error;
@@ -2478,7 +2479,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
-			filter_arg->setn) != 0) {
+			filter_arg->setn, node->dlist[i].dload) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
 	}
@@ -2494,7 +2495,7 @@ int ds_remove_dst(int group, str *address)
 
 	setn = 0;
 
-	dp = pack_dest(*address, 0, 0, NULL);
+	dp = pack_dest(*address, 0, 0, NULL, 0);
 	filter_arg.setid = group;
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
