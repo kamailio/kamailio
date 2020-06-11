@@ -264,6 +264,45 @@ modparam("ims_charging", "hash_size", 1024)
     </section>
 
     <section>
+      <title><varname>db_mode</varname> (int)</title>
+
+      <para>Should a database be used to store dialog information.</para>
+
+      <para>Available database modes: 0 for no database, 1 for real-time mode and
+      2 for shutdown mode. Mode 2 seems to be not fully implemented.</para>
+
+      <para><emphasis>Default value is 0 - no database is used.</emphasis></para>
+
+      <example>
+        <title><varname>db_mode</varname>parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "db_mode", 0)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>db_url</varname> (string)</title>
+
+      <para></para>
+
+      <para><emphasis>Default value is <quote>&defaultdb;</quote></emphasis></para>
+
+      <example>
+        <title><varname>db_url</varname>parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "db_url", "&exampledb;")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>interim_update_credits</varname>(int)</title>
 
       <para>How much credit should be requested interim request? At the start
@@ -453,8 +492,7 @@ modparam("ims_charging", "single_ro_session_per_dialog", 1)
       <para>Origin host to be used in Diameter messages to
       charging-server.</para>
 
-      <para><emphasis>Default value is
-      "scscf.ims.smilecoms.com".</emphasis></para>
+      <para><emphasis>Default value is "".</emphasis></para>
 
       <example>
         <title><varname>origin_host</varname>parameter usage</title>
@@ -473,7 +511,7 @@ modparam("ims_charging", "origin_host", "scscf.kamailio-ims.org")
       <para>Origin Realm to be used in Diameter messages to
       charging-server.</para>
 
-      <para><emphasis>Default value is "ims.smilecome.com".</emphasis></para>
+      <para><emphasis>Default value is "".</emphasis></para>
 
       <example>
         <title><varname>origin_realm</varname>parameter usage</title>
@@ -492,7 +530,7 @@ modparam("ims_charging", "origin_realm", "kamailio-ims.org")
       <para>Destination host to be used in Diameter messages to
       charging-server.</para>
 
-      <para><emphasis>Default value is 5s.</emphasis></para>
+      <para><emphasis>Default value is "hss.ims.smilecoms.com".</emphasis></para>
 
       <example>
         <title><varname>destination_host</varname>parameter usage</title>
@@ -755,6 +793,48 @@ modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
         </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>vendor_specific_chargeinfo</varname> (int)</title>
+
+      <para>This parameter can be used to activate or deactivate the addition
+      of Vendor-Specific-Termination-Clause and Vendor-Specific-Termination-Reason
+      AVPs to the requests. To activate set this parameter to 1.</para>
+
+      <para><emphasis>Default value is "0" (deactivated).</emphasis></para>
+
+      <example>
+        <title><varname>vendor_specific_chargeinfo</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "vendor_specific_chargeinfo", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>vendor_specific_id</varname> (int)</title>
+
+      <para>To set the ID of the Vendor-Specific information, not implemented right
+      now.</para>
+
+      <para><emphasis>Default value is "10".</emphasis></para>
+
+      <example>
+        <title><varname>vendor_specific_id</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "vendor_specific_id", 10)
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
