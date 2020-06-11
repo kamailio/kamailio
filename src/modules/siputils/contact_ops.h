@@ -36,7 +36,7 @@
 #ifndef CONTACT_OPS_H
 #define CONTACT_OPS_H
 
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 
 #define DEFAULT_SEPARATOR "*"
 
@@ -57,18 +57,19 @@ struct uri_format
 
 typedef struct uri_format contact_fields_t;
 
-int ki_encode_contact (sip_msg_t *msg, str *eprefix, str *eaddr);
+int ki_encode_contact(sip_msg_t *msg, str *eprefix, str *eaddr);
 int ki_decode_contact(sip_msg_t *msg);
 int ki_decode_contact_header(sip_msg_t *msg);
 
-int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
-int decode_contact (struct sip_msg *msg, char *unused1,char *unused2);
-int decode_contact_header (struct sip_msg *msg, char *unused1,char *unused2);
+int encode_contact(struct sip_msg *msg, char *encoding_prefix, char *public_ip);
+int decode_contact(struct sip_msg *msg, char *unused1, char *unused2);
+int decode_contact_header(struct sip_msg *msg, char *unused1, char *unused2);
 
-int encode2format (str uri, struct uri_format *format);
-int decode2format (str uri, char separator, struct uri_format *format);
+int encode2format(str uri, struct uri_format *format);
+int decode2format(str uri, char separator, struct uri_format *format);
 
-int encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str * result);
-int decode_uri (str uri, char separator, str * result);
+int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
+		str *result);
+int decode_uri(str uri, char separator, str *result);
 
 #endif
