@@ -1,4 +1,5 @@
 CREATE TABLE `matrix` (
+    `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `first` INT(10) NOT NULL,
     `second` SMALLINT(10) NOT NULL,
     `res` INT(10) NOT NULL

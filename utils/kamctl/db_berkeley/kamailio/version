@@ -64,8 +64,6 @@ imc_members|
 imc_members|1
 imc_rooms|
 imc_rooms|1
-METADATA_DEFAULTS
-NIL|NIL|''|NIL|NIL|NULL|NULL|NULL|NULL|'2030-05-28 21:32:15'|1.0|'Default-Call-ID'|1|'2000-01-01 00:00:01'|0|0|''|NULL|NULL|NULL
 lcr_gw|
 lcr_gw|3
 lcr_rule|

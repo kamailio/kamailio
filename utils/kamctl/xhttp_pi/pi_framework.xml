@@ -219,17 +219,6 @@
 		<column><field>attrs</field><type>DB1_STR</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of domainpolicy table-->
-	<db_table id="domainpolicy">
-		<table_name>domainpolicy</table_name>
-		<db_url_id>mysql</db_url_id>
-		<column><field>id</field><type>DB1_INT</type></column>
-		<column><field>rule</field><type>DB1_STR</type></column>
-		<column><field>type</field><type>DB1_STR</type></column>
-		<column><field>att</field><type>DB1_STR</type></column>
-		<column><field>val</field><type>DB1_STR</type></column>
-		<column><field>description</field><type>DB1_STR</type></column>
-	</db_table>
 	<!-- Declaration of domain table-->
 	<db_table id="domain">
 		<table_name>domain</table_name>
@@ -249,6 +238,17 @@
 		<column><field>type</field><type>DB1_INT</type></column>
 		<column><field>value</field><type>DB1_STR</type></column>
 		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of domainpolicy table-->
+	<db_table id="domainpolicy">
+		<table_name>domainpolicy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rule</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_STR</type></column>
+		<column><field>att</field><type>DB1_STR</type></column>
+		<column><field>val</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of dr_gateways table-->
 	<db_table id="dr_gateways">
@@ -388,6 +388,7 @@
 	<db_table id="matrix">
 		<table_name>matrix</table_name>
 		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>first</field><type>DB1_INT</type></column>
 		<column><field>second</field><type>DB1_INT</type></column>
 		<column><field>res</field><type>DB1_INT</type></column>
@@ -2519,6 +2520,7 @@
 			<db_table_id>matrix</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>first</field></col>
 				<col><field>second</field></col>
 				<col><field>res</field></col>
@@ -2532,6 +2534,25 @@
 				<col><field>second</field></col>
 				<col><field>res</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>matrix</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>first</field></col>
+				<col><field>second</field></col>
+				<col><field>res</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>matrix</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- mohqcalls provisionning -->

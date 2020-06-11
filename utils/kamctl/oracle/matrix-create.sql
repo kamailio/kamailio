@@ -1,4 +1,5 @@
 CREATE TABLE matrix (
+    id NUMBER(10) PRIMARY KEY,
     first NUMBER(10),
     second NUMBER(5),
     res NUMBER(10)
