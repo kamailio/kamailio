@@ -87,10 +87,10 @@ int ki_encode_contact(sip_msg_t *msg, str *eprefix, str *eaddr)
 		res = encode_uri(uri, eprefix->s, eaddr->s, separator, &newUri);
 
 		if(res != 0) {
-			LM_ERR("failed encoding contact.Code %d\n", res);
+			LM_ERR("failed encoding contact - return code %d\n", res);
 			return res;
 		} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
-			LM_ERR("lumping failed in mangling port \n");
+			LM_ERR("lumping failed in mangling port\n");
 			return -2;
 		}
 
@@ -101,10 +101,10 @@ int ki_encode_contact(sip_msg_t *msg, str *eprefix, str *eaddr)
 
 			res = encode_uri(uri, eprefix->s, eaddr->s, separator, &newUri);
 			if(res != 0) {
-				LM_ERR("failed encode_uri.Code %d\n", res);
+				LM_ERR("failed encode_uri - return code %d\n", res);
 				return res;
 			} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
-				LM_ERR("lumping failed in mangling port \n");
+				LM_ERR("lumping failed in mangling port\n");
 				return -3;
 			}
 		} /* while */
@@ -158,7 +158,8 @@ int ki_decode_contact(sip_msg_t *msg)
 		LM_DBG("newuri.s=[%.*s]\n", newUri.len, newUri.s);
 
 	if(res != 0) {
-		LM_ERR("failed decoding contact.Code %d\n", res);
+		LM_ERR("failed decoding contact [%.*s] - return code %d\n",
+				uri.len, uri.s, res);
 		return res;
 	} else {
 		/* we do not modify the original first line */
@@ -200,11 +201,11 @@ int ki_decode_contact_header(sip_msg_t *msg)
 		if(strlen(contact_flds_separator) >= 1)
 			separator = contact_flds_separator[0];
 
-	LM_DBG("Using separator [%c]\n", separator);
+	LM_DBG("using separator [%c]\n", separator);
 	ruri = GET_RURI(msg);
-	LM_DBG("New uri [%.*s]\n", ruri->len, ruri->s);
+	LM_DBG("new uri [%.*s]\n", ruri->len, ruri->s);
 	ruri = &msg->first_line.u.request.uri;
-	LM_DBG("Initial uri [%.*s]\n", ruri->len, ruri->s);
+	LM_DBG("initial uri [%.*s]\n", ruri->len, ruri->s);
 
 	if(msg->contact->parsed == NULL) {
 		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
@@ -220,12 +221,14 @@ int ki_decode_contact_header(sip_msg_t *msg)
 		uri = c->uri;
 
 		res = decode_uri(uri, separator, &newUri);
-		LM_DBG("newuri.s=[%.*s]\n", newUri.len, newUri.s);
 		if(res != 0) {
-			LM_ERR("failed decoding contact.Code %d\n", res);
+			LM_ERR("failed decoding contact [%.*s] - return code %d\n",
+					uri.len, uri.s, res);
 			return res;
-		} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
-			LM_ERR("lumping failed in mangling port \n");
+		}
+		LM_DBG("newuri.s=[%.*s]\n", newUri.len, newUri.s);
+		if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+			LM_ERR("lumping failed in mangling port\n");
 			return -2;
 		}
 
@@ -235,10 +238,13 @@ int ki_decode_contact_header(sip_msg_t *msg)
 
 			res = decode_uri(uri, separator, &newUri);
 			if(res != 0) {
-				LM_ERR("failed decoding contact.Code %d\n", res);
+				LM_ERR("failed decoding contact [%.*s] - return code %d\n",
+						uri.len, uri.s, res);
 				return res;
-			} else if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
-				LM_ERR("lumping failed in mangling port \n");
+			}
+			LM_DBG("newuri.s=[%.*s]\n", newUri.len, newUri.s);
+			if(patch(msg, uri.s, uri.len, newUri.s, newUri.len) < 0) {
+				LM_ERR("lumping failed in mangling port\n");
 				return -3;
 			}
 		} // end while
@@ -298,8 +304,8 @@ int encode2format(str uri, struct uri_format *format)
 	 * parse_uri,myfunction works good */
 	foo = parse_uri(start, end - start, &sipUri);
 	if(foo != 0) {
-		LM_ERR("parse_uri failed on [%.*s].Code %d \n", uri.len, uri.s, foo);
-		LM_DBG("PARSING uri with parse uri not ok [%d]\n", foo);
+		LM_ERR("parse_uri failed on [%.*s] - return code %d \n",
+				uri.len, uri.s, foo);
 		return foo - 10;
 	}
 
@@ -310,7 +316,7 @@ int encode2format(str uri, struct uri_format *format)
 	format->port = sipUri.port;
 	format->protocol = sipUri.transport_val;
 
-	LM_DBG("First and second format [%d][%d] transport=[%.*s] "
+	LM_DBG("first and second format [%d][%d] transport=[%.*s] "
 		   "transportval=[%.*s]\n",
 			format->first, format->second, sipUri.transport.len,
 			sipUri.transport.s, sipUri.transport_val.len,
@@ -336,7 +342,7 @@ int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
 		return -2;
 	}
 
-	LM_DBG("Encoding request for [%.*s] with [%s]-[%s]\n", uri.len, uri.s,
+	LM_DBG("encoding request for [%.*s] with [%s]-[%s]\n", uri.len, uri.s,
 			encoding_prefix, public_ip);
 
 	foo = encode2format(uri, &format);
@@ -363,7 +369,7 @@ int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
 	result->s = pkg_malloc(result->len);
 	pos = result->s;
 	if(pos == NULL) {
-		LM_DBG("Unable to alloc result [%d] end=[%d]\n", result->len,
+		LM_DBG("unable to alloc result [%d] end=[%d]\n", result->len,
 				format.second);
 		LM_ERR("unable to alloc pkg memory\n");
 		return -3;
@@ -392,7 +398,7 @@ int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
 	pos = pos + strlen(public_ip);
 	memcpy(pos, uri.s + format.second, uri.len - format.second);
 
-	LM_DBG("Adding [%.*s] => new uri [%.*s]\n", uri.len - format.second,
+	LM_DBG("adding [%.*s] => new uri [%.*s]\n", uri.len - format.second,
 			uri.s + format.second, result->len, result->s);
 
 	/* Because called parse_uri format contains pointers to the inside of msg,
@@ -418,7 +424,7 @@ int decode2format(str uri, char separator, struct uri_format *format)
 	} state;
 
 	if(uri.s == NULL) {
-		LM_ERR("invalid parameter uri.It is NULL\n");
+		LM_ERR("invalid parameter uri - it is NULL\n");
 		return -1;
 	}
 
@@ -426,7 +432,7 @@ int decode2format(str uri, char separator, struct uri_format *format)
 
 	start = memchr(uri.s, ':', uri.len);
 	if(start == NULL) {
-		LM_ERR("invalid SIP uri.Missing :\n");
+		LM_ERR("invalid SIP uri - missing :\n");
 		return -2;
 	}				   /* invalid uri */
 	start = start + 1; /* jumping over sip: */
@@ -436,11 +442,11 @@ int decode2format(str uri, char separator, struct uri_format *format)
 
 	end = memchr(start, '@', uri.len - (start - uri.s));
 	if(end == NULL) {
-		LM_ERR("invalid SIP uri.Missing @\n");
+		LM_ERR("invalid SIP uri - missing @\n");
 		return -3; /* no host address found */
 	}
 
-	LM_DBG("Decoding [%.*s]\n", (int)(long)(end - start), start);
+	LM_DBG("decoding [%.*s]\n", (int)(long)(end - start), start);
 
 	state = EX_PREFIX;
 	lastpos = start;
@@ -486,8 +492,10 @@ int decode2format(str uri, char separator, struct uri_format *format)
 
 
 	/* we must be in state EX_PROT and protocol is between lastpos and end@ */
-	if(state != EX_PROT)
+	if(state != EX_PROT) {
+		LM_ERR("unexpected state %d\n", state);
 		return -6;
+	}
 	format->protocol.len = end - lastpos;
 	if(format->protocol.len > 0)
 		format->protocol.s = lastpos;
@@ -563,7 +571,7 @@ int decode_uri(str uri, char separator, str *result)
 		result->len += 1 + format.port.len; //:
 	if(format.protocol.len > 0)
 		result->len += 1 + 10 + format.protocol.len; //;transport=
-	LM_DBG("Result size is [%d]. Original Uri size is [%d].\n", result->len,
+	LM_DBG("result size is [%d] - original Uri size is [%d].\n", result->len,
 			uri.len);
 
 	/* adding one comes from * */
