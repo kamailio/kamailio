@@ -229,6 +229,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		i_req->parsed_uri_ok=0;
 		i_req->new_uri.s=pkg_malloc(uri->len);
 		if (unlikely(i_req->new_uri.s==0)){
+			PKG_MEM_ERROR;
 			ret=E_OUT_OF_MEM;
 			goto error03;
 		}
@@ -498,6 +499,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->path_vec.s && i_req->path_vec.len)){
 		t->uac[branch].path.s=shm_malloc(i_req->path_vec.len+1);
 		if (unlikely(t->uac[branch].path.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -513,6 +515,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->instance.s && i_req->instance.len)){
 		t->uac[branch].instance.s=shm_malloc(i_req->instance.len+1);
 		if (unlikely(t->uac[branch].instance.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -528,6 +531,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->ruid.s && i_req->ruid.len)){
 		t->uac[branch].ruid.s=shm_malloc(i_req->ruid.len+1);
 		if (unlikely(t->uac[branch].ruid.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -543,6 +547,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->location_ua.s && i_req->location_ua.len)){
 		t->uac[branch].location_ua.s=shm_malloc(i_req->location_ua.len+1);
 		if (unlikely(t->uac[branch].location_ua.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -670,7 +675,7 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
 		ser_error=E_OUT_OF_MEM;
-		LM_ERR("no shmem\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 
@@ -906,6 +911,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(path && path->s)){
 		t->uac[branch].path.s=shm_malloc(path->len+1);
 		if (unlikely(t->uac[branch].path.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -922,6 +928,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(instance && instance->s)){
 		t->uac[branch].instance.s=shm_malloc(instance->len+1);
 		if (unlikely(t->uac[branch].instance.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -938,6 +945,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(ruid && ruid->s)){
 		t->uac[branch].ruid.s=shm_malloc(ruid->len+1);
 		if (unlikely(t->uac[branch].ruid.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -954,6 +962,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(location_ua && location_ua->s)){
 		t->uac[branch].location_ua.s=shm_malloc(location_ua->len+1);
 		if (unlikely(t->uac[branch].location_ua.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -1213,8 +1222,10 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 		if (unlikely(reason_len == 0))
 			return 0; /* nothing to do, no reason */
 		cr = shm_malloc(sizeof(struct cancel_reason) + reason_len);
-		if (unlikely(cr == 0))
+		if (unlikely(cr == 0)) {
+			SHM_MEM_ERROR;
 			goto error;
+		}
 		d = (char*)cr +sizeof(*cr);
 		cr->cause = CANCEL_REAS_PACKED_HDRS;
 		cr->u.packed_hdrs.s = d;

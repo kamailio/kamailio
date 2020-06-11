@@ -170,7 +170,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf) {
-		LM_ERR("cannot allocate memory\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 	p = cancel_buf;
@@ -327,7 +327,7 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
-		LM_ERR("cannot allocate shared memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	d = cancel_buf;
@@ -651,7 +651,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 		p = (rr_t*)ptr->parsed;
 		while(p) {
 			if (! (t = pkg_malloc(sizeof(struct rte)))) {
-				LM_ERR("out of pkg mem (asked for: %d).\n",
+				PKG_MEM_ERROR_FMT("(asked for: %d).\n",
 						(int)sizeof(struct rte));
 				goto err;
 			}
@@ -999,7 +999,7 @@ eval_flags:
 				 * header parser's allocator (using pkg/shm) */
 				chklen = sizeof(struct rte) + sizeof(rr_t);
 				if (! (t = pkg_malloc(chklen))) {
-					ERR("out of pkg memory (%d required)\n", (int)chklen);
+					PKG_MEM_ERROR_FMT("(%d required)\n", (int)chklen);
 					/* last element was freed, unlink it */
 					if(prev_t == NULL) {
 						/* there is only one elem in route set: the remote target */
@@ -1204,7 +1204,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	req_buf = shm_malloc(offset + *len + 1);
 	req_buf += offset;
 	if (!req_buf) {
-		LM_ERR("Cannot allocate memory (%u+1)\n", *len);
+		SHM_MEM_ERROR_FMT("required (%u+1)\n", *len);
 		goto error01;
 	}
 	p = req_buf;
@@ -1565,7 +1565,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LM_ERR("no more shared memory (%d)\n", *len);
+		SHM_MEM_ERROR_FMT("required (%d)\n", *len);
 		goto error;
 	}
 
@@ -1688,7 +1688,7 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 	p = cancel_buf;

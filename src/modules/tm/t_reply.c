@@ -316,7 +316,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 	n=(struct totag_elem*) shm_malloc(sizeof(struct totag_elem));
 	s=(char *)shm_malloc(tag->len);
 	if (!s || !n) {
-		LM_ERR("no more shm memory \n");
+		SHM_MEM_ERROR;
 		if (n) shm_free(n);
 		if (s) shm_free(s);
 		return 0;
@@ -855,7 +855,7 @@ int fake_req_clone_str_helper(str *src, str *dst, char *txt)
 	if (src->s!=0 && src->len!=0) {
 		dst->s=pkg_malloc(src->len+1);
 		if (!dst->s) {
-			LM_ERR("no pkg mem to clone %s back to faked msg\n", txt);
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		dst->len=src->len;

@@ -71,7 +71,7 @@ int init_tmcb_lists()
 	local_req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
 	if ((req_in_tmcb_hl==0) || (local_req_in_tmcb_hl==0)) {
-		LM_CRIT("no more shared mem\n");
+		SHM_MEM_CRITICAL;
 		goto error;
 	}
 	req_in_tmcb_hl->first = 0;
@@ -133,7 +133,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 	/* build a new callback structure */
 	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
-		LM_ERR("out of shm. mem\n");
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 

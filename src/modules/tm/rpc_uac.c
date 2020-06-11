@@ -217,7 +217,7 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	/* construct a single header block now */
 	ret = pkg_malloc(total_len);
 	if (!ret) {
-		LM_ERR("no pkg mem for hf block\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	i = sl.next;
@@ -278,7 +278,7 @@ static void  rpc_print_routes(rpc_t* rpc, void* c,
 
 	buf=pkg_malloc(size+1);
 	if (buf==0){
-		LM_ERR("out of memory\n");
+		PKG_MEM_ERROR;
 		rpc->add(c, "s", "");
 		return;
 	}
@@ -322,7 +322,7 @@ static void  rpc_print_uris(rpc_t* rpc, void* c, struct sip_msg* reply)
 	dlg_t* dlg;
 	dlg=shm_malloc(sizeof(dlg_t));
 	if (dlg==0){
-		ERR("out of memory (shm)\n");
+		SHM_MEM_ERROR;
 		return;
 	}
 	memset(dlg, 0, sizeof(dlg_t));

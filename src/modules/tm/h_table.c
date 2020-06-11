@@ -333,6 +333,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 
 	new_cell = (struct cell *)shm_malloc(cell_size);
 	if(!new_cell) {
+		SHM_MEM_ERROR;
 		ser_error = E_OUT_OF_MEM;
 		return NULL;
 	}
@@ -480,7 +481,7 @@ struct s_table *init_hash_table()
 	/*allocs the table*/
 	_tm_table = (struct s_table *)shm_malloc(sizeof(struct s_table));
 	if(!_tm_table) {
-		LM_ERR("no shmem for TM table\n");
+		SHM_MEM_ERROR;
 		goto error0;
 	}
 
