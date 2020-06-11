@@ -14,7 +14,7 @@ Javier Gallart
 
    <jgallart@sonoc.io>
 
-   Copyright © 2019 www.sonoc.io
+   Copyright Â© 2019 www.sonoc.io
      __________________________________________________________________
 
    Table of Contents
@@ -296,7 +296,7 @@ modparam("xhttp_prom", "prom_gauge", "name=gg_third; label=method:handler;");
    4.5. prom_dispatch()
    4.6. prom_check_uri()
 
-4.1. prom_counter_reset(name, l0, l1, l2)
+4.1.  prom_counter_reset(name, l0, l1, l2)
 
    Get a counter based on its name and labels and reset its value to 0.
    Name parameter is mandatory. Values of labels are optional (from none
@@ -325,7 +325,7 @@ prom_counter_reset("cnt01", "push", "192.168.0.1");
 kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
 ...
 
-4.2. prom_gauge_reset(name, l0, l1, l2)
+4.2.  prom_gauge_reset(name, l0, l1, l2)
 
    Get a gauge based on its name and labels and reset its value to 0. Name
    parameter is mandatory. Values of labels are optional (from none up to
@@ -352,7 +352,7 @@ prom_gauge_reset("cnt01", "push", "192.168.0.1");
 kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
 ...
 
-4.3. prom_counter_inc(name, number, l0, l1, l2)
+4.3.  prom_counter_inc(name, number, l0, l1, l2)
 
    Get a counter identified by its name and labels and increase its value
    by a number. If counter does not exist it creates the counter,
@@ -389,7 +389,7 @@ prom_counter_inc("cnt02", "15", "push", "192.168.0.1");
 kamailio_cnt02 {method="push", IP="192.168.0.1"} 15 1234567890
 ...
 
-4.4. prom_gauge_set(name, number, l0, l1, l2)
+4.4.  prom_gauge_set(name, number, l0, l1, l2)
 
    Get a gauge identified by its name and labels and set its value to a
    number. If gauge does not exist it creates the gauge and assigns the
@@ -426,7 +426,7 @@ prom_gauge_set("gg02", "2.8", "push", "192.168.0.1");
 kamailio_gg02 {method="push", IP="192.168.0.1"} 2.8 1234567890
 ...
 
-4.5. prom_dispatch()
+4.5.  prom_dispatch()
 
    Handle the HTTP request and generate a response.
 
@@ -526,7 +526,7 @@ kamailio_sl_sent_replies 15 1554839325427
 kamailio_sl_xxx_replies 0 1554839325461
 ...
 
-4.6. prom_check_uri()
+4.6.  prom_check_uri()
 
    Check if path of HTTP URL equals /metrics. This avoids us to check hu
    variable from xHTTP module.
