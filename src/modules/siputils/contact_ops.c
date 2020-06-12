@@ -670,7 +670,7 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 				PKG_MEM_ERROR;
 				return -1;
 			}
-			nuri.len = snprintf(nuri.s, MAX_URI_SIZE-1, "sip:%.*s;%.*s=%.*s",
+			nuri.len = snprintf(nuri.s, MAX_URI_SIZE-1, "%.*s;%.*s=%.*s",
 					saddr->len, saddr->s, nparam->len, nparam->s,
 					pval.len, pval.s);
 			if(nuri.len<=0 || nuri.len>=MAX_URI_SIZE) {
@@ -679,6 +679,7 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 				pkg_free(nuri.s);
 				return -2;
 			}
+			LM_DBG("encoded uri [%.*s] (%d)\n", nuri.len, nuri.s, nuri.len);
 			if(patch(msg, c->uri.s, c->uri.len, nuri.s, nuri.len) < 0) {
 				LM_ERR("failed to update contact uri [%.*s]\n",
 						c->uri.len, c->uri.s);
@@ -758,7 +759,7 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 			memcpy(nval.s, bnval, nval.len);
 			nval.s[nval.len] = '\0';
 
-			LM_DBG("new uri [%.*s]\n", nval.len, nval.s);
+			LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
 			if(patch(msg, c->uri.s, c->uri.len, nval.s, nval.len) < 0) {
 				LM_ERR("failed to update contact uri [%.*s]\n",
 						c->uri.len, c->uri.s);
@@ -863,7 +864,7 @@ int ki_contact_param_decode_ruri(sip_msg_t *msg, str *nparam)
 	memcpy(nval.s, bnval, nval.len);
 	nval.s[nval.len] = '\0';
 
-	LM_DBG("new uri [%.*s]\n", nval.len, nval.s);
+	LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
 
 	if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
 		msg->new_uri = nval;
