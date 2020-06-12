@@ -108,6 +108,10 @@ sl_api_t opt_slb;
 static int mod_init(void);
 static void mod_destroy(void);
 
+static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr);
+static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2);
+static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p2);
+
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void** param, int param_no);
 static int fixup_free_set_uri(void** param, int param_no);
@@ -186,6 +190,12 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
+	{"contact_param_encode",      (cmd_function)w_contact_param_encode,    2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"contact_param_decode",      (cmd_function)w_contact_param_decode,    1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 
 	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
 		0, 0},
@@ -460,6 +470,47 @@ static int fixup_option(void** param, int param_no) {
 	return 0;
 }
 
+static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr)
+{
+	str nparam = STR_NULL;
+	str saddr = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)psaddr, &saddr)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	return ki_contact_param_encode(msg, &nparam, &saddr);
+}
+
+static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_decode(msg, &nparam);
+}
+
+static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p3)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_decode_ruri(msg, &nparam);
+}
+
 /*
  * Check if pseudo variable contains a valid uri
  */
@@ -561,6 +612,22 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("contact_param_encode"),
+		SR_KEMIP_INT, ki_contact_param_encode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_decode"),
+		SR_KEMIP_INT, ki_contact_param_decode,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_decode_ruri"),
+		SR_KEMIP_INT, ki_contact_param_decode_ruri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
