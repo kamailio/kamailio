@@ -55,6 +55,22 @@
 	<copyright>
 	    <year>2017</year>
 	</copyright>
+	<authorgroup>
+	    <editor>
+		<firstname>Emmanuel</firstname>
+		<surname>Schmidbauer</surname>
+		<affiliation><orgname>TextNow Inc.</orgname></affiliation>
+		<email>emmanuel.schmidbauer@textnow.com</email>
+		<address>
+		<otheraddr>
+		<ulink></ulink>
+		</otheraddr>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2020</year>
+	</copyright>
     </bookinfo>
     <toc></toc>
     
