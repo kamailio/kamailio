@@ -646,6 +646,13 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 		return 1;
 	}
 
+	if(msg->contact->parsed == NULL) {
+		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
+			LM_ERR("contact parsing failed\n");
+			return -4;
+		}
+	}
+
 	cb = (contact_body_t *)msg->contact->parsed;
 	c = cb->contacts;
 	/* we visit each contact */
