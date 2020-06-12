@@ -1177,8 +1177,8 @@ sip_p_charging_vector("g");
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>saddr</emphasis> - local server address, can be
-			host part, host-port part or host-port-params part.
+			<para><emphasis>saddr</emphasis> - local server address in SIP
+			URI format.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1190,7 +1190,7 @@ sip_p_charging_vector("g");
 		<programlisting format="linespecific">
 ...
 if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
-    contact_param_encode("ksu", "1.2.3.4:5060;transport=tcp");
+    contact_param_encode("ksu", "sip:1.2.3.4:5060;transport=tcp");
 }
 ...
 </programlisting>
