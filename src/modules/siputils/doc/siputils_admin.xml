@@ -1160,6 +1160,102 @@ sip_p_charging_vector("g");
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.contact_param_encode">
+		<title>
+		<function moreinfo="none">contact_param_encode(pname, saddr)</function>
+		</title>
+		<para>
+		This function encodes URI inside Contact headers by building a new
+		URI from 'saddr' parameter and adding a parameter with the name 'pname'
+		containing incoming URI encoded in Base64URL format.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pname</emphasis> - name of the new URI parameter to
+			hold the encoded incoming URI.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>saddr</emphasis> - local server address, can be
+			host part, host-port part or host-port-params part.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_encode</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
+    contact_param_encode("ksu", "1.2.3.4:5060;transport=tcp");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.contact_param_decode">
+		<title>
+		<function moreinfo="none">contact_param_decode(pname)</function>
+		</title>
+		<para>
+		This function decodes URI inside Contact headers by building a new
+		URI from 'pname' parameter, decoding its value from Base64URL.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pname</emphasis> - name of the incoming URI parameter
+			holding the encoded URI value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_decode</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER") and src_ip == 1.2.3.4) {
+    contact_param_decode("ksu");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.contact_param_decode_ruri">
+		<title>
+		<function moreinfo="none">contact_param_decode_uri(pname)</function>
+		</title>
+		<para>
+		This function decodes R-URI (request URI) by building a new
+		R-URI from 'pname' parameter, decoding its value from Base64URL.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pname</emphasis> - name of the incoming URI parameter
+			holding the encoded URI value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_decode_ruri</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("INVITE") and src_ip == 1.2.3.4) {
+    contact_param_decode_ruri("ksu");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
