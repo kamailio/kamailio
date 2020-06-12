@@ -990,15 +990,14 @@ sip_p_charging_vector("g");
    Meaning of the parameters is as follows:
      * pname - name of the new URI parameter to hold the encoded incoming
        URI.
-     * saddr - local server address, can be host part, host-port part or
-       host-port-params part.
+     * saddr - local server address in SIP URI format.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1.42. contact_param_encode usage
 ...
 if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
-    contact_param_encode("ksu", "1.2.3.4:5060;transport=tcp");
+    contact_param_encode("ksu", "sip:1.2.3.4:5060;transport=tcp");
 }
 ...
 
