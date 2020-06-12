@@ -82,7 +82,8 @@
 			<para><emphasis>5</emphasis> : Deleted dialog</para>
 		</listitem>
 	</itemizedlist>
-	<para>The early and deleted dialog states are not updated in database storage.
+	<para>The early and deleted dialog states are updated in database storage,
+	unless deactivated with the <emphasis>update_all_states</emphasis> parameter.
 	</para>
 	</section>
 
@@ -1640,6 +1641,39 @@ modparam("dialog", "keep_proxy_rr", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.p.update_all_states">
+		<title><varname>update_all_states</varname> (string)</title>
+		<para>
+			When enabled the dialog modules will also synchronize the
+			early and deleted dialog states to the database. This is
+			useful in failover situations, but of course will generate
+			more load to the database from this module.
+		</para>
+		<para>
+			Valid values are:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0</emphasis> - Don't synchronize early and deleted dialogs
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1</emphasis> - Synchronize early and deleted dialogs
+			</para></listitem>
+		</itemizedlist>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>update_all_states</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "update_all_states", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
