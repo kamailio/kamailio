@@ -704,6 +704,10 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 {
 	contact_body_t *cb;
 	contact_t *c;
+	sip_uri_t puri;
+	str sparams;
+	param_t* params = NULL;
+	param_hooks_t phooks;
 	param_t* pit;
 	char boval[MAX_URI_SIZE];
 	char bnval[MAX_URI_SIZE];
@@ -726,9 +730,28 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 	}
 
 	cb = (contact_body_t *)msg->contact->parsed;
-	c = cb->contacts;
-	while(c != NULL) {
-		pit = c->params;
+	for(c = cb->contacts; c != NULL; c = c->next) {
+		if(c->uri.len<4) {
+			continue;
+		}
+		if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+			LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len, c->uri.s);
+			return -1;
+		}
+		if(puri.sip_params.len>0) {
+			sparams = puri.sip_params;
+		} else if(puri.params.len>0) {
+			sparams = puri.params;
+		} else {
+			continue;
+		}
+
+		if (parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';')<0) {
+			LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len, c->uri.s);
+			continue;
+		}
+
+		pit = params;
 		while(pit!=NULL) {
 			if(pit->name.len==nparam->len
 					&& strncasecmp(pit->name.s, nparam->s, nparam->len)==0) {
@@ -736,46 +759,51 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 			}
 			pit=pit->next;
 		}
-		if(pit!=NULL && pit->body.len>0) {
-			oval = pit->body;
-			if(oval.len % 4) {
-				if(oval.len + 4 >= MAX_URI_SIZE-1) {
-					LM_ERR("not enough space to insert padding [%.*s]\n",
-							c->uri.len, c->uri.s);
-					return -1;
-				}
-				memcpy(boval, oval.s, oval.len);
-				for(i=0; i < (4 - (oval.len % 4)); i++) {
-					boval[oval.len + i] = '=';
-				}
-				oval.s = boval;
-				oval.len += (4 - (oval.len % 4));
-				/* move to next buffer */
-			}
-			nval.len = base64url_dec(oval.s, oval.len, bnval, MAX_URI_SIZE-1);
-			if (nval.len <= 0) {
-				LM_ERR("failed to decode contact uri [%.*s]\n",
-							c->uri.len, c->uri.s);
-				return -1;
-			}
-			nval.s = (char*)pkg_malloc((nval.len+1)*sizeof(char));
-			if(nval.s==NULL) {
-				PKG_MEM_ERROR;
-				return -1;
-			}
-			memcpy(nval.s, bnval, nval.len);
-			nval.s[nval.len] = '\0';
-
-			LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
-			if(patch(msg, c->uri.s, c->uri.len, nval.s, nval.len) < 0) {
-				LM_ERR("failed to update contact uri [%.*s]\n",
-						c->uri.len, c->uri.s);
-				pkg_free(nval.s);
-				return -2;
-			}
+		if(pit==NULL || pit->body.len<=0) {
+			free_params(params);
+			continue;
 		}
 
-		c = c->next;
+		oval = pit->body;
+		if(oval.len % 4) {
+			if(oval.len + 4 >= MAX_URI_SIZE-1) {
+				LM_ERR("not enough space to insert padding [%.*s]\n",
+						c->uri.len, c->uri.s);
+				free_params(params);
+				return -1;
+			}
+			memcpy(boval, oval.s, oval.len);
+			for(i=0; i < (4 - (oval.len % 4)); i++) {
+				boval[oval.len + i] = '=';
+			}
+			oval.s = boval;
+			oval.len += (4 - (oval.len % 4));
+			/* move to next buffer */
+		}
+		nval.len = base64url_dec(oval.s, oval.len, bnval, MAX_URI_SIZE-1);
+		if (nval.len <= 0) {
+			free_params(params);
+			LM_ERR("failed to decode contact uri [%.*s]\n",
+						c->uri.len, c->uri.s);
+			return -1;
+		}
+		nval.s = (char*)pkg_malloc((nval.len+1)*sizeof(char));
+		if(nval.s==NULL) {
+			free_params(params);
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memcpy(nval.s, bnval, nval.len);
+		nval.s[nval.len] = '\0';
+
+		LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
+		if(patch(msg, c->uri.s, c->uri.len, nval.s, nval.len) < 0) {
+			LM_ERR("failed to update contact uri [%.*s]\n",
+					c->uri.len, c->uri.s);
+			free_params(params);
+			pkg_free(nval.s);
+			return -2;
+		}
 	}
 
 	return 1;
