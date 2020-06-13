@@ -638,6 +638,8 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 	str nuri;
 	char bval[MAX_URI_SIZE];
 	str pval;
+	int q;
+	char *p;
 
 	if((msg->contact == NULL)
 			&& ((parse_headers(msg, HDR_CONTACT_F, 0) == -1)
@@ -677,9 +679,19 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 				PKG_MEM_ERROR;
 				return -1;
 			}
-			nuri.len = snprintf(nuri.s, MAX_URI_SIZE-1, "%.*s;%.*s=%.*s",
-					saddr->len, saddr->s, nparam->len, nparam->s,
-					pval.len, pval.s);
+			q = 1;
+			for(p = c->uri.s-1; p > msg->buf; p++) {
+				if(*p == '<') {
+					q = 0;
+					break;
+				}
+				if(*p != ' ' && *p != '\t' && *p != '\n'  && *p != '\n') {
+					break;
+				}
+			}
+			nuri.len = snprintf(nuri.s, MAX_URI_SIZE-1, "%s%.*s;%.*s=%.*s%s",
+					(q)?"<":"", saddr->len, saddr->s, nparam->len, nparam->s,
+					pval.len, pval.s, (q)?">":"");
 			if(nuri.len<=0 || nuri.len>=MAX_URI_SIZE) {
 				LM_ERR("failed to build the new contact for [%.*s] uri (%d)\n",
 						c->uri.len, c->uri.s, nuri.len);
