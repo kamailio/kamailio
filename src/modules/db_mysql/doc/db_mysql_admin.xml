@@ -199,6 +199,9 @@ modparam("db_mysql", "update_affected_found", 1)
 		defined.
 		</para>
 		<para>
+		Note: this option is supported only by libmysqlclient, not by libmariadbclient.
+		</para>
+		<para>
 		<emphasis>
 			Default value is 0 (0 - off).
 		</emphasis>
