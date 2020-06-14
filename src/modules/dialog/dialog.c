@@ -114,7 +114,6 @@ int dlg_noack_timeout = 60;
 int dlg_end_timeout = 300;
 
 int dlg_enable_dmq = 0;
-int dlg_update_all_states = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 str dlg_event_callback = STR_NULL;
@@ -328,7 +327,6 @@ static param_export_t mod_params[]={
 	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
 	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
-	{ "update_all_states",     INT_PARAM, &dlg_update_all_states    },
 	{ 0,0,0 }
 };
 
