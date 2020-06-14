@@ -72,6 +72,7 @@ int my_con_connect(db_con_t* con)
 					(const void*)&my_connect_to))
 			WARN("failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
+#ifndef LIBMARIADB
 #if MYSQL_VERSION_ID > 50710
 	if(db_mysql_opt_ssl_mode!=0) {
 		if(db_mysql_opt_ssl_mode==1) {
@@ -84,6 +85,19 @@ int my_con_connect(db_con_t* con)
 			optuint = (unsigned int)db_mysql_opt_ssl_mode;
 		}
 		mysql_options(mcon->con, MYSQL_OPT_SSL_MODE, (const void*)&optuint);
+	}
+#else
+	if(db_mysql_opt_ssl_mode!=0) {
+		optuint = (unsigned int)db_mysql_opt_ssl_mode;
+		LM_WARN("ssl mode not supported by mysql version (value %u) - ignoring\n",
+						optuint);
+	}
+#endif
+#else
+	if(db_mysql_opt_ssl_mode!=0) {
+		optuint = (unsigned int)db_mysql_opt_ssl_mode;
+		LM_WARN("ssl mode not supported by mariadb (value %u) - ignoring\n",
+						optuint);
 	}
 #endif
 
