@@ -116,6 +116,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&db_mysql_timeout_interval);
 	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const void*)&db_mysql_timeout_interval);
 	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+#ifndef LIBMARIADB
 #if MYSQL_VERSION_ID > 50710
 	if(db_mysql_opt_ssl_mode!=0) {
 		if(db_mysql_opt_ssl_mode==1) {
@@ -128,6 +129,19 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 			optuint = (unsigned int)db_mysql_opt_ssl_mode;
 		}
 		mysql_options(ptr->con, MYSQL_OPT_SSL_MODE, (const void*)&optuint);
+	}
+#else
+	if(db_mysql_opt_ssl_mode!=0) {
+		optuint = (unsigned int)db_mysql_opt_ssl_mode;
+		LM_WARN("ssl mode not supported by mysql version (value %u) - ignoring\n",
+						optuint);
+	}
+#endif
+#else
+	if(db_mysql_opt_ssl_mode!=0) {
+		optuint = (unsigned int)db_mysql_opt_ssl_mode;
+		LM_WARN("ssl mode not supported by mariadb (value %u) - ignoring\n",
+						optuint);
 	}
 #endif
 #if MYSQL_VERSION_ID > 50012
