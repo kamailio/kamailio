@@ -198,6 +198,9 @@ modparam("db_mysql", "update_affected_found", 1)
    SSL_MODE_DISABLED, any other value is passed to the mysql_options(),
    not checking if it is defined.
 
+   Note: this option is supported only by libmysqlclient, not by
+   libmariadbclient.
+
    Default value is 0 (0 - off).
 
    Example 1.7. Set opt_ssl_mode parameter
