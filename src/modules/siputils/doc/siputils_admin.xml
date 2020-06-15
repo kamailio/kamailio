@@ -1256,6 +1256,35 @@ if (is_method("INVITE") and src_ip == 1.2.3.4) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.contact_param_rm">
+		<title>
+		<function moreinfo="none">contact_param_rm(pname)</function>
+		</title>
+		<para>
+		This function removes the parameter from the URIs inside the Contact
+		headers.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pname</emphasis> - name of the URI parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER") and src_ip == 1.2.3.4) {
+    contact_param_rm("myparam");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
