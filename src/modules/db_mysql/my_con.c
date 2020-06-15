@@ -55,7 +55,6 @@ int my_con_connect(db_con_t* con)
 {
 	struct my_con* mcon;
 	struct my_uri* muri;
-	unsigned int optuint = 0;
 
 	mcon = DB_GET_PAYLOAD(con);
 	muri = DB_GET_PAYLOAD(con->uri);
@@ -72,9 +71,9 @@ int my_con_connect(db_con_t* con)
 					(const void*)&my_connect_to))
 			WARN("failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
-#ifndef LIBMARIADB
-#if MYSQL_VERSION_ID > 50710
+#if MYSQL_VERSION_ID > 50710 && !defined(MARIADB_BASE_VERSION)
 	if(db_mysql_opt_ssl_mode!=0) {
+		unsigned int optuint = 0;
 		if(db_mysql_opt_ssl_mode==1) {
 			if(db_mysql_opt_ssl_mode!=SSL_MODE_DISABLED) {
 				LM_WARN("ssl mode disabled is not 1 (value %u) - enforcing\n",
@@ -88,16 +87,8 @@ int my_con_connect(db_con_t* con)
 	}
 #else
 	if(db_mysql_opt_ssl_mode!=0) {
-		optuint = (unsigned int)db_mysql_opt_ssl_mode;
 		LM_WARN("ssl mode not supported by mysql version (value %u) - ignoring\n",
-						optuint);
-	}
-#endif
-#else
-	if(db_mysql_opt_ssl_mode!=0) {
-		optuint = (unsigned int)db_mysql_opt_ssl_mode;
-		LM_WARN("ssl mode not supported by mariadb (value %u) - ignoring\n",
-						optuint);
+						(unsigned int)db_mysql_opt_ssl_mode);
 	}
 #endif
 
