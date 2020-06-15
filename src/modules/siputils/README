@@ -99,6 +99,7 @@ Gabriel Vasile
               4.33. contact_param_encode(pname, saddr)
               4.34. contact_param_decode(pname)
               4.35. contact_param_decode_uri(pname)
+              4.36. contact_param_rm(pname)
 
         5. Exported pseudo-variables
 
@@ -154,6 +155,7 @@ Gabriel Vasile
    1.42. contact_param_encode usage
    1.43. contact_param_decode usage
    1.44. contact_param_decode_ruri usage
+   1.45. contact_param_rm usage
 
 Chapter 1. Admin Guide
 
@@ -214,6 +216,7 @@ Chapter 1. Admin Guide
         4.33. contact_param_encode(pname, saddr)
         4.34. contact_param_decode(pname)
         4.35. contact_param_decode_uri(pname)
+        4.36. contact_param_rm(pname)
 
    5. Exported pseudo-variables
 
@@ -432,6 +435,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.33. contact_param_encode(pname, saddr)
    4.34. contact_param_decode(pname)
    4.35. contact_param_decode_uri(pname)
+   4.36. contact_param_rm(pname)
 
 4.1.  ring_insert_callid()
 
@@ -1034,6 +1038,23 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 ...
 if (is_method("INVITE") and src_ip == 1.2.3.4) {
     contact_param_decode_ruri("ksu");
+}
+...
+
+4.36.  contact_param_rm(pname)
+
+   This function removes the parameter from the URIs inside the Contact
+   headers.
+
+   Meaning of the parameters is as follows:
+     * pname - name of the URI parameter.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+   Example 1.45. contact_param_rm usage
+...
+if (is_method("REGISTER") and src_ip == 1.2.3.4) {
+    contact_param_rm("myparam");
 }
 ...
 
