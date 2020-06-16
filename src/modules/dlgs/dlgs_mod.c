@@ -31,13 +31,18 @@
 #include "../../core/ut.h"
 #include "../../core/kemi.h"
 #include "../../core/utils/sruid.h"
+#include "../../core/timer_proc.h"
 
 #include "dlgs_records.h"
 
 MODULE_VERSION
 
-static int _dlgs_lifetime = 10800;
+int _dlgs_lifetime = 10800;
+int _dlgs_initlifetime = 180;
 static int _dlgs_timer_interval = 30;
+
+static int _dlgs_htsize_param = 9;
+int _dlgs_htsize = 512;
 
 /* sruid to get internal uid */
 sruid_t _dlgs_sruid;
@@ -66,7 +71,9 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"lifetime",        PARAM_INT,     &_dlgs_lifetime},
+	{"initlifetime",    PARAM_INT,     &_dlgs_initlifetime},
 	{"timer_interval",  PARAM_INT,     &_dlgs_timer_interval},
+	{"hash_size",       PARAM_INT,     &_dlgs_htsize_param},
 	{0, 0, 0}
 };
 
@@ -90,15 +97,37 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(dlgs_rpc_init() < 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	if(sruid_init(&_dlgs_sruid, '-', "dlgs", SRUID_INC) < 0) {
 		return -1;
 	}
 
+	if(_dlgs_htsize_param>1) {
+		if(_dlgs_htsize_param>16) {
+			_dlgs_htsize_param = 16;
+		}
+		_dlgs_htsize = 1<<_dlgs_htsize_param;
+	}
+	if(_dlgs_timer_interval<=0) {
+		_dlgs_timer_interval = 30;
+	}
+
+	if(sr_wtimer_add(dlgs_ht_timer, NULL, _dlgs_timer_interval) < 0) {
+		return -1;
+	}
+
+	if(dlgs_init()<0) {
+		return -1;
+	}
 	return 0;
 }
 
 /**
- * @brief Initialize async module children
+ * @brief Initialize module children
  */
 static int child_init(int rank)
 {
@@ -118,6 +147,7 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	dlgs_destroy();
 }
 
 /**
@@ -164,7 +194,7 @@ static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *str2)
  *
  */
 /* clang-format off */
-static sr_kemi_t sr_kemi_async_exports[] = {
+static sr_kemi_t sr_kemi_dlgs_exports[] = {
 	{ str_init("dlgs"), str_init("dlgs_manage"),
 		SR_KEMIP_INT, ki_dlgs_manage,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
@@ -180,6 +210,6 @@ static sr_kemi_t sr_kemi_async_exports[] = {
  */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	sr_kemi_modules_add(sr_kemi_async_exports);
+	sr_kemi_modules_add(sr_kemi_dlgs_exports);
 	return 0;
 }

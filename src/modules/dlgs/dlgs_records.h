@@ -61,14 +61,24 @@ typedef struct _dlgs_slot {
 } dlgs_slot_t;
 
 typedef struct _dlgs_ht {
-	unsigned int htexpire;
-	unsigned int htinitexpire;
 	unsigned int htsize;
+	unsigned int htlifetime;
+	unsigned int htinitlifetime;
 	dlgs_slot_t *slots;
 } dlgs_ht_t;
+
+typedef struct _dlgs_stats {
+	unsigned int c_init;
+	unsigned int c_progress;
+	unsigned int c_answered;
+	unsigned int c_confirmed;
+	unsigned int c_terminted;
+	unsigned int c_notanswered;
+} dlgs_stats_t;
+
 /* clang-format on */
 
-dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int expire, int initexpire);
+dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime);
 int dlgs_ht_destroy(dlgs_ht_t *dsht);
 int dlgs_add_item(dlgs_ht_t *dsht, sip_msg_t *msg, str *src, str *dst, str *data);
 int dlgs_del_item(dlgs_ht_t *dsht, sip_msg_t *msg);
@@ -77,5 +87,11 @@ int dlgs_unlock_item(dlgs_ht_t *dsht, sip_msg_t *msg);
 
 int dlgs_ht_dbg(dlgs_ht_t *dsht);
 int dlgs_item_free(dlgs_item_t *cell);
+
+void dlgs_ht_timer(unsigned int ticks, void *param);
+
+int dlgs_init(void);
+int dlgs_destroy(void);
+int dlgs_rpc_init(void);
 
 #endif

@@ -34,19 +34,56 @@
 #include "../../core/utils/sruid.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "dlgs_records.h"
 
 #define dlgs_compute_hash(_s) core_case_hash(_s, 0, 0)
 #define dlgs_get_index(_h, _size) (_h) & ((_size)-1)
 
+extern int _dlgs_lifetime;
+extern int _dlgs_initlifetime;
+extern int _dlgs_htsize;
 extern sruid_t _dlgs_sruid;
+
+static dlgs_ht_t *_dlgs_htb = NULL;
 
 typedef struct _dlgs_sipfields {
 	str callid;
 	str ftag;
 	str ttag;
 } dlgs_sipfields_t;
+
+
+/**
+ *
+ */
+int dlgs_init(void)
+{
+	if (_dlgs_htb!=NULL) {
+		return 0;
+	}
+	_dlgs_htb = dlgs_ht_init(_dlgs_htsize, _dlgs_lifetime, _dlgs_initlifetime);
+	if(_dlgs_htb==NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_destroy(void)
+{
+	if (_dlgs_htb!=NULL) {
+		return 0;
+	}
+	dlgs_ht_destroy(_dlgs_htb);
+	_dlgs_htb = NULL;
+
+	return 0;
+}
 
 /**
  *
@@ -163,7 +200,7 @@ int dlgs_item_free(dlgs_item_t *item)
 }
 
 
-dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int expire, int initexpire)
+dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime)
 {
 	int i;
 	dlgs_ht_t *dsht = NULL;
@@ -175,8 +212,8 @@ dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int expire, int initexpire)
 	}
 	memset(dsht, 0, sizeof(dlgs_ht_t));
 	dsht->htsize = htsize;
-	dsht->htexpire = expire;
-	dsht->htinitexpire = initexpire;
+	dsht->htlifetime = lifetime;
+	dsht->htinitlifetime = initlifetime;
 
 	dsht->slots = (dlgs_slot_t*)shm_malloc(dsht->htsize * sizeof(dlgs_slot_t));
 	if(dsht->slots == NULL) {
@@ -448,6 +485,110 @@ int dlgs_ht_dbg(dlgs_ht_t *dsht)
 			it = it->next;
 		}
 		lock_release(&dsht->slots[i].lock);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+void dlgs_ht_timer(unsigned int ticks, void *param)
+{
+	time_t tnow;
+	int i;
+	dlgs_item_t *it;
+	dlgs_item_t *ite;
+
+	if(_dlgs_htb == NULL) {
+		return;
+	}
+
+	tnow = time(NULL);
+
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		it = _dlgs_htb->slots[i].first;
+		while(it) {
+			ite = NULL;
+			if(it->state == DLGS_STATE_INIT || it->state == DLGS_STATE_PROGRESS
+					|| it->state == DLGS_STATE_ANSWERED
+					|| it->state == DLGS_STATE_NOTANSWERED) {
+				if(it->ts_init + _dlgs_htb->htinitlifetime < tnow) {
+					ite = it;
+				}
+			} else if(it->state == DLGS_STATE_CONFIRMED
+					|| it->state == DLGS_STATE_TERMINATED) {
+				if(it->ts_answer + _dlgs_htb->htlifetime < tnow) {
+					ite = it;
+				}
+			}
+			it = it->next;
+			if(ite != NULL) {
+				if(ite==_dlgs_htb->slots[i].first) {
+					_dlgs_htb->slots[i].first = it;
+					if(it!=NULL) {
+						it->prev = NULL;
+					}
+				} else {
+					ite->prev->next = it;
+					if(it!=NULL) {
+						it->prev = ite->prev;
+					}
+				}
+				dlgs_item_free(ite);
+			}
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+
+	return;
+}
+
+static const char *dlgs_rpc_stats_doc[2] = {
+	"Stats of the dlgs records",
+	0
+};
+
+
+/*
+ * RPC command to list the stats of the records
+ */
+static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
+{
+}
+
+static const char *dlgs_rpc_list_doc[2] = {
+	"List the dlgs records",
+	0
+};
+
+
+/*
+ * RPC command to list the records
+ */
+static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
+{
+}
+
+/* clang-format off */
+rpc_export_t dlgs_rpc_cmds[] = {
+	{"dlgs.stats", dlgs_rpc_stats,
+		dlgs_rpc_stats_doc, 0},
+	{"dlgs.list",  dlgs_rpc_list,
+		dlgs_rpc_list_doc,   0},
+
+	{0, 0, 0, 0}
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int dlgs_rpc_init(void)
+{
+	if(rpc_register_array(dlgs_rpc_cmds) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
 	}
 	return 0;
 }
