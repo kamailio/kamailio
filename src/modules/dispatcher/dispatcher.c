@@ -121,6 +121,7 @@ int ds_timer_mode = 0;
 int ds_attrs_none = 0;
 int ds_load_mode = 0;
 
+int ds_rehash_max = -1; /* Number of times trying rehash, to find an active destination. 0 : disable, -1 : Total number of destinations */
 str ds_outbound_proxy = STR_NULL;
 
 /* tm */
@@ -289,6 +290,7 @@ static param_export_t params[]={
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
 	{"reload_delta",       PARAM_INT, &ds_reload_delta },
+	{"ds_rehash_max",      PARAM_INT, &ds_rehash_max },
 	{0,0,0}
 };
 
@@ -1661,10 +1663,14 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 }
 
 
+static const char *dispatcher_rpc_set_state_doc[2] = {
+		"Set the state of a destination address", 0};
+
+
 /*
- * RPC command to set the state of a destination address or duid
+ * RPC command to set the state of a destination address
  */
-static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
+static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
 {
 	int group;
 	str dest;
@@ -1708,44 +1714,15 @@ static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
 	if(dest.len == 3 && strncmp(dest.s, "all", 3) == 0) {
 		ds_reinit_state_all(group, stval);
 	} else {
-		if (mattr==1) {
-			if(ds_reinit_duid_state(group, &dest, stval) < 0) {
-				rpc->fault(ctx, 500, "State Update Failed");
-				return;
-			}
-		} else {
-			if(ds_reinit_state(group, &dest, stval) < 0) {
-				rpc->fault(ctx, 500, "State Update Failed");
-				return;
-			}
+		if(ds_reinit_state(group, &dest, stval) < 0) {
+			rpc->fault(ctx, 500, "State Update Failed");
+			return;
 		}
 	}
 
 	return;
 }
 
-
-static const char *dispatcher_rpc_set_state_doc[2] = {
-		"Set the state of a destination by address", 0};
-
-/*
- * RPC command to set the state of a destination address
- */
-static void dispatcher_rpc_set_state(rpc_t *rpc, void *ctx)
-{
-	dispatcher_rpc_set_state_helper(rpc, ctx, 0);
-}
-
-static const char *dispatcher_rpc_set_duid_state_doc[2] = {
-		"Set the state of a destination by duid", 0};
-
-/*
- * RPC command to set the state of a destination duid
- */
-static void dispatcher_rpc_set_duid_state(rpc_t *rpc, void *ctx)
-{
-	dispatcher_rpc_set_state_helper(rpc, ctx, 1);
-}
 
 static const char *dispatcher_rpc_ping_active_doc[2] = {
 		"Manage setting on/off the pinging (keepalive) of destinations", 0};
@@ -1798,22 +1775,17 @@ static const char *dispatcher_rpc_add_doc[2] = {
  */
 static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 {
-	int group, flags, nparams;
+	int group, flags;
 	str dest;
-	str attrs;
 
 	flags = 0;
 
-	nparams = rpc->scan(ctx, "dS*dS", &group, &dest, &flags, &attrs);
-	if(nparams < 2) {
+	if(rpc->scan(ctx, "dS*d", &group, &dest, &flags) < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
-	} else if (nparams < 3) {
-		attrs.s = 0;
-		attrs.len = 0;
 	}
 
-	if(ds_add_dst(group, &dest, flags, &attrs) != 0) {
+	if(ds_add_dst(group, &dest, flags) != 0) {
 		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
 		return;
 	}
@@ -1846,49 +1818,6 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 	return;
 }
 
-static const char *dispatcher_rpc_hash_doc[2] = {
-		"Compute the hash if the values", 0};
-
-
-/*
- * RPC command to compute the hash of the values
- */
-static void dispatcher_rpc_hash(rpc_t *rpc, void *ctx)
-{
-	int n = 0;
-	unsigned int hashid = 0;
-	int nslots = 0;
-	str val1 = STR_NULL;
-	str val2 = STR_NULL;
-	void *th;
-
-	n = rpc->scan(ctx, "dS*S", &nslots, &val1, &val2);
-	if(n < 2) {
-		rpc->fault(ctx, 500, "Invalid Parameters");
-		return;
-	}
-	if(n==2) {
-		val2.s = NULL;
-		val2.s = 0;
-	}
-
-	hashid = ds_get_hash(&val1, &val2);
-
-	/* add entry node */
-	if(rpc->add(ctx, "{", &th) < 0) {
-		rpc->fault(ctx, 500, "Internal error root reply");
-		return;
-	}
-	if(rpc->struct_add(th, "uu", "hashid", hashid,
-				"slot", (nslots>0)?(hashid%nslots):0)
-			< 0) {
-		rpc->fault(ctx, 500, "Internal error reply structure");
-		return;
-	}
-
-	return;
-}
-
 /* clang-format off */
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
@@ -1897,16 +1826,12 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_list_doc,   0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
-	{"dispatcher.set_duid_state",   dispatcher_rpc_set_duid_state,
-		dispatcher_rpc_set_duid_state_doc,   0},
 	{"dispatcher.ping_active",   dispatcher_rpc_ping_active,
 		dispatcher_rpc_ping_active_doc, 0},
 	{"dispatcher.add",   dispatcher_rpc_add,
 		dispatcher_rpc_add_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
-	{"dispatcher.hash",   dispatcher_rpc_hash,
-		dispatcher_rpc_hash_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */

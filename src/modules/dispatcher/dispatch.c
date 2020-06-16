@@ -79,22 +79,6 @@
 #define DS_ALG_RELWEIGHT 11
 #define DS_ALG_PARALLEL 12
 
-/* increment call load */
-#define DS_LOAD_INC(dgrp, didx) do { \
-		lock_get(&(dgrp)->lock); \
-		(dgrp)->dlist[didx].dload++; \
-		lock_release(&(dgrp)->lock); \
-	} while(0)
-
-/* decrement call load */
-#define DS_LOAD_DEC(dgrp, didx) do { \
-		lock_get(&(dgrp)->lock); \
-		if(likely((dgrp)->dlist[didx].dload > 0)) { \
-			(dgrp)->dlist[didx].dload--; \
-		} \
-		lock_release(&(dgrp)->lock); \
-	} while(0)
-
 static int _ds_table_version = DS_TABLE_VERSION;
 
 static ds_ht_t *_dsht_load = NULL;
@@ -108,6 +92,7 @@ extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
+extern int ds_rehash_max;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -353,7 +338,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 /**
  *
  */
-ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
+ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
@@ -419,7 +404,6 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 
 	dp->flags = flags;
 	dp->priority = priority;
-	dp->dload = dload;
 
 	if(ds_set_attrs(dp, attrs) < 0) {
 		LM_ERR("cannot set attributes!\n");
@@ -437,16 +421,23 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	} else if(dp->attrs.socket.s && dp->attrs.socket.len > 0) {
 		/* parse_phostport(...) expects 0-terminated string
 		 * - after socket parameter is either ';' or '\0' */
-		STR_VTOZ(dp->attrs.socket.s[dp->attrs.socket.len], c);
+		if(dp->attrs.socket.s[dp->attrs.socket.len] != '\0') {
+			c = dp->attrs.socket.s[dp->attrs.socket.len];
+			dp->attrs.socket.s[dp->attrs.socket.len] = '\0';
+		}
 		if(parse_phostport(
 				   dp->attrs.socket.s, &host.s, &host.len, &port, &proto)
 				!= 0) {
 			LM_ERR("bad socket <%.*s>\n", dp->attrs.socket.len,
 					dp->attrs.socket.s);
-			STR_ZTOV(dp->attrs.socket.s[dp->attrs.socket.len], c);
+			if(c != 0) {
+				dp->attrs.socket.s[dp->attrs.socket.len] = c;
+			}
 			goto err;
 		}
-		STR_ZTOV(dp->attrs.socket.s[dp->attrs.socket.len], c);
+		if(c != 0) {
+			dp->attrs.socket.s[dp->attrs.socket.len] = c;
+		}
 		dp->sock = grep_sock_info(&host, (unsigned short)port, proto);
 		if(dp->sock == 0) {
 			LM_ERR("non-local socket <%.*s>\n", dp->attrs.socket.len,
@@ -499,14 +490,14 @@ err:
  *
  */
 int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
-		int list_idx, int *setn, int dload)
+		int list_idx, int *setn)
 {
 	ds_dest_t *dp = NULL;
 	ds_set_t *sp = NULL;
 	ds_dest_t *dp0 = NULL;
 	ds_dest_t *dp1 = NULL;
 
-	dp = pack_dest(uri, flags, priority, attrs, dload);
+	dp = pack_dest(uri, flags, priority, attrs);
 	if(!dp)
 		goto err;
 
@@ -855,7 +846,7 @@ int ds_load_list(char *lfile)
 		attrs.len = p - attrs.s;
 
 add_destination:
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
 				!= 0) {
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -879,7 +870,7 @@ next_line:
 	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+	ds_ht_clear_slots(_dsht_load);
 	ds_log_sets();
 	return 0;
 
@@ -1105,7 +1096,7 @@ int ds_load_db(void)
 			}
 		}
 		LM_DBG("attributes string: [%.*s]\n", attrs.len, (attrs.s)?attrs.s:"");
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn)
 				!= 0) {
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
@@ -1127,6 +1118,7 @@ int ds_load_db(void)
 	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+	ds_ht_clear_slots(_dsht_load);
 
 	ds_log_sets();
 
@@ -1530,7 +1522,6 @@ int ds_get_leastloaded(ds_set_t *dset)
 
 	k = -1;
 	t = 0x7fffffff; /* high load */
-	lock_get(&dset->lock); \
 	for(j = 0; j < dset->nr; j++) {
 		if(!ds_skip_dst(dset->dlist[j].flags)
 				&& (dset->dlist[j].attrs.maxload == 0
@@ -1542,7 +1533,6 @@ int ds_get_leastloaded(ds_set_t *dset)
 			}
 		}
 	}
-	lock_release(&dset->lock); \
 	return k;
 }
 
@@ -1564,7 +1554,7 @@ int ds_load_add(struct sip_msg *msg, ds_set_t *dset, int setid, int dst)
 				msg->callid->body.s);
 		return -1;
 	}
-	DS_LOAD_INC(dset, dst);
+	dset->dlist[dst].dload++;
 	return 0;
 }
 
@@ -1617,24 +1607,23 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 				break;
 		}
 	}
-	/* old destination has not been found: has been removed meanwhile? */
 	if(olddst == -1) {
-		LM_WARN("old destination address not found for [%d, %.*s]\n", set,
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
 				it->duid.len, it->duid.s);
-	} 
+		return -1;
+	}
 	if(newdst == -1) {
-		/* new destination has not been found: has been removed meanwhile? */
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
 		LM_ERR("new destination address not found for [%d, %.*s]\n", set,
 				duid->len, duid->s);
-		return -2;
+		return -1;
 	}
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	
-	if(olddst != -1)
-		DS_LOAD_DEC(idx, olddst);
+	if(idx->dlist[olddst].dload > 0)
+		idx->dlist[olddst].dload--;
 
 	if(ds_load_add(msg, idx, set, newdst) < 0) {
 		LM_ERR("unable to replace destination load [%.*s / %.*s]\n", duid->len,
@@ -1673,7 +1662,8 @@ int ds_load_remove_byid(int set, str *duid)
 		return -1;
 	}
 
-	DS_LOAD_DEC(idx, olddst);
+	if(idx->dlist[olddst].dload > 0)
+		idx->dlist[olddst].dload--;
 
 	return 0;
 }
@@ -2099,30 +2089,40 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	LM_DBG("set [%d]\n", rstate->setid);
 
 	hash = 0;
+	int maxRehash = 0;
+	int fullHash;
 	switch(rstate->alg) {
 		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHFROMURI: /* 1 - hash from-uri */
 			if(ds_hash_fromuri(msg, &hash) != 0) {
 				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
+			maxRehash = 3;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHTOURI: /* 2 - hash to-uri */
 			if(ds_hash_touri(msg, &hash) != 0) {
 				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
+			maxRehash = 3;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHRURI: /* 3 - hash r-uri */
 			if(ds_hash_ruri(msg, &hash) != 0) {
 				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
+			maxRehash = 3;
+			fullHash = hash;
 			break;
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
@@ -2145,6 +2145,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					LM_ERR("can't get authorization hash\n");
 					return -1;
 			}
+			maxRehash = 3;
+			fullHash = hash;
 			break;
 		case DS_ALG_RANDOM: /* 6 - random selection */
 			hash = kam_rand();
@@ -2154,6 +2156,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				LM_ERR("can't get PV hash\n");
 				return -1;
 			}
+			maxRehash = 3;
+			fullHash = hash;
 			break;
 		case DS_ALG_SERIAL: /* 8 - use always first entry */
 			hash = 0;
@@ -2215,7 +2219,39 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		if(ds_use_default != 0 && idx->nr != 1)
 			i = (i + 1) % (idx->nr - 1);
 		else
-			i = (i + 1) % idx->nr;
+			{  /* Should try to rehash, and at most maxRehash times*/
+				if ( maxRehash < 0 ) maxRehash = idx->nr;
+				if ( maxRehash > 0 )
+				{
+					char fullhashStr[3*sizeof(int) + 2];
+					do
+					{
+						str cid;
+						cid.len = snprintf (fullhashStr, sizeof(fullhashStr), "%d", fullHash );
+						if ( cid.len >= sizeof(fullhashStr))
+						{
+							cid.len = sizeof(fullhashStr);
+						}
+						cid.s = fullhashStr;
+						fullHash = ds_get_hash(&cid, NULL);
+						maxRehash--;
+					}
+					while (( maxRehash > 0 ) && ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) );
+					if ( 0 == maxRehash )  /* Acts as if no rehash had been done */
+					{
+					  i = (i + 1) % idx->nr;
+					}
+					else
+					{
+						i = fullHash % idx->nr;
+					}
+					
+				}
+				else
+				{
+					i = (i + 1) % idx->nr;
+				}
+			}
 		if(i == hash) {
 			/* back to start -- looks like no active dst */
 			if(ds_use_default != 0) {
@@ -2284,7 +2320,6 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		}
 		/* max load exceeded per destination */
 		if(rstate->alg == DS_ALG_CALLLOAD
-				&& idx->dlist[i].attrs.maxload != 0
 				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
 			continue;
 		}
@@ -2306,7 +2341,6 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		}
 		/* max load exceeded per destination */
 		if(rstate->alg == DS_ALG_CALLLOAD
-				&& idx->dlist[i].attrs.maxload != 0
 				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
 			continue;
 		}
@@ -2338,7 +2372,6 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 {
 
-	int ret;
 	socket_info_t *sock = NULL;
 	sr_xavp_t *rxavp = NULL;
 	sr_xavp_t *lxavp = NULL;
@@ -2351,7 +2384,6 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 		}
 	}
 
-next_dst:
 	rxavp = xavp_get(&ds_xavp_dst, NULL);
 	if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
 		LM_DBG("no xavp with previous destination record\n");
@@ -2399,18 +2431,12 @@ next_dst:
 		return 1;
 	}
 	if(upos == DS_USE_NEXT) {
-		ret = ds_load_replace(msg, &lxavp->val.v.s);
-		switch(ret) {
-			case 0:
-				break;
-			case -2:
-				LM_ERR("cannot update load with %.*s, skipping dst.\n", lxavp->val.v.s.len, lxavp->val.v.s.s);
-				goto next_dst;
-			default:
-				LM_ERR("cannot update load distribution\n");
-				return -1;
+		if(ds_load_replace(msg, &lxavp->val.v.s) < 0) {
+			LM_ERR("cannot update load distribution\n");
+			return -1;
 		}
 	}
+
 	return 1;
 }
 
@@ -2421,7 +2447,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
-			&setn, node->dlist[i].dload) != 0) {
+			&setn) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
 	}
@@ -2429,12 +2455,15 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 }
 
 /* add dispatcher entry to in-memory dispatcher list */
-int ds_add_dst(int group, str *address, int flags, str *attrs)
+int ds_add_dst(int group, str *address, int flags)
 {
 	int setn, priority;
+	str attrs;
 
 	setn = _ds_list_nr;
 	priority = 0;
+	attrs.s = 0;
+	attrs.len = 0;
 
 	*next_idx = (*crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*next_idx]);
@@ -2443,8 +2472,8 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 	ds_iter_set(_ds_list, &ds_add_dest_cb, NULL);
 
 	// add new destination
-	if(add_dest2list(group, *address, flags, priority, attrs,
-			*next_idx, &setn, 0) != 0) {
+	if(add_dest2list(group, *address, flags, priority, &attrs,
+			*next_idx, &setn) != 0) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
 		if(ds_load_mode==1) {
 			goto error;
@@ -2458,7 +2487,7 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+	ds_ht_clear_slots(_dsht_load);
 	ds_log_sets();
 	return 0;
 
@@ -2479,7 +2508,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
-			filter_arg->setn, node->dlist[i].dload) != 0) {
+			filter_arg->setn) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
 	}
@@ -2495,7 +2524,7 @@ int ds_remove_dst(int group, str *address)
 
 	setn = 0;
 
-	dp = pack_dest(*address, 0, 0, NULL, 0);
+	dp = pack_dest(*address, 0, 0, NULL);
 	filter_arg.setid = group;
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
@@ -2513,7 +2542,7 @@ int ds_remove_dst(int group, str *address)
 
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+	ds_ht_clear_slots(_dsht_load);
 	ds_log_sets();
 	return 0;
 
@@ -2982,47 +3011,6 @@ int ds_reinit_state(int group, str *address, int state)
 	}
 	LM_ERR("destination address [%d : %.*s] not found\n", group, address->len,
 			address->s);
-	return -1;
-}
-
-/**
- *
- */
-int ds_reinit_duid_state(int group, str *vduid, int state)
-{
-	int i = 0;
-	ds_set_t *idx = NULL;
-
-	if(_ds_list == NULL || _ds_list_nr <= 0) {
-		LM_ERR("the list is null\n");
-		return -1;
-	}
-
-	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
-		LM_ERR("destination set [%d] not found\n", group);
-		return -1;
-	}
-
-	for(i = 0; i < idx->nr; i++) {
-		if(idx->dlist[i].attrs.duid.len == vduid->len
-				&& strncasecmp(idx->dlist[i].attrs.duid.s, vduid->s, vduid->len)
-						   == 0) {
-			int old_state = idx->dlist[i].flags;
-			/* reset the bits used for states */
-			idx->dlist[i].flags &= ~(DS_STATES_ALL);
-			/* set the new states */
-			idx->dlist[i].flags |= state;
-			if(idx->dlist[i].attrs.rweight > 0) {
-				ds_reinit_rweight_on_state_change(
-						old_state, idx->dlist[i].flags, idx);
-			}
-
-			return 0;
-		}
-	}
-	LM_ERR("destination duid [%d : %.*s] not found\n", group, vduid->len,
-			vduid->s);
 	return -1;
 }
 
