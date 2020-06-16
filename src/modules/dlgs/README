@@ -1,0 +1,139 @@
+DLGS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2020 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. lifetime (int)
+              3.2. timer_interval (int)
+
+        4. Functions
+
+              4.1. dlgs_manage(src, dst, data)
+
+   List of Examples
+
+   1.1. Set lifetime parameter
+   1.2. Set timer_interval parameter
+   1.3. dlgs_manage usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. lifetime (int)
+        3.2. timer_interval (int)
+
+   4. Functions
+
+        4.1. dlgs_manage(src, dst, data)
+
+1. Overview
+
+   This module tracks dialogs (active calls) in stateless mode and offers
+   statistics about them.
+
+   The dialogs can be tagged and the number of dialogs with the same tag
+   can be retrieved in configuration file.
+
+   The module aims to be a lightweight alternative to dialog module, to
+   enable SIP server instances (such as an edge proxy or SBC) to know how
+   many active calls they route, without being a call stateful proxy. The
+   tracking of active calls is done without any dependency on other
+   modules, in other words, it does not need the tm (transaction
+   management) module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. lifetime (int)
+   3.2. timer_interval (int)
+
+3.1. lifetime (int)
+
+   The lifetime in seconds of a dialog in memory.
+
+   Default value is 10800 (3 hours).
+
+   Example 1.1. Set lifetime parameter
+...
+modparam("dlgs", "lifetime", 3600)
+...
+
+3.2. timer_interval (int)
+
+   The value in secods to run the timer callback function for cleaning up
+   dialogs past the lifetime limit.
+
+   Default value is 30.
+
+   Example 1.2. Set timer_interval parameter
+...
+modparam("dlgs", "timer_interval", 60)
+...
+
+4. Functions
+
+   4.1. dlgs_manage(src, dst, data)
+
+4.1. dlgs_manage(src, dst, data)
+
+   Track the dialog corresponding to the current SIP message. It has to be
+   used for INVITE messages.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. dlgs_manage usage
+...
+request_route {
+    ...
+    if(is_method("INVITE")) {
+        dlgs_manage("$fu", "$tu", "my data");
+    }
+    ...
+}
+...

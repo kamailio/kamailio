@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module tracks dialogs (active calls) in stateless mode and offers
+		statistics about them.
+	</para>
+	<para>
+		The dialogs can be tagged and the number of dialogs with the same tag
+		can be retrieved in configuration file.
+	</para>
+	<para>
+		The module aims to be a lightweight alternative to dialog module, to
+		enable SIP server instances (such as an edge proxy or SBC) to know how
+		many active calls they route, without being a call stateful proxy. The
+		tracking of active calls is done without any dependency on other modules,
+		in other words, it does not need the tm (transaction management) module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="dlgs.p.lifetime">
+		<title><varname>lifetime</varname> (int)</title>
+		<para>
+			The lifetime in seconds of a dialog in memory.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10800 (3 hours).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>lifetime</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "lifetime", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.p.timer_interval">
+		<title><varname>timer_interval</varname> (int)</title>
+		<para>
+			The value in secods to run the timer callback function for cleaning
+			up dialogs past the lifetime limit.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "timer_interval", 60)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="dlgs.f.dlgs_manage">
+		<title>
+		<function moreinfo="none">dlgs_manage(src, dst, data)</function>
+		</title>
+		<para>
+			Track the dialog corresponding to the current SIP message. It has to be
+			used for INVITE messages.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_manage</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(is_method("INVITE")) {
+        dlgs_manage("$fu", "$tu", "my data");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
