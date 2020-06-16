@@ -64,8 +64,8 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section id="dlgs.p.lifetime">
-		<title><varname>lifetime</varname> (int)</title>
+	<section id="dlgs.p.active_lifetime">
+		<title><varname>active_lifetime</varname> (int)</title>
 		<para>
 			The lifetime in seconds of a dialog in memory.
 		</para>
@@ -75,10 +75,10 @@
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>lifetime</varname> parameter</title>
+		<title>Set <varname>active_lifetime</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dlgs", "lifetime", 3600)
+modparam("dlgs", "active_lifetime", 3600)
 ...
 </programlisting>
 		</example>
@@ -107,28 +107,72 @@ modparam("dlgs", "timer_interval", 60)
 
 	<section>
 	<title>Functions</title>
-	<section id="dlgs.f.dlgs_manage">
+	<section id="dlgs.f.dlgs_init">
 		<title>
-		<function moreinfo="none">dlgs_manage(src, dst, data)</function>
+		<function moreinfo="none">dlgs_init(src, dst, data)</function>
 		</title>
 		<para>
-			Track the dialog corresponding to the current SIP message. It has to be
-			used for INVITE messages.
+			Start track the dialog corresponding to the current SIP message.
+			It has to be used for INVITE messages.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>dlgs_manage</function> usage</title>
+		<title><function>dlgs_init</function> usage</title>
 		<programlisting format="linespecific">
 ...
 request_route {
     ...
     if(is_method("INVITE")) {
-        dlgs_manage("$fu", "$tu", "my data");
+        dlgs_init("$fu", "$tu", "my data");
     }
     ...
 }
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_update">
+		<title>
+		<function moreinfo="none">dlgs_update(src)</function>
+		</title>
+		<para>
+			Update dialog state.
+		</para>
+		<para>
+		This function can be used from ONSEND_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_update</function> usage</title>
+		<programlisting format="linespecific">
+...
+onsend_route {
+    ...
+    if(is_method("INVITE|ACK|BYE")) {
+        dlgs_init("$fu", "$tu", "my data");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>RPC Commands</title>
+	<section id="dlgs.rpc.list">
+		<title>
+		<function moreinfo="none">rpc.list</function>
+		</title>
+		<para>
+			List dialog records.
+		</para>
+		<example>
+		<title><function>dlgs.list</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.list
 ...
 </programlisting>
 		</example>
