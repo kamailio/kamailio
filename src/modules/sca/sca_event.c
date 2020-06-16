@@ -28,13 +28,13 @@ int sca_event_from_str(str *event_str)
 {
 	int event = SCA_EVENT_TYPE_UNKNOWN;
 
-	if (event_str == NULL || event_str->s == NULL) {
+	if(event_str == NULL || event_str->s == NULL) {
 		return (SCA_EVENT_TYPE_UNKNOWN);
 	}
 
-	if (STR_EQ(*event_str, SCA_EVENT_NAME_CALL_INFO)) {
+	if(STR_EQ(*event_str, SCA_EVENT_NAME_CALL_INFO)) {
 		event = SCA_EVENT_TYPE_CALL_INFO;
-	} else if (STR_EQ(*event_str, SCA_EVENT_NAME_LINE_SEIZE)) {
+	} else if(STR_EQ(*event_str, SCA_EVENT_NAME_LINE_SEIZE)) {
 		event = SCA_EVENT_TYPE_LINE_SEIZE;
 	}
 
@@ -43,15 +43,15 @@ int sca_event_from_str(str *event_str)
 
 char *sca_event_name_from_type(int event_type)
 {
-	switch (event_type) {
-	case SCA_EVENT_TYPE_CALL_INFO:
-		return (SCA_EVENT_NAME_CALL_INFO.s);
+	switch(event_type) {
+		case SCA_EVENT_TYPE_CALL_INFO:
+			return (SCA_EVENT_NAME_CALL_INFO.s);
 
-	case SCA_EVENT_TYPE_LINE_SEIZE:
-		return (SCA_EVENT_NAME_LINE_SEIZE.s);
+		case SCA_EVENT_TYPE_LINE_SEIZE:
+			return (SCA_EVENT_NAME_LINE_SEIZE.s);
 
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return ("unknown");
@@ -63,7 +63,7 @@ int sca_event_append_header_for_type(int event_type, char *hdrbuf, int maxlen)
 
 	len = snprintf(hdrbuf, maxlen, "Event: %s%s",
 			sca_event_name_from_type(event_type), CRLF);
-	if (len >= maxlen) {
+	if(len >= maxlen) {
 		LM_ERR("%s Event header too long\n",
 				sca_event_name_from_type(event_type));
 		return (-1);

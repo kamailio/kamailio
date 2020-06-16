@@ -36,18 +36,18 @@ int sca_reply(sca_mod *scam, int status_code, char *status_msg,
 	status_str.s = status_msg;
 	status_str.len = strlen(status_msg);
 
-	if (extra_headers && extra_headers->len) {
-		if (add_lump_rpl(msg, extra_headers->s, extra_headers->len,
-		LUMP_RPL_HDR) == NULL) {
-			LM_ERR("sca_subscription_reply: failed to add Retry-After header\n");
+	if(extra_headers && extra_headers->len) {
+		if(add_lump_rpl(msg, extra_headers->s, extra_headers->len, LUMP_RPL_HDR)
+				== NULL) {
+			LM_ERR("sca_subscription_reply: failed to add Retry-After "
+				   "header\n");
 			return (-1);
 		}
 	}
 
-	if (scam->sl_api->freply(msg, status_code, &status_str) < 0) {
-		LM_ERR("Failed to send \"%d %s\" reply to %.*s",
-				status_code, status_msg,
-				get_from(msg)->body.len, get_from(msg)->body.s);
+	if(scam->sl_api->freply(msg, status_code, &status_str) < 0) {
+		LM_ERR("Failed to send \"%d %s\" reply to %.*s", status_code,
+				status_msg, get_from(msg)->body.len, get_from(msg)->body.s);
 		return (-1);
 	}
 

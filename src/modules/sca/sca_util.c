@@ -29,7 +29,7 @@ int sca_get_msg_method(sip_msg_t *msg)
 {
 	assert(msg != NULL);
 
-	if (msg->first_line.type == SIP_REQUEST) {
+	if(msg->first_line.type == SIP_REQUEST) {
 		return (msg->REQ_METHOD);
 	}
 
@@ -43,7 +43,7 @@ int sca_get_msg_contact_uri(sip_msg_t *msg, str *contact_uri)
 	assert(msg != NULL);
 	assert(contact_uri != NULL);
 
-	if (SCA_HEADER_EMPTY(msg->contact)) {
+	if(SCA_HEADER_EMPTY(msg->contact)) {
 		LM_DBG("Empty Contact header\n");
 		contact_uri->s = NULL;
 		contact_uri->len = 0;
@@ -51,24 +51,24 @@ int sca_get_msg_contact_uri(sip_msg_t *msg, str *contact_uri)
 		return (0);
 	}
 
-	if (parse_contact(msg->contact) < 0) {
+	if(parse_contact(msg->contact) < 0) {
 		LM_ERR("Failed to parse Contact header: %.*s\n",
 				STR_FMT(&msg->contact->body));
 		return (-1);
 	}
-	if ((contact_body = (contact_body_t *) msg->contact->parsed) == NULL) {
+	if((contact_body = (contact_body_t *)msg->contact->parsed) == NULL) {
 		LM_ERR("Invalid Contact header: %.*s\n", STR_FMT(&msg->contact->body));
 		return (-1);
 	}
-	if (contact_body->star) {
+	if(contact_body->star) {
 		LM_ERR("Invalid Contact header: SCA Contact must not be \"*\"\n");
 		return (-1);
 	}
-	if (contact_body->contacts == NULL) {
+	if(contact_body->contacts == NULL) {
 		LM_ERR("Invalid Contact header: parser found no contacts\n");
 		return (-1);
 	}
-	if (contact_body->contacts->next) {
+	if(contact_body->contacts->next) {
 		LM_ERR("Invalid Contact header: Contact may only contain one URI\n");
 		return (-1);
 	}
@@ -85,11 +85,11 @@ int sca_get_msg_cseq_number(sip_msg_t *msg)
 
 	assert(msg != NULL);
 
-	if (SCA_HEADER_EMPTY(msg->cseq)) {
+	if(SCA_HEADER_EMPTY(msg->cseq)) {
 		LM_ERR("Empty Cseq header\n");
 		return (-1);
 	}
-	if (str2int(&(get_cseq(msg)->number), (unsigned int *) &cseq) != 0) {
+	if(str2int(&(get_cseq(msg)->number), (unsigned int *)&cseq) != 0) {
 		LM_ERR("Bad Cseq header: %.*s\n", STR_FMT(&msg->cseq->body));
 		return (-1);
 	}
@@ -104,7 +104,7 @@ int sca_get_msg_cseq_method(sip_msg_t *msg)
 {
 	assert(msg != NULL);
 
-	if (SCA_HEADER_EMPTY(msg->cseq)) {
+	if(SCA_HEADER_EMPTY(msg->cseq)) {
 		LM_ERR("Empty Cseq header\n");
 		return (-1);
 	}
@@ -119,22 +119,22 @@ int sca_get_msg_from_header(sip_msg_t *msg, struct to_body **from)
 	assert(msg != NULL);
 	assert(from != NULL);
 
-	if (SCA_HEADER_EMPTY(msg->from)) {
+	if(SCA_HEADER_EMPTY(msg->from)) {
 		LM_ERR("Empty From header\n");
 		return (-1);
 	}
-	if (parse_from_header(msg) < 0) {
+	if(parse_from_header(msg) < 0) {
 		LM_ERR("Bad From header\n");
 		return (-1);
 	}
 	f = get_from(msg);
-	if (SCA_STR_EMPTY(&f->tag_value)) {
+	if(SCA_STR_EMPTY(&f->tag_value)) {
 		LM_ERR("Bad From header: no tag parameter\n");
 		return (-1);
 	}
 
 	// ensure the URI is parsed for future use
-	if (parse_uri(f->uri.s, f->uri.len, GET_FROM_PURI(msg)) < 0) {
+	if(parse_uri(f->uri.s, f->uri.len, GET_FROM_PURI(msg)) < 0) {
 		LM_ERR("Failed to parse From URI %.*s\n", STR_FMT(&f->uri));
 		return (-1);
 	}
@@ -152,15 +152,16 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to)
 	assert(msg != NULL);
 	assert(to != NULL);
 
-	if (SCA_HEADER_EMPTY(msg->to)) {
+	if(SCA_HEADER_EMPTY(msg->to)) {
 		LM_ERR("Empty To header\n");
 		return (-1);
 	}
 	t = get_to(msg);
-	if (t == NULL) {
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, // end of buffer
-		&parsed_to);
-		if (parsed_to.error != PARSE_OK) {
+	if(t == NULL) {
+		parse_to(msg->to->body.s,
+				msg->to->body.s + msg->to->body.len + 1, // end of buffer
+				&parsed_to);
+		if(parsed_to.error != PARSE_OK) {
 			LM_ERR("Bad To header\n");
 			return (-1);
 		}
@@ -168,7 +169,7 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to)
 	}
 
 	// ensure the URI is parsed for future use
-	if (parse_uri(t->uri.s, t->uri.len, GET_TO_PURI(msg)) < 0) {
+	if(parse_uri(t->uri.s, t->uri.len, GET_TO_PURI(msg)) < 0) {
 		LM_ERR("Failed to parse To URI %.*s\n", STR_FMT(&t->uri));
 		return (-1);
 	}
@@ -190,14 +191,14 @@ int sca_build_to_body_from_uri(sip_msg_t *msg, struct to_body **body, str *uri)
 	*body = pkg_malloc(sizeof(struct to_body));
 	if(*body == NULL) {
 		LM_ERR("cannot allocate pkg memory\n");
-		return(-1);
+		return (-1);
 	}
 
 	parse_to(uri->s, uri->s + uri->len + 1, *body);
-	if ((*body)->error != PARSE_OK) {
+	if((*body)->error != PARSE_OK) {
 		LM_ERR("Bad uri value[%.*s]\n", STR_FMT(uri));
 		free_to(*body);
-		return(-1);
+		return (-1);
 	}
 	return (0);
 }
@@ -205,24 +206,25 @@ int sca_build_to_body_from_uri(sip_msg_t *msg, struct to_body **body, str *uri)
 /*
  *  count characters requiring escape as defined by escape_common
  */
-int sca_uri_display_escapes_count(str *display) {
+int sca_uri_display_escapes_count(str *display)
+{
 	int c = 0;
 	int i;
 
-	if (SCA_STR_EMPTY(display)) {
+	if(SCA_STR_EMPTY(display)) {
 		return (0);
 	}
 
-	for (i = 0; i < display->len; i++) {
-		switch (display->s[i]) {
-		case '\'':
-		case '"':
-		case '\\':
-		case '\0':
-			c++;
+	for(i = 0; i < display->len; i++) {
+		switch(display->s[i]) {
+			case '\'':
+			case '"':
+			case '\\':
+			case '\0':
+				c++;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 
@@ -235,7 +237,7 @@ int sca_uri_extract_aor(str *uri, str *aor)
 
 	assert(aor != NULL);
 
-	if (uri == NULL) {
+	if(uri == NULL) {
 		aor->s = NULL;
 		aor->len = 0;
 		return (-1);
@@ -243,7 +245,7 @@ int sca_uri_extract_aor(str *uri, str *aor)
 
 	aor->s = uri->s;
 	semi = memchr(uri->s, ';', uri->len);
-	if (semi != NULL) {
+	if(semi != NULL) {
 		aor->len = semi - uri->s;
 	} else {
 		aor->len = uri->len;
@@ -262,12 +264,12 @@ int sca_uri_build_aor(str *aor, int maxlen, str *contact_uri, str *domain_uri)
 	assert(contact_uri != NULL);
 	assert(domain_uri != NULL);
 
-	if (contact_uri->len + domain_uri->len >= maxlen) {
+	if(contact_uri->len + domain_uri->len >= maxlen) {
 		return (-1);
 	}
 
 	p = memchr(contact_uri->s, '@', contact_uri->len);
-	if (p == NULL) {
+	if(p == NULL) {
 		// no username, by definition can't be an SCA line
 		aor->s = NULL;
 		aor->len = 0;
@@ -275,10 +277,10 @@ int sca_uri_build_aor(str *aor, int maxlen, str *contact_uri, str *domain_uri)
 		return (0);
 	}
 	dp = memchr(domain_uri->s, '@', domain_uri->len);
-	if (dp == NULL) {
+	if(dp == NULL) {
 		// may be nameless URI
 		dp = memchr(domain_uri->s, ':', domain_uri->len);
-		if (dp == NULL) {
+		if(dp == NULL) {
 			// bad domain URI
 			return (-1);
 		}
@@ -298,8 +300,8 @@ int sca_uri_build_aor(str *aor, int maxlen, str *contact_uri, str *domain_uri)
 	return (aor->len);
 }
 
-int sca_aor_create_from_info(str *aor, uri_type type, str *user, str *domain,
-		str *port)
+int sca_aor_create_from_info(
+		str *aor, uri_type type, str *user, str *domain, str *port)
 {
 	str scheme = STR_NULL;
 	int len = 0;
@@ -310,13 +312,13 @@ int sca_aor_create_from_info(str *aor, uri_type type, str *user, str *domain,
 
 	// +1 for ':', +1 for '@'
 	len = scheme.len + 1 + user->len + 1 + domain->len;
-	if (!SCA_STR_EMPTY(port)) {
+	if(!SCA_STR_EMPTY(port)) {
 		// +1 for ':'
 		len += 1 + port->len;
 	}
 
-	aor->s = (char *) pkg_malloc(len);
-	if (aor->s == NULL) {
+	aor->s = (char *)pkg_malloc(len);
+	if(aor->s == NULL) {
 		LM_ERR("sca_aor_create_from_info: pkg_malloc %d bytes failed\n", len);
 		return (-1);
 	}
@@ -339,7 +341,7 @@ int sca_aor_create_from_info(str *aor, uri_type type, str *user, str *domain,
 	SCA_STR_APPEND(aor, domain);
 	len += domain->len;
 
-	if (!SCA_STR_EMPTY(port)) {
+	if(!SCA_STR_EMPTY(port)) {
 		*(aor->s + len) = ':';
 		len += 1;
 
@@ -363,59 +365,63 @@ int sca_create_canonical_aor_for_ua(sip_msg_t *msg, str *c_aor, int ua_opts)
 
 	memset(c_aor, 0, sizeof(str));
 
-	if ((ua_opts & SCA_AOR_TYPE_AUTO)) {
-		if (msg->first_line.type == SIP_REQUEST) {
+	if((ua_opts & SCA_AOR_TYPE_AUTO)) {
+		if(msg->first_line.type == SIP_REQUEST) {
 			ua_opts = SCA_AOR_TYPE_UAC;
 		} else {
 			ua_opts = SCA_AOR_TYPE_UAS;
 		}
 	}
 
-	if ((ua_opts & SCA_AOR_TYPE_UAC)) {
-		if (sca_get_msg_from_header(msg, &tf) < 0) {
+	if((ua_opts & SCA_AOR_TYPE_UAC)) {
+		if(sca_get_msg_from_header(msg, &tf) < 0) {
 			LM_ERR("sca_create_canonical_aor: failed to get From header\n");
 			goto done;
 		}
 	} else {
-		if (sca_get_msg_to_header(msg, &tf) < 0) {
+		if(sca_get_msg_to_header(msg, &tf) < 0) {
 			LM_ERR("sca_create_canonical_aor: failed to get To header\n");
 			goto done;
 		}
 	}
 
-	if (sca_uri_extract_aor(&tf->uri, &tf_aor) < 0) {
+	if(sca_uri_extract_aor(&tf->uri, &tf_aor) < 0) {
 		LM_ERR("sca_create_canonical_aor: failed to extract AoR from "
-				"URI <%.*s>\n", STR_FMT(&tf->uri));
+			   "URI <%.*s>\n",
+				STR_FMT(&tf->uri));
 		goto done;
 	}
 
 	memset(&c_uri, 0, sizeof(sip_uri_t));
-	if ((rc = sca_get_msg_contact_uri(msg, &contact_uri)) < 0) {
+	if((rc = sca_get_msg_contact_uri(msg, &contact_uri)) < 0) {
 		LM_ERR("sca_create_canonical_aor: failed to get contact URI from "
-				"Contact <%.*s>\n", STR_FMT(&msg->contact->body));
+			   "Contact <%.*s>\n",
+				STR_FMT(&msg->contact->body));
 		goto done;
 	}
-	if (rc > 0) {
-		if (parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
+	if(rc > 0) {
+		if(parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
 			LM_ERR("sca_create_canonical_aor: failed to parse Contact URI "
-					"<%.*s>\n", STR_FMT(&contact_uri));
+				   "<%.*s>\n",
+					STR_FMT(&contact_uri));
 			rc = -1;
 			goto done;
 		}
 	}
 
-	if (SCA_STR_EMPTY(&c_uri.user) ||
-	SCA_STR_EQ(&c_uri.user, &tf->parsed_uri.user)) {
+	if(SCA_STR_EMPTY(&c_uri.user)
+			|| SCA_STR_EQ(&c_uri.user, &tf->parsed_uri.user)) {
 		// empty contact header or Contact user matches To/From AoR
-		c_aor->s = (char *) pkg_malloc(tf_aor.len);
+		c_aor->s = (char *)pkg_malloc(tf_aor.len);
 		c_aor->len = tf_aor.len;
 		memcpy(c_aor->s, tf_aor.s, tf_aor.len);
 	} else {
 		// Contact user and To/From user mismatch
-		if (sca_aor_create_from_info(c_aor, c_uri.type, &c_uri.user,
-				&tf->parsed_uri.host, &tf->parsed_uri.port) < 0) {
+		if(sca_aor_create_from_info(c_aor, c_uri.type, &c_uri.user,
+				   &tf->parsed_uri.host, &tf->parsed_uri.port)
+				< 0) {
 			LM_ERR("sca_create_canonical_aor: failed to create AoR from "
-					"Contact <%.*s> and URI <%.*s>\n",
+				   "Contact <%.*s> and URI <%.*s>\n",
 					STR_FMT(&contact_uri), STR_FMT(&tf_aor));
 			goto done;
 		}
@@ -423,7 +429,8 @@ int sca_create_canonical_aor_for_ua(sip_msg_t *msg, str *c_aor, int ua_opts)
 
 	rc = 1;
 
-	done: return (rc);
+done:
+	return (rc);
 }
 
 int sca_create_canonical_aor(sip_msg_t *msg, str *c_aor)
@@ -444,34 +451,36 @@ int sca_call_is_held(sip_msg_t *msg)
 	int rc;
 
 	if(sca->cfg->onhold_bflag >= 0) {
-		if (isbflagset(0, (flag_t)sca->cfg->onhold_bflag)==1) {
+		if(isbflagset(0, (flag_t)sca->cfg->onhold_bflag) == 1) {
 			LM_DBG("onhold_bflag set, skip parse_sdp and set held\n");
-			return ( 1 );
+			return (1);
 		}
 	}
 	rc = parse_sdp(msg);
-	if (rc < 0) {
+	if(rc < 0) {
 		LM_ERR("sca_call_is_held: parse_sdp body failed\n");
 		return (0);
-	} else if (rc > 0) {
+	} else if(rc > 0) {
 		LM_DBG("sca_call_is_held: parse_sdp returned %d, no SDP body\n", rc);
 		return (0);
 	}
 
 	// Cf. modules_k/textops's exported is_audio_on_hold
-	for (n_sess = 0, session = get_sdp_session(msg, n_sess); session != NULL;
+	for(n_sess = 0, session = get_sdp_session(msg, n_sess); session != NULL;
 			n_sess++, session = get_sdp_session(msg, n_sess)) {
 
-		for (n_str = 0, stream = get_sdp_stream(msg, n_sess, n_str);
+		for(n_str = 0, stream = get_sdp_stream(msg, n_sess, n_str);
 				stream != NULL;
 				n_str++, stream = get_sdp_stream(msg, n_sess, n_str)) {
-			if (stream->is_on_hold) {
-				LM_DBG("sca_call_is_held: parse_sdp detected stream is on hold\n");
+			if(stream->is_on_hold) {
+				LM_DBG("sca_call_is_held: parse_sdp detected stream is on "
+					   "hold\n");
 				is_held = 1;
 				goto done;
 			}
 		}
 	}
 
-	done: return (is_held);
+done:
+	return (is_held);
 }

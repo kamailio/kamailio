@@ -27,7 +27,8 @@
 #ifndef SCA_H
 #define SCA_H
 
-struct _sca_config {
+struct _sca_config
+{
 	str *outbound_proxy;
 	str *db_url;
 	str *subs_table;
@@ -42,7 +43,8 @@ struct _sca_config {
 };
 typedef struct _sca_config sca_config;
 
-struct _sca_mod {
+struct _sca_mod
+{
 	sca_config *cfg;
 	sca_hash_table *subscriptions;
 	sca_hash_table *appearances;
