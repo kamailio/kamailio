@@ -902,26 +902,13 @@ int ki_contact_param_decode_ruri(sip_msg_t *msg, str *nparam)
 		LM_ERR("failed to decode uri [%.*s]\n", uri.len, uri.s);
 		return -1;
 	}
-	nval.s = (char*)pkg_malloc((nval.len+1)*sizeof(char));
-	if(nval.s==NULL) {
-		free_params(params);
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	memcpy(nval.s, bnval, nval.len);
-	nval.s[nval.len] = '\0';
+	nval.s = bnval;
+	free_params(params);
 
 	LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
-
-	if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
-		msg->new_uri = nval;
-	} else {
-		pkg_free(msg->new_uri.s);
-		msg->new_uri = nval;
+	if(rewrite_uri(msg, &nval) < 0) {
+		return -1;
 	}
-	ruri_mark_new(); /* re-use uri for serial forking */
-
-	free_params(params);
 
 	return 1;
 }
