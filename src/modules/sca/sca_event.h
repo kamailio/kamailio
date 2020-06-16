@@ -17,7 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA. 02110-1301 USA
  */
-enum {
+enum
+{
 	SCA_EVENT_TYPE_UNKNOWN = -1,
 	SCA_EVENT_TYPE_CALL_INFO = 1,
 	SCA_EVENT_TYPE_LINE_SEIZE = 2,
@@ -26,8 +27,7 @@ enum {
 extern str SCA_EVENT_NAME_CALL_INFO;
 extern str SCA_EVENT_NAME_LINE_SEIZE;
 
-#define sca_ok_status_for_event(e1) \
-	(e1) == SCA_EVENT_TYPE_CALL_INFO ? 202 : 200
+#define sca_ok_status_for_event(e1) (e1) == SCA_EVENT_TYPE_CALL_INFO ? 202 : 200
 #define sca_ok_text_for_event(e1) \
 	(e1) == SCA_EVENT_TYPE_CALL_INFO ? "Accepted" : "OK"
 
