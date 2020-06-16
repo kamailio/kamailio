@@ -38,6 +38,15 @@
 #define DLGS_STATE_TERMINATED	4
 #define DLGS_STATE_NOTANSWERED	5
 
+typedef struct _dlgs_stats {
+	unsigned int c_init;
+	unsigned int c_progress;
+	unsigned int c_answered;
+	unsigned int c_confirmed;
+	unsigned int c_terminted;
+	unsigned int c_notanswered;
+} dlgs_stats_t;
+
 typedef struct _dlgs_item {
     unsigned int hashid;   /* item hash id */
 	str callid;            /* sip call-id */
@@ -50,6 +59,7 @@ typedef struct _dlgs_item {
 	int state;             /* state */
 	time_t ts_init;
 	time_t ts_answer;
+	time_t ts_finish;
     struct _dlgs_item *prev;
     struct _dlgs_item *next;
 } dlgs_item_t;
@@ -62,30 +72,28 @@ typedef struct _dlgs_slot {
 
 typedef struct _dlgs_ht {
 	unsigned int htsize;
-	unsigned int htlifetime;
-	unsigned int htinitlifetime;
+	unsigned int alifetime;
+	unsigned int ilifetime;
+	unsigned int flifetime;
+	dlgs_stats_t fstats;
 	dlgs_slot_t *slots;
 } dlgs_ht_t;
 
-typedef struct _dlgs_stats {
-	unsigned int c_init;
-	unsigned int c_progress;
-	unsigned int c_answered;
-	unsigned int c_confirmed;
-	unsigned int c_terminted;
-	unsigned int c_notanswered;
-} dlgs_stats_t;
-
+typedef struct _dlgs_sipfields {
+	str callid;
+	str ftag;
+	str ttag;
+} dlgs_sipfields_t;
 /* clang-format on */
 
-dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime);
-int dlgs_ht_destroy(dlgs_ht_t *dsht);
-int dlgs_add_item(dlgs_ht_t *dsht, sip_msg_t *msg, str *src, str *dst, str *data);
-int dlgs_del_item(dlgs_ht_t *dsht, sip_msg_t *msg);
-dlgs_item_t *dlgs_get_item(dlgs_ht_t *dsht, sip_msg_t *msg);
-int dlgs_unlock_item(dlgs_ht_t *dsht, sip_msg_t *msg);
+dlgs_ht_t *dlgs_ht_init(void);
+int dlgs_ht_destroy(void);
+int dlgs_add_item(sip_msg_t *msg, str *src, str *dst, str *data);
+int dlgs_del_item(sip_msg_t *msg);
+dlgs_item_t *dlgs_get_item(sip_msg_t *msg);
+int dlgs_unlock_item(sip_msg_t *msg);
 
-int dlgs_ht_dbg(dlgs_ht_t *dsht);
+int dlgs_ht_dbg(void);
 int dlgs_item_free(dlgs_item_t *cell);
 
 void dlgs_ht_timer(unsigned int ticks, void *param);
@@ -93,5 +101,6 @@ void dlgs_ht_timer(unsigned int ticks, void *param);
 int dlgs_init(void);
 int dlgs_destroy(void);
 int dlgs_rpc_init(void);
+int dlgs_update_item(sip_msg_t *msg);
 
 #endif

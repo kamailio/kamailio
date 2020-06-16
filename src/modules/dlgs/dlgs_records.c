@@ -42,19 +42,13 @@
 #define dlgs_compute_hash(_s) core_case_hash(_s, 0, 0)
 #define dlgs_get_index(_h, _size) (_h) & ((_size)-1)
 
-extern int _dlgs_lifetime;
-extern int _dlgs_initlifetime;
+extern int _dlgs_active_lifetime;
+extern int _dlgs_init_lifetime;
+extern int _dlgs_finish_lifetime;
 extern int _dlgs_htsize;
 extern sruid_t _dlgs_sruid;
 
 static dlgs_ht_t *_dlgs_htb = NULL;
-
-typedef struct _dlgs_sipfields {
-	str callid;
-	str ftag;
-	str ttag;
-} dlgs_sipfields_t;
-
 
 /**
  *
@@ -64,7 +58,7 @@ int dlgs_init(void)
 	if (_dlgs_htb!=NULL) {
 		return 0;
 	}
-	_dlgs_htb = dlgs_ht_init(_dlgs_htsize, _dlgs_lifetime, _dlgs_initlifetime);
+	_dlgs_htb = dlgs_ht_init();
 	if(_dlgs_htb==NULL) {
 		return -1;
 	}
@@ -79,7 +73,7 @@ int dlgs_destroy(void)
 	if (_dlgs_htb!=NULL) {
 		return 0;
 	}
-	dlgs_ht_destroy(_dlgs_htb);
+	dlgs_ht_destroy();
 	_dlgs_htb = NULL;
 
 	return 0;
@@ -200,7 +194,7 @@ int dlgs_item_free(dlgs_item_t *item)
 }
 
 
-dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime)
+dlgs_ht_t *dlgs_ht_init(void)
 {
 	int i;
 	dlgs_ht_t *dsht = NULL;
@@ -211,9 +205,10 @@ dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime)
 		return NULL;
 	}
 	memset(dsht, 0, sizeof(dlgs_ht_t));
-	dsht->htsize = htsize;
-	dsht->htlifetime = lifetime;
-	dsht->htinitlifetime = initlifetime;
+	dsht->htsize = _dlgs_htsize;
+	dsht->alifetime = _dlgs_active_lifetime;
+	dsht->ilifetime = _dlgs_init_lifetime;
+	dsht->flifetime = _dlgs_finish_lifetime;
 
 	dsht->slots = (dlgs_slot_t*)shm_malloc(dsht->htsize * sizeof(dlgs_slot_t));
 	if(dsht->slots == NULL) {
@@ -242,11 +237,13 @@ dlgs_ht_t *dlgs_ht_init(unsigned int htsize, int lifetime, int initlifetime)
 	return dsht;
 }
 
-int dlgs_ht_destroy(dlgs_ht_t *dsht)
+int dlgs_ht_destroy(void)
 {
 	int i;
 	dlgs_item_t *it, *it0;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	if(dsht == NULL) {
 		return -1;
 	}
@@ -269,13 +266,15 @@ int dlgs_ht_destroy(dlgs_ht_t *dsht)
 }
 
 
-int dlgs_add_item(dlgs_ht_t *dsht, sip_msg_t *msg, str *src, str *dst, str *data)
+int dlgs_add_item(sip_msg_t *msg, str *src, str *dst, str *data)
 {
 	unsigned int idx;
 	unsigned int hid;
 	dlgs_item_t *it, *prev, *nitem;
 	dlgs_sipfields_t sf;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	if(dsht == NULL || dsht->slots == NULL) {
 		LM_ERR("invalid parameters.\n");
 		return -1;
@@ -301,9 +300,9 @@ int dlgs_add_item(dlgs_ht_t *dsht, sip_msg_t *msg, str *src, str *dst, str *data
 		if(sf.callid.len == it->callid.len
 				&& strncmp(sf.callid.s, it->callid.s, sf.callid.len) == 0) {
 			lock_release(&dsht->slots[idx].lock);
-			LM_WARN("call-id already in hash table [%.*s].\n", sf.callid.len,
+			LM_DBG("call-id already in hash table [%.*s].\n", sf.callid.len,
 					sf.callid.s);
-			return -2;
+			return 1;
 		}
 		prev = it;
 		it = it->next;
@@ -334,13 +333,15 @@ int dlgs_add_item(dlgs_ht_t *dsht, sip_msg_t *msg, str *src, str *dst, str *data
 	return 0;
 }
 
-int dlgs_unlock_item(dlgs_ht_t *dsht, sip_msg_t *msg)
+int dlgs_unlock_item(sip_msg_t *msg)
 {
 	unsigned int idx;
 	unsigned int hid;
 	str *cid;
 	dlgs_sipfields_t sf;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	if(dsht == NULL || dsht->slots == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
@@ -364,14 +365,16 @@ int dlgs_unlock_item(dlgs_ht_t *dsht, sip_msg_t *msg)
 	return 0;
 }
 
-dlgs_item_t *dlgs_get_item(dlgs_ht_t *dsht, sip_msg_t *msg)
+dlgs_item_t *dlgs_get_item(sip_msg_t *msg)
 {
 	unsigned int idx;
 	unsigned int hid;
 	dlgs_item_t *it;
 	str *cid;
 	dlgs_sipfields_t sf;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	if(dsht == NULL || dsht->slots == NULL) {
 		LM_ERR("invalid parameters\n");
 		return NULL;
@@ -408,14 +411,16 @@ dlgs_item_t *dlgs_get_item(dlgs_ht_t *dsht, sip_msg_t *msg)
 }
 
 
-int dlgs_del_item(dlgs_ht_t *dsht, sip_msg_t *msg)
+int dlgs_del_item(sip_msg_t *msg)
 {
 	unsigned int idx;
 	unsigned int hid;
 	dlgs_item_t *it;
 	str *cid;
 	dlgs_sipfields_t sf;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	if(dsht == NULL || dsht->slots == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
@@ -463,11 +468,13 @@ int dlgs_del_item(dlgs_ht_t *dsht, sip_msg_t *msg)
 /**
  *
  */
-int dlgs_ht_dbg(dlgs_ht_t *dsht)
+int dlgs_ht_dbg(void)
 {
 	int i;
 	dlgs_item_t *it;
+	dlgs_ht_t *dsht;
 
+	dsht = _dlgs_htb;
 	for(i = 0; i < dsht->htsize; i++) {
 		lock_get(&dsht->slots[i].lock);
 		LM_ERR("htable[%d] -- <%d>\n", i, dsht->slots[i].esize);
@@ -486,6 +493,98 @@ int dlgs_ht_dbg(dlgs_ht_t *dsht)
 		}
 		lock_release(&dsht->slots[i].lock);
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_update_item(sip_msg_t *msg)
+{
+	int rtype = 0;
+	int rmethod = 0;
+	int rcode = 0;
+	int ostate = 0;
+	int nstate = 0;
+	dlgs_item_t *it;
+	time_t tnow;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		rtype = SIP_REQUEST;
+		if(msg->first_line.u.request.method_value == METHOD_INVITE) {
+			rmethod = METHOD_INVITE;
+		} else {
+			rmethod = msg->first_line.u.request.method_value;
+		}
+	} else {
+		rtype = SIP_REPLY;
+		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
+				(msg->cseq==NULL))) {
+			LM_ERR("no CSEQ header\n");
+			return -1;
+		}
+		rmethod = get_cseq(msg)->method_id;
+		rcode = (int)msg->first_line.u.reply.statuscode;
+	}
+
+	tnow = time(NULL);
+
+	it = dlgs_get_item(msg);
+	if(it==NULL) {
+		LM_DBG("no matching item found\n");
+		return 0;
+	}
+	ostate = it->state;
+	if(rtype == SIP_REQUEST) {
+		switch(rmethod) {
+			case METHOD_ACK:
+				if(it->state==DLGS_STATE_ANSWERED) {
+					it->state = DLGS_STATE_CONFIRMED;
+				}
+			break;
+			case METHOD_CANCEL:
+				if(it->state<DLGS_STATE_ANSWERED) {
+					it->state = DLGS_STATE_NOTANSWERED;
+					it->ts_finish = tnow;
+				}
+			break;
+			case METHOD_BYE:
+				if(it->state==DLGS_STATE_ANSWERED
+						|| it->state==DLGS_STATE_CONFIRMED) {
+					it->state = DLGS_STATE_TERMINATED;
+					it->ts_finish = tnow;
+				}
+			break;
+		}
+		goto done;
+	}
+
+	switch(rmethod) {
+		case METHOD_INVITE:
+			if(rcode>=100 && rcode<200) {
+				if(it->state==DLGS_STATE_INIT) {
+					it->state = DLGS_STATE_PROGRESS;
+				}
+			} else if(rcode>=200 && rcode<300) {
+				if(it->state==DLGS_STATE_INIT
+						|| it->state==DLGS_STATE_PROGRESS) {
+					it->state = DLGS_STATE_ANSWERED;
+					it->ts_answer = tnow;
+				}
+			} else if(rcode>=300) {
+				if(it->state==DLGS_STATE_INIT
+						|| it->state==DLGS_STATE_PROGRESS) {
+					it->state = DLGS_STATE_NOTANSWERED;
+					it->ts_finish = tnow;
+				}
+			}
+		break;
+	}
+
+done:
+	nstate = it->state;
+	dlgs_unlock_item(msg);
+	LM_DBG("old state %d - new state %d\n", ostate, nstate);
 	return 0;
 }
 
@@ -511,14 +610,17 @@ void dlgs_ht_timer(unsigned int ticks, void *param)
 		while(it) {
 			ite = NULL;
 			if(it->state == DLGS_STATE_INIT || it->state == DLGS_STATE_PROGRESS
-					|| it->state == DLGS_STATE_ANSWERED
-					|| it->state == DLGS_STATE_NOTANSWERED) {
-				if(it->ts_init + _dlgs_htb->htinitlifetime < tnow) {
+					|| it->state == DLGS_STATE_ANSWERED) {
+				if(it->ts_init + _dlgs_htb->ilifetime < tnow) {
 					ite = it;
 				}
-			} else if(it->state == DLGS_STATE_CONFIRMED
+			} else if(it->state == DLGS_STATE_CONFIRMED) {
+				if(it->ts_answer + _dlgs_htb->alifetime < tnow) {
+					ite = it;
+				}
+			} else if(it->state == DLGS_STATE_NOTANSWERED
 					|| it->state == DLGS_STATE_TERMINATED) {
-				if(it->ts_answer + _dlgs_htb->htlifetime < tnow) {
+				if(it->ts_finish + _dlgs_htb->flifetime < tnow) {
 					ite = it;
 				}
 			}
@@ -568,6 +670,41 @@ static const char *dlgs_rpc_list_doc[2] = {
  */
 static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 {
+	dlgs_item_t *it;
+	int n = 0;
+	int i;
+	void *th;
+
+	if(_dlgs_htb == NULL) {
+		return;
+	}
+
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		it = _dlgs_htb->slots[i].first;
+		while(it) {
+			if (rpc->add(ctx, "{", &th) < 0) {
+				lock_release(&_dlgs_htb->slots[i].lock);
+				rpc->fault(ctx, 500, "Internal error creating rpc");
+				return;
+			}
+			if(rpc->struct_add(th, "dSSSSuuu",
+							"count", ++n,
+							"src", &it->src,
+							"dst", &it->dst,
+							"data", &it->data,
+							"ruid", &it->ruid,
+							"ts_init", (unsigned int)it->ts_init,
+							"ts_answer", (unsigned int)it->ts_answer,
+							"state", it->state)<0) {
+				lock_release(&_dlgs_htb->slots[i].lock);
+				rpc->fault(ctx, 500, "Internal error creating item");
+				return;
+			}
+			it = it->next;
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
 }
 
 /* clang-format off */
@@ -575,7 +712,7 @@ rpc_export_t dlgs_rpc_cmds[] = {
 	{"dlgs.stats", dlgs_rpc_stats,
 		dlgs_rpc_stats_doc, 0},
 	{"dlgs.list",  dlgs_rpc_list,
-		dlgs_rpc_list_doc,   0},
+		dlgs_rpc_list_doc, RET_ARRAY},
 
 	{0, 0, 0, 0}
 };

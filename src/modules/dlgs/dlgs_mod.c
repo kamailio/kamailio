@@ -37,8 +37,9 @@
 
 MODULE_VERSION
 
-int _dlgs_lifetime = 10800;
-int _dlgs_initlifetime = 180;
+int _dlgs_active_lifetime = 10800;
+int _dlgs_init_lifetime = 180;
+int _dlgs_finish_lifetime = 10;
 static int _dlgs_timer_interval = 30;
 
 static int _dlgs_htsize_param = 9;
@@ -51,15 +52,18 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-static int w_dlgs_manage(sip_msg_t *msg, char *psrc, char *pdst, char *pdata);
-static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *str2);
-static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *str2);
-static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *str2);
+static int w_dlgs_init(sip_msg_t *msg, char *psrc, char *pdst, char *pdata);
+static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2);
+static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2);
+static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2);
+static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2);
 
 /* clang-format off */
 static cmd_export_t cmds[]={
-	{"dlgs_manage", (cmd_function)w_dlgs_manage, 3, fixup_spve_all,
+	{"dlgs_init", (cmd_function)w_dlgs_init, 3, fixup_spve_all,
 		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
+	{"dlgs_update", (cmd_function)w_dlgs_update, 0, 0,
+		0, ONSEND_ROUTE},
 	{"dlgs_tags_add", (cmd_function)w_dlgs_tags_add, 1, fixup_spve_null,
 		fixup_spve_null, ANY_ROUTE},
 	{"dlgs_tags_rm", (cmd_function)w_dlgs_tags_rm, 1, fixup_spve_null,
@@ -70,10 +74,11 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"lifetime",        PARAM_INT,     &_dlgs_lifetime},
-	{"initlifetime",    PARAM_INT,     &_dlgs_initlifetime},
-	{"timer_interval",  PARAM_INT,     &_dlgs_timer_interval},
-	{"hash_size",       PARAM_INT,     &_dlgs_htsize_param},
+	{"active_lifetime",  PARAM_INT,     &_dlgs_active_lifetime},
+	{"init_lifetime",    PARAM_INT,     &_dlgs_init_lifetime},
+	{"finish_lifetime",  PARAM_INT,     &_dlgs_finish_lifetime},
+	{"timer_interval",   PARAM_INT,     &_dlgs_timer_interval},
+	{"hash_size",        PARAM_INT,     &_dlgs_htsize_param},
 	{0, 0, 0}
 };
 
@@ -153,7 +158,89 @@ static void mod_destroy(void)
 /**
  *
  */
-static int ki_dlgs_manage(sip_msg_t *msg, str *src, str *dst, str *data)
+static int ki_dlgs_init(sip_msg_t *msg, str *src, str *dst, str *data)
+{
+	int rtype = 0;
+	int rmethod = 0;
+	int ret = 0;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		rtype = SIP_REQUEST;
+		if(msg->first_line.u.request.method_value == METHOD_INVITE) {
+			rmethod = METHOD_INVITE;
+		} else {
+			rmethod = msg->first_line.u.request.method_value;
+		}
+	} else {
+		rtype = SIP_REPLY;
+		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
+				(msg->cseq==NULL))) {
+			LM_ERR("no CSEQ header\n");
+			return -1;
+		}
+		rmethod = get_cseq(msg)->method_id;
+	}
+
+	if(rmethod == METHOD_INVITE) {
+		ret = dlgs_add_item(msg, src, dst, data);
+		LM_DBG("added item return code: %d\n", ret);
+		if(rtype==SIP_REPLY) {
+			dlgs_update_item(msg);
+		}
+	} else {
+		dlgs_update_item(msg);
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlgs_init(sip_msg_t *msg, char *psrc, char *pdst, char *pdata)
+{
+	str vsrc = STR_NULL;
+	str vdst = STR_NULL;
+	str vdata = str_init("");
+
+	if(fixup_get_svalue(msg, (gparam_t*)psrc, &vsrc) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pdst, &vdst) < 0) {
+		LM_ERR("failed to get p2\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pdata, &vdata) < 0) {
+		LM_ERR("failed to get p3\n");
+		return -1;
+	}
+
+	return ki_dlgs_init(msg, &vsrc, &vdst, &vdata);
+}
+
+/**
+ *
+ */
+static int ki_dlgs_update(sip_msg_t *msg)
+{
+	dlgs_update_item(msg);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_dlgs_update(msg);
+}
+
+/**
+ *
+ */
+static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2)
 {
 	return 1;
 }
@@ -161,7 +248,7 @@ static int ki_dlgs_manage(sip_msg_t *msg, str *src, str *dst, str *data)
 /**
  *
  */
-static int w_dlgs_manage(sip_msg_t *msg, char *psrc, char *pdst, char *pdata)
+static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2)
 {
 	return 1;
 }
@@ -169,23 +256,7 @@ static int w_dlgs_manage(sip_msg_t *msg, char *psrc, char *pdst, char *pdata)
 /**
  *
  */
-static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *str2)
-{
-	return 1;
-}
-
-/**
- *
- */
-static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *str2)
-{
-	return 1;
-}
-
-/**
- *
- */
-static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *str2)
+static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2)
 {
 	return 1;
 }
@@ -195,9 +266,14 @@ static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *str2)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dlgs_exports[] = {
-	{ str_init("dlgs"), str_init("dlgs_manage"),
-		SR_KEMIP_INT, ki_dlgs_manage,
+	{ str_init("dlgs"), str_init("dlgs_init"),
+		SR_KEMIP_INT, ki_dlgs_init,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_update"),
+		SR_KEMIP_INT, ki_dlgs_update,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
