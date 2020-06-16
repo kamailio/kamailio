@@ -64,8 +64,9 @@ Carlos Ruiz Diaz
               4.24. service_context_id_mcc(string)
               4.25. service_context_id_release(string)
               4.26. custom_user_avp (avp string)
-              4.27. vendor_specific_chargeinfo (int)
-              4.28. vendor_specific_id (int)
+              4.27. app_provided_party_avp (avp string)
+              4.28. vendor_specific_chargeinfo (int)
+              4.29. vendor_specific_id (int)
 
         5. Functions
 
@@ -121,10 +122,11 @@ Carlos Ruiz Diaz
    1.24. service_context_id_mccparameter usage
    1.25. service_context_id_releaseparameter usage
    1.26. custom_user_avpparameter usage
-   1.27. vendor_specific_chargeinfoparameter usage
-   1.28. vendor_specific_idparameter usage
-   1.29. Ro_CCR
-   1.30. Ro_set_session_id_avp
+   1.27. app_provided_party_avpparameter usage
+   1.28. vendor_specific_chargeinfoparameter usage
+   1.29. vendor_specific_idparameter usage
+   1.30. Ro_CCR
+   1.31. Ro_set_session_id_avp
 
 Chapter 1. Admin Guide
 
@@ -170,8 +172,9 @@ Chapter 1. Admin Guide
         4.24. service_context_id_mcc(string)
         4.25. service_context_id_release(string)
         4.26. custom_user_avp (avp string)
-        4.27. vendor_specific_chargeinfo (int)
-        4.28. vendor_specific_id (int)
+        4.27. app_provided_party_avp (avp string)
+        4.28. vendor_specific_chargeinfo (int)
+        4.29. vendor_specific_id (int)
 
    5. Functions
 
@@ -372,8 +375,9 @@ Chapter 1. Admin Guide
    4.24. service_context_id_mcc(string)
    4.25. service_context_id_release(string)
    4.26. custom_user_avp (avp string)
-   4.27. vendor_specific_chargeinfo (int)
-   4.28. vendor_specific_id (int)
+   4.27. app_provided_party_avp (avp string)
+   4.28. vendor_specific_chargeinfo (int)
+   4.29. vendor_specific_id (int)
 
 4.1. hash_size(int)
 
@@ -726,7 +730,22 @@ modparam("ims_charging", "service_context_id_release", "262")
 modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
 ...
 
-4.27. vendor_specific_chargeinfo (int)
+4.27. app_provided_party_avp (avp string)
+
+   When this parameter is set and the contents of the AVP is not empty, an
+   Application-Provided-Called Party-Address AVP will be addedd to
+   charging related requests. This is required for special cases e.g.
+   related to roaming for some diameter server.
+
+   Default value: if not set, the
+   Application-Provided-Called-Party-Address AVP will be not set.
+
+   Example 1.27. app_provided_party_avpparameter usage
+...
+modparam("ims_charging", "app_provided_party_avp", "$avp(app_user)")
+...
+
+4.28. vendor_specific_chargeinfo (int)
 
    This parameter can be used to activate or deactivate the addition of
    Vendor-Specific-Termination-Clause and
@@ -735,19 +754,19 @@ modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
 
    Default value is "0" (deactivated).
 
-   Example 1.27. vendor_specific_chargeinfoparameter usage
+   Example 1.28. vendor_specific_chargeinfoparameter usage
 ...
 modparam("ims_charging", "vendor_specific_chargeinfo", 1)
 ...
 
-4.28. vendor_specific_id (int)
+4.29. vendor_specific_id (int)
 
    To set the ID of the Vendor-Specific information, not implemented right
    now.
 
    Default value is "10".
 
-   Example 1.28. vendor_specific_idparameter usage
+   Example 1.29. vendor_specific_idparameter usage
 ...
 modparam("ims_charging", "vendor_specific_id", 10)
 ...
@@ -779,7 +798,7 @@ outgoing_trunk_id)
    This method is executed asynchronously. See example on how to retrieve
    return value.
 
-   Example 1.29. Ro_CCR
+   Example 1.30. Ro_CCR
 ...
   xlog("L_DBG","Sending initial CCR Request for call\n");
     Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
@@ -815,7 +834,7 @@ n");
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
-   Example 1.30. Ro_set_session_id_avp
+   Example 1.31. Ro_set_session_id_avp
 ...
             Ro_set_session_id_avp();
             xlog("L_DBG","Ro session AVP has been set: $avp(ro_session_id)\n");
