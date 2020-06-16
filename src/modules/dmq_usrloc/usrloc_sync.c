@@ -58,6 +58,7 @@ extern int _dmq_usrloc_batch_msg_size;
 extern int _dmq_usrloc_batch_size;
 extern int _dmq_usrloc_batch_usleep;
 extern str _dmq_usrloc_domain;
+extern int _dmq_usrloc_delete;
 
 static int add_contact(str aor, ucontact_info_t* ci)
 {
@@ -815,7 +816,9 @@ void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 				usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
 				break;
 			case UL_CONTACT_DELETE:
-				usrloc_dmq_send_contact(ptr, aor, DMQ_RM, 0);
+				if (_dmq_usrloc_delete >= 1) {
+					usrloc_dmq_send_contact(ptr, aor, DMQ_RM, 0);
+				}
 				break;
 			case UL_CONTACT_EXPIRE:
 				//usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE);

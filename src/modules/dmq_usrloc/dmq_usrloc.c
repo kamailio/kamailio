@@ -42,6 +42,7 @@ int _dmq_usrloc_batch_msg_contacts = 1;
 int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
+int _dmq_usrloc_delete = 1;
 
 usrloc_api_t dmq_ul;
 
@@ -56,6 +57,7 @@ static param_export_t params[] = {
 	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
 	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
+	{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete},
 	{0, 0, 0}
 };
 
