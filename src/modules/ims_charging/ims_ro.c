@@ -35,6 +35,7 @@
 #include "ims_charging_stats.h"
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
+static pv_spec_t *app_provided_party_avp;	/*!< AVP for app_provided_party setting */
 
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
@@ -77,6 +78,11 @@ void init_custom_user(pv_spec_t *custom_user_avp_p)
     custom_user_avp = custom_user_avp_p;
 }
 
+void init_app_provided_party(pv_spec_t *app_provided_party_avp_p)
+{
+    app_provided_party_avp = app_provided_party_avp_p;
+}
+
 /*!
  * \brief Return the custom_user for a record route
  * \param req SIP message
@@ -98,6 +104,29 @@ static int get_custom_user(struct sip_msg *req, str *custom_user) {
 
 	return -1;
 }
+
+/*!
+ * \brief Return the Application-Provided-Called-Party-Address
+ * \param req SIP message
+ * \param address to be returned
+ * \return <0 for failure
+ */
+static int get_app_provided_party(struct sip_msg *req, str *address) {
+	pv_value_t pv_val;
+
+	if (app_provided_party_avp) {
+		if ((pv_get_spec_value(req, app_provided_party_avp, &pv_val) == 0)
+				&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len > 0)) {
+			address->s = pv_val.rs.s;
+			address->len = pv_val.rs.len;
+			return 0;
+		}
+		LM_DBG("invalid AVP value, no Application-Provided-Called-Party-Address\n");
+	}
+
+	return -1;
+}
+
 
 void credit_control_session_callback(int event, void* session) {
     switch (event) {
@@ -447,7 +476,8 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     str user_name/* ={0,0}*/, sip_method = {0, 0}, event = {0, 0};
     uint32_t expires = 0;
     str callid = {0, 0}, to_uri = {0, 0}, from_uri = {0, 0},
-    icid = {0, 0}, orig_ioi = {0, 0}, term_ioi = {0, 0};
+    icid = {0, 0}, orig_ioi = {0, 0}, term_ioi = {0, 0},
+    app_provided_party = {0, 0};
 
     event_type_t * event_type = 0;
     ims_information_t * ims_info = 0;
@@ -478,8 +508,12 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
+    if (get_app_provided_party(req, &app_provided_party) == -1) {
+        LM_DBG("no valid Application-Provided-Called-Party-Address AVP provided\n");
+    }
+
     if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid,
-            &orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id, pani)))
+            &orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id, pani, &app_provided_party)))
         goto error;
     LM_DBG("created IMS information\n");
     event_type = 0;
@@ -586,7 +620,8 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
         goto error;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity,
-            &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, &ro_session->pani)))
+            &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id,
+            &ro_session->pani, &ro_session->app_provided_party)))
         goto error;
 
     LM_DBG("created IMS information\n");
@@ -859,7 +894,8 @@ void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, 
         goto error0;
 
     if (!(ims_info = new_ims_information(event_type, time_stamps, &ro_session->callid, &ro_session->callid, &ro_session->asserted_identity,
-            &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id, &ro_session->pani)))
+            &ro_session->called_asserted_identity, 0, 0, 0, ro_session->direction, &ro_session->incoming_trunk_id, &ro_session->outgoing_trunk_id,
+            &ro_session->pani, &ro_session->app_provided_party)))
         goto error0;
 
     event_type = 0;

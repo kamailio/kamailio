@@ -58,6 +58,7 @@ struct ro_session {
     str incoming_trunk_id;
     str outgoing_trunk_id;
     str pani;
+    str app_provided_party;
     unsigned int hop_by_hop;
     struct ro_tl ro_tl;
     unsigned int reserved_secs;

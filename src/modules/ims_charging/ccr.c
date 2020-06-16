@@ -176,6 +176,15 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
         if (!cdp_avp->epcapp.add_Cause_Code(&aList2, *(x->cause_code)))
             goto error;
 
+    if (x->app_provided_party) {
+        if (!cdp_avp->epcapp.add_Application_Provided_Called_Party_Address(&aList, *(x->app_provided_party),0))
+            goto error;
+        if (!cdp_avp->epcapp.add_Application_Server_Information(&aList2, &aList, 0))
+            goto error;
+        cdp_avp->cdp->AAAFreeAVPList(&aList);
+        aList.head = aList.tail = 0;
+    }
+
     if (!cdp_avp->epcapp.add_IMS_Information(avp_list, &aList2, AVP_FREE_DATA))//TODO check why not DONT FREE DATA
         goto error;
 

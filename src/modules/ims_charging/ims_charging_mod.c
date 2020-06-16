@@ -66,7 +66,9 @@ client_ro_cfg cfg = { str_init(""),
 };
 
 static str custom_user_spec = {NULL, 0};
+static str app_provided_party_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
+pv_spec_t app_provided_party_avp;
 
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 struct cdp_binds cdpb;
@@ -138,6 +140,7 @@ static param_export_t params[] = {
 		{ "vendor_specific_chargeinfo",		INT_PARAM,	&vendor_specific_chargeinfo		}, /* VSI for extra charing info in Ro */
 		{ "vendor_specific_id",		INT_PARAM,			&vendor_specific_id		}, /* VSI for extra charing info in Ro */
 		{ "custom_user_avp",		PARAM_STR,			&custom_user_spec},
+		{ "app_provided_party_avp",	PARAM_STR,			&app_provided_party_spec},
 		{ 0, 0, 0 }
 };
 
@@ -188,7 +191,19 @@ int fix_parameters() {
 		}
 	}
 
+	if (app_provided_party_spec.s) {
+		if (pv_parse_spec(&app_provided_party_spec, &app_provided_party_avp) == 0
+				&& (app_provided_party_avp.type != PVT_AVP)) {
+			LM_ERR("malformed or non AVP app_provided_party "
+					"AVP definition in '%.*s'\n",
+					app_provided_party_spec.len,
+					app_provided_party_spec.s);
+			return -1;
+		}
+	}
+
 	init_custom_user(custom_user_spec.s ? &custom_user_avp : 0);
+	init_app_provided_party(app_provided_party_spec.s ? &app_provided_party_avp : 0);
 
 	return 1;
 }
