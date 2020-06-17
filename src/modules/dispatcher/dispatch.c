@@ -2248,7 +2248,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 						maxRehash--;
 					}
 					while (( maxRehash > 0 ) && ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) );
-					if ( 0 == maxRehash )  /* Acts as if no rehash had been done */
+					if ( ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) )  /* Acts as if no rehash had been done */
 					{
 					  i = (i + 1) % idx->nr;
 					}
