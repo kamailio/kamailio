@@ -107,6 +107,7 @@ extern int ds_ping_latency_stats;
 extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
+extern int ds_rehash_max;
 extern int ds_load_mode;
 
 static db_func_t ds_dbf;
@@ -2099,30 +2100,40 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	LM_DBG("set [%d]\n", rstate->setid);
 
 	hash = 0;
+	int maxRehash = 0;
+	int fullHash;
 	switch(rstate->alg) {
 		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHFROMURI: /* 1 - hash from-uri */
 			if(ds_hash_fromuri(msg, &hash) != 0) {
 				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHTOURI: /* 2 - hash to-uri */
 			if(ds_hash_touri(msg, &hash) != 0) {
 				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_HASHRURI: /* 3 - hash r-uri */
 			if(ds_hash_ruri(msg, &hash) != 0) {
 				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
 			hash = idx->last;
@@ -2145,6 +2156,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					LM_ERR("can't get authorization hash\n");
 					return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_RANDOM: /* 6 - random selection */
 			hash = kam_rand();
@@ -2154,6 +2167,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				LM_ERR("can't get PV hash\n");
 				return -1;
 			}
+			maxRehash = ds_rehash_max;
+			fullHash = hash;
 			break;
 		case DS_ALG_SERIAL: /* 8 - use always first entry */
 			hash = 0;
@@ -2215,7 +2230,39 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		if(ds_use_default != 0 && idx->nr != 1)
 			i = (i + 1) % (idx->nr - 1);
 		else
-			i = (i + 1) % idx->nr;
+			{  /* Should try to rehash, and at most maxRehash times*/
+				if ( maxRehash < 0 ) maxRehash = idx->nr;
+				if ( maxRehash > 0 )
+				{
+					char fullhashStr[3*sizeof(int) + 2];
+					do
+					{
+						str cid;
+						cid.len = snprintf (fullhashStr, sizeof(fullhashStr), "%d", fullHash );
+						if ( cid.len >= sizeof(fullhashStr))
+						{
+							cid.len = sizeof(fullhashStr);
+						}
+						cid.s = fullhashStr;
+						fullHash = ds_get_hash(&cid, NULL);
+						maxRehash--;
+					}
+					while (( maxRehash > 0 ) && ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) );
+					if ( 0 == maxRehash )  /* Acts as if no rehash had been done */
+					{
+					  i = (i + 1) % idx->nr;
+					}
+					else
+					{
+						i = fullHash % idx->nr;
+					}
+					
+				}
+				else
+				{
+					i = (i + 1) % idx->nr;
+				}
+			}
 		if(i == hash) {
 			/* back to start -- looks like no active dst */
 			if(ds_use_default != 0) {

@@ -121,6 +121,7 @@ int ds_timer_mode = 0;
 int ds_attrs_none = 0;
 int ds_load_mode = 0;
 
+int ds_rehash_max = -1; /* Number of times trying rehash, to find an active destination. 0 : disable, -1 : Total number of destinations */
 str ds_outbound_proxy = STR_NULL;
 
 /* tm */
@@ -289,6 +290,7 @@ static param_export_t params[]={
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
 	{"reload_delta",       PARAM_INT, &ds_reload_delta },
+	{"ds_rehash_max",      PARAM_INT, &ds_rehash_max },
 	{0,0,0}
 };
 
