@@ -141,6 +141,8 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE},
 	{"get_uri_param",      (cmd_function)get_uri_param,     2, fixup_get_uri_param,
 		free_fixup_get_uri_param, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"uri_param_rm",       (cmd_function)w_uri_param_rm,    1, fixup_spve_null,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
@@ -585,6 +587,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("uri_param_value"),
 		SR_KEMIP_INT, ki_uri_param_value,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("uri_param_rm"),
+		SR_KEMIP_INT, ki_uri_param_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("is_tel_number"),
