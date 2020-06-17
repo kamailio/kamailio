@@ -2219,50 +2219,49 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 
 	LM_DBG("using alg [%d] hash [%u]\n", rstate->alg, hash);
 
+	int listSize;
 	if(ds_use_default != 0 && idx->nr != 1)
-		hash = hash % (idx->nr - 1);
+		listSize = idx->nr - 1;
 	else
-		hash = hash % idx->nr;
+		listSize = idx->nr;
+	hash = hash % listSize;
 	i = hash;
 
-	/* if selected address is inactive, find next active */
-	while(ds_skip_dst(idx->dlist[i].flags)) {
-		if(ds_use_default != 0 && idx->nr != 1)
-			i = (i + 1) % (idx->nr - 1);
+	if ( maxRehash < 0 ) {
+		if(ds_use_default != 0 ) 
+			maxRehash = listSize - 1;
 		else
-			{  /* Should try to rehash, and at most maxRehash times*/
-				if ( maxRehash < 0 ) maxRehash = idx->nr;
-				if ( maxRehash > 0 )
+			maxRehash = listSize;
+	}
+	
+	/* if selected address is inactive, find one active */
+
+	while(ds_skip_dst(idx->dlist[i].flags)) {
+ 		/* if alg was a hash, it should try to rehash first, and at most maxRehash times*/
+		if ( maxRehash > 0 ) {
+			char fullhashStr[3*sizeof(int) + 2];
+			do
+			{
+				str cid;
+				cid.len = snprintf (fullhashStr, sizeof(fullhashStr), "%d", fullHash );
+				if ( cid.len >= sizeof(fullhashStr))
 				{
-					char fullhashStr[3*sizeof(int) + 2];
-					do
-					{
-						str cid;
-						cid.len = snprintf (fullhashStr, sizeof(fullhashStr), "%d", fullHash );
-						if ( cid.len >= sizeof(fullhashStr))
-						{
-							cid.len = sizeof(fullhashStr);
-						}
-						cid.s = fullhashStr;
-						fullHash = ds_get_hash(&cid, NULL);
-						maxRehash--;
-					}
-					while (( maxRehash > 0 ) && ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) );
-					if ( ds_skip_dst(idx->dlist[fullHash % idx->nr].flags ) )  /* Acts as if no rehash had been done */
-					{
-					  i = (i + 1) % idx->nr;
-					}
-					else
-					{
-						i = fullHash % idx->nr;
-					}
-					
+					cid.len = sizeof(fullhashStr);
 				}
-				else
-				{
-					i = (i + 1) % idx->nr;
-				}
+				cid.s = fullhashStr;
+				fullHash = ds_get_hash(&cid, NULL);
+				maxRehash--;
 			}
+			while (( maxRehash > 0 ) && ds_skip_dst(idx->dlist[fullHash % listSize].flags ) );
+			if ( ds_skip_dst(idx->dlist[fullHash % listSize].flags ) )  /* Acts as if no rehash had been done */
+			   /* original implementaion : find next active */
+				i = (i + 1) % listSize;			
+			else 
+				i = fullHash % listSize;
+		}
+		else /* original implementaion : find next active */
+			i = (i + 1) % listSize;			
+
 		if(i == hash) {
 			/* back to start -- looks like no active dst */
 			if(ds_use_default != 0) {
