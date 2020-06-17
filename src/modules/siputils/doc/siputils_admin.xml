@@ -505,6 +505,34 @@ get_uri_param("nat", "$var(nat)");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title id="siputils.f.uri_param_rm">
+		<function moreinfo="none">uri_param_rm(param)</function>
+		</title>
+		<para>
+		Remove parameter from Request URI.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>uri_param_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param_rm("param1")) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siputils.f.tel2sip">
 		<title>
 		<function moreinfo="none">tel2sip(uri, hostpart, result)</function>
