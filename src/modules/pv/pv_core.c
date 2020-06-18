@@ -188,9 +188,9 @@ int pv_get_msgtype(struct sip_msg *msg, pv_param_t *param,
 		return -1;
 
 	if(msg->first_line.type == SIP_REQUEST)
-		type = 1;
+		type = SIP_REQUEST; /* 1 */
 	else if(msg->first_line.type == SIP_REPLY)
-		type = 2;
+		type = SIP_REPLY; /* 2 */
 
 	return pv_get_uintval(msg, param, res, type);
 }
