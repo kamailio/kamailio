@@ -449,6 +449,34 @@ if (uri_param("param1","value1")) {
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title id="siputils.f.uri_param_any">
+		<function moreinfo="none">uri_param_any(param)</function>
+		</title>
+		<para>
+		Find if Request URI has a given parameter with or without value.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name to look for.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>uri_param_any</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param_any("param1")) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siputils.f.add_uri_param">
 		<title>
 		<function moreinfo="none">add_uri_param(param)</function>
