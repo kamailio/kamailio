@@ -137,6 +137,8 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"uri_param",          (cmd_function)uri_param_2,       2, fixup_spve_spve,
 		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"uri_param_any",      (cmd_function)w_uri_param_any,   1, fixup_spve_null,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_uri_param",      (cmd_function)add_uri_param,     1, fixup_str_null,
 		0, REQUEST_ROUTE},
 	{"get_uri_param",      (cmd_function)get_uri_param,     2, fixup_get_uri_param,
@@ -587,6 +589,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("uri_param_value"),
 		SR_KEMIP_INT, ki_uri_param_value,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("uri_param_any"),
+		SR_KEMIP_INT, ki_uri_param_any,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("uri_param_rm"),

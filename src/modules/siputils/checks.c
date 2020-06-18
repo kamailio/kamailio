@@ -290,6 +290,73 @@ int ki_uri_param(sip_msg_t *_msg, str *sparam)
 }
 
 /*
+ * Check if param with or without value exists in Request URI
+ */
+int ki_uri_param_any(sip_msg_t *msg, str *sparam)
+{
+	str t;
+	str ouri;
+	sip_uri_t puri;
+	param_hooks_t hooks;
+	param_t* params, *pit;
+
+	if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
+		ouri = msg->first_line.u.request.uri;
+		if(ouri.s == NULL) {
+			LM_ERR("r-uri not found\n");
+			return -1;
+		}
+	} else {
+		ouri = msg->new_uri;
+	}
+
+	if (parse_uri(ouri.s, ouri.len, &puri) < 0) {
+		LM_ERR("failed to parse r-uri [%.*s]\n", ouri.len, ouri.s);
+		return -1;
+	}
+	if(puri.sip_params.len>0) {
+		t = puri.sip_params;
+	} else if(puri.params.len>0) {
+		t = puri.params;
+	} else {
+		LM_DBG("no uri params [%.*s]\n", ouri.len, ouri.s);
+		return -1;
+	}
+
+	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
+	}
+
+	for (pit = params; pit; pit = pit->next) {
+		if ((pit->name.len == sparam->len)
+				&& (strncasecmp(pit->name.s, sparam->s, sparam->len) == 0)) {
+			break;
+		}
+	}
+	if(pit==NULL) {
+		free_params(params);
+		return -1;
+	}
+
+	free_params(params);
+	return 1;
+}
+
+/*
+ * Find if Request URI has a given parameter with or without value
+ */
+int w_uri_param_any(struct sip_msg* _msg, char* _param, char* _str2)
+{
+	str sparam;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	return ki_uri_param_any(_msg, &sparam);
+}
+
+/*
  * Adds a new parameter to Request URI
  */
 int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
