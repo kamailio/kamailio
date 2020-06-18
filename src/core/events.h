@@ -43,6 +43,7 @@
 
 typedef struct sr_event_param {
 	void *data;
+	str obuf;
 	receive_info_t* rcv;
 	dest_info_t *dst;
 	sip_msg_t *req;
