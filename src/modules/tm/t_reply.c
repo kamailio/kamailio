@@ -582,7 +582,8 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					_tm_local_response_sent_lookup = 1;
 				}
 			}
-			if ((rt >= 0 && event_rt.rlist[rt] != NULL) || (keng != NULL)) {
+			if ((rt >= 0 && event_rt.rlist[rt] != NULL) || (keng != NULL)
+					|| sr_event_enabled(SREV_SIP_REPLY_OUT)) {
 				if (likely(build_sip_msg_from_buf(&pmsg, buf, len,
 								inc_msg_no()) == 0)) {
 					struct onsend_info onsnd_info;
@@ -591,14 +592,28 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					onsnd_info.send_sock=trans->uas.response.dst.send_sock;
 					onsnd_info.buf=buf;
 					onsnd_info.len=len;
-					p_onsend=&onsnd_info;
 
+					if(sr_event_enabled(SREV_SIP_REPLY_OUT)) {
+						sr_event_param_t evp;
+						memset(&evp, 0, sizeof(sr_event_param_t));
+						evp.obuf.s = buf;
+						evp.obuf.len = len;
+						evp.rcv = &trans->uas.request->rcv;
+						evp.dst = &trans->uas.response.dst;
+						evp.req = trans->uas.request;
+						evp.rpl = &pmsg;
+						evp.rplcode = code;
+						evp.mode = 2;
+						sr_event_exec(SREV_SIP_REPLY_OUT, &evp);
+					}
+
+					p_onsend=&onsnd_info;
 					backup_rt = get_route_type();
 					set_route_type(LOCAL_ROUTE);
 					init_run_actions_ctx(&ctx);
-					if(keng == NULL) {
+					if(rt >= 0 && event_rt.rlist[rt] != NULL) {
 						run_top_route(event_rt.rlist[rt], &pmsg, 0);
-					} else {
+					} else if(keng != NULL) {
 						bctx = sr_kemi_act_ctx_get();
 						sr_kemi_act_ctx_set(&ctx);
 						(void)sr_kemi_route(keng, &pmsg, EVENT_ROUTE,
