@@ -42,6 +42,8 @@ typedef struct onsend_info{
 	char* buf;                      /* outgoing buffer */
 	int len;                        /* outgoing buffer len */
 	sip_msg_t *msg;                 /* original sip msg struct */
+	int rmode;                      /* runtime execution mode */
+	int rplcode;                    /* reply code */
 } onsend_info_t;
 
 extern onsend_info_t* p_onsend;
