@@ -75,7 +75,6 @@
 #endif
 
 int _last_returned_code  = 0;
-struct onsend_info* p_onsend=0; /* onsend route send info */
 
 /* current action executed from config file */
 static cfg_action_t *_cfg_crt_action = 0;
