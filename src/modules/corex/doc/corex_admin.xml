@@ -150,6 +150,26 @@ modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400:
 </programlisting>
 	    </example>
 	</section>
+	<section id="corex.p.evcb_reply_out">
+	    <title><varname>evcb_reply_out</varname> (string)</title>
+	    <para>
+		Name of KEMI callback function to be executed instead of
+		event_route[corex:reply-out].
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>evcb_reply_out</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "evcb_reply_out", "ksr_corex_reply_out")
+...
+</programlisting>
+	    </example>
+	</section>
     <section id="corex.p.nio_intercept">
         <title><varname>nio_intercept</varname> (int)</title>
         <para>
@@ -953,7 +973,7 @@ event_route[dispatcher:dst-down] {
 
     <section>
     <title>Event Routes</title>
-    <section id="async.evr.network_io">
+    <section id="corex.evr.network_msg">
         <title>
         <function moreinfo="none">event_route[network:msg]</function>
         </title>
@@ -979,6 +999,14 @@ event_route[dispatcher:dst-down] {
             decryption, compression/decompression etc. of the message sent to or 
 			received from remote host. Therefore, except text operations,
 			no module functions or pseudo variables are available in this event route.
+        </para>
+    </section>
+    <section id="corex.evr.reply_out">
+        <title>
+        <function moreinfo="none">event_route[corex:reply-out]</function>
+        </title>
+        <para>
+            Event route block to be executed when a SIP reply is sent out.
         </para>
     </section>
     </section>
