@@ -30,6 +30,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/ut.h"
 #include "../../core/kemi.h"
+#include "../../core/events.h"
 #include "../../core/utils/sruid.h"
 #include "../../core/timer_proc.h"
 
@@ -57,6 +58,8 @@ static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2);
 static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2);
 static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2);
 static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2);
+
+static int dlgs_sip_reply_out(sr_event_param_t *evp);
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -124,6 +127,8 @@ static int mod_init(void)
 	if(sr_wtimer_add(dlgs_ht_timer, NULL, _dlgs_timer_interval) < 0) {
 		return -1;
 	}
+
+	sr_event_register_cb(SREV_SIP_REPLY_OUT, dlgs_sip_reply_out);
 
 	if(dlgs_init()<0) {
 		return -1;
@@ -259,6 +264,17 @@ static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2)
 static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2)
 {
 	return 1;
+}
+
+/**
+ *
+ */
+static int dlgs_sip_reply_out(sr_event_param_t *evp)
+{
+	if(evp->rpl!=NULL) {
+		dlgs_update_item(evp->rpl);
+	}
+	return 0;
 }
 
 /**
