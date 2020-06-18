@@ -31,6 +31,8 @@
 #include "../../core/pvar.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/events.h"
+#include "../../core/onsend.h"
 #include "../../core/dns_cache.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_param.h"
@@ -69,6 +71,8 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 static int fixup_file_op(void** param, int param_no);
 
 static sr_kemi_xval_t _sr_kemi_corex_xval = {0};
+static str corex_evcb_reply_out = STR_NULL;
+static int corex_evrt_reply_out_no = -1;
 
 int corex_alias_subdomains_param(modparam_t type, void *val);
 int corex_dns_cache_param(modparam_t type, void *val);
@@ -76,6 +80,8 @@ int corex_dns_cache_param(modparam_t type, void *val);
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
+
+static int corex_sip_reply_out(sr_event_param_t *evp);
 
 static pv_export_t mod_pvs[] = {
 	{ {"cfg", (sizeof("cfg")-1)}, PVT_OTHER, pv_get_cfg, 0,
@@ -151,6 +157,7 @@ static param_export_t params[]={
 	{"nio_intercept",	INT_PARAM, &nio_intercept},
 	{"nio_min_msg_len",	INT_PARAM, &nio_min_msg_len},
 	{"nio_msg_avp",		PARAM_STR, &nio_msg_avp_param},
+	{"evcb_reply_out",	PARAM_STR, &corex_evcb_reply_out},
 
 	{0, 0, 0}
 };
@@ -193,6 +200,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	corex_evrt_reply_out_no = route_lookup(&event_rt, "corex:reply-out");
+
+	if(corex_evrt_reply_out_no>=0 || corex_evcb_reply_out.len>0) {
+		sr_event_register_cb(SREV_SIP_REPLY_OUT, corex_sip_reply_out);
+	}
 	return 0;
 }
 
@@ -1089,6 +1101,25 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2)
 	}
 	return -1;
 }
+
+/**
+ *
+ */
+static int corex_sip_reply_out(sr_event_param_t *evp)
+{
+	onsend_info_t sndinfo;
+	str evname = str_init("corex:reply-out");
+
+	memset(&sndinfo, 0, sizeof(onsend_info_t));
+
+	if(corex_evrt_reply_out_no>=0 || corex_evcb_reply_out.len>0) {
+		run_onsend_evroute(&sndinfo, corex_evrt_reply_out_no,
+				&corex_evcb_reply_out, &evname);
+	}
+
+	return 0;
+}
+
 
 /**
  *
