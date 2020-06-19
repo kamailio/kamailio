@@ -277,15 +277,18 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novaria
 
 	if ( *_e != 0 )
 	{
-		if (!novariation) {
-			*_e = randomize_expires( *_e, range );
-		}
-
 		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
 			if(reg_min_expires_mode) {
 				rerrno = R_LOW_EXP;
 				return;
 			} else {
+				*_e = cfg_get(registrar, registrar_cfg, min_expires);
+			}
+		}
+
+		if (!novariation) {
+			*_e = randomize_expires( *_e, range );
+			if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
 				*_e = cfg_get(registrar, registrar_cfg, min_expires);
 			}
 		}
