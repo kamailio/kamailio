@@ -3,16 +3,21 @@
 #parses the output of /usr/sbin/kamctl rpc app_python.api_list
 #
 #usage ./kemi_mock.py api.json > KSR.py
+#or for python 3.2
+#./kemi_mock.py api.json --no-union > KSR.py
 
 import json
 import sys
 
 from collections import defaultdict
 
+#python 3.2 doesnt support types.Union
+noUnion = False
 
 def printMocReturn(module_name, func, indent):
     param_names = []
     param_list = []
+    param_signature = ""
     if (func['params'] != 'none'):
         param_list = func['params'].split(", ")
     i = 0
@@ -21,17 +26,19 @@ def printMocReturn(module_name, func, indent):
         param_names.append("param"+str(i))
         i = i + 1
 
+    param_signature = ", ".join(param_names)
+
     prefix = ""
     for i in range(indent):
         prefix = prefix+"\t"
-
-    print(prefix + "if \""+module_name+"\" not in _mock_data:")
-    printDefaultReturn(func, indent+1)
 
     print(prefix + "if \""+func['name']+"\" not in _mock_data['"+module_name+"']:")
     printDefaultReturn(func, indent+1)
 
     print(prefix + "node = _mock_data['"+module_name+"']['"+func['name']+"']")
+
+    print(prefix + "if isinstance(node, types.FunctionType):")
+    print(prefix + "\treturn node("+param_signature+")")
 
     for param in param_names:
         print(prefix + "if not isinstance(node, dict):")
@@ -95,7 +102,10 @@ def printFunction(module_name, func, indent):
     elif (func['ret'] == "str"):
         print(prefix + "def " + func['name'] + "(" + params + ") -> int:")
     elif(func['ret'] == "xval"):
-        print(prefix + "def " + func['name'] +"("+params+") -> Union[int,str]:")
+        if noUnion:
+            print(prefix + "def " + func['name'] + "(" + params + "):")
+        else:
+            print(prefix + "def " + func['name'] +"("+params+") -> Union[int,str]:")
     else:
         print(prefix + "def " + func['name'] +"("+params+"):")
 
@@ -110,7 +120,15 @@ if len(sys.argv) < 2:
     print("Please specify the json file to parse")
     sys.exit(-1)
 
-print("from typing import Union")
+if len(sys.argv) > 2:
+    for i in range(2,len(sys.argv)):
+        if sys.argv[i] == "--no-union":
+            noUnion = True
+
+if not noUnion:
+    print("from typing import Union")
+
+print("import types")
 print("_mock_data={}")
 
 with open(sys.argv[1]) as f:
@@ -170,7 +188,10 @@ for func in classes['']:
 
 for module_name in classes.keys():
     if module_name != "":
-        print(module_name + "="+module_name.capitalize()+"()")
+        print(module_name + " = "+module_name.capitalize()+"()")
 
+print("")
 
+for module_name in classes.keys():
+    print("_mock_data['" + module_name + "'] = {}")
 
