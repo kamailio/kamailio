@@ -294,5 +294,30 @@ event_route[sipdump:msg] {
 	</section>
 	</section>
 
+	<section>
+	<title>Usage Remarks</title>
+	<section id="sipdump.x.usage-remarks">
+		<para>
+			Note that the files with the SIP traffic and metadata are not deleted
+			by the module itself. They have to be deleted explicitely by other
+			means, such as cron.d job, or using rtimer and exec modules. Next
+			examples shows how to delete the files older than 2 days using
+			&kamailio; modules.
+		</para>
+<programlisting  format="linespecific">
+...
+loadmodule "rtimer.so
+loadmodule "exec.so
+...
+modparam("rtimer", "timer", "name=tjobs;interval=300;mode=1;")
+modparam("rtimer", "exec", "timer=tjobs;route=TCLEAN")
+...
+route[TCLEAN] {
+    exec_cmd("find /tmp -type f -name kamailio-sipdump-* -mtime +1 -delete &amp;");
+}
+...
+</programlisting>
+	</section>
+
 </chapter>
 
