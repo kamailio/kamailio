@@ -294,9 +294,8 @@ event_route[sipdump:msg] {
 	</section>
 	</section>
 
-	<section>
-	<title>Usage Remarks</title>
 	<section id="sipdump.x.usage-remarks">
+	<title>Usage Remarks</title>
 		<para>
 			Note that the files with the SIP traffic and metadata are not deleted
 			by the module itself. They have to be deleted explicitely by other
