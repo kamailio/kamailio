@@ -31,11 +31,11 @@ Daniel-Constantin Mierla
               3.4. auto_reconnect (integer)
               3.5. insert_delayed (integer)
               3.6. update_affected_found (integer)
+              3.7. opt_ssl_mode (integer)
 
-        4. opt_ssl_mode (integer)
-        5. Functions
-        6. Installation
-        7. Reading configuration from my.cnf
+        4. Functions
+        5. Installation
+        6. Reading configuration from my.cnf
 
    List of Examples
 
@@ -68,11 +68,11 @@ Chapter 1. Admin Guide
         3.4. auto_reconnect (integer)
         3.5. insert_delayed (integer)
         3.6. update_affected_found (integer)
+        3.7. opt_ssl_mode (integer)
 
-   4. opt_ssl_mode (integer)
-   5. Functions
-   6. Installation
-   7. Reading configuration from my.cnf
+   4. Functions
+   5. Installation
+   6. Reading configuration from my.cnf
 
 1. Overview
 
@@ -104,6 +104,7 @@ Chapter 1. Admin Guide
    3.4. auto_reconnect (integer)
    3.5. insert_delayed (integer)
    3.6. update_affected_found (integer)
+   3.7. opt_ssl_mode (integer)
 
 3.1. ping_interval (integer)
 
@@ -184,7 +185,7 @@ modparam("db_mysql", "insert_delayed", 1)
 modparam("db_mysql", "update_affected_found", 1)
 ...
 
-4. opt_ssl_mode (integer)
+3.7. opt_ssl_mode (integer)
 
    Control how the connection to MySQL server is done in regards to
    SSL/TLS. If set to 1, SSL/TLS mode is disabled.
@@ -208,11 +209,11 @@ modparam("db_mysql", "update_affected_found", 1)
 modparam("db_mysql", "opt_ssl_mode", 1)
 ...
 
-5. Functions
+4. Functions
 
    No function exported to be used from configuration file.
 
-6. Installation
+5. Installation
 
    Because it depends on an external library, the mysql module is not
    compiled and installed by default. You can use one of these options.
@@ -222,7 +223,7 @@ modparam("db_mysql", "opt_ssl_mode", 1)
      * - from command line use: 'make all include_modules="db_mysql"; make
        install include_modules="db_mysql"'.
 
-7. Reading configuration from my.cnf
+6. Reading configuration from my.cnf
 
    In order to take into account specific mysql client options, a my.cnf
    config group can be passed using the db_url module parameter. This is
