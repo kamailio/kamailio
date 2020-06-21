@@ -181,7 +181,6 @@ modparam("db_mysql", "update_affected_found", 1)
 </programlisting>
 		</example>
 	</section>
-	</section>
 	<section id="db_mysql.p.opt_ssl_mode">
 		<title><varname>opt_ssl_mode</varname> (integer)</title>
 		<para>
@@ -214,6 +213,7 @@ modparam("db_mysql", "opt_ssl_mode", 1)
 ...
 </programlisting>
 		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
