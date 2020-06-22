@@ -694,6 +694,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	if (bind(evapi_srv_sock, ai_res->ai_addr, ai_res->ai_addrlen) < 0) {
 		LM_ERR("cannot bind to local address and port [%s:%d]\n", laddr, lport);
 		close(evapi_srv_sock);
+		freeaddrinfo(ai_res);
 		return -1;
 	}
 	freeaddrinfo(ai_res);
