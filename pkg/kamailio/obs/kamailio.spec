@@ -1428,6 +1428,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.dialog
 %doc %{_docdir}/kamailio/modules/README.dispatcher
 %doc %{_docdir}/kamailio/modules/README.diversion
+%doc %{_docdir}/kamailio/modules/README.dlgs
 %doc %{_docdir}/kamailio/modules/README.dmq
 %doc %{_docdir}/kamailio/modules/README.domain
 %doc %{_docdir}/kamailio/modules/README.domainpolicy
@@ -1584,6 +1585,7 @@ fi
 %{_libdir}/kamailio/modules/dialog.so
 %{_libdir}/kamailio/modules/dispatcher.so
 %{_libdir}/kamailio/modules/diversion.so
+%{_libdir}/kamailio/modules/dlgs.so
 %{_libdir}/kamailio/modules/dmq.so
 %{_libdir}/kamailio/modules/domain.so
 %{_libdir}/kamailio/modules/domainpolicy.so
