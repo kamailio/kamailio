@@ -334,7 +334,7 @@ modparam("uac","credential","username:domain:password")
 				<title>Set <varname>auth_realm_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_realm_avp","$avp(i:10)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
 ...
 				</programlisting>
 			</example>
@@ -356,7 +356,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 				<title>Set <varname>auth_username_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_username_avp","$avp(i:11)")
+modparam("uac","auth_username_avp","$avp(auser)")
 ...
 				</programlisting>
 			</example>
@@ -378,7 +378,7 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 				<title>Set <varname>auth_password_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_password_avp","$avp(i:12)")
+modparam("uac","auth_password_avp","$avp(apasswd)")
 ...
 				</programlisting>
 			</example>
