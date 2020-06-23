@@ -115,6 +115,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	unsigned int state = 1;
 	srjson_t *vj;
 	int newdlg = 0;
+	dlg_entry_t *d_entry = NULL;
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
@@ -219,6 +220,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	dlg = dlg_get_by_iuid_mode(&iuid, 1);
 	if (dlg) {
 		LM_DBG("found dialog [%u:%u] at %p\n", iuid.h_entry, iuid.h_id, dlg);
+		d_entry = &(d_table->entries[dlg->h_entry]);
 		unref++;
 	}
 
@@ -396,9 +398,9 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		if(unref) {
 			dlg_unref(dlg, unref);
 		}
-		if(newdlg == 0) {
-			dlg_cell_unlock(dlg);
-		}
+	}
+	if(newdlg == 0 && d_entry!=NULL) {
+		dlg_unlock(d_table, d_entry);
 	}
 
 	srjson_DestroyDoc(&jdoc);
@@ -414,10 +416,8 @@ invalid2:
 	return 0;
 
 error:
-	if (dlg) {
-		if(newdlg == 0) {
-			dlg_cell_unlock(dlg);
-		}
+	if(newdlg == 0 && d_entry!=NULL) {
+		dlg_unlock(d_table, d_entry);
 	}
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_500_rpl;
