@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver 5.2.0
+%define ver 5.4.0
 %define rel dev1.0%{dist}
 
 %if 0%{?fedora}
@@ -238,11 +238,11 @@
 %endif
 
 
-Summary:    Kamailio (former OpenSER) - the Open Source SIP Server
+Summary:    Kamailio - the Open Source SIP Server
 Name:       %name
 Version:    %ver
 Release:    %rel
-Packager:   Peter Dunkley <peter@dunkley.me.uk>
+Packager:   Sergey Safarov <s.safarov@gmail.com>
 License:    GPL-2.0
 Group:      %{PKGGROUP}
 Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
@@ -271,11 +271,20 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
-BuildRequires:  bison, flex
+BuildRequires:  bison, flex, which, make, gcc, gcc-c++
 %if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
 %endif
+
+%if 0%{?rhel} || 0%{?centos_ver}
+%if 0%{?rhel} > 6 || 0%{?centos_ver} > 6
+BuildRequires:  pkgconfig
+%endif
+%else
+BuildRequires:  pkgconfig
+%endif
+
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
 BuildRequires:  shadow
