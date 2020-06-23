@@ -272,6 +272,7 @@ Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex
+BuildRequires:  which, make, gcc, gcc-c++
 %if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
