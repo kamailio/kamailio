@@ -327,7 +327,7 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 					return ret;
 				} else return 1;
 		case SREV_SIP_REPLY_OUT:
-				if(unlikely(_sr_events_list.net_data_in[0]!=0))
+				if(unlikely(_sr_events_list.sip_reply_out[0]!=0))
 				{
 					ret = 0;
 					for(i=0; i<SREV_CB_LIST_SIZE
