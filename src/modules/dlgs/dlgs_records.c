@@ -688,12 +688,15 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dSSSSuuu",
+			if(rpc->struct_add(th, "dSSSSSSSuuu",
 							"count", ++n,
 							"src", &it->src,
 							"dst", &it->dst,
 							"data", &it->data,
 							"ruid", &it->ruid,
+							"callid", &it->callid,
+							"ftag", &it->ftag,
+							"ttag", &it->ttag,
 							"ts_init", (unsigned int)it->ts_init,
 							"ts_answer", (unsigned int)it->ts_answer,
 							"state", it->state)<0) {
