@@ -1158,6 +1158,7 @@ static int ki_copy_avps(struct sip_msg* msg, str *name1, str *name2)
 	if((fname2 = avpops_parse_pvar(name2->s)) == NULL)
 	{
 		LM_ERR("unable to get pseudo-variable in param 2\n");
+		pkg_free(fname1);
 		return E_OUT_OF_MEM;
 	}
 	/* attr name is mandatory */
