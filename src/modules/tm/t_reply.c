@@ -630,7 +630,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			}
 
 		}
-		LM_DBG("reply sent out. buf=%p: %.20s..., shmem=%p: %.20s\n",
+		LM_DBG("reply sent out - buf=%p: %.20s... shmem=%p: %.20s\n",
 			buf, buf, rb->buffer, rb->buffer );
 	}
 	if (code>=200) {
@@ -2359,7 +2359,7 @@ int reply_received( struct sip_msg  *p_msg )
 	msg_status=p_msg->REPLY_STATUS;
 
 	uac=&t->uac[branch];
-	LM_DBG("org. status uas=%d, uac[%d]=%d local=%d is_invite=%d)\n",
+	LM_DBG("original status uas=%d, uac[%d]=%d local=%d is_invite=%d)\n",
 		t->uas.status, branch, uac->last_received,
 		is_local(t), is_invite(t));
 	last_uac_status=uac->last_received;
@@ -2476,7 +2476,7 @@ int reply_received( struct sip_msg  *p_msg )
 	p_msg->fwd_send_flags.blst_imask|=
 		uac->request.dst.send_flags.blst_imask & BLST_503;
 	/* processing of on_reply block */
-	if (onreply_route) {
+	if (onreply_route || sr_event_enabled(SREV_SIP_REPLY_OUT)) {
 		set_route_type(TM_ONREPLY_ROUTE);
 		/* transfer transaction flag to message context */
 		if (t->uas.request) {
@@ -2525,6 +2525,21 @@ int reply_received( struct sip_msg  *p_msg )
 			sr_kemi_act_ctx_set(bctx);
 		} else {
 			run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
+		}
+
+
+		if((!(ctx.run_flags&DROP_R_F)) && sr_event_enabled(SREV_SIP_REPLY_OUT)) {
+			sr_event_param_t evp;
+			memset(&evp, 0, sizeof(sr_event_param_t));
+			evp.obuf.s = p_msg->buf;
+			evp.obuf.len = p_msg->len;
+			evp.rcv = (t->uas.request)?&t->uas.request->rcv:0;
+			evp.dst = &t->uas.response.dst;
+			evp.req = t->uas.request;
+			evp.rpl = p_msg;
+			evp.rplcode = msg_status;
+			evp.mode = 2;
+			sr_event_exec(SREV_SIP_REPLY_OUT, &evp);
 		}
 
 		/* restore brach last_received as before executing onreply_route */
