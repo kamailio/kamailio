@@ -570,6 +570,15 @@ int dlgs_update_item(sip_msg_t *msg)
 						|| it->state==DLGS_STATE_PROGRESS) {
 					it->state = DLGS_STATE_ANSWERED;
 					it->ts_answer = tnow;
+					if(it->ttag.len<=0) {
+						to_body_t *tb;
+						tb = get_to(msg);
+						if(tb!=NULL && tb->tag_value.len>0
+								&& (tb->tag_value.len<DLGS_TOTAG_SIZE-1)) {
+							it->ttag.len = tb->tag_value.len;
+							memcpy(it->ttag.s, tb->tag_value.s, tb->tag_value.len);
+						}
+					}
 				}
 			} else if(rcode>=300) {
 				if(it->state==DLGS_STATE_INIT
