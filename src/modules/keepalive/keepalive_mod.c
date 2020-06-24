@@ -83,8 +83,8 @@ static param_export_t params[] = {
 	{"ping_interval", PARAM_INT, &ka_ping_interval},
 	{"destination", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)ka_mod_add_destination},
-	{"ping_from", PARAM_STRING,	&ka_ping_from},
-	{"delete_counter", PARAM_INT,	&ka_counter_del},
+	{"ping_from", PARAM_STR, &ka_ping_from},
+	{"delete_counter", PARAM_INT, &ka_counter_del},
 	{0, 0, 0}
 };
 
