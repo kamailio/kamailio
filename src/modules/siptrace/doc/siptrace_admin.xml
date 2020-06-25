@@ -632,6 +632,115 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 </programlisting>
                 </example>
         </section>
+	<section id="siptrace.p.methods_blacklist_auto">
+				<title><varname>methods_blacklist_auto</varname> (integer)</title>
+				<para>
+				The bitmask with internal SIP method ids to be ignored before mirroring 
+				traffic to a SIP capture server when <quote>trace_mode=1</quote>.
+				The ids for SIP requests are the same set inside parser/msg_parser.h 
+				for enum request_method.
+				</para>
+				<para>
+				The value of the parameter can be a bitwise OR of the following ids:
+					<itemizedlist>
+						<listitem>
+							<para><emphasis>1</emphasis> - INVITE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>2</emphasis> - CANCEL
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>4</emphasis> - ACK
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>8</emphasis> - BYE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>16</emphasis> - INFO
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>32</emphasis> - REGISTER
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>64</emphasis> - SUBSCRIBE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>128</emphasis> - NOTIFY
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>256</emphasis> - MESSAGE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>512</emphasis> - OPTIONS
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>1024</emphasis> - PRACK
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>2048</emphasis> - UPDATE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>4096</emphasis> - REFER
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>8192</emphasis> - PUBLISH
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>16384</emphasis> - KDMQ
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>32768</emphasis> - GET
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>65536</emphasis> - POST
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>131072</emphasis> - PUT
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>262144</emphasis> - DELETE
+							</para>
+						</listitem>
+						<listitem>
+							<para><emphasis>524288</emphasis> - OTHER (includes HTTP)
+							</para>
+						</listitem>
+					</itemizedlist>
+				</para>
+				<para>
+				The ids may be given in decimal or hexadecimal format.
+				</para>
+				<para>
+				Default value is <emphasis>0</emphasis> (all SIP methods are mirrored).
+				</para>
+				<example>
+				<title>Set <varname>methods_blacklist_auto</varname>
+				parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("siptrace", "methods_blacklist_auto", 16896)
+...
+</programlisting>
+				</example>
+        </section>
 	</section>
 
 	<section>

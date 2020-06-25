@@ -117,6 +117,8 @@ static void trace_free_info(void* trace_info);
 static int  trace_add_info_xavp(siptrace_info_t* info);
 static inline int trace_parse_raw_uri(siptrace_info_t* info);
 
+static int siptrace_blacklisted_method(siptrace_data_t *sto);
+
 int siptrace_net_data_recv(sr_event_param_t *evp);
 int siptrace_net_data_send(sr_event_param_t *evp);
 
@@ -126,6 +128,7 @@ int siptrace_net_data_send(sr_event_param_t *evp);
 
 static int _siptrace_init_mode = 0;
 static int _siptrace_mode = 0;
+static int methods_blacklist_auto = 0;
 
 
 static str db_url = str_init(DEFAULT_DB_URL);
@@ -254,6 +257,7 @@ static param_export_t params[] = {
 	{"trace_db_mode", INT_PARAM, &trace_db_mode},
 	{"trace_init_mode", PARAM_INT, &_siptrace_init_mode},
 	{"trace_mode", PARAM_INT, &_siptrace_mode},
+	{"methods_blacklist_auto", INT_PARAM, &methods_blacklist_auto},
 	{0, 0, 0}
 };
 /* clang-format on */
@@ -2017,6 +2021,48 @@ static void trace_free_info(void* trace_info)
 	shm_free(trace_info);
 }
 
+static int siptrace_blacklisted_method(siptrace_data_t *sto)
+{
+	sip_msg_t msg;
+
+	if(methods_blacklist_auto == 0) {
+		return -1;
+	}
+
+	if(sto == NULL || sto->body.s == NULL || sto->body.len <= 0) {
+		return -1;
+	}
+
+	if(sto->body.s && sto->body.len) {
+		memset(&msg, 0, sizeof(sip_msg_t));
+		msg.buf = sto->body.s;
+		msg.len = sto->body.len;
+		if(parse_msg(msg.buf, msg.len, &msg) != 0) {
+			LM_ERR("parse_msg failed\n");
+			return -1;
+		}
+	}
+
+	if(msg.first_line.type == SIP_REQUEST) {
+		if (msg.first_line.u.request.method_value & methods_blacklist_auto) {
+			free_sip_msg(&msg);
+			return 1;
+		}
+	} else {
+		if(parse_headers(&msg, HDR_CSEQ_F, 0) != 0 || msg.cseq == NULL) {
+			LM_ERR("cannot parse cseq header\n");
+			free_sip_msg(&msg);
+			return -1;
+		}
+		if(get_cseq(&msg)->method_id & methods_blacklist_auto) {
+			free_sip_msg(&msg);
+			return 1;
+		}
+	}
+	free_sip_msg(&msg);
+	return -1;
+}
+
 /**
  *
  */
@@ -2042,6 +2088,11 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
+
+	if(siptrace_blacklisted_method(&sto) >= 0) {
+		LM_DBG("blacklisted method\n");
+		return -1;
+	}
 
 	sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
 			siptrace_proto_name(nd->rcv->proto),
@@ -2156,6 +2207,11 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
+
+	if(siptrace_blacklisted_method(&sto) >= 0) {
+		LM_DBG("blacklisted method\n");
+		return -1;
+	}
 
 	if(unlikely(new_dst.send_sock == 0)) {
 		LM_WARN("no sending socket found\n");

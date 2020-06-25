@@ -22,9 +22,9 @@ Camille Oudot
 
    <camille.oudot@orange.com>
 
-   Copyright © 2010 asipto.com
+   Copyright (c) 2010 asipto.com
 
-   Copyright © 2006 voice-system.ro
+   Copyright (c) 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -62,6 +62,7 @@ Camille Oudot
               3.21. trace_init_mode (integer)
               3.22. trace_mode (integer)
               3.23. auth_key (integer)
+              3.24. methods_blacklist_auto (integer)
 
         4. Functions
 
@@ -100,10 +101,11 @@ Camille Oudot
    1.20. Set trace_init_mode parameter
    1.21. Set trace_mode parameter
    1.22. Set auth_key parameter
-   1.23. sip_trace() usage
-   1.24. sip_trace_mode() usage
-   1.25. hlog() usage
-   1.26. Send relayed ACK message
+   1.23. Set methods_blacklist_auto parameter
+   1.24. sip_trace() usage
+   1.25. sip_trace_mode() usage
+   1.26. hlog() usage
+   1.27. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -140,6 +142,7 @@ Chapter 1. Admin Guide
         3.21. trace_init_mode (integer)
         3.22. trace_mode (integer)
         3.23. auth_key (integer)
+        3.24. methods_blacklist_auto (integer)
 
    4. Functions
 
@@ -167,7 +170,7 @@ Chapter 1. Admin Guide
        configuration file. In this case the original message is processed
        along with it's corresponding transaction/dialog if certain flags
        are used.
-     * by setting “trace_mode” to mirror or store to db all traffic.
+     * by setting "trace_mode" to mirror or store to db all traffic.
 
    The tracing can be turned on/off using Kamailio RPC commands.
 
@@ -219,6 +222,7 @@ Chapter 1. Admin Guide
    3.21. trace_init_mode (integer)
    3.22. trace_mode (integer)
    3.23. auth_key (integer)
+   3.24. methods_blacklist_auto (integer)
 
 3.1. db_url (str)
 
@@ -235,7 +239,7 @@ modparam("siptrace", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Name of the table where to store the SIP messages.
 
-   Default value is “sip_trace”.
+   Default value is "sip_trace".
 
    Example 1.2. Set table parameter
 ...
@@ -267,7 +271,7 @@ modparam("siptrace", "trace_on", 1)
 3.5. traced_user_avp (str)
 
    The name of the AVP storing the SIP URI of the traced user. If the AVP
-   is set, messages are stored in database table and the “traced_user”
+   is set, messages are stored in database table and the "traced_user"
    column is filled with AVP's value. You can store the message many times
    for many users by having multiple values for this AVP.
 
@@ -281,10 +285,10 @@ modparam("siptrace", "traced_user_avp", "$avp(user)")
 3.6. trace_table_avp (str)
 
    The name of the AVP storing the name of the table where to store the
-   SIP messages. If it is not set, the value of “table” parameter is used.
+   SIP messages. If it is not set, the value of "table" parameter is used.
    In this way one can select dynamically where to store the traced
    messages. The table must exist, and must have the same structure as the
-   “sip_trace” table.
+   "sip_trace" table.
 
    Default value is "NULL" (feature disabled).
 
@@ -310,7 +314,7 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 
    Parameter to enable/disable inserts to the database from this Kamailio.
 
-   In case we only want to send the SIP messages to the “duplicate_uri”
+   In case we only want to send the SIP messages to the "duplicate_uri"
    and not store the information to the local database we can set this to
    "0".
 
@@ -323,7 +327,7 @@ modparam("siptrace", "trace_to_database", 0)
 
 3.9. trace_local_ip (str)
 
-   The address to be used in “fromip” field for locally generated
+   The address to be used in "fromip" field for locally generated
    messages. If not set, the module sets it to the address of the socket
    that will be used to send the message.
 
@@ -355,9 +359,9 @@ modparam("siptrace", "trace_sl_acks", 0)
 
    Parameter to enable/disable writing of x-headers.
 
-   Stores “fromip”, “toip”, “method” and “direction” in “X-Siptrace-*”
+   Stores "fromip", "toip", "method" and "direction" in "X-Siptrace-*"
    headers. This allows to transmit them to a second Kamailio server using
-   the “duplicate_uri” feature. Because the headers are added after the
+   the "duplicate_uri" feature. Because the headers are added after the
    data is written to the database, the headers only show up in the
    packets sent by duplicate_uri.
 
@@ -378,7 +382,7 @@ modparam("siptrace", "xheaders_write", 0)
 
    Parameter to enable/disable reading of x-headers.
 
-   Reads and removes the “X-Siptrace-*” headers. Packets not containing
+   Reads and removes the "X-Siptrace-*" headers. Packets not containing
    the headers are neither stored to the database nor relayed
    (duplicate_uri). See xheaders_write for further information.
 
@@ -402,8 +406,8 @@ modparam("siptrace", "hep_mode_on", 1)
 
 3.14. hep_version (integer)
 
-   The parameter indicate the version of the HEP protocol. Can be “1”, “2”
-   or “3”. In HEPv2 and HEPv3 the timestamp and capture agent ID will be
+   The parameter indicate the version of the HEP protocol. Can be "1", "2"
+   or "3". In HEPv2 and HEPv3 the timestamp and capture agent ID will be
    included in the HEP header.
 
    Default value is "1".
@@ -427,13 +431,13 @@ modparam("siptrace", "hep_capture_id", 234)
 
 3.16. trace_db_mode (integer)
 
-   If set to 1, the module uses “INSERT DELAYED” to store to database
-   (when it is available, otherwise falls back to “INSERT”).
+   If set to 1, the module uses "INSERT DELAYED" to store to database
+   (when it is available, otherwise falls back to "INSERT").
 
-   If set to 2, the module uses “ASYNC-INSERT” to store to database (when
-   it is available, otherwise falls back to “INSERT”).
+   If set to 2, the module uses "ASYNC-INSERT" to store to database (when
+   it is available, otherwise falls back to "INSERT").
 
-   Default value is 0 (use “INSERT”).
+   Default value is 0 (use "INSERT").
 
    Example 1.16. Set trace_db_mode parameter
 ...
@@ -541,6 +545,44 @@ modparam("siptrace", "trace_mode", 3)
 modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 ...
 
+3.24. methods_blacklist_auto (integer)
+
+   The bitmask with internal SIP method ids to be ignored before mirroring
+   traffic to a SIP capture server when "trace_mode=1". The ids for SIP
+   requests are the same set inside parser/msg_parser.h for enum
+   request_method.
+
+   The value of the parameter can be a bitwise OR of the following ids:
+     * 1 - INVITE
+     * 2 - CANCEL
+     * 4 - ACK
+     * 8 - BYE
+     * 16 - INFO
+     * 32 - REGISTER
+     * 64 - SUBSCRIBE
+     * 128 - NOTIFY
+     * 256 - MESSAGE
+     * 512 - OPTIONS
+     * 1024 - PRACK
+     * 2048 - UPDATE
+     * 4096 - REFER
+     * 8192 - PUBLISH
+     * 16384 - KDMQ
+     * 32768 - GET
+     * 65536 - POST
+     * 131072 - PUT
+     * 262144 - DELETE
+     * 524288 - OTHER (includes HTTP)
+
+   The ids may be given in decimal or hexadecimal format.
+
+   Default value is 0 (all SIP methods are mirrored).
+
+   Example 1.23. Set methods_blacklist_auto parameter
+...
+modparam("siptrace", "methods_blacklist_auto", 16896)
+...
+
 4. Functions
 
    4.1. sip_trace([address][,correlation_id][,mode])
@@ -571,7 +613,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.23. sip_trace() usage
+   Example 1.24. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -597,7 +639,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.24. sip_trace_mode() usage
+   Example 1.25. sip_trace_mode() usage
 ...
 sip_trace_mode("t");
 ...
@@ -614,7 +656,7 @@ sip_trace_mode("t");
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.25. hlog() usage
+   Example 1.26. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -633,7 +675,7 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
      * on or off: turns on/off SIP message tracing. Possible values are:
           + on
           + off
-     * “check” does not change siptrace status, just reports the current
+     * "check" does not change siptrace status, just reports the current
        status.
 
    RPC Command Format:
@@ -667,7 +709,7 @@ kamcmd siptrace.status check
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.26. Send relayed ACK message
+   Example 1.27. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {
