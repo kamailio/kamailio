@@ -625,7 +625,7 @@ modparam("dispatcher", "ds_inactive_threshold", 10)
 ...
 </programlisting>
                 </example>
-        </section>
+	</section>
 	<section id="dispatcher.p.ds_ping_reply_codes">
 		<title><varname>ds_ping_reply_codes</varname> (string)</title>
 		<para>
@@ -668,7 +668,7 @@ modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3
 		<itemizedlist>
 		<listitem>
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
-            After a gateway is probed, the PROBING state is cleared in this mode.
+			After a gateway is probed, the PROBING state is cleared in this mode.
 			This means that no probing will be executed at all only if flag in config file is set to 8/PROBING
 			(please check destination list file syntaxis for more details), it will probe only one time at startup or 
 			after dispatcher reload.</para>
@@ -1847,7 +1847,7 @@ onreply_route {
 		<para>
 		Example:
 		</para>
-        <programlisting  format="linespecific">
+<programlisting  format="linespecific">
 		&sercmd; dispatcher.list
 ...
 DEST: {
@@ -1883,10 +1883,10 @@ DEST: {
 		<para>
 		Example
 		</para>
-        <programlisting  format="linespecific">
+<programlisting  format="linespecific">
 		&sercmd; dispatcher.reload
-		</programlisting>
-    </section>
+</programlisting>
+	</section>
 
 	<section id="dispatcher.r.ping_active">
 		<title>
@@ -1921,7 +1921,7 @@ DEST: {
 &kamcmd; dispatcher.ping_active 0
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.add">
 		<title>
 		<function moreinfo="none">dispatcher.add</function>
@@ -1957,7 +1957,7 @@ DEST: {
 &sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.remove">
 		<title>
 		<function moreinfo="none">dispatcher.remove</function>
@@ -1990,7 +1990,7 @@ DEST: {
 &sercmd; dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.hash">
 		<title>
 		<function moreinfo="none">dispatcher.hash</function>
@@ -2220,4 +2220,3 @@ event_route[dispatcher:dst-up] {
     </section>
 
 </chapter>
-
