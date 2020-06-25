@@ -355,31 +355,32 @@ modparam("dispatcher", "force_dst", 1)
 		<para>
 		The addeded fields are:
 		<itemizedlist>
-			<listitem>
-			grp - the set id (group id).
-			</listitem>
-			<listitem>
-			uri - the URI address.
-			</listitem>
-			<listitem>
-			sock - the socket pointer.
-			</listitem>
-			<listitem>
-			socket - the socket string - it is added only if xavp_dst_mode has bit 2 set
-			(value 2).
-			</listitem>
-			<listitem>
-			sockname - the sockname string - it is added only if xavp_dst_mode has bit 3 set
-			(value 3).
-			</listitem>
-			<listitem>
-			dstid - the destination unique id (in case of call load distribution algorithm).
-			</listitem>
-			<listitem>
-			attrs - the attributes - they are added if xavp_dst_mode does not have
-			the bit 1 set (value 1).
-			</listitem>
-		</itemizedlist>
+					<listitem>
+						<para>grp - the set id (group id).</para>
+					</listitem>
+					<listitem>
+						<para>uri - the URI address.</para>
+					</listitem>
+					<listitem>
+						<para>sock - the socket pointer.</para>
+					</listitem>
+					<listitem>
+						<para>socket - the socket string - it is added only if xavp_dst_mode has
+							bit 2 set (value 2).</para>
+					</listitem>
+					<listitem>
+						<para>sockname - the sockname string - it is added only if xavp_dst_mode
+							has bit 3 set (value 3).</para>
+					</listitem>
+					<listitem>
+						<para>dstid - the destination unique id (in case of call load distribution
+							algorithm).</para>
+					</listitem>
+					<listitem>
+						<para>attrs - the attributes - they are added if xavp_dst_mode does not
+							have the bit 1 set (value 1).</para>
+					</listitem>
+				</itemizedlist>
 		</para>
 		<para>
 		<emphasis>
