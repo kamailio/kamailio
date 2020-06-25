@@ -47,6 +47,8 @@ typedef struct _dlgs_stats {
 	unsigned int c_notanswered;
 } dlgs_stats_t;
 
+void dlgs_update_stats(dlgs_stats_t *stats, int state, int val);
+
 typedef struct _dlgs_item {
     unsigned int hashid;   /* item hash id */
 	str callid;            /* sip call-id */
@@ -67,7 +69,8 @@ typedef struct _dlgs_item {
 typedef struct _dlgs_slot {
 	unsigned int esize;
 	dlgs_item_t *first;
-	gen_lock_t lock;	
+	dlgs_stats_t astats;
+	gen_lock_t lock;
 } dlgs_slot_t;
 
 typedef struct _dlgs_ht {

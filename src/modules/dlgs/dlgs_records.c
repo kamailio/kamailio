@@ -499,8 +499,36 @@ int dlgs_ht_dbg(void)
 /**
  *
  */
+void dlgs_update_stats(dlgs_stats_t *stats, int state, int val)
+{
+	switch(state) {
+		case DLGS_STATE_INIT:
+			stats->c_init += val;
+			return;
+		case DLGS_STATE_PROGRESS:
+			stats->c_progress += val;
+			return;
+		case DLGS_STATE_ANSWERED:
+			stats->c_answered += val;
+			return;
+		case DLGS_STATE_CONFIRMED:
+			stats->c_confirmed += val;
+			return;
+		case DLGS_STATE_TERMINATED:
+			stats->c_terminted += val;
+			return;
+		case DLGS_STATE_NOTANSWERED:
+			stats->c_notanswered += val;
+			return;
+	}
+}
+
+/**
+ *
+ */
 int dlgs_update_item(sip_msg_t *msg)
 {
+	unsigned int idx;
 	int rtype = 0;
 	int rmethod = 0;
 	int rcode = 0;
@@ -534,24 +562,31 @@ int dlgs_update_item(sip_msg_t *msg)
 		LM_DBG("no matching item found\n");
 		return 0;
 	}
+	idx = dlgs_get_index(it->hashid, _dlgs_htb->htsize);
 	ostate = it->state;
 	if(rtype == SIP_REQUEST) {
 		switch(rmethod) {
 			case METHOD_ACK:
 				if(it->state==DLGS_STATE_ANSWERED) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_CONFIRMED;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 				}
 			break;
 			case METHOD_CANCEL:
 				if(it->state<DLGS_STATE_ANSWERED) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_NOTANSWERED;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
 			break;
 			case METHOD_BYE:
 				if(it->state==DLGS_STATE_ANSWERED
 						|| it->state==DLGS_STATE_CONFIRMED) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_TERMINATED;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
 			break;
@@ -563,12 +598,16 @@ int dlgs_update_item(sip_msg_t *msg)
 		case METHOD_INVITE:
 			if(rcode>=100 && rcode<200) {
 				if(it->state==DLGS_STATE_INIT) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_PROGRESS;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 				}
 			} else if(rcode>=200 && rcode<300) {
 				if(it->state==DLGS_STATE_INIT
 						|| it->state==DLGS_STATE_PROGRESS) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_ANSWERED;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_answer = tnow;
 					if(it->ttag.len<=0) {
 						to_body_t *tb;
@@ -583,7 +622,9 @@ int dlgs_update_item(sip_msg_t *msg)
 			} else if(rcode>=300) {
 				if(it->state==DLGS_STATE_INIT
 						|| it->state==DLGS_STATE_PROGRESS) {
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_NOTANSWERED;
+					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
 			}
