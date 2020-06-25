@@ -290,11 +290,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>flags</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "flags", 3)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "flags", 3)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.use_default">
@@ -312,11 +312,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>use_default</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "use_default", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "use_default", 1)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.xavp_dst">
@@ -342,11 +342,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>xavp_dst</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_dst", "_dsdst_")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_dst", "_dsdst_")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.xavp_dst_mode">
@@ -415,11 +415,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>xavp_ctx</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_ctx", "_dsctx_")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_ctx", "_dsctx_")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.xavp_ctx_mode">
@@ -436,11 +436,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>xavp_ctx_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_ctx_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_ctx_mode", 1)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.hash_pvar">
@@ -461,19 +461,19 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Use $avp(hash) for hashing:</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "hash_pvar", "$avp(hash)")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "hash_pvar", "$avp(hash)")
+...
+</programlisting>
 		</example>
 		<example>
 		<title>Use combination of PVs for hashing:</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.setid_pvname">
@@ -489,11 +489,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>setid_pvname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "setid_pvname", "$var(setid)")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "setid_pvname", "$var(setid)")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.attrs_pvname">
@@ -509,11 +509,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>attrs_pvname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "attrs_pvname", "$var(attrs)")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "attrs_pvname", "$var(attrs)")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_ping_method">
@@ -529,11 +529,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_ping_method</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_method", "INFO")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_method", "INFO")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_ping_from">
@@ -549,11 +549,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_ping_from</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -572,11 +572,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_ping_interval</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_interval", 30)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_interval", 30)
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -597,11 +597,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_probing_threshold</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_probing_threshold", 10)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_probing_threshold", 10)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_inactive_threshold">
@@ -619,11 +619,11 @@ modparam("dispatcher", "force_dst", 1)
                 </para>
                 <example>
                 <title>Set the <quote>ds_inactive_threshold</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_inactive_threshold", 10)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_inactive_threshold", 10)
+...
+</programlisting>
                 </example>
         </section>
 	<section id="dispatcher.p.ds_ping_reply_codes">
@@ -652,11 +652,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_ping_reply_codes</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3")
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_probing_mode">
@@ -697,11 +697,11 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>ds_probing_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_probing_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_probing_mode", 1)
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -727,10 +727,10 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>accessing the metrics</title>
- <programlisting format="linespecific">
+<programlisting format="linespecific">
 # using the command :
 kamcmd dispatcher.list
- ...
+...
 DEST: {
 	URI: sip:1.2.3.4
 	FLAGS: AX
@@ -743,16 +743,16 @@ DEST: {
 		TIMEOUT: 0     # count of ping timeouts
 	}
 }
- ...
- </programlisting>
+...
+</programlisting>
 		</example>
 		<example>
 		<title>Set the <quote>ds_ping_latency_stats</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_latency_stats", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_latency_stats", 1)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_latency_estimator_alpha">
@@ -771,11 +771,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_hash_size</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_latency_estimator_alpha", 900)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_hash_size">
@@ -794,11 +794,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_hash_size</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_size", 9)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_size", 9)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_hash_expire">
@@ -814,11 +814,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_hash_expire</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_expire", 3600)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_expire", 3600)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_hash_initexpires">
@@ -835,11 +835,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_hash_initexpire</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_initexpire", 60)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_initexpire", 60)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.ds_hash_check_interval">
@@ -855,11 +855,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_hash_check_interval</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_check_interval", 60)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_check_interval", 60)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.outbound_proxy">
@@ -874,11 +874,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>outbound_proxy</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -898,11 +898,11 @@ DEST: {
 		is ignored.</para>
 		<example>
 		<title>Set the <quote>ds_default_socket</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -922,13 +922,13 @@ DEST: {
 		(this parameter has higher priority).</para>
 		<example>
 		<title>Set the <quote>ds_default_sockname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
+<programlisting format="linespecific">
+...
  listen=udp:1.2.3.4:5060 name "sock1"
- ...
- modparam("dispatcher", "ds_default_sockname", "sock1")
- ...
- </programlisting>
+...
+modparam("dispatcher", "ds_default_sockname", "sock1")
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -963,11 +963,11 @@ DEST: {
 		</para>
 		<example>
 		<title>Set the <quote>ds_timer_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_timer_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_timer_mode", 1)
+...
+</programlisting>
 		</example>
 	</section>
 	<section id="dispatcher.p.event_callback">
@@ -1016,11 +1016,11 @@ end
 		</para>
 		<example>
 		<title>Set the <quote>ds_attrs_none</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_attrs_none", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_attrs_none", 1)
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -1065,11 +1065,11 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 		</para>
 		<example>
 		<title>Set the <quote>ds_load_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_load_mode", 1)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_load_mode", 1)
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -1849,13 +1849,13 @@ onreply_route {
 		</para>
         <programlisting  format="linespecific">
 		&sercmd; dispatcher.list
- ...
+...
 DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
 }
- ...
+...
 </programlisting>
 		<para>FLAGS consist out of 2 letters. First letter describe status of
 		destination: A-active, I – inactive, T – trying, D – disabled. Second
