@@ -2082,51 +2082,48 @@ kamctl rpc dispatcher.hash 4 bob server.com
 			<para>
 			There are some predefined names:
 			<itemizedlist>
-				<listitem>
-					'duid' - used for call load dispatching. It must be an
-					unique value to identify a destination (gateway address).
-					Practically the load within the group is associated with
-					this value.
-				</listitem>
-				<listitem>
-					'maxload' - used for call load dispatching. It must be
-					a positive integer, defining the upper limit of active
-					calls per destination. When the limit is reached, then
-					the gateway is no longer selected for new calls until
-					an exiting call via that gateway is terminated. If set
-					to 0, then no active call limit is used.
-				</listitem>
-				<listitem>
-					'weight' - used for weight based load distribution. It
-					must be set to a positive integer value beteen 0 and
-					100. The value represents the percent of calls to be
-					sent to that gateways.
-				</listitem>
-				<listitem>
-					'rweight' - used for relative weight based load
-					distribution. It must be set to a positive integer value
-					between 1 and 100 (otherwise host will be excluded from
-					relative weight distribution type).
-				</listitem>
-				<listitem>
-					'socket' - used to set the sending socket for the gateway.
-					It is used for sending the SIP traffic as well as
-					OPTIONS keepalives.
-				</listitem>
-				<listitem>
-					'sockname' - used to set by name the sending socket for the
-					gateway. It is used for sending the SIP traffic as well as
-					OPTIONS keepalives and has priority over 'socket' attribute.
-				</listitem>
-				<listitem>
-					'ping_from' - used to set the From URI in OPTIONS keepalives.
-					It overwrites the general ds_ping_from parameter.
-				</listitem>
-				<listitem>
-					'obproxy' - SIP URI of outbound proxy to be used when sending pings.
-					It overwrites the general ds_outbound_proxy parameter.
-				</listitem>
-			</itemizedlist>
+						<listitem>
+							<para>'duid' - used for call load dispatching. It must be an unique
+								value to identify a destination (gateway address). Practically the
+								load within the group is associated with this value.></para>
+						</listitem>
+						<listitem>
+							<para>'maxload' - used for call load dispatching. It must be a positive
+								integer, defining the upper limit of active calls per destination.
+								When the limit is reached, then the gateway is no longer selected
+								for new calls until an exiting call via that gateway is terminated.
+								If set to 0, then no active call limit is used.></para>
+						</listitem>
+						<listitem>
+							<para>'weight' - used for weight based load distribution. It must be set
+								to a positive integer value beteen 0 and 100. The value represents
+								the percent of calls to be sent to that gateways.></para>
+						</listitem>
+						<listitem>
+							<para>'rweight' - used for relative weight based load distribution. It
+								must be set to a positive integer value between 1 and 100 (otherwise
+								host will be excluded from relative weight distribution
+								type).</para>
+						</listitem>
+						<listitem>
+							<para>'socket' - used to set the sending socket for the gateway. It is
+								used for sending the SIP traffic as well as OPTIONS
+								keepalives.</para>
+						</listitem>
+						<listitem>
+							<para>'sockname' - used to set by name the sending socket for the
+								gateway. It is used for sending the SIP traffic as well as OPTIONS
+								keepalives and has priority over 'socket' attribute.</para>
+						</listitem>
+						<listitem>
+							<para>'ping_from' - used to set the From URI in OPTIONS keepalives. It
+								overwrites the general ds_ping_from parameter.</para>
+						</listitem>
+						<listitem>
+							<para>'obproxy' - SIP URI of outbound proxy to be used when sending
+								pings. It overwrites the general ds_outbound_proxy parameter.</para>
+						</listitem>
+					</itemizedlist>
 		</para>
 		</section>
 		<section id="dispatcher.ex.fileforma">
