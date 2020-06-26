@@ -72,7 +72,7 @@
 
 	<section>
 		<title>Parameters</title>
-		<section>
+		<section id="siputils.p.ring_timeout">
 			<title><varname>ring_timeout</varname> (int)</title>
 			<para>
 			Timeout value in seconds, define how long the call-id is stored in the internal list kept for replacing 183 messages  with 180.
@@ -92,7 +92,7 @@ modparam("siputils", "ring_timeout", 30)
 				</programlisting>
 			</example>
 		</section>
-			<section>
+		<section id="siputils.p.options_accept">
 		<title><varname>options_accept</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept header field.
@@ -115,7 +115,7 @@ modparam("siputils", "options_accept", "application/*")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.p.options_accept_encoding">
 		<title><varname>options_accept_encoding</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept-Encoding header field.
@@ -137,7 +137,7 @@ modparam("siputils", "options_accept_encoding", "gzip")
 		</example>
 	</section>
 
-		<section>
+		<section id="siputils.p.contact_flds_separator">
 		<title><varname>contact_flds_separator</varname> (string)</title>
 		<para>
 		First char of this parameter is used as separator for encoding/decoding 
@@ -170,7 +170,7 @@ modparam("siputils", "contact_flds_separator", "-")
 	</section>
 
 
-	<section>
+	<section id="siputils.p.options_accept_language">
 		<title><varname>options_accept_language</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept-Language header field.
@@ -193,7 +193,7 @@ modparam("siputils", "options_accept_language", "de")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.p.options_support">
 		<title><varname>options_support</varname> (string)</title>
 		<para>
 			This parameter is the content of the Support header field,
@@ -215,7 +215,7 @@ modparam("siputils", "options_support", "100rel")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.p.rpid_prefix">
 		<title><varname>rpid_prefix</varname> (string)</title>
 		<para>
 		Prefix to be added to Remote-Party-ID header field just before 
@@ -231,7 +231,7 @@ modparam("auth", "rpid_prefix", "Whatever &lt;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.p.rpid_suffix">
 		<title><varname>rpid_suffix</varname> (string)</title>
 		<para>
 		Suffix to be added to Remote-Party-ID header field after the URI 
@@ -248,7 +248,7 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="siputils.p.rpid_avp">
 		<title><varname>rpid_avp</varname> (string)</title>
 		<para>
 			Full AVP specification for the AVP which 
