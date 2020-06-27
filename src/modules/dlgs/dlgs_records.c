@@ -707,6 +707,57 @@ static const char *dlgs_rpc_stats_doc[2] = {
  */
 static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 {
+	void *th;
+	void *ti;
+	dlgs_stats_t *sti;
+	dlgs_stats_t sta;
+	int i;
+
+	if(_dlgs_htb == NULL) {
+		return;
+	}
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return;
+	}
+	i = 0;
+	do {
+		if(i==0) {
+			sti = &_dlgs_htb->fstats;
+			if(rpc->struct_add(th, "{", "final", &ti)<0) {
+				rpc->fault(ctx, 500, "Internal error creating final stats");
+				return;
+			}
+		} else {
+			memset(&sta, 0, sizeof(dlgs_stats_t));
+			for(i=0; i<_dlgs_htb->htsize; i++) {
+				sta.c_init += _dlgs_htb->slots[i].astats.c_init;
+				sta.c_progress += _dlgs_htb->slots[i].astats.c_progress;
+				sta.c_answered += _dlgs_htb->slots[i].astats.c_answered;
+				sta.c_confirmed += _dlgs_htb->slots[i].astats.c_confirmed;
+				sta.c_terminted += _dlgs_htb->slots[i].astats.c_terminted;
+				sta.c_notanswered += _dlgs_htb->slots[i].astats.c_notanswered;
+			}
+			sti = &sta;
+			if(rpc->struct_add(th, "{", "active", &ti)<0) {
+				rpc->fault(ctx, 500, "Internal error creating final stats");
+				return;
+			}
+			i = 1;
+		}
+		if(rpc->struct_add(ti, "uuuuuu",
+				"init", sti->c_init,
+				"progress", sti->c_progress,
+				"answered", sti->c_answered,
+				"confirmed", sti->c_confirmed,
+				"terminted", sti->c_terminted,
+				"notanswered", sti->c_notanswered)<0) {
+			rpc->fault(ctx, 500, "Internal error creating values");
+			return;
+		}
+		i++;
+	} while(i<2);
 }
 
 static const char *dlgs_rpc_list_doc[2] = {
