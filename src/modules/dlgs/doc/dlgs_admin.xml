@@ -177,5 +177,21 @@ onsend_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="dlgs.rpc.stats">
+		<title>
+		<function moreinfo="none">rpc.stats</function>
+		</title>
+		<para>
+			Return dialog statistics.
+		</para>
+		<example>
+		<title><function>dlgs.stats</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.stats
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
