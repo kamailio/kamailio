@@ -549,7 +549,7 @@ modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
       <para>Destination realm to be used in Diameter messages to
       charging-server.</para>
 
-      <para><emphasis>Default value is "ims.smilecoms.com".</emphasis></para>
+      <para><emphasis>Default value is "".</emphasis></para>
 
       <example>
         <title><varname>destination_realm</varname>parameter usage</title>
