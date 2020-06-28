@@ -437,8 +437,9 @@ int dlgs_del_item(sip_msg_t *msg)
 	idx = dlgs_get_index(hid, dsht->htsize);
 
 	/* head test and return */
-	if(dsht->slots[idx].first == NULL)
+	if(dsht->slots[idx].first == NULL) {
 		return 0;
+	}
 
 	lock_get(&dsht->slots[idx].lock);
 	it = dsht->slots[idx].first;
@@ -456,6 +457,7 @@ int dlgs_del_item(sip_msg_t *msg)
 				it->next->prev = it->prev;
 			dsht->slots[idx].esize--;
 			lock_release(&dsht->slots[idx].lock);
+			dlgs_update_stats(&dsht->fstats, it->state, 1);
 			dlgs_item_free(it);
 			return 0;
 		}
@@ -687,6 +689,7 @@ void dlgs_ht_timer(unsigned int ticks, void *param)
 						it->prev = ite->prev;
 					}
 				}
+				dlgs_update_stats(&_dlgs_htb->fstats, ite->state, 1);
 				dlgs_item_free(ite);
 			}
 		}
