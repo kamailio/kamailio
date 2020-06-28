@@ -121,7 +121,9 @@ int ds_timer_mode = 0;
 int ds_attrs_none = 0;
 int ds_load_mode = 0;
 
-int ds_rehash_max = -1; /* Number of times trying rehash, to find an active destination. 0 : disable, -1 : Total number of destinations */
+int ds_rehash_max = 0; /* Number of times trying rehash, to find an active destination. 
+/* Default, 0 : disabled. to ensure backward compatibility with running enviroments
+-1 : Total number of destinations */
 str ds_outbound_proxy = STR_NULL;
 
 /* tm */
