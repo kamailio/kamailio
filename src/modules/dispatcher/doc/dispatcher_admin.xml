@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding='ISO-8859-1'?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
  
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 %docentities;
+
+<!ENTITY % xinclude SYSTEM "http://www.docbook.org/xml/4.4/xinclude.mod" >
+%xinclude;
 
 ]>
 <!-- Module User's Guide -->
@@ -96,14 +99,14 @@ modparam("dispatcher", "list_file", "/run/kamailio/dispatcher.list")
 	</section>
 
 	<section id="dispatcher.p.db_url">
- 		<title><varname>db_url</varname> (string)</title>
- 		<para>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
 		If you want to load the list of gateways from the database you must set
 		this parameter.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>NULL</quote> (disable DB support).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disable DB support).
 		</emphasis>
 		</para>
 		<example>
@@ -263,131 +266,132 @@ modparam("dispatcher", "force_dst", 1)
 </programlisting>
 		</example>
 	</section>
- 	<section id="dispatcher.p.flags">
- 		<title><varname>flags</varname> (int)</title>
- 		<para>
- 		Various flags that affect dispatcher's behaviour. The flags are defined
+	<section id="dispatcher.p.flags">
+		<title><varname>flags</varname> (int)</title>
+		<para>
+		Various flags that affect dispatcher's behaviour. The flags are defined
 		as a bitmask on an integer value.
- 		If flag 1 is set only the username
- 		part of the URI will be used when computing an URI based hash.
- 		If no flags are set the username, hostname and port will be used.
- 		The port is used only if different from 5060 (normal sip URI) or 5061
- 		(in the sips: case).
- 		</para>
- 		<para>
+		If flag 1 is set only the username
+		part of the URI will be used when computing an URI based hash.
+		If no flags are set the username, hostname and port will be used.
+		The port is used only if different from 5060 (normal sip URI) or 5061
+		(in the sips: case).
+		</para>
+		<para>
 		If flag 2 is set, then failover support is enabled. The functions
 		exported by the module will store the rest of addresses from the
 		destination set in XAPVs, and use these XAVPs to try next address if
 		the current-tried destination fails.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>flags</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "flags", 3)
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.use_default">
- 		<title><varname>use_default</varname> (int)</title>
- 		<para>
- 		If the parameter is set to 1, the last address in destination set
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>flags</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "flags", 3)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.p.use_default">
+		<title><varname>use_default</varname> (int)</title>
+		<para>
+		If the parameter is set to 1, the last address in destination set
 		is used as a final option to send the request to. For example, it is useful
 		when wanting to send the call to an announcement server saying:
 		"the gateways are full, try later".
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>use_default</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "use_default", 1)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>use_default</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "use_default", 1)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.xavp_dst">
- 		<title><varname>xavp_dst</varname> (str)</title>
- 		<para>
- 		The name of the XAVP which will hold the list with addresses and
+	<section id="dispatcher.p.xavp_dst">
+		<title><varname>xavp_dst</varname> (str)</title>
+		<para>
+		The name of the XAVP which will hold the list with addresses and
 		associated properties, in the order they have been selected by the
 		chosen algorithm. If use_default is 1, the values of last XAVP correspond
 		to the last address in destination set. In case of using dispatcher.list file,
 		you have to set the priority field for each destination to ensure a particular order there.
 		The first XAVP is the current selected destination. All the other addresses
 		from the destination set will be added in the XAVP list to be able to implement serial forking.
- 		</para>
+		</para>
 		<note>
- 		<para>
+		<para>
 		You must set this parameter if you want to do load balancing fail over.
- 		</para>
+		</para>
 		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>_dsdst_</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>xavp_dst</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_dst", "_dsdst_")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.xavp_dst_mode">
- 		<title><varname>xavp_dst_mode</varname> (int)</title>
- 		<para>
- 		Control what fields are added to the XAVP specified by xavp_dst
+		<para>
+		<emphasis>
+			Default value is <quote>_dsdst_</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>xavp_dst</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_dst", "_dsdst_")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.p.xavp_dst_mode">
+		<title><varname>xavp_dst_mode</varname> (int)</title>
+		<para>
+		Control what fields are added to the XAVP specified by xavp_dst
 		parameter.
 		</para>
 		<para>
 		The addeded fields are:
 		<itemizedlist>
-			<listitem>
-			grp - the set id (group id).
-			</listitem>
-			<listitem>
-			uri - the URI address.
-			</listitem>
-			<listitem>
-			sock - the socket pointer.
-			</listitem>
-			<listitem>
-			socket - the socket string - it is added only if xavp_dst_mode has bit 2 set
-			(value 2).
-			</listitem>
-			<listitem>
-			sockname - the sockname string - it is added only if xavp_dst_mode has bit 3 set
-			(value 3).
-			</listitem>
-			<listitem>
-			dstid - the destination unique id (in case of call load distribution algorithm).
-			</listitem>
-			<listitem>
-			attrs - the attributes - they are added if xavp_dst_mode does not have
-			the bit 1 set (value 1).
-			</listitem>
-		</itemizedlist>
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote> (add all fields).
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
+					<listitem>
+						<para>grp - the set id (group id).</para>
+					</listitem>
+					<listitem>
+						<para>uri - the URI address.</para>
+					</listitem>
+					<listitem>
+						<para>sock - the socket pointer.</para>
+					</listitem>
+					<listitem>
+						<para>socket - the socket string - it is added only if xavp_dst_mode has
+							bit 2 set (value 2).</para>
+					</listitem>
+					<listitem>
+						<para>sockname - the sockname string - it is added only if xavp_dst_mode
+							has bit 3 set (value 3).</para>
+					</listitem>
+					<listitem>
+						<para>dstid - the destination unique id (in case of call load distribution
+							algorithm).</para>
+					</listitem>
+					<listitem>
+						<para>attrs - the attributes - they are added if xavp_dst_mode does not
+							have the bit 1 set (value 1).</para>
+					</listitem>
+				</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (add all fields).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>xavp_dst_mode</quote> parameter</title>
 <programlisting format="linespecific">
 ...
     modparam("dispatcher", "xavp_dst_mode", 1)
@@ -395,102 +399,102 @@ modparam("dispatcher", "force_dst", 1)
     modparam("dispatcher", "xavp_dst_mode", 2)
 ...
 </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.xavp_ctx">
- 		<title><varname>xavp_ctx</varname> (str)</title>
- 		<para>
- 		The name of the XAVP which will hold some attributes specific to
+		</example>
+	</section>
+	<section id="dispatcher.p.xavp_ctx">
+		<title><varname>xavp_ctx</varname> (str)</title>
+		<para>
+		The name of the XAVP which will hold some attributes specific to
 		dispatcher routing context. The XAVP can hold the next fields: cnt -
 		the number of addresses selected for routing.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>_dsctx_</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>xavp_ctx</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_ctx", "_dsctx_")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.xavp_ctx_mode">
- 		<title><varname>xavp_ctx_mode</varname> (int)</title>
- 		<para>
- 		Control what fields are added to the XAVP specified by xavp_ctx
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>_dsctx_</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>xavp_ctx</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_ctx", "_dsctx_")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.p.xavp_ctx_mode">
+		<title><varname>xavp_ctx_mode</varname> (int)</title>
+		<para>
+		Control what fields are added to the XAVP specified by xavp_ctx
 		parameter. The cnt field is added if xavp_cnt_mode does not have the
 		bit 1 set.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote> (add all fields).
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>xavp_ctx_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "xavp_ctx_mode", 1)
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.hash_pvar">
- 		<title><varname>hash_pvar</varname> (str)</title>
- 		<para>
- 		String with PVs used for the hashing algorithm 7.
- 		</para>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (add all fields).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>xavp_ctx_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "xavp_ctx_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.p.hash_pvar">
+		<title><varname>hash_pvar</varname> (str)</title>
+		<para>
+		String with PVs used for the hashing algorithm 7.
+		</para>
 		<note>
- 		<para>
+		<para>
 		You must set this parameter if you want do hashing over custom message
 		parts.
- 		</para>
+		</para>
 		</note>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - disabled.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Use $avp(hash) for hashing:</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "hash_pvar", "$avp(hash)")
- ...
- </programlisting>
- 		</example>
- 		<example>
- 		<title>Use combination of PVs for hashing:</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
- ...
- </programlisting>
- 		</example>
- 	</section>
- 	<section id="dispatcher.p.setid_pvname">
- 		<title><varname>setid_pvname</varname> (str)</title>
- 		<para>
+		<para>
+		<emphasis>
+			Default value is <quote>null</quote> - disabled.
+		</emphasis>
+		</para>
+		<example>
+		<title>Use $avp(hash) for hashing:</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "hash_pvar", "$avp(hash)")
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Use combination of PVs for hashing:</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.p.setid_pvname">
+		<title><varname>setid_pvname</varname> (str)</title>
+		<para>
 		The name of the PV where to store the set ID (group ID) when calling
 		ds_is_from_list() with no parameter.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote> - don't set PV.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>setid_pvname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "setid_pvname", "$var(setid)")
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>null</quote> - don't set PV.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>setid_pvname</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "setid_pvname", "$var(setid)")
+...
+</programlisting>
+		</example>
 	</section>
 	<section id="dispatcher.p.attrs_pvname">
 		<title><varname>attrs_pvname</varname> (str)</title>
@@ -505,100 +509,100 @@ modparam("dispatcher", "force_dst", 1)
 		</para>
 		<example>
 		<title>Set the <quote>attrs_pvname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "attrs_pvname", "$var(attrs)")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "attrs_pvname", "$var(attrs)")
+...
+</programlisting>
 		</example>
 	</section>
- 	<section id="dispatcher.p.ds_ping_method">
- 		<title><varname>ds_ping_method</varname> (string)</title>
- 		<para>
+	<section id="dispatcher.p.ds_ping_method">
+		<title><varname>ds_ping_method</varname> (string)</title>
+		<para>
 		With this method you can define, with which method you want to probe the gateways.
 		Pinging gateways feature depends on ds_ping_interval parameter.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>OPTIONS</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_ping_method</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_method", "INFO")
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>OPTIONS</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_method</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_method", "INFO")
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_ping_from">
- 		<title><varname>ds_ping_from</varname> (string)</title>
- 		<para>
- 		With this Method you can define the "From:"-Line for the request, sent to the failed gateways.
- 		This method is only available, if compiled with the probing of failed gateways enabled.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>sip:dispatcher@localhost</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_ping_from</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
- ...
- </programlisting>
- 		</example>
+	<section id="dispatcher.p.ds_ping_from">
+		<title><varname>ds_ping_from</varname> (string)</title>
+		<para>
+		With this Method you can define the "From:"-Line for the request, sent to the failed gateways.
+		This method is only available, if compiled with the probing of failed gateways enabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sip:dispatcher@localhost</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_from</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
+...
+</programlisting>
+		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_ping_interval">
- 		<title><varname>ds_ping_interval</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_ping_interval">
+		<title><varname>ds_ping_interval</varname> (int)</title>
+		<para>
 		With this parameter you can define the interval for sending a request
 		to a gateway marked as inactive upon a failed request routing to it.
- 		This parameter is only used, when the TM-Module is loaded.
+		This parameter is only used, when the TM-Module is loaded.
 		If set to <quote>0</quote>, the pinging of inactive gateway is disabled.
- 		</para>
- 		<para>
- 		<emphasis>
+		</para>
+		<para>
+		<emphasis>
 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_ping_interval</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_interval", 30)
- ...
- </programlisting>
- 		</example>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_interval</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_interval", 30)
+...
+</programlisting>
+		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_probing_threshold">
- 		<title><varname>ds_probing_threshold</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_probing_threshold">
+		<title><varname>ds_probing_threshold</varname> (int)</title>
+		<para>
 		If you want to set a gateway into inactive mode, there can be
 		a specific number of failed requests until it will change from "active"
 		to "inactive". It is using the state "trying", that allows selection
 		of gateway but indicates there was a failure previously with the
 		gateway. The number of attempts can be set with this parameter.
 		This parameter can be modified via ser config framework.
- 		</para>
- 		<para>
- 		<emphasis>
+		</para>
+		<para>
+		<emphasis>
 		Default value is <quote>1</quote> (set inactive with first failure).
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_probing_threshold</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_probing_threshold", 10)
- ...
- </programlisting>
- 		</example>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_probing_threshold</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_probing_threshold", 10)
+...
+</programlisting>
+		</example>
 	</section>
 	<section id="dispatcher.p.ds_inactive_threshold">
                 <title><varname>ds_inactive_threshold</varname> (int)</title>
@@ -615,16 +619,16 @@ modparam("dispatcher", "force_dst", 1)
                 </para>
                 <example>
                 <title>Set the <quote>ds_inactive_threshold</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_inactive_threshold", 10)
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_inactive_threshold", 10)
+...
+</programlisting>
                 </example>
-        </section>
- 	<section id="dispatcher.p.ds_ping_reply_codes">
- 		<title><varname>ds_ping_reply_codes</varname> (string)</title>
- 		<para>
+	</section>
+	<section id="dispatcher.p.ds_ping_reply_codes">
+		<title><varname>ds_ping_reply_codes</varname> (string)</title>
+		<para>
 			This parameter defines the valid response codes, which are accepted
 			as a valid reply to the PING-Method. It is a list separated by
 			colons, where you may define either a single code (e.g. "code=202"
@@ -632,39 +636,39 @@ modparam("dispatcher", "force_dst", 1)
 			responses, you want to accept (e.g. "class=2" would accept
 			everything from 200 to 299 as valid response). This parameter can
 			be modified via config framework.
- 		</para>
- 		<para>
+		</para>
+		<para>
 			Please note that the response codes the module accepts as valid reply to the
 			PING-Method are not only the ones generated from the remote servers, but also those
 			that are generated locally. E.g.: setting code=408 or class=400 will never set
 			a backend down even if it is, because internally the Kamailio transaction layer
 			generates a 408 in the case of no response from the remote server, and this
 			internal code 408 is accepted as valid value.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote></quote> (only 200 OK is accepted).
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_ping_reply_codes</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3")
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (only 200 OK is accepted).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_reply_codes</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3")
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_probing_mode">
- 		<title><varname>ds_probing_mode</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_probing_mode">
+		<title><varname>ds_probing_mode</varname> (int)</title>
+		<para>
 		Controls what gateways are tested to see if they are reachable.
 		</para>
 
 		<itemizedlist>
 		<listitem>
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
-            After a gateway is probed, the PROBING state is cleared in this mode.
+			After a gateway is probed, the PROBING state is cleared in this mode.
 			This means that no probing will be executed at all only if flag in config file is set to 8/PROBING
 			(please check destination list file syntaxis for more details), it will probe only one time at startup or 
 			after dispatcher reload.</para>
@@ -681,29 +685,29 @@ modparam("dispatcher", "force_dst", 1)
 		</listitem>
 		<listitem>
 			<para>Value 3: If set to 3, any gateway with state PROBING is continually probed
- 				without modifying/removing the PROBING state.  This allows selected gateways
+				without modifying/removing the PROBING state.  This allows selected gateways
 				to be probed continually, regardless of state changes.</para>
 		</listitem>
 		</itemizedlist>
 
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_probing_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_probing_mode", 1)
- ...
- </programlisting>
- 		</example>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_probing_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_probing_mode", 1)
+...
+</programlisting>
+		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_ping_latency_stats">
- 		<title><varname>ds_ping_latency_stats</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_ping_latency_stats">
+		<title><varname>ds_ping_latency_stats</varname> (int)</title>
+		<para>
 		Enable latency measurement when pinging nodes
 		</para>
 
@@ -716,17 +720,17 @@ modparam("dispatcher", "force_dst", 1)
 			</para>
 		</listitem>
 		</itemizedlist>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>accessing the metrics</title>
- <programlisting format="linespecific">
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>accessing the metrics</title>
+<programlisting format="linespecific">
 # using the command :
 kamcmd dispatcher.list
- ...
+...
 DEST: {
 	URI: sip:1.2.3.4
 	FLAGS: AX
@@ -739,143 +743,143 @@ DEST: {
 		TIMEOUT: 0     # count of ping timeouts
 	}
 }
- ...
- </programlisting>
- 		</example>
- 		<example>
- 		<title>Set the <quote>ds_ping_latency_stats</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_ping_latency_stats", 1)
- ...
- </programlisting>
- 		</example>
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Set the <quote>ds_ping_latency_stats</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_latency_stats", 1)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_latency_estimator_alpha">
- 		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
+	<section id="dispatcher.p.ds_latency_estimator_alpha">
+		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
 		<para>
 		The value to be used to control the memory of the estimator EWMA "exponential weighted moving average" or
 		"the speed at which the older samples are dampened"
 		a good explanation can be found here : http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm
 		Because Kamailio doesn't support float parameter types, the value in the parameter is divided by 1000 and stored as float.
 		For example, if you want to set the alpha to be 0.75, use value 750 here.
- 		</para>
- 		<para>
- 		<emphasis>
+		</para>
+		<para>
+		<emphasis>
 			Default value is <quote>900 => 0.9</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_hash_size</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_latency_estimator_alpha", 900)
- ...
- </programlisting>
- 		</example>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_hash_size</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_hash_size">
- 		<title><varname>ds_hash_size</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_hash_size">
+		<title><varname>ds_hash_size</varname> (int)</title>
+		<para>
 		The value to be used as power of two to set the number of slots
 		to hash table storing data for call load dispatching (e.g., value
 		8 will create a hash table with 256 slots).
 		It must be greater than 0 to enable call load dispatching feature
 		(alg 10).
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_hash_size</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_size", 9)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_hash_size</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_size", 9)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_hash_expire">
- 		<title><varname>ds_hash_expire</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_hash_expire">
+		<title><varname>ds_hash_expire</varname> (int)</title>
+		<para>
 		Expiration time in seconds to remove the load on a destination if no
 		BYE was received meanwhile.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>7200</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_hash_expire</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_expire", 3600)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>7200</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_hash_expire</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_expire", 3600)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_hash_initexpires">
- 		<title><varname>ds_hash_initexpire</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_hash_initexpires">
+		<title><varname>ds_hash_initexpire</varname> (int)</title>
+		<para>
 		Expiration time in seconds to remove the load on a destination if no
 		200 for INVITE was received meanwhile and state updated with
 		ds_load_update().
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>7200</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_hash_initexpire</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_initexpire", 60)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>7200</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_hash_initexpire</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_initexpire", 60)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.ds_hash_check_interval">
- 		<title><varname>ds_hash_check_interval</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_hash_check_interval">
+		<title><varname>ds_hash_check_interval</varname> (int)</title>
+		<para>
 		Time interval in seconds to scan internal hash table with call load
 		dispatching data for expired items.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>30</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_hash_check_interval</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_hash_check_interval", 60)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>30</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_hash_check_interval</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_hash_check_interval", 60)
+...
+</programlisting>
+		</example>
 	</section>
- 	<section id="dispatcher.p.outbound_proxy">
- 		<title><varname>outbound_proxy</varname> (str)</title>
- 		<para>
+	<section id="dispatcher.p.outbound_proxy">
+		<title><varname>outbound_proxy</varname> (str)</title>
+		<para>
 		SIP URI of outbound proxy to be used when sending pings.
- 		</para>
- 		<para>
- 		<emphasis>
- 			By default no outbound proxy is defined.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>outbound_proxy</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			By default no outbound proxy is defined.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>outbound_proxy</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="dispatcher.p.ds_default_socket">
@@ -894,11 +898,11 @@ DEST: {
 		is ignored.</para>
 		<example>
 		<title>Set the <quote>ds_default_socket</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
- ...
- </programlisting>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
+...
+</programlisting>
 		</example>
 	</section>
 
@@ -918,19 +922,19 @@ DEST: {
 		(this parameter has higher priority).</para>
 		<example>
 		<title>Set the <quote>ds_default_sockname</quote> parameter</title>
- <programlisting format="linespecific">
- ...
+<programlisting format="linespecific">
+...
  listen=udp:1.2.3.4:5060 name "sock1"
- ...
- modparam("dispatcher", "ds_default_sockname", "sock1")
- ...
- </programlisting>
+...
+modparam("dispatcher", "ds_default_sockname", "sock1")
+...
+</programlisting>
 		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_timer_mode">
- 		<title><varname>ds_timer_mode</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_timer_mode">
+		<title><varname>ds_timer_mode</varname> (int)</title>
+		<para>
 			Specify the timer process to be used by the module for
 			keepalives and active dialogs tracking.
 		</para>
@@ -946,25 +950,25 @@ DEST: {
 		</listitem>
 		</itemizedlist>
 
- 		<para>
+		<para>
 			On a server with a lot of traffic, using secondary
 			timer can help with performances, because the main timer
 			can be overloaded by taking care of transactions retransmissions
 			and expirations of items in memory.
 		</para>
 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_timer_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_timer_mode", 1)
- ...
- </programlisting>
- 		</example>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_timer_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_timer_mode", 1)
+...
+</programlisting>
+		</example>
 	</section>
 	<section id="dispatcher.p.event_callback">
 		<title><varname>event_callback</varname> (str)</title>
@@ -998,26 +1002,26 @@ end
 		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_attrs_none">
- 		<title><varname>ds_attrs_none</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_attrs_none">
+		<title><varname>ds_attrs_none</varname> (int)</title>
+		<para>
 		If set to 1, "none=yes" is set in the attrs for those records that
 		have no attrs value, to ensure that corresponding XAVP fields for
 		records do not get mixed up.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_attrs_none</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_attrs_none", 1)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_attrs_none</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_attrs_none", 1)
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="dispatcher.p.ds_db_extra_attrs">
@@ -1047,26 +1051,26 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 		</example>
 	</section>
 
- 	<section id="dispatcher.p.ds_load_mode">
- 		<title><varname>ds_load_mode</varname> (int)</title>
- 		<para>
+	<section id="dispatcher.p.ds_load_mode">
+		<title><varname>ds_load_mode</varname> (int)</title>
+		<para>
 		If set to 1, the module throws error when failing to add a destination
 		address (e.g., invalid URI). If set to 0, it skips the failing address
 		and continues with the next ones.
- 		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>0</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_load_mode</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_load_mode", 1)
- ...
- </programlisting>
- 		</example>
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_load_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_load_mode", 1)
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="dispatcher.p.reload_delta">
@@ -1331,15 +1335,15 @@ DEST: {
 </programlisting>
 		</example>
 	</section>
-  	<section id="dispatcher.f.ds_select_domain">
- 		<title>
- 		<function moreinfo="none">ds_select_domain(set, alg[, limit])</function>
- 		</title>
- 		<para>
- 		The method selects a destination from addresses set and rewrites the
- 		host and port from R-URI. The parameters have same meaning as for
- 		ds_select_dst().
- 		</para>
+	<section id="dispatcher.f.ds_select_domain">
+		<title>
+		<function moreinfo="none">ds_select_domain(set, alg[, limit])</function>
+		</title>
+		<para>
+		The method selects a destination from addresses set and rewrites the
+		host and port from R-URI. The parameters have same meaning as for
+		ds_select_dst().
+		</para>
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
 		destination set are stored in XAVP list (limited with an optional 'limit'
@@ -1473,23 +1477,23 @@ failure_route[REROUTE] {
 		<para>
 		Takes the next destination address from the corresponding XAVPs
 		and sets the dst_uri (outbound proxy address).
- 		</para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_next_domain()</function>
- 		</title>
- 		<para>
- 		Takes the next destination address from the corresponding XAVPs
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ds_next_domain()</function>
+		</title>
+		<para>
+		Takes the next destination address from the corresponding XAVPs
 		and sets the domain part of the request URI.
- 		</para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
- 	</section>
+	</section>
 	<section id="dispatcher.f.ds_set_dst">
 		<title>
 		<function moreinfo="none">ds_set_dst()</function>
@@ -1497,28 +1501,28 @@ failure_route[REROUTE] {
 		<para>
 		Takes the current destination address from the corresponding XAVPs
 		and sets the dst_uri (outbound proxy address).
- 		</para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
- 	</section>
-  	<section id="dispatcher.f.ds_set_domain">
- 		<title>
- 		<function moreinfo="none">ds_set_domain()</function>
- 		</title>
- 		<para>
- 		Takes the current destination address from the corresponding XAVPs
+	</section>
+	<section id="dispatcher.f.ds_set_domain">
+		<title>
+		<function moreinfo="none">ds_set_domain()</function>
+		</title>
+		<para>
+		Takes the current destination address from the corresponding XAVPs
 		and sets the domain part of the request URI.
- 		</para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
- 	</section>
-  	<section id="dispatcher.f.ds_mark_dst">
- 		<title>
- 		<function moreinfo="none">ds_mark_dst([state])</function>
- 		</title>
- 		<para>
+	</section>
+	<section id="dispatcher.f.ds_mark_dst">
+		<title>
+		<function moreinfo="none">ds_mark_dst([state])</function>
+		</title>
+		<para>
 		Mark the last used address from destination set as inactive
 		("i"/"I"), active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T").
 		Apart of disabled state, a destination can be set in probing mode by
@@ -1526,11 +1530,11 @@ failure_route[REROUTE] {
 		of failed gateways can be implemented. When an address is marked as
 		inactive or disabled, it will be ignored by 'ds_select_dst' and
 		'ds_select_domain'.
- 		</para>
- 		<para>
+		</para>
+		<para>
 		The parameter state is optional, when it is missing, then
 		the destination will be marked inactive (i.e., same as 'i').
- 		</para>
+		</para>
 		<para>Possible values for state parameter:</para>
 		<itemizedlist>
 		<listitem>
@@ -1574,15 +1578,15 @@ failure_route[tryagain] {
 ...
 </programlisting>
 		</example>
- 	</section>
-  	<section  id="dispatcher.f.ds_list_exists">
- 		<title>
+	</section>
+	<section  id="dispatcher.f.ds_list_exists">
+		<title>
 		<function moreinfo="none">ds_list_exists(groupid)</function>
- 		</title>
- 		<para>
+		</title>
+		<para>
 		Function alias: ds_list_exist(groupid)
- 		</para>
- 		<para>
+		</para>
+		<para>
 		Check if a specific group is defined in dispatcher list
 		or database.
 		</para>
@@ -1611,11 +1615,11 @@ if(ds_list_exists("10")) {
 </programlisting>
 	</example>
 	</section>
-  	<section  id="dispatcher.f.ds_is_from_list">
- 		<title>
+	<section  id="dispatcher.f.ds_is_from_list">
+		<title>
 		<function moreinfo="none">ds_is_from_list([groupid [, mode [, uri] ] ])</function>
- 		</title>
- 		<para>
+		</title>
+		<para>
 		This function returns true, if there is a match of source address or uri
 		with an address in the given group of the dispatcher-list; otherwise false.
 		</para>
@@ -1657,12 +1661,12 @@ if(ds_list_exists("10")) {
 		Upon a match, the variable specified by 'setid_pvname' parameter will
 		be set to groupid of matching address and the attributes will be set in
 		variable specified by 'attrs_pvname'.
- 		</para>
+		</para>
 		<para>
 		Note that for backward compatibility mode, when no parameter is given
 		or only groupid is given, the matching is done only for IP address
 		and port (protocol is ignored).
- 		</para>
+		</para>
 		<para>
 			This function can be used from ANY_ROUTE.
 		</para>
@@ -1685,14 +1689,14 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 ...
 </programlisting>
 		</example>
- 	</section>
-  	<section id="dispatcher.f.ds_load_update">
- 		<title>
- 		<function moreinfo="none">ds_load_update()</function>
- 		</title>
- 		<para>
+	</section>
+	<section id="dispatcher.f.ds_load_update">
+		<title>
+		<function moreinfo="none">ds_load_update()</function>
+		</title>
+		<para>
 		Updates the load state:
- 		</para>
+		</para>
 		<itemizedlist>
 		<listitem>
 			<para>if it is a BYE or CANCEL - remove the load from
@@ -1708,14 +1712,14 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 			BRANCH_ROUTE and ONREPLY_ROUTE.
 		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_load_unset()</function>
- 		</title>
- 		<para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ds_load_unset()</function>
+		</title>
+		<para>
 		Remove the call load for the destination that routed the call.
- 		</para>
+		</para>
 		<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 			BRANCH_ROUTE and ONREPLY_ROUTE.
@@ -1747,7 +1751,7 @@ onreply_route {
 ...
 </programlisting>
 		</example>
- 	</section>
+	</section>
 	<section id="dispatcher.f.ds_reload">
 		<title>
 		<function moreinfo="none">ds_reload()</function>
@@ -1843,15 +1847,15 @@ onreply_route {
 		<para>
 		Example:
 		</para>
-        <programlisting  format="linespecific">
+<programlisting  format="linespecific">
 		&sercmd; dispatcher.list
- ...
+...
 DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
 }
- ...
+...
 </programlisting>
 		<para>FLAGS consist out of 2 letters. First letter describe status of
 		destination: A-active, I – inactive, T – trying, D – disabled. Second
@@ -1879,10 +1883,10 @@ DEST: {
 		<para>
 		Example
 		</para>
-        <programlisting  format="linespecific">
+<programlisting  format="linespecific">
 		&sercmd; dispatcher.reload
-		</programlisting>
-    </section>
+</programlisting>
+	</section>
 
 	<section id="dispatcher.r.ping_active">
 		<title>
@@ -1917,7 +1921,7 @@ DEST: {
 &kamcmd; dispatcher.ping_active 0
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.add">
 		<title>
 		<function moreinfo="none">dispatcher.add</function>
@@ -1953,7 +1957,7 @@ DEST: {
 &sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.remove">
 		<title>
 		<function moreinfo="none">dispatcher.remove</function>
@@ -1986,7 +1990,7 @@ DEST: {
 &sercmd; dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 </programlisting>
-    </section>
+	</section>
 		<section id="dispatcher.r.hash">
 		<title>
 		<function moreinfo="none">dispatcher.hash</function>
@@ -2081,51 +2085,48 @@ kamctl rpc dispatcher.hash 4 bob server.com
 			<para>
 			There are some predefined names:
 			<itemizedlist>
-				<listitem>
-					'duid' - used for call load dispatching. It must be an
-					unique value to identify a destination (gateway address).
-					Practically the load within the group is associated with
-					this value.
-				</listitem>
-				<listitem>
-					'maxload' - used for call load dispatching. It must be
-					a positive integer, defining the upper limit of active
-					calls per destination. When the limit is reached, then
-					the gateway is no longer selected for new calls until
-					an exiting call via that gateway is terminated. If set
-					to 0, then no active call limit is used.
-				</listitem>
-				<listitem>
-					'weight' - used for weight based load distribution. It
-					must be set to a positive integer value beteen 0 and
-					100. The value represents the percent of calls to be
-					sent to that gateways.
-				</listitem>
-				<listitem>
-					'rweight' - used for relative weight based load
-					distribution. It must be set to a positive integer value
-					between 1 and 100 (otherwise host will be excluded from
-					relative weight distribution type).
-				</listitem>
-				<listitem>
-					'socket' - used to set the sending socket for the gateway.
-					It is used for sending the SIP traffic as well as
-					OPTIONS keepalives.
-				</listitem>
-				<listitem>
-					'sockname' - used to set by name the sending socket for the
-					gateway. It is used for sending the SIP traffic as well as
-					OPTIONS keepalives and has priority over 'socket' attribute.
-				</listitem>
-				<listitem>
-					'ping_from' - used to set the From URI in OPTIONS keepalives.
-					It overwrites the general ds_ping_from parameter.
-				</listitem>
-				<listitem>
-					'obproxy' - SIP URI of outbound proxy to be used when sending pings.
-					It overwrites the general ds_outbound_proxy parameter.
-				</listitem>
-			</itemizedlist>
+						<listitem>
+							<para>'duid' - used for call load dispatching. It must be an unique
+								value to identify a destination (gateway address). Practically the
+								load within the group is associated with this value.></para>
+						</listitem>
+						<listitem>
+							<para>'maxload' - used for call load dispatching. It must be a positive
+								integer, defining the upper limit of active calls per destination.
+								When the limit is reached, then the gateway is no longer selected
+								for new calls until an exiting call via that gateway is terminated.
+								If set to 0, then no active call limit is used.></para>
+						</listitem>
+						<listitem>
+							<para>'weight' - used for weight based load distribution. It must be set
+								to a positive integer value beteen 0 and 100. The value represents
+								the percent of calls to be sent to that gateways.></para>
+						</listitem>
+						<listitem>
+							<para>'rweight' - used for relative weight based load distribution. It
+								must be set to a positive integer value between 1 and 100 (otherwise
+								host will be excluded from relative weight distribution
+								type).</para>
+						</listitem>
+						<listitem>
+							<para>'socket' - used to set the sending socket for the gateway. It is
+								used for sending the SIP traffic as well as OPTIONS
+								keepalives.</para>
+						</listitem>
+						<listitem>
+							<para>'sockname' - used to set by name the sending socket for the
+								gateway. It is used for sending the SIP traffic as well as OPTIONS
+								keepalives and has priority over 'socket' attribute.</para>
+						</listitem>
+						<listitem>
+							<para>'ping_from' - used to set the From URI in OPTIONS keepalives. It
+								overwrites the general ds_ping_from parameter.</para>
+						</listitem>
+						<listitem>
+							<para>'obproxy' - SIP URI of outbound proxy to be used when sending
+								pings. It overwrites the general ds_outbound_proxy parameter.</para>
+						</listitem>
+					</itemizedlist>
 		</para>
 		</section>
 		<section id="dispatcher.ex.fileforma">
@@ -2219,4 +2220,3 @@ event_route[dispatcher:dst-up] {
     </section>
 
 </chapter>
-
