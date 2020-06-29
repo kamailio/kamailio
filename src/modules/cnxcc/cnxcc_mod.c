@@ -1511,10 +1511,6 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 			return -1;
 		}
 
-		LM_WARN("value cid: len=%d | value [%.*s]", value->sip_data.callid.len,
-				value->sip_data.callid.len, value->sip_data.callid.s);
-		LM_WARN("added cid: len=%d | value [%.*s]", cid->len, cid->len, cid->s);
-
 		if(value->sip_data.callid.len != cid->len
 				|| strncasecmp(value->sip_data.callid.s, cid->s, cid->len)
 						   != 0) {
@@ -1525,7 +1521,7 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 			return -1;
 		}
 
-		LM_DBG("CID already present\n");
+		LM_DBG("CID[%.*s] already present\n", cid->len, cid->s);
 		return 0;
 	}
 
