@@ -216,7 +216,8 @@ static int mod_init(void) {
 		if( !( fs.st_mode & S_IWOTH) &&
 			!((fs.st_mode & S_IWGRP) && (fs.st_gid == gid)) &&
 			!((fs.st_mode & S_IWUSR) && (fs.st_uid == uid))) {
-				LM_ERR("config file %s not writable\n", config_file);
+				LM_ERR("config file %s not writable or not owned by uid: %d and gid: %d\n",
+						config_file, uid, gid);
 				return -1;
 		}
 	}
