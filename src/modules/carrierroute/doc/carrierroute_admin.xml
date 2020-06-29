@@ -206,7 +206,8 @@ modparam("carrierroute", "config_source", "file")
     <section>
 	    <title><varname>config_file</varname> (string)</title>
 	    <para>
-		    Specifies the path to the config file.
+			Specifies the path to the config file. The file has to be owned by
+			the user and group used to run &kamailio;.
 	    </para>
 	    <para>
 		    <emphasis>
