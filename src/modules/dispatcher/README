@@ -497,9 +497,9 @@ modparam("dispatcher", "force_dst", 1)
    Default value is “0”.
 
    Example 1.10. Set the “flags” parameter
- ...
- modparam("dispatcher", "flags", 3)
- ...
+...
+modparam("dispatcher", "flags", 3)
+...
 
 3.11. use_default (int)
 
@@ -511,9 +511,9 @@ modparam("dispatcher", "force_dst", 1)
    Default value is “0”.
 
    Example 1.11. Set the “use_default” parameter
- ...
- modparam("dispatcher", "use_default", 1)
- ...
+...
+modparam("dispatcher", "use_default", 1)
+...
 
 3.12. xavp_dst (str)
 
@@ -534,9 +534,9 @@ Note
    Default value is “_dsdst_”.
 
    Example 1.12. Set the “xavp_dst” parameter
- ...
- modparam("dispatcher", "xavp_dst", "_dsdst_")
- ...
+...
+modparam("dispatcher", "xavp_dst", "_dsdst_")
+...
 
 3.13. xavp_dst_mode (int)
 
@@ -574,9 +574,9 @@ Note
    Default value is “_dsctx_”.
 
    Example 1.14. Set the “xavp_ctx” parameter
- ...
- modparam("dispatcher", "xavp_ctx", "_dsctx_")
- ...
+...
+modparam("dispatcher", "xavp_ctx", "_dsctx_")
+...
 
 3.15. xavp_ctx_mode (int)
 
@@ -587,9 +587,9 @@ Note
    Default value is “0” (add all fields).
 
    Example 1.15. Set the “xavp_ctx_mode” parameter
- ...
- modparam("dispatcher", "xavp_ctx_mode", 1)
- ...
+...
+modparam("dispatcher", "xavp_ctx_mode", 1)
+...
 
 3.16. hash_pvar (str)
 
@@ -603,14 +603,14 @@ Note
    Default value is “null” - disabled.
 
    Example 1.16. Use $avp(hash) for hashing:
- ...
- modparam("dispatcher", "hash_pvar", "$avp(hash)")
- ...
+...
+modparam("dispatcher", "hash_pvar", "$avp(hash)")
+...
 
    Example 1.17. Use combination of PVs for hashing:
- ...
- modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
- ...
+...
+modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
+...
 
 3.17. setid_pvname (str)
 
@@ -620,9 +620,9 @@ Note
    Default value is “null” - don't set PV.
 
    Example 1.18. Set the “setid_pvname” parameter
- ...
- modparam("dispatcher", "setid_pvname", "$var(setid)")
- ...
+...
+modparam("dispatcher", "setid_pvname", "$var(setid)")
+...
 
 3.18. attrs_pvname (str)
 
@@ -632,9 +632,9 @@ Note
    Default value is “null” - don't set PV.
 
    Example 1.19. Set the “attrs_pvname” parameter
- ...
- modparam("dispatcher", "attrs_pvname", "$var(attrs)")
- ...
+...
+modparam("dispatcher", "attrs_pvname", "$var(attrs)")
+...
 
 3.19. ds_ping_method (string)
 
@@ -645,9 +645,9 @@ Note
    Default value is “OPTIONS”.
 
    Example 1.20. Set the “ds_ping_method” parameter
- ...
- modparam("dispatcher", "ds_ping_method", "INFO")
- ...
+...
+modparam("dispatcher", "ds_ping_method", "INFO")
+...
 
 3.20. ds_ping_from (string)
 
@@ -658,9 +658,9 @@ Note
    Default value is “sip:dispatcher@localhost”.
 
    Example 1.21. Set the “ds_ping_from” parameter
- ...
- modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
- ...
+...
+modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
+...
 
 3.21. ds_ping_interval (int)
 
@@ -672,9 +672,9 @@ Note
    Default value is “0”.
 
    Example 1.22. Set the “ds_ping_interval” parameter
- ...
- modparam("dispatcher", "ds_ping_interval", 30)
- ...
+...
+modparam("dispatcher", "ds_ping_interval", 30)
+...
 
 3.22. ds_probing_threshold (int)
 
@@ -688,9 +688,9 @@ Note
    Default value is “1” (set inactive with first failure).
 
    Example 1.23. Set the “ds_probing_threshold” parameter
- ...
- modparam("dispatcher", "ds_probing_threshold", 10)
- ...
+...
+modparam("dispatcher", "ds_probing_threshold", 10)
+...
 
 3.23. ds_inactive_threshold (int)
 
@@ -703,9 +703,9 @@ Note
    Default value is “1” (set active with first success).
 
    Example 1.24. Set the “ds_inactive_threshold” parameter
- ...
- modparam("dispatcher", "ds_inactive_threshold", 10)
- ...
+...
+modparam("dispatcher", "ds_inactive_threshold", 10)
+...
 
 3.24. ds_ping_reply_codes (string)
 
@@ -727,10 +727,10 @@ Note
    Default value is “” (only 200 OK is accepted).
 
    Example 1.25. Set the “ds_ping_reply_codes” parameter
- ...
- modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
-3")
- ...
+...
+modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3
+")
+...
 
 3.25. ds_probing_mode (int)
 
@@ -756,9 +756,9 @@ Note
    Default value is “0”.
 
    Example 1.26. Set the “ds_probing_mode” parameter
- ...
- modparam("dispatcher", "ds_probing_mode", 1)
- ...
+...
+modparam("dispatcher", "ds_probing_mode", 1)
+...
 
 3.26. ds_ping_latency_stats (int)
 
@@ -771,7 +771,7 @@ Note
    Example 1.27. accessing the metrics
 # using the command :
 kamcmd dispatcher.list
- ...
+...
 DEST: {
         URI: sip:1.2.3.4
         FLAGS: AX
@@ -785,12 +785,12 @@ estimator_alpha
                 TIMEOUT: 0     # count of ping timeouts
         }
 }
- ...
+...
 
    Example 1.28. Set the “ds_ping_latency_stats” parameter
- ...
- modparam("dispatcher", "ds_ping_latency_stats", 1)
- ...
+...
+modparam("dispatcher", "ds_ping_latency_stats", 1)
+...
 
 3.27. ds_latency_estimator_alpha (int)
 
@@ -805,9 +805,9 @@ estimator_alpha
    Default value is “900 => 0.9”.
 
    Example 1.29. Set the “ds_hash_size” parameter
- ...
- modparam("dispatcher", "ds_latency_estimator_alpha", 900)
- ...
+...
+modparam("dispatcher", "ds_latency_estimator_alpha", 900)
+...
 
 3.28. ds_hash_size (int)
 
@@ -819,9 +819,9 @@ estimator_alpha
    Default value is “0”.
 
    Example 1.30. Set the “ds_hash_size” parameter
- ...
- modparam("dispatcher", "ds_hash_size", 9)
- ...
+...
+modparam("dispatcher", "ds_hash_size", 9)
+...
 
 3.29. ds_hash_expire (int)
 
@@ -831,9 +831,9 @@ estimator_alpha
    Default value is “7200”.
 
    Example 1.31. Set the “ds_hash_expire” parameter
- ...
- modparam("dispatcher", "ds_hash_expire", 3600)
- ...
+...
+modparam("dispatcher", "ds_hash_expire", 3600)
+...
 
 3.30. ds_hash_initexpire (int)
 
@@ -844,9 +844,9 @@ estimator_alpha
    Default value is “7200”.
 
    Example 1.32. Set the “ds_hash_initexpire” parameter
- ...
- modparam("dispatcher", "ds_hash_initexpire", 60)
- ...
+...
+modparam("dispatcher", "ds_hash_initexpire", 60)
+...
 
 3.31. ds_hash_check_interval (int)
 
@@ -856,9 +856,9 @@ estimator_alpha
    Default value is “30”.
 
    Example 1.33. Set the “ds_hash_check_interval” parameter
- ...
- modparam("dispatcher", "ds_hash_check_interval", 60)
- ...
+...
+modparam("dispatcher", "ds_hash_check_interval", 60)
+...
 
 3.32. outbound_proxy (str)
 
@@ -867,9 +867,9 @@ estimator_alpha
    By default no outbound proxy is defined.
 
    Example 1.34. Set the “outbound_proxy” parameter
- ...
- modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
- ...
+...
+modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
+...
 
 3.33. ds_default_socket (str)
 
@@ -883,9 +883,9 @@ estimator_alpha
    ignored.
 
    Example 1.35. Set the “ds_default_socket” parameter
- ...
- modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
- ...
+...
+modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
+...
 
 3.34. ds_default_sockname (str)
 
@@ -899,11 +899,11 @@ estimator_alpha
    (this parameter has higher priority).
 
    Example 1.36. Set the “ds_default_sockname” parameter
- ...
+...
  listen=udp:1.2.3.4:5060 name "sock1"
- ...
- modparam("dispatcher", "ds_default_sockname", "sock1")
- ...
+...
+modparam("dispatcher", "ds_default_sockname", "sock1")
+...
 
 3.35. ds_timer_mode (int)
 
@@ -921,9 +921,9 @@ estimator_alpha
    Default value is “0”.
 
    Example 1.37. Set the “ds_timer_mode” parameter
- ...
- modparam("dispatcher", "ds_timer_mode", 1)
- ...
+...
+modparam("dispatcher", "ds_timer_mode", 1)
+...
 
 3.36. event_callback (str)
 
@@ -956,9 +956,9 @@ end
    Default value is “0”.
 
    Example 1.39. Set the “ds_attrs_none” parameter
- ...
- modparam("dispatcher", "ds_attrs_none", 1)
- ...
+...
+modparam("dispatcher", "ds_attrs_none", 1)
+...
 
 3.38. ds_db_extra_attrs (str)
 
@@ -986,9 +986,9 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
    Default value is “0”.
 
    Example 1.41. Set the “ds_load_mode” parameter
- ...
- modparam("dispatcher", "ds_load_mode", 1)
- ...
+...
+modparam("dispatcher", "ds_load_mode", 1)
+...
 
 3.40. reload_delta (int)
 
@@ -1510,13 +1510,13 @@ kamcmd dispatcher.set_duid_state ip 2 xyz
 
    Example:
                 kamcmd dispatcher.list
- ...
+...
 DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
 }
- ...
+...
 
    FLAGS consist out of 2 letters. First letter describe status of
    destination: A-active, I â inactive, T â trying, D â disabled.
@@ -1673,15 +1673,15 @@ kamctl rpc dispatcher.hash 4 bob server.com
    There are some predefined names:
      * 'duid' - used for call load dispatching. It must be an unique value
        to identify a destination (gateway address). Practically the load
-       within the group is associated with this value.
+       within the group is associated with this value.>
      * 'maxload' - used for call load dispatching. It must be a positive
        integer, defining the upper limit of active calls per destination.
        When the limit is reached, then the gateway is no longer selected
        for new calls until an exiting call via that gateway is terminated.
-       If set to 0, then no active call limit is used.
+       If set to 0, then no active call limit is used.>
      * 'weight' - used for weight based load distribution. It must be set
        to a positive integer value beteen 0 and 100. The value represents
-       the percent of calls to be sent to that gateways.
+       the percent of calls to be sent to that gateways.>
      * 'rweight' - used for relative weight based load distribution. It
        must be set to a positive integer value between 1 and 100
        (otherwise host will be excluded from relative weight distribution
@@ -1951,39 +1951,42 @@ route[REQINIT] {
 
 # Handle requests within SIP dialogs
 route[WITHINDLG] {
-        if (has_totag()) {
-                # sequential request withing a dialog should
-                # take the path determined by record-routing
-                if (loose_route()) {
-                        if (is_method("BYE")) {
-                                setflag(FLT_ACC); # do accounting ...
-                                setflag(FLT_ACCFAILED); # ... even if the transa
-ction fails
-                        }
-                        route(RELAY);
-                } else {
-                        if (is_method("SUBSCRIBE") && uri == myself) {
-                                # in-dialog subscribe requests
-                                route(PRESENCE);
-                                exit;
-                        }
-                        if ( is_method("ACK") ) {
-                                if ( t_check_trans() ) {
-                                        # non loose-route, but stateful ACK;
-                                        # must be ACK after a 487 or e.g. 404 fr
-om upstream server
-                                        t_relay();
-                                        exit;
-                                } else {
-                                        # ACK without matching transaction ... i
-gnore and discard.
-                                        exit;
-                                }
-                        }
-                        sl_send_reply("404","Not here");
-                }
-                exit;
+        if (!has_totag()) {
+                return;
         }
+
+        # sequential request withing a dialog should
+        # take the path determined by record-routing
+        if (loose_route()) {
+                if (is_method("BYE")) {
+                        setflag(FLT_ACC); # do accounting ...
+                        setflag(FLT_ACCFAILED); # ... even if the transaction fa
+ils
+                }
+                route(RELAY);
+        }
+
+        if (is_method("SUBSCRIBE") && uri == myself) {
+                # in-dialog subscribe requests
+                route(PRESENCE);
+        }
+
+        if ( is_method("ACK") ) {
+                if ( t_check_trans() ) {
+                        # non loose-route, but stateful ACK;
+                        # must be ACK after a 487 or e.g. 404 from upstream serv
+er
+                        t_relay();
+                        exit;
+                } else {
+                        # ACK without matching transaction ... ignore and discar
+d.
+                        exit;
+                }
+        }
+
+        sl_send_reply("404","Not here");
+        exit;
 }
 
 # Handle SIP registrations
