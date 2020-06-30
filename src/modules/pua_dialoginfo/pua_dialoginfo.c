@@ -353,6 +353,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
 		|| (request->flags & (1<<refresh_pubruri_avps_flag))))
 	{
+		lock_get(&dlginfo->lock);
 		refresh_pubruri_avps(dlginfo, &uri);
 	}
 
@@ -496,6 +497,12 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 	}
+
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
+		|| (request->flags & (1<<refresh_pubruri_avps_flag))))
+	{
+		lock_release(&dlginfo->lock);
+	}
 }
 
 /*
@@ -576,6 +583,12 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 		return NULL;
 	}
 	memset( dlginfo, 0, len);
+
+	if(use_pubruri_avps && lock_init(&dlginfo->lock) == 0) {
+		LM_ERR("cannot init the lock\n");
+		free_dlginfo_cell(dlginfo);
+		return NULL;
+	}
 
 	/* copy from dlg structure to dlginfo structure */
 	dlginfo->lifetime     = override_lifetime ? override_lifetime : dlg->lifetime;
@@ -756,20 +769,24 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 
 	if ((!disable_caller_publish) && (disable_caller_publish_flag == -1 || !(request
 		&& (request->flags & (1<<disable_caller_publish_flag))))) {
+		if(use_pubruri_avps) lock_get(&dlginfo->lock);
 		dialog_publish_multi("Trying", dlginfo->pubruris_caller,
 				&identity_local,
 				&identity_remote,
 				&(dlg->callid), 1, dlginfo->lifetime,
 				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
+		if(use_pubruri_avps) lock_release(&dlginfo->lock);
 	}
 
 	if (callee_trying && ((!disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 			&& (request->flags & (1<<disable_callee_publish_flag)))))) {
+		if(use_pubruri_avps) lock_get(&dlginfo->lock);
 		dialog_publish_multi("Trying", dlginfo->pubruris_callee,
 				&identity_remote,
 				&identity_local,
 				&(dlg->callid), 0, dlginfo->lifetime,
 				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
+		if(use_pubruri_avps) lock_release(&dlginfo->lock);
 	}
 }
 
@@ -939,9 +956,7 @@ void free_dlginfo_cell(void *param) {
 	free_str_list_all(cell->pubruris_caller);
 	free_str_list_all(cell->pubruris_callee);
 
-	/*if (cell->to_tag) {
-		shm_free(cell->to_tag);
-	}*/
+	if(use_pubruri_avps) lock_destroy(cell->lock);
 	shm_free(param);
 }
 
