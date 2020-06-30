@@ -23,6 +23,7 @@
 
 #ifndef _PUA_DLGINFO_H
 #define _PUA_DLGINFO_H
+#include "../../core/locking.h"
 #include "../pua/pua_bind.h"
 
 extern send_publish_t pua_send_publish;
@@ -35,6 +36,7 @@ void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str 
  * dlg_cell during the callback (as this could create a race condition
  * if the dlg_cell gets meanwhile deleted) */
 struct dlginfo_cell {
+	gen_lock_t lock;
 	str from_uri;
 	str to_uri;
 	str callid;
