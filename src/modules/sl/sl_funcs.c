@@ -267,7 +267,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				len = snprintf(tmp, tsize, "0 %.*s\r\n",
 						msg->first_line.u.request.method.len,
 						msg->first_line.u.request.method.s);
-				if(len<0 || len>tsize) {
+				if(len<0 || len>=tsize) {
 					LM_ERR("failed to print the tmp cseq\n");
 					pkg_free(tmp);
 					pkg_free(cseqb);
