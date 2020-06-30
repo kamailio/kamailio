@@ -1027,7 +1027,7 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	size_t left;
 
 	p = imc_body_buf;
-	left = sizeof(imc_body_buf);
+	left = sizeof(imc_body_buf) - 2;
 
 	memcpy(p, ROOMS, sizeof(ROOMS) - 1);
 	p += sizeof(ROOMS) - 1;
