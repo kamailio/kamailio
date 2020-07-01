@@ -603,7 +603,10 @@ int pvh_set_header(
 		return -1;
 	}
 
-	xavi = pvh_get_xavi(msg, &xavi_name);
+	if((xavi = pvh_get_xavi(msg, &xavi_name)) == NULL) {
+		LM_ERR("xavi %.*s not found\n", xavi_name.len, xavi_name.s);
+		return -1;
+	}
 	avi = xavi->val.v.xavp;
 	hname_cnt = xavi_count(hname, &avi);
 	if(hname_cnt == 0) {
