@@ -161,10 +161,9 @@ modparam("cnxcc", "credit_check_period", 1)
 
 					<listitem>
 						<para>
-							<emphasis>-2 - failed, credit value is less than initial pulse value</emphasis>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
-
 				</itemizedlist>
 			</para>
 			<example>
@@ -212,6 +211,11 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
 					<listitem>
 						<para>
 							<emphasis>-1 - failed, error logged</emphasis>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -325,6 +329,11 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
 						</para>
 					</listitem>
 
+					<listitem>
+						<para>
+							<emphasis>-4 - call-id already present for this client</emphasis>
+						</para>
+					</listitem>
 				</itemizedlist>
 			</para>
 			<example>
@@ -522,13 +531,20 @@ route[CNXCC]
 	$var(i_pulse)             = 30;
 	$var(f_pulse)             = 6;
 
-	if (!cnxcc_set_max_credit("$var(client)",
+
+	cnxcc_set_max_credit("$var(client)",
 			"$var(credit)",
 			"$var(cost_per_sec)",
 			"$var(i_pulse)",
-			"$var(f_pulse)")) {
-		xlog("Error setting up credit control");
-	}
+			"$var(f_pulse)");
+
+	switch ($?) {
+		case -1:
+			xerr("Error setting up credit control");
+			sl_send_reply("503", "Internal Server Error");
+		case -4:
+			xwarn("$ci already present for client $var(client)");
+	};
 }
 
 event_route[cnxcc:call-shutdown]
