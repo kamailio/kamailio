@@ -2038,7 +2038,7 @@ static int siptrace_blacklisted_method(siptrace_data_t *sto)
 		msg.buf = sto->body.s;
 		msg.len = sto->body.len;
 		if(parse_msg(msg.buf, msg.len, &msg) != 0) {
-			LM_ERR("parse_msg failed\n");
+			LM_DBG("parse_msg failed\n");
 			return -1;
 		}
 	}
@@ -2050,7 +2050,7 @@ static int siptrace_blacklisted_method(siptrace_data_t *sto)
 		}
 	} else {
 		if(parse_headers(&msg, HDR_CSEQ_F, 0) != 0 || msg.cseq == NULL) {
-			LM_ERR("cannot parse cseq header\n");
+			LM_DBG("cannot parse cseq header\n");
 			free_sip_msg(&msg);
 			return -1;
 		}
