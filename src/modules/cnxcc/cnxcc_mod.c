@@ -1578,6 +1578,7 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 {
 	credit_data_t *credit_data = NULL;
 	call_t *call = NULL;
+	hash_tables_t *hts = NULL;
 
 	double credit = 0, connect_cost = 0, cost_per_second = 0;
 
@@ -1617,6 +1618,12 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 	if(cost_per_second <= 0) {
 		LM_ERR("cost_per_second value must be > 0: %f\n", cost_per_second);
 		return -1;
+	}
+
+	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
+		LM_ERR("call-id[%.*s] already present\n",
+		msg->callid->body.len, msg->callid->body.s);
+		return -2;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-credit[%f], "
@@ -1796,6 +1803,7 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 {
 	credit_data_t *credit_data = NULL;
 	call_t *call = NULL;
+	hash_tables_t *hts = NULL;
 
 	if(parse_headers(msg, HDR_CALLID_F, 0) != 0) {
 		LM_ERR("Error parsing Call-ID");
@@ -1824,6 +1832,12 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 		LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len,
 				msg->callid->body.s);
 		return -1;
+	}
+
+	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
+		LM_ERR("call-id[%.*s] already present\n",
+		msg->callid->body.len, msg->callid->body.s);
+		return -2;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-chan[%d], "
@@ -1882,6 +1896,7 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 {
 	credit_data_t *credit_data = NULL;
 	call_t *call = NULL;
+	hash_tables_t *hts = NULL;
 
 	if(parse_headers(msg, HDR_CALLID_F, 0) != 0) {
 		LM_ERR("Error parsing Call-ID");
@@ -1911,6 +1926,12 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 		LM_ERR("[%.*s]: client ID cannot be null\n", msg->callid->body.len,
 				msg->callid->body.s);
 		return -1;
+	}
+
+	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
+		LM_ERR("call-id[%.*s] already present\n",
+		msg->callid->body.len, msg->callid->body.s);
+		return -2;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-secs[%d], "
