@@ -543,14 +543,21 @@ route[CNXCC]
 	$var(i_pulse)             = 30;
 	$var(f_pulse)             = 6;
 
-	if (!cnxcc_set_max_credit("$var(client)",
+
+	cnxcc_set_max_credit("$var(client)",
 			"$var(credit)",
 			"$var(connect_cost)",
 			"$var(cost_per_sec)",
 			"$var(i_pulse)",
 			"$var(f_pulse)")) {
-		xlog("Error setting up credit control");
-	}
+
+	switch ($?) {
+		case -1:
+			xerr("Error setting up credit control");
+			sl_send_reply("503", "Internal Server Error");
+		case -2:
+			xwarn("$ci already exists for client $var(client)");
+	};
 }
 
 event_route[cnxcc:call-shutdown]
