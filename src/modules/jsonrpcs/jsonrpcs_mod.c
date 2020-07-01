@@ -586,8 +586,10 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 	va_list ap;
 	str stmp;
 
-	if(ctx->req_node==NULL)
+	if(ctx->req_node==NULL) {
+		LM_DBG("no request node\n");
 		return 0;
+	}
 
 	orig_fmt=fmt;
 	va_start(ap, fmt);
@@ -632,10 +634,14 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 					*char_ptr = int2str(SRJSON_GET_ULONG(ctx->req_node),
 							&stmp.len);
 				} else {
+					LM_ERR("field is not a number to auto-convert - type %d\n",
+							ctx->req_node->type);
 					*char_ptr = NULL;
 					goto error;
 				}
 			} else {
+				LM_ERR("field is not a string - type %d\n",
+							ctx->req_node->type);
 				*char_ptr = NULL;
 				goto error;
 			}
@@ -650,11 +656,15 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 					str_ptr->s = int2str(SRJSON_GET_ULONG(ctx->req_node),
 							&str_ptr->len);
 				} else {
+					LM_ERR("field is not a number to auto-convert - type %d\n",
+							ctx->req_node->type);
 					str_ptr->s = NULL;
 					str_ptr->len = 0;
 					goto error;
 				}
 			} else {
+				LM_ERR("field is not a string - type %d\n",
+							ctx->req_node->type);
 				str_ptr->s = NULL;
 				str_ptr->len = 0;
 				goto error;
@@ -676,8 +686,10 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		ctx->req_node = ctx->req_node->next;
 	}
 	/* error if there is still a scan char type and it is not optional */
-	if(*fmt && *fmt!='*' && mandatory_param==1)
+	if(*fmt && *fmt!='*' && mandatory_param==1) {
+		LM_ERR("no more fields to scan\n");
 		goto error;
+	}
 
 	va_end(ap);
 	return (int)(fmt-orig_fmt)-modifiers;
