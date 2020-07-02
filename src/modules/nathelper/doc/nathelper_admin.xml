@@ -842,7 +842,7 @@ if(is_rfc1918("$rd")) {
 
 	<section id="nathelper.set_contact_alias">
 		<title>
-		<function moreinfo="none">set_contact_alias()</function>
+		<function moreinfo="none">set_contact_alias([trim])</function>
 		</title>
 		<para>
 		Adds an <quote>;alias=ip~port~transport</quote> parameter to the
@@ -850,6 +850,16 @@ if(is_rfc1918("$rd")) {
 		The new contact URI is immediately visible to other modules in the
 		way the <function>fix_nated_contact()</function> does it.
 		</para>
+		<para>Meaning of parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>trim</emphasis> - by default, set_contact_alias() will not detect and trim an
+					already existing alias parameter. If this optional parameter is set to "1", set_contact_alias()
+					will trim the existing alias before adding a new one.
+				</para>
+			</listitem>
+		</itemizedlist>
 		<para>
 		This function can be used from
 		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and FAILURE_ROUTE.
