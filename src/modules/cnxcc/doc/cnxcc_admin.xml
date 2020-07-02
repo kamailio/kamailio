@@ -549,7 +549,7 @@ route[CNXCC]
 			"$var(connect_cost)",
 			"$var(cost_per_sec)",
 			"$var(i_pulse)",
-			"$var(f_pulse)"));
+			"$var(f_pulse)");
 
 	switch ($?) {
 		case -1:
