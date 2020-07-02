@@ -135,7 +135,7 @@ static param_export_t params[] = {
 		{ "video_service_identifier", 	INT_PARAM, 			&video_service_identifier },/*service id for voice*/
 		{ "video_rating_group", 	INT_PARAM, 			&video_rating_group },/*rating group for voice*/
 		{ "db_mode",			INT_PARAM,			&ro_db_mode_param		},
-		{ "db_url",			PARAM_STRING,			&db_url 			},
+		{ "db_url",			PARAM_STR,			&db_url 			},
 		{ "db_update_period",		INT_PARAM,			&db_update_period		},
 		{ "vendor_specific_chargeinfo",		INT_PARAM,	&vendor_specific_chargeinfo		}, /* VSI for extra charing info in Ro */
 		{ "vendor_specific_id",		INT_PARAM,			&vendor_specific_id		}, /* VSI for extra charing info in Ro */
