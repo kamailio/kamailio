@@ -618,7 +618,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 
 	memset(&ci, 0, sizeof(ucontact_info_t));
 
-	ret = rpc->scan(ctx, "SSSdfSddd*SS", &table, &aor, &contact, &ci.expires,
+	ret = rpc->scan(ctx, "SSSdfSuuu*SS", &table, &aor, &contact, &ci.expires,
 			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &received,
 			&socket);
 	if (ret < 9) {
