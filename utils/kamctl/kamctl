@@ -2583,12 +2583,12 @@ usrloc() {
 				UL_EXPIRES=0
 				UL_FLAGS=0
 				BR_FLAGS=0
-				UL_PATH=0
+				UL_PATH="."
 			elif [ $# -eq 4 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
 				BR_FLAGS=0
-				UL_PATH=0
+				UL_PATH="."
 			elif [ $# -eq 5 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
