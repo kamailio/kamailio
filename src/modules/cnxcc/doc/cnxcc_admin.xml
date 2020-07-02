@@ -177,7 +177,7 @@ modparam("cnxcc", "credit_check_period", 1)
 
 					<listitem>
 						<para>
-							<emphasis>-2 - failed, credit value is less than initial pulse value</emphasis>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
 
@@ -342,6 +342,12 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
 						<para>
 							<emphasis>-3 - failed, number of calls established
 								is more than the limit you specified</emphasis>
+						</para>
+					</listitem>
+
+					<listitem>
+						<para>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
 
@@ -555,8 +561,8 @@ route[CNXCC]
 		case -1:
 			xerr("Error setting up credit control");
 			sl_send_reply("503", "Internal Server Error");
-		case -2:
-			xwarn("$ci already exists for client $var(client)");
+		case -4:
+			xwarn("$ci already present for client $var(client)");
 	};
 }
 
