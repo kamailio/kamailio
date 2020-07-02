@@ -1623,7 +1623,7 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
 		LM_ERR("call-id[%.*s] already present\n",
 		msg->callid->body.len, msg->callid->body.s);
-		return -2;
+		return -4;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-credit[%f], "
@@ -1837,7 +1837,7 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
 		LM_ERR("call-id[%.*s] already present\n",
 		msg->callid->body.len, msg->callid->body.s);
-		return -2;
+		return -4;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-chan[%d], "
@@ -1931,7 +1931,7 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
 		LM_ERR("call-id[%.*s] already present\n",
 		msg->callid->body.len, msg->callid->body.s);
-		return -2;
+		return -4;
 	}
 
 	LM_DBG("Setting up new call for client [%.*s], max-secs[%d], "
