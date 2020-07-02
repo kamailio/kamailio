@@ -865,6 +865,8 @@ void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, 
     //getting subscription id type
     if (strncasecmp(subscr.id.s, "tel:", 4) == 0) {
         subscr.type = Subscription_Type_MSISDN;
+        subscr.id.s += 4;
+        subscr.id.len -= 4;
     } else {
         subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
