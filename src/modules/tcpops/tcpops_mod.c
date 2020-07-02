@@ -576,7 +576,7 @@ static int ki_tcp_get_conid_helper(sip_msg_t* msg, str *saddr, pv_spec_t *pvs)
 setvalue:
 	memset(&val, 0, sizeof(pv_value_t));
 	val.ri = conid;
-	val.flags = PV_VAL_INT;
+	val.flags = PV_VAL_INT|PV_TYPE_INT;
 	if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val)<0) {
 		LM_ERR("failed to set the output var\n");
 		return -1;
