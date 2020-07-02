@@ -530,7 +530,7 @@ modparam("ims_charging", "origin_realm", "kamailio-ims.org")
       <para>Destination host to be used in Diameter messages to
       charging-server.</para>
 
-      <para><emphasis>Default value is "hss.ims.smilecoms.com".</emphasis></para>
+      <para><emphasis>Default value is "".</emphasis></para>
 
       <example>
         <title><varname>destination_host</varname>parameter usage</title>

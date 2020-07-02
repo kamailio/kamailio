@@ -185,6 +185,9 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     
     if (cfg.origin_realm.s && cfg.origin_realm.len >0)
         str_dup(x->origin_realm, cfg.origin_realm, pkg);
+
+    if (cfg.destination_host.s && cfg.destination_host.len > 0)
+        str_dup(x->destination_host, cfg.destination_host, pkg);
     
     if (cfg.destination_realm.s && cfg.destination_realm.len > 0)
         str_dup(x->destination_realm, cfg.destination_realm, pkg);
@@ -281,6 +284,7 @@ void Ro_free_CCR(Ro_CCR_t *x) {
 
     str_free(x->origin_host, pkg);
     str_free(x->origin_realm, pkg);
+    str_free(x->destination_host, pkg);
     str_free(x->destination_realm, pkg);
 
     str_free_ptr(x->user_name, pkg);

@@ -340,6 +340,7 @@ typedef struct {
 typedef struct {
     str origin_host;
     str origin_realm;
+    str destination_host;
     str destination_realm;
 
     int32_t acct_record_type;
