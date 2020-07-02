@@ -34,7 +34,7 @@
 #include "../../core/fmsg.h"
 
 #include "mqueue_api.h"
-
+#include "mqueue_db.h"
 
 /**
  *
@@ -71,6 +71,11 @@ void mq_destroy(void)
 	mh = _mq_head_list;
 	while(mh!=NULL)
 	{
+		if(mh->dbmode == 1 || mh->dbmode == 3)
+		{
+			LM_INFO("mqueue[%.*s] dbmode[%d]\n", mh->name.len, mh->name.s, mh->dbmode);
+			mqueue_db_save_queue(&mh->name);
+		}
 		mi = mh->ifirst;
 		while(mi!=NULL)
 		{
@@ -178,6 +183,27 @@ mq_head_t *mq_head_get(str *name)
 		mh = mh->next;
 	}
 	return NULL;
+}
+
+/**
+ *
+ */
+int mq_set_dbmode(str *name, int dbmode)
+{
+	mq_head_t *mh = NULL;
+
+	mh = _mq_head_list;
+	while(mh!=NULL)
+	{
+		if(name->len == mh->name.len
+				&& strncmp(mh->name.s, name->s, name->len)==0)
+		{
+			mh->dbmode = dbmode;
+			return 0;
+		}
+		mh = mh->next;
+	}
+	return -1;
 }
 
 /**
