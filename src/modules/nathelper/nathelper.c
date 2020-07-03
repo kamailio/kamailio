@@ -110,6 +110,7 @@ static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
 static int set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
+static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -212,6 +213,8 @@ static cmd_export_t cmds[] = {
 	{"set_contact_alias",  (cmd_function)set_contact_alias_f,  0,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"set_contact_alias",  (cmd_function)w_set_contact_alias_f, 1,
+		fixup_int_1, 0, REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
 		REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
@@ -704,10 +707,12 @@ static int fix_nated_contact_f(struct sip_msg *msg, char *str1, char *str2)
  * Replaces ip:port pair in the Contact: field with the source address
  * of the packet.
  */
-static int set_contact_alias(struct sip_msg *msg)
+static int set_contact_alias(struct sip_msg *msg, int trim)
 {
 	char nbuf[MAX_URI_SIZE];
+	char sbuf[MAX_URI_SIZE];
 	str nuri;
+	str suri;
 	int br;
 
 	int offset, len;
@@ -718,16 +723,24 @@ static int set_contact_alias(struct sip_msg *msg)
 
 	nuri.s = nbuf;
 	nuri.len = MAX_URI_SIZE;
+	suri.s = sbuf;
+	suri.len = MAX_URI_SIZE;
 	if(get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
 	if((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
 		LM_ERR("you can't update contact twice, check your config!\n");
 		return -1;
 	}
-
-	if(uri_add_rcv_alias(msg, &c->uri, &nuri) < 0) {
-		LM_DBG("cannot add the alias parameter\n");
-		return -1;
+	if(trim > 0 && uri_trim_rcv_alias(&c->uri, &suri) > 0) {
+		if(uri_add_rcv_alias(msg, &suri, &nuri) < 0) {
+			LM_DBG("cannot add the alias parameter\n");
+			return -1;
+		}
+	} else {
+		if(uri_add_rcv_alias(msg, &c->uri, &nuri) < 0) {
+			LM_DBG("cannot add the alias parameter\n");
+			return -1;
+		}
 	}
 
 	br = 1;
@@ -769,7 +782,19 @@ static int set_contact_alias(struct sip_msg *msg)
 
 static int set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	return set_contact_alias(msg);
+	return set_contact_alias(msg, 0);
+}
+
+static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	int i = 0;
+	if(str1) {
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
+	}
+	if(i > 1)
+		i = 1;
+	return set_contact_alias(msg, i);
 }
 
 #define SALIAS ";alias="
