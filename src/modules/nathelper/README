@@ -67,7 +67,7 @@ Ovidiu Sas
               5.6. is_rfc1918(ip_address)
               5.7. add_contact_alias([ip_addr, port, proto])
               5.8. handle_ruri_alias()
-              5.9. set_contact_alias([trim])
+              5.9. set_contact_alias()
               5.10. set_alias_to_pv(target_avp)
 
         6. Exported Pseudo Variables
@@ -158,7 +158,7 @@ Chapter 1. Admin Guide
         5.6. is_rfc1918(ip_address)
         5.7. add_contact_alias([ip_addr, port, proto])
         5.8. handle_ruri_alias()
-        5.9. set_contact_alias([trim])
+        5.9. set_contact_alias()
         5.10. set_alias_to_pv(target_avp)
 
    6. Exported Pseudo Variables
@@ -498,7 +498,7 @@ modparam("nathelper", "nat_addr_mode", 0)
    5.6. is_rfc1918(ip_address)
    5.7. add_contact_alias([ip_addr, port, proto])
    5.8. handle_ruri_alias()
-   5.9. set_contact_alias([trim])
+   5.9. set_contact_alias()
    5.10. set_alias_to_pv(target_avp)
 
 5.1.  fix_nated_contact()
@@ -700,18 +700,12 @@ if(is_rfc1918("$rd")) {
     };
 ...
 
-5.9.  set_contact_alias([trim])
+5.9.  set_contact_alias()
 
    Adds an “;alias=ip~port~transport” parameter to the contact URI
    containing the received ip, port, and transport protocol. The new
    contact URI is immediately visible to other modules in the way the
    fix_nated_contact() does it.
-
-   Meaning of parameters:
-     * trim - by default, set_contact_alias() will not detect and trim an
-       already existing alias parameter. If this optional parameter is set
-       to "1", set_contact_alias() will trim the existing alias before
-       adding a new one.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
