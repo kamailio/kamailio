@@ -4034,6 +4034,55 @@ static int ki_stop_recording(sip_msg_t *msg)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_STOP_RECORDING);
 }
 
+
+static int ki_block_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_BLOCK_MEDIA);
+}
+static int ki_block_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_BLOCK_MEDIA);
+}
+static int ki_unblock_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_UNBLOCK_MEDIA);
+}
+static int ki_unblock_media(sip_msg_t *msg , str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNBLOCK_MEDIA);
+}
+
+static int ki_block_dtmf0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_BLOCK_DTMF);
+}
+static int ki_block_dtmf(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_BLOCK_DTMF);
+}
+static int ki_unblock_dtmf0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_UNBLOCK_DTMF);
+}
+static int ki_unblock_dtmf(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNBLOCK_DTMF);
+}
+
+static int ki_play_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_PLAY_MEDIA);
+}
+static int ki_stop_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_STOP_MEDIA);
+}
+static int ki_stop_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_STOP_MEDIA);
+}
+
+
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
 {
 	rtpp_set_link_t rtpl1;
@@ -4149,6 +4198,65 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+
+	{ str_init("rtpengine"), str_init("block_media0"),
+        SR_KEMIP_INT, ki_block_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("block_media"),
+        SR_KEMIP_INT, ki_block_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("unblock_media0"),
+        SR_KEMIP_INT, ki_unblock_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("unblock_media"),
+        SR_KEMIP_INT, ki_unblock_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+	{ str_init("rtpengine"), str_init("block_dtmf0"),
+        SR_KEMIP_INT, ki_block_dtmf0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("block_dtmf"),
+        SR_KEMIP_INT, ki_block_dtmf,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("unblock_dtmf0"),
+        SR_KEMIP_INT, ki_unblock_dtmf0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("unblock_dtmf"),
+        SR_KEMIP_INT, ki_unblock_dtmf,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { str_init("rtpengine"), str_init("play_media"),
+        SR_KEMIP_INT, ki_play_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+		{ str_init("rtpengine"), str_init("stop_media0"),
+        SR_KEMIP_INT, ki_stop_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_media"),
+        SR_KEMIP_INT, ki_stop_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
     { str_init("rtpengine"), str_init("set_rtpengine_set"),
         SR_KEMIP_INT, ki_set_rtpengine_set,
         { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
