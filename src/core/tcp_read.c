@@ -1846,8 +1846,11 @@ repeat_1st_read:
 			if (unlikely(con->state==S_CONN_BAD)){
 				resp=CONN_ERROR;
 				if (!(con->send_flags.f & SND_F_CON_CLOSE))
-					LM_WARN("F_TCPCONN connection marked as bad: %p id %d refcnt %d\n",
-							con, con->id, atomic_get(&con->refcnt));
+					LM_WARN("F_TCPCONN connection marked as bad: %p id %d fd %d"
+							" refcnt %d ([%s]:%u -> [%s]:%u)\n",
+							con, con->id, con->fd, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				goto read_error;
 			}
 			read_flags=((
