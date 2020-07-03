@@ -3325,7 +3325,8 @@ inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 	 * the refcnt. and at least a membar_write_atomic_op() mem. barrier or
 	 *  a mb_atomic_* op must * be used to make sure all the changed flags are
 	 *  written into memory prior to the new refcnt value */
-	if (unlikely(mb_atomic_dec_and_test(&tcpconn->refcnt))){
+	if (unlikely((mb_atomic_get(&tcpconn->refcnt)==0)
+				|| mb_atomic_dec_and_test(&tcpconn->refcnt))){
 		_tcpconn_free(tcpconn);
 		return 1;
 	}
