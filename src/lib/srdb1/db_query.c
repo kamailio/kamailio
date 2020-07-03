@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -46,7 +46,7 @@ static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
 		int (*submit_query)(const db1_con_t*, const str*))
 {
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 
