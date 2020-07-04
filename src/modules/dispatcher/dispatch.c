@@ -196,10 +196,10 @@ int ds_hash_load_destroy(void)
 void ds_iter_set(ds_set_t *node, void (*ds_action_cb)(ds_set_t *node, int i, void *arg),
 		void *ds_action_arg)
 {
+	int i;
+
 	if(!node)
 		return;
-
-	int i;
 
 	for(i = 0; i < 2; ++i)
 		ds_iter_set(node->next[i], ds_action_cb, ds_action_arg);
@@ -340,7 +340,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 9
 				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
 			dest->attrs.ping_from = pit->body;
-		} else if(pit->name.len == 7 
+		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "obproxy", 7) == 0) {
 			dest->attrs.obproxy = pit->body;
 		}
@@ -557,11 +557,11 @@ err:
 /* for internal usage; arr must be arr[100] */
 void shuffle_uint100array(unsigned int *arr)
 {
-	if(arr == NULL)
-		return;
 	int k;
 	int j;
 	unsigned int t;
+	if(arr == NULL)
+		return;
 	for(j = 0; j < 100; j++) {
 		k = j + (kam_rand() % (100 - j));
 		t = arr[j];
@@ -879,7 +879,7 @@ next_line:
 	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+
 	ds_log_sets();
 	return 0;
 
@@ -1021,7 +1021,7 @@ int ds_load_db(void)
 				LM_ERR("too many db columns: %d\n", nrcols);
 				return -1;
 			}
-			query_cols[nrcols++] = &pit->body; 
+			query_cols[nrcols++] = &pit->body;
 		}
 	}
 
@@ -1366,7 +1366,6 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	str key1;
 	str key2;
 
-
 	if(msg == NULL || hash == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
@@ -1621,7 +1620,7 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 	if(olddst == -1) {
 		LM_WARN("old destination address not found for [%d, %.*s]\n", set,
 				it->duid.len, it->duid.s);
-	} 
+	}
 	if(newdst == -1) {
 		/* new destination has not been found: has been removed meanwhile? */
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
@@ -1632,7 +1631,7 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	
+
 	if(olddst != -1)
 		DS_LOAD_DEC(idx, olddst);
 
@@ -2458,7 +2457,7 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+
 	ds_log_sets();
 	return 0;
 
@@ -2513,7 +2512,7 @@ int ds_remove_dst(int group, str *address)
 
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	
+
 	ds_log_sets();
 	return 0;
 
@@ -2599,10 +2598,12 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 	/* standard deviation using oneline algorithm */
 	/* https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm */
 	if (latency_stats->count > 1) {
-		float delta = latency - latency_stats->average;
+		float delta;
+		float delta2;
+		delta = latency - latency_stats->average;
 		latency_stats->average += delta/latency_stats->count;
-		float delta2 = latency - latency_stats->average;
-		latency_stats->m2 += delta*delta2;
+		delta2 = latency - latency_stats->average;
+		latency_stats->m2 += ((double)delta)*delta2;
 		latency_stats->stdev = sqrt(latency_stats->m2 / (latency_stats->count-1));
 	}
 	/* exponentialy weighted moving average */
@@ -2619,6 +2620,9 @@ int ds_update_latency(int group, str *address, int code)
 	int i = 0;
 	int state = 0;
 	ds_set_t *idx = NULL;
+	int apply_rweights = 0;
+	int all_gw_congested = 1;
+	int total_congestion_ms = 0;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -2630,26 +2634,25 @@ int ds_update_latency(int group, str *address, int code)
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
-	int apply_rweights = 0;
-	int all_gw_congested = 1;
-	int total_congestion_ms = 0;
 	lock_get(&idx->lock);
 	while (i < idx->nr) {
 		ds_dest_t *ds_dest = &idx->dlist[i];
 		ds_latency_stats_t *latency_stats = &ds_dest->latency_stats;
 		if (ds_dest->uri.len == address->len
 				&& strncasecmp(ds_dest->uri.s, address->s, address->len) == 0) {
+			struct timeval now;
+			int latency_ms;
+			int congestion_ms;
 			/* Destination address found, this is the gateway that was pinged. */
 			state = ds_dest->flags;
 			if (code == 408 && latency_stats->timeout < UINT32_MAX)
 				latency_stats->timeout++;
-			struct timeval now;
 			gettimeofday(&now, NULL);
-			int latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
+			latency_ms = (now.tv_sec - latency_stats->start.tv_sec)*1000
 		            + (now.tv_usec - latency_stats->start.tv_usec)/1000;
 			latency_stats_update(latency_stats, latency_ms);
 
-			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			congestion_ms = latency_stats->estimate - latency_stats->average;
 			if (congestion_ms < 0) congestion_ms = 0;
 			total_congestion_ms += congestion_ms;
 
@@ -2672,10 +2675,12 @@ int ds_update_latency(int group, str *address, int code)
 			}
 		} else {
 			/* Another gateway in the set, we verify if it is congested. */
-			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			int congestion_ms;
+			int active_weight;
+			congestion_ms = latency_stats->estimate - latency_stats->average;
 			if (congestion_ms < 0) congestion_ms = 0;
 			total_congestion_ms += congestion_ms;
-			int active_weight = ds_dest->attrs.weight - congestion_ms;
+			active_weight = ds_dest->attrs.weight - congestion_ms;
 			if (active_weight > 0) all_gw_congested = 0;
 		}
 		if (!ds_dest->attrs.congestion_control) all_gw_congested = 0;
@@ -2686,11 +2691,13 @@ int ds_update_latency(int group, str *address, int code)
 	if (all_gw_congested) {
 		i = 0;
 		while (i < idx->nr) {
+			int congestion_ms;
+			int active_weight;
 			ds_dest_t *ds_dest = &idx->dlist[i];
 			ds_latency_stats_t *latency_stats = &ds_dest->latency_stats;
-			int congestion_ms = latency_stats->estimate - latency_stats->average;
+			congestion_ms = latency_stats->estimate - latency_stats->average;
 			/* We multiply by 2^4 to keep enough precision */
-			int active_weight = (total_congestion_ms << 4) / congestion_ms;
+			active_weight = (total_congestion_ms << 4) / congestion_ms;
 			if (ds_dest->attrs.rweight != active_weight) {
 				apply_rweights = 1;
 				ds_dest->attrs.rweight = active_weight;
