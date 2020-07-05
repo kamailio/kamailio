@@ -795,6 +795,7 @@ static int db_redis_compare_column(db_key_t k, db_val_t *v, db_op_t op, redisRep
     double d_value;
     str *tmpstr;
     char tmp[32] = "";
+    struct tm _time;
 
     int vtype = VAL_TYPE(v);
 
@@ -926,7 +927,8 @@ static int db_redis_compare_column(db_key_t k, db_val_t *v, db_op_t op, redisRep
             return -1;
         case DB1_DATETIME:
             // TODO: insert int value to db for faster comparison!
-            strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", localtime(&(VAL_TIME(v))));
+            localtime_r(&(VAL_TIME(v)), &_time);
+            strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", &_time);
             LM_DBG("comparing DATETIME %s %s %s\n", reply->str, op, tmp);
             if (!strcmp(op, OP_EQ)) {
                 return (strcmp(reply->str, tmp) == 0) ? 0 : -1;
