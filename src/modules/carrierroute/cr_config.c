@@ -121,14 +121,8 @@ static int backup_config(void) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	if(!strcpy(backup_file, config_file)){
-		LM_ERR("can't copy filename\n");
-		goto errout;
-	}
-	if(!strcat(backup_file, ".bak")){
-		LM_ERR("can't attach suffix\n");
-		goto errout;
-	}
+	strcpy(backup_file, config_file);
+	strcat(backup_file, ".bak");
 	/* open source file */
 	if ((from = fopen(config_file, "rb"))==NULL) {
 		LM_ERR("Cannot open source file.\n");
