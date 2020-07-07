@@ -368,7 +368,8 @@ usage_base() {
 	mecho " -- command 'start|stop|restart|trap'"
 	echo
 cat <<EOF
- trap ............................... trap with gdb Kamailio processes
+ trap ............................... trap with gdb Kamailio processes using RPC
+ pstrap ............................. trap with gdb Kamailio processes using ps
  restart ............................ restart Kamailio
  start .............................. start Kamailio
  stop ............................... stop Kamailio
