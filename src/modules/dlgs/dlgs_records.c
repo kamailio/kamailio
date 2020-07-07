@@ -189,6 +189,15 @@ int dlgs_item_free(dlgs_item_t *item)
 	if(item == NULL) {
 		return -1;
 	}
+	if(item->tags != NULL) {
+		dlgs_tag_t *dti, *dtb;
+		dti = item->tags;
+		while(dti!=NULL) {
+			dtb = dti;
+			dti = dti->next;
+			shm_free(dtb);
+		}
+	}
 	shm_free(item);
 	return 0;
 }
@@ -365,6 +374,9 @@ int dlgs_unlock_item(sip_msg_t *msg)
 	return 0;
 }
 
+/**
+ *
+ */
 dlgs_item_t *dlgs_get_item(sip_msg_t *msg)
 {
 	unsigned int idx;
@@ -637,6 +649,48 @@ done:
 	nstate = it->state;
 	dlgs_unlock_item(msg);
 	LM_DBG("old state %d - new state %d\n", ostate, nstate);
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_tags_add(sip_msg_t *msg, str *vtags)
+{
+	dlgs_item_t *dit = NULL;
+	dlgs_tag_t *dtag = NULL;
+	unsigned int tsize = 0;
+
+	if(vtags==NULL || vtags->len<=0) {
+		LM_DBG("no tags content\n");
+		return -1;
+	}
+
+	dit = dlgs_get_item(msg);
+	if(dit == NULL) {
+		return -1;
+	}
+
+	tsize = sizeof(dlgs_tag_t) + vtags->len + 1;
+	dtag = (dlgs_tag_t*)shm_malloc(tsize);
+	if(dtag == NULL) {
+		SHM_MEM_ERROR;
+		dlgs_unlock_item(msg);
+		return -2;
+	}
+	memset(dtag, 0, tsize);
+	dtag->tname.s = (char*)dtag + sizeof(dlgs_tag_t);
+	memcpy(dtag->tname.s, vtags->s, vtags->len);
+	dtag->tname.len = vtags->len;
+	dtag->tname.s[dtag->tname.len] = '\0';
+
+	if(dit->tags != NULL) {
+		dit->tags->prev = dtag;
+	}
+	dtag->next = dit->tags;
+	dit->tags = dtag;
+	dlgs_unlock_item(msg);
+
 	return 0;
 }
 

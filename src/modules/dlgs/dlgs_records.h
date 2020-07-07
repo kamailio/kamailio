@@ -49,6 +49,14 @@ typedef struct _dlgs_stats {
 
 void dlgs_update_stats(dlgs_stats_t *stats, int state, int val);
 
+typedef struct _dlgs_tag {
+	unsigned int hashid;
+	str tname;
+	str tvalue;
+	struct _dlgs_tag *prev;
+	struct _dlgs_tag *next;
+} dlgs_tag_t;
+
 typedef struct _dlgs_item {
     unsigned int hashid;   /* item hash id */
 	str callid;            /* sip call-id */
@@ -62,6 +70,7 @@ typedef struct _dlgs_item {
 	time_t ts_init;
 	time_t ts_answer;
 	time_t ts_finish;
+	dlgs_tag_t *tags;
     struct _dlgs_item *prev;
     struct _dlgs_item *next;
 } dlgs_item_t;
@@ -105,5 +114,7 @@ int dlgs_init(void);
 int dlgs_destroy(void);
 int dlgs_rpc_init(void);
 int dlgs_update_item(sip_msg_t *msg);
+
+int dlgs_tags_add(sip_msg_t *msg, str *vtags);
 
 #endif

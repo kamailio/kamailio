@@ -55,6 +55,7 @@ static void mod_destroy(void);
 
 static int w_dlgs_init(sip_msg_t *msg, char *psrc, char *pdst, char *pdata);
 static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2);
+static int w_dlgs_count(sip_msg_t *msg, char *pfield, char *pop, char *pdata);
 static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2);
 static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2);
 static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2);
@@ -67,11 +68,13 @@ static cmd_export_t cmds[]={
 		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{"dlgs_update", (cmd_function)w_dlgs_update, 0, 0,
 		0, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"dlgs_count", (cmd_function)w_dlgs_count, 3, fixup_spve_all,
+		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{"dlgs_tags_add", (cmd_function)w_dlgs_tags_add, 1, fixup_spve_null,
 		fixup_spve_null, ANY_ROUTE},
 	{"dlgs_tags_rm", (cmd_function)w_dlgs_tags_rm, 1, fixup_spve_null,
 		fixup_spve_null, ANY_ROUTE},
-	{"dlgs_tags_count", (cmd_function)w_dlgs_tags_rm, 1, fixup_spve_null,
+	{"dlgs_tags_count", (cmd_function)w_dlgs_tags_count, 1, fixup_spve_null,
 		fixup_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -245,9 +248,60 @@ static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
+{
+	LM_DBG("counting by: [%.*s] [%.*s] [%.*s]\n", vfield->len, vfield->s,
+			vop->len, vop->s, vdata->len, vdata->s);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlgs_count(sip_msg_t *msg, char *pfield, char *pop, char *pdata)
+{
+	str vfield = STR_NULL;
+	str vop = STR_NULL;
+	str vdata = str_init("");
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfield, &vfield) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pop, &vop) < 0) {
+		LM_ERR("failed to get p2\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pdata, &vdata) < 0) {
+		LM_ERR("failed to get p3\n");
+		return -1;
+	}
+	return ki_dlgs_count(msg, &vfield, &vop, &vdata);
+}
+
+/**
+ *
+ */
+static int ki_dlgs_tags_add(sip_msg_t *msg, str *vtags)
+{
+	if(dlgs_tags_add(msg, vtags)<0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2)
 {
-	return 1;
+	str vtags = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)ptags, &vtags) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	return ki_dlgs_tags_add(msg, &vtags);
 }
 
 /**
@@ -290,6 +344,16 @@ static sr_kemi_t sr_kemi_dlgs_exports[] = {
 	{ str_init("dlgs"), str_init("dlgs_update"),
 		SR_KEMIP_INT, ki_dlgs_update,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_count"),
+		SR_KEMIP_INT, ki_dlgs_count,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_tags_add"),
+		SR_KEMIP_INT, ki_dlgs_tags_add,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
