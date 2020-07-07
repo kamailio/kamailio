@@ -2947,11 +2947,11 @@ kamailio_pstrap() {
 	DATE=`/bin/date +%Y%m%d_%H%M%S`
 	LOG_FILE=/tmp/gdb_kamailio_${DATE}.txt
 	minfo "Trap file: $LOG_FILE"
-	ps axw | grep kamailio | grep -v grep | sort > $LOG_FILE
+	ps axw | grep kamailio | grep -v grep | grep -v kamctl | sort > $LOG_FILE
 	echo "" >> $LOG_FILE
 	echo "" >> $LOG_FILE
 	echo -n "Trapping Kamailio with gdb: "
-	PID_TIMESTAMP_VECTOR=`ps axw | grep kamailio | grep -v grep | sort | awk '{print $1}'`
+	PID_TIMESTAMP_VECTOR=`ps axw | grep kamailio | grep -v grep | grep -v kamctl | sort | awk '{print $1}'`
 	for pid in $PID_TIMESTAMP_VECTOR
 	do
 		echo -n "."
