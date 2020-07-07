@@ -2909,7 +2909,7 @@ extcmd() {
 }
 
 ##### ================================================ #####
-### trap with gdb kamailio processes
+### trap with gdb kamailio processes using RPC core.psx
 #
 
 kamailio_trap() {
@@ -2923,6 +2923,35 @@ kamailio_trap() {
 	ctl_cmd_run core.psx > $LOG_FILE
 	echo -n "Trapping Kamailio with gdb: "
 	PID_TIMESTAMP_VECTOR=`$EGREP 'PID' $LOG_FILE | $EGREP -Eo '[0-9]+'`
+	for pid in $PID_TIMESTAMP_VECTOR
+	do
+		echo -n "."
+		PID=`echo $pid | cut -d '-' -f 1`
+		echo "" >> $LOG_FILE
+		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="bt full" >> $LOG_FILE 2>&1
+		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
+	done
+	echo "."
+}
+
+##### ================================================ #####
+### trap with gdb kamailio processes using ps command
+#
+
+kamailio_pstrap() {
+	if [ -z "$GDB" ] ; then
+		merr "'gdb' tool not found: set GDB variable to correct tool path"
+		exit
+	fi
+	DATE=`/bin/date +%Y%m%d_%H%M%S`
+	LOG_FILE=/tmp/gdb_kamailio_${DATE}.txt
+	minfo "Trap file: $LOG_FILE"
+	ps axw | grep kamailio | grep -v grep | sort > $LOG_FILE
+	echo "" >> $LOG_FILE
+	echo "" >> $LOG_FILE
+	echo -n "Trapping Kamailio with gdb: "
+	PID_TIMESTAMP_VECTOR=`ps axw | grep kamailio | grep -v grep | sort | awk '{print $1}'`
 	for pid in $PID_TIMESTAMP_VECTOR
 	do
 		echo -n "."
@@ -3145,6 +3174,10 @@ case $1 in
 	trap)
 		require_ctlengine
 		kamailio_trap
+		;;
+
+	pstrap)
+		kamailio_pstrap
 		;;
 
 	start)
