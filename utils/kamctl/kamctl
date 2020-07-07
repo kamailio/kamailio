@@ -2958,7 +2958,7 @@ kamailio_pstrap() {
 		PID=`echo $pid | cut -d '-' -f 1`
 		echo "" >> $LOG_FILE
 		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
-		$GDB kamailio $PID -batch --eval-command="bt full" >> $LOG_FILE 2>&1
+		$GDB kamailio $PID -batch --eval-command="p process_no" --eval-command="p pt[process_no]" --eval-command="bt full" >> $LOG_FILE 2>&1
 		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
 	done
 	echo "."
