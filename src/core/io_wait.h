@@ -669,12 +669,6 @@ again_epoll:
 					if (errno==EAGAIN) goto again_epoll;
 					LM_ERR("removing fd %d from epoll list failed: %s [%d]\n",
 						fd, strerror(errno), errno);
-					if (unlikely(errno==EBADF)) {
-						LM_ERR("unhashing of invalid fd - %d (epfd %d)\n", fd,
-								h->h->epfd);
-						unhash_fd_map(e);
-						h->fd_no--;
-					}
 					goto error;
 				}
 #ifdef EPOLL_NO_CLOSE_BUG
