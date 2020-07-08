@@ -1893,6 +1893,13 @@ read_error:
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				}
 				if(tcp_conn_lst!=NULL) {
+					LM_DBG("removing from list %p id %d fd %d,"
+							" state %d, flags %x, main fd %d, refcnt %d"
+							" ([%s]:%u -> [%s]:%u)\n",
+							con, con->id, con->fd, con->state,
+							con->flags, con->s, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 					tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 					local_timer_del(&tcp_reader_ltimer, &con->timer);
 					if (unlikely(resp!=CONN_EOF))
