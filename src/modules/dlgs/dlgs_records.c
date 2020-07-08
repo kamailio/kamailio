@@ -479,6 +479,107 @@ int dlgs_del_item(sip_msg_t *msg)
 	return 0;
 }
 
+int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
+{
+	int i;
+	int n;
+	dlgs_item_t *it;
+	int tfield = 0;
+	int top = 0;
+	str mval;
+
+	if(_dlgs_htb == NULL) {
+		return -1;
+	}
+	if(vfield == NULL || vop == NULL || vdata ==NULL) {
+		return -1;
+	}
+	if(vfield->len==3 && strncasecmp(vfield->s, "any", 3)==0) {
+		tfield = 0;
+	} else if(vfield->len==3 && strncasecmp(vfield->s, "src", 3)==0) {
+		tfield = 1;
+	} else if(vfield->len==3 && strncasecmp(vfield->s, "dst", 3)==0) {
+		tfield = 2;
+	} else if(vfield->len==4 && strncasecmp(vfield->s, "data", 4)==0) {
+		tfield = 3;
+	} else {
+		LM_ERR("unknown field: %.*s\n", vfield->len, vfield->s);
+		return -1;
+	}
+	if(vop->len==2 && strncasecmp(vop->s, "eq", 2)==0) {
+		top = 0;
+	} else if(vop->len==2 && strncasecmp(vop->s, "ne", 2)==0) {
+		top = 1;
+	} else if(vop->len==2 && strncasecmp(vop->s, "re", 2)==0) {
+		top = 2;
+	} else if(vop->len==2 && strncasecmp(vop->s, "sw", 2)==0) {
+		top = 3;
+	} else if(vop->len==2 && strncasecmp(vop->s, "fm", 2)==0) {
+		top = 4;
+	} else {
+		LM_ERR("unknown operator: %.*s\n", vop->len, vop->s);
+		return -1;
+	}
+
+	n = 0;
+	if(tfield == 0) {
+		/* count 'any' dialog not-yet-finished */
+		for(i=0; i<_dlgs_htb->htsize; i++) {
+			n += _dlgs_htb->slots[i].astats.c_init;
+			n += _dlgs_htb->slots[i].astats.c_progress;
+			n += _dlgs_htb->slots[i].astats.c_answered;
+			n += _dlgs_htb->slots[i].astats.c_confirmed;
+		}
+		return n;
+	}
+
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		for(it = _dlgs_htb->slots[i].first; it != NULL; it=it->next) {
+			if(it->state != DLGS_STATE_TERMINATED
+					&& it->state != DLGS_STATE_NOTANSWERED) {
+				switch(tfield) {
+					case 1:
+						mval = it->src;
+						break;
+					case 2:
+						mval = it->dst;
+						break;
+					case 3:
+						mval = it->data;
+						break;
+					default:
+						mval = it->src;
+						break;
+				}
+				switch(top) {
+					case 0:
+						if(mval.len == vdata->len
+								&& strncmp(mval.s, vdata->s, mval.len)==0) {
+							n++;
+						}
+					break;
+					case 1:
+						if(mval.len != vdata->len
+								|| strncmp(mval.s, vdata->s, mval.len)!=0) {
+							n++;
+						}
+					break;
+					case 3:
+						if(mval.len >= vdata->len
+								&& strncmp(mval.s, vdata->s, vdata->len)==0) {
+							n++;
+						}
+					break;
+				}
+			}
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+
+	return n;
+}
+
 /**
  *
  */
@@ -692,6 +793,82 @@ int dlgs_tags_add(sip_msg_t *msg, str *vtags)
 	dlgs_unlock_item(msg);
 
 	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_tags_rm(sip_msg_t *msg, str *vtags)
+{
+	dlgs_item_t *dit = NULL;
+	dlgs_tag_t *dtag = NULL;
+
+	if(vtags==NULL || vtags->len<=0) {
+		LM_DBG("no tags content\n");
+		return -1;
+	}
+
+	dit = dlgs_get_item(msg);
+	if(dit == NULL) {
+		return -1;
+	}
+	for(dtag=dit->tags; dtag!=NULL; dtag=dtag->next) {
+		if(dtag->tname.len == vtags->len
+				&& strncmp(dtag->tname.s, vtags->s, vtags->len) == 0) {
+			break;
+		}
+	}
+	if(dtag == NULL) {
+		dlgs_unlock_item(msg);
+		return 0;
+	}
+	if(dtag->next) {
+		dtag->next->prev = dtag->prev;
+	}
+	if(dtag->prev) {
+		dtag->prev->next = dtag->next;
+	}
+	if(dtag == dit->tags) {
+		dit->tags = dtag->next;
+	}
+	dlgs_unlock_item(msg);
+
+	shm_free(dtag);
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_tags_count(sip_msg_t *msg, str *vtags)
+{
+	int i;
+	int n;
+	dlgs_item_t *it;
+	dlgs_tag_t *dtag = NULL;
+
+	if(_dlgs_htb == NULL) {
+		return -1;
+	}
+
+	n = 0;
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		for(it = _dlgs_htb->slots[i].first; it != NULL; it=it->next) {
+			if(it->state != DLGS_STATE_TERMINATED
+					&& it->state != DLGS_STATE_NOTANSWERED) {
+				for(dtag=it->tags; dtag!=NULL; dtag=dtag->next) {
+					if(dtag->tname.len == vtags->len
+							&& strncmp(dtag->tname.s, vtags->s, vtags->len) == 0) {
+						n++;
+					}
+				}
+			}
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+
+	return n;
 }
 
 /**

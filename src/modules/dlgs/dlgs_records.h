@@ -102,6 +102,8 @@ dlgs_ht_t *dlgs_ht_init(void);
 int dlgs_ht_destroy(void);
 int dlgs_add_item(sip_msg_t *msg, str *src, str *dst, str *data);
 int dlgs_del_item(sip_msg_t *msg);
+int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata);
+
 dlgs_item_t *dlgs_get_item(sip_msg_t *msg);
 int dlgs_unlock_item(sip_msg_t *msg);
 
@@ -116,5 +118,7 @@ int dlgs_rpc_init(void);
 int dlgs_update_item(sip_msg_t *msg);
 
 int dlgs_tags_add(sip_msg_t *msg, str *vtags);
+int dlgs_tags_rm(sip_msg_t *msg, str *vtags);
+int dlgs_tags_count(sip_msg_t *msg, str *vtags);
 
 #endif

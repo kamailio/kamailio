@@ -252,6 +252,10 @@ static int ki_dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 {
 	LM_DBG("counting by: [%.*s] [%.*s] [%.*s]\n", vfield->len, vfield->s,
 			vop->len, vop->s, vdata->len, vdata->s);
+	if(dlgs_count(msg, vfield, vop, vdata) < 0) {
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -307,8 +311,36 @@ static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2)
 /**
  *
  */
+static int ki_dlgs_tags_rm(sip_msg_t *msg, str *vtags)
+{
+	if(dlgs_tags_rm(msg, vtags)<0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2)
 {
+	str vtags = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)ptags, &vtags) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	return ki_dlgs_tags_rm(msg, &vtags);
+}
+
+/**
+ *
+ */
+static int ki_dlgs_tags_count(sip_msg_t *msg, str *vtags)
+{
+	if(dlgs_tags_count(msg, vtags)<0) {
+		return -1;
+	}
 	return 1;
 }
 
@@ -317,7 +349,13 @@ static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2)
  */
 static int w_dlgs_tags_count(sip_msg_t *msg, char *ptags, char *p2)
 {
-	return 1;
+	str vtags = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)ptags, &vtags) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	return ki_dlgs_tags_count(msg, &vtags);
 }
 
 /**
@@ -353,6 +391,16 @@ static sr_kemi_t sr_kemi_dlgs_exports[] = {
 	},
 	{ str_init("dlgs"), str_init("dlgs_tags_add"),
 		SR_KEMIP_INT, ki_dlgs_tags_add,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_tags_rm"),
+		SR_KEMIP_INT, ki_dlgs_tags_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_tags_count"),
+		SR_KEMIP_INT, ki_dlgs_tags_count,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
