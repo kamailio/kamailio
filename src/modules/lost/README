@@ -9,7 +9,7 @@ Edited by
 
 Wolfgang Kampichler
 
-   Copyright © 20018-2020 Wolfgang Kampichler
+   Copyright © 2018-2020 Wolfgang Kampichler
      __________________________________________________________________
 
    Table of Contents
@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
      * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
      * url - the location reference returned in the HELD locationRequest
        response - this reference may be added as Geolocation header value
-       and forwarded downstream Note: to work properly, it is required to
+       and forwarded downstream. Note: to work properly, it is required to
        include "locationURI" in the location_type parameter.
      * error - any error code returned in the HELD locationRequest
        response
@@ -293,7 +293,7 @@ var(name)\n");
    standard libcurl-7.19.7-52 has a memory leak. To fix this memory,
    install libcurl from city-fan repository. More details at:
    https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
-   -centos6
+   -centos6.
 
    Note: http_client_query exported by the http_client API returns by
    default the first line of the HTTP response, but the lost module
@@ -303,3 +303,7 @@ var(name)\n");
    http_client module parameter query_result to 0. More details at:
    https://www.kamailio.org/docs/modules/devel/modules/http_client.html#ht
    tp_client.p.query_result.
+
+   Note: to test the module with a mapping service (LOST), an API key may
+   be requested under the following link (search for "GET ACCESS"):
+   https://gridgears.at/.
