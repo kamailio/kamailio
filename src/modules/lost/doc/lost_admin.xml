@@ -69,8 +69,8 @@
                 loaded first in order to initialize connections properly.
                 </para></listitem>
                 <listitem><para>
-                TLS - if you use TLS connections (https) the tls module should be
-                loaded first in order to initialize &openssl; properly.
+                TLS - if you use TLS connections (https) the tls module
+                should be loaded first in order to initialize &openssl; properly.
                 </para></listitem>
 			    </itemizedlist>
             </para>
@@ -98,14 +98,14 @@
 	<section id="lost.p.general">
 		<title>Parameters</title>
         <para>
-        Besides parameters listed, this module uses <emphasis>http_client</emphasis> therefore
-        according parameters may apply.
+        Besides parameters listed, this module uses <emphasis>http_client</emphasis>
+        therefore according parameters may apply.
         </para>
         <section id="lost.p.exact_type">
             <title><varname>exact_type</varname> (int)</title>
             <para>
-            Indicates to the location server that the contents of the "location_type" parameter must
-            be strictly followed. Values are 0 (false) or 1 (true).
+            Indicates to the location server that the contents of the "location_type"
+            parameter must be strictly followed. Values are 0 (false) or 1 (true).
             </para>
             <para>
             Default: 0 (false)
@@ -181,8 +181,8 @@
 				<function moreinfo="none">lost_held_query(con, [id,] pidf-lo, url, error)</function>
 			</title>
 			<para>
-			Sends a HELD locationRequest to a given connection. The device identity is either specified,
-            or the P-A-I header value, or the From header value.
+			Sends a HELD locationRequest to a given connection. The device identity is either
+            specified, or the P-A-I header value, or the From header value.
 	    	</para>
 			    <itemizedlist>
 				    <listitem><para>
@@ -200,7 +200,7 @@
                     <listitem><para>
 						<emphasis>url</emphasis> - the location reference returned
                         in the HELD locationRequest response - this reference may be
-                        added as Geolocation header value and forwarded downstream
+                        added as Geolocation header value and forwarded downstream.
                         Note: to work properly, it is required to include "locationURI"
                         in the location_type parameter.
                     </para></listitem>
@@ -325,15 +325,20 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
             (via http_client) and in case if you are using CentOS 6, be aware that
             standard libcurl-7.19.7-52 has a memory leak. To fix this memory, install
             libcurl from city-fan repository. More details at:
-            <ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6">
-            https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6</ulink>
+            <ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6"></ulink>.
         </para>
         <para>
             Note: http_client_query exported by the http_client API returns by default the first line of
             the HTTP response, but the lost module requires the complete response message, otherwise
             dereferencing location via the HTTP URL provided with the Geolocation header causes an error.
-            Therefore, to work properly, it is required to set the http_client module parameter query_result to 0. More details at:
+            Therefore, to work properly, it is required to set the http_client module parameter query_result
+            to 0. More details at:
             <ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result"></ulink>.
+        </para>
+        <para>
+            Note: to test the module with a mapping service (LOST), an API key may be requested under the
+            following link (search for "GET ACCESS"):
+            <ulink url="https://gridgears.at/"></ulink>.
         </para>
     </section>
 </chapter>
