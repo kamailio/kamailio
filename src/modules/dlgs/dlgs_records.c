@@ -1033,6 +1033,36 @@ static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 	} while(i<2);
 }
 
+/*
+ * RPC command to add a dlg item to rpc result
+ */
+static int dlgs_rpc_add_item(rpc_t *rpc, void *ctx, dlgs_item_t *it, int n,
+		int mode)
+{
+	void *th;
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return -1;
+	}
+	if(rpc->struct_add(th, "dSSSSSSSuuu",
+					"count", n,
+					"src", &it->src,
+					"dst", &it->dst,
+					"data", &it->data,
+					"ruid", &it->ruid,
+					"callid", &it->callid,
+					"ftag", &it->ftag,
+					"ttag", &it->ttag,
+					"ts_init", (unsigned int)it->ts_init,
+					"ts_answer", (unsigned int)it->ts_answer,
+					"state", it->state)<0) {
+		rpc->fault(ctx, 500, "Internal error creating item");
+		return -1;
+	}
+	return 0;
+}
+
 static const char *dlgs_rpc_list_doc[2] = {
 	"List the dlgs records",
 	0
@@ -1047,7 +1077,6 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 	dlgs_item_t *it;
 	int n = 0;
 	int i;
-	void *th;
 
 	if(_dlgs_htb == NULL) {
 		return;
@@ -1057,25 +1086,9 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 		lock_get(&_dlgs_htb->slots[i].lock);
 		it = _dlgs_htb->slots[i].first;
 		while(it) {
-			if (rpc->add(ctx, "{", &th) < 0) {
+			n++;
+			if(dlgs_rpc_add_item(rpc, ctx, it, n, 0) < 0) {
 				lock_release(&_dlgs_htb->slots[i].lock);
-				rpc->fault(ctx, 500, "Internal error creating rpc");
-				return;
-			}
-			if(rpc->struct_add(th, "dSSSSSSSuuu",
-							"count", ++n,
-							"src", &it->src,
-							"dst", &it->dst,
-							"data", &it->data,
-							"ruid", &it->ruid,
-							"callid", &it->callid,
-							"ftag", &it->ftag,
-							"ttag", &it->ttag,
-							"ts_init", (unsigned int)it->ts_init,
-							"ts_answer", (unsigned int)it->ts_answer,
-							"state", it->state)<0) {
-				lock_release(&_dlgs_htb->slots[i].lock);
-				rpc->fault(ctx, 500, "Internal error creating item");
 				return;
 			}
 			it = it->next;
@@ -1085,7 +1098,7 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 }
 
 static const char *dlgs_rpc_briefing_doc[2] = {
-	"Briefinf the dlgs records",
+	"Briefing the dlgs records",
 	0
 };
 
@@ -1129,6 +1142,88 @@ static void dlgs_rpc_briefing(rpc_t *rpc, void *ctx)
 	}
 }
 
+/*
+ * Helper to get dlgs records by filter
+ */
+static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
+{
+	dlgs_item_t *it = NULL;
+	int n = 0;
+	int i = 0;
+	str vfield = STR_NULL;
+	str vop = STR_NULL;
+	str vdata = STR_NULL;
+	int tfield = 0;
+	int top = 0;
+
+	if(_dlgs_htb == NULL) {
+		return;
+	}
+	n = rpc->scan(ctx, "SSS", &vfield, &vop, &vdata);
+	if(n < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if(dlgs_parse_field(&vfield, &tfield)<0) {
+		rpc->fault(ctx, 500, "Invalid Field");
+		return;
+	}
+
+	if(dlgs_parse_op(&vop, &top)<0) {
+		rpc->fault(ctx, 500, "Invalid Operator");
+		return;
+	}
+
+	n = 0;
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		it = _dlgs_htb->slots[i].first;
+		while(it) {
+			if(dlgs_match_field(it, tfield, top, &vdata, NULL)==0) {
+				n++;
+				if(dlgs_rpc_add_item(rpc, ctx, it, n, 0) < 0) {
+					lock_release(&_dlgs_htb->slots[i].lock);
+					return;
+				}
+				if(limit!=0 && limit==n) {
+					/* finished by limit */
+					lock_release(&_dlgs_htb->slots[i].lock);
+					return;
+				}
+			}
+			it = it->next;
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+}
+
+static const char *dlgs_rpc_get_doc[2] = {
+	"Get the first dlgs record by filter",
+	0
+};
+
+/*
+ * RPC command to get first dlgs record by filter
+ */
+static void dlgs_rpc_get(rpc_t *rpc, void *ctx)
+{
+	dlgs_rpc_get_limit(rpc, ctx, 1);
+}
+
+static const char *dlgs_rpc_getall_doc[2] = {
+	"Get the all dlgs records by filter",
+	0
+};
+
+/*
+ * RPC command to get all dlgs records by filter
+ */
+static void dlgs_rpc_getall(rpc_t *rpc, void *ctx)
+{
+	dlgs_rpc_get_limit(rpc, ctx, 0);
+}
+
 /* clang-format off */
 rpc_export_t dlgs_rpc_cmds[] = {
 	{"dlgs.stats", dlgs_rpc_stats,
@@ -1137,6 +1232,10 @@ rpc_export_t dlgs_rpc_cmds[] = {
 		dlgs_rpc_list_doc, RET_ARRAY},
 	{"dlgs.briefing",  dlgs_rpc_briefing,
 		dlgs_rpc_briefing_doc, RET_ARRAY},
+	{"dlgs.get",  dlgs_rpc_get,
+		dlgs_rpc_get_doc, RET_ARRAY},
+	{"dlgs.getall",  dlgs_rpc_getall,
+		dlgs_rpc_getall_doc, RET_ARRAY},
 
 	{0, 0, 0, 0}
 };
