@@ -65,11 +65,11 @@ static int dlgs_sip_reply_out(sr_event_param_t *evp);
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{"dlgs_init", (cmd_function)w_dlgs_init, 3, fixup_spve_all,
-		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|ONSEND_ROUTE},
 	{"dlgs_update", (cmd_function)w_dlgs_update, 0, 0,
 		0, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{"dlgs_count", (cmd_function)w_dlgs_count, 3, fixup_spve_all,
-		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+		fixup_free_spve_all, ANY_ROUTE},
 	{"dlgs_tags_add", (cmd_function)w_dlgs_tags_add, 1, fixup_spve_null,
 		fixup_spve_null, ANY_ROUTE},
 	{"dlgs_tags_rm", (cmd_function)w_dlgs_tags_rm, 1, fixup_spve_null,
