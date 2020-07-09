@@ -24,6 +24,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
+#include <fnmatch.h>
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
@@ -528,6 +530,8 @@ int dlgs_match_field(dlgs_item_t *it, int tfield, int top, str *vdata,
 		void *rdata)
 {
 	str mval;
+	regmatch_t pmatch;
+
 	switch(tfield) {
 		case 1:
 			mval = it->src;
@@ -555,9 +559,20 @@ int dlgs_match_field(dlgs_item_t *it, int tfield, int top, str *vdata,
 				return 0;
 			}
 		break;
+		case 2:
+			if(rdata!=NULL
+					&& regexec((regex_t*)rdata, mval.s, 1, &pmatch, 0)==0) {
+				return 0;
+			}
+		break;
 		case 3:
 			if(mval.len >= vdata->len
 					&& strncmp(mval.s, vdata->s, vdata->len)==0) {
+				return 0;
+			}
+		break;
+		case 4:
+			if(fnmatch(vdata->s, mval.s, 0) == 0) {
 				return 0;
 			}
 		break;
@@ -1155,6 +1170,7 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 	str vdata = STR_NULL;
 	int tfield = 0;
 	int top = 0;
+	regex_t mre;
 
 	if(_dlgs_htb == NULL) {
 		return;
@@ -1175,26 +1191,44 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 		return;
 	}
 
+	if(top == 2) {
+		memset(&mre, 0, sizeof(regex_t));
+		if (regcomp(&mre, vdata.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+			LM_ERR("failed to compile regex: %.*s\n", vdata.len, vdata.s);
+			rpc->fault(ctx, 500, "Invalid Matching Value");
+			return;
+		}
+	}
+
 	n = 0;
 	for(i = 0; i < _dlgs_htb->htsize; i++) {
 		lock_get(&_dlgs_htb->slots[i].lock);
 		it = _dlgs_htb->slots[i].first;
 		while(it) {
-			if(dlgs_match_field(it, tfield, top, &vdata, NULL)==0) {
+			if(dlgs_match_field(it, tfield, top, &vdata, (top==2)?&mre:NULL)==0) {
 				n++;
 				if(dlgs_rpc_add_item(rpc, ctx, it, n, 0) < 0) {
 					lock_release(&_dlgs_htb->slots[i].lock);
+					if(top == 2) {
+						regfree(&mre);
+					}
 					return;
 				}
 				if(limit!=0 && limit==n) {
 					/* finished by limit */
 					lock_release(&_dlgs_htb->slots[i].lock);
+					if(top == 2) {
+						regfree(&mre);
+					}
 					return;
 				}
 			}
 			it = it->next;
 		}
 		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+	if(top == 2) {
+		regfree(&mre);
 	}
 }
 
