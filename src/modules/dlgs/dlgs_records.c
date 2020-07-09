@@ -479,6 +479,95 @@ int dlgs_del_item(sip_msg_t *msg)
 	return 0;
 }
 
+/**
+ *
+ */
+int dlgs_parse_field(str *vfield, int *tfield)
+{
+	if(vfield->len==3 && strncasecmp(vfield->s, "any", 3)==0) {
+		*tfield = 0;
+	} else if(vfield->len==3 && strncasecmp(vfield->s, "src", 3)==0) {
+		*tfield = 1;
+	} else if(vfield->len==3 && strncasecmp(vfield->s, "dst", 3)==0) {
+		*tfield = 2;
+	} else if(vfield->len==4 && strncasecmp(vfield->s, "data", 4)==0) {
+		*tfield = 3;
+	} else {
+		LM_ERR("unknown field: %.*s\n", vfield->len, vfield->s);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_parse_op(str *vop, int *top)
+{
+	if(vop->len==2 && strncasecmp(vop->s, "eq", 2)==0) {
+		*top = 0;
+	} else if(vop->len==2 && strncasecmp(vop->s, "ne", 2)==0) {
+		*top = 1;
+	} else if(vop->len==2 && strncasecmp(vop->s, "re", 2)==0) {
+		*top = 2;
+	} else if(vop->len==2 && strncasecmp(vop->s, "sw", 2)==0) {
+		*top = 3;
+	} else if(vop->len==2 && strncasecmp(vop->s, "fm", 2)==0) {
+		*top = 4;
+	} else {
+		LM_ERR("unknown operator: %.*s\n", vop->len, vop->s);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dlgs_match_field(dlgs_item_t *it, int tfield, int top, str *vdata,
+		void *rdata)
+{
+	str mval;
+	switch(tfield) {
+		case 1:
+			mval = it->src;
+			break;
+		case 2:
+			mval = it->dst;
+			break;
+		case 3:
+			mval = it->data;
+			break;
+		default:
+			mval = it->src;
+			break;
+	}
+	switch(top) {
+		case 0:
+			if(mval.len == vdata->len
+					&& strncmp(mval.s, vdata->s, mval.len)==0) {
+				return 0;
+			}
+		break;
+		case 1:
+			if(mval.len != vdata->len
+					|| strncmp(mval.s, vdata->s, mval.len)!=0) {
+				return 0;
+			}
+		break;
+		case 3:
+			if(mval.len >= vdata->len
+					&& strncmp(mval.s, vdata->s, vdata->len)==0) {
+				return 0;
+			}
+		break;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 {
 	int i;
@@ -486,7 +575,6 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 	dlgs_item_t *it;
 	int tfield = 0;
 	int top = 0;
-	str mval;
 
 	if(_dlgs_htb == NULL) {
 		return -1;
@@ -494,30 +582,12 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 	if(vfield == NULL || vop == NULL || vdata ==NULL) {
 		return -1;
 	}
-	if(vfield->len==3 && strncasecmp(vfield->s, "any", 3)==0) {
-		tfield = 0;
-	} else if(vfield->len==3 && strncasecmp(vfield->s, "src", 3)==0) {
-		tfield = 1;
-	} else if(vfield->len==3 && strncasecmp(vfield->s, "dst", 3)==0) {
-		tfield = 2;
-	} else if(vfield->len==4 && strncasecmp(vfield->s, "data", 4)==0) {
-		tfield = 3;
-	} else {
-		LM_ERR("unknown field: %.*s\n", vfield->len, vfield->s);
+
+	if(dlgs_parse_field(vfield, &tfield)<0) {
 		return -1;
 	}
-	if(vop->len==2 && strncasecmp(vop->s, "eq", 2)==0) {
-		top = 0;
-	} else if(vop->len==2 && strncasecmp(vop->s, "ne", 2)==0) {
-		top = 1;
-	} else if(vop->len==2 && strncasecmp(vop->s, "re", 2)==0) {
-		top = 2;
-	} else if(vop->len==2 && strncasecmp(vop->s, "sw", 2)==0) {
-		top = 3;
-	} else if(vop->len==2 && strncasecmp(vop->s, "fm", 2)==0) {
-		top = 4;
-	} else {
-		LM_ERR("unknown operator: %.*s\n", vop->len, vop->s);
+
+	if(dlgs_parse_op(vop, &top)<0) {
 		return -1;
 	}
 
@@ -538,39 +608,8 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 		for(it = _dlgs_htb->slots[i].first; it != NULL; it=it->next) {
 			if(it->state != DLGS_STATE_TERMINATED
 					&& it->state != DLGS_STATE_NOTANSWERED) {
-				switch(tfield) {
-					case 1:
-						mval = it->src;
-						break;
-					case 2:
-						mval = it->dst;
-						break;
-					case 3:
-						mval = it->data;
-						break;
-					default:
-						mval = it->src;
-						break;
-				}
-				switch(top) {
-					case 0:
-						if(mval.len == vdata->len
-								&& strncmp(mval.s, vdata->s, mval.len)==0) {
-							n++;
-						}
-					break;
-					case 1:
-						if(mval.len != vdata->len
-								|| strncmp(mval.s, vdata->s, mval.len)!=0) {
-							n++;
-						}
-					break;
-					case 3:
-						if(mval.len >= vdata->len
-								&& strncmp(mval.s, vdata->s, vdata->len)==0) {
-							n++;
-						}
-					break;
+				if(dlgs_match_field(it, tfield, top, vdata, NULL)==0) {
+					n++;
 				}
 			}
 		}
@@ -1045,12 +1084,59 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 	}
 }
 
+static const char *dlgs_rpc_briefing_doc[2] = {
+	"Briefinf the dlgs records",
+	0
+};
+
+
+/*
+ * RPC command to return the briefing of the records
+ */
+static void dlgs_rpc_briefing(rpc_t *rpc, void *ctx)
+{
+	dlgs_item_t *it;
+	int n = 0;
+	int i;
+	void *th;
+
+	if(_dlgs_htb == NULL) {
+		return;
+	}
+
+	for(i = 0; i < _dlgs_htb->htsize; i++) {
+		lock_get(&_dlgs_htb->slots[i].lock);
+		it = _dlgs_htb->slots[i].first;
+		while(it) {
+			if (rpc->add(ctx, "{", &th) < 0) {
+				lock_release(&_dlgs_htb->slots[i].lock);
+				rpc->fault(ctx, 500, "Internal error creating rpc");
+				return;
+			}
+			if(rpc->struct_add(th, "dSSSuu",
+							"count", ++n,
+							"src", &it->src,
+							"dst", &it->dst,
+							"callid", &it->callid,
+							"state", it->state)<0) {
+				lock_release(&_dlgs_htb->slots[i].lock);
+				rpc->fault(ctx, 500, "Internal error creating item");
+				return;
+			}
+			it = it->next;
+		}
+		lock_release(&_dlgs_htb->slots[i].lock);
+	}
+}
+
 /* clang-format off */
 rpc_export_t dlgs_rpc_cmds[] = {
 	{"dlgs.stats", dlgs_rpc_stats,
 		dlgs_rpc_stats_doc, 0},
 	{"dlgs.list",  dlgs_rpc_list,
 		dlgs_rpc_list_doc, RET_ARRAY},
+	{"dlgs.briefing",  dlgs_rpc_briefing,
+		dlgs_rpc_briefing_doc, RET_ARRAY},
 
 	{0, 0, 0, 0}
 };
