@@ -208,7 +208,7 @@ void remove_aaa_session(str *session_id);
 
 struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity,
         str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani);
+        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani, str *app_provided_party);
 
 /*!
  * \brief Refefence a ro_session with locking

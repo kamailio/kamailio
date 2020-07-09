@@ -469,16 +469,15 @@ int get_timestamps(struct sip_msg * req, struct sip_msg * reply, time_t * req_ti
  */
 
 Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, AAASession ** authp, int dir, str asserted_identity,
-        str called_asserted_identity, str subscription_id, int subscription_id_type, str* incoming_trunk_id, str *outgoing_trunk_id, str* pani) {
+        str called_asserted_identity, str subscription_id, int subscription_id_type, str* incoming_trunk_id, str *outgoing_trunk_id,
+        str* pani, str* app_provided_party) {
 
     Ro_CCR_t * ro_ccr_data = 0;
     AAASession * auth = NULL;
     str user_name/* ={0,0}*/, sip_method = {0, 0}, event = {0, 0};
     uint32_t expires = 0;
     str callid = {0, 0}, to_uri = {0, 0}, from_uri = {0, 0},
-    icid = {0, 0}, orig_ioi = {0, 0}, term_ioi = {0, 0},
-    app_provided_party = {0, 0};
-
+    icid = {0, 0}, orig_ioi = {0, 0}, term_ioi = {0, 0};
     event_type_t * event_type = 0;
     ims_information_t * ims_info = 0;
     time_stamps_t * time_stamps = 0;
@@ -508,12 +507,8 @@ Ro_CCR_t * dlg_create_ro_session(struct sip_msg * req, struct sip_msg * reply, A
     if (!(time_stamps = new_time_stamps(&req_timestamp, NULL, &reply_timestamp, NULL)))
         goto error;
 
-    if (get_app_provided_party(req, &app_provided_party) == -1) {
-        LM_DBG("no valid Application-Provided-Called-Party-Address AVP provided\n");
-    }
-
     if (!(ims_info = new_ims_information(event_type, time_stamps, &callid, &callid, &asserted_identity, &called_asserted_identity, &icid,
-            &orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id, pani, &app_provided_party)))
+            &orig_ioi, &term_ioi, dir, incoming_trunk_id, outgoing_trunk_id, pani, app_provided_party)))
         goto error;
     LM_DBG("created IMS information\n");
     event_type = 0;
@@ -561,13 +556,13 @@ out_of_memory:
 }
 
 int sip_create_ro_ccr_data(struct sip_msg * msg, int dir, Ro_CCR_t ** ro_ccr_data, AAASession ** auth, str asserted_identity, str called_asserted_identity,
-        str subscription_id, int subscription_id_type, str* incoming_trunk_id, str* outgoing_trunk_id, str* pani) {
+        str subscription_id, int subscription_id_type, str* incoming_trunk_id, str* outgoing_trunk_id, str* pani, str* app_provided_party) {
 
     if (msg->first_line.type == SIP_REQUEST) {
         /*end of session*/
         if (strncmp(msg->first_line.u.request.method.s, "INVITE", 6) == 0) {
             if (!(*ro_ccr_data = dlg_create_ro_session(msg, NULL, auth, dir, asserted_identity, called_asserted_identity, subscription_id,
-                    subscription_id_type, incoming_trunk_id, outgoing_trunk_id, pani)))
+                    subscription_id_type, incoming_trunk_id, outgoing_trunk_id, pani, app_provided_party)))
                 goto error;
         }
     } else {
@@ -1086,7 +1081,8 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     str session_id = {0, 0},
     called_asserted_identity = {0, 0},
     subscription_id = {0, 0},
-    asserted_identity = {0, 0};
+    asserted_identity = {0, 0},
+    app_provided_party = {0, 0};
     int subscription_id_type = AVP_EPC_Subscription_Id_Type_End_User_SIP_URI;
     AAASession* cc_acc_session = NULL;
     Ro_CCR_t * ro_ccr_data = 0;
@@ -1205,10 +1201,15 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     free_sdp((sdp_info_t**) (void*) &msg->body);
 
+    if (get_app_provided_party(msg, &app_provided_party) == -1) {
+        LM_DBG("no valid Application-Provided-Called-Party-Address AVP provided\n");
+    }
+
     //create a session object without auth and diameter session id - we will add this later.
     new_session = build_new_ro_session(dir, 0, 0, &session_id, &dlg->callid,
             &asserted_identity, &called_asserted_identity, &mac, dlg->h_entry, dlg->h_id,
-            reservation_units, 0, active_rating_group, active_service_identifier, incoming_trunk_id, outgoing_trunk_id, pani);
+            reservation_units, 0, active_rating_group, active_service_identifier, incoming_trunk_id,
+            outgoing_trunk_id, pani, &app_provided_party);
 
     if (!new_session) {
         LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
@@ -1221,7 +1222,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     ssd->tlabel = tlabel;
     ssd->ro_session = new_session;
 
-    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type, incoming_trunk_id, outgoing_trunk_id, pani))
+    if (!sip_create_ro_ccr_data(msg, dir, &ro_ccr_data, &cc_acc_session, asserted_identity, called_asserted_identity, subscription_id, subscription_id_type, incoming_trunk_id, outgoing_trunk_id, pani, &app_provided_party))
         goto error;
 
     if (!ro_ccr_data)
