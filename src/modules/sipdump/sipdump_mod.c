@@ -323,7 +323,7 @@ static sipdump_info_t* sipdump_event_info = NULL;
 /**
  *
  */
-void sipdump_event_route(sipdump_info_t* sdi)
+int sipdump_event_route(sipdump_info_t* sdi)
 {
 	int backup_rt;
 	run_act_ctx_t ctx;
@@ -352,6 +352,10 @@ void sipdump_event_route(sipdump_info_t* sdi)
 	}
 	sipdump_event_info = NULL;
 	set_route_type(backup_rt);
+	if(ctx.run_flags & DROP_R_F) {
+		return DROP_R_F;
+	}
+	return RETURN_R_F;
 }
 
 /**
@@ -396,7 +400,10 @@ int sipdump_msg_received(sr_event_param_t *evp)
 	get_valid_proto_string(evp->rcv->proto, 0, 0, &sdi.proto);
 
 	if(sipdump_mode & SIPDUMP_MODE_EVROUTE) {
-		sipdump_event_route(&sdi);
+		if(sipdump_event_route(&sdi) == DROP_R_F) {
+			/* drop() used in event_route - all done */
+			return 0;
+		}
 	}
 
 	if(!(sipdump_mode & SIPDUMP_MODE_WFILE)) {
