@@ -38,6 +38,7 @@
 #define SREV_NET_DATA_RECV		14
 #define SREV_NET_DATA_SEND		15
 #define SREV_SIP_REPLY_OUT		16
+#define SREV_TCP_WS_CLOSE		17
 
 #define SREV_CB_LIST_SIZE	8
 
@@ -71,6 +72,7 @@ typedef struct sr_event_cb {
 	sr_event_cb_f net_data_recv;
 	sr_event_cb_f net_data_send;
 	sr_event_cb_f sip_reply_out[SREV_CB_LIST_SIZE];
+	sr_event_cb_f tcp_ws_close[SREV_CB_LIST_SIZE];
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);
