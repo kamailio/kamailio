@@ -31,6 +31,7 @@
 #include "../../core/counters.h"
 #include "../../core/kemi.h"
 #include "../../core/mem/mem.h"
+#include "../../core/events.h"
 #include "ws_conn.h"
 #include "websocket.h"
 
@@ -261,6 +262,14 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	return 0;
 }
 
+static void wsconn_run_close_callback(ws_connection_t *wsc)
+{
+	sr_event_param_t evp = {0};
+	wsc->rcv.proto_reserved1 = wsc->id;
+	evp.rcv = &wsc->rcv;
+	sr_event_exec(SREV_TCP_WS_CLOSE, &evp);
+}
+
 static void wsconn_run_route(ws_connection_t *wsc)
 {
 	int rt, backup_rt;
@@ -320,6 +329,8 @@ static void wsconn_dtor(ws_connection_t *wsc)
 
 	if(wsc->run_event)
 		wsconn_run_route(wsc);
+
+	wsconn_run_close_callback(wsc);
 
 	shm_free(wsc);
 
