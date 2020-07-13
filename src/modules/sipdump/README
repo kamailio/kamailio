@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2017 asipto.com
+   Copyright Â© 2017 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -229,7 +229,7 @@ end
 
    4.1. sipdump_send(tag)
 
-4.1. sipdump_send(tag)
+4.1.  sipdump_send(tag)
 
    Send the details of the current SIP message to the writer process and
    get it stored in the file.
@@ -248,7 +248,7 @@ sipdump_send("cfg");
 
    5.1. sipdump.enable
 
-5.1. sipdump.enable
+5.1.  sipdump.enable
 
    Control the value for "enable" parameter.
 
@@ -268,10 +268,13 @@ kamcmd sipdump.enable 0
 
    6.1. sipdump:msg
 
-6.1. sipdump:msg
+6.1.  sipdump:msg
 
    Executed when sipdump handles messages and mode parameter has flag 2
    set. The variable $sipdump(...) is available inside the event route.
+
+   If drop() is used in event_route, then writing to file is no longer
+   done when mode parameter has also the flag 1 set.
 ...
 event_route[sipdump:msg] {
     xinfo("[$sipdump(tag)] [[$sipdump(buf)]]\n");
