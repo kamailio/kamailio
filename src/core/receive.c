@@ -222,7 +222,7 @@ int receive_msg(char *buf, unsigned int len, struct receive_info *rcv_info)
 			LM_DBG("attempt of nonsip message processing failed\n");
 		} else if(ret == NONSIP_MSG_DROP) {
 			LM_DBG("nonsip message processing completed\n");
-			goto error02;
+			goto end;
 		}
 	}
 	if(errsipmsg==1) {
