@@ -183,7 +183,7 @@ str default_db_type   = str_init(DEFAULT_DB_TYPE);
 str domain_db         = str_init(DEFAULT_DOMAIN_DB);
 int default_dbt       = 0;
 int expire            = 0;
-db_shared_param_t *write_on_master_db_shared;
+int *mdb_w_available;
 
 /*! \brief
  * Exported functions
@@ -307,13 +307,6 @@ static int mod_init(void)
 	}
 #endif
 
-	if((write_on_master_db_shared = shm_malloc(sizeof(db_shared_param_t))) == NULL) {
-		LM_ERR("couldn't allocate shared memory.\n");
-		return -1;
-	} else {
-		write_on_master_db_shared->val = db_master_write;
-	}
-
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
 	else
@@ -402,14 +395,18 @@ static int mod_init(void)
 		LM_ERR("could not init database watch environment.\n");
 		return -1;
 	}
-	if (lock_init(&write_on_master_db_shared->lock)==0){
-		LM_ERR("could not initialise lock\n");
+
+	if((mdb_w_available = shm_malloc(sizeof(int))) == NULL) {
+		LM_ERR("couldn't allocate shared memory. \n");
+		return -1;
 	}
-	if(write_on_master_db_shared->val){
+	if (db_master_write) {
 		/* register extra dummy timer to be created in init_db_check() */
 		register_dummy_timers(1);
+		if (mdb_availability_control) {
+			check_master_db();
+		}
 	}
-        check_master_db(db_master_write);
 	return 0;
 }
 
@@ -418,7 +415,7 @@ static int child_init(int _rank)
 {
 	if(_rank==PROC_INIT) {
 		if(init_db_check() < 0){
-				LM_ERR("could not initialise database check.\n");
+			LM_ERR("could not initialise database check.\n");
 			return -1;
 		}
 		return 0;

@@ -123,11 +123,7 @@ extern int connection_expires;
 extern int alg_location;
 
 extern int  max_loc_nr;
-typedef struct db_shared_param {
-	int val;
-	gen_lock_t lock;
-} db_shared_param_t;
-extern db_shared_param_t *write_on_master_db_shared;
+extern int * mdb_w_available;
 extern int mdb_availability_control;
 
 #endif /* UL_MOD_H */
