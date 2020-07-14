@@ -1039,7 +1039,6 @@ int uri_trim_rcv_alias(str *uri, str *nuri)
 	char *p;
 	str skip;
 	str ip, port;
-	int proto;
 
 	if(uri == NULL || nuri == NULL) {
 		LM_ERR("invalid parameter value\n");
@@ -1089,7 +1088,7 @@ int uri_trim_rcv_alias(str *uri, str *nuri)
 		/* proper alias parameter not found */
 		return 0;
 	}
-	proto = (int)(*p - '0');
+	/* jump over proto */
 	p++;
 
 	if(p != uri->s + uri->len && *p != ';') {
