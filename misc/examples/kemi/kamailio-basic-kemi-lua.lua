@@ -12,6 +12,43 @@
 --  the execution of the script. Use KSR.x.exit() after it or KSR.x.drop()
 --
 
+-- debug callback function to print details of execution trace
+--[[
+local ksr_exec_level=0
+
+local function ksr_exec_hook(event)
+	local s = "";
+	local t = debug.getinfo(3)
+	s = s .. ksr_exec_level .. ">>> " .. string.rep(" ", ksr_exec_level);
+	if t~=nil and t.currentline>=0 then
+		s = s .. t.short_src .. ":" .. t.currentline .. " ";
+	end
+	t=debug.getinfo(2)
+	if event=="call" then
+		ksr_exec_level = ksr_exec_level + 1;
+	else
+		ksr_exec_level = ksr_exec_level - 1;
+		if ksr_exec_level < 0 then
+			ksr_exec_level = 0;
+		end
+	end
+	if t.what=="main" then
+		if event=="call" then
+			s = s .. "begin " .. t.short_src;
+		else
+			s = s .. "end " .. t.short_src;
+		end
+	elseif t.what=="Lua" then
+		s = s .. event .. " " .. t.name or "(Lua)" .. " <" .. t.linedefined .. ":" .. t.short_src .. ">";
+	else
+		s = s .. event .. " " .. t.name or "(C)" .. " [" .. t.what .. "] ";
+	end
+	KSR.info(s .. "\n");
+end
+
+debug.sethook(ksr_exec_hook, "cr")
+ksr_exec_level=0
+]]--
 
 -- global variables corresponding to defined values (e.g., flags) in kamailio.cfg
 FLT_ACC=1
