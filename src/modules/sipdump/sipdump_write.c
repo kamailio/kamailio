@@ -187,10 +187,10 @@ static int sipdump_write_meta(char *fpath)
 	mpath[len-2] = 't';
 	mpath[len-1] = 'a';
 
-	LM_DBG("writing meta to file: %s\n", mpath);
+	LM_DBG("writing meta to file: %s (%d)\n", mpath, len);
 	mfile = fopen( mpath , "w" );
 	if(mfile==NULL) {
-		LM_ERR("failed to open meta file %s\n", mpath);
+		LM_ERR("failed to open meta file %s (%d)\n", mpath, len);
 		return -1;
 	}
 	localtime_r(&up_since, &ti);
@@ -270,6 +270,7 @@ static int sipdump_rotate_file(void)
 			LM_ERR("failed to open file %s\n", _sipdump_fpath);
 			return -1;
 		}
+		sipdump_init_pcap(_sipdump_pcap_file);
 	}
 
 	sipdump_write_meta(_sipdump_fpath);
@@ -393,7 +394,7 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 			sipdump_data_print(sdd, &odata);
 			/* LM_NOTICE("writing: [[%.*s]] (%d)\n", odata.len,
 					odata.s, odata.len); */
-			fwrite(odata.s, 1, odata.len, _sipdump_text_file);
+			fwrite(odata.s, odata.len, 1, _sipdump_text_file);
 		}
 		if(sipdump_mode & SIPDUMP_MODE_WPCAP) {
 			if(_sipdump_pcap_file==NULL) {
