@@ -96,11 +96,12 @@ modparam("sipdump", "enable", 1)
 		<title><varname>mode</varname> (int)</title>
 		<para>
 			Set the type of activity done by the module, the value can be set
-			based on flags: 1 - write to files; 2 - execute event route
+			based on flags: 1 - write to text files; 2 - execute event route;
+			3 - write to pcap files
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1 (write to files).
+			Default value is 1 (write to text files).
 		</emphasis>
 		</para>
 		<example>
@@ -173,7 +174,8 @@ modparam("sipdump", "folder", "/run/kamailio")
 		<title><varname>fprefix</varname> (str)</title>
 		<para>
 			File name prefix. The date is appended to this prefix in the format
-			yyyy-mm-dd--hh-mm-ss. The extension of the file is ".data".
+			yyyy-mm-dd--hh-mm-ss. The extension of the text file is ".data",
+			of the meta file is ".meta" and of the pcap file is ".pcap".
 		</para>
 		<para>
 		<emphasis>
@@ -320,6 +322,13 @@ route[TCLEAN] {
 }
 ...
 </programlisting>
+		<para>
+		If operational mode is set to write the pcap files, note that packets
+		in the pcap file are generated always with transport UDP, no matter
+		the SIP traffic was over another transport layer like TCP, TLS, SCTP
+		or WSS. The headers of the SIP message (e.g., Via, Route) should provide
+		hints about what the SIP transport layer.
+		</para>
 	</section>
 
 </chapter>
