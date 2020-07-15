@@ -96,8 +96,13 @@ modparam("sipdump", "enable", 1)
 		<title><varname>mode</varname> (int)</title>
 		<para>
 			Set the type of activity done by the module, the value can be set
-			based on flags: 1 - write to text files; 2 - execute event route;
-			3 - write to pcap files
+			based on flags: 1 (value 1) - write to text files;
+			2 (value 2) - execute event route;
+			3 (value 4) - write to pcap files.
+		</para>
+		<para>
+			To enable several activity modes, set the parameter to the sum of
+			correspinding values.
 		</para>
 		<para>
 		<emphasis>
