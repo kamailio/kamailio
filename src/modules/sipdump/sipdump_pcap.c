@@ -20,6 +20,9 @@
  *
  */
 
+#include <stdio.h>
+#include <arpa/inet.h>
+
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
 
@@ -105,6 +108,8 @@ void sipdump_init_pcap(FILE *fs)
 	LM_DBG("writing the pcap file header\n");
 	if(fwrite(&v_pcap_header, sizeof(struct pcap_header), 1, fs) != 1) {
 		LM_ERR("failed to write the pcap file header\n");
+	} else {
+		fflush(fs);
 	}
 }
 
@@ -119,7 +124,7 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	};
 	struct pcap_ipv4_header v_pcap_ipv4_header = {
 		.ver_ihl = 0x45, /* IPv4 + 20 bytes of header */
-		.ip_ttl = 128, /* We always put a TTL of 128 to keep Wireshark less blue */
+		.ip_ttl = 128, /* put a TTL of 128 to keep Wireshark less blue */
 	};
 	struct pcap_ipv6_header v_pcap_ipv6_header = {
 		.ip6_ctlun.ip6_un2_vfc = 0x60,
@@ -127,8 +132,8 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	void *pcap_ip_header;
 	size_t pcap_ip_header_len;
 	struct pcap_udp_header v_pcap_udp_header;
-	ip_addr_t src_ip;
-	ip_addr_t dst_ip;
+	struct in_addr ip4addr;
+	struct in6_addr ip6addr;
 
 	if(fs == NULL || spd == NULL) {
 		return;
@@ -141,24 +146,38 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 
 	/* IP header */
 	if (spd->afid == AF_INET6) {
+		LM_DBG("ipv6 = %s -> %s\n", spd->src_ip.s, spd->dst_ip.s);
 		v_pcap_ethernet_header.type = htons(0x86DD); /* IPv6 packet */
 		pcap_ip_header = &v_pcap_ipv6_header;
 		pcap_ip_header_len = sizeof(struct pcap_ipv6_header);
-		str2ip6buf(&spd->src_ip, &src_ip);
-		memcpy(&v_pcap_ipv6_header.ip6_src, src_ip.u.addr16, src_ip.len);
-		str2ip6buf(&spd->dst_ip, &dst_ip);
-		memcpy(&v_pcap_ipv6_header.ip6_dst, dst_ip.u.addr16, dst_ip.len);
+		if (inet_pton(AF_INET6, spd->src_ip.s, &ip6addr) != 1) {
+			LM_ERR("failed to parse IPv6 address %s\n", spd->src_ip.s);
+			return;
+		}
+		memcpy(&v_pcap_ipv6_header.ip6_src, &ip6addr, sizeof(struct in6_addr));
+		if (inet_pton(AF_INET, spd->dst_ip.s, &ip6addr) != 1) {
+			LM_ERR("failed to parse IPv4 address %s\n", spd->dst_ip.s);
+			return;
+		}
+		memcpy(&v_pcap_ipv6_header.ip6_dst, &ip6addr, sizeof(struct in6_addr));
 		v_pcap_ipv6_header.ip6_ctlun.ip6_un1.ip6_un1_plen = htons(sizeof(struct pcap_udp_header)
 					+ spd->data.len);
 		v_pcap_ipv6_header.ip6_ctlun.ip6_un1.ip6_un1_nxt = IPPROTO_UDP;
 	} else {
+		LM_DBG("ipv4 = %s -> %s\n", spd->src_ip.s, spd->dst_ip.s);
 		v_pcap_ethernet_header.type = htons(0x0800); /* IPv4 packet */
 		pcap_ip_header = &v_pcap_ipv4_header;
 		pcap_ip_header_len = sizeof(struct pcap_ipv4_header);
-		str2ipbuf(&spd->src_ip, &src_ip);
-		memcpy(&v_pcap_ipv6_header.ip6_src, src_ip.u.addr, src_ip.len);
-		str2ipbuf(&spd->dst_ip, &dst_ip);
-		memcpy(&v_pcap_ipv6_header.ip6_dst, dst_ip.u.addr, dst_ip.len);
+		if (inet_pton(AF_INET, spd->src_ip.s, &ip4addr) != 1) {
+			LM_ERR("failed to parse IPv4 address %s\n", spd->src_ip.s);
+			return;
+		}
+		memcpy(&v_pcap_ipv4_header.ip_src, &ip4addr, sizeof(uint32_t));
+		if (inet_pton(AF_INET, spd->dst_ip.s, &ip4addr) != 1) {
+			LM_ERR("failed to parse IPv4 address %s\n", spd->dst_ip.s);
+			return;
+		}
+		memcpy(&v_pcap_ipv4_header.ip_dst, &ip4addr, sizeof(uint32_t));
 		v_pcap_ipv4_header.ip_len = htons(sizeof(struct pcap_udp_header)
 					+ sizeof(struct pcap_ipv4_header) + spd->data.len);
 		v_pcap_ipv4_header.ip_protocol = IPPROTO_UDP; /* UDP */
@@ -184,4 +203,5 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	if (fwrite(spd->data.s, spd->data.len, 1, fs) != 1) {
 		LM_ERR("writing UDP payload to pcap failed: %s\n", strerror(errno));
 	}
+	fflush(fs);
 }

@@ -395,6 +395,7 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 			/* LM_NOTICE("writing: [[%.*s]] (%d)\n", odata.len,
 					odata.s, odata.len); */
 			fwrite(odata.s, odata.len, 1, _sipdump_text_file);
+			fflush(_sipdump_text_file);
 		}
 		if(sipdump_mode & SIPDUMP_MODE_WPCAP) {
 			if(_sipdump_pcap_file==NULL) {
