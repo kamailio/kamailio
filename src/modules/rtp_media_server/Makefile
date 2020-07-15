@@ -6,7 +6,7 @@ DEFS+=-I$(LOCALBASE)/lib
 
 ORTPLIBS=-lortp
 BCUNITLIBS=-lbcunit
-MS2LIBS=-lmediastreamer_voip -lmediastreamer_base
+MS2LIBS=-lmediastreamer
 
 LIBS=$(ORTPLIBS) $(BCUNITLIBS) $(MS2LIBS)
 DEFS+=-DKAMAILIO_MOD_INTERFACE

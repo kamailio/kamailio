@@ -29,6 +29,19 @@
 </section>
 
 <section>
+	<title>Quick start, how-to build on debian</title>
+	<section>
+		<title>Building on Debian, Dockerfile and docker image</title>
+		<para>
+		The module includes Dockerfile that can also be use as a reference on how to build everything
+		from source on Debian, the of libmediastreamer on Linux is usually outdated.
+		
+		A docker image is also available from dockerhub https://hub.docker.com/r/jchavanton/rtp_media_server
+		</para>
+	</section>
+</section>
+
+<section>
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
