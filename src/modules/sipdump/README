@@ -158,7 +158,7 @@ modparam("sipdump", "enable", 1)
    event route; 3 (value 4) - write to pcap files.
 
    To enable several activity modes, set the parameter to the sum of
-   correspinding values.
+   corresponding values.
 
    Default value is 1 (write to text files).
 
