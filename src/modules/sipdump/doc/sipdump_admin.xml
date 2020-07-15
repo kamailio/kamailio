@@ -102,7 +102,7 @@ modparam("sipdump", "enable", 1)
 		</para>
 		<para>
 			To enable several activity modes, set the parameter to the sum of
-			correspinding values.
+			corresponding values.
 		</para>
 		<para>
 		<emphasis>
