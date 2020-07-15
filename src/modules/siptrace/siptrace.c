@@ -178,6 +178,9 @@ socket_info_t *trace_send_sock_info = 0;
 str trace_dup_uri_str = {0, 0};
 sip_uri_t *trace_dup_uri = 0;
 
+static str _siptrace_evcb_msg = STR_NULL;
+static int _siptrace_evrt_msg_idx = -1;
+
 static unsigned short traced_user_avp_type = 0;
 static int_str traced_user_avp;
 static str traced_user_avp_str = {NULL, 0};
@@ -254,6 +257,7 @@ static param_export_t params[] = {
 	{"trace_db_mode", INT_PARAM, &trace_db_mode},
 	{"trace_init_mode", PARAM_INT, &_siptrace_init_mode},
 	{"trace_mode", PARAM_INT, &_siptrace_mode},
+	{"evcb_msg", PARAM_STR, &_siptrace_evcb_msg},
 	{0, 0, 0}
 };
 /* clang-format on */
@@ -301,6 +305,8 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+
+	_siptrace_evrt_msg_idx = route_lookup(&event_rt, "siptrace:msg");
 
 	if(trace_db_delayed!=0) {
 		trace_db_mode = 1;
@@ -2017,6 +2023,56 @@ static void trace_free_info(void* trace_info)
 	shm_free(trace_info);
 }
 
+static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
+{
+	int backup_rt;
+	run_act_ctx_t ctx;
+	run_act_ctx_t *bctx;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("siptrace:msg");
+	sip_msg_t msg;
+
+	if(_siptrace_evrt_msg_idx < 0 && _siptrace_evcb_msg.len<=0) {
+		return 0;
+	}
+
+	if(sto == NULL || sto->body.s == NULL || sto->body.len <= 0) {
+		return -1;
+	}
+
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = sto->body.s;
+	msg.len = sto->body.len;
+	if(parse_msg(msg.buf, msg.len, &msg) != 0) {
+		LM_DBG("parse_msg failed\n");
+		return -1;
+	}
+
+	backup_rt = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	init_run_actions_ctx(&ctx);
+
+	if(_siptrace_evrt_msg_idx>=0) {
+		run_top_route(event_rt.rlist[_siptrace_evrt_msg_idx], &msg, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if (keng!=NULL) {
+			bctx = sr_kemi_act_ctx_get();
+			sr_kemi_act_ctx_set(&ctx);
+			(void)sr_kemi_route(keng, &msg, EVENT_ROUTE,
+						&_siptrace_evcb_msg, &evname);
+			sr_kemi_act_ctx_set(bctx);
+		}
+	}
+
+	free_sip_msg(&msg);
+	set_route_type(backup_rt);
+	if(ctx.run_flags & DROP_R_F) {
+		return DROP_R_F;
+	}
+	return RETURN_R_F;
+}
+
 /**
  *
  */
@@ -2066,6 +2122,11 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	}
 
 	sto.dir = "in";
+
+	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
+		/* drop() used in event_route - all done */
+		return 0;
+	}
 
 	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
 		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
@@ -2186,6 +2247,11 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 	}
 
 	sto.dir = "out";
+
+	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
+		/* drop() used in event_route - all done */
+		return 0;
+	}
 
 	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
 		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);

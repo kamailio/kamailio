@@ -632,6 +632,25 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 </programlisting>
                 </example>
         </section>
+		<section id="siptrace.p.evcb_msg">
+                <title><varname>evcb_msg</varname> (str)</title>
+                <para>
+				Set the name of KEMI function to be executed instead of
+				event_route[siptrace:msg].
+                </para>
+                <para>
+                Default value is empty.
+                </para>
+                <example>
+                <title>Set <varname>evcb_msg</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
 
 	<section>
@@ -794,6 +813,33 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	</section>
 	</section><!-- RPC commands -->
 
+    <section>
+	<title>Event Routes</title>
+	<section id="siptrace.ev.siptrace_msg">
+		<title>
+		<function moreinfo="none">event_route[siptrace:msg]</function>
+		</title>
+		<para>
+		The event route is executed when mirroring SIP traffic using core event
+		callbacks (data in/out on network). If drop() is used, then the mirroring
+		is no longer done.
+		</para>
+		<para>
+		Note: now only message content (e.g., headers, body) can be used for
+		conditions in the event route, the source and destination addresses are
+		not yet available.
+		</para>
+		<programlisting  format="linespecific">
+...
+event_route[siptrace:msg] {
+    if(is_method("OPTIONS")) {
+        drop();
+    }
+}
+...
+		</programlisting>
+	</section>
+	</section><!-- event routes -->
 	<section>
 		<title>Database setup</title>
 		<para>

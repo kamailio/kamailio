@@ -284,6 +284,10 @@ sipdump_send("cfg");
 			Executed when sipdump handles messages and mode parameter has flag 2 set.
 			The variable $sipdump(...) is available inside the event route.
 		</para>
+		<para>
+			If drop() is used in event_route, then writing to file is no longer
+			done when mode parameter has also the flag 1 set.
+		</para>
 <programlisting  format="linespecific">
 ...
 event_route[sipdump:msg] {

@@ -62,6 +62,7 @@ Camille Oudot
               3.21. trace_init_mode (integer)
               3.22. trace_mode (integer)
               3.23. auth_key (integer)
+              3.24. evcb_msg (str)
 
         4. Functions
 
@@ -73,8 +74,12 @@ Camille Oudot
 
               5.1. siptrace.status param
 
-        6. Database setup
-        7. Known issues
+        6. Event Routes
+
+              6.1. event_route[siptrace:msg]
+
+        7. Database setup
+        8. Known issues
 
    List of Examples
 
@@ -100,10 +105,11 @@ Camille Oudot
    1.20. Set trace_init_mode parameter
    1.21. Set trace_mode parameter
    1.22. Set auth_key parameter
-   1.23. sip_trace() usage
-   1.24. sip_trace_mode() usage
-   1.25. hlog() usage
-   1.26. Send relayed ACK message
+   1.23. Set evcb_msg parameter
+   1.24. sip_trace() usage
+   1.25. sip_trace_mode() usage
+   1.26. hlog() usage
+   1.27. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -140,6 +146,7 @@ Chapter 1. Admin Guide
         3.21. trace_init_mode (integer)
         3.22. trace_mode (integer)
         3.23. auth_key (integer)
+        3.24. evcb_msg (str)
 
    4. Functions
 
@@ -151,8 +158,12 @@ Chapter 1. Admin Guide
 
         5.1. siptrace.status param
 
-   6. Database setup
-   7. Known issues
+   6. Event Routes
+
+        6.1. event_route[siptrace:msg]
+
+   7. Database setup
+   8. Known issues
 
 1. Overview
 
@@ -219,6 +230,7 @@ Chapter 1. Admin Guide
    3.21. trace_init_mode (integer)
    3.22. trace_mode (integer)
    3.23. auth_key (integer)
+   3.24. evcb_msg (str)
 
 3.1. db_url (str)
 
@@ -541,6 +553,18 @@ modparam("siptrace", "trace_mode", 3)
 modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 ...
 
+3.24. evcb_msg (str)
+
+   Set the name of KEMI function to be executed instead of
+   event_route[siptrace:msg].
+
+   Default value is empty.
+
+   Example 1.23. Set evcb_msg parameter
+...
+modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
+...
+
 4. Functions
 
    4.1. sip_trace([address][,correlation_id][,mode])
@@ -571,7 +595,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.23. sip_trace() usage
+   Example 1.24. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -597,7 +621,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.24. sip_trace_mode() usage
+   Example 1.25. sip_trace_mode() usage
 ...
 sip_trace_mode("t");
 ...
@@ -614,7 +638,7 @@ sip_trace_mode("t");
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.25. hlog() usage
+   Example 1.26. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -643,7 +667,28 @@ kamcmd siptrace.status off
 kamcmd siptrace.status check
 ...
 
-6. Database setup
+6. Event Routes
+
+   6.1. event_route[siptrace:msg]
+
+6.1.  event_route[siptrace:msg]
+
+   The event route is executed when mirroring SIP traffic using core event
+   callbacks (data in/out on network). If drop() is used, then the
+   mirroring is no longer done.
+
+   Note: now only message content (e.g., headers, body) can be used for
+   conditions in the event route, the source and destination addresses are
+   not yet available.
+...
+event_route[siptrace:msg] {
+    if(is_method("OPTIONS")) {
+        drop();
+    }
+}
+...
+
+7. Database setup
 
    Before running Kamailio with siptrace and activated trace_to_database
    parameter, you have to setup the database tables where the module will
@@ -654,7 +699,7 @@ kamcmd siptrace.status check
    complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-7. Known issues
+8. Known issues
 
    Stateless forwarded messages (forward()) are not logged if you set the
    flag, use sip_trace() inside onsend_route block.
@@ -667,7 +712,7 @@ kamcmd siptrace.status check
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.26. Send relayed ACK message
+   Example 1.27. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {
