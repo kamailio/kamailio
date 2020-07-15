@@ -3365,6 +3365,8 @@ void ds_ping_set(ds_set_t *node)
 	int i, j;
 	str ping_from;
 	str obproxy;
+	int state;
+	ds_rctx_t rctx;
 
 	if(!node)
 		return;
@@ -3427,8 +3429,25 @@ void ds_ping_set(ds_set_t *node)
 			if(tmb.t_request(&uac_r, &node->dlist[j].uri, &node->dlist[j].uri,
 					   &ping_from, &obproxy)
 					< 0) {
-				LM_ERR("unable to ping [%.*s]\n", node->dlist[j].uri.len,
-						node->dlist[j].uri.s);
+				LM_ERR("unable to ping [%.*s] in group [%d]\n",
+						node->dlist[j].uri.len, node->dlist[j].uri.s,
+						node->id);
+				state = DS_TRYING_DST;
+				if(ds_probing_mode != DS_PROBE_NONE) {
+					state |= DS_PROBING_DST;
+				}
+				memset(&rctx, 0, sizeof(ds_rctx_t));
+				rctx.code = 500;
+				rctx.reason.s = "Sending keepalive failed";
+				rctx.reason.len = 24;
+				/* check if meantime someone disabled the target via RPC */
+				if(!(node->dlist[j].flags & DS_DISABLED_DST)
+						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,
+								state, &rctx) != 0) {
+					LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
+							node->dlist[j].uri.len, node->dlist[j].uri.s,
+							node->id);
+				}
 			}
 		}
 	}
