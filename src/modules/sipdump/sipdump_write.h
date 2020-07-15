@@ -23,14 +23,28 @@
 #ifndef _SIPDUMP_WRITE_H_
 #define _SIPDUMP_WRITE_H_
 
+#include <sys/time.h>
+
 #include "../../core/str.h"
 #include "../../core/locking.h"
 
-#define SIPDUMP_MODE_WFILE (1<<0)
+#define SIPDUMP_MODE_WTEXT (1<<0)
 #define SIPDUMP_MODE_EVROUTE (1<<1)
+#define SIPDUMP_MODE_WPCAP (1<<2)
+#define SIPDUMP_MODE_WPCAPEX (1<<3)
 
 typedef struct sipdump_data {
+	int pid;
+	int procno;
+	struct timeval tv;
 	str data;
+	str tag;
+	int afid;
+	int protoid;
+	str src_ip;
+	int src_port;
+	str dst_ip;
+	int dst_port;
 	struct sipdump_data *next;
 } sipdump_data_t;
 
@@ -46,11 +60,19 @@ int sipdump_list_init(int en);
 
 int sipdump_list_destroy(void);
 
-int sipdump_list_add(str *data);
+int sipdump_list_add(sipdump_data_t *sdd);
 
 void sipdump_timer_exec(unsigned int ticks, void *param);
 
 int sipdump_file_init(str *folder, str *fprefix);
+
+void sipdump_init_pcap(FILE *fs);
+
+void sipdump_write_pcap(FILE *fs, sipdump_data_t *sd);
+
+int sipdump_data_print(sipdump_data_t *sd, str *obuf);
+
+int sipdump_data_clone(sipdump_data_t *isd, sipdump_data_t **osd);
 
 int sipdump_enabled(void);
 
