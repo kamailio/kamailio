@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "../strutils.h"
 #include "../dprint.h"
 
 #include "parse_hname2.h"
@@ -247,7 +246,9 @@ done:
 	if(_ksr_hdr_map_idx[hdr->name.s[0]].idxs >= 0) {
 		for(i = _ksr_hdr_map_idx[hdr->name.s[0]].idxs;
 					i <= _ksr_hdr_map_idx[hdr->name.s[0]].idxe; i++) {
-			if(cmp_hdrname_str(&hdr->name, &_ksr_hdr_map[i].hname) == 0) {
+			if(hdr->name.len == _ksr_hdr_map[i].hname.len
+					&& strncasecmp(hdr->name.s, _ksr_hdr_map[i].hname.s,
+							hdr->name.len) == 0) {
 				hdr->type = _ksr_hdr_map[i].htype;
 			}
 		}
