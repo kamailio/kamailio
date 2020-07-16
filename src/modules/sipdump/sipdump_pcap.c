@@ -28,6 +28,8 @@
 
 #include "sipdump_write.h"
 
+extern int sipdump_mode;
+
 /* structures related to PCAP headers imported from open source Asterisk project
  * fuction to write to PCAP file adapted for internal structures
  * source: res_pjsip_logger.c - License GPLv2 -  Copyright (C) Digium, Inc.*/
@@ -113,8 +115,15 @@ void sipdump_init_pcap(FILE *fs)
 	}
 }
 
+static char *_sipdump_pcap_data_buf = NULL;
+
 void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 {
+	str data = str_init("");
+	str mval = str_init("");
+	str sproto = str_init("none");
+	char *p = NULL;
+
 	struct pcap_record_header v_pcap_record_header = {
 		.ts_sec = spd->tv.tv_sec,
 		.ts_usec = spd->tv.tv_usec,
@@ -139,10 +148,40 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 		return;
 	}
 
+	data = spd->data;
+	if((sipdump_mode & SIPDUMP_MODE_WPCAPEX) && (spd->data.len < BUF_SIZE - 256)) {
+		if(_sipdump_pcap_data_buf == NULL) {
+			_sipdump_pcap_data_buf = (char*)malloc(BUF_SIZE);
+		}
+		if(_sipdump_pcap_data_buf != NULL) {
+			data.s = _sipdump_pcap_data_buf;
+			data.len = 0;
+			mval.s = q_memchr(spd->data.s, '\n', spd->data.len);
+			p = data.s;
+			if(mval.s != NULL) {
+				data.len = mval.s - spd->data.s + 1;
+				memcpy(p, spd->data.s, data.len);
+				p += data.len;
+				get_valid_proto_string(spd->protoid, 0, 0, &sproto);
+				mval.len = snprintf(p, BUF_SIZE - (data.len + 1),
+						"P-KSR-SIPDump: %.*s pid=%d pno=%d\r\n",
+						sproto.len, sproto.s, spd->pid, spd->procno);
+				if(mval.len < 0 || mval.len >= BUF_SIZE - (data.len + 1)) {
+					data = spd->data;
+				} else {
+					data.len += mval.len;
+					p += mval.len;
+					mval.s += 1;
+					memcpy(p, mval.s, spd->data.s + spd->data.len - mval.s);
+					data.len += spd->data.s + spd->data.len - mval.s;
+				}
+			}
+		}
+	}
 	/* always store UDP */
 	v_pcap_udp_header.src = ntohs(spd->src_port);
 	v_pcap_udp_header.dst = ntohs(spd->dst_port);
-	v_pcap_udp_header.length = ntohs(sizeof(struct pcap_udp_header) + spd->data.len);
+	v_pcap_udp_header.length = ntohs(sizeof(struct pcap_udp_header) + data.len);
 
 	/* IP header */
 	if (spd->afid == AF_INET6) {
@@ -161,7 +200,7 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 		}
 		memcpy(&v_pcap_ipv6_header.ip6_dst, &ip6addr, sizeof(struct in6_addr));
 		v_pcap_ipv6_header.ip6_ctlun.ip6_un1.ip6_un1_plen = htons(sizeof(struct pcap_udp_header)
-					+ spd->data.len);
+					+ data.len);
 		v_pcap_ipv6_header.ip6_ctlun.ip6_un1.ip6_un1_nxt = IPPROTO_UDP;
 	} else {
 		LM_DBG("ipv4 = %s -> %s\n", spd->src_ip.s, spd->dst_ip.s);
@@ -179,13 +218,13 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 		}
 		memcpy(&v_pcap_ipv4_header.ip_dst, &ip4addr, sizeof(uint32_t));
 		v_pcap_ipv4_header.ip_len = htons(sizeof(struct pcap_udp_header)
-					+ sizeof(struct pcap_ipv4_header) + spd->data.len);
+					+ sizeof(struct pcap_ipv4_header) + data.len);
 		v_pcap_ipv4_header.ip_protocol = IPPROTO_UDP; /* UDP */
 	}
 
 	/* add up all the sizes for this record */
 	v_pcap_record_header.orig_len = sizeof(struct pcap_ethernet_header) + pcap_ip_header_len
-			+ sizeof(struct pcap_udp_header) + spd->data.len;
+			+ sizeof(struct pcap_udp_header) + data.len;
 	v_pcap_record_header.incl_len = v_pcap_record_header.orig_len;
 
 	if (fwrite(&v_pcap_record_header, sizeof(struct pcap_record_header), 1, fs) != 1) {
@@ -200,7 +239,7 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	if (fwrite(&v_pcap_udp_header, sizeof(struct pcap_udp_header), 1, fs) != 1) {
 		LM_ERR("writing UDP header to pcap failed: %s\n", strerror(errno));
 	}
-	if (fwrite(spd->data.s, spd->data.len, 1, fs) != 1) {
+	if (fwrite(data.s, data.len, 1, fs) != 1) {
 		LM_ERR("writing UDP payload to pcap failed: %s\n", strerror(errno));
 	}
 	fflush(fs);
