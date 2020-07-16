@@ -1944,6 +1944,7 @@ int main(int argc, char** argv)
 	debug_flag=0;
 	dont_fork_cnt=0;
 
+	ksr_hname_init_index();
 	sr_cfgenv_init();
 	daemon_status_init();
 
