@@ -28,6 +28,7 @@
 
 #include "dprint.h"
 #include "ut.h"
+#include "trim.h"
 #include "strutils.h"
 
 /*! \brief
@@ -453,16 +454,24 @@ int cmpi_str(str *s1, str *s2)
 
 int cmp_hdrname_str(str *s1, str *s2)
 {
+	str n1, n2;
+	n1 = *s1;
+	n2 = *s2;
+	trim_trailing(&n1);
+	trim_trailing(&n2);
 	/* todo: parse hdr name and compare with short/long alternative */
-	return cmpi_str(s1, s2);
+	return cmpi_str(&n1, &n2);
 }
 
-int cmp_hdrname_strzn(str *s1, char *s2, size_t n)
+int cmp_hdrname_strzn(str *s1, char *s2, size_t len)
 {
-	str s;
-	s.s = s2;
-	s.len = n;
-	return cmpi_str(s1, &s);
+	str n1, n2;
+	n1 = *s1;
+	n2.s = s2;
+	n2.len = len;
+	trim_trailing(&n1);
+	trim_trailing(&n2);
+	return cmpi_str(&n1, &n2);
 }
 
 int cmp_str_params(str *s1, str *s2)
