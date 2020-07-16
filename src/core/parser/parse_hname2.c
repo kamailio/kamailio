@@ -27,9 +27,10 @@
  */
 
 #include "../comp_defs.h"
+#include "../trim.h"
+#include "../ut.h"  /* q_memchr */
 #include "parse_hname2.h"
 #include "keys.h"
-#include "../ut.h"  /* q_memchr */
 
 #define LOWER_BYTE(b) ((b) | 0x20)
 #define LOWER_DWORD(d) ((d) | 0x20202020)
@@ -238,6 +239,7 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
 	        goto other;
 	} else {
 		hdr->name.len = p - hdr->name.s;
+		trim_trailing(&hdr->name);
 		return (p + 1);
 	}
 
@@ -252,6 +254,7 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
 	} else {
 		hdr->type = HDR_OTHER_T;
 		hdr->name.len = p - hdr->name.s;
+		trim_trailing(&hdr->name);
 		/*hdr_update_type(hdr);*/
 		return (p + 1);
 	}
