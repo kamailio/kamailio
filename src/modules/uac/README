@@ -409,7 +409,7 @@ modparam("uac","credential","username:domain:password")
 
    Example 1.9. Set auth_realm_avp parameter
 ...
-modparam("uac","auth_realm_avp","$avp(i:10)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
 ...
 
 3.10. auth_username_avp (string)
@@ -423,7 +423,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 
    Example 1.10. Set auth_username_avp parameter
 ...
-modparam("uac","auth_username_avp","$avp(i:11)")
+modparam("uac","auth_username_avp","$avp(auser)")
 ...
 
 3.11. auth_password_avp (string)
@@ -437,7 +437,7 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 
    Example 1.11. Set auth_password_avp parameter
 ...
-modparam("uac","auth_password_avp","$avp(i:12)")
+modparam("uac","auth_password_avp","$avp(apasswd)")
 ...
 
 3.12. reg_db_url (string)
