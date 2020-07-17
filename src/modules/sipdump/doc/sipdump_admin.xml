@@ -96,9 +96,11 @@ modparam("sipdump", "enable", 1)
 		<title><varname>mode</varname> (int)</title>
 		<para>
 			Set the type of activity done by the module, the value can be set
-			based on flags: 1 (value 1) - write to text files;
-			2 (value 2) - execute event route;
-			3 (value 4) - write to pcap files.
+			based on flags index: 0 (value 1) - write to text files;
+			1 (value 2) - execute event route;
+			2 (value 4) - write to pcap files; 3 (value 8) - insert the
+			P-KSR-SIPDump header with meta data inside the SIP message written
+			in pcap file.
 		</para>
 		<para>
 			To enable several activity modes, set the parameter to the sum of
