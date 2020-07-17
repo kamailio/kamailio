@@ -66,7 +66,7 @@ static void reg_rpc_dereg_impu(rpc_t* rpc, void* ctx)
 				impucontact->contact->state = CONTACT_DELETE_PENDING;
 				if (impu_rec->shead) {
 						//send NOTIFY to all subscribers of this IMPU.
-						notify_subscribers(impu_rec, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
+						notify_subscribers(impu_rec, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
 				}
 				impucontact->contact->state = CONTACT_DELETED;
 				ul.unlock_contact_slot_i(impucontact->contact->sl);
