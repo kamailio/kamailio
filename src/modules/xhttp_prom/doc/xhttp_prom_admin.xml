@@ -101,7 +101,7 @@
 		<title>Set <varname>xhttp_prom_buf_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "xhttp_prom_buf_size", 1024)
+modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 ...
 		</programlisting>
 	  </example>
@@ -122,7 +122,7 @@ modparam("xhttp", "xhttp_prom_buf_size", 1024)
 		<programlisting format="linespecific">
 ...
 # Set timeout to 10 hours		  
-modparam("xhttp", "xhttp_prom_timeout", 600)
+modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 ...
 		</programlisting>
 	  </example>
