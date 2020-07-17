@@ -677,7 +677,7 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
-	LOG(cfg_get(core, core_cfg, corelog), "ERROR: parse_msg: message=<%.*s>\n",
+	LOG(cfg_get(core, core_cfg, sip_parser_log), "ERROR: parse_msg: message=<%.*s>\n",
 			(int)msg->len, ZSW(msg->buf));
 	return -1;
 }

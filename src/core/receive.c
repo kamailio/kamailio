@@ -304,7 +304,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		}
 	}
 	if(errsipmsg==1) {
-		LOG(cfg_get(core, core_cfg, corelog),
+		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"core parsing of SIP message failed (%s:%d/%d)\n",
 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
 				(int)msg->rcv.proto);
