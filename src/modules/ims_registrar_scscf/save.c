@@ -777,6 +777,9 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
     int first_unbarred_impu = 1; //this is used to flag the IMPU as anchor for implicit set
     int is_primary_impu = 0;
     int ret = 1;
+	str callid = {0, 0};
+	str path = {0, 0};
+	ucontact_t* ucontact;
 
     int num_explicit_dereg_contact = 0;
     str *explicit_dereg_contact = 0;
@@ -835,7 +838,12 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             for (h = msg->contact; h; h = h->next) {
                 if (h->type == HDR_CONTACT_T && h->parsed) {
                     for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
-                        event_reg(0, impu_rec, IMS_REGISTRAR_CONTACT_REGISTERED, 0, 0, &chi->uri, 0, 0);
+						if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+							LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+							goto error;
+						}
+                        event_reg(0, impu_rec, ucontact, IMS_REGISTRAR_CONTACT_REGISTERED, 0, 0, &chi->uri, 0, 0);
+						ul.release_ucontact(ucontact);
                     }
                 }
             }
@@ -927,7 +935,12 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             for (h = msg->contact; h; h = h->next) {
                 if (h->type == HDR_CONTACT_T && h->parsed) {
                     for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
-                        event_reg(0, impu_rec, IMS_REGISTRAR_CONTACT_REGISTERED, 0, 0, &chi->uri, 0, 0);
+						if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+							LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+							goto error;
+						}
+                        event_reg(0, impu_rec, ucontact, IMS_REGISTRAR_CONTACT_REFRESHED, 0, 0, &chi->uri, 0, 0);
+						ul.release_ucontact(ucontact);
                     }
                 }
             }
@@ -1029,11 +1042,17 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         //                                s = s->next;
                         //                            }
                         //                        }
-                        notify_subscribers(tmp_impu_rec, (str*) explicit_dereg_contact, num_explicit_dereg_contact, IMS_REGISTRAR_CONTACT_UNREGISTERED);
 
                         for (h = msg->contact; h; h = h->next) {
                             if (h->type == HDR_CONTACT_T && h->parsed) {
                                 for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+									if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+										LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+										goto error;
+									}
+									notify_subscribers(tmp_impu_rec, ucontact, (str*) explicit_dereg_contact, num_explicit_dereg_contact, IMS_REGISTRAR_CONTACT_UNREGISTERED);
+									ul.release_ucontact(ucontact);
+
                                     if (calc_contact_q(chi->q, &qvalue) != 0) {
                                         LM_ERR("error on <%.*s>\n", chi->uri.len, chi->uri.s);
                                         ul.unlock_udomain(_d, &pi->public_identity);

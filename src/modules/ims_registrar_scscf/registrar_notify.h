@@ -79,7 +79,7 @@ typedef struct _reg_notification {
     
     str *explit_dereg_contact;
     int num_explit_dereg_contact;
-    
+
     struct _reg_notification *next; /**< next notification in the list	*/
     struct _reg_notification *prev; /**< previous notification in the list	*/
 } reg_notification;
@@ -116,6 +116,7 @@ typedef enum {
     IMS_REGISTRAR_CONTACT_EXPIRED, /**< A contact has expired and will be removed		*/
     IMS_REGISTRAR_CONTACT_UNREGISTERED, /**< User unregistered with Expires 0				*/
     IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
+	IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE
 } IMS_Registrar_events_enum_t;
 
 extern IMS_Registrar_events_enum_t IMS_Registrar_events;
@@ -132,7 +133,7 @@ int publish_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str *contact);
 
-int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *contact_uri,
+int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int event_type, str *presentity_uri, str *watcher_contact, str *contact_uri,
                 str *explit_dereg_contact, int num_explit_dereg_contact);
 
 
@@ -140,7 +141,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, s
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned int reginfo_version);
 
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str *contact_uri,
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_passed, str *presentity_uri, str *watcher_contact, str *contact_uri,
                             str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 void notification_event_process();
@@ -163,6 +164,6 @@ void notify_destroy();
 int aor_to_contact(str* aor, str* contact);
 int contact_port_ip_match(str *c1, str *c2);
 
-int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type);
+int notify_subscribers(impurecord_t* impurecord, ucontact_t* contact, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type);
 
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_
