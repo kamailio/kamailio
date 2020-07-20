@@ -62,6 +62,7 @@ static ksr_hdr_map_t _ksr_hdr_map[] = {
 	{ str_init("Content-Type"), HDR_CONTENTTYPE_T, HDR_CONTENTTYPE_F },
 	{ str_init("CSeq"), HDR_CSEQ_T, HDR_CSEQ_F },
 
+	{ str_init("d"), HDR_REQUESTDISPOSITION_T, HDR_REQUESTDISPOSITION_F },
 	{ str_init("Date"), HDR_DATE_T, HDR_DATE_F },
 	{ str_init("Diversion"), HDR_DIVERSION_T, HDR_DIVERSION_F },
 
@@ -75,6 +76,8 @@ static ksr_hdr_map_t _ksr_hdr_map[] = {
 	{ str_init("i"), HDR_CALLID_T, HDR_CALLID_F },
 	{ str_init("Identity"), HDR_IDENTITY_T, HDR_IDENTITY_F },
 	{ str_init("Identity-Info"), HDR_IDENTITY_INFO_T, HDR_IDENTITY_INFO_F },
+
+	{ str_init("j"), HDR_REJECTCONTACT_T, HDR_REJECTCONTACT_F },
 
 	{ str_init("k"), HDR_SUPPORTED_T, HDR_SUPPORTED_F },
 
@@ -126,6 +129,10 @@ static ksr_hdr_map_t _ksr_hdr_map[] = {
 
 	{ str_init("v"), HDR_VIA_T, HDR_VIA_F },
 	{ str_init("Via"), HDR_VIA_T, HDR_VIA_F },
+
+	{ str_init("x"), HDR_SESSIONEXPIRES_T, HDR_SESSIONEXPIRES_F },
+
+	{ str_init("y"), HDR_IDENTITY_T, HDR_IDENTITY_F },
 
 	{ str_init("WWW-Authenticate"), HDR_WWW_AUTHENTICATE_T, HDR_WWW_AUTHENTICATE_F },
 
