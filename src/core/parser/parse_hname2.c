@@ -145,12 +145,26 @@ typedef struct ksr_hdr_map_idx {
 } ksr_hdr_map_idx_t;
 
 #define KSR_HDR_MAP_IDX_SIZE 256
+
+/**
+ * array to keep start and end indexes of header names groupped by first char
+ */
 static ksr_hdr_map_idx_t _ksr_hdr_map_idx[KSR_HDR_MAP_IDX_SIZE];
 
+/**
+ * valid chars in header names
+ */
 static char *_ksr_hname_chars_list = "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz-._+~";
 
+/**
+ * indexed valid chars in 256-array for 1-byte-index access check
+ */
 static char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
 
+
+/**
+ * init header name parsing structures and indexes
+ */
 int ksr_hname_init_index(void)
 {
 	char c;
@@ -180,10 +194,6 @@ int ksr_hname_init_index(void)
 
 	return 0;
 }
-
-#define LOWER_BYTE(b) ((b) | 0x20)
-#define LOWER_DWORD(d) ((d) | 0x20202020)
-
 
 /**
  * parse the sip header name in the buffer starting at 'begin' till before 'end'
