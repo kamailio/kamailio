@@ -47,6 +47,8 @@
 #include "tps_storage.h"
 
 extern int _tps_param_mask_callid;
+extern int _tps_contact_mode;
+extern str _tps_cparam_name;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
@@ -298,26 +300,52 @@ error:
 /**
  *
  */
-int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd)
+int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 {
+	str tmp;
+
 	if(parse_sip_msg_uri(msg)<0) {
 		LM_ERR("failed to parse r-uri\n");
 		return -1;
 	}
-	if(msg->parsed_uri.user.len<10) {
-		LM_DBG("not an expected user format\n");
-		return 1;
+
+	if (ctmode == 1 || ctmode == 2) {
+		if(msg->parsed_uri.sip_params.len<10) {
+			LM_DBG("not an expected param format\n");
+			return 1;
+		}
+
+		tmp.s = msg->parsed_uri.sip_params.s;
+		// skip param and '=' sign
+		tmp.s += _tps_cparam_name.len + 1;
+		tmp.len = msg->parsed_uri.sip_params.len - _tps_cparam_name.len - 1;
+
+		if(memcmp(tmp.s, "atpsh-", 6)==0) {
+			ptsd->a_uuid = tmp;
+			return 0;
+		}
+		if(memcmp(tmp.s, "btpsh-", 6)==0) {
+			ptsd->a_uuid = tmp;
+			ptsd->b_uuid = tmp;
+			return 0;
+		}
+
+	} else {
+		if(msg->parsed_uri.user.len<10) {
+			LM_DBG("not an expected user format\n");
+			return 1;
+		}
+		if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
+			ptsd->a_uuid = msg->parsed_uri.user;
+			return 0;
+		}
+		if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
+			ptsd->a_uuid = msg->parsed_uri.user;
+			ptsd->b_uuid = msg->parsed_uri.user;
+			return 0;
+		}
 	}
-	if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
-		ptsd->a_uuid = msg->parsed_uri.user;
-		return 0;
-	}
-	if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
-		ptsd->a_uuid = msg->parsed_uri.user;
-		ptsd->b_uuid = msg->parsed_uri.user;
-		return 0;
-	}
-	LM_DBG("not an expected user prefix\n");
+	LM_DBG("not an expected prefix\n");
 
 	return 1;
 }
@@ -753,7 +781,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		return -1;
 	}
 
-	ret = tps_dlg_message_update(msg, &mtsd);
+	ret = tps_dlg_message_update(msg, &mtsd, _tps_contact_mode);
 	if(ret<0) {
 		LM_ERR("failed to update on dlg message\n");
 		return -1;
