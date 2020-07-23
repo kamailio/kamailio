@@ -216,6 +216,7 @@ extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
 
 extern char *_sr_uri_host_extra_chars;
+extern char *_ksr_hname_extra_chars;
 
 extern char *ksr_stats_namesep;
 

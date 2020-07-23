@@ -39,5 +39,6 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
 char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr);
 
 int ksr_hname_init_index(void);
+int ksr_hname_init_config(void);
 
 #endif /* PARSE_HNAME2_H */

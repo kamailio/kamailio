@@ -2545,6 +2545,8 @@ try_again:
 	/* init lookup for core event routes */
 	sr_core_ert_init();
 
+	ksr_hname_init_config();
+
 	if (dont_fork_cnt)
 		dont_fork = dont_fork_cnt;	/* override by command line */
 

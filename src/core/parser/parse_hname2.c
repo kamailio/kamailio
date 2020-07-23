@@ -157,13 +157,18 @@ static ksr_hdr_map_idx_t _ksr_hdr_map_idx[KSR_HDR_MAP_IDX_SIZE];
 static char *_ksr_hname_chars_list = "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz-._+~";
 
 /**
+ * additional valid chars in header names (core param)
+ */
+char *_ksr_hname_extra_chars = "";
+
+/**
  * indexed valid chars in 256-array for 1-byte-index access check
  */
 static char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
 
 
 /**
- * init header name parsing structures and indexes
+ * init header name parsing structures and indexes at very beginning of start up
  */
 int ksr_hname_init_index(void)
 {
@@ -190,6 +195,20 @@ int ksr_hname_init_index(void)
 
 	for(i=0; _ksr_hname_chars_list[i] != 0; i++) {
 		_ksr_hname_chars_idx[_ksr_hname_chars_list[i]] = 1;
+	}
+
+	return 0;
+}
+
+/**
+ * init header name parsing structures and indexes after config parsing
+ */
+int ksr_hname_init_config(void)
+{
+	int i;
+
+	for(i=0; _ksr_hname_extra_chars[i] != 0; i++) {
+		_ksr_hname_chars_idx[_ksr_hname_extra_chars[i]] = 1;
 	}
 
 	return 0;
