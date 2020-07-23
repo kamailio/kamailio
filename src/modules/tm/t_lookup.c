@@ -1495,7 +1495,8 @@ int t_unref( struct sip_msg* p_msg  )
 				LM_BUG("called w/ kr=REQ_ERR_DELAYED in failure"
 						" route for %p\n", T);
 			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
-				LM_ERR("generation of a delayed stateful reply"
+				// could be a valid error, or due to a immediate CANCEL
+				LM_WARN("generation of a delayed stateful reply"
 						" failed\n");
 				t_release_transaction(T);
 			}
