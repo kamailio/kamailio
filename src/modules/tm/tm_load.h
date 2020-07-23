@@ -83,7 +83,6 @@ struct tm_binds {
 	cancel_all_uacs_f  cancel_all_uacs;
 	prepare_request_within_f  prepare_request_within;
 	send_prepared_request_f   send_prepared_request;
-	enum route_mode*   route_mode;
 #ifdef DIALOG_CALLBACKS
 	register_new_dlg_cb_f register_new_dlg_cb;
 	register_dlg_tmcb_f   register_dlg_tmcb;
