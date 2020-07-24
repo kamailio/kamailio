@@ -243,6 +243,10 @@ int dlg_clean_run(ticks_t ti)
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
+			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts>0 && tdlg->start_ts<tm-60) {
+				LM_NOTICE("dialog disconnection no-ACK call-id[%.*s][%u]<[%u - 60]\n",
+						tdlg->callid.len, tdlg->callid.s, tdlg->start_ts, tm);
+			}
 			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts>0
 					&& tdlg->start_ts<tm-dlg_noack_timeout) {
 				if(update_dlg_timer(&tdlg->tl, 10)<0) {
