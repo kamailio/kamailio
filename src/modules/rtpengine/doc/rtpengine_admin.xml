@@ -730,6 +730,26 @@ modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
 	</section>
 
 
+	<section id="rtpengine.p.compress_size">
+		<title><varname>compress_size</varname> (string)</title>
+		<para>
+			Maximum compression message size. If the message length is over this 
+			amount of size, the Kamailio sends the message after compress.
+		</para>
+		<para>
+			By default, this parameter is set to 0(no compress).
+		</para>
+		<example>
+		<title>Set <varname>compress_size</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "compress_size", 1400)
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.mos_min_pv">
 		<title><varname>mos_min_pv</varname> (string)</title>
 		<para>

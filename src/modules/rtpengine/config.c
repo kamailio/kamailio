@@ -36,6 +36,7 @@ struct cfg_group_rtpengine	default_rtpengine_cfg = {
 		1000,	/* default wait timeout in milliseconds */
 		MAX_RTPP_TRIED_NODES,
         5, /* rtprengine retries */
+		0, /* compress size */
 	    };
 
 void	*rtpengine_cfg = &default_rtpengine_cfg;
@@ -54,5 +55,7 @@ cfg_def_t	rtpengine_cfg_def[] = {
 		"Timeout value expressed in milliseconds to wait for reply from RTPEngine"},
 	{"rtpengine_retr",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"How many times the module should retry to send and receive after timeout was generated"},
+	{"compress_size",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
+		"The max send message size for compress"},
 	{0, 0, 0, 0, 0, 0}
 };

@@ -3,7 +3,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=rtpengine.so
-LIBS=
+LIBS=-lz
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1

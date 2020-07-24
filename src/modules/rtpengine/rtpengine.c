@@ -84,6 +84,7 @@
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
 #include "bencode.h"
+#include "compress.h"
 #include "config.h"
 
 MODULE_VERSION
@@ -454,6 +455,7 @@ static param_export_t params[] = {
 	{"setid_default",         INT_PARAM, &setid_default          },
 	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
 	{"hash_algo",             INT_PARAM, &hash_algo},
+	{"compress_size",         INT_PARAM, &default_rtpengine_cfg.compress_size            },
 
 	/* MOS stats output */
 	/* global averages */
@@ -2799,6 +2801,10 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 	int rtpengine_retr, rtpengine_tout_ms = 1000;
 	char *cp;
 	static char buf[0x10000];
+	static char buf_tmp[0x10000];
+	int compress_size;
+	char *tmp;
+	int total_len, ret;
 	struct pollfd fds[1];
 	struct iovec *v;
 	str cmd = STR_NULL;
@@ -2831,8 +2837,24 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			goto badproxy;
 		}
 
+		tmp = buf;
+		total_len = 0;
+		for (i = 0; i < vcnt; i++) {
+			memcpy(tmp, v[i].iov_base, v[i].iov_len);
+			tmp += v[i].iov_len;
+			total_len += v[i].iov_len;
+		}
+
+		compress_size = cfg_get(rtpengine,rtpengine_cfg,compress_size);
+		if ((compress_size > 0) && (total_len > compress_size)) {
+			ret = compress_data(buf, total_len);
+			if (ret > 0) {
+				total_len = ret;
+			}
+		}
+
 		do {
-			len = writev(fd, v + 1, vcnt);
+			len = write(fd, buf, total_len);
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
@@ -2841,6 +2863,15 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		do {
 			len = read(fd, buf, sizeof(buf) - 1);
+
+			if (len > 0) {
+				// uncompress the message if it's compressed
+				ret = uncompress_data(buf, len, buf_tmp, sizeof(buf_tmp));
+				if (ret > 0) {
+					len = ret;
+				}
+				LM_DBG("Uncompressed message: %s\n", buf);
+			}
 		} while (len == -1 && errno == EINTR);
 		close(fd);
 		if (len <= 0) {
@@ -2860,10 +2891,27 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
+
+		tmp = buf;
+		total_len = 0;
+		for (i = 0; i < vcnt; i++) {
+			memcpy(tmp, v[i].iov_base, v[i].iov_len);
+			tmp += v[i].iov_len;
+			total_len += v[i].iov_len;
+		}
+
+		compress_size = cfg_get(rtpengine,rtpengine_cfg,compress_size);
+		if ((compress_size > 0) && (total_len > compress_size)) {
+			ret = compress_data(buf, total_len);
+			if (ret > 0) {
+				total_len = ret;
+			}
+		}
+
 		rtpengine_retr = cfg_get(rtpengine,rtpengine_cfg,rtpengine_retr);
 		for (i = 0; i < rtpengine_retr; i++) {
 			do {
-				len = writev(rtpp_socks[node->idx], v, vcnt + 1);
+				len = write(rtpp_socks[node->idx], buf, total_len);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
 				bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
@@ -2876,6 +2924,13 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				(fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
+					if (len > 0) {
+						ret = uncompress_data(buf, len, buf_tmp, sizeof(buf_tmp));
+						if (ret > 0) {
+							len = ret;
+						}
+						LM_DBG("Uncompressed message: %s\n", buf);
+					}
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
 					bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
