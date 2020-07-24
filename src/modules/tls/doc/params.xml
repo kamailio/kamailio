@@ -1250,7 +1250,7 @@ end
 	<section id="tls.p.rand_engine">
 	<title><varname>rand_engine</varname> (str)</title>
 	<para>
-		Set the ranondom number generator engine for libssl.
+		Set the random number generator engine for libssl.
 	</para>
 	<para>
 		Note: the default random number generator (PRNG) engine of libssl v1.1.x
