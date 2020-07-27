@@ -1645,10 +1645,11 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	}
 
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
-		LM_WARN("timeout for dlg with CallID '%.*s' and tags '%.*s' '%.*s'\n",
+		LM_WARN("dlg timeout - callid: '%.*s' tags: '%.*s' '%.*s' ostate: %d\n",
 			dlg->callid.len, dlg->callid.s,
 			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
+			old_state);
 
 		/* set end time */
 		dlg->end_ts = (unsigned int)(time(0));
