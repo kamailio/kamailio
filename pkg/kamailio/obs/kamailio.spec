@@ -1146,10 +1146,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with kazoo}
     kkazoo \
 %endif
-%if %{with rabbitmq}
-    krabbitmq \
-%endif
-    kldap 
+    kldap \
 %if %{with lua}
     klua \
 %endif
@@ -1172,6 +1169,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kpostgres kpresence kpython \
 %if %{with python3}
     kpython3 \
+%endif
+%if %{with rabbitmq}
+    krabbitmq \
 %endif
     kradius \
 %if %{with redis}
@@ -1234,9 +1234,6 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with kazoo}
     kkazoo \
 %endif
-%if %{with rabbitmq}
-    krabbitmq \
-%endif
     kldap \
 %if %{with lua}
     klua \
@@ -1260,6 +1257,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kpostgres kpresence kpython \
 %if %{with python3}
     kpython3 \
+%endif
+%if %{with rabbitmq}
+    krabbitmq \
 %endif
     kradius \
 %if %{with redis}
