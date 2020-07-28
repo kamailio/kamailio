@@ -123,6 +123,13 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 		t_vals[2] = TYPE_NULL;
 	}
 
+	LM_DBG("default - totag[%.*s]\n", c_vals[2].len, c_vals[2].s);
+	if (c_vals[2].len == 0 && acc_env.to_tag.s && acc_env.to_tag.len > 0) {
+		LM_DBG("extra [%p] totag[%.*s]\n", acc_env.to_tag.s, acc_env.to_tag.len, acc_env.to_tag.s);
+		c_vals[2].len = acc_env.to_tag.len;
+		c_vals[2].s = acc_env.to_tag.s;
+	}
+
 	/* Callid */
 	if (req->callid && req->callid->body.len) {
 		c_vals[3] = req->callid->body;
