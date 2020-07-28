@@ -79,8 +79,7 @@ struct acc_enviroment acc_env;
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
 
 
-static inline struct hdr_field* get_rpl_to( struct cell *t,
-														struct sip_msg *reply)
+static inline struct hdr_field* get_rpl_to( struct cell *t, struct sip_msg *reply)
 {
 	if (reply==FAKED_REPLY || !reply || !reply->to)
 		return t->uas.request->to;
@@ -88,12 +87,16 @@ static inline struct hdr_field* get_rpl_to( struct cell *t,
 		return reply->to;
 }
 
+void env_set_totag(struct cell *t, struct sip_msg *reply)
+{
+	if (reply==FAKED_REPLY || !reply || !reply->to)
+		tmb.t_get_reply_totag(t->uas.request, &acc_env.to_tag);
+}
 
 static inline void env_set_to(struct hdr_field *to)
 {
 	acc_env.to = to;
 }
-
 
 static inline void env_set_text(char *p, int len)
 {
@@ -493,7 +496,9 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 
 	/* set env variables */
 	env_set_to( get_rpl_to(t,reply) );
-	env_set_code_status( code, reply);
+	env_set_code_status(code, reply);
+	/* for missed calls, we make sure to include the totag if it is locally generated */
+	env_set_totag(t, reply);
 
 	/* we report on missed calls when the first
 	 * forwarding attempt fails; we do not wish to
@@ -512,7 +517,6 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 		acc_db_request( req );
 		flags_to_reset |= 1 << db_missed_flag;
 	}
-
 	/* run extra acc engines */
 	acc_run_engines(req, 1, &flags_to_reset);
 
