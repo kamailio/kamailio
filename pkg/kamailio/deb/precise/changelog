@@ -1,24 +1,6 @@
-kamailio (5.4.0~rc1) unstable; urgency=medium
+kamailio (5.4.0) unstable; urgency=medium
 
-  * version set 5.4.0~rc1
+  * version set 5.4.0
 
- -- Victor Seva <vseva@debian.org>  Fri, 17 Jul 2020 10:40:34 +0200
-
-kamailio (5.4.0~rc0) unstable; urgency=medium
-
-  * version set 5.4.0~rc0
-
- -- Victor Seva <vseva@debian.org>  Fri, 10 Jul 2020 13:30:34 +0200
-
-kamailio (5.4.0~pre1) unstable; urgency=medium
-
-  * version set 5.4.0~pre1
-
- -- Victor Seva <vseva@debian.org>  Thu, 02 Jul 2020 16:32:52 +0200
-
-kamailio (5.4.0~pre0) unstable; urgency=medium
-
-  * version set 5.4.0~pre0
-
- -- Victor Seva <vseva@debian.org>  Fri, 19 Jun 2020 10:01:28 +0200
+ -- Victor Seva <vseva@debian.org>  Wed, 29 Jul 2020 09:11:23 +0200
 
