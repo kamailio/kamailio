@@ -733,7 +733,7 @@ static int ki_evapi_async_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
         {
                 LM_ERR("failed to suspend request processing\n");
                 return -1;
-        }
+	}
 
 	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
 
@@ -750,9 +750,9 @@ static int ki_evapi_async_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
 
         if(evapi_relay_unicast(sdata, stag)<0) {
                 LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
-                                sdata->len, sdata->s, stag->len, stag->s);
-                return -2;
-        }
+				sdata->len, sdata->s, stag->len, stag->s);
+		return -2;
+	}
 	return 1;
 }
 
@@ -819,11 +819,11 @@ static sr_kemi_t sr_kemi_evapi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
                         SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-        { str_init("evapi"), str_init("async_relay_unicast"),
-                SR_KEMIP_INT, ki_evapi_async_relay_unicast,
-                { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
-                        SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-        },
+	{ str_init("evapi"), str_init("async_relay_unicast"),
+		SR_KEMIP_INT, ki_evapi_async_relay_unicast,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
