@@ -448,7 +448,7 @@ struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name) {
 		}
 
 		if (list_current==0) {
-			LM_ERR("no more shm mem (%d)\n",len);
+			SHM_MEM_ERROR;
 			return 0;
 		}
 
@@ -483,7 +483,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset( dlginfo, 0, len);
@@ -531,7 +531,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 				dlginfo->pubruris_caller =
 					(struct str_list*)shm_malloc( sizeof(struct str_list) );
 				if (dlginfo->pubruris_caller==0) {
-					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
@@ -546,7 +546,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 				dlginfo->pubruris_callee =
 					(struct str_list*)shm_malloc( sizeof(struct str_list) );
 				if (dlginfo->pubruris_callee==0) {
-					LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
@@ -567,7 +567,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 		dlginfo->pubruris_caller =
 			(struct str_list*)shm_malloc( sizeof(struct str_list) );
 		if (dlginfo->pubruris_caller==0) {
-			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+			SHM_MEM_ERROR;
 			free_dlginfo_cell(dlginfo);
 			return NULL;
 		}
@@ -577,7 +577,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type)
 		dlginfo->pubruris_callee =
 			(struct str_list*)shm_malloc( sizeof(struct str_list) );
 		if (dlginfo->pubruris_callee==0) {
-			LM_ERR("no more shm mem (%d)\n", (int) sizeof(struct str_list));
+			SHM_MEM_ERROR;
 			free_dlginfo_cell(dlginfo);
 			return NULL;
 		}
