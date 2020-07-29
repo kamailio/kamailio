@@ -26,4 +26,4 @@
 #include "../../core/dprint.h"
 #include "../usrloc/usrloc.h"
 
-void bla_cb(ucontact_t* c, int type, void* param);
+void bla_cb(ucontact_t *c, int type, void *param);

@@ -34,6 +34,6 @@ extern str reg_from_uri;
 extern send_publish_t pua_send_publish;
 extern send_subscribe_t pua_send_subscribe;
 extern query_dialog_t pua_is_dialog;
-extern int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2);
+extern int bla_handle_notify(struct sip_msg *msg, char *s1, char *s2);
 
 #endif
