@@ -1,6 +1,4 @@
 /*
- * $Id: pua_bla.c 1666 2007-03-02 13:40:09Z anca_vamanu $
- *
  * pua_bla module - pua Bridged Line Appearance
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
@@ -17,17 +15,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- *  2007-03-30  initial version (anca)
  */
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../usrloc/usrloc.h"
@@ -56,7 +51,7 @@ str server_address= {0, 0};
 static cmd_export_t cmds[]=
 {
 	{"bla_set_flag", (cmd_function)bla_set_flag,		 0, 0, 0, REQUEST_ROUTE},
-	{"bla_handle_notify", (cmd_function)bla_handle_notify,   0, 0, 0, REQUEST_ROUTE}, 	
+	{"bla_handle_notify", (cmd_function)bla_handle_notify,   0, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 static param_export_t params[]=
@@ -81,7 +76,7 @@ struct module_exports exports= {
 	0,					/* per-child init function */
 	0					/* module destroy function */
 };
-	
+
 /**
  * init module function
  */
@@ -97,19 +92,19 @@ static int mod_init(void)
 	}
 
 	if(!default_domain.s || default_domain.len<=0)
-	{	
+	{
 		LM_ERR("default domain not found\n");
 		return -1;
 	}
 
 	if(!header_name.s || header_name.len<=0)
-	{	
+	{
 		LM_ERR("header_name parameter not set\n");
 		return -1;
 	}
 
 	if(!bla_outbound_proxy.s || bla_outbound_proxy.len<=0)
-	{	
+	{
 		LM_DBG("No outbound proxy set\n");
 	}
 
@@ -119,7 +114,7 @@ static int mod_init(void)
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	
+
 	if (bind_pua(&pua) < 0)
 	{
 		LM_ERR("Can't bind pua\n");
@@ -145,12 +140,12 @@ static int mod_init(void)
 		return -1;
 	}
 	pua_is_dialog= pua.is_dialog;
-	
+
 	if(pua.register_puacb== NULL)
 	{
 		LM_ERR("Could not import register callback\n");
 		return -1;
-	}	
+	}
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc)
@@ -176,19 +171,19 @@ static int mod_init(void)
 		return -1;
 	}
 	if(ul.register_ulcb(UL_CONTACT_EXPIRE, bla_cb, 0)< 0)
-	{	
+	{
 		LM_ERR("can not register callback for"
 				" insert\n");
 		return -1;
 	}
 	if(ul.register_ulcb(UL_CONTACT_UPDATE, bla_cb, 0)< 0)
-	{	
+	{
 		LM_ERR("can not register callback for"
 				" update\n");
 		return -1;
 	}
 	if(ul.register_ulcb(UL_CONTACT_DELETE, bla_cb, 0)< 0)
-	{	
+	{
 		LM_ERR("can not register callback for"
 				" delete\n");
 		return -1;
@@ -201,19 +196,19 @@ static int mod_init(void)
 int bla_set_flag(struct sip_msg* msg , char* s1, char* s2)
 {
 	LM_DBG("mark as bla aor\n");
-	
+
 	is_bla_aor= 1;
-	
+
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
 		return -1;
 	}
-	
+
 
 	if (msg->from->parsed == NULL)
 	{
-		if ( parse_from_header( msg )<0 ) 
+		if ( parse_from_header( msg )<0 )
 		{
 			LM_DBG("cannot parse From header\n");
 			return -1;
@@ -223,5 +218,5 @@ int bla_set_flag(struct sip_msg* msg , char* s1, char* s2)
 	reg_from_uri= ((struct to_body*)(msg->from->parsed))->uri;
 
 	return 1;
-}	
+}
 
