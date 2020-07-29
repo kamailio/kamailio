@@ -240,7 +240,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LM_ERR("while allocating memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
@@ -327,7 +327,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	publ= (publ_info_t*)pkg_malloc(size);
 	if(publ== NULL)
 	{
-		LM_ERR("no more share memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(publ, 0, size);
