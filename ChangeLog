@@ -2,6 +2,34 @@
 
 ===================== Changes Since Version 5.3.0 ===========================
 
+commit 1832f33f5a3e4801495f6a489bbfca6dc375eb2f (HEAD -> 5.4, origin/5.4)
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Jul 29 12:16:33 2020 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit eb2abae40b36ad123528cddb25e0ddd217b68b22
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 24 22:25:50 2020 +0200
+
+    tls: docs - fixed typo
+
+    - GH #2410
+
+    (cherry picked from commit a12064696ac37cadf954a89b58daa1e05e182180)
+
+commit fd93050113eee959002ee40496abab2e01cfe7cc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 09:12:30 2020 +0200
+
+    pkg/kamailio/deb: version 5.4.0
+
+commit e2e4467177fc729f5cb3e77708ad26bebbe23fe4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 29 09:08:40 2020 +0200
+
+    ChangeLog: prepared content for v5.4.0
+
 commit 41a7f134be420b0a7169b83f2ef5f5961b58a50c (HEAD -> 5.4)
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Wed Jul 29 09:07:39 2020 +0200
