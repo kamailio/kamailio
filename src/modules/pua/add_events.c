@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -35,7 +35,7 @@ extern int dlginfo_increase_version;
 int pua_add_events(void)
 {
 	/* add presence */
-	if(add_pua_event(PRESENCE_EVENT, "presence", "application/pidf+xml", 
+	if(add_pua_event(PRESENCE_EVENT, "presence", "application/pidf+xml",
 				pres_process_body)< 0)
 	{
 		LM_ERR("while adding event presence\n");
@@ -68,20 +68,20 @@ int pua_add_events(void)
 	}
 
 	/* add message-summary*/
-	if(add_pua_event(MSGSUM_EVENT, "message-summary", 
+	if(add_pua_event(MSGSUM_EVENT, "message-summary",
 				"application/simple-message-summary", mwi_process_body)< 0)
 	{
 		LM_ERR("while adding event message-summary\n");
 		return -1;
 	}
-	
+
 	/* add presence;winfo */
 	if(add_pua_event(PWINFO_EVENT, "presence.winfo", NULL, NULL)< 0)
 	{
 		LM_ERR("while adding event presence.winfo\n");
 		return -1;
 	}
-	
+
 	/* add application/reginfo+xml */
 	if (dlginfo_increase_version) {
 		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", reginfo_process_body)< 0) {
@@ -94,7 +94,7 @@ int pua_add_events(void)
 			return -1;
 		}
 	}
-	
+
 	/* add xcap-diff */
 	if(add_pua_event(XCAPDIFF_EVENT, "xcap-diff",
 				"application/xcap-diff+xml", 0)< 0)
@@ -105,7 +105,7 @@ int pua_add_events(void)
 
 	return 0;
 
-}	
+}
 
 int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_param)
 {
@@ -142,19 +142,19 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		{
 			tuple_id= buf;
 			tuple_id_len= sprintf(tuple_id, "%p", publ);
-			tuple_id[tuple_id_len]= '\0'; 
+			tuple_id[tuple_id_len]= '\0';
 
 			tuple=(str*)pkg_malloc(sizeof(str));
 			if(tuple== NULL)
 			{
-				LM_ERR("No more memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			alloc_tuple = 1;
 			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
 			if(tuple->s== NULL)
 			{
-				LM_ERR("NO more memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
@@ -191,18 +191,18 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			xmlFree(tuple_id);
 			tuple_id= buf;
 			tuple_id_len= strlen(tuple_id);
-		
+
 			tuple=(str*)pkg_malloc(sizeof(str));
 			if(tuple== NULL)
 			{
-				LM_ERR("No more memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			alloc_tuple= 1;
 			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
 			if(tuple->s== NULL)
 			{
-				LM_ERR("NO more memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
@@ -217,7 +217,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		LM_DBG("found person node\n");
 		person_id= xmlNodeGetAttrContentByName(node, "id");
 		if(person_id== NULL)
-		{	
+		{
 			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
 			{
 				LM_ERR("while extracting xml"
@@ -229,23 +229,23 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		{
 			xmlFree(person_id);
 		}
-	}	
+	}
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL)
 	{
-		LM_ERR("NO more memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);
 	if(body->s== NULL || body->len== 0)
 	{
 		LM_ERR("while dumping xml format\n");
 		goto error;
-	}	
+	}
 	xmlFreeDoc(doc);
 	doc= NULL;
-	
+
 	*fin_body= body;
 	xmlMemoryDump();
 	xmlCleanupParser();
@@ -263,7 +263,7 @@ error:
 	}
 	return -1;
 
-}	
+}
 
 int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 {
@@ -295,20 +295,20 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL)
 	{
 		LM_ERR("while setting version attribute\n");
-		goto error;	
+		goto error;
 	}
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL)
 	{
-		LM_ERR("NO more memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
-	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);
 
 	xmlFreeDoc(doc);
 	doc= NULL;
-	*fin_body= body;	
+	*fin_body= body;
 	if(*fin_body== NULL)
 		LM_DBG("NULL fin_body\n");
 
@@ -322,7 +322,7 @@ error:
 		xmlFreeDoc(doc);
 	if(body)
 		pkg_free(body);
-	
+
 	xmlMemoryDump();
 	xmlCleanupParser();
 	return -1;
@@ -355,19 +355,19 @@ int reginfo_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple
 
 	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL) {
 		LM_ERR("while setting version attribute\n");
-		goto error;	
+		goto error;
 	}
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL) {
-		LM_ERR("NO more memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
-	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);
 
 	xmlFreeDoc(doc);
 	doc= NULL;
-	*fin_body= body;	
+	*fin_body= body;
 	if(*fin_body== NULL)
 		LM_DBG("NULL fin_body\n");
 
@@ -381,7 +381,7 @@ error:
 		xmlFreeDoc(doc);
 	if(body)
 		pkg_free(body);
-	
+
 	xmlMemoryDump();
 	xmlCleanupParser();
 	return -1;
