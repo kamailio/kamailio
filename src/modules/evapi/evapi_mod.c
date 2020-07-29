@@ -703,7 +703,7 @@ static int ki_evapi_async_relay(sip_msg_t *msg, str *sdata)
 	return 1;
 }
 
-static int ki_evapi_async_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
+static int ki_evapi_async_unicast(sip_msg_t *msg, str *sdata, str *stag)
 {
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -819,8 +819,8 @@ static sr_kemi_t sr_kemi_evapi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
                         SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("evapi"), str_init("async_relay_unicast"),
-		SR_KEMIP_INT, ki_evapi_async_relay_unicast,
+	{ str_init("evapi"), str_init("async_unicast"),
+		SR_KEMIP_INT, ki_evapi_async_unicast,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
