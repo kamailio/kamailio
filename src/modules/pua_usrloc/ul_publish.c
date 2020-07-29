@@ -174,7 +174,7 @@ str* build_pidf(ucontact_t* c)
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LM_ERR("while allocating memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(body, 0, sizeof(str));
@@ -253,8 +253,10 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		body = NULL;
 
 	uri.s = (char*)pkg_malloc(sizeof(char)*(c->aor->len+default_domain.len+6));
-	if(uri.s == NULL)
+	if(uri.s == NULL) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 
 	memcpy(uri.s, "sip:", 4);
 	uri.len = 4;
@@ -278,7 +280,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	publ= (publ_info_t*)pkg_malloc(size);
 	if(publ== NULL)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(publ, 0, size);
