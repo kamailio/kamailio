@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -35,7 +35,7 @@ int init_puacb_list(void)
 		( sizeof(struct puacb_head_list) );
 	if (puacb_list==0)
 	{
-		LM_CRIT("no more shared mem\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	puacb_list->first = 0;
@@ -55,7 +55,7 @@ void destroy_puacb_list(void)
 	{
 		cbp_tmp = cbp;
 		cbp = cbp->next;
-		if (cbp_tmp->param) 
+		if (cbp_tmp->param)
 			shm_free( cbp_tmp->param );
 		shm_free( cbp_tmp );
 	}
@@ -71,7 +71,7 @@ int register_puacb( int types, pua_cb f, void* param )
 	struct pua_callback *cbp;
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>PUACB_MAX ) 
+	if ( types<0 || types>PUACB_MAX )
 	{
 		LM_CRIT("invalid callback types: mask=%d\n",types);
 		return E_BUG;
@@ -84,9 +84,9 @@ int register_puacb( int types, pua_cb f, void* param )
 	}
 
 	/* build a new callback structure */
-	if (!(cbp=(struct pua_callback*)shm_malloc(sizeof( struct pua_callback)))) 
+	if (!(cbp=(struct pua_callback*)shm_malloc(sizeof( struct pua_callback))))
 	{
-		LM_ERR("out of share mem\n");
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
 
