@@ -1,6 +1,4 @@
 /*
- * $Id: registrar_cb.c 1666 2007-03-02 13:40:09Z anca_vamanu $
- *
  * pua_bla module - pua Bridged Line Appearance
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
@@ -17,17 +15,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- *  2007-03-30  initial version (anca)
  */
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "../../core/dprint.h"
 #include "../pua/pua.h"
 #include "registrar_cb.h"
@@ -44,7 +39,7 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	{
 		LM_DBG("Not a recognized BLA AOR\n");
 		return ;
-	}	
+	}
 
 	if(type & UL_CONTACT_INSERT)
 		LM_DBG("type= UL_CONTACT_INSERT\n");
@@ -60,12 +55,14 @@ void bla_cb(ucontact_t* c, int type, void* param)
 
 	memset(&subs, 0, sizeof(subs_info_t));
 	subs.remote_target= &c->c;
-	
+
 	subs.pres_uri= &reg_from_uri;
 
 	uri.s = (char*)pkg_malloc(sizeof(char)*(c->aor->len+default_domain.len+6));
-	if(uri.s == NULL)
+	if(uri.s == NULL) {
+		PKG_MEM_ERROR;
 		goto error;
+	}
 
 	memcpy(uri.s, "sip:", 4);
 	uri.len = 4;
@@ -77,20 +74,20 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	{
 		uri.s[uri.len++]= '@';
 		memcpy(uri.s+ uri.len, default_domain.s, default_domain.len);
-		uri.len+= default_domain.len;		
+		uri.len+= default_domain.len;
 	}
-	
+
 	subs.watcher_uri= &uri;
 	if(type & UL_CONTACT_DELETE || type & UL_CONTACT_EXPIRE )
 		subs.expires= 0;
 	else
 		subs.expires= c->expires - (int)time(NULL);
-		
+
 
 	subs.source_flag= BLA_SUBSCRIBE;
 	subs.event= BLA_EVENT;
 	subs.contact= &server_address;
-	
+
 	if(bla_outbound_proxy.s && bla_outbound_proxy.len)
 		subs.outbound_proxy= &bla_outbound_proxy;
 	else
@@ -105,9 +102,9 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	if(pua_send_subscribe(&subs)< 0)
 	{
 		LM_ERR("while sending subscribe\n");
-	}	
+	}
 	pkg_free(uri.s);
 error:
 	is_bla_aor= 0;
 	return ;
-}	
+}

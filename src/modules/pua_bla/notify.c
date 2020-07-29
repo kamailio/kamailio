@@ -1,6 +1,4 @@
 /*
- * $Id: notify.c 1666 2007-03-02 13:40:09Z anca_vamanu $
- *
  * pua_bla module - pua Bridged Line Appearance
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
@@ -20,21 +18,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- *  2007-03-30  initial version (anca)
  */
-#include<stdio.h>
-#include<stdlib.h>
-#include<libxml/parser.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <libxml/parser.h>
 
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/strutils.h"
 #include "../pua/hash.h"
-#include"pua_bla.h"
+#include "pua_bla.h"
 
 int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 {
@@ -85,21 +79,21 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   	}
   	publ.pres_uri= &pto->uri;
   	dialog.watcher_uri= publ.pres_uri;
-  
+
   	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
   	{
   		LM_ERR("NULL to_tag value\n");
 		goto error;
   	}
   	dialog.from_tag= pto->tag_value;
-  
+
   	if( msg->callid==NULL || msg->callid->body.s==NULL)
  	{
   		LM_ERR("cannot parse callid header\n");
   		goto error;
   	}
   	dialog.call_id = msg->callid->body;
-  
+
   	if (!msg->from || !msg->from->body.s)
   	{
   		LM_ERR("cannot find 'from' header!\n");
@@ -117,13 +111,13 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
  	}
  	pfrom = (struct to_body*)msg->from->parsed;
  	dialog.pres_uri= &pfrom->uri;
- 
+
  	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
  	{
  		LM_ERR("no from tag value present\n");
  		goto error;
  	}
- 
+
  	dialog.to_tag= pfrom->tag_value;
  	dialog.event= BLA_EVENT;
  	dialog.flag= BLA_SUBSCRIBE;
@@ -133,7 +127,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
  		goto error;
  	}
  	LM_DBG("found a matching dialog\n");
- 
+
  	/* parse Subscription-State and extract expires if existing */
 	hdr = msg->headers;
 	while (hdr!= NULL)
@@ -183,7 +177,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    				goto error;
    			}
    		}
-   
+
    	if ( get_content_length(msg) == 0 )
    	{
    		LM_ERR("content length= 0\n");
@@ -199,7 +193,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    		}
    		body.len = get_content_length( msg );
    	}
-   	
+
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
 	{
 		LM_ERR("no contact header found");
@@ -228,25 +222,25 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    	extra_headers.len+= contact.len;
    	memcpy(extra_headers.s+ extra_headers.len, CRLF, CRLF_LEN);
    	extra_headers.len+= CRLF_LEN;
-   
+
    	publ.body= &body;
    	publ.source_flag= BLA_PUBLISH;
    	publ.expires= expires;
    	publ.event= BLA_EVENT;
    	publ.extra_headers= &extra_headers;
-	
+
    	if(pua_send_publish(&publ)< 0)
    	{
    		LM_ERR("while sending Publish\n");
    		goto error;
    	}
-      
+
    	xmlCleanupParser();
    	xmlMemoryDump();
 
 	free_to_params(&TO);
 	return 1;
-   
+
 error:
 	free_to_params(&TO);
    	return 0;
