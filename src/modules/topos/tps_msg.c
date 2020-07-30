@@ -303,6 +303,7 @@ error:
 int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 {
 	str tmp;
+	int ret;
 
 	if(parse_sip_msg_uri(msg)<0) {
 		LM_ERR("failed to parse r-uri\n");
@@ -314,12 +315,17 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 			LM_DBG("not an expected param format\n");
 			return 1;
 		}
-
-		tmp.s = msg->parsed_uri.sip_params.s;
-		// skip param and '=' sign
-		tmp.s += _tps_cparam_name.len + 1;
-		tmp.len = msg->parsed_uri.sip_params.len - _tps_cparam_name.len - 1;
-
+		// find parameter, there might be others
+		ret = tps_get_param_value(&msg->parsed_uri.params,
+			&_tps_cparam_name, &tmp);
+		if (ret < 0) {
+			LM_ERR("failed to parse param\n");
+			return -1;
+		}
+		if (ret == 1) {
+			LM_DBG("prefix para not found\n");
+			return 1;
+		}
 		if(memcmp(tmp.s, "atpsh-", 6)==0) {
 			ptsd->a_uuid = tmp;
 			return 0;
