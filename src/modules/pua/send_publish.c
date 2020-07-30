@@ -516,14 +516,11 @@ int send_publish( publ_info_t* publ )
 
 	if (dbmode==PUA_DB_ONLY)
 	{
-		if (publ->etag) {
-			memset(&dbpres, 0, sizeof(dbpres));
-			dbpres.pres_uri = &pres_uri;
-			dbpres.watcher_uri = &watcher_uri;
-			dbpres.extra_headers = &extra_headers;
-			presentity = get_record_puadb(publ->id, publ->etag,
-						      &dbpres, &res);
-		}
+		memset(&dbpres, 0, sizeof(dbpres));
+		dbpres.pres_uri = &pres_uri;
+		dbpres.watcher_uri = &watcher_uri;
+		dbpres.extra_headers = &extra_headers;
+		presentity = get_record_puadb(publ->id, publ->etag, &dbpres, &res);
 	}
 	else
 	{
