@@ -321,14 +321,12 @@ int xcaps_xpath_hack(str *buf, int type)
 	}
 
 	start = buf->s;
-	c = buf->s[buf->len-1];
-	buf->s[buf->len-1] = '\0';
-	while((p = strstr(start, match))!=NULL)
-	{
+	STR_VTOZ(buf->s[buf->len-1], c);
+	while((start < buf->s + buf->len - 8) && (p = strstr(start, match))!=NULL) {
 		memcpy(p, repl, 7);
 		start = p + 7;
 	}
-	buf->s[buf->len-1] = c;
+	STR_ZTOV(buf->s[buf->len-1], c);
 	return 0;
 }
 
