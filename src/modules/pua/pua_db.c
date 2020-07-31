@@ -1485,8 +1485,8 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 int update_version_puadb(ua_pres_t *pres) 
 
 {
-	db_key_t q_cols[3], db_cols[1];
-	db_val_t q_vals[3], db_vals[1];
+	db_key_t q_cols[1], db_cols[1];
+	db_val_t q_vals[1], db_vals[1];
 	int n_query_cols= 0, n_update_cols=0;
 
 	if (pres==NULL)
@@ -1496,22 +1496,10 @@ int update_version_puadb(ua_pres_t *pres)
 	}
 
 	/* cols and values used for search query */
-	q_cols[n_query_cols] = &str_call_id_col;	
+	q_cols[n_query_cols] = &str_pres_id_col;
 	q_vals[n_query_cols].type = DB1_STR;
 	q_vals[n_query_cols].nul = 0;
-	q_vals[n_query_cols].val.str_val = pres->call_id;
-	n_query_cols++;
-
-	q_cols[n_query_cols] = &str_to_tag_col;	
-	q_vals[n_query_cols].type = DB1_STR;
-	q_vals[n_query_cols].nul = 0;
-	q_vals[n_query_cols].val.str_val = pres->to_tag;
-	n_query_cols++;
-
-	q_cols[n_query_cols] = &str_from_tag_col;	
-	q_vals[n_query_cols].type = DB1_STR;
-	q_vals[n_query_cols].nul = 0;
-	q_vals[n_query_cols].val.str_val = pres->from_tag;
+	q_vals[n_query_cols].val.str_val = pres->id;
 	n_query_cols++;
 
 	/* we overwrite contact even if not changed */
