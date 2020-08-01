@@ -100,6 +100,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 	if (!DBT_CON_CONNECTION(_res))
 	{
 		LM_ERR("cannot get the link to database\n");
+		pkg_free(_res);
 		return NULL;
 	}
 
