@@ -87,6 +87,38 @@ reply_route {
 	</example>
     </section>
 
+    <section id="textopsx.f.change_reply_status_code">
+	<title>
+	    <function>change_reply_status_code(vcode)</function>
+	</title>
+	<para>
+		Change the status code for a SIP reply .
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>vcode</emphasis> - the new status code.
+		</para>
+	    </listitem>
+	</itemizedlist>
+   		<para>
+		This function can be used from ONREPLY_ROUTE.
+		</para>
+	<example>
+	    <title><function>change_reply_status_code</function> usage</title>
+	    <programlisting>
+...
+reply_route {
+    if (status == "604") {
+        change_reply_status_code("404");
+        exit;
+    }
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
 	<section id="textopsx.f.remove_body">
 		<title>
 		<function moreinfo="none">remove_body()</function>
