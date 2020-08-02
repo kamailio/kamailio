@@ -50,6 +50,8 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
 static int change_reply_status_f(sip_msg_t *, char *, char *);
 static int change_reply_status_fixup(void **param, int param_no);
 
+static int change_reply_status_code_f(sip_msg_t *, char *, char *);
+
 static int w_keep_hf_f(sip_msg_t *, char *, char *);
 
 static int w_fnmatch2_f(sip_msg_t *, char *, char *);
@@ -84,6 +86,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"change_reply_status", change_reply_status_f, 2,
 			change_reply_status_fixup, 0, ONREPLY_ROUTE},
+	{"change_reply_status_code", change_reply_status_code_f, 1,
+			fixup_igp_null, 0, ONREPLY_ROUTE},
 	{"remove_body", (cmd_function)w_remove_body_f, 0, 0, 0, ANY_ROUTE},
 	{"keep_hf", (cmd_function)w_keep_hf_f, 0, fixup_regexp_null, 0, ANY_ROUTE},
 	{"keep_hf", (cmd_function)w_keep_hf_f, 1, fixup_regexp_null, 0, ANY_ROUTE},
@@ -274,6 +278,49 @@ static int change_reply_status_f(
 	return ki_change_reply_status(msg, code, &reason);
 }
 
+
+/**
+ *
+ */
+static int ki_change_reply_status_code(sip_msg_t *msg, int code)
+{
+	if((code < 100) || (code > 699)) {
+		LM_ERR("wrong status code: %d\n", code);
+		return -1;
+	}
+
+	if(((code < 300) || (msg->REPLY_STATUS < 300))
+			&& (code / 100 != msg->REPLY_STATUS / 100)) {
+		LM_ERR("the class of provisional or "
+				   "positive final replies cannot be changed\n");
+		return -1;
+	}
+
+	/* rewrite the status code directly in the message buffer */
+	msg->first_line.u.reply.statuscode = code;
+	msg->first_line.u.reply.status.s[2] = code % 10 + '0';
+	code /= 10;
+	msg->first_line.u.reply.status.s[1] = code % 10 + '0';
+	code /= 10;
+	msg->first_line.u.reply.status.s[0] = code + '0';
+
+	return 1l;
+}
+
+/**
+ *
+ */
+static int change_reply_status_code_f(sip_msg_t *msg, char *pcode, char *p2)
+{
+	int code;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pcode, &code)<0) {
+		LM_ERR("cannot get parameters\n");
+		return -1;
+	}
+
+	return ki_change_reply_status_code(msg, code);
+}
 
 /**
  *
@@ -2193,6 +2240,11 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("remove_body"),
 		SR_KEMIP_INT, ki_remove_body,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("change_reply_status_code"),
+		SR_KEMIP_INT, ki_change_reply_status_code,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textopsx"), str_init("keep_hf"),
