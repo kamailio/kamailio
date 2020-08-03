@@ -243,8 +243,9 @@ ipsec_create("location");
           stores the contacts.
           </para>
           <para>
-          <emphasis>flags</emphasis> - Set send force socket for request messages.
-          If 1 - set force socket for request messages. Useful for ipsec and TCP.
+          <emphasis>flags</emphasis> - bitwise flag:
+          0x01 - set force socket for request messages. Useful for ipsec and TCP.
+          0x02 - reverse search for a contact in the memory. Useful when contact alias is disabled.
           This is an optional parameter, default value - 0.
           </para>
         </listitem>
