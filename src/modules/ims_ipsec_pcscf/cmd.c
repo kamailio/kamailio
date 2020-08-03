@@ -76,6 +76,7 @@ extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
 #define IPSEC_SEND_FORCE_SOCKET		0x01 /* if set - set send force socket for request messages */
+#define IPSEC_REVERSE_SEARCH		0x02 /* if set - start seraching from the last element */
 
 int bind_ipsec_pcscf(ipsec_pcscf_api_t* api) {
 	if(!api){
@@ -663,7 +664,7 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -802,7 +803,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, _cflags & IPSEC_REVERSE_SEARCH) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -946,7 +947,7 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
