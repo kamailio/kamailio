@@ -261,7 +261,7 @@ tryagain:
 	if (b && b->contacts) {
 		for (ct = b->contacts; ct; ct = ct->next) {
 			search_ci.aor = ct->uri;
-			if (ul.get_pcontact(_d, &search_ci, &c) == 0) {
+			if (ul.get_pcontact(_d, &search_ci, &c, 0) == 0) {
 				if (checkcontact(_m, c) != 0) {
 					c = NULL;
 				} else {
@@ -278,7 +278,7 @@ tryagain:
 		//			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 		//			received_host.s = srcip;
 		search_ci.searchflag = SEARCH_RECEIVED;
-		if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
+		if (ul.get_pcontact(_d, &search_ci, &c, 0) == 1) {
 			LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
 		} else {
 			if (checkcontact(_m, c) != 0) {
@@ -290,7 +290,7 @@ tryagain:
 	if ((c == NULL) && (is_registered_fallback2ip == 2)) {
 		LM_INFO("Contact not found based on IP/Port/Proto, trying Contact-header\n");
 		search_ci.searchflag = SEARCH_NORMAL;
-		if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
+		if (ul.get_pcontact(_d, &search_ci, &c, 0) == 1) {
 		} else {
 			if (checkcontact(_m, c) != 0) {
 				c = NULL;
@@ -785,7 +785,7 @@ int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received
         search_ci.aor.len = uri->len;
 		search_ci.reg_state = PCONTACT_ANY;
 
-	if (ul.get_pcontact(_d, &search_ci, &pcontact) == 0) {
+	if (ul.get_pcontact(_d, &search_ci, &pcontact, 0) == 0) {
 		/* Lock this record while working with the data: */
 		ul.lock_udomain(_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
 

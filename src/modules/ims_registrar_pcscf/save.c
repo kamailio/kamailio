@@ -196,10 +196,24 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 							ci.searchflag = SEARCH_RECEIVED;
 						}
 					}
-				} 
+				} else {
+					char* srcip = NULL;
+					if((srcip = pkg_malloc(50)) == NULL) {
+						LM_ERR("Error allocating memory for source IP address\n");
+						return -1;
+					}
+
+					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, 50);
+					ci.received_host.s = srcip;
+					ci.received_port = req->rcv.src_port;
+					ci.received_proto = req->rcv.proto;
+					ci.searchflag = SEARCH_RECEIVED;
+					LM_DBG("received from request: host [%.*s], port [%d] , proto [%d]\n", 
+							ci.received_host.len, ci.received_host.s, ci.received_port, ci.received_proto);
+				}
 				
 				ul.lock_udomain(_d, &puri.host, port, puri.proto);
-				if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
+				if (ul.get_pcontact(_d, &ci, &pcontact, 0) != 0) { //need to insert new contact
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
 						LM_DBG("This is a de-registration for contact <%.*s> but contact is not in usrloc - ignore\n", c->uri.len, c->uri.s);
 						goto next_contact;
@@ -362,7 +376,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	}
 
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
-	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
+	if (ul.get_pcontact(_d, &ci, &pcontact, 0) != 0) { //need to insert new contact
 		ipsec_pcscf.ipsec_reconfig(); // try to clean all ipsec SAs/Policies if there is no registered contacts
 
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
