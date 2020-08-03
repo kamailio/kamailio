@@ -321,7 +321,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         contact_info.via_prot = local_data->via_proto;
         contact_info.reg_state = PCONTACT_ANY;
 
-        if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+        if (ul.get_pcontact(domain_t, &contact_info, &pcontact, 0) != 0) {
             LM_ERR("Shouldn't get here, can't find contact....\n");
             ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
             goto error;
