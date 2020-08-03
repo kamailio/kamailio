@@ -74,7 +74,7 @@ void unlock_ulslot(udomain_t* _d, int i);
 int update_rx_regsession(struct udomain* _d, str* session_id, struct pcontact* _c);
 int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pcontact* _c);
 int insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _r);
-int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _r);
+int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _c, int reverse_search);
 int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 int delete_pcontact(udomain_t* _d, struct pcontact* _r);
 int unreg_pending_contacts_cb(udomain_t* _d, pcontact_t* _c, int type);

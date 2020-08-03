@@ -444,9 +444,10 @@ error:
  * @udomain_t* _d - domain to search in
  * @str* _contact - contact to search for - should be a SIP URI
  * @struct pontact** _c - contact to return to if found (null if not found)
+ * @int reverse_search - reverse search for a contact in the memory
  * @return 0 if found <>0 if not
  */
-int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _c) {
+int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _c, int reverse_search) {
 	unsigned int sl, i, j, aorhash, params_len, has_rinstance=0;
 	struct pcontact* c;
 	struct sip_uri needle_uri;
@@ -454,9 +455,10 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	char *params, *sep;
 	str rinstance = {0, 0};
         
-	LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d] Received [%d://%.*s:%d], Search flag is %d\n",
+	LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d] Received [%d://%.*s:%d], Search flag is %d, reverse_search %d\n",
 		contact_info->aor.len, contact_info->aor.s, contact_info->via_prot, contact_info->via_host.len, contact_info->via_host.s, contact_info->via_port,
-		contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port, contact_info->searchflag);
+		contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port, contact_info->searchflag,
+		reverse_search);
 
 	/* parse the uri in the NOTIFY */
 	if (contact_info->aor.len>0 && contact_info->aor.s){
@@ -501,7 +503,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	sl = aorhash & (_d->size - 1);
         
 	LM_DBG("get_pcontact slot is [%d]\n", sl);
-	c = _d->table[sl].first;
+	c = reverse_search ? _d->table[sl].last : _d->table[sl].first;
 
 	for (i = 0; i < _d->table[sl].n; i++) {
 		LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
@@ -563,7 +565,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 							c->rinstance.len, c->rinstance.s);
 					if ((rinstance.len == c->rinstance.len) && memcmp(rinstance.s, c->rinstance.s, rinstance.len) != 0) {
 						LM_DBG("rinstance does not match - no match here...\n");
-						c = c->next;
+						c = reverse_search ? c->prev : c->next;
 						continue;
 					}
 				}
@@ -571,7 +573,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 				if ((contact_info->extra_search_criteria & SEARCH_SERVICE_ROUTES) && contact_info->num_service_routes > 0) {
 					LM_DBG("have %d service routes to search for\n", contact_info->num_service_routes);
 					if (contact_info->num_service_routes != c->num_service_routes) {
-						c = c->next;
+						c = reverse_search ? c->prev : c->next;
 						LM_DBG("number of service routes do not match - failing\n");
 						continue;
 					} 
@@ -588,7 +590,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 						}
 					}
 					if (serviceroutematch == 0) {
-						c = c->next;
+						c = reverse_search ? c->prev : c->next;
 						continue;
 					}
 				}
@@ -596,14 +598,14 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 				//finally check state being searched for
 				if ( (contact_info->reg_state != PCONTACT_ANY) && ((contact_info->reg_state & c->reg_state) == 0)) {
 					LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info->reg_state, c->reg_state);
-					c = c->next;
+					c = reverse_search ? c->prev : c->next;
 					continue;
 				}
 				*_c = c;
 				return 0;
 			}
 		}
-		c = c->next;
+		c = reverse_search ? c->prev : c->next;
 	}
         
 	LM_DBG("contact not found in memory\n");
