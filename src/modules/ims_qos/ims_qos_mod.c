@@ -1314,7 +1314,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 								contact_info.received_host.len = 0;
 								contact_info.reg_state = PCONTACT_ANY; //search for any state
 
-								if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+								if (ul.get_pcontact(domain_t, &contact_info, &pcontact, 0) != 0) {
 										LM_ERR("This contact does not exist in PCSCF usrloc - error in cfg file\n");
 										ul.unlock_udomain(domain_t, &vb->host, vb->port, vb->proto);
 										lock_release(saved_t_data->lock);

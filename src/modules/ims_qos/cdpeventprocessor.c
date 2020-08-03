@@ -275,7 +275,7 @@ void cdp_cb_event_process()
 												contact_info.aor = p_session_data->registration_aor;
 												contact_info.reg_state = PCONTACT_ANY;
 
-												if (ul.get_pcontact(domain, &contact_info, &pcontact) != 0) {
+												if (ul.get_pcontact(domain, &contact_info, &pcontact, 0) != 0) {
 														LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");
 												} else {
 														LM_DBG("Updating contact [%.*s] after Rx reg session terminated, setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
