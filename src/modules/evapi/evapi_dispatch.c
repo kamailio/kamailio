@@ -650,7 +650,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	memset(&ai_hints, 0, sizeof(struct addrinfo));
 	ai_hints.ai_family = AF_UNSPEC;		/* allow IPv4 or IPv6 */
 	ai_hints.ai_socktype = SOCK_STREAM;	/* stream socket */
-	ai_ret = getaddrinfo(laddr, NULL, &ai_hints, &ai_res);
+	ai_ret = getaddrinfo(laddr, int2str(lport, NULL), &ai_hints, &ai_res);
 	if (ai_ret != 0) {
 		LM_ERR("getaddrinfo failed: %d %s\n", ai_ret, gai_strerror(ai_ret));
 		return -1;
