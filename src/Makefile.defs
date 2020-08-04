@@ -272,7 +272,7 @@ MKTAGS=ctags
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
 	RPAREN=)
-	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|\
+	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version 2>/dev/null|head -n 1|\
 				sed  -e 's/([^$(RPAREN)]*)//g' \
 					 -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
 					 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
@@ -334,7 +334,7 @@ endif
 ifneq (, $(findstring clang, $(CC_LONGVER)))
 	#clang should be gcc compatible
 	CC_NAME=clang
-	CC_FULLVER:=$(shell echo "$(CC_LONGVER)" | head -n 1 |  sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
+	CC_FULLVER:=$(shell $(CC) --version 2>/dev/null | head -n 1 | sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
 	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
 	CC_OPT=-O3
