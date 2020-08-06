@@ -76,7 +76,7 @@ extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
 #define IPSEC_SEND_FORCE_SOCKET		0x01 /* if set - set send force socket for request messages */
-#define IPSEC_REVERSE_SEARCH		0x02 /* if set - start seraching from the last element */
+#define IPSEC_REVERSE_SEARCH		0x02 /* if set - start searching from the last element */
 
 int bind_ipsec_pcscf(ipsec_pcscf_api_t* api) {
 	if(!api){
