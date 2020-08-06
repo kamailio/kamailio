@@ -128,6 +128,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 	char *alias_start, *p, *port_s, *proto_s;
 	char portbuf[5];
 	str alias_s;
+	char srcip[50];
 
 	pcscf_act_time();
 	local_time_now = time_now;
@@ -197,13 +198,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						}
 					}
 				} else {
-					char* srcip = NULL;
-					if((srcip = pkg_malloc(50)) == NULL) {
-						LM_ERR("Error allocating memory for source IP address\n");
-						return -1;
-					}
-
-					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, 50);
+					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
 					ci.received_host.s = srcip;
 					ci.received_port = req->rcv.src_port;
 					ci.received_proto = req->rcv.proto;
