@@ -2053,7 +2053,7 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 	init_run_actions_ctx(&ctx);
 
 	if(_siptrace_evrt_msg_idx>=0) {
-		run_top_route(event_rt.rlist[_siptrace_evrt_msg_idx], &msg, 0);
+		run_top_route(event_rt.rlist[_siptrace_evrt_msg_idx], &msg, &ctx);
 	} else {
 		keng = sr_kemi_eng_get();
 		if (keng!=NULL) {
