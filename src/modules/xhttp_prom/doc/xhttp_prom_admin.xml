@@ -113,6 +113,9 @@ modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 		automatically deleted. Listing metrics does not count as using them.
 	  </para>
 	  <para>
+		If the parameter is set to 0, the metrics deletion will be disabled.
+	  </para>
+	  <para>
 		<emphasis>
 		  Default value is 60 minutes.
 		</emphasis>

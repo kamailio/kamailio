@@ -123,13 +123,13 @@ static void prom_metric_list_free()
 int prom_metric_init(int timeout_minutes)
 {
 	/* Initialize timeout. minutes to milliseconds. */
-	if (timeout_minutes < 1) {
+	if (timeout_minutes < 0) {
 		LM_ERR("Invalid timeout: %d\n", timeout_minutes);
 		return -1;
 	}
 	lvalue_timeout = ((uint64_t)timeout_minutes) * 60000;
 	LM_DBG("lvalue_timeout set to %" PRIu64 "\n", lvalue_timeout);
-	
+
 	/* Initialize lock. */
 	prom_lock = lock_alloc();
 	if (!prom_lock) {
@@ -570,9 +570,11 @@ static prom_lvalue_t* prom_metric_lvalue_get(str *s_name, metric_type_t m_type,
 		return NULL;
 	}
 
-	/* Delete old lvalue structures. */
-	prom_metric_list_timeout_delete();
-	
+	if (lvalue_timeout > 0) {
+		/* Delete old lvalue structures. */
+		prom_metric_list_timeout_delete();
+	}
+
     prom_metric_t *p_m = prom_metric_get(s_name);
 	if (p_m == NULL) {
 		LM_ERR("No metric found for name: %.*s\n", s_name->len, s_name->s);

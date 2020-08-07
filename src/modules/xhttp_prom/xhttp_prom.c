@@ -102,7 +102,7 @@ static xhttp_api_t xhttp_api;
 str xhttp_prom_stats = str_init("");
 
 int buf_size = 0;
-int timeout_minutes = 0;
+int timeout_minutes = 60;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 /* module commands */
@@ -214,11 +214,6 @@ static int mod_init(void)
 	/* Check xhttp_prom_buf_size param */
 	if (buf_size == 0)
 		buf_size = pkg_mem_size/3;
-
-	/* Check xhttp_prom_timeout param */
-	if (timeout_minutes == 0) {
-		timeout_minutes = 60;
-	}
 
 	/* Initialize Prometheus metrics. */
 	if (prom_metric_init(timeout_minutes)) {
