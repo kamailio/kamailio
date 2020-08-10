@@ -2559,6 +2559,8 @@ try_again:
 	if (ksr_route_locks_set_init()<0)
 		goto error;
 
+	ksr_shutdown_phase_init();
+
 	/* init lookup for core event routes */
 	sr_core_ert_init();
 

@@ -111,6 +111,24 @@ unsigned int set_modinit_delay(unsigned int v)
 	return r;
 }
 
+/* shut down phase for instance - kept in shared memory */
+static int *_ksr_shutdown_phase = 0;
+
+int ksr_shutdown_phase_init(void)
+{
+	if(_ksr_shutdown_phase) {
+		_ksr_shutdown_phase = (int*)shm_malloc(sizeof(int));
+	}
+	return 0;
+}
+/**
+ * return destroy modules phase state
+ */
+int ksr_shutdown_phase(void)
+{
+	return (_ksr_shutdown_phase)?(*_ksr_shutdown_phase):0;
+}
+
 /* keep state if server is in destroy modules phase */
 static int _sr_destroy_modules_phase = 0;
 
@@ -740,6 +758,10 @@ void destroy_modules()
 	struct sr_module* t, *foo;
 
 	_sr_destroy_modules_phase = 1;
+	if(_ksr_shutdown_phase!=NULL) {
+		*_ksr_shutdown_phase = 1;
+	}
+
 	/* call first destroy function from each module */
 	t=modules;
 	while(t) {
