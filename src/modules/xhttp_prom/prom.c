@@ -22,7 +22,10 @@
  */
 
 /**
- * Functionality of prometheus module.
+ * @file
+ * @brief xHTTP_PROM :: Functionality of xhttp_prom module.
+ * @ingroup xhttp_prom
+ * - Module: @ref xhttp_prom
  */
 
 #include <string.h>
@@ -35,9 +38,10 @@
 
 #include "prom.h"
 #include "prom_metric.h"
+#include "xhttp_prom.h"
 
 /**
- * Delete current buffer data.
+ * @brief Delete current buffer data.
  */
 void prom_body_delete(prom_ctx_t *ctx)
 {
@@ -45,10 +49,10 @@ void prom_body_delete(prom_ctx_t *ctx)
 }
 
 /**
- * Write some data in prom_body buffer.
+ * @brief Write some data in prom_body buffer.
  *
- * /return number of bytes written.
- * /return -1 on error.
+ * @return number of bytes written.
+ * @return -1 on error.
  */
 int prom_body_printf(prom_ctx_t *ctx, char *fmt, ...)
 {
@@ -87,10 +91,63 @@ error:
 }
 
 /**
- * Get current timestamp in milliseconds.
+ * @brief Write a metric name in prom_body buffer.
  *
- * /param ts pointer to timestamp integer.
- * /return 0 on success.
+ * Based on prom_body_printf function.
+ *
+ * @return number of bytes written.
+ * @return -1 on error.
+ */
+int prom_body_name_printf(prom_ctx_t *ctx, char *fmt, ...)
+{
+	struct xhttp_prom_reply *reply = &ctx->reply;
+	
+	va_list ap;
+	
+	va_start(ap, fmt);
+
+	LM_DBG("Body current length: %d\n", reply->body.len);
+
+	char *p = reply->buf.s + reply->body.len;
+	int remaining_len = reply->buf.len - reply->body.len;
+	LM_DBG("Remaining length: %d\n", remaining_len);
+
+	/* int vsnprintf(char *str, size_t size, const char *format, va_list ap); */
+	int len = vsnprintf(p, remaining_len, fmt, ap);
+	if (len < 0) {
+		LM_ERR("Error printing body buffer\n");
+		goto error;
+	} else if (len >= remaining_len) {
+		LM_ERR("Error body buffer overflow: %d (%d)\n", len, remaining_len);
+		goto error;
+	} else {
+		/* Buffer printed OK. */
+
+		/* Change - into _ to accomplish with Prometheus guidelines for metric names */
+		int i;
+		for (i=0; i<len; i++) {
+			if (p[i] == '-') {
+				p[i] = '_';
+			}
+		}
+		
+		reply->body.len += len;
+		LM_DBG("Body new length: %d\n", reply->body.len);
+	}
+
+	va_end(ap);
+	return len;
+
+error:
+	va_end(ap);
+	return -1;
+}
+
+/**
+ * @brief Get current timestamp in milliseconds.
+ *
+ * @param ts pointer to timestamp integer.
+ * @return 0 on success.
  */
 int get_timestamp(uint64_t *ts)
 {
@@ -109,9 +166,9 @@ int get_timestamp(uint64_t *ts)
 }
 
 /**
- * Generate a string suitable for a Prometheus metric.
+ * @brief Generate a string suitable for a Prometheus metric.
  *
- * /return 0 on success.
+ * @return 0 on success.
  */
 static int metric_generate(prom_ctx_t *ctx, str *group, str *name, counter_handle_t *h)
 {
@@ -123,17 +180,20 @@ static int metric_generate(prom_ctx_t *ctx, str *group, str *name, counter_handl
 		LM_ERR("Error getting current timestamp\n");
 		return -1;
 	}
-	LM_DBG("Timestamp: %" PRIu64 "\n", ts);
 
-	
-	/* LM_DBG("%.*s:%.*s = %lu\n",
-	   group->len, group->s, name->len, name->s, counter_val); */
-	LM_DBG("kamailio_%.*s_%.*s %lu %" PRIu64 "\n",
+	LM_DBG("metric -> group: %.*s  name: %.*s  value: %lu  TS: %" PRIu64 "\n",
 		   group->len, group->s, name->len, name->s,
 		   counter_val, (uint64_t)ts);
 
-	if (prom_body_printf(ctx, "kamailio_%.*s_%.*s %lu %" PRIu64 "\n",
-						 group->len, group->s, name->len, name->s,
+	/* Print metric name. */
+	if (prom_body_name_printf(ctx, "%.*s%.*s_%.*s",
+						 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
+						 group->len, group->s, name->len, name->s) == -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+						 
+	if (prom_body_printf(ctx, " %lu %" PRIu64 "\n",
 						 counter_val, (uint64_t)ts) == -1) {
 		LM_ERR("Fail to print\n");
 		return -1;
@@ -143,7 +203,7 @@ static int metric_generate(prom_ctx_t *ctx, str *group, str *name, counter_handl
 }
 
 /**
- * Statistic getter callback.
+ * @brief Statistic getter callback.
  */
 static void prom_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
 {
@@ -151,7 +211,7 @@ static void prom_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
 }
 
 /**
- * Group statistic getter callback.
+ * @brief Group statistic getter callback.
  */
 static void prom_get_all_grps_cbk(void* p, str* g)
 {
@@ -161,9 +221,9 @@ static void prom_get_all_grps_cbk(void* p, str* g)
 #define STATS_MAX_LEN 1024
 
 /**
- * Get statistics (based on stats_get_all)
+ * @brief Get statistics (based on stats_get_all)
  *
- * /return 0 on success
+ * @return 0 on success
  */
 int prom_stats_get(prom_ctx_t *ctx, str *stat)
 {

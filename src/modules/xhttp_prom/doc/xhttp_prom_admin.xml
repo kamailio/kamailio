@@ -23,7 +23,7 @@
 	</para>
 	<para>
 	  The module generates metrics based on &kamailio; statistics, and also the user
-	  can create his own metrics (currently counters and gauges).
+	  can create his own metrics (currently counters, gauges and histograms).
 	</para>
 	<para>
 	  The xHTTP_PROM module uses the xHTTP module to handle HTTP requests.
@@ -113,6 +113,10 @@ modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 		automatically deleted. Listing metrics does not count as using them.
 	  </para>
 	  <para>
+		<emphasis>If set to 0 timeout is disabled.</emphasis>
+ 		Negative values are not allowed.
+	  </para>
+	  <para>
 		<emphasis>
 		  Default value is 60 minutes.
 		</emphasis>
@@ -151,6 +155,14 @@ modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 		  Default value is "", meaning do not display any &kamailio; statistics.
 		</emphasis>
 	  </para>
+	  <para>
+		<emphasis>
+		  IMPORTANT: &kamailio; internal statistics are parsed to convert - into _, so they
+		  accomplish with Prometheus guidelines for metric names.
+		  <ulink url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink>
+		</emphasis>
+		User generated statistics and label names are not parsed.
+	  </para>
 	  <example>
 		<title>Set <varname>xhttp_prom_stats</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -166,6 +178,32 @@ modparam("xhttp_prom", "xhttp_prom_stats", "200_replies")
 
 # Do not display internal &kamailio; statistics. This is the default option.
 modparam("xhttp_prom", "xhttp_prom_stats", "")
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.p.xhttp_prom_beginning">
+	  <title><varname>xhttp_prom_beginning</varname> (str)</title>
+	  <para>
+		Specifies beginning of string the metrics are build with.
+	  </para>
+	  <para>
+		<emphasis>It defaults to "kamailio_"</emphasis>, so if not specified every
+		metric will start with "kamailio_".
+	  </para>
+	  <para>
+		Void string "" is also allowed, meaning no prefix string for every metric
+		name.
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_beginning</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# All metrics will start with "my_metric_".
+modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
+
+# No string at the beginning.
+modparam("xhttp_prom", "xhttp_prom_beginning", "");
 ...
 		</programlisting>
 	  </example>
@@ -282,6 +320,86 @@ modparam("xhttp_prom", "prom_gauge", "name=gg_second;");
 
 # Create gg_third gauge with two labels method and handler:
 modparam("xhttp_prom", "prom_gauge", "name=gg_third; label=method:handler;");
+
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.p.prom_histogram">
+	  <title><varname>prom_histogram</varname> (str)</title>
+	  <para>
+		Create a histogram metric.
+	  </para>
+	  <para>
+		This function declares a histogram but the actual histogram is only created
+		when observing it.
+	  </para>
+	  <para>
+		It takes a list of attribute=value separated by semicolon, the attributes can
+		be name, label and buckets.
+	  </para>
+	  <itemizedlist>
+		<listitem>
+		  <para>
+			<emphasis>name</emphasis> - name of the histogram. This attribute is mandatory.
+			It is used to generate the metric name. Each name is unique, no metric shall
+			repeat a name.
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>label</emphasis> - names of labels in the histogram. Optional.
+			Only one label parameter at most allowed in histograms.
+			Each label name is separated by <emphasis>:</emphasis> without spaces.
+			At most only three label names allowed in each label parameter.
+			<example><title><varname>prom_histogram</varname> label example</title>
+			<programlisting format="linespecific">
+# Create two labels called method and handler
+label = method:handler
+This would generate  {method="whatever", handler="whatever2"} when building
+the metric.
+			</programlisting>
+			</example>
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>buckets</emphasis> - specifies upper bounds for buckets in the
+			histogram. This attribute is optional.
+		  </para>
+		  <para>
+			Bucket values are separated by ":". Each value has to be a number.
+		  </para>
+		  <para>
+			"+Inf" upper bucket is always automatically included.
+		  </para>
+		  <para>At least one bucket value is needed (other than +Inf).</para>
+		  <para>Every bucket value has to increase in the list.</para>
+		  <para>
+			If no buckets specified, default bucket list is set to these values:
+			<para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
+		  </para>
+		</listitem>
+	  </itemizedlist>
+	  <example>
+		<title>Set <varname>prom_histogram</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+		  
+# Create my_histo histogram with no labels and default buckets.
+modparam("xhttp_prom", "prom_histogram", "name=my_histo;");
+
+# Create second_histo histogram with one label and default buckets.
+# modparam("xhttp_prom", "prom_histogram", "name=second_histo; label=my_lbl");
+
+# Create a histogram with no labels and buckets 3.1, 5, 6.5
+modparam("xhttp_prom", "prom_histogram", "name=histo_third; buckets=3.1:5:6.5");
+
+# Create a histogram with a label and buckets 3.1, 5, 6.5
+modparam("xhttp_prom", "prom_histogram", "name=histo_fourth; label=lbl; buckets=3.1:5:6.5");
+
+These lines declare the histogram but the actual metric will be created when
+using it by prom_histogram_observe function.
 
 ...
 		</programlisting>
@@ -454,6 +572,60 @@ modparam("xhttp_prom", "prom_gauge", "name=cnt02; label=method:IP;");
 prom_gauge_set("gg02", "2.8", "push", "192.168.0.1");
 # When listed the metric it will show a line like this:
 kamailio_gg02 {method="push", IP="192.168.0.1"} 2.8 1234567890
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.f.prom_histogram_observe">
+	  <title>
+		<function moreinfo="none">prom_histogram_observe(name, number, l0, l1, l2)</function>
+	  </title>
+	  <para>
+		Get a histogram identified by its name and labels and observe a value in it.
+		If histogram does not exist it creates the histogram and accumulate the value in its
+		buckets, counter and sum.
+	  </para>
+	  <para>
+		Name is mandatory, number is mandatory.
+		Number is a string that will be parsed as a float.
+		l0, l1, l2 are values of labels and are optional.
+	  </para>
+	  <para>
+		name value and number of labels have to match a previous histogram definition with prom_histogram.
+	  </para>
+	  <para>
+		This function accepts pseudovariables on its parameters.
+	  </para>
+	  <para>
+		Available via KEMI framework as <emphasis>histogram_observe_l0</emphasis>,
+		<emphasis>histogram_observe_l1</emphasis>,
+		<emphasis>histogram_observe_l2</emphasis> and
+		<emphasis>histogram_observe_l3</emphasis>.
+	  </para>
+	  <example>
+		<title><function>prom_histogram_observe</function> usage</title>
+		<programlisting format="linespecific">
+...
+# Definition of hist01 histogram with no labels and default buckets.
+modparam("xhttp_prom", "prom_histogram", "name=hist01;");
+...
+# Observe -12.5 value in hist01 histogram (with no labels). If histogram does not exist it gets created:
+prom_histogram_observe("hist01", "-12.5");
+...
+
+# Definition of hist02 histogram with two labels method and IP and buckets [2.3, 5.8, +Inf]:
+modparam("xhttp_prom", "prom_histogram", "name=hist02; label=method:IP; buckets=2.3:5.8");
+...
+# Observe 2.8 value in hist02 histogram with labels method and IP.
+# It creates the histogram if it does not exist.
+prom_histogram_observe("hist02", "2.8", "push", "192.168.0.1");
+# When listed the metric it will show lines like this:
+hist02_bucket{method="push", IP="192.168.0.1", le="2.300000"} 0 1592574659768
+hist02_bucket{method="push", IP="192.168.0.1", le="5.800000"} 1 1592574659768
+hist02_bucket{method="push", IP="192.168.0.1", le="+Inf"} 1 1592574659768
+hist02_sum{method="push", IP="192.168.0.1"} 2.800000 1592574659768
+hist02_count{method="push", IP="192.168.0.1"} 1 1592574659768
+
 ...
 		</programlisting>
 	  </example>
@@ -706,6 +878,31 @@ event_route[xhttp:request] {
 		</programlisting>
 	  </example>
     </section>
+	<section  id="xhttp_prom.rpc.histogram_observe">
+	  <title><function moreinfo="none">xhttp_prom.histogram_observe</function></title>
+	  <para>
+		Observe a number in a histogram. Select the histogram by its name and labels.
+	  </para>
+      <para>
+        Name: <emphasis>xhttp_prom.histogram_observe</emphasis>
+      </para>
+      <para>Parameters:</para>
+	  <itemizedlist>
+		<listitem><para><emphasis>name</emphasis>: name of the histogram (mandatory)</para></listitem>
+		<listitem><para><emphasis>number</emphasis>: float value to observe in the histogram (mandatory)</para></listitem>
+		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
+		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
+		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
+	  </itemizedlist>
+	  <example>
+		<title><function>xhttp_prom.histogram_observe</function> usage</title>
+		<programlisting format="linespecific">
+		  ...
+		  &kamcmd; xhttp_prom.histogram_observe "hist01" -- -5.2
+		  ...
+		</programlisting>
+	  </example>
+    </section>
 	<section  id="xhttp_prom.rpc.metric_list_print">
 	  <title><function moreinfo="none">xhttp_prom.metric_list_print</function></title>
 	  <para>
@@ -715,6 +912,10 @@ event_route[xhttp:request] {
         Name: <emphasis>xhttp_prom.metric_list_print</emphasis>
       </para>
       <para>Parameters:<emphasis>none</emphasis></para>
+	  <para>
+		<emphasis>NOTE:</emphasis>: If you list a lot of metrics you may need to increase
+		buffer size of your RPC transport layer.
+	  </para>
 	  <example>
 		<title><function>xhttp_prom.metric_list_print</function> usage</title>
 		<programlisting format="linespecific">
