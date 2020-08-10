@@ -22,7 +22,10 @@
  */
 
 /**
- * Header user defined metrics for Prometheus.
+ * @file
+ * @brief xHTTP_PROM :: Header for user defined metrics.
+ * @ingroup xhttp_prom
+ * - Module: @ref xhttp_prom
  */
 
 #ifndef _PROM_METRIC_H_
@@ -31,48 +34,73 @@
 #include "xhttp_prom.h"
 
 /**
- * Initialize user defined metrics.
+ * @brief Initialize user defined metrics.
  */
-int prom_metric_init(int timeout_minutes);
+int prom_metric_init();
 
 /**
- * Close user defined metrics.
+ * @brief Close user defined metrics.
  */
 void prom_metric_close();
 
 /**
- * Create a counter and add it to list.
+ * @brief Create a counter and add it to list.
  */
 int prom_counter_create(char *spec);
 
 /**
- * Create a gauge and add it to list.
+ * @brief Create a gauge and add it to list.
  */
 int prom_gauge_create(char *spec);
 
 /**
- * Print user defined metrics.
+ * @brief Create a histogram and add it to list.
+ *
+ * @return 0 on success.
+ */
+int prom_histogram_create(char *spec);
+
+/**
+ * @brief Print user defined metrics.
  */
 int prom_metric_list_print(prom_ctx_t *ctx);
 
 /**
- * Reset a counter.
+ * @brief Reset a counter.
  */
 int prom_counter_reset(str *s_name, str *l1, str *l2, str *l3);
 
 /**
- * Reset value in a gauge.
+ * @brief Reset value in a gauge.
  */
 int prom_gauge_reset(str *s_name, str *l1, str *l2, str *l3);
 
 /**
- * Add some positive amount to a counter.
+ * @brief Add some positive amount to a counter.
  */
 int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3);
 
 /**
- * Set a value in a gauge.
+ * @brief Set a value in a gauge.
  */
 int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3);
+
+/**
+ * @brief Observe a value in a histogram.
+ *
+ * @param number value to observe.
+ */
+int prom_histogram_observe(str *s_name, double number, str *l1, str *l2, str *l3);
+
+/**
+ * @brief Parse a string and convert to double.
+ *
+ * @param s_number pointer to number string.
+ * @param pnumber double passed as reference.
+ *
+ * @return 0 on success.
+ * On error value pointed by pnumber is undefined.
+ */
+int double_parse_str(str *s_number, double *pnumber);
 
 #endif // _PROM_METRIC_H_

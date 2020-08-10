@@ -22,7 +22,10 @@
  */
 
 /**
- * Header for functionality of prometheus module.
+ * @file
+ * @brief xHTTP_PROM :: Header for functionality of xhttp_prom module.
+ * @ingroup xhttp_prom
+ * - Module: @ref xhttp_prom
  */
 
 #ifndef _PROM_H_
@@ -31,25 +34,25 @@
 #include "xhttp_prom.h"
 
 /**
- * Get current timestamp in milliseconds.
+ * @brief Get current timestamp in milliseconds.
  *
- * /param ts pointer to timestamp integer.
- * /return 0 on success.
+ * @param ts pointer to timestamp integer.
+ * @return 0 on success.
  */
 int get_timestamp(uint64_t *ts);
 
 /**
- * Write some data in prom_body buffer.
+ * @brief Write some data in prom_body buffer.
  *
- * /return number of bytes written.
- * /return -1 on error.
+ * @return number of bytes written.
+ * @return -1 on error.
  */
 int prom_body_printf(prom_ctx_t *ctx, char *fmt, ...);
 
 /**
- * Get statistics (based on stats_get_all)
+ * @brief Get statistics (based on stats_get_all)
  *
- * /return 0 on success
+ * @return 0 on success
  */
 int prom_stats_get(prom_ctx_t *ctx, str *stat);
 
