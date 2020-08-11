@@ -128,11 +128,11 @@ static void pike_top(rpc_t *rpc, void *c)
 		stropts = "HOT";
 
 	DBG("pike:top: string options: '%s'", stropts);
-	if ( strstr(stropts, "ALL") ) {
+	if ( strcasestr(stropts, "ALL") ) {
 		options = NODE_STATUS_ALL;
-	} else if ( strstr(stropts, "HOT") ) {
+	} else if ( strcasestr(stropts, "HOT") ) {
 		options |= NODE_STATUS_HOT;
-	} else if ( strstr(stropts, "WARM") ) {
+	} else if ( strcasestr(stropts, "WARM") ) {
 		options |= NODE_STATUS_WARM;
 	}
 	DBG("pike:top: options: 0x%02x\n", options);
