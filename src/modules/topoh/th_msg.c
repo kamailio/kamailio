@@ -408,7 +408,7 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 				if (th_uri_prefix_checks && (via->host.len!=th_ip.len
 						|| strncasecmp(via->host.s, th_ip.s, th_ip.len)!=0))
 				{
-					LM_DBG("via %d is not encoded",i);
+					LM_DBG("via %d is not encoded - skip\n",i);
 					continue;
 				}
 
@@ -418,9 +418,16 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 					LM_ERR("cannot find param in via %d\n", i);
 					return -1;
 				}
-				if(vp->value.len <= th_vparam_prefix.len) {
-					LM_ERR("invalid param len in via %d\n", i);
-					return -1;
+				if(th_vparam_prefix.len > 0) {
+					if(vp->value.len <= th_vparam_prefix.len) {
+						LM_DBG("shorter param len in via %d - skip\n", i);
+						continue;
+					}
+					if(strncmp(vp->value.s, th_vparam_prefix.s,
+									th_vparam_prefix.len) != 0) {
+						LM_DBG("no prefix in via %d - skip\n", i);
+						continue;
+					}
 				}
 				if(i==2) {
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
