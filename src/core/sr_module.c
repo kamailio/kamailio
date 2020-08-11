@@ -112,11 +112,11 @@ unsigned int set_modinit_delay(unsigned int v)
 }
 
 /* shut down phase for instance - kept in shared memory */
-static int *_ksr_shutdown_phase = 0;
+static int *_ksr_shutdown_phase = NULL;
 
 int ksr_shutdown_phase_init(void)
 {
-	if(_ksr_shutdown_phase) {
+	if(_ksr_shutdown_phase == NULL) {
 		_ksr_shutdown_phase = (int*)shm_malloc(sizeof(int));
 	}
 	return 0;
