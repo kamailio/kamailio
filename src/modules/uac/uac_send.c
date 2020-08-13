@@ -36,6 +36,7 @@
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 #include "auth.h"
 #include "auth_hdr.h"
@@ -81,6 +82,8 @@ typedef struct _uac_send_info {
 } uac_send_info_t;
 
 static struct _uac_send_info _uac_req;
+
+extern str uac_event_callback;
 
 void uac_send_info_copy(uac_send_info_t *src, uac_send_info_t *dst)
 {
@@ -630,12 +633,27 @@ void uac_req_run_event_route(sip_msg_t *msg, uac_send_info_t *tp, int rcode)
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	int kemi_evroute = 0;
 
-	rt = route_get(&event_rt, evrtname);
-	if (rt < 0 || event_rt.rlist[rt] == NULL)
-	{
-		LM_DBG("event_route[uac:reply] does not exist\n");
-		return;
+	if(uac_event_callback.s!=NULL && uac_event_callback.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_DBG("event callback (%s) set, but no cfg engine\n",
+					uac_event_callback.s);
+			return;
+		} else {
+			kemi_evroute = 1;
+		}
+	}
+
+	if (kemi_evroute==0) {
+		rt = route_get(&event_rt, evrtname);
+		if (rt < 0 || event_rt.rlist[rt] == NULL)
+		{
+			LM_DBG("event_route[uac:reply] does not exist\n");
+			return;
+		}
 	}
 
 	uac_send_info_copy(tp, &_uac_req);
@@ -652,7 +670,17 @@ void uac_req_run_event_route(sip_msg_t *msg, uac_send_info_t *tp, int rcode)
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+
+	if (kemi_evroute==1) {
+		str evrtname = str_init("uac:reply");
+
+		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+					&uac_event_callback, &evrtname)<0) {
+			LM_ERR("error running event route kemi callback\n");
+		}
+	} else {
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+	}
 	set_route_type(backup_rt);
 }
 

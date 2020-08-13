@@ -93,6 +93,8 @@ pv_spec_t auth_password_spec;
 str uac_default_socket = STR_NULL;
 struct socket_info * uac_default_sockinfo = NULL;
 
+str uac_event_callback = STR_NULL;
+
 static int w_replace_from(struct sip_msg* msg, char* p1, char* p2);
 static int w_restore_from(struct sip_msg* msg, char* p1, char* p2);
 static int w_replace_to(struct sip_msg* msg, char* p1, char* p2);
@@ -178,6 +180,7 @@ static param_export_t params[] = {
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
 	{"default_socket",	PARAM_STR, &uac_default_socket},
+	{"event_callback",	PARAM_STR,	&uac_event_callback},
 	{0, 0, 0}
 };
 
