@@ -63,9 +63,11 @@ static void setup_ecdh(SSL_CTX *ctx)
 {
    EC_KEY *ecdh;
 
-   if (OpenSSL_version_num() < 0x1000005fL) {
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
+   if (SSLeay() < 0x1000005fL) {
       return;
    }
+#endif
 
    ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
