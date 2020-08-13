@@ -383,7 +383,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 	<section id="pipelimit.p.clean_unused">
 		<title><varname>clean_unused</varname> (int)</title>
 		<para>
-		Clean unused pipes afetr this number of timer intervals.
+		Clean unused pipes after this number of timer intervals.
 		</para>
 		<para>
 		<emphasis>
@@ -720,7 +720,7 @@ kamcmd pl.get_pid
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>load</emphasis> - the forced value of load
-			(it must be greater then 0.0 and smaller then 1.0).
+			(it must be greater than 0.0 and smaller than 1.0).
 			</para></listitem>
 		</itemizedlist>
 		<para>
