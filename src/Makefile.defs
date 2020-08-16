@@ -1937,12 +1937,11 @@ ifeq ($(OS), freebsd)
 	ifeq ($(RAW_SOCKS), yes)
 		C_DEFS+= -DUSE_RAW_SOCKS
 	endif
+	LIBS= -lm   # resolv and dlopen is in libc
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS+= -pthread   #dlopen is in libc
-	else
-		LIBS=   #dlopen is in libc
+		LIBS+= -pthread
 	endif
 	# check for ver >= 4.1
 	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
