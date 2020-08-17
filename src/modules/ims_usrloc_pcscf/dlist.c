@@ -79,6 +79,36 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 	return 1;
 }
 
+/*!
+ * \brief Get all contacts from the usrloc, in partitions if wanted
+ *
+ * Return list of all contacts for all currently registered
+ * users in all domains. The caller must provide buffer of
+ * sufficient length for fitting all those contacts. In the
+ * case when buffer was exhausted, the function returns
+ * estimated amount of additional space needed, in this
+ * case the caller is expected to repeat the call using
+ * this value as the hint.
+ *
+ * Information is packed into the buffer as follows:
+ *
+ * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+ * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+ * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+ * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+ * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+ * |.............................................................................................|
+ * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+ * |0000|
+ * +----+
+ *
+ * \param buf target buffer
+ * \param len length of buffer
+ * \param flags contact flags
+ * \param part_idx part index
+ * \param part_max maximal part
+ * \return 0 on success, positive if buffer size was not sufficient, negative on failure
+ */
 static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 							unsigned int part_idx, unsigned int part_max)
 {
@@ -90,55 +120,69 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	int i = 0;
 	cp = buf;
 	shortage = 0;
-	unsigned int received_len = 0;
-	char received_s[60]; // IPv6-Address (39) + "sip:" (4) + ":" (1) + Port (5); 60 should be plenty.
+
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(int);
 
 	for (p = root; p != NULL; p = p->next) {
-
 		for(i=0; i<p->d->size; i++) {
-
-			if ( (i % part_max) != part_idx )
+			if ((i % part_max) != part_idx) {
 				continue;
+			}
 
 			lock_ulslot(p->d, i);
-			if(p->d->table[i].n<=0)
-			{
+			if(p->d->table[i].n<=0) {
 				unlock_ulslot(p->d, i);
 				continue;
 			}
+
 			for (c = p->d->table[i].first; c != NULL; c = c->next) {
-					if (c->received_host.s) {
-						received_len = snprintf(received_s, sizeof(received_s), "sip:%.*s:%x", c->received_host.len,
-							c->received_host.s, c->received_port) - 1; 
+				if (c->received_host.s && c->security_temp && c->security_temp->type == SECURITY_IPSEC) {
+					needed = (int)(sizeof(c->received_host.len) + c->received_host.len +
+							sizeof(c->security_temp->data.ipsec->spi_uc) +
+							sizeof(c->security_temp->data.ipsec->spi_us) +
+							sizeof(c->security_temp->data.ipsec->spi_pc) +
+							sizeof(c->security_temp->data.ipsec->spi_ps) +
+							sizeof(c->security_temp->data.ipsec->port_uc) +
+							sizeof(c->security_temp->data.ipsec->port_us) +
+							sizeof(c->security_temp->data.ipsec->port_pc) +
+							sizeof(c->security_temp->data.ipsec->port_ps));
 
-						needed = (int)(sizeof(received_len)
-								+ received_len + sizeof(c->sock)
-								+ sizeof(unsigned int) + sizeof(c->path.len)
-								+ c->path.len);
-						if (len >= needed) {
-							cp = (char*)cp + received_len;
-							cp = (char*)cp + sizeof(received_len);
+					if (len >= needed) {
+						memcpy(cp, &c->received_host.len, sizeof(c->received_host.len));
+						cp = (char*)cp + sizeof(c->received_host.len);
+						memcpy(cp, c->received_host.s, c->received_host.len);
+						cp = (char*)cp + c->received_host.len;
 
-							memcpy(cp, received_s, received_len);
-							cp = (char*)cp + received_len;
+						memcpy(cp, &c->security_temp->data.ipsec->spi_uc, sizeof(c->security_temp->data.ipsec->spi_uc));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->spi_uc);
 
-							memcpy(cp, &c->sock, sizeof(c->sock));
-							cp = (char*)cp + sizeof(c->sock);
+						memcpy(cp, &c->security_temp->data.ipsec->spi_us, sizeof(c->security_temp->data.ipsec->spi_us));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->spi_us);
 
-							memset(cp, 0, sizeof(unsigned int));
-							cp = (char*)cp + sizeof(unsigned int);
+						memcpy(cp, &c->security_temp->data.ipsec->spi_pc, sizeof(c->security_temp->data.ipsec->spi_pc));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->spi_pc);
 
-							memcpy(cp, &c->path.len, sizeof(c->path.len));
-							cp = (char*)cp + sizeof(c->path.len);
-							memcpy(cp, c->path.s, c->path.len);
-							cp = (char*)cp + c->path.len;
-							len -= needed;
-						} else {
-							shortage += needed;
-						}
+						memcpy(cp, &c->security_temp->data.ipsec->spi_ps, sizeof(c->security_temp->data.ipsec->spi_ps));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->spi_ps);
+
+						memcpy(cp, &c->security_temp->data.ipsec->port_uc, sizeof(c->security_temp->data.ipsec->port_uc));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->port_uc);
+
+						memcpy(cp, &c->security_temp->data.ipsec->port_us, sizeof(c->security_temp->data.ipsec->port_us));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->port_us);
+
+						memcpy(cp, &c->security_temp->data.ipsec->port_pc, sizeof(c->security_temp->data.ipsec->port_pc));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->port_pc);
+
+						memcpy(cp, &c->security_temp->data.ipsec->port_ps, sizeof(c->security_temp->data.ipsec->port_ps));
+						cp = (char*)cp + sizeof(c->security_temp->data.ipsec->port_ps);
+
+						len -= needed;
+					} else {
+						shortage += needed;
 					}
+				}
 			}
 			unlock_ulslot(p->d, i);
 		}
