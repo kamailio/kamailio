@@ -62,7 +62,7 @@ typedef int (*bind_ipsec_pcscf_t)(ipsec_pcscf_api_t* api);
 struct sip_msg;
 struct udomain_t;
 
-int ipsec_create(struct sip_msg* m, udomain_t* d);
+int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags);
 int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags);
 int ipsec_destroy(struct sip_msg* m, udomain_t* d);
 int ipsec_cleanall();
