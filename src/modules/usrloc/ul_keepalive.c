@@ -43,7 +43,7 @@
 static int ul_ka_send(str *kamsg, dest_info_t *kadst);
 
 /**
- * 
+ *
 _KAMETHOD_ _URI_ SIP/2.0\r\n
 Via: SIP/2.0/_PROTO_ _IP_:_PORT_;branch=z9hG4bKx._GCNT_._BCNT_.0\r\n
 __KAROUTES__
@@ -60,7 +60,7 @@ Content-Length: 0\r\n\r\n"
 
 #define ULKA_MSG "%.*s %.*s SIP/2.0\r\n" \
   "Via: SIP/2.0/%.*s %.*s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
-  "%.*s%.*s" \
+  "%s%.*s%.*s" \
   "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
   "To: <sip:%.*s%s%.*s>\r\n" \
   "Call-ID: " ULKA_CALLID_PREFIX "%u.%u\r\n" \
@@ -197,6 +197,7 @@ int ul_ka_urecord(urecord_t *ur)
 				vaddr.len, vaddr.s,
 				vport.len, vport.s,
 				_ul_ka_counter, bcnt,
+				(uc->path.len>0)?"Route: ":"",
 				(uc->path.len>0)?uc->path.len:0,
 				(uc->path.len>0)?uc->path.s:"",
 				(uc->path.len>0)?2:0,
