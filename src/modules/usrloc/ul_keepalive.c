@@ -60,7 +60,7 @@ Content-Length: 0\r\n\r\n"
 
 #define ULKA_MSG "%.*s %.*s SIP/2.0\r\n" \
   "Via: SIP/2.0/%.*s %.*s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
-  "%.*s%.*s" \
+  "Route: %.*s%.*s" \
   "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
   "To: <sip:%.*s%s%.*s>\r\n" \
   "Call-ID: " ULKA_CALLID_PREFIX "%u.%u\r\n" \
