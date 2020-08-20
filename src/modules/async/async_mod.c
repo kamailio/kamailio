@@ -404,7 +404,7 @@ static int w_async_ms_route(sip_msg_t *msg, char *rt, char *sec)
 		LM_ERR("no async interval value\n");
 		return -1;
 	}
-	return ki_async_route(msg, &rn, s);
+	return ki_async_ms_route(msg, &rn, s);
 }
 
 /**
@@ -502,6 +502,11 @@ static int fixup_async_task_route(void **param, int param_no)
 static sr_kemi_t sr_kemi_async_exports[] = {
 	{ str_init("async"), str_init("route"),
 		SR_KEMIP_INT, ki_async_route,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("async"), str_init("ms_route"),
+		SR_KEMIP_INT, ki_async_ms_route,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
