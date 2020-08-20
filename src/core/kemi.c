@@ -1485,6 +1485,41 @@ static int sr_kemi_core_get_debug(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_route(sip_msg_t *msg, str *route)
+{
+	run_act_ctx_t tctx;
+	run_act_ctx_t *pctx = NULL;
+	int rtid = -1;
+	int ret = 0;
+
+	if(route == NULL || route->s == NULL) {
+		return -1;
+	}
+
+	rtid = route_lookup(&main_rt, route->s);
+	if (rtid < 0) {
+		return -1;
+	}
+
+	if(_sr_kemi_act_ctx != NULL) {
+		pctx = _sr_kemi_act_ctx;
+	} else {
+		init_run_actions_ctx(&tctx);
+		pctx = &tctx;
+	}
+
+	ret=run_actions(pctx, main_rt.rlist[rtid], msg);
+
+	if (pctx->run_flags & EXIT_R_F) {
+		return 0;
+	}
+
+	return ret;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -1879,6 +1914,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("get_debug"),
 		SR_KEMIP_INT, sr_kemi_core_get_debug,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("route"),
+		SR_KEMIP_INT, sr_kemi_core_route,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
