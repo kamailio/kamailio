@@ -254,10 +254,15 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
+       flags - bitwise flag: 0x01 - if set - delete unused tunnels before
+       every registration. This is an optional parameter, default value -
+       0.
 
    Example 1.9. ipsec_create
 ...
 ipsec_create("location");
+# or
+ipsec_create("location", "1");
 ...
 
 4.2. ipsec_forward(domain, flags)
