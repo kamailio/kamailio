@@ -745,8 +745,9 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddStrToObject(&jdoc, jdoc.root, "ruid", ptr->ruid.s, ptr->ruid.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "c", ptr->c.s, ptr->c.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "received", ptr->received.s, ptr->received.len);
-	if (_dmq_usrloc_replicate_socket_info==1)
+	if (_dmq_usrloc_replicate_socket_info==1 && ptr->sock!=NULL) {
 		srjson_AddStrToObject(&jdoc, jdoc.root, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
+	}
 	srjson_AddStrToObject(&jdoc, jdoc.root, "path", ptr->path.s, ptr->path.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "callid", ptr->callid.s, ptr->callid.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "user_agent", ptr->user_agent.s, ptr->user_agent.len);
@@ -759,7 +760,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "last_modified", ptr->last_modified);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "methods", ptr->methods);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "reg_id", ptr->reg_id);
-        srjson_AddNumberToObject(&jdoc, jdoc.root, "server_id", ptr->server_id);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "server_id", ptr->server_id);
 
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s==NULL) {
