@@ -139,6 +139,7 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	va_list arglist;
 	char obuf[LC_LOG_MSG_MAX_SIZE];
 	int n;
+	int r;
 
 	va_start(arglist, format);
 
@@ -146,8 +147,11 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	n += snprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, "(%d) ", my_pid());
 	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
-	if(udp_send(&_lc_udp_dst, obuf, n)!=0) {
-		udp_send(&_lc_udp_dst, "debug: previous udp send returned non zero\n", 43);
+	r = udp_send(&_lc_udp_dst, obuf, n);
+	if(r<0) {
+		/* sending log message failed - print to stderror to help debugging */
+		fprintf(stderr, "error: previous udp send returned failure (%d:%d:%s)\n",
+				r, errno, strerror(errno));
 	}
 }
 
@@ -160,9 +164,9 @@ int ki_log_udp(sip_msg_t *msg, str *txt)
 
 	ret=udp_send(&_lc_udp_dst, txt->s, txt->len);
 
-	if(ret==0) return 1;
+	if(ret>0) return 1;
 
-	return ret;
+	return (ret==0)?-1:ret;
 
 }
 
