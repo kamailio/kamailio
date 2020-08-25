@@ -216,6 +216,10 @@ modparam("sqlops", "tr_buf_size", 4096)
 		<para>
 			<emphasis>2</emphasis> - query successful, no rows returned
 		</para>
+		<para>
+			<emphasis>3</emphasis> - query successful, at least one row
+            returned, but result parameter was not given
+		</para>
 		</listitem>
 	</itemizedlist>
 	<section>
