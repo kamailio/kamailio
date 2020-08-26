@@ -211,6 +211,8 @@ modparam("sqlops", "connect_mode", 1)
      * -1 - error in parameters or query execution
      * 1 - query successful, at least one row in resultset (for SELECTs)
      * 2 - query successful, no rows returned
+       3 - query successful, at least one row returned, but result
+       parameter was not given
 
 4.1.  sql_query(connection, query[, result])
 

@@ -39,6 +39,7 @@ Bogdan-Andrei Iancu
    2. RPC calls
 
         1. pike.top
+        2. pike.list
 
    3. Developer Guide
 
@@ -49,6 +50,7 @@ Bogdan-Andrei Iancu
    1.3. Set remove_latency parameter
    1.4. Set pike_log_level parameter
    1.5. pike_check_req usage
+   2.1. Using pike.top
    3.1. Tree of IP addresses
 
 Chapter 1. Admin Guide
@@ -219,6 +221,7 @@ Chapter 2. RPC calls
    Table of Contents
 
    1. pike.top
+   2. pike.list
 
 1.  pike.top
 
@@ -230,15 +233,24 @@ Chapter 2. RPC calls
 
    Some IPs could be marked as HOT depending on theirs request rates.
 
-   pike.top command takes one string parameter which specifies what kind
-   of nodes you are interested in. Possible values are HOT or ALL. If no
-   argument is given, it behaves as HOT was used.
+   pike.top command can take one string parameter which specifies what
+   kind of nodes you are interested in. Possible values are HOT or ALL. If
+   no argument is given, it behaves as HOT was used.
 
    Marking nodes HOT is done on server side, client only presents given
    data and make some postprocessing like sorting.
 
    Output of this command is a simple dump of ip_tree nodes marked as
    ip-leafs.
+
+   Example 2.1. Using pike.top
+...
+kamcli rpc pike.top ALL
+...
+
+2.  pike.list
+
+   Alias for "pike.top" command.
 
 Chapter 3. Developer Guide
 

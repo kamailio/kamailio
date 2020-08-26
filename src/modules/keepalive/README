@@ -40,8 +40,8 @@ Yasin CANER
               2.4. Functions
 
                     2.4.1. ka_is_alive(destination)
-                    2.4.2. ka_add_destination(sip_uri)
-                    2.4.3. ka_del_destination(sip_uri)
+                    2.4.2. ka_add_destination(sip_uri, owner)
+                    2.4.3. ka_del_destination(sip_uri, owner)
 
               2.5. RPC Commands
 
@@ -67,8 +67,8 @@ Yasin CANER
    1.3. Set delete_counter parameter
    1.4. Set ping_from parameter
    1.5. ka_is_alive() usage
-   1.6. ka_add_destination(sip_uri) usage
-   1.7. ka_del_destination(sip_uri) usage
+   1.6. ka_add_destination(sip_uri, ownder) usage
+   1.7. ka_del_destination(sip_uri, owner) usage
    1.8. keepalive.list RPC example
    1.9. keepalive.add RPC example
    1.10. keepalive.del RPC example
@@ -96,8 +96,8 @@ Chapter 1. Admin Guide
         2.4. Functions
 
               2.4.1. ka_is_alive(destination)
-              2.4.2. ka_add_destination(sip_uri)
-              2.4.3. ka_del_destination(sip_uri)
+              2.4.2. ka_add_destination(sip_uri, owner)
+              2.4.3. ka_del_destination(sip_uri, owner)
 
         2.5. RPC Commands
 
@@ -131,8 +131,8 @@ Chapter 1. Admin Guide
    2.4. Functions
 
         2.4.1. ka_is_alive(destination)
-        2.4.2. ka_add_destination(sip_uri)
-        2.4.3. ka_del_destination(sip_uri)
+        2.4.2. ka_add_destination(sip_uri, owner)
+        2.4.3. ka_del_destination(sip_uri, owner)
 
    2.5. RPC Commands
 
@@ -222,9 +222,19 @@ if(ka_is_alive("192.168.10.20") == 1) {
 };
 ...
 
-2.4.2.  ka_add_destination(sip_uri)
+2.4.2.  ka_add_destination(sip_uri, owner)
 
-   Adds destination sip/sips uri in memory list to keep alive .
+   Adds SIP URI in the memory destinations list to perform keep alive to
+   it.
+
+   Meaning of the parameters:
+     * sip_uri (string) - address of destination to monitor. Valid format
+       is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
+       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       'port' is optional (using default standard port 5060 for sip and
+       5061 for sips)
+     * owner (string) - module name âowningâ the destination (for
+       informational purpose)
 
    Returned value:
      * 1 - successful
@@ -233,18 +243,28 @@ if(ka_is_alive("192.168.10.20") == 1) {
    This function can be used from
    REQUEST_ROUTE,BRANCH_ROUTE,ONREPLY_ROUTE.
 
-   Example 1.6. ka_add_destination(sip_uri) usage
+   Example 1.6. ka_add_destination(sip_uri, ownder) usage
 ...
 $avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
 $avp(duri2)="sip:192.168.1.11:5061";
 $avp(duri3)="sip:192.168.1.12"
-ka_add_destination("$avp(duri3)");
-ka_add_destination("sip:192.168.1.10:5060;transport=tcp");
+ka_add_destination("$avp(duri3)", "config");
+ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 ...
 
-2.4.3.  ka_del_destination(sip_uri)
+2.4.3.  ka_del_destination(sip_uri, owner)
 
-   Deletes destination sip/sips uri in memory list .
+   Deletes the SIP URI from the memory destinations list used for
+   monitoring.
+
+   Meaning of the parameters:
+     * sip_uri (string) - address of monitored destination. Valid format
+       is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
+       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       'port' is optional (using default standard port 5060 for sip and
+       5061 for sips)
+     * owner (string) - module name âowningâ the destination (for
+       informational purpose)
 
    Returned value:
      * 1 - successful
@@ -252,13 +272,13 @@ ka_add_destination("sip:192.168.1.10:5060;transport=tcp");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. ka_del_destination(sip_uri) usage
+   Example 1.7. ka_del_destination(sip_uri, owner) usage
 ...
 $avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
 $avp(duri2)="sip:192.168.1.11:5061";
 $avp(duri3)="sip:192.168.1.12"
-ka_del_destination("$avp(duri3)");
-ka_del_destination("sip:192.168.1.10:5060;transport=tcp");
+ka_del_destination("$avp(duri3)", "config");
+ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 ...
 
 2.5. RPC Commands
