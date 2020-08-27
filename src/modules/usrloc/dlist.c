@@ -597,13 +597,24 @@ int get_udomain(const char* _n, udomain_t** _d)
 	dlist_t* d;
 	str s;
 
+	if(_n == NULL) {
+		LM_ERR("null location table name\n");
+		goto notfound;
+	}
+
 	s.s = (char*)_n;
 	s.len = strlen(_n);
+	if(s.len <= 0) {
+		LM_ERR("empty location table name\n");
+		goto notfound;
+	}
 
 	if (find_dlist(&s, &d) == 0) {
 		*_d = d->d;
 		return 0;
 	}
+
+notfound:
 	*_d = NULL;
 	return -1;
 }
