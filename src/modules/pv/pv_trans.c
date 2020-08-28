@@ -1408,6 +1408,62 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_URI_PASSWD:
 			val->rs = (_tr_parsed_uri.passwd.s)?_tr_parsed_uri.passwd:_tr_empty;
 			break;
+		case TR_URI_SURI:
+			if(_tr_uri.len >= TR_BUFFER_SIZE) {
+				LM_WARN("uri too long [%.*s] (%d)\n",
+						_tr_uri.len, _tr_uri.s, _tr_uri.len);
+				val->rs = _tr_empty;
+				break;
+			}
+
+			tr_set_crt_buffer();
+			sv.s = _tr_uri.s;
+			sv.len = 0;
+			while(sv.len<_tr_uri.len) {
+				if(_tr_uri.s[sv.len]==':') {
+					break;
+				}
+				sv.len++;
+			}
+			if(_tr_uri.s[sv.len]!=':') {
+				LM_WARN("uri schema not found [%.*s] (%d)\n",
+						_tr_uri.len, _tr_uri.s, _tr_uri.len);
+				val->rs = _tr_empty;
+				break;
+			}
+			sv.len++;
+			memcpy(_tr_buffer, sv.s, sv.len);
+			sv.s = _tr_buffer;
+			sv.len++;
+			if(_tr_parsed_uri.user.len > 0) {
+				memcpy(sv.s + sv.len, _tr_parsed_uri.user.s,
+						_tr_parsed_uri.user.len);
+				sv.len += _tr_parsed_uri.user.len;
+				sv.s[sv.len] = '@';
+				sv.len++;
+			}
+			if(_tr_parsed_uri.host.len > 0) {
+				memcpy(sv.s + sv.len, _tr_parsed_uri.host.s,
+						_tr_parsed_uri.host.len);
+				sv.len += _tr_parsed_uri.host.len;
+			}
+			if(_tr_parsed_uri.port.len > 0) {
+				sv.s[sv.len] = ':';
+				sv.len++;
+				memcpy(sv.s + sv.len, _tr_parsed_uri.port.s,
+						_tr_parsed_uri.port.len);
+				sv.len += _tr_parsed_uri.port.len;
+			}
+			if(_tr_parsed_uri.transport_val.len > 0) {
+				memcpy(sv.s + sv.len, ";transport=", 11);
+				sv.len += 11;
+				memcpy(sv.s + sv.len, _tr_parsed_uri.transport_val.s,
+						_tr_parsed_uri.transport_val.len);
+				sv.len += _tr_parsed_uri.transport_val.len;
+			}
+			sv.s[sv.len] = '\0';
+			val->rs = sv;
+			break;
 		case TR_URI_PORT:
 			val->flags |= PV_TYPE_INT|PV_VAL_INT;
 			val->rs = (_tr_parsed_uri.port.s)?_tr_parsed_uri.port:_tr_empty;
@@ -2787,6 +2843,9 @@ char* tr_parse_uri(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "port", 4)==0) {
 		t->subtype = TR_URI_PORT;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "suri", 4)==0) {
+		t->subtype = TR_URI_SURI;
 		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "params", 6)==0) {
 		t->subtype = TR_URI_PARAMS;
