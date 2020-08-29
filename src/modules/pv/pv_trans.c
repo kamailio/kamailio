@@ -1408,6 +1408,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_URI_PASSWD:
 			val->rs = (_tr_parsed_uri.passwd.s)?_tr_parsed_uri.passwd:_tr_empty;
 			break;
+		case TR_URI_DURI:
 		case TR_URI_SURI:
 			if(_tr_uri.len >= TR_BUFFER_SIZE) {
 				LM_WARN("uri too long [%.*s] (%d)\n",
@@ -1435,7 +1436,7 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memcpy(_tr_buffer, sv.s, sv.len);
 			sv.s = _tr_buffer;
 			sv.len++;
-			if(_tr_parsed_uri.user.len > 0) {
+			if(subtype == TR_URI_SURI && _tr_parsed_uri.user.len > 0) {
 				memcpy(sv.s + sv.len, _tr_parsed_uri.user.s,
 						_tr_parsed_uri.user.len);
 				sv.len += _tr_parsed_uri.user.len;
@@ -2846,6 +2847,9 @@ char* tr_parse_uri(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "suri", 4)==0) {
 		t->subtype = TR_URI_SURI;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "duri", 4)==0) {
+		t->subtype = TR_URI_DURI;
 		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "params", 6)==0) {
 		t->subtype = TR_URI_PARAMS;
