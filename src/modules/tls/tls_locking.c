@@ -140,7 +140,7 @@ unsigned long sr_ssl_id_f()
 /* returns -1 on error, 0 on success */
 int tls_init_locks()
 {
-/* OpenSSL is thread-safe since 1.1.0 */
+/* OpenSSL is no longer supporting to set locking callbacks since 1.1.0 */
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* init "static" tls locks */
 	n_static_locks=CRYPTO_num_locks();
@@ -185,10 +185,13 @@ int tls_init_locks()
 	 *  (only atomic_inc), fallback to the default use-locks mode
 	 * CRYPTO_set_add_lock_callback(atomic_add_f);
 	 */
-#endif
 
 	return 0;
 error:
 	tls_destroy_locks();
 	return -1;
+
+#else
+	return 0;
+#endif
 }
