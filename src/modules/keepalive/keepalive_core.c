@@ -61,7 +61,7 @@ ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param)
 
 	ka_dest = (ka_dest_t *)param;
 
-    LM_DBG("ka_check_timer dest:%.*s\n", ka_dest->uri.len, ka_dest->uri.s);
+    LM_DBG("dest: %.*s\n", ka_dest->uri.len, ka_dest->uri.s);
 
     if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
         return (ticks_t)(0); /* stops the timer */
@@ -104,7 +104,7 @@ static void ka_options_callback(
 
 	uri.s = t->to.s + 5;
 	uri.len = t->to.len - 8;
-	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s)\n", ps->code,
+	LM_DBG("OPTIONS request was finished with code %d (to %.*s)\n", ps->code,
 			ka_dest->uri.len, ka_dest->uri.s); //uri.len, uri.s);
 
 
@@ -149,7 +149,7 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route)
 		return;
 	}
 
-	LM_DBG("ka_run_route event_route[%s]\n", route);
+	LM_DBG("run event_route[%s]\n", route);
 
 	rt = route_get(&event_rt, route);
 	if(rt < 0 || event_rt.rlist[rt] == NULL) {
