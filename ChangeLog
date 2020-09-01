@@ -1,3 +1,382 @@
+===================== 2020-09-01 Version 5.4.1 Released =====================
+
+===================== Changes Since Version 5.4.0 ===========================
+
+commit 9527496e3c1bd268531551d72c61ee6190a4c468
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 1 09:37:28 2020 +0200
+
+    Makefile.defs: version set to 5.4.1
+
+commit ee284726b6200f86c370254ba3d27d2f43c79053
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 1 09:35:50 2020 +0200
+
+    pkg: version set to 5.4.1 for rpm and alpine specs
+
+commit 47fe547ce2c1b7b1ccb22744dbefe8a0ea41d926
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Sep 1 09:12:28 2020 +0200
+
+    pkg/kamailio/deb: version set 5.4.1
+
+commit b1ce252f8090f66de290cec95dbb6e1762ee6bdf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 31 12:15:00 2020 +0200
+
+    keepalive: removed function name from log messages
+    
+    (cherry picked from commit 17d6a88090e2a67f5c0b06e6aae76d629595b37e)
+
+commit e9baba91c6c7e3d1817e8a07bbabbce3a8efbe79
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Aug 30 18:04:04 2020 +0200
+
+    tls: proper ifdef on libssl version for tls_init_locks()
+    
+    - avoid compile warning on unused label
+    
+    (cherry picked from commit 60bd3aa284a5d9eb117a9763aa590aecf276ba16)
+
+commit ac56dfde20c5e689fb911debdd33a6155f7b130c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 27 12:34:50 2020 +0200
+
+    usrloc: get_udomain() - safety checks for location table name parameter
+    
+    (cherry picked from commit 29dde9fea1eb21b4bb484286f7443dd32f611bd2)
+
+commit f22d1ebae89f15e177a791d09c36ded1184d9b67
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Aug 26 23:16:45 2020 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 05b4b85b6d977fddfd23b3c556328c516670b98d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Aug 25 20:11:59 2020 +0300
+
+    sqlops module: added one more sql query function return value to README
+    
+    (cherry picked from commit d93de03c10eb7b88024d7eb9ba85200601cf6c7a)
+
+commit b5176749605808af737aca00992f549152f9c38a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 24 10:22:52 2020 +0200
+
+    topoh: remove the Via cookie when skipping topoh via event route
+    
+    - event route is now executed with parsed sip message to be sent out
+    - GH #2437
+    
+    (cherry picked from commit 06a1d20fdcae42c8f2130c547c6c6cf5fb6dce26)
+
+commit a3763403b22b21974e401929de4ef3f6f38d045a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 24 09:34:33 2020 +0200
+
+    keepalive: docs - documented owner parameter for add/delete functions
+    
+    - related to GH #2438
+    
+    (cherry picked from commit 7284a61125bb0cacd1adc2289af616061df03258)
+
+commit f1d194d0d83f94a495c539436918a094f06758de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 20 16:16:56 2020 +0200
+
+    core: kemi - exported core route function
+    
+    (cherry picked from commit d9dd2abeb82be8b992ddf534864b6d84594b7a47)
+
+commit daab7955e91c4537547c89eacb7ecd0f136bffdb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 20 15:57:57 2020 +0200
+
+    cfgutils: exported route check functions to kemi
+    
+    (cherry picked from commit ecba550f5d35435adfa9c692cec8cee6cae8a77b)
+
+commit 474d77b8743834a14d00ad285534cf2916460b17
+Author: Yufei Tao <yufei.tao@syntec.co.uk>
+Date:   Thu Aug 13 16:18:49 2020 +0100
+
+    uac: added uac_event_callback for kemi
+    
+    (cherry picked from commit 767d3ca88a4e4fa093a6a81a36d95d116251b578)
+
+commit 0efd0d63a8f8d7b644d0eba13552778d3b746c67
+Author: Dmitry <dmitry.wagin@ya.ru>
+Date:   Sun Aug 16 23:21:37 2020 +0300
+
+    Makefile.defs: Fixed libs option for FreeBSD
+    
+    (cherry picked from commit f490c4e0f5888963a01fa99fe94a464d44223199)
+
+commit 67979e07b63b574687b1924c38fabd724d0ad876
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 13 07:19:28 2020 +0200
+
+    tls: added define condition on version functions
+    
+    - libssl 1.1 variants are not in 1.0
+    - following the changes by 234b02236b3ad13cdaf5624d11c727ad7d804747
+    
+    (cherry picked from commit 99c6a68dea60ca745dfdfa33085bb6acbcee846a)
+
+commit 10af8efa9061c2f52ee1db51c4cf665073c20dcc
+Author: Rosen Penev <rosenp@gmail.com>
+Date:   Wed Aug 12 16:37:13 2020 +0200
+
+    tls: support compilation without deprecated OpenSSL APIs
+    
+    - GH #2428
+    
+    (cherry picked from commit 234b02236b3ad13cdaf5624d11c727ad7d804747)
+
+commit c8c884c4db353d4fac83752a494989e699fc36ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 11 12:36:02 2020 +0200
+
+    topoh: check if via param has the expected prefix, otherwise skip
+    
+    - GH #2437
+    
+    (cherry picked from commit 046126b4a90090bf5b8f9b517ba5218793e6b973)
+
+commit c783f19708bfd1d8c2334f739c8960b2de5f4fb3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 11 11:11:35 2020 +0200
+
+    pike: docs - section for pike.list rpc command
+    
+    (cherry picked from commit 720e929a87c6d3ee29c316ca63886c7142320f43)
+
+commit 6d79c954469082aeb8518fdcca80217ce4826992
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 5 16:38:01 2020 +0200
+
+    Makefile.defs: map gcc v10.x to 9.0+ options
+    
+    - detect properly the 10.x gcc version number, GH #2425
+    
+    (cherry picked from commit 79e7738027a40affa4c7f606bf55a3ad0fe31bc4)
+
+commit b14b0a116791b85f2048e5fc863e50b7f7d93405
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 4 08:36:18 2020 +0200
+
+    Makefile.defs: get clang version only from --version output
+    
+    - the full version with stderr output included has a different first
+    line on MacOS, making head -n 1 not extract the version number line
+    
+    (cherry picked from commit bff689cfedca70149e17b6ec3584ca9ecab71418)
+
+commit aabb2b2cfab6dc664ebc4b3d15db0d2ecb3cafd5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 1 16:51:39 2020 +0200
+
+    db_text: free pointer in case of error
+    
+    (cherry picked from commit bddf16db74ea779bb01805fc2cbabfdaf8f4d62b)
+
+commit 4aeb071b26df08e1dfc902340475c077e468c661
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 31 20:45:47 2020 +0200
+
+    xcap_server: check before going to the end of the buffer
+    
+    - use marcros to set and restore char for ending 0
+    
+    (cherry picked from commit 6ce5c0bdf136ecffd7917f2d60093e1b2c49fa54)
+
+commit c98d9e8c6687f2311f51016ed9cc2e089d4eb242
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 30 20:32:02 2020 +0200
+
+    app_lua: docs - note about availability of 'sr' Lua module
+    
+    - use KSR in the examples
+    
+    (cherry picked from commit 34efa83569bedb1f36c3661ee063ff6334633e4a)
+
+commit 12095fd3948ca776dd2d03b8efa11293609389c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 30 10:36:01 2020 +0200
+
+    evapi: export async_unicast() to kemi
+    
+    - PR #2415
+    
+    (cherry picked from commit 7116c04c61cf789a371568fb593c109e195a1574)
+
+commit ef86ec4afefdb1c235e0815c76ce17c63f2d20b6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 24 12:28:07 2020 +0200
+
+    dmq_usrloc: do not replicate socket if the field is not set:
+    
+    - GH #2451
+    
+    (cherry picked from commit 8891b656f5d3650b83e4f877ca43068d5d6f7ff7)
+
+commit 1ecade5cbd323e1ab45ec6f83236e1d389739d3b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 24 10:01:20 2020 +0200
+
+    log_custom: print to stderror if sending log message fails
+    
+    - help troubleshooting while avoiding looping to same function in case
+    the log engine is set to log custom module
+    
+    (cherry picked from commit f16d046f6330f897b374d9bb7dab3b2ce8eab3a7)
+
+commit bf38c7b04171e6f410ff885f10abe0f815d27de9
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Thu Aug 20 11:06:56 2020 +0200
+
+    async: fix async_ms_route and export it to kemi
+    
+    (cherry picked from commit b787627819fc93dcc8c68a4950c9760d298ce555)
+
+commit 19128f2121d8b859a6a546dfdf2c0855b9bd9502
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 18 17:48:21 2020 +0200
+
+    usrloc: print Route header name in keepalive when Path is present
+    
+    - related to GH #2446
+    
+    (cherry picked from commit d49d6b89ceb311598a89cfd789d180412b46a4af)
+
+commit b8a8b0dba15b186fb255307084848b918da378d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 17 11:44:09 2020 +0200
+
+    usrloc: export the ka_logmsg parameter
+    
+    - GH #2440
+    
+    (cherry picked from commit d74ab3652eadb34b708755522048468ca8f0b2e8)
+
+commit 890bde4199ec3e9a5fd3c570729f964636a4fffe
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Aug 14 12:46:59 2020 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2cdaacfb4b54cd6d219c9f8f5becd8928b04f21d
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Aug 13 09:26:57 2020 +0200
+
+    pipelimit: docs - fixed typo
+    
+    (cherry picked from commit c87f3c1d07a5a3c51728d404200d60b10ed6159f)
+
+commit a24d6c421fac3487f45a352955ba1a2d3e3cf2b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 4 15:19:39 2020 +0200
+
+    evapi: use port in getaddrinfo() otherwise it does not bind as expected
+    
+    - regression added by cc098ecdfb556bf5efaab72fa767c773000f9fb6
+    
+    (cherry picked from commit 301302531c630803222e7f14a1c113b1a400f7a1)
+
+commit 91568036f1cfe3bedcf0d6a06c91c917f71c364b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Aug 4 15:01:17 2020 +0200
+
+    pkg/kamailio/deb: add focal support #2338
+
+commit 73c97ee8ca89bea202b09f6b75722396fbe05ba6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jul 31 16:00:06 2020 +0200
+
+    pua: update_version_puadb() use pres_id to select record
+    
+    * only relevant when db_mode is PUA_DB_ONLY
+    * call_id/to_tag/from_tag values can be "", for instance with
+      DIALOG_PUBLISH.* records. Then **ALL** records get version
+      field update
+    * update_vesion_puadb() is called from send_publish() and pres->id
+      value is valid after a call to get_record_puadb()
+    
+    related to #2414
+    
+    (cherry picked from commit e4aed5c272c8144dd1ddf58163c3ba501bb46a5b)
+
+commit 46b4cc31bb2cb0a513ddf283db5d0690b0b04f68
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jul 30 12:19:45 2020 +0200
+
+    pua: fix send_publish() behavior on PUA_DB_ONLY
+    
+    * dialog PUBLISH was missing SIP-If-Mach
+    * pua was inserting a new record for every dialog state
+    
+    fixes #2414
+    
+    (cherry picked from commit 91d9441a242da4746171bfa532fa2378328e8d73)
+
+commit fefe5aa727147de608ee9770b06b7f78b72ba4f9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 13:28:39 2020 +0200
+
+    pua_bla: clang-format
+    
+    * use STR_NULL
+    
+    (cherry picked from commit e542b779b29bda2d0a953a4e55921edc466a3936)
+
+commit 20c9f514b61f5c0c41890650691483ae2b261007
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 13:15:25 2020 +0200
+
+    pua_bla: convert to PKG/SHM memory logging helper functions
+    
+    * remove trailing spaces
+    * remove history notes and $Id
+    
+    (cherry picked from commit e4895abf5a533b96bf5e7112488a0facaabfc1a7)
+
+commit b5d848e774814b0673c4fec1734d6f3de3e1c877
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 13:10:04 2020 +0200
+
+    pua_usrloc: convert to PKG/SHM memory logging helper functions
+    
+    (cherry picked from commit be07ed5dd927448ffad3bd77f976249a888cfb2e)
+
+commit 3a44d393dc24d1f7caafedef90c0714c8ed74ff2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 10:53:48 2020 +0200
+
+    pua: convert to PKG/SHM memory logging helper functions
+    
+    * remove trailing spaces
+    
+    (cherry picked from commit c91e852d203017b571ae15e48c289f73f4824136)
+
+commit 7a440bdaf8f174f5a97228fab32754daf5cad348
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 29 10:32:05 2020 +0200
+
+    pua_dialoginfo: convert to PKG/SHM memory logging helper functions
+    
+    (cherry picked from commit 7e5cc3aa21a243ef19ec092fec10043b1178cae7)
+
+commit a0454945adf28d21e3fdb1261d38cf8427f4f7e5
+Merge: 6c4fceb2ab 6619be4624
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 30 10:28:28 2020 +0200
+
+    Merge pull request #2406 from kamailio/feature/remove-unused-var
+    
+    tm - remove not used route_mode var
+
+
 ===================== 2020-07-29 Version 5.4.0 Released =====================
 
 ===================== Changes Since Version 5.3.0 ===========================
