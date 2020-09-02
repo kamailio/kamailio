@@ -61,6 +61,7 @@ extern struct tm_binds tmb;
 
 int ka_ping_interval = 30;
 ka_destinations_list_t *ka_destinations_list = NULL;
+sruid_t ka_sruid;
 str ka_ping_from = str_init("sip:keepalive@kamailio.org");
 int ka_counter_del = 5;
 
@@ -123,6 +124,10 @@ static int mod_init(void)
 
 	if(ka_alloc_destinations_list() < 0)
 		return -1;
+
+	if(sruid_init(&ka_sruid, '-', "ka", SRUID_INC) < 0) {
+		return -1;
+	}
 
 	return 0;
 }
