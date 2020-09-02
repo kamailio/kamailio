@@ -27,8 +27,6 @@
 #include <stdlib.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
-#include <openssl/bn.h>
-#include <openssl/dh.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -63,7 +61,7 @@ static void setup_ecdh(SSL_CTX *ctx)
 {
    EC_KEY *ecdh;
 
-   if (OpenSSL_version_num() < 0x1000005fL) {
+   if (SSLeay() < 0x1000005fL) {
       return;
    }
 
