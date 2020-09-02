@@ -627,13 +627,14 @@ int tls_h_mod_pre_init_f(void)
 		return 0;
 	}
 	LM_DBG("preparing tls env for modules initialization\n");
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
+	OPENSSL_init_ssl(0, NULL);
+#else
 	LM_DBG("preparing tls env for modules initialization (libssl <=1.0)\n");
 	SSL_library_init();
-	SSL_load_error_strings();
-#else
-	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
 #endif
+	SSL_load_error_strings();
 	tls_mod_preinitialized=1;
 	return 0;
 }
@@ -667,7 +668,7 @@ int tls_h_mod_init_f(void)
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 	LM_WARN("You are using an old version of OpenSSL (< 0.9.7). Upgrade!\n");
 #endif
-	ssl_version=OpenSSL_version_num();
+	ssl_version=SSLeay();
 	/* check if version have the same major minor and fix level
 	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not)
 	 * - values is represented as 0xMMNNFFPPS: major minor fix patch status
@@ -679,7 +680,7 @@ int tls_h_mod_init_f(void)
 				" compiled \"%s\" (0x%08lx).\n"
 				" Please make sure a compatible version is used"
 				" (tls_force_run in kamailio.cfg will override this check)\n",
-				OpenSSL_version(OPENSSL_VERSION), ssl_version,
+				SSLeay_version(SSLEAY_VERSION), ssl_version,
 				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
 		if (cfg_get(tls, tls_cfg, force_run))
 			LM_WARN("tls_force_run turned on, ignoring "
@@ -856,7 +857,6 @@ int tls_check_sockets(tls_domains_cfg_t* cfg)
 void tls_h_mod_destroy_f(void)
 {
 	LM_DBG("tls module final tls destroy\n");
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
 	if(tls_mod_preinitialized > 0)
 		ERR_free_strings();
 	/* TODO: free all the ctx'es */
@@ -868,6 +868,5 @@ void tls_h_mod_destroy_f(void)
 	 * by atexit(), when shm is gone */
 	LM_DBG("executing openssl v1.1+ cleanup\n");
 	OPENSSL_cleanup();
-#endif
 #endif
 }
