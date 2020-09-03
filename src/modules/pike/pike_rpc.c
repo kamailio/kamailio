@@ -26,6 +26,7 @@
 #include "../../core/timer.h"	/* ticks_t */
 
 #include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "pike_top.h"
 
 #include <stdlib.h>
@@ -128,11 +129,11 @@ static void pike_top(rpc_t *rpc, void *c)
 		stropts = "HOT";
 
 	DBG("pike:top: string options: '%s'", stropts);
-	if ( strcasestr(stropts, "ALL") ) {
+	if ( strz_casesearch_strz(stropts, "ALL") ) {
 		options = NODE_STATUS_ALL;
-	} else if ( strcasestr(stropts, "HOT") ) {
+	} else if ( strz_casesearch_strz(stropts, "HOT") ) {
 		options |= NODE_STATUS_HOT;
-	} else if ( strcasestr(stropts, "WARM") ) {
+	} else if ( strz_casesearch_strz(stropts, "WARM") ) {
 		options |= NODE_STATUS_WARM;
 	}
 	DBG("pike:top: options: 0x%02x\n", options);
