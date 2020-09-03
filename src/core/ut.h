@@ -1053,6 +1053,12 @@ char* get_abs_pathname(str* base, str* file);
  */
 char *str_search(str *text, str *needle);
 
+char *str_casesearch(str *text, str *needle);
+
+char *strz_casesearch_strz(char *textz, char *needlez);
+
+char *str_casesearch_strz(str *text, char *needlez);
+
 /*
  * ser_memmem() returns the location of the first occurrence of data
  * pattern b2 of size len2 in memory block b1 of size len1 or

@@ -110,26 +110,6 @@ int tcp_set_clone_rcvbuf(int v)
 }
 
 #ifdef READ_HTTP11
-static inline char *strfindcasestrz(str *haystack, char *needlez)
-{
-	int i,j;
-	str needle;
-
-	needle.s = needlez;
-	needle.len = strlen(needlez);
-	for(i=0;i<haystack->len-needle.len;i++) {
-		for(j=0;j<needle.len;j++) {
-			if ( !((haystack->s[i+j]==needle.s[j]) ||
-					( isalpha((int)haystack->s[i+j])
-						&& ((haystack->s[i+j])^(needle.s[j]))==0x20 )) )
-				break;
-		}
-		if (j==needle.len)
-			return haystack->s+i;
-	}
-	return 0;
-}
-
 int tcp_http11_continue(struct tcp_connection *c)
 {
 	struct dest_info dst;
@@ -161,7 +141,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 
 	/* check for Expect header */
-	if(strfindcasestrz(&msg, "Expect: 100-continue")!=NULL)
+	if(str_casesearch_strz(&msg, "Expect: 100-continue")!=NULL)
 	{
 		init_dst_from_rcv(&dst, &c->rcv);
 		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
@@ -169,7 +149,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		}
 	}
 	/* check for Transfer-Encoding header */
-	if(strfindcasestrz(&msg, "Transfer-Encoding: chunked")!=NULL)
+	if(str_casesearch_strz(&msg, "Transfer-Encoding: chunked")!=NULL)
 	{
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
@@ -178,7 +158,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 	 * - HTTP Via format is different that SIP Via
 	 * - workaround: replace with Hia to be ignored by SIP parser
 	 */
-	if((p=strfindcasestrz(&msg, "\nVia:"))!=NULL)
+	if((p=str_casesearch_strz(&msg, "\nVia:"))!=NULL)
 	{
 		p++;
 		*p = 'H';
