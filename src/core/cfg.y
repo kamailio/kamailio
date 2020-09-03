@@ -1448,7 +1448,7 @@ assign_stm:
 	| USER_AGENT_HEADER EQUAL error { yyerror("string value expected"); }
 	| URI_HOST_EXTRA_CHARS EQUAL STRING { _sr_uri_host_extra_chars=$3; }
 	| URI_HOST_EXTRA_CHARS EQUAL error { yyerror("string value expected"); }
-	| HDR_NAME_EXTRA_CHARS EQUAL STRING { _ksr_hname_extra_chars=$3; }
+	| HDR_NAME_EXTRA_CHARS EQUAL STRING { _ksr_hname_extra_chars=(unsigned char*)$3; }
 	| HDR_NAME_EXTRA_CHARS EQUAL error { yyerror("string value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
 	| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }

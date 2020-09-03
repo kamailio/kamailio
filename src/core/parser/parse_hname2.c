@@ -154,17 +154,17 @@ static ksr_hdr_map_idx_t _ksr_hdr_map_idx[KSR_HDR_MAP_IDX_SIZE];
 /**
  * valid chars in header names
  */
-static char *_ksr_hname_chars_list = "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz-._+~";
+static unsigned char *_ksr_hname_chars_list = (unsigned char*)"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz-._+~";
 
 /**
  * additional valid chars in header names (core param)
  */
-char *_ksr_hname_extra_chars = "";
+unsigned char *_ksr_hname_extra_chars = (unsigned char*)"";
 
 /**
  * indexed valid chars in 256-array for 1-byte-index access check
  */
-static char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
+static unsigned char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
 
 
 /**
@@ -172,7 +172,7 @@ static char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
  */
 int ksr_hname_init_index(void)
 {
-	char c;
+	unsigned char c;
 	int i;
 
 	for(i=0; i<KSR_HDR_MAP_IDX_SIZE; i++) {
@@ -231,7 +231,7 @@ char *parse_sip_header_name(char* const begin, const char* const end,
 		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
-	if(_ksr_hname_chars_idx[*begin] == 0) {
+	if(_ksr_hname_chars_idx[(unsigned char)(*begin)] == 0) {
 		LM_ERR("invalid start of header name for [%.*s]\n",
 				(int)(end-begin), begin);
 		hdr->type = HDR_ERROR_T;
@@ -241,7 +241,7 @@ char *parse_sip_header_name(char* const begin, const char* const end,
 	hdr->name.s = begin;
 
 	for(p=begin+1; p<end; p++) {
-		if(_ksr_hname_chars_idx[*p] == 0) {
+		if(_ksr_hname_chars_idx[(unsigned char)(*p)] == 0) {
 			/* char not allowed in header name */
 			break;
 		}
@@ -279,9 +279,9 @@ char *parse_sip_header_name(char* const begin, const char* const end,
 
 done:
 	/* lookup header type */
-	if(_ksr_hdr_map_idx[hdr->name.s[0]].idxs >= 0) {
-		for(i = _ksr_hdr_map_idx[hdr->name.s[0]].idxs;
-					i <= _ksr_hdr_map_idx[hdr->name.s[0]].idxe; i++) {
+	if(_ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxs >= 0) {
+		for(i = _ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxs;
+					i <= _ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxe; i++) {
 			if(hdr->name.len == _ksr_hdr_map[i].hname.len
 					&& strncasecmp(hdr->name.s, _ksr_hdr_map[i].hname.s,
 							hdr->name.len) == 0) {
