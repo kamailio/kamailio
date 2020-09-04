@@ -103,6 +103,10 @@ int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
 	if(ka_str_copy(owner, &(dest->owner), NULL) < 0)
 		goto err;
 
+	if(sruid_next(&ka_sruid) < 0)
+		goto err;
+	ka_str_copy(&(ka_sruid.uid), &(dest->uuid), NULL);
+
 	dest->flags = flags;
 	dest->statechanged_clb = statechanged_clb;
 	dest->response_clb = response_clb;
@@ -236,6 +240,38 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 	return 0;
 
 }
+
+/*!
+* @function ka_find_destination_by_uuid
+*
+* @param *uuid uuid of ka_dest record
+* @param **target searched address in stack
+* @param **head which points target
+*	*
+* @result 1 successful  , 0 fail
+*/
+int ka_find_destination_by_uuid(str uuid, ka_dest_t **target, ka_dest_t **head){
+	ka_dest_t  *dest=0 ,*temp=0;
+
+	LM_DBG("finding destination with uuid:%.*s\n", uuid.len, uuid.s);
+
+	for(dest = ka_destinations_list->first ;dest ; temp = dest, dest = dest->next ){
+		if(!dest)
+			break;
+
+		if (STR_EQ(uuid, dest->uuid)){
+			*head = temp;
+			*target = dest;
+			LM_DBG("destination is found [target : %p] [head : %p] \r\n",target,temp);
+			return 1;
+		}
+	}
+
+	return 0;
+
+}
+
+
 /*!
 * @function free_destination
 * @abstract free ka_dest_t members
@@ -259,6 +295,9 @@ int free_destination(ka_dest_t *dest){
 		if(dest->owner.s)
 			shm_free(dest->owner.s);
 
+		if(dest->uuid.s)
+			shm_free(dest->uuid.s);
+		
 		shm_free(dest);
 	}
 
