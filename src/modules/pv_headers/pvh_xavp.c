@@ -539,38 +539,33 @@ int pvh_get_header(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	sr_xavp_t *xavi = NULL;
 	sr_xval_t *xval = NULL;
 	pv_value_t tv;
-	str hname = STR_NULL;
-	int idx = 0;
+	str *hname = NULL;
+	int idx, idxf;
 	int cnt = 0;
 
-	idx = param->pvi.u.ival;
+	if(pv_get_spec_name(msg, param, &tv) != 0 || (!(tv.flags & PV_VAL_STR))) {
+		LM_ERR("invalid header name, must be a string\n");
+		return -1;
+	}
+	hname = &tv.rs;
 
-	if(param->pvn.type == PV_NAME_PVAR) {
-		if(pv_get_spec_value(msg, (pv_spec_p)(param->pvn.u.dname), &tv) != 0) {
-			LM_ERR("cannot get avp value\n");
-			return -1;
-		}
-		if(!(tv.flags & PV_VAL_STR)) {
-			return pv_get_null(msg, param, res);
-		}
-		hname = tv.rs;
-	} else if(param->pvn.u.isname.type == AVP_NAME_STR) {
-		hname = param->pvn.u.isname.name.s;
-	} else {
-		return pv_get_null(msg, param, res);
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf) != 0) {
+		LM_ERR("invalid index\n");
+		return -1;
 	}
 
 	if(idx < 0) {
-		if((xavi = pvh_xavi_get_child(msg, &xavi_name, &hname)) == NULL)
+		if((xavi = pvh_xavi_get_child(msg, &xavi_name, hname)) == NULL)
 			cnt = 0;
 		else
-			cnt = xavi_count(&hname, &xavi);
+			cnt = xavi_count(hname, &xavi);
 		idx = idx + cnt;
 		if(idx < 0)
-			pv_get_null(msg, param, res);
+			return pv_get_null(msg, param, res);
 	}
 
-	xval = pvh_xavi_get_value(msg, &xavi_name, &hname, idx);
+	xval = pvh_xavi_get_value(msg, &xavi_name, hname, idx);
 
 	if(xval == NULL || !xval->v.s.s)
 		return pv_get_null(msg, param, res);
