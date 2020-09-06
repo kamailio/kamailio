@@ -487,10 +487,10 @@ modparam("uac", "reg_db_table", "uacreg")
 			host part, can have port and parameters. Must not include 'sip:'.
 			The username part of the Contact: URI will be the L_UUID field in the database.
 			</para>
-            <para>
+			<para>
 			A contact_addr value in the uacreg table will
 			override the parameter for this particular entry.
-		    </para>
+			</para>
 			<example>
 				<title>Set <varname>reg_contact_addr</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -1359,7 +1359,7 @@ event_route[uac:reply] {
 			<listitem><para>expires</para></listitem>
 			<listitem><para>flags</para></listitem>
 			<listitem><para>reg_delay</para></listitem>
-            <listitem><para>contact_addr</para></listitem>
+			<listitem><para>contact_addr</para></listitem>
 			<listitem><para>socket</para></listitem>
 		</itemizedlist>
 		</para>
@@ -1461,7 +1461,7 @@ event_route[uac:reply] {
 			<emphasis>reg_delay</emphasis> - delay initial registration with at least reg_delay seconds, e.g.,: 3
 			</para></listitem>
 		</itemizedlist>
-        <itemizedlist>
+		<itemizedlist>
 			<listitem><para>
 			<emphasis>contact_addr</emphasis> - Used contact address for sending out registration requests,
 			e.g.:, udp:192.168.0.125:5060
