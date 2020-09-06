@@ -491,6 +491,12 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 	}
 	hook = &uri->host;
 	hook->s = s;
+	p = q_memchr(s, ']', e - s);
+	if(p!=NULL)
+	{
+		/* move s pointer to end of IPv6 address*/
+		s = p + 1;
+	}
 	p = q_memchr(s, ':', e - s);
 	if(p!=NULL)
 	{
@@ -521,6 +527,12 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 	hook->len = e - hook->s;
 	trim(hook);
 
+	if(strncasecmp(uri->host.s, "[", 1)==0) {
+		/* required remove square brackets from IPv6 address */
+		uri->host.s++;
+		uri->host.len--;
+		uri->host.len--;
+	}
 	if(uri->host.len<=0)
 	{
 		LM_ERR("bad host part in [%.*s] at [%ld]\n",
