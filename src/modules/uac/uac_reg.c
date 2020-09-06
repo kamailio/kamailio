@@ -78,7 +78,7 @@ typedef struct _reg_uac
 	str   auth_password;
 	str   auth_ha1;
 	str   callid;
-    str   contact_addr;
+	str   contact_addr;
 	str   socket;
 	unsigned int cseq;
 	unsigned int flags;
@@ -526,10 +526,10 @@ int reg_ht_add(reg_uac_t *reg)
 		return -1;
 	}
 
-    if (!reg->contact_addr.s || reg->contact_addr.len == 0) 
-    {
-        reg->contact_addr=reg_contact_addr;
-    }
+	if (!reg->contact_addr.s || reg->contact_addr.len == 0) 
+	{
+		reg->contact_addr=reg_contact_addr;
+	}
 
 	len = reg->l_uuid.len + 1
 		+ reg->l_username.len + 1
@@ -542,7 +542,7 @@ int reg_ht_add(reg_uac_t *reg)
 		+ reg->auth_password.len + 1
 		+ reg->auth_ha1.len + 1
 		+ reg->socket.len + 1
-        + reg->contact_addr.len + 1
+		+ reg->contact_addr.len + 1
 		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
@@ -554,9 +554,8 @@ int reg_ht_add(reg_uac_t *reg)
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
 	if (reg->reg_delay) {
-        LM_INFO("reg->reg_delay: %u\n",reg->reg_delay);
 		nr->reg_delay = reg->reg_delay;
-    }
+	}
 	else if (reg_random_delay>0)
 		nr->reg_delay = kam_rand() % reg_random_delay;
 	nr->reg_init  = time(NULL);
@@ -576,7 +575,7 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
 	reg_copy_shm(&nr->auth_ha1, &reg->auth_ha1, 0);
 	reg_copy_shm(&nr->socket, &reg->socket, 0);
-    reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0)
+	reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0)
 	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	for(i=0; i<nr->auth_ha1.len; i++) {
@@ -1301,8 +1300,8 @@ static int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db_key_t 
 	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
 	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[12].val.int_val;
 
-    /*contact may be empty */
-    reg_db_set_attr(contact_addr, 13, 1);
+	/*contact may be empty */
+	reg_db_set_attr(contact_addr, 13, 1);
 	/* socket may be empty */
 	reg_db_set_attr(socket, 14, 1);
 
@@ -1332,7 +1331,7 @@ int uac_reg_load_db(void)
 		&expires_column,
 		&flags_column,
 		&reg_delay_column,
-        &contact_addr_column,
+		&contact_addr_column,
 		&socket_column
 	};
 	db1_res_t* db_res = NULL;
@@ -1469,7 +1468,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 		&expires_column,
 		&flags_column,
 		&reg_delay_column,
-        &contact_addr_column,
+		&contact_addr_column,
 		&socket_column
 	};
 	db_key_t db_keys[1] = {&l_uuid_column};
@@ -1876,7 +1875,7 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 				"timer_expires", (int)reg->timer_expires,
 				"reg_init",      (int)reg->reg_init,
 				"reg_delay",     (int)reg->reg_delay,
-                "contact_addr",  (reg->contact_addr.len)?
+				"contact_addr",  (reg->contact_addr.len)?
 										&reg->contact_addr:&none,
 				"socket",        &reg->socket
 				)<0) {
@@ -2136,7 +2135,7 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 				&reg.expires,
 				&reg.flags,
 				&reg.reg_delay,
-                &reg.contact_addr,
+				&reg.contact_addr,
 				&reg.socket
 			)<1)
 	{
