@@ -18,5 +18,5 @@ CREATE TABLE `uacreg` (
     CONSTRAINT l_uuid_idx UNIQUE (`l_uuid`)
 );
 
-INSERT INTO version (table_name, table_version) values ('uacreg','5');
+INSERT INTO version (table_name, table_version) values ('uacreg','4');
 

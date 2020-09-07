@@ -1,6 +1,6 @@
 {
   "name": "uacreg",
-  "version": 5,
+  "version": 4,
   "columns": [
     "id": {
       "type": "int",
@@ -73,9 +73,9 @@
       "null": false
     },
     "contact_addr": {
-        "type": "string",
-        "default": "",
-        "null": false
+      "type": "string",
+      "default": "",
+      "null": false
     },
     "socket": {
       "type": "string",
