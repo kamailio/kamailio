@@ -942,26 +942,6 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 			old_uri.len, old_uri.s, new_display->len, new_display->s,
 			new_uri->len, new_uri->s);
 
-	/* duplicate the decoded value */
-	p = pkg_malloc( new_uri->len);
-	if (!p) {
-		PKG_MEM_ERROR;
-		return;
-	}
-	memcpy( p, new_uri->s, new_uri->len);
-
-	/* build del/add lumps */
-	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
-	if (l==0) {
-		LM_ERR("del lump failed\n");
-		goto free;
-	}
-
-	if (insert_new_lump_after( l, p, new_uri->len, 0)==0) {
-		LM_ERR("insert new lump failed\n");
-		goto free;
-	}
-
 	/* deal with display name */
 	l = 0;
 	/* first remove the existing display */
@@ -972,8 +952,8 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		l = del_lump(msg, body->display.s-msg->buf, body->display.len, 0);
 		if (l==0) {
 			LM_ERR("display del lump failed\n");
-			goto free;
-			}
+			return;
+		}
 	}
 	if (new_display->s && new_display->len > 0) {
 		LM_DBG("inserting display [%.*s]\n",
@@ -982,18 +962,38 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		buf.s = pkg_malloc(new_display->len + 2);
 		if (buf.s==0) {
 			PKG_MEM_ERROR;
-			goto free;
+			return;
 		}
 		memcpy( buf.s, new_display->s, new_display->len);
 		buf.len = new_display->len;
 		if (l==0 && (l=get_display_anchor(msg, hdr, body, &buf)) == 0) {
 			LM_ERR("failed to insert anchor\n");
-			goto free2;
+			goto free1;
 		}
 		if (insert_new_lump_after(l, buf.s, buf.len, 0) == 0) {
 			LM_ERR("insert new display lump failed\n");
-			goto free2;
+			goto free1;
 		}
+	}
+
+	/* uri update - duplicate the decoded value */
+	p = pkg_malloc( new_uri->len);
+	if (!p) {
+		PKG_MEM_ERROR;
+		goto free1;
+	}
+	memcpy( p, new_uri->s, new_uri->len);
+
+	/* build del/add lumps */
+	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
+	if (l==0) {
+		LM_ERR("del lump failed\n");
+		goto free2;
+	}
+
+	if (insert_new_lump_after( l, p, new_uri->len, 0)==0) {
+		LM_ERR("insert new lump failed\n");
+		goto free2;
 	}
 
 	/* register tm callback to change replies,
@@ -1009,10 +1009,10 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	return;
 
 free2:
-	pkg_free(buf.s);
-
-free:
 	pkg_free(p);
+
+free1:
+	pkg_free(buf.s);
 }
 
 
