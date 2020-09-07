@@ -1464,7 +1464,7 @@ event_route[uac:reply] {
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>contact_addr</emphasis> - Used contact address for sending out registration requests,
-			e.g.:, udp:192.168.0.125:5060
+			e.g.:, 192.168.0.125:5060
 			</para></listitem>
 		</itemizedlist>
 		<itemizedlist>
