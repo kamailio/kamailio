@@ -392,7 +392,6 @@ void set_curl_mem_callbacks(void)
 			LM_ERR ("invalid memory manager: %d\n", curl_memory_manager);
 			break;
 	}
-
 }
 
 int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
@@ -400,7 +399,6 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	g = wg;
 	g->evbase = evbase;
 
-	set_curl_mem_callbacks();
 
 	g->multi = curl_multi_init();
 	LM_DBG("curl_multi %p initialized on global %p (evbase %p)\n", g->multi, g, evbase);
