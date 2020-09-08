@@ -553,9 +553,8 @@ int reg_ht_add(reg_uac_t *reg)
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
-	if (reg->reg_delay) {
+	if (reg->reg_delay) 
 		nr->reg_delay = reg->reg_delay;
-	}
 	else if (reg_random_delay>0)
 		nr->reg_delay = kam_rand() % reg_random_delay;
 	nr->reg_init  = time(NULL);
@@ -1093,6 +1092,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return 4;
 	if(reg->flags&UAC_REG_DISABLED)
 		return 4;
+
 	if(!(reg->flags & UAC_REG_INIT)) {
 		if(reg->reg_delay>0) {
 			if(tn < reg->reg_init+reg->reg_delay) {
@@ -1101,6 +1101,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		}
 		reg->flags |= UAC_REG_INIT;
 	}
+
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
