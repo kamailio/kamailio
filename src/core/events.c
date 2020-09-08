@@ -343,6 +343,7 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 							&& _sr_events_list.sip_reply_out[i]; i++) {
 						ret |= _sr_events_list.sip_reply_out[i](evp);
 					}
+					return ret;
 				} else return 1;
 		case SREV_TCP_WS_CLOSE:
 				if(unlikely(_sr_events_list.tcp_ws_close[0]!=0))
