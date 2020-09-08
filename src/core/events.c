@@ -334,6 +334,7 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 							&& _sr_events_list.sip_reply_out[i]; i++) {
 						ret |= _sr_events_list.sip_reply_out[i](evp);
 					}
+					return ret;
 				} else return 1;
 		default:
 			return -1;
