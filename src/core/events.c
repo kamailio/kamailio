@@ -353,6 +353,7 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 							&& _sr_events_list.tcp_ws_close[i]; i++) {
 						ret = _sr_events_list.tcp_ws_close[i](evp);
 					}
+					return ret;
 				} else return 1;
 		default:
 			return -1;
