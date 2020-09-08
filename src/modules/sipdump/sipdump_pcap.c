@@ -125,8 +125,8 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	char *p = NULL;
 
 	struct pcap_record_header v_pcap_record_header = {
-		.ts_sec = spd->tv.tv_sec,
-		.ts_usec = spd->tv.tv_usec,
+		.ts_sec = 0,
+		.ts_usec = 0,
 	};
 	struct pcap_ethernet_header v_pcap_ethernet_header = {
 		.type = 0,
@@ -147,6 +147,9 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	if(fs == NULL || spd == NULL) {
 		return;
 	}
+
+	v_pcap_record_header.ts_sec = spd->tv.tv_sec;
+	v_pcap_record_header.ts_usec = spd->tv.tv_usec;
 
 	data = spd->data;
 	if((sipdump_mode & SIPDUMP_MODE_WPCAPEX) && (spd->data.len < BUF_SIZE - 256)) {
