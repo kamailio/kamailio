@@ -182,6 +182,7 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	v_pcap_udp_header.src = ntohs(spd->src_port);
 	v_pcap_udp_header.dst = ntohs(spd->dst_port);
 	v_pcap_udp_header.length = ntohs(sizeof(struct pcap_udp_header) + data.len);
+	v_pcap_udp_header.checksum = 0;
 
 	/* IP header */
 	if (spd->afid == AF_INET6) {
