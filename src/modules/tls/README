@@ -1426,7 +1426,7 @@ end
 
 10.34. rand_engine (str)
 
-   Set the ranondom number generator engine for libssl.
+   Set the random number generator engine for libssl.
 
    Note: the default random number generator (PRNG) engine of libssl
    v1.1.x is not designed for multi-process applications and can result in
