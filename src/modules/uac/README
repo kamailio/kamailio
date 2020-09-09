@@ -524,6 +524,9 @@ modparam("uac", "reg_db_table", "uacreg")
    username part of the Contact: URI will be the L_UUID field in the
    database.
 
+   A contact_addr value in the uacreg table will override the parameter
+   for this particular entry.
+
    Example 1.17. Set reg_contact_addr parameter
 ...
 modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
@@ -1111,8 +1114,10 @@ event_route[uac:reply] {
      * flags
      * reg_delay
      * socket
+     * contact_addr
 
-   Use a dot (.) if no value should be set for auth_password or auth_ha1.
+   Use a dot (.) if no value should be set for auth_password, auth_ha1, or
+   contact_addr.
 
    Example 1.45. uac.reg_add usage
 ...
@@ -1154,6 +1159,11 @@ event_route[uac:reply] {
 
      * reg_delay - delay initial registration with at least reg_delay
        seconds, e.g.,: 3
+
+     * contact_addr - contact address to be used for this record instead
+       of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It
+       can be set to '.' (dot) to skip setting it and then
+       reg_contact_addr modparam is used.
 
      * socket - Used socket for sending out registration requests, e.g.:,
        udp:192.168.0.125:5060
