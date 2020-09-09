@@ -456,14 +456,17 @@ struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len,
 }
 
 
+/**
+ * free lump content
+ */
 void free_lump(struct lump* lmp)
 {
-	if (lmp && (lmp->op==LUMP_ADD)){
-		if (lmp->u.value){
-			if (lmp->flags &(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
+	if (lmp && (lmp->op==LUMP_ADD)) {
+		if (lmp->u.value) {
+			if (lmp->flags & LUMPFLAG_SHMEM) {
 				LM_CRIT("non free-able lump: %p flags=%x\n", lmp, lmp->flags);
 				abort();
-			}else{
+			} else if(!(lmp->flags & LUMPFLAG_DUPED)) {
 				pkg_free(lmp->u.value);
 				lmp->u.value=0;
 				lmp->len=0;
