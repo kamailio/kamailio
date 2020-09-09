@@ -72,6 +72,11 @@
       "default": 0,
       "null": false
     },
+    "contact_addr": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
     "socket": {
       "type": "string",
       "default": "",

@@ -18,6 +18,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
@@ -38,6 +39,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
@@ -61,6 +63,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
