@@ -283,7 +283,7 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 				memcpy(p, "msrp://", 7);
 				p+=7;
 			}
-			strcpy(p, ip_addr2a(&mf->tcpinfo->rcv->src_ip));
+			strcpy(p, ip_addr2strz(&mf->tcpinfo->rcv->src_ip));
 			strcat(p, ":");
 			strcat(p, int2str(mf->tcpinfo->rcv->src_port, NULL));
 			s.len = strlen(s.s);
