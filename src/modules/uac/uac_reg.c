@@ -526,7 +526,7 @@ int reg_ht_add(reg_uac_t *reg)
 		return -1;
 	}
 
-	if (!reg->contact_addr.s || reg->contact_addr.len == 0) 
+	if (!reg->contact_addr.s || reg->contact_addr.len == 0)
 	{
 		reg->contact_addr=reg_contact_addr;
 	}
@@ -553,7 +553,7 @@ int reg_ht_add(reg_uac_t *reg)
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
-	if (reg->reg_delay) 
+	if (reg->reg_delay)
 		nr->reg_delay = reg->reg_delay;
 	else if (reg_random_delay>0)
 		nr->reg_delay = kam_rand() % reg_random_delay;
@@ -594,9 +594,9 @@ int reg_ht_add(reg_uac_t *reg)
 }
 
 
- /**
-  *
-  */
+/**
+ *
+ */
 int reg_ht_rm(reg_uac_t *reg)
 {
 	unsigned int slot1, slot2;
@@ -2136,8 +2136,8 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 				&reg.expires,
 				&reg.flags,
 				&reg.reg_delay,
-				&reg.contact_addr,
-				&reg.socket
+				&reg.socket,
+				&reg.contact_addr
 			)<1)
 	{
 		rpc->fault(ctx, 400, "Invalid Parameters");
@@ -2152,6 +2152,10 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	if(reg.auth_ha1.len==1 && reg.auth_ha1.s[0] == '.') {
 		reg.auth_ha1.s = NULL;
 		reg.auth_ha1.len = 0;
+	}
+
+	if(reg.contact_addr.len==1 && reg.contact_addr.s[0] == '.') {
+		reg.contact_addr = reg_contact_addr;
 	}
 
 	if(uac_reg_check_password(&reg) < 0) {
