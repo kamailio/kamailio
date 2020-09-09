@@ -174,17 +174,5 @@ void qm_sums(void* qm);
 void qm_mod_get_stats(void *qm, void **qm_root);
 void qm_mod_free_stats(void *root);
 
-typedef struct _mem_counter{
-	const char *file;
-	const char *func;
-	const char *mname;
-	unsigned long line;
-
-	unsigned long size;
-	int count;
-
-	struct _mem_counter *next;
-} mem_counter;
-
 #endif
 #endif

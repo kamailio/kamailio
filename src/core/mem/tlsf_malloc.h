@@ -89,18 +89,6 @@ unsigned long tlsf_available(tlsf_t pool);
 void tlsf_mod_get_stats(tlsf_t pool, void **root);
 void tlsf_mod_free_stats(void *root);
 
-typedef struct _mem_counter{
-	const char *file;
-	const char *func;
-	const char *mname;
-	unsigned long line;
-
-	unsigned long size;
-	int count;
-
-	struct _mem_counter *next;
-} mem_counter;
-
 #if defined(__cplusplus)
 };
 #endif
