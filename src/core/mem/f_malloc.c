@@ -1367,6 +1367,16 @@ void fm_shm_sums(void* qmp)
 	fm_sums(qmp);
 	fm_shm_unlock();
 }
+void fm_shm_mod_get_stats(void *qmp, void **qm_rootp)
+{
+	fm_shm_lock();
+	fm_mod_get_stats(qmp, qm_rootp);
+	fm_shm_unlock();
+}
+void fm_shm_mod_free_stats(void *qm_rootp)
+{
+	fm_mod_free_stats(qm_rootp);
+}
 
 
 /**
@@ -1413,8 +1423,8 @@ int fm_malloc_init_shm_manager(void)
 	ma.xavailable     = fm_shm_available;
 	ma.xsums          = fm_shm_sums;
 	ma.xdestroy       = fm_malloc_destroy_shm_manager;
-	ma.xmodstats      = fm_mod_get_stats;
-	ma.xfmodstats     = fm_mod_free_stats;
+	ma.xmodstats      = fm_shm_mod_get_stats;
+	ma.xfmodstats     = fm_shm_mod_free_stats;
 	ma.xglock         = fm_shm_glock;
 	ma.xgunlock       = fm_shm_gunlock;
 
