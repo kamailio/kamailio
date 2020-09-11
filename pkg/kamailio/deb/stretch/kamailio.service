@@ -20,6 +20,8 @@ Restart=on-failure
 # /run/kamailio in tmpfs
 RuntimeDirectory=kamailio
 RuntimeDirectoryMode=0770
+# necessary for chown of control files e.g. for jsonrpcs and ctl modules
+AmbientCapabilities=CAP_CHOWN
 
 [Install]
 WantedBy=multi-user.target
