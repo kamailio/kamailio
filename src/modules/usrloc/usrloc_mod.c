@@ -258,6 +258,7 @@ static param_export_t params[] = {
 	{"ka_domain",           PARAM_STR, &ul_ka_domain},
 	{"ka_method",           PARAM_STR, &ul_ka_method},
 	{"ka_filter",           PARAM_INT, &ul_ka_filter},
+	{"ka_timeout",          PARAM_INT, &ul_keepalive_timeout},
 	{"ka_loglevel",         PARAM_INT, &ul_ka_loglevel},
 	{"ka_logmsg",           PARAM_STR, &ul_ka_logmsg},
 	{0, 0, 0}
