@@ -604,8 +604,8 @@ modparam("usrloc", "desc_time_order", 1)
 		<title><varname>timer_interval</varname> (int)</title>
 		<para>
 		Number of seconds between two timer runs. The module uses a timer to
-		delete expired contacts, synchronize with database and other tasks,
-		that need to be run periodically.
+		delete expired contacts, synchronize with database, send keepalives
+		and other tasks, that need to be run periodically.
 		</para>
 		<para>
 		<emphasis>
@@ -1421,6 +1421,36 @@ modparam("usrloc", "ka_domain", "mydomain.com")
 modparam("usrloc", "ka_filter", 1)
 ...
 		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_timeout">
+		<title><varname>ka_timeout</varname> (int)</title>
+		<para>
+		The parameter sets the interval in seconds after which a
+		contact is removed from location table if it does not reply to SIP
+		keepalives (usually OPTIONS ping requests).
+		</para>
+		<para>
+		The features is available only for contacts that are stored in memory
+		(not working for db only mode of the usrloc module).
+		</para>
+		<para>
+		Keepalives are sent stateless, not using TM module. The value of this
+		parameter has to be few times higher than timer interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_timeout", 120)
+...
+</programlisting>
 		</example>
 	</section>
 
