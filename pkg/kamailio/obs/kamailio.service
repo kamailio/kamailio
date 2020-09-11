@@ -13,6 +13,8 @@ Environment='PKG_MEMORY=4'
 EnvironmentFile=-/etc/sysconfig/kamailio
 ExecStart=/usr/sbin/kamailio -DD -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
 Restart=on-failure
+# necessary for chown of control files e.g. for jsonrpcs and ctl modules
+AmbientCapabilities=CAP_CHOWN
 
 [Install]
 WantedBy=multi-user.target
