@@ -105,6 +105,13 @@ An open IRC discussion channel is managed by the community:
   * irc server: irc.freenode.net
   * irc channel: #kamailio
 
+### Matrix Channel
+
+An open Matrix discussion channel is managed by the community:
+
+  * server: https://riot.kamailio.dev/
+  * Room: https://riot.kamailio.dev/#/room/#kamailio:matrix.kamailio.dev
+
 ## Useful Resources
 
 News:
