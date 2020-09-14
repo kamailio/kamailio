@@ -442,6 +442,34 @@ if(!loose_route_preloaded()) {
       </example>
     </section>
 
+	<section id="rr.f.loose_route_mode">
+      <title><function moreinfo="none">loose_route_mode(vmode)</function></title>
+
+	  <para>The function is similar to `loose_route()`, but it does only
+	  loose routing processing if vmode==1, skipping the testing of r-uri==myself
+	  for performing strict routing. If vmode==0, it behaves like loose_route().
+      </para>
+      <para>It is a convenient function to use with application servers that
+      set the Contact URI to SIP server address.
+      </para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>loose_route_mode</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(has_totag() and uri==myself) {
+    if(loose_route_mode("1")) {
+        rewritehostport("my.app.server:5090");
+        t_relay();
+        exit;
+    }
+}
+...
+</programlisting>
+      </example>
+    </section>
 
     <section id="rr.f.record_route">
       <title><function moreinfo="none">record_route([sparams])</function></title>
