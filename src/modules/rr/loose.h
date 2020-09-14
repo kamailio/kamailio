@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -42,6 +42,15 @@
 #define RR_NOT_DRIVEN -1	/*!< The next hop is not determined from the route set */
 #define RR_FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
 #define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
+
+
+/*!
+ * \brief Do loose routing as per RFC3261
+ * \param _m SIP message
+ * \param _mode - 0: try loose or strict routing; 1: try loose routing only
+ * \return negative on failure or preloaded, 1 on success
+ */
+int loose_route_mode(sip_msg_t* _m, int _mode);
 
 
 /*!

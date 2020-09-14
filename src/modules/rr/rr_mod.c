@@ -75,6 +75,7 @@ static int it_list_fixup(void** param, int param_no);
 /* wrapper functions */
 static int w_loose_route(struct sip_msg *, char *, char *);
 static int w_loose_route_preloaded(struct sip_msg *, char *, char *);
+static int w_loose_route_mode(struct sip_msg *, char *, char *);
 static int w_record_route(struct sip_msg *, char *, char *);
 static int w_record_route_preset(struct sip_msg *,char *, char *);
 static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
@@ -99,6 +100,8 @@ static cmd_export_t cmds[] = {
 	{"loose_route",          (cmd_function)w_loose_route,		0, 0, 0,
 			REQUEST_ROUTE},
 	{"loose_route_preloaded", (cmd_function)w_loose_route_preloaded,0, 0, 0,
+			REQUEST_ROUTE},
+	{"loose_route_mode", (cmd_function)w_loose_route_mode, 1, fixup_igp_null, fixup_free_igp_null,
 			REQUEST_ROUTE},
 	{"record_route",         (cmd_function)w_record_route,		0, 0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
@@ -273,7 +276,7 @@ static int direction_fixup(void** param, int param_no)
  */
 static int w_loose_route(struct sip_msg *msg, char *p1, char *p2)
 {
-	return loose_route(msg);
+	return loose_route_mode(msg, 0);
 }
 
 /**
@@ -282,7 +285,7 @@ static int w_loose_route(struct sip_msg *msg, char *p1, char *p2)
 static int w_loose_route_preloaded(sip_msg_t *msg, char *p1, char *p2)
 {
 	int ret;
-	ret = loose_route(msg);
+	ret = loose_route_mode(msg, 0);
 	if(ret == RR_PRELOADED) {
 		return 1;
 	}
@@ -290,7 +293,20 @@ static int w_loose_route_preloaded(sip_msg_t *msg, char *p1, char *p2)
 }
 
 /**
- * wrapper for loose_route_(msg)
+ * wrapper for loose_route_mode(msg, mode)
+ */
+static int w_loose_route_mode(struct sip_msg *msg, char *pmode, char *p2)
+{
+	int vmode = 0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &vmode) < 0) {
+		LM_ERR("failed to get the mode parameter\n");
+		return -1;
+	}
+	return loose_route_mode(msg, vmode);
+}
+
+/**
+ * wrapper for loose_route_preloaded(msg)
  */
 static int ki_loose_route_preloaded(sip_msg_t *msg)
 {
@@ -300,6 +316,14 @@ static int ki_loose_route_preloaded(sip_msg_t *msg)
 		return 1;
 	}
 	return -1;
+}
+
+/**
+ * wrapper for loose_route_mode(msg, vmode)
+ */
+static int ki_loose_route_mode(sip_msg_t *msg, int vmode)
+{
+	return loose_route_mode(msg, vmode);
 }
 
 /**
@@ -850,6 +874,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("loose_route_preloaded"),
 		SR_KEMIP_INT, ki_loose_route_preloaded,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("loose_route_mode"),
+		SR_KEMIP_INT, ki_loose_route_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rr"), str_init("remove_record_route"),

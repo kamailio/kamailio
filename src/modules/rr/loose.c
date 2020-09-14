@@ -990,9 +990,10 @@ done:
 /*!
  * \brief Do loose routing as per RFC3261
  * \param _m SIP message
+ * \param _mode - 0: try loose or strict routing; 1: try loose routing only
  * \return negative on failure or preloaded, 1 on success
  */
-int loose_route(struct sip_msg* _m)
+int loose_route_mode(sip_msg_t* _m, int _mode)
 {
 	int ret;
 
@@ -1012,12 +1013,22 @@ int loose_route(struct sip_msg* _m)
 	} else if (ret == 1) {
 		return after_loose(_m, 1);
 	} else {
-		if (is_myself(&_m->parsed_uri)) {
+		if ((_mode==0) && (is_myself(&_m->parsed_uri))) {
 			return after_strict(_m);
 		} else {
 			return after_loose(_m, 0);
 		}
 	}
+}
+
+/*!
+ * \brief Do loose routing as per RFC3261
+ * \param _m SIP message
+ * \return negative on failure or preloaded, 1 on success
+ */
+int loose_route(struct sip_msg* _m)
+{
+	return loose_route_mode(_m, 0);
 }
 
 /**
