@@ -3252,6 +3252,7 @@ void ds_ping_set(ds_set_t *node)
 	uac_req_t uac_r;
 	int i, j;
 	str ping_from;
+	int state;
 
 	if(!node)
 		return;
@@ -3300,6 +3301,18 @@ void ds_ping_set(ds_set_t *node)
 					< 0) {
 				LM_ERR("unable to ping [%.*s]\n", node->dlist[j].uri.len,
 						node->dlist[j].uri.s);
+				state = DS_TRYING_DST;
+				if(ds_probing_mode != DS_PROBE_NONE) {
+					state |= DS_PROBING_DST;
+				}
+				/* check if meantime someone disabled the target via RPC */
+				if(!(node->dlist[j].flags & DS_DISABLED_DST)
+						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,
+								state) != 0) {
+					LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
+							node->dlist[j].uri.len, node->dlist[j].uri.s,
+							node->id);
+				}
 			}
 		}
 	}
