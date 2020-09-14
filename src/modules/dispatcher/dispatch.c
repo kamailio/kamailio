@@ -2070,6 +2070,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	unsigned int hash;
 	ds_set_t *idx = NULL;
 	int ulast = 0;
+	int vlast = 0;
 
 	if(msg == NULL) {
 		LM_ERR("bad parameters\n");
@@ -2124,8 +2125,11 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			}
 			break;
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
+			lock_get(&idx->lock);
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
+			vlast = idx->last;
+			lock_release(&idx->lock);
 			ulast = 1;
 			break;
 		case DS_ALG_HASHAUTHUSER: /* 5 - hash auth username */
@@ -2136,8 +2140,11 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					break;
 				case 1:
 					/* No Authorization found: Use round robin */
+					lock_get(&idx->lock);
 					hash = idx->last;
 					idx->last = (idx->last + 1) % idx->nr;
+					vlast = idx->last;
+					lock_release(&idx->lock);
 					ulast = 1;
 					break;
 				default:
@@ -2158,8 +2165,10 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			hash = 0;
 			break;
 		case DS_ALG_WEIGHT: /* 9 - weight based distribution */
+			lock_get(&idx->lock);
 			hash = idx->wlist[idx->wlast];
 			idx->wlast = (idx->wlast + 1) % 100;
+			lock_release(&idx->lock);
 			break;
 		case DS_ALG_CALLLOAD: /* 10 - call load based distribution */
 			/* only INVITE can start a call */
@@ -2189,8 +2198,10 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			}
 			break;
 		case DS_ALG_RELWEIGHT: /* 11 - relative weight based distribution */
+			lock_get(&idx->lock);
 			hash = idx->rwlist[idx->rwlast];
 			idx->rwlast = (idx->rwlast + 1) % 100;
+			lock_release(&idx->lock);
 			break;
 		case DS_ALG_PARALLEL: /* 12 - parallel dispatching */
 			hash = 0;
@@ -2240,10 +2251,13 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		rstate->emode = 1;
 	}
 
-	/* update last field for next select to point after the current active used */
-	if(ulast) {
+	/* update last field for next select to point after the current active used,
+	 * if not updated meanwhile */
+	lock_get(&idx->lock);
+	if(ulast && (vlast == idx->last)) {
 		idx->last = (hash + 1) % idx->nr;
 	}
+	lock_release(&idx->lock);
 
 	LM_DBG("selected [%d-%d-%d/%d] <%.*s>\n", rstate->alg, rstate->setid,
 			rstate->umode, hash,
