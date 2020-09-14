@@ -103,13 +103,22 @@ static void ka_options_callback(
 
 	str *uuid = (str *)(*ps->param);
 
+	LM_DBG("ka_options_callback with uuid: %.*s\n", uuid->len, uuid->s);
+
 	// Retrieve ka_dest by uuid from destination list
+	ka_lock_destination_list();
 	ka_dest_t *ka_dest=0,*hollow=0;
 	if (!ka_find_destination_by_uuid(*uuid, &ka_dest, &hollow)) {
 		LM_ERR("Couldn't find destination \r\n");
+		shm_free(uuid->s);
+		shm_free(uuid);
+		ka_unlock_destination_list();
 		return;
 	}
+	lock_get(&ka_dest->lock); // Lock record so we prevent to be removed in the meantime
+	shm_free(uuid->s);
 	shm_free(uuid);
+	ka_unlock_destination_list();
 
 	uri.s = t->to.s + 5;
 	uri.len = t->to.len - 8;
@@ -141,6 +150,7 @@ static void ka_options_callback(
 	if(ka_dest->response_clb != NULL) {
 		ka_dest->response_clb(&ka_dest->uri, ps, ka_dest->user_attr);
 	}
+	lock_release(&ka_dest->lock);
 }
 
 /*
