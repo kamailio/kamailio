@@ -1174,7 +1174,7 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
 			<itemizedlist>
 				<listitem>
 					<para><emphasis>0x01</emphasis> - save the contacts only
-					in memory cache without no DB operation;
+					in memory cache with no DB operation;
 					</para>
 				</listitem>
 				<listitem>
