@@ -245,21 +245,22 @@ Chapter 1. Admin Guide
    If path support is enabled in the registrar module, a call to save(...)
    stores the values of the Path Header(s) along with the contact into
    usrloc. There are three modes regarding the reply to a REGISTER
-   including one or more Path HFs:
+   including one or more Path header fields:
      * off - stores the value of the Path headers into usrloc without
        passing it back to the UAC in the reply.
      * lazy - stores the Path header and passes it back to the UAC if
-       Path-support is indicated by the “path” param in the Supported HF.
+       Path-support is indicated by the “path” param in the Supported
+       header field.
      * strict - rejects the registration with “420 Bad Extension” if
        there's a Path header but no support for it is indicated by the
        UAC. Otherwise it's stored and passed back to the UAC.
 
    A call to lookup(...) always uses the path header if found, and inserts
-   it as Route HF either in front of the first Route HF, or after the last
-   Via HF if no Route is present. It also sets the destination uri to the
-   first Path uri, thus overwriting the received-uri, because NAT has to
-   be handled at the outbound-proxy of the UAC (the first hop after
-   client's NAT).
+   it as Route header field either in front of the first Route header
+   field, or after the last Via header field if no Route is present. It
+   also sets the destination uri to the first Path uri, thus overwriting
+   the received-uri, because NAT has to be handled at the outbound-proxy
+   of the UAC (the first hop after client's NAT).
 
    The whole process is transparent to the user, so no config changes are
    required beside setting the registrar-parameters “use_path” and
@@ -329,10 +330,10 @@ Chapter 1. Admin Guide
 
 3.1. default_expires (integer)
 
-   If the processed message contains neither Expires HFs nor expires
-   contact parameters, this value will be used for newly created usrloc
-   records. The parameter contains number of second to expire (for example
-   use 3600 for one hour). If it is set to a lower value than the
+   If the processed message contains neither Expires header fields nor
+   expires contact parameters, this value will be used for newly created
+   usrloc records. The parameter contains number of second to expire (for
+   example use 3600 for one hour). If it is set to a lower value than the
    “min_expires” parameter then it will be ignored. This parameter can be
    modified via ser config framework. A random value in a specific
    interval can be selected by using the default_expires_range parameter
@@ -892,8 +893,8 @@ request_route {
 4.1.  save(domain, [, flags [, uri]])
 
    The function processes a REGISTER message. It can add, remove or modify
-   location records (in usrloc) depending on Contact and Expires HFs in
-   the REGISTER message. On success and when called from the
+   location records (in usrloc) depending on Contact and Expires header
+   fields in the REGISTER message. On success and when called from the
    REQUEST_ROUTE, “200 OK” will be returned listing all contacts that are
    currently in the location database. On an error, an error message will
    be sent with a short description in reason phrase.
@@ -903,7 +904,7 @@ request_route {
        then this must be name of the table which stores the contacts.
      * flags (optional) - the value may be a bitwise OR of the following
        flags:
-          + 0x01 - save the contacts only in memory cache without no DB
+          + 0x01 - save the contacts only in memory cache with no DB
             operation;
           + 0x02 - do not generate a SIP reply to the current REGISTER
             request. When used in ONREPLY_ROUTE, this parameter is
