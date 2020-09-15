@@ -28,7 +28,7 @@
 		If path support is enabled in the registrar module, a call to save(...)
 		stores the values of the Path Header(s) along with the contact into usrloc. 
 		There are three modes regarding the reply to a REGISTER including
-		one or more Path HFs:
+		one or more Path header fields:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -42,7 +42,7 @@
 			<para>
 				<emphasis>lazy</emphasis> - stores the Path header and 
 				passes it back to the UAC if Path-support is indicated 
-				by the <quote>path</quote> param in the Supported HF.
+				by the <quote>path</quote> param in the Supported header field.
 			</para>
 			</listitem>
 			<listitem>
@@ -56,8 +56,8 @@
 		</itemizedlist>
 		<para>
 		A call to lookup(...) always uses the path header if
-		found, and inserts it as Route HF either in front of
-		the first Route HF, or after the last Via HF if no
+		found, and inserts it as Route header field either in front of
+		the first Route header field, or after the last Via header field if no
 		Route is present. It also sets the destination uri to
 		the first Path uri, thus overwriting the received-uri,
 		because NAT has to be handled at the outbound-proxy of
@@ -131,7 +131,7 @@
 		<title><varname>default_expires</varname> (integer)</title>
 		<para>
 		If the processed message contains neither Expires 
-		<acronym>HFs</acronym> nor expires contact parameters, this value 
+		header fields nor expires contact parameters, this value 
 		will be used for newly created usrloc records. The parameter contains 
 		number of second to expire (for example use 3600 for one hour). If it
 		is set to a lower value than the <quote>min_expires</quote> parameter
@@ -1048,7 +1048,7 @@ request_route {
 		</title>
 		<para>
 		The function processes a <emphasis>REGISTER</emphasis> message. It can add, remove or 
-		modify location records (in usrloc) depending on Contact and Expires HFs in the 
+		modify location records (in usrloc) depending on Contact and Expires header fields in the 
 		REGISTER message. On success and when called from the REQUEST_ROUTE, 
 		<quote>200 OK</quote> will be returned listing all contacts that are currently in 
 		the location database. On an error, an error message will be sent with a short
