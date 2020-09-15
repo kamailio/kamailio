@@ -16,20 +16,23 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module offers topology hiding by stripping the SIP routing
-		headers that show topology details.
+		This module offers topology hiding for INVITE-based dialogs, by stripping
+		the SIP routing headers that show topology details .
 		The script interpreter gets the SIP messages with full content,
 		so all existing functionality is preserved.
 	</para>
 	<para>
 		The module is transparent for the configuration writer. It only needs to be
-		loaded (tune the parameters if needed).
+		loaded (tune the module parameters if needed).
 	</para>
 	<para>
 		It also works for SIP MESSAGE or other requests that do not create
-		a call dialog -- record_route() must be used for them as well, the
+		a dialog -- record_route() must be used for them as well, the
 		headers are not going to be in the messages sent to the network, they
 		are needed to know local addresses used to communicate with each side.
+		At this moment it is not designed to work for presence (SUBSCRIBE-based)
+		dialogs. The REGISTER and PUBLISH requests are skipped from processing
+		by this module, expected to be terminated on a local SIP server.
 	</para>
 	</section>
 	<section>
