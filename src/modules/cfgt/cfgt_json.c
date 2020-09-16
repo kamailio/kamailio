@@ -43,6 +43,10 @@ int _cfgt_get_array_avp_vals(struct sip_msg *msg, pv_param_t *param,
 		LM_ERR("invalid name\n");
 		return -1;
 	}
+	if(name_type == 0 && avp_name.n == 0) {
+		LM_DBG("skip name_type:%d avp_name:%d\n", name_type, avp_name.n);
+		return 0;
+	}
 	*jobj = srjson_CreateArray(jdoc);
 	if(*jobj == NULL) {
 		LM_ERR("cannot create json object\n");
@@ -286,8 +290,8 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 						el = el->next;
 						continue;
 					}
-					if(srjson_GetArraySize(jdoc, jobj) == 0
-							&& !(mask & CFGT_DP_NULL)) {
+					if(jobj == NULL || (srjson_GetArraySize(jdoc, jobj) == 0
+							&& !(mask & CFGT_DP_NULL))) {
 						el = el->next;
 						continue;
 					}
@@ -314,6 +318,16 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 				}
 				snprintf(iname, 128, "$xavp(%.*s)", item_name.len, item_name.s);
 			} else {
+				if(el->pvname.len > 3 && strncmp("$T_", el->pvname.s, 3) == 0) {
+					LM_DBG("skip tm var[%.*s]\n", el->pvname.len, el->pvname.s);
+					el = el->next;
+					continue;
+				}
+				if(strchr(el->pvname.s + 1, 36) != NULL) {
+					LM_DBG("skip dynamic format [%.*s]\n", el->pvname.len, el->pvname.s);
+					el = el->next;
+					continue;
+				}
 				if(pv_get_spec_value(msg, &el->spec, &value) != 0) {
 					LM_WARN("can't get value[%.*s]\n", el->pvname.len,
 							el->pvname.s);
