@@ -733,6 +733,20 @@ resetdebug();
 		&kamcmd; pkg.stats index 10
 		</programlisting>
     </section>
+	<section id="kex.r.pkg.info">
+		<title>
+		<function moreinfo="none">pkg.info</function>
+		</title>
+		<para>
+			Get pkg manager details.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc pkg.info
+		</programlisting>
+    </section>
 	<section id="kex.r.stats.get_statistics">
 		<title>
 		<function moreinfo="none">stats.get_statistics</function>
