@@ -75,17 +75,18 @@ Ovidiu Sas
               4.20. core.ppdefines
               4.21. core.modules
               4.22. pkg.stats
-              4.23. stats.get_statistics
-              4.24. stats.fetch
-              4.25. stats.fetchn
-              4.26. stats.reset_statistics
-              4.27. stats.clear_statistics
-              4.28. system.listMethods
-              4.29. system.methodHelp
-              4.30. system.methodSignature
-              4.31. mod.mem_stats
-              4.32. mod.stats
-              4.33. mod.mem_statsx
+              4.23. pkg.info
+              4.24. stats.get_statistics
+              4.25. stats.fetch
+              4.26. stats.fetchn
+              4.27. stats.reset_statistics
+              4.28. stats.clear_statistics
+              4.29. system.listMethods
+              4.30. system.methodHelp
+              4.31. system.methodSignature
+              4.32. mod.mem_stats
+              4.33. mod.stats
+              4.34. mod.mem_statsx
 
    List of Examples
 
@@ -154,17 +155,18 @@ Chapter 1. Admin Guide
         4.20. core.ppdefines
         4.21. core.modules
         4.22. pkg.stats
-        4.23. stats.get_statistics
-        4.24. stats.fetch
-        4.25. stats.fetchn
-        4.26. stats.reset_statistics
-        4.27. stats.clear_statistics
-        4.28. system.listMethods
-        4.29. system.methodHelp
-        4.30. system.methodSignature
-        4.31. mod.mem_stats
-        4.32. mod.stats
-        4.33. mod.mem_statsx
+        4.23. pkg.info
+        4.24. stats.get_statistics
+        4.25. stats.fetch
+        4.26. stats.fetchn
+        4.27. stats.reset_statistics
+        4.28. stats.clear_statistics
+        4.29. system.listMethods
+        4.30. system.methodHelp
+        4.31. system.methodSignature
+        4.32. mod.mem_stats
+        4.33. mod.stats
+        4.34. mod.mem_statsx
 
 1. Overview
 
@@ -457,17 +459,18 @@ resetdebug();
    4.20. core.ppdefines
    4.21. core.modules
    4.22. pkg.stats
-   4.23. stats.get_statistics
-   4.24. stats.fetch
-   4.25. stats.fetchn
-   4.26. stats.reset_statistics
-   4.27. stats.clear_statistics
-   4.28. system.listMethods
-   4.29. system.methodHelp
-   4.30. system.methodSignature
-   4.31. mod.mem_stats
-   4.32. mod.stats
-   4.33. mod.mem_statsx
+   4.23. pkg.info
+   4.24. stats.get_statistics
+   4.25. stats.fetch
+   4.26. stats.fetchn
+   4.27. stats.reset_statistics
+   4.28. stats.clear_statistics
+   4.29. system.listMethods
+   4.30. system.methodHelp
+   4.31. system.methodSignature
+   4.32. mod.mem_stats
+   4.33. mod.stats
+   4.34. mod.mem_statsx
 
 4.1.  core.aliases_list
 
@@ -638,7 +641,14 @@ kamcmd core.modules
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
 
-4.23.  stats.get_statistics
+4.23.  pkg.info
+
+   Get pkg manager details.
+
+   Example:
+                kamcli rpc pkg.info
+
+4.24.  stats.get_statistics
 
    Print the list of available internal statistics.
 
@@ -658,7 +668,7 @@ kamcmd core.modules
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-4.24.  stats.fetch
+4.25.  stats.fetch
 
    Print the list of available internal statistics with a more json
    friendly output. Each printed statistic is a field in the output
@@ -678,7 +688,7 @@ kamcmd core.modules
                 kamcmd stats.fetch shmem.free_size
                 kamcmd stats.fetch shmem: fwd_requests fwd_replies
 
-4.25.  stats.fetchn
+4.26.  stats.fetchn
 
    Print the list of available internal statistics with a more json
    friendly output. Each printed statistic is a field in the output
@@ -698,7 +708,7 @@ kamcmd core.modules
                 kamcmd stats.fetchn shmem.free_size
                 kamcmd stats.fetchn shmem: fwd_requests fwd_replies
 
-4.26.  stats.reset_statistics
+4.27.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -710,7 +720,7 @@ kamcmd core.modules
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.27.  stats.clear_statistics
+4.28.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -722,7 +732,7 @@ kamcmd core.modules
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.28.  system.listMethods
+4.29.  system.listMethods
 
    Print list of available RPC commands.
 
@@ -735,15 +745,15 @@ kamcmd core.modules
 kamcmd system.listMethods
 ...
 
-4.29.  system.methodHelp
+4.30.  system.methodHelp
 
    Print the help string for given method.
 
-4.30.  system.methodSignature
+4.31.  system.methodSignature
 
    Returns signature of given method.
 
-4.31.  mod.mem_stats
+4.32.  mod.mem_stats
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
@@ -788,12 +798,12 @@ loc
     Total: 864
 }
 
-4.32.  mod.stats
+4.33.  mod.stats
 
    Same as RPC command "mod.mem_stats", this is an alias command to
    preserve backward compatibility.
 
-4.33.  mod.mem_statsx
+4.34.  mod.mem_statsx
 
    Similar to RPC command "mod.mem_stats", but the output has an extended
    format, printing info that includes the allocated size and the count of
