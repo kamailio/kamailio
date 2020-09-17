@@ -70,6 +70,7 @@ Muhammad Shahzad Shafi
               5.4. corex.shm_status
               5.5. corex.shm_summary
               5.6. corex.pkg_summary
+              5.7. corex.shm.info
 
         6. Event Routes
 
@@ -165,6 +166,7 @@ Chapter 1. Admin Guide
         5.4. corex.shm_status
         5.5. corex.shm_summary
         5.6. corex.pkg_summary
+        5.7. corex.shm.info
 
    6. Event Routes
 
@@ -724,6 +726,7 @@ event_route[dispatcher:dst-down] {
    5.4. corex.shm_status
    5.5. corex.shm_summary
    5.6. corex.pkg_summary
+   5.7. corex.shm.info
 
 5.1.  corex.debug
 
@@ -775,6 +778,13 @@ event_route[dispatcher:dst-down] {
    Example:
                 kamcmd corex.pkg_summary pid 2345
                 kamcmd corex.pkg_summary idx 1
+
+5.7.  corex.shm.info
+
+   Return shared memory manager details.
+
+   Example:
+                kamcli rpc shm.info
 
 6. Event Routes
 
