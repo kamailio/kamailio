@@ -305,6 +305,11 @@ int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 {
 	pv_spec_t *pv=NULL;
 
+	if(!is_route_type(CORE_ONREPLY_ROUTE|TM_ONREPLY_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
+
 	if(pv_t_update_req(msg))
 		return pv_get_null(msg, param, res);
 
@@ -319,6 +324,11 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	pv_spec_t *pv=NULL;
+
+	if(!is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
 
 	if(pv_t_update_rpl(msg))
 		return pv_get_null(msg, param, res);
@@ -335,6 +345,11 @@ int pv_get_t_var_branch(struct sip_msg *msg,  pv_param_t *param,
 {
 	pv_spec_t *pv=NULL;
 
+	if(!is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE|TM_ONREPLY_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
+
 	if(pv_t_update_rpl(msg))
 		return pv_get_null(msg, param, res);
 
@@ -349,6 +364,11 @@ int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	pv_spec_t *pv=NULL;
+
+	if(!is_route_type(REQUEST_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
 
 	if(pv_t_update_inv(msg))
 		return pv_get_null(msg, param, res);
