@@ -39,6 +39,7 @@
 
 #include "corex_lib.h"
 #include "corex_rpc.h"
+#include "corex_rpc_shm.h"
 #include "corex_var.h"
 #include "corex_nio.h"
 
@@ -185,6 +186,12 @@ static int mod_init(void)
 	if(corex_init_rpc()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
+	if(corex_init_rpc_shm()<0)
+	{
+		LM_ERR("failed to register RPC shm commands\n");
 		return -1;
 	}
 
