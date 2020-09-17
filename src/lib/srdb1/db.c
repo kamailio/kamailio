@@ -477,8 +477,12 @@ int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table,
  */
 int db_use_table(db1_con_t* _h, const str* _t)
 {
-	if (!_h || !_t || !_t->s) {
-		LM_ERR("invalid parameter value\n");
+	if (!_h) {
+		LM_ERR("invalid connection parameter\n");
+		return -1;
+	}
+	if (!_t || !_t->s) {
+		LM_ERR("invalid table parameter value\n");
 		return -1;
 	}
 
