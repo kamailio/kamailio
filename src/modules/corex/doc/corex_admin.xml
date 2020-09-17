@@ -969,6 +969,20 @@ event_route[dispatcher:dst-down] {
 		&sercmd; corex.pkg_summary idx 1
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.info">
+		<title>
+		<function moreinfo="none">corex.shm.info</function>
+		</title>
+		<para>
+			Return shared memory manager details.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc shm.info
+		</programlisting>
+    </section>
     </section>
 
     <section>
