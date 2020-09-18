@@ -983,6 +983,20 @@ event_route[dispatcher:dst-down] {
 		&kamcli; rpc shm.info
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.stats">
+		<title>
+		<function moreinfo="none">corex.shm.stats</function>
+		</title>
+		<para>
+			Return shared memory statistics (values are in bytes).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc shm.stats
+		</programlisting>
+    </section>
     </section>
 
     <section>
