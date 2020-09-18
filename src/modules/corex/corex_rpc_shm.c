@@ -54,8 +54,34 @@ static void corex_rpc_shm_info(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* corex_rpc_shm_stats_doc[2] = {
+	"Return shared memory stats",
+	0
+};
+
+/*
+ * RPC command to return shm stats
+ */
+static void corex_rpc_shm_stats(rpc_t* rpc, void* c)
+{
+	struct mem_info mi;
+	void *th;
+
+	shm_info(&mi);
+	rpc->add(c, "{", &th);
+	rpc->struct_add(th, "uuuuuu",
+			"total", (unsigned int)(mi.total_size),
+			"free", (unsigned int)(mi.free),
+			"used", (unsigned int)(mi.used),
+			"real_used",(unsigned int)(mi.real_used),
+			"max_used", (unsigned int)(mi.max_used),
+			"fragments", (unsigned int)mi.total_frags
+		);
+}
+
 rpc_export_t corex_rpc_shm_cmds[] = {
-	{"shm.info", corex_rpc_shm_info, corex_rpc_shm_info_doc, 0},
+	{"shm.info",  corex_rpc_shm_info,  corex_rpc_shm_info_doc,  0},
+	{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
 	{0, 0, 0, 0}
 };
 
