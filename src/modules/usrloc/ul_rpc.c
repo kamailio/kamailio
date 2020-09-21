@@ -144,12 +144,12 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding state");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Flags", c->flags)<0)
+	if(rpc->struct_add(vh, "u", "Flags", c->flags)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding flags");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "CFlags", c->cflags)<0)
+	if(rpc->struct_add(vh, "u", "CFlags", c->cflags)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding cflags");
 		return -1;
@@ -159,7 +159,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding socket");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Methods", c->methods)<0)
+	if(rpc->struct_add(vh, "u", "Methods", c->methods)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding methods");
 		return -1;
@@ -175,7 +175,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding instance");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Reg-Id", c->reg_id)<0)
+	if(rpc->struct_add(vh, "u", "Reg-Id", c->reg_id)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding reg_id");
 		return -1;
@@ -286,7 +286,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
-					if(rpc->struct_add(bh, "Sd[",
+					if(rpc->struct_add(bh, "Su[",
 								"AoR", &r->aor,
 								"HashID", r->aorhash,
 								"Contacts", &ih)<0)
