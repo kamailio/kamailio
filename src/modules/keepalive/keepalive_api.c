@@ -112,6 +112,9 @@ int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
 	dest->response_clb = response_clb;
 	dest->user_attr = user_attr;
 	dest->ping_interval = MS_TO_TICKS((ping_interval == 0 ? ka_ping_interval : ping_interval) * 1000) ;
+	if (lock_init(&dest->lock)==0){
+		LM_ERR("failed initializing Lock \n");
+	}
 
     dest->timer = timer_alloc();
 	if (dest->timer == NULL) {
@@ -177,7 +180,7 @@ ka_state ka_destination_state(str *destination)
 * @result 1 successful  , -1 fail
 */
 int ka_del_destination(str *uri, str *owner){
-
+	LM_DBG("removing destination: %.*s\n", uri->len, uri->s);
 	ka_dest_t *target=0,*head=0;
 	ka_lock_destination_list();
 
@@ -190,15 +193,14 @@ int ka_del_destination(str *uri, str *owner){
 		LM_ERR("Couldn't find destination \r\n");
 		goto err;
 	}
-
+	lock_get(&target->lock);
 	if(!head){
 		LM_DBG("There isn't any head so maybe it is first \r\n");
 		ka_destinations_list->first = target->next;
-		free_destination(target);
-		ka_unlock_destination_list();
-		return 1;
+	} else {
+		head->next = target->next;
 	}
-	head->next = target->next;
+	lock_release(&target->lock);
 	free_destination(target);
 	ka_unlock_destination_list();
 	return 1;
@@ -211,7 +213,7 @@ err:
 * @abstract find given destination uri address in destination_list stack
 *           don't forget to add lock via ka_lock_destination_list to prevent crashes
 * @param *uri given uri
-* @param *owner given owner name, not using now
+* @param *owner given owner name
 * @param **target searched address in stack
 * @param **head which points target
 *	*
@@ -226,10 +228,7 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 		if(!dest)
 			break;
 
-		if(uri->len!=dest->uri.len)
-			continue;
-
-		if(memcmp(dest->uri.s , uri->s , uri->len>dest->uri.len?dest->uri.len : uri->len)==0){
+		if (STR_EQ(*uri, dest->uri) && STR_EQ(*owner, dest->owner)){
 			*head = temp;
 			*target = dest;
 			LM_DBG("destination is found [target : %p] [head : %p] \r\n",target,temp);
@@ -243,6 +242,7 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 
 /*!
 * @function ka_find_destination_by_uuid
+*			don't forget to add lock via ka_lock_destination_list to prevent crashes
 *
 * @param *uuid uuid of ka_dest record
 * @param **target searched address in stack
@@ -281,7 +281,7 @@ int ka_find_destination_by_uuid(str uuid, ka_dest_t **target, ka_dest_t **head){
 * @result 1 successful  , -1 fail
 */
 int free_destination(ka_dest_t *dest){
-
+	
 	if(dest){
         if(timer_del(dest->timer) < 0){
           LM_ERR("failed to remove timer for destination <%.*s>\n", dest->uri.len, dest->uri.s);
@@ -289,6 +289,7 @@ int free_destination(ka_dest_t *dest){
         }
 
         timer_free(dest->timer);
+		lock_destroy(dest->lock);
 		if(dest->uri.s)
 			shm_free(dest->uri.s);
 

@@ -77,6 +77,7 @@ typedef struct _ka_dest
 	unsigned short int port;   /*!< Port of the URI */
 	unsigned short int proto;  /*!< Protocol of the URI */
 	struct timer_ln *timer;    /*!< Timer firing the OPTIONS test */
+	gen_lock_t lock;		   /*!< Lock of this record to prevent being removed while running */
 	struct _ka_dest *next;
 } ka_dest_t;
 
