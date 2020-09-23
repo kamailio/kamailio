@@ -1260,6 +1260,21 @@ dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
 	return dlg_lookup_msg_dialog(msg, NULL);
 }
 
+
+void extra_ack_debug_info(const char *s, struct sip_msg* req) {
+	if (!req) {
+		LM_ERR("[ACK] %s >>> req is null\n", s);
+		return;
+	}
+	if (parse_headers(req,HDR_CALLID_F,0)<0 || !req->callid) {
+		LM_ERR("[ACK] %s >>> can not parse call-id !\n", s);
+	}
+	if (parse_headers(req,HDR_TO_F,0)<0 || !req->to) {
+		LM_ERR("[ACK] %s >>> can not parse to-tag call-id[%.*s]\n", s, req->callid->body.len, req->callid->body.s);
+	}
+	LM_INFO("[ACK] %s >>> call-id[%.*s]\n", s, req->callid->body.len, req->callid->body.s);
+}
+
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
  *
@@ -1280,10 +1295,16 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int unref=0, event=0, timeout=0, reset=0;
 	unsigned int dir=0;
 	int ret=0;
+	int extra_ack_debug=0;
+
+	if (req->first_line.u.request.method_value == METHOD_ACK)
+		extra_ack_debug=1;
 
 	dlg = dlg_get_ctx_dialog();
 	if (dlg!=NULL) {
 		dlg_release(dlg);
+		if (extra_ack_debug)
+			LM_NOTICE(" DIALOG skipping dlg!=null call-id[%.*s]\n", dlg->callid.len, dlg->callid.s);
 		return;
 	}
 
@@ -1302,13 +1323,19 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID ) {
 		if( d_rrb.get_route_param( req, &rr_param, &val)!=0) {
 			LM_DBG("Route param '%.*s' not found\n", rr_param.len,rr_param.s);
-			if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+			if (seq_match_mode==SEQ_MATCH_STRICT_ID ) {
+				if (extra_ack_debug)
+					extra_ack_debug_info("seq_match_mode is now SEQ_MATCH_STRICT_ID (#1)", req);
 				return;
+			}
 		} else {
 			LM_DBG("route param is '%.*s' (len=%d)\n",val.len,val.s,val.len);
 
-			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
+			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 ) {
+				if (extra_ack_debug)
+					extra_ack_debug_info("parse_dlg_rr_param failed", req);
 				return;
+			}
 
 			dlg = dlg_lookup(h_entry, h_id);
 			if (dlg==0) {
@@ -1317,12 +1344,17 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 					req->first_line.u.request.method.len,
 					req->first_line.u.request.method.s,
 					val.len,val.s, h_entry, h_id);
-				if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+				if (seq_match_mode==SEQ_MATCH_STRICT_ID ) {
+					if (extra_ack_debug)
+						extra_ack_debug_info("seq_match_mode is now STRICT_ID (#2)", req);
 					return;
+				}
 			} else {
 				if (pre_match_parse( req, &callid, &ftag, &ttag, 1)<0) {
 					// lookup_dlg has incremented the ref count by 1
 					dlg_release(dlg);
+					if (extra_ack_debug)
+						extra_ack_debug_info("pre_match_parse failed (#1)", req);
 					return;
 				}
 				if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
@@ -1347,22 +1379,30 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 					dlg = 0;
 					dir = DLG_DIR_NONE;
 
-					if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+					if (seq_match_mode==SEQ_MATCH_STRICT_ID ) {
+						if (extra_ack_debug)
+							extra_ack_debug_info("seq_match_mode is now SEQ_MATCH_STRICT_ID (#3)", req);
 						return;
+					}
 				}
 			}
 		}
 	}
 
 	if (dlg==0) {
-		if (pre_match_parse(req, &callid, &ftag, &ttag, 1)<0)
+		if (pre_match_parse(req, &callid, &ftag, &ttag, 1)<0) {
+			if (extra_ack_debug)
+				extra_ack_debug_info("pre_match_parse failed (#2)", req);
 			return;
+		}
 		/* TODO - try to use the RR dir detection to speed up here the
 		 * search -bogdan */
 		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 		if (dlg==0){
 			LM_DBG("Callid '%.*s' not found\n",
 				req->callid->body.len, req->callid->body.s);
+			if (extra_ack_debug)
+				extra_ack_debug_info("get_dlg not fount", req);
 			return;
 		}
 	}
