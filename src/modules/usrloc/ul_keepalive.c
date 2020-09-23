@@ -40,6 +40,8 @@
 
 #include "ul_keepalive.h"
 
+extern int ul_keepalive_timeout;
+
 static int ul_ka_send(str *kamsg, dest_info_t *kadst);
 
 /**
@@ -102,11 +104,13 @@ int ul_ka_urecord(urecord_t *ur)
 	int aortype = 0;
 	int i;
 	struct timeval tv;
+	time_t tnow = 0;
 
 	if (ul_ka_mode == ULKA_NONE) {
 		return 0;
 	}
 	LM_DBG("keepalive for aor: %.*s\n", ur->aor.len, ur->aor.s);
+	tnow = time(NULL);
 
 	for(i=0; i<ur->aor.len; i++) {
 		if(ur->aor.s[i] == '@') {
@@ -122,6 +126,18 @@ int ul_ka_urecord(urecord_t *ur)
 		if((ul_ka_filter&GAU_OPT_SERVER_ID) && (uc->server_id != server_id)) {
 			continue;
 		}
+		if(ul_keepalive_timeout>0 && uc->last_keepalive>0) {
+			if(uc->last_keepalive+ul_keepalive_timeout < tnow) {
+				/* set contact as expired in 10s */
+				LM_DBG("set expired contact on keepalive - aor: %.*s c: %.*s\n",
+						ur->aor.len, ur->aor.s, uc->c.len, uc->c.s);
+				if(uc->expires > tnow + 10) {
+					uc->expires = tnow + 10;
+					continue;
+				}
+			}
+		}
+
 		if(ul_ka_mode & ULKA_NAT) {
 			/* keepalive for natted contacts only */
 			if (ul_nat_bflag == 0) {
