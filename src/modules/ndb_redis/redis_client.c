@@ -770,7 +770,7 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 		/* null reply, reconnect and try again */
 		if (rsrv->ctxRedis->err)
 		{
-			LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+			LM_DBG("Redis error: %s\n", rsrv->ctxRedis->errstr);
 		}
 		if (redisc_create_pipelined_message(rsrv) == 0)
 		{
