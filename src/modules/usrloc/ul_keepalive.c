@@ -126,18 +126,6 @@ int ul_ka_urecord(urecord_t *ur)
 		if((ul_ka_filter&GAU_OPT_SERVER_ID) && (uc->server_id != server_id)) {
 			continue;
 		}
-		if(ul_keepalive_timeout>0 && uc->last_keepalive>0) {
-			if(uc->last_keepalive+ul_keepalive_timeout < tnow) {
-				/* set contact as expired in 10s */
-				LM_DBG("set expired contact on keepalive - aor: %.*s c: %.*s\n",
-						ur->aor.len, ur->aor.s, uc->c.len, uc->c.s);
-				if(uc->expires > tnow + 10) {
-					uc->expires = tnow + 10;
-					continue;
-				}
-			}
-		}
-
 		if(ul_ka_mode & ULKA_NAT) {
 			/* keepalive for natted contacts only */
 			if (ul_nat_bflag == 0) {
@@ -145,6 +133,20 @@ int ul_ka_urecord(urecord_t *ur)
 			}
 			if ((uc->cflags & ul_nat_bflag) != ul_nat_bflag) {
 				continue;
+			}
+		}
+
+		if(ul_keepalive_timeout>0 && uc->last_keepalive>0) {
+			if(uc->last_keepalive+ul_keepalive_timeout < tnow) {
+				/* set contact as expired in 10s */
+				LM_DBG("set expired contact on keepalive (%u + %u < %u)"
+						" - aor: %.*s c: %.*s\n", (unsigned int)uc->last_keepalive,
+						(unsigned int)ul_keepalive_timeout, (unsigned int)tnow,
+						ur->aor.len, ur->aor.s, uc->c.len, uc->c.s);
+				if(uc->expires > tnow + 10) {
+					uc->expires = tnow + 10;
+					continue;
+				}
 			}
 		}
 		if(uc->received.len > 0) {
