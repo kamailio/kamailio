@@ -2488,37 +2488,6 @@ struct hostent* dns_resolvehost(char* name)
 }
 
 
-
-
-#if 0
-/* resolves a host name trying  NAPTR,  SRV, A & AAAA lookups, for details
- *  see dns_sip_resolve()
- *  FIXME: this version will return only the first ip
- * returns: hostent struct & *port filled with the port from the SRV record;
- *  0 on error
- */
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
-										char* proto)
-{
-	struct dns_srv_handle h;
-	struct ip_addr ip;
-	int ret;
-
-	if ((cfg_get(core, core_cfg, use_dns_cache==0)) || (dns_hash==0)){
-		/* not init or off => use normal, non-cached version */
-		return _sip_resolvehost(name, port, proto);
-	}
-	dns_srv_handle_init(&h);
-	ret=dns_sip_resolve(&h, name, &ip, port, proto, dns_flags);
-	dns_srv_handle_put(&h);
-	if (ret>=0)
-		return ip_addr2he(name, &ip);
-	return 0;
-}
-#endif
-
-
-
 /* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
