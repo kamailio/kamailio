@@ -26,8 +26,8 @@
  * - Module: \ref usrloc
  */
 
-#include "ucontact.h"
-#include <string.h>             /* memcpy */
+#include <string.h>
+#include <time.h>
 #include "../../core/mem/shm_mem.h"
 #include "../../core/ut.h"
 #include "../../core/ip_addr.h"
@@ -129,7 +129,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->methods = _ci->methods;
 	c->reg_id = _ci->reg_id;
 	c->last_modified = _ci->last_modified;
-	c->last_keepalive = _ci->last_modified;
+	c->last_keepalive = time(NULL);
 	c->tcpconn_id = _ci->tcpconn_id;
 	c->server_id = _ci->server_id;
 	c->keepalive = (_ci->cflags & ul_nat_bflag)?1:0;
@@ -295,7 +295,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->cseq = _ci->cseq;
 	_c->methods = _ci->methods;
 	_c->last_modified = _ci->last_modified;
-	_c->last_keepalive = _ci->last_modified;
+	_c->last_keepalive = time(NULL);
 	_c->flags = _ci->flags;
 	_c->cflags = _ci->cflags;
 	_c->server_id = _ci->server_id;
