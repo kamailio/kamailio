@@ -2436,6 +2436,8 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 }
 
 static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
+	int training_count = 10000;
+
 	/* after 2^21 ~24 days at 1s interval, the average becomes a weighted average */
 	if (latency_stats->count < 2097152) {
 		latency_stats->count++;
@@ -2450,8 +2452,10 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 		latency_stats->average = latency;
 		latency_stats->estimate = latency;
 	}
-	/* train the average if stable after 10 samples */
-	if (latency_stats->count > 10 && latency_stats->stdev < 0.5) latency_stats->count = 500000;
+	/* stabilize-train the estimator if the average is stable after 10 samples */
+	if (latency_stats->count > 10 && latency_stats->count < training_count
+	        && latency_stats->stdev < 0.5)
+		latency_stats->count = training_count;
 	if (latency_stats->min > latency)
 		latency_stats->min = latency;
 	if (latency_stats->max < latency)
