@@ -793,6 +793,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 						unsigned int *dir, int mode)
 {
 	struct dlg_cell *dlg;
+	struct dlg_cell *dlg_no_totag=NULL;
 	struct dlg_entry *d_entry;
 
 	d_entry = &(d_table->entries[h_entry]);
@@ -804,13 +805,24 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
 			ref_dlg_unsafe(dlg, 1);
 			if(likely(mode==0)) dlg_unlock( d_table, d_entry);
-			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
-				callid->len, callid->s,h_entry,*dir);
+
+			/* If to-tag is empty continue to search in case another dialog is found with a matching to-tag. */
+			if (dlg->tag[1].len == 0) {
+				dlg_no_totag=dlg;
+				LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
+					callid->len, callid->s,h_entry,*dir);
+				continue;
+			}
+			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d to-tag='%.*s'\n",
+				callid->len, callid->s,h_entry,*dir, dlg->tag[1].len, dlg->tag[1].s);
+
 			return dlg;
 		}
 	}
 
 	if(likely(mode==0)) dlg_unlock( d_table, d_entry);
+	if (dlg_no_totag) return dlg_no_totag;
+
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }
