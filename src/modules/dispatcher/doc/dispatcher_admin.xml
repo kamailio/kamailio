@@ -1241,7 +1241,7 @@ modparam("dispatcher", "reload_delta", 1)
 				</para>
 				<para>
 				Using this algorithm, you can also enable congestion control by setting the
-				attibute 'cc=1', when 'cc' is enabled the 'weight' attribute will also be
+				attribute 'cc=1', when 'cc' is enabled the 'weight' attribute will also be
 				used to control congestion tolerance. When facing congestion the weight of
 				a gateway is lowered by 1 for every ms of estimated congestion, a 'rweight'
 				value of 50 is recommended. See the example "configuring load balancing with
@@ -1260,6 +1260,43 @@ modparam("dispatcher", "reload_delta", 1)
 				with the values of the destination records, no re-routing
 				making sense in this case.
 				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>13</quote> - latency optimized dispatching
+				</para>
+				<para>
+				- The algorithm will load balance using round-robin prioritizing the gateways with the highest priority.
+				</para>
+				<para>
+				- If ds_ping_latency_stats is active the algorithm will adjust the priority of the gateway automatically,
+				the priority will be lowered by 1 point every time the latency ms is as high as the priority.
+				</para>
+				<para>
+				- If the attribute 'cc=1' is set, the latency used is congestion ms : estimate (current latency ms) - average (normal condition latency ms).
+				</para>
+				<example>
+				<title><function>latency_optimized_dispatching</function> usage</title>
+				<programlisting format="linespecific">
+Using this simple formula :
+    ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
+
+GATEWAY | PRIORITY | ESTIMATED | ADJUSTED | LOAD
+   #    |          |  LATENCY  | PRIORITY | DISTRIBUTION
+   1    |    30    |    21     |    30    | 33%
+   2    |    30    |    91     |    27    | 0%
+   3    |    30    |    61     |    28    | 0%
+   4    |    30    |    19     |    30    | 33%
+   5    |    30    |    32     |    29    | 0%
+   6    |    30    |    0      |    30    | 33%
+   7    |    30    |    201    |    24    | 0%
+
+
+With congestion control the formula becomes :
+    CONGESTION_MS = CURRENT_LATENCY_MS - NORMAL_CONDITION_LATENCY_MS
+    ADJUSTED_PRIORITY = PRIORITY - (CONGESTION_MS/PRIORITY)
+				</programlisting>
+				</example>
 			</listitem>
 			<listitem>
 				<para>
