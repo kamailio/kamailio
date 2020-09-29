@@ -234,7 +234,7 @@ int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
 			xavp_rm_by_index(&xname->name, idx, NULL);
 			return 0;
 		}
-		
+
 		if(xname->next->index.type==PVT_EXTRA)
 		{
 			/* get the index */
@@ -352,7 +352,7 @@ int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
 			return -1;
 		return 0;
 	}
-		
+
 	/* xavp with xavp list value */
 	if(xname->next->index.type==PVT_EXTRA)
 	{
@@ -389,7 +389,7 @@ int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
 
 		if(avp->val.type!=SR_XTYPE_XAVP)
 			return -1;
-			
+
 		if(xname->next->index.type==PVT_EXTRA) {
 			if(idxf1==PV_IDX_ALL) {
 				/* ignore: should iterate and set same value to all xavps
@@ -416,7 +416,7 @@ int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
 	/* add new xavp with xavp list */
 	if(xavp_add_value(&xname->next->name, &xval, &list)==NULL)
 		return -1;
-	
+
 	/* build xavp value */
 	memset(&xval, 0, sizeof(sr_xval_t));
 	xval.type = SR_XTYPE_XAVP;
@@ -895,7 +895,7 @@ int pv_set_xavu(struct sip_msg* msg, pv_param_t *param,
 			xavu_rm_by_name(&xname->name, NULL);
 			return 0;
 		}
-		
+
 		avu = xavu_lookup(&xname->name, NULL);
 		if(avu!=NULL && avu->val.type==SR_XTYPE_XAVP) {
 			xavu_rm_by_name(&xname->next->name, &avu->val.v.xavp);
