@@ -96,10 +96,10 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_xavp_name, 0, 0, 0 },
 	{ {"xavu", sizeof("xavu")-1}, /* xavu */
 		PVT_XAVU, pv_get_xavu, pv_set_xavu,
-		pv_parse_xavp_name, 0, 0, 0 },
+		pv_parse_xavu_name, 0, 0, 0 },
 	{ {"xavi", sizeof("xavi")-1}, /* xavi */
 		PVT_XAVI, pv_get_xavi, pv_set_xavi,
-		pv_parse_xavp_name, 0, 0, 0 },
+		pv_parse_xavi_name, 0, 0, 0 },
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
 	{{"hdr", (sizeof("hdr")-1)}, PVT_HDR, pv_get_hdr, 0, pv_parse_hdr_name,
@@ -1221,7 +1221,7 @@ static int w_xav_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		return -1;
 	}
 
- 	return ki_xav_child_seti(msg, &rname, &cname, ival, _case);
+	return ki_xav_child_seti(msg, &rname, &cname, ival, _case);
 }
 
 static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
