@@ -268,8 +268,8 @@ end
 		<title><varname>event_mode</varname> (int)</title>
 		<para>
 			Control what event_route blocks to be executed. It is a bitmask of:
-			1 - execute event_route[topos:outgoing]; 2 - execute
-			event_route[topos:sending].
+			1 - execute event_route[topos:msg-outgoing]; 2 - execute
+			event_route[topos:msg-sending].
 		</para>
 		<para>
 		<emphasis>
