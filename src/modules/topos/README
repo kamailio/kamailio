@@ -265,8 +265,8 @@ end
 3.9. event_mode (int)
 
    Control what event_route blocks to be executed. It is a bitmask of: 1 -
-   execute event_route[topos:outgoing]; 2 - execute
-   event_route[topos:sending].
+   execute event_route[topos:msg-outgoing]; 2 - execute
+   event_route[topos:msg-sending].
 
    Default value is 3 (execute both event_route blocks).
 
