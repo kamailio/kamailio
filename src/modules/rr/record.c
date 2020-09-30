@@ -78,7 +78,7 @@ extern int rr_sockname_mode;
  */
 static char rr_param_buf_ptr[RR_PARAM_BUF_SIZE];
 static str rr_param_buf = {rr_param_buf_ptr,0};
-static unsigned int rr_param_msg;
+static msg_ctx_id_t rr_param_ctx_id = {0};
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
 
@@ -429,7 +429,7 @@ int record_route(struct sip_msg* _m, str *params)
 		tag = 0;
 	}
 
-	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
 		/* rr_params were set for a different message -> reset buffer */
 		rr_param_buf.len = 0;
 	}
@@ -549,7 +549,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		from = get_from(_m);
 	}
 
-	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
 		/* rr_params were set for a different message -> reset buffer */
 		rr_param_buf.len = 0;
 	}
@@ -817,7 +817,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		tag = 0;
 	}
 
-	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
 		/* rr_params were set for a different message -> reset buffer */
 		rr_param_buf.len = 0;
 	}
@@ -930,10 +930,10 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 		}
 	} else {
 		/* RR not done yet -> store the param in the static buffer */
-		if (rr_param_msg!=msg->id) {
+		if (msg_ctx_id_match(msg, &rr_param_ctx_id)!=1) {
 			/* it's about a different message -> reset buffer */
 			rr_param_buf.len = 0;
-			rr_param_msg = msg->id;
+			msg_ctx_id_set(msg, &rr_param_ctx_id);
 		}
 		if (rr_param_buf.len+rr_param->len>RR_PARAM_BUF_SIZE) {
 			LM_ERR("maximum size of rr_param_buf exceeded\n");
