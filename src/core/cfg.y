@@ -360,6 +360,8 @@ extern char *default_routename;
 %token AUTO_BIND_IPV6
 %token BIND_IPV6_LINK_LOCAL
 
+%token IPV6_HEX_STYLE
+
 /*blacklist*/
 %token DST_BLST_INIT
 %token USE_DST_BLST
@@ -875,6 +877,13 @@ assign_stm:
 	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
+	| IPV6_HEX_STYLE EQUAL STRING {
+		ksr_ipv6_hex_style = $3;
+		if(ksr_ipv6_hex_style[0]!='a' && ksr_ipv6_hex_style[0]!='A') {
+			yyerror("expected \"a\" or \"A\" value");
+		}
+	}
+	| IPV6_HEX_STYLE error { yyerror("string value expected"); }
 	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}
 	| BIND_IPV6_LINK_LOCAL error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }

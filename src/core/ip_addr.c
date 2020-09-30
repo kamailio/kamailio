@@ -36,6 +36,7 @@
 #include "resolve.h"
 #include "trim.h"
 
+char *ksr_ipv6_hex_style = "A";
 
 struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 {

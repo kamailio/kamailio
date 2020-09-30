@@ -41,6 +41,8 @@
 
 #include "dprint.h"
 
+extern char *ksr_ipv6_hex_style;
+
 enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP,
 	PROTO_WS, PROTO_WSS, PROTO_OTHER };
 #define PROTO_LAST PROTO_OTHER
@@ -530,7 +532,7 @@ static inline int ip6tosbuf(unsigned char* ip6, char* buff, int len)
 	register unsigned short hex4;
 	int r;
 
-#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
+#define HEXDIG(x) (((x)>=10)?(x)-10+ksr_ipv6_hex_style[0]:(x)+'0')
 
 	offset=0;
 	if (unlikely(len<IP6_MAX_STR_SIZE))
