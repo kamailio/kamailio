@@ -37,7 +37,10 @@ and commit history, there are several *rules* required for each contribution.
 ### Basic Rules ###
 
   * github pull request is the favorited mechanism to submit contributions
-  (patches)
+  (patches). See more about at:
+    * [Github Docs On Proposing Changes With Pull Requests](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests)
+    * the URL to Kamailio project pull requests portal:
+    * https://github.com/kamailio/kamailio/pulls
   * make a pull request against **master branch**
     * commit can be later backported to stable branch(es)
   * make a pull request for each new feature
