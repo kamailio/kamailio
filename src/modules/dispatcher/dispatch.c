@@ -320,6 +320,11 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				  && strncasecmp(pit->name.s, "weight", 6) == 0) {
 			str2sint(&pit->body, &dest->attrs.weight);
 		} else if(pit->name.len == 7
+				  && strncasecmp(pit->name.s, "latency", 7) == 0) {
+			int initial_latency = 0;
+			if (str2sint(&pit->body, &initial_latency) == 0)
+				latency_stats_init(&dest->latency_stats, initial_latency, 10000);
+		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "maxload", 7) == 0) {
 			str2sint(&pit->body, &dest->attrs.maxload);
 		} else if(pit->name.len == 6
@@ -2587,6 +2592,16 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	return (ret == 0) ? 1 : -1;
 }
 
+void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count) {
+	latency_stats->stdev = 0.0f;
+	latency_stats->m2 = 0.0f;
+	latency_stats->max = latency;
+	latency_stats->min = latency;
+	latency_stats->average = latency;
+	latency_stats->estimate = latency;
+	latency_stats->count = count;
+}
+
 static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
 	int training_count = 10000;
 
@@ -2596,18 +2611,14 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 	} else { /* We adjust the sum of squares used by the oneline algorithm proportionally */
 		latency_stats->m2 -= latency_stats->m2/latency_stats->count;
 	}
-	if (latency_stats->count == 1) {
-		latency_stats->stdev = 0.0f;
-		latency_stats->m2 = 0.0f;
-		latency_stats->max = latency;
-		latency_stats->min = latency;
-		latency_stats->average = latency;
-		latency_stats->estimate = latency;
-	}
+
+	if (latency_stats->count == 1)
+		latency_stats_init(latency_stats, latency, 1);
 	/* stabilize-train the estimator if the average is stable after 10 samples */
 	if (latency_stats->count > 10 && latency_stats->count < training_count
 	        && latency_stats->stdev < 0.5)
 		latency_stats->count = training_count;
+
 	if (latency_stats->min > latency)
 		latency_stats->min = latency;
 	if (latency_stats->max < latency)
