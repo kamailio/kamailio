@@ -1226,7 +1226,7 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	nr_keys = 0;
 	nr_ucols = 0;
 
-	db_keys[nr_keys]=&td_col_a_uuid;
+	db_keys[nr_keys]=&tt_col_a_uuid;
 	db_ops[nr_keys]=OP_EQ;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
@@ -1249,8 +1249,7 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	}
 
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
-		if(sd->b_tag.len<=0
-				&& msg->first_line.u.reply.statuscode>=180
+		if(msg->first_line.u.reply.statuscode>=180
 				&& msg->first_line.u.reply.statuscode<200) {
 
 			db_ucols[nr_ucols] = &tt_col_y_rr;
