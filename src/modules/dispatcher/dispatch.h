@@ -204,6 +204,8 @@ typedef struct _ds_latency_stats {
 	uint32_t timeout;
 } ds_latency_stats_t;
 
+void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count);
+
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
 	int flags;        /*!< flags */
