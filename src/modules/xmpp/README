@@ -228,8 +228,8 @@ Chapter 1. Admin Guide
 
    The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA
    has to use outbound proxy to SIP-to-XMPP gateway IP address. It has to
-   be used as domain in the the destination address of the messages sent
-   by SIP users to XMPP users:
+   be used as domain in the destination address of the messages sent by
+   SIP users to XMPP users:
    "sip:username<delim>jabber_server@gateway_domain".
 
    Default value is "sip-xmpp.example.org".

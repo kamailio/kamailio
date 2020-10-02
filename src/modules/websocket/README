@@ -672,8 +672,8 @@ kamcmd ws.enable
 7.1.  websocket:closed
 
    When defined, the module calls event_route[websocket:closed] when a
-   connection closes. The connection may be identified using the the $si
-   and $sp pseudo-variables.
+   connection closes. The connection may be identified using the $si and
+   $sp pseudo-variables.
 
    Example 1.16. event_route[websocket:closed] usage
 ...
