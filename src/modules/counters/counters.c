@@ -132,7 +132,7 @@ struct module_exports exports = {
 
 
 
-/** parse the the script_counter modparam.
+/** parse the script_counter modparam.
  *  Format:   [grp.]name[( |:)desc]
  *  E.g.:
  *           "name" => new counter: *cnt_script_grp."name"
