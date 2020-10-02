@@ -18,7 +18,7 @@
 	<title>Introduction</title>
 
 	<para>Dynamic Routing is a module for selecting (based on multiple
-	criteria) the the best gateway/destination to be used for delivering a
+	criteria) the best gateway/destination to be used for delivering a
 	certain call. Least Cost Routing (LCR) is a special case of dynamic
 	routing - when the rules are ordered based on costs. Dynamic Routing
 	comes with many features regarding routing rule selection:
