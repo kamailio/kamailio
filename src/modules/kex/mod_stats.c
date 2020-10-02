@@ -35,9 +35,7 @@
 #include "../../core/pt.h"
 #include "../../core/sr_module.h"
 #include "../../core/events.h"
-#include "../../core/mem/pkg.h"
-#include "../../core/mem/shm.h"
-#include "../../core/locking.h"
+#include "../../core/mem/f_malloc.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -48,9 +46,6 @@
 #define DBG_MOD_SHM_FLAG		2 /* 1<<1 - print shm memory stats */
 #define DBG_MOD_ALL_FLAG		3 /* 1|2  - print pkg+shm (1+2) memory stats */
 #define DBG_MOD_INF_FLAG		4 /* 1<<2 - print more info in the stats */
-
-
-static gen_lock_t *kex_rpc_mod_mem_stats_lock = NULL;
 
 /**
  *
@@ -253,9 +248,7 @@ static void rpc_mod_mem_stats_mode(rpc_t *rpc, void *ctx, int fmode)
  */
 static void rpc_mod_mem_stats(rpc_t *rpc, void *ctx)
 {
-	lock_get(kex_rpc_mod_mem_stats_lock);
-	rpc_mod_mem_stats_mode(rpc, ctx, 0);
-	lock_release(kex_rpc_mod_mem_stats_lock);
+	 rpc_mod_mem_stats_mode(rpc, ctx, 0);
 }
 
 /**
@@ -263,9 +256,7 @@ static void rpc_mod_mem_stats(rpc_t *rpc, void *ctx)
  */
 static void rpc_mod_mem_statsx(rpc_t *rpc, void *ctx)
 {
-	lock_get(kex_rpc_mod_mem_stats_lock);
-	rpc_mod_mem_stats_mode(rpc, ctx, DBG_MOD_INF_FLAG);
-	lock_release(kex_rpc_mod_mem_stats_lock);
+	 rpc_mod_mem_stats_mode(rpc, ctx, DBG_MOD_INF_FLAG);
 }
 
 
@@ -284,15 +275,6 @@ rpc_export_t kex_mod_rpc[] = {
  */
 int mod_stats_init_rpc(void)
 {
-	kex_rpc_mod_mem_stats_lock = lock_alloc();
-	if(kex_rpc_mod_mem_stats_lock == NULL) {
-		LM_ERR("failed to allocate the lock\n");
-		return -1;
-	}
-	if(lock_init(kex_rpc_mod_mem_stats_lock) == NULL) {
-		LM_ERR("failed to init the lock\n");
-		return -1;
-	}
 	if (rpc_register_array(kex_mod_rpc)!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
