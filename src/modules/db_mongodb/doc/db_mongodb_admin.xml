@@ -96,7 +96,7 @@
 	<section>
 	<title>Usage</title>
 		<para>
-			Load the module and set the the DB URL for specific modules to:
+			Load the module and set the DB URL for specific modules to:
 			mongodb://username:password@host:port/database. Username, password
 			and port are optional.
 		</para>
