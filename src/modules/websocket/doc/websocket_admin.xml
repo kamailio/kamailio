@@ -695,7 +695,7 @@ ws_close(4000, "Because I say so");
 			When defined, the module calls
 			event_route[websocket:closed] when a connection
 			closes.  The connection may be identified using the
-			the $si and $sp pseudo-variables.
+			$si and $sp pseudo-variables.
 		</para>
 		<example>
 		<title><function moreinfo="none">event_route[websocket:closed]</function> usage</title>
