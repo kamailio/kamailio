@@ -276,7 +276,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
     if (cdp_result >= 2000 && cdp_result < 3000) {
         counter_inc(ims_qos_cnts_h.successful_registration_aars);
         if (is_rereg) {
-            LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
+            LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
             goto done;
