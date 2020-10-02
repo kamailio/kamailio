@@ -175,7 +175,7 @@ modparam("cpl-c","domain_column","domain")
 			<title><varname>cpl_xml_column</varname> (string)</title>
 			<para>
 				Indicates the name of the column used for storing the
-				the XML version of the cpl script.
+				XML version of the cpl script.
 			</para>
 			<para>
 				<emphasis>
@@ -195,7 +195,7 @@ modparam("cpl-c","cpl_xml_column","cpl_xml")
 			<title><varname>cpl_bin_column</varname> (string)</title>
 			<para>
 				Indicates the name of the column used for storing the
-				the binary version of the cpl script (compiled version).
+				binary version of the cpl script (compiled version).
 			</para>
 			<para>
 				<emphasis>
