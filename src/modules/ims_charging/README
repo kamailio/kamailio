@@ -560,7 +560,7 @@ modparam("ims_charging", "origin_realm", "kamailio-ims.org")
 
    Destination host to be used in Diameter messages to charging-server.
 
-   Default value is "hss.ims.smilecoms.com".
+   Default value is "".
 
    Example 1.15. destination_hostparameter usage
 ...
@@ -571,7 +571,7 @@ modparam("ims_charging", "destination_host", "ocs.kamailio-ims.org")
 
    Destination realm to be used in Diameter messages to charging-server.
 
-   Default value is "ims.smilecoms.com".
+   Default value is "".
 
    Example 1.16. destination_realmparameter usage
 ...
