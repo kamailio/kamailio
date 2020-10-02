@@ -1262,7 +1262,7 @@ modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
 
 19. carrierfailureroute_scan_prefix_col (string)
 
-   Name of column contains the the scan prefixes. Scan prefixes define the
+   Name of column contains the scan prefixes. Scan prefixes define the
    matching portion of a phone number, e.g. we have the scan prefixes
    49721 and 49, the called number is 49721913740, it matches 49721,
    because the longest match is taken. If no prefix matches, the number is

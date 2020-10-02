@@ -2146,7 +2146,7 @@ route {
 
 4.24.  t_reset_max_lifetime()
 
-   Resets the the maximum lifetime for the current INVITE or non-INVITE
+   Resets the maximum lifetime for the current INVITE or non-INVITE
    transaction to the default value (set using the tm module parameter
    max_inv_lifetime or max_noninv_lifetime).
 
