@@ -228,8 +228,8 @@ modparam("cpl-c","domain_column","domain")
 
 3.5. cpl_xml_column (string)
 
-   Indicates the name of the column used for storing the the XML version
-   of the cpl script.
+   Indicates the name of the column used for storing the XML version of
+   the cpl script.
 
    Default value is “cpl_xml”.
 
@@ -240,8 +240,8 @@ modparam("cpl-c","cpl_xml_column","cpl_xml")
 
 3.6. cpl_bin_column (string)
 
-   Indicates the name of the column used for storing the the binary
-   version of the cpl script (compiled version).
+   Indicates the name of the column used for storing the binary version of
+   the cpl script (compiled version).
 
    Default value is “cpl_bin”.
 
