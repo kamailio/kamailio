@@ -168,7 +168,7 @@
       <para>
         The <function>attr_equals()</function> function checks whether
         the attribute identified by the argument <symbol>attribute</symbol>
-        exists and its value is identical the the value given by the
+        exists and its value is identical the value given by the
         argument <symbol>value</symbol>. If so, it returns
         <literal>true</literal> and <literal>false</literal> otherwise.
       </para>
