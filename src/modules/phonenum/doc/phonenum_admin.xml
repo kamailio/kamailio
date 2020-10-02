@@ -157,6 +157,14 @@ if(phonenum_match("1-484-555-8888", "src")) {
 			before accessing a key via: $phn(pvc=&gt;key).
 	    </para>
 	    <para>
+			Note from libphonenumber library docs: country name code is the region
+			that is expected the number to be from. It is only used if the number
+			being parsed is not written in international format. The country code
+			for the number in this case would be stored as that of the region
+			supplied. If the number is guaranteed to start with a '+' followed
+			by the country calling code, then region 'ZZ'.
+	    </para>
+	    <para>
 			The parameters can be static strings or strings with variables.
 	    </para>
 	    <para>
