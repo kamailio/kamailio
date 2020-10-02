@@ -2,6 +2,30 @@
 
 ===================== Changes Since Version 5.2.7 ===========================
 
+commit 667ef53f1d296950f352c6e89da08b22695d87bc (HEAD -> 5.2, origin/5.2)
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Oct 2 18:32:56 2020 +0000
+
+    Revert "jansson: use the core macros for ending string value with '\0' and to restore"
+
+    This reverts commit 61255b01f88ea904bf5694f834a5b2aec7398c69.
+
+commit 9c3fd4b20254302b174331acec560f809d305e44
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Oct 2 18:32:39 2020 +0000
+
+    Revert "xcap_server: check before going to the end of the buffer"
+
+    This reverts commit f82bdb7fadd02368133b4813cdba515a7725a31d.
+
+commit 28a85a330128cc1ac8e7388aeae314808c01796b
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Oct 2 16:49:36 2020 +0000
+
+    Revert "evapi: free addr info in case of bind error"
+
+    This reverts commit e7a390388fe640d46efc640e97a87f00f1361f47.
+
 commit 259cf0e5dd3fbeddeb1494065c742d22a8f5371e
 Author: Henning Westerholt <hw@skalatan.de>
 Date:   Fri Oct 2 16:24:50 2020 +0000
@@ -19,6 +43,12 @@ Author: Henning Westerholt <hw@skalatan.de>
 Date:   Fri Oct 2 16:22:41 2020 +0000
 
     pkg: update debian pkg files for 5.2.8
+
+commit a00f1acc9c9e009f363e615bc4369341f7146ac0
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Oct 2 18:17:01 2020 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
 
 commit 5a034b5b5a1e45e2c91ccf70db0b8b236f30f388
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
