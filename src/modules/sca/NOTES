@@ -113,7 +113,7 @@ Revisiting possibility of using TMCB_ tm module hooks.
 	* Register a pv in the module, set it to a known value in the
 	  TMCB_E2EACK_IN callback, have the script check the value of the
 	  pv, and invoke an exported sca_update function if the pv is set
-	  the the known value.
+	  to the known value.
 
 	    Pros: fits sip-router script-based logic model well, does not
 		  rely on a timer (eliminates races).
