@@ -541,6 +541,11 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		}
 		from = get_from(_m);
 	}
+
+	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+		/* rr_params were set for a different message -> reset buffer */
+		rr_param_buf.len = 0;
+	}
 	
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	if (!l) {
@@ -802,6 +807,11 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		}
 	} else {
 		tag = 0;
+	}
+
+	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+		/* rr_params were set for a different message -> reset buffer */
+		rr_param_buf.len = 0;
 	}
 
 	if(rr_ignore_sips==0) {
