@@ -2655,7 +2655,7 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		vkey = 1;
 	} else if(mkey.len==4 && strncmp(mkey.s, "turi", mkey.len)==0) {
 		vkey = 2;
-	} else if(mkey.len==5 && strncmp(mkey.s, "callid", mkey.len)==0) {
+	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
 		vkey = 3;
 	} else {
 		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
