@@ -434,10 +434,11 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	/* unlock dialog */
 	if (dlg) {
 		dlg->dflags |= DLG_FLAG_CHANGED_VARS;
-		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-		if ( dlg_db_mode==DB_MODE_REALTIME )
+		if ( dlg_db_mode==DB_MODE_REALTIME ) {
+			/* dlg_lock() / dlg_unlock() are reentrant */
 			update_dialog_dbinfo(dlg);
-
+		}
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
 	print_lists(dlg);
 
