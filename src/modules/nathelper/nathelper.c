@@ -116,7 +116,7 @@ static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int is_rfc1918_f(struct sip_msg *, char *, char *);
-static int extract_mediaip(str *, str *, int *, char *);
+static int extract_mediaip(str *, str *, int *, char *, int);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void **param, int param_no);
@@ -1611,7 +1611,7 @@ static int is_rfc1918_f(struct sip_msg *msg, char *str1, char *str2)
 
 /* replace ip addresses in SDP and return umber of replacements */
 static inline int replace_sdp_ip(
-		struct sip_msg *msg, str *org_body, char *line, str *ip)
+		struct sip_msg *msg, str *org_body, char *line, str *ip, int linelen)
 {
 	str body1, oldip, newip;
 	str body = *org_body;
@@ -1631,7 +1631,7 @@ static inline int replace_sdp_ip(
 	}
 	body1 = body;
 	for(;;) {
-		if(extract_mediaip(&body1, &oldip, &pf, line) == -1)
+		if(extract_mediaip(&body1, &oldip, &pf, line, linelen) == -1)
 			break;
 		if(pf != AF_INET) {
 			LM_ERR("not an IPv4 address in '%s' SDP\n", line);
@@ -1734,20 +1734,31 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 		}
 	}
 
-	if(level & FIX_MEDIP) {
-		/* Iterate all c= and replace ips in them. */
-		ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0);
-		if(ret == -1)
-			return -1;
-		count += ret;
-	}
+	if(level & (FIX_MEDIP | FIX_ORGIP)) {
 
-	if(level & FIX_ORGIP) {
-		/* Iterate all o= and replace ips in them. */
-		ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0);
+		/* Iterate all a=rtcp and replace ips in them. rfc3605 */
+		ret = replace_sdp_ip(msg, &body, "a=rtcp", (ip && ip->len>0) ? ip : 0, 6);
 		if(ret == -1)
-			return -1;
-		count += ret;
+			LM_DBG("a=rtcp parameter does not exist. nothing to do.\n");
+		else 
+			count += ret;
+
+		if(level & FIX_MEDIP) {
+			/* Iterate all c= and replace ips in them. */
+			ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0, 2);
+			if(ret == -1)
+				return -1;
+			count += ret;
+		}
+
+		if(level & FIX_ORGIP) {
+			/* Iterate all o= and replace ips in them. */
+			ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0, 2);
+			if(ret == -1)
+				return -1;
+			count += ret;
+		}
+
 	}
 
 	return count > 0 ? 1 : 2;
@@ -1775,22 +1786,22 @@ static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 	return ki_fix_nated_sdp_ip(msg, level, &ip);
 }
 
-static int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
+static int extract_mediaip(str *body, str *mediaip, int *pf, char *line, int linelen)
 {
 	char *cp, *cp1;
 	int len, nextisip;
 
 	cp1 = NULL;
 	for(cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, line, len, 2);
+		cp1 = ser_memmem(cp, line, len, linelen);
 		if(cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
 			break;
-		cp = cp1 + 2;
+		cp = cp1 + linelen;
 	}
 	if(cp1 == NULL)
 		return -1;
 
-	mediaip->s = cp1 + 2;
+	mediaip->s = cp1 + linelen;
 	mediaip->len =
 			eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
 	trim_len(mediaip->len, mediaip->s, *mediaip);
