@@ -131,6 +131,7 @@ int reg_use_domain = 0;
 
 int sock_flag = -1;
 str sock_hdr_name = {0,0};
+str sock_addr = {0,0};
 
 /* where to go for event route ("usrloc:contact-expired") */
 int reg_expire_event_rt = -1; /* default disabled */
@@ -249,6 +250,7 @@ static param_export_t params[] = {
 	{"lookup_filter_mode", INT_PARAM, &reg_lookup_filter_mode			},
 	{"min_expires_mode",   PARAM_INT, &reg_min_expires_mode				},
 	{"use_expired_contacts",  INT_PARAM, &default_registrar_cfg.use_expired_contacts	 },
+	{"sock_addr",          PARAM_STR, &sock_addr                        },
 	{0, 0, 0}
 };
 
