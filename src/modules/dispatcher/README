@@ -762,7 +762,8 @@ modparam("dispatcher", "ds_probing_mode", 1)
 
 3.26. ds_ping_latency_stats (int)
 
-   Enable latency measurement when pinging nodes
+   Enable latency measurement when pinging nodes The estimator can be
+   initialized at startup and reload using the attribute latency.
      * If set to 0, disable latency measurement.
      * If set to 1, enable latency measurement.
 
@@ -776,6 +777,9 @@ DEST: {
         URI: sip:1.2.3.4
         FLAGS: AX
         PRIORITY: 9
+        ATTRS: {
+                BODY: latency=24
+        }
         LATENCY: {
                 AVG: 24.250000 # weighted moving average for the last few weeks
                 STD: 1.035000  # standard deviation of AVG
@@ -1695,6 +1699,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
        overwrites the general ds_ping_from parameter.
      * 'obproxy' - SIP URI of outbound proxy to be used when sending
        pings. It overwrites the general ds_outbound_proxy parameter.
+     * 'latency' - latency_stats initialization in ms.
 
 6.1.2. File Format
 
