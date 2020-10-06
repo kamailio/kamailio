@@ -627,13 +627,14 @@ int tls_h_mod_pre_init_f(void)
 		return 0;
 	}
 	LM_DBG("preparing tls env for modules initialization\n");
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
+	OPENSSL_init_ssl(0, NULL);
+#else
 	LM_DBG("preparing tls env for modules initialization (libssl <=1.0)\n");
 	SSL_library_init();
-	SSL_load_error_strings();
-#else
-	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
 #endif
+	SSL_load_error_strings();
 	tls_mod_preinitialized=1;
 	return 0;
 }
@@ -865,7 +866,6 @@ int tls_check_sockets(tls_domains_cfg_t* cfg)
 void tls_h_mod_destroy_f(void)
 {
 	LM_DBG("tls module final tls destroy\n");
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
 	if(tls_mod_preinitialized > 0)
 		ERR_free_strings();
 	/* TODO: free all the ctx'es */
@@ -877,6 +877,5 @@ void tls_h_mod_destroy_f(void)
 	 * by atexit(), when shm is gone */
 	LM_DBG("executing openssl v1.1+ cleanup\n");
 	OPENSSL_cleanup();
-#endif
 #endif
 }
