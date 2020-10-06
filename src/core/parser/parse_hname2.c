@@ -309,3 +309,9 @@ char* parse_hname2_short(char* const begin, const char* const end, struct hdr_fi
 {
 	return parse_sip_header_name(begin, end, hdr, 0);
 }
+
+char* parse_hname2_str (str* const hbuf, hdr_field_t* const hdr)
+{
+	return parse_sip_header_name(hbuf->s, hbuf->s + hbuf->len, hdr, 1);
+}
+
