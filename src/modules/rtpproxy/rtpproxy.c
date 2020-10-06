@@ -114,7 +114,7 @@ static str DEFAULT_RTPP_SET_ID_STR = str_init("0");
 #define	PTL_CPROTOVER	"20081102"
 
 #define	CPORT		"22222"
-static int extract_mediaip(str *, str *, int *, char *);
+static int rp_extract_mediaip(str *, str *, int *, char *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
@@ -958,7 +958,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 	}
 	body1 = body;
 	for(;;) {
-		if (extract_mediaip(&body1, &oldip, &pf,line) == -1)
+		if (rp_extract_mediaip(&body1, &oldip, &pf,line) == -1)
 			break;
 		if (pf != AF_INET) {
 			LM_ERR("not an IPv4 address in '%s' SDP\n",line);
@@ -988,7 +988,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 }
 
 	static int
-extract_mediaip(str *body, str *mediaip, int *pf, char *line)
+rp_extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 {
 	char *cp, *cp1;
 	int len, nextisip;
