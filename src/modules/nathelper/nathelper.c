@@ -116,7 +116,7 @@ static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int is_rfc1918_f(struct sip_msg *, char *, char *);
-static int extract_mediaip(str *, str *, int *, char *, int);
+static int nh_extract_mediaip(str *, str *, int *, char *, int);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void **param, int param_no);
@@ -1631,7 +1631,7 @@ static inline int replace_sdp_ip(
 	}
 	body1 = body;
 	for(;;) {
-		if(extract_mediaip(&body1, &oldip, &pf, line, linelen) == -1)
+		if(nh_extract_mediaip(&body1, &oldip, &pf, line, linelen) == -1)
 			break;
 		if(pf != AF_INET) {
 			LM_ERR("not an IPv4 address in '%s' SDP\n", line);
@@ -1786,7 +1786,8 @@ static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 	return ki_fix_nated_sdp_ip(msg, level, &ip);
 }
 
-static int extract_mediaip(str *body, str *mediaip, int *pf, char *line, int linelen)
+static int nh_extract_mediaip(str *body, str *mediaip, int *pf, char *line,
+		int linelen)
 {
 	char *cp, *cp1;
 	int len, nextisip;
