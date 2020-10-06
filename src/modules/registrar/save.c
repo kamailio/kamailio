@@ -229,8 +229,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
+	static struct socket_info si = {0};
 	int_str val;
-	struct socket_info *si = 0;
 
 	if (_m!=0) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
@@ -254,16 +254,9 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* set received socket */
 		if (sock_addr.len>0) {
-			si = (struct socket_info *)pkg_malloc(sizeof(struct socket_info));
-			if(si == 0) {
-				LOG(L_ERR, "ERROR: pack_ci: memory allocation error\n");
-				rerrno = R_PARSE;
-				goto error;
-			}
-
-			memset(si, 0, sizeof(struct socket_info));
-			si->sock_str = sock_addr;
-			ci.sock = si;
+		    memset(&si, 0, sizeof(struct socket_info));
+		    si.sock_str = sock_addr;
+		    ci.sock = &si;
 		} else if (_m->flags&sock_flag) {
 			ci.sock = get_sock_val(_m);
 			if (ci.sock==0)
@@ -425,10 +418,6 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	return &ci;
 error:
 
-	if (si) {
-		pkg_free(si);
-	}
-
 	return 0;
 }
 
@@ -577,11 +566,6 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 		build_contact(_m, NULL, &u->host);
 	}
 	
-	if (sock_addr.len>0 && ci && ci->sock) {
-		pkg_free(ci->sock);
-	}
-	
-
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
@@ -594,11 +578,6 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 error:
 	if (r)
 		ul.delete_urecord(_d, _a, r);
-
-	if (sock_addr.len>0 && ci && ci->sock) {
-		pkg_free(ci->sock);
-	}
-	
 
 	return -1;
 }
@@ -842,17 +821,9 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 	}
 #endif
 
-	if (sock_addr.len>0 && ci && ci->sock) {
-		pkg_free(ci->sock);
-	}
-
 	return rc;
 error:
 
-	if (sock_addr.len>0 && ci && ci->sock) {
-		pkg_free(ci->sock);
-	}
-	
 	return -1;
 }
 
