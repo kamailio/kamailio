@@ -79,6 +79,8 @@ static int sql_res_param(modparam_t type, void* val);
 
 extern int sqlops_tr_buf_size;
 
+int sqlops_results_maxsize = 32;
+
 static int sqlops_connect_mode = 0;
 
 static pv_export_t mod_pvs[] = {
@@ -111,6 +113,7 @@ static param_export_t params[]={
 	{"sqlres",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_res_param},
 	{"tr_buf_size",     PARAM_INT,   &sqlops_tr_buf_size},
 	{"connect_mode",    PARAM_INT,   &sqlops_connect_mode},
+	{"results_maxsize", PARAM_INT,   &sqlops_results_maxsize},
 	{0,0,0}
 };
 
