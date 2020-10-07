@@ -1167,6 +1167,11 @@ int tps_response_sent(sip_msg_t *msg)
 				&& msg->contact==NULL) {
 		contact_keep = 1;
 	}
+	if(contact_keep==0 && msg->first_line.u.reply.statuscode>=400
+				&& msg->first_line.u.reply.statuscode<500
+				&& msg->contact==NULL) {
+		contact_keep = 1;
+	}
 	if(contact_keep==0) {
 		tps_remove_headers(msg, HDR_CONTACT_T);
 		if(direction==TPS_DIR_DOWNSTREAM) {
