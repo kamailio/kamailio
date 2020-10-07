@@ -253,9 +253,9 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* set received socket */
-		if (sock_addr.len>0) {
+		if (_m->rcv.bind_address->useinfo.sock_str.len > 0) {
 		    memset(&si, 0, sizeof(struct socket_info));
-		    si.sock_str = sock_addr;
+		    si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
 		    ci.sock = &si;
 		} else if (_m->flags&sock_flag) {
 			ci.sock = get_sock_val(_m);

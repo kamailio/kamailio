@@ -535,31 +535,6 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</example>
 	</section>
 
-	<section id="registrar.p.sock_addr">
-		<title><varname>sock_addr</varname> (string)</title>
-		<para>
-		This parameters can be used to override value written into socket field when contact is saved.
-		The value should be given in the following format: proto:IP:port. 
-		</para>
-		<para>
-		It could be usefull when kamailio is installed behind NAT and it is necessary to store its public IP 
-		instead socket on which the register request was received.
-		</para>
-		<para>
-		<emphasis>
-			Default value is NULL.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>sock_addr</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "sock_addr", "udp:104.215.148.63:5060")
-...
-		</programlisting>
-		</example>
-	</section>
-
 	<section id="registrar.p.method_filtering">
 		<title><varname>method_filtering</varname> (integer)</title>
 		<para>
