@@ -30,6 +30,7 @@ Daniel-Constantin Mierla
               3.2. sqlres (str)
               3.3. tr_buf_size (int)
               3.4. connect_mode (int)
+              3.5. results_maxsize (int)
 
         4. Functions
 
@@ -50,13 +51,14 @@ Daniel-Constantin Mierla
    1.2. Set sqlres parameter
    1.3. Set tr_buf_size parameter
    1.4. Set connect_mode parameter
-   1.5. sql_query() usage
-   1.6. sql_xquery() usage
-   1.7. sql_pvquery() usage
-   1.8. sql_result_free() usage
-   1.9. sql_query_async() usage
-   1.10. $dbr(result=>key) usage
-   1.11. $sqlrows(con) usage
+   1.5. Set results_maxsize parameter
+   1.6. sql_query() usage
+   1.7. sql_xquery() usage
+   1.8. sql_pvquery() usage
+   1.9. sql_result_free() usage
+   1.10. sql_query_async() usage
+   1.11. $dbr(result=>key) usage
+   1.12. $sqlrows(con) usage
 
 Chapter 1. Admin Guide
 
@@ -74,6 +76,7 @@ Chapter 1. Admin Guide
         3.2. sqlres (str)
         3.3. tr_buf_size (int)
         3.4. connect_mode (int)
+        3.5. results_maxsize (int)
 
    4. Functions
 
@@ -136,6 +139,7 @@ Chapter 1. Admin Guide
    3.2. sqlres (str)
    3.3. tr_buf_size (int)
    3.4. connect_mode (int)
+   3.5. results_maxsize (int)
 
 3.1. sqlcon (str)
 
@@ -198,6 +202,23 @@ modparam("sqlops", "tr_buf_size", 4096)
 modparam("sqlops", "connect_mode", 1)
 ...
 
+3.5. results_maxsize (int)
+
+   Set the upper limit of how many result containers are going to be
+   defined.
+
+   Note that a result container can be used for different SQL queries, it
+   is not required to have result container per SQL query. Use different
+   containers when the result records are needed at the same time (e.g.,
+   compare a field from one result with a field from another result).
+
+   Default value is 32.
+
+   Example 1.5. Set results_maxsize parameter
+...
+modparam("sqlops", "results_maxsize", 4096)
+...
+
 4. Functions
 
    4.1. sql_query(connection, query[, result])
@@ -228,7 +249,7 @@ modparam("sqlops", "connect_mode", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. sql_query() usage
+   Example 1.6. sql_query() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -248,7 +269,7 @@ sql_result_free("ra");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. sql_xquery() usage
+   Example 1.7. sql_xquery() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -286,7 +307,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
    successful query, 2 if query provided no result set, 3 if result is
    ignored (no result parameter given)
 
-   Example 1.7. sql_pvquery() usage
+   Example 1.8. sql_pvquery() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -300,7 +321,7 @@ sql_pvquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. sql_result_free() usage
+   Example 1.9. sql_result_free() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -324,7 +345,7 @@ sql_result_free("ra");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. sql_query_async() usage
+   Example 1.10. sql_query_async() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -351,7 +372,7 @@ sql_query_async("ca", "delete from domain");
        integer.
      * colname[N] - return the name of the N-th column in the result set.
 
-   Example 1.10. $dbr(result=>key) usage
+   Example 1.11. $dbr(result=>key) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -410,7 +431,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 
    “con” must be the name identifying a DB connection.
 
-   Example 1.11. $sqlrows(con) usage
+   Example 1.12. $sqlrows(con) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
