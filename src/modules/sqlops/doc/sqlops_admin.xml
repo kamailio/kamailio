@@ -215,6 +215,32 @@ modparam("sqlops", "connect_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="sqlops.results_maxsize">
+		<title><varname>results_maxsize</varname> (int)</title>
+		<para>
+		Set the upper limit of how many result containers are going to be
+		defined.
+		</para>
+		<para>
+		Note that a result container can be used for different SQL queries, it
+		is not required to have result container per SQL query. Use different
+		containers when the result records are needed at the same time (e.g.,
+		compare a field from one result with a field from another result).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 32.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>results_maxsize</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "results_maxsize", 4096)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
