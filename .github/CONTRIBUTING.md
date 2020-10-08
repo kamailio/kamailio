@@ -104,7 +104,14 @@ by the commit, for example:
   * `modname`: support for foo rfc extension
     * `usrloc`: support for gruu rfc extension
   * `lib`: srutils - critical bug fix for abc case
+  * `etc`: kamailio.cfg - added core reply route block
+  * `misc`: examples/kemi lua - added debug callback function
   * `kamctl`: added support for management of module xyz
+
+It is acceptable to use slightly different formats, like `etc/kamailio.cfg: ...`
+instead of `etc: kamailio.cfg - ...` or `modules/usrloc: ...` instead of
+`usrloc: ...`, the important aspect is to indicate the component where the
+changes were done.
 
 At the end of the first line some CI flags can be added. Available at this
 moment:
@@ -164,7 +171,7 @@ dialplan: basic safety for concurrent rpc reload
 
 #### Commit Message Examples ####
 
-  * change to usrloc module from modules
+  * changes to usrloc module from modules
 
 ```
 usrloc: fixed name conflict
@@ -173,7 +180,7 @@ usrloc: fixed name conflict
   with the usr_avp.h version
 ```
 
-  * change to core
+  * changes to core
 
 ```
 core: loadpath can now use a list of directories
@@ -183,6 +190,15 @@ core: loadpath can now use a list of directories
   First match wins (e.g. for loadmodule "textops" if
   modules/textops.so or modules/textops/textops.so exists, it will
   be loaded and the search will stop).
+```
+
+  * changes to `etc/kamailio.cfg` file
+
+```
+etc: kamailio.cfg - set load_backends to 1 for permissions module
+
+- the config uses only address table
+
 ```
 
 #### See Also ####
