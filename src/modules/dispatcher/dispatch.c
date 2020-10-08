@@ -2066,6 +2066,65 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 	return ret;
 }
 
+int ds_manage_routes_fill_xavp(unsigned int hash, ds_set_t *idx, ds_select_state_t *rstate)
+{
+	int i;
+
+	LM_DBG("using first entry [%d/%d]\n", rstate->setid, hash);
+	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg,
+				&rstate->lxavp)<0) {
+		LM_ERR("failed to add destination in the xavp (%d/%d)\n",
+				hash, rstate->setid);
+		return -1;
+	}
+	rstate->cnt++;
+
+	/* add to xavp the destinations after the selected one */
+	for(i = hash + 1; i < idx->nr && rstate->cnt < rstate->limit; i++) {
+		if(ds_skip_dst(idx->dlist[i].flags)
+				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
+			continue;
+		}
+		/* max load exceeded per destination */
+		if(rstate->alg == DS_ALG_CALLLOAD
+				&& idx->dlist[i].attrs.maxload != 0
+				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
+			continue;
+		}
+		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
+		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
+					&rstate->lxavp)<0) {
+			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
+					i, rstate->setid);
+			return -1;
+		}
+		rstate->cnt++;
+	}
+
+	/* add to xavp the destinations before the selected one */
+	for(i = 0; i < hash && rstate->cnt < rstate->limit; i++) {
+		if(ds_skip_dst(idx->dlist[i].flags)
+				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
+			continue;
+		}
+		/* max load exceeded per destination */
+		if(rstate->alg == DS_ALG_CALLLOAD
+				&& idx->dlist[i].attrs.maxload != 0
+				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
+			continue;
+		}
+		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
+		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
+					&rstate->lxavp)<0) {
+			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
+					i, rstate->setid);
+			return -1;
+		}
+		rstate->cnt++;
+	}
+	return 0;
+}
+
 /**
  *
  */
@@ -2285,58 +2344,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		return 1;
 	}
 
-	LM_DBG("using first entry [%d/%d]\n", rstate->setid, hash);
-	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg,
-				&rstate->lxavp)<0) {
-		LM_ERR("failed to add destination in the xavp (%d/%d)\n",
-				hash, rstate->setid);
+	if (ds_manage_routes_fill_xavp(hash, idx, rstate) == -1)
 		return -1;
-	}
-	rstate->cnt++;
-
-	/* add to xavp the destinations after the selected one */
-	for(i = hash + 1; i < idx->nr && rstate->cnt < rstate->limit; i++) {
-		if(ds_skip_dst(idx->dlist[i].flags)
-				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
-			continue;
-		}
-		/* max load exceeded per destination */
-		if(rstate->alg == DS_ALG_CALLLOAD
-				&& idx->dlist[i].attrs.maxload != 0
-				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
-			continue;
-		}
-		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
-		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
-					&rstate->lxavp)<0) {
-			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
-					i, rstate->setid);
-			return -1;
-		}
-		rstate->cnt++;
-	}
-
-	/* add to xavp the destinations before the selected one */
-	for(i = 0; i < hash && rstate->cnt < rstate->limit; i++) {
-		if(ds_skip_dst(idx->dlist[i].flags)
-				|| (ds_use_default != 0 && i == (idx->nr - 1))) {
-			continue;
-		}
-		/* max load exceeded per destination */
-		if(rstate->alg == DS_ALG_CALLLOAD
-				&& idx->dlist[i].attrs.maxload != 0
-				&& idx->dlist[i].dload >= idx->dlist[i].attrs.maxload) {
-			continue;
-		}
-		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
-		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
-					&rstate->lxavp)<0) {
-			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
-					i, rstate->setid);
-			return -1;
-		}
-		rstate->cnt++;
-	}
 
 	/* add default dst to last position in XAVP list */
 	if(ds_use_default != 0 && hash != idx->nr - 1
