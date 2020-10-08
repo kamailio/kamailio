@@ -253,14 +253,14 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* set received socket */
-		if (_m->rcv.bind_address && _m->rcv.bind_address->useinfo.sock_str.len > 0) {
-		    memset(&si, 0, sizeof(struct socket_info));
-		    si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
-		    ci.sock = &si;
-		} else if (_m->flags&sock_flag) {
+		if (_m->flags&sock_flag) {
 			ci.sock = get_sock_val(_m);
 			if (ci.sock==0)
 				ci.sock = _m->rcv.bind_address;
+		} else if (sock_advertise_enabled && _m->rcv.bind_address && _m->rcv.bind_address->useinfo.sock_str.len > 0) {
+		    memset(&si, 0, sizeof(struct socket_info));
+		    si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
+		    ci.sock = &si;
 		} else {
 			ci.sock = _m->rcv.bind_address;
 		}
