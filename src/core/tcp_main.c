@@ -95,6 +95,7 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "ut.h"
+#include "events.h"
 #include "cfg/cfg_struct.h"
 
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
@@ -5135,4 +5136,88 @@ void tcp_get_info(struct tcp_gen_info *ti)
 #endif /* TCP_ASYNC */
 }
 
+
+/* finds an ws/wss tcpconn & sends on it
+ * uses the dst members to, proto (ws/wss) and id and tries to send
+ * returns: number of bytes written (>=0) on success
+ *          <0 on error */
+int wss_send(dest_info_t* dst, const char* buf, unsigned len)
+{
+	int port;
+	struct ip_addr ip;
+	union sockaddr_union* from = NULL;
+	union sockaddr_union local_addr;
+	struct tcp_connection *con = NULL;
+	struct ws_event_info wsev;
+	sr_event_param_t evp = {0};
+	int ret;
+
+	if (unlikely((dst->proto == PROTO_WS
+#ifdef USE_TLS
+					|| dst->proto == PROTO_WSS
 #endif
+				) && sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+		if (unlikely(dst->send_flags.f & SND_F_FORCE_SOCKET
+					&& dst->send_sock)) {
+
+			local_addr = dst->send_sock->su;
+#ifdef SO_REUSEPORT
+			if (cfg_get(tcp, tcp_cfg, reuse_port)) {
+				LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
+						su2a(&dst->to,sizeof(struct sockaddr_in)),
+						(dst->send_flags.f & SND_F_FORCE_SOCKET),
+						dst->send_sock);
+
+				su_setport(&local_addr, dst->send_sock->port_no);
+			}
+			else
+				su_setport(&local_addr, 0); /* any local port will do */
+#else
+			su_setport(&local_addr, 0); /* any local port will do */
+#endif
+			from = &local_addr;
+		}
+
+		port = su_getport(&dst->to);
+		if (likely(port)) {
+			su2ip_addr(&ip, &dst->to);
+			if(tcp_connection_match==TCPCONN_MATCH_STRICT) {
+				con = tcpconn_lookup(dst->id, &ip, port, from,
+						(dst->send_sock)?dst->send_sock->port_no:0, 0);
+			} else {
+				con = tcpconn_get(dst->id, &ip, port, from, 0);
+			}
+		}
+		else if (likely(dst->id))
+			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+		else {
+			LM_CRIT("null_id & to\n");
+			goto error;
+		}
+
+		if (con == NULL) {
+			LM_WARN("TCP/TLS connection for WebSocket could not be found\n");
+			goto error;
+		}
+
+		memset(&wsev, 0, sizeof(ws_event_info_t));
+		wsev.type = SREV_TCP_WS_FRAME_OUT;
+		wsev.buf = (char*)buf;
+		wsev.len = len;
+		wsev.id = con->id;
+		evp.data = (void *)&wsev;
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
+		tcpconn_put(con);
+		goto done;
+	} else {
+		LM_CRIT("used with invalid proto %d\n", dst->proto);
+		goto error;
+	}
+
+done:
+	return ret;
+error:
+	return -1;
+}
+
+#endif /* USE_TCP */

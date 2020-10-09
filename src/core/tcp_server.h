@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,7 +33,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 int tcpconn_add_alias(int id, int port, int proto);
 
 
-
+int wss_send(dest_info_t* dst, const char* buf, unsigned len);
 
 
 #endif
