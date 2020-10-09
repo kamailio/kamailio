@@ -169,9 +169,9 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			hdr->body.len=tmp-hdr->body.s;
 			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
 					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
-			DBG("to body [%.*s], to tag [%.*s]\n", to_b->body.len,
-					ZSW(to_b->body.s), to_b->tag_value.len,
-					ZSW(to_b->tag_value.s));
+			DBG("to body (%d)[%.*s], to tag (%d)[%.*s]\n", to_b->body.len,
+					to_b->body.len, ZSW(to_b->body.s), to_b->tag_value.len,
+					to_b->tag_value.len, ZSW(to_b->tag_value.s));
 			break;
 		case HDR_CONTENTLENGTH_T:
 			hdr->body.s=tmp;
