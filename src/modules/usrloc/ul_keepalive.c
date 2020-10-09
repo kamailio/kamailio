@@ -253,6 +253,11 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 	}
 
 #ifdef USE_TCP
+	else if(kadst->proto == PROTO_WS || kadst->proto == PROTO_WSS) {
+		/*ws-wss*/
+		kadst->id=0;
+		return wss_send(kadst, kamsg->s, kamsg->len);
+	}
 	else if(kadst->proto == PROTO_TCP) {
 		/*tcp*/
 		kadst->id=0;
