@@ -268,6 +268,7 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 	struct hdr_field *reas1, *reas_last, *hdr;
 	int hadded = 0;
 	sr_cfgenv_t *cenv = NULL;
+	hdr_flags_t hdr_flags = 0;
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
@@ -361,6 +362,11 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 		switch(hf_type) {
 			case HDR_CSEQ_T:
 				/* find the method name and replace it */
+				if(hdr_flags &  HDR_CSEQ_F) {
+					LM_DBG("duplicate CSeq header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_CSEQ_F;
 				while ((s < invite_buf_end)
 					&& ((*s == ':') || (*s == ' ') || (*s == '\t') ||
 						((*s >= '0') && (*s <= '9')))
@@ -381,6 +387,12 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 				break;
 
 			case HDR_TO_T:
+				if(hdr_flags &  HDR_TO_F) {
+					LM_DBG("duplicate To header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_TO_F;
+
 				if (to_len == 0) {
 					/* there is no To tag required, just copy paste
 					 * the header */
@@ -395,7 +407,25 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 				break;
 
 			case HDR_FROM_T:
+				/* copy hf */
+				if(hdr_flags &  HDR_FROM_F) {
+					LM_DBG("duplicate From header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_FROM_F;
+				s = lw_next_line(s, invite_buf_end);
+				append_str(d, s1, s - s1);
+				break;
 			case HDR_CALLID_T:
+				/* copy hf */
+				if(hdr_flags &  HDR_CALLID_F) {
+					LM_DBG("duplicate Call-Id header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_CALLID_F;
+				s = lw_next_line(s, invite_buf_end);
+				append_str(d, s1, s - s1);
+				break;
 			case HDR_ROUTE_T:
 			case HDR_MAXFORWARDS_T:
 				/* copy hf */
@@ -495,6 +525,7 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 	/* HDR_EOH_T was not found in the buffer, the message is corrupt */
 	LM_ERR("HDR_EOH_T was not found\n");
 
+errorhdr:
 	shm_free(cancel_buf);
 error:
 	LM_ERR("cannot build %.*s request\n", method_len, method);
