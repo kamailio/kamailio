@@ -609,7 +609,10 @@ skip:
 
 error:
 	ser_error=E_BAD_REQ;
-	if (hf) pkg_free(hf);
+	if (hf) {
+		clean_hdr_field(hf);
+		pkg_free(hf);
+	}
 	/* restore original flags */
 	msg->parsed_flag |= orig_flag;
 	return -1;
