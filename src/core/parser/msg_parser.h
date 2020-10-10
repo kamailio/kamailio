@@ -127,6 +127,10 @@ typedef enum request_method {
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
+/* sip parser mode flags (1<<n) */
+#define KSR_SIP_PARSER_MODE_NONE 0
+#define KSR_SIP_PARSER_MODE_STRICT 1
+
 #define IFISMETHOD(methodname,firstchar)                                  \
 if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 		strncasecmp( tmp+1, &#methodname[1], methodname##_LEN-1)==0 &&     \

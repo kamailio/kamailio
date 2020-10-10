@@ -391,6 +391,7 @@ extern char *default_routename;
 %token MEMJOIN
 %token MEMSTATUSMODE
 %token SIP_PARSER_LOG
+%token SIP_PARSER_MODE
 %token CORELOG
 %token SIP_WARNING
 %token SERVER_SIGNATURE
@@ -956,6 +957,8 @@ assign_stm:
 	| MEMSTATUSMODE EQUAL error { yyerror("int value expected"); }
 	| SIP_PARSER_LOG EQUAL intno { default_core_cfg.sip_parser_log=$3; }
 	| SIP_PARSER_LOG EQUAL error { yyerror("int value expected"); }
+	| SIP_PARSER_MODE EQUAL intno { ksr_sip_parser_mode=$3; }
+	| SIP_PARSER_MODE EQUAL error { yyerror("int value expected"); }
 	| CORELOG EQUAL intno { default_core_cfg.corelog=$3; }
 	| CORELOG EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
