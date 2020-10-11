@@ -35,10 +35,6 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
-/* flags for first line
- * - stored on a short field (16 flags) */
-#define FLINE_FLAG_PROTO_SIP	(1<<0)
-#define FLINE_FLAG_PROTO_HTTP	(1<<1)
 
 int http_reply_parse = 0;
 
@@ -110,7 +106,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start* fl)
 		} else if (strncasecmp( tmp+1, &HTTP2_VERSION[1], HTTP2_VERSION_LEN-1)==0
 				&& (*(tmp+HTTP2_VERSION_LEN)==' ')) {
 			fl->type=SIP_REPLY;
-			fl->flags|=FLINE_FLAG_PROTO_HTTP;
+			fl->flags|=(FLINE_FLAG_PROTO_HTTP | FLINE_FLAG_PROTO_HTTP2);
 			fl->u.reply.version.len=HTTP2_VERSION_LEN;
 			tmp=buffer+HTTP2_VERSION_LEN;
 		}
@@ -235,14 +231,23 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start* fl)
 				&& !strncasecmp(fl->u.request.version.s+1,
 					&SIP_VERSION[1], SIP_VERSION_LEN-1)) {
 			fl->flags|=FLINE_FLAG_PROTO_SIP;
-		} else if(fl->u.request.version.len >= HTTP_VERSION_LEN
+		} else if(fl->u.request.version.len >= 4
 				&& (fl->u.request.version.s[0]=='H'
-					|| fl->u.request.version.s[0]=='h')
-				&& !strncasecmp(fl->u.request.version.s+1,
-					&HTTP_VERSION[1], HTTP_VERSION_LEN-1)) {
-			fl->flags|=FLINE_FLAG_PROTO_HTTP;
+					|| fl->u.request.version.s[0]=='h')) {
+			if(fl->u.request.version.len >= HTTP_VERSION_LEN
+					&& !strncasecmp(fl->u.request.version.s+1,
+						&HTTP_VERSION[1], HTTP_VERSION_LEN-1)) {
+				fl->flags|=FLINE_FLAG_PROTO_HTTP;
+			} else if(fl->u.request.version.len >= HTTP2_VERSION_LEN
+					&& !strncasecmp(fl->u.request.version.s+1,
+						&HTTP2_VERSION[1], HTTP2_VERSION_LEN-1)) {
+				fl->flags|=(FLINE_FLAG_PROTO_HTTP | FLINE_FLAG_PROTO_HTTP2);
+			}
 		}
 	}
+
+	LM_DBG("first line type %d (%s) flags %d\n", (int)fl->type,
+		(fl->type==SIP_REPLY)?"reply(status)":"request", (int)fl->flags);
 
 	return nl;
 
