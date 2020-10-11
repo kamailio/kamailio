@@ -359,8 +359,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->callid==0) {
 					msg->callid=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					ERR("duplicate Call-ID header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
+					LOG(cfg_get(core, core_cfg, sip_parser_log),
+							"duplicate Call-ID header field [%.*s]\n",
+							(end-tmp>100)?100:(int)(end-tmp), tmp);
 					goto  error;
 				}
 				msg->parsed_flag|=HDR_CALLID_F;
@@ -373,8 +374,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->to==0) {
 					msg->to=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					ERR("duplicate To header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
+					LOG(cfg_get(core, core_cfg, sip_parser_log),
+							"duplicate To header field [%.*s]\n",
+							(end-tmp>100)?100:(int)(end-tmp), tmp);
 					goto  error;
 				}
 				msg->parsed_flag|=HDR_TO_F;
@@ -407,8 +409,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if(msg->maxforwards==0) {
 					msg->maxforwards=hf;
 				} else {
-					ERR("duplicate Max-Forwards header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
+					LOG(cfg_get(core, core_cfg, sip_parser_log),
+							"duplicate Max-Forwards header field [%.*s]\n",
+							(end-tmp>100)?100:(int)(end-tmp), tmp);
 					goto  error;
 				}
 				msg->parsed_flag|=HDR_MAXFORWARDS_F;
@@ -429,8 +432,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->content_length==0) {
 					msg->content_length = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					ERR("duplicate Content-Length header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
+					LOG(cfg_get(core, core_cfg, sip_parser_log),
+							"duplicate Content-Length header field [%.*s]\n",
+							(end-tmp>100)?100:(int)(end-tmp), tmp);
 					goto  error;
 				}
 				msg->parsed_flag|=HDR_CONTENTLENGTH_F;
