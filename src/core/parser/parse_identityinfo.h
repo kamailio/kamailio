@@ -59,8 +59,6 @@ enum {
 	II_M_TOKEN
 };
 
-#define ZSW(_c) ((_c)?(_c):"")
-
 struct identityinfo_body {
 	int error;  	/* Error code */
 	str uri;    	/* URI */
