@@ -31,6 +31,7 @@ Bogdan-Andrei Iancu
         4. Functions
 
               4.1. pike_check_req()
+              4.2. pike_check_ip(ipaddr)
 
         5. RPC Commands
 
@@ -50,6 +51,7 @@ Bogdan-Andrei Iancu
    1.3. Set remove_latency parameter
    1.4. Set pike_log_level parameter
    1.5. pike_check_req usage
+   1.6. pike_check_ip usage
    2.1. Using pike.top
    3.1. Tree of IP addresses
 
@@ -73,6 +75,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. pike_check_req()
+        4.2. pike_check_ip(ipaddr)
 
    5. RPC Commands
 
@@ -175,6 +178,7 @@ modparam("pike", "pike_log_level", -1)
 4. Functions
 
    4.1. pike_check_req()
+   4.2. pike_check_ip(ipaddr)
 
 4.1.  pike_check_req()
 
@@ -191,11 +195,28 @@ Warning
      * -2 (false) - IP is detected as a new source of flooding - first
        time detection
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
 
    Example 1.5. pike_check_req usage
 ...
 if (!pike_check_req()) { exit; };
+...
+
+4.2.  pike_check_ip(ipaddr)
+
+   Process the IP address parameter and return false if it was exceeding
+   the blocking limit. The return codes are the same from
+   pike_check_req().
+
+   The parameter can contain variables.
+
+   This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
+
+   Example 1.6. pike_check_ip usage
+...
+if (!pike_check_ip("1.2.3.4")) { exit; };
+...
+if (!pike_check_ip("$si")) { exit; };
 ...
 
 5. RPC Commands
