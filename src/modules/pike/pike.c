@@ -36,6 +36,7 @@
 #include "../../core/timer.h"
 #include "../../core/locking.h"
 #include "../../core/kemi.h"
+#include "../../core/mod_fix.h"
 #include "ip_tree.h"
 #include "timer.h"
 #include "pike_funcs.h"
@@ -63,7 +64,10 @@ pike_list_link_t *pike_timer = 0;
 
 
 static cmd_export_t cmds[]={
-	{"pike_check_req", (cmd_function)w_pike_check_req,  0,  0, 0, REQUEST_ROUTE},
+	{"pike_check_req",    (cmd_function)w_pike_check_req,  0,
+		0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"pike_check_ip", (cmd_function)w_pike_check_ip,       1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -175,6 +179,11 @@ static sr_kemi_t sr_kemi_pike_exports[] = {
 	{ str_init("pike"), str_init("pike_check_req"),
 		SR_KEMIP_INT, pike_check_req,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pike"), str_init("pike_check_ip"),
+		SR_KEMIP_INT, pike_check_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

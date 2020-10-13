@@ -32,6 +32,7 @@
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
 #include "../../core/counters.h"
+#include "../../core/mod_fix.h"
 #include "ip_tree.h"
 #include "pike_funcs.h"
 #include "timer.h"
@@ -53,28 +54,11 @@ void pike_counter_init()
 
 
 
-int pike_check_req(sip_msg_t *msg)
+int pike_check_ipaddr(sip_msg_t *msg, ip_addr_t* ip)
 {
 	pike_ip_node_t *node;
 	pike_ip_node_t *father;
 	unsigned char flags;
-	struct ip_addr* ip;
-
-
-#ifdef _test
-	/* get the ip address from second via */
-	if (parse_headers(msg, HDR_VIA1_F, 0)!=0 )
-		return -1;
-	if (msg->via1==0 )
-		return -1;
-	/* convert from string to ip_addr */
-	ip = str2ip( &msg->via1->host );
-	if (ip==0)
-		return -1;
-#else
-	ip = &(msg->rcv.src_ip);
-#endif
-
 
 	/* first lock the proper tree branch and mark the IP with one more hit*/
 	lock_tree_branch( ip->u.addr[0] );
@@ -159,9 +143,59 @@ int pike_check_req(sip_msg_t *msg)
 }
 
 
-int w_pike_check_req(struct sip_msg *msg, char *foo, char *bar)
+int pike_check_req(sip_msg_t *msg)
+{
+	ip_addr_t* ip;
+
+
+#ifdef _test
+	/* get the ip address from second via */
+	if (parse_headers(msg, HDR_VIA1_F, 0)!=0 )
+		return -1;
+	if (msg->via1==0 )
+		return -1;
+	/* convert from string to ip_addr */
+	ip = str2ip( &msg->via1->host );
+	if (ip==0)
+		return -1;
+#else
+	ip = &(msg->rcv.src_ip);
+#endif
+
+	return pike_check_ipaddr(msg, ip);
+}
+
+int w_pike_check_req(sip_msg_t *msg, char *foo, char *bar)
 {
 	return pike_check_req(msg);
+}
+
+int pike_check_ip(sip_msg_t *msg, str *strip)
+{
+	ip_addr_t* ip;
+
+	if(strip==NULL || strip->len<=0) {
+		return -1;
+	}
+
+	ip = str2ip(strip);
+	if (ip==0) {
+		LM_ERR("failed to parse ip address: %.*s\n", strip->len, strip->s);
+		return -1;
+	}
+
+	return pike_check_ipaddr(msg, ip);
+}
+
+int w_pike_check_ip(sip_msg_t *msg, char *pip, char *bar)
+{
+	str strip;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pip, &strip)<0) {
+		LM_ERR("failed to get the ip parameter\n");
+		return -1;
+	}
+	return pike_check_ip(msg, &strip);
 }
 
 void clean_routine(unsigned int ticks , void *param)
