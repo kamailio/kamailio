@@ -193,7 +193,7 @@ modparam("pike", "pike_log_level", -1)
 		</itemizedlist>
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>pike_check_req</function> usage</title>
@@ -204,6 +204,32 @@ if (!pike_check_req()) { exit; };
 </programlisting>
 		</example>
 	</section>
+	<section id="pike.f.pike_check_ip">
+		<title>
+		<function moreinfo="none">pike_check_ip(ipaddr)</function>
+		</title>
+		<para>
+		Process the IP address parameter and return false if it was exceeding
+		the blocking limit. The return codes are the same from pike_check_req().
+		</para>
+		<para>
+		The parameter can contain variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>pike_check_ip</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!pike_check_ip("1.2.3.4")) { exit; };
+...
+if (!pike_check_ip("$si")) { exit; };
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
