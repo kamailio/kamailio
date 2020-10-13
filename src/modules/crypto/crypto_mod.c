@@ -38,6 +38,9 @@
 #include "crypto_evcb.h"
 #include "api.h"
 
+#include <openssl/hmac.h>
+
+
 MODULE_VERSION
 
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
@@ -61,6 +64,9 @@ static int w_crypto_nio_out(sip_msg_t* msg, char* p1, char* p2);
 static int w_crypto_nio_encrypt(sip_msg_t* msg, char* p1, char* p2);
 static int w_crypto_nio_decrypt(sip_msg_t* msg, char* p1, char* p2);
 
+static int w_crypto_hmac_sha256(sip_msg_t* msg, char* inb, char* keyb, char* outb);
+static int fixup_crypto_hmac(void** param, int param_no);
+
 static char *_crypto_salt_param = "k8hTm4aZ";
 
 static int _crypto_register_callid = 0;
@@ -82,6 +88,8 @@ static cmd_export_t cmds[]={
 		0, 0, ANY_ROUTE},
 	{"crypto_netio_decrypt", (cmd_function)w_crypto_nio_decrypt, 0,
 		0, 0, ANY_ROUTE},
+	{"crypto_hmac_sha256", (cmd_function)w_crypto_hmac_sha256, 3,
+		fixup_crypto_hmac, 0, ANY_ROUTE},
 	{"load_crypto",        (cmd_function)load_crypto, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -289,6 +297,110 @@ static int fixup_crypto_aes_encrypt(void** param, int param_no)
 /**
  *
  */
+static int ki_crypto_hmac_sha256_helper(sip_msg_t* msg, str *ins, str *key,
+		pv_spec_t *dst)
+{
+	pv_value_t val;
+	unsigned char digest[EVP_MAX_MD_SIZE];
+	unsigned int digest_len;
+
+	LM_DBG("ins: %.*s, key: %.*s\n", STR_FMT(ins), STR_FMT(key));
+
+	if (!HMAC(EVP_sha256(), key->s, key->len, (const unsigned char *)ins->s, ins->len, digest, &digest_len)) {
+		LM_ERR("HMAC error\n");
+		goto error;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = pv_get_buffer();
+	val.rs.len = base64url_enc((unsigned char *)digest, digest_len, (unsigned char *)val.rs.s, pv_get_buffer_size()-1);
+	if (val.rs.len < 0) {
+		LM_ERR("base64 output of digest value is too large (need %d)\n", -val.rs.len);
+		goto error;
+	}
+
+	if (val.rs.len > 1 && val.rs.s[val.rs.len-1] == '=') {
+		val.rs.len--;
+		if (val.rs.len > 1 && val.rs.s[val.rs.len-1] == '=') {
+			val.rs.len--;
+		}
+	}
+	val.rs.s[val.rs.len] = '\0';
+
+	LM_DBG("base64 digest result: [%.*s]\n", val.rs.len, val.rs.s);
+	val.flags = PV_VAL_STR;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	return 1;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_crypto_hmac_sha256(sip_msg_t* msg, str *ins, str *keys, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+
+	if(dst==NULL) {
+		LM_ERR("failed getting pv: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_crypto_hmac_sha256_helper(msg, ins, keys, dst);
+}
+
+/**
+ *
+ */
+static int w_crypto_hmac_sha256(sip_msg_t* msg, char* inb, char* keyb, char* outb)
+{
+	str ins;
+	str keys;
+	pv_spec_t *dst;
+
+	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
+		LM_ERR("cannot get input value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)keyb, &keys) != 0) {
+		LM_ERR("cannot get key value\n");
+		return -1;
+	}
+	dst = (pv_spec_t*)outb;
+
+	return ki_crypto_hmac_sha256_helper(msg, &ins, &keys, dst);
+}
+
+/**
+ *
+ */
+static int fixup_crypto_hmac(void** param, int param_no)
+{
+	if(param_no==1 || param_no==2) {
+		if(fixup_spve_null(param, 1)<0)
+			return -1;
+		return 0;
+	} else if(param_no==3) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 		pv_spec_t *dst)
 {
@@ -400,6 +512,7 @@ static int fixup_crypto_aes_decrypt(void** param, int param_no)
 	}
 	return 0;
 }
+
 
 /**
  * testing function

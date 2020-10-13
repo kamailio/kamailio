@@ -226,6 +226,30 @@ crypto_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
 	    </example>
 	</section>
 
+	<section id="async.f.crypto_hmac_sha256">
+		<title>
+			<function moreinfo="none">crypto_hmac_sha256(text, key, res)</function>
+		</title>
+		<para>
+			Calculates HMAC (keyed-hash message authentication code) with SHA256
+			as a cryptographic hash function. The result is encoded in base64 url
+			encoded format and stored in res. The parameter res must be a read-write
+			variable. The parameters text and key can be static strings or strings
+			with variables (dynamic strings).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>crypto_hmac_sha256</function> usage</title>
+			<programlisting format="linespecific">
+...
+crypto_hmac_sha256("$var(text)", "my-secret-key", "$var(hmac)");
+...
+</programlisting>
+		</example>
+	</section>
+	
 	<section id="async.f.crypto_netio_in">
 	    <title>
 		<function moreinfo="none">crypto_netio_in)</function>
