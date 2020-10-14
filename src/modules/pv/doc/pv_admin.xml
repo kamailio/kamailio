@@ -417,6 +417,49 @@ xavp_params_implode("x", "$var(out)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_slist_explode">
+			<title>
+				<function moreinfo="none">xavp_slist_explode(slist, sep, mode, xname)</function>
+			</title>
+			<para>
+				Breaks a string list in tokens by separators and stores them
+				in XAVPs. Note that is not storing empty values.
+			</para>
+			<para>
+				The first parameter has to be a string (static or with variables).
+			</para>
+			<para>
+				The second parameter has to contain separator characters (they
+				can be many).
+			</para>
+			<para>
+				The third parameter is mode, controlling the behaviour of extracting
+				the tokens, the supported mode right now is 't', which trims
+				the white spaces around the value.
+			</para>
+			<para>
+				The fourth parameter is the name of the xavp to hold the tokens.
+			</para>
+			<para>
+				The values are stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_slist_explode</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_slist_explode("a=b; c=d;", "=;", "t", "x");
+# results in:
+#    $xavp(x[0]) = "a";
+#    $xavp(x[1]) = "b";
+#    $xavp(x[2]) = "c";
+#    $xavp(x[3]) = "d";
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavp_child_seti">
 			<title>
 				<function moreinfo="none">xavp_child_seti(rname, cname, ival)</function>
