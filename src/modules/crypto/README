@@ -35,10 +35,11 @@ Daniel-Constantin Mierla
 
               4.1. crypto_aes_encrypt(text, key, res)
               4.2. crypto_aes_decrypt(text, key, res)
-              4.3. crypto_netio_in)
-              4.4. crypto_netio_out()
-              4.5. crypto_netio_encrypt()
-              4.6. crypto_netio_decrypt()
+              4.3. crypto_hmac_sha256(text, key, res)
+              4.4. crypto_netio_in)
+              4.5. crypto_netio_out()
+              4.6. crypto_netio_encrypt()
+              4.7. crypto_netio_decrypt()
 
         5. Event Routes
 
@@ -53,11 +54,12 @@ Daniel-Constantin Mierla
    1.5. Set netio_key parameter
    1.6. crypto_aes_encrypt usage
    1.7. crypto_aes_decrypt usage
-   1.8. crypto_netio_in usage
-   1.9. crypto_netio_out usage
-   1.10. crypto_netio_encrypt usage
-   1.11. crypto_netio_decrypt usage
-   1.12. event_route[crypto:netio] usage
+   1.8. crypto_hmac_sha256 usage
+   1.9. crypto_netio_in usage
+   1.10. crypto_netio_out usage
+   1.11. crypto_netio_encrypt usage
+   1.12. crypto_netio_decrypt usage
+   1.13. event_route[crypto:netio] usage
 
 Chapter 1. Admin Guide
 
@@ -81,10 +83,11 @@ Chapter 1. Admin Guide
 
         4.1. crypto_aes_encrypt(text, key, res)
         4.2. crypto_aes_decrypt(text, key, res)
-        4.3. crypto_netio_in)
-        4.4. crypto_netio_out()
-        4.5. crypto_netio_encrypt()
-        4.6. crypto_netio_decrypt()
+        4.3. crypto_hmac_sha256(text, key, res)
+        4.4. crypto_netio_in)
+        4.5. crypto_netio_out()
+        4.6. crypto_netio_encrypt()
+        4.7. crypto_netio_decrypt()
 
    5. Event Routes
 
@@ -199,10 +202,11 @@ modparam("crypto", "netio_key", "strong-password-here")
 
    4.1. crypto_aes_encrypt(text, key, res)
    4.2. crypto_aes_decrypt(text, key, res)
-   4.3. crypto_netio_in)
-   4.4. crypto_netio_out()
-   4.5. crypto_netio_encrypt()
-   4.6. crypto_netio_decrypt()
+   4.3. crypto_hmac_sha256(text, key, res)
+   4.4. crypto_netio_in)
+   4.5. crypto_netio_out()
+   4.6. crypto_netio_encrypt()
+   4.7. crypto_netio_decrypt()
 
 4.1.  crypto_aes_encrypt(text, key, res)
 
@@ -232,14 +236,29 @@ crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 crypto_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
 ...
 
-4.3.  crypto_netio_in)
+4.3.  crypto_hmac_sha256(text, key, res)
+
+   Calculates HMAC (keyed-hash message authentication code) with SHA256 as
+   a cryptographic hash function. The result is encoded in base64 url
+   encoded format and stored in res. The parameter res must be a
+   read-write variable. The parameters text and key can be static strings
+   or strings with variables (dynamic strings).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. crypto_hmac_sha256 usage
+...
+crypto_hmac_sha256("$var(text)", "my-secret-key", "$var(hmac)");
+...
+
+4.4.  crypto_netio_in)
 
    Return 1 (true) if it is an incoming net message, or -1 (false)
    otherwise.
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.8. crypto_netio_in usage
+   Example 1.9. crypto_netio_in usage
 ...
 event_route[crypto:netio] {
   if(crypto_netio_in()) {
@@ -247,14 +266,14 @@ event_route[crypto:netio] {
   }
 ...
 
-4.4.  crypto_netio_out()
+4.5.  crypto_netio_out()
 
    Return 1 (true) if it is an outgoing net message, or -1 (false)
    otherwise.
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.9. crypto_netio_out usage
+   Example 1.10. crypto_netio_out usage
 ...
 event_route[crypto:netio] {
   if(crypto_netio_out()) {
@@ -262,13 +281,13 @@ event_route[crypto:netio] {
   }
 ...
 
-4.5.  crypto_netio_encrypt()
+4.6.  crypto_netio_encrypt()
 
    Mark the network message for encryption.
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.10. crypto_netio_encrypt usage
+   Example 1.11. crypto_netio_encrypt usage
 ...
 event_route[crypto:netio] {
   if(crypto_netio_out()) {
@@ -276,13 +295,13 @@ event_route[crypto:netio] {
   }
 ...
 
-4.6.  crypto_netio_decrypt()
+4.7.  crypto_netio_decrypt()
 
    Mark the network message for decryption.
 
    This function can be used from EVENT_ROUTE.
 
-   Example 1.11. crypto_netio_decrypt usage
+   Example 1.12. crypto_netio_decrypt usage
 ...
 event_route[crypto:netio] {
   if(crypto_netio_in()) {
@@ -296,7 +315,7 @@ event_route[crypto:netio] {
 
 5.1.  event_route[crypto:netio]
 
-   Example 1.12. event_route[crypto:netio] usage
+   Example 1.13. event_route[crypto:netio] usage
 ...
 # ----- crypto params -----
 modparam("crypto", "register_evcb", 1)
