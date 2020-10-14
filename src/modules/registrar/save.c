@@ -62,6 +62,8 @@
 #include "save.h"
 #include "config.h"
 
+#define REG_SOCK_USE_ADVERTISED 1 /* 1<<0 */
+
 static int mem_only = 0;
 
 extern sruid_t _reg_sruid;
@@ -255,14 +257,17 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* set received socket */
 		if (_m->flags&sock_flag) {
 			ci.sock = get_sock_val(_m);
-			if (ci.sock==0)
+		}
+		if (ci.sock==NULL) {
+			if ((reg_sock_mode & REG_SOCK_USE_ADVERTISED)
+					&& _m->rcv.bind_address != NULL
+					&& _m->rcv.bind_address->useinfo.sock_str.len > 0) {
+				memset(&si, 0, sizeof(struct socket_info));
+				si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
+				ci.sock = &si;
+			} else {
 				ci.sock = _m->rcv.bind_address;
-		} else if (sock_advertise_enabled && _m->rcv.bind_address && _m->rcv.bind_address->useinfo.sock_str.len > 0) {
-		    memset(&si, 0, sizeof(struct socket_info));
-		    si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
-		    ci.sock = &si;
-		} else {
-			ci.sock = _m->rcv.bind_address;
+			}
 		}
 
 		/* set tcp connection id */

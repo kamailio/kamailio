@@ -132,7 +132,7 @@ int reg_use_domain = 0;
 int sock_flag = -1;
 str sock_hdr_name = {0,0};
 
-int sock_advertise_enabled = 0;
+int reg_sock_mode = 0;
 
 /* where to go for event route ("usrloc:contact-expired") */
 int reg_expire_event_rt = -1; /* default disabled */
@@ -232,6 +232,7 @@ static param_export_t params[] = {
 	{"received_avp",       PARAM_STRING, &rcv_avp_param       					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
+	{"sock_mode",          PARAM_INT, &reg_sock_mode						},
 	{"sock_flag",          INT_PARAM, &sock_flag           					},
 	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     					},
 	{"method_filtering",   INT_PARAM, &method_filtering    					},
@@ -251,7 +252,6 @@ static param_export_t params[] = {
 	{"lookup_filter_mode", INT_PARAM, &reg_lookup_filter_mode			},
 	{"min_expires_mode",   PARAM_INT, &reg_min_expires_mode				},
 	{"use_expired_contacts",  INT_PARAM, &default_registrar_cfg.use_expired_contacts	 },
-	{"use_advertised_address", PARAM_INT, &sock_advertise_enabled		},
 	{0, 0, 0}
 };
 
