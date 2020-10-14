@@ -475,7 +475,8 @@ xavp_params_implode("x", "$var(out)");
    the tokens, the supported mode right now is 't', which trims the white
    spaces around the value.
 
-   The fourth parameter is the name of the xavp to hold the tokens.
+   The fourth parameter is the name of the root xavp to hold the tokens in
+   fields named 'v' and indexed from 0.
 
    The values are stored as string type.
 
@@ -485,10 +486,10 @@ xavp_params_implode("x", "$var(out)");
 ...
 xavp_slist_explode("a=b; c=d;", "=;", "t", "x");
 # results in:
-#    $xavp(x[0]) = "a";
-#    $xavp(x[1]) = "b";
-#    $xavp(x[2]) = "c";
-#    $xavp(x[3]) = "d";
+#    $xavp(x[0]=>v[0]) = "a";
+#    $xavp(x[0]=>v[1]) = "b";
+#    $xavp(x[0]=>v[2]) = "c";
+#    $xavp(x[0]=>v[3]) = "d";
 ...
 
 4.11.  xavp_child_seti(rname, cname, ival)
