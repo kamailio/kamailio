@@ -99,6 +99,7 @@ extern int reg_flow_timer;
 
 extern str sock_hdr_name;
 extern int sock_flag;
+extern int sock_advertise_enabled;
 
 extern str reg_xavp_cfg;
 extern str reg_xavp_rcd;

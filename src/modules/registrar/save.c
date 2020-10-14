@@ -229,6 +229,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
+	static struct socket_info si = {0};
 	int_str val;
 
 	if (_m!=0) {
@@ -256,6 +257,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.sock = get_sock_val(_m);
 			if (ci.sock==0)
 				ci.sock = _m->rcv.bind_address;
+		} else if (sock_advertise_enabled && _m->rcv.bind_address && _m->rcv.bind_address->useinfo.sock_str.len > 0) {
+		    memset(&si, 0, sizeof(struct socket_info));
+		    si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
+		    ci.sock = &si;
 		} else {
 			ci.sock = _m->rcv.bind_address;
 		}
@@ -412,6 +417,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 	return &ci;
 error:
+
 	return 0;
 }
 
@@ -559,7 +565,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	} else { /* No contacts found */
 		build_contact(_m, NULL, &u->host);
 	}
-
+	
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
@@ -572,6 +578,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 error:
 	if (r)
 		ul.delete_urecord(_d, _a, r);
+
 	return -1;
 }
 
@@ -816,6 +823,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 
 	return rc;
 error:
+
 	return -1;
 }
 
