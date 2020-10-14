@@ -586,8 +586,10 @@ int pv_xavi_print(sip_msg_t* msg, char* s1, char *s2)
 int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
 {
 	str s;
+	sr_xavp_t *xavp_list=NULL;
 	sr_xavp_t *xavp=NULL;
 	sr_xval_t xval;
+	str itname = str_init("v");
 	int i;
 	int j;
 	int sfound;
@@ -620,7 +622,22 @@ int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
 				memset(&xval, 0, sizeof(sr_xval_t));
 				xval.type = SR_XTYPE_STR;
 				xval.v.s = s;
-				xavp = xavp_add_value_after(xname, &xval, xavp);
+				if(xavp_list == NULL) {
+					if(xavp_add_value(&itname, &xval, &xavp_list)==NULL) {
+						LM_ERR("failed to add item in the list: [%.*s]\n",
+								s.len, s.s);
+						return -1;
+					}
+					xavp = xavp_list;
+				} else {
+					xavp = xavp_add_value_after(&itname, &xval, xavp);
+					if(xavp == NULL) {
+						LM_ERR("failed to add item in the list: [%.*s]\n",
+								s.len, s.s);
+						xavp_destroy_list(&xavp_list);
+						return -1;
+					}
+				}
 			}
 			s.s = slist->s + i + 1;
 		}
@@ -637,7 +654,31 @@ int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = s;
-		xavp = xavp_add_value_after(xname, &xval, xavp);
+		if(xavp_list == NULL) {
+			if(xavp_add_value(&itname, &xval, &xavp_list)==NULL) {
+				LM_ERR("failed to add item in the list: [%.*s]\n",
+						s.len, s.s);
+				return -1;
+			}
+			xavp = xavp_list;
+		} else {
+			xavp = xavp_add_value_after(&itname, &xval, xavp);
+			if(xavp == NULL) {
+				LM_ERR("failed to add item in the list: [%.*s]\n",
+						s.len, s.s);
+				xavp_destroy_list(&xavp_list);
+				return -1;
+			}
+		}
+	}
+
+	/* add main xavp in root list */
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_XAVP;
+	xval.v.xavp = xavp_list;
+	if(xavp_add_value(xname, &xval, NULL)==NULL) {
+		xavp_destroy_list(&xavp);
+		return -1;
 	}
 
 	return 0;
