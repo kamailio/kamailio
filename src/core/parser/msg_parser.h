@@ -145,22 +145,22 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 /* sip request */
 #define IS_SIP(req)                                     \
 	(((req)->first_line.type == SIP_REQUEST) &&           \
-	((req)->first_line.type & FLINE_FLAG_PROTO_SIP))
+	((req)->first_line.flags & FLINE_FLAG_PROTO_SIP))
 
 /* sip reply */
 #define IS_SIP_REPLY(rpl)                               \
 	(((rpl)->first_line.type == SIP_REPLY) &&             \
-	((rpl)->first_line.type & FLINE_FLAG_PROTO_SIP))
+	((rpl)->first_line.flags & FLINE_FLAG_PROTO_SIP))
 
 /* http request */
 #define IS_HTTP(req)                                    \
 	(((req)->first_line.type == SIP_REQUEST) &&           \
-	((req)->first_line.type & FLINE_FLAG_PROTO_HTTP))
+	((req)->first_line.flags & FLINE_FLAG_PROTO_HTTP))
 
 /* http reply */
 #define IS_HTTP_REPLY(rpl)                              \
 	(((rpl)->first_line.type == SIP_REPLY) &&             \
-	((rpl)->first_line.type & FLINE_FLAG_PROTO_HTTP))
+	((rpl)->first_line.flags & FLINE_FLAG_PROTO_HTTP))
 
 /*! \brief
  * Return a URI to which the message should be really sent (not what should
