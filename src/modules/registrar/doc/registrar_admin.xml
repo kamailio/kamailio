@@ -535,26 +535,27 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</example>
 	</section>
 
-	<section id="registrar.p.use_advertised_address">
-		<title><varname>use_advertised_address</varname> (integer)</title>
+	<section id="registrar.p.sock_mode">
+		<title><varname>sock_mode</varname> (integer)</title>
 		<para>
-		This parameter can be used to override value written into socket field when contact is saved.
-		If set to 1, advertised address will be written instead local listen socket.
+		If set to 1, the server stores the advertised address in socket field,
+		instead of bind address.
 		</para>
 		<para>
-		This could be useful when kamailio is installed behind NAT and it is necessary to store its public IP 
-		instead socket on which the register request was received.
+		This could be useful when kamailio is installed behind NAT and it is
+		necessary to store its public IP instead socket on which the register
+		request was received.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0 (disabled).
+			Default value is 0 (store bind address).
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>use_advertised_address</varname> parameter</title>
+		<title>Set <varname>sock_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "use_advertised_address", 1)
+modparam("registrar", "sock_mode", 1)
 ...
 		</programlisting>
 		</example>
