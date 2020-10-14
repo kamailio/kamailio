@@ -2739,6 +2739,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("xavp_slist_explode"),
+		SR_KEMIP_INT, ki_xavp_slist_explode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("xavp_seti"),
 		SR_KEMIP_INT, ki_xavp_seti,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
