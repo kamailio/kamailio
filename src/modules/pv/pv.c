@@ -559,6 +559,8 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx,
 		char *dst_name, char *dst_idx);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
+static int w_xavp_slist_explode(sip_msg_t *msg, char *pslist, char *psep,
+		char *pmode, char *pxname);
 static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
 static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
@@ -610,6 +612,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
 		fixup_free_pvar_null,
+		ANY_ROUTE},
+	{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode,
+		4, fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
 		2, fixup_spve_spve, fixup_free_spve_spve,
@@ -1110,6 +1115,53 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 
 	return ki_xavp_params_implode(msg, &sxname, (str*)pvname);
 }
+
+/**
+ *
+ */
+static int w_xavp_slist_explode(sip_msg_t *msg, char *pslist, char *psep,
+		char *pmode, char *pxname)
+{
+	str slist;
+	str sep;
+	str smode;
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pslist, &slist)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psep, &sep)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pmode, &smode)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &sxname)!=0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	if(xavp_slist_explode(&slist, &sep, &smode, &sxname)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_slist_explode(sip_msg_t *msg, str *slist, str *sep, str *mode,
+		str *sxname)
+{
+	if(xavp_slist_explode(slist, sep, mode, sxname)<0)
+		return -1;
+
+	return 1;
+}
+
 
 /**
  *

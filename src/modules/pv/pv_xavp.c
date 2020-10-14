@@ -583,6 +583,69 @@ int pv_xavi_print(sip_msg_t* msg, char* s1, char *s2)
 /**
  *
  */
+int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
+{
+	str s;
+	sr_xavp_t *xavp=NULL;
+	sr_xval_t xval;
+	int i;
+	int j;
+	int sfound;
+
+	if(slist==NULL || xname==NULL || slist->s==NULL || xname->s==NULL
+			|| slist->len<=0 || xname->len<=0 || sep==NULL  || sep->s==NULL
+			|| sep->len<=0 || mode==NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	s.s = slist->s;
+	for(i=0; i<slist->len; i++) {
+		LM_DBG("==== %d = %c\n", i, slist->s[i]);
+		sfound = 0;
+		for(j=0; j<sep->len; j++) {
+			if(slist->s[i]==sep->s[j]) {
+				sfound = 1;
+			}
+		}
+		if(sfound) {
+			s.len = slist->s + i - s.s;
+			if(s.len > 0 && mode->len > 0) {
+				if(mode->s[0]=='t') {
+					trim(&s);
+				}
+			}
+			if(s.len>0) {
+				LM_DBG("token found: [%.*s]\n", s.len, s.s);
+				memset(&xval, 0, sizeof(sr_xval_t));
+				xval.type = SR_XTYPE_STR;
+				xval.v.s = s;
+				xavp = xavp_add_value_after(xname, &xval, xavp);
+			}
+			s.s = slist->s + i + 1;
+		}
+	}
+	/* last tocken */
+	s.len = slist->s + i - s.s;
+	if(s.len > 0 && mode->len > 0) {
+		if(mode->s[0]=='t') {
+			trim(&s);
+		}
+	}
+	if(s.len>0) {
+		LM_DBG("last token found: [%.*s]\n", s.len, s.s);
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = s;
+		xavp = xavp_add_value_after(xname, &xval, xavp);
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
 int xavp_params_explode(str *params, str *xname)
 {
 	param_t* params_list = NULL;
