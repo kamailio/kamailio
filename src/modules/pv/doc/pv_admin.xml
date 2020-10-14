@@ -438,7 +438,8 @@ xavp_params_implode("x", "$var(out)");
 				the white spaces around the value.
 			</para>
 			<para>
-				The fourth parameter is the name of the xavp to hold the tokens.
+				The fourth parameter is the name of the root xavp to hold the tokens
+				in fields named 'v' and indexed from 0.
 			</para>
 			<para>
 				The values are stored as string type.
@@ -452,10 +453,10 @@ xavp_params_implode("x", "$var(out)");
 ...
 xavp_slist_explode("a=b; c=d;", "=;", "t", "x");
 # results in:
-#    $xavp(x[0]) = "a";
-#    $xavp(x[1]) = "b";
-#    $xavp(x[2]) = "c";
-#    $xavp(x[3]) = "d";
+#    $xavp(x[0]=&gt;v[0]) = "a";
+#    $xavp(x[0]=&gt;v[1]) = "b";
+#    $xavp(x[0]=&gt;v[2]) = "c";
+#    $xavp(x[0]=&gt;v[3]) = "d";
 ...
 				</programlisting>
 			</example>
