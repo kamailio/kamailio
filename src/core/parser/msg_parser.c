@@ -359,10 +359,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->callid==0) {
 					msg->callid=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					LOG(cfg_get(core, core_cfg, sip_parser_log),
-							"duplicate Call-ID header field [%.*s]\n",
-							(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate Call-ID header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_CALLID_F;
 				break;
@@ -374,10 +376,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->to==0) {
 					msg->to=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					LOG(cfg_get(core, core_cfg, sip_parser_log),
-							"duplicate To header field [%.*s]\n",
-							(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate To header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_TO_F;
 				break;
@@ -385,9 +389,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->cseq==0) {
 					msg->cseq=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					ERR("duplicate CSeq header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate CSeq header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_CSEQ_F;
 				break;
@@ -395,9 +402,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->from==0) {
 					msg->from=hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					ERR("duplicate From header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate From header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_FROM_F;
 				break;
@@ -409,10 +419,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if(msg->maxforwards==0) {
 					msg->maxforwards=hf;
 				} else {
-					LOG(cfg_get(core, core_cfg, sip_parser_log),
-							"duplicate Max-Forwards header field [%.*s]\n",
-							(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate Max-Forwards header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_MAXFORWARDS_F;
 				break;
@@ -432,10 +444,12 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				if (msg->content_length==0) {
 					msg->content_length = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-					LOG(cfg_get(core, core_cfg, sip_parser_log),
-							"duplicate Content-Length header field [%.*s]\n",
-							(end-tmp>100)?100:(int)(end-tmp), tmp);
-					goto  error;
+					if(IS_SIP(msg)) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"duplicate Content-Length header field [%.*s]\n",
+								(end-tmp>100)?100:(int)(end-tmp), tmp);
+						goto  error;
+					}
 				}
 				msg->parsed_flag|=HDR_CONTENTLENGTH_F;
 				break;
