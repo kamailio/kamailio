@@ -314,7 +314,8 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 
 	if(unlikely(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
 			< 0)) {
-		LM_WARN("parsing relevant headers failed\n");
+		LOG(cfg_get(core, core_cfg, sip_parser_log),
+				"parsing relevant headers failed\n");
 	}
 	LM_DBG("--- received sip message - %s - call-id: [%.*s] - cseq: [%.*s]\n",
 			(msg->first_line.type == SIP_REQUEST) ? "request" : "reply",
@@ -353,7 +354,8 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		/* sanity checks */
 		if(unlikely((msg->via1 == 0) || (msg->via1->error != PARSE_OK))) {
 			/* no via, send back error ? */
-			LM_ERR("no via found in request\n");
+			LOG(cfg_get(core, core_cfg, sip_parser_log),
+					"no via found in request\n");
 			STATS_BAD_MSG();
 			goto error02;
 		}
