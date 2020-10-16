@@ -562,7 +562,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 				<listitem>
 					<para><emphasis>0x02</emphasis> - rewrite media
 					&ip; address (c=) with source address of the message
-					or the provided IP address. (a=rtpc) param will be rewritten if exists. (the provided IP address take
+					or the provided IP address. (a=rtcp) param will be rewritten if exists. (the provided IP address take
 					precedence over the source address).</para>
 				</listitem>
 				<listitem>
@@ -572,7 +572,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 				<listitem>
 					<para><emphasis>0x08</emphasis> - rewrite IP from
 					origin description (o=) with source address of the message
-					or the provided IP address. (a=rtpc) param will be rewritten if exists. (the provided IP address take
+					or the provided IP address. (a=rtcp) param will be rewritten if exists. (the provided IP address take
 					precedence over the source address).</para>
 				</listitem>
 			</itemizedlist>
@@ -582,7 +582,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			If not specified, the received signalling IP will be used. The
 			parameter allows pseudo-variables usage. NOTE: For the IP to be
 			used, you need to use 0x02 or 0x08 flags, otherwise it will have
-			no effect. Must be IPv4 address family. 
+			no effect. Must be IPv4 address family.
 			</para>
 			</listitem>
 		</itemizedlist>
