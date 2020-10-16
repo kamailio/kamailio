@@ -1317,7 +1317,25 @@ event_route[uac:reply] {
 ...
 			</programlisting>
 		</example>
-	</section>
+		</section>
+
+		<section id="uac.r.uac.reg_remove">
+			<title>
+				<function moreinfo="none">uac.reg_remove</function>
+			</title>
+		<para>
+		Remove a UAC remote registration record by l_uuid.
+		</para>
+
+		<example>
+		<title><function>uac.reg_remove</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_remove my_l_uuid
+...
+			</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
