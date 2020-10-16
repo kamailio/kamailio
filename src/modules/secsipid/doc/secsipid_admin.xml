@@ -110,7 +110,7 @@ modparam("secsipid", "timeout", 2)
 			the function is downloading the key using the URL from "info"
 			parameter of the Identity header, using the value od "timeout"
 			parameter to limit the download time. The validity of the JWT
-			body in the Identity header is also checjed against the "expire"
+			body in the Identity header is also checked against the "expire"
 			parameter.
 		</para>
 		<para>
