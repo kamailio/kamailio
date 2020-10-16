@@ -87,6 +87,7 @@ Ramona-Elena Modroiu
               8.6. uac.reg_refresh
               8.7. uac.reg_active
               8.8. uac.reg_add
+              8.9. uac.reg_remove
 
         9. Remote Registration
 
@@ -137,7 +138,8 @@ Ramona-Elena Modroiu
    1.43. uac.reg_refresh usage
    1.44. uac.reg_active usage
    1.45. uac.reg_add usage
-   1.46. lookup remote registrations usage
+   1.46. uac.reg_remove usage
+   1.47. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -207,6 +209,7 @@ Chapter 1. Admin Guide
         8.6. uac.reg_refresh
         8.7. uac.reg_active
         8.8. uac.reg_add
+        8.9. uac.reg_remove
 
    9. Remote Registration
 
@@ -995,6 +998,7 @@ event_route[uac:reply] {
    8.6. uac.reg_refresh
    8.7. uac.reg_active
    8.8. uac.reg_add
+   8.9. uac.reg_remove
 
 8.1.  uac.reg_dump
 
@@ -1119,6 +1123,15 @@ event_route[uac:reply] {
    kamcmd uac.reg_add ...
 ...
 
+8.9.  uac.reg_remove
+
+   Remove a UAC remote registration record by l_uuid.
+
+   Example 1.46. uac.reg_remove usage
+...
+   kamcmd uac.reg_remove my_l_uuid
+...
+
 9. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
@@ -1165,7 +1178,7 @@ event_route[uac:reply] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.46. lookup remote registrations usage
+   Example 1.47. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");
