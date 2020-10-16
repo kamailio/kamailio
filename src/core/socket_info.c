@@ -2064,7 +2064,7 @@ void init_proto_order()
 
 
 /**
- * parse '[port:]host[:port]' string to a broken down structure
+ * parse '[proto:]host[:port]' string to a broken down structure
  */
 int parse_protohostport(str* ins, sr_phostp_t *r)
 {
@@ -2152,7 +2152,7 @@ error_port:
 }
 
 /**
- * lookup a local socket by '[port:]host[:port]' string
+ * lookup a local socket by '[proto:]host[:port]' string
  */
 struct socket_info* lookup_local_socket(str *phostp)
 {
