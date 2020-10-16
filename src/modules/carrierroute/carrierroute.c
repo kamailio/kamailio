@@ -27,7 +27,7 @@
 
 /*!
  * \defgroup carrierroute CARRIERROUTE :: The Kamailio carrierroute Module
- * The module provides routing, balancing and blacklisting capabilities.
+ * The module provides routing, balancing and blocklisting capabilities.
  * It reads routing entries from a database source or from a config file
  * at Kamailio startup. It can uses one routing tree (for one carrier),
  * or if needed for every user a different routing tree (unique for each carrier)

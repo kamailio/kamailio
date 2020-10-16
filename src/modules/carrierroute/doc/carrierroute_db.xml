@@ -168,7 +168,7 @@ modparam("carrierroute", "carrierroute_strip_col", "strip")
   <section>
     <title><varname>carrierroute_rewrite_host_col</varname> (string)</title>
     <para>Name of column contains the rewrite prefixes. Here you can define a rewrite prefix
-			  for the localpart of the SIP URI. An empty field represents a blacklist entry, anything else
+			  for the localpart of the SIP URI. An empty field represents a blocklist entry, anything else
 			  is put as domain part into the Request URI of the SIP message.</para>
     <example>
       <title>Set <varname>carrierroute_rewrite_host_col</varname> parameter</title>
