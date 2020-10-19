@@ -55,6 +55,10 @@ int reload_trusted_table(void);
  */
 void clean_trusted(void);
 
+/*
+ * Check if request comes from trusted ip address with matching from URI
+ */
+int ki_allow_trusted(sip_msg_t* _msg);
 
 /*
  * Check if request comes from trusted ip address with matching from URI
