@@ -2441,13 +2441,13 @@ static int sr_kemi_hdr_match_content(sip_msg_t *msg, str *hname, str *op,
 	if(op->len == 2) {
 		if(strncasecmp(op->s, "eq", 2) == 0) {
 			opval = 1;
-		} if(strncasecmp(op->s, "ne", 2) == 0) {
+		} else if(strncasecmp(op->s, "ne", 2) == 0) {
 			opval = 2;
-		} if(strncasecmp(op->s, "sw", 2) == 0) {
+		} else if(strncasecmp(op->s, "sw", 2) == 0) {
 			opval = 3;
-		} if(strncasecmp(op->s, "in", 2) == 0) {
+		} else if(strncasecmp(op->s, "in", 2) == 0) {
 			opval = 4;
-		} if(strncasecmp(op->s, "re", 2) == 0) {
+		} else if(strncasecmp(op->s, "re", 2) == 0) {
 			opval = 5;
 			LM_ERR("operator not implemented: %.*s\n", op->len, op->s);
 			return SR_KEMI_FALSE;
@@ -2468,7 +2468,7 @@ static int sr_kemi_hdr_match_content(sip_msg_t *msg, str *hname, str *op,
 		} else if(hidx->s[0]=='l' || hidx->s[0]=='L') {
 			/* last */
 			hidxval = 2;
-		} else if(hidx->s[0]=='a' || hidx->s[0]=='a') {
+		} else if(hidx->s[0]=='a' || hidx->s[0]=='A') {
 			/* all */
 			hidxval = 3;
 		} else if(hidx->s[0]=='o' || hidx->s[0]=='O') {
