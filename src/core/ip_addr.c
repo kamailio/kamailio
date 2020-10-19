@@ -37,7 +37,13 @@
 #include "resolve.h"
 #include "trim.h"
 
-str ksr_ipv6_hex_style = str_init("A");
+/**
+ * ipv6 style for string representation
+ * - A: uppercase expanded format
+ * - a: lowercase expanded format
+ * - c: lowercase compacted format
+ */
+str ksr_ipv6_hex_style = str_init("c");
 
 
 /* inits a struct sockaddr_union from a struct hostent, an address index in
