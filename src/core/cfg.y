@@ -879,10 +879,12 @@ assign_stm:
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| IPV6_HEX_STYLE EQUAL STRING {
-		ksr_ipv6_hex_style = $3;
-		if(ksr_ipv6_hex_style[0]!='a' && ksr_ipv6_hex_style[0]!='A') {
-			yyerror("expected \"a\" or \"A\" value");
+		ksr_ipv6_hex_style.s = $3;
+		if(ksr_ipv6_hex_style.s[0]!='a' && ksr_ipv6_hex_style.s[0]!='A'
+				&& ksr_ipv6_hex_style.s[0]!='c') {
+			yyerror("expected \"a\", \"A\" or \"c\" value");
 		}
+		ksr_ipv6_hex_style.len = strlen(ksr_ipv6_hex_style.s);
 	}
 	| IPV6_HEX_STYLE error { yyerror("string value expected"); }
 	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}

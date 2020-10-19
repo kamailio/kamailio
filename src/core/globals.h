@@ -220,7 +220,7 @@ extern char *_sr_uri_host_extra_chars;
 extern unsigned char *_ksr_hname_extra_chars;
 
 extern char *ksr_stats_namesep;
-extern char *ksr_ipv6_hex_style;
+extern str ksr_ipv6_hex_style;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
