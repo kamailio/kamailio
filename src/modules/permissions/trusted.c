@@ -507,7 +507,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto, char *from_uri)
  * Checks based on request's source address, protocol, and From URI
  * if request can be trusted without authentication.
  */
-int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
+int ki_allow_trusted(sip_msg_t* _msg)
 {
 	str furi;
 	char furi_string[MAX_URI_SIZE+1];
@@ -528,6 +528,15 @@ int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
 
 	return allow_trusted(_msg, ip_addr2a(&(_msg->rcv.src_ip)), _msg->rcv.proto,
 			furi_string);
+}
+
+/*
+ * Checks based on request's source address, protocol, and From URI
+ * if request can be trusted without authentication.
+ */
+int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
+{
+	return ki_allow_trusted(_msg);
 }
 
 /*
