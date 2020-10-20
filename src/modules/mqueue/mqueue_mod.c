@@ -294,13 +294,13 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 	int			mqueue_sz = 0;
 
 	if (rpc->scan(ctx, "S", &mqueue_name) < 1) {
-		rpc->fault(ctx, 500, "No queue name");
+		rpc->fault(ctx, 400, "No queue name");
 		return;
 	}
 
 	if(mqueue_name.len <= 0 || mqueue_name.s == NULL) {
 		LM_ERR("bad mqueue name\n");
-		rpc->fault(ctx, 500, "Invalid queue name");
+		rpc->fault(ctx, 400, "Invalid queue name");
 		return;
 	}
 
@@ -308,7 +308,7 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 
 	if(mqueue_sz < 0) {
 		LM_ERR("no such mqueue\n");
-		rpc->fault(ctx, 500, "No such queue");
+		rpc->fault(ctx, 404, "No such queue");
 		return;
 	}
 
@@ -324,6 +324,34 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 
 static const char* mqueue_rpc_get_size_doc[2] = {
 	"Get size of mqueue.",
+	0
+};
+
+static void mqueue_rpc_get_sizes(rpc_t* rpc, void* ctx)
+{
+	mq_head_t* mh = mq_head_get(NULL);
+	void* vh;
+	int size;
+
+	while(mh!=NULL)
+	{
+		if (rpc->add(ctx, "{", &vh) < 0) {
+			rpc->fault(ctx, 500, "Server error");
+			return;
+		}
+		lock_get(&mh->lock);
+		size = mh->csize;
+		lock_release(&mh->lock);
+		rpc->struct_add(vh, "Sd",
+				"name", &mh->name,
+				"size", size
+		);
+		mh = mh->next;
+	}
+}
+
+static const char* mqueue_rpc_get_sizes_doc[2] = {
+	"Get sizes of all mqueues.",
 	0
 };
 
@@ -392,6 +420,7 @@ static const char* mqueue_rpc_fetch_doc[2] = {
 
 rpc_export_t mqueue_rpc[] = {
 	{"mqueue.get_size", mqueue_rpc_get_size, mqueue_rpc_get_size_doc, 0},
+	{"mqueue.get_sizes", mqueue_rpc_get_sizes, mqueue_rpc_get_sizes_doc, RET_ARRAY},
 	{"mqueue.fetch", mqueue_rpc_fetch, mqueue_rpc_fetch_doc, 0},
 	{0, 0, 0, 0}
 };

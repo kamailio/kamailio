@@ -77,6 +77,7 @@ int mq_head_add(str *name, int msize);
 int mq_head_fetch(str *name);
 void mq_pv_free(str *name);
 int mq_item_add(str *qname, str *key, str *val);
+mq_head_t *mq_head_get(str *name);
 
 int _mq_get_csize(str *);
 int mq_set_dbmode(str *, int dbmode);
