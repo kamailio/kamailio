@@ -43,12 +43,12 @@
 
 extern str ksr_ipv6_hex_style;
 
-enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP,
-	PROTO_WS, PROTO_WSS, PROTO_OTHER };
+typedef enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP,
+	PROTO_WS, PROTO_WSS, PROTO_OTHER } sip_protos_t;
 #define PROTO_LAST PROTO_OTHER
 
 #ifdef USE_COMP
-enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ };
+typedef enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ } comp_methods_t;
 #endif
 
 typedef struct ip_addr {
@@ -69,22 +69,22 @@ typedef struct net {
 	struct ip_addr mask;
 } sr_net_t;
 
-union sockaddr_union{
+typedef union sockaddr_union{
 	struct sockaddr     s;
 	struct sockaddr_in  sin;
 	struct sockaddr_in6 sin6;
 	struct sockaddr_storage sas;
-};
+} sr_sockaddr_union_t;
 
 
-enum si_flags {
+typedef enum si_flags {
 	SI_NONE         = 0,
 	SI_IS_IP        = (1<<0),
 	SI_IS_LO        = (1<<1),
 	SI_IS_MCAST     = (1<<2),
 	SI_IS_ANY       = (1<<3),
 	SI_IS_MHOMED    = (1<<4),
-};
+} si_flags_t;
 
 typedef struct addr_info {
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
@@ -134,11 +134,11 @@ typedef struct socket_info {
 
 
 /* send flags */
-enum send_flags {
+typedef enum send_flags {
 	SND_F_FORCE_CON_REUSE   = (1 << 0), /* reuse an existing connection or fail */
 	SND_F_CON_CLOSE         = (1 << 1), /* close the connection after sending */
 	SND_F_FORCE_SOCKET      = (1 << 2), /* send socket in dst is forced */
-};
+} send_flags_t;
 
 typedef struct snd_flags {
 	unsigned short f;          /* snd flags */

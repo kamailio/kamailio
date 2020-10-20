@@ -41,7 +41,7 @@
 
 
 
-struct tls_hooks{
+typedef struct tls_hooks{
 	/* read using tls (should use tcp internal read functions to
 	   get the data from the connection) */
 	int  (*read)(struct tcp_connection* c, rd_conn_flags_t* flags);
@@ -77,7 +77,7 @@ struct tls_hooks{
 	/* generic pre-init function (called at kamailio start, before module
 	 * initialization (after modparams) */
 	int (*pre_init)(void);
-};
+} tls_hooks_t;
 
 
 extern struct tls_hooks tls_hook;
