@@ -748,6 +748,7 @@ static inline int strz2sint(char* _s, int* _r)
 
 /**
  * \brief Make a copy of a str structure to a str using shm_malloc
+ *        The copy will be zero-terminated
  * \param dst destination
  * \param src source
  * \return 0 on success, -1 on failure
@@ -775,7 +776,7 @@ static inline int shm_str_dup(str* dst, const str* src)
 		dst->len = src->len;
 	}
 
-	dst->s = (char*)shm_malloc(dst->len);
+	dst->s = (char*)shm_malloc(dst->len+1);
 	if (dst->s == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
@@ -788,6 +789,7 @@ static inline int shm_str_dup(str* dst, const str* src)
 	}
 
 	memcpy(dst->s, src->s, dst->len);
+	dst->s[dst->len] = 0;
 
 	return 0;
 }
@@ -848,6 +850,7 @@ static inline char* shm_str2char_dup(str *src)
 
 /**
  * \brief Make a copy of a str structure using pkg_malloc
+ *        The copy will be zero-terminated
  * \param dst destination
  * \param src source
  * \return 0 on success, -1 on failure
@@ -875,7 +878,7 @@ static inline int pkg_str_dup(str* dst, const str* src)
 		dst->len = src->len;
 	}
 
-	dst->s = (char*)pkg_malloc(dst->len);
+	dst->s = (char*)pkg_malloc(dst->len+1);
 	if (dst->s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -888,6 +891,7 @@ static inline int pkg_str_dup(str* dst, const str* src)
 	}
 
 	memcpy(dst->s, src->s, dst->len);
+	dst->s[dst->len] = 0;
 
 	return 0;
 }
