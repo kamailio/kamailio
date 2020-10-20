@@ -94,8 +94,7 @@ int jsonrpc_request(struct sip_msg* _m,
 		for (; pit;pit=pit->next)
 		{
 			if PIT_MATCHES("route") {
-				pkg_str_dup(&route, &pit->body);
-				CHECK_MALLOC_GOTO(route.s, end);
+				route = pit->body;
 
 			} else if PIT_MATCHES("timeout") {
 				timeout = atoi(pit->body.s);
@@ -135,7 +134,6 @@ skip_parse:
 
 end:
 	if(freeme) free_params(freeme);
-	if(route.s) pkg_free(route.s);
 	return retval;
 }
 
