@@ -1241,7 +1241,7 @@ modparam("dispatcher", "reload_delta", 1)
 				</para>
 				<para>
 				Using this algorithm, you can also enable congestion control by setting the
-				attibute 'cc=1', when 'cc' is enabled the 'rweight' attribute will also be
+				attibute 'cc=1', when 'cc' is enabled the 'weight' attribute will also be
 				used to control congestion tolerance. When facing congestion the weight of
 				a gateway is lowered by 1 for every ms of estimated congestion, a 'rweight'
 				value of 50 is recommended. See the example "configuring load balancing with
