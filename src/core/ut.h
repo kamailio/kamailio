@@ -781,12 +781,6 @@ static inline int shm_str_dup(str* dst, const str* src)
 		return -1;
 	}
 
-	/* avoid memcpy from NULL source - undefined behaviour */
-	if (src->s == NULL) {
-		LM_WARN("shm_str_dup fallback; skip memcpy for src->s == NULL\n");
-		return 0;
-	}
-
 	memcpy(dst->s, src->s, dst->len);
 
 	return 0;
@@ -879,12 +873,6 @@ static inline int pkg_str_dup(str* dst, const str* src)
 	if (dst->s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
-	}
-
-	/* avoid memcpy from NULL source - undefined behaviour */
-	if (src->s == NULL) {
-		LM_WARN("pkg_str_dup fallback; skip memcpy for src->s == NULL\n");
-		return 0;
 	}
 
 	memcpy(dst->s, src->s, dst->len);
