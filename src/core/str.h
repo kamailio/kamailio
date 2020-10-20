@@ -40,13 +40,16 @@
  * need to make a zero-terminated copy of it.
  *
  * @section drawbacks Drawbacks
- * Note well that the fact that string stored
- * using this data structure are not zero terminated makes them a little
- * incovenient to use with many standard libc string functions, because these
- * usually expect the input to be zero-terminated. In this case you have to
- * either make a zero-terminated copy or inject the terminating zero behind
- * the actuall string (if possible). Note that injecting a zero terminating
- * characters is considered to be dangerous.
+ * Note well that the fact that a string stored
+ * using this data structure are not guaranteed to be zero terminated (by
+ * default they're not) makes them a little incovenient to use with many
+ * standard libc string functions, because these usually expect the input
+ * to be zero-terminated.
+ * In this case you have to either make a zero-terminated copy or inject the
+ * terminating zero behind the actuall string (if possible). Note that
+ * injecting a zero terminating characters is considered to be dangerous.
+ * The functions shm_str_dup() and pkg_str_dup() will always create a
+ * zero-terminated copy.
  */
 
 /** @file
