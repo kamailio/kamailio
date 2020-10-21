@@ -119,7 +119,8 @@ struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
 		       *t38,
-		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
+		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask,
+		       *codec_set, *codec_except;
 	str call_id, from_tag, to_tag;
 };
 
@@ -2082,6 +2083,29 @@ static const char *transports[] = {
 	[0x06]	= "UDP/TLS/RTP/SAVPF",
 };
 
+static int parse_codec_flag(struct ng_flags_parse *ng_flags, const str *key, const str *val,
+		const char *cmp1, const char *cmp2,
+		bencode_item_t **dictp)
+{
+	str s;
+
+	if (!str_key_val_prefix(key, cmp1, val, &s)) {
+		if (!cmp2)
+			return 0;
+		if (!str_key_val_prefix(key, cmp2, val, &s))
+			return 0;
+	}
+
+	if (!*dictp) {
+		*dictp = bencode_list(ng_flags->dict->buffer);
+		bencode_dictionary_add(ng_flags->codec, "transcode",
+			*dictp);
+	}
+	bencode_list_add_str(*dictp, &s);
+
+	return 1;
+}
+
 static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enum rtpe_operation *op,
 		const char *flags_str)
 {
@@ -2135,47 +2159,18 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			goto next;
 		}
 
-		if (str_key_val_prefix(&key, "transcode", &val, &s)
-				|| str_key_val_prefix(&key, "codec-transcode", &val, &s))
-		{
-			if (!ng_flags->codec_transcode) {
-				ng_flags->codec_transcode = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "transcode",
-					ng_flags->codec_transcode);
-			}
-			bencode_list_add_str(ng_flags->codec_transcode, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "transcode", "codec-transcode", &ng_flags->codec_transcode))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-strip", &val, &s)) {
-			if (!ng_flags->codec_strip) {
-				ng_flags->codec_strip = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "strip",
-					ng_flags->codec_strip);
-			}
-			bencode_list_add_str(ng_flags->codec_strip, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-strip", NULL, &ng_flags->codec_strip))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-offer", &val, &s)) {
-			if (!ng_flags->codec_offer) {
-				ng_flags->codec_offer = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "offer",
-					ng_flags->codec_offer);
-			}
-			bencode_list_add_str(ng_flags->codec_offer, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-offer", NULL, &ng_flags->codec_offer))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-mask", &val, &s)) {
-			if (!ng_flags->codec_mask) {
-				ng_flags->codec_mask = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "mask",
-					ng_flags->codec_mask);
-			}
-			bencode_list_add_str(ng_flags->codec_mask, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-mask", NULL, &ng_flags->codec_mask))
 			goto next;
-		}
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-set", NULL, &ng_flags->codec_set))
+			goto next;
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-except", NULL, &ng_flags->codec_except))
+			goto next;
 
 		/* check for specially handled items */
 		switch (key.len) {
