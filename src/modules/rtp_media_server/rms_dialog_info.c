@@ -19,8 +19,11 @@
  */
 
 #include "rtp_media_server.h"
+
 extern rms_dialog_info_t *rms_dialog_list;
 extern int in_rms_process;
+
+ser_lock_t dialog_list_mutex;
 
 static void rms_action_free(rms_dialog_info_t *si)
 {
