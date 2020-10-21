@@ -36,6 +36,8 @@ static char *rms_answer_default_route = "rms:start";
 int in_rms_process;
 rms_t *rms;
 
+struct tm_binds tmb;
+
 static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct sip_msg *msg);
 static int fixup_rms_action_play(void **param, int param_no);
 static int fixup_rms_bridge(void **param, int param_no);
