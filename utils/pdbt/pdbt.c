@@ -297,7 +297,7 @@ int dt_write_tree(const struct dt_node_t *root, const char* filename)
 	char number[25];
 	number[0] = '\0';
 
-	fd = creat(filename, S_IRWXU);
+	fd = creat(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	if (fd < 0) {
 		LERR("cannot create file '%s'\n", filename);
 		return -1;
@@ -370,7 +370,7 @@ int save_mmap(struct dt_node_t *root, char *filename) {
 	int fd;
 	int n;
 
-	fd = open(filename, O_RDWR|O_CREAT|O_TRUNC, S_IRWXU);
+	fd = open(filename, O_RDWR|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	if (fd < 0) {
 		LERR("cannot create file '%s'\n", filename);
 		return -1;
