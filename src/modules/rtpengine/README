@@ -2088,13 +2088,19 @@ rtpengine_offer();
             engaged. Only codecs that are supported for both decoding and
             encoding can be added in this manner. More details about this
             are found in the rtpengine README.
+          + codec-set=... - set codec options (bitrate etc) for codecs
+            that are implicitly accepted for transcoding from the offering
+            side.
           + codec-strip=... - strips given codec from sdp
           + codec-offer=... - offer given codec from sdp. More details
             about this are found in the rtpengine README.
+          + codec-except=... - same as codec-offer but preserves original
+            order
           + codec-mask=... - Similar to strip except that codecs listed
             here will still be accepted and used for transcoding on the
-            offering side.Useful only in combination with codec-transcode.
-            all keyword can be used to mask all offered codecs
+            offering side. Useful only in combination with
+            codec-transcode. all keyword can be used to mask all offered
+            codecs
           + T.38=decode - If the offered SDP contains a media section
             advertising T.38 over UDPTL, translate it to a regular audio
             media section over RTP. By default, PCMU and PCMA will be used
