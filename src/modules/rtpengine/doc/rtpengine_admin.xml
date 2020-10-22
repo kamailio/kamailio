@@ -2393,6 +2393,11 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
+				<emphasis>codec-set=...</emphasis> - set codec options (bitrate etc) for codecs that are implicitly
+				accepted for transcoding from the offering side.
+				</para></listitem>
+
+				<listitem><para>
 				<emphasis>codec-strip=...</emphasis> - strips given codec from sdp
 				</para></listitem>
 
@@ -2402,8 +2407,12 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
+				<emphasis>codec-except=...</emphasis> - same as <emphasis>codec-offer</emphasis> but preserves original order
+				</para></listitem>
+
+				<listitem><para>
 				<emphasis>codec-mask=...</emphasis> - Similar to strip except that codecs listed here will still be accepted
-				and used for transcoding on the offering side.Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
+				and used for transcoding on the offering side. Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
 				can be used to mask all offered codecs
 				</para></listitem>
 				<listitem><para>
