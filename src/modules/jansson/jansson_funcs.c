@@ -27,6 +27,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
 #include "../../core/str.h"
+#include "../../core/xavp.h"
 
 #include "jansson_path.h"
 #include "jansson_funcs.h"
@@ -296,4 +297,194 @@ int janssonmod_array_size(struct sip_msg* msg, char* path_in, char* src_in, char
 fail:
 	json_decref(json);
 	return -1;
+}
+
+
+static int jansson_object2xavp(json_t* obj, str *xavp)
+{
+	const char *key;
+	json_t *value;
+	sr_xavp_t *row = NULL;
+	sr_xval_t val;
+
+	json_object_foreach(obj, key, value) {
+		str name;
+		char* freeme = NULL;
+
+		if(jansson_to_xval(&val, &freeme, value)<0) {
+			ERR("failed to convert json object member value to xavp for key: %s\n", key);
+			if(freeme!=NULL) {
+				free(freeme);
+			}
+			return -1;
+		}
+
+		name.s = (char*)key;
+		name.len = strlen(name.s);
+
+		xavp_add_value(&name, &val, &row);
+
+		if(freeme!=NULL) {
+			free(freeme);
+		}
+	}
+
+	/* Add row to result xavp */
+	val.type = SR_XTYPE_XAVP;
+	val.v.xavp = row;
+	LM_DBG("Adding row\n");
+	xavp_add_value(xavp, &val, NULL);
+	return 1;
+}
+
+
+int jansson_xdecode(struct sip_msg* msg, char* src_in, char* xavp_in) {
+	str src_s;
+	str xavp_s;
+	json_t* json = NULL;
+	json_error_t parsing_error;
+
+	if (fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
+		ERR("cannot get json string value\n");
+		return -1;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)xavp_in, &xavp_s) != 0) {
+		ERR("cannot get xavp string value\n");
+		return -1;
+	}
+
+	LM_DBG("decoding '%.*s' into '%.*s'\n", src_s.len, src_s.s, xavp_s.len, xavp_s.s);
+	json = json_loads(src_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
+
+	if(!json) {
+		ERR("failed to parse json: %.*s\n", src_s.len, src_s.s);
+		ERR("json error at line %d, col %d: %s\n",
+				parsing_error.line, parsing_error.column, parsing_error.text);
+		return -1;
+	}
+
+	if (json_is_object(json)) {
+		if (jansson_object2xavp(json, &xavp_s) < 0) {
+			goto fail;
+		}
+	} else if (json_is_array(json)) {
+		size_t i;
+		json_t *value;
+
+		json_array_foreach(json, i, value) {
+			if (jansson_object2xavp(value, &xavp_s) < 0) {
+				goto fail;
+			}
+		}
+	} else {
+		LM_ERR("json root is not an object or array\n");
+		goto fail;
+	}
+
+	json_decref(json);
+	return 1;
+fail:
+	json_decref(json);
+	return -1;
+}
+
+static int jansson_xavp2object(json_t *json, sr_xavp_t **head) {
+	sr_xavp_t *avp = NULL;
+	json_t *it = NULL;
+
+	if(json==NULL)
+		return -1;
+
+	avp = *head;
+	if (avp->val.type != SR_XTYPE_XAVP) {
+		LM_ERR("cannot iterate xavp members\n");
+		return -1;
+	}
+	avp = avp->val.v.xavp;
+	while(avp)
+	{
+		switch(avp->val.type) {
+			case SR_XTYPE_NULL:
+				it = json_null();
+				break;
+			case SR_XTYPE_INT:
+				it = json_integer(avp->val.v.i);
+				break;
+			case SR_XTYPE_STR:
+				it = json_stringn(avp->val.v.s.s, avp->val.v.s.len);
+				break;
+			case SR_XTYPE_TIME:
+				it = json_integer((json_int_t)avp->val.v.t);
+				break;
+			case SR_XTYPE_LONG:
+				it = json_integer((json_int_t)avp->val.v.l);
+				break;
+			case SR_XTYPE_LLONG:
+				it = json_integer((json_int_t)avp->val.v.ll);
+				break;
+			case SR_XTYPE_XAVP:
+				it = json_string("<<xavp>>");
+				break;
+			case SR_XTYPE_DATA:
+				it = json_string("<<data>>");
+				break;
+			default:
+				LM_ERR("unknown xavp type: %d\n", avp->val.type);
+				return -1;
+		}
+		if (it == NULL) {
+			LM_ERR("failed to create json value\n");
+			return -1;
+		}
+		if (json_object_set_new(json, avp->name.s, it) < 0) {
+			LM_ERR("failed to add member to object\n");
+			return -1;
+		}
+		avp = avp->next;
+	}
+	return 1;
+}
+
+int jansson_xencode(struct sip_msg* msg, char* xavp, char* dst) {
+	str xavp_s;
+	json_t *json;
+	pv_spec_t *dst_pv;
+	pv_value_t dst_val;
+	sr_xavp_t *avp = NULL;
+	int ret = 1;
+
+	if (fixup_get_svalue(msg, (gparam_p)xavp, &xavp_s) != 0) {
+		LM_ERR("cannot get field string value\n");
+		return -1;
+	}
+
+	LM_DBG("encoding '%.*s' into '%p'\n", xavp_s.len, xavp_s.s, dst);
+
+	avp = xavp_get(&xavp_s, NULL);
+	if(avp==NULL || avp->val.type!=SR_XTYPE_XAVP) {
+		return -1;
+	}
+
+	json = json_object();
+	if (json == NULL) {
+		LM_ERR("could not obtain json handle\n");
+		return -1;
+	}
+	ret = jansson_xavp2object(json, &avp);
+	if (ret > 0) {
+		dst_val.rs.s = json_dumps(json, 0);
+		dst_val.rs.len = strlen(dst_val.rs.s);
+		dst_val.flags = PV_VAL_STR;
+		dst_pv = (pv_spec_t *)dst;
+		if (dst_pv->setf(msg, &dst_pv->pvp, (int)EQ_T, &dst_val) < 0) {
+			ret = -1;
+		}
+		free(dst_val.rs.s);
+	} else {
+		LM_ERR("json encoding failed\n");
+	}
+
+	json_decref(json);
+	return ret;
 }

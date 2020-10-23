@@ -27,8 +27,10 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/lvalue.h"
+#include "../../core/xavp.h"
 
 typedef int (*jansson_to_val_f)(pv_value_t* val, char** freeme, json_t* v);
 int jansson_to_val(pv_value_t* val, char** freeme, json_t* v);
+int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v);
 
 #endif

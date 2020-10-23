@@ -210,6 +210,44 @@ while($var(count) &lt; $var(appendme_size)) {
         </programlisting>
         </example>
     </section>
+    <section id="jansson.f.jansson_xdecode">
+        <title>
+            <function moreinfo="none">jansson_xdecode(json, xavp)</function>
+        </title>
+        <para>
+            Parse a JSON string in 'json' and store the elements in xapv 'xavp'.
+            Top-level JSON must be an object or an array of objects.
+            Nested arrays and objects are not decoded but stored as string.
+        </para>
+        <example>
+        <title><function>jansson_xdecode</function> usage</title>
+        <programlisting format="linespecific">
+...
+jansson_xdecode('{"foo":"bar"}', "js");
+xlog("foo is $xavp(js=>foo)");
+...
+        </programlisting>
+        </example>
+    </section>
+    <section id="jansson.f.jansson_xencode">
+        <title>
+            <function moreinfo="none">jansson_xencode(xavp, pv)</function>
+        </title>
+        <para>
+            Encode the items in the xavp 'xavp' as JSON and store the result in a pv.
+            Nested xavps's are not supported.
+        </para>
+        <example>
+        <title><function>jansson_xencode</function> usage</title>
+        <programlisting format="linespecific">
+...
+$xavp(a=>foo) = "bar";
+jansson_xencode("a", "$var(js)");
+# $var(js) = '{"foo":"bar"}'
+...
+        </programlisting>
+        </example>
+    </section>
     <section id="jansson.f.jansson_get_field">
         <title>
             <function moreinfo="none">jansson_get_field(src, field_name, dst)</function>
