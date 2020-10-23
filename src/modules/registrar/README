@@ -959,8 +959,9 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
    location records (in usrloc) depending on Contact and Expires header
    fields in the REGISTER message. On success and when called from the
    REQUEST_ROUTE, “200 OK” will be returned listing all contacts that are
-   currently in the location database. On an error, an error message will
-   be sent with a short description in reason phrase.
+   currently in the location database. As a side effect, also branch flags
+   are stored in usrloc. On an error, an error message will be sent with a
+   short description in reason phrase.
 
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
@@ -1008,7 +1009,8 @@ save("location", "0x00", "sip:test@kamailio.org");
    no such contacts, -1 will be returned. If there are such contacts,
    Request-URI will be overwritten with the contact that has the highest q
    value and optionally the rest will be appended to the message
-   (depending on append_branches parameter value).
+   (depending on append_branches parameter value). As a side effect, also
+   branch flags are restored from usrloc.
 
    If the method_filtering option is enabled and request is initial
    request without to-tag, the lookup function will return only the
