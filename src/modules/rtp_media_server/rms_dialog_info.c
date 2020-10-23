@@ -23,7 +23,7 @@
 extern rms_dialog_info_t *rms_dialog_list;
 extern int in_rms_process;
 
-gen_lock_t dialog_list_mutex;
+gen_lock_t *dialog_list_mutex;
 
 static void rms_action_free(rms_dialog_info_t *si)
 {
@@ -48,13 +48,24 @@ rms_action_t *rms_action_new(rms_action_type_t t)
 	return a;
 }
 
-int init_rms_dialog_list()
+int rms_dialog_list_init()
 {
+	dialog_list_mutex = lock_alloc();
+	if(!dialog_list_mutex)
+		return 0;
+	dialog_list_mutex = lock_init(dialog_list_mutex);
 	rms_dialog_list = shm_malloc(sizeof(rms_dialog_info_t));
 	if(!rms_dialog_list)
 		return 0;
 	clist_init(rms_dialog_list, next, prev);
 	return 1;
+}
+
+void rms_dialog_list_free()
+{
+	lock_destroy(dialog_list_mutex);
+	lock_dealloc((void*)dialog_list_mutex);
+	shm_free(rms_dialog_list);
 }
 
 rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg) // str *from_tag)
@@ -90,9 +101,9 @@ rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg) // str *from_tag)
 
 rms_dialog_info_t *rms_dialog_search_sync(struct sip_msg *msg)
 {
-	lock(&dialog_list_mutex);
+	lock(dialog_list_mutex);
 	rms_dialog_info_t *si = rms_dialog_search(msg);
-	unlock(&dialog_list_mutex);
+	unlock(dialog_list_mutex);
 	return si;
 }
 
@@ -101,9 +112,9 @@ void rms_dialog_add(rms_dialog_info_t *si)
 	if (in_rms_process) {
 		clist_append(rms_dialog_list, si, next, prev);
 	} else {
-		lock(&dialog_list_mutex);
+		lock(dialog_list_mutex);
 		clist_append(rms_dialog_list, si, next, prev);
-		unlock(&dialog_list_mutex);
+		unlock(dialog_list_mutex);
 	}
 }
 
@@ -112,9 +123,9 @@ void rms_dialog_rm(rms_dialog_info_t *si)
 	if (in_rms_process) {
 		clist_append(rms_dialog_list, si, next, prev);
 	} else {
-		lock(&dialog_list_mutex);
+		lock(dialog_list_mutex);
 		clist_rm(si, next, prev);
-		unlock(&dialog_list_mutex);
+		unlock(dialog_list_mutex);
 	}
 }
 

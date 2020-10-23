@@ -39,7 +39,7 @@
 #include "rms_media.h"
 #include "rms_dialog_info.h"
 
-extern gen_lock_t dialog_list_mutex;
+extern gen_lock_t *dialog_list_mutex;
 
 
 

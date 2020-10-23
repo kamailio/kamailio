@@ -175,7 +175,7 @@ static int mod_init(void)
 	rms->udp_last_port = 50000 + kam_rand() % 10000;
 	rms_media_init();
 
-	if(!init_rms_dialog_list()) {
+	if(!rms_dialog_list_init()) {
 		LM_ERR("can't initialize rms_dialog_list !\n");
 		return -1;
 	}
@@ -314,14 +314,14 @@ static void rms_dialog_manage_loop()
 {
 	in_rms_process = 1;
 	while(1) {
-		lock(&dialog_list_mutex);
+		lock(dialog_list_mutex);
 		rms_dialog_info_t *di;
 		clist_foreach(rms_dialog_list, di, next)
 		{
 			di = rms_dialog_action_check(di);
 			//LM_INFO("next ... si[%p]\n", di);
 		}
-		unlock(&dialog_list_mutex);
+		unlock(dialog_list_mutex);
 		usleep(10000);
 	}
 }
@@ -755,9 +755,9 @@ static void rms_action_add(rms_dialog_info_t *di, rms_action_t *a)
 
 static void rms_action_add_sync(rms_dialog_info_t *di, rms_action_t *a)
 {
-	lock(&dialog_list_mutex);
+	lock(dialog_list_mutex);
 	rms_action_add(di, a);
-	unlock(&dialog_list_mutex);
+	unlock(dialog_list_mutex);
 }
 
 // Called when receiving BYE

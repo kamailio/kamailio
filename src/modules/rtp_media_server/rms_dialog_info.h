@@ -58,7 +58,8 @@ typedef struct rms_action
 
 int rms_check_msg(struct sip_msg *msg);
 rms_action_t *rms_action_new(rms_action_type_t t);
-int init_rms_dialog_list();
+int rms_dialog_list_init();
+void rms_dialog_list_free();
 rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg);
 rms_dialog_info_t *rms_dialog_search_sync(struct sip_msg *msg);
 void rms_dialog_add(rms_dialog_info_t *di);
