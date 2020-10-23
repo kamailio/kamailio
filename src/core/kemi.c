@@ -2275,8 +2275,6 @@ static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
 		int rmode)
 {
-	char hbuf[256];
-	str s;
 	hdr_field_t shdr;
 	hdr_field_t *ihdr;
 #define SR_KEMI_VHDR_SIZE 256
@@ -2296,23 +2294,12 @@ static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
-	if(hname->len>=252) {
-		LM_ERR("header name too long\n");
+	if (parse_hname2_str(hname, &shdr)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 
-	memcpy(hbuf, hname->s, hname->len);
-	hbuf[hname->len] = ':';
-	hbuf[hname->len+1] = '\0';
-	s.s = hbuf;
-	s.len = hname->len + 1;
-
-	if (parse_hname2_short(s.s, s.s + s.len, &shdr)==0) {
-		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
-		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
-		return &_sr_kemi_xval;
-	}
 	n = 0;
 	for (ihdr=msg->headers; ihdr; ihdr=ihdr->next) {
 		hmatch = 0;
