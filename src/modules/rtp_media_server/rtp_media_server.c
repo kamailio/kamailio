@@ -489,6 +489,8 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 		return;
 	} else if(ntype == TMCB_LOCAL_COMPLETED) {
 		LM_NOTICE("COMPLETED [%d]\n", pcbp->code);
+		if (pcbp->code >= 300)
+			return;
 	} else if(ntype == TMCB_LOCAL_RESPONSE_IN){
 		LM_NOTICE("RESPONSE [%d]\n", pcbp->code);
 		if (pcbp->code != 180 && pcbp->code != 183)
@@ -892,7 +894,13 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 	if(!rms_str_dup(&a->param, &target, 1)) {
 		goto error;
 	}
-
+	if (a->param.s[a->param.len-1] != ';') {
+		a->param.s = shm_realloc(a->param.s, a->param.len + 2);
+		a->param.s[a->param.len]=';';
+		a->param.len++;
+		a->param.s[a->param.len]= '\0';
+		LM_NOTICE("remote >>> target[%.*s]\n", a->param.len, a->param.s);
+	}
 	a->route.len = route.len;
 	a->route.s = route.s;
 
