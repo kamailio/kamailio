@@ -3361,7 +3361,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		gparam_p hfval, int mode, gparam_p hfanc)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
+	struct hdr_field *hf, *append_hf;
 	char *s;
 	int len;
 	str s0;
@@ -3372,6 +3372,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	hf = 0;
+	append_hf = 0;
 	if(hfanc!=NULL) {
 		for (hf=msg->headers; hf; hf=hf->next) {
 			if(hfanc->type==GPARAM_TYPE_INT)
@@ -3384,20 +3385,25 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 				if (cmp_hdrname_str(&hf->name,&hfanc->v.str)!=0)
 					continue;
 			}
-			break;
+			if (mode == 0) { /* append */
+				append_hf = hf;
+				continue;
+			} else { /* insert */
+				break;
+			}
 		}
 	}
 
 	if(mode == 0) { /* append */
-		if(hf==0) { /* after last header */
+		if(append_hf==0) { /* after last header */
 			anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-		} else { /* after hf */
-			anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+		} else { /* after last hf */
+			anchor = anchor_lump(msg, append_hf->name.s + append_hf->len - msg->buf, 0, 0);
 		}
 	} else { /* insert */
 		if(hf==0) { /* before first header */
 			anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
-		} else { /* before hf */
+		} else { /* before first hf */
 			anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
 		}
 	}
