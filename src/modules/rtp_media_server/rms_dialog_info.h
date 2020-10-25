@@ -70,6 +70,7 @@ rms_dialog_info_t *rms_dialog_new_bleg(struct sip_msg *msg);
 int rms_dialogs_dump_f(struct sip_msg *msg, char *param1, char *param2);
 rms_dialog_info_t *rms_get_dialog_list(void);
 
+
 typedef struct ms_res
 {
 	AudioStream *audio_stream;
@@ -80,9 +81,12 @@ typedef enum rms_dialog_state {
 	RMS_ST_DEFAULT,
 	RMS_ST_CONNECTING,
 	RMS_ST_CONNECTED,
+	RMS_ST_CONNECTED_ACK,
 	RMS_ST_DISCONNECTING,
 	RMS_ST_DISCONNECTED,
 } rms_dialog_state_t;
+
+int rms_dialog_info_set_state(rms_dialog_info_t *di, rms_dialog_state_t state);
 
 typedef struct rms_dialog_info
 {
