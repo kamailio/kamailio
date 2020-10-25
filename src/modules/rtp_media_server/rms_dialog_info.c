@@ -68,6 +68,27 @@ void rms_dialog_list_free()
 	shm_free(rms_dialog_list);
 }
 
+char *rms_dialog_state_toa(rms_dialog_state_t state) {
+	if (state == 0) return "RMS_ST_DEFAULT";
+	else if (state == 1) return "RMS_ST_CONNECTING";
+	else if (state == 2) return "RMS_ST_CONNECTED";
+	else if (state == 3) return "RMS_ST_CONNECTED_ACK";
+	else if (state == 4) return "RMS_ST_DISCONNECTING";
+	else if (state == 5) return "RMS_ST_DISCONNECTED";
+	return "RMS_ST_UNKNOWN";
+}
+
+int rms_dialog_info_set_state(rms_dialog_info_t *di, rms_dialog_state_t state)
+{
+	if (state <= di->state) {
+		LM_ERR("[%s] >> [%s] (invalid state transition) call-id[%s]\n", rms_dialog_state_toa(di->state), rms_dialog_state_toa(state), di->callid.s);
+	} else {
+		LM_NOTICE("[%s] >> [%s] call-id[%s]\n", rms_dialog_state_toa(di->state), rms_dialog_state_toa(state), di->callid.s);
+		di->state = state;
+	}
+	return 1;
+}
+
 rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg) // str *from_tag)
 {
 	rms_dialog_info_t *si;

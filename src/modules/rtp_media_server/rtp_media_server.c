@@ -225,7 +225,9 @@ static rms_dialog_info_t *rms_stop(rms_dialog_info_t *di)
 	}
 
 	rms_dialog_info_t *tmp = di->prev;
-	di->state = RMS_ST_DISCONNECTED;
+	// not yet, we need the confirmation.
+	// rms_dialog_info_set_state(di, RMS_ST_DISCONNECTED);
+
 	// keep it for a little while to deal with retransmissions ...
 	//clist_rm(di, next, prev);
 	//rms_dialog_free(di);
@@ -269,7 +271,7 @@ static rms_dialog_info_t *rms_dialog_action_check(rms_dialog_info_t *di)
 			//	rms_stop(di->bridged_di);
 			di = rms_stop(di);
 			a->type = RMS_NONE;
-			// di->state = RMS_SSTATE_DISCONNECTED;
+			// rms_dialog_info_set_state(di, RMS_ST_DISCONNECTED);
 			return di;
 		} else if(a->type == RMS_PLAY) {
 			LM_INFO("dialog action RMS_PLAY [%s]\n", di->callid.s);
@@ -428,7 +430,7 @@ static int rms_answer_call(
 			return 0;
 		}
 		LM_INFO("answered\n");
-		di->state = RMS_ST_CONNECTED;
+		rms_dialog_info_set_state(di, RMS_ST_CONNECTED);
 	} else {
 		LM_INFO("no request found\n");
 	}
@@ -473,7 +475,7 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 	if(ntype == TMCB_ON_FAILURE) {
 		LM_NOTICE("FAILURE [%d]\n", pcbp->code);
 		rms_action_t *a = (rms_action_t *)*pcbp->param;
-		a->di->state = RMS_ST_DISCONNECTED;
+		rms_dialog_info_set_state(a->di, RMS_ST_DISCONNECTED);
 		if(a->cell->uas.request) {
 			str *reason = &pcbp->rpl->first_line.u.reply.reason;
 			if(!tmb.t_reply_with_body(a->cell, pcbp->code, reason, NULL, NULL,
@@ -1064,14 +1066,17 @@ static int rms_sip_request_f(struct sip_msg *msg)
 	}
 
 	if(di && strncmp(method->s, "BYE", 3) == 0) {
+		if(di->state == RMS_ST_DISCONNECTING)
+			return -1;
 		if(di->state == RMS_ST_CONNECTED)
-			di->state = RMS_ST_DISCONNECTING;
+			rms_dialog_info_set_state(di, RMS_ST_DISCONNECTING);
 		rms_action_t *a = rms_action_new(RMS_STOP);
 		if(!a)
 			return -1;
 		rms_action_add_sync(di, a);
 		if(di->bridged_di) { // bridged
 			LM_NOTICE("BYE in brigde mode\n");
+			rms_sip_forward(di, msg, method);
 		} else { // connected localy
 			LM_NOTICE("BYE in local mode\n");
 			rms_disconnect(msg);
@@ -1083,7 +1088,6 @@ static int rms_sip_request_f(struct sip_msg *msg)
 		LM_NOTICE("initial INVITE\n");
 		return 1;
 	} else {
-		LM_NOTICE("in dialog message, state [%d]\n", di->state);
 		if (di->state == RMS_ST_DISCONNECTING) {
 			return -1; // ignore in dialog message in this state
 		} else if (di->state == RMS_ST_DISCONNECTED) {
