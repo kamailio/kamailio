@@ -31,13 +31,13 @@
 
 /* Module parameters variables */
 
-extern str user_column;     /* 'username' column name */
-extern str domain_column;   /* 'domain' column name */
-extern str alias_user_column;     /* 'alias_username' column name */
-extern str alias_domain_column;   /* 'alias_domain' column name */
+extern str user_column;			/* 'username' column name */
+extern str domain_column;		/* 'domain' column name */
+extern str alias_user_column;	/* 'alias_username' column name */
+extern str alias_domain_column; /* 'alias_domain' column name */
 extern str domain_prefix;
-extern int ald_append_branches;  /* append branches after an alias lookup */
+extern int ald_append_branches; /* append branches after an alias lookup */
 
-extern db1_con_t* db_handle;   /* Database connection handle */
+extern db1_con_t *db_handle; /* Database connection handle */
 
 #endif /* _ALIAS_DB_H_ */
