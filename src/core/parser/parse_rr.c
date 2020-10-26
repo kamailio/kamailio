@@ -296,7 +296,8 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 			} else {
 				PKG_MEM_ERROR;
 			}
-			return -2;
+			ret = -2;
+			goto error;
 		}
 		memcpy(res, it, sizeof(rr_t));
 
@@ -313,7 +314,8 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 			LM_ERR("Error while duplicating parameters\n");
 			if (_shm) shm_free(res);
 			else pkg_free(res);
-			return -3;
+			ret = -3;
+			goto error;
 		}
 
 		xlate_pointers(it, res);
@@ -327,6 +329,18 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		it = it->next;
 	}
 	return 0;
+
+error:
+	if(*_new != NULL) {
+		if (_shm) {
+			shm_free_rr(_new);
+		} else {
+			free_rr(_new);
+		}
+		*_new = NULL;
+	}
+
+	return ret;
 }
 
 
