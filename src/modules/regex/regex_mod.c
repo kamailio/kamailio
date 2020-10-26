@@ -246,6 +246,7 @@ static int load_pcres(int action)
 	int pcre_erroffset;
 	int num_pcres_tmp = 0;
 	pcre **pcres_tmp = NULL;
+	int llen;
 
 	/* Get the lock */
 	lock_get(reload_lock);
@@ -301,31 +302,37 @@ static int load_pcres(int action)
 			}
 			/* Start the regular expression with '(' */
 			patterns[i][0] = '(';
+			patterns[i][1] = '\0';
 			memset(line, 0, FILE_MAX_LINE);
 			continue;
 		}
 
+		llen = strlen(line);
 		/* Check if the patter size is too big (aprox) */
-		if (strlen(patterns[i]) + strlen(line) >= group_max_size - 4) {
+		if (strlen(patterns[i]) + llen >= group_max_size - 4) {
 			LM_ERR("pattern max file exceeded\n");
 			fclose(f);
 			goto err;
 		}
 
 		/* Append ')' at the end of the line */
-		if (line[strlen(line) - 1] == '\n') {
-			line[strlen(line)] = line[strlen(line) - 1];
-			line[strlen(line) - 2] = ')';
+		if (line[llen - 1] == '\n') {
+			line[llen - 1] = ')';
+			line[llen] = '\n';
+			line[llen + 1] = '\0';
 		} else {
 			/* This is the last char in the file and it's not \n */
-			line[strlen(line)] = ')';
+			line[llen] = ')';
+			line[llen + 1] = '\0';
 		}
 
 		/* Append '(' at the beginning of the line */
-		memcpy(patterns[i]+strlen(patterns[i]), "(", 1);
+		llen = strlen(patterns[i]);
+		memcpy(patterns[i]+llen, "(", 1);
+		llen++;
 
-		/* Append the line to the current pattern */
-		memcpy(patterns[i]+strlen(patterns[i]), line, strlen(line));
+		/* Append the line to the current pattern (including the ending 0) */
+		memcpy(patterns[i] + llen, line, strlen(line) + 1);
 
 		memset(line, 0, FILE_MAX_LINE);
 	}
