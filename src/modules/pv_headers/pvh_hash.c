@@ -85,6 +85,7 @@ int pvh_str_hash_add_key(struct str_hash_table *ht, str *key)
 
 err:
 	pvh_str_free(&e->key);
+	pkg_free(e);
 	return -1;
 }
 
