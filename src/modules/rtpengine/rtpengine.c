@@ -2084,7 +2084,7 @@ static const char *transports[] = {
 };
 
 static int parse_codec_flag(struct ng_flags_parse *ng_flags, const str *key, const str *val,
-		const char *cmp1, const char *cmp2,
+		const char *cmp1, const char *cmp2, const char *dictstr,
 		bencode_item_t **dictp)
 {
 	str s;
@@ -2098,7 +2098,7 @@ static int parse_codec_flag(struct ng_flags_parse *ng_flags, const str *key, con
 
 	if (!*dictp) {
 		*dictp = bencode_list(ng_flags->dict->buffer);
-		bencode_dictionary_add(ng_flags->codec, "transcode",
+		bencode_dictionary_add(ng_flags->codec, dictstr,
 			*dictp);
 	}
 	bencode_list_add_str(*dictp, &s);
@@ -2159,17 +2159,17 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			goto next;
 		}
 
-		if (parse_codec_flag(ng_flags, &key, &val, "transcode", "codec-transcode", &ng_flags->codec_transcode))
+		if (parse_codec_flag(ng_flags, &key, &val, "transcode", "codec-transcode", "transcode", &ng_flags->codec_transcode))
 			goto next;
-		if (parse_codec_flag(ng_flags, &key, &val, "codec-strip", NULL, &ng_flags->codec_strip))
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-strip", NULL, "strip", &ng_flags->codec_strip))
 			goto next;
-		if (parse_codec_flag(ng_flags, &key, &val, "codec-offer", NULL, &ng_flags->codec_offer))
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-offer", NULL, "offer", &ng_flags->codec_offer))
 			goto next;
-		if (parse_codec_flag(ng_flags, &key, &val, "codec-mask", NULL, &ng_flags->codec_mask))
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-mask", NULL, "mask", &ng_flags->codec_mask))
 			goto next;
-		if (parse_codec_flag(ng_flags, &key, &val, "codec-set", NULL, &ng_flags->codec_set))
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-set", NULL, "set", &ng_flags->codec_set))
 			goto next;
-		if (parse_codec_flag(ng_flags, &key, &val, "codec-except", NULL, &ng_flags->codec_except))
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-except", NULL, "except", &ng_flags->codec_except))
 			goto next;
 
 		/* check for specially handled items */
