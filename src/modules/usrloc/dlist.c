@@ -236,7 +236,7 @@ int ul_ka_db_records(int partidx)
 				continue;
 			}
 			ur.aor.len = strlen(p);
-			if(ur.aor.len >= ULKA_AORBUF_SIZE) {
+			if(ur.aor.len >= ULKA_AORBUF_SIZE - 1) {
 				LM_DBG("long username ->skipping\n");
 				continue;
 			}
