@@ -163,19 +163,18 @@ static int alias_db_query(struct sip_msg* _msg, str table,
 					(char*)RES_ROWS(db_res)[i].values[1].val.str_val.s,
 					RES_ROWS(db_res)[i].values[1].val.str_val.len);
 				user_s.len += RES_ROWS(db_res)[i].values[1].val.str_val.len;
-				useruri_buf[user_s.len] = '\0';
 			break;
 			case DB1_BLOB:
 				strncpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[1].val.blob_val.s,
 					RES_ROWS(db_res)[i].values[1].val.blob_val.len);
 				user_s.len += RES_ROWS(db_res)[i].values[1].val.blob_val.len;
-				useruri_buf[user_s.len] = '\0';
 			break;
 			default:
 				LM_ERR("unknown type of DB user column\n");
 				goto err_server;
 		}
+		useruri_buf[user_s.len] = '\0';
 		user_s.s = useruri_buf;
 		/* set the URI */
 		LM_DBG("new URI [%d] is [%.*s]\n", i, user_s.len ,user_s.s );
