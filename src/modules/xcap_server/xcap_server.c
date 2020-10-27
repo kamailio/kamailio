@@ -322,7 +322,7 @@ int xcaps_xpath_hack(str *buf, int type)
 
 	start = buf->s;
 	STR_VTOZ(buf->s[buf->len-1], c);
-	while((start < buf->s + buf->len - 8) && (p = strstr(start, match))!=NULL) {
+	while((start < buf->s + buf->len - 10) && (p = strstr(start, match))!=NULL) {
 		memcpy(p, repl, 7);
 		start = p + 7;
 	}
