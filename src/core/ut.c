@@ -297,6 +297,29 @@ char *str_search(str *text, str *needle)
 }
 
 /**
+ * @brief search for occurence of needlez starting from vstart and before vend
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *stre_search_strz(char *vstart, char *vend, char *needlez)
+{
+    str text;
+    str needle;
+
+	if(vend <= vstart) {
+		return NULL;
+	}
+
+	text.s = vstart;
+	text.len = vend - vstart;
+
+	needle.s = needlez;
+	needle.len = strlen(needlez);
+
+    return str_search(&text, &needle);
+}
+
+/**
  * @brief case insensitive search for occurence of needle in text
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found

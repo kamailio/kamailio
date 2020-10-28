@@ -1057,6 +1057,8 @@ char* get_abs_pathname(str* base, str* file);
  */
 char *str_search(str *text, str *needle);
 
+char *stre_search_strz(char *vstart, char *vend, char *needlez);
+
 char *str_casesearch(str *text, str *needle);
 
 char *strz_casesearch_strz(char *textz, char *needlez);
