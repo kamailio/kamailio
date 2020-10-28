@@ -446,7 +446,7 @@ int uac_auth(sip_msg_t *msg)
 	/* found? */
 	if (crd==0)
 	{
-		LM_DBG("no credential for realm \"%.*s\"\n",
+		LM_INFO("no credential for realm \"%.*s\"\n",
 			auth.realm.len, auth.realm.s);
 		goto error;
 	}
