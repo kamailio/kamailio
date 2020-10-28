@@ -776,8 +776,9 @@ failure_route[TRUNKAUTH] {
     if(t_check_status("401|407")) {
         $avp(auser) = "test";
         $avp(apass) = "test";
-        uac_auth();
-        t_relay();
+        if (uac_auth()) {
+            t_relay();
+        }
         exit;
     }
 }
