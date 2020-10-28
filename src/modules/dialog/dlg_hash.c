@@ -857,7 +857,7 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \param mode let hash table slot locked or not
+ * \param mode let hash table slot locked or not, even when dlg is not found
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
@@ -867,33 +867,47 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 	struct dlg_cell *dlg;
 	struct dlg_cell *dlg_no_totag=NULL;
 	struct dlg_entry *d_entry;
+	unsigned int dir_no_totag = DLG_DIR_NONE;
 
 	d_entry = &(d_table->entries[h_entry]);
 
 	dlg_lock( d_table, d_entry);
 
 	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
-		/* Check callid / fromtag / totag */
+		/* check callid / fromtag / totag */
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
-			ref_dlg_unsafe(dlg, 1);
-			if(likely(mode==0)) dlg_unlock( d_table, d_entry);
-
-			/* If to-tag is empty continue to search in case another dialog is found with a matching to-tag. */
-			if (dlg->tag[1].len == 0) {
-				dlg_no_totag=dlg;
-				LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
-					callid->len, callid->s,h_entry,*dir);
+			/* if to-tag is empty continue to search in case another dialog
+			 * is found with a matching to-tag. */
+			if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
+				dlg_no_totag = dlg;
+				dir_no_totag = *dir;
 				continue;
 			}
+
+			ref_dlg_unsafe(dlg, 1);
+			if(likely(mode==0)) {
+				dlg_unlock( d_table, d_entry);
+			}
 			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d to-tag='%.*s'\n",
-				callid->len, callid->s,h_entry,*dir, dlg->tag[1].len, dlg->tag[1].s);
+				callid->len, callid->s, h_entry, *dir,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 
 			return dlg;
 		}
 	}
 
-	if(likely(mode==0)) dlg_unlock( d_table, d_entry);
-	if (dlg_no_totag) return dlg_no_totag;
+	if (dlg_no_totag) {
+		ref_dlg_unsafe(dlg_no_totag, 1);
+	}
+	if(likely(mode==0)) {
+		dlg_unlock(d_table, d_entry);
+	}
+	if (dlg_no_totag) {
+		*dir = dir_no_totag;
+		LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d no-to-tag\n",
+				callid->len, callid->s, h_entry, *dir);
+		return dlg_no_totag;
+	}
 
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
