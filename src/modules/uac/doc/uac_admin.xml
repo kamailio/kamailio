@@ -877,9 +877,9 @@ failure_route[TRUNKAUTH] {
         $avp(auser) = "test";
         $avp(apass) = "test";
         # $avp(apass) = "36d0a02793542b4961e8348347236dbf";
-        uac_auth();
-        # uac_auth("1");
-        t_relay();
+        if (uac_auth()) {
+            t_relay();
+        }
         exit;
     }
 }
