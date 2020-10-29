@@ -795,10 +795,7 @@ error_key:
 	return -1;
 }
 
-/**
- *
- */
-static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
+static int pv_get_redisc_result(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	redisc_pv_t *rpv;
@@ -904,6 +901,25 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 			/* We do nothing. */
 			return pv_get_null(msg, param, res);
 	}
+}
+
+static int pv_get_redisc(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	redisc_pv_t *rpv = (redisc_pv_t*)param->pvn.u.dname;
+	gparam_t *gparam;
+	int result = pv_get_redisc_result(msg, param, res);
+	/* Clean-up allocations made while parsing */
+	for (gparam = rpv->pos; gparam != &rpv->pos[MAXIMUM_NESTED_KEYS]; ++gparam)
+	{
+		if (gparam->type != GPARAM_TYPE_PVS) continue;
+		pkg_free(gparam->v.pvs);
+		gparam->type = GPARAM_TYPE_INT;
+		gparam->v.i = -1;
+	}
+	pkg_free(rpv);
+	param->pvn.u.dname = NULL;
+	return result;
 }
 
 /**
