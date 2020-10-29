@@ -492,15 +492,13 @@ static void rpc_stats_get_statistics(rpc_t* rpc, void* ctx)
 
 static void rpc_fetch_add_stat(rpc_t* rpc, void* ctx, void* hst, char* g, char* n, unsigned long val, int numeric) {
 	char nbuf[128];
-	char vbuf[32];
 	int res;
 
 	snprintf(nbuf, 127, "%s.%s", g, n);
 	if (numeric) {
 		res = rpc->struct_add(hst, "d", nbuf, val);
 	} else {
-		snprintf(vbuf, 31, "%lu", val);
-		res = rpc->struct_add(hst, "s", nbuf, vbuf);
+		res = rpc->struct_printf(hst, nbuf, "%lu", val);
 	}
 	if (res<0)
 	{
