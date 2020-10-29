@@ -525,24 +525,17 @@ static void rpc_fetch_all_grps_cbk(void* p, str* g)
 /**
  * All statistic getter RPC callback.
  */
-static void stats_fetch_all(rpc_t* rpc, void* ctx, char* stat)
+static void stats_fetch_all(rpc_t* rpc, void* ctx, void* th, char* stat)
 {
 	int len = strlen(stat);
 	struct rpc_list_params packed_params;
 	str s_statistic;
 	stat_var *s_stat;
-	void *th;
 	char nbuf[128];
 	char vbuf[32];
 	char *m;
 	char *n;
 	int i;
-
-	if (rpc->add(ctx, "{", &th) < 0)
-	{
-		rpc->fault(ctx, 500, "Internal error creating root struct");
-		return;
-	}
 
 	if (len==3 && strcmp("all", stat)==0) {
 		packed_params.rpc = rpc;
@@ -618,6 +611,7 @@ static void stats_fetch_all(rpc_t* rpc, void* ctx, char* stat)
 static void rpc_stats_fetch_statistics(rpc_t* rpc, void* ctx)
 {
 	char* stat;
+	void *th;
 
 	if (stats_support()==0) {
 		rpc->fault(ctx, 400, "stats support not enabled");
@@ -627,9 +621,13 @@ static void rpc_stats_fetch_statistics(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "Please provide which stats to retrieve");
 		return;
 	}
-	stats_fetch_all(rpc, ctx, stat);
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating root struct");
+		return;
+	}
+	stats_fetch_all(rpc, ctx, th, stat);
 	while((rpc->scan(ctx, "*s", &stat)>0)) {
-		stats_fetch_all(rpc, ctx, stat);
+		stats_fetch_all(rpc, ctx, th, stat);
 	}
 	return;
 }
@@ -669,22 +667,16 @@ static void rpc_fetchn_all_grps_cbk(void* p, str* g)
 /**
  * All statistic getter RPC callback with number value.
  */
-static void stats_fetchn_all(rpc_t* rpc, void* ctx, char* stat)
+static void stats_fetchn_all(rpc_t* rpc, void* ctx, void* th, char* stat)
 {
 	int len = strlen(stat);
 	struct rpc_list_params packed_params;
 	str s_statistic;
 	stat_var *s_stat;
-	void *th;
 	char nbuf[128];
 	char *m;
 	char *n;
 	int i;
-
-	if (rpc->add(ctx, "{", &th) < 0) {
-		rpc->fault(ctx, 500, "Internal error creating root struct");
-		return;
-	}
 
 	if (len==3 && strcmp("all", stat)==0) {
 		packed_params.rpc = rpc;
@@ -757,6 +749,7 @@ static void stats_fetchn_all(rpc_t* rpc, void* ctx, char* stat)
 static void rpc_stats_fetchn_statistics(rpc_t* rpc, void* ctx)
 {
 	char* stat;
+	void *th;
 
 	if (stats_support()==0) {
 		rpc->fault(ctx, 400, "stats support not enabled");
@@ -766,9 +759,13 @@ static void rpc_stats_fetchn_statistics(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "Please provide which stats to retrieve");
 		return;
 	}
-	stats_fetchn_all(rpc, ctx, stat);
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating root struct");
+		return;
+	}
+	stats_fetchn_all(rpc, ctx, th, stat);
 	while((rpc->scan(ctx, "*s", &stat)>0)) {
-		stats_fetchn_all(rpc, ctx, stat);
+		stats_fetchn_all(rpc, ctx, th, stat);
 	}
 	return;
 }
