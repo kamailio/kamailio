@@ -673,11 +673,11 @@ data_target = $(prefix)/$(data_dir)
 # -DUSE_DNS_FAILOVER
 #		if the destination resolves to multiple ips, on send error fall back
 #		to the others
-# -DUSE_DST_BLACKLIST
-#		blacklist bad destination (timeout, failed to connect, error sending
+# -DUSE_DST_BLOCKLIST
+#		blocklist bad destination (timeout, failed to connect, error sending
 #        a.s.o)
-# -DUSE_DST_BLACKLIST_STATS
-#		turns on blacklist bad destination measurements
+# -DUSE_DST_BLOCKLIST_STATS
+#		turns on blocklist bad destination measurements
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
@@ -724,11 +724,11 @@ C_DEFS+= -DSHM_MMAP \
 	 -DHAVE_RESOLV_RES \
 	 -DUSE_DNS_CACHE \
 	 -DUSE_DNS_FAILOVER \
-	 -DUSE_DST_BLACKLIST \
+	 -DUSE_DST_BLOCKLIST \
 	 -DUSE_NAPTR \
 	 -DWITH_XAVP \
 	 #-DUSE_DNS_CACHE_STATS \
-	 #-DUSE_DST_BLACKLIST_STATS \
+	 #-DUSE_DST_BLOCKLIST_STATS \
 	 #-DDNS_WATCHDOG_SUPPORT \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \
