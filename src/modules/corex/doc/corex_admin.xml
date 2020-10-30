@@ -130,7 +130,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<listitem>
 			<para>
 			<emphasis>flags</emphasis> - can be: 1 - the domain is unresolvable
-			(like blacklisted); 2 - the record is permanent (never times out,
+			(like blocklisted); 2 - the record is permanent (never times out,
 			never deleted, never overwritten)
 			</para>
 		</listitem>
