@@ -77,7 +77,7 @@ enum dns_errors{
 					E_DNS_BAD_IP_ENTRY,
 					E_DNS_NO_IP /**< unresolvable a or aaaa records*/,
 					E_DNS_BAD_IP /**< the ip is invalid */,
-					E_DNS_BLACKLIST_IP /**< the ip is blacklisted */,
+					E_DNS_BLOCKLIST_IP /**< the ip is blocklisted */,
 					E_DNS_NAME_TOO_LONG /**< try again with a shorter name */,
 					E_DNS_AF_MISMATCH /**< ipv4 or ipv6 only requested, but
 										 name contains an ip addr. of the
@@ -112,7 +112,7 @@ const char* dns_strerror(int err);
 /*@} */
 
 
-/** @name ip blacklist error flags */
+/** @name ip blocklist error flags */
 /*@{ */
 #define IP_ERR_BAD_DST      2 /* destination is marked as bad (e.g. bad ip) */
 #define IP_ERR_SND          3 /* send error while using this as destination */

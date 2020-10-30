@@ -109,10 +109,10 @@
 	#define IF_NAPTR(x) warn("dns naptr support not compiled in")
 #endif
 
-#ifdef USE_DST_BLACKLIST
-	#define IF_DST_BLACKLIST(x) x
+#ifdef USE_DST_BLOCKLIST
+	#define IF_DST_BLOCKLIST(x) x
 #else
-	#define IF_DST_BLACKLIST(x) warn("dst blacklist support not compiled in")
+	#define IF_DST_BLOCKLIST(x) warn("dst blocklist support not compiled in")
 #endif
 
 #ifdef USE_SCTP
@@ -362,7 +362,7 @@ extern char *default_routename;
 
 %token IPV6_HEX_STYLE
 
-/*blacklist*/
+/*blocklist*/
 %token DST_BLST_INIT
 %token USE_DST_BLST
 %token DST_BLST_MEM
@@ -889,36 +889,36 @@ assign_stm:
 	| IPV6_HEX_STYLE error { yyerror("string value expected"); }
 	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}
 	| BIND_IPV6_LINK_LOCAL error { yyerror("boolean value expected"); }
-	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
+	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLOCKLIST(dst_blocklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.use_dst_blocklist=$3);
 	}
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
 	| DST_BLST_MEM EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_max_mem=$3);
 	}
 	| DST_BLST_MEM error { yyerror("boolean value expected"); }
 	| DST_BLST_TTL EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_timeout=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_timeout=$3);
 	}
 	| DST_BLST_TTL error { yyerror("boolean value expected"); }
-	| DST_BLST_GC_INT EQUAL NUMBER { IF_DST_BLACKLIST(blst_timer_interval=$3);}
+	| DST_BLST_GC_INT EQUAL NUMBER { IF_DST_BLOCKLIST(blst_timer_interval=$3);}
 	| DST_BLST_GC_INT error { yyerror("boolean value expected"); }
 	| DST_BLST_UDP_IMASK EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_udp_imask=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_udp_imask=$3);
 	}
 	| DST_BLST_UDP_IMASK error { yyerror("number(flags) expected"); }
 	| DST_BLST_TCP_IMASK EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_tcp_imask=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_tcp_imask=$3);
 	}
 	| DST_BLST_TCP_IMASK error { yyerror("number(flags) expected"); }
 	| DST_BLST_TLS_IMASK EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_tls_imask=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_tls_imask=$3);
 	}
 	| DST_BLST_TLS_IMASK error { yyerror("number(flags) expected"); }
 	| DST_BLST_SCTP_IMASK EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_sctp_imask=$3);
+		IF_DST_BLOCKLIST(default_core_cfg.blst_sctp_imask=$3);
 	}
 	| DST_BLST_SCTP_IMASK error { yyerror("number(flags) expected"); }
 	| IP_FREE_BIND EQUAL intno { _sr_ip_free_bind=$3; }

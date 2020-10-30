@@ -48,12 +48,12 @@ struct cfg_group_core {
 	int	debug;
 	int	log_facility;
 	int memdbg; /*!< log level for memory debugging messages */
-#ifdef USE_DST_BLACKLIST
-	/* blacklist */
-	int	use_dst_blacklist; /*!< 1 if blacklist is enabled */
-	unsigned int	blst_timeout; /*!< blacklist entry ttl */
+#ifdef USE_DST_BLOCKLIST
+	/* blocklist */
+	int	use_dst_blocklist; /*!< 1 if blocklist is enabled */
+	unsigned int	blst_timeout; /*!< blocklist entry ttl */
 	unsigned int	blst_max_mem; /*!< maximum memory used for the
-					blacklist entries */
+					blocklist entries */
 	unsigned int	blst_udp_imask;  /* ignore mask for udp */
 	unsigned int	blst_tcp_imask;  /* ignore mask for tcp */
 	unsigned int	blst_tls_imask;  /* ignore mask for tls */

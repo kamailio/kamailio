@@ -28,9 +28,9 @@
  */
 
 
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 
-#include "dst_blacklist.h"
+#include "dst_blocklist.h"
 #include "globals.h"
 #include "cfg_core.h"
 #include "mem/shm_mem.h"
@@ -43,7 +43,7 @@
 #include "rpc.h"
 #include "compiler_opt.h"
 #include "resolve.h" /* for str2ip */
-#ifdef USE_DST_BLACKLIST_STATS
+#ifdef USE_DST_BLOCKLIST_STATS
 #include "pt.h"
 #endif
 
@@ -115,42 +115,42 @@ struct dst_blst_lst_head{
 #endif
 };
 
-int dst_blacklist_init=1; /* if 0, the dst blacklist is not initialized at startup */
+int dst_blocklist_init=1; /* if 0, the dst blocklist is not initialized at startup */
 static struct timer_ln* blst_timer_h=0;
 
 static volatile unsigned int* blst_mem_used=0;
 unsigned int blst_timer_interval=DEFAULT_BLST_TIMER_INTERVAL;
 struct dst_blst_lst_head* dst_blst_hash=0;
 
-#ifdef USE_DST_BLACKLIST_STATS
-struct t_dst_blacklist_stats* dst_blacklist_stats=0;
+#ifdef USE_DST_BLOCKLIST_STATS
+struct t_dst_blocklist_stats* dst_blocklist_stats=0;
 #endif
 
-/* blacklist per protocol event ignore mask array */
+/* blocklist per protocol event ignore mask array */
 unsigned blst_proto_imask[PROTO_LAST+1];
 
-#ifdef DST_BLACKLIST_HOOKS
+#ifdef DST_BLOCKLIST_HOOKS
 
-/* there 2 types of callbacks supported: on add new entry to the blacklist
- *  (DST_BLACKLIST_ADD_CB) and on blacklist search (DST_BLACKLIST_SEARCH_CB).
+/* there 2 types of callbacks supported: on add new entry to the blocklist
+ *  (DST_BLOCKLIST_ADD_CB) and on blocklist search (DST_BLOCKLIST_SEARCH_CB).
  *  Both of them take a struct dest_info*, a flags pointer(unsigned char*),
  *  and a struct sip_msg* as parameters. The flags can be changed.
  *  A callback should return one of:
- *    DST_BLACKLIST_CONTINUE - do nothing, let other callbacks run
- *    DST_BLACKLIST_ACCEPT   - for blacklist add: force accept immediately,
- *                             for blacklist search: force match and use
- *                              the flags as the blacklist search return.
+ *    DST_BLOCKLIST_CONTINUE - do nothing, let other callbacks run
+ *    DST_BLOCKLIST_ACCEPT   - for blocklist add: force accept immediately,
+ *                             for blocklist search: force match and use
+ *                              the flags as the blocklist search return.
  *                              ( so the flags should be set to some valid
  *                                non zero BLST flags value )
- *   DST_BLACKLIST_DENY      - for blacklist add: don't allow adding the
- *                              destination to the blacklist.
- *                             for blacklist search: force return not found
+ *   DST_BLOCKLIST_DENY      - for blocklist add: don't allow adding the
+ *                              destination to the blocklist.
+ *                             for blocklist search: force return not found
  */
 
 #define MAX_BLST_HOOKS 1
 
 struct blst_callbacks_lst{
-	struct blacklist_hook* hooks;
+	struct blocklist_hook* hooks;
 	unsigned int max_hooks;
 	int last_idx;
 };
@@ -163,12 +163,12 @@ static int init_blst_callback_lst(struct blst_callbacks_lst*  cb_lst, int max)
 
 	cb_lst->max_hooks=MAX_BLST_HOOKS;
 	cb_lst->last_idx=0;
-	cb_lst->hooks=pkg_malloc(cb_lst->max_hooks*sizeof(struct blacklist_hook));
+	cb_lst->hooks=pkg_malloc(cb_lst->max_hooks*sizeof(struct blocklist_hook));
 	if (cb_lst->hooks==0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(cb_lst->hooks, 0, cb_lst->max_hooks*sizeof(struct blacklist_hook));
+	memset(cb_lst->hooks, 0, cb_lst->max_hooks*sizeof(struct blocklist_hook));
 	return 0;
 }
 
@@ -189,14 +189,14 @@ static void destroy_blst_callback_lst(struct blst_callbacks_lst* cb_lst)
 }
 
 
-static void destroy_blacklist_hooks()
+static void destroy_blocklist_hooks()
 {
 	destroy_blst_callback_lst(&blst_add_cb);
 	destroy_blst_callback_lst(&blst_search_cb);
 }
 
 
-static int init_blacklist_hooks()
+static int init_blocklist_hooks()
 {
 
 	if (init_blst_callback_lst(&blst_add_cb, MAX_BLST_HOOKS)!=0)
@@ -206,7 +206,7 @@ static int init_blacklist_hooks()
 	return 0;
 error:
 	LM_ERR("failure initializing internal lists\n");
-	destroy_blacklist_hooks();
+	destroy_blocklist_hooks();
 	return -1;
 }
 
@@ -216,38 +216,38 @@ error:
 /* allocates a new hook
  * returns 0 on success and -1 on error
  * must be called from mod init (from the main process, before forking)*/
-int register_blacklist_hook(struct blacklist_hook *h, int type)
+int register_blocklist_hook(struct blocklist_hook *h, int type)
 {
 	struct blst_callbacks_lst* cb_lst;
-	struct blacklist_hook* tmp;
+	struct blocklist_hook* tmp;
 	int new_max_hooks;
 
-	if (dst_blacklist_init==0) {
-		LM_ERR("blacklist is turned off, "
+	if (dst_blocklist_init==0) {
+		LM_ERR("blocklist is turned off, "
 			"the hook cannot be registered\n");
 		goto error;
 	}
 
 	switch(type){
-		case DST_BLACKLIST_ADD_CB:
+		case DST_BLOCKLIST_ADD_CB:
 			cb_lst=&blst_add_cb;
 			break;
-		case DST_BLACKLIST_SEARCH_CB:
+		case DST_BLOCKLIST_SEARCH_CB:
 			cb_lst=&blst_search_cb;
 			break;
 		default:
-			BUG("register_blacklist_hook: invalid type %d\n", type);
+			BUG("register_blocklist_hook: invalid type %d\n", type);
 			goto error;
 	}
 	if (cb_lst==0 || cb_lst->hooks==0 || cb_lst->max_hooks==0){
-		BUG("register_blacklist_hook: intialization error\n");
+		BUG("register_blocklist_hook: intialization error\n");
 		goto error;
 	}
 
 	if (cb_lst->last_idx >= cb_lst->max_hooks){
 		new_max_hooks=2*cb_lst->max_hooks;
 		tmp=pkg_realloc(cb_lst->hooks,
-				new_max_hooks*sizeof(struct blacklist_hook));
+				new_max_hooks*sizeof(struct blocklist_hook));
 		if (tmp==0){
 			goto error;
 		}
@@ -256,7 +256,7 @@ int register_blacklist_hook(struct blacklist_hook *h, int type)
 		 * overwritten anyway) */
 		memset(&cb_lst->hooks[cb_lst->max_hooks+1], 0,
 					(new_max_hooks-cb_lst->max_hooks-1)*
-						sizeof(struct blacklist_hook));
+						sizeof(struct blocklist_hook));
 		cb_lst->max_hooks=new_max_hooks;
 	}
 	cb_lst->hooks[cb_lst->last_idx]=*h;
@@ -267,29 +267,29 @@ error:
 }
 
 
-inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
+inline static int blocklist_run_hooks(struct blst_callbacks_lst *cb_lst,
 							struct dest_info* si, unsigned char* flags,
 							struct sip_msg* msg)
 {
 	int r;
 	int ret;
 
-	ret=DST_BLACKLIST_CONTINUE; /* default, if no hook installed accept
-								blacklist operation */
+	ret=DST_BLOCKLIST_CONTINUE; /* default, if no hook installed accept
+								blocklist operation */
 	if (likely(cb_lst->last_idx==0))
 		return ret;
 	for (r=0; r<cb_lst->last_idx; r++){
 		ret=cb_lst->hooks[r].on_blst_action(si, flags, msg);
-		if (ret!=DST_BLACKLIST_CONTINUE) break;
+		if (ret!=DST_BLOCKLIST_CONTINUE) break;
 	}
 	return ret;
 }
 
 
-#endif /* DST_BLACKLIST_HOOKS */
+#endif /* DST_BLOCKLIST_HOOKS */
 
 
-/** init per protocol blacklist event ignore masks.
+/** init per protocol blocklist event ignore masks.
  * @return 0 on success, < 0 on error.
  */
 int blst_init_ign_masks(void)
@@ -350,7 +350,7 @@ inline static unsigned short dst_blst_hash_no(unsigned char proto,
 
 
 
-void destroy_dst_blacklist()
+void destroy_dst_blocklist()
 {
 	int r;
 	struct dst_blst_entry** crt;
@@ -395,34 +395,34 @@ void destroy_dst_blacklist()
 		shm_free((void*)blst_mem_used);
 		blst_mem_used=0;
 	}
-#ifdef DST_BLACKLIST_HOOKS
-	destroy_blacklist_hooks();
+#ifdef DST_BLOCKLIST_HOOKS
+	destroy_blocklist_hooks();
 #endif
 
-#ifdef USE_DST_BLACKLIST_STATS
-	if (dst_blacklist_stats)
-		shm_free(dst_blacklist_stats);
+#ifdef USE_DST_BLOCKLIST_STATS
+	if (dst_blocklist_stats)
+		shm_free(dst_blocklist_stats);
 #endif
 }
 
 
 
-int init_dst_blacklist()
+int init_dst_blocklist()
 {
 	int ret;
 #ifdef BLST_LOCK_PER_BUCKET
 	int r;
 #endif
 
-	if (dst_blacklist_init==0) {
-		/* the dst blacklist is turned off */
-		default_core_cfg.use_dst_blacklist=0;
+	if (dst_blocklist_init==0) {
+		/* the dst blocklist is turned off */
+		default_core_cfg.use_dst_blocklist=0;
 		return 0;
 	}
 
 	ret=-1;
-#ifdef DST_BLACKLIST_HOOKS
-	if (init_blacklist_hooks()!=0){
+#ifdef DST_BLOCKLIST_HOOKS
+	if (init_blocklist_hooks()!=0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -497,26 +497,26 @@ int init_dst_blacklist()
 	}
 	return 0;
 error:
-	destroy_dst_blacklist();
+	destroy_dst_blocklist();
 	return ret;
 }
 
-#ifdef USE_DST_BLACKLIST_STATS
-int init_dst_blacklist_stats(int iproc_num)
+#ifdef USE_DST_BLOCKLIST_STATS
+int init_dst_blocklist_stats(int iproc_num)
 {
-	/* do not initialize the stats array if the dst blacklist will not be used */
-	if (dst_blacklist_init==0) return 0;
+	/* do not initialize the stats array if the dst blocklist will not be used */
+	if (dst_blocklist_init==0) return 0;
 
 	/* if it is already initialized */
-	if (dst_blacklist_stats)
-		shm_free(dst_blacklist_stats);
+	if (dst_blocklist_stats)
+		shm_free(dst_blocklist_stats);
 
-	dst_blacklist_stats=shm_malloc(sizeof(*dst_blacklist_stats) * iproc_num);
-	if (dst_blacklist_stats==0){
+	dst_blocklist_stats=shm_malloc(sizeof(*dst_blocklist_stats) * iproc_num);
+	if (dst_blocklist_stats==0){
 	        SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
-	memset(dst_blacklist_stats, 0, sizeof(*dst_blacklist_stats) * iproc_num);
+	memset(dst_blocklist_stats, 0, sizeof(*dst_blocklist_stats) * iproc_num);
 
 	return 0;
 }
@@ -524,7 +524,7 @@ int init_dst_blacklist_stats(int iproc_num)
 
 /* must be called with the lock held
  * struct dst_blst_entry** head, struct dst_blst_entry* e */
-#define dst_blacklist_lst_add(head, e)\
+#define dst_blocklist_lst_add(head, e)\
 do{ \
 	(e)->next=*(head); \
 	*(head)=(e); \
@@ -533,10 +533,10 @@ do{ \
 
 
 /* must be called with the lock held
- * returns a pointer to the blacklist entry if found, 0 otherwise
+ * returns a pointer to the blocklist entry if found, 0 otherwise
  * it also deletes expired elements (expire<=now) as it searches
  * proto==PROTO_NONE = wildcard */
-inline static struct dst_blst_entry* _dst_blacklist_lst_find(
+inline static struct dst_blst_entry* _dst_blocklist_lst_find(
 												unsigned short hash,
 												struct ip_addr* ip,
 												unsigned char proto,
@@ -577,7 +577,7 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
  * returns 1 if a matching entry was deleted, 0 otherwise
  * it also deletes expired elements (expire<=now) as it searches
  * proto==PROTO_NONE = wildcard */
-inline static int _dst_blacklist_del(
+inline static int _dst_blocklist_del(
 												unsigned short hash,
 												struct ip_addr* ip,
 												unsigned char proto,
@@ -631,7 +631,7 @@ inline static int _dst_blacklist_del(
  *  returns: number of deleted entries
  *  This function should be called periodically from a timer
  */
-inline static int dst_blacklist_clean_expired(unsigned int target,
+inline static int dst_blocklist_clean_expired(unsigned int target,
 									  ticks_t delta,
 									  ticks_t timeout)
 {
@@ -690,17 +690,17 @@ skip:
 /* timer */
 static ticks_t blst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 {
-	dst_blacklist_clean_expired(0, 0, 2); /*spend max. 2 ticks*/
+	dst_blocklist_clean_expired(0, 0, 2); /*spend max. 2 ticks*/
 	return (ticks_t)(-1);
 }
 
 
 
-/* adds a proto ip:port combination to the blacklist
- * returns 0 on success, -1 on error (blacklist full -- would use more then
+/* adds a proto ip:port combination to the blocklist
+ * returns 0 on success, -1 on error (blocklist full -- would use more then
  *  blst:_max_mem, or out of shm. mem.)
  */
-inline static int dst_blacklist_add_ip(unsigned char err_flags,
+inline static int dst_blocklist_add_ip(unsigned char err_flags,
 									unsigned char proto,
 									struct ip_addr* ip, unsigned short port,
 									ticks_t timeout)
@@ -723,20 +723,20 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 	hash=dst_blst_hash_no(proto, ip, port);
 	/* check if the entry already exists */
 	LOCK_BLST(hash);
-		e=_dst_blacklist_lst_find(hash, ip, proto, port, now);
+		e=_dst_blocklist_lst_find(hash, ip, proto, port, now);
 		if (e){
 			e->flags|=err_flags;
 			e->expire=now+timeout; /* update the timeout */
 		}else{
 			if (unlikely((*blst_mem_used+size) >=
 					cfg_get(core, core_cfg, blst_max_mem))){
-#ifdef USE_DST_BLACKLIST_STATS
-				dst_blacklist_stats[process_no].bkl_lru_cnt++;
+#ifdef USE_DST_BLOCKLIST_STATS
+				dst_blocklist_stats[process_no].bkl_lru_cnt++;
 #endif
 				UNLOCK_BLST(hash);
 				/* first try to free some memory  (~ 12%), but don't
 				 * spend more then 250 ms*/
-				dst_blacklist_clean_expired(*blst_mem_used/16*14, 0,
+				dst_blocklist_clean_expired(*blst_mem_used/16*14, 0,
 															MS_TO_TICKS(250));
 				if (unlikely(*blst_mem_used+size >=
 						cfg_get(core, core_cfg, blst_max_mem))){
@@ -759,7 +759,7 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 			memcpy(e->ip, ip->u.addr, ip->len);
 			e->expire=now+timeout; /* update the timeout */
 			e->next=0;
-			dst_blacklist_lst_add(&dst_blst_hash[hash].first, e);
+			dst_blocklist_lst_add(&dst_blst_hash[hash].first, e);
 			BLST_HASH_STATS_INC(hash);
 		}
 	UNLOCK_BLST(hash);
@@ -769,8 +769,8 @@ error:
 
 
 
-/* if no blacklisted returns 0, else returns the blacklist flags */
-inline static int dst_is_blacklisted_ip(unsigned char proto,
+/* if no blocklisted returns 0, else returns the blocklist flags */
+inline static int dst_is_blocklisted_ip(unsigned char proto,
 										struct ip_addr* ip,
 										unsigned short port)
 {
@@ -784,7 +784,7 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 	hash=dst_blst_hash_no(proto, ip, port);
 	if (unlikely(dst_blst_hash[hash].first)){
 		LOCK_BLST(hash);
-			e=_dst_blacklist_lst_find(hash, ip, proto, port, now);
+			e=_dst_blocklist_lst_find(hash, ip, proto, port, now);
 			if (e){
 				ret=e->flags;
 			}
@@ -795,81 +795,81 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 
 
 
-/** add dst to the blacklist, specifying the timeout.
+/** add dst to the blocklist, specifying the timeout.
  * @param err_flags - reason (bitmap)
  * @param si - destination (protocol, ip and port)
- * @param msg - sip message that triggered the blacklisting (can be 0 if 
+ * @param msg - sip message that triggered the blocklisting (can be 0 if 
  *               not known)
  * @param timeout - timeout in ticks
  * @return 0 on success, -1 on error
  */
-int dst_blacklist_force_add_to(unsigned char err_flags,  struct dest_info* si,
+int dst_blocklist_force_add_to(unsigned char err_flags,  struct dest_info* si,
 								struct sip_msg* msg, ticks_t timeout)
 {
 	struct ip_addr ip;
 
-#ifdef DST_BLACKLIST_HOOKS
-	if (unlikely (blacklist_run_hooks(&blst_add_cb, si, &err_flags, msg) ==
-					DST_BLACKLIST_DENY))
+#ifdef DST_BLOCKLIST_HOOKS
+	if (unlikely (blocklist_run_hooks(&blst_add_cb, si, &err_flags, msg) ==
+					DST_BLOCKLIST_DENY))
 		return 0;
 #endif
 	su2ip_addr(&ip, &si->to);
-	return dst_blacklist_add_ip(err_flags, si->proto, &ip,
+	return dst_blocklist_add_ip(err_flags, si->proto, &ip,
 								su_getport(&si->to), timeout);
 }
 
 
 
-/** add dst to the blacklist, specifying the timeout.
- * (like @function dst_blacklist_force_add_to)= above, but uses 
+/** add dst to the blocklist, specifying the timeout.
+ * (like @function dst_blocklist_force_add_to)= above, but uses
  * (proto, sockaddr_union) instead of struct dest_info)
  */
-int dst_blacklist_force_su_to(unsigned char err_flags, unsigned char proto,
+int dst_blocklist_force_su_to(unsigned char err_flags, unsigned char proto,
 								union sockaddr_union* dst,
 								struct sip_msg* msg, ticks_t timeout)
 {
 	struct ip_addr ip;
-#ifdef DST_BLACKLIST_HOOKS
+#ifdef DST_BLOCKLIST_HOOKS
 	struct dest_info si;
-	
+
 	init_dest_info(&si);
 	si.to=*dst;
 	si.proto=proto;
-	if (unlikely (blacklist_run_hooks(&blst_add_cb, &si, &err_flags, msg) ==
-					DST_BLACKLIST_DENY))
+	if (unlikely (blocklist_run_hooks(&blst_add_cb, &si, &err_flags, msg) ==
+					DST_BLOCKLIST_DENY))
 		return 0;
 #endif
 	su2ip_addr(&ip, dst);
-	return dst_blacklist_add_ip(err_flags, proto, &ip,
+	return dst_blocklist_add_ip(err_flags, proto, &ip,
 								su_getport(dst), timeout);
 }
 
 
 
-int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg)
+int dst_is_blocklisted(struct dest_info* si, struct sip_msg* msg)
 {
 	int ires;
 	struct ip_addr ip;
-#ifdef DST_BLACKLIST_HOOKS
+#ifdef DST_BLOCKLIST_HOOKS
 	unsigned char err_flags;
 	int action;
 #endif
 	su2ip_addr(&ip, &si->to);
 
-#ifdef DST_BLACKLIST_HOOKS
+#ifdef DST_BLOCKLIST_HOOKS
 	err_flags=0;
-	if (unlikely((action=(blacklist_run_hooks(&blst_search_cb, si, &err_flags, msg))
-					) != DST_BLACKLIST_CONTINUE)){
-		if (action==DST_BLACKLIST_DENY)
+	if (unlikely((action=(blocklist_run_hooks(&blst_search_cb, si, &err_flags, msg))
+					) != DST_BLOCKLIST_CONTINUE)){
+		if (action==DST_BLOCKLIST_DENY)
 			return 0;
-		else  /* if (action==DST_BLACKLIST_ACCEPT) */
+		else  /* if (action==DST_BLOCKLIST_ACCEPT) */
 			return err_flags;
 	}
 #endif
-	ires=dst_is_blacklisted_ip(si->proto, &ip, su_getport(&si->to));
-#ifdef USE_DST_BLACKLIST_STATS
+	ires=dst_is_blocklisted_ip(si->proto, &ip, su_getport(&si->to));
+#ifdef USE_DST_BLOCKLIST_STATS
 	if (ires)
-		dst_blacklist_stats[process_no].bkl_hit_cnt++;
+		dst_blocklist_stats[process_no].bkl_hit_cnt++;
 #endif
 	return ires;
 }
@@ -877,7 +877,7 @@ int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg)
 
 
 /* returns 1 if the entry was deleted, 0 if not found */
-int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
+int dst_blocklist_del(struct dest_info* si, struct sip_msg* msg)
 {
 	unsigned short hash;
 	struct ip_addr ip;
@@ -892,7 +892,7 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
 	hash=dst_blst_hash_no(si->proto, &ip, port);
 	if (unlikely(dst_blst_hash[hash].first)){
 		LOCK_BLST(hash);
-			ret=_dst_blacklist_del(hash, &ip, si->proto, port, now);
+			ret=_dst_blocklist_del(hash, &ip, si->proto, port, now);
 		UNLOCK_BLST(hash);
 	}
 	return ret;
@@ -903,8 +903,8 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
 /* rpc functions */
 void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 {
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 	rpc->add(ctx, "dd",  *blst_mem_used, cfg_get(core, core_cfg, blst_max_mem));
@@ -913,7 +913,7 @@ void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 
 
 
-#ifdef USE_DST_BLACKLIST_STATS
+#ifdef USE_DST_BLOCKLIST_STATS
 
 static unsigned long  stat_sum(int ivar, int breset) {
 	unsigned long isum=0;
@@ -922,14 +922,14 @@ static unsigned long  stat_sum(int ivar, int breset) {
 	for (; i1 < get_max_procs(); i1++)
 		switch (ivar) {
 			case 0:
-				isum+=dst_blacklist_stats[i1].bkl_hit_cnt;
+				isum+=dst_blocklist_stats[i1].bkl_hit_cnt;
 				if (breset)
-					dst_blacklist_stats[i1].bkl_hit_cnt=0;
+					dst_blocklist_stats[i1].bkl_hit_cnt=0;
 				break;
 			case 1:
-				isum+=dst_blacklist_stats[i1].bkl_lru_cnt;
+				isum+=dst_blocklist_stats[i1].bkl_lru_cnt;
 				if (breset)
-					dst_blacklist_stats[i1].bkl_lru_cnt=0;
+					dst_blocklist_stats[i1].bkl_lru_cnt=0;
 				break;
 		}
 
@@ -943,46 +943,46 @@ void dst_blst_stats_get(rpc_t* rpc, void* c)
 	void *handle;
 	int found=0,i=0;
 	int reset=0;
-	char* dst_blacklist_stats_names[] = {
+	char* dst_blocklist_stats_names[] = {
 		"bkl_hit_cnt",
 		"bkl_lru_cnt",
 		NULL
 	};
 	
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(c, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(c, 500, "dst blocklist support disabled");
 		return;
 	}
 	if (rpc->scan(c, "s", &name) < 0)
 		return;
 	if (rpc->scan(c, "d", &reset) < 0)
 		return;
-	if (!strcasecmp(name, DST_BLACKLIST_ALL_STATS)) {
+	if (!strcasecmp(name, DST_BLOCKLIST_ALL_STATS)) {
 		/* dump all the dns cache stat values */
 		rpc->add(c, "{", &handle);
-		for (i=0; dst_blacklist_stats_names[i]; i++)
+		for (i=0; dst_blocklist_stats_names[i]; i++)
 			rpc->struct_add(handle, "d",
-							dst_blacklist_stats_names[i],
+							dst_blocklist_stats_names[i],
 							stat_sum(i, reset));
 
 		found=1;
 	} else {
-		for (i=0; dst_blacklist_stats_names[i]; i++)
-			if (!strcasecmp(dst_blacklist_stats_names[i], name)) {
+		for (i=0; dst_blocklist_stats_names[i]; i++)
+			if (!strcasecmp(dst_blocklist_stats_names[i], name)) {
 			rpc->add(c, "{", &handle);
 			rpc->struct_add(handle, "d",
-							dst_blacklist_stats_names[i],
+							dst_blocklist_stats_names[i],
 							stat_sum(i, reset));
 			found=1;
 			break;
 			}
 	}
 	if(!found)
-		rpc->fault(c, 500, "unknown dst blacklist stat parameter");
+		rpc->fault(c, 500, "unknown dst blocklist stat parameter");
 
 	return;
 }
-#endif /* USE_DST_BLACKLIST_STATS */
+#endif /* USE_DST_BLOCKLIST_STATS */
 
 /* only for debugging, it helds the lock too long for "production" use */
 void dst_blst_debug(rpc_t* rpc, void* ctx)
@@ -992,8 +992,8 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 	now=get_ticks_raw();
@@ -1022,8 +1022,8 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 
 	n=0;
 #endif
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 		for(h=0; h<DST_BLST_HASH_SIZE; h++){
@@ -1038,7 +1038,7 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 		}
 }
 
-/* dumps the content of the blacklist in a human-readable format */
+/* dumps the content of the blocklist in a human-readable format */
 void dst_blst_view(rpc_t* rpc, void* ctx)
 {
 	int h;
@@ -1047,8 +1047,8 @@ void dst_blst_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 	now=get_ticks_raw();
@@ -1073,7 +1073,7 @@ void dst_blst_view(rpc_t* rpc, void* ctx)
 }
 
 
-/* deletes all the entries from the blacklist except the permanent ones
+/* deletes all the entries from the blocklist except the permanent ones
  * (which are marked with BLST_PERMANENT)
  */
 void dst_blst_flush(void)
@@ -1104,14 +1104,14 @@ void dst_blst_flush(void)
 /* rpc wrapper function for dst_blst_flush() */
 void dst_blst_delete_all(rpc_t* rpc, void* ctx)
 {
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 	dst_blst_flush();
 }
 
-/* Adds a new entry to the blacklist */
+/* Adds a new entry to the blocklist */
 void dst_blst_add(rpc_t* rpc, void* ctx)
 {
 	str ip;
@@ -1119,8 +1119,8 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	unsigned char err_flags;
 	struct ip_addr *ip_addr;
 
-	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
-		rpc->fault(ctx, 500, "dst blacklist support disabled");
+	if (!cfg_get(core, core_cfg, use_dst_blocklist)){
+		rpc->fault(ctx, 500, "dst blocklist support disabled");
 		return;
 	}
 	if (rpc->scan(ctx, "Sddd", &ip, &port, &proto, &flags) < 4)
@@ -1149,18 +1149,18 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port, 
+	if (dst_blocklist_add_ip(err_flags, proto, ip_addr, port, 
 				    S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout))))
-		rpc->fault(ctx, 400, "Failed to add the entry to the blacklist");
+		rpc->fault(ctx, 400, "Failed to add the entry to the blocklist");
 }
 
-/* fixup function for use_dst_blacklist
- * verifies that dst_blacklist_init is set to 1
+/* fixup function for use_dst_blocklist
+ * verifies that dst_blocklist_init is set to 1
  */
-int use_dst_blacklist_fixup(void *handle, str *gname, str *name, void **val)
+int use_dst_blocklist_fixup(void *handle, str *gname, str *name, void **val)
 {
-	if ((int)(long)(*val) && !dst_blacklist_init) {
-		LM_ERR("dst blacklist is turned off by dst_blacklist_init=0, "
+	if ((int)(long)(*val) && !dst_blocklist_init) {
+		LM_ERR("dst blocklist is turned off by dst_blocklist_init=0, "
 			"it cannot be enabled runtime.\n");
 		return -1;
 	}
@@ -1186,5 +1186,5 @@ void blst_reinit_ign_masks(str* gname, str* name)
 }
 
 
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 

@@ -333,16 +333,16 @@ AUTO_BIND_IPV6		auto_bind_ipv6
 BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
 IPV6_HEX_STYLE		ipv6_hex_style
 
-/* blacklist */
-DST_BLST_INIT	dst_blacklist_init
-USE_DST_BLST		use_dst_blacklist
-DST_BLST_MEM		dst_blacklist_mem
-DST_BLST_TTL		dst_blacklist_expire|dst_blacklist_ttl
-DST_BLST_GC_INT		dst_blacklist_gc_interval
-DST_BLST_UDP_IMASK	dst_blacklist_udp_imask
-DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
-DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
-DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
+/* blocklist */
+DST_BLST_INIT	dst_blocklist_init
+USE_DST_BLST		use_dst_blocklist
+DST_BLST_MEM		dst_blocklist_mem
+DST_BLST_TTL		dst_blocklist_expire|dst_blocklist_ttl
+DST_BLST_GC_INT		dst_blocklist_gc_interval
+DST_BLST_UDP_IMASK	dst_blocklist_udp_imask
+DST_BLST_TCP_IMASK	dst_blocklist_tcp_imask
+DST_BLST_TLS_IMASK	dst_blocklist_tls_imask
+DST_BLST_SCTP_IMASK	dst_blocklist_sctp_imask
 
 IP_FREE_BIND		ip_free_bind|ipfreebind|ip_nonlocal_bind
 

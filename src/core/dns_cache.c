@@ -124,7 +124,7 @@ static const char* dns_str_errors[]={
 	"bad A or AAAA entry",
 	"unresolvable A or AAAA request",
 	"invalid ip in A or AAAA record",
-	"blacklisted ip",
+	"blocklisted ip",
 	"name too long ", /* try again with a shorter name */
 	"ip AF mismatch", /* address family mismatch */
 	"unresolvable NAPTR request",

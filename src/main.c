@@ -120,8 +120,8 @@
 #ifdef USE_DNS_CACHE
 #include "core/dns_cache.h"
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "core/dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "core/dst_blocklist.h"
 #endif
 #include "core/rand/fastrand.h" /* seed */
 #include "core/rand/kam_rand.h"
@@ -564,8 +564,8 @@ void cleanup(int show_status)
 #ifdef USE_DNS_CACHE
 	destroy_dns_cache();
 #endif
-#ifdef USE_DST_BLACKLIST
-	destroy_dst_blacklist();
+#ifdef USE_DST_BLOCKLIST
+	destroy_dst_blocklist();
 #endif
 	/* restore the original core configuration before the
 	 * config block is freed, otherwise even logging is unusable,
@@ -2731,18 +2731,18 @@ try_again:
 	}
 #endif /* USE_DNS_CACHE_STATS */
 #endif
-#ifdef USE_DST_BLACKLIST
-	if (init_dst_blacklist()<0){
-		LM_CRIT("could not initialize the dst blacklist, exiting...\n");
+#ifdef USE_DST_BLOCKLIST
+	if (init_dst_blocklist()<0){
+		LM_CRIT("could not initialize the dst blocklist, exiting...\n");
 		goto error;
 	}
-#ifdef USE_DST_BLACKLIST_STATS
+#ifdef USE_DST_BLOCKLIST_STATS
 	/* preinitializing before the number of processes is determined */
-	if (init_dst_blacklist_stats(1)<0){
-		LM_CRIT("could not initialize the dst blacklist measurement\n");
+	if (init_dst_blocklist_stats(1)<0){
+		LM_CRIT("could not initialize the dst blocklist measurement\n");
 		goto error;
 	}
-#endif /* USE_DST_BLACKLIST_STATS */
+#endif /* USE_DST_BLOCKLIST_STATS */
 #endif
 	if (init_avps()<0) goto error;
 	if (rpc_init_time() < 0) goto error;
@@ -2844,9 +2844,9 @@ try_again:
 		goto error;
 	}
 #endif
-#if defined USE_DST_BLACKLIST && defined USE_DST_BLACKLIST_STATS
-	if (init_dst_blacklist_stats(get_max_procs())<0){
-		LM_CRIT("could not initialize the dst blacklist measurement\n");
+#if defined USE_DST_BLOCKLIST && defined USE_DST_BLOCKLIST_STATS
+	if (init_dst_blocklist_stats(get_max_procs())<0){
+		LM_CRIT("could not initialize the dst blocklist measurement\n");
 		goto error;
 	}
 #endif

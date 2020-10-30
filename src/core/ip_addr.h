@@ -142,7 +142,7 @@ typedef enum send_flags {
 
 typedef struct snd_flags {
 	unsigned short f;          /* snd flags */
-	unsigned short blst_imask; /* blacklist ignore mask */
+	unsigned short blst_imask; /* blocklist ignore mask */
 } snd_flags_t;
 
 

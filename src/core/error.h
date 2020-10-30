@@ -67,7 +67,7 @@
 /* error in server */
 #define E_BAD_SERVER		-500
 #define E_ADM_PROHIBITED	-510
-#define E_BLACKLISTED		-520
+#define E_BLOCKLISTED		-520
 
 
 #define MAX_REASON_LEN	128

@@ -58,9 +58,9 @@
 #else
 #include "tls_hooks.h"
 #endif /* CORE_TLS */
-#ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
-#endif /* USE_DST_BLACKLIST */
+#ifdef USE_DST_BLOCKLIST
+#include "dst_blocklist.h"
+#endif /* USE_DST_BLOCKLIST */
 
 #define HANDLE_IO_INLINE
 #include "io_wait.h"
@@ -190,10 +190,10 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 
 
 /** reads data from an existing tcp connection.
- * Side-effects: blacklisting, sets connection state to S_CONN_OK, tcp stats.
+ * Side-effects: blocklisting, sets connection state to S_CONN_OK, tcp stats.
  * @param fd - connection file descriptor
  * @param c - tcp connection structure. c->state might be changed and
- *             receive info might be used for blacklisting.
+ *             receive info might be used for blocklisting.
  * @param buf - buffer where the received data will be stored.
  * @param b_size - buffer size.
  * @param flags - value/result - used to signal a seen or "forced" EOF on the
@@ -235,20 +235,20 @@ again:
 				if (unlikely(c->state==S_CONN_CONNECT)){
 					switch(errno){
 						case ECONNRESET:
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
 												&c->rcv.src_su,
 												&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
 						case ETIMEDOUT:
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
 												&c->rcv.src_su,
 												&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
@@ -261,18 +261,18 @@ again:
 						switch(errno){
 							case ECONNRESET:
 								TCP_STATS_CON_RESET();
-#ifdef USE_DST_BLACKLIST
-								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
 													&c->rcv.src_su,
 													&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 								break;
 							case ETIMEDOUT:
-#ifdef USE_DST_BLACKLIST
-								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
 													&c->rcv.src_su,
 													&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 								break;
 						}
 				}

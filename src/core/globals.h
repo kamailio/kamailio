@@ -238,17 +238,17 @@ struct t_dns_cache_stats{
 extern struct t_dns_cache_stats* dns_cache_stats;
 #endif /* USE_DNS_CACHE_STATS */
 #endif
-#ifdef USE_DST_BLACKLIST
-extern int dst_blacklist_init; /* if 0, the dst blacklist is not initialized at startup */
-extern unsigned int blst_timer_interval; /*blacklist gc timer interval (in s)*/
+#ifdef USE_DST_BLOCKLIST
+extern int dst_blocklist_init; /* if 0, the dst blocklist is not initialized at startup */
+extern unsigned int blst_timer_interval; /*blocklist gc timer interval (in s)*/
 
-#ifdef USE_DST_BLACKLIST_STATS
-struct t_dst_blacklist_stats{
+#ifdef USE_DST_BLOCKLIST_STATS
+struct t_dst_blocklist_stats{
 	unsigned long bkl_hit_cnt;
 	unsigned long bkl_lru_cnt;
 };
-extern struct t_dst_blacklist_stats* dst_blacklist_stats;
-#endif /* USE_DST_BLACKLIST_STATS */
+extern struct t_dst_blocklist_stats* dst_blocklist_stats;
+#endif /* USE_DST_BLOCKLIST_STATS */
 #endif
 
 #endif

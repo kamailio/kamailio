@@ -62,8 +62,8 @@
 #ifdef USE_DNS_FAILOVER
 #include "dns_cache.h"
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "dst_blocklist.h"
 #endif
 #include "compiler_opt.h"
 #include "core_stats.h"
@@ -583,11 +583,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error; /* error ? */
 #endif
 		}
-#ifdef USE_DST_BLACKLIST
-		if (cfg_get(core, core_cfg, use_dst_blacklist)){
-			if (dst_is_blacklisted(send_info, msg)){
+#ifdef USE_DST_BLOCKLIST
+		if (cfg_get(core, core_cfg, use_dst_blocklist)){
+			if (dst_is_blocklisted(send_info, msg)){
 				su2ip_addr(&ip, &send_info->to);
-				LM_DBG("blacklisted destination:%s:%d (%d)\n",
+				LM_DBG("blocklisted destination:%s:%d (%d)\n",
 					ip_addr2a(&ip), su_getport(&send_info->to), send_info->proto);
 				ret=ser_error=E_SEND;
 #ifdef USE_DNS_FAILOVER
@@ -611,8 +611,8 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (msg_send(send_info, buf, len)<0){
 			p_onsend=0;
 			ret=ser_error=E_SEND;
-#ifdef USE_DST_BLACKLIST
-			(void)dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
+#ifdef USE_DST_BLOCKLIST
+			(void)dst_blocklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 			continue; /* try another ip */
