@@ -489,7 +489,7 @@ modparam("tm", "blst_503", 1)
 	<title><varname>blst_503_def_timeout</varname> (integer)</title>
 	<para>
 		
-		Blacklist interval in seconds for a 503 reply with no "Retry-After"
+		Blocklist interval in seconds for a 503 reply with no "Retry-After"
 		header.
 		See also <varname>blst_503</varname>, 
 		<varname>blst_503_min_timeout</varname> and 
