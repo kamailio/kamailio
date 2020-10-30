@@ -937,7 +937,7 @@ resetdebug();
 		</para>
         <programlisting  format="linespecific">
 		&kamcmd; mod.stats core all
-		&kamcmd; mod.stats userblacklist shm
+		&kamcmd; mod.stats tm shm
 		&kamcmd; mod.stats kex pkg
 		&kamcmd; mod.stats all all
 		</programlisting>
