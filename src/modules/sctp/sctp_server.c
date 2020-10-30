@@ -51,9 +51,9 @@
 #include "../../core/mem/mem.h"
 #include "../../core/ip_addr.h"
 #include "../../core/cfg/cfg_struct.h"
-#ifdef USE_DST_BLACKLIST
-#include "../../core/dst_blacklist.h"
-#endif /* USE_DST_BLACKLIST */
+#ifdef USE_DST_BLOCKLIST
+#include "../../core/dst_blocklist.h"
+#endif /* USE_DST_BLOCKLIST */
 #include "../../core/timer_ticks.h"
 #include "../../core/clist.h"
 #include "../../core/error.h"
@@ -2125,15 +2125,15 @@ static int sctp_handle_send_failed(struct socket_info *si,
 
 		ret = sctp_msg_send_ext(&dst, data, data_len, &sinfo);
 	}
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	else if(cfg_get(sctp, sctp_cfg, send_retries)) {
-		/* blacklist only if send_retries is on, if off we blacklist
+		/* blocklist only if send_retries is on, if off we blocklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
-		   errors and we blacklist a failed dst only once) */
-		dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
+		   errors and we blocklist a failed dst only once) */
+		dst_blocklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
 	}
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 
 	return (ret > 0) ? 0 : ret;
 }
@@ -2206,12 +2206,12 @@ again:
 			break;
 		case SCTP_COMM_LOST:
 			SCTP_STATS_COMM_LOST();
-#ifdef USE_DST_BLACKLIST
-			/* blacklist only if send_retries is turned off (if on we don't
+#ifdef USE_DST_BLOCKLIST
+			/* blocklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
 			if(cfg_get(sctp, sctp_cfg, send_retries) == 0)
-				dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
-#endif /* USE_DST_BLACKLIST */
+				dst_blocklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
+#endif /* USE_DST_BLOCKLIST */
 			/* no break */
 			goto comm_lost_cont; /* do not increment counters for
 									   SCTP_SHUTDOWN_COMP */
@@ -2239,12 +2239,12 @@ again:
 /* do nothing when failing to start an assoc
 			  (in this case we never see SCTP_COMM_UP so we never 
 			  track the assoc) */
-#ifdef USE_DST_BLACKLIST
-			/* blacklist only if send_retries is turned off (if on we don't 
+#ifdef USE_DST_BLOCKLIST
+			/* blocklist only if send_retries is turned off (if on we don't 
 			   know here if we did retry or we are at the first error) */
 			if(cfg_get(sctp, sctp_cfg, send_retries) == 0)
-				dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0, 0);
-#endif /* USE_DST_BLACKLIST */
+				dst_blocklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0, 0);
+#endif /* USE_DST_BLOCKLIST */
 			break;
 		default:
 			break;
