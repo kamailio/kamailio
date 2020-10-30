@@ -301,7 +301,7 @@
 <section id="tm.blst_503">
     <title>tm.blst_503</title>
     <para>
-        if set to 1, blacklist 503 SIP response sources.
+        if set to 1, blocklist 503 SIP response sources.
     </para>
     <para>Default value: 0.</para>
     <para>Range: 0 - 1.</para>
@@ -313,7 +313,7 @@
 <section id="tm.blst_503_def_timeout">
     <title>tm.blst_503_def_timeout</title>
     <para>
-        default 503 blacklist time (in s), when no Retry-After header
+        default 503 blocklist time (in s), when no Retry-After header
         is present.
     </para>
     <para>Default value: 0.</para>
@@ -325,7 +325,7 @@
 <section id="tm.blst_503_min_timeout">
     <title>tm.blst_503_min_timeout</title>
     <para>
-        minimum 503 blacklist time (in s).
+        minimum 503 blocklist time (in s).
     </para>
     <para>Default value: 0.</para>
     <para>Type: integer.</para>
@@ -336,7 +336,7 @@
 <section id="tm.blst_503_max_timeout">
     <title>tm.blst_503_max_timeout</title>
     <para>
-        maximum 503 blacklist time (in s).
+        maximum 503 blocklist time (in s).
     </para>
     <para>Default value: 3600.</para>
     <para>Type: integer.</para>
@@ -347,7 +347,7 @@
 <section id="tm.blst_methods_add">
     <title>tm.blst_methods_add</title>
     <para>
-        bitmap of method types that trigger blacklisting on transaction
+        bitmap of method types that trigger blocklisting on transaction
         timeouts.
     </para>
     <para>Default value: 1.</para>
@@ -359,7 +359,7 @@
 <section id="tm.blst_methods_lookup">
     <title>tm.blst_methods_lookup</title>
     <para>
-        Bitmap of method types that are looked-up in the blacklist
+        Bitmap of method types that are looked-up in the blocklist
         before statefull forwarding.
     </para>
     <para>Default value: -9.</para>

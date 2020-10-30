@@ -19,41 +19,41 @@ Configuration Variables for core
         Default: 4.
         Type: integer.
 
- 4. core.use_dst_blacklist
-        enable/disable destination blacklisting.
+ 4. core.use_dst_blocklist
+        enable/disable destination blocklisting.
         Default: 0.
         Range: 0 - 1.
         Type: integer.
 
- 5. core.dst_blacklist_expire
-        how much time (in s) a blacklisted destination is kept in the
+ 5. core.dst_blocklist_expire
+        how much time (in s) a blocklisted destination is kept in the
         list.
         Default: 60.
         Type: integer.
 
- 6. core.dst_blacklist_mem
+ 6. core.dst_blocklist_mem
         maximum shared memory amount (in KB) used for keeping the
-        blacklisted destinations.
+        blocklisted destinations.
         Default: 250.
         Type: integer.
 
- 7. core.dst_blacklist_udp_imask
-        blacklist event ignore mask for UDP.
+ 7. core.dst_blocklist_udp_imask
+        blocklist event ignore mask for UDP.
         Default: 0.
         Type: integer.
 
- 8. core.dst_blacklist_tcp_imask
-        blacklist event ignore mask for TCP.
+ 8. core.dst_blocklist_tcp_imask
+        blocklist event ignore mask for TCP.
         Default: 0.
         Type: integer.
 
- 9. core.dst_blacklist_tls_imask
-        blacklist event ignore mask for TLS.
+ 9. core.dst_blocklist_tls_imask
+        blocklist event ignore mask for TLS.
         Default: 0.
         Type: integer.
 
-10. core.dst_blacklist_sctp_imask
-        blacklist event ignore mask for SCTP.
+10. core.dst_blocklist_sctp_imask
+        blocklist event ignore mask for SCTP.
         Default: 0.
         Type: integer.
 

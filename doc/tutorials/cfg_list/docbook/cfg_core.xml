@@ -39,10 +39,10 @@
     </para>
 </section>
 
-<section id="core.use_dst_blacklist">
-    <title>core.use_dst_blacklist</title>
+<section id="core.use_dst_blocklist">
+    <title>core.use_dst_blocklist</title>
     <para>
-        enable/disable destination blacklisting.
+        enable/disable destination blocklisting.
     </para>
     <para>Default value: 0.</para>
     <para>Range: 0 - 1.</para>
@@ -51,10 +51,10 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_expire">
-    <title>core.dst_blacklist_expire</title>
+<section id="core.dst_blocklist_expire">
+    <title>core.dst_blocklist_expire</title>
     <para>
-        how much time (in s) a blacklisted destination is kept in the
+        how much time (in s) a blocklisted destination is kept in the
         list.
     </para>
     <para>Default value: 60.</para>
@@ -63,11 +63,11 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_mem">
-    <title>core.dst_blacklist_mem</title>
+<section id="core.dst_blocklist_mem">
+    <title>core.dst_blocklist_mem</title>
     <para>
         maximum shared memory amount (in KB) used for keeping the
-        blacklisted destinations.
+        blocklisted destinations.
     </para>
     <para>Default value: 250.</para>
     <para>Type: integer.</para>
@@ -75,10 +75,10 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_udp_imask">
-    <title>core.dst_blacklist_udp_imask</title>
+<section id="core.dst_blocklist_udp_imask">
+    <title>core.dst_blocklist_udp_imask</title>
     <para>
-        blacklist event ignore mask for UDP.
+        blocklist event ignore mask for UDP.
     </para>
     <para>Default value: 0.</para>
     <para>Type: integer.</para>
@@ -86,10 +86,10 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_tcp_imask">
-    <title>core.dst_blacklist_tcp_imask</title>
+<section id="core.dst_blocklist_tcp_imask">
+    <title>core.dst_blocklist_tcp_imask</title>
     <para>
-        blacklist event ignore mask for TCP.
+        blocklist event ignore mask for TCP.
     </para>
     <para>Default value: 0.</para>
     <para>Type: integer.</para>
@@ -97,10 +97,10 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_tls_imask">
-    <title>core.dst_blacklist_tls_imask</title>
+<section id="core.dst_blocklist_tls_imask">
+    <title>core.dst_blocklist_tls_imask</title>
     <para>
-        blacklist event ignore mask for TLS.
+        blocklist event ignore mask for TLS.
     </para>
     <para>Default value: 0.</para>
     <para>Type: integer.</para>
@@ -108,10 +108,10 @@
     </para>
 </section>
 
-<section id="core.dst_blacklist_sctp_imask">
-    <title>core.dst_blacklist_sctp_imask</title>
+<section id="core.dst_blocklist_sctp_imask">
+    <title>core.dst_blocklist_sctp_imask</title>
     <para>
-        blacklist event ignore mask for SCTP.
+        blocklist event ignore mask for SCTP.
     </para>
     <para>Default value: 0.</para>
     <para>Type: integer.</para>

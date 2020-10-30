@@ -341,42 +341,42 @@ RPC Exports for core
 </para>
 </section>
 
-<section id="dst_blacklist.mem_info"><title>dst_blacklist.mem_info</title>
+<section id="dst_blocklist.mem_info"><title>dst_blocklist.mem_info</title>
 <para>
-        dst blacklist memory usage info.
+        dst blocklist memory usage info.
 </para>
 <para>
 </para>
 </section>
 
-<section id="dst_blacklist.debug"><title>dst_blacklist.debug</title>
+<section id="dst_blocklist.debug"><title>dst_blocklist.debug</title>
 <para>
-        dst blacklist  debug  info.
+        dst blocklist  debug  info.
 </para>
 <para>
 </para>
 </section>
 
-<section id="dst_blacklist.view"><title>dst_blacklist.view</title>
+<section id="dst_blocklist.view"><title>dst_blocklist.view</title>
 <para>
-        dst blacklist dump in human-readable format.
+        dst blocklist dump in human-readable format.
 </para>
 <para>
 </para>
 </section>
 
-<section id="dst_blacklist.delete_all"><title>dst_blacklist.delete_all</title>
+<section id="dst_blocklist.delete_all"><title>dst_blocklist.delete_all</title>
 <para>
-        Deletes all the entries from the dst blacklist except the
+        Deletes all the entries from the dst blocklist except the
         permanent ones.
 </para>
 <para>
 </para>
 </section>
 
-<section id="dst_blacklist.add"><title>dst_blacklist.add</title>
+<section id="dst_blocklist.add"><title>dst_blocklist.add</title>
 <para>
-        Adds a new entry to the dst blacklist.
+        Adds a new entry to the dst blocklist.
 </para>
 <para>
 </para>

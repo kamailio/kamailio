@@ -137,19 +137,19 @@ RPC Exports for core
 40. dns.delete_ptr
         deletes an PTR record from the DNS cache
 
-41. dst_blacklist.mem_info
-        dst blacklist memory usage info.
+41. dst_blocklist.mem_info
+        dst blocklist memory usage info.
 
-42. dst_blacklist.debug
-        dst blacklist  debug  info.
+42. dst_blocklist.debug
+        dst blocklist  debug  info.
 
-43. dst_blacklist.view
-        dst blacklist dump in human-readable format.
+43. dst_blocklist.view
+        dst blocklist dump in human-readable format.
 
-44. dst_blacklist.delete_all
-        Deletes all the entries from the dst blacklist except the
+44. dst_blocklist.delete_all
+        Deletes all the entries from the dst blocklist except the
         permanent ones.
 
-45. dst_blacklist.add
-        Adds a new entry to the dst blacklist.
+45. dst_blocklist.add
+        Adds a new entry to the dst blocklist.
 
