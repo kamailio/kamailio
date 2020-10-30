@@ -52,8 +52,8 @@
 #include "../../core/msg_translator.h"
 #include "lw_parser.h"
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "../../core/dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "../../core/dst_blocklist.h"
 #endif
 #include "../../core/atomic_ops.h" /* membar_depends() */
 #include "../../core/kemi.h"
@@ -1475,7 +1475,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
  *  the destination resolves to several addresses
  *  Takes care of starting timers a.s.o. (on send success)
  *  returns: -2 on error, -1 on drop,  current branch id on success,
- *   new branch id on send error/blacklist, when failover is possible
+ *   new branch id on send error/blocklist, when failover is possible
  *    (ret>=0 && ret!=branch)
  *    if lock_replies is 1, the replies for t will be locked when adding
  *     new branches (to prevent races). Use 0 from failure routes or other
@@ -1520,15 +1520,15 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #endif /* USE_DNS_FAILOVER*/
 		return -1; /* drop, try next branch */
 	}
-#ifdef USE_DST_BLACKLIST
-	if (cfg_get(core, core_cfg, use_dst_blacklist)
+#ifdef USE_DST_BLOCKLIST
+	if (cfg_get(core, core_cfg, use_dst_blocklist)
 			&& p_msg
 			&& (p_msg->REQ_METHOD
 				& cfg_get(tm, tm_cfg, tm_blst_methods_lookup))
 		){
-		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
+		if (dst_is_blocklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
-			LM_DBG("blacklisted destination: %s:%d (%d)\n",
+			LM_DBG("blocklisted destination: %s:%d (%d)\n",
 					ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 					uac->request.dst.proto);
 			/* disable the current branch: set a "fake" timeout
@@ -1544,7 +1544,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 				if (ret>=0){
 					su2ip_addr(&ip, &uac->request.dst.to);
-					LM_DBG("send on branch %d failed (blacklist),"
+					LM_DBG("send on branch %d failed (blocklist),"
 							" trying another ip %s:%d (%d)\n", branch,
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 							uac->request.dst.proto);
@@ -1556,7 +1556,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 			return -1; /* don't send */
 		}
 	}
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	if (SEND_BUFFER( &uac->request)==-1) {
 		/* disable the current branch: set a "fake" timeout
 		 *  reply code but don't set uac->reply, to avoid overriding
@@ -1568,8 +1568,8 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		LM_DBG("send to %s:%d (%d) failed\n",
 				ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 				uac->request.dst.proto);
-#ifdef USE_DST_BLACKLIST
-		dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
+#ifdef USE_DST_BLOCKLIST
+		dst_blocklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if the destination resolves to more ips, add another
@@ -1787,7 +1787,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	}
 	if (success_branch<=0) {
 		/* return always E_SEND for now
-		 * (the real reason could be: denied by onsend routes, blacklisted,
+		 * (the real reason could be: denied by onsend routes, blocklisted,
 		 *  send failed or any of the errors listed before + dns failed
 		 *  when attempting dns failover) */
 		ser_error=E_SEND;
