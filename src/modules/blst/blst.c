@@ -16,7 +16,7 @@
 
 /*! \file
  * \brief
- * blst module :: Blacklist related script functions
+ * blst module :: Blocklist related script functions
  *
  */
 
