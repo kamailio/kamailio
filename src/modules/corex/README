@@ -250,7 +250,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
      * name - the domain name
      * addr - the IP address
      * ttl - TTL value
-     * flags - can be: 1 - the domain is unresolvable (like blacklisted);
+     * flags - can be: 1 - the domain is unresolvable (like blocklisted);
        2 - the record is permanent (never times out, never deleted, never
        overwritten)
 

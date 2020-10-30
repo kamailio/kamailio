@@ -1020,7 +1020,7 @@ modparam("tm", "blst_503", 1)
 
 3.17. blst_503_def_timeout (integer)
 
-   Blacklist interval in seconds for a 503 reply with no "Retry-After"
+   Blocklist interval in seconds for a 503 reply with no "Retry-After"
    header. See also blst_503, blst_503_min_timeout and
    blst_503_max_timeout.
 
