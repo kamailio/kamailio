@@ -4130,7 +4130,7 @@ inline static int send2child(struct tcp_connection* tcpconn)
 			tcpconn);
 	/* first make sure this child doesn't have pending request for
 	 * tcp_main (to avoid a possible deadlock: e.g. child wants to
-	 * send a release command, but the master fills its socket buffer
+	 * send a release command, but the main attendant fills its socket buffer
 	 * with new connection commands => deadlock) */
 	/* answer tcp_send requests first */
 	while(unlikely((tcpconn->state != S_CONN_BAD) &&

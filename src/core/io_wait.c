@@ -264,8 +264,8 @@ static void destroy_devpoll(io_wait_h* h)
 #ifdef HAVE_SELECT
 static int init_select(io_wait_h* h)
 {
-	FD_ZERO(&h->master_rset);
-	FD_ZERO(&h->master_wset);
+	FD_ZERO(&h->main_rset);
+	FD_ZERO(&h->main_wset);
 	return 0;
 }
 #endif
@@ -279,7 +279,7 @@ char* check_poll_method(enum poll_types poll_method)
 	char* ret;
 
 	ret=0;
-	if (_os_ver==0) 
+	if (_os_ver==0)
 		_os_ver=get_sys_version(0,0,0);
 	switch(poll_method){
 		case POLL_NONE:

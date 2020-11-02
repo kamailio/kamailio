@@ -168,8 +168,8 @@ typedef struct io_wait_handler {
 	int dpoll_fd;
 #endif
 #ifdef HAVE_SELECT
-	fd_set master_rset; /* read set */
-	fd_set master_wset; /* write set */
+	fd_set main_rset; /* read set */
+	fd_set main_wset; /* write set */
 	int max_fd_select; /* maximum select used fd */
 #endif
 } io_wait_h;
@@ -400,9 +400,9 @@ inline static int io_watch_add(	io_wait_h* h,
 		case POLL_SELECT:
 			fd_array_setup(events);
 			if (likely(events & POLLIN))
-				FD_SET(fd, &h->master_rset);
+				FD_SET(fd, &h->main_rset);
 			if (unlikely(events & POLLOUT))
-				FD_SET(fd, &h->master_wset);
+				FD_SET(fd, &h->main_wset);
 			if (h->max_fd_select<fd) h->max_fd_select=fd;
 			break;
 #endif
@@ -619,9 +619,9 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
 			if (likely(events & POLLIN))
-				FD_CLR(fd, &h->master_rset);
+				FD_CLR(fd, &h->main_rset);
 			if (unlikely(events & POLLOUT))
-				FD_CLR(fd, &h->master_wset);
+				FD_CLR(fd, &h->main_wset);
 			if (unlikely(h->max_fd_select && (h->max_fd_select==fd)))
 				/* we don't know the prev. max, so we just decrement it */
 				h->max_fd_select--;
@@ -810,13 +810,13 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 		case POLL_SELECT:
 			fd_array_chg(events);
 			if (unlikely(del_events & POLLIN))
-				FD_CLR(fd, &h->master_rset);
+				FD_CLR(fd, &h->main_rset);
 			else if (unlikely(add_events & POLLIN))
-				FD_SET(fd, &h->master_rset);
+				FD_SET(fd, &h->main_rset);
 			if (likely(del_events & POLLOUT))
-				FD_CLR(fd, &h->master_wset);
+				FD_CLR(fd, &h->main_wset);
 			else if (likely(add_events & POLLOUT))
-				FD_SET(fd, &h->master_wset);
+				FD_SET(fd, &h->main_wset);
 			break;
 #endif
 #ifdef HAVE_SIGIO_RT
@@ -992,10 +992,10 @@ inline static int io_wait_loop_select(io_wait_h* h, int t, int repeat)
 	int r;
 	struct fd_map* fm;
 	int revents;
-	
+
 again:
-		sel_rset=h->master_rset;
-		sel_wset=h->master_wset;
+		sel_rset=h->main_rset;
+		sel_wset=h->main_wset;
 		timeout.tv_sec=t;
 		timeout.tv_usec=0;
 		ret=n=select(h->max_fd_select+1, &sel_rset, &sel_wset, 0, &timeout);

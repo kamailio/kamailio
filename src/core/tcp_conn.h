@@ -35,7 +35,7 @@
 #define TCP_CON_MAX_ALIASES (4*3)
 
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns"
-							 * the connection to the tcp master process */
+							 * the connection to the tcp maing process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 

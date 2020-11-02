@@ -1078,7 +1078,7 @@ void slow_timer_main()
 		 *  on signal delivery for the signals it doesn't wait on
 		 *  (on darwin 8.8.0, g4 1.5Ghz I've measured a 36s delay!).
 		 * To work arround this bug, we sigwait() on all the signals we
-		 * are interested in ser and manually call the master signal handler
+		 * are interested in kamailio and manually call the main signal handler
 		 * if the signal!= slow timer signal -- andrei */
 		sig_usr(sig);
 #endif

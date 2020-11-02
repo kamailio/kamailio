@@ -1769,7 +1769,7 @@ int main_loop(void)
 		if (!tcp_disable){
 				/* start tcp  & tls receivers */
 			if (tcp_init_children()<0) goto error;
-				/* start tcp+tls master proc */
+				/* start tcp+tls main attendant proc */
 			pid = fork_process(PROC_TCP_MAIN, "tcp main process", 0);
 			if (pid<0){
 				LM_CRIT("cannot fork tcp main process: %s\n", strerror(errno));
