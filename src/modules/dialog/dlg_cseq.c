@@ -388,7 +388,7 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 		}
 	}
 
-	LM_DBG("traking cseq updates\n");
+	LM_DBG("tracking cseq updates\n");
 	via = (struct via_body*)msg.h_via1->parsed;
 
 	if(via->branch==NULL || via->branch->value.len<=0) {
