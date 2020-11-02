@@ -381,6 +381,13 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 		goto done;
 	}
 
+	if((get_to(&msg)->tag_value.len>0)) {
+		/* intial request - handle only INVITEs */
+		if(msg.first_line.u.request.method_value!=METHOD_INVITE) {
+			goto done;
+		}
+	}
+
 	LM_DBG("traking cseq updates\n");
 	via = (struct via_body*)msg.h_via1->parsed;
 
