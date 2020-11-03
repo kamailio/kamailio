@@ -749,15 +749,15 @@ static void dlg_on_send(struct cell* t, int type, struct tmcb_params *param)
 	LM_DBG("dialog_on_send CB\n");
 	iuid = (dlg_iuid_t*)(*param->param);
 	if (iuid==NULL)
-	return;
+		return;
 
 	dlg = dlg_get_by_iuid(iuid);
 	if(dlg==NULL)
-	return;
+		return;
 
 	/* sync over dmq */
 	if (dlg_enable_dmq) {
-	dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1, 0);
+		dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1, 0);
 	}
 
 	/* unref by 2: 1 set when adding in tm cb, 1 set by dlg_get_by_iuid() */
