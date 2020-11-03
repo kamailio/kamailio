@@ -52,6 +52,7 @@ extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
 extern struct acc_enviroment acc_env;
 extern char *acc_time_format;
+extern int acc_extra_nullable;
 
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
@@ -458,8 +459,13 @@ int acc_db_request( struct sip_msg *rq)
 	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
-	for( i++ ; i<m; i++)
-		VAL_STR(db_vals+i) = val_arr[i];
+	for( i++ ; i<m; i++) {
+		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+			VAL_NULL(db_vals + i) = 1;
+		} else {
+			VAL_STR(db_vals+i) = val_arr[i];
+		}
+	}
 
 	if (acc_dbf.use_table(db_handle, &acc_env.text/*table*/) < 0) {
 		LM_ERR("error in use_table\n");
@@ -488,8 +494,13 @@ int acc_db_request( struct sip_msg *rq)
 	} else {
 		n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m,1);
 		do {
-			for (i=m; i<m+n; i++)
-				VAL_STR(db_vals+i)=val_arr[i];
+			for (i=m; i<m+n; i++) {
+			if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+					VAL_NULL(db_vals + i) = 1;
+				} else {
+					VAL_STR(db_vals+i)=val_arr[i];
+				}
+			}
 			if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
 				if(acc_dbf.insert_delayed(db_handle,db_keys,db_vals,m+n)<0) {
 					LM_ERR("failed to insert delayed into database\n");

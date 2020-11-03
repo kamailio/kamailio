@@ -83,6 +83,7 @@ int acc_prepare_always = 0; /* prepare the request always for later acc */
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 char *acc_time_format = "%Y-%m-%d %H:%M:%S";
 int reason_from_hf = 0; /*!< assign reason from reason hf if present */
+int acc_extra_nullable  = 0;
 
 /* ----- time mode variables ------- */
 /*! \name AccTimeModeVariables  Time Mode Variables */
@@ -199,6 +200,7 @@ static param_export_t params[] = {
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
 	{"acc_prepare_always",      INT_PARAM, &acc_prepare_always      },
 	{"reason_from_hf",          INT_PARAM, &reason_from_hf          },
+	{"acc_extra_nullable",      INT_PARAM, &acc_extra_nullable      },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
