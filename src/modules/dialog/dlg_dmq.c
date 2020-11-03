@@ -534,11 +534,11 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 			if (dlg->vars != NULL) {
 				srjson_t *pj = NULL;
 				pj = srjson_CreateObject(&jdoc);
-                for(var=dlg->vars ; var ; var=var->next) {
+				for(var=dlg->vars ; var ; var=var->next) {
 					srjson_AddStrToObject(&jdoc, pj, var->key.s,
 							var->value.s, var->value.len);
-                }
-                srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
+				}
+				srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
 			}
 
 			if (dlg->profile_links) {
@@ -657,8 +657,8 @@ int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 		dlg_lock( d_table, &entry);
 
 		for(dlg = entry.first; dlg != NULL; dlg = dlg->next){
-				dlg->dflags |= DLG_FLAG_CHANGED_PROF;
-				dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
+			dlg->dflags |= DLG_FLAG_CHANGED_PROF;
+			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
 		}
 
 		dlg_unlock( d_table, &entry);
@@ -672,7 +672,7 @@ int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 * @brief dmq response callback
 */
 int dlg_dmq_resp_callback_f(struct sip_msg* msg, int code,
-                            dmq_node_t* node, void* param)
+		dmq_node_t* node, void* param)
 {
 	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;
