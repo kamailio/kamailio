@@ -60,6 +60,7 @@ str dmq_server_socket = {0, 0};
 sip_uri_t dmq_server_uri = {0};
 
 str dmq_notification_address = {0, 0};
+str dmq_notification_channel = str_init("notification_peer");
 int dmq_multi_notify = 0;
 sip_uri_t dmq_notification_uri = {0};
 int dmq_ping_interval = 60;
@@ -109,6 +110,7 @@ static param_export_t params[] = {
 	{"ping_interval", INT_PARAM, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
 	{"notification_address", PARAM_STR, &dmq_notification_address},
+	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", INT_PARAM, &dmq_multi_notify},
 	{"worker_usleep", INT_PARAM, &dmq_worker_usleep},
 	{0, 0, 0}

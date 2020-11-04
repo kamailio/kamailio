@@ -32,6 +32,7 @@ dmq_resp_cback_t dmq_notification_resp_callback = {&notification_resp_callback_f
 
 int *dmq_init_callback_done = 0;
 
+extern str dmq_notification_channel;
 
 /**
  * @brief add notification peer
@@ -43,10 +44,8 @@ int add_notification_peer()
 	memset(&not_peer, 0, sizeof(dmq_peer_t));
 	not_peer.callback = dmq_notification_callback_f;
 	not_peer.init_callback = NULL;
-	not_peer.description.s = "notification_peer";
-	not_peer.description.len = 17;
-	not_peer.peer_id.s = "notification_peer";
-	not_peer.peer_id.len = 17;
+	not_peer.description = dmq_notification_channel;
+	not_peer.peer_id = dmq_notification_channel;
 	dmq_notification_peer = register_dmq_peer(&not_peer);
 	if(!dmq_notification_peer) {
 		LM_ERR("error in register_dmq_peer\n");
