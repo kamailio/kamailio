@@ -60,6 +60,7 @@ Emmanuel Schmidbauer
               3.22. peer_tag_mode (integer)
               3.23. max_subnets (int)
               3.24. load_backends (int)
+              3.25. reload_delta (int)
 
         4. Functions
 
@@ -114,18 +115,19 @@ Emmanuel Schmidbauer
    1.22. Set peer_tag_mode parameter
    1.23. Set max_subnets parameter
    1.24. Set load_backends parameter
-   1.25. allow_routing usage
-   1.26. allow_routing(basename) usage
-   1.27. allow_routing(allow_file, deny_file) usage
-   1.28. allow_register(basename) usage
-   1.29. allow_register(allow_file, deny_file) usage
-   1.30. allow_uri(basename, pvar) usage
-   1.31. allow_address() usage
-   1.32. allow_source_address(group_id) usage
-   1.33. allow_source_address_group() usage
+   1.25. Set reload_delta parameter
+   1.26. allow_routing usage
+   1.27. allow_routing(basename) usage
+   1.28. allow_routing(allow_file, deny_file) usage
+   1.29. allow_register(basename) usage
+   1.30. allow_register(allow_file, deny_file) usage
+   1.31. allow_uri(basename, pvar) usage
+   1.32. allow_address() usage
+   1.33. allow_source_address(group_id) usage
    1.34. allow_source_address_group() usage
-   1.35. allow_trusted() usage
-   1.36. Address File Sample
+   1.35. allow_source_address_group() usage
+   1.36. allow_trusted() usage
+   1.37. Address File Sample
 
 Chapter 1. Admin Guide
 
@@ -170,6 +172,7 @@ Chapter 1. Admin Guide
         3.22. peer_tag_mode (integer)
         3.23. max_subnets (int)
         3.24. load_backends (int)
+        3.25. reload_delta (int)
 
    4. Functions
 
@@ -401,6 +404,7 @@ Chapter 1. Admin Guide
    3.22. peer_tag_mode (integer)
    3.23. max_subnets (int)
    3.24. load_backends (int)
+   3.25. reload_delta (int)
 
 3.1. default_allow_file (string)
 
@@ -726,6 +730,24 @@ modparam("permissions", "max_subnets", 1024)
 modparam("permissions", "load_backends", 1)
 ...
 
+3.25. reload_delta (int)
+
+   The number of seconds that have to be waited before executing a new RPC
+   reload. By default there is a rate limiting of maximum one reload in
+   five seconds.
+
+   If set to 0, no rate limit is configured. Note carefully: use this
+   configuration only in tests environments because executing two RPC
+   reloads of the same table at the same time can cause to kamailio to
+   crash.
+
+   Default value is “5”.
+
+   Example 1.25. Set reload_delta parameter
+...
+modparam("permissions", "reload_delta", 1)
+...
+
 4. Functions
 
    4.1. allow_routing()
@@ -749,7 +771,7 @@ modparam("permissions", "load_backends", 1)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. allow_routing usage
+   Example 1.26. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -772,7 +794,7 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. allow_routing(basename) usage
+   Example 1.27. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -797,7 +819,7 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. allow_routing(allow_file, deny_file) usage
+   Example 1.28. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -820,7 +842,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. allow_register(basename) usage
+   Example 1.29. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -850,7 +872,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. allow_register(allow_file, deny_file) usage
+   Example 1.30. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -879,7 +901,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. allow_uri(basename, pvar) usage
+   Example 1.31. allow_uri(basename, pvar) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -905,7 +927,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. allow_address() usage
+   Example 1.32. allow_address() usage
 ...
 
 // Check if source address/port is in group 1
@@ -927,7 +949,7 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. allow_source_address(group_id) usage
+   Example 1.33. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -944,7 +966,7 @@ if (!allow_source_address("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. allow_source_address_group() usage
+   Example 1.34. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -962,7 +984,7 @@ if ($var(group) != -1) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.34. allow_source_address_group() usage
+   Example 1.35. allow_source_address_group() usage
 ...
 
 $var(group) = allow_address_group("1.2.3.4", "5060");
@@ -992,7 +1014,7 @@ if ($var(group) != -1) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.35. allow_trusted() usage
+   Example 1.36. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();
@@ -1024,8 +1046,9 @@ if (allow_trusted("$si", "any", "$ai")) {
    database table into cache memory. In cache memory the entries are for
    performance reasons stored in two different tables: address table and
    subnet table depending on the value of the mask field (IPv6: 64 or
-   smaller, IPv4: 32 or smaller). Note that there is a rate limiting of
-   maximum one reload in five seconds.
+   smaller, IPv4: 32 or smaller). Note that there is a rate limiting
+   defined by 'reload_delta' paramenter. By default is allowed maximum one
+   reload in five seconds.
 
    Parameters: none
 
@@ -1067,8 +1090,9 @@ if (allow_trusted("$si", "any", "$ai")) {
 5.7.  permissions.trustedReload
 
    Causes the permissions module to re-read the contents of the trusted
-   database table into cache memory. Note that there is a rate limiting of
-   maximum one reload in five seconds.
+   database table into cache memory. Note that there is a rate limiting
+   defined by 'reload_delta' paramenter. By default is allowed maximum one
+   reload in five seconds.
 
    Parameters: none
 
@@ -1100,7 +1124,7 @@ if (allow_trusted("$si", "any", "$ai")) {
    provided, the tag value has to be a single token, without whitespaces
    (other punctuation signs can be in its value, like ',', '=', ';', ...).
 
-   Example 1.36. Address File Sample
+   Example 1.37. Address File Sample
 ...
 # address file - records to match with allow_address(...) and variants
 # * file format details
