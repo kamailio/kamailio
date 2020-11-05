@@ -1278,6 +1278,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (IPv6: 64 or smaller, IPv4: 32 or smaller).
+			Note that there is a rate limiting of maximum one reload in
+			five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1359,6 +1361,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 		<para>
 			Causes the permissions module to re-read the contents of
 			the trusted database table into cache memory.
+			Note that there is a rate limiting of maximum one reload in
+			five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
