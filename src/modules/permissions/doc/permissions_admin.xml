@@ -846,6 +846,33 @@ modparam("permissions", "load_backends", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+		The number of seconds that have to be waited before executing a new
+		RPC reload. By default there is a rate limiting of maximum one reload
+		in five seconds.
+		</para>
+		<para>
+		If set to 0, no rate limit is configured. Note carefully: use this
+		configuration only in tests environments because executing two RPC
+		reloads of the same table at the same time can cause to kamailio
+		to crash.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reload_delta</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "reload_delta", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -1278,8 +1305,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (IPv6: 64 or smaller, IPv4: 32 or smaller).
-			Note that there is a rate limiting of maximum one reload in
-			five seconds.
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1361,8 +1388,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 		<para>
 			Causes the permissions module to re-read the contents of
 			the trusted database table into cache memory.
-			Note that there is a rate limiting of maximum one reload in
-			five seconds.
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
