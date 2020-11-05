@@ -1024,7 +1024,8 @@ if (allow_trusted("$si", "any", "$ai")) {
    database table into cache memory. In cache memory the entries are for
    performance reasons stored in two different tables: address table and
    subnet table depending on the value of the mask field (IPv6: 64 or
-   smaller, IPv4: 32 or smaller).
+   smaller, IPv4: 32 or smaller). Note that there is a rate limiting of
+   maximum one reload in five seconds.
 
    Parameters: none
 
@@ -1066,7 +1067,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 5.7.  permissions.trustedReload
 
    Causes the permissions module to re-read the contents of the trusted
-   database table into cache memory.
+   database table into cache memory. Note that there is a rate limiting of
+   maximum one reload in five seconds.
 
    Parameters: none
 
