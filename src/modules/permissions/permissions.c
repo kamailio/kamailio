@@ -60,6 +60,7 @@ static char* perm_deny_suffix = ".deny";
 
 /* for allow_trusted and allow_address function */
 str perm_db_url = {NULL, 0};                    /* Don't connect to the database by default */
+int perm_reload_delta = 5;
 
 /* for allow_trusted function */
 int perm_db_mode = DISABLE_CACHE;               /* Database usage mode: 0=no cache, 1=cache */
@@ -593,6 +594,9 @@ static int mod_init(void)
 		return -1;
 	}
 	*perm_rpc_reload_time = 0;
+
+	if(perm_reload_delta < 0)
+		perm_reload_delta = 5;
 
 	if(permissions_init_rpc()!=0) {
 		LM_ERR("failed to register RPC commands\n");

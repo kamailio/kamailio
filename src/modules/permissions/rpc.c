@@ -30,13 +30,15 @@
 #include "permissions.h"
 
 
-int rpc_check_reload(rpc_t* rpc, void* ctx) {
-	if(perm_rpc_reload_time==NULL) {
+int rpc_check_reload(rpc_t *rpc, void *ctx)
+{
+	if(perm_rpc_reload_time == NULL) {
 		LM_ERR("not ready for reload\n");
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return -1;
 	}
-	if(*perm_rpc_reload_time!=0 && *perm_rpc_reload_time > time(NULL) - 5) {
+	if(*perm_rpc_reload_time != 0
+			&& *perm_rpc_reload_time > time(NULL) - perm_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "ongoing reload");
 		return -1;

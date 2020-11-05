@@ -59,6 +59,7 @@ extern str perm_ip_addr_col;   /* Name of ip address column */
 extern str perm_mask_col;      /* Name of mask column */
 extern str perm_port_col;      /* Name of port column */
 extern int perm_peer_tag_mode; /* Matching mode */
+extern int perm_reload_delta;  /* seconds between RPC reloads */
 
 /* backends to be loaded */
 #define PERM_LOAD_ADDRESSDB	(1<<0)
