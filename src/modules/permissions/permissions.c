@@ -187,6 +187,7 @@ static param_export_t params[] = {
 	{"port_col",           PARAM_STR, &perm_port_col        },
 	{"max_subnets",        PARAM_INT, &_perm_max_subnets    },
 	{"load_backends",      PARAM_INT, &_perm_load_backends  },
+	{"reload_delta",       PARAM_INT, &perm_reload_delta    },
 	{0, 0, 0}
 };
 
