@@ -3292,6 +3292,9 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 		}
 		try_lookup_naptr = 1;
 	}
+	/* check if it's an ip address, dns_srv_sip_resolve will return the right failure */
+	if (str2ip(name) || str2ip6(name))
+		goto naptr_not_found;
 	/* do naptr lookup */
 	if ((e=dns_get_entry(name, T_NAPTR))==0)
 		goto naptr_not_found;
