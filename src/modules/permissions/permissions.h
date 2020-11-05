@@ -66,6 +66,7 @@ extern int perm_peer_tag_mode; /* Matching mode */
 #define PERM_LOAD_ALLOWFILE	(1<<2)
 #define PERM_LOAD_DENYFILE	(1<<3)
 extern int _perm_load_backends; /* */
+extern time_t *perm_rpc_reload_time;
 
 typedef struct int_or_pvar {
 	unsigned int i;

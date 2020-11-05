@@ -30,10 +30,30 @@
 #include "permissions.h"
 
 
+int rpc_check_reload(rpc_t* rpc, void* ctx) {
+	if(perm_rpc_reload_time==NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return -1;
+	}
+	if(*perm_rpc_reload_time!=0 && *perm_rpc_reload_time > time(NULL) - 5) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "ongoing reload");
+		return -1;
+	}
+	*perm_rpc_reload_time = time(NULL);
+	return 0;
+}
+
 /*! \brief
  * RPC function to reload trusted table
  */
 void rpc_trusted_reload(rpc_t* rpc, void* c) {
+
+	if(rpc_check_reload(rpc, c) < 0) {
+		return;
+	}
+
 	if (reload_trusted_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
@@ -67,6 +87,11 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
  * RPC function to reload address table
  */
 void rpc_address_reload(rpc_t* rpc, void* c) {
+
+	if(rpc_check_reload(rpc, c) < 0) {
+		return;
+	}
+
 	if (reload_address_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
