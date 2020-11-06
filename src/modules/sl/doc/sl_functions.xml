@@ -88,6 +88,42 @@ send_reply("403", "Invalid user - $fU");
 		</example>
 	</section>
 
+	<section id="sl.f.send_reply_mode">
+		<title>
+		<function moreinfo="none">send_reply_mode(code, reason, mode)</function>
+		</title>
+		<para>
+			Similar to send_reply() function, with additional third parameter
+			mode, which can specify extra operations to be done along with
+			sending the SIP response.
+		</para>
+		<para>
+			The parameter mode is a flag-based value and can be a combination of:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>1</emphasis> - do not connect to send the response
+			(similar to set_reply_no_connect()).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> - close the connection after sending the
+			response (similar to set_reply_close()).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>send_reply_mode</function> usage</title>
+		<programlisting format="linespecific">
+...
+send_reply_mode("404", "Not found", "3");
+...
+send_reply_mode("403", "Invalid user - $fU", "3");
+...
+</programlisting>
+		</example>
+	</section>
+
     <section id="sl.f.sl_reply_error">
 	<title>
 	    <function>sl_reply_error()</function>
