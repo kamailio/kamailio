@@ -2,7 +2,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=userblacklist.so
+NAME=userblocklist.so
 LIBS=
 
 SERLIBPATH=../../lib

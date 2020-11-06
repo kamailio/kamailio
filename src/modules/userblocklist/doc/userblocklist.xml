@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>userblacklist Module</title>
+	<title>userblocklist Module</title>
 	<authorgroup>
 		<editor>
 		<firstname>Henning</firstname>
@@ -31,6 +31,6 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	<xi:include href="userblacklist_admin.xml"/>
+	<xi:include href="userblocklist_admin.xml"/>
 	
 </book>
