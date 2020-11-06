@@ -9,6 +9,6 @@
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>USERBLACKLIST Module</name>
-    <xi:include href="userblacklist.xml"/>
-    <xi:include href="globalblacklist.xml"/>
+    <xi:include href="userblocklist.xml"/>
+    <xi:include href="globalblocklist.xml"/>
 </database>

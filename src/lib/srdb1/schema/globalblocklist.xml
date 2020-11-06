@@ -7,16 +7,16 @@
 
 ]>
 
-<table id="globalblacklist" xmlns:db="http://docbook.org/ns/docbook">
-    <name>globalblacklist</name>
+<table id="globalblocklist" xmlns:db="http://docbook.org/ns/docbook">
+    <name>globalblocklist</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-		<db:para>This table is used by the userblacklist module for the global
-			blacklists. More information is available at:
+		<db:para>This table is used by the userblocklist module for the global
+			blocklists. More information is available at:
 			<itemizedlist>
 			<listitem>
-			<ulink url="&KAMAILIO_MOD_DOC;userblacklist.html">&KAMAILIO_MOD_DOC;userblacklist.html</ulink>.
+			<ulink url="&KAMAILIO_MOD_DOC;userblocklist.html">&KAMAILIO_MOD_DOC;userblocklist.html</ulink>.
 			</listitem>
 			</itemizedlist>
         </db:para>
@@ -37,15 +37,15 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>The prefix that is matched for the blacklist.</description>
+        <description>The prefix that is matched for the blocklist.</description>
     </column>
 
     <column>
-        <name>whitelist</name>
+        <name>allowlist</name>
         <type>char</type>
         <size>1</size>
         <default>0</default>
-        <description>Specify if this a blacklist (0) or a whitelist (1) entry.</description>
+        <description>Specify if this a blocklist (0) or a allowlist (1) entry.</description>
     </column>
 
      <column>
@@ -58,7 +58,7 @@
     </column>
 
     <index>
-        <name>globalblacklist_idx</name>
+        <name>globalblocklist_idx</name>
         <colref linkend="prefix"/>
     </index>
 </table>

@@ -7,17 +7,17 @@
 
 ]>
 
-<table id="userblacklist" xmlns:db="http://docbook.org/ns/docbook">
-    <name>userblacklist</name>
+<table id="userblocklist" xmlns:db="http://docbook.org/ns/docbook">
+    <name>userblocklist</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
-			This table is used by the userblacklist module for the user specific
-			blacklists. More information is available at:
+			This table is used by the userblocklist module for the user specific
+			blocklists. More information is available at:
 			<itemizedlist>
 			<listitem>
-			<ulink url="&KAMAILIO_MOD_DOC;userblacklist.html">&KAMAILIO_MOD_DOC;userblacklist.html</ulink>.
+			<ulink url="&KAMAILIO_MOD_DOC;userblocklist.html">&KAMAILIO_MOD_DOC;userblocklist.html</ulink>.
 			</listitem>
 			</itemizedlist>
         </db:para>
@@ -38,7 +38,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>The user that is used for the blacklist lookup.</description>
+        <description>The user that is used for the blocklist lookup.</description>
     </column>
 
     <column id="domain">
@@ -46,7 +46,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>The domain that is used for the blacklist lookup.</description>
+        <description>The domain that is used for the blocklist lookup.</description>
     </column>
 
     <column id="prefix">
@@ -54,19 +54,19 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>The prefix that is matched for the blacklist.</description>
+        <description>The prefix that is matched for the blocklist.</description>
     </column>
 
     <column>
-        <name>whitelist</name>
+        <name>allowlist</name>
         <type>char</type>
         <size>1</size>
         <default>0</default>
-        <description>Specify if this a blacklist (0) or a whitelist (1) entry.</description>
+        <description>Specify if this a blocklist (0) or a allowlist (1) entry.</description>
     </column>
 
     <index>
-        <name>userblacklist_idx</name>
+        <name>userblocklist_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="prefix"/>
