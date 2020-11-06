@@ -29,8 +29,9 @@ Daniel-Constantin Mierla
 
               3.1. sl_send_reply(code, reason)
               3.2. send_reply(code, reason)
-              3.3. sl_reply_error()
-              3.4. sl_forward_reply([ code, [ reason ] ])
+              3.3. send_reply_mode(code, reason, mode)
+              3.4. sl_reply_error()
+              3.5. sl_forward_reply([ code, [ reason ] ])
 
         4. Statistics
 
@@ -74,8 +75,9 @@ Daniel-Constantin Mierla
    1.6. event_callback_lres_sent example
    1.7. sl_send_reply usage
    1.8. send_reply usage
-   1.9. sl_reply_error usage
-   1.10. send_reply usage
+   1.9. send_reply_mode usage
+   1.10. sl_reply_error usage
+   1.11. send_reply usage
 
 Chapter 1. Admin Guide
 
@@ -95,8 +97,9 @@ Chapter 1. Admin Guide
 
         3.1. sl_send_reply(code, reason)
         3.2. send_reply(code, reason)
-        3.3. sl_reply_error()
-        3.4. sl_forward_reply([ code, [ reason ] ])
+        3.3. send_reply_mode(code, reason, mode)
+        3.4. sl_reply_error()
+        3.5. sl_forward_reply([ code, [ reason ] ])
 
    4. Statistics
 
@@ -246,8 +249,9 @@ modparam("sl", "event_callback_lres_sent", "ksr_event_sl_local_response")
 
    3.1. sl_send_reply(code, reason)
    3.2. send_reply(code, reason)
-   3.3. sl_reply_error()
-   3.4. sl_forward_reply([ code, [ reason ] ])
+   3.3. send_reply_mode(code, reason, mode)
+   3.4. sl_reply_error()
+   3.5. sl_forward_reply([ code, [ reason ] ])
 
 3.1.  sl_send_reply(code, reason)
 
@@ -297,18 +301,37 @@ send_reply("404", "Not found");
 send_reply("403", "Invalid user - $fU");
 ...
 
-3.3.  sl_reply_error()
+3.3.  send_reply_mode(code, reason, mode)
+
+   Similar to send_reply() function, with additional third parameter mode,
+   which can specify extra operations to be done along with sending the
+   SIP response.
+
+   The parameter mode is a flag-based value and can be a combination of:
+     * 1 - do not connect to send the response (similar to
+       set_reply_no_connect()).
+     * 2 - close the connection after sending the response (similar to
+       set_reply_close()).
+
+   Example 1.9. send_reply_mode usage
+...
+send_reply_mode("404", "Not found", "3");
+...
+send_reply_mode("403", "Invalid user - $fU", "3");
+...
+
+3.4.  sl_reply_error()
 
    Sends back an error reply describing the nature of the last internal
    error. Usually this function should be used after a script function
    that returned an error code.
 
-   Example 1.9. sl_reply_error usage
+   Example 1.10. sl_reply_error usage
 ...
 sl_reply_error();
 ...
 
-3.4.  sl_forward_reply([ code, [ reason ] ])
+3.5.  sl_forward_reply([ code, [ reason ] ])
 
    Forward statelessly the current received SIP reply, with the option to
    change the status code and reason text. The new code has to be in the
@@ -321,7 +344,7 @@ sl_reply_error();
 
    This function can be used from ONREPLY_ROUTE.
 
-   Example 1.10. send_reply usage
+   Example 1.11. send_reply usage
 ...
 if(status=="408")
     sl_forward_reply("404", "Not found");
