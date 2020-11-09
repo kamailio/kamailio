@@ -2258,6 +2258,7 @@ static int sctp_handle_notification(struct socket_info *si,
 {
 	union sctp_notification *snp;
 	char su_buf[SU2A_MAX_STR_SIZE];
+	struct sockaddr_storage sa_storage;
 
 #define SNOT DBG
 #define ERR_LEN_TOO_SMALL(length, val, bind_addr, from_su, text)            \
@@ -2311,8 +2312,9 @@ static int sctp_handle_notification(struct socket_info *si,
 					sctp_paddr_change_state2s(snp->sn_paddr_change.spc_state),
 					snp->sn_paddr_change.spc_state,
 					&snp->sn_paddr_change.spc_aaddr);
-			strcpy(su_buf, su2a((union sockaddr_union *)&snp->sn_paddr_change
-										   .spc_aaddr,
+			memcpy(&sa_storage, &snp->sn_paddr_change.spc_aaddr,
+					sizeof(snp->sn_paddr_change.spc_aaddr));
+			strcpy(su_buf, su2a((union sockaddr_union *)&sa_storage,
 								   sizeof(snp->sn_paddr_change.spc_aaddr)));
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_PEER_ADDR_CHANGE"
 				 ": %s: %s: assoc_id %d \n",
