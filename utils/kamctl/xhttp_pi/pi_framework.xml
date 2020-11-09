@@ -950,6 +950,25 @@
 		<column><field>whitelist</field><type>DB1_INT</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
+	<!-- Declaration of userblocklist table-->
+	<db_table id="userblocklist">
+		<table_name>userblocklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>allowlist</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of globalblocklist table-->
+	<db_table id="globalblocklist">
+		<table_name>globalblocklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>allowlist</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of location table-->
 	<db_table id="location">
 		<table_name>location</table_name>
@@ -4754,6 +4773,91 @@
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
 			<db_table_id>globalblacklist</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- userblocklist provisionning -->
+	<mod><mod_name>userblocklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- globalblocklist provisionning -->
+	<mod><mod_name>globalblocklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
 			<cmd_type>DB1_DELETE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>
