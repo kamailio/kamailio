@@ -76,7 +76,9 @@ int crypto_aes_init(unsigned char *key_data, int key_data_len,
 {
 	int i, nrounds = 5;
 	int x;
-	unsigned char key[32], iv[32];
+	unsigned char key[32], iv[32]; /* IV is only 16 bytes, but makes it easier */
+	memset(key, 0, sizeof(key));
+	memset(iv, 0, sizeof(iv));
 
 	/*
 	 * Gen key & IV for AES 256 CBC mode. A SHA1 digest is used to hash
