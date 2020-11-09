@@ -3245,6 +3245,7 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	/* restore msg fields */
 	msg->buf = tmp.buf;
 	msg->id = tmp.id;
+	msg->pid = tmp.pid;
 	msg->rcv = tmp.rcv;
 	msg->set_global_address = tmp.set_global_address;
 	msg->set_global_port = tmp.set_global_port;
