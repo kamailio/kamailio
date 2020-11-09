@@ -3199,6 +3199,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 
 	ret=-E_DNS_NO_NAPTR;
 	if(proto) origproto=*proto;
+	else origproto = PROTO_NONE;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
