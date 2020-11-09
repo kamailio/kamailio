@@ -313,7 +313,7 @@ static int ki_crypto_hmac_sha256_helper(sip_msg_t* msg, str *ins, str *key,
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.rs.s = pv_get_buffer();
-	val.rs.len = base64url_enc((unsigned char *)digest, digest_len, (unsigned char *)val.rs.s, pv_get_buffer_size()-1);
+	val.rs.len = base64url_enc((char *)digest, digest_len, val.rs.s, pv_get_buffer_size()-1);
 	if (val.rs.len < 0) {
 		LM_ERR("base64 output of digest value is too large (need %d)\n", -val.rs.len);
 		goto error;
