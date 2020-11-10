@@ -8,9 +8,9 @@ RPC Exports for userblacklist
 	</title>
 
 
-<section id="userblacklist.reload_blacklist"><title>userblacklist.reload_blacklist</title>
+<section id="userblocklist.reload_blacklist"><title>userblocklist.reload_blocklist</title>
 <para>
-        Documentation missing (ubl_rpc_reload_blacklist_doc).
+        Documentation missing (ubl_rpc_reload_blocklist_doc).
 </para>
 <para>
 </para>
