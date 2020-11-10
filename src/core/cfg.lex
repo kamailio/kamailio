@@ -1265,6 +1265,10 @@ IMPORTFILE      "import_file"
 <COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
 
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
+											if(ksr_cfg_print_mode == 1) {
+												printf("%s", yytext);
+												BEGIN(CFGPRINTMODE);
+											}
 											sr_cfg_compat=SR_COMPAT_SER;}
 <INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count();
 											if(ksr_cfg_print_mode == 1) {
@@ -1273,7 +1277,11 @@ IMPORTFILE      "import_file"
 											}
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count();
-												sr_cfg_compat=SR_COMPAT_MAX;}
+											if(ksr_cfg_print_mode == 1) {
+												printf("%s", yytext);
+												BEGIN(CFGPRINTMODE);
+											}
+											sr_cfg_compat=SR_COMPAT_MAX;}
 
 <INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
