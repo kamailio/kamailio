@@ -119,6 +119,7 @@
 	static void pp_ifdef();
 	static void pp_else();
 	static void pp_endif();
+	static void ksr_print_cfg_part(char *text);
 
 %}
 
@@ -1283,32 +1284,55 @@ IMPORTFILE      "import_file"
 											}
 											sr_cfg_compat=SR_COMPAT_MAX;}
 
-<INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
+											ksr_print_cfg_part(yytext);
+											pp_define_set_type(0);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
-<INITIAL>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(1);
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count();
+											ksr_print_cfg_part(yytext);
+											pp_define_set_type(1);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
-<INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
+<INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
+											ksr_print_cfg_part(yytext);
+											pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
+									ksr_print_cfg_part(yytext);
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
 									exit(-1);
 								}
 <DEFINE_ID>{ID}                 {	count();
+									ksr_print_cfg_part(yytext);
 									if (pp_define(yyleng, yytext)) return 1;
 									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
-<DEFINE_EOL>{EAT_ABLE}			{	count(); }
+<DEFINE_EOL>{EAT_ABLE}			{	count(); ksr_print_cfg_part(yytext); }
 <DEFINE_EOL>{CR}				{	count();
-									state = INITIAL; BEGIN(INITIAL); }
+									ksr_print_cfg_part(yytext);
+									state = INITIAL;
+									if(ksr_cfg_print_mode == 1) {
+										BEGIN(CFGPRINTMODE);
+									} else {
+										BEGIN(INITIAL);
+									}
+								}
 <DEFINE_EOL>.                   {	count();
+									ksr_print_cfg_part(yytext);
 									addstr(&s_buf, yytext, yyleng);
 									state = DEFINE_DATA_S; BEGIN(DEFINE_DATA); }
-<DEFINE_DATA>\\{CR}		{	count(); } /* eat the escaped CR */
+<DEFINE_DATA>\\{CR}		{	count(); ksr_print_cfg_part(yytext); } /* eat the escaped CR */
 <DEFINE_DATA>{CR}		{	count();
+							ksr_print_cfg_part(yytext);
 							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
 							memset(&s_buf, 0, sizeof(s_buf));
-							state = INITIAL; BEGIN(INITIAL); }
+							state = INITIAL;
+							if(ksr_cfg_print_mode == 1) {
+								BEGIN(CFGPRINTMODE);
+							} else {
+								BEGIN(INITIAL);
+							}
+						}
 <DEFINE_DATA>.          {	count();
 							addstr(&s_buf, yytext, yyleng); }
 
@@ -1454,6 +1478,12 @@ IMPORTFILE      "import_file"
 
 %%
 
+static void ksr_print_cfg_part(char *text)
+{
+	if(ksr_cfg_print_mode == 1) {
+		printf("%s", text);
+	}
+}
 
 static char* addchar(struct str_buf* dst, char c)
 {
