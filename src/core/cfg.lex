@@ -113,13 +113,12 @@
 		struct sr_yy_fname *next;
 	} *sr_yy_fname_list = 0;
 
-	str  *pp_define_get(int len, const char * text);
 	static int  pp_ifdef_type(int pos);
 	static void pp_ifdef_var(int len, const char * text);
 	static void pp_ifdef();
 	static void pp_else();
 	static void pp_endif();
-	static void ksr_print_cfg_part(char *text);
+	static void ksr_cfg_print_part(char *text);
 
 %}
 
@@ -1285,56 +1284,48 @@ IMPORTFILE      "import_file"
 											sr_cfg_compat=SR_COMPAT_MAX;}
 
 <INITIAL,CFGPRINTMODE>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
-											ksr_print_cfg_part(yytext);
+											ksr_cfg_print_part(yytext);
 											pp_define_set_type(0);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count();
-											ksr_print_cfg_part(yytext);
+											ksr_cfg_print_part(yytext);
 											pp_define_set_type(1);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
-											ksr_print_cfg_part(yytext);
+											ksr_cfg_print_part(yytext);
 											pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
-									ksr_print_cfg_part(yytext);
+									ksr_cfg_print_part(yytext);
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
 									exit(-1);
 								}
 <DEFINE_ID>{ID}                 {	count();
-									ksr_print_cfg_part(yytext);
+									ksr_cfg_print_part(yytext);
 									if (pp_define(yyleng, yytext)) return 1;
 									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
-<DEFINE_EOL>{EAT_ABLE}			{	count(); ksr_print_cfg_part(yytext); }
+<DEFINE_EOL>{EAT_ABLE}			{	count(); ksr_cfg_print_part(yytext); }
 <DEFINE_EOL>{CR}				{	count();
-									ksr_print_cfg_part(yytext);
+									ksr_cfg_print_part(yytext);
 									state = INITIAL;
-									if(ksr_cfg_print_mode == 1) {
-										BEGIN(CFGPRINTMODE);
-									} else {
-										BEGIN(INITIAL);
-									}
+									ksr_cfg_print_initial_state();
 								}
 <DEFINE_EOL>.                   {	count();
-									ksr_print_cfg_part(yytext);
+									ksr_cfg_print_part(yytext);
 									addstr(&s_buf, yytext, yyleng);
 									state = DEFINE_DATA_S; BEGIN(DEFINE_DATA); }
-<DEFINE_DATA>\\{CR}		{	count(); ksr_print_cfg_part(yytext); } /* eat the escaped CR */
+<DEFINE_DATA>\\{CR}		{	count(); ksr_cfg_print_part(yytext); } /* eat the escaped CR */
 <DEFINE_DATA>{CR}		{	count();
-							ksr_print_cfg_part(yytext);
+							ksr_cfg_print_part(yytext);
 							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
 							memset(&s_buf, 0, sizeof(s_buf));
 							state = INITIAL;
-							if(ksr_cfg_print_mode == 1) {
-								BEGIN(CFGPRINTMODE);
-							} else {
-								BEGIN(INITIAL);
-							}
+							ksr_cfg_print_initial_state();
 						}
 <DEFINE_DATA>.          {	count();
-							ksr_print_cfg_part(yytext);
+							ksr_cfg_print_part(yytext);
 							addstr(&s_buf, yytext, yyleng); }
 
 <INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
@@ -1401,11 +1392,7 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				if(ksr_cfg_print_mode == 1) {
-					BEGIN(CFGPRINTMODE);
-				} else {
-					BEGIN(INITIAL);
-				}
+				ksr_cfg_print_initial_state();
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
@@ -1419,11 +1406,7 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				if(ksr_cfg_print_mode == 1) {
-					BEGIN(CFGPRINTMODE);
-				} else {
-					BEGIN(INITIAL);
-				}
+				ksr_cfg_print_initial_state();
 }
 
 <CFGPRINTMODE>.|{CR}  { count(); printf("%s", yytext); }
@@ -1479,10 +1462,19 @@ IMPORTFILE      "import_file"
 
 %%
 
-static void ksr_print_cfg_part(char *text)
+static void ksr_cfg_print_part(char *text)
 {
 	if(ksr_cfg_print_mode == 1) {
 		printf("%s", text);
+	}
+}
+
+void ksr_cfg_print_initial_state(void)
+{
+	if(ksr_cfg_print_mode == 1) {
+		BEGIN(CFGPRINTMODE);
+	} else {
+		BEGIN(INITIAL);
 	}
 }
 
@@ -2001,11 +1993,8 @@ static void pp_update_state()
 			return;
 		}
 
-	if(ksr_cfg_print_mode == 1) {
-		state = CFGPRINTMODE; BEGIN(CFGPRINTMODE);
-	} else {
-		state = INITIAL; BEGIN(INITIAL);
-	}
+	state = INITIAL;
+	ksr_cfg_print_initial_state();
 }
 
 static void pp_ifdef()

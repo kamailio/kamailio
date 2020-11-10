@@ -49,6 +49,8 @@ void pp_ifdef_level_error(void);
 
 void pp_define_core(void);
 
+void ksr_cfg_print_initial_state(void);
+
 #endif /*_PPCFG_H_*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
