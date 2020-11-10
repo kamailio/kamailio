@@ -1334,6 +1334,7 @@ IMPORTFILE      "import_file"
 							}
 						}
 <DEFINE_DATA>.          {	count();
+							ksr_print_cfg_part(yytext);
 							addstr(&s_buf, yytext, yyleng); }
 
 <INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
