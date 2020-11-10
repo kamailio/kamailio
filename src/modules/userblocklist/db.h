@@ -20,9 +20,9 @@
 
 /*!
  * \file
- * \brief USERBLACKLIST :: database access
- * \ingroup userblacklist
- * - Module: \ref userblacklist
+ * \brief USERBLOCKLIST :: database access
+ * \ingroup userblocklist
+ * - Module: \ref userblocklist
  */
 
 #ifndef _DB_H_
@@ -31,8 +31,8 @@
 #include "../../core/sr_module.h"
 #include "../../lib/trie/dtrie.h"
 
-#define MARK_WHITELIST 1
-#define MARK_BLACKLIST 2
+#define MARK_ALLOWLIST 1
+#define MARK_BLOCKLIST 2
 
 int db_build_userbl_tree(const str *user, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain);
 int db_reload_source(const str *table, struct dtrie_node_t *root);

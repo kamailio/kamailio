@@ -20,20 +20,20 @@
 
 /*!
  * \file
- * \brief USERBLACKLIST :: module definitions
- * \ingroup userblacklist
- * - Module: \ref userblacklist
+ * \brief USERBLOCKLIST :: module definitions
+ * \ingroup userblocklist
+ * - Module: \ref userblocklist
  */
 
 /*!
- * \defgroup userblacklist USERBLACKLIST :: The Kamailio userblacklist Module
+ * \defgroup userblocklist USERBLOCKLIST :: The Kamailio userblocklist Module
  *
- * The userblacklist module allows Kamailio to handle blacklists on a per user basis.
+ * The userblocklist module allows Kamailio to handle blocklists on a per user basis.
  * This information is stored in a database table, which is queried to decide if the
- * number (more exactly, the request URI user) is blacklisted or not.
+ * number (more exactly, the request URI user) is blocklisted or not.
  * An additional functionality that this module provides is the ability to handle
- * global blacklists. This lists are loaded on startup into memory, thus providing a
- * better performance then in the userblacklist case.
+ * global blocklists. This lists are loaded on startup into memory, thus providing a
+ * better performance then in the userblocklist case.
  */
 
 #include <string.h>
@@ -52,17 +52,17 @@
 
 #include "../../lib/trie/dtrie.h"
 #include "db.h"
-#include "db_userblacklist.h"
+#include "db_userblocklist.h"
 
 MODULE_VERSION
 
 
 #define MAXNUMBERLEN 31
 
-#define BLACKLISTED_S		"blacklisted"
-#define BLACKLISTED_LEN		(sizeof(BLACKLISTED_S)-1)
-#define WHITELISTED_S		"whitelisted"
-#define WHITELISTED_LEN		(sizeof(WHITELISTED_S)-1)
+#define BLOCKLISTED_S		"blocklisted"
+#define BLOCKLISTED_LEN		(sizeof(BLOCKLISTED_S)-1)
+#define ALLOWLISTED_S		"allowlisted"
+#define ALLOWLISTED_LEN		(sizeof(ALLOWLISTED_S)-1)
 #define TRUE_S			"true"
 #define TRUE_LEN		(sizeof(TRUE_S)-1)
 #define FALSE_S			"false"
@@ -75,34 +75,34 @@ typedef struct _avp_check
 } avp_check_t;
 
 
-struct check_blacklist_fs_t {
+struct check_blocklist_fs_t {
 	struct dtrie_node_t *dtrie_root;
 };
 
-str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
+str userblocklist_db_url = str_init(DEFAULT_RODB_URL);
 int use_domain = 0;
 int match_mode = 10; /* numeric */
 static struct dtrie_node_t *gnode = NULL;
 
 /* ---- fixup functions: */
-static int check_blacklist_fixup(void** param, int param_no);
-static int check_user_blacklist_fixup(void** param, int param_no);
-static int check_globalblacklist_fixup(void** param, int param_no);
+static int check_blocklist_fixup(void** param, int param_no);
+static int check_user_blocklist_fixup(void** param, int param_no);
+static int check_globalblocklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
-static int check_user_blacklist(sip_msg_t *msg, char* puser,
+static int check_user_blocklist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable);
-static int check_user_whitelist(sip_msg_t *msg, char* puser,
+static int check_user_allowlist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable);
-static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain);
-static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain);
-static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+static int check_user_blocklist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_allowlist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_blocklist3(sip_msg_t *msg, char* puser, char* pdomain,
 		char* pnumber);
-static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+static int check_user_allowlist3(sip_msg_t *msg, char* puser, char* pdomain,
 		char* pnumber);
-static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
-static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
-static int check_globalblacklist(sip_msg_t *msg);
+static int check_blocklist(sip_msg_t *msg, struct check_blocklist_fs_t *arg1);
+static int check_allowlist(sip_msg_t *msg, struct check_blocklist_fs_t *arg1);
+static int check_globalblocklist(sip_msg_t *msg);
 
 
 /* ---- module init functions: */
@@ -112,34 +112,34 @@ static int rpc_child_init(void);
 static void mod_destroy(void);
 
 static cmd_export_t cmds[]={
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4,
-		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_blacklist, 1,
-		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_whitelist", (cmd_function)check_whitelist, 1,
-		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_globalblacklist, 0,
-		check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blocklist", (cmd_function)check_user_blocklist2, 2,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_allowlist", (cmd_function)check_user_allowlist2, 2,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blocklist", (cmd_function)check_user_blocklist3, 3,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_allowlist", (cmd_function)check_user_allowlist3, 3,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blocklist", (cmd_function)check_user_blocklist, 4,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_allowlist", (cmd_function)check_user_allowlist, 4,
+		check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blocklist", (cmd_function)check_blocklist, 1,
+		check_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_allowlist", (cmd_function)check_allowlist, 1,
+		check_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blocklist", (cmd_function)check_globalblocklist, 0,
+		check_globalblocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
 
 
 static param_export_t params[] = {
-	userblacklist_DB_URL
-	userblacklist_DB_TABLE
-	globalblacklist_DB_TABLE
-	userblacklist_DB_COLS
-	globalblacklist_DB_COLS
+	userblocklist_DB_URL
+	userblocklist_DB_TABLE
+	globalblocklist_DB_TABLE
+	userblocklist_DB_COLS
+	globalblocklist_DB_COLS
 	{ "use_domain",      INT_PARAM, &use_domain },
 	{ "match_mode",	     INT_PARAM, &match_mode },
 	{ 0, 0, 0 }
@@ -149,18 +149,18 @@ static param_export_t params[] = {
 #ifdef MI_REMOVED
 /* Exported MI functions */
 static mi_export_t mi_cmds[] = {
-	{ "reload_blacklist", mi_reload_blacklist, MI_NO_INPUT_FLAG, 0, mi_child_init },
-	{ "dump_blacklist", mi_dump_blacklist, MI_NO_INPUT_FLAG, 0, 0},
-	{ "check_blacklist", mi_check_blacklist, 0, 0, 0 },
-	{ "check_whitelist", mi_check_whitelist, 0, 0, 0 },
-	{ "check_userblacklist", mi_check_userblacklist, 0, 0, 0 },
-	{ "check_userwhitelist", mi_check_userwhitelist, 0, 0, 0 },
+	{ "reload_blocklist", mi_reload_blocklist, MI_NO_INPUT_FLAG, 0, mi_child_init },
+	{ "dump_blocklist", mi_dump_blocklist, MI_NO_INPUT_FLAG, 0, 0},
+	{ "check_blocklist", mi_check_blocklist, 0, 0, 0 },
+	{ "check_allowlist", mi_check_allowlist, 0, 0, 0 },
+	{ "check_userblocklist", mi_check_userblocklist, 0, 0, 0 },
+	{ "check_userallowlist", mi_check_userallowlist, 0, 0, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 #endif
 
 struct module_exports exports= {
-	"userblacklist", /* module name */
+	"userblocklist", /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* cmd (cfg function) exports */
 	params,          /* param exports */
@@ -192,7 +192,7 @@ static struct source_list_t *sources = NULL;
 static struct dtrie_node_t *dtrie_root = NULL;
 
 
-static int check_user_blacklist_fixup(void** param, int param_no)
+static int check_user_blocklist_fixup(void** param, int param_no)
 {
 	if (param_no > 0 && param_no <= 4) {
 		if(strlen((char*)*param) == 0 && param_no != 4) {
@@ -220,8 +220,8 @@ static int ki_check_user_list(sip_msg_t *msg, str* suser, str* sdomain,
 
 	if(stable==NULL || stable->len<=0) {
 		/* use default table name */
-		table.len=userblacklist_table.len;
-		table.s=userblacklist_table.s;
+		table.len=userblocklist_table.len;
+		table.s=userblocklist_table.s;
 	} else {
 		table.len = stable->len;
 		table.s = stable->s;
@@ -265,9 +265,9 @@ static int ki_check_user_list(sip_msg_t *msg, str* suser, str* sdomain,
 
 	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
-		if (*nodeflags == (void *)MARK_WHITELIST) {
-			/* LM_ERR("whitelisted"); */
-			return 1; /* found, but is whitelisted */
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			/* LM_ERR("allowlisted"); */
+			return 1; /* found, but is allowlisted */
 		}
 	} else {
 		if(!listtype) {
@@ -278,7 +278,7 @@ static int ki_check_user_list(sip_msg_t *msg, str* suser, str* sdomain,
 			return -1; /* not found is not ok */
 		}
 	}
-	LM_DBG("entry %s is blacklisted\n", req_number);
+	LM_DBG("entry %s is blocklisted\n", req_number);
 	return -1;
 }
 
@@ -318,69 +318,69 @@ static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
 	return ki_check_user_list(msg, &user, &domain, &number, &table, listtype);
 }
 
-static int check_user_whitelist(sip_msg_t *msg, char* puser,
+static int check_user_allowlist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable)
 {
 	return check_user_list(msg, puser, pdomain, pnumber, ptable, 1);
 }
 
-static int ki_check_user_whitelist_table(sip_msg_t *msg, str* suser,
+static int ki_check_user_allowlist_table(sip_msg_t *msg, str* suser,
 		str* sdomain, str* snumber, str* stable)
 {
 	return ki_check_user_list(msg, suser, sdomain, snumber, stable, 1);
 }
 
-static int check_user_blacklist(sip_msg_t *msg, char* puser,
+static int check_user_blocklist(sip_msg_t *msg, char* puser,
 		char* pdomain, char* pnumber, char* ptable)
 {
 	return check_user_list(msg, puser, pdomain, pnumber, ptable, 0);
 }
 
-static int ki_check_user_blacklist_table(sip_msg_t *msg, str* suser,
+static int ki_check_user_blocklist_table(sip_msg_t *msg, str* suser,
 		str* sdomain, str* snumber, str* stable)
 {
 	return ki_check_user_list(msg, suser, sdomain, snumber, stable, 0);
 }
 
-static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain)
+static int check_user_allowlist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
 	return check_user_list(msg, puser, pdomain, NULL, NULL, 1);
 }
 
-static int ki_check_user_whitelist(sip_msg_t *msg, str* suser, str* sdomain)
+static int ki_check_user_allowlist(sip_msg_t *msg, str* suser, str* sdomain)
 {
 	return ki_check_user_list(msg, suser, sdomain, NULL, NULL, 1);
 }
 
-static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain)
+static int check_user_blocklist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
 	return check_user_list(msg, puser, pdomain, NULL, NULL, 0);
 }
 
-static int ki_check_user_blacklist(sip_msg_t *msg, str* suser, str* sdomain)
+static int ki_check_user_blocklist(sip_msg_t *msg, str* suser, str* sdomain)
 {
 	return ki_check_user_list(msg, suser, sdomain, NULL, NULL, 0);
 }
 
-static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+static int check_user_allowlist3(sip_msg_t *msg, char* puser, char* pdomain,
 		char* pnumber)
 {
 	return check_user_list(msg, puser, pdomain, pnumber, NULL, 1);
 }
 
-static int ki_check_user_whitelist_number(sip_msg_t *msg, str* suser,
+static int ki_check_user_allowlist_number(sip_msg_t *msg, str* suser,
 		str* sdomain, str* snumber)
 {
 	return ki_check_user_list(msg, suser, sdomain, snumber, NULL, 1);
 }
 
-static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+static int check_user_blocklist3(sip_msg_t *msg, char* puser, char* pdomain,
 		char* pnumber)
 {
 	return check_user_list(msg, puser, pdomain, pnumber, NULL, 0);
 }
 
-static int ki_check_user_blacklist_number(sip_msg_t *msg, str* suser,
+static int ki_check_user_blocklist_number(sip_msg_t *msg, str* suser,
 		str* sdomain, str* snumber)
 {
 	return ki_check_user_list(msg, suser, sdomain, snumber, NULL, 0);
@@ -490,9 +490,9 @@ static int add_source(const char *table)
 }
 
 
-static int check_globalblacklist_fixup(void** param, int param_no)
+static int check_globalblocklist_fixup(void** param, int param_no)
 {
-	char * table = globalblacklist_table.s;
+	char * table = globalblocklist_table.s;
 	if(param_no > 0){
 		LM_ERR("Wrong number of parameters\n");
 		return -1;
@@ -517,10 +517,10 @@ static int check_globalblacklist_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int ki_check_globalblacklist(sip_msg_t *msg)
+static int ki_check_globalblocklist(sip_msg_t *msg)
 {
-	char * table = globalblacklist_table.s;
-	struct check_blacklist_fs_t* arg = NULL;
+	char * table = globalblocklist_table.s;
+	struct check_blocklist_fs_t* arg = NULL;
 	int result;
 
 	if (!table) {
@@ -539,40 +539,40 @@ static int ki_check_globalblacklist(sip_msg_t *msg)
 		return -1;
 	}
 
-	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	arg = pkg_malloc(sizeof(struct check_blocklist_fs_t));
 	if (!arg) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	memset(arg, 0, sizeof(struct check_blocklist_fs_t));
 	arg->dtrie_root = gnode;
 
-	result = check_blacklist(msg, arg);
+	result = check_blocklist(msg, arg);
 	pkg_free(arg);
 
 	return result;
 }
 
-static int check_globalblacklist(sip_msg_t* msg)
+static int check_globalblocklist(sip_msg_t* msg)
 {
-	static struct check_blacklist_fs_t* arg = NULL;
+	static struct check_blocklist_fs_t* arg = NULL;
 	if(!arg){
-		arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+		arg = pkg_malloc(sizeof(struct check_blocklist_fs_t));
 		if (!arg) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
-		memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+		memset(arg, 0, sizeof(struct check_blocklist_fs_t));
 		arg->dtrie_root = gnode;
 	}
-	return check_blacklist(msg, arg);
+	return check_blocklist(msg, arg);
 }
 
-static int check_blacklist_fixup(void **arg, int arg_no)
+static int check_blocklist_fixup(void **arg, int arg_no)
 {
 	char *table = (char *)(*arg);
 	struct dtrie_node_t *node = NULL;
-	struct check_blacklist_fs_t *new_arg;
+	struct check_blocklist_fs_t *new_arg;
 
 	if (arg_no != 1) {
 		LM_ERR("wrong number of parameters\n");
@@ -596,22 +596,22 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 		return -1;
 	}
 
-	new_arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	new_arg = pkg_malloc(sizeof(struct check_blocklist_fs_t));
 	if (!new_arg) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(new_arg, 0, sizeof(struct check_blacklist_fs_t));
+	memset(new_arg, 0, sizeof(struct check_blocklist_fs_t));
 	new_arg->dtrie_root = node;
 	*arg=(void*)new_arg;
 
 	return 0;
 }
 
-static int ki_check_blacklist(sip_msg_t *msg, str* stable)
+static int ki_check_blocklist(sip_msg_t *msg, str* stable)
 {
 	struct dtrie_node_t *node = NULL;
-	struct check_blacklist_fs_t* arg = NULL;
+	struct check_blocklist_fs_t* arg = NULL;
 	int result;
 
 	if(stable==NULL || stable->len<=0) {
@@ -632,21 +632,21 @@ static int ki_check_blacklist(sip_msg_t *msg, str* stable)
 		return -1;
 	}
 
-	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	arg = pkg_malloc(sizeof(struct check_blocklist_fs_t));
 	if (!arg) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	memset(arg, 0, sizeof(struct check_blocklist_fs_t));
 	arg->dtrie_root = node;
 
-	result = check_blacklist(msg, arg);
+	result = check_blocklist(msg, arg);
 	pkg_free(arg);
 
 	return result;
 }
 
-static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
+static int check_blocklist(sip_msg_t *msg, struct check_blocklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
@@ -677,12 +677,12 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	lock_get(lock);
 	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
-		if (*nodeflags == (void *)MARK_WHITELIST) {
-			/* LM_DBG("whitelisted"); */
-			ret = 1; /* found, but is whitelisted */
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			/* LM_DBG("allowlisted"); */
+			ret = 1; /* found, but is allowlisted */
 		}
 		else {
-			LM_DBG("entry %s is blacklisted\n", req_number);
+			LM_DBG("entry %s is blocklisted\n", req_number);
 		}
 	}
 	else {
@@ -694,10 +694,10 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	return ret;
 }
 
-static int ki_check_whitelist(sip_msg_t *msg, str* stable)
+static int ki_check_allowlist(sip_msg_t *msg, str* stable)
 {
 	struct dtrie_node_t *node = NULL;
-	struct check_blacklist_fs_t* arg = NULL;
+	struct check_blocklist_fs_t* arg = NULL;
 	int result;
 
 	if(stable==NULL || stable->len<=0) {
@@ -718,21 +718,21 @@ static int ki_check_whitelist(sip_msg_t *msg, str* stable)
 		return -1;
 	}
 
-	arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	arg = pkg_malloc(sizeof(struct check_blocklist_fs_t));
 	if (!arg) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+	memset(arg, 0, sizeof(struct check_blocklist_fs_t));
 	arg->dtrie_root = node;
 
-	result = check_whitelist(msg, arg);
+	result = check_allowlist(msg, arg);
 	pkg_free(arg);
 
 	return result;
 }
 
-static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
+static int check_allowlist(sip_msg_t *msg, struct check_blocklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
@@ -763,12 +763,12 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	lock_get(lock);
 	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
-		if (*nodeflags == (void *)MARK_WHITELIST) {
-			/* LM_DBG("whitelisted"); */
-			ret = 1; /* found, but is whitelisted */
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			/* LM_DBG("allowlisted"); */
+			ret = 1; /* found, but is allowlisted */
 		}
 		else {
-			LM_DBG("entry %s is blacklisted\n", req_number);
+			LM_DBG("entry %s is blocklisted\n", req_number);
 		}
 	}
 	else {
@@ -888,17 +888,17 @@ static void dump_dtrie_mi(const struct dtrie_node_t *root,
 			return ;
 		}
 
-		/* Resolve the value of the whitelist attribute */
-		if (root->data == (void *)MARK_BLACKLIST) {
+		/* Resolve the value of the allowlist attribute */
+		if (root->data == (void *)MARK_BLOCKLIST) {
 			val = int2str(0, &val_len);
-		} else if (root->data == (void *)MARK_WHITELIST) {
+		} else if (root->data == (void *)MARK_ALLOWLIST) {
 			val = int2str(1, &val_len);
 		}
 
 		/* Add the attribute to the current node */
 		if((add_mi_attr(crt_node, MI_DUP_VALUE,
-				userblacklist_whitelist_col.s,
-				userblacklist_whitelist_col.len,
+				userblocklist_allowlist_col.s,
+				userblocklist_allowlist_col.len,
 				val, val_len)) == 0) {
 			LM_ERR("cannot add attributes to the node\n");
 			return ;
@@ -962,9 +962,9 @@ static struct mi_root * check_list_mi(struct mi_root* cmd, int list_type)
 	if (node)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	/* Check that global blacklist exists */
+	/* Check that global blocklist exists */
 	if (!gnode) {
-		LM_ERR("the global blacklist is NULL\n");
+		LM_ERR("the global blocklist is NULL\n");
 		return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
@@ -985,19 +985,19 @@ static struct mi_root * check_list_mi(struct mi_root* cmd, int list_type)
 	lock_get(lock);
 	nodeflags = dtrie_longest_match(gnode, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
-		if (*nodeflags == (void *)MARK_WHITELIST) {
-			LM_DBG("prefix %.*s is whitelisted in table %.*s\n",
-				prefix.len, prefix.s, globalblacklist_table.len, globalblacklist_table.s);
-			ret = MARK_WHITELIST;
-		} else if (*nodeflags == (void *)MARK_BLACKLIST) {
-			LM_DBG("prefix %.*s is blacklisted in table %.*s\n",
-				prefix.len, prefix.s, globalblacklist_table.len, globalblacklist_table.s);
-			ret = MARK_BLACKLIST;
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			LM_DBG("prefix %.*s is allowlisted in table %.*s\n",
+				prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
+			ret = MARK_ALLOWLIST;
+		} else if (*nodeflags == (void *)MARK_BLOCKLIST) {
+			LM_DBG("prefix %.*s is blocklisted in table %.*s\n",
+				prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
+			ret = MARK_BLOCKLIST;
 		}
 	}
 	else {
 		LM_DBG("prefix %.*s not found in table %.*s\n",
-			prefix.len, prefix.s, globalblacklist_table.len, globalblacklist_table.s);
+			prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
 	}
 	lock_release(lock);
 
@@ -1013,21 +1013,21 @@ static struct mi_root * check_list_mi(struct mi_root* cmd, int list_type)
 	val.len = FALSE_LEN;
 
 	switch (list_type) {
-		case MARK_WHITELIST:
-			attr.s = WHITELISTED_S;
-			attr.len = WHITELISTED_LEN;
+		case MARK_ALLOWLIST:
+			attr.s = ALLOWLISTED_S;
+			attr.len = ALLOWLISTED_LEN;
 
-			if (ret == MARK_WHITELIST) {
+			if (ret == MARK_ALLOWLIST) {
 				val.s = TRUE_S;
 				val.len = TRUE_LEN;
 			}
 
 			break;
-		case MARK_BLACKLIST:
-			attr.s = BLACKLISTED_S;
-			attr.len = BLACKLISTED_LEN;
+		case MARK_BLOCKLIST:
+			attr.s = BLOCKLISTED_S;
+			attr.len = BLOCKLISTED_LEN;
 
-			if (ret == MARK_BLACKLIST) {
+			if (ret == MARK_BLOCKLIST) {
 				val.s = TRUE_S;
 				val.len = TRUE_LEN;
 			}
@@ -1103,8 +1103,8 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 	if (node)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	/* Build userblacklist dtrie */
-	table = userblacklist_table;
+	/* Build userblocklist dtrie */
+	table = userblocklist_table;
 	LM_DBG("check entry %s for user %.*s@%.*s in table %.*s, use domain=%d\n",
 		req_prefix, user.len, user.s, domain.len, domain.s,
 		table.len, table.s, local_use_domain);
@@ -1129,14 +1129,14 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 	/* Search for a match in dtrie */
 	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
-		if (*nodeflags == (void *)MARK_WHITELIST) {
-			LM_DBG("user %.*s is whitelisted for prefix %.*s in table %.*s\n",
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			LM_DBG("user %.*s is allowlisted for prefix %.*s in table %.*s\n",
 				user.len, user.s, prefix.len, prefix.s, table.len, table.s);
-			ret = MARK_WHITELIST;
-		} else if (*nodeflags == (void *)MARK_BLACKLIST) {
-			LM_DBG("user %.*s is blacklisted for prefix %.*s in table %.*s\n",
+			ret = MARK_ALLOWLIST;
+		} else if (*nodeflags == (void *)MARK_BLOCKLIST) {
+			LM_DBG("user %.*s is blocklisted for prefix %.*s in table %.*s\n",
 				user.len, user.s, prefix.len, prefix.s, table.len, table.s);
-			ret = MARK_BLACKLIST;
+			ret = MARK_BLOCKLIST;
 		}
 	} else {
 		LM_DBG("user %.*s, prefix %.*s not found in table %.*s\n",
@@ -1156,21 +1156,21 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 	val.len = FALSE_LEN;
 
 	switch (list_type) {
-		case MARK_WHITELIST:
-			attr.s = WHITELISTED_S;
-			attr.len = WHITELISTED_LEN;
+		case MARK_ALLOWLIST:
+			attr.s = ALLOWLISTED_S;
+			attr.len = ALLOWLISTED_LEN;
 
-			if (ret == MARK_WHITELIST) {
+			if (ret == MARK_ALLOWLIST) {
 				val.s = TRUE_S;
 				val.len = TRUE_LEN;
 			}
 
 			break;
-		case MARK_BLACKLIST:
-			attr.s = BLACKLISTED_S;
-			attr.len = BLACKLISTED_LEN;
+		case MARK_BLOCKLIST:
+			attr.s = BLOCKLISTED_S;
+			attr.len = BLOCKLISTED_LEN;
 
-			if (ret == MARK_BLACKLIST) {
+			if (ret == MARK_BLOCKLIST) {
 				val.s = TRUE_S;
 				val.len = TRUE_LEN;
 			}
@@ -1192,28 +1192,28 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 }
 
 
-struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
+struct mi_root * mi_reload_blocklist(struct mi_root* cmd, void* param)
 {
 	struct mi_root * tmp = NULL;
 	if(reload_sources() == 0) {
 		tmp = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	} else {
-		tmp = init_mi_tree( 500, "cannot reload blacklist", 21);
+		tmp = init_mi_tree( 500, "cannot reload blocklist", 21);
 	}
 
 	return tmp;
 }
 
 
-struct mi_root * mi_dump_blacklist(struct mi_root* cmd, void* param)
+struct mi_root * mi_dump_blocklist(struct mi_root* cmd, void* param)
 {
 	char prefix_buff[MAXNUMBERLEN + 1];
 	int length = 0;
 	struct mi_root *tmp = NULL;
 
-	/* Check that global blacklist exists */
+	/* Check that global blocklist exists */
 	if (!gnode) {
-		LM_ERR("the global blacklist is NULL\n");
+		LM_ERR("the global blocklist is NULL\n");
 		return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
@@ -1229,31 +1229,31 @@ struct mi_root * mi_dump_blacklist(struct mi_root* cmd, void* param)
 }
 
 
-struct mi_root * mi_check_blacklist(struct mi_root* cmd, void* param)
+struct mi_root * mi_check_blocklist(struct mi_root* cmd, void* param)
 {
-	return check_list_mi(cmd, MARK_BLACKLIST);
+	return check_list_mi(cmd, MARK_BLOCKLIST);
 }
 
 
-struct mi_root * mi_check_whitelist(struct mi_root* cmd, void* param)
+struct mi_root * mi_check_allowlist(struct mi_root* cmd, void* param)
 {
-	return check_list_mi(cmd, MARK_WHITELIST);
+	return check_list_mi(cmd, MARK_ALLOWLIST);
 }
 
 
-struct mi_root * mi_check_userblacklist(struct mi_root* cmd, void* param)
+struct mi_root * mi_check_userblocklist(struct mi_root* cmd, void* param)
 {
-	return check_userlist_mi(cmd, MARK_BLACKLIST);
+	return check_userlist_mi(cmd, MARK_BLOCKLIST);
 }
 
 
-struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param)
+struct mi_root * mi_check_userallowlist(struct mi_root* cmd, void* param)
 {
-	return check_userlist_mi(cmd, MARK_WHITELIST);
+	return check_userlist_mi(cmd, MARK_ALLOWLIST);
 }
 #endif
 
-static void ubl_rpc_reload_blacklist(rpc_t* rpc, void* ctx)
+static void ubl_rpc_reload_blocklist(rpc_t* rpc, void* ctx)
 {
 	if(reload_sources() != 0) {
 		rpc->fault(ctx, 500, "Reload failed");
@@ -1261,14 +1261,14 @@ static void ubl_rpc_reload_blacklist(rpc_t* rpc, void* ctx)
 	}
 }
 
-static const char* ubl_rpc_reload_blacklist_doc[2] = {
-	"Reload user blacklist records.",
+static const char* ubl_rpc_reload_blocklist_doc[2] = {
+	"Reload user blocklist records.",
 	0
 };
 
 rpc_export_t ubl_rpc[] = {
-	{"userblacklist.reload_blacklist", ubl_rpc_reload_blacklist,
-		ubl_rpc_reload_blacklist_doc, 0},
+	{"userblocklist.reload_blocklist", ubl_rpc_reload_blocklist,
+		ubl_rpc_reload_blocklist_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -1285,7 +1285,7 @@ static int ubl_rpc_init(void)
 static int mod_init(void)
 {
 	if (ubl_rpc_init()<0) return -1;
-	if (userblacklist_db_init() != 0) return -1;
+	if (userblocklist_db_init() != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
 	return 0;
@@ -1300,31 +1300,31 @@ static int child_init(int rank)
 	return rpc_child_init();
 }
 
-static int userblacklist_child_initialized = 0;
-static int blacklist_child_initialized = 0;
+static int userblocklist_child_initialized = 0;
+static int blocklist_child_initialized = 0;
 
 static int rpc_child_init(void)
 {
-	/* user blacklist init */
-	if(userblacklist_child_initialized)
+	/* user blocklist init */
+	if(userblocklist_child_initialized)
 		return 0;
-	if (userblacklist_db_open() != 0) return -1;
+	if (userblocklist_db_open() != 0) return -1;
 	dtrie_root=dtrie_init(match_mode);
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
 	}
 
-	/* global blacklist init */
-	if (check_globalblacklist_fixup(NULL, 0) != 0) {
+	/* global blocklist init */
+	if (check_globalblocklist_fixup(NULL, 0) != 0) {
 		LM_ERR("could not add global table when init the module");
 	}
 
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
 
-	userblacklist_child_initialized = 1;
-	blacklist_child_initialized = 1;
+	userblocklist_child_initialized = 1;
+	blocklist_child_initialized = 1;
 
 	return 0;
 }
@@ -1334,7 +1334,7 @@ static void mod_destroy(void)
 {
 	destroy_source_list();
 	destroy_shmlock();
-	userblacklist_db_close();
+	userblocklist_db_close();
 	dtrie_destroy(&dtrie_root, NULL, match_mode);
 }
 
@@ -1342,49 +1342,49 @@ static void mod_destroy(void)
  *
  */
 /* clang-format off */
-static sr_kemi_t sr_kemi_userblacklist_exports[] = {
-	{ str_init("userblacklist"), str_init("check_user_blacklist"),
-		SR_KEMIP_INT, ki_check_user_blacklist,
+static sr_kemi_t sr_kemi_userblocklist_exports[] = {
+	{ str_init("userblocklist"), str_init("check_user_blocklist"),
+		SR_KEMIP_INT, ki_check_user_blocklist,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_user_whitelist"),
-		SR_KEMIP_INT, ki_check_user_whitelist,
+	{ str_init("userblocklist"), str_init("check_user_allowlist"),
+		SR_KEMIP_INT, ki_check_user_allowlist,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_user_blacklist_number"),
-		SR_KEMIP_INT, ki_check_user_blacklist_number,
+	{ str_init("userblocklist"), str_init("check_user_blocklist_number"),
+		SR_KEMIP_INT, ki_check_user_blocklist_number,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_user_whitelist_number"),
-		SR_KEMIP_INT, ki_check_user_whitelist_number,
+	{ str_init("userblocklist"), str_init("check_user_allowlist_number"),
+		SR_KEMIP_INT, ki_check_user_allowlist_number,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_user_blacklist_table"),
-		SR_KEMIP_INT, ki_check_user_blacklist_table,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("userblacklist"), str_init("check_user_whitelist_table"),
-		SR_KEMIP_INT, ki_check_user_whitelist_table,
+	{ str_init("userblocklist"), str_init("check_user_blocklist_table"),
+		SR_KEMIP_INT, ki_check_user_blocklist_table,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_whitelist"),
-		SR_KEMIP_INT, ki_check_whitelist,
+	{ str_init("userblocklist"), str_init("check_user_allowlist_table"),
+		SR_KEMIP_INT, ki_check_user_allowlist_table,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("userblocklist"), str_init("check_allowlist"),
+		SR_KEMIP_INT, ki_check_allowlist,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_blacklist"),
-		SR_KEMIP_INT, ki_check_blacklist,
+	{ str_init("userblocklist"), str_init("check_blocklist"),
+		SR_KEMIP_INT, ki_check_blocklist,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("userblacklist"), str_init("check_global_blacklist"),
-		SR_KEMIP_INT, ki_check_globalblacklist,
+	{ str_init("userblocklist"), str_init("check_global_blocklist"),
+		SR_KEMIP_INT, ki_check_globalblocklist,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1395,6 +1395,6 @@ static sr_kemi_t sr_kemi_userblacklist_exports[] = {
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	sr_kemi_modules_add(sr_kemi_userblacklist_exports);
+	sr_kemi_modules_add(sr_kemi_userblocklist_exports);
 	return 0;
 }

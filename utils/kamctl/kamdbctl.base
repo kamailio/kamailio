@@ -39,7 +39,7 @@ STANDARD_TABLES=${STANDARD_TABLES:-'version acc dbaliases domain domain_attrs
 		usr_preferences aliases silo dialog dialog_vars dispatcher dialplan
 		acc_cdrs topos_d topos_t'}
 EXTRA_TABLES=${EXTRA_TABLES:-'imc_members imc_rooms cpl sip_trace domainpolicy
-		carrierroute carrier_name domain_name carrierfailureroute userblacklist
+		carrierroute carrier_name domain_name carrierfailureroute userblocklist
 		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees
 		sca_subscriptions mohqcalls mohqueues rtpproxy rtpengine
 		dr_gateways dr_rules dr_gw_lists dr_groups secfilter'}
@@ -76,7 +76,7 @@ STANDARD_MODULES=${STANDARD_MODULES:-'standard acc lcr domain group
 PRESENCE_MODULES=${PRESENCE_MODULES:-'presence rls'}
 
 EXTRA_MODULES=${EXTRA_MODULES:-'imc cpl siptrace domainpolicy carrierroute
-		drouting userblacklist htable purple uac pipelimit mtree sca mohqueue
+		drouting userblocklist htable purple uac pipelimit mtree sca mohqueue
 		rtpproxy rtpengine secfilter'}
 
 DBUID_MODULES=${UID_MODULES:-'uid_auth_db uid_avp_db uid_domain uid_gflags
