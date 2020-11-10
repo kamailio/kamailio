@@ -215,6 +215,7 @@ extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
 extern int ksr_sip_parser_mode;
+extern int ksr_cfg_print_mode;
 
 extern char *_sr_uri_host_extra_chars;
 extern unsigned char *_ksr_hname_extra_chars;

@@ -533,6 +533,8 @@ char *sr_memmng_shm = NULL;
 
 static int *_sr_instance_started = NULL;
 
+int ksr_cfg_print_mode = 0;
+
 /**
  * return 1 if all child processes were forked
  * - note: they might still be in init phase (i.e., child init)
@@ -1933,6 +1935,7 @@ int main(int argc, char** argv)
 		{"modparam",    required_argument, 0, KARGOPTVAL + 6},
 		{"log-engine",  required_argument, 0, KARGOPTVAL + 7},
 		{"debug",       required_argument, 0, KARGOPTVAL + 8},
+		{"cfg-print",   no_argument,       0, KARGOPTVAL + 9},
 		{0, 0, 0, 0 }
 	};
 
@@ -2002,6 +2005,9 @@ int main(int argc, char** argv)
 						LM_ERR("bad debug level value: %s\n", optarg);
 						goto error;
 					}
+					break;
+			case KARGOPTVAL+9:
+					ksr_cfg_print_mode = 1;
 					break;
 
 			default:
@@ -2165,6 +2171,7 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+6:
 			case KARGOPTVAL+7:
 			case KARGOPTVAL+8:
+			case KARGOPTVAL+9:
 					break;
 
 			/* long options */
@@ -2318,13 +2325,20 @@ try_again:
 
 	yyin=cfg_stream;
 	debug_save = default_core_cfg.debug;
-	if ((yyparse()!=0)||(cfg_errors)||(pp_ifdef_level_check()<0)){
-		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+	r = yyparse();
+	if (ksr_cfg_print_mode == 1) {
+		/* printed evaluated content of config file based on include and ifdef */
+		return 0;
+	}
+	if ((r!=0)||(cfg_errors)||(pp_ifdef_level_check()<0)){
+		fprintf(stderr, "ERROR: bad config file (%d errors) (parsing code: %d)\n",
+				cfg_errors, r);
 		if (debug_flag) default_core_cfg.debug = debug_save;
 		pp_ifdef_level_error();
 
 		goto error;
 	}
+
 	if (cfg_warnings){
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}

@@ -124,7 +124,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
-%x PVARID INCLF IMPTF EVRTNAME
+%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -670,11 +670,11 @@ IMPORTFILE      "import_file"
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
-<INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
-<INITIAL>{PREP_START}{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL,CFGPRINTMODE>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{INCLUDEFILE}  { count(); BEGIN(INCLF); }
 
-<INITIAL>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
-<INITIAL>{PREP_START}{IMPORTFILE}  { count(); BEGIN(IMPTF); }
+<INITIAL,CFGPRINTMODE>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{IMPORTFILE}  { count(); BEGIN(IMPTF); }
 
 <INITIAL>{CFG_SELECT}	{ count(); yylval.strval=yytext; return CFG_SELECT; }
 <INITIAL>{CFG_RESET}	{ count(); yylval.strval=yytext; return CFG_RESET; }
@@ -1267,6 +1267,10 @@ IMPORTFILE      "import_file"
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
 											sr_cfg_compat=SR_COMPAT_SER;}
 <INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count();
+											if(ksr_cfg_print_mode == 1) {
+												printf("%s", yytext);
+												BEGIN(CFGPRINTMODE);
+											}
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count();
 												sr_cfg_compat=SR_COMPAT_MAX;}
@@ -1304,10 +1308,10 @@ IMPORTFILE      "import_file"
 <INITIAL>{PREP_START}{SUBSTDEF}	{ count();  return SUBSTDEF;}
 <INITIAL>{PREP_START}{SUBSTDEFS}	{ count();  return SUBSTDEFS;}
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
-<INITIAL,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
 <IFDEF_ID>{ID}{MINUS}           { count();
@@ -1321,9 +1325,9 @@ IMPORTFILE      "import_file"
 								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
 															pp_endif(); }
 
 	/* we're in an ifdef that evaluated to false -- throw it away */
@@ -1364,7 +1368,11 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				BEGIN(INITIAL);
+				if(ksr_cfg_print_mode == 1) {
+					BEGIN(CFGPRINTMODE);
+				} else {
+					BEGIN(INITIAL);
+				}
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
@@ -1378,8 +1386,14 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				BEGIN(INITIAL);
+				if(ksr_cfg_print_mode == 1) {
+					BEGIN(CFGPRINTMODE);
+				} else {
+					BEGIN(INITIAL);
+				}
 }
+
+<CFGPRINTMODE>.|{CR}  { count(); printf("%s", yytext); }
 
 
 <<EOF>>							{
@@ -1948,7 +1962,11 @@ static void pp_update_state()
 			return;
 		}
 
-	state = INITIAL; BEGIN(INITIAL);
+	if(ksr_cfg_print_mode == 1) {
+		state = CFGPRINTMODE; BEGIN(CFGPRINTMODE);
+	} else {
+		state = INITIAL; BEGIN(INITIAL);
+	}
 }
 
 static void pp_ifdef()
