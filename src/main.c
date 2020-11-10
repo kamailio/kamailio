@@ -169,6 +169,7 @@ Options:\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
     -c           Check configuration file for syntax errors\n\
+    --cfg-print  Print configuration file evaluating includes and ifdefs\n\
     -d           Debugging level control (multiple -d to increase the level from 0)\n\
     --debug=val  Debugging level value\n\
     -D           Control how daemonize is done:\n\
