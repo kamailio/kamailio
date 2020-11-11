@@ -119,12 +119,13 @@
 	static void pp_else();
 	static void pp_endif();
 	static void ksr_cfg_print_part(char *text);
+	static void ksr_cfg_print_define_module(char *modpath, int modpathlen);
 
 %}
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
-%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE
+%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -1257,15 +1258,20 @@ IMPORTFILE      "import_file"
 									return STRING;
 								}
 
-<INITIAL,COMMENT>{COM_START}	{ count(); comment_nest++; state=COMMENT_S;
-										BEGIN(COMMENT); }
-<COMMENT>{COM_END}				{ count(); comment_nest--;
-										if (comment_nest==0){
-											state=INITIAL_S;
-											BEGIN(INITIAL);
-										}
+<INITIAL,CFGPRINTMODE,COMMENT>{COM_START}	{ count();
+									ksr_cfg_print_part(yytext);
+									comment_nest++; state=COMMENT_S;
+									BEGIN(COMMENT);
 								}
-<COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
+<COMMENT>{COM_END}				{ count();
+									ksr_cfg_print_part(yytext);
+									comment_nest--;
+									if (comment_nest==0){
+										state=INITIAL_S;
+										ksr_cfg_print_initial_state();
+									}
+								}
+<COMMENT>.|{EAT_ABLE}|{CR}				{ count(); ksr_cfg_print_part(yytext); };
 
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
 											sr_cfg_compat=SR_COMPAT_SER;}
@@ -1349,9 +1355,16 @@ IMPORTFILE      "import_file"
 <IFDEF_SKIP>.|{CR}    { count(); }
 
 	/* this is split so the shebangs match more, giving them priority */
-<INITIAL>{COM_LINE}        { count(); state = LINECOMMENT_S;
-								BEGIN(LINECOMMENT); }
-<LINECOMMENT>.*{CR}        { count(); state = INITIAL_S; BEGIN(INITIAL); }
+<INITIAL,CFGPRINTMODE>{COM_LINE}        { count();
+								ksr_cfg_print_part(yytext);
+								state = LINECOMMENT_S;
+								BEGIN(LINECOMMENT);
+							}
+<LINECOMMENT>.*{CR}        { count();
+								ksr_cfg_print_part(yytext);
+								state = INITIAL_S;
+								ksr_cfg_print_initial_state();
+							}
 
 <INITIAL>{ID}		{	if ((sdef = pp_define_get(yyleng, yytext))!=NULL) {
 							for (r=sdef->len-1; r>=0; r--)
@@ -1400,8 +1413,20 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_initial_state();
 }
 
+<CFGPRINTMODE>{LOADMODULE}	{ count(); printf("%s", yytext);
+				BEGIN(CFGPRINTLOADMOD);
+			}
 <CFGPRINTMODE>.|{CR}  { count(); printf("%s", yytext); }
 
+
+<CFGPRINTLOADMOD>[ \t]* { /* eat the whitespace */
+				count(); printf("%s", yytext);
+			}
+<CFGPRINTLOADMOD>[^ \t\r\n]+   { /* get the module name */
+				count(); printf("%s", yytext);
+				ksr_cfg_print_define_module(yytext, yyleng);
+				ksr_cfg_print_initial_state();
+}
 
 <<EOF>>							{
 									switch(state){
@@ -1457,6 +1482,54 @@ static void ksr_cfg_print_part(char *text)
 {
 	if(ksr_cfg_print_mode == 1) {
 		printf("%s", text);
+	}
+}
+
+static void ksr_cfg_print_define_module(char *modpath, int modpathlen)
+{
+	char defmod[64];
+	str modname;
+	char *p;
+
+	modname.s = modpath;
+	modname.len = modpathlen;
+
+	if(modname.len <= 2) {
+		return;
+	}
+	if(modname.s[0] == '\'' && modname.s[modname.len - 1] == '\'') {
+		modname.s++;
+		modname.len -= 2;
+	} else if(modname.s[0] == '"' && modname.s[modname.len - 1] == '"') {
+		modname.s++;
+		modname.len -= 2;
+	}
+
+	if(modname.len>3 && strncmp(modname.s + modname.len-3, ".so", 3)==0) {
+		modname.len -= 3;
+	}
+	if (strchr(modpath, '/')) {
+		/* only the name */
+		p = modname.s + modname.len - 1;
+		modname.len = 0;
+		while(p>=modname.s && *p!='/') {
+			p--;
+			modname.len++;
+		}
+		modname.s = p + 1;
+	}
+
+	/* add cfg define for each module: MOD_modulename */
+	if(modname.len >= 60) {
+		printf("\n# ***** ERROR: too long module name: %s\n", modpath);
+		return;
+	}
+	memcpy(defmod, "MOD_", 4);
+	memcpy(defmod+4, modname.s, modname.len);
+	pp_define_set_type(0);
+	if(pp_define(modname.len + 4, defmod)<0) {
+		printf("\n# ***** ERROR: unable to set cfg define for module: %s\n",
+				modpath);
 	}
 }
 
