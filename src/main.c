@@ -2326,6 +2326,7 @@ try_again:
 
 	yyin=cfg_stream;
 	debug_save = default_core_cfg.debug;
+	ksr_cfg_print_initial_state();
 	r = yyparse();
 	if (ksr_cfg_print_mode == 1) {
 		/* printed evaluated content of config file based on include and ifdef */
