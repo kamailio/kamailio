@@ -114,6 +114,7 @@ extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
+int ksr_local_rport = 0;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -2975,7 +2976,7 @@ char* create_via_hf(unsigned int *len,
 #endif /* USE_TCP || USE_SCTP */
 
 	/* test and add rport parameter to local via - rfc3581 */
-	if(msg && msg->msg_flags&FL_ADD_LOCAL_RPORT) {
+	if((ksr_local_rport) || (msg && (msg->msg_flags&FL_ADD_LOCAL_RPORT))) {
 		/* params so far + ';rport' + '\0' */
 		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
 		if(via==0) {

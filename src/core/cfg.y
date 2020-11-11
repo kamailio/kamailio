@@ -253,6 +253,7 @@ extern char *default_routename;
 %token REVERT_URI
 %token FORCE_RPORT
 %token ADD_LOCAL_RPORT
+%token LOCAL_RPORT
 %token FORCE_TCP_ALIAS
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
@@ -1757,6 +1758,8 @@ assign_stm:
 	| FORCE_RPORT EQUAL NUMBER
 		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0, 0); }
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
+	| LOCAL_RPORT EQUAL NUMBER { ksr_local_rport=$3; }
+	| LOCAL_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto
 		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
