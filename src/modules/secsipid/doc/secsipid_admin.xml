@@ -140,7 +140,7 @@ modparam("secsipid", "cache_expire", 7200)
 
 	<section>
 	<title>Functions</title>
-	<section id="async.f.secsipid_check_identity">
+	<section id="secsipid.f.secsipid_check_identity">
 		<title>
 		<function moreinfo="none">secsipid_check_identity(keyPath)</function>
 		</title>
@@ -179,7 +179,7 @@ request_route {
 			together with jansson module.
 		</para>
 	</section>
-	<section id="async.f.secsipid_add_identity">
+	<section id="secsipid.f.secsipid_add_identity">
 		<title>
 		<function moreinfo="none">secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)</function>
 		</title>
@@ -212,7 +212,7 @@ request_route {
 		</example>
 	</section>
 	</section>
-	<section>
+	<section id="secsipid.s.installation">
 	<title>Installation</title>
 	<para>
 		The module depends on "libsecsipid", which is a component of "sipsecidx"
