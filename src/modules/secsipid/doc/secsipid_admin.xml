@@ -95,6 +95,46 @@ modparam("secsipid", "timeout", 2)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>cache_dir</varname> (str)</title>
+		<para>
+		The path to the directory where to save cached pyblic keys. If set,
+		it activates the public key file caching in the libsecsipid library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cache_dir</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "cache_dir", "/tmp/kamailio/secsipid")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>cache_expire</varname> (int)</title>
+		<para>
+		The interval in seconds after which a cached public key is considered
+		expired. This value is passed to the libsecsipid library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3600.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cache_expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "cache_expire", 7200)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
