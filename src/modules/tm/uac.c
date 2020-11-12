@@ -305,16 +305,20 @@ static inline int t_run_local_req(
 	setsflagsval(sflag_bk);
 
 	if (unlikely(ra_ctx.run_flags&DROP_R_F)) {
-		LM_DBG("tm:local-request dropped msg. to %.*s\n", 
+		LM_DBG("tm:local-request dropped msg. to %.*s\n",
 				lreq.dst_uri.len, lreq.dst_uri.s);
 		refresh_shortcuts = E_DROP;
 		goto clean;
 	}
+
 	/* rebuild the new message content */
-	if(lreq.force_send_socket != uac_r->dialog->send_sock) {
-		LM_DBG("Send socket updated to: %.*s",
+	if((lreq.force_send_socket != uac_r->dialog->send_sock)
+			|| (lreq.msg_flags&(FL_ADD_LOCAL_RPORT|FL_ADD_SRVID
+					|FL_ADD_XAVP_VIA_PARAMS|FL_USE_XAVP_VIA_FIELDS))) {
+		LM_DBG("local Via update - socket: [%.*s] - msg-flags: %u",
 				lreq.force_send_socket->address_str.len,
-				lreq.force_send_socket->address_str.s);
+				lreq.force_send_socket->address_str.s,
+				lreq.msg_flags);
 
 		/* rebuild local Via - remove previous value
 			* and add the one for the new send socket */
