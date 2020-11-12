@@ -38,6 +38,9 @@ MODULE_VERSION
 static int secsipid_expire = 300;
 static int secsipid_timeout = 5;
 
+static int secsipid_cache_expire = 3600;
+static str secsipid_cache_dir = str_init("");
+
 static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
@@ -57,8 +60,10 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"expire",     PARAM_INT,   &secsipid_expire},
-	{"timeout",    PARAM_INT,   &secsipid_timeout},
+	{"expire",        PARAM_INT,   &secsipid_expire},
+	{"timeout",       PARAM_INT,   &secsipid_timeout},
+	{"cache_expire",  PARAM_INT,   &secsipid_cache_expire},
+	{"cache_dir",     PARAM_STR,   &secsipid_cache_dir},
 	{0, 0, 0}
 };
 
@@ -127,6 +132,9 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 
 	ibody = hf->body;
 
+	if(secsipid_cache_dir.len > 0) {
+		SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s, secsipid_cache_expire);
+	}
 	ret = SecSIPIDCheckFull(ibody.s, ibody.len, secsipid_expire, keypath->s,
 			secsipid_timeout);
 

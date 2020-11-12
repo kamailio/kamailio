@@ -70,20 +70,19 @@ extern "C" {
 
 
 // SecSIPIDSignJSONHP --
-
-extern int SecSIPIDSignJSONHP(char* p0, char* p1, char* p2, char** p3);
+extern int SecSIPIDSignJSONHP(char* headerJSON, char* payloadJSON, char* prvkeyPath, char** outPtr);
 
 // SecSIPIDGetIdentity --
-
-extern int SecSIPIDGetIdentity(char* p0, char* p1, char* p2, char* p3, char* p4, char* p5, char** p6);
+extern int SecSIPIDGetIdentity(char* origTN, char* destTN, char* attestVal, char* origID, char* x5uVal, char* prvkeyPath, char** outPtr);
 
 // SecSIPIDCheck --
-
-extern int SecSIPIDCheck(char* p0, int p1, int p2, char* p3, int p4);
+extern int SecSIPIDCheck(char* identityVal, int identityLen, int expireVal, char* pubkeyPath, int timeoutVal);
 
 // SecSIPIDCheckFull --
+extern int SecSIPIDCheckFull(char* identityVal, int identityLen, int expireVal, char* pubkeyPath, int timeoutVal);
 
-extern int SecSIPIDCheckFull(char* p0, int p1, int p2, char* p3, int p4);
+// SecSIPIDSetFileCacheOptions --
+extern int SecSIPIDSetFileCacheOptions(char* dirPath, int expireVal);
 
 #ifdef __cplusplus
 }
