@@ -795,6 +795,9 @@ modparam("acc", "acc_prepare_always", 1)
    corresponding script variable is not defined or has $null value. If set
    to 0, the value is saved as empty string (the existing behavior).
 
+   Database columns may need to be altered to DROP NOT NULL constraints
+   and DROP DEFAULT values in order to accept NULL values.
+
    Default value is 0.
 
    Example 1.9. acc_extra_nullable example
@@ -1147,6 +1150,9 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
    to $null) will be saved as empty string. If set to 1, custom CDR fields
    not defined in config operation (or set to $null) will be saved as
    NULL.
+
+   Database columns may need to be altered to DROP NOT NULL constraints
+   and DROP DEFAULT values in order to accept NULL values.
 
    Default value is 0.
 
