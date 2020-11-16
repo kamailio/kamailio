@@ -1227,7 +1227,7 @@ static void mod_destroy(void)
 /**
  *
  */
-static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+static int ki_jsonrpcs_dispatch(sip_msg_t* msg)
 {
 	rpc_export_t* rpce;
 	jsonrpc_ctx_t* ctx;
@@ -1314,6 +1314,14 @@ send_reply:
 	return 1;
 }
 
+
+/**
+ *
+ */
+static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+{
+	return ki_jsonrpcs_dispatch(msg);
+}
 
 int jsonrpc_exec_ex(str *cmd, str *rpath)
 {
@@ -1551,6 +1559,11 @@ static sr_kemi_xval_t* ki_jsonrpcs_response(sip_msg_t *msg)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_jsonrpcs_exports[] = {
+	{ str_init("jsonrpcs"), str_init("dispatch"),
+		SR_KEMIP_INT, ki_jsonrpcs_dispatch,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("jsonrpcs"), str_init("exec"),
 		SR_KEMIP_INT, ki_jsonrpcs_exec,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
