@@ -634,6 +634,10 @@ modparam("acc", "acc_prepare_always", 1)
 			set to 0, the value is saved as empty string (the existing behavior).
 		</para>
 		<para>
+		Database columns may need to be altered to DROP NOT NULL constraints
+		and DROP DEFAULT values in order to accept NULL values.
+		</para>
+		<para>
 		Default value is 0.
 		</para>
 		<example>
@@ -1155,6 +1159,10 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 		<para>
 		If set to 0, custom CDR fields not defined in config operation (or set to $null) will be saved as empty string.
 		If set to 1, custom CDR fields not defined in config operation (or set to $null) will be saved as NULL.
+		</para>
+		<para>
+		Database columns may need to be altered to DROP NOT NULL constraints
+		and DROP DEFAULT values in order to accept NULL values.
 		</para>
 		<para>
 		Default value is 0.
