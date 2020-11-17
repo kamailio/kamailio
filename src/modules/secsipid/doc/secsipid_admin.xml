@@ -207,11 +207,33 @@ request_route {
 ...
 </programlisting>
 		</example>
+	</section>
+	<section id="secsipid.f.secsipid_get_url">
+		<title>
+		<function moreinfo="none">secsipid_get_url(url, ovar)</function>
+		</title>
 		<para>
-			Further checks can be done with config operations, decoding the JWT header
-			and payload using {s.select} and {s.decode.base64t} transformations
-			together with jansson module.
+			Get the content of a URL and store the result in a variable.
 		</para>
+		<para>
+		The url parameters can contain pseudo-variables and ovar has to be
+		the name of a writtable pseudo-variable.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_get_url</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+  ...
+  if(secsipid_get_url("https://$fd/stirshaken/cert.pem", "$var(pubkey)")) { ... }
+  ...
+}
+...
+</programlisting>
+		</example>
 	</section>
 	<section id="secsipid.f.secsipid_add_identity">
 		<title>
