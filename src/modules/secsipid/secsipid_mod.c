@@ -46,6 +46,7 @@ static int child_init(int);
 static void mod_destroy(void);
 
 static int w_secsipid_check_identity(sip_msg_t *msg, char *pkeypath, char *str2);
+static int w_secsipid_check_identity_pubkey(sip_msg_t *msg, char *pkeyval, char *str2);
 static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 			char *pattest, char *porigid, char *px5u, char *pkeypath);
 
@@ -53,6 +54,8 @@ static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{"secsipid_check_identity", (cmd_function)w_secsipid_check_identity, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"secsipid_check_identity_pubkey", (cmd_function)w_secsipid_check_identity_pubkey, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"secsipid_add_identity", (cmd_function)w_secsipid_add_identity, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
@@ -161,6 +164,57 @@ static int w_secsipid_check_identity(sip_msg_t *msg, char *pkeypath, char *str2)
 
 	return ki_secsipid_check_identity(msg, &keypath);
 }
+
+/**
+ *
+ */
+static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
+{
+	int ret = 1;
+	str ibody = STR_NULL;
+	hdr_field_t *hf;
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==SECSIPID_HDR_IDENTITY_LEN
+				&& strncasecmp(hf->name.s, SECSIPID_HDR_IDENTITY,
+					SECSIPID_HDR_IDENTITY_LEN)==0)
+			break;
+	}
+
+	if(hf == NULL) {
+		LM_DBG("no identity header\n");
+		return -1;
+	}
+
+	ibody = hf->body;
+
+	ret = SecSIPIDCheckFullPubKey(ibody.s, ibody.len, secsipid_expire, keyval->s,
+			keyval->len);
+
+	if(ret==0) {
+		LM_DBG("identity check: ok\n");
+		return 1;
+	}
+
+	LM_DBG("identity check: failed\n");
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_secsipid_check_identity_pubkey(sip_msg_t *msg, char *pkeyval, char *str2)
+{
+	str keyval = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pkeyval, &keyval)<0) {
+		LM_ERR("failed to get keyval parameter\n");
+		return -1;
+	}
+
+	return ki_secsipid_check_identity_pubkey(msg, &keyval);
+}
+
 
 /**
  *
@@ -276,6 +330,11 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 		SR_KEMIP_INT, ki_secsipid_add_identity,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("secsipid"), str_init("secsipid_check_identity_pubkey"),
+		SR_KEMIP_INT, ki_secsipid_check_identity_pubkey,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
