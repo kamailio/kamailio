@@ -29,6 +29,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/data_lump.h"
+#include "../../core/lvalue.h"
 #include "../../core/kemi.h"
 
 #include "secsipid.h"
@@ -49,6 +50,7 @@ static int w_secsipid_check_identity(sip_msg_t *msg, char *pkeypath, char *str2)
 static int w_secsipid_check_identity_pubkey(sip_msg_t *msg, char *pkeyval, char *str2);
 static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 			char *pattest, char *porigid, char *px5u, char *pkeypath);
+static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *pout);
 
 
 /* clang-format off */
@@ -59,6 +61,8 @@ static cmd_export_t cmds[]={
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"secsipid_add_identity", (cmd_function)w_secsipid_add_identity, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"secsipid_get_url", (cmd_function)w_secsipid_get_url, 2,
+		fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -319,6 +323,85 @@ static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 /**
  *
  */
+static str _secsipid_get_url_val = STR_NULL;
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_secsipid_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_secsipid_get_url(sip_msg_t *msg, str *surl)
+{
+	int r;
+
+	memset(&_sr_kemi_secsipid_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_secsipid_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_secsipid_xval;
+	}
+
+	if(_secsipid_get_url_val.s != NULL) {
+		free(_secsipid_get_url_val.s);
+		_secsipid_get_url_val.len = 0;
+	}
+
+	r = SecSIPIDGetURLContent(surl->s, secsipid_timeout, &_secsipid_get_url_val.s,
+			&_secsipid_get_url_val.len);
+	if(r!=0) {
+		sr_kemi_xval_null(&_sr_kemi_secsipid_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_secsipid_xval;
+	}
+
+	_sr_kemi_secsipid_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_secsipid_xval.v.s = _secsipid_get_url_val;
+
+	return &_sr_kemi_secsipid_xval;
+}
+
+/**
+ *
+ */
+static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
+{
+	int r;
+	pv_spec_t *ovar;
+	pv_value_t val;
+	str surl = {NULL, 0};
+
+	if(fixup_get_svalue(msg, (gparam_t*)purl, &surl)<0) {
+		LM_ERR("failed to get url parameter\n");
+		return -1;
+	}
+	if(_secsipid_get_url_val.s != NULL) {
+		free(_secsipid_get_url_val.s);
+		_secsipid_get_url_val.len = 0;
+	}
+
+	r = SecSIPIDGetURLContent(surl.s, secsipid_timeout, &_secsipid_get_url_val.s,
+			&_secsipid_get_url_val.len);
+	if(r!=0) {
+		return -1;
+	}
+	ovar = (pv_spec_t *)povar;
+
+	val.rs = _secsipid_get_url_val;
+	val.flags = PV_VAL_STR;
+	if(ovar->setf) {
+		ovar->setf(msg, &ovar->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_secsipid_exports[] = {
 	{ str_init("secsipid"), str_init("secsipid_check_identity"),
@@ -333,6 +416,11 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 	},
 	{ str_init("secsipid"), str_init("secsipid_check_identity_pubkey"),
 		SR_KEMIP_INT, ki_secsipid_check_identity_pubkey,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("secsipid"), str_init("secsipid_get_url"),
+		SR_KEMIP_XVAL, ki_secsipid_get_url,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
