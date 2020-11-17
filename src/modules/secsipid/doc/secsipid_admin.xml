@@ -179,6 +179,40 @@ request_route {
 			together with jansson module.
 		</para>
 	</section>
+	<section id="secsipid.f.secsipid_check_identity_pubkey">
+		<title>
+		<function moreinfo="none">secsipid_check_identity(pubkeyVal)</function>
+		</title>
+		<para>
+			Similar to secsipid_check_identity() with the public key value
+			provided in the parameter.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_check_identity_pubkey</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+  ...
+  http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)");
+  ...
+  if(secsipid_check_identity_pubkey("$var(pubkey)")) { ... }
+  ...
+}
+...
+</programlisting>
+		</example>
+		<para>
+			Further checks can be done with config operations, decoding the JWT header
+			and payload using {s.select} and {s.decode.base64t} transformations
+			together with jansson module.
+		</para>
+	</section>
 	<section id="secsipid.f.secsipid_add_identity">
 		<title>
 		<function moreinfo="none">secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)</function>
