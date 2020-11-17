@@ -34,7 +34,8 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. secsipid_check_identity(keyPath)
-              4.2. secsipid_add_identity(origTN, destTN, attest, origID,
+              4.2. secsipid_check_identity(pubkeyVal)
+              4.3. secsipid_add_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
         5. Installation
@@ -46,8 +47,9 @@ Daniel-Constantin Mierla
    1.3. Set cache_dir parameter
    1.4. Set cache_expire parameter
    1.5. secsipid_check_identity usage
-   1.6. secsipid_add_identity usage
-   1.7. Libsecsipid usage
+   1.6. secsipid_check_identity_pubkey usage
+   1.7. secsipid_add_identity usage
+   1.8. Libsecsipid usage
 
 Chapter 1. Admin Guide
 
@@ -69,7 +71,8 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. secsipid_check_identity(keyPath)
-        4.2. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+        4.2. secsipid_check_identity(pubkeyVal)
+        4.3. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
    5. Installation
@@ -155,7 +158,8 @@ modparam("secsipid", "cache_expire", 7200)
 4. Functions
 
    4.1. secsipid_check_identity(keyPath)
-   4.2. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+   4.2. secsipid_check_identity(pubkeyVal)
+   4.3. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
 4.1.  secsipid_check_identity(keyPath)
@@ -186,7 +190,32 @@ request_route {
    header and payload using {s.select} and {s.decode.base64t}
    transformations together with jansson module.
 
-4.2.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
+4.2.  secsipid_check_identity(pubkeyVal)
+
+   Similar to secsipid_check_identity() with the public key value provided
+   in the parameter.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. secsipid_check_identity_pubkey usage
+...
+request_route {
+  ...
+  http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)")
+;
+  ...
+  if(secsipid_check_identity_pubkey("$var(pubkey)")) { ... }
+  ...
+}
+...
+
+   Further checks can be done with config operations, decoding the JWT
+   header and payload using {s.select} and {s.decode.base64t}
+   transformations together with jansson module.
+
+4.3.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
    Add Identity header using the key specified by "keyPath" to sign the
    JWT body. If origID is empty, a UUID string is generated to fill the
@@ -200,7 +229,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. secsipid_add_identity usage
+   Example 1.7. secsipid_add_identity usage
 ...
 request_route {
     ...
@@ -224,7 +253,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.7. Libsecsipid usage
+   Example 1.8. Libsecsipid usage
 ...
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
