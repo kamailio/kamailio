@@ -348,6 +348,9 @@ static sr_kemi_xval_t* ki_secsipid_get_url(sip_msg_t *msg, str *surl)
 		_secsipid_get_url_val.len = 0;
 	}
 
+	if(secsipid_cache_dir.len > 0) {
+		SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s, secsipid_cache_expire);
+	}
 	r = SecSIPIDGetURLContent(surl->s, secsipid_timeout, &_secsipid_get_url_val.s,
 			&_secsipid_get_url_val.len);
 	if(r!=0) {
@@ -380,6 +383,9 @@ static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 		_secsipid_get_url_val.len = 0;
 	}
 
+	if(secsipid_cache_dir.len > 0) {
+		SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s, secsipid_cache_expire);
+	}
 	r = SecSIPIDGetURLContent(surl.s, secsipid_timeout, &_secsipid_get_url_val.s,
 			&_secsipid_get_url_val.len);
 	if(r!=0) {
