@@ -459,11 +459,20 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 
 		prev = (struct contact *)0;
 		curr = contacts;
-		while (curr &&
-				((curr->q_index < next->q_index) ||
-				 ((curr->q_index == next->q_index) && (next->path.len == 0)))) {
-			prev = curr;
-			curr = curr->next;
+		if (mode == T_LOAD_PROPORTIONAL) {
+			while (curr &&
+					((curr->q_index < next->q_index) ||
+					 ((curr->q_index == next->q_index) && (next->path.len == 0)))) {
+				prev = curr;
+				curr = curr->next;
+			}
+		} else {
+			while (curr &&
+					((curr->q < next->q) ||
+					 ((curr->q == next->q) && (next->path.len == 0)))) {
+				prev = curr;
+				curr = curr->next;
+			}
 		}
 		if (!curr) {
 			next->next = (struct contact *)0;
