@@ -1063,7 +1063,11 @@ done:
 	counter_inc(regactive);
 }
 
-int uac_reg_update(reg_uac_t *reg, time_t tn)
+
+/**
+ *
+ */
+int uac_reg_send(reg_uac_t *reg, time_t tn)
 {
 	char *uuid;
 	uac_req_t uac_r;
@@ -1077,36 +1081,8 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	str   s_hdrs;
 	dlg_t tmdlg;
 
-	if(uac_tmb.t_request==NULL)
-		return -1;
-	if(reg->expires==0)
-		return 1;
-	if(reg->flags&UAC_REG_ONGOING) {
-		if (reg->timer_expires > tn - reg_retry_interval)
-			return 2;
-		LM_DBG("record marked as ongoing registration (%d) - resetting\n",
-				(int)reg->flags);
-		reg->flags &= ~(UAC_REG_ONLINE|UAC_REG_AUTHSENT);
-	}
-	if(reg_active && *reg_active == 0)
-		return 4;
-	if(reg->flags&UAC_REG_DISABLED)
-		return 4;
-
-	if(!(reg->flags & UAC_REG_INIT)) {
-		if(reg->reg_delay>0) {
-			if(tn < reg->reg_init+reg->reg_delay) {
-				return 2;
-			}
-		}
-		reg->flags |= UAC_REG_INIT;
-	}
-
-	if(reg->timer_expires > tn + reg_timer_interval + 3)
-		return 3;
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
-	if(uuid==NULL)
-	{
+	if(uuid==NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -1157,8 +1133,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
 				&& reg->cseq > 0 && reg->cseq < 2147483638
-				&& reg->callid.len > 0)
-	{
+				&& reg->callid.len > 0) {
 		/* reregister, reuse callid and cseq */
 		memset(&tmdlg, 0, sizeof(dlg_t));
 		tmdlg.id.call_id = reg->callid;
@@ -1187,9 +1162,9 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	{
 		LM_ERR("failed to send request for [%.*s]", reg->l_uuid.len, reg->l_uuid.s);
 		shm_free(uuid);
-		if (reg_retry_interval)
+		if (reg_retry_interval) {
 			reg->timer_expires = (tn ? tn : time(NULL)) + reg_retry_interval;
-		else {
+		} else {
 			reg->flags |= UAC_REG_DISABLED;
 			counter_inc(regdisabled);
 		}
@@ -1197,6 +1172,43 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return -1;
 	}
 	return 0;
+}
+
+
+/**
+ *
+ */
+int uac_reg_update(reg_uac_t *reg, time_t tn)
+{
+	if(uac_tmb.t_request==NULL)
+		return -1;
+	if(reg->expires==0)
+		return 1;
+	if(reg->flags&UAC_REG_ONGOING) {
+		if (reg->timer_expires > tn - reg_retry_interval)
+			return 2;
+		LM_DBG("record marked as ongoing registration (%d) - resetting\n",
+				(int)reg->flags);
+		reg->flags &= ~(UAC_REG_ONLINE|UAC_REG_AUTHSENT);
+	}
+	if(reg_active && *reg_active == 0)
+		return 4;
+	if(reg->flags&UAC_REG_DISABLED)
+		return 4;
+
+	if(!(reg->flags & UAC_REG_INIT)) {
+		if(reg->reg_delay>0) {
+			if(tn < reg->reg_init+reg->reg_delay) {
+				return 2;
+			}
+		}
+		reg->flags |= UAC_REG_INIT;
+	}
+
+	if(reg->timer_expires > tn + reg_timer_interval + 3)
+		return 3;
+
+	return uac_reg_send(reg, tn);
 }
 
 /**
@@ -2212,6 +2224,50 @@ static void rpc_uac_reg_active(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_unregister_doc[2] = {
+	"Send a register request with expires 0.",
+	0
+};
+
+
+static void rpc_uac_reg_unregister(rpc_t* rpc, void* ctx)
+{
+	reg_uac_t *reg = NULL;
+	str attr = {0};
+	str val = {0};
+	int ret;
+
+	if(_reg_htable==NULL) {
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2) {
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL) {
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
+		return;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
+	}
+
+	reg->expires = 0;
+	uac_reg_send(reg, time(NULL));
+
+	lock_release(reg->lock);
+	return;
+}
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
@@ -2222,6 +2278,7 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
 	{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
 	{"uac.reg_active", rpc_uac_reg_active, rpc_uac_reg_active_doc, 0},
+	{"uac.reg_unregister", rpc_uac_reg_unregister, rpc_uac_reg_unregister_doc, 0},
 	{0, 0, 0, 0}
 };
 
