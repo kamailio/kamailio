@@ -337,7 +337,7 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 	}
 
 	/* Check if anything needs to be done */
-	LM_DBG("nr_branches is %d\n", nr_branches);
+	LM_DBG("nr_branches is %d - new uri mode %d\n", nr_branches, ruri_is_new);
 
 	if ((nr_branches == 0) || ((nr_branches == 1) && !ruri_is_new)) {
 		LM_DBG("nothing to do - only one contact!\n");
