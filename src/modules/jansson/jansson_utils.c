@@ -97,7 +97,7 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 		val->v.s.len = strlen(value);
 	}else if(json_is_boolean(v)) {
 		val->type = SR_XTYPE_INT;
-		val->v.i = json_is_true(v) ? 0 : 1;
+		val->v.i = json_is_true(v) ? 1 : 0;
 	}else if(json_is_real(v)) {
 		char* value = NULL;
 		if(asprintf(&value, "%.15g", json_real_value(v))<0) {
