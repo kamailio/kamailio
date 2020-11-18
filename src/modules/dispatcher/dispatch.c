@@ -467,19 +467,19 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	strncpy(hn, puri.host.s, puri.host.len);
 	hn[puri.host.len] = '\0';
 
-	/* Do a DNS-Lookup for the Host-Name: */
-	he = resolvehost(hn);
-	if(he == 0) {
-		if(dp->flags & DS_NODNSARES_DST) {
-			dp->irmode |= DS_IRMODE_NOIPADDR;
-		} else {
+	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
+	if(dp->flags & DS_NODNSARES_DST) {
+		dp->irmode |= DS_IRMODE_NOIPADDR;
+	} else {
+		he = resolvehost(hn);
+		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
 					puri.host.len, puri.host.s);
 			goto err;
+		} else {
+			/* Store hostent in the dispatcher structure */
+			hostent2ip_addr(&dp->ip_address, he, 0);
 		}
-	} else {
-		/* Store hostent in the dispatcher structure */
-		hostent2ip_addr(&dp->ip_address, he, 0);
 	}
 
 	/* Copy the port out of the URI */
@@ -3189,6 +3189,10 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 	pv_value_t val;
 	int j;
 	for(j = 0; j < node->nr; j++) {
+		if(node->dlist[j].irmode & DS_IRMODE_NOIPADDR) {
+			/* dst record using hotname with dns not done - no ip to match */
+			continue;
+		}
 		if(ip_addr_cmp(pipaddr, &node->dlist[j].ip_address)
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						   || tport == node->dlist[j].port)
