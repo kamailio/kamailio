@@ -83,11 +83,12 @@ Ramona-Elena Modroiu
               8.2. uac.reg_info
               8.3. uac.reg_enable
               8.4. uac.reg_disable
-              8.5. uac.reg_reload
-              8.6. uac.reg_refresh
-              8.7. uac.reg_active
-              8.8. uac.reg_add
-              8.9. uac.reg_remove
+              8.5. uac.reg_unregister
+              8.6. uac.reg_reload
+              8.7. uac.reg_refresh
+              8.8. uac.reg_active
+              8.9. uac.reg_add
+              8.10. uac.reg_remove
 
         9. Remote Registration
 
@@ -134,12 +135,13 @@ Ramona-Elena Modroiu
    1.39. uac.reg_info usage
    1.40. uac.reg_enable usage
    1.41. uac.reg_disable usage
-   1.42. uac.reg_reload usage
-   1.43. uac.reg_refresh usage
-   1.44. uac.reg_active usage
-   1.45. uac.reg_add usage
-   1.46. uac.reg_remove usage
-   1.47. lookup remote registrations usage
+   1.42. uac.reg_unregister usage
+   1.43. uac.reg_reload usage
+   1.44. uac.reg_refresh usage
+   1.45. uac.reg_active usage
+   1.46. uac.reg_add usage
+   1.47. uac.reg_remove usage
+   1.48. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -205,11 +207,12 @@ Chapter 1. Admin Guide
         8.2. uac.reg_info
         8.3. uac.reg_enable
         8.4. uac.reg_disable
-        8.5. uac.reg_reload
-        8.6. uac.reg_refresh
-        8.7. uac.reg_active
-        8.8. uac.reg_add
-        8.9. uac.reg_remove
+        8.5. uac.reg_unregister
+        8.6. uac.reg_reload
+        8.7. uac.reg_refresh
+        8.8. uac.reg_active
+        8.9. uac.reg_add
+        8.10. uac.reg_remove
 
    9. Remote Registration
 
@@ -998,11 +1001,12 @@ event_route[uac:reply] {
    8.2. uac.reg_info
    8.3. uac.reg_enable
    8.4. uac.reg_disable
-   8.5. uac.reg_reload
-   8.6. uac.reg_refresh
-   8.7. uac.reg_active
-   8.8. uac.reg_add
-   8.9. uac.reg_remove
+   8.5. uac.reg_unregister
+   8.6. uac.reg_reload
+   8.7. uac.reg_refresh
+   8.8. uac.reg_active
+   8.9. uac.reg_add
+   8.10. uac.reg_remove
 
 8.1.  uac.reg_dump
 
@@ -1063,43 +1067,57 @@ event_route[uac:reply] {
    kamcmd uac.reg_disable l_uuid s:12345678
 ...
 
-8.5.  uac.reg_reload
+8.5.  uac.reg_unregister
+
+   Send REGISTER with expires 0 for matching record, disabling it. The
+   command has two parameter: attribute and value. The attribute can be:
+   l_uuid, l_username, r_username or auth_username. The value is what
+   should be matched against the value of the attribute in the remote
+   registration record.
+
+   Example 1.42. uac.reg_unregister usage
+...
+   kamcmd uac.reg_unregister l_uuid account123
+   kamcmd uac.reg_unregister l_uuid s:12345678
+...
+
+8.6.  uac.reg_reload
 
    Reload the records from database for remote registrations. There is a
    limit of how often the reload command can be executed, by default is
    150 seconds between reloads -- see the reg_gc_interval parameter for
    more details.
 
-   Example 1.42. uac.reg_reload usage
+   Example 1.43. uac.reg_reload usage
 ...
    kamcmd uac.reg_reload
 ...
 
-8.6.  uac.reg_refresh
+8.7.  uac.reg_refresh
 
    Load one record by l_uuid from database for remote registrations. If
    the record exists in memory, it will be replaced with the new values
    loaded from database.
 
-   Example 1.43. uac.reg_refresh usage
+   Example 1.44. uac.reg_refresh usage
 ...
    kamcmd uac.reg_refresh account123
    kamcmd uac.reg_refresh s:12345678
 ...
 
-8.7.  uac.reg_active
+8.8.  uac.reg_active
 
    Control if the module should do remote registrations or not. Setting to
    1 enables remote registrations for all records and 0 disables doing
    them.
 
-   Example 1.44. uac.reg_active usage
+   Example 1.45. uac.reg_active usage
 ...
    kamctl rpc uac.reg_active 0
    kamctl rpc uac.reg_active 1
 ...
 
-8.8.  uac.reg_add
+8.9.  uac.reg_add
 
    Add a new UAC remote registration record. If one with the same unique
    id is found, it is deleted.
@@ -1124,16 +1142,16 @@ event_route[uac:reply] {
    Use a dot (.) if no value should be set for auth_password, auth_ha1, or
    contact_addr.
 
-   Example 1.45. uac.reg_add usage
+   Example 1.46. uac.reg_add usage
 ...
    kamcmd uac.reg_add ...
 ...
 
-8.9.  uac.reg_remove
+8.10.  uac.reg_remove
 
    Remove a UAC remote registration record by l_uuid.
 
-   Example 1.46. uac.reg_remove usage
+   Example 1.47. uac.reg_remove usage
 ...
    kamcmd uac.reg_remove my_l_uuid
 ...
@@ -1189,7 +1207,7 @@ event_route[uac:reply] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.47. lookup remote registrations usage
+   Example 1.48. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");
