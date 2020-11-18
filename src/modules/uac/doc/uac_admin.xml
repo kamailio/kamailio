@@ -1276,6 +1276,28 @@ event_route[uac:reply] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_unregister">
+			<title>
+				<function moreinfo="none">uac.reg_unregister</function>
+			</title>
+		<para>
+			Send REGISTER with expires 0 for matching record, disabling it.
+			The command has two parameter: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matched against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_unregister</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_unregister l_uuid account123
+   kamcmd uac.reg_unregister l_uuid s:12345678
+...
+			</programlisting>
+		</example>
+		</section>
+
 		<section id="uac.r.uac.reg_reload">
 			<title>
 				<function moreinfo="none">uac.reg_reload</function>
