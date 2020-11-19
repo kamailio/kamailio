@@ -125,7 +125,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
-%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD
+%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -551,6 +551,7 @@ IFNDEF       ifndef
 ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
+DEFENV       defenv
 
 /* else is already defined */
 
@@ -1413,6 +1414,27 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_initial_state();
 }
 
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFENV}  { count();
+			ksr_cfg_print_part(yytext);
+			state = DEFINE_S;
+			BEGIN(DEFENV_ID);
+}
+
+<DEFENV_ID>[ \t]*      { /* eat the whitespace */
+				count();
+				ksr_cfg_print_part(yytext);
+			}
+<DEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
+				count();
+				ksr_cfg_print_part(yytext);
+				if(pp_define_env(yytext, yyleng) < 0) {
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
+					exit(-1);
+				}
+				state = INITIAL;
+				ksr_cfg_print_initial_state();
+}
+
 <CFGPRINTMODE>{LOADMODULE}	{ count(); printf("%s", yytext);
 				BEGIN(CFGPRINTLOADMOD);
 			}
@@ -1997,6 +2019,47 @@ int pp_define_set(int len, char *text)
 			pp_defines[ppos].name.s,
 			pp_defines[ppos].value.len,
 			pp_defines[ppos].value.s);
+	return 0;
+}
+
+int pp_define_env(const char * text, int len)
+{
+	char *r;
+	str defname;
+	str defvalue;
+
+	r = strchr(text, '=');
+
+	defname.s = (char*)text;
+	if(r == NULL) {
+		defname.len = len;
+		r = (char*)text;
+	} else {
+		defname.len = r - text;
+		r++;
+		if(strlen(r) == 0) {
+			LM_ERR("invalid defenv id [%s]\n", (char*)text);
+			return -1;
+		}
+	}
+	defvalue.s = getenv(r);
+
+	if(defvalue.s == NULL) {
+		LM_ERR("env variable not defined [%s]\n", (char*)text);
+		return -1;
+	}
+	defvalue.len = strlen(defvalue.s);
+
+	pp_define_set_type(0);
+	if(pp_define(defname.len, defname.s)<0) {
+		LM_ERR("cannot set define name [%s]\n", (char*)text);
+		return -1;
+	}
+	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+		LM_ERR("cannot set define value [%s]\n", (char*)text);
+		return -1;
+	}
+
 	return 0;
 }
 
