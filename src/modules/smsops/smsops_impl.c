@@ -195,7 +195,7 @@ static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
 		}
 	}
 
-	if (i <= sms.len)
+	if (i < sms.len)
 		output_buffer[output_buffer_length++] =	(sms.s[i] & BITMASK_7BITS) >> (carry_on_bits - 1);
 
 	return output_buffer_length;
@@ -606,6 +606,15 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 							udh_read += (1 /* IE ID */ + 1 /* IE Len */ + ie->data.len /* IE data */);
 						}
 
+						// TS 23.040, Sec. 9.2.3.16
+						// Coding: 7 Bit
+						if (rp_data->pdu.coding == 0x00) {
+							int udh_bit_len = (1 + udh_len) * 8; // add 1 octet for the udh length
+							udh_bit_len += (7 - (udh_bit_len % 7));
+							len -= (udh_bit_len / 7);
+						}else{
+							len -= (1 + udh_len); // add 1 octet for the udh length
+						}
 					}
 
 					blen = 2 + len*4;
@@ -618,6 +627,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 					// Coding: 7 Bit
 					if (rp_data->pdu.coding == 0x00) {
 						// We don't care about the extra used bytes here.
+						rp_data->pdu.payload.sm.len = len;
 						rp_data->pdu.payload.sm.len = gsm_to_ascii(&body.s[p], len, rp_data->pdu.payload.sm, fill_bits);
 					} else {
 						// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
