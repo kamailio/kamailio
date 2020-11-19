@@ -593,7 +593,7 @@ void rpc_t_uac_wait(rpc_t* rpc, void* c)
 
 static int t_uac_check_msg(struct sip_msg* msg,
 		str* method, str* body,
-		int* fromtag, int *cseq_is, int* cseq,
+		str *fromtag, int *cseq_is, int* cseq,
 		str* callid)
 {
 	struct to_body* parsed_from;
@@ -628,7 +628,13 @@ static int t_uac_check_msg(struct sip_msg* msg,
 	}
 
 	parsed_from = (struct to_body*)msg->from->parsed;
-	*fromtag = parsed_from->tag_value.s && parsed_from->tag_value.len;
+	if(parsed_from->tag_value.s && parsed_from->tag_value.len) {
+		fromtag->s = parsed_from->tag_value.s;
+		fromtag->len = parsed_from->tag_value.len;
+	} else {
+		fromtag->s = NULL;
+		fromtag->len = 0;
+	}
 
 	*cseq = 0;
 	if (msg->cseq && (parsed_cseq = get_cseq(msg))) {
@@ -676,7 +682,8 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	struct socket_info* ssock;
 	str saddr;
 	int sport, sproto;
-	int ret, fromtag, cseq_is, cseq;
+	int ret, cseq_is, cseq;
+	str fromtag;
 	dlg_t dlg;
 	uac_req_t uac_req;
 
@@ -749,7 +756,9 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	 */
 
 	/* Generate fromtag if not present */
-	if (!fromtag) {
+	if (fromtag.s && fromtag.len) {
+		dlg.id.loc_tag = fromtag;
+	} else {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, ruri);
 	}
 
@@ -758,8 +767,11 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	else dlg.loc_seq.value = DEFAULT_CSEQ;
 	dlg.loc_seq.is_set = 1;
 
-	dlg.loc_uri = faked_msg.from->body;
-	dlg.rem_uri = faked_msg.to->body;
+	dlg.loc_uri = get_from(&faked_msg)->uri;
+	dlg.rem_uri = get_to(&faked_msg)->uri;
+	if(get_to(&faked_msg)->tag_value.len > 0) {
+		dlg.id.rem_tag = get_to(&faked_msg)->tag_value;
+	}
 	dlg.rem_target = *ruri;
 	dlg.dst_uri = *nexthop;
 	dlg.send_sock=ssock;
