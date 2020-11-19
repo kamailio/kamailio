@@ -56,6 +56,7 @@ extern int tcp_ka_interval;
 
 extern struct sip_msg *ah_reply;
 extern str ah_error;
+extern http_m_time_t ah_time;
 
 extern int tls_verify_host;
 extern int tls_verify_peer;
