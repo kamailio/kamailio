@@ -1,7 +1,7 @@
 -- Kamailio - equivalent of routing blocks in Lua
 --
--- KSR - the new dynamic object exporting Kamailio functions (kemi)
--- sr - the old static object exporting Kamailio functions
+-- KSR - the object exporting Kamailio KEMI functions (app_lua module)
+-- sr - the old object exporting Kamailio functions (app_lua_sr module)
 --
 
 -- Relevant remarks:
@@ -10,6 +10,9 @@
 --  * use KSR.x.exit() to trigger the stop of executing the script
 --  * KSR.drop() is only marking the SIP message for drop, but doesn't stop
 --  the execution of the script. Use KSR.x.exit() after it or KSR.x.drop()
+--
+-- Hints:
+--  * Lua syntax check: luac -p /path/to/script.lua
 --
 
 -- debug callback function to print details of execution trace
