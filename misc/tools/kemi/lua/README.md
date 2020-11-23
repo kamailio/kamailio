@@ -71,9 +71,9 @@ Other external tools useful to check the Lua scripts.
 ### luac ###
 
 The `luac` (the Lua compiler) can be used with parameter `-p` to check for
-syntax errors (e.g., missing closing quote or parenthesis).:w
+syntax errors (e.g., missing closing quote or parenthesis).
 
-Example - when there is a missing closing quite, like:
+Example - when there is a missing closing quote, like:
 
 ```
 KSR.hdr.remove("Route);
