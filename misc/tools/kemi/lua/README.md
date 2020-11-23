@@ -2,7 +2,7 @@
 
 Tools useful for using Kamailio with KEMI Lua scripts.
 
-## kemiksrlib ##
+## kemiksrlib.py ##
 
 Generates the file `KSR.lua` with skeleton functions in the `KSR` object. The
 function parameters are prefixed with `p_` and the functions return:
