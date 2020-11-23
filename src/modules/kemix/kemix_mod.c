@@ -420,6 +420,39 @@ static sr_kemi_xval_t* ki_kx_get_srcport(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_send_sock(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if (msg==NULL || msg->force_send_socket==0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->force_send_socket->sock_str;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_send_sock_name(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if (msg==NULL || msg->force_send_socket==0
+			|| msg->force_send_socket->sockname.s==0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->force_send_socket->sockname;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_rcvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -448,6 +481,23 @@ static sr_kemi_xval_t* ki_kx_get_rcvport(sip_msg_t *msg)
 
 	_sr_kemi_kx_xval.vtype = SR_KEMIP_INT;
 	_sr_kemi_kx_xval.v.n = (int)msg->rcv.bind_address->port_no;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_rcv_sock_name(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(msg==NULL || msg->rcv.bind_address==NULL
+			|| msg->rcv.bind_address->sockname.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = msg->rcv.bind_address->sockname;
 	return &_sr_kemi_kx_xval;
 }
 
@@ -812,8 +862,23 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_send_sock"),
+		SR_KEMIP_XVAL, ki_kx_get_send_sock,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_send_sock_name"),
+		SR_KEMIP_XVAL, ki_kx_get_send_sock_name,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("kx"), str_init("get_rcvip"),
 		SR_KEMIP_XVAL, ki_kx_get_rcvip,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_rcv_sock_name"),
+		SR_KEMIP_XVAL, ki_kx_get_rcv_sock_name,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
