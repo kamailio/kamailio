@@ -133,7 +133,8 @@ function ksr_route_reqinit()
 	}
 	if (KSR.corex.has_user_agent()>0) {
 		var UA = KSR.pv.gete("$ua");
-		if (UA.indexOf("friendly-scanner")>=0 || UA.indexOf("sipcli")>=0) {
+		if (UA.indexOf("friendly")>=0 || UA.indexOf("scanner")>=0
+				|| UA.indexOf("sipcli")>=0 || UA.indexOf("sipvicious")>=0) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
