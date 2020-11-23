@@ -858,6 +858,19 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 			&msg->rcv.bind_address->port_no_str);
 }
 
+int pv_get_rcvsname(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address==NULL
+			|| msg->rcv.bind_address->sockname.s==NULL)
+		return pv_get_null(msg, param, res);
+
+	return pv_get_strval(msg, param, res, &msg->rcv.bind_address->sockname);
+}
+
 int pv_get_rcvaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
 		int tmode, pv_value_t *res)
 {

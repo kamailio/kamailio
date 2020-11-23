@@ -410,6 +410,9 @@ static pv_export_t mod_pvs[] = {
 	{{"Rut", (sizeof("Rut")-1)}, /* */
 		PVT_OTHER, pv_get_rcvaddr_uri_full, 0,
 		0, 0, 0, 0},
+	{{"Rn", (sizeof("Rn")-1)}, /* */
+		PVT_OTHER, pv_get_rcvsname, 0,
+		0, 0, 0, 0},
 	{{"RAi", (sizeof("RAi")-1)}, /* */
 		PVT_OTHER, pv_get_rcv_advertised_ip, 0,
 		0, 0, 0, 0},
