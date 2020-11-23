@@ -163,13 +163,13 @@ function ksr_route_reqinit()
 		if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 then
 			-- ip is already blocked
 			KSR.dbg("request from blocked IP - " .. KSR.kx.get_method()
-					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+					.. " from " .. KSR.kx.get_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.x.exit();
 		end
 		if KSR.pike.pike_check_req() < 0 then
 			KSR.err("ALERT: pike blocking " .. KSR.kx.get_method()
-					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+					.. " from " .. KSR.kx.get_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.htable.sht_seti("ipban", srcip, 1);
 			KSR.x.exit();
