@@ -137,7 +137,8 @@ function ksr_route_reqinit()
 	if (KSR.corex.has_user_agent()>0) {
 		local UA = KSR.pv.get("$ua");
 		// if (sipscanregex.match(UA)) {
-		if (UA.find("friendly-scanner")!=null || UA.find("sipcli")!=null) {
+		if (UA.find("friendly")!=null || UA.find("scanner")!=null
+				|| UA.find("sipcli")!=null || UA.find("sipvicious")!=null) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
