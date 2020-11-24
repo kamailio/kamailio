@@ -32,6 +32,8 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/digest/digest.h"
+#include "../../core/parser/contact/parse_contact.h"
+
 #include "../../core/tcp_conn.h"
 
 MODULE_VERSION
@@ -1000,6 +1002,61 @@ static int ki_kx_get_msgtype(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_cturi_mode(sip_msg_t *msg, int xmode)
+{
+	contact_t *c;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if((parse_contact_headers(msg) < 0) || (msg->contact == NULL)
+			|| (msg->contact->parsed == NULL)) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if (((contact_body_t*)msg->contact->parsed)->star == 1) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	c = (((contact_body_t*)msg->contact->parsed)->contacts);
+	if(c==NULL || c->uri.s==NULL || c->uri.len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s = c->uri;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_cturi(sip_msg_t *msg)
+{
+	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_getw_cturi(sip_msg_t *msg)
+{
+	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_gete_cturi(sip_msg_t *msg)
+{
+	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_kx_exports[] = {
 	{ str_init("kx"), str_init("get_ruri"),
@@ -1124,6 +1181,21 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("getw_duri"),
 		SR_KEMIP_XVAL, ki_kx_getw_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_cturi"),
+		SR_KEMIP_XVAL, ki_kx_get_cturi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("gete_cturi"),
+		SR_KEMIP_XVAL, ki_kx_gete_cturi,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("getw_cturi"),
+		SR_KEMIP_XVAL, ki_kx_getw_cturi,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
