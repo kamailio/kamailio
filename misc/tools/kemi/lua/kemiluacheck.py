@@ -8,7 +8,7 @@ PATH_GENERATED_OBJ = "KSR.luacheckrc"
 class ModuleObjGenerator(object):
 
     # Contains the output until it should be written to disk
-    markdown_string = ""
+    object_string = ""
 
     def execute(self, data):
         # Validate that we got some methods back. 155 is an arbitrary large number.
@@ -19,7 +19,7 @@ class ModuleObjGenerator(object):
         functions_parsed = self.parse_function_list(data)
         self.output_obj(functions_parsed)
 
-        print ("Markdown doc created successfully at " + PATH_GENERATED_OBJ)
+        print ("File created successfully at " + PATH_GENERATED_OBJ)
 
     def parse_function_list(self, functions):
         data = {}
@@ -52,22 +52,22 @@ class ModuleObjGenerator(object):
 
     def object_module_content(self, module, methods):
         if module != "_core":
-            self.markdown_string += "\t\t\t\t" + module + " = {\n\t\t\t\t\tfields= {\n"
+            self.object_string += "\t\t\t\t" + module + " = {\n\t\t\t\t\tfields= {\n"
 
         for value in methods:
             if module != "_core":
-                self.markdown_string += "\t\t\t\t\t\t" + value["name"] + " = {},\n"
+                self.object_string += "\t\t\t\t\t\t" + value["name"] + " = {},\n"
             else:
-                self.markdown_string += "\t\t\t\t" + value["name"] + " = {},\n"
+                self.object_string += "\t\t\t\t" + value["name"] + " = {},\n"
 
         if module != "_core":
-            self.markdown_string += "\t\t\t\t\t},\n\t\t\t\t},\n"
+            self.object_string += "\t\t\t\t\t},\n\t\t\t\t},\n"
         return True
 
     def obj_write(self):
         f = open(PATH_GENERATED_OBJ, "w")
         f.write("stds.KSR = {\n\tread_globals = {\n\t\tKSR = {\n\t\t\tfields = {\n")
-        f.write(self.markdown_string)
+        f.write(self.object_string)
         f.write("\t\t\t\tx = {\n\t\t\t\t\tfields= {\n")
         f.write("\t\t\t\t\t\tdrop= {},\n")
         f.write("\t\t\t\t\t\texit= {},\n")

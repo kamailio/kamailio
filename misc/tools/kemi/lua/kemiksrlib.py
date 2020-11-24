@@ -8,7 +8,7 @@ PATH_GENERATED_OBJ = "KSR.lua"
 class ModuleObjGenerator(object):
 
     # Contains the output until it should be written to disk
-    markdown_string = ""
+    output_string = ""
 
     def execute(self, data):
         # Validate that we got some methods back. 155 is an arbitrary large number.
@@ -57,7 +57,7 @@ class ModuleObjGenerator(object):
             module_prefix = module + "."
 
         for value in methods:
-            self.markdown_string += "local function KSR." + module_prefix + value["name"]
+            self.object_string += "local function KSR." + module_prefix + value["name"]
 
             # Sanitize the return values
             if value["return"] == "none":
@@ -79,10 +79,10 @@ class ModuleObjGenerator(object):
             else:
                 params_value = value["params"]
 
-            # Generate the output string for the markdown page
-            self.markdown_string += "(" + params_value + ")\n"
-            self.markdown_string += "\treturn" + return_value + ";\n"
-            self.markdown_string += "end\n\n"
+            # Generate the output string for the file
+            self.object_string += "(" + params_value + ")\n"
+            self.object_string += "\treturn" + return_value + ";\n"
+            self.object_string += "end\n\n"
 
 
         return True
@@ -90,7 +90,7 @@ class ModuleObjGenerator(object):
     def obj_write(self):
         f = open(PATH_GENERATED_OBJ, "w")
         f.write("local KSR = {};\n\n")
-        f.write(self.markdown_string)
+        f.write(self.object_string)
         f.write("return KSR;\n")
         f.close()
         return True
