@@ -226,3 +226,31 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 		return 0;
 	}
 }
+
+/**
+ *
+ */
+int parse_contact_headers(sip_msg_t *msg)
+{
+	hdr_field_t* hdr;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	if (msg->contact) {
+		hdr = msg->contact;
+		while(hdr) {
+			if (hdr->type == HDR_CONTACT_T) {
+				if (!hdr->parsed && (parse_contact(hdr) < 0)) {
+					LM_ERR("failed to parse Contact body\n");
+					return -1;
+				}
+			}
+			hdr = hdr->next;
+		}
+	}
+
+	return 0;
+}
