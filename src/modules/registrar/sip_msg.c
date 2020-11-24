@@ -86,8 +86,6 @@ static inline int get_expires_hf(struct sip_msg* _m)
  */
 int parse_message(struct sip_msg* _m)
 {
-	struct hdr_field* ptr;
-
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
 		LM_ERR("failed to parse headers\n");
@@ -118,18 +116,10 @@ int parse_message(struct sip_msg* _m)
 		return -5;
 	}
 
-	if (_m->contact) {
-		ptr = _m->contact;
-		while(ptr) {
-			if (ptr->type == HDR_CONTACT_T) {
-				if (!ptr->parsed && (parse_contact(ptr) < 0)) {
-					rerrno = R_PARSE_CONT;
-					LM_ERR("failed to parse Contact body\n");
-					return -6;
-				}
-			}
-			ptr = ptr->next;
-		}
+	if(parse_contact_headers(_m) < 0) {
+		rerrno = R_PARSE_CONT;
+		LM_ERR("failed to parse Contact body\n");
+		return -6;
 	}
 
 	return 0;
