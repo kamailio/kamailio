@@ -276,6 +276,38 @@ int async_task_push(async_task_t *task)
 /**
  *
  */
+int async_task_group_push(str *gname, async_task_t *task)
+{
+	int len;
+	async_wgroup_t *awg = NULL;
+
+	if(_async_wgroup_list==NULL) {
+		LM_WARN("async task pushed, but no async group - ignoring\n");
+		return 0;
+	}
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		if(awg->name.len==gname->len
+				&& memcmp(awg->name.s, gname->s, gname->len)==0) {
+			break;
+		}
+	}
+	if(awg==NULL) {
+		LM_WARN("group [%.*s] not found - ignoring\n", gname->len, gname->s);
+		return 0;
+	}
+	len = write(_async_wgroup_list->sockets[1], &task, sizeof(async_task_t*));
+	if(len<=0) {
+		LM_ERR("failed to pass the task [%p] to group [%.*s]\n", task,
+				gname->len, gname->s);
+		return -1;
+	}
+	LM_DBG("task [%p] sent to groupt [%.*s]\n", task, gname->len, gname->s);
+	return 0;
+}
+
+/**
+ *
+ */
 int async_task_run(int idx)
 {
 	async_task_t *ptask;

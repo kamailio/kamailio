@@ -50,4 +50,6 @@ int async_task_set_usleep(int n);
 int async_task_workers_get(void);
 int async_task_workers_active(void);
 
+int async_task_group_push(str *gname, async_task_t *task);
+
 #endif
