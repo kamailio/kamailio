@@ -1,0 +1,119 @@
+SWORKER Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2020 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. sworker_active()
+              3.2. swork_task(gname)
+
+   List of Examples
+
+   1.1. sworker_active() usage
+   1.2. sworker_task() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. sworker_active()
+        3.2. swork_task(gname)
+
+1. Overview
+
+   This module can delegate processing of SIP requests to a group of
+   workers in the configuration file. The async workers have to defined
+   with the global parameter.
+
+   It does not create the transaction and nor suspend it.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Functions
+
+   3.1. sworker_active()
+   3.2. swork_task(gname)
+
+3.1. sworker_active()
+
+   Return 1 (true) if the processing happens in an asyn process, or -1
+   (false) if the processing is happening in a SIP receiving process.
+
+   This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
+
+   Example 1.1. sworker_active() usage
+...
+request_route {
+    ...
+    if(sworker_active()) {
+    }
+    ...
+}
+...
+
+3.2. swork_task(gname)
+
+   Delegate the processing of SIP message to a group of async workers.
+
+   The parameter gname provides the name of the group workers, it can
+   contain pseudo-variables.
+
+   The function returns 0 (exit) in case the task is delegated.
+
+   This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
+
+   Example 1.2. sworker_task() usage
+...
+request_route {
+        if(!sworker_active()) {
+                xinfo("===== delegate processing [$Tf] [$si:$sp]\n");
+                sworker_task("default");
+                exit;
+        }
+        xinfo("===== processing continues [$Tf] [$si:$sp]\n");
+    ...
+}
+...
