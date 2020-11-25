@@ -44,10 +44,7 @@
 
 #include "async_task.h"
 
-static int _async_task_workers = 0;
-static int _async_task_sockets[2];
-static int _async_task_usleep = 0;
-static int _async_nonblock = 0;
+static async_wgroup_t *_async_wgroup_list = NULL;
 
 int async_task_run(int idx);
 
@@ -56,7 +53,7 @@ int async_task_run(int idx);
  */
 int async_task_workers_get(void)
 {
-	return _async_task_workers;
+	return (_async_wgroup_list)?_async_wgroup_list->workers:0;
 }
 
 /**
@@ -64,7 +61,7 @@ int async_task_workers_get(void)
  */
 int async_task_workers_active(void)
 {
-	if(_async_task_workers<=0)
+	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
 
 	return 1;
@@ -77,17 +74,17 @@ int async_task_init_sockets(void)
 {
 	int val;
 
-	if (socketpair(PF_UNIX, SOCK_DGRAM, 0, _async_task_sockets) < 0) {
+	if (socketpair(PF_UNIX, SOCK_DGRAM, 0, _async_wgroup_list->sockets) < 0) {
 		LM_ERR("opening tasks dgram socket pair\n");
 		return -1;
 	}
 
-	if (_async_nonblock) {
-		val = fcntl(_async_task_sockets[1], F_GETFL, 0);
+	if (_async_wgroup_list->nonblock) {
+		val = fcntl(_async_wgroup_list->sockets[1], F_GETFL, 0);
 		if(val<0) {
 			LM_WARN("failed to get socket flags\n");
 		} else {
-			if(fcntl(_async_task_sockets[1], F_SETFL, val | O_NONBLOCK)<0) {
+			if(fcntl(_async_wgroup_list->sockets[1], F_SETFL, val | O_NONBLOCK)<0) {
 				LM_WARN("failed to set socket nonblock flag\n");
 			}
 		}
@@ -103,7 +100,7 @@ int async_task_init_sockets(void)
 void async_task_close_sockets_child(void)
 {
 	LM_DBG("closing the notification socket used by children\n");
-	close(_async_task_sockets[1]);
+	close(_async_wgroup_list->sockets[1]);
 }
 
 /**
@@ -112,7 +109,7 @@ void async_task_close_sockets_child(void)
 void async_task_close_sockets_parent(void)
 {
 	LM_DBG("closing the notification socket used by parent\n");
-	close(_async_task_sockets[0]);
+	close(_async_wgroup_list->sockets[0]);
 }
 
 /**
@@ -121,14 +118,14 @@ void async_task_close_sockets_parent(void)
 int async_task_init(void)
 {
 	LM_DBG("start initializing asynk task framework\n");
-	if(_async_task_workers<=0)
+	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
 
 	/* advertise new processes to core */
-	register_procs(_async_task_workers);
+	register_procs(_async_wgroup_list->workers);
 
 	/* advertise new processes to cfg framework */
-	cfg_register_child(_async_task_workers);
+	cfg_register_child(_async_wgroup_list->workers);
 
 	return 0;
 }
@@ -138,7 +135,7 @@ int async_task_init(void)
  */
 int async_task_initialized(void)
 {
-	if(_async_task_workers<=0)
+	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
 	return 1;
 }
@@ -150,8 +147,9 @@ int async_task_child_init(int rank)
 {
 	int pid;
 	int i;
+	char pname[64];
 
-	if(_async_task_workers<=0)
+	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
 
 	LM_DBG("child initializing asynk task framework\n");
@@ -171,8 +169,10 @@ int async_task_child_init(int rank)
 	if (rank!=PROC_MAIN)
 		return 0;
 
-	for(i=0; i<_async_task_workers; i++) {
-		pid=fork_process(PROC_RPC, "Async Task Worker", 1);
+	snprintf(pname, 62, "Async Task Worker - %s",
+			(_async_wgroup_list->name.s)?_async_wgroup_list->name.s:"unknown");
+	for(i=0; i<_async_wgroup_list->workers; i++) {
+		pid=fork_process(PROC_RPC, pname, 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0) {
@@ -197,14 +197,30 @@ int async_task_child_init(int rank)
  */
 int async_task_set_workers(int n)
 {
-	if(_async_task_workers>0) {
+	str gname = str_init("default");
+
+	if(_async_wgroup_list!=NULL && _async_wgroup_list->workers>0) {
 		LM_WARN("task workers already set\n");
 		return 0;
 	}
 	if(n<=0)
 		return 0;
 
-	_async_task_workers = n;
+	if(_async_wgroup_list==NULL) {
+		_async_wgroup_list = (async_wgroup_t*)pkg_malloc(sizeof(async_wgroup_t)
+				+ (gname.len+1)*sizeof(char));
+		if(_async_wgroup_list==NULL) {
+			LM_ERR("failed to create async wgroup\n");
+			return -1;
+		}
+		memset(_async_wgroup_list, 0, sizeof(async_wgroup_t)
+				+ (gname.len+1)*sizeof(char));
+	}
+	_async_wgroup_list->workers = n;
+	_async_wgroup_list->name.s = (char*)_async_wgroup_list
+		+ sizeof(async_wgroup_t);
+	memcpy(_async_wgroup_list->name.s, gname.s, gname.len);
+	_async_wgroup_list->name.len = gname.len;
 
 	return 0;
 }
@@ -214,8 +230,9 @@ int async_task_set_workers(int n)
  */
 int async_task_set_nonblock(int n)
 {
-	if(n>0)
-		_async_nonblock = 1;
+	if(n>0 && _async_wgroup_list!=NULL) {
+		_async_wgroup_list->nonblock = 1;
+	}
 
 	return 0;
 }
@@ -225,10 +242,12 @@ int async_task_set_nonblock(int n)
  */
 int async_task_set_usleep(int n)
 {
-	int v;
+	int v = 0;
 
-	v = _async_task_usleep;
-	_async_task_usleep = n;
+	if(_async_wgroup_list!=NULL) {
+		v = _async_wgroup_list->usleep;
+		_async_wgroup_list->usleep = n;
+	}
 
 	return v;
 }
@@ -240,12 +259,12 @@ int async_task_push(async_task_t *task)
 {
 	int len;
 
-	if(_async_task_workers<=0) {
+	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0) {
 		LM_WARN("async task pushed, but no async workers - ignoring\n");
 		return 0;
 	}
 
-	len = write(_async_task_sockets[1], &task, sizeof(async_task_t*));
+	len = write(_async_wgroup_list->sockets[1], &task, sizeof(async_task_t*));
 	if(len<=0) {
 		LM_ERR("failed to pass the task to asynk workers\n");
 		return -1;
@@ -265,8 +284,8 @@ int async_task_run(int idx)
 	LM_DBG("async task worker %d ready\n", idx);
 
 	for( ; ; ) {
-		if(unlikely(_async_task_usleep)) sleep_us(_async_task_usleep);
-		if ((received = recvfrom(_async_task_sockets[0],
+		if(unlikely(_async_wgroup_list->usleep)) sleep_us(_async_wgroup_list->usleep);
+		if ((received = recvfrom(_async_wgroup_list->sockets[0],
 							&ptask, sizeof(async_task_t*),
 							0, NULL, 0)) < 0) {
 			LM_ERR("failed to received task (%d: %s)\n", errno, strerror(errno));
