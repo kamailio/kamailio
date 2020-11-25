@@ -1063,7 +1063,6 @@ static int ki_ds_list_exists(struct sip_msg *msg, int set)
 static int fixup_ds_list_exist(void **param, int param_no)
 {
 	return fixup_igp_null(param, param_no);
-	return 0;
 }
 
 static int ds_parse_reply_codes()
