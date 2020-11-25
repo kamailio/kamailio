@@ -1506,7 +1506,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.uid_gflags
 %doc %{_docdir}/kamailio/modules/README.uid_uri_db
 %doc %{_docdir}/kamailio/modules/README.uri_db
-%doc %{_docdir}/kamailio/modules/README.userblacklist
+%doc %{_docdir}/kamailio/modules/README.userblocklist
 %doc %{_docdir}/kamailio/modules/README.usrloc
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_prom
@@ -1663,7 +1663,7 @@ fi
 %{_libdir}/kamailio/modules/uid_gflags.so
 %{_libdir}/kamailio/modules/uid_uri_db.so
 %{_libdir}/kamailio/modules/uri_db.so
-%{_libdir}/kamailio/modules/userblacklist.so
+%{_libdir}/kamailio/modules/userblocklist.so
 %{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_prom.so
