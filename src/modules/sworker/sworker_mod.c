@@ -167,12 +167,15 @@ int ki_sworker_task(sip_msg_t *msg, str *gname)
 		return -1;
 	}
 
+	if(!(msg->rcv.rflags & RECV_F_PREROUTING)) {
+		LM_WARN("not used in pre-routing phase\n");
+		return -1;
+	}
 	if(sworker_send_task(msg, gname) < 0) {
 		return -1;
 	}
 
-	/* force exit in config */
-	return 0;
+	return 1;
 }
 
 /**
