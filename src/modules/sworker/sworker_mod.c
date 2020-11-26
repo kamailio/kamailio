@@ -122,6 +122,7 @@ void sworker_exec_task(void *param)
 	memcpy(buf, stp->buf, stp->len);
 	len = stp->len;
 	memcpy(&rcvi, &stp->rcv, sizeof(receive_info_t));
+	rcvi.rflags |= RECV_F_INTERNAL;
 
 	_sworker_active = 1;
 	receive_msg(buf, len, &rcvi);
