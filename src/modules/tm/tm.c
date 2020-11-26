@@ -2900,6 +2900,29 @@ static int ki_t_relay(sip_msg_t *msg)
 /**
  *
  */
+static int ki_t_relay_to_proto(sip_msg_t *msg, str *sproto)
+{
+
+	int proto = PROTO_NONE;
+
+	if (sproto != NULL && sproto->s != NULL && sproto->len == 3) {
+		if (strncasecmp(sproto->s, "UDP", 3) == 0) {
+			proto = PROTO_UDP;
+		} else if (strncasecmp(sproto->s, "TCP", 3) == 0) {
+			proto = PROTO_TCP;
+		} else if (strncasecmp(sproto->s, "TLS", 3)) {
+			proto = PROTO_TLS;
+		} else {
+			LM_ERR("t_relay_to_proto failed, bad protocol specified <%s>\n", sproto->s);
+			return E_UNSPEC;
+		}
+	}
+	return _w_t_relay_to(msg, (struct proxy_l *)0, proto);
+}
+
+/**
+ *
+ */
 static int ki_t_relay_to_proxy_flags(sip_msg_t *msg, str *sproxy, int rflags)
 {
 	proxy_l_t *proxy = NULL;
@@ -3224,6 +3247,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_relay_to_proxy_flags"),
 		SR_KEMIP_INT, ki_t_relay_to_proxy_flags,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_relay_to_proto"),
+		SR_KEMIP_INT, ki_t_relay_to_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_get_status_code"),
