@@ -501,6 +501,7 @@ extern char *default_routename;
 %token EVENT_ROUTE_CALLBACK
 %token RECEIVED_ROUTE_CALLBACK
 %token RECEIVED_ROUTE_MODE
+%token PRE_ROUTING_CALLBACK
 %token MAX_RECURSIVE_LEVEL
 %token MAX_BRANCHES_PARAM
 %token LATENCY_CFG_LOG
@@ -1735,6 +1736,16 @@ assign_stm:
 			}
 		}
 	| KEMI DOT RECEIVED_ROUTE_CALLBACK EQUAL error { yyerror("string expected"); }
+	| KEMI DOT PRE_ROUTING_CALLBACK EQUAL STRING {
+			kemi_pre_routing_callback.s = $5;
+			kemi_pre_routing_callback.len = strlen($5);
+			if(kemi_pre_routing_callback.len==4
+					&& strcasecmp(kemi_pre_routing_callback.s, "none")==0) {
+				kemi_pre_routing_callback.s = "";
+				kemi_pre_routing_callback.len = 0;
+			}
+		}
+	| KEMI DOT PRE_ROUTING_CALLBACK EQUAL error { yyerror("string expected"); }
     | RECEIVED_ROUTE_MODE EQUAL intno { ksr_evrt_received_mode=$3; }
 	| RECEIVED_ROUTE_MODE EQUAL error  { yyerror("number  expected"); }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }

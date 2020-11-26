@@ -217,6 +217,68 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
 	return ret;
 }
 
+
+static int ksr_evrt_pre_routing_idx = -1;
+str kemi_pre_routing_callback = STR_NULL;
+
+
+/**
+ *
+ */
+int ksr_evrt_pre_routing(sip_msg_t *msg)
+{
+	int ret = 0;
+	int rt = -1;
+	run_act_ctx_t ra_ctx;
+	run_act_ctx_t *bctx = NULL;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("core:pre-routing");
+	recv_flags_t brflags;
+
+	if(kemi_pre_routing_callback.len>0) {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_DBG("kemi enabled with no core:pre-routing event route callback\n");
+			return 0;
+		}
+	} else {
+		if(ksr_evrt_pre_routing_idx == -1) {
+			rt = route_lookup(&event_rt, evname.s);
+			if (rt < 0 || event_rt.rlist[rt] == NULL) {
+				ksr_evrt_pre_routing_idx = -2;
+			}
+		} else {
+			rt = ksr_evrt_pre_routing_idx;
+		}
+		if (rt < 0 || event_rt.rlist[rt] == NULL) {
+			LM_DBG("event route core:pre-routing not defined\n");
+			return 0;
+		}
+	}
+
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ra_ctx);
+	brflags = msg->rcv.rflags;
+	msg->rcv.rflags |= RECV_F_PREROUTING;
+	if(keng) {
+		bctx = sr_kemi_act_ctx_get();
+		sr_kemi_act_ctx_set(&ra_ctx);
+		ret=sr_kemi_route(keng, msg, REQUEST_ROUTE,
+				&kemi_pre_routing_callback, &evname);
+		sr_kemi_act_ctx_set(bctx);
+	} else {
+		ret=run_actions(&ra_ctx, event_rt.rlist[rt], msg);
+	}
+	msg->rcv.rflags = brflags;
+	if(ra_ctx.run_flags&DROP_R_F) {
+		LM_DBG("drop was used\n");
+		return 1;
+	}
+	LM_DBG("execution returned %d\n", ret);
+
+	return 0;
+}
+
 /** Receive message
  *  WARNING: buf must be 0 terminated (buf[len]=0) or some things might
  * break (e.g.: modules/textops)
@@ -329,6 +391,15 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 
 	/* ... clear branches from previous message */
 	clear_branches();
+
+	ret = ksr_evrt_pre_routing(msg);
+	if(ret<0) {
+		goto error02;
+	}
+	if(ret == 1) {
+		/* finished */
+		goto end;
+	}
 
 	if(unlikely(ksr_route_locks_set!=NULL && msg->callid && msg->callid->body.s
 			&& msg->callid->body.len >0)) {

@@ -147,7 +147,8 @@ typedef struct snd_flags {
 
 /* recv flags */
 typedef enum recv_flags {
-	RECV_F_INTERNAL   = (1 << 0), /*  */
+	RECV_F_INTERNAL     = (1 << 0), /* message dispatched internally */
+	RECV_F_PREROUTING   = (1 << 1), /* message in pre-routing */
 } recv_flags_t;
 
 typedef struct receive_info {

@@ -198,6 +198,7 @@ extern int onsend_route_reply;
 
 extern int ksr_evrt_received_mode;
 extern str kemi_received_route_callback;
+extern str kemi_pre_routing_callback;
 
 /* real time stuff */
 extern int real_time;
