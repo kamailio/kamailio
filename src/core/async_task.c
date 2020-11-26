@@ -40,13 +40,14 @@
 #include "ut.h"
 #include "pt.h"
 #include "cfg/cfg_struct.h"
+#include "parser/parse_param.h"
 
 
 #include "async_task.h"
 
 static async_wgroup_t *_async_wgroup_list = NULL;
 
-int async_task_run(int idx);
+int async_task_run(async_wgroup_t *awg, int idx);
 
 /**
  *
@@ -73,19 +74,22 @@ int async_task_workers_active(void)
 int async_task_init_sockets(void)
 {
 	int val;
+	async_wgroup_t *awg;
 
-	if (socketpair(PF_UNIX, SOCK_DGRAM, 0, _async_wgroup_list->sockets) < 0) {
-		LM_ERR("opening tasks dgram socket pair\n");
-		return -1;
-	}
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		if (socketpair(PF_UNIX, SOCK_DGRAM, 0, awg->sockets) < 0) {
+			LM_ERR("opening tasks dgram socket pair\n");
+			return -1;
+		}
 
-	if (_async_wgroup_list->nonblock) {
-		val = fcntl(_async_wgroup_list->sockets[1], F_GETFL, 0);
-		if(val<0) {
-			LM_WARN("failed to get socket flags\n");
-		} else {
-			if(fcntl(_async_wgroup_list->sockets[1], F_SETFL, val | O_NONBLOCK)<0) {
-				LM_WARN("failed to set socket nonblock flag\n");
+		if (awg->nonblock) {
+			val = fcntl(awg->sockets[1], F_GETFL, 0);
+			if(val<0) {
+				LM_WARN("failed to get socket flags\n");
+			} else {
+				if(fcntl(awg->sockets[1], F_SETFL, val | O_NONBLOCK)<0) {
+					LM_WARN("failed to set socket nonblock flag\n");
+				}
 			}
 		}
 	}
@@ -99,8 +103,13 @@ int async_task_init_sockets(void)
  */
 void async_task_close_sockets_child(void)
 {
+	async_wgroup_t *awg;
+
 	LM_DBG("closing the notification socket used by children\n");
-	close(_async_wgroup_list->sockets[1]);
+
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		close(awg->sockets[1]);
+	}
 }
 
 /**
@@ -108,8 +117,13 @@ void async_task_close_sockets_child(void)
  */
 void async_task_close_sockets_parent(void)
 {
+	async_wgroup_t *awg;
+
 	LM_DBG("closing the notification socket used by parent\n");
-	close(_async_wgroup_list->sockets[0]);
+
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		close(awg->sockets[0]);
+	}
 }
 
 /**
@@ -117,15 +131,23 @@ void async_task_close_sockets_parent(void)
  */
 int async_task_init(void)
 {
+	int nrg = 0;
+	async_wgroup_t *awg;
+
 	LM_DBG("start initializing asynk task framework\n");
 	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
 
+	/* overall number of processes */
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		nrg += awg->workers;
+	}
+
 	/* advertise new processes to core */
-	register_procs(_async_wgroup_list->workers);
+	register_procs(nrg);
 
 	/* advertise new processes to cfg framework */
-	cfg_register_child(_async_wgroup_list->workers);
+	cfg_register_child(nrg);
 
 	return 0;
 }
@@ -148,6 +170,7 @@ int async_task_child_init(int rank)
 	int pid;
 	int i;
 	char pname[64];
+	async_wgroup_t *awg;
 
 	if(_async_wgroup_list==NULL || _async_wgroup_list->workers<=0)
 		return 0;
@@ -169,22 +192,26 @@ int async_task_child_init(int rank)
 	if (rank!=PROC_MAIN)
 		return 0;
 
-	snprintf(pname, 62, "Async Task Worker - %s",
-			(_async_wgroup_list->name.s)?_async_wgroup_list->name.s:"unknown");
-	for(i=0; i<_async_wgroup_list->workers; i++) {
-		pid=fork_process(PROC_RPC, pname, 1);
-		if (pid<0)
-			return -1; /* error */
-		if(pid==0) {
-			/* child */
+	for(awg=_async_wgroup_list; awg!=NULL; awg=awg->next) {
+		snprintf(pname, 62, "Async Task Worker - %s",
+				(awg->name.s)?awg->name.s:"unknown");
+		for(i=0; i<awg->workers; i++) {
+			pid=fork_process(PROC_RPC, pname, 1);
+			if (pid<0) {
+				return -1; /* error */
+			}
+			if(pid==0) {
+				/* child */
 
-			/* initialize the config framework */
-			if (cfg_child_init())
-				return -1;
-			/* main function for workers */
-			if(async_task_run(i+1)<0) {
-				LM_ERR("failed to initialize task worker process: %d\n", i);
-				return -1;
+				/* initialize the config framework */
+				if (cfg_child_init()) {
+					return -1;
+				}
+				/* main function for workers */
+				if(async_task_run(awg, i+1)<0) {
+					LM_ERR("failed to initialize task worker process: %d\n", i);
+					return -1;
+				}
 			}
 		}
 	}
@@ -215,12 +242,12 @@ int async_task_set_workers(int n)
 		}
 		memset(_async_wgroup_list, 0, sizeof(async_wgroup_t)
 				+ (gname.len+1)*sizeof(char));
+		_async_wgroup_list->name.s = (char*)_async_wgroup_list
+				+ sizeof(async_wgroup_t);
+		memcpy(_async_wgroup_list->name.s, gname.s, gname.len);
+		_async_wgroup_list->name.len = gname.len;
 	}
 	_async_wgroup_list->workers = n;
-	_async_wgroup_list->name.s = (char*)_async_wgroup_list
-		+ sizeof(async_wgroup_t);
-	memcpy(_async_wgroup_list->name.s, gname.s, gname.len);
-	_async_wgroup_list->name.len = gname.len;
 
 	return 0;
 }
@@ -250,6 +277,108 @@ int async_task_set_usleep(int n)
 	}
 
 	return v;
+}
+
+/**
+ *
+ */
+int async_task_set_workers_group(char *data)
+{
+	str sval;
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	async_wgroup_t awg;
+	async_wgroup_t *newg;
+
+	if(data==NULL) {
+		return -1;
+	}
+	sval.s = data;
+	sval.len = strlen(sval.s);
+
+	if(sval.len<=0) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if(sval.s[sval.len-1]==';') {
+		sval.len--;
+	}
+	if (parse_params(&sval, CLASS_ANY, &phooks, &params_list)<0) {
+		return -1;
+	}
+	memset(&awg, 0, sizeof(async_wgroup_t));
+
+	for (pit = params_list; pit; pit=pit->next) {
+		if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "name", 4)==0) {
+			awg.name = pit->body;
+		} else if (pit->name.len==7
+				&& strncasecmp(pit->name.s, "workers", 7)==0) {
+			if (str2sint(&pit->body, &awg.workers) < 0) {
+				LM_ERR("invalid workers value: %.*s\n", pit->body.len, pit->body.s);
+				return -1;
+			}
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "usleep", 6)==0) {
+			if (str2sint(&pit->body, &awg.usleep) < 0) {
+				LM_ERR("invalid usleep value: %.*s\n", pit->body.len, pit->body.s);
+				return -1;
+			}
+		} else if (pit->name.len==8
+				&& strncasecmp(pit->name.s, "nonblock", 8)==0) {
+			if (str2sint(&pit->body, &awg.nonblock) < 0) {
+				LM_ERR("invalid nonblock value: %.*s\n", pit->body.len, pit->body.s);
+				return -1;
+			}
+		}
+	}
+
+	if(awg.name.len<=0) {
+		LM_ERR("invalid name value: [%.*s]\n", sval.len, sval.s);
+		return -1;
+	}
+	if (awg.workers<=0) {
+		LM_ERR("invalid workers value: %d\n", awg.workers);
+		return -1;
+	}
+
+	if(awg.name.len==7 && strncmp(awg.name.s, "default", 7)==0) {
+		if(async_task_set_workers(awg.workers)<0) {
+			LM_ERR("failed to create the default group\n");
+			return -1;
+		}
+		async_task_set_nonblock(awg.nonblock);
+		async_task_set_usleep(awg.usleep);
+		return 0;
+	}
+	if(_async_wgroup_list==NULL) {
+		if(async_task_set_workers(1)<0) {
+			LM_ERR("failed to create the initial default group\n");
+			return -1;
+		}
+	}
+
+	newg = (async_wgroup_t*)pkg_malloc(sizeof(async_wgroup_t)
+				+ (awg.name.len+1)*sizeof(char));
+	if(newg==NULL) {
+		LM_ERR("failed to create async wgroup [%.*s]\n", sval.len, sval.s);
+		return -1;
+	}
+	memset(newg, 0, sizeof(async_wgroup_t)
+				+ (awg.name.len+1)*sizeof(char));
+	newg->name.s = (char*)newg + sizeof(async_wgroup_t);
+	memcpy(newg->name.s, awg.name.s, awg.name.len);
+	newg->name.len = awg.name.len;
+	newg->workers = awg.workers;
+	newg->nonblock = awg.nonblock;
+	newg->usleep = awg.usleep;
+
+	newg->next = _async_wgroup_list->next;
+	_async_wgroup_list->next = newg;
+
+	return 0;
 }
 
 /**
@@ -295,7 +424,7 @@ int async_task_group_push(str *gname, async_task_t *task)
 		LM_WARN("group [%.*s] not found - ignoring\n", gname->len, gname->s);
 		return 0;
 	}
-	len = write(_async_wgroup_list->sockets[1], &task, sizeof(async_task_t*));
+	len = write(awg->sockets[1], &task, sizeof(async_task_t*));
 	if(len<=0) {
 		LM_ERR("failed to pass the task [%p] to group [%.*s]\n", task,
 				gname->len, gname->s);
@@ -308,16 +437,17 @@ int async_task_group_push(str *gname, async_task_t *task)
 /**
  *
  */
-int async_task_run(int idx)
+int async_task_run(async_wgroup_t *awg, int idx)
 {
 	async_task_t *ptask;
 	int received;
 
-	LM_DBG("async task worker %d ready\n", idx);
+	LM_DBG("async task worker [%.*s] idx [%d] ready\n", awg->name.len,
+			awg->name.s, idx);
 
 	for( ; ; ) {
-		if(unlikely(_async_wgroup_list->usleep)) sleep_us(_async_wgroup_list->usleep);
-		if ((received = recvfrom(_async_wgroup_list->sockets[0],
+		if(unlikely(awg->usleep)) sleep_us(awg->usleep);
+		if ((received = recvfrom(awg->sockets[0],
 							&ptask, sizeof(async_task_t*),
 							0, NULL, 0)) < 0) {
 			LM_ERR("failed to received task (%d: %s)\n", errno, strerror(errno));
