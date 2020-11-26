@@ -157,6 +157,7 @@ void tcp_options_get(struct cfg_group_tcp* t);
 
 #ifdef USE_TCP
 int tcp_set_clone_rcvbuf(int v);
+int tcp_get_clone_rcvbuf(void);
 #endif /* USE_TCP */
 
 #endif /* tcp_options_h */

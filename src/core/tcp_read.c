@@ -109,6 +109,11 @@ int tcp_set_clone_rcvbuf(int v)
 	return r;
 }
 
+int tcp_get_clone_rcvbuf(void)
+{
+	return tcp_clone_rcvbuf;
+}
+
 #ifdef READ_HTTP11
 static inline char *strfindcasestrz(str *haystack, char *needlez)
 {
