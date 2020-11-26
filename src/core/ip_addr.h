@@ -145,6 +145,10 @@ typedef struct snd_flags {
 	unsigned short blst_imask; /* blocklist ignore mask */
 } snd_flags_t;
 
+/* recv flags */
+typedef enum recv_flags {
+	RECV_F_INTERNAL   = (1 << 0), /*  */
+} recv_flags_t;
 
 typedef struct receive_info {
 	struct ip_addr src_ip;
@@ -156,6 +160,7 @@ typedef struct receive_info {
 	union sockaddr_union src_su; /* useful for replies*/
 	struct socket_info* bind_address; /* sock_info structure on which
 										* the msg was received */
+	recv_flags_t rflags; /* flags */
 	char proto;
 #ifdef USE_COMP
 	char proto_pad0;  /* padding field */
