@@ -3251,7 +3251,12 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		LM_ERR("invalid buffer parameter\n");
 		return -1;
 	}
-
+#ifdef USE_TCP
+	if(tcp_get_clone_rcvbuf()==0) {
+		LM_ERR("tcp clone received buffer not enabled\n");
+		return -1;
+	}
+#endif
 	if(obuf->len >= BUF_SIZE) {
 		LM_ERR("new buffer is too large (%d)\n", obuf->len);
 		return -1;
