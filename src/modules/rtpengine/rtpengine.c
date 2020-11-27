@@ -2943,9 +2943,6 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 			}
 
 			break;
-		case RTP_HASH_CRC32_CALLID:
-			crc32_uint(&callid, &sum);
-			goto retry;
 		default:
 			LM_ERR("unknown hashing algo %d\n", hash_algo);
 			return NULL;
@@ -2963,7 +2960,6 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	}
 
 retry:
-	LM_DBG("sum is = %u\n", sum);
 	weight_sum = 0;
 
 	lock_get(active_rtpp_set->rset_lock);
