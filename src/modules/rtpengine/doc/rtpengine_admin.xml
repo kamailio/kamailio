@@ -2022,14 +2022,13 @@ modparam("rtpengine", "control_cmd_tos", 144)
 		<title><varname>hash_algo</varname> (integer)</title>
 		<para>
 			Hashing algorithm to be used in node selection algorithm. Now there are 2 possibilities: legacy
-			algorithm - 0(very basic hash over callid), SHA1 - 1(apply sha1 over the callid and calculate hash) or
-			CRC32 - 2(calculate crc32 sum over the callid).
+			algorithm - 0(very basic hash over callid) or SHA1 - 1(apply sha1 over the callid and calculate hash).
 		</para>
 		<para>
 			Default value is 0, legacy algorithm.
 		</para>
 		<para>
-			The values not falling into the range <quote>0-2</quote> are ignored.
+			The values not falling into the range <quote>0-1</quote> are ignored.
 		</para>
 		<example>
 		<title>Set <varname>control_cmd_tos</varname> parameter</title>
@@ -2037,9 +2036,6 @@ modparam("rtpengine", "control_cmd_tos", 144)
 ...
 ### use SHA1 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 1)
-
-### use CRC32 instead of legacy algorithm
-modparam("rtpengine", "hash_algo", 2)
 ...
 </programlisting>
 		</example>
