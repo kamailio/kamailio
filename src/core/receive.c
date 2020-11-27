@@ -235,6 +235,11 @@ int ksr_evrt_pre_routing(sip_msg_t *msg)
 	str evname = str_init("core:pre-routing");
 	recv_flags_t brflags;
 
+	if(msg->rcv.rflags & RECV_F_INTERNAL) {
+		DBG("skip internal routed message\n");
+		return 0;
+	}
+
 	if(kemi_pre_routing_callback.len>0) {
 		keng = sr_kemi_eng_get();
 		if(keng == NULL) {
