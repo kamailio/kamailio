@@ -43,6 +43,7 @@
 #include "sr_compat.h"
 #include "ppcfg.h"
 #include "async_task.h"
+#include "shm_init.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -114,7 +115,7 @@ static int *_ksr_shutdown_phase = NULL;
 
 int ksr_shutdown_phase_init(void)
 {
-	if(_ksr_shutdown_phase == NULL) {
+	if((_ksr_shutdown_phase == NULL) && (shm_initialized())) {
 		_ksr_shutdown_phase = (int*)shm_malloc(sizeof(int));
 	}
 	return 0;
