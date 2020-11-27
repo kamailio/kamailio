@@ -1011,7 +1011,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		/* null reply, reconnect and try again */
 		if(rsrv->ctxRedis->err)
 		{
-			LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+			LM_DBG("Redis error: %s\n", rsrv->ctxRedis->errstr);
 		}
 		if(redisc_reconnect_server(rsrv)==0)
 		{
@@ -1054,7 +1054,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 			/* null reply, reconnect and try again */
 			if(rsrv->ctxRedis->err)
 			{
-				LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+				LM_DBG("Redis error: %s\n", rsrv->ctxRedis->errstr);
 			}
 			if(redisc_reconnect_server(rsrv)==0)
 			{
@@ -1152,7 +1152,7 @@ again:
 	/* null reply, reconnect and try again */
 	if(rsrv->ctxRedis->err)
 	{
-		LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+		LM_DBG("Redis error: %s\n", rsrv->ctxRedis->errstr);
 	}
 
 	if(res)
