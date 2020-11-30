@@ -168,7 +168,7 @@
             <title>Set <varname>location_type</varname> parameter</title>
                 <programlisting format="linespecific">
     ...
-    modparam("http_client", "location_type, "civic geodetic locationURI")
+    modparam("lost", "location_type, "civic geodetic locationURI")
     ...
                 </programlisting>
             </example>
@@ -228,7 +228,7 @@ $var(id) = "sip:alice@atlanta";
 $var(res) = lost_held_query("heldsrv", "$var(id)" , "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$var(pidf)");
 ...
-$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)"", "$var(err)");
+$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$var(pidf)\n");
 ...
 				</programlisting>
