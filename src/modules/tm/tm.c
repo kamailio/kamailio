@@ -2923,7 +2923,7 @@ static int ki_t_relay_to_proto(sip_msg_t *msg, str *sproto)
 /**
  *
  */
-static int ki_t_relay_to_proto2(sip_msg_t *msg, str *sproto, str *host, unsigned int port)
+static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, unsigned int port)
 {
 
 	int proto = PROTO_NONE;
@@ -3284,8 +3284,8 @@ static sr_kemi_t tm_kemi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("tm"), str_init("t_relay_to_proto2"),
-		SR_KEMIP_INT, ki_t_relay_to_proto2,
+	{ str_init("tm"), str_init("t_relay_to_proto_addr"),
+		SR_KEMIP_INT, ki_t_relay_to_proto_addr,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
