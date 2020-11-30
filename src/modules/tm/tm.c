@@ -2913,7 +2913,7 @@ static int ki_t_relay_to_proto(sip_msg_t *msg, str *sproto)
 		} else if (strncasecmp(sproto->s, "TLS", 3)) {
 			proto = PROTO_TLS;
 		} else {
-			LM_ERR("t_relay_to_proto failed, bad protocol specified <%s>\n", sproto->s);
+			LM_ERR("bad protocol specified <%s>\n", sproto->s);
 			return E_UNSPEC;
 		}
 	}
@@ -2937,7 +2937,7 @@ static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, unsi
 		} else if (strncasecmp(sproto->s, "TLS", 3)) {
 			proto = PROTO_TLS;
 		} else {
-			LM_ERR("t_relay_to_proto2 failed, bad protocol specified <%s>\n", sproto->s);
+			LM_ERR("bad protocol specified <%s>\n", sproto->s);
 			return E_UNSPEC;
 		}
 	}
