@@ -250,13 +250,16 @@ static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2)
  */
 static int ki_dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 {
+	int ret;
+
 	LM_DBG("counting by: [%.*s] [%.*s] [%.*s]\n", vfield->len, vfield->s,
 			vop->len, vop->s, vdata->len, vdata->s);
-	if(dlgs_count(msg, vfield, vop, vdata) < 0) {
-		return -1;
+	ret = dlgs_count(msg, vfield, vop, vdata);
+	if(ret <= 0) {
+		return (ret-1);
 	}
 
-	return 1;
+	return ret;
 }
 
 /**
