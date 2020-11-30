@@ -340,6 +340,7 @@ int dlgs_add_item(sip_msg_t *msg, str *src, str *dst, str *data)
 		prev->next = nitem;
 	}
 	dsht->slots[idx].esize++;
+	dlgs_update_stats(&dsht->slots[idx].astats, nitem->state, 1);
 	lock_release(&dsht->slots[idx].lock);
 	return 0;
 }
