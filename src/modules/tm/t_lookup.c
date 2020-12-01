@@ -1067,8 +1067,7 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 			if (cfg_get(tm, tm_cfg, tm_aggregate_auth) &&
 					(p_msg->REPLY_STATUS==401 || p_msg->REPLY_STATUS==407)){
 				if (parse_headers(p_msg, HDR_EOH_F,0)==-1){
-					LM_WARN("WARNING: the reply cannot be "
-							"completely parsed\n");
+					LM_WARN("the reply cannot be completely parsed\n");
 					/* try to continue, via1 & cseq are checked below */
 				}
 			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F|HDR_CALLID_F,

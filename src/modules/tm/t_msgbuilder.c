@@ -484,7 +484,7 @@ char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 				/* final (end-of-headers) CRLF */
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
-				/* LOG(L_DBG, "DBG: build_local: %.*s\n", *len, cancel_buf); */
+				/* LOG(L_DBG, "%.*s\n", *len, cancel_buf); */
 				return cancel_buf;
 
 			default:

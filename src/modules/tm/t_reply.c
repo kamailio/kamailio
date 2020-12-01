@@ -1666,8 +1666,7 @@ int t_retransmit_reply( struct cell *t )
 	 * the chances for this increase a lot.
 	 */
 	if (!t->uas.response.dst.send_sock) {
-		LOG(L_WARN, "WARNING: t_retransmit_reply: "
-			"no resolved dst to retransmit\n");
+		LOG(L_WARN, "no resolved dst to retransmit\n");
 		return -1;
 	}
 
@@ -1677,14 +1676,13 @@ int t_retransmit_reply( struct cell *t )
 	LOCK_REPLIES( t );
 
 	if (!t->uas.response.buffer) {
-		DBG("DBG: t_retransmit_reply: nothing to retransmit\n");
+		DBG("nothing to retransmit\n");
 		goto error;
 	}
 
 	len=t->uas.response.buffer_len;
 	if ( len==0 || len>BUF_SIZE )  {
-		DBG("DBG: t_retransmit_reply: "
-			"zero length or too big to retransmit: %d\n", len);
+		DBG("zero length or too big to retransmit: %d\n", len);
 		goto error;
 	}
 	memcpy( b, t->uas.response.buffer, len );
