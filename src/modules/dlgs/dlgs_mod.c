@@ -341,8 +341,11 @@ static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2)
  */
 static int ki_dlgs_tags_count(sip_msg_t *msg, str *vtags)
 {
-	if(dlgs_tags_count(msg, vtags)<0) {
-		return -1;
+	int ret;
+
+	ret = dlgs_tags_count(msg, vtags);
+	if(ret<=0) {
+		return (ret-1);
 	}
 	return 1;
 }
