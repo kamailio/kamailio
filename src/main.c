@@ -833,9 +833,10 @@ void handle_sigs(void)
 */
 void sig_usr(int signo)
 {
-
+#ifdef SIG_DEBUG
 #ifdef PKG_MALLOC
 	int memlog;
+#endif
 #endif
 
 	if (is_main){
@@ -859,7 +860,7 @@ void sig_usr(int signo)
 #ifdef SIG_DEBUG /* signal unsafe stuff follows */
 					LM_INFO("signal %d received\n", signo);
 					/* print memory stats for non-main too */
-					#ifdef PKG_MALLOC
+#ifdef PKG_MALLOC
 					/* make sure we have current cfg values, but update only
 					  the safe part (values not requiring callbacks), to
 					  account for processes that might not have registered
@@ -877,11 +878,13 @@ void sig_usr(int signo)
 							pkg_sums();
 						}
 					}
-					#endif
+#endif
 #endif
 					_exit(0);
 					break;
 			case SIGUSR1:
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
+					LM_INFO("signal %d received\n", signo);
 #ifdef PKG_MALLOC
 					cfg_update_no_cbs();
 					memlog=cfg_get(core, core_cfg, memlog);
@@ -896,10 +899,14 @@ void sig_usr(int signo)
 						}
 					}
 #endif
+#endif
 					break;
 				/* ignored*/
 			case SIGUSR2:
 			case SIGHUP:
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
+					LM_INFO("signal %d received - ignoring\n", signo);
+#endif
 					break;
 			case SIGCHLD:
 #ifndef 			STOP_JIRIS_CHANGES
