@@ -797,14 +797,12 @@ void handle_sigs(void)
 				break;
 			}
 
-#ifndef STOP_JIRIS_CHANGES
 			if (dont_fork) {
 				LM_INFO("dont_fork turned on, living on\n");
 				break;
 			}
 			LM_INFO("terminating due to SIGCHLD\n");
-#endif
-			LM_DBG("terminating due to SIGCHLD\n");
+
 			/* exit */
 			shutdown_children(SIGTERM, 1);
 			if (WIFSIGNALED(chld_status)) {
@@ -909,13 +907,9 @@ void sig_usr(int signo)
 #endif
 					break;
 			case SIGCHLD:
-#ifndef 			STOP_JIRIS_CHANGES
 #ifdef SIG_DEBUG /* signal unsafe stuff follows */
 					LM_DBG("SIGCHLD received: "
 						"we do not worry about grand-children\n");
-#endif
-#else
-					_exit(0); /* terminate if one child died */
 #endif
 					break;
 		}
