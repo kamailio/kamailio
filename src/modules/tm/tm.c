@@ -2923,7 +2923,7 @@ static int ki_t_relay_to_proto(sip_msg_t *msg, str *sproto)
 /**
  *
  */
-static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, unsigned int port)
+static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, int port)
 {
 
 	int proto = PROTO_NONE;
@@ -2941,9 +2941,9 @@ static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, unsi
 			return E_UNSPEC;
 		}
 	}
-	proxy = mk_proxy(host, port, 0);
+	proxy = mk_proxy(host, (unsigned short)port, 0);
 	if (proxy == 0) {
-		LM_ERR("bad host, port provided <%s,%d>\n",
+		LM_ERR("bad host:port provided <%s:%d>\n",
 		       host->s, port );
 		return E_BAD_ADDRESS;
 	}
