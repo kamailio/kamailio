@@ -298,6 +298,8 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 					if(geo.len == 0) {
 						LM_WARN("%s element not found\n", HELD_TYPE_URI);
 						geo.s = NULL;
+					} else {
+						geo.s = lost_trim_content(geo.s, &geo.len);
 					}
 				}
 				if(xmlStrcmp(cur_node->name,
