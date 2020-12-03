@@ -31,6 +31,16 @@
 #define READ(val) \
 	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
+#define LW_HNAME_SET(_p, _end, _hnlen, _type, _htype) \
+	do { \
+		if(_end - _p > _hnlen) { \
+			if(_p[_hnlen] == ':' || _p[_hnlen] == ' ') { \
+				*_type = _htype; \
+				_p += _hnlen; \
+			} \
+		} \
+	} while(0)
+
 /*
  * lightweight header field name parser
  * used by build_local_reparse() function in order to construct ACK or CANCEL request
@@ -50,122 +60,111 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 
 	p = begin;
 	val = LOWER_DWORD(READ(p));
+	*type = HDR_OTHER_T;
 
 	switch(val) {
 
 		case _cseq_: /* Cseq */
-			*type = HDR_CSEQ_T;
-			p += 4;
+			LW_HNAME_SET(p, end, 4, type, HDR_CSEQ_T);
 			break;
 
 		case _via1_: /* Via */
 		case _via2_:
-			*type = HDR_VIA_T;
-			p += 3;
+			LW_HNAME_SET(p, end, 3, type, HDR_VIA_T);
 			break;
 
 		case _from_: /* From */
-			*type = HDR_FROM_T;
-			p += 4;
+			LW_HNAME_SET(p, end, 4, type, HDR_FROM_T);
 			break;
 
 		case _to12_: /* To */
-			*type = HDR_TO_T;
-			p += 2;
+			LW_HNAME_SET(p, end, 2, type, HDR_TO_T);
 			break;
 
 		case _requ_: /* Require */
-			p += 4;
-			val = LOWER_DWORD(READ(p));
+			if(end - begin < 8) {
+				return begin;
+			}
+
+			val = LOWER_DWORD(READ(p + 4));
 
 			switch(val) {
 
 				case _ire1_:
 				case _ire2_:
-					p += 3;
-					*type = HDR_REQUIRE_T;
+					LW_HNAME_SET(p, end, 7, type, HDR_REQUIRE_T);
 					break;
 
 				default:
-					p -= 4;
 					*type = HDR_OTHER_T;
 					break;
 			}
 			break;
 
 		case _prox_: /* Proxy-Require */
+			if(end - begin < 14) {
+				return begin;
+			}
 
 			if((LOWER_DWORD(READ(p + 4)) == _y_re_)
 					&& (LOWER_DWORD(READ(p + 8)) == _quir_)
 					&& (LOWER_BYTE(*(p + 12)) == 'e')) {
-
-				p += 13;
-				*type = HDR_PROXYREQUIRE_T;
-				break;
-
-			} else {
-				*type = HDR_OTHER_T;
+				LW_HNAME_SET(p, end, 13, type, HDR_PROXYREQUIRE_T);
 				break;
 			}
+			break;
 
 		case _cont_: /* Content-Length */
+			if(end - begin < 15) {
+				return begin;
+			}
 
 			if((LOWER_DWORD(READ(p + 4)) == _ent__)
 					&& (LOWER_DWORD(READ(p + 8)) == _leng_)
 					&& (LOWER_BYTE(*(p + 12)) == 't')
 					&& (LOWER_BYTE(*(p + 13)) == 'h')) {
-
-				p += 14;
-				*type = HDR_CONTENTLENGTH_T;
-				break;
-			} else {
-				*type = HDR_OTHER_T;
+				LW_HNAME_SET(p, end, 14, type, HDR_CONTENTLENGTH_T);
 				break;
 			}
+			break;
 
 		case _call_: /* Call-Id */
+			if(end - begin < 8) {
+				return begin;
+			}
 
-			p += 4;
-			val = LOWER_DWORD(READ(p));
+			val = LOWER_DWORD(READ(p + 4));
 
 			switch(val) {
-
 				case __id1_:
 				case __id2_:
-					p += 3;
-					*type = HDR_CALLID_T;
-					break;
-
-				default:
-					p -= 4;
-					*type = HDR_OTHER_T;
+					LW_HNAME_SET(p, end, 7, type, HDR_CALLID_T);
 					break;
 			}
 			break;
 
 		case _rout_: /* Route */
-
-			if(LOWER_BYTE(*(p + 4)) == 'e') {
-				p += 5;
-				*type = HDR_ROUTE_T;
-				break;
-			} else {
-				*type = HDR_OTHER_T;
-				break;
+			if(end - begin < 6) {
+				return begin;
 			}
 
+			if(LOWER_BYTE(*(p + 4)) == 'e') {
+				LW_HNAME_SET(p, end, 5, type, HDR_ROUTE_T);
+				break;
+			}
+			break;
+
 		case _max__: /* Max-Forwards */
+			if(end - begin < 13) {
+				return begin;
+			}
 
 			if((LOWER_DWORD(READ(p + 4)) == _forw_)
 					&& (LOWER_DWORD(READ(p + 8)) == _ards_)) {
-
-				p += 12;
-				*type = HDR_MAXFORWARDS_T;
-				break;
-			} else {
-				*type = HDR_OTHER_T;
+				LW_HNAME_SET(p, end, 12, type, HDR_MAXFORWARDS_T);
 				break;
 			}
+			break;
 
 		default:
 			/* compact headers */
@@ -177,7 +176,6 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 						*type = HDR_VIA_T;
 						break;
 					}
-					*type = HDR_OTHER_T;
 					break;
 
 				case 'f': /* From */
@@ -186,7 +184,6 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 						*type = HDR_FROM_T;
 						break;
 					}
-					*type = HDR_OTHER_T;
 					break;
 
 				case 't': /* To */
@@ -200,7 +197,6 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 						*type = HDR_TO_T;
 						break;
 					}
-					*type = HDR_OTHER_T;
 					break;
 
 				case 'l': /* Content-Length */
@@ -209,7 +205,6 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 						*type = HDR_CONTENTLENGTH_T;
 						break;
 					}
-					*type = HDR_OTHER_T;
 					break;
 
 				case 'i': /* Call-Id */
@@ -218,11 +213,6 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 						*type = HDR_CALLID_T;
 						break;
 					}
-					*type = HDR_OTHER_T;
-					break;
-
-				default:
-					*type = HDR_OTHER_T;
 					break;
 			}
 	}
