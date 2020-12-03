@@ -350,7 +350,9 @@ error:
 	return 0;
 }
 
-int ht_dmq_replicate_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode) {
+int ht_dmq_replicate_action(ht_dmq_action_t action, str* htname, str* cname,
+		int type, int_str* val, int mode)
+{
 
 	srjson_doc_t jdoc;
 
@@ -370,7 +372,8 @@ int ht_dmq_replicate_action(ht_dmq_action_t action, str* htname, str* cname, int
 		srjson_AddStrToObject(&jdoc, jdoc.root, "cname", cname->s, cname->len);
 	}
 
-	if (action==HT_DMQ_SET_CELL || action==HT_DMQ_SET_CELL_EXPIRE || action==HT_DMQ_RM_CELL_RE) {
+	if (action==HT_DMQ_SET_CELL || action==HT_DMQ_SET_CELL_EXPIRE
+			|| action==HT_DMQ_RM_CELL_RE || action==HT_DMQ_RM_CELL_SW) {
 		srjson_AddNumberToObject(&jdoc, jdoc.root, "type", type);
 		if (type&AVP_VAL_STR) {
 			srjson_AddStrToObject(&jdoc, jdoc.root, "strval", val->s.s, val->s.len);
@@ -407,7 +410,8 @@ error:
 	return -1;
 }
 
-int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode) {
+int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname,
+		int type, int_str* val, int mode) {
 
 	ht_t* ht;
 	ht = ht_get_table(htname);
@@ -416,7 +420,8 @@ int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname, int ty
 		return -1;
 	}
 
-	LM_DBG("replaying action %d on %.*s=>%.*s...\n", action, htname->len, htname->s, cname->len, cname->s);
+	LM_DBG("replaying action %d on %.*s=>%.*s...\n", action,
+			htname->len, htname->s, cname->len, cname->s);
 
 	if (action==HT_DMQ_SET_CELL) {
 		return ht_set_cell(ht, cname, type, val, mode);
@@ -426,6 +431,8 @@ int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname, int ty
 		return ht_del_cell(ht, cname);
 	} else if (action==HT_DMQ_RM_CELL_RE) {
 		return ht_rm_cell_re(&val->s, ht, mode);
+	} else if (action==HT_DMQ_RM_CELL_SW) {
+		return ht_rm_cell_op(&val->s, ht, mode, HT_RM_OP_SW);
 	} else {
 		LM_ERR("unrecognized action\n");
 		return -1;
