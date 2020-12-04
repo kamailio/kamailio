@@ -429,6 +429,8 @@ void cfgt_save_node(cfgt_node_p node)
 		}
 		fclose(fp);
 		node->jdoc.free_fn(dest.s);
+		LM_INFO("*** node uuid:[%.*s] id:[%d] saved ***\n",
+				STR_FMT(&node->uuid), node->msgid);
 	} else {
 		LM_ERR("Can't open file [%s] to write\n", dest.s);
 		pkg_free(dest.s);
@@ -767,7 +769,7 @@ int cfgt_msgin(sr_event_param_t *evp)
 int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str unknown = {"unknown", 7};
-	int get_hdr_result = 0;
+	int get_hdr_result = 0, res;
 
 	if(_cfgt_node) {
 		if(_cfgt_node->msgid == 0) {
@@ -786,7 +788,10 @@ int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 				}
 				pkg_str_dup(&_cfgt_node->uuid, &unknown);
 			}
-			return _cfgt_get_uuid_id(_cfgt_node);
+			res = _cfgt_get_uuid_id(_cfgt_node);
+			LM_INFO("*** node uuid:[%.*s] id:[%d] created ***\n",
+				STR_FMT(&_cfgt_node->uuid), _cfgt_node->msgid);
+			return res;
 		} else {
 			LM_DBG("_cfgt_node->uuid:[%.*s]\n", _cfgt_node->uuid.len,
 					_cfgt_node->uuid.s);
