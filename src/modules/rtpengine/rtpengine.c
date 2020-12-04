@@ -149,6 +149,7 @@ struct minmax_mos_stats {
 	str packetloss_param;
 	str jitter_param;
 	str roundtrip_param;
+	str roundtrip_leg_param;
 	str samples_param;
 
 	pv_elem_t *mos_pv;
@@ -156,6 +157,7 @@ struct minmax_mos_stats {
 	pv_elem_t *packetloss_pv;
 	pv_elem_t *jitter_pv;
 	pv_elem_t *roundtrip_pv;
+	pv_elem_t *roundtrip_leg_pv;
 	pv_elem_t *samples_pv;
 };
 struct minmax_mos_label_stats {
@@ -174,6 +176,7 @@ struct minmax_stats_vals {
 	long long packetloss;
 	long long jitter;
 	long long roundtrip;
+	long long roundtrip_leg;
 	long long samples;
 	long long avg_samples; /* our own running count to average the averages */
 };
@@ -463,15 +466,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_pv",     PARAM_STR, &global_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_pv",         PARAM_STR, &global_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_pv",      PARAM_STR, &global_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_pv",                PARAM_STR, &global_mos_stats.max.mos_param             },
 	{"mos_max_at_pv",             PARAM_STR, &global_mos_stats.max.at_param              },
 	{"mos_max_packetloss_pv",     PARAM_STR, &global_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_pv",         PARAM_STR, &global_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_pv",      PARAM_STR, &global_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_pv",            PARAM_STR, &global_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_pv", PARAM_STR, &global_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_pv",     PARAM_STR, &global_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_pv",  PARAM_STR, &global_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_pv", PARAM_STR, &global_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_pv",    PARAM_STR, &global_mos_stats.average.samples_param     },
 
 	/* designated side A */
@@ -481,15 +487,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_A_pv",     PARAM_STR, &side_A_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_A_pv",         PARAM_STR, &side_A_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_A_pv",      PARAM_STR, &side_A_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_A_pv",                PARAM_STR, &side_A_mos_stats.max.mos_param             },
 	{"mos_max_at_A_pv",             PARAM_STR, &side_A_mos_stats.max.at_param              },
 	{"mos_max_packetloss_A_pv",     PARAM_STR, &side_A_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_A_pv",         PARAM_STR, &side_A_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_A_pv",      PARAM_STR, &side_A_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_A_pv",            PARAM_STR, &side_A_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_A_pv", PARAM_STR, &side_A_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_A_pv",     PARAM_STR, &side_A_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_A_pv",  PARAM_STR, &side_A_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_A_pv",    PARAM_STR, &side_A_mos_stats.average.samples_param     },
 
 	/* designated side B */
@@ -499,15 +508,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_B_pv",         PARAM_STR, &side_B_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.min.roundtrip_param       },
 	{"mos_max_B_pv",                PARAM_STR, &side_B_mos_stats.max.mos_param             },
 	{"mos_max_at_B_pv",             PARAM_STR, &side_B_mos_stats.max.at_param              },
 	{"mos_max_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_B_pv",         PARAM_STR, &side_B_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_B_pv",            PARAM_STR, &side_B_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_B_pv", PARAM_STR, &side_B_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_B_pv",     PARAM_STR, &side_B_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_B_pv",    PARAM_STR, &side_B_mos_stats.average.samples_param     },
 
 	{0, 0, 0}
@@ -1925,6 +1937,8 @@ static int minmax_pv_parse(struct minmax_mos_stats *s, int *got_any) {
 		return -1;
 	if (pv_parse_var(&s->roundtrip_param, &s->roundtrip_pv, got_any))
 		return -1;
+	if (pv_parse_var(&s->roundtrip_leg_param, &s->roundtrip_leg_pv, got_any))
+		return -1;
 	if (pv_parse_var(&s->samples_param, &s->samples_pv, got_any))
 		return -1;
 	return 0;
@@ -3272,6 +3286,7 @@ static void avp_print_mos(struct minmax_mos_stats *s, struct minmax_stats_vals *
 	avp_print_int(s->packetloss_pv, vals->packetloss / vals->avg_samples, msg);
 	avp_print_int(s->jitter_pv, vals->jitter / vals->avg_samples, msg);
 	avp_print_int(s->roundtrip_pv, vals->roundtrip / vals->avg_samples, msg);
+	avp_print_int(s->roundtrip_leg_pv, vals->roundtrip_leg / vals->avg_samples, msg);
 	avp_print_int(s->samples_pv, vals->samples / vals->avg_samples, msg);
 }
 
@@ -3287,6 +3302,7 @@ static int decode_mos_vals_dict(struct minmax_stats_vals *vals, bencode_item_t *
 	vals->packetloss = bencode_dictionary_get_integer(mos_ent, "packet loss", -1);
 	vals->jitter = bencode_dictionary_get_integer(mos_ent, "jitter", -1);
 	vals->roundtrip = bencode_dictionary_get_integer(mos_ent, "round-trip time", -1);
+	vals->roundtrip_leg = bencode_dictionary_get_integer(mos_ent, "round-trip time leg", -1);
 	vals->samples = bencode_dictionary_get_integer(mos_ent, "samples", -1);
 	vals->avg_samples = 1;
 
@@ -3416,6 +3432,7 @@ ssrc_ok:
 			average_vals.packetloss += vals_decoded.packetloss;
 			average_vals.jitter += vals_decoded.jitter;
 			average_vals.roundtrip += vals_decoded.roundtrip;
+			average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
 			average_vals.samples += vals_decoded.samples;
 		}
 
