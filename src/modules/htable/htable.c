@@ -493,6 +493,7 @@ static int ht_rm_items(sip_msg_t* msg, str* hname, str* op, str *val,
 				}
 				return 1;
 			} else if(strncmp(op->s, "sw", 2)==0) {
+				isval.s = *val;
 				if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_SW, &ht->name, NULL,
 							AVP_VAL_STR, &isval, mkey)!=0) {
 					LM_ERR("dmq relication failed (op %d)\n", mkey);
