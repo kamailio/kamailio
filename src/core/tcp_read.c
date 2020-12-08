@@ -296,9 +296,11 @@ again:
 			}
 		}else if (unlikely((bytes_read==0) ||
 					(*flags & RD_CONN_FORCE_EOF))){
-			LM_DBG("EOF on %p, FD %d, bytes %d, flags %x ([%s]:%u -> [%s]:%u)",
-					c, fd, bytes_read, *flags, ip_addr2a(&c->rcv.src_ip),
-					c->rcv.src_port, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+			LM_DBG("EOF on connection %p (state: %u, flags: %x) - FD %d,"
+					" bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
+					c, c->state, c->flags, fd, bytes_read, *flags,
+					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
 			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
