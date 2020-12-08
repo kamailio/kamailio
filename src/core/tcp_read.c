@@ -316,12 +316,12 @@ again:
 			}
 		}else if (unlikely((bytes_read==0) ||
 					(*flags & RD_CONN_FORCE_EOF))){
+			LM_DBG("EOF on %p, FD %d, bytes %d, flags %x ([%s]:%u -> [%s]:%u)",
+					c, fd, bytes_read, *flags, ip_addr2a(&c->rcv.src_ip),
+					c->rcv.src_port, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
 			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
-			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
-			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
