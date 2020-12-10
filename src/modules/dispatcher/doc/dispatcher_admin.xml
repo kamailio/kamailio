@@ -2147,20 +2147,21 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						</listitem>
 						<listitem>
 							<para>'weight' - used for weight based load distribution. It must be set
-								to a positive integer value beteen 0 and 100. The value represents
-								the percent of calls to be sent to that gateways. The sum must not
-								exceed 100, otherwise the destinations whose weight added to the
-								sum go over 100 are ignored. If the sum is less than 100, then the
-								last destination is used to fill the missing percentage. See also
-								the description of the corresponding algorithm parameter for
+								to a positive integer value beteen 1 and 100 (inclusive the limits),
+								otherwise the destination address is ignored (its weight set to 0).
+								The value represents the percent of calls to be sent to that gateways.
+								The sum must not exceed 100, otherwise the destinations whose weight
+								added to the sum go over 100 are ignored. If the sum is less than 100,
+								then the last destination is used to fill the missing percentage. See
+								also the description of the corresponding algorithm parameter for
 								ds_select_dst().</para>
 						</listitem>
 						<listitem>
 							<para>'rweight' - used for relative weight based load distribution. It
-								must be set to a positive integer value between 1 and 100 (otherwise
-								host will be excluded from relative weight distribution
-								type). See also the description of the corresponding algorithm
-								parameter for ds_select_dst().</para>
+								must be set to a positive integer value between 1 and 100 (inclusive
+								the limits) otherwise host will be excluded from relative weight
+								distribution type - its rweight is set to 0. See also the description
+								of the corresponding algorithm parameter for ds_select_dst().</para>
 						</listitem>
 						<listitem>
 							<para>'socket' - used to set the sending socket for the gateway. It is
