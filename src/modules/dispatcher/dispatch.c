@@ -284,7 +284,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 	param_hooks_t phooks;
 	param_t *pit = NULL;
 	str param;
-	int tmp_rweight = 0;
+	int tmp_ival = 0;
 	str sattrs;
 
 	if(vattrs == NULL || vattrs->len <= 0) {
@@ -319,7 +319,15 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			str2sint(&pit->body, &dest->attrs.congestion_control);
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "weight", 6) == 0) {
-			str2sint(&pit->body, &dest->attrs.weight);
+			tmp_ival = 0;
+			str2sint(&pit->body, &tmp_ival);
+			if(tmp_ival >= 1 && tmp_ival <= 100) {
+				dest->attrs.weight = tmp_ival;
+			} else {
+				dest->attrs.weight = 0;
+				LM_ERR("weight %d not in 1-100 range - ignoring destination",
+						tmp_ival);
+			}
 		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "latency", 7) == 0) {
 			int initial_latency = 0;
@@ -336,12 +344,13 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			dest->attrs.sockname = pit->body;
 		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "rweight", 7) == 0) {
-			tmp_rweight = 0;
-			str2sint(&pit->body, &tmp_rweight);
-			if(tmp_rweight >= 1 && tmp_rweight <= 100) {
-				dest->attrs.rweight = tmp_rweight;
+			tmp_ival = 0;
+			str2sint(&pit->body, &tmp_ival);
+			if(tmp_ival >= 1 && tmp_ival <= 100) {
+				dest->attrs.rweight = tmp_ival;
 			} else {
-				LM_ERR("rweight %d not in 1-100 range; skipped", tmp_rweight);
+				dest->attrs.rweight = 0;
+				LM_WARN("rweight %d not in 1-100 range - ignoring", tmp_ival);
 			}
 		} else if(pit->name.len == 9
 				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
