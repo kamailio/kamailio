@@ -653,6 +653,10 @@ int dp_init_relative_weights(ds_set_t *dset)
 	/* if the array was not completely filled (i.e., the sum of rweights is
 	 * less than 100 due to truncated), then use last address to fill the rest */
 	last_insert = t > 0 ? dset->rwlist[t - 1] : (unsigned int)(dset->nr - 1);
+	if(t < 100) {
+		LM_INFO("extra rweight %d for last active destination in group %d\n",
+				(100-t), dset->id);
+	}
 	for(j = t; j < 100; j++)
 		dset->rwlist[j] = last_insert;
 
@@ -706,6 +710,10 @@ int dp_init_weights(ds_set_t *dset)
 	}
 	/* if the array was not completely filled (i.e., the sum of weights is
 	 * less than 100), then use last address to fill the rest */
+	if(t < 100) {
+		LM_INFO("extra weight %d for last destination in group %d\n",
+				(100-t), dset->id);
+	}
 	for(; t < 100; t++)
 		dset->wlist[t] = (unsigned int)(dset->nr - 1);
 randomize:
