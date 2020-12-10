@@ -1189,7 +1189,7 @@ modparam("dispatcher", "reload_delta", 1)
 				<para>
 				<quote>9</quote> - use weight based load distribution. You
 				have to set the attribute 'weight' for each address (gateway) in
-				destination set. For more see the description of the 'weight'
+				destination set. See also the description of the 'weight'
 				attribute in the 'Special Attributes' section.
 				</para>
 			</listitem>
@@ -1228,12 +1228,15 @@ modparam("dispatcher", "reload_delta", 1)
 				<para>
 				The major difference from the weight distribution is the
 				probability recalculation according to rweight value in case of
-				host enabling/disabling
+				destinations being active or inactive.
 				</para>
 				<para>
-				For example, 100 calls in 3-hosts group with rweight params 1/2/1
-				will be distributed as 25/50/25. After third host failing
-				distribution will be changed to 33/67/0.
+				For example, 100 calls in 3-destinations group with rweight params 1/2/1
+				will be distributed as 25/50/25. If the third destination becomes
+				inactive, the distribution is changed to 33/67/0. If the computation
+				of percentage per destination is not an exact integer number, the value
+				is trucated and the last destination is used to fill the remaining
+				percentage till 100.
 				</para>
 				<para>
 				Using this algorithm, you can also enable congestion control by setting the
@@ -1247,6 +1250,10 @@ modparam("dispatcher", "reload_delta", 1)
 				The congestion estimation is done using an EWMA (see ds_latency_estimator_alpha).
 				If all the gateways in a set are above their congestion threshold(weight), the
 				load distribution is instead done using the ratio of estimated congestion ms.
+				</para>
+				<para>
+				See also the description of the 'rweight' attribute in the
+				'Special Attributes' section.
 				</para>
 			</listitem>
 			<listitem>
@@ -2100,13 +2107,19 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						<listitem>
 							<para>'weight' - used for weight based load distribution. It must be set
 								to a positive integer value beteen 0 and 100. The value represents
-								the percent of calls to be sent to that gateways.></para>
+								the percent of calls to be sent to that gateways. The sum must not
+								exceed 100, otherwise the destinations whose weight added to the
+								sum go over 100 are ignored. If the sum is less than 100, then the
+								last destination is used to fill the missing percentage. See also
+								the description of the corresponding algorithm parameter for
+								ds_select_dst().</para>
 						</listitem>
 						<listitem>
 							<para>'rweight' - used for relative weight based load distribution. It
 								must be set to a positive integer value between 1 and 100 (otherwise
 								host will be excluded from relative weight distribution
-								type).</para>
+								type). See also the description of the corresponding algorithm
+								parameter for ds_select_dst().</para>
 						</listitem>
 						<listitem>
 							<para>'socket' - used to set the sending socket for the gateway. It is
