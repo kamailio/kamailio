@@ -1058,8 +1058,8 @@ modparam("dispatcher", "reload_delta", 1)
             (serial forking ordered by priority).
           + “9” - use weight based load distribution. You have to set the
             attribute 'weight' for each address (gateway) in destination
-            set. For more see the description of the 'weight' attribute in
-            the 'Special Attributes' section.
+            set. See also the description of the 'weight' attribute in the
+            'Special Attributes' section.
           + “10” - use call load distribution. You have to set the
             attribute 'duid' (as an unique string id) per each address in
             destination set. Also, you must set the parameter
@@ -1081,10 +1081,14 @@ modparam("dispatcher", "reload_delta", 1)
             active host rweights in destination group).
             The major difference from the weight distribution is the
             probability recalculation according to rweight value in case
-            of host enabling/disabling
-            For example, 100 calls in 3-hosts group with rweight params
-            1/2/1 will be distributed as 25/50/25. After third host
-            failing distribution will be changed to 33/67/0.
+            of destinations being active or inactive.
+            For example, 100 calls in 3-destinations group with rweight
+            params 1/2/1 will be distributed as 25/50/25. If the third
+            destination becomes inactive, the distribution is changed to
+            33/67/0. If the computation of percentage per destination is
+            not an exact integer number, the value is trucated and the
+            last destination is used to fill the remaining percentage till
+            100.
             Using this algorithm, you can also enable congestion control
             by setting the attibute 'cc=1', when 'cc' is enabled the
             'rweight' attribute will also be used to control congestion
@@ -1097,6 +1101,8 @@ modparam("dispatcher", "reload_delta", 1)
             above their congestion threshold(weight), the load
             distribution is instead done using the ratio of estimated
             congestion ms.
+            See also the description of the 'rweight' attribute in the
+            'Special Attributes' section.
           + “12” - dispatch to all destination in setid at once (parallel
             forking). Note that the XAVPs are no longer set with the
             values of the destination records, no re-routing making sense
@@ -1681,11 +1687,17 @@ kamctl rpc dispatcher.hash 4 bob server.com
        If set to 0, then no active call limit is used.>
      * 'weight' - used for weight based load distribution. It must be set
        to a positive integer value beteen 0 and 100. The value represents
-       the percent of calls to be sent to that gateways.>
+       the percent of calls to be sent to that gateways. The sum must not
+       exceed 100, otherwise the destinations whose weight added to the
+       sum go over 100 are ignored. If the sum is less than 100, then the
+       last destination is used to fill the missing percentage. See also
+       the description of the corresponding algorithm parameter for
+       ds_select_dst().
      * 'rweight' - used for relative weight based load distribution. It
        must be set to a positive integer value between 1 and 100
        (otherwise host will be excluded from relative weight distribution
-       type).
+       type). See also the description of the corresponding algorithm
+       parameter for ds_select_dst().
      * 'socket' - used to set the sending socket for the gateway. It is
        used for sending the SIP traffic as well as OPTIONS keepalives.
      * 'sockname' - used to set by name the sending socket for the

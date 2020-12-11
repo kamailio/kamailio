@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
 
    Example 1.3. Set location_type parameter
     ...
-    modparam("http_client", "location_type, "civic geodetic locationURI")
+    modparam("lost", "location_type, "civic geodetic locationURI")
     ...
 
 4. Functions
@@ -221,7 +221,7 @@ $var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)");
 ...
-$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)"", "$var(err)");
+$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)\n");
 ...
