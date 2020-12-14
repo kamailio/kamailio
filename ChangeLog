@@ -1,3 +1,483 @@
+===================== 2020-12-14 Version 5.4.3 Released =====================
+
+===================== Changes Since Version 5.4.2 ===========================
+
+commit 32a19315eb946f939ca9cd8c50aae98b78adcfa1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Dec 14 09:44:34 2020 +0100
+
+    pkg/kamailio/deb: version set 5.4.3
+
+commit fc592bd1c4f0f0d400c8c50fbc7583157d7f4956
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 14 09:25:07 2020 +0100
+
+    Makefile.defs: version set to 5.4.3
+
+commit b1b2067d360be72d536b7372c5bafd918bb57593
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 14 08:56:22 2020 +0100
+
+    pkg: version set to 5.4.3 for rpms and apline
+
+commit 0dffe40c25f59ba796edab7653633fe6c0773dc8
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Dec 11 21:01:26 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 24666d2223c8e718ed9abe949a74d4339ae6c87e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 10 16:25:49 2020 +0100
+
+    dispacher: docs - more details about weight and rweight attributes
+    
+    - cross reference sections that have info about weight and rweight
+    attributes
+    
+    (cherry picked from commit db55715003cd9af5ef3d32b51b5246643eea10d1)
+
+commit 834bca2dab19fd1a63386e28955428c93da3c2ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 8 13:07:44 2020 +0100
+
+    core: tcp - log connection state and flags on debug message
+    
+    (cherry picked from commit 41040a0420ee48f51901bf32e29526c8948ecea0)
+
+commit bec3650b51342a9b093ca92134c3b22f4ee22637
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 8 12:50:56 2020 +0100
+
+    core: tcp - debug messages merged, print bytes read and flags
+    
+    (cherry picked from commit efb9c5f83b37c316b848ae7b6dc829e2f8ca6275)
+
+commit bded4ca0918a4a48e7d1001bc924b31924ac8ea4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 14:07:34 2020 +0100
+
+    pv: use static buffer for ctime_r() output and check its return
+    
+    - fixed $TF output, regression introduced when switching to thread safe
+    time function
+    
+    (cherry picked from commit 02fc919e4f177cc3ab9c5d53eb9ea2019c572bd9)
+
+commit cb6d5b577aa9eb3d60cb71a60133dd4a8777b69d
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Dec 2 20:56:57 2020 +0300
+
+    lost: trimed spaces before reolving locationURI value
+    
+    fixes GH2569 (#2569). Allow parse exmaples from RFC7840
+    
+    (cherry picked from commit f9d424ac426dc0547c7233902dfa44ad1287e077)
+
+commit f72f1effb079f66714f4399b12eaba077fc2b773
+Author: Patrick Wakano <patrick.wakano@ipscape.com>
+Date:   Wed Dec 2 13:58:18 2020 +0100
+
+    dialog: access dialog table entry by reference for dmq_send_all_dlgs
+    
+    - avoid race conditions to get and release the lock when entry structure
+    is copied in local variable
+    - GH #2570, GH #2547
+    
+    (cherry picked from commit 4183b860e8af6d65074ab98a996c187211aebc7f)
+
+commit 7ef04a11c4b92a49dcf94dade5bb0a8c65880a43
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 2 09:45:48 2020 +0100
+
+    auth_diameter: init variable and check before freeing
+    
+    (cherry picked from commit 04dc5d6c66c85d0d411aa23b27bc6be00258eff6)
+
+commit e7f616df3f68bd7c53150ad20a8ec5a42b8daede
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Nov 29 22:54:24 2020 +0300
+
+    lost: removed extra `"` symbol in example
+    
+    (cherry picked from commit 124499c12db185d85805e5c71d5cc4222e608b68)
+
+commit 4b5f58be3101c4efe745f37e286bf84b6ffd694f
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Nov 29 22:44:33 2020 +0300
+
+    lost: fixed typo
+    
+    (cherry picked from commit 87f363f7fa0bf8f1897a3d6de13a09d6ec3812b9)
+
+commit 7c7fc27eb10372fda305a65c2dacea679a57efde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 26 13:54:42 2020 +0100
+
+    core: check if the tcp clone rcv buffer is set when applying changes
+    
+    (cherry picked from commit aa13720e5d78dde5ae5235c13399848cb8f5a0cc)
+
+commit 5c6ddfea8845cd2d76bd15ec5511d156ef2ba3c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 18:09:51 2020 +0100
+
+    dispatcher: removed unnecessary return
+    
+    (cherry picked from commit 721d533317c735d7ddbd16ad94684b483468c010)
+
+commit d610f27185eafe275e98c567f1c1781eb0325961
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Thu Nov 19 15:39:13 2020 +0200
+
+    smsops: fix len calc for a concatenated sms
+    
+    - fixed the calculation for concatenated SMSs
+    based on TS 23.040, Sec. 9.2.3.16
+    
+    (cherry picked from commit d90f29b3b03386add989aebe3865bdc78dff8fbe)
+
+commit 0744976d1ab80caf09f80b7594d2c76de3437d9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 13:48:01 2020 +0100
+
+    misc/examples/kemi: fixed function name to get From-URI
+    
+    (cherry picked from commit 6035c30aea72d06bf08883677d45f4eb0019f189)
+
+commit fba5f6172932c7925dce1ee49fbfeb4e6cceb6fc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 10:10:55 2020 +0100
+
+    etc/kamailio.cfg: split to filter on both friendly and scanner
+    
+    - some scanning scripts use a different format for the user agent
+    
+    (cherry picked from commit 454c4653409a69ef115de5ee748524d36e147246)
+
+commit c5793f508aa115146e10c2f32691a29a16dc98ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 10:09:33 2020 +0100
+
+    misc/examples/kemi: filter on user agent matching friendly, scanner and sipvicious
+    
+    (cherry picked from commit e15c90d31fd0444f41cb862408f77399123c0191)
+
+commit 66f5cc9d021eca4a9acfbca935e991c2c6caed3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 08:02:37 2020 +0100
+
+    misc/examples: note that sr is exported by app_lua_sr
+    
+    - hint for lua syntax check
+    
+    (cherry picked from commit 889431746d24c73eeff73705fab36a0e154116a9)
+
+commit 4851f0318bf049ccef93390f6ac0fdfa8a38c0b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 17:06:06 2020 +0100
+
+    tm: proper fill of From/To URI/tag values using parsed structure in t_uac_send()
+    
+    (cherry picked from commit aa6e9963b2725c1b6b7e5ff995a77c222d95fa3c)
+
+commit f8885c990642d4f2bebe47ea7d1f6ce8673c29f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 13:15:52 2020 +0100
+
+    tm: check end of header name in lw parser
+    
+    - proper identification of header type, prior could mistakenly set the
+    type by matching the prefix of long header name
+    - GH #2572
+    
+    (cherry picked from commit c0f5382bfbd2022896a9b206967977f827517700)
+
+commit b9846143c171d731e94d7f0d450b40f66f2ac2c6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Dec 4 10:23:04 2020 +0100
+
+    cfgt: log info when node is created and saved
+    
+    (cherry picked from commit a2eff905626c6428539d3d848e7968f5dd0f2108)
+
+commit 4fdc21a826533f1b889ee6e8302fe112859bf0fd
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Dec 1 18:00:39 2020 +0300
+
+    pkg/kamailio/obs: updated tmpfiles
+    
+    fixed removing of kamailio_ctl and other files
+
+commit 49d833852bdcdc7c37ebd8d8d4e8cfb5ef149613
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 1 09:40:56 2020 +0100
+
+    dlgs: fixed return value for dlgs_tags_count()
+    
+    (cherry picked from commit 057383f0b780b8317831f72c7c9f64786cc5a25e)
+
+commit 3c8d3df471c92068144f84f2f02b9e79c8c723d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 30 14:07:21 2020 +0100
+
+    dlgs: fix counting dialogs function
+    
+    - count the dialog in initial state
+    - GH #2568
+    
+    (cherry picked from commit 6376e24960878ca510ab6f1ce0594a351debc409)
+
+commit d0da78960e61aca42e75ba346b76616b59a16e86
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Nov 27 19:16:29 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 89b66e50b93465c120e818dabd4c94f9443bd686
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Nov 27 18:05:35 2020 +0000
+
+    Revert "rtpengine: add CRC32 hash algo (#2558)"
+    
+    This reverts commit bc1cf60f970c572ecaddf1ea154834d0e41d292e.
+
+commit 18edda18229ee6e75370a078a5deb8f980274e52
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Nov 26 08:16:39 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit bc1cf60f970c572ecaddf1ea154834d0e41d292e
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Nov 25 19:20:52 2020 +0200
+
+    rtpengine: add CRC32 hash algo (#2558)
+    
+    (cherry picked from commit 10349080490faabffaf1ab7cc5d591678b8c94dd)
+
+commit 2d733ec7c9e26ad79d9d8503db0d342217febd30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 14:14:48 2020 +0100
+
+    tm: print ruri mode in debug message from t load contacts
+    
+    (cherry picked from commit 3214ecd8ee82d1b69cde57d96dddefe1301c190c)
+
+commit f61d7a1b6b45bbed29bf4bc6c8a69fd52700ca41
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 14:04:15 2020 +0100
+
+    tm: use q field comparison in while for standard t contacts load
+    
+    - fix ordering change to standar mode introduced with proportional mode
+    - GH #2449
+    
+    (cherry picked from commit 59f6ddbe902d61bc682dd12fc6330df656468b1b)
+
+commit d9a1a5cf667e7d093cc077fc51297825565c79d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 12:55:17 2020 +0100
+
+    drouting: give portparameter set to 0 to sip_resolvehost()
+    
+    - enable doing SRV query, GH #2553
+    
+    (cherry picked from commit 18f59c10582845da5eea280990daf19c804978fb)
+
+commit c9ab7671bffdee3c775f6eb13cbd2363b6f5ecf3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 16 10:06:20 2020 +0100
+
+    jsonrpcs: exported dispatch() function to kemi
+    
+    (cherry picked from commit 08a9ed3d136c861f990e4f63c2c0544e08d9078d)
+
+commit bec6cdf10dfbf9f32fce041987a3468b8a675a22
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Mon Nov 9 14:37:26 2020 +0200
+
+    core: added missing field in sip_msg_update_buffer
+    
+    - added a missing field in sip_msg_update_buffer()
+      when restoring message fiedls: msg->pid.
+    
+    (cherry picked from commit 57be5c1f33344275c15777a7927d9c48df4a69ba)
+
+commit f6747a1fe4af59062733090ee0081d1bf15669c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 13:10:43 2020 +0100
+
+    sctp: memcpy field data to avoid unaligned access warning
+    
+    - GH #2543
+    
+    (cherry picked from commit 4bb099b046939b85e1827b804167a51ef4bc00c4)
+
+commit f3a872e9e8f780a23f7e3426ce4152a3a26cc448
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 12:31:24 2020 +0100
+
+    http_async_client: include poll.h instead sys/poll.h
+    
+    - according to POSIX specs
+    - GH #2543
+    
+    (cherry picked from commit 8f30c75cff7787a39f7c934e00e933b1beb43c20)
+
+commit b72ab5e554d230b36a7c6dbc79b8e86b5d0c70e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 12:13:51 2020 +0100
+
+    core: init origproto to fix compiler warning
+    
+    - GH #2543
+    
+    (cherry picked from commit ef3233d14080936486d09edbe9598d7d92bd2f33)
+
+commit 88f43b97768676fd2b84c3e855ec5ae441b826cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 11:15:10 2020 +0100
+
+    dialog: skip doing cseq update processing for non-sip requests
+    
+    (cherry picked from commit 960b60ede8543f38b61ad2769e81e11d5a777df8)
+
+commit 82e00ce32c9a232be1dbd2e0a0e6e6c349e054b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 3 12:49:33 2020 +0100
+
+    exec: debug message when command returns non-zero
+    
+    (cherry picked from commit e9eee1ead964992a2d81014709755bbfd1e995c9)
+
+commit 17cb589ce5ac07dbb12f1b99f17258f313adf783
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 3 11:38:56 2020 +0100
+
+    dialog: small formatting changes
+    
+    (cherry picked from commit a3443211515068bb12ecbd53541785a5ebf1cb6c)
+
+commit 4b5f5636143037ff6620b88e03e57c05a91eabc4
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Nov 9 12:52:07 2020 +0000
+
+    crypto: properly initialize key and iv to 0, add comment regarding the size of IV
+    
+    - properly initialize key and iv to 0, otherwise invalid data might be printed
+    - the initialization vector for AES will be always AES blocksize, e.g. 128 bits
+    
+    (cherry picked from commit e9624bc4823cfba0bd9536a70b9eeadecb2a537e)
+
+commit 5c26e09f8c5be8c3de66958207701cdd7a8dce62
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 9 00:19:44 2020 +0300
+
+    pkg/kamailio/alpine: packaged app_lua_sr module
+    
+    (cherry picked from commit 6782b2c1789f162b405ec0b9894f61075a4307f9)
+
+commit 345376cb49a5464ebb65f940e97262e010dc24ae
+Author: Guillem Jover <gjover@sipwise.com>
+Date:   Thu Nov 5 18:34:43 2020 +0100
+
+    sl: Fix 3xx stats RPC marshalling
+    
+    The struct_add() method was getting 4 values but only 3 "d".
+    
+    (cherry picked from commit ac55cc5ce5fcbb50d3a2a6b228585dce8fc1150d)
+
+commit a97206031ff0c28f791a5789f6dfc37707a4b59d
+Author: Julien Chavanton <jchavanton@gmail.com>
+Date:   Thu Nov 5 07:09:38 2020 -0800
+
+    core: DNS stop resolving NAPTR for IP addresses (#2541)
+    
+    
+    (cherry picked from commit 37f06f031c4ce93bcf4494744282c17f7a2d157c)
+
+commit 5bd72f2758b2059759ce152e6d97b6a1955bc5bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 08:09:39 2020 +0100
+
+    dialog: proper to-tag check for initial requests to skip cseq updates
+    
+    (cherry picked from commit 81d3e7a43a249dfc9eaa075c698e1eb3237a517e)
+
+commit e27c128abebcb06d1383a909ecfd21bcb4ca8026
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Nov 2 09:27:41 2020 +0000
+
+    dialog: small spelling fix in debug log message
+    
+    (cherry picked from commit 1640569d02420e0c0d0232fc825354d1f09784c8)
+
+commit a309a0ee48278923871197391a30d485f0513a4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 2 09:04:46 2020 +0100
+
+    dialog: skip non-INVITE initial request for cseq update processing
+    
+    (cherry picked from commit a973882b064c758972ce40e9ac3a83440c613be1)
+
+commit bb016b3ac30bbd3c09c5ee8c10331c836231ed3d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 28 10:32:50 2020 +0100
+
+    dialog: update internal_get_dlg() after 0bde3ca changes
+    
+    - keep also direction value for no-totag dialog
+    - reference and unlock only when returning, related to #2494
+    
+    (cherry picked from commit 98436c73e8519e96e3d167b7610cbb58b9939885)
+
+commit f76216bb1fab2dd39413915bc2db88d9c588a56e
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Sep 11 10:51:23 2020 +0000
+
+    pkg: add CAP_CHOWN capability to Kamailio systemd service files to allow chown (#2391)
+    
+    - add CAP_CHOWN capability to Kamailio systemd service files to allow chown
+    - needed e.g. for user and group setting from jsonrpcs and ctl modules
+    - related to github issue #2391
+    
+    (cherry picked from commit 8b72f462deb4b66fb55f754abc93bf7295278afa)
+
+commit 62dff5b8b157236cae7defe64291a6e4a8ae27b5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 28 20:16:28 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 3deaec5ec6eda850e4b5c53e860d91460c317837
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 28 19:02:33 2020 +0000
+
+    uac: extend docs for uac_auth() example, only t_relay() on success
+    
+    - extend docs for uac_auth() example, only t_relay() on success
+    - otherwise you will get a 'no branches for forwarding' error from tm
+    
+    (cherry picked from commit 668402e77c19ba4b5b8fc5b6c869ffbf34ea622d)
+
+commit 035e22e9d75949d066129b4056271ff772653500
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Oct 28 18:08:59 2020 +0000
+
+    uac: do not silently fail on realm lookup error, at least log with INFO
+    
+    (cherry picked from commit b6c10c8181d670a81a7d1216c7e6ec81c0963e9c)
+
+commit 4f00ba425051718ecbf426591fdb14268ae92d94
+Author: Paris Stamatopoulos <paris@forin.gr>
+Date:   Fri Oct 23 23:57:49 2020 +0300
+
+    auth_radius, misc_radius: Adds VENDOR() definition if the freeradius-client.h does not contain one already.
+    
+    (cherry picked from commit 9978e00405cac89cc65d2d8a863128dd2814d7fd)
+
+
 ===================== 2020-10-27 Version 5.4.2 Released =====================
 
 ===================== Changes Since Version 5.4.1 ===========================
