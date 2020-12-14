@@ -2927,7 +2927,8 @@ static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, int 
 {
 
 	int proto = PROTO_NONE;
-	struct proxy_l *proxy;
+	proxy_l_t *proxy = NULL;
+	int ret = -1;
 
 	if (sproto != NULL && sproto->s != NULL && sproto->len == 3) {
 		if (strncasecmp(sproto->s, "UDP", 3) == 0) {
@@ -2947,7 +2948,10 @@ static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, int 
 		       host->s, port );
 		return E_BAD_ADDRESS;
 	}
-	return _w_t_relay_to(msg, proxy, proto);
+	ret = _w_t_relay_to(msg, proxy, proto);
+	free_proxy(proxy);
+	pkg_free(proxy);
+	return ret;
 }
 
 /**
