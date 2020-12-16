@@ -756,6 +756,59 @@ static int ki_evapi_async_unicast(sip_msg_t *msg, str *sdata, str *stag)
 	return 1;
 }
 
+static int ki_evapi_async_multicast(sip_msg_t *msg, str *sdata, str *stag)
+{
+	unsigned int tindex;
+	unsigned int tlabel;
+	tm_cell_t *t = 0;
+
+	if(tmb.t_suspend==NULL) {
+		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suspend request processing\n");
+		return -1;
+	}
+
+	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+
+
+	if(sdata->s==NULL || sdata->len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
+	if(stag->s==NULL || stag->len == 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+
+	if(evapi_relay_multicast(sdata, stag)<0) {
+		LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
+				sdata->len, sdata->s, stag->len, stag->s);
+		return -2;
+	}
+	return 1;
+}
+
 /**
  *
  */
@@ -821,6 +874,11 @@ static sr_kemi_t sr_kemi_evapi_exports[] = {
 	},
 	{ str_init("evapi"), str_init("async_unicast"),
 		SR_KEMIP_INT, ki_evapi_async_unicast,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("evapi"), str_init("async_multicast"),
+		SR_KEMIP_INT, ki_evapi_async_multicast,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
