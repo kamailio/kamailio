@@ -87,6 +87,7 @@ static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
 static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char *trace_type);
 static int fixup_siptrace(void **param, int param_no);
+static int fixup_free_siptrace(void **param, int param_no);
 static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2);
 
 static int parse_siptrace_uri(str* duri, dest_info_t* dst);
@@ -191,9 +192,9 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"sip_trace", (cmd_function)w_sip_trace1, 1, fixup_siptrace, 0,
 		ANY_ROUTE},
-	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_siptrace, 0,
+	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_siptrace, fixup_free_siptrace,
 		ANY_ROUTE},
-	{"sip_trace", (cmd_function)w_sip_trace3, 3, fixup_siptrace, 0,
+	{"sip_trace", (cmd_function)w_sip_trace3, 3, fixup_siptrace, fixup_free_siptrace,
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0,
 		ANY_ROUTE},
@@ -749,6 +750,21 @@ static int fixup_siptrace(void **param, int param_no)
 			return -1;
 		}
 		memcpy(*param, &trace_type, sizeof(trace_type));
+	}
+
+	return 0;
+}
+
+static int fixup_free_siptrace(void **param, int param_no)
+{
+	if (param_no == 1 || param_no == 2) {
+		/* correlation id */
+		return fixup_free_spve_all(param, param_no);
+	} if (param_no == 3) {
+		/* tracing type; string only */
+		if (*param) {
+			pkg_free(*param);
+		}
 	}
 
 	return 0;
