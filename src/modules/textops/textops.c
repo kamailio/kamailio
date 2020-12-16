@@ -2307,6 +2307,11 @@ static int ki_set_body(sip_msg_t* msg, str* nb, str* nc)
 	return 1;
 }
 
+int set_body(struct sip_msg* msg, str *body, str *content_type)
+{
+    return ki_set_body(msg, body, content_type);
+}
+
 static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 {
 	str nb = {0,0};
@@ -2775,6 +2780,15 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
 }
 
+int set_body_multipart(struct sip_msg* msg)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
+}
+
 static int set_multibody_0(struct sip_msg* msg, char* p1, char* p2, char* p3)
 {
 	return set_multibody_helper(msg, NULL, NULL, NULL);
@@ -2979,6 +2993,11 @@ static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3,
 	} else {
 		return ki_append_multibody_cd(msg, &txt, &ct, &cd);
 	}
+}
+
+int append_body_part(struct sip_msg* msg, str *body, str *content_type, str *content_disposition)
+{
+	return ki_append_multibody_cd(msg, body, content_type, content_disposition);
 }
 
 static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
