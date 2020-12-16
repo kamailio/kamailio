@@ -891,8 +891,9 @@ static int ki_http_query_helper(sip_msg_t *_m, str *url, str *post, str *hdrs,
 		LM_ERR("invalid url parameter\n");
 		return -1;
 	}
-	ret = http_client_query(_m, url->s, &result, (post && post->s)?post->s:NULL,
-			(hdrs && hdrs->s)?hdrs->s:NULL);
+	ret = http_client_query(_m, url->s, &result,
+			(post && post->s && post->len>0)?post->s:NULL,
+			(hdrs && hdrs->s && hdrs->len>0)?hdrs->s:NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
