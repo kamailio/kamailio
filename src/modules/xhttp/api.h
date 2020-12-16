@@ -18,21 +18,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _XHTTP_API_H_
 #define _XHTTP_API_H_
 
 #include "../../core/sr_module.h"
 
-typedef int (*xhttp_reply_f)(sip_msg_t *msg, int code, str *reason,
-		str *ctype, str *body);
+typedef int (*xhttp_reply_f)(
+		sip_msg_t *msg, int code, str *reason, str *ctype, str *body);
 
+/* clang-format off */
 typedef struct xhttp_api {
 	xhttp_reply_f reply;
 } xhttp_api_t;
+/* clang-format on */
 
-typedef int (*bind_xhttp_f)(xhttp_api_t* api);
-int bind_xhttp(xhttp_api_t* api);
+typedef int (*bind_xhttp_f)(xhttp_api_t *api);
+int bind_xhttp(xhttp_api_t *api);
 
 /**
  * @brief Load the XHTTP API
@@ -46,8 +48,7 @@ static inline int xhttp_load_api(xhttp_api_t *api)
 		LM_ERR("cannot find bind_xhttp\n");
 		return -1;
 	}
-	if(bindxhttp(api)<0)
-	{
+	if(bindxhttp(api) < 0) {
 		LM_ERR("cannot bind xhttp api\n");
 		return -1;
 	}
