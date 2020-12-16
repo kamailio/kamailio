@@ -508,7 +508,7 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_B_pv",         PARAM_STR, &side_B_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.min.roundtrip_param       },
-	{"mos_min_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_B_pv",                PARAM_STR, &side_B_mos_stats.max.mos_param             },
 	{"mos_max_at_B_pv",             PARAM_STR, &side_B_mos_stats.max.at_param              },
 	{"mos_max_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.max.packetloss_param      },
