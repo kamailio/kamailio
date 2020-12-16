@@ -793,7 +793,9 @@ static int fixup_free_siptrace(void **param, int param_no)
 		return fixup_free_spve_all(param, param_no);
 	} if (param_no == 3) {
 		/* tracing type; string only */
-		return fixup_free_str_all(param, param_no);
+		if (*param) {
+			pkg_free(*param);
+		}
 	}
 
 	return 0;
