@@ -955,12 +955,15 @@ https://tools.ietf.org/html/rfc5222
 	/* set properties */
 	xmlNewProp(ptrFindService, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:lost1");
-	xmlNewProp(ptrFindService, BAD_CAST "xmlns:p2",
-			BAD_CAST "http://www.opengis.net/gml");
 	xmlNewProp(ptrFindService, BAD_CAST "serviceBoundary",
 			(loc->boundary == 1) ? BAD_CAST "value" : BAD_CAST "reference");
 	xmlNewProp(ptrFindService, BAD_CAST "recursive",
 			(loc->recursive == 1) ? BAD_CAST "true" : BAD_CAST "false");
+	if(loc->xpath == NULL) {
+		xmlNewProp(ptrFindService, BAD_CAST "xmlns:p2",
+				BAD_CAST "http://www.opengis.net/gml");
+	}
+
 	/* location - element */
 	ptrLocation = xmlNewChild(ptrFindService, NULL, BAD_CAST "location", NULL);
 	xmlNewProp(ptrLocation, BAD_CAST "id", BAD_CAST loc->identity);
