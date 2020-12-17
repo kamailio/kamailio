@@ -387,8 +387,9 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 	}
 
 	if(get_to(&msg)->tag_value.len<=0) {
-		/* intial request - handle only INVITEs */
-		if(msg.first_line.u.request.method_value!=METHOD_INVITE) {
+		/* intial request - handle only INVITEs, ACKs and CANCELs */
+		if(!(msg.first_line.u.request.method_value
+					& (METHOD_INVITE|METHOD_ACK|METHOD_CANCEL))) {
 			goto done;
 		}
 	}
