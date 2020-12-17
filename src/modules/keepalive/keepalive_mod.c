@@ -40,6 +40,8 @@
 #include "../tm/tm_load.h"
 #include "../dispatcher/api.h"
 
+#include "../../core/mem/shm_mem.h"
+
 #include "keepalive.h"
 #include "api.h"
 
@@ -55,12 +57,14 @@ static int w_cmd_is_alive(struct sip_msg *msg, char *str1, char *str2);
 static int fixup_add_destination(void** param, int param_no);
 static int w_add_destination(sip_msg_t *msg, char *uri, char *owner);
 static int w_del_destination(sip_msg_t *msg, char *uri, char *owner);
+static int ka_add_initial_destinations();
 
 
 extern struct tm_binds tmb;
 
 int ka_ping_interval = 30;
 ka_destinations_list_t *ka_destinations_list = NULL;
+ka_initial_dest_t *ka_initial_destinations_list = NULL;
 sruid_t ka_sruid;
 str ka_ping_from = str_init("sip:keepalive@kamailio.org");
 int ka_counter_del = 5;
@@ -126,6 +130,10 @@ static int mod_init(void)
 		return -1;
 
 	if(sruid_init(&ka_sruid, '-', "ka", SRUID_INC) < 0) {
+		return -1;
+	}
+
+	if (ka_add_initial_destinations() < 0) {
 		return -1;
 	}
 
@@ -235,24 +243,63 @@ static int ki_del_destination(sip_msg_t *msg, str *uri, str *owner)
 
 /*
  * Function callback executer per module param "destination".
- * Is just a wrapper to ka_add_dest() api function
+ * It just adds destinations to an initial list to be added later in mod_init
+ * This is required because of initialization requirements.
  */
-static int ka_mod_add_destination(modparam_t type, void *val)
-{
-	if(ka_alloc_destinations_list() < 0)
-		return -1;
+static int ka_mod_add_destination(modparam_t type, void *val) {
+	LM_DBG("adding destination to initial list %s\n", (char *)val);
 
-	str dest = {val, strlen(val)};
-	str owner = str_init("_params");
-	LM_DBG("adding destination %.*s\n", dest.len, dest.s);
+	char *owner = "_params";
+	char *uri = (char *)val;
 
-	return ka_add_dest(&dest, &owner, 0, ka_ping_interval, 0, 0, 0);
+	ka_initial_dest_t *current_position = NULL;
+	ka_initial_dest_t *new_destination = (ka_initial_dest_t *) shm_malloc(sizeof(ka_initial_dest_t));
+	new_destination->uri.s = shm_malloc(sizeof(char) * strlen(uri));
+	new_destination->owner.s = shm_malloc(sizeof(char) * strlen(owner));
+
+	memcpy(new_destination->uri.s, uri, strlen(uri));
+	new_destination->uri.len = strlen(uri);
+
+	memcpy(new_destination->owner.s, owner, strlen(owner));
+	new_destination->owner.len = strlen(owner);
+	
+	new_destination->next = NULL;
+
+	if (ka_initial_destinations_list == NULL) {
+		ka_initial_destinations_list = new_destination;
+	} else {
+		current_position = ka_initial_destinations_list;
+		while (current_position->next != NULL) {
+			current_position = current_position->next;
+		}
+		current_position->next = new_destination;
+	}
+
+	return 1;
+}
+
+static int ka_add_initial_destinations() {
+	LM_DBG("ka_add_initial_destinations called \n");
+	int res = 1;
+	ka_initial_dest_t *old_position = NULL;
+
+	ka_initial_dest_t *current_position = ka_initial_destinations_list;
+	while ( res > 0 && current_position != NULL) {
+		res = ka_add_dest(&(current_position->uri), &(current_position->owner), 0, ka_ping_interval, 0, 0, 0);
+		LM_INFO("Added initial destination Via \"destination\" parameter <%.*s> \n", current_position->uri.len, current_position->uri.s);
+		shm_free(current_position->uri.s);
+		shm_free(current_position->owner.s);
+		old_position = current_position;
+		current_position = old_position->next;
+		shm_free(old_position);
+	}
+	ka_initial_destinations_list = NULL;
+
+	return res;
 }
 
 /*
  * Allocate global variable *ka_destination_list* if not already done
- * WHY:  when specifying static destinations as module param, ka_mod_add_destination() is
- *       executed BEFORE mod_init()
  */
 int ka_alloc_destinations_list()
 {

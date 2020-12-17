@@ -57,6 +57,14 @@ typedef void (*ka_response_f)(
 		str *uri, struct tmcb_params *ps, void *user_attr);
 
 
+typedef struct _ka_initial_dest
+{
+	str uri;
+	str owner;
+	struct _ka_initial_dest *next;
+} ka_initial_dest_t;
+
+
 typedef struct _ka_dest
 {
 	str uri;
