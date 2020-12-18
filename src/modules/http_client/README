@@ -91,7 +91,7 @@ Hugh Waite
 
    2. Developer Guide
 
-        1.
+        1. Introduction
         2. Available Functions
 
               2.1. int http_connect(msg, connection, url, result,
@@ -872,7 +872,7 @@ Chapter 2. Developer Guide
 
    Table of Contents
 
-   1.
+   1. Introduction
    2. Available Functions
 
         2.1. int http_connect(msg, connection, url, result, content_type,
@@ -881,6 +881,8 @@ Chapter 2. Developer Guide
         2.2. int http_connection_exists(str *connection)
         2.3. int http_query(msg, url, dest, post)
         2.4. http_get_content_type(str connection)
+
+1. Introduction
 
    This module provides a set of API functions that other modules can use
    in order to integrate with HTTP services.
