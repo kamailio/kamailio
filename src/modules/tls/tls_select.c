@@ -1404,7 +1404,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_serial", sizeof("tls_my_serial")-1},
 		PVT_OTHER, pv_sn,0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL },
-	/* certificate parameters for peer and local, for subject and issuer*/	
+	/* certificate parameters for peer and local, for subject and issuer*/
 	{{"tls_peer_subject", sizeof("tls_peer_subject")-1},
 		PVT_OTHER, pv_comp, 0,
 		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT },
@@ -1496,7 +1496,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_subject_uid", sizeof("tls_my_subject_uid")-1},
 		PVT_OTHER, pv_comp, 0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_UID },
-	/* subject alternative name parameters for peer and local */	
+	/* subject alternative name parameters for peer and local */
 	{{"tls_peer_san_email", sizeof("tls_peer_san_email")-1},
 		PVT_OTHER, pv_alt, 0,
 		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_E },
@@ -1521,7 +1521,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_san_ip", sizeof("tls_my_san_ip")-1},
 		PVT_OTHER, pv_alt, 0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_IP },
-	/* peer certificate validation parameters */		
+	/* peer certificate validation parameters */
 	{{"tls_peer_verified", sizeof("tls_peer_verified")-1},
 		PVT_OTHER, pv_check_cert, 0,
 		0, 0, pv_init_iname, PV_CERT_VERIFIED },
@@ -1540,11 +1540,71 @@ pv_export_t tls_pv[] = {
 	{{"tls_peer_notAfter", sizeof("tls_peer_notAfter")-1},
 		PVT_OTHER, pv_validity, 0,
 		0, 0, pv_init_iname, PV_CERT_NOTAFTER },
-	/* peer certificate validation parameters */		
+	/* peer certificate validation parameters */
 	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
 		PVT_OTHER, pv_tlsext_sn, 0,
 		0, 0, pv_init_iname, PV_TLSEXT_SNI },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 
-}; 
+};
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t _ksr_kemi_tls_xval = {0};
+
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname)
+{
+	pv_param_t param;
+	pv_value_t value;
+	int i;
+
+	memset(&_ksr_kemi_tls_xval, 0, sizeof(sr_kemi_xval_t));
+	for(i=0; tls_pv[i].name.s != NULL; i++) {
+		if((tls_pv[i].name.len == aname->len)
+				&& strncmp(tls_pv[i].name.s, aname->s, aname->len) == 0) {
+			break;
+		}
+	}
+	if(tls_pv[i].name.s==NULL) {
+		LM_WARN("unknown attribute: %.*s\n", aname->len, aname->s);
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(tls_pv[i].parse_name!=NULL || tls_pv[i].parse_index!=NULL) {
+		LM_WARN("unsupported attribute: %.*s\n", aname->len, aname->s);
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	memset(&param, 0, sizeof(pv_param_t));
+	memset(&value, 0, sizeof(pv_value_t));
+
+	if(tls_pv[i].getf(msg, &param, &value) != 0) {
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_VAL_NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_TYPE_INT) {
+		_ksr_kemi_tls_xval.vtype = SR_KEMIP_INT;
+		_ksr_kemi_tls_xval.v.n = value.ri;
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_VAL_STR) {
+		_ksr_kemi_tls_xval.vtype = SR_KEMIP_STR;
+		_ksr_kemi_tls_xval.v.s = value.rs;
+		return &_ksr_kemi_tls_xval;
+	}
+
+	LM_WARN("unsupported value for attribute: %.*s\n", aname->len, aname->s);
+	sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+	return &_ksr_kemi_tls_xval;
+}

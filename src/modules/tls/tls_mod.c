@@ -549,11 +549,24 @@ static int w_is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 /**
  *
  */
+static sr_kemi_xval_t* ki_tls_cget(sip_msg_t *msg, str *aname)
+{
+	return ki_tls_cget_attr(msg, aname);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_tls_exports[] = {
 	{ str_init("tls"), str_init("is_peer_verified"),
 		SR_KEMIP_INT, ki_is_peer_verified,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tls"), str_init("cget"),
+		SR_KEMIP_XVAL, ki_tls_cget,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
