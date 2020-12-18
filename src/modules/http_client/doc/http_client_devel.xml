@@ -10,11 +10,14 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<section>
+	<title>Introduction</title>
+	<para>
 	This module provides a set of API functions that other modules can use in order to
 	integrate with HTTP services.
+	</para>
 	</section>
 	<section>
 	<title>Available Functions</title>
@@ -93,7 +96,7 @@
 			<function moreinfo="none">int http_query(msg, url, dest, post)</function>
 			</title>
 			<para>
-			Sends a HTTP GET or POST request to a given connection. If post data 
+			Sends a HTTP GET or POST request to a given connection. If post data
 			is defined, POST will be used, otherwise GET. The default settings
 			defined as module params of the http_client module will be used for
 			the connection.
@@ -143,7 +146,6 @@
 			data delivered.
 			</para>
 		</section>
-
 
 	</section>
 

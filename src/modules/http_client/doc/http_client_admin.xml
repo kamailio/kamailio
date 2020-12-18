@@ -74,8 +74,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be
-		installed before  
-		running &kamailio; with this module loaded:
+		installed before running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -86,7 +85,7 @@
 		</para>
 	</section>
 	</section>
-	
+
 	<section>
 		<title>Parameters</title>
 		<section id="http_client.p.httpredirect">
@@ -297,7 +296,7 @@ modparam("http_client", "cipher_suites", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
 			<title><varname>verify_peer</varname> (int)</title>
 			<para>
 			If set to 0, TLS verification of the server certificate
-			is disabled. This means that the connection will get 
+			is disabled. This means that the connection will get
 			encrypted, but there's no authentication. There's no
 			proof that the transmission of data is to the host
 			that is meant to receive data.
@@ -324,7 +323,7 @@ modparam("http_client", "verify_peer", 1)
 			<title><varname>verify_host</varname> (int)</title>
 			<para>
 			If set to 0, domain verification of the server certificate
-			is disabled. This means that the connection will get 
+			is disabled. This means that the connection will get
 			encrypted but there is no check that data will be sent to the
 			host that is meant to receive it. Disable with caution.
 			</para>
@@ -535,11 +534,11 @@ modparam("http_client", "query_maxdatasize", 2048)
 				Overrides the default cipher_suite modparam.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the 
+				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the
 				default connection_timeout for the module.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>tlsversion</emphasis> TLS version used for this connection. Overrides the 
+				<emphasis>tlsversion</emphasis> TLS version used for this connection. Overrides the
 				default tlsversion for the module.
 				</para></listitem>
 				<listitem><para>
@@ -648,7 +647,7 @@ modparam("http_client", "config_file", "httpconnections.cfg)
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
-maxdatasize = 4 
+maxdatasize = 4
 tlsversion = TLSv1.2
 verify_peer = yes
 client_key = default_key.pem
