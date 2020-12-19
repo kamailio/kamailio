@@ -851,6 +851,12 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 					return SR_KEMI_TRUE;
 				}
 			break;
+			case 'E':
+			case 'e':
+				if(imethod==METHOD_PRACK) {
+					return SR_KEMI_TRUE;
+				}
+			break;
 			case 'P':
 			case 'p':
 				if(imethod==METHOD_PUBLISH) {
