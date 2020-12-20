@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2019-2020 Mojtaba Esfandiari.S, Nasim-Telecom
+ * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
+ * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
+ * Copyright (C) 2020 Mojtaba Esfandiari.S, Nasim-Telecom
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -60,7 +62,10 @@ int lreproxy_hash_table_destroy();
 int lreproxy_hash_table_insert(str callid, str viabranch, struct lreproxy_hash_entry *value);
 int lreproxy_hash_table_remove(str callid, str viabranch, enum lre_operation);
 struct lreproxy_hash_entry *lreproxy_hash_table_lookup(str callid, str viabranch);
-
+//struct lreproxy_hash_entry *lreproxy_hash_table_lookup(str callid, str viabranch, enum lre_operation);
+//struct lrep_node *lreproxy_hash_table_lookup(str callid, str viabranch, enum lre_operation);
+//void rtpengine_hash_table_print();
+//unsigned int rtpengine_hash_table_total();
 
 void lreproxy_hash_table_free_entry(struct lreproxy_hash_entry *entry);
 void lreproxy_hash_table_free_row_entry_list(struct lreproxy_hash_entry *row_entry_list);

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019-2020 Mojtaba Esfandiari.S, Nasim-Telecom
+ * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
+ * Copyright (C) 2020 Mojtaba Esfandiari.S, Nasim-Telecom
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -116,39 +117,21 @@ static str DEFAULT_LREP_SET_ID_STR = str_init("0");
 
 #define	CPORT		"22333"
 #define HASH_SIZE   128
-//static int extract_mediaip(str *, str *, int *, char *);
-//static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
-//static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
-//static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
+
 static char *gencookie();
 static int lrep_test(struct lrep_node*);
 static int lrep_get_config(struct lrep_node *node);
 static int lrep_set_conntrack_rule(struct lreproxy_hash_entry *e);
 
-//static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
-//static int unforce_rtp_proxy(struct sip_msg *, char *);
-//static int force_rtp_proxy(struct sip_msg *, char *, char *, int, int);
-//static int start_recording_f(struct sip_msg *, char *, char *);
-//static int lreproxy_answer1_f(struct sip_msg *, char *, char *);
-//static int lreproxy_answer2_f(struct sip_msg *, char *, char *);
-//static int lreproxy_offer1_f(struct sip_msg *, char *, char *);
-//static int lreproxy_offer2_f(struct sip_msg *, char *, char *);
+
 static int lreproxy_force(struct sip_msg *msg, const char *flags, enum lre_operation op, int more);
 static int lreproxy_unforce(struct sip_msg *msg, const char *flags, enum lre_operation op, int more);
 
 static int lreproxy_manage0(struct sip_msg *msg, char *flags, char *ip);
 static int lreproxy_manage1(struct sip_msg *msg, char *flags, char *ip);
 static int lreproxy_manage2(struct sip_msg *msg, char *flags, char *ip);
-//static int w_lre_manage(sip_msg_t *msg, char *flags);
-//static int lre_get_sdp_info(struct sip_msg *msg, lre_sdp_info_t *lre_sdp_info);
-//static int replace_body_total(sip_msg_t *msg, int port, char *flags, int type);
-//static int replace_body_total(sip_msg_t *msg, struct lrep_node *n, const char *flags, int type);
-//static int change_media_sdp(sip_msg_t *msg, struct lrep_node *n, const char *flags, int type);
+
 static int change_media_sdp(sip_msg_t *msg, struct lreproxy_hash_entry *e, const char *flags, enum lre_operation op);
-
-
-
-
 
 static int add_lreproxy_socks(struct lrep_set * lrep_list, char * rtpproxy);
 static int fixup_set_id(void ** param, int param_no);
@@ -219,24 +202,7 @@ str internal_ip;
 str external_ip;
 
 static cmd_export_t cmds[] = {
-//        {"lreproxy_offer",	(cmd_function)lreproxy_offer1_f,     0,
-//                0, 0,
-//                ANY_ROUTE},
-//        {"lreproxy_offer",	(cmd_function)lreproxy_offer1_f,     1,
-//                fixup_spve_null, 0,
-//                ANY_ROUTE},
-//        {"lreproxy_offer",	(cmd_function)lreproxy_offer2_f,     2,
-//                fixup_spve_spve, 0,
-//                ANY_ROUTE},
-//        {"lreproxy_answer",	(cmd_function)lreproxy_answer1_f,    0,
-//                0, 0,
-//                ANY_ROUTE},
-//        {"lreproxy_answer",	(cmd_function)lreproxy_answer1_f,    1,
-//                fixup_spve_null, 0,
-//                ANY_ROUTE},
-//        {"lreproxy_answer",	(cmd_function)lreproxy_answer2_f,    2,
-//                fixup_spve_spve, 0,
-//                ANY_ROUTE},
+
         {"set_lre_proxy_set",  (cmd_function)set_lre_proxy_set_f,    1,
                 fixup_set_id, 0,
                 ANY_ROUTE},
@@ -249,10 +215,7 @@ static cmd_export_t cmds[] = {
         {"lreproxy_manage",	(cmd_function)lreproxy_manage2,     2,
                                                        fixup_spve_spve, fixup_free_spve_spve,
                    ANY_ROUTE},
-//        {"lre_manage", (cmd_function) w_lre_manage, 0, 0,
-//                0, ANY_ROUTE},
-//        {"lre_manage", (cmd_function) w_lre_manage, 1, 0, 0,
-//                   ANY_ROUTE},
+
         {0, 0, 0, 0, 0, 0}
 };
 
@@ -266,11 +229,6 @@ static param_export_t params[] = {
         {"lrep_alg",         INT_PARAM, &lrep_algorithm         },
         {"hash_table_tout",       INT_PARAM, &hash_table_tout        },
         {"hash_table_size",       INT_PARAM, &hash_table_size        },
-//    {"ht_name", STR_PARAM, &ht_name.s},
-//        {"start_port",             INT_PARAM, &start_port },
-//        {"end_port",             INT_PARAM, &end_port },
-//        {"internal_ip",         STR_PARAM, &internal_ip},
-//        {"external_ip",         STR_PARAM, &external_ip },
 
         {0, 0, 0}
 };
@@ -593,107 +551,6 @@ static int fixup_set_id(void ** param, int param_no)
 	return 0;
 }
 
-//static void  rtpproxy_rpc_enable(rpc_t* rpc, void* ctx)
-//{
-//	str rtpp_url;
-//	int enable;
-//	struct lrep_set *lrep_list;
-//	struct lrep_node *crt_rtpp;
-//	int found;
-//
-//	found = 0;
-//	enable = 0;
-//
-//	if(lrep_set_list ==NULL)
-//		goto end;
-//
-//	if (rpc->scan(ctx, "Sd", &rtpp_url, &enable) < 2) {
-//		rpc->fault(ctx, 500, "Not enough parameters");
-//		return;
-//	}
-//
-//	for(lrep_list = lrep_set_list->lset_first; lrep_list != NULL;
-//			lrep_list = lrep_list->lset_next) {
-//
-//		for(crt_rtpp = lrep_list->ln_first; crt_rtpp != NULL;
-//				crt_rtpp = crt_rtpp->ln_next) {
-//			/*found a matching rtpp*/
-//			if(crt_rtpp->ln_url.len == rtpp_url.len) {
-//
-//				if(strncmp(crt_rtpp->ln_url.s, rtpp_url.s, rtpp_url.len) == 0) {
-//					/*set the enabled/disabled status*/
-//					found = 1;
-//					crt_rtpp->ln_recheck_ticks =
-//						enable? RPC_MIN_RECHECK_TICKS : RPC_MAX_RECHECK_TICKS;
-//					crt_rtpp->ln_disabled = enable?0:1;
-//				}
-//			}
-//		}
-//	}
-//
-//end:
-//	if(!found) {
-//		rpc->fault(ctx, 404, "RTPProxy not found");
-//		return;
-//	}
-//}
-
-
-//static void  rtpproxy_rpc_list(rpc_t* rpc, void* ctx)
-//{
-//	struct lrep_set *lrep_list;
-//	struct lrep_node *crt_rtpp;
-//	void *vh;
-//
-//	if(lrep_set_list ==NULL)
-//		return;
-//
-//	for(lrep_list = lrep_set_list->lset_first; lrep_list != NULL;
-//			lrep_list = lrep_list->lset_next) {
-//
-//		for(crt_rtpp = lrep_list->ln_first; crt_rtpp != NULL;
-//				crt_rtpp = crt_rtpp->ln_next) {
-//
-//			if (rpc->add(ctx, "{", &vh) < 0) {
-//				rpc->fault(ctx, 500, "Server error");
-//				return;
-//			}
-//			rpc->struct_add(vh, "dSdddd",
-//				"setid", lrep_list->id_set,
-//				"url", &crt_rtpp->ln_url,
-//				"index", crt_rtpp->idx,
-//				"disabled", crt_rtpp->ln_disabled,
-//				"weight", crt_rtpp->ln_weight,
-//				"recheck", crt_rtpp->ln_recheck_ticks);
-//		}
-//	}
-//}
-//
-//static const char* rtpproxy_rpc_enable_doc[2] = {
-//	"Set state (enable/disable) for a rtp proxy.",
-//	0
-//};
-//
-//static const char* rtpproxy_rpc_list_doc[2] = {
-//	"List rtp proxies.",
-//	0
-//};
-//
-//rpc_export_t rtpproxy_rpc[] = {
-//	{"rtpproxy.list", rtpproxy_rpc_list, rtpproxy_rpc_list_doc, RET_ARRAY},
-//	{"rtpproxy.enable", rtpproxy_rpc_enable, rtpproxy_rpc_enable_doc, 0},
-//	{0, 0, 0, 0}
-//};
-
-//static int rtpproxy_rpc_init(void)
-//{
-//	if (rpc_register_array(rtpproxy_rpc)!=0)
-//	{
-//		LM_ERR("failed to register RPC commands\n");
-//		return -1;
-//	}
-//	return 0;
-//}
 
 static int
 mod_init(void)
@@ -718,23 +575,7 @@ mod_init(void)
     }
     memset(lrep_set_list, 0, sizeof(struct lrep_set_head));
 
-//	if (nortpproxy_str.s==NULL || nortpproxy_str.len<=0) {
-//		nortpproxy_str.len = 0;
-//	} else {
-//		while (nortpproxy_str.len > 0
-//				&& (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
-//					nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
-//			nortpproxy_str.len--;
-//	}
 
-//	if (rtpp_db_url.s != NULL)
-//	{
-//		init_rtpproxy_db();
-//		if (lrep_sets > 0)
-//		{
-//			LM_WARN("rtpproxy db url configured - ignoring modparam sets\n");
-//		}
-//	}
     /* storing the list of rtp proxy sets in shared memory*/
     for(i=0;i<lrep_sets;i++){
                 LM_DBG("Adding RTP-Proxy set %d/%d: %s\n", i, lrep_sets, rtpp_strings[i]);
@@ -751,42 +592,6 @@ mod_init(void)
             pkg_free(rtpp_strings[i]);
     }
 
-//	if (ice_candidate_priority_avp_param) {
-//		s.s = ice_candidate_priority_avp_param; s.len = strlen(s.s);
-//		if (pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
-//			LM_ERR("malformed or non AVP definition <%s>\n",
-//					ice_candidate_priority_avp_param);
-//			return -1;
-//		}
-//		if (pv_get_avp_name(0, &(avp_spec.pvp), &ice_candidate_priority_avp,
-//					&avp_flags) != 0) {
-//			LM_ERR("invalid AVP definition <%s>\n",
-//					ice_candidate_priority_avp_param);
-//			return -1;
-//		}
-//		ice_candidate_priority_avp_type = avp_flags;
-//	}
-
-//	if (rtp_inst_pv_param.s) {
-//		rtp_inst_pvar = pv_cache_get(&rtp_inst_pv_param);
-//		if ((rtp_inst_pvar == NULL) ||
-//				((rtp_inst_pvar->type != PVT_AVP) &&
-//					(rtp_inst_pvar->type != PVT_XAVP) &&
-//					(rtp_inst_pvar->type != PVT_SCRIPTVAR))) {
-//			LM_ERR("Invalid pvar name <%.*s>\n", rtp_inst_pv_param.len,
-//					rtp_inst_pv_param.s);
-//			return -1;
-//		}
-//	}
-
-//	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
-//		if(pv_parse_format(&extra_id_pv_param, &extra_id_pv) < 0) {
-//			LM_ERR("malformed PV string: %s\n", extra_id_pv_param.s);
-//			return -1;
-//		}
-//	} else {
-//		extra_id_pv = NULL;
-//	}
 
     if (rtpp_strings)
         pkg_free(rtpp_strings);
@@ -801,6 +606,7 @@ mod_init(void)
                 LM_ERR("lreproxy_hash_table_init(%d) failed!\n", hash_table_size);
         return -1;
     } else {
+//                LM_DBG("rtpengine_hash_table_init(%d) success!\n", hash_table_size);
                 LM_INFO(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>lreproxy_hash_table_init(%d) success!\n", hash_table_size);
     }
 
@@ -945,13 +751,12 @@ static void mod_destroy(void)
 
     /* destroy the hash table */
     if (!lreproxy_hash_table_destroy()) {
-                LM_ERR("lreproxy_hash_table_destroy() failed!\n");
+                LM_ERR("rtpengine_hash_table_destroy() failed!\n");
     } else {
-                LM_DBG("lreproxy_hash_table_destroy() success!\n");
+                LM_DBG("rtpengine_hash_table_destroy() success!\n");
     }
 
 }
-
 
 
 static char * gencookie(void)
@@ -1024,7 +829,6 @@ static int lrep_get_config(struct lrep_node *node){
     return 1;
 
 
-
 }
 
 static int lrep_set_conntrack_rule(struct lreproxy_hash_entry *e) {
@@ -1041,12 +845,13 @@ static int lrep_set_conntrack_rule(struct lreproxy_hash_entry *e) {
     char dnat_ipv4[20];
     char dnat_port[20];
     char timeout[20];
+    char callid[50];
 
     struct iovec v[] = {
             {NULL, 0},  /* reserved (cookie) */
             {"S",  1},   /* command & common options */
             {NULL, 0},  /* src_ipv4 */
-            {NULL, 0},  /* dst_ipv4 */
+            {NULL, 0},  /* dst_ipnv4 */
             {NULL, 0},  /* snat_ipv4 */
             {NULL, 0},  /* dnat_ipv4 */
             {NULL, 0},  /* src_port */
@@ -1054,12 +859,13 @@ static int lrep_set_conntrack_rule(struct lreproxy_hash_entry *e) {
             {NULL, 0},  /* snat_port */
             {NULL, 0},  /* dnat_port*/
             {NULL, 0},  /* timeout to clear conntrack entry*/
+            {NULL, 0},  /* callid of session */
     };
 
     v_len += v[1].iov_len;
 
     //set src_ipv4 to buffer.
-    sprintf(src_ipv4, "%.*s ", e->src_ipv4.len, e->src_ipv4.s);
+    sprintf(src_ipv4, " %.*s ", e->src_ipv4.len, e->src_ipv4.s);
     v[2].iov_base = src_ipv4;
     v[2].iov_len = strlen(v[2].iov_base);
     v_len += v[2].iov_len;
@@ -1112,8 +918,15 @@ static int lrep_set_conntrack_rule(struct lreproxy_hash_entry *e) {
     v[10].iov_len = strlen(v[10].iov_base);
     v_len += v[10].iov_len;
 
+    //set callid to buffer.
+    sprintf(callid, "%.*s ", e->callid.len, e->callid.s);
+    v[11].iov_base = callid;
+    v[11].iov_len = strlen(v[11].iov_base);
+    v_len += v[11].iov_len;
+//    LM_ERR("e->callid.len is:%d right now.\n\n", e->callid.len);
+
     memset(buf, 0, buflen);
-    memcpy(buf, send_lrep_command(e->node, v, 11, v_len), buflen);
+    memcpy(buf, send_lrep_command(e->node, v, 12, v_len), buflen);
 //
 
 //    if (buf == NULL) {
@@ -1229,14 +1042,7 @@ char *send_lrep_command(struct lrep_node *node, struct iovec *v, int vcnt, int m
                                 goto out;
 //                            break;
                     }
-//                    len -= (v[0].iov_len - 1);
-//                    cp += (v[0].iov_len - 1);
-//                    if (len != 0) {
-//                        len--;
-//                        cp++;
-//                    }
-//                    goto out;
-//                    }
+
                 }
                 fds[0].revents = 0;
             }
@@ -1301,14 +1107,9 @@ struct lrep_node *select_lrep_node(int do_test)
                 return node;
             }
         }
-//        return node->ln_enable ? node : NULL;
-        return NULL;
+        return node->ln_enable ? node : NULL;
+//        return NULL;
     }
-
-//    /* XXX Use quick-and-dirty hashing algo */
-//    for(sum = 0; callid.len > 0; callid.len--)
-//        sum += callid.s[callid.len - 1];
-//    sum &= 0xff;
 
 
     /* Check node is enable and test it again*/
@@ -1376,23 +1177,6 @@ retry3:
         goto retry3;
     }
 
-//            LM_INFO("STEP-4>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-
-
-//    sumcut = sum % weight_sum;
-//    /*
-//     * sumcut here lays from 0 to weight_sum-1.
-//     * Scan proxy list and decrease until appropriate proxy is found.
-//     */
-//    for (node=selected_rtpp_set->ln_first; node!=NULL; node=node->ln_next) {
-//        if (!node->ln_enable)
-//            continue;
-//        if (sumcut < node->ln_weight)
-//            goto found;
-//        sumcut -= node->ln_weight;
-//    }
-    /* No node list */
-//    return NULL;
     found:
     if (do_test) {
 //    //todo...
@@ -1402,8 +1186,6 @@ retry3:
     }
     return node;
 }
-
-
 
 //static int change_media_sdp(sip_msg_t *msg, struct lrep_node *n, const char *flags, int type) {
 static int change_media_sdp(sip_msg_t *msg, struct lreproxy_hash_entry *e, const char *flags, enum lre_operation op) {
@@ -1452,7 +1234,6 @@ static int change_media_sdp(sip_msg_t *msg, struct lreproxy_hash_entry *e, const
     start_sdp_s = strstr(off, "s=");
     start_sdp_c = strstr(off, "c=IN IP4");
     start_sdp_m = strstr(off, "m=audio");
-
 
     //if enabled then set direction,
     if (e->node->lrep_n_c->internal_ip && flags) {
@@ -1541,14 +1322,6 @@ static int change_media_sdp(sip_msg_t *msg, struct lreproxy_hash_entry *e, const
             for (;*avp_flags && !isspace(*avp_flags); avp_flags++);
             for (avp_flags++;*avp_flags && !isspace(*avp_flags); avp_flags++);
             avp_flags++;
-//            while(occure <2) {
-//                if (isspace(*avp_flags))
-//                    occure++;
-//                avp_flags++;
-//            }
-//            snprintf(sdp_new_m, 128, "m=audio %d \r\n",port);
-//            snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",port, (int)(len - (avp_flags-off)), avp_flags);
-//            snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",n->lrep_n_c->current_port, (int)(len - (avp_flags-off)), avp_flags);
             if (op == OP_OFFER)
                 snprintf(sdp_new_m, 128, "m=audio %.*s %.*s\r",e->dst_port.len, e->dst_port.s, (int)(len - (avp_flags-off)), avp_flags);
 //                snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",e->node->lrep_n_c->current_port, (int)(len - (avp_flags-off)), avp_flags);
@@ -1585,8 +1358,9 @@ static int change_media_sdp(sip_msg_t *msg, struct lreproxy_hash_entry *e, const
     return 1;
 }
 
+/* This function assumes p points to a line of requested type. */
 
-static int
+	static int
 set_lre_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
 	lrep_set_link_t *rtpl;
@@ -1837,11 +1611,11 @@ static int lreproxy_force(struct sip_msg *msg, const char *flags, enum lre_opera
                 lreproxy_hash_table_free_entry(entry);
                 return 0;
             } else {
-                        LM_INFO("lreproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+                        LM_INFO("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
                                 node->ln_url.len, node->ln_url.s, call_id.len,
                                 call_id.len, call_id.s, viabranch.len, viabranch.s);
 
-                        LM_DBG("lreproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+                        LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
                                node->ln_url.len, node->ln_url.s, call_id.len,
                                call_id.len, call_id.s, viabranch.len, viabranch.s);
             }
@@ -1925,14 +1699,6 @@ static int lreproxy_force(struct sip_msg *msg, const char *flags, enum lre_opera
 
         lrep_set_conntrack_rule(entry);
 
-
-//        lre_get_sdp_info(msg, &lre_sdp_info);
-
-        //todo...
-//        change_media_sdp(msg, n, flags, op);
-//        else
-//        change_media_sdp(msg, n, NULL, op);
-
     }
     return 1;
 }
@@ -1970,7 +1736,8 @@ static int lreproxy_unforce(struct sip_msg *msg, const char *flags, enum lre_ope
                            viabranch.len, viabranch.s);
         }
     }
-
+    LM_INFO("lreproxy hash table remove entry for callen=%d callid=%.*s viabranch=%.*s successfully\n",
+            call_id.len, call_id.len, call_id.s,
+            viabranch.len, viabranch.s);
     return 1;
 }
-

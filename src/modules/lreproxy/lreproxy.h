@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019-2020 Mojtaba Esfandiari.S, Nasim-Telecom
-
+ * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
+ * Copyright (C) 2020 Mojtaba Esfandiari.S, Nasim-Telecom
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -45,11 +45,6 @@ enum lre_operation {
 
     OP_ANY,
 };
-
-//typedef struct lre_sdp_info{
-//    int_str ip_addr;
-//    int_str port;
-//}lre_sdp_info_t;
 
 
 enum lre_alg{
@@ -108,13 +103,5 @@ struct lrep_set *get_lrep_set(str *set_name);
 int insert_lrep_node(struct lrep_set *const rtpp_list, const str *const url,
 		const int weight, const int enable);
 
-//static int replace_body_total(sip_msg_t *msg, struct lrep_node *n, char *flags, int type);
-
-//int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
-
-//int init_rtpproxy_db(void);
-
-//extern str rtpp_db_url;
-//extern str rtpp_table_name;
 
 #endif  //_LREPROXY_H

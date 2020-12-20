@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2019-2020 Mojtaba Esfandiari.S, Nasim-Telecom
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
+ * Copyright (C) 2020 Mojtaba Esfandiari.S, Nasim-Telecom
  *
  * This file is part of Kamailio, a free SIP server.
  *

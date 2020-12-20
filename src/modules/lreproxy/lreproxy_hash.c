@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2019-2020 Mojtaba Esfandiari.S, Nasim-Telecom
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
  * Copyright (C) 2014-2015 Sipwise GmbH, http://www.sipwise.com
+ * Copyright (C) 2020 Mojtaba Esfandiari.S, Nasim-Telecom
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -291,7 +291,7 @@ int lreproxy_hash_table_insert(str callid, str viabranch, struct lreproxy_hash_e
     if (lreproxy_hash_table->row_locks[hash_index]) {
         lock_get(lreproxy_hash_table->row_locks[hash_index]);
     } else {
-                LM_ERR("NULL lreproxy_hash_table->row_locks[%d]\n", hash_index);
+                LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", hash_index);
         return 0;
     }
 
@@ -416,7 +416,8 @@ int lreproxy_hash_table_remove(str callid, str viabranch, enum lre_operation op)
 
     return found;
 }
-
+//struct lrep_node *lreproxy_hash_table_lookup(str callid, str viabranch, enum lre_operation op) {
+//struct lreproxy_hash_entry *lreproxy_hash_table_lookup(str callid, str viabranch, enum lre_operation op) {
 struct lreproxy_hash_entry *lreproxy_hash_table_lookup(str callid, str viabranch) {
     struct lreproxy_hash_entry *entry, *last_entry;
     unsigned int hash_index;
@@ -498,19 +499,19 @@ int lreproxy_hash_table_sanity_checks() {
         return 0;
     }
 
-    // check lreproxy hashtable->row_locks
+    // check rtpengine hashtable->row_locks
     if (!lreproxy_hash_table->row_locks) {
                 LM_ERR("NULL lreproxy_hash_table->row_locks\n");
         return 0;
     }
 
-    // check lreproxy hashtable->row_entry_list
+    // check rtpengine hashtable->row_entry_list
     if (!lreproxy_hash_table->row_entry_list) {
                 LM_ERR("NULL lreproxy_hash_table->row_entry_list\n");
         return 0;
     }
 
-    // check lreproxy hashtable->row_totals
+    // check rtpengine hashtable->row_totals
     if (!lreproxy_hash_table->row_totals) {
                 LM_ERR("NULL lreproxy_hash_table->row_totals\n");
         return 0;
