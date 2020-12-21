@@ -72,6 +72,7 @@ Hugh Waite
 
               4.3. http_get_redirect(connection, result)
               4.4. http_client_query(url, [post-data], [hdrs], result)
+              4.5. http_client_get(url, body, hdrs, respv)
 
         5. Pseudovariables
 
@@ -128,6 +129,7 @@ Hugh Waite
    1.23. http_connect_raw() usage
    1.24. http_get_redirect() usage
    1.25. http_client_query() usage
+   1.26. http_client_get() usage
 
 Chapter 1. Admin Guide
 
@@ -169,6 +171,7 @@ Chapter 1. Admin Guide
 
         4.3. http_get_redirect(connection, result)
         4.4. http_client_query(url, [post-data], [hdrs], result)
+        4.5. http_client_get(url, body, hdrs, respv)
 
    5. Pseudovariables
 
@@ -670,6 +673,7 @@ modparam("http_client", "netinterface", "eth0")
    4.2. http_connect_raw(connection, url, content_type, data, result)
    4.3. http_get_redirect(connection, result)
    4.4. http_client_query(url, [post-data], [hdrs], result)
+   4.5. http_client_get(url, body, hdrs, respv)
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -816,6 +820,28 @@ http_client_query("http://api.com/index.php",
 # POST-Request
 http_client_query("http://api.com/index.php", "src=$si",
     "Content-Type: text/plain", "$var(result)");
+...
+
+4.5.  http_client_get(url, body, hdrs, respv)
+
+   Perform a HTTP GET request to "url", storing the response body in the
+   "respv" variable. The "body" and "hdrs" can be empty strings to skip
+   setting them. The first three parameters can contain variables that are
+   evaluated at runtime. The "respv" has to be the name of a writable
+   variable.
+
+   Note: usually HTTP GET requests should have no body, according to specs
+   the body in HTTP GET does not affect the response, but is not
+   explicitely forbidden.
+
+   Example 1.26. http_client_get() usage
+...
+http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu
+{s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
 ...
 
 5. Pseudovariables
