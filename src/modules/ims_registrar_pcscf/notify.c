@@ -113,8 +113,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
     expires = local_time_now + expires; //turn expires into correct time since epoch format
     LM_DBG("Changed expires to format time since the epoch: %d", expires);
     ci.expires = expires;
-    ci.reg_state = PCONTACT_REGISTERED;
-
+    ci.reg_state = PCONTACT_ANY;
 
     ul.lock_udomain(_d, &puri.host, puri.port_no, puri.proto);
     ci.aor = contact_uri;
@@ -213,6 +212,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
                     TIME_T_CAST(pcontact->expires),
                     expires,
                     expires - local_time_now);
+            ci.reg_state = PCONTACT_REGISTERED;
             if (ul.update_pcontact(_d, &ci, pcontact) != 0) {
                 LM_ERR("failed to update pcscf contact\n");
                 ret = RESULT_ERROR;

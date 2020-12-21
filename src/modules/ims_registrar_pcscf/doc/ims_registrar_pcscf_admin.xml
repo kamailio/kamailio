@@ -319,6 +319,47 @@ pcscf_save("location");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>The return code may have the following values:</para>
+
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>( 1)</emphasis> OK</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>(-1)</emphasis> Parsing of contact data failed</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>(-2)</emphasis> Deregistration in progress</para>
+		</listitem>
+		</itemizedlist>
+		<para>For db_mode = DB_ONLY (3) setting for ims_usrloc_pcscf module modparam following logic is implemented:</para>
+		<itemizedlist>
+		<listitem>
+		<para>To avoid race time conditions between a REREGISTER and the expiry handler state machine in the scscf
+		 an approach is chosen to refuse a REREGISTER in time window of 20 seconds after pcontact expiry on the
+		 pcscf (thus allowing expiry handling to finish). REREGISTER is refused in this scenario with
+		 return code -2.</para>
+		</listitem>
+		<listitem>
+		<para>In case a REREGISTER arrives at pcscf and the respective pcontact is expired longer than time
+		 window of 20 seconds registration also is refused with return code -2 and additionaly PUBLISH is sent to
+		 scscf with expiry = 0.</para>
+		</listitem>
+		<listitem>
+		<para>The rc -2 shall be handled in register.cfg script as follows:</para>
+		<para>
+		</para>
+			<para>  pcscf_save_pending("location");</para>
+				<para>  switch ($retcode) {</para>
+					<para>case -1:</para>
+						<para>.......</para>
+					<para>case -2:</para>
+						<para>send_reply("500", "Deregister in progress - Please try again");</para>
+						<para>exit;</para>
+						<para>break;</para>
+				<para>}</para>
+		</listitem>
+		</itemizedlist>
   </section>
 
    <section>
