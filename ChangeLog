@@ -1,3 +1,381 @@
+===================== 2020-12-21 Version 5.3.8 Released =====================
+
+===================== Changes Since Version 5.3.7 ===========================
+
+commit cd35b9440e3bf1f4509cc3d481846addf9236774
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Dec 21 15:47:14 2020 +0000
+
+    pkg: set version to 5.3.8 for packaging files
+
+commit 05d4d530d56ddad05103b222d734e0429ca3457b
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Dec 21 15:46:56 2020 +0000
+
+    Makefile.defs: set version to 5.3.8
+
+commit c67189205cad464cb8480c9883cfaa6531062fac
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Dec 21 16:46:54 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 70aaf931cf24738b6909721405657f251124c9a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 08:18:51 2020 +0100
+
+    http_client: docs - section title to get proper entry in toc
+    
+    - bits of whitespacing fixing
+    
+    (cherry picked from commit fadc0fc499fb57a763aa71a76b24cff152bbd927)
+
+commit 8283f280977a5edc8973028a05d70d0b631026ac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 17 14:54:04 2020 +0100
+
+    dialog: handle CANCEL requests for CSeq updates
+    
+    (cherry picked from commit fd35a1a4eee2c50a3b7bf4ee6b1f6f20f4fa7d62)
+
+commit 03505654c7ecd4b0e026a561d36ca2c04d5a2535
+Author: tsearle <tsearle@gmail.com>
+Date:   Wed Dec 16 21:47:11 2020 +0100
+
+    modules/siptrace: fix regression preventing variables to be used (#2588)
+    
+    * modules/siptrace: fix regression preventing variables to be used
+    
+    Commit fa7eb2a switched the 2 parameter version of sip_trace from
+    using the builtin fixup_spve_spve to the custom fixup method to
+    using the custom fixup_siptrace. As it is a custom fixup method,
+    the corresponding free method can not be auto-detected causing the
+    config parser to require the parameters to be a constant.  This
+    patch adds a free method, allowing variables to be once again passed
+    as the 2nd parameter of this method (as well as fixing a memory leak
+    for the 3rd parameter).
+    
+    * change free for parameter 3
+    
+    Co-authored-by: Torrey Searle <tsearle@voxbone.com>
+    (cherry picked from commit 7c98d547996637a7bf1c7025c93142f574fe3ac9)
+
+commit dcc0b84d12d2a8591e91019cd62604735140d7bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 16 20:54:57 2020 +0100
+
+    http_client: do not set empty headers and body
+    
+    (cherry picked from commit ce58411c462231d6ea1fc3b4acbf50520c2962ce)
+
+commit b0c05e51d2fdfba36cd1e023a9d44e7b1f5218bd
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Mon Dec 21 15:29:49 2020 +0000
+
+    Revert "kemix: exported functions to get socket string and name"
+    
+    This reverts commit 6f6dda289c5c26a3098cae0d8df37e6bc51e1ac1.
+
+commit 65b9c2d085f8d0b2f73fc948f185f59800894e59
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 10 17:04:31 2020 +0100
+
+    dispatcher: info log message when adding extra weight or rweight percentages
+    
+    (cherry picked from commit ba27633ca22bcfc18fd4bb7d62c2f5bb32e56962)
+
+commit 4bc84f40b0fe7e9a654a1d24ee190fb7e8073b7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 10 16:34:28 2020 +0100
+
+    dispatcher: check weight value to be in expected range
+    
+    (cherry picked from commit e00f610203fee957a22afc5f8103c1482a925138)
+
+commit ef4bb80111a3eb8e7741a814ae3b113cdca448e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 8 13:07:44 2020 +0100
+
+    core: tcp - log connection state and flags on debug message
+    
+    (cherry picked from commit 41040a0420ee48f51901bf32e29526c8948ecea0)
+
+commit 7d2fc9e4e480fb811983212136938cace93d2e2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 8 12:50:56 2020 +0100
+
+    core: tcp - debug messages merged, print bytes read and flags
+    
+    (cherry picked from commit efb9c5f83b37c316b848ae7b6dc829e2f8ca6275)
+
+commit 6a4e6784dd787f3c33af8907771c023dd7fe5019
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 13:15:52 2020 +0100
+
+    tm: check end of header name in lw parser
+    
+    - proper identification of header type, prior could mistakenly set the
+    type by matching the prefix of long header name
+    - GH #2572
+    
+    (cherry picked from commit c0f5382bfbd2022896a9b206967977f827517700)
+
+commit 7465d23be7b0e9f27dc4f95c99fba7fd1a996345
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 2 09:45:48 2020 +0100
+
+    auth_diameter: init variable and check before freeing
+    
+    (cherry picked from commit 04dc5d6c66c85d0d411aa23b27bc6be00258eff6)
+
+commit 5c685f3d3d091dfd56fea5cb2ae76682c49de671
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Nov 29 22:54:24 2020 +0300
+
+    lost: removed extra `"` symbol in example
+    
+    (cherry picked from commit 124499c12db185d85805e5c71d5cc4222e608b68)
+
+commit f21627f0e24c5717ca29198a1c8f4575e7f071ee
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 27 12:22:52 2020 +0100
+
+    ndb_redis: set message level to debug on reconnect
+    
+    * logging error makes no sense here since there's going
+      to be a reconnection afterwards
+    
+    (cherry picked from commit 98805c723fbe01556e56d5b00ffc686b92014847)
+
+commit 91d4c181c5472c9e1d1727c74e7e63729c059e23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 26 13:54:42 2020 +0100
+
+    core: check if the tcp clone rcv buffer is set when applying changes
+    
+    (cherry picked from commit aa13720e5d78dde5ae5235c13399848cb8f5a0cc)
+
+commit f7e7c3501a79415ff12ae77b5428a88ab70d65f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 18:09:51 2020 +0100
+
+    dispatcher: removed unnecessary return
+    
+    (cherry picked from commit 721d533317c735d7ddbd16ad94684b483468c010)
+
+commit b4f83c8001569c99582eb3f9243308334af3f00b
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Nov 25 15:28:40 2020 +0000
+
+    tls: log version, gh #2561
+    
+    (cherry picked from commit c9f0adddde8321bfaf368691fea74079e40bd789)
+
+commit 6f6dda289c5c26a3098cae0d8df37e6bc51e1ac1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 08:15:34 2020 +0100
+
+    kemix: exported functions to get socket string and name
+    
+    (cherry picked from commit b59204eb1df8c85bcdde65f2a840f55986f01223)
+
+commit a76f06eb010765216450bd78bcc1040aa9902280
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 08:12:18 2020 +0100
+
+    kemix: exported function get_rcvadvip() and get_rcvadvport()
+    
+    - return advertised address and port of the receiving socket
+    
+    (cherry picked from commit 070a9c042a1caf19162d3d97b26f8d7548747cbb)
+
+commit 1f5bd88fd60f98e36fd0b59b54398a221aa24432
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 08:02:37 2020 +0100
+
+    misc/examples: note that sr is exported by app_lua_sr
+    
+    - hint for lua syntax check
+    
+    (cherry picked from commit 889431746d24c73eeff73705fab36a0e154116a9)
+
+commit 7cecd70c29bd5e0b8fa918ad99b016afc68e42ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 17:06:06 2020 +0100
+
+    tm: proper fill of From/To URI/tag values using parsed structure in t_uac_send()
+    
+    (cherry picked from commit aa6e9963b2725c1b6b7e5ff995a77c222d95fa3c)
+
+commit 41761ed5d158ab59ef51aca11a849ce7b8194de9
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Thu Nov 19 15:39:13 2020 +0200
+
+    smsops: fix len calc for a concatenated sms
+    
+    - fixed the calculation for concatenated SMSs
+    based on TS 23.040, Sec. 9.2.3.16
+    
+    (cherry picked from commit d90f29b3b03386add989aebe3865bdc78dff8fbe)
+
+commit a9a35d0ba6e6f55a7788bf8cee945b7d9e3c4f9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 14:14:48 2020 +0100
+
+    tm: print ruri mode in debug message from t load contacts
+    
+    (cherry picked from commit 3214ecd8ee82d1b69cde57d96dddefe1301c190c)
+
+commit 833e3d0f9bbc2e4e00c662f4927ace96ddb739d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 07:55:44 2020 +0100
+
+    dispatcher: test no-dns flag to skip ip matching for hostnames
+    
+    - no dns done at startup if the flag is set in the destination record
+    
+    (cherry picked from commit 1c58b8e0ed221404a15c1426f40df167654e3860)
+
+commit fc91871294ff7d23fadb642550122e15c781f61e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 12:55:17 2020 +0100
+
+    drouting: give portparameter set to 0 to sip_resolvehost()
+    
+    - enable doing SRV query, GH #2553
+    
+    (cherry picked from commit 18f59c10582845da5eea280990daf19c804978fb)
+
+commit 63022e0d95500e5da0d1a7cc4d14ced6e3e2604c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 16 10:06:20 2020 +0100
+
+    jsonrpcs: exported dispatch() function to kemi
+    
+    (cherry picked from commit 08a9ed3d136c861f990e4f63c2c0544e08d9078d)
+
+commit 164c4f1523d8400b84a4359b1e15d5633a9acd97
+Author: Aleksandar Yosifov <alexyosifov@gmail.com>
+Date:   Mon Nov 9 14:37:26 2020 +0200
+
+    core: added missing field in sip_msg_update_buffer
+    
+    - added a missing field in sip_msg_update_buffer()
+      when restoring message fiedls: msg->pid.
+    
+    (cherry picked from commit 57be5c1f33344275c15777a7927d9c48df4a69ba)
+
+commit 0b09dd1f5453f66684053f5b3ea3d2c98ce9923b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 13:10:43 2020 +0100
+
+    sctp: memcpy field data to avoid unaligned access warning
+    
+    - GH #2543
+    
+    (cherry picked from commit 4bb099b046939b85e1827b804167a51ef4bc00c4)
+
+commit 6e7858b0b1837bfa17fb374f01b3ad2125cac180
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 12:31:24 2020 +0100
+
+    http_async_client: include poll.h instead sys/poll.h
+    
+    - according to POSIX specs
+    - GH #2543
+    
+    (cherry picked from commit 8f30c75cff7787a39f7c934e00e933b1beb43c20)
+
+commit 580afabee9f76f1e37b09b1f7b7086c61df5412f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 12:13:51 2020 +0100
+
+    core: init origproto to fix compiler warning
+    
+    - GH #2543
+    
+    (cherry picked from commit ef3233d14080936486d09edbe9598d7d92bd2f33)
+
+commit f0732ee99ee486a71790b2ce4419ba1cad654592
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 11:15:10 2020 +0100
+
+    dialog: skip doing cseq update processing for non-sip requests
+    
+    (cherry picked from commit 960b60ede8543f38b61ad2769e81e11d5a777df8)
+
+commit 8cc9193404e7dac358e96fe8b9dd744ed84f0b47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 3 12:49:33 2020 +0100
+
+    exec: debug message when command returns non-zero
+    
+    (cherry picked from commit e9eee1ead964992a2d81014709755bbfd1e995c9)
+
+commit b37aa273da9c35561378acacf7922904265713cc
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Dec 1 18:00:39 2020 +0300
+
+    pkg/kamailio/obs: updated tmpfiles
+    
+    fixed removing of kamailio_ctl and other files
+    
+    (cherry picked from commit 468ec8f26ff8496bdf62a7bfbbb1b1e2e3452c0f)
+
+commit 3a9ed0aab93d8fd04c33a35eec10481c1b699611
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Nov 27 19:16:44 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 93ad3b9ed017f00984ef241a90186b4dfdab2728
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Fri Nov 27 18:01:50 2020 +0000
+
+    Revert "rtpengine: add CRC32 hash algo (#2558)"
+    
+    This reverts commit 0bff74a16bb991ffe8c6690133414c5c9126bd1f.
+
+commit 19ac8252b08521e79cd7c6608ac38bdf3bad767a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Nov 26 08:16:58 2020 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0bff74a16bb991ffe8c6690133414c5c9126bd1f
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Nov 25 19:20:52 2020 +0200
+
+    rtpengine: add CRC32 hash algo (#2558)
+    
+    (cherry picked from commit 10349080490faabffaf1ab7cc5d591678b8c94dd)
+
+commit c16b3f7e7fe6646ea84bdfc32e4130eeac6b39e5
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Nov 9 00:19:44 2020 +0300
+
+    pkg/kamailio/alpine: packaged app_lua_sr module
+    
+    (cherry picked from commit 6782b2c1789f162b405ec0b9894f61075a4307f9)
+
+commit c64c264c84a12b66aa77e088306fe9914c08d558
+Author: Guillem Jover <gjover@sipwise.com>
+Date:   Thu Nov 5 18:34:43 2020 +0100
+
+    sl: Fix 3xx stats RPC marshalling
+    
+    The struct_add() method was getting 4 values but only 3 "d".
+    
+    (cherry picked from commit ac55cc5ce5fcbb50d3a2a6b228585dce8fc1150d)
+
+commit 5ffe28d4b83b1a75b1706bd851b76575b3d09c45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 08:09:39 2020 +0100
+
+    dialog: proper to-tag check for initial requests to skip cseq updates
+    
+    (cherry picked from commit 81d3e7a43a249dfc9eaa075c698e1eb3237a517e)
+    (cherry picked from commit 5bd72f2758b2059759ce152e6d97b6a1955bc5bc)
 ===================== 2020-11-02 Version 5.3.7 Released =====================
 
 ===================== Changes Since Version 5.3.6 ===========================
