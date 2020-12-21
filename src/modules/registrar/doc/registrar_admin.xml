@@ -745,6 +745,19 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<itemizedlist>
 		<listitem>
 			<para>
+				<emphasis>expires</emphasis> - the number of maximum
+				contacts to be stored for the current registration AoR. It
+				overwrites the 'max_contacts' module parameter value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - the expires value, to overwrite the
+				value from SIP headers.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for the current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
@@ -755,14 +768,6 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>socket</emphasis> - the string representing the
 				socket on which the register request was received, as alternative
 				to using the sock_hdr.
-			</para>
-		</listitem>
-		<listitem>
-			<para>
-				<emphasis>q</emphasis> - q value of contact
-				(integer 0-1000). It
-				overrides q value given in contact header and
-				default_q parameter.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -784,6 +789,7 @@ modparam("registrar", "xavp_cfg", "reg")
 request_route {
     ...
     $xavp(reg=&gt;max_contacts) = 4;
+    $xavp(reg[0]=&gt;expires) = 600;
     save("location");
     ...
 }
