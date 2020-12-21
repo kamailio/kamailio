@@ -156,7 +156,7 @@ $var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)");
 ...
-$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)"", "$var(err)");
+$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)\n");
 ...
