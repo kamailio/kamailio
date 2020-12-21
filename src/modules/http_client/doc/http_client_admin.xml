@@ -901,6 +901,35 @@ http_client_query("http://api.com/index.php", "src=$si",
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_get">
+			<title>
+				<function moreinfo="none">http_client_get(url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP GET request to "url", storing the response body
+				in the "respv" variable. The "body" and "hdrs" can be empty strings
+				to skip setting them. The first three parameters can contain
+				variables that are evaluated at runtime. The "respv" has to be
+				the name of a writable variable.
+			</para>
+			<para>
+				Note: usually HTTP GET requests should have no body, according to
+				specs the body in HTTP GET does not affect the response, but is
+				not explicitely forbidden.
+			</para>
+			<example>
+				<title><function>http_client_get()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Pseudovariables</title>
