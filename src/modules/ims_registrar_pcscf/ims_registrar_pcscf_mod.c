@@ -67,6 +67,7 @@
 #include "async_reginfo.h"
 
 #include "ims_registrar_pcscf_mod.h"
+#include "ul_callback.h"
 #include "save.h"
 #include "service_routes.h"
 MODULE_VERSION
@@ -260,6 +261,12 @@ static int mod_init(void) {
 
 	if (bind_usrloc(&ul) < 0) {
 		return -1;
+	}
+	if (ul.db_mode == DB_ONLY){
+		if (!(ul.register_ulcb_method(NULL, PCSCF_CONTACT_UPDATE, callback_pcscf_contact_cb, NULL) == 1)){
+			LM_ERR("Can't register ulcb method\n");
+			return -1;
+		}
 	}
 	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
 
