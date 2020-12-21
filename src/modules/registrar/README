@@ -722,13 +722,15 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
    Defines the name of XAVP class to store runtime module config values.
    The values are stored as inner XAVPs, like $xavp(class=>attribute).
    Valid inner XAVP names:
+     * expires - the number of maximum contacts to be stored for the
+       current registration AoR. It overwrites the 'max_contacts' module
+       parameter value.
+     * q - the expires value, to overwrite the value from SIP headers.
      * max_contacts - the number of maximum contacts to be stored for the
        current registration AoR. It overwrites the 'max_contacts' module
        parameter value.
      * socket - the string representing the socket on which the register
        request was received, as alternative to using the sock_hdr.
-     * q - q value of contact (integer 0-1000). It overrides q value given
-       in contact header and default_q parameter.
 
    For example. if this parameter is set to 'reg', then the number of
    maximum contacts can be set in $xavp(reg=>max_contacts).
@@ -742,6 +744,7 @@ modparam("registrar", "xavp_cfg", "reg")
 request_route {
     ...
     $xavp(reg=>max_contacts) = 4;
+    $xavp(reg[0]=>expires) = 600;
     save("location");
     ...
 }
