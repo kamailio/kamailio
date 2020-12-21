@@ -111,11 +111,11 @@ size_t write_function(void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 /*! Send query to server, optionally post data.
  */
-static int curL_query_url(struct sip_msg *_m, const char *_url, str *_dst,
-		const curl_query_t *const params)
+static int curL_request_url(struct sip_msg *_m, const char *_met,
+		const char *_url, str *_dst, const curl_query_t *const params)
 {
 	CURL *curl = NULL;
-	;
+
 	CURLcode res;
 	char *at = NULL;
 	curl_res_stream_t stream;
@@ -158,10 +158,15 @@ static int curL_query_url(struct sip_msg *_m, const char *_url, str *_dst,
 	res = curl_easy_setopt(
 			curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
+	if(_met != NULL) {
+		/* Enforce method (GET, PUT, ...) */
+		res |= curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, _met);
+	}
 	if(params->post) {
-		/* Now specify we want to POST data */
-		res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
-
+		if(_met == NULL) {
+			/* Now specify we want to POST data */
+			res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		}
 		if(params->contenttype) {
 			char ctype[256];
 
@@ -593,7 +598,7 @@ int curl_con_query_url_f(struct sip_msg *_m, const str *connection,
 		LM_DBG("**** Curl HTTP_proxy not set \n");
 	}
 
-	res = curL_query_url(_m, urlbuf, result, &query_params);
+	res = curL_request_url(_m, NULL, urlbuf, result, &query_params);
 
 	if(res > 1000 && conn->failover.s) {
 		int counter = failover + 1;
@@ -630,12 +635,12 @@ int curl_con_query_url(struct sip_msg *_m, const str *connection,
 }
 
 /*!
- * Performs http_query and saves possible result (first body line of reply)
+ * Performs http request and saves possible result (first body line of reply)
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_client_query(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs)
+int http_client_request(
+		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_hdrs, char *_met)
 {
 	int res;
 	curl_query_t query_params;
@@ -646,7 +651,7 @@ int http_client_query(
 	query_params.authmethod = default_authmethod;
 	query_params.contenttype = NULL;
 	query_params.hdrs = _hdrs;
-	query_params.post = _post;
+	query_params.post = _body;
 	query_params.clientcert = NULL;
 	query_params.clientkey = NULL;
 	query_params.cacert = NULL;
@@ -669,11 +674,21 @@ int http_client_query(
 		}
 	}
 
-	res = curL_query_url(_m, _url, _dst, &query_params);
+	res = curL_request_url(_m, _met, _url, _dst, &query_params);
 
 	return res;
 }
 
+/*!
+ * Performs http_query and saves possible result (first body line of reply)
+ * to pvar.
+ * This is the same http_query as used to be in the utils module.
+ */
+int http_client_query(
+		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs)
+{
+	return http_client_request(_m, _url, _dst, _post, _hdrs, 0);
+}
 
 char *http_get_content_type(const str *connection)
 {

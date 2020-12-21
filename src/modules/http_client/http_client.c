@@ -147,6 +147,8 @@ static int w_http_query_post(
 		struct sip_msg *_m, char *_url, char *_post, char *_result);
 static int w_http_query_post_hdr(struct sip_msg *_m, char *_url, char *_post,
 		char *_hdrs, char *_result);
+static int w_http_query_get_hdr(struct sip_msg *_m, char *_url, char *_body,
+		char *_hdrs, char *_result);
 static int w_curl_connect(
 		struct sip_msg *_m, char *_con, char *_url, char *_result);
 
@@ -166,6 +168,9 @@ static cmd_export_t cmds[] = {
 		fixup_free_http_query_post,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_client_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+		fixup_free_http_query_post_hdr,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_client_get", (cmd_function)w_http_query_get_hdr, 4, fixup_http_query_post_hdr,
 		fixup_free_http_query_post_hdr,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
@@ -1003,6 +1008,107 @@ static int w_http_query_post_hdr(
 }
 
 /*!
+ * helper for HTTP-Query function
+ */
+static int ki_http_request_helper(sip_msg_t *_m, str *met, str *url, str *body,
+		str *hdrs, pv_spec_t *dst)
+{
+	int ret = 0;
+	str result = {NULL, 0};
+	pv_value_t val;
+
+	if(url==NULL || url->s==NULL) {
+		LM_ERR("invalid url parameter\n");
+		return -1;
+	}
+	ret = http_client_request(_m, url->s, &result,
+			(body && body->s && body->len>0)?body->s:NULL,
+			(hdrs && hdrs->s && hdrs->len>0)?hdrs->s:NULL,
+			(met && met->s && met->len>0)?met->s:NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	if(result.s != NULL)
+		pkg_free(result.s);
+
+	return (ret == 0) ? -1 : ret;
+}
+
+/*!
+ * KEMI function to perform GET with headers and body
+ */
+static int ki_http_get_hdrs(sip_msg_t *_m, str *url, str *body,
+		str *hdrs, str *dpv)
+{
+	str met = str_init("GET");
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_http_request_helper(_m, &met, url, body, hdrs, dst);
+}
+
+/*!
+ * Wrapper for HTTP-Query function for cfg script
+ */
+static int w_http_get_script(sip_msg_t *_m, char *_url, char *_body,
+		char *_hdrs, char *_result)
+{
+	str met = str_init("GET");
+	str url = {NULL, 0};
+	str body = {NULL, 0};
+	str hdrs = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len <= 0) {
+		LM_ERR("URL has no value\n");
+		return -1;
+	}
+	if(_body && get_str_fparam(&body, _m, (gparam_p)_body) != 0) {
+		LM_ERR("DATA has no value\n");
+		return -1;
+	} else {
+		if(body.len == 0) {
+			body.s = NULL;
+		}
+	}
+	if(_hdrs && get_str_fparam(&hdrs, _m, (gparam_p)_hdrs) != 0) {
+		LM_ERR("HDRS has no value\n");
+		return -1;
+	} else {
+		if(hdrs.len == 0) {
+			hdrs.s = NULL;
+		}
+	}
+	dst = (pv_spec_t *)_result;
+
+	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, dst);
+}
+
+/*!
+ * Wrapper for HTTP-GET (HDRS-Variant)
+ */
+static int w_http_query_get_hdr(
+		sip_msg_t *_m, char *_url, char *_body, char *_hdrs, char *_result)
+{
+	return w_http_get_script(_m, _url, _body, _hdrs, _result);
+}
+
+/*!
  * Parse arguments to  pv $curlerror
  */
 static int pv_parse_curlerror(pv_spec_p sp, str *in)
@@ -1146,6 +1252,11 @@ static sr_kemi_t sr_kemi_http_client_exports[] = {
 	},
 	{ str_init("http_client"), str_init("query_post_hdrs"),
 		SR_KEMIP_INT, ki_http_query_post_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("get_hdrs"),
+		SR_KEMIP_INT, ki_http_get_hdrs,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
