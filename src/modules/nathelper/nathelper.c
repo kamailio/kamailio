@@ -2154,8 +2154,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		} else if(path.len && udpping_from_path) {
 			path_ip_str = extract_last_path_ip(path);
 			if(path_ip_str == NULL) {
-				LM_ERR("ERROR:nathelper:nh_timer: unable to parse path from "
-					   "location\n");
+				LM_ERR("unable to parse path from location\n");
 				continue;
 			}
 			if(get_natping_socket(path_ip_str, &path_ip, &path_port)) {
