@@ -29,6 +29,7 @@
 #include "mem/mem.h"
 #include "ut.h"
 #include "re.h"
+#include "pvar.h"
 #include "dprint.h"
 
 #include "ppcfg.h"
@@ -91,6 +92,8 @@ int pp_substdef_add(char *data, int mode)
 	char *p;
 	str defname;
 	str defvalue;
+	str newval;
+	sip_msg_t *fmsg;
 
 	if(pp_subst_add(data)<0) {
 		LM_ERR("subst rule cannot be added\n");
@@ -146,6 +149,12 @@ found_repl:
 		defvalue.s[defvalue.len] = '"';
 		defvalue.s--;
 		defvalue.len += 2;
+	}
+	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
+		fmsg = faked_msg_get_next();
+		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
+			defvalue = newval;
+		}
 	}
 	if(pp_define_set(defvalue.len, defvalue.s)<0) {
 		LM_ERR("cannot set define value\n");
