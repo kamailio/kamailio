@@ -175,6 +175,17 @@ modparam("ims_usrloc_pcscf", "db_url",
        reflected in the database. This is slow but very reliable. This
        mode will ensure that no registration data is lost as a result of a
        restart or crash.
+     * 3 - DB_ONLY Scheme. All changes to usrloc are immediately
+       reflected in the database and additionally PCSCF usrloc data are downloaded
+       from db and inserted into PCSCF usrloc cache if required - i.e. If 
+       contact data cannot be found in cache a db
+       query for the contact is done in table location and when contact is
+       found there its respective data are inserted in PCSCF usrloc cache.
+       Also an audit had been added for removal of long expired PCSCF usrloc data
+       in table location.
+       Some of the db queries do only support Mysql.
+       This mode will ensure that no registration data is lost as a result of a
+       restart or crash.
 
    Default value is 0.
 

@@ -122,18 +122,23 @@ int use_location_pcscf_table(str* domain)
 
 	return 0;
 }
+db1_con_t* get_db_handle () 
+{
+    return ul_dbh;
+
+}
 
 int db_update_pcontact(pcontact_t* _c)
 {
 	str impus, service_routes;
 
 	db_val_t match_values[2];
-	db_key_t match_keys[2] = { &aor_col, &received_port_col };
-    db_op_t op[2];
-	db_key_t update_keys[8] = { &expires_col, &reg_state_col,
-								&service_routes_col, &received_col,
-								&received_port_col, &received_proto_col,
-								&rx_session_id_col, &public_ids_col };
+	//db_key_t match_keys[2] = { &aor_col, &received_port_col };
+   //     db_op_t op[2];
+	//db_key_t update_keys[8] = { &expires_col, &reg_state_col,
+	//							&service_routes_col, &received_col,
+	//							&received_port_col, &received_proto_col,
+	//							&rx_session_id_col, &public_ids_col };
 	db_val_t values[8];
         
 	LM_DBG("updating pcontact: aor[%.*s], received port %u\n", _c->aor.len, _c->aor.s, _c->received_port);
@@ -146,8 +151,8 @@ int db_update_pcontact(pcontact_t* _c)
 	VAL_NULL(match_values + 1)	= 0;
 	VAL_INT(match_values + 1)	= _c->received_port;
 	
-	op[0]=OP_EQ;
-	op[1]=OP_EQ;
+    //	op[0]=OP_EQ;
+    //	op[1]=OP_EQ;
 
 	if (use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len, _c->domain->s);
@@ -195,17 +200,22 @@ int db_update_pcontact(pcontact_t* _c)
 	SET_PROPER_NULL_FLAG(impus, values, 7);
 	SET_STR_VALUE(values + 7, impus);
 
-	if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,values, 2, 8)) !=0){
-		LM_ERR("could not update database info\n");
-	    return -1;
-	}
+	//if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,values, 2, 8)) !=0){
+	//	LM_ERR("could not update database info\n");
+	//    return -1;
+	//}
 
-	if (ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-		LM_DBG("no existing rows for an update... doing insert\n");
-		if (db_insert_pcontact(_c) != 0) {
-			LM_ERR("Failed to insert a pcontact on update\n");
-		}
-	}
+        if (db_insert_pcontact(_c) != 0) {
+                      LM_ERR("Failed to insert a pcontact on update\n");
+                      return -1;
+       }
+
+//	if (ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
+//		LM_DBG("no existing rows for an update... doing insert\n");
+//		if (db_insert_pcontact(_c) != 0) {
+//			LM_ERR("Failed to insert a pcontact on update\n");
+//		}
+//	}
 
 	return 0;
 }
@@ -301,7 +311,7 @@ int db_insert_pcontact(struct pcontact* _c)
 	SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
 	SET_PROPER_NULL_FLAG(_c->rx_session_id, values, LP_RX_SESSION_ID_IDX);
 
-	VAL_DOUBLE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
+	VAL_INT(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
 	VAL_TIME(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = _c->expires;
 	VAL_NULL(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = 0;
 	VAL_NULL(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = 0;
@@ -341,7 +351,7 @@ int db_insert_pcontact(struct pcontact* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
+	if (ul_dbf.insert_update(ul_dbh, keys, values, 16) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}

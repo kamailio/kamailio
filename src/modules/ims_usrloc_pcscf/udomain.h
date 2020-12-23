@@ -40,6 +40,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+ 
 
 #ifndef UDOMAIN_H
 #define UDOMAIN_H
@@ -82,5 +83,7 @@ int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcon
 int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
 
 int preload_udomain(db1_con_t* _c, udomain_t* _d);
-
+int audit_usrloc_expired_pcontacts(udomain_t* _d);
+int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact** _c, pcontact_info_t* contact_info);
+int db_delete_presentityuri_from_pua(str *presentity_uri);
 #endif

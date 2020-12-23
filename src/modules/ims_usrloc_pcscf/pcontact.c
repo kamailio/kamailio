@@ -277,6 +277,17 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 			(*_c)->num_service_routes = _ci->num_service_routes;
 		}
 	}
+	// add the rx session id
+	if ((_ci->rx_regsession_id) && (_ci->rx_regsession_id->len > 0) && (_ci->rx_regsession_id->s)) {
+		(*_c)->rx_session_id.s = shm_malloc(_ci->rx_regsession_id->len);
+		if (!((*_c)->rx_session_id.s)) {
+			LM_ERR("no more shm mem\n");
+			goto out_of_memory;
+		}
+		memcpy((*_c)->rx_session_id.s, _ci->rx_regsession_id->s, _ci->rx_regsession_id->len);
+		(*_c)->rx_session_id.len = _ci->rx_regsession_id->len;
+	}
+        //(*_c)->str_callback_registered = 0;
         
         LM_DBG("New contact host:port [%.*s:%d]\n", (*_c)->contact_host.len, (*_c)->contact_host.s, (*_c)->contact_port);
         LM_DBG("New contact via host:port:proto: [%.*s:%d:%d]\n", (*_c)->via_host.len, (*_c)->via_host.s, (*_c)->via_port, (*_c)->via_proto);
@@ -357,18 +368,68 @@ static inline void nodb_timer(pcontact_t* _c)
         
         if ((_c->expires - act_time) + expires_grace <= 0) {//we've allowed some grace time TODO: add as parameter
         //if ((_c->expires - act_time) <= -10) {//we've allowed some grace time TODO: add as parameter
-		LM_DBG("pcscf contact <%.*s> has expired and will be removed\n", _c->aor.len, _c->aor.s);
-		if (exists_ulcb_type(PCSCF_CONTACT_EXPIRE)) {
-			run_ul_callbacks(PCSCF_CONTACT_EXPIRE, _c);
-		}
+        	LM_DBG("pcscf contact <%.*s> has expired and will be removed\n", _c->aor.len, _c->aor.s);
 
-		if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
-			LM_ERR("Error deleting ims_usrloc_pcscf record in DB");
-		}
+                // check expiry again by updating expiry from DB
+                if (db_mode == DB_ONLY){
+                   if  (db_load_pcontact(_c->slot->d, &_c->aor, 0/*insert_cache*/, &_c, NULL)){
+                        if ((_c->reg_state == PCONTACT_REG_PENDING_AAR) || (_c->reg_state == PCONTACT_REG_PENDING)){
+                           //we do not need expires_grace here as contact is not registered in scscf 
+                           if ((_c->expires - act_time)  <= 0) {
+                               _c->reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
+                               delete_pcontact(_c->slot->d,  _c);
+                               return;
+                           }
+                        }
+                        else{
+                           if ((_c->expires - act_time) + expires_grace >= 0) {
+                               return;
+                           }
+                        }
+                    }
+                    else{
+                        // not found in DB: better delete in cache also
+                        update_stat(_c->slot->d->expired, 1);
+                        mem_delete_pcontact(_c->slot->d, _c);
+                        return;
+                    }
+                    // PRM1945 : PUBLISH already sent:  delete pcontact and pua after time window 30 secs
+                    // currently not clear what happens if more contacts existing for one public_identity (pua)
+                    // which are not expired
+                    if ((_c->reg_state == PCONTACT_DEREG_PENDING_PUBLISH) &&
+                        ((_c->expires - act_time) + expires_grace + 30 <= 0)){
+                       LM_INFO("Deleting expired pcontact: <%.*s>\n", _c->aor.len, _c->aor.s);
+                       if (&_c->head->public_identity){
+                           if (&_c->head->public_identity.s && &_c->head->public_identity.len)
+                               db_delete_presentityuri_from_pua(&_c->head->public_identity);
+                       }
+                       delete_pcontact(_c->slot->d,  _c);
+                       return;
+                    }
+                    
+                   _c->reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
+					if(db_delete_pcontact(_c) !=0) {
+						LM_ERR("Error deleting ims_usrloc_pcscf record in DB");
+					} //delete contact in DB to not process this contact in several units
+                   if (exists_ulcb_type(PCSCF_CONTACT_UPDATE)) {
+                        run_ul_callbacks(PCSCF_CONTACT_UPDATE, _c);
+                        LM_INFO("pcscf contact <%.*s> has expired - sending PUBLISH\n", _c->aor.len, _c->aor.s);
+                        return;
+                   }
+                }
+                else{
+	           if (exists_ulcb_type(PCSCF_CONTACT_EXPIRE)) {
+			        run_ul_callbacks(PCSCF_CONTACT_EXPIRE, _c);
+		       }
 
-		update_stat(_c->slot->d->expired, 1);
-		mem_delete_pcontact(_c->slot->d, _c);
-		return;
+		    if (db_mode == WRITE_THROUGH && db_delete_pcontact(_c) != 0) {
+			     LM_ERR("Error deleting ims_usrloc_pcscf record in DB");
+		    }
+
+		    update_stat(_c->slot->d->expired, 1);
+		    mem_delete_pcontact(_c->slot->d, _c);
+		    return;
+		    }
 	}
 
 	//TODO: this is just for tmp debugging
