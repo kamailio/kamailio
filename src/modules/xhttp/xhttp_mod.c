@@ -516,12 +516,39 @@ int bind_xhttp(xhttp_api_t *api)
 /**
  *
  */
+static sr_kemi_xval_t _sr_kemi_xhttp_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xhttp_get_hu(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_xhttp_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_xhttp_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_xhttp_xval;
+	}
+
+	_sr_kemi_xhttp_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_xhttp_xval.v.s = msg->first_line.u.request.uri;
+	return &_sr_kemi_xhttp_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_xhttp_exports[] = {
 	{ str_init("xhttp"), str_init("xhttp_reply"),
 		SR_KEMIP_INT, xhttp_send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp"), str_init("get_hu"),
+		SR_KEMIP_XVAL, ki_xhttp_get_hu,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
