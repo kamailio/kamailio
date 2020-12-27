@@ -196,10 +196,6 @@ static pv_export_t mod_pvs[] = {
 	{{"dd", (sizeof("dd")-1)}, /* */
 		PVT_OTHER, pv_get_dsturi_attr, 0,
 		0, 0, pv_init_iname, 1},
-	{{"def", (sizeof("def")-1)}, PVT_OTHER, pv_get_def, 0,
-		pv_parse_def_name, 0, 0, 0},
-	{{"defn", (sizeof("defn")-1)}, PVT_OTHER, pv_get_defn, 0,
-		pv_parse_defn_name, 0, 0, 0},
 	{{"di", (sizeof("di")-1)}, /* */
 		PVT_OTHER, pv_get_diversion, 0,
 		0, 0, pv_init_iname, 1},
