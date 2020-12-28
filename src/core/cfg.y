@@ -403,6 +403,7 @@ extern char *default_routename;
 %token LOADMODULE
 %token LOADPATH
 %token MODPARAM
+%token MODPARAMX
 %token CFGENGINE
 %token MAXBUFFER
 %token SQL_BUFFER_SIZE
@@ -1890,6 +1891,34 @@ module_stm:
 		}
 	}
 	| MODPARAM error { yyerror("Invalid arguments"); }
+	| MODPARAMX LPAREN STRING COMMA STRING COMMA STRING RPAREN {
+		if (!shm_initialized() && init_shm()<0) {
+			yyerror("Can't initialize shared memory");
+			YYABORT;
+		}
+		if (modparamx_set($3, $5, PARAM_STRING, $7) != 0) {
+			 yyerror("Can't set module parameter");
+		}
+	}
+	| MODPARAMX LPAREN STRING COMMA STRING COMMA intno RPAREN {
+		if (!shm_initialized() && init_shm()<0) {
+			yyerror("Can't initialize shared memory");
+			YYABORT;
+		}
+		if (modparamx_set($3, $5, PARAM_INT, (void*)$7) != 0) {
+			 yyerror("Can't set module parameter");
+		}
+	}
+	| MODPARAMX LPAREN STRING COMMA STRING COMMA PVAR RPAREN {
+		if (!shm_initialized() && init_shm()<0) {
+			yyerror("Can't initialize shared memory");
+			YYABORT;
+		}
+		if (modparamx_set($3, $5, PARAM_VAR, (void*)$7) != 0) {
+			 yyerror("Can't set module parameter");
+		}
+	}
+	| MODPARAMX error { yyerror("Invalid arguments"); }
 	| CFGENGINE STRING {
 		if(sr_kemi_eng_setz($2, NULL)) {
 			yyerror("Can't set config routing engine");

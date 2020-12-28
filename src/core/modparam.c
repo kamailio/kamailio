@@ -29,6 +29,8 @@
 
 #include "modparam.h"
 #include "dprint.h"
+#include "fmsg.h"
+#include "pvar.h"
 #include "mem/mem.h"
 #include <sys/types.h>
 #include <regex.h>
@@ -177,6 +179,100 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 		return -4;
 	}
 	return 0;
+}
+
+int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
+{
+	str seval;
+	str sfmt;
+	sip_msg_t *fmsg;
+	char* emname;
+	char* epname;
+	pv_spec_t *pvs;
+	pv_value_t pvv;
+
+	emname = mname;
+	if(strchr(mname, '$') != NULL) {
+		fmsg = faked_msg_get_next();
+		sfmt.s = mname;
+		sfmt.len = strlen(sfmt.s);
+		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+			emname = seval.s;
+		}
+	}
+
+	epname = pname;
+	if(strchr(pname, '$') != NULL) {
+		fmsg = faked_msg_get_next();
+		sfmt.s = pname;
+		sfmt.len = strlen(sfmt.s);
+		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+			epname = seval.s;
+		}
+	}
+
+	switch(ptype) {
+		case PARAM_STRING:
+			if(strchr((char*)pval, '$') != NULL) {
+				fmsg = faked_msg_get_next();
+				sfmt.s = (char*)pval;
+				sfmt.len = strlen(sfmt.s);
+				if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+					return set_mod_param_regex(emname, epname, PARAM_STRING,
+							(void*)seval.s);
+				} else {
+					LM_ERR("failed to evaluate parameter [%s]\n", (char*)pval);
+					return -1;
+				}
+			} else {
+				return set_mod_param_regex(emname, epname, PARAM_STRING, pval);
+			}
+		case PARAM_INT:
+			return set_mod_param_regex(emname, epname, PARAM_INT, pval);
+		case PARAM_VAR:
+			sfmt.s = (char*)pval;
+			sfmt.len = strlen(sfmt.s);
+			seval.len = pv_locate_name(&sfmt);
+			if(seval.len != sfmt.len) {
+				LM_ERR("invalid pv [%.*s] (%d/%d)\n", sfmt.len, sfmt.s,
+						seval.len, sfmt.len);
+				return -1;
+			}
+			pvs = pv_cache_get(&sfmt);
+			if(pvs==NULL) {
+				LM_ERR("cannot get pv spec for [%.*s]\n", sfmt.len, sfmt.s);
+				return -1;
+			}
+
+			fmsg = faked_msg_get_next();
+			memset(&pvv, 0, sizeof(pv_value_t));
+			if(pv_get_spec_value(fmsg, pvs, &pvv) != 0) {
+				LM_ERR("unable to get pv value for [%.*s]\n", sfmt.len, sfmt.s);
+				return -1;
+			}
+			if(pvv.flags&PV_VAL_NULL) {
+				LM_ERR("unable to get pv value for [%.*s]\n", sfmt.len, sfmt.s);
+				return -1;
+			}
+			if(pvv.flags&PV_TYPE_INT) {
+				return set_mod_param_regex(emname, epname, PARAM_INT,
+						(void*)(long)pvv.ri);
+			}
+			if(pvv.rs.len<0) {
+				LM_ERR("invalid pv string value for [%.*s]\n", sfmt.len, sfmt.s);
+				return -1;
+			}
+			if(pvv.rs.s[pvv.rs.len] != '\0') {
+				LM_ERR("non 0-terminated pv string value for [%.*s]\n",
+						sfmt.len, sfmt.s);
+				return -1;
+			}
+			return set_mod_param_regex(emname, epname, PARAM_STRING,
+							(void*)pvv.rs.s);
+		default:
+			LM_ERR("invalid parameter type: %d\n", ptype);
+			return -1;
+	}
 }
 
 int set_mod_param_serialized(char* mval)

@@ -490,6 +490,7 @@ CFG_DESCRIPTION		"description"|"descr"|"desc"
 LOADMODULE	loadmodule
 LOADPATH	"loadpath"|"mpath"
 MODPARAM        modparam
+MODPARAMX        modparamx
 
 CFGENGINE	"cfgengine"
 
@@ -1003,6 +1004,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
+<INITIAL>{MODPARAMX}     { count(); yylval.strval=yytext; return MODPARAMX; }
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
 <INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
 <INITIAL>{HDR_NAME_EXTRA_CHARS}	{ yylval.strval=yytext; return HDR_NAME_EXTRA_CHARS; }

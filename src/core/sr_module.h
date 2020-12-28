@@ -109,6 +109,7 @@ typedef int (*child_init_function)(int rank);
 #define PARAM_STRING     (1U<<0)  /**< String (char *) parameter type */
 #define PARAM_INT        (1U<<1)  /**< Integer parameter type */
 #define PARAM_STR        (1U<<2)  /**< struct str parameter type */
+#define PARAM_VAR        (1U<<3)  /**< var parameter type - mdoparamx */
 #define PARAM_USE_FUNC   (1U<<(8*sizeof(int)-1))
 #define PARAM_TYPE_MASK(_x)   ((_x)&(~PARAM_USE_FUNC))
 
