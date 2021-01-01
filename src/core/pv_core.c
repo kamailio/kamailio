@@ -141,11 +141,11 @@ static pv_export_t core_pvs[] = {
 	{ STR_STATIC_INIT("rc"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
 	{ STR_STATIC_INIT("retcode"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
 	{ STR_STATIC_INIT("env"), PVT_OTHER, pv_get_env, 0,
-		pv_parse_env_name, 0, 0, 0},
-	{{"def", (sizeof("def")-1)}, PVT_OTHER, pv_get_def, 0,
-		pv_parse_def_name, 0, 0, 0},
-	{{"defn", (sizeof("defn")-1)}, PVT_OTHER, pv_get_defn, 0,
-		pv_parse_defn_name, 0, 0, 0},
+		pv_parse_env_name, 0, 0, 0 },
+	{ STR_STATIC_INIT("def"), PVT_OTHER, pv_get_def, 0,
+		pv_parse_def_name, 0, 0, 0 },
+	{ STR_STATIC_INIT("defn"), PVT_OTHER, pv_get_defn, 0,
+		pv_parse_defn_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
