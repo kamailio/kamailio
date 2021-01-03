@@ -78,6 +78,7 @@ sruid_t _tps_sruid;
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
 int _tps_sanity_checks = 0;
+int _tps_update_rr_dialog = 0;
 str _tps_storage = str_init("db");
 
 extern int _tps_branch_expire;
@@ -141,6 +142,7 @@ static param_export_t params[]={
 	{"cparam_name",		PARAM_STR, &_tps_cparam_name},
 	{"a_contact_avp",	PARAM_STR, &_tps_acontact_avp},
 	{"b_contact_avp",	PARAM_STR, &_tps_bcontact_avp},
+	{"update_rr_dialog",    PARAM_INT, &_tps_update_rr_dialog},
 	{0,0,0}
 };
 

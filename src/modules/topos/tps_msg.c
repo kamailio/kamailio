@@ -49,6 +49,7 @@
 extern int _tps_param_mask_callid;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
+extern int _tps_update_rr_dialog;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
@@ -368,9 +369,16 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 	int vlen;
 	int r2;
 	int isreq;
+	int update_rr_dialog = _tps_update_rr_dialog;
 
 	if(ptsd->cp==NULL) {
 		ptsd->cp = ptsd->cbuf;
+	}
+
+	if(_tps_update_rr_dialog) {
+		if((msg->first_line.type==SIP_REQUEST) && !(get_to(msg)->tag_value.len>0)) {
+			update_rr_dialog = 0;
+		}
 	}
 
 	i = 0;
@@ -429,7 +437,7 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				LM_ERR("no more space to pack rr headers\n");
 				return -1;
 			}
-			if(isreq==1) {
+			if(isreq==1 || update_rr_dialog) {
 				/* sip request - get a+s-side record route */
 				if(i>1) {
 					if(i==2 &&r2==0) {
@@ -441,6 +449,12 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 					*ptsd->cp = ',';
 					ptsd->cp++;
 					ptsd->a_rr.len++;
+					if(update_rr_dialog) {
+						ptsd->b_rr.len++;
+					}
+				}
+				if(i==1 && update_rr_dialog) {
+					ptsd->b_rr.s = ptsd->cp;
 				}
 				*ptsd->cp = '<';
 				if(i==1) {
@@ -458,6 +472,9 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 
 				ptsd->cp++;
 				ptsd->a_rr.len++;
+				if(update_rr_dialog) {
+					ptsd->b_rr.len++;
+				}
 
 				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
 				if(i==1) {
@@ -483,6 +500,10 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				*ptsd->cp = '>';
 				ptsd->cp++;
 				ptsd->a_rr.len++;
+				if(update_rr_dialog) {
+					ptsd->b_rr.len += rr->nameaddr.uri.len;
+					ptsd->b_rr.len++;
+				}
 			} else {
 				/* sip response - get b-side record route */
 				if(i==1) {
@@ -879,6 +900,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	}
 	if(dialog!=0) {
 		tps_append_xuuid(msg, &stsd.a_uuid);
+		if(_tps_update_rr_dialog) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS|TPS_DBU_BRR)<0) {
+				goto error;
+			}
+		}
 	}
 	return 0;
 
@@ -934,7 +960,7 @@ int tps_response_received(sip_msg_t *msg)
 				TPS_DBU_CONTACT|TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
-	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS)<0) {
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd, _tps_update_rr_dialog?TPS_DBU_RPLATTRS|TPS_DBU_BRR|TPS_DBU_ARR:TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
 	tps_storage_lock_release(&lkey);
@@ -1037,7 +1063,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	if(dialog!=0) {
 		tps_storage_end_dialog(msg, &mtsd, ptsd);
-		if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
+		if(tps_storage_update_dialog(msg, &mtsd, &stsd, _tps_update_rr_dialog?TPS_DBU_CONTACT|TPS_DBU_ARR:TPS_DBU_CONTACT)<0) {
 			goto error;
 		}
 	}
