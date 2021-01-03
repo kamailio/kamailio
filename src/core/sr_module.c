@@ -42,6 +42,7 @@
 #include "rpc_lookup.h"
 #include "sr_compat.h"
 #include "ppcfg.h"
+#include "fmsg.h"
 #include "async_task.h"
 #include "shm_init.h"
 
@@ -609,6 +610,29 @@ skip:
 	if (path && path!=mod_path)
 		pkg_free(path);
 	return -1;
+}
+
+/**
+ *
+ */
+int load_modulex(char* mod_path)
+{
+	str seval;
+	str sfmt;
+	sip_msg_t *fmsg;
+	char* emod;
+
+	emod = mod_path;
+	if(strchr(mod_path, '$') != NULL) {
+		fmsg = faked_msg_get_next();
+		sfmt.s = mod_path;
+		sfmt.len = strlen(sfmt.s);
+		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+			emod = seval.s;
+		}
+	}
+
+	return load_module(emod);
 }
 
 /**

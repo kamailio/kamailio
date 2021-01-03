@@ -330,6 +330,7 @@ extern int mod_response_cbk_no; /**< size of reponse callbacks array */
 
 int register_builtin_modules(void);
 int load_module(char* path);
+int load_modulex(char* path);
 ksr_cmd_export_t* find_export_record(char* name, int param_no, int flags);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);

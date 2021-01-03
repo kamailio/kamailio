@@ -488,6 +488,7 @@ ONSEND_RT_REPLY		"onsend_route_reply"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
+LOADMODULEX	loadmodulex
 LOADPATH	"loadpath"|"mpath"
 MODPARAM        modparam
 MODPARAMX        modparamx
@@ -1002,6 +1003,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
+<INITIAL>{LOADMODULEX}	{ count(); yylval.strval=yytext; return LOADMODULEX; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 <INITIAL>{MODPARAMX}     { count(); yylval.strval=yytext; return MODPARAMX; }

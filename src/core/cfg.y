@@ -401,6 +401,7 @@ extern char *default_routename;
 %token USER_AGENT_HEADER
 %token REPLY_TO_VIA
 %token LOADMODULE
+%token LOADMODULEX
 %token LOADPATH
 %token MODPARAM
 %token MODPARAMX
@@ -1850,6 +1851,13 @@ module_stm:
 			}
 	}
 	| LOADMODULE error	{ yyerror("string expected"); }
+	| LOADMODULEX STRING {
+		LM_DBG("loading module %s\n", $2);
+			if (load_modulex($2)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULEX error	{ yyerror("string expected"); }
 	| LOADPATH STRING {
 		if(mods_dir_cmd==0) {
 			LM_DBG("loading modules under %s\n", $2);
