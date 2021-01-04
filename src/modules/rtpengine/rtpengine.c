@@ -1003,7 +1003,14 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 
 		/* Check the rn_address is 'hostname:port' */
 		/* Check the rn_address port is valid */
-		p1 = strchr(pnode->rn_address, ':');
+		if(pnode->rn_umode == 6) {
+                        p1 = strstr(pnode->rn_address, "]:");
+                        if(p1 != NULL) {
+                                p1++;
+                        }
+                } else {
+                        p1 = strchr(pnode->rn_address, ':');
+                }
 		if (p1 != NULL) {
 			p1++;
 		}
