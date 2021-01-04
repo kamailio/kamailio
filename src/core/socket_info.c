@@ -1085,7 +1085,7 @@ static int get_flags(int family){
 	int nll = 0;
     int nl_sock = -1;
 
-	fill_nl_req(req, RTM_GETLINK, AF_INET);
+	fill_nl_req(req, RTM_GETLINK, family);
 
 	if((nl_sock = nl_bound_sock()) < 0) return -1;
 
