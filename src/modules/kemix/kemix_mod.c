@@ -1093,6 +1093,52 @@ static int ki_kx_get_defn(sip_msg_t *msg, str *dname)
 	return n;
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_kx_get_env(sip_msg_t *msg, str *envname)
+{
+	char *val;
+
+	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(envname==NULL || envname->s==NULL || envname->len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	val = getenv(envname->s);
+	if (val == NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_kx_xval.v.s.s = val;
+	_sr_kemi_kx_xval.v.s.len = strlen(val);
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
+static int ki_kx_get_envn(sip_msg_t *msg, str *envname)
+{
+	str val;
+	int r = 0;
+
+	if(envname==NULL || envname->s==NULL || envname->len<=0) {
+		return 0;
+	}
+
+	val.s = getenv(envname->s);
+	if (val.s) {
+		val.len = strlen(val.s);
+		str2sint(&val, &r);
+		return r;
+	}
+
+	return r;
+}
 
 /**
  *
@@ -1401,6 +1447,16 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_defn"),
 		SR_KEMIP_INT, ki_kx_get_defn,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_env"),
+		SR_KEMIP_XVAL, ki_kx_get_env,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_envn"),
+		SR_KEMIP_INT, ki_kx_get_envn,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
