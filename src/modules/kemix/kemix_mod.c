@@ -525,6 +525,17 @@ static sr_kemi_xval_t* ki_kx_get_send_sock_name(sip_msg_t *msg)
 /**
  *
  */
+static int ki_kx_get_send_sock_port(sip_msg_t *msg)
+{
+	if (msg==NULL || msg->force_send_socket==0) {
+		return 0;
+	}
+	return (int)msg->force_send_socket->port_no;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_rcvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -1322,6 +1333,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_send_sock_name"),
 		SR_KEMIP_XVAL, ki_kx_get_send_sock_name,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_send_sock_port"),
+		SR_KEMIP_INT, ki_kx_get_send_sock_port,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
