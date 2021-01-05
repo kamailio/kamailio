@@ -184,6 +184,9 @@ int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
 int pv_get_force_sock_name(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_force_sock_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_useragent(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

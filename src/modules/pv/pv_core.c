@@ -1075,6 +1075,19 @@ int pv_get_force_sock_name(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &msg->force_send_socket->sockname);
 }
 
+int pv_get_force_sock_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if (msg->force_send_socket==0)
+		return pv_get_uintval(msg, param, res, 0);
+
+	return pv_get_intstrval(msg, param, res, (int)msg->force_send_socket->port_no,
+			&msg->force_send_socket->port_no_str);
+}
+
 int pv_get_useragent(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
