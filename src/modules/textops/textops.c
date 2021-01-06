@@ -136,6 +136,7 @@ static int in_list_prefix_f(struct sip_msg* _msg, char* _subject, char* _list,
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
+static int ends_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
@@ -314,6 +315,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"starts_with",  (cmd_function)starts_with_f, 2,
+		fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"ends_with",  (cmd_function)ends_with_f, 2,
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"is_audio_on_hold",  (cmd_function)is_audio_on_hold_f, 0,
@@ -4220,6 +4224,49 @@ static int ki_starts_with(sip_msg_t *msg, str *s1, str *s2 )
 	return -2;
 }
 
+static int ends_with_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	str s1;
+	str s2;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1)!=0) {
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2)!=0) {
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	if(s2.len > s1.len) {
+		return -1;
+	}
+	ret = strncmp(s1.s + s1.len - s2.len, s2.s, s2.len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_ends_with(sip_msg_t *msg, str *vstr, str *vsuffix )
+{
+	int ret;
+
+	if(vstr==NULL || vsuffix==NULL) {
+		return -1;
+	}
+	if(vsuffix->len > vstr->len) {
+		return -1;
+	}
+	ret = strncmp(vstr->s + vstr->len - vsuffix->len, vsuffix->s, vsuffix->len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
 static int ki_is_audio_on_hold(sip_msg_t *msg)
 {
 	int sdp_session_num = 0, sdp_stream_num;
@@ -4900,6 +4947,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("starts_with"),
 		SR_KEMIP_INT, ki_starts_with,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("ends_with"),
+		SR_KEMIP_INT, ki_ends_with,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
