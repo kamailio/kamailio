@@ -1283,6 +1283,21 @@ int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		}
 	}
 
+        if(sd->b_tag.len>0 && ((mode & TPS_DBU_BRR) || (mode & TPS_DBU_ARR))) {
+                if(((md->direction == TPS_DIR_DOWNSTREAM) && (msg->first_line.type==SIP_REPLY)) ||
+                                ((md->direction == TPS_DIR_UPSTREAM) && (msg->first_line.type==SIP_REQUEST))) {
+                        if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_BRR)) {
+                                TPS_REDIS_SET_ARGS(&md->b_rr, argc, &td_key_b_rr, argv, argvlen);
+                        }
+                }
+                else {
+                        if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_ARR)) {
+                                TPS_REDIS_SET_ARGS(&md->a_rr, argc, &td_key_a_rr, argv, argvlen);
+                                TPS_REDIS_SET_ARGS(&md->s_rr, argc, &td_key_s_rr, argv, argvlen);
+                        }
+                }
+        }
+
 	if(argc<=2) {
 		return 0;
 	}
