@@ -1492,6 +1492,29 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 			nr_ucols++;
 		}
 	}
+	if(sd->b_tag.len>0 && ((mode & TPS_DBU_BRR) || (mode & TPS_DBU_ARR))) {
+		if(((md->direction == TPS_DIR_DOWNSTREAM) && (msg->first_line.type==SIP_REPLY)) ||
+					((md->direction == TPS_DIR_UPSTREAM) && (msg->first_line.type==SIP_REQUEST))) {
+			if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_BRR)) {
+				db_ucols[nr_ucols] = &td_col_b_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
+				nr_ucols++;
+			}
+		} else {
+			if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_ARR)) {
+				db_ucols[nr_ucols] = &td_col_a_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->a_rr);
+				nr_ucols++;
+				db_ucols[nr_ucols] = &td_col_s_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->s_rr);
+				nr_ucols++;
+			}
+		}
+	}
+
 	if(nr_ucols==0) {
 		return 0;
 	}
