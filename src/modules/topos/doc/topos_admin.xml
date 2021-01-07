@@ -413,6 +413,26 @@ modparam("topos", "b_contact_avp", "$avp(tps-bct)")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.rr_update">
+		<title><varname>rr_update</varname> (int)</title>
+		<para>
+			If set to 1, topos module will track and update record
+			route changes on re-invite.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not update record route changes within dialog).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rr_update</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "rr_update", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Event Routes</title>
