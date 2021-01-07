@@ -39,7 +39,9 @@
 
 #define TPS_DBU_CONTACT		(1<<0)
 #define TPS_DBU_RPLATTRS	(1<<1)
-#define TPS_DBU_ALL			(0xffffffff)
+#define TPS_DBU_ARR		(1<<2)
+#define TPS_DBU_BRR		(1<<3)
+#define TPS_DBU_ALL		(0xffffffff)
 
 #define TPS_DATA_SIZE	8192
 typedef struct tps_data {
