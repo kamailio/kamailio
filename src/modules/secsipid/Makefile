@@ -7,7 +7,16 @@ include ../../Makefile.defs
 auto_gen=
 NAME=secsipid.so
 
-BUILDER = $(shell which pkg-config)
+ifeq ($(CROSS_COMPILE),)
+	BUILDER = $(shell which pkg-config)
+ifneq ($(BUILDER),)
+	PKGLIBSECSIPID = $(shell $(BUILDER) --exists secsipid-1 > /dev/null 2>&1 ; echo $$? )
+ifneq ($(PKGLIBSECSIPID),0)
+	BUILDER =
+endif
+endif
+endif
+
 ifeq ($(BUILDER),)
 	DEFS+= -I.
 	LIBS = -L. -lsecsipid
