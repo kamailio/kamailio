@@ -25,14 +25,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <secsipid.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/data_lump.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
-
-#include "secsipid.h"
 
 MODULE_VERSION
 
