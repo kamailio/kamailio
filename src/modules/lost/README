@@ -27,6 +27,8 @@ Wolfgang Kampichler
               3.1. exact_type (int)
               3.2. response_time (int)
               3.3. location_type (string)
+              3.4. geoheader_type (int)
+              3.5. geoheader_order (int)
 
         4. Functions
 
@@ -41,8 +43,10 @@ Wolfgang Kampichler
    1.1. Set exact_type parameter
    1.2. Set response_time parameter
    1.3. Set location_type parameter
-   1.4. lost_held_query() usage
-   1.5. lost() usage
+   1.4. Set geoheader_type parameter
+   1.5. Set geoheader_order parameter
+   1.6. lost_held_query() usage
+   1.7. lost() usage
 
 Chapter 1. Admin Guide
 
@@ -59,6 +63,8 @@ Chapter 1. Admin Guide
         3.1. exact_type (int)
         3.2. response_time (int)
         3.3. location_type (string)
+        3.4. geoheader_type (int)
+        3.5. geoheader_order (int)
 
    4. Functions
 
@@ -131,6 +137,8 @@ Chapter 1. Admin Guide
    3.1. exact_type (int)
    3.2. response_time (int)
    3.3. location_type (string)
+   3.4. geoheader_type (int)
+   3.5. geoheader_order (int)
 
    Besides parameters listed, this module uses http_client therefore
    according parameters may apply.
@@ -182,6 +190,40 @@ Chapter 1. Admin Guide
     modparam("lost", "location_type, "civic geodetic locationURI")
     ...
 
+3.4. geoheader_type (int)
+
+   A Geolocation header may include a list of locationValues pointing to
+   either a Presence Information Data Format Location Object (PIDF-LO) in
+   the SIP body using a content-indirection (cid:) URI per RFC4483
+   (https://tools.ietf.org/html/rfc4483), or an http(s) URI pointing to an
+   external source. This parameter supports filtering of the following
+   types:
+     * 0 (any) - any URI (first or last)
+     * 1 (cid) - cid URI (aka Location-by-Value)
+     * 2 (http) - http URI (aka Location-by-Reference)
+     * 3 (https) - https URI (aka Location-by-Reference)
+
+   Default: 0 (any)
+
+   Example 1.4. Set geoheader_type parameter
+    ...
+    modparam("lost", "geoheader_type", 1)
+    ...
+
+3.5. geoheader_order (int)
+
+   A Geolocation header may include a list of locationValues. This
+   parameter sets the order of the URI used to retrieve location
+   information, either the first element of a certain type or the last.
+   Values are 0 (first) or 1 (last).
+
+   Default: 0 (first)
+
+   Example 1.5. Set geoheader_order parameter
+    ...
+    modparam("lost", "geoheader_order", 0)
+    ...
+
 4. Functions
 
    4.1. lost_held_query(con, [id,] pidf-lo, url, error)
@@ -210,7 +252,7 @@ Chapter 1. Admin Guide
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.4. lost_held_query() usage
+   Example 1.6. lost_held_query() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 ...
@@ -246,7 +288,7 @@ r(pidf)\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.5. lost() usage
+   Example 1.7. lost() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 modparam("http_client", "httpcon", "lostsrv=>http://service.org/api/lost");
@@ -307,3 +349,6 @@ var(name)\n");
    Note: to test the module with a mapping service (LOST), an API key may
    be requested under the following link (search for "GET ACCESS"):
    https://gridgears.at/.
+
+   Note: in case modparam "geoheader_type" is set to 2 (http), the module
+   may use 3 (https) as fallback and vice versa.
