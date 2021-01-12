@@ -380,7 +380,7 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-					   LOST_GEOLOC_HEADER_SIZE)	== 0) {
+								LOST_GEOLOC_HEADER_SIZE) == 0) {
 
 				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
 				if(res == NULL) {
@@ -427,7 +427,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 				&& (hf->name.len == LOST_PAI_HEADER_SIZE - 2)) {
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_PAI_HEADER,
-						LOST_PAI_HEADER_SIZE) == 0) {
+								LOST_PAI_HEADER_SIZE) == 0) {
 
 				LM_DBG("P-A-I body:  [%.*s]\n", hf->body.len, hf->body.s);
 
@@ -513,6 +513,303 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 }
 
 /*
+ * lost_delete_geoheader_list(list)
+ * removes geoheader list from private memory
+ */
+void lost_delete_geoheader_list(p_geolist_t list)
+{
+
+	p_geolist_t curr;
+
+	while((curr = list) != NULL) {
+		list = curr->next;
+		if(curr->value != NULL) {
+			pkg_free(curr->value);
+		}
+		if(curr->param != NULL) {
+			pkg_free(curr->param);
+		}
+		pkg_free(curr);
+	}
+
+	list = NULL;
+
+	return;
+}
+
+/*
+ * lost_get_geoheader_value(list, type, rtype)
+ * returns geoheader value and type (rtype) of given type
+ */
+char *lost_get_geoheader_value(p_geolist_t list, geotype_t type, int *rtype)
+{
+
+	p_geolist_t head = list;
+	char *value = NULL;
+
+	if(head == NULL) {
+		return value;
+	}
+
+	/* type is not important, take first element value and type */
+	if((type == ANY) || (type == UNKNOWN)) {
+		*rtype = head->type;
+		return head->value;
+	}
+
+	/* take first element value and type of given type */
+	while(head) {
+		if(type == head->type) {
+			value = head->value;
+			*rtype = head->type;
+			break;
+		}
+		head = head->next;
+	}
+
+	return value;
+}
+
+
+/*
+ * lost_reverse_geoheader_list(list)
+ * reverses list order
+ */
+void lost_reverse_geoheader_list(p_geolist_t *head)
+{
+
+	p_geolist_t prev = NULL;
+	p_geolist_t next = NULL;
+	p_geolist_t current = *head;
+
+	while(current != NULL) {
+		next = current->next;
+		current->next = prev;
+		prev = current;
+		current = next;
+	}
+
+	*head = prev;
+}
+
+/*
+ * lost_copy_geoheader_value(src, len)
+ * returns a header vaule string (src to src + len) allocated in private memory
+ */
+char *lost_copy_geoheader_value(char *src, int len)
+{
+
+	char *res = NULL;
+
+	res = (char *)pkg_malloc((len + 1) * sizeof(char));
+	if(res == NULL) {
+		LM_ERR("no more private memory\n");
+		return res;
+	} else {
+		memset(res, 0, len + 1);
+		memcpy(res, src, len + 1);
+		res[len] = '\0';
+	}
+
+	return res;
+}
+
+/*
+ * lost_new_geoheader_list(hdr, items)
+ * searches and parses Geolocation header and returns a list
+ * allocated in private memory and an item count
+ */
+p_geolist_t lost_new_geoheader_list(str hdr, int *items)
+{
+
+	char *search = NULL;
+	char *cidptr = NULL;
+	char *urlptr = NULL;
+	char *ptr = NULL;
+
+	int count = 0;
+	int len = 0;
+
+	p_geolist_t list = NULL;
+	p_geolist_t new = NULL;
+
+	LM_DBG("parsing geolocation header value ...\n");
+
+	/* search the complete header field */
+	search = hdr.s;
+	for(int i = 0; i < hdr.len; i++) {
+		/* check for cid content */
+		/* <cid:x> might be the shortest */
+		if(strlen(search) > 6) {
+			if((*(search + 0) == '<')
+					&& ((*(search + 1) == 'c') || (*(search + 1) == 'C'))
+					&& ((*(search + 2) == 'i') || (*(search + 2) == 'I'))
+					&& ((*(search + 3) == 'd') || (*(search + 3) == 'D'))
+					&& (*(search + 4) == ':')) {
+				cidptr = search + 4;
+				*cidptr = LAQUOT;
+				ptr = cidptr;
+				len = 1;
+				while(*(ptr + len) != '>') {
+					if((len == strlen(ptr)) || (*(ptr + len) == '<')) {
+						LM_WARN("invalid cid: [%.*s]\n", hdr.len, hdr.s);
+						break;
+					}
+					len++;
+				}
+				if((*(ptr + len) == '>') && (len > 6)) {
+					new = (p_geolist_t)pkg_malloc(sizeof(s_geolist_t));
+					if(new == NULL) {
+						LM_ERR("no more private memory\n");
+					} else {
+
+						LM_DBG("\t[%.*s]\n", len + 1, cidptr);
+
+						new->value = lost_copy_geoheader_value(cidptr, len + 1);
+						new->param = NULL;
+						new->type = CID;
+						new->next = list;
+						list = new;
+						count++;
+
+						LM_DBG("adding cid [%s]\n", new->value);
+					}
+				} else {
+					LM_WARN("invalid value: [%.*s]\n", hdr.len, hdr.s);
+				}
+			}
+		}
+
+		/* check for http(s) content */
+		/* <http://goo.gl/> might be the shortest */
+		if(strlen(search) > 10) {
+			if((*(search + 0) == '<')
+					&& ((*(search + 1) == 'h') || (*(search + 1) == 'H'))
+					&& ((*(search + 2) == 't') || (*(search + 2) == 'T'))
+					&& ((*(search + 3) == 't') || (*(search + 3) == 'T'))
+					&& ((*(search + 4) == 'p') || (*(search + 4) == 'P'))) {
+				urlptr = search + 1;
+				ptr = urlptr;
+				len = 0;
+				while(*(ptr + len) != '>') {
+					if((len == strlen(ptr)) || (*(ptr + len) == '<')) {
+						LM_WARN("invalid url: [%.*s]\n", hdr.len, hdr.s);
+						break;
+					}
+					len++;
+				}
+				if((*(ptr + len) == '>') && (len > 10)) {
+					new = (p_geolist_t)pkg_malloc(sizeof(s_geolist_t));
+					if(new == NULL) {
+						LM_ERR("no more private memory\n");
+					} else {
+
+						LM_DBG("\t[%.*s]\n", len, urlptr);
+
+						new->value = lost_copy_geoheader_value(urlptr, len);
+						new->param = NULL;
+						if(*(search + 5) == ':') {
+
+							LM_DBG("adding http url [%s]\n", new->value);
+
+							new->type = HTTP;
+						} else if(((*(search + 5) == 's')
+										  || (*(search + 5) == 'S'))
+								  && (*(search + 6) == ':')) {
+
+							LM_DBG("adding https url [%s]\n", new->value);
+
+							new->type = HTTPS;
+						}
+						new->next = list;
+						list = new;
+						count++;
+					}
+				} else {
+					LM_WARN("invalid value: [%.*s]\n", hdr.len, hdr.s);
+				}
+			}
+		}
+		search++;
+	}
+
+	*items = count;
+
+	return list;
+}
+
+/*
+ * lost_parse_pidf(pidf, urn)
+ * parses pidf and returns a new location object
+ */
+p_loc_t lost_parse_pidf(str pidf, str urn)
+{
+
+	p_loc_t loc = NULL;
+
+	xmlDocPtr doc = NULL;
+	xmlNodePtr root = NULL;
+
+	/* read and parse pidf-lo */
+	doc = xmlReadMemory(pidf.s, pidf.len, 0, NULL,
+			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
+
+	if(doc == NULL) {
+		LM_WARN("invalid xml (pidf-lo): [%.*s]\n", pidf.len, pidf.s);
+		doc = xmlRecoverMemory(pidf.s, pidf.len);
+		if(doc == NULL) {
+			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len,
+					pidf.s);
+			goto err;
+		}
+
+		LM_DBG("xml (pidf-lo) recovered\n");
+	}
+
+	root = xmlDocGetRootElement(doc);
+	if(root == NULL) {
+		LM_ERR("empty pidf-lo document\n");
+		goto err;
+	}
+	if((!xmlStrcmp(root->name, (const xmlChar *)"presence"))
+			|| (!xmlStrcmp(root->name, (const xmlChar *)"locationResponse"))) {
+		/* get the geolocation: point or circle, urn, ... */
+		loc = lost_new_loc(urn);
+		if(loc == NULL) {
+			LM_ERR("location object allocation failed\n");
+			goto err;
+		}
+		if(lost_parse_location_info(root, loc) < 0) {
+			LM_ERR("location element not found\n");
+			goto err;
+		}
+	} else {
+		LM_ERR("findServiceResponse or presence element not found in "
+			   "[%.*s]\n",
+				pidf.len, pidf.s);
+		goto err;
+	}
+
+	/* free memory */
+	xmlFreeDoc(doc);
+	doc = NULL;
+
+	return loc;
+
+err:
+	LM_ERR("pidflo parsing error\n");
+	/* free memory */
+	if(doc != NULL) {
+		xmlFreeDoc(doc);
+		doc = NULL;
+	}
+	if(loc != NULL) {
+		lost_free_loc(loc);
+	}
+	return NULL;
+}
+
+/*
  * lost_parse_geo(node, loc)
  * parses locationResponse (pos|circle) and writes 
  * results to location object
@@ -586,6 +883,7 @@ err:
 	LM_ERR("no more private memory\n");
 	return -1;
 }
+
 /*
  * lost_xpath_location(doc, path, loc)
  * performs xpath expression on locationResponse and writes 
@@ -733,7 +1031,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 					memset(ptr, 0, buffersize);
 					memcpy(ptr, (char *)(xmlbuff + remove), buffersize);
 					ptr[buffersize] = '\0';
-					
+
 					/* trim the result */
 					tmp = lost_trim_content(ptr, &len);
 

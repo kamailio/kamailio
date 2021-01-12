@@ -49,6 +49,10 @@ MODULE_VERSION
 /* Module parameter variables */
 httpc_api_t httpapi;
 
+/* lost: any (0), cid (1), http (2) or https (3) (default: 0) */
+int lost_geoloc_type = 0;
+/* lost: Geolocation header value order: first (0) or last (1) (default: 0) */
+int lost_geoloc_order = 0;
 /* held request: response time (default: 0 = no timeout) */
 int held_resp_time = 0;
 /* held request: exact is true (1) or false (0) (default: false) */
@@ -96,16 +100,14 @@ static cmd_export_t cmds[] = {
 		{"lost_query", (cmd_function)w_lost_query_all, 6, fixup_lost_query_all,
 				fixup_free_lost_query_all,
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};
 
 /* Exported parameters */
-static param_export_t params[] = {
-		{"exact_type", PARAM_INT, &held_exact_type},
+static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
 		{"response_time", PARAM_INT, &held_resp_time},
 		{"location_type", PARAM_STR, &held_loc_type},
-		{0, 0, 0}
-};
+		{"geoheader_type", PARAM_INT, &lost_geoloc_type},
+		{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}};
 
 /* Module interface */
 struct module_exports exports = {

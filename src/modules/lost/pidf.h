@@ -39,7 +39,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#define BUFSIZE 128	/* temporary buffer to hold geolocation */
+#define BUFSIZE 128	   /* temporary buffer to hold geolocation */
 #define RANDSTRSIZE 16 /* temporary id in a findService request */
 
 xmlNodePtr xmlNodeGetNodeByName(

@@ -173,6 +173,62 @@
                 </programlisting>
             </example>
         </section>
+        <section id="lost.p.geoheader_type">
+            <title><varname>geoheader_type</varname> (int)</title>
+            <para>
+            A Geolocation header may include a list of locationValues pointing
+            to either a Presence Information Data Format Location Object
+            (PIDF-LO) in the SIP body using a content-indirection (cid:) URI
+            per RFC4483 (<ulink url="https://tools.ietf.org/html/rfc4483"/>),
+            or an http(s) URI pointing to an external source. This parameter
+            supports filtering of the following types:
+            </para>
+			<itemizedlist>
+                <listitem><para>
+                    <emphasis>0 (any)</emphasis> - any URI (first or last)
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>1 (cid)</emphasis> - cid URI (aka Location-by-Value)
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>2 (http)</emphasis> - http URI (aka Location-by-Reference)
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>3 (https)</emphasis> - https URI (aka Location-by-Reference)
+                </para></listitem>
+            </itemizedlist>
+            <para>
+            Default: 0 (any)
+            </para>
+            <example>
+            <title>Set <varname>geoheader_type</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "geoheader_type", 1)
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.geoheader_order">
+            <title><varname>geoheader_order</varname> (int)</title>
+            <para>
+            A Geolocation header may include a list of locationValues. This
+            parameter sets the order of the URI used to retrieve location
+            information, either the first element of a certain type or the
+            last. Values are 0 (first) or 1 (last).
+            </para>
+            <para>
+            Default: 0 (first)
+            </para>
+            <example>
+            <title>Set <varname>geoheader_order</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "geoheader_order", 0)
+    ...
+                </programlisting>
+            </example>
+        </section>
 	</section>
 	<section>
 	    <title>Functions</title>
@@ -328,17 +384,22 @@ xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
             <ulink url="https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6"></ulink>.
         </para>
         <para>
-            Note: http_client_query exported by the http_client API returns by default the first line of
-            the HTTP response, but the lost module requires the complete response message, otherwise
-            dereferencing location via the HTTP URL provided with the Geolocation header causes an error.
-            Therefore, to work properly, it is required to set the http_client module parameter query_result
-            to 0. More details at:
+            Note: http_client_query exported by the http_client API returns by
+            default the first line of the HTTP response, but the lost module requires
+            the complete response message, otherwise dereferencing location via the
+            HTTP URL provided with the Geolocation header causes an error. Therefore,
+            to work properly, it is required to set the http_client module parameter
+            query_result to 0. More details at:
             <ulink url="https://www.kamailio.org/docs/modules/devel/modules/http_client.html#http_client.p.query_result"></ulink>.
         </para>
         <para>
             Note: to test the module with a mapping service (LOST), an API key may be requested under the
             following link (search for "GET ACCESS"):
             <ulink url="https://gridgears.at/"></ulink>.
+        </para>
+        <para>
+            Note: in case modparam "geoheader_type" is set to 2 (http), the module may
+            use 3 (https) as fallback and vice versa.
         </para>
     </section>
 </chapter>
