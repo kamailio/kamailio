@@ -1,13 +1,13 @@
 /*
- *  Duktape public API for Duktape 2.5.0.
+ *  Duktape public API for Duktape 2.6.0.
  *
  *  See the API reference for documentation on call semantics.  The exposed,
  *  supported API is between the "BEGIN PUBLIC API" and "END PUBLIC API"
  *  comments.  Other parts of the header are Duktape internal and related to
  *  e.g. platform/compiler/feature detection.
  *
- *  Git commit 6001888049cb42656f8649db020e804bcdeca6a7 (v2.5.0).
- *  Git branch master.
+ *  Git commit fffa346eff06a8764b02c31d4336f63a773a95c3 (v2.6.0).
+ *  Git branch v2-maintenance.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -176,16 +176,16 @@
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20500L
+#define DUK_VERSION                       20600L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the ECMAScript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "6001888049cb42656f8649db020e804bcdeca6a7"
-#define DUK_GIT_DESCRIBE                  "v2.5.0"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "fffa346eff06a8764b02c31d4336f63a773a95c3"
+#define DUK_GIT_DESCRIBE                  "v2.6.0"
+#define DUK_GIT_BRANCH                    "v2-maintenance"
 
 /* External duk_config.h provides platform/compiler/OS dependent
  * typedefs and macros, and DUK_USE_xxx config options so that
