@@ -629,6 +629,7 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 
 	int count = 0;
 	int len = 0;
+	int i = 0;
 
 	p_geolist_t list = NULL;
 	p_geolist_t new = NULL;
@@ -637,7 +638,7 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 
 	/* search the complete header field */
 	search = hdr.s;
-	for(int i = 0; i < hdr.len; i++) {
+	for(i = 0; i < hdr.len; i++) {
 		/* check for cid content */
 		/* <cid:x> might be the shortest */
 		if(strlen(search) > 6) {
