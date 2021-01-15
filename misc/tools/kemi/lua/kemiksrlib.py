@@ -8,7 +8,7 @@ PATH_GENERATED_OBJ = "KSR.lua"
 class ModuleObjGenerator(object):
 
     # Contains the output until it should be written to disk
-    output_string = ""
+    object_string = ""
 
     def execute(self, data):
         # Validate that we got some methods back. 155 is an arbitrary large number.
