@@ -25,6 +25,7 @@
  */
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 
 #include "../../core/basex.h"
 #include "../../core/dprint.h"
@@ -52,6 +53,7 @@ static void destroy(void);
 static unsigned int ob_force_flag = (unsigned int) -1;
 static unsigned int ob_force_no_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
+static str flow_token_secret = {0, 0};
 
 static cmd_export_t cmds[]=
 {
@@ -63,8 +65,9 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]=
 {
-	{ "force_outbound_flag",	INT_PARAM, &ob_force_flag },
-	{ "force_no_outbound_flag",     INT_PARAM, &ob_force_no_flag },
+	{ "force_outbound_flag",    PARAM_INT, &ob_force_flag },
+	{ "force_no_outbound_flag", PARAM_INT, &ob_force_no_flag },
+	{ "flow_token_secret",      PARAM_STRING, &flow_token_secret},
 	{ 0, 0, 0 }
 };
 
@@ -102,10 +105,17 @@ static int mod_init(void)
 		return -1;
 	}
 	ob_key.len = OB_KEY_LEN;
-	if (RAND_bytes((unsigned char *) ob_key.s, ob_key.len) == 0)
-	{
-		LM_ERR("unable to get %d cryptographically strong pseudo-"
-		       "random bytes\n", ob_key.len);
+
+	if(flow_token_secret.s) {
+		assert(ob_key.len == SHA_DIGEST_LENGTH);
+		LM_DBG("flow_token_secret mod param set. use persistent ob_key");
+		SHA1(flow_token_secret.s, flow_token_secret.len, ob_key.s);
+	} else {
+		if (RAND_bytes((unsigned char *) ob_key.s, ob_key.len) == 0)
+		{
+			LM_ERR("unable to get %d cryptographically strong pseudo-"
+			       "random bytes\n", ob_key.len);
+		}
 	}
 
 	if (cfg_declare("outbound", outbound_cfg_def, &default_outbound_cfg,
