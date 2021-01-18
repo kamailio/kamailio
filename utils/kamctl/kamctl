@@ -2036,7 +2036,7 @@ kamailio_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	CMDPARAMS="tm.t_uac_start OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
+	CMDPARAMS="= tm.t_uac_start OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost=CRLF=To:<$1>=CRLF=Contact:sip:daemon@$myhost=CRLF=\""
 	if [ $CTLENGINETYPE -eq 1 ] ; then
 		ctl_cmd_run $CMDPARAMS
 	else
