@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com) 
+ * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1030,21 +1030,14 @@ int xavp_set_child_sval(str *rname, str *cname, str *sval)
 }
 
 /**
- * serialize the values in subfields of an xavp in name=value; format
- * - rname - name of the root list xavp
- * - obuf - buffer were to write the output
- * - olen - the size of obuf
- * return: 0 - not found; -1 - error; >0 - length of output
+ * internal function to serialize fields of an xavp (from any of the lists: XAVP, XAUV, or XAVI).
  */
-
-int xavp_serialize_fields(str *rname, char *obuf, int olen)
+int xavx_serialize_fields(sr_xavp_t *ravp, char *obuf, int olen)
 {
-	sr_xavp_t *ravp = NULL;
 	sr_xavp_t *avp = NULL;
 	str ostr;
 	int rlen;
 
-	ravp = xavp_get(rname, NULL);
 	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP) {
 		/* not found or not holding subfields */
 		return 0;
@@ -1092,6 +1085,18 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 		avp = avp->next;
 	}
 	return rlen;
+}
+
+/**
+ * serialize the values in subfields of an xavp in name=value; format
+ * - rname - name of the root list xavp
+ * - obuf - buffer were to write the output
+ * - olen - the size of obuf
+ * return: 0 - not found; -1 - error; >0 - length of output
+ */
+int xavp_serialize_fields(str *rname, char *obuf, int olen)
+{
+	return xavx_serialize_fields(xavp_get(rname, NULL), obuf, olen);
 }
 
 /**
@@ -1444,6 +1449,18 @@ sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval)
 	xval.v.s = *sval;
 
 	return xavu_set_child_xval(rname, cname, &xval);
+}
+
+/**
+ * serialize the values in subfields of an xavu in name=value; format
+ * - rname - name of the root list xavu
+ * - obuf - buffer were to write the output
+ * - olen - the size of obuf
+ * return: 0 - not found; -1 - error; >0 - length of output
+ */
+int xavu_serialize_fields(str *rname, char *obuf, int olen)
+{
+	return xavx_serialize_fields(xavu_get(rname, NULL), obuf, olen);
 }
 
 
@@ -2373,57 +2390,5 @@ int xavi_set_child_sval(str *rname, str *cname, str *sval)
  */
 int xavi_serialize_fields(str *rname, char *obuf, int olen)
 {
-	sr_xavp_t *ravi = NULL;
-	sr_xavp_t *avi = NULL;
-	str ostr;
-	int rlen;
-
-	ravi = xavi_get(rname, NULL);
-	if(ravi==NULL || ravi->val.type!=SR_XTYPE_XAVP) {
-		/* not found or not holding subfields */
-		return 0;
-	}
-
-	rlen = 0;
-	ostr.s = obuf;
-	avi = ravi->val.v.xavp;
-	while(avi) {
-		switch(avi->val.type) {
-			case SR_XTYPE_INT:
-				LM_DBG("     XAVP int value: %d\n", avi->val.v.i);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%u;",
-						avi->name.len, avi->name.s, (unsigned int)avi->val.v.i);
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
-					return -1;
-				}
-			break;
-			case SR_XTYPE_STR:
-				LM_DBG("     XAVP str value: %s\n", avi->val.v.s.s);
-				if(avi->val.v.s.len == 0) {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
-						avi->name.len, avi->name.s);
-				} else {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
-						avi->name.len, avi->name.s,
-						avi->val.v.s.len, avi->val.v.s.s);
-				}
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
-					return -1;
-				}
-			break;
-			default:
-				LM_DBG("skipping value type: %d\n", avi->val.type);
-				ostr.len = 0;
-		}
-		if(ostr.len>0) {
-			ostr.s += ostr.len;
-			rlen += ostr.len;
-		}
-		avi = avi->next;
-	}
-	return rlen;
+	return xavx_serialize_fields(xavi_get(rname, NULL), obuf, olen);
 }

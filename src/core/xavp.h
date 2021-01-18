@@ -107,6 +107,7 @@ sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 sr_xavp_t* xavp_get_child(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
+int xavx_serialize_fields(sr_xavp_t *ravp, char *obuf, int olen);
 int xavp_serialize_fields(str *rname, char *obuf, int olen);
 
 int xavp_set_child_ival(str *rname, str *cname, int ival);
@@ -131,6 +132,7 @@ sr_xavp_t *xavu_set_sval(str *rname, str *sval);
 sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval);
 sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival);
 sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval);
+int xavu_serialize_fields(str *rname, char *obuf, int olen);
 
 /** xavi api */
 int xavi_init_head(void);
