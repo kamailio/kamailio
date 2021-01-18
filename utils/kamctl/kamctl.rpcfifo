@@ -101,6 +101,12 @@ rpc_cmd()
 		chmod a+w $path
 	fi
 
+	PARAMEVAL="no"
+	if [ "$1" = "=" ]; then
+		PARAMEVAL="yes"
+		shift
+	fi
+
 	# construct the command now
 	CMD="{\"jsonrpc\": \"2.0\", \"method\": \"$1\"";
 	shift
@@ -114,7 +120,12 @@ rpc_cmd()
 		shift
 		while [ -n "$1" ] ; do
 			rpcparamval "${1}"
-			CMD="${CMD}, ${RPCVAL}"
+			if [ "$PARAMEVAL" = "yes" ]; then
+				CMDPARAM=`echo "$RPCVAL" | awk -F'=CRLF=' '{$1=$1}1' OFS='\r\n'`
+				CMD="${CMD}, ${CMDPARAM}"
+			else
+				CMD="${CMD}, ${RPCVAL}"
+			fi
 			shift
 		done
 		CMD="${CMD}]"
