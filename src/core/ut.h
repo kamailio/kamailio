@@ -745,6 +745,29 @@ static inline int strz2sint(char* _s, int* _r)
 	return 0;
 }
 
+/**
+ * duplicate str structure and content in a single shm block
+ */
+static str* shm_str_dup_block(const str* src)
+{
+	str *dst;
+
+	if(src==NULL) {
+		return NULL;
+	}
+	dst = (str*)shm_malloc(sizeof(str) + src->len + 1);
+	if (dst == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(dst, 0, sizeof(str) + src->len + 1);
+
+	dst->s = (char*)dst + sizeof(str);
+	dst->len = src->len;
+	memcpy(dst->s, src->s, src->len);
+
+	return dst;
+}
 
 /**
  * \brief Make a copy of a str structure to a str using shm_malloc
