@@ -723,6 +723,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(tm_rpc_response_list_init()<0) {
+		LM_ERR("failed to init rpc\n");
+		return -1;
+	}
+
 	if(on_sl_reply_name.s!=NULL && on_sl_reply_name.len>0) {
 		keng = sr_kemi_eng_get();
 		if(keng==NULL) {
@@ -2767,6 +2772,13 @@ static const char* rpc_t_uac_wait_doc[2] = {
 	0
 };
 
+static const char* rpc_t_uac_wait_block_doc[2] = {
+	"starts a tm uac and waits for the final reply in blocking mode, using a"
+		" list of string parameters: method, ruri, dst_uri send_sock, headers"
+		" (CRLF separated) and body (optional)",
+	0
+};
+
 static const char* tm_rpc_list_doc[2] = {
 	"List transactions.",
 	0
@@ -2787,6 +2799,7 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
 	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
+	{"tm.t_uac_wait_block",  rpc_t_uac_wait_block,  rpc_t_uac_wait_block_doc, 0},
 	{"tm.list",  tm_rpc_list,  tm_rpc_list_doc, RET_ARRAY},
 	{"tm.clean", tm_rpc_clean,  tm_rpc_clean_doc, 0},
 	{0, 0, 0, 0}
