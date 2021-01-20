@@ -143,12 +143,13 @@ Daniel-Constantin Mierla
               5.1. tm.list
               5.2. tm.t_uac_start
               5.3. tm.t_uac_wait
-              5.4. tm.cancel
-              5.5. tm.hash_stats
-              5.6. tm.reply
-              5.7. tm.reply_callid
-              5.8. tm.clean
-              5.9. tm.stats
+              5.4. tm.t_uac_wait
+              5.5. tm.cancel
+              5.6. tm.hash_stats
+              5.7. tm.reply
+              5.8. tm.reply_callid
+              5.9. tm.clean
+              5.10. tm.stats
 
         6. Event Routes
 
@@ -400,12 +401,13 @@ Chapter 1. Admin Guide
         5.1. tm.list
         5.2. tm.t_uac_start
         5.3. tm.t_uac_wait
-        5.4. tm.cancel
-        5.5. tm.hash_stats
-        5.6. tm.reply
-        5.7. tm.reply_callid
-        5.8. tm.clean
-        5.9. tm.stats
+        5.4. tm.t_uac_wait
+        5.5. tm.cancel
+        5.6. tm.hash_stats
+        5.7. tm.reply
+        5.8. tm.reply_callid
+        5.9. tm.clean
+        5.10. tm.stats
 
    6. Event Routes
 
@@ -2950,12 +2952,13 @@ t_clean();
    5.1. tm.list
    5.2. tm.t_uac_start
    5.3. tm.t_uac_wait
-   5.4. tm.cancel
-   5.5. tm.hash_stats
-   5.6. tm.reply
-   5.7. tm.reply_callid
-   5.8. tm.clean
-   5.9. tm.stats
+   5.4. tm.t_uac_wait
+   5.5. tm.cancel
+   5.6. tm.hash_stats
+   5.7. tm.reply
+   5.8. tm.reply_callid
+   5.9. tm.clean
+   5.10. tm.stats
 
 5.1.  tm.list
 
@@ -2981,10 +2984,17 @@ t_clean();
 
 5.3.  tm.t_uac_wait
 
-   Similar to tm.t_uac_start, but waits for the SIP response and tries to
-   provide its details via RPC response.
+   Similar to tm.t_uac_start, but waits asynchronously for the SIP
+   response and tries to provide its details via RPC response.
 
-5.4.  tm.cancel
+5.4.  tm.t_uac_wait
+
+   Similar to tm.t_uac_start, but blocks waiting for the SIP response and
+   returns the SIP reply code and reason text via RPC response. It waits
+   up to 80 seconds, if no reply is received, it returns a RPC fault 500
+   code. While waiting, the RPC process cannot handle other RPC commands.
+
+5.5.  tm.cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -2992,14 +3002,14 @@ t_clean();
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.5.  tm.hash_stats
+5.6.  tm.hash_stats
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.6.  tm.reply
+5.7.  tm.reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3013,7 +3023,7 @@ t_clean();
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.7.  tm.reply_callid
+5.8.  tm.reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3028,14 +3038,14 @@ t_clean();
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.8.  tm.clean
+5.9.  tm.clean
 
    Trigger an hard clean of expired transactions.
 
    Parameters:
      * none
 
-5.9.  tm.stats
+5.10.  tm.stats
 
    Gets information about current and past TM transaction handling.
 
