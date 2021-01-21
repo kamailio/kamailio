@@ -44,6 +44,8 @@
 
 #include "pidf.h"
 #include "utilities.h"
+#include "response.h"
+#include "naptr.h"
 
 #define LOST_SUCCESS 200
 #define LOST_CLIENT_ERROR 400
@@ -51,6 +53,10 @@
 
 #define HELD_DEFAULT_TYPE "geodetic locationURI"
 #define HELD_DEFAULT_TYPE_LEN (sizeof(HELD_DEFAULT_TYPE) - 1)
+
+#define NAPTR_LOST_SERVICE_HTTP "LoST:http"
+#define NAPTR_LOST_SERVICE_HTTPS "LoST:https"
+#define NAPTR_LIS_SERVICE_HELD "LIS:HELD"
 
 extern httpc_api_t httpapi;
 
@@ -138,6 +144,7 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 
 err:
 	LM_ERR("no more private memory\n");
+	/* clean up */
 	if(ret != NULL) {
 		pkg_free(ret);
 	}
@@ -166,32 +173,56 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	xmlNodePtr root = NULL;
 	xmlNodePtr cur_node = NULL;
 
-	str did = {NULL, 0};
-	str que = {NULL, 0};
-	str con = {NULL, 0};
-	str geo = {NULL, 0};
-	str err = {NULL, 0};
-	str res = {NULL, 0};
-	str idhdr = {NULL, 0};
-	str pidfuri = {NULL, 0};
-	str rtype = {HELD_DEFAULT_TYPE, HELD_DEFAULT_TYPE_LEN};
+	str geo = STR_NULL; /* return value geolocation uri */
+	str res = STR_NULL; /* return value pidf */
+	str err = STR_NULL; /* return value error */
 
-	int curlres = 0;
+	str url = STR_NULL;
+	str did = STR_NULL;
+	str que = STR_NULL;
+	str con = STR_NULL;
+	str host = STR_NULL;
+	str name = STR_NULL;
+	str idhdr = STR_NULL;
+	str pidfuri = STR_NULL;
+
+	static str rtype = STR_STATIC_INIT(HELD_DEFAULT_TYPE);
+	static str sheld = STR_STATIC_INIT(NAPTR_LIS_SERVICE_HELD);
+
+	char ustr[MAX_URI_SIZE];
+	char istr[NI_MAXHOST];
+	char *ipstr = NULL;
+	char *lisurl = NULL;
+
+	int len = 0;
+	int curl = 0;
+	int flag = 0;
+	int naptr = 0;
 	int presence = 0;
 
-	if(_con == NULL || _pidf == NULL || _url == NULL || _err == NULL) {
+	if(_pidf == NULL || _url == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
 		goto err;
 	}
+
 	/* module parameter */
 	if(held_loc_type.len > 0) {
 		rtype.s = held_loc_type.s;
 		rtype.len = held_loc_type.len;
 	}
 	/* connection from parameter */
-	if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
-		LM_ERR("cannot get connection string\n");
-		goto err;
+	if(_con) {
+		if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
+			LM_ERR("cannot get connection string\n");
+			goto err;
+		}
+		/* check if connection exists */
+		if(con.s != NULL && con.len > 0) {
+			if(httpapi.http_connection_exists(&con) == 0) {
+				LM_ERR("connection: [%s] does not exist\n", con.s);
+				goto err;
+			}
+		}
 	}
 	/* id from parameter */
 	if(_id) {
@@ -225,30 +256,15 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		did.len = idhdr.len;
 	}
 	LM_INFO("### HELD id [%.*s]\n", did.len, did.s);
-
-	/* check if connection exists */
-	if(httpapi.http_connection_exists(&con) == 0) {
-		LM_ERR("connection: [%s] does not exist\n", con.s);
-		lost_free_string(&idhdr);
-		goto err;
-	}
-
 	/* assemble locationRequest */
 	held = lost_new_held(did, rtype, held_resp_time, held_exact_type);
-
 	if(held == NULL) {
 		LM_ERR("held object allocation failed\n");
-		lost_free_string(&idhdr);
+		lost_free_string(&idhdr); /* clean up */
 		goto err;
 	}
 	que.s = lost_held_location_request(held, &que.len);
-
-	/* free memory */
-	did.s = NULL;
-	did.len = 0;
-	lost_free_held(held);
-	lost_free_string(&idhdr);
-
+	lost_free_held(held); /* clean up */
 	if(que.len == 0) {
 		LM_ERR("held request document error\n");
 		que.s = NULL;
@@ -258,17 +274,89 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	LM_DBG("held location request: [%s]\n", que.s);
 
 	/* send locationRequest to location server - HTTP POST */
-	curlres = httpapi.http_connect(_m, &con, NULL, &res, mtheld, &que);
+	if(con.s != NULL && con.len > 0) {
+
+		LM_DBG("using connection [%.*s]\n", con.len, con.s);
+
+		/* send via connection */
+		curl = httpapi.http_connect(_m, &con, NULL, &res, mtheld, &que);
+	} else {
+		/* we have no connection ... do a NAPTR lookup */
+		if(lost_parse_host(did.s, &host, &flag) > 0) {
+
+			LM_DBG("no conn. trying NATPR lookup [%.*s]\n", host.len, host.s);
+
+			/* remove '[' and ']' from string (IPv6) */ 
+			if(flag == AF_INET6) {
+  				host.s++;
+  				host.len = host.len - 2;
+			}
+			/* is it a name or ip ... check nameinfo (reverse lookup) */
+			len = 0;
+			ipstr = lost_copy_string(host, &len);
+			if(len > 0) {
+				name.s = &(istr[0]);
+				name.len = NI_MAXHOST;
+				if(lost_get_nameinfo(ipstr, &name, flag) > 0) {
+
+					LM_DBG("ip [%s] to name [%.*s]\n", ipstr, name.len, name.s);
+
+					/* change ip string to name */ 
+					host.s = name.s;
+					host.len = name.len;
+				} else {
+
+					/* keep string */
+					LM_DBG("no nameinfo for [%s]\n", ipstr);
+				
+				}
+				pkg_free(ipstr); /* clean up */
+			}
+			url.s = &(ustr[0]);
+			url.len = MAX_URI_SIZE;
+			if((naptr = lost_naptr_lookup(host, &sheld, &url)) == 0) {
+				LM_ERR("NAPTR failed on [%.*s]\n", host.len, host.s);
+				lost_free_string(&que); /* clean up */
+				lost_free_string(&idhdr);
+				goto err;
+			}
+		} else {
+			LM_ERR("failed to get location service for [%.*s]\n", did.len, did.s);
+			lost_free_string(&que); /* clean up */
+			lost_free_string(&idhdr);
+			goto err;
+		}
+
+		LM_DBG("NATPR lookup returned [%.*s]\n", url.len, url.s);
+
+		/* curl doesn't like str */
+		len = 0;
+		lisurl = lost_copy_string(url, &len);
+		/* send to service */
+		if(len > 0) {
+			curl = httpapi.http_client_query(_m, lisurl, &res, que.s, mtheld);
+			pkg_free(lisurl); /*clean up */
+		} else {
+			goto err;	
+		}
+	}
 	/* only HTTP 2xx responses are accepted */
-	if(curlres >= 300 || curlres < 100) {
-		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
+	if(curl >= 300 || curl < 100) {
+		if(con.s != NULL && con.len > 0) {
+			LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curl);
+		} else {
+			LM_ERR("[%.*s] failed with error: %d\n", url.len, url.s, curl);
+		}
 		lost_free_string(&res);
 		goto err;
 	}
 
-	LM_DBG("[%.*s] returned: %d\n", con.len, con.s, curlres);
+	LM_DBG("[%.*s] returned: %d\n", con.len, con.s, curl);
 
-	/* free memory */
+	did.s = NULL;
+	did.len = 0;
+	/* clean up */
+	lost_free_string(&idhdr);
 	lost_free_string(&que);
 	/* read and parse the returned xml */
 	doc = xmlReadMemory(res.s, res.len, 0, NULL,
@@ -288,7 +376,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		LM_ERR("empty xml document\n");
 		goto err;
 	}
-	/* check the root element ... shall be locationResponse, or errors */
+	/* check the root element ... shall be locationResponse, or error */
 	if(xmlStrcmp(root->name, (const xmlChar *)"locationResponse") == 0) {
 
 		LM_DBG("HELD location response [%.*s]\n", res.len, res.s);
@@ -310,8 +398,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 						geo.s = lost_trim_content(geo.s, &geo.len);
 					}
 				}
-				if(xmlStrcmp(cur_node->name, (const xmlChar *)"presence")
-						== 0) {
+				if(xmlStrcmp(cur_node->name, (const xmlChar *)"presence") == 0) {
 
 					LM_DBG("*** node '%s' found\n", cur_node->name);
 
@@ -320,29 +407,22 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 				}
 			}
 		}
-
 		/* if we do not have a presence node but a location URI */
 		/* dereference pidf.lo at location server via HTTP GET */
-		if((presence == 0) && (geo.len > 0)) {
-
+		if((presence == 0) && (geo.s != NULL && geo.len > 0)) {
 			LM_INFO("presence node not found in HELD response, trying URI "
 					"...\n");
-
-			curlres =
-					httpapi.http_client_query(_m, geo.s, &pidfuri, NULL, NULL);
+			curl = httpapi.http_client_query(_m, geo.s, &pidfuri, NULL, NULL);
 			/* only HTTP 2xx responses are accepted */
-			if(curlres >= 300 || curlres < 100) {
-				LM_ERR("dereferencing location failed: %d\n", curlres);
-				/* free memory */
+			if(curl >= 300 || curl < 100) {
+				LM_ERR("dereferencing location failed: %d\n", curl);
+				/* clean up */
 				lost_free_string(&pidfuri);
 				goto err;
 			}
-
 			if(pidfuri.len == 0) {
-
 				LM_WARN("HELD location request failed [%.*s]\n", geo.len,
 						geo.s);
-
 			} else {
 
 				LM_DBG("HELD location response [%.*s]\n", pidfuri.len,
@@ -352,14 +432,15 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 				res.len = pidfuri.len;
 			}
 		}
+		/* error received */
 	} else if(xmlStrcmp(root->name, (const xmlChar *)"error") == 0) {
 
 		LM_DBG("HELD error response [%.*s]\n", res.len, res.s);
 
-		/* get the error patterm */
+		/* get the error property */
 		err.s = lost_get_property(root, (char *)"code", &err.len);
 		if(err.len == 0) {
-			LM_ERR("error - code property not found: [%.*s]\n", res.len, res.s);
+			LM_ERR("error - property not found: [%.*s]\n", res.len, res.s);
 			goto err;
 		}
 		LM_WARN("locationRequest error response: [%.*s]\n", err.len, err.s);
@@ -367,8 +448,9 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		LM_ERR("root element is not valid: [%.*s]\n", res.len, res.s);
 		goto err;
 	}
+
+	/* clean up */
 	xmlFreeDoc(doc);
-	doc = NULL;
 
 	/* set writeable pvars */
 	pvpidf.rs = res;
@@ -422,63 +504,85 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 	p_loc_t loc = NULL;
 	p_geolist_t geolist = NULL;
-	int geotype;
+	p_fsr_t fsrdata = NULL;
 
-	str url = {NULL, 0};
-	str uri = {NULL, 0};
-	str urn = {NULL, 0};
-	str err = {NULL, 0};
-	str req = {NULL, 0};
-	str con = {NULL, 0};
-	str ret = {NULL, 0};
-	str name = {NULL, 0};
-	str pidf = {NULL, 0};
-	str geohdr = {NULL, 0};
-	str pidfhdr = {NULL, 0};
+	str name = STR_NULL; /* return value displayName */
+	str uri = STR_NULL;	 /* return value uri */
+	str err = STR_NULL;	 /* return value error */
+
+	str tmp = STR_NULL;
+	str url = STR_NULL;
+	str urn = STR_NULL;
+	str req = STR_NULL;
+	str con = STR_NULL;
+	str ret = STR_NULL;
+	str pidf = STR_NULL;
+	str geohdr = STR_NULL;
+	str oldurl = STR_NULL;
+	str losturl = STR_NULL;
+
+	static str shttp = STR_STATIC_INIT(NAPTR_LOST_SERVICE_HTTP);
+	static str shttps = STR_STATIC_INIT(NAPTR_LOST_SERVICE_HTTPS);
 
 	struct msg_start *fl;
+
+	char ustr[MAX_URI_SIZE];
 	char *search = NULL;
 	char *geoval = NULL;
-	int curlres = 0;
-	int geoitems = 0;
 
-	xmlDocPtr doc = NULL;
-	xmlNodePtr root = NULL;
+	int geotype = 0;
+	int redirect = 0;
+	int curl = 0;
+	int naptr = 0;
+	int geoitems = 0;
 
 	if(_con == NULL || _uri == NULL || _name == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
 		goto err;
 	}
-	if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
-		LM_ERR("cannot get connection string\n");
-		goto err;
+	/* connection from parameter */
+	if(_con) {
+		if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
+			LM_ERR("cannot get connection string\n");
+			goto err;
+		}
+		/* check if connection exists */
+		if(con.s != NULL && con.len > 0) {
+			if(httpapi.http_connection_exists(&con) == 0) {
+				LM_WARN("connection: [%.*s] does not exist\n", con.len, con.s);
+				/* check if NAPTR lookup works with connection parameter */
+				losturl.s = &(ustr[0]);
+				losturl.len = MAX_URI_SIZE;
+				if((naptr = lost_naptr_lookup(con, &shttps, &losturl)) == 0) {
+					naptr = lost_naptr_lookup(con, &shttp, &losturl);
+				}
+				if(naptr == 0) {
+					LM_ERR("NAPTR failed on [%.*s]\n", con.len, con.s);
+					goto err;
+				}
+			}
+		}
 	}
 	/* urn from parameter */
 	if(_urn) {
 		if(fixup_get_svalue(_m, (gparam_p)_urn, &urn) != 0) {
-			LM_ERR("cannot get service urn\n");
+			LM_ERR("cannot get service urn parameter\n");
 			goto err;
 		}
 	}
 	/* urn from request line */
 	if(urn.len == 0) {
-		LM_WARN("no sevice urn parameter, trying request line ...\n");
+
+		LM_DBG("no service urn parameter, trying request line ...\n");
+
 		fl = &(_m->first_line);
 		urn.len = fl->u.request.uri.len;
 		urn.s = fl->u.request.uri.s;
 	}
 	/* check urn scheme */
-	if(urn.len > 3) {
-		search = urn.s;
-		if(((*(search + 0) == 'u') || (*(search + 0) == 'U'))
-				&& ((*(search + 1) == 'r') || (*(search + 1) == 'R'))
-				&& ((*(search + 2) == 'n') || (*(search + 2) == 'N'))
-				&& (*(search + 3) == ':')) {
-			LM_INFO("### LOST urn\t[%.*s]\n", urn.len, urn.s);
-		} else {
-			LM_ERR("service urn not found\n");
-			goto err;
-		}
+	search = urn.s;
+	if(is_urn(search) > 0) {
+		LM_INFO("### LOST urn\t[%.*s]\n", urn.len, urn.s);
 	} else {
 		LM_ERR("service urn not found\n");
 		goto err;
@@ -486,44 +590,35 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	/* pidf from parameter */
 	if(_pidf) {
 		if(fixup_get_svalue(_m, (gparam_p)_pidf, &pidf) != 0) {
-			LM_WARN("cannot get pidf-lo parameter\n");
+			LM_ERR("cannot get pidf parameter\n");
 		} else {
 
-			LM_DBG("parsing pidf-lo from paramenter\n");
+			LM_DBG("parsing pidf parameter ...\n");
 
-			if(pidf.len > 0) {
+			if(pidf.s != NULL && pidf.len > 0) {
 
-				LM_DBG("pidf-lo: [%.*s]\n", pidf.len, pidf.s);
+				LM_DBG("pidf: [%.*s]\n", pidf.len, pidf.s);
 
-				/* parse the pidf-lo */
+				/* parse the pidf and get loc object */
 				loc = lost_parse_pidf(pidf, urn);
-				/* free memory */
-				pidf.s = NULL;
-				pidf.len = 0;
-			} else {
-				LM_WARN("no valid pidf parameter ...\n");
 			}
 		}
 	}
-
-	/* no pidf-lo so far ... check geolocation header */
+	/* neither valifd pidf parameter nor loc ... check geolocation header */
 	if(loc == NULL) {
 
 		LM_DBG("looking for geolocation header ...\n");
 
-		geohdr.s = lost_get_geolocation_header(_m, &geohdr.len);
-		if(geohdr.len == 0) {
+		if(lost_get_geolocation_header(_m, &geohdr) == 0) {
 			LM_ERR("geolocation header not found\n");
-			goto err;
 		}
 
-		LM_DBG("geolocation header found\n");
+		LM_DBG("parsing geolocation header ...\n");
 
 		/* parse Geolocation header */
 		geolist = lost_new_geoheader_list(geohdr, &geoitems);
 		if(geoitems == 0) {
 			LM_ERR("invalid geolocation header\n");
-			lost_free_string(&geohdr);
 			goto err;
 		}
 
@@ -535,7 +630,6 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 			lost_reverse_geoheader_list(&geolist);
 		}
-
 		switch(lost_geoloc_type) {
 			case ANY: /* type: 0 */
 				geoval = lost_get_geoheader_value(geolist, ANY, &geotype);
@@ -580,36 +674,26 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 				break;
 		}
-
 		if(geoval == NULL) {
 			LM_ERR("invalid geolocation header\n");
-			/* free memory */
-			lost_delete_geoheader_list(geolist);
-			lost_free_string(&geohdr);
 			goto err;
 		}
-
 		LM_INFO("### LOST loc\t[%s]\n", geoval);
-
+		/* clean up */
+		pidf.s = NULL;
+		pidf.len = 0;
 		/* use location by value */
 		if(geotype == CID) {
-
 			/* get body part - filter=>content-indirection */
 			pidf.s = get_body_part_by_filter(_m, 0, 0, geoval, NULL, &pidf.len);
-			if(pidf.len > 0) {
+			if(pidf.s != NULL && pidf.len > 0) {
 
 				LM_DBG("LbV pidf-lo: [%.*s]\n", pidf.len, pidf.s);
 
-				/* parse the pidf-lo */
-				loc = lost_parse_pidf(pidf, urn);
-				/* free memory */
-				pidf.s = NULL;
-				pidf.len = 0;
 			} else {
 				LM_WARN("no multipart body found\n");
 			}
 		}
-
 		/* use location by reference */
 		if((geotype == HTTPS) || (geotype == HTTP)) {
 			url.s = geoval;
@@ -617,60 +701,44 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 			/* ! dereference pidf.lo at location server - HTTP GET */
 			/* ! requires hack in http_client module */
 			/* ! functions.c => http_client_query => query_params.oneline = 0; */
-			curlres =
-					httpapi.http_client_query(_m, url.s, &pidfhdr, NULL, NULL);
-			/* free memory */
+			curl = httpapi.http_client_query(_m, url.s, &ret, NULL, NULL);
 			url.s = NULL;
 			url.len = 0;
 			/* only HTTP 2xx responses are accepted */
-			if(curlres >= 300 || curlres < 100) {
-				LM_ERR("http GET failed with error: %d\n", curlres);
-				/* free memory */
-				lost_delete_geoheader_list(geolist);
-				lost_free_string(&pidfhdr);
-				lost_free_string(&geohdr);
+			if(curl >= 300 || curl < 100) {
+				LM_ERR("http GET failed with error: %d\n", curl);
+				/* clean up */
+				lost_free_string(&ret);
 				goto err;
 			}
-
-			pidf.s = pidfhdr.s;
-			pidf.len = pidfhdr.len;
-
-			if(pidf.len > 0) {
+			pidf.s = ret.s;
+			pidf.len = ret.len;
+			if(pidf.s != NULL && pidf.len > 0) {
 
 				LM_DBG("LbR pidf-lo: [%.*s]\n", pidf.len, pidf.s);
 
-				/* parse the pidf-lo */
-				loc = lost_parse_pidf(pidf, urn);
-				/* free memory */
-				pidf.s = NULL;
-				pidf.len = 0;
 			} else {
 				LM_WARN("dereferencing location failed\n");
 			}
 		}
-		/* free memory */
+		/* clean up */
 		lost_delete_geoheader_list(geolist);
-		lost_free_string(&geohdr);
-		lost_free_string(&pidfhdr);
+		lost_free_string(&ret);
 	}
-
-	if(loc == NULL) {
+	if(pidf.s == NULL && pidf.len == 0) {
 		LM_ERR("location object not found\n");
 		goto err;
 	}
-
-	/* check if connection exits */
-	if(httpapi.http_connection_exists(&con) == 0) {
-		LM_ERR("connection: [%.*s] does not exist\n", con.len, con.s);
+	/* parse the pidf and get loc object */
+	loc = lost_parse_pidf(pidf, urn);
+	if(loc == NULL) {
+		LM_ERR("parsing pidf failed\n");
 		goto err;
 	}
 	/* assemble findService request */
 	req.s = lost_find_service_request(loc, &req.len);
-	/* free memory */
-	lost_free_loc(loc);
-	loc = NULL;
-
-	if(req.len == 0) {
+	lost_free_loc(loc); /* clean up */
+	if(req.s == NULL && req.len == 0) {
 		LM_ERR("lost request failed\n");
 		goto err;
 	}
@@ -678,18 +746,19 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	LM_DBG("findService request: [%.*s]\n", req.len, req.s);
 
 	/* send findService request to mapping server - HTTP POST */
-	curlres = httpapi.http_connect(_m, &con, NULL, &ret, mtlost, &req);
+	if(naptr) {
+		curl = httpapi.http_client_query(_m, url.s, &ret, req.s, mtlost);
+	} else {
+		curl = httpapi.http_connect(_m, &con, NULL, &ret, mtlost, &req);
+	}
 	/* only HTTP 2xx responses are accepted */
-	if(curlres >= 300 || curlres < 100) {
-		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
+	if(curl >= 300 || curl < 100) {
+		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curl);
 		lost_free_string(&ret);
 		goto err;
 	}
 
-	LM_DBG("[%.*s] returned: %d\n", con.len, con.s, curlres);
-
-	/* free memory */
-	lost_free_string(&req);
+	LM_DBG("[%.*s] returned: %d\n", con.len, con.s, curl);
 
 	if(ret.len == 0) {
 		LM_ERR("findService request failed\n");
@@ -698,70 +767,117 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 	LM_DBG("findService response: [%.*s]\n", ret.len, ret.s);
 
-	/* read and parse the returned xml */
-	doc = xmlReadMemory(ret.s, ret.len, 0, 0,
-			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
-
-	if(doc == NULL) {
-		LM_ERR("invalid xml document: [%.*s]\n", ret.len, ret.s);
-		doc = xmlRecoverMemory(ret.s, ret.len);
-		if(doc == NULL) {
-			LM_ERR("xml document recovery failed on: [%.*s]\n", ret.len, ret.s);
-			goto err;
+	/* at least parse one request */
+	redirect = 1;
+	while(redirect) {
+		fsrdata = lost_parse_findServiceResponse(ret);
+		lost_print_findServiceResponse(fsrdata);
+		switch(fsrdata->category) {
+			case RESPONSE:
+				if(fsrdata->uri != NULL) {
+					/* get the first uri element */
+					if((tmp.s = fsrdata->uri->value) != NULL) {
+						tmp.len = strlen(fsrdata->uri->value);
+						uri.s = lost_copy_string(tmp, &uri.len);
+					}
+				} else {
+					LM_ERR("uri not found: [%.*s]\n", ret.len, ret.s);
+					goto err;
+				}
+				if(fsrdata->mapping != NULL) {
+					/* get the displayName element */
+					if((tmp.s = fsrdata->mapping->name->text) != NULL) {
+						tmp.len = strlen(fsrdata->mapping->name->text);
+						name.s = lost_copy_string(tmp, &name.len);
+					}
+				} else {
+					LM_ERR("name not found: [%.*s]\n", ret.len, ret.s);
+					goto err;
+				}
+				/* we are done */
+				redirect = 0;
+				break;
+			case ERROR:
+				/* get the errors element */
+				if(fsrdata->errors != NULL) {
+					if((tmp.s = fsrdata->errors->issue->type) != NULL) {
+						tmp.len = strlen(fsrdata->errors->issue->type);
+						err.s = lost_copy_string(tmp, &err.len);
+					}
+					/* clean up */
+					tmp.s = NULL;
+					tmp.len = 0;
+				} else {
+					LM_ERR("errors not found: [%.*s]\n", ret.len, ret.s);
+					goto err;
+				}
+				/* we are done */
+				redirect = 0;
+				break;
+			case REDIRECT:
+				/* get the target element */
+				if(fsrdata->redirect != NULL) {
+					if((tmp.s = fsrdata->redirect->target) != NULL) {
+						tmp.len = strlen(fsrdata->redirect->target);
+						url.s = &(ustr[0]);
+						url.len = MAX_URI_SIZE;
+						if((naptr = lost_naptr_lookup(tmp, &shttps, &url))
+								== 0) {
+							naptr = lost_naptr_lookup(tmp, &shttp, &url);
+						}
+						if(naptr == 0) {
+							LM_ERR("NAPTR failed on [%.*s]\n", tmp.len, tmp.s);
+							goto err;
+						}
+						/* clean up */
+						tmp.s = NULL;
+						tmp.len = 0;
+						/* check loop */
+						if(oldurl.s != NULL && oldurl.len > 0) {
+							if(str_strcasecmp(&url, &oldurl) == 0) {
+								LM_ERR("loop detected: "
+									   "[%.*s]<-->[%.*s]\n",
+										oldurl.len, oldurl.s, url.len, url.s);
+								goto err;
+							}
+						}
+						/* remember the redirect target */
+						oldurl.s = lost_copy_string(url, &oldurl.len);
+						/* clean up */
+						lost_free_findServiceResponse(fsrdata);
+						lost_free_string(&ret);
+						/* send request */
+						curl = httpapi.http_client_query(
+								_m, url.s, &ret, req.s, mtlost);
+						url.s = NULL;
+						url.len = 0;
+						/* only HTTP 2xx responses are accepted */
+						if(curl >= 300 || curl < 100) {
+							LM_ERR("http GET failed with error: %d\n", curl);
+							goto err;
+						}
+						/* once more ... we got a redirect */
+						redirect = 1;
+					}
+				} else {
+					LM_ERR("redirect element not found: [%.*s]\n", ret.len,
+							ret.s);
+					goto err;
+				}
+				break;
+			case OTHER:
+			default:
+				LM_ERR("pidf is not valid: [%.*s]\n", ret.len, ret.s);
+				goto err;
+				break;
 		}
-
-		LM_DBG("xml document recovered\n");
 	}
-	root = xmlDocGetRootElement(doc);
-	if(root == NULL) {
-		LM_ERR("empty xml document: [%.*s]\n", ret.len, ret.s);
-		/* free memory */
-		lost_free_string(&ret);
-		goto err;
-	}
-	/* check the root element, shall be findServiceResponse, or errors */
-	if((!xmlStrcmp(root->name, (const xmlChar *)"findServiceResponse"))) {
-		/* get the uri element */
-		uri.s = lost_get_content(root, uri_element, &uri.len);
-		if(uri.len == 0) {
-			LM_ERR("uri element not found: [%.*s]\n", ret.len, ret.s);
-			/* free memory */
-			lost_free_string(&ret);
-			goto err;
-		}
-		LM_INFO("### LOST uri\t[%.*s]\n", uri.len, uri.s);
-		/* get the displayName element */
-		name.s = lost_get_content(root, name_element, &name.len);
-		if(name.len == 0) {
-			LM_ERR("displayName element not found: [%.*s]\n", ret.len, ret.s);
-			/* free memory */
-			lost_free_string(&ret);
-			goto err;
-		}
-		LM_INFO("### LOST din\t[%.*s]\n", name.len, name.s);
-	} else if((!xmlStrcmp(root->name, (const xmlChar *)"errors"))) {
 
-		LM_DBG("findService error response received\n");
-
-		/* get the error patterm */
-		err.s = lost_get_childname(root, errors_element, &err.len);
-		LM_DBG("findService error response: [%.*s]\n", err.len, err.s);
-		if(err.len == 0) {
-			LM_ERR("error pattern element not found: [%.*s]\n", ret.len, ret.s);
-			/* free memory */
-			lost_free_string(&ret);
-			goto err;
-		}
-		LM_WARN("findService error response: [%.*s]\n", err.len, err.s);
-	} else {
-		LM_ERR("root element is not valid: [%.*s]\n", ret.len, ret.s);
-		/* free memory */
-		lost_free_string(&ret);
-		goto err;
-	}
-
-	/* free memory */
+	/* clean up */
+	lost_free_findServiceResponse(fsrdata);
 	lost_free_string(&ret);
+	lost_free_string(&req);
+	lost_free_string(&oldurl);
 
 	/* set writable pvars */
 	pvname.rs = name;
@@ -791,13 +907,24 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	/* free memory */
-	if(doc != NULL) {
-		xmlFreeDoc(doc);
-		doc = NULL;
+	/* clean up */
+	if(fsrdata != NULL) {
+		lost_free_findServiceResponse(fsrdata);
+	}
+	if(geolist != NULL) {
+		lost_delete_geoheader_list(geolist);
+	}
+	if(oldurl.s != NULL) {
+		lost_free_string(&oldurl);
 	}
 	if(loc != NULL) {
 		lost_free_loc(loc);
+	}
+	if(ret.s != NULL && ret.len > 0) {
+		lost_free_string(&ret);
+	}
+	if(req.s != NULL && req.len > 0) {
+		lost_free_string(&req);
 	}
 
 	return LOST_CLIENT_ERROR;

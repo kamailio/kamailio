@@ -155,7 +155,10 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	pkg_free(held_loc_type.s);
+	if(held_loc_type.s != NULL && held_loc_type.len > 0) {
+		pkg_free(held_loc_type.s);
+		held_loc_type.len = 0;
+	}
 	/* do nothing */
 }
 

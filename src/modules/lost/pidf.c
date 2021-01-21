@@ -123,7 +123,10 @@ char *xmlNodeGetNodeContentByName(
 xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
 {
 	xmlNodePtr cur = doc->children;
-	return xmlNodeGetNodeByName(cur, name, ns);
+	if(cur)
+		return xmlNodeGetNodeByName(cur, name, ns);
+	else
+		return NULL;
 }
 
 char *xmlDocGetNodeContentByName(

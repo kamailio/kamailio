@@ -121,18 +121,21 @@ void lost_delete_geoheader_list(p_geolist_t);
 int lost_parse_location_info(xmlNodePtr, p_loc_t);
 int lost_xpath_location(xmlDocPtr, char *, p_loc_t);
 int lost_parse_geo(xmlNodePtr, p_loc_t);
+int lost_parse_host(const char *, str *, int *);
+int lost_get_geolocation_header(struct sip_msg *, str *);
+int lost_get_nameinfo(char *, str *, int);
 
 char *lost_find_service_request(p_loc_t, int *);
 char *lost_held_location_request(p_held_t, int *);
 char *lost_get_content(xmlNodePtr, const char *, int *);
 char *lost_get_property(xmlNodePtr, const char *, int *);
-char *lost_get_geolocation_header(struct sip_msg *, int *);
 char *lost_get_from_header(struct sip_msg *, int *);
 char *lost_get_pai_header(struct sip_msg *, int *);
 char *lost_get_childname(xmlNodePtr, const char *, int *);
 char *lost_trim_content(char *, int *);
 char *lost_copy_geoheader_value(char *, int);
 char *lost_get_geoheader_value(p_geolist_t, geotype_t, int *);
+char *lost_copy_string(str, int *);
 
 p_loc_t lost_new_loc(str);
 p_loc_t lost_parse_pidf(str, str);
