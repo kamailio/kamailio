@@ -955,12 +955,7 @@ cisco_restart() {
 	myhost=`get_my_host`
 	CMDPARAMS="= tm.t_uac_start NOTIFY \"$1\" \".\" \".\" \"From:sip:daemon@$myhost=CRLF=To:<$1>=CRLF=Event:check-sync=CRLF=Contact:sip:daemon@$myhost=CRLF=\""
 
-	if [ $CTLENGINETYPE -eq 1 ] ; then
-		ctl_cmd_run $CMDPARAMS
-	else
-		RET=`ctl_cmd_run $CMDPARAMS | head -1`
-		print_status $RET
-	fi
+	ctl_cmd_run $CMDPARAMS
 }
 
 #
@@ -2037,12 +2032,7 @@ options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
 	CMDPARAMS="= tm.t_uac_wait_block OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost=CRLF=To:<$1>=CRLF=Contact:sip:daemon@$myhost=CRLF=\""
-	if [ $CTLENGINETYPE -eq 1 ] ; then
-		ctl_cmd_run $CMDPARAMS
-	else
-		RET=`ctl_cmd_run $CMDPARAMS | head -1`
-		print_status $RET
-	fi
+	ctl_cmd_run $CMDPARAMS
 }
 
 #
