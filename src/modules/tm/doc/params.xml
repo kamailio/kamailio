@@ -1551,4 +1551,33 @@ modparam("tm", "exec_time_check", 0)
 		</example>
 	</section>
 
+	<section id="tm.p.reply_relay_mode">
+		<title><varname>reply_relay_mode</varname> (int)</title>
+		<para>
+			If set to 1, a received 200ok response that was suspeneded is no
+			longer forwarded in the transactional context if another final
+			response was forward while 200ok was suspended. Forwarding the 200ok,
+			even it was received first, results in overwritting the transaction
+			response buffer that can impact matching of incoming ACKs.
+		</para>
+		<para>
+			Set it to 0 in order to disable this behaviour and attempt to forward
+			suspended 200ok in the transaction context. This was the behaviour
+			before the commit 18410da0.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_relay_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "reply_relay_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
