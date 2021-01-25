@@ -454,6 +454,8 @@ static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx)
 				if(idx>=0)
 					return 1;
 				count++;
+			} else {
+				prv = foo;
 			}
 			n++;
 		} else {
@@ -1914,6 +1916,8 @@ static int xavi_rm_internal(str *name, sr_xavp_t **head, int idx)
 				if(idx>=0)
 					return 1;
 				count++;
+			} else {
+				prv = foo;
 			}
 			n++;
 		} else {
