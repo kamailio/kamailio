@@ -872,13 +872,13 @@ next_line:
 		goto error;
 	}
 
-	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
-
 	fclose(f);
 	f = NULL;
 	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+
+	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	ds_log_sets();
 	return 0;
@@ -1120,13 +1120,13 @@ int ds_load_db(void)
 		goto err2;
 	}
 
-	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
-
 	ds_dbf.free_result(ds_db_handle, res);
 
 	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+
+	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	ds_log_sets();
 
