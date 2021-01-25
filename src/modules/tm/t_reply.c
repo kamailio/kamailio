@@ -109,6 +109,10 @@ extern int tm_remap_503_500;
 /* send path and flags in 3xx class reply */
 int tm_rich_redirect = 0;
 
+/* control if reply should be relayed
+ * when transaction reply status is RPS_PUSHED_AFTER_COMPLETION */
+extern int tm_reply_relay_mode;
+
 /* how to deal with winning branch reply selection in failure_route
  * can be overwritten per transaction with t_drop_replies(...)
  * Values:
@@ -2044,7 +2048,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			goto error02;
 		}
 
-		if (reply_status != RPS_PUSHED_AFTER_COMPLETION) {
+		if (tm_reply_relay_mode == 0
+				|| reply_status != RPS_PUSHED_AFTER_COMPLETION) {
 			/* attempt to copy the message to UAS's shmem:
 			 * - copy to-tag for ACK matching as well
 			 *   -  allocate little a bit more for provisional as
@@ -2104,7 +2109,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		if (likely(uas_rb->dst.send_sock)) {
 			if (onsend_route_enabled(SIP_REPLY) && p_msg
-						&& (p_msg != FAKED_REPLY) && (reply_status != RPS_PUSHED_AFTER_COMPLETION)) {
+						&& (p_msg != FAKED_REPLY)
+						&& (tm_reply_relay_mode == 0
+							|| reply_status != RPS_PUSHED_AFTER_COMPLETION)) {
 				if (run_onsend(p_msg, &uas_rb->dst, buf, res_len)==0){
 					su2ip_addr(&ip, &(uas_rb->dst.to));
 					LM_ERR("reply to %s:%d(%d) dropped"
@@ -2120,7 +2127,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
 				LM_DBG("reply buffer sent out\n");
 				if (unlikely(!totag_retr
-							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT) && (reply_status != RPS_PUSHED_AFTER_COMPLETION))){
+							&& has_tran_tmcbs(t, TMCB_RESPONSE_OUT)
+							&& (tm_reply_relay_mode == 0
+								|| reply_status != RPS_PUSHED_AFTER_COMPLETION))){
 					LOCK_REPLIES( t );
 					if(relayed_code==uas_rb->rbtype) {
 						run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb,
@@ -2132,7 +2141,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 					}
 					UNLOCK_REPLIES( t );
 				}
-				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT) && (reply_status != RPS_PUSHED_AFTER_COMPLETION))){
+				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT)
+							&& (tm_reply_relay_mode == 0
+								|| reply_status != RPS_PUSHED_AFTER_COMPLETION))){
 					INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
 									relayed_msg, uas_rb, &uas_rb->dst, buf,
 									res_len,

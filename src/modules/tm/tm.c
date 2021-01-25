@@ -222,6 +222,10 @@ str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
 str _tm_event_callback_lres_sent = {NULL, 0};
 
+/* control if reply should be relayed
+ * when transaction reply status is RPS_PUSHED_AFTER_COMPLETION */
+int tm_reply_relay_mode = 1;
+
 unsigned long tm_exec_time_check = 0; /* microseconds */
 int tm_exec_time_check_param = 5000; /* milliseconds */
 
@@ -480,6 +484,7 @@ static param_export_t params[]={
 	{"rich_redirect" ,      PARAM_INT, &tm_rich_redirect                     },
 	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent    },
 	{"exec_time_check" ,    PARAM_INT, &tm_exec_time_check_param             },
+	{"reply_relay_mode",    PARAM_INT, &tm_reply_relay_mode                  },
 	{0,0,0}
 };
 
