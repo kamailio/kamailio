@@ -748,7 +748,7 @@ static inline int strz2sint(char* _s, int* _r)
 /**
  * duplicate str structure and content in a single shm block
  */
-static str* shm_str_dup_block(const str* src)
+static inline str* shm_str_dup_block(const str* src)
 {
 	str *dst;
 
