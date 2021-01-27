@@ -204,14 +204,16 @@ void tm_rpc_response_list_clean(unsigned int ticks, void *param)
 	ri1 = _tm_rpc_response_list->rlist;
 	while(ri1!=NULL) {
 		if(ri1->rtime < tnow - TM_RPC_RESPONSE_LIFETIME) {
+			LM_DBG("freeing item [%.*s]\n", ri1->ruid.len, ri1->ruid.s);
 			if(ri0 == NULL) {
 				_tm_rpc_response_list->rlist = ri1->next;
+				shm_free(ri1);
+				ri1 = _tm_rpc_response_list->rlist;
 			} else {
 				ri0->next = ri1->next;
+				shm_free(ri1);
+				ri1 = ri0->next;
 			}
-			LM_DBG("freeing item [%.*s]\n", ri1->ruid.len, ri1->ruid.s);
-			shm_free(ri1);
-			ri1 = ri0->next;
 		} else {
 			ri0 = ri1;
 			ri1 = ri1->next;
