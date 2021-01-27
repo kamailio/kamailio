@@ -663,6 +663,18 @@ int http_client_query(
 			query_params.http_proxy_port = default_http_proxy_port;
 		}
 	}
+	if(default_tls_clientcert.s != NULL && default_tls_clientcert.len > 0) {
+		query_params.clientcert = default_tls_clientcert.s;
+	}
+	if(default_tls_clientkey.s != NULL && default_tls_clientkey.len > 0) {
+		query_params.clientkey = default_tls_clientkey.s;
+	}
+	if(default_tls_cacert != NULL) {
+		query_params.cacert = default_tls_cacert;
+	}
+	if(default_cipher_suite_list.s != NULL && default_cipher_suite_list.len) {
+		query_params.ciphersuites = default_cipher_suite_list.s;
+	}
 
 	res = curL_query_url(_m, _url, _dst, &query_params);
 
