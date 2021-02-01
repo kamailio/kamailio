@@ -208,7 +208,9 @@ Options:\n\
 #ifdef USE_TCP
 "    -N           Number of tcp child processes (default: equal to `-n')\n"
 #endif
-"    -O nr        Script optimization level (debugging option)\n\
+"    --no-atexit  Skip atexit callbacks execution from external libraries\n\
+                 which may access destroyed shm memory causing crash on shutdown\n\
+    -O nr        Script optimization level (debugging option)\n\
     -P file      Create a pid file\n"
 #ifdef USE_SCTP
 "    -Q           Number of sctp child processes (default: equal to `-n')\n"
@@ -533,6 +535,7 @@ char *sr_memmng_shm = NULL;
 
 static int *_sr_instance_started = NULL;
 
+int ksr_no_atexit = 0;
 /**
  * return 1 if all child processes were forked
  * - note: they might still be in init phase (i.e., child init)
@@ -735,7 +738,11 @@ void handle_sigs(void)
 			LM_NOTICE("Thank you for flying " NAME "!!!\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
-			exit(0);
+			if(ksr_no_atexit==1) {
+				_exit(0);
+			} else {
+				exit(0);
+			}
 			break;
 
 		case SIGUSR1:
@@ -805,9 +812,17 @@ void handle_sigs(void)
 			/* exit */
 			shutdown_children(SIGTERM, 1);
 			if (WIFSIGNALED(chld_status)) {
-				exit(1);
+				if(ksr_no_atexit==1) {
+					_exit(1);
+				} else {
+					exit(1);
+				}
 			} else {
-				exit(0);
+				if(ksr_no_atexit==1) {
+					_exit(0);
+				} else {
+					exit(0);
+				}
 			}
 			break;
 
@@ -1933,6 +1948,7 @@ int main(int argc, char** argv)
 		{"modparam",    required_argument, 0, KARGOPTVAL + 6},
 		{"log-engine",  required_argument, 0, KARGOPTVAL + 7},
 		{"debug",       required_argument, 0, KARGOPTVAL + 8},
+		{"no-atexit",   no_argument,       0, KARGOPTVAL + 10},
 		{0, 0, 0, 0 }
 	};
 
@@ -2001,6 +2017,9 @@ int main(int argc, char** argv)
 						LM_ERR("bad debug level value: %s\n", optarg);
 						goto error;
 					}
+					break;
+			case KARGOPTVAL+10:
+					ksr_no_atexit = 1;
 					break;
 
 			default:
@@ -2164,6 +2183,7 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+6:
 			case KARGOPTVAL+7:
 			case KARGOPTVAL+8:
+			case KARGOPTVAL+10:
 					break;
 
 			/* long options */
