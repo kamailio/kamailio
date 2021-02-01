@@ -188,6 +188,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("while adding child\n");
 			goto error;
 		}
+		/* Testing(POC) - Add a display attribute to the remote/identity tag */
+		xmlNewProp(tag_node, BAD_CAST "display", BAD_CAST "RemoteCallerName");	
 		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "target", NULL);
 		if( tag_node ==NULL)
 		{
@@ -229,6 +231,8 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("while adding child\n");
 			goto error;
 		}
+		/* Testing(POC) - Add a display attribute to the local/identity tag */
+		xmlNewProp(tag_node, BAD_CAST "display", BAD_CAST "localCallerName");
 		if (localtarget && localtarget->s) {
 			memcpy(buf, localtarget->s, localtarget->len);
 			buf[localtarget->len]= '\0';
