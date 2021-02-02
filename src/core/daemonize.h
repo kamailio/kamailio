@@ -41,6 +41,14 @@ int daemon_status_send(char status);
 void daemon_status_no_wait(void);
 void daemon_status_on_fork_cleanup(void);
 
+#define ksr_exit(exvar, excode) do { \
+		if(exvar==1) { \
+			_exit(excode); \
+		} else { \
+			exit(excode); \
+		} \
+	} while(0)
+
 #endif /*_daemonize_h */
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

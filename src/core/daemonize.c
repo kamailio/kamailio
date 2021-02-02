@@ -69,6 +69,8 @@
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
 
+extern int ksr_no_atexit;
+
 /** temporary pipe FDs for sending exit status back to the ancestor process.
  * This pipe is used to send the desired exit status to the initial process,
  * that waits for it in the foreground. This way late errors preventing
@@ -297,9 +299,9 @@ int daemonize(char*  name,  int status_wait)
 			goto error;
 		}else if (pid!=0){
 			if (status_wait) {
-				if (daemon_status_wait(&pipe_status) == 0)
+				if (daemon_status_wait(&pipe_status) == 0) {
 					exit((int)pipe_status);
-				else{
+				} else {
 					LM_ERR("Main process exited before writing to pipe\n");
 					exit(-1);
 				}
