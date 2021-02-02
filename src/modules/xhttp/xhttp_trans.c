@@ -66,7 +66,7 @@ int xhttp_tr_eval_xhttpurl(
 					(char *)pkg_malloc((val->rs.len + 1) * sizeof(char));
 			if(_httpurl_str.s == NULL) {
 				PKG_MEM_ERROR;
-				memset(&_httpurl_str.s, 0, sizeof(str));
+				memset(&_httpurl_str, 0, sizeof(str));
 				return -1;
 			}
 		}
