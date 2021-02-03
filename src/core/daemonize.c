@@ -300,13 +300,13 @@ int daemonize(char*  name,  int status_wait)
 		}else if (pid!=0){
 			if (status_wait) {
 				if (daemon_status_wait(&pipe_status) == 0) {
-					exit((int)pipe_status);
+					ksr_exit(ksr_no_atexit, (int)pipe_status);
 				} else {
 					LM_ERR("Main process exited before writing to pipe\n");
-					exit(-1);
+					ksr_exit(ksr_no_atexit, -1);
 				}
 			}
-			exit(0);
+			ksr_exit(ksr_no_atexit, 0);
 		}
 		if (status_wait)
 			daemon_status_no_wait(); /* clean unused read fd */
@@ -322,7 +322,7 @@ int daemonize(char*  name,  int status_wait)
 			goto error;
 		}else if (pid!=0){
 			/*parent process => exit */
-			exit(0);
+			ksr_exit(ksr_no_atexit, 0);
 		}
 	}
 

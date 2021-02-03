@@ -738,11 +738,7 @@ void handle_sigs(void)
 			LM_NOTICE("Thank you for flying " NAME "!!!\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
-			if(ksr_no_atexit==1) {
-				_exit(0);
-			} else {
-				exit(0);
-			}
+			ksr_exit(ksr_no_atexit, 0);
 			break;
 
 		case SIGUSR1:
@@ -812,17 +808,9 @@ void handle_sigs(void)
 			/* exit */
 			shutdown_children(SIGTERM, 1);
 			if (WIFSIGNALED(chld_status)) {
-				if(ksr_no_atexit==1) {
-					_exit(1);
-				} else {
-					exit(1);
-				}
+				ksr_exit(ksr_no_atexit, 1);
 			} else {
-				if(ksr_no_atexit==1) {
-					_exit(0);
-				} else {
-					exit(0);
-				}
+				ksr_exit(ksr_no_atexit, 0);
 			}
 			break;
 
