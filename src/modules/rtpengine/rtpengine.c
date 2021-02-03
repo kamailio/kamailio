@@ -287,6 +287,9 @@ static pv_spec_t *media_duration_pvar = NULL;
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
 
+#define RTPENGINE_SESS_OUT_OF_PORTS_MSG "Ran out of ports"
+#define RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN (sizeof(RTPENGINE_SESS_OUT_OF_PORTS_MSG)-1)
+
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
 
@@ -2605,6 +2608,13 @@ select_node:
 				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
 				goto select_node;
 			}
+			if ((RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN == error.len) &&
+				(strncmp(error.s, RTPENGINE_SESS_OUT_OF_PORTS_MSG, RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN) == 0))
+			{
+				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
+				goto select_node;
+			}
+
 			LM_ERR("proxy replied with error: %.*s\n", error.len, error.s);
 		}
 		goto error;
