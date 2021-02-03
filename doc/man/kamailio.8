@@ -58,6 +58,12 @@ Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
 Add an alias, the value has to be '[proto:]hostname[:port]'
 (like for 'alias' global parameter)
 .TP
+.BI \-\-atexit\fR=\fIval
+Control atexit callbacks execution from external libraries
+which may access destroyed shm memory causing crash on shutdown.
+Can be y[es] or 1 to enable atexit callbacks, n[o] or 0 to disable,
+default is yes.
+.TP
 .BI \-A " pre\-processor\-define"
 Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
 .TP
@@ -159,10 +165,6 @@ Specifies the number of children processes forked per interface (default 8).
 Specifies the number of children processes forked to handle tcp incoming connections (by default is equal to
 .BI \-n
 ).
-.TP
-.BI \-\-no\-atexit
-Skip atexit callbacks execution from external libraries
-which may access destroyed shm memory causing crash on shutdown.
 .TP
 .BI \-P " pid\-file"
 Creates a file containing the pid of the main
