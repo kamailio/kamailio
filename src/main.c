@@ -164,6 +164,10 @@ Options:\n\
                   disable with no or off\n\
     --alias=val  Add an alias, the value has to be '[proto:]hostname[:port]'\n\
                   (like for 'alias' global parameter)\n\
+    --atexit=val Control atexit callbacks execution from external libraries\n\
+                  which may access destroyed shm memory causing crash on shutdown.\n\
+                  Can be y[es] or 1 to enable atexit callbacks, n[o] or 0 to disable,\n\
+                  default is yes.\n\
     -A define    Add config pre-processor define (e.g., -A WITH_AUTH,\n\
                   -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
@@ -209,9 +213,7 @@ Options:\n\
 #ifdef USE_TCP
 "    -N           Number of tcp child processes (default: equal to `-n')\n"
 #endif
-"    --no-atexit  Skip atexit callbacks execution from external libraries\n\
-                 which may access destroyed shm memory causing crash on shutdown\n\
-    -O nr        Script optimization level (debugging option)\n\
+"    -O nr        Script optimization level (debugging option)\n\
     -P file      Create a pid file\n"
 #ifdef USE_SCTP
 "    -Q           Number of sctp child processes (default: equal to `-n')\n"
@@ -537,7 +539,7 @@ char *sr_memmng_shm = NULL;
 static int *_sr_instance_started = NULL;
 
 int ksr_cfg_print_mode = 0;
-int ksr_no_atexit = 0;
+int ksr_atexit_mode = 1;
 
 /**
  * return 1 if all child processes were forked
@@ -741,7 +743,7 @@ void handle_sigs(void)
 			LM_NOTICE("Thank you for flying " NAME "!!!\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
-			ksr_exit(ksr_no_atexit, 0);
+			ksr_exit(0);
 			break;
 
 		case SIGUSR1:
@@ -809,9 +811,9 @@ void handle_sigs(void)
 			/* exit */
 			shutdown_children(SIGTERM, 1);
 			if (WIFSIGNALED(chld_status)) {
-				ksr_exit(ksr_no_atexit, 1);
+				ksr_exit(1);
 			} else {
-				ksr_exit(ksr_no_atexit, 0);
+				ksr_exit(0);
 			}
 			break;
 
@@ -1941,7 +1943,7 @@ int main(int argc, char** argv)
 		{"log-engine",  required_argument, 0, KARGOPTVAL + 7},
 		{"debug",       required_argument, 0, KARGOPTVAL + 8},
 		{"cfg-print",   no_argument,       0, KARGOPTVAL + 9},
-		{"no-atexit",   no_argument,       0, KARGOPTVAL + 10},
+		{"atexit",      required_argument, 0, KARGOPTVAL + 10},
 		{0, 0, 0, 0 }
 	};
 
@@ -2016,7 +2018,14 @@ int main(int argc, char** argv)
 					ksr_cfg_print_mode = 1;
 					break;
 			case KARGOPTVAL+10:
-					ksr_no_atexit = 1;
+					if(optarg[0]=='y' || optarg[0]=='1') {
+						ksr_atexit_mode = 1;
+					} else if(optarg[0]=='n' || optarg[0]=='0') {
+						ksr_atexit_mode = 0;
+					} else {
+						LM_ERR("bad atexit value: %s\n", optarg);
+						goto error;
+					}
 					break;
 
 			default:

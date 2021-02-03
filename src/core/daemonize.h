@@ -41,11 +41,13 @@ int daemon_status_send(char status);
 void daemon_status_no_wait(void);
 void daemon_status_on_fork_cleanup(void);
 
-#define ksr_exit(exvar, excode) do { \
-		if(exvar==1) { \
-			_exit(excode); \
-		} else { \
+extern int ksr_atexit_mode;
+
+#define ksr_exit(excode) do { \
+		if(ksr_atexit_mode==1) { \
 			exit(excode); \
+		} else { \
+			_exit(excode); \
 		} \
 	} while(0)
 
