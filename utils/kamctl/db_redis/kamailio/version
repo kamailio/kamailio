@@ -1,2 +1,2 @@
-table_name/string,table_version/int,
+id/int,table_name/string,table_version/int,
 1

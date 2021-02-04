@@ -114,7 +114,7 @@ static str DEFAULT_RTPP_SET_ID_STR = str_init("0");
 #define	PTL_CPROTOVER	"20081102"
 
 #define	CPORT		"22222"
-static int extract_mediaip(str *, str *, int *, char *);
+static int rp_extract_mediaip(str *, str *, int *, char *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
@@ -958,7 +958,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 	}
 	body1 = body;
 	for(;;) {
-		if (extract_mediaip(&body1, &oldip, &pf,line) == -1)
+		if (rp_extract_mediaip(&body1, &oldip, &pf,line) == -1)
 			break;
 		if (pf != AF_INET) {
 			LM_ERR("not an IPv4 address in '%s' SDP\n",line);
@@ -988,7 +988,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 }
 
 	static int
-extract_mediaip(str *body, str *mediaip, int *pf, char *line)
+rp_extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 {
 	char *cp, *cp1;
 	int len, nextisip;
@@ -1814,9 +1814,14 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	int method;
 	int nosdp;
 
+	if(route_type==BRANCH_FAILURE_ROUTE) {
+		/* do nothing in branch failure event route
+		 * - delete done on transaction failure route */
+		return 1;
+	}
+
 	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
-				|| (msg->cseq==NULL)))
-	{
+				|| (msg->cseq==NULL))) {
 		LM_ERR("no CSEQ header\n");
 		return -1;
 	}
@@ -1831,8 +1836,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
 		return unforce_rtp_proxy(msg, flags);
 
-	if(ip==NULL)
-	{
+	if(ip==NULL) {
 		cp = ip_addr2a(&msg->rcv.dst_ip);
 		strcpy(newip, cp);
 	}
@@ -3009,6 +3013,7 @@ static int ki_rtpproxy_stop_stream2uas(sip_msg_t* msg)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rtpproxy_exports[] = {
 	{ str_init("rtpproxy"), str_init("rtpproxy_manage0"),
 		SR_KEMIP_INT, ki_rtpproxy_manage0,
@@ -3098,6 +3103,7 @@ static sr_kemi_t sr_kemi_rtpproxy_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {

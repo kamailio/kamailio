@@ -10,8 +10,6 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-Edited by
-
 Ovidiu Sas
 
    <osas@voipembedded.com>
@@ -104,7 +102,7 @@ Ovidiu Sas
    List of Examples
 
    1.1. Setting db_url module parameter
-   1.2. Setting gw_table module parameter
+   1.2. Setting lcr_gw_table module parameter
    1.3. Setting id_column module parameter
    1.4. Setting lcr_id_column module parameter
    1.5. Setting gw_name_column module parameter
@@ -409,7 +407,7 @@ modparam("lcr","db_url","dbdriver://username:password@dbhost/dbname")
 
    Default value is “lcr_gw”.
 
-   Example 1.2. Setting gw_table module parameter
+   Example 1.2. Setting lcr_gw_table module parameter
 ...
 modparam("lcr", "lcr_gw_table","gw")
 ...

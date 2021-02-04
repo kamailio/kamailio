@@ -65,8 +65,20 @@
 		<function moreinfo="none">tm.t_uac_wait</function>
 		</title>
 		<para>
-		Similar to tm.t_uac_start, but waits for the SIP response and tries to
-		provide its details via RPC response.
+		Similar to tm.t_uac_start, but waits asynchronously for the SIP response
+		and tries to provide its details via RPC response.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start, but blocks waiting for the SIP response and
+		returns the SIP reply code and reason text via RPC response. It waits
+		up to 80 seconds, if no reply is received, it returns a RPC fault 500
+		code. While waiting, the RPC process cannot handle other RPC commands.
 		</para>
 	</section>
 

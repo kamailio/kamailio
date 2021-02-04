@@ -159,19 +159,4 @@ void seas_sighandler(int signo);
 char* create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,int *evt_len,int flags);
 char* create_as_event_sl(struct sip_msg *msg,char processor_id,int *evt_len,int flags);
 
-static inline void print_ip_buf(struct ip_addr* ip, char *where,int len)
-{
-	switch(ip->af){
-		case AF_INET:
-			snprintf(where,len,"%d.%d.%d.%d", ip->u.addr[0], ip->u.addr[1], ip->u.addr[2], ip->u.addr[3]);
-			break;
-		case AF_INET6:
-			snprintf(where,len,"%x:%x:%x:%x:%x:%x:%x:%x",htons(ip->u.addr16[0]),htons(ip->u.addr16[1]),htons(ip->u.addr16[2]),
-					htons(ip->u.addr16[3]), htons(ip->u.addr16[4]), htons(ip->u.addr16[5]), htons(ip->u.addr16[6]),
-					htons(ip->u.addr16[7]));
-			break;
-		default:
-			break;
-	}
-}
 #endif

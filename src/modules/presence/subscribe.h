@@ -88,9 +88,7 @@ struct subscription
 };
 typedef struct subscription subs_t;
 
-void msg_active_watchers_clean(unsigned int ticks, void *param);
-
-void msg_watchers_clean(unsigned int ticks, void *param);
+void ps_watchers_db_timer_clean(unsigned int ticks, void *param);
 
 int handle_subscribe0(struct sip_msg *);
 int w_handle_subscribe0(struct sip_msg *, char *, char *);

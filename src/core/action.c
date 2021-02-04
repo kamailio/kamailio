@@ -75,7 +75,6 @@
 #endif
 
 int _last_returned_code  = 0;
-struct onsend_info* p_onsend=0; /* onsend route send info */
 
 /* current action executed from config file */
 static cfg_action_t *_cfg_crt_action = 0;
@@ -385,13 +384,17 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 			else if (a->type==FORWARD_TCP_T) {
 				dst.proto= PROTO_TCP;
-				dst.id = msg->otcpid;
+				if(msg->msg_flags & FL_USE_OTCPID) {
+					dst.id = msg->otcpid;
+				}
 			}
 #endif
 #ifdef USE_TLS
 			else if (a->type==FORWARD_TLS_T) {
 				dst.proto= PROTO_TLS;
-				dst.id = msg->otcpid;
+				if(msg->msg_flags & FL_USE_OTCPID) {
+					dst.id = msg->otcpid;
+				}
 			}
 #endif
 #ifdef USE_SCTP
@@ -506,7 +509,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				goto error;
 			}
-			LOG_(DEFAULT_FACILITY, a->val[0].u.number, "<script>: ", "%s", 
+			LOG_FN(DEFAULT_FACILITY, a->val[0].u.number, "<script>: ", "%s",
 				 a->val[1].u.string);
 			ret=1;
 			break;

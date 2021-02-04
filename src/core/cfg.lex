@@ -113,18 +113,19 @@
 		struct sr_yy_fname *next;
 	} *sr_yy_fname_list = 0;
 
-	str  *pp_define_get(int len, const char * text);
 	static int  pp_ifdef_type(int pos);
 	static void pp_ifdef_var(int len, const char * text);
 	static void pp_ifdef();
 	static void pp_else();
 	static void pp_endif();
+	static void ksr_cfg_print_part(char *text);
+	static void ksr_cfg_print_define_module(char *modpath, int modpathlen);
 
 %}
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
-%x PVARID INCLF IMPTF EVRTNAME
+%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -154,6 +155,7 @@ ROUTE_SEND onsend_route
 ROUTE_EVENT event_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
+LOCAL_RPORT		"local_rport"
 ADD_LOCAL_RPORT		"add_local_rport"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
@@ -297,6 +299,7 @@ XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
+STRNAME		name|NAME
 ALIAS		alias
 SR_AUTO_ALIASES	auto_aliases
 DNS		 dns
@@ -330,21 +333,24 @@ DNS_CACHE_REC_PREF	dns_cache_rec_pref
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
 BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
-/* blacklist */
-DST_BLST_INIT	dst_blacklist_init
-USE_DST_BLST		use_dst_blacklist
-DST_BLST_MEM		dst_blacklist_mem
-DST_BLST_TTL		dst_blacklist_expire|dst_blacklist_ttl
-DST_BLST_GC_INT		dst_blacklist_gc_interval
-DST_BLST_UDP_IMASK	dst_blacklist_udp_imask
-DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
-DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
-DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
+IPV6_HEX_STYLE		ipv6_hex_style
+
+/* blocklist */
+DST_BLST_INIT	dst_blocklist_init
+USE_DST_BLST		use_dst_blocklist
+DST_BLST_MEM		dst_blocklist_mem
+DST_BLST_TTL		dst_blocklist_expire|dst_blocklist_ttl
+DST_BLST_GC_INT		dst_blocklist_gc_interval
+DST_BLST_UDP_IMASK	dst_blocklist_udp_imask
+DST_BLST_TCP_IMASK	dst_blocklist_tcp_imask
+DST_BLST_TLS_IMASK	dst_blocklist_tls_imask
+DST_BLST_SCTP_IMASK	dst_blocklist_sctp_imask
 
 IP_FREE_BIND		ip_free_bind|ipfreebind|ip_nonlocal_bind
 
 PORT	port
 STAT	statistics
+STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
@@ -352,6 +358,7 @@ SOCKET_WORKERS socket_workers
 ASYNC_WORKERS async_workers
 ASYNC_USLEEP async_usleep
 ASYNC_NONBLOCK async_nonblock
+ASYNC_WORKERS_GROUP async_workers_group
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -361,6 +368,8 @@ MEMSAFETY	"mem_safety"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
+SIP_PARSER_LOG "sip_parser_log"
+SIP_PARSER_MODE "sip_parser_mode"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
 SERVER_HEADER server_header
@@ -460,6 +469,7 @@ REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
 RECEIVED_ROUTE_CALLBACK	"received_route_callback"
 RECEIVED_ROUTE_MODE		"received_route_mode"
+PRE_ROUTING_CALLBACK	"pre_routing_callback"
 
 MAX_RECURSIVE_LEVEL		"max_recursive_level"
 MAX_BRANCHES_PARAM		"max_branches"
@@ -471,14 +481,17 @@ LATENCY_LIMIT_ACTION	latency_limit_action
 LATENCY_LIMIT_CFG		latency_limit_cfg
 
 URI_HOST_EXTRA_CHARS	"uri_host_extra_chars"
+HDR_NAME_EXTRA_CHARS	"hdr_name_extra_chars"
 
 MSG_TIME	msg_time
 ONSEND_RT_REPLY		"onsend_route_reply"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
+LOADMODULEX	loadmodulex
 LOADPATH	"loadpath"|"mpath"
 MODPARAM        modparam
+MODPARAMX        modparamx
 
 CFGENGINE	"cfgengine"
 
@@ -542,6 +555,7 @@ IFNDEF       ifndef
 ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
+DEFENV       defenv
 
 /* else is already defined */
 
@@ -631,6 +645,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{SET_USERPHONE}	{ count(); yylval.strval=yytext;
 								return SET_USERPHONE; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
+<INITIAL>{LOCAL_RPORT}	{ count(); yylval.strval=yytext;
+								return LOCAL_RPORT; }
 <INITIAL>{ADD_LOCAL_RPORT}	{ count(); yylval.strval=yytext;
 								return ADD_LOCAL_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
@@ -663,11 +679,11 @@ IMPORTFILE      "import_file"
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
-<INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
-<INITIAL>{PREP_START}{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL,CFGPRINTMODE>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{INCLUDEFILE}  { count(); BEGIN(INCLF); }
 
-<INITIAL>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
-<INITIAL>{PREP_START}{IMPORTFILE}  { count(); BEGIN(IMPTF); }
+<INITIAL,CFGPRINTMODE>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{IMPORTFILE}  { count(); BEGIN(IMPTF); }
 
 <INITIAL>{CFG_SELECT}	{ count(); yylval.strval=yytext; return CFG_SELECT; }
 <INITIAL>{CFG_RESET}	{ count(); yylval.strval=yytext; return CFG_RESET; }
@@ -711,6 +727,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
+<INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
 									return SR_AUTO_ALIASES; }
@@ -770,6 +787,8 @@ IMPORTFILE      "import_file"
 								return AUTO_BIND_IPV6; }
 <INITIAL>{BIND_IPV6_LINK_LOCAL}	{ count(); yylval.strval=yytext;
 								return BIND_IPV6_LINK_LOCAL; }
+<INITIAL>{IPV6_HEX_STYLE}	{ count(); yylval.strval=yytext;
+								return IPV6_HEX_STYLE; }
 <INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
 								return DST_BLST_INIT; }
 <INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;
@@ -791,6 +810,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{IP_FREE_BIND}	{ count(); yylval.strval=yytext; return IP_FREE_BIND; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
+<INITIAL>{STATS_NAMESEP}	{ count(); yylval.strval=yytext; return STATS_NAMESEP; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
@@ -798,6 +818,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
 <INITIAL>{ASYNC_NONBLOCK}	{ count(); yylval.strval=yytext; return ASYNC_NONBLOCK; }
+<INITIAL>{ASYNC_WORKERS_GROUP}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS_GROUP; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
@@ -806,6 +827,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
+<INITIAL>{SIP_PARSER_LOG}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG; }
+<INITIAL>{SIP_PARSER_MODE}  { count(); yylval.strval=yytext; return SIP_PARSER_MODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
@@ -968,6 +991,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{EVENT_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return EVENT_ROUTE_CALLBACK;}
 <INITIAL>{RECEIVED_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return RECEIVED_ROUTE_CALLBACK;}
 <INITIAL>{RECEIVED_ROUTE_MODE}  { count(); yylval.strval=yytext; return RECEIVED_ROUTE_MODE;}
+<INITIAL>{PRE_ROUTING_CALLBACK}  { count(); yylval.strval=yytext; return PRE_ROUTING_CALLBACK;}
 <INITIAL>{MAX_RECURSIVE_LEVEL}  { count(); yylval.strval=yytext; return MAX_RECURSIVE_LEVEL;}
 <INITIAL>{MAX_BRANCHES_PARAM}  { count(); yylval.strval=yytext; return MAX_BRANCHES_PARAM;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
@@ -979,10 +1003,13 @@ IMPORTFILE      "import_file"
 <INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
+<INITIAL>{LOADMODULEX}	{ count(); yylval.strval=yytext; return LOADMODULEX; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
+<INITIAL>{MODPARAMX}     { count(); yylval.strval=yytext; return MODPARAMX; }
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
 <INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
+<INITIAL>{HDR_NAME_EXTRA_CHARS}	{ yylval.strval=yytext; return HDR_NAME_EXTRA_CHARS; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }
@@ -1240,60 +1267,81 @@ IMPORTFILE      "import_file"
 									return STRING;
 								}
 
-<INITIAL,COMMENT>{COM_START}	{ count(); comment_nest++; state=COMMENT_S;
-										BEGIN(COMMENT); }
-<COMMENT>{COM_END}				{ count(); comment_nest--;
-										if (comment_nest==0){
-											state=INITIAL_S;
-											BEGIN(INITIAL);
-										}
+<INITIAL,CFGPRINTMODE,COMMENT>{COM_START}	{ count();
+									ksr_cfg_print_part(yytext);
+									comment_nest++; state=COMMENT_S;
+									BEGIN(COMMENT);
 								}
-<COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
+<COMMENT>{COM_END}				{ count();
+									ksr_cfg_print_part(yytext);
+									comment_nest--;
+									if (comment_nest==0){
+										state=INITIAL_S;
+										ksr_cfg_print_initial_state();
+									}
+								}
+<COMMENT>.|{EAT_ABLE}|{CR}				{ count(); ksr_cfg_print_part(yytext); };
 
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
 											sr_cfg_compat=SR_COMPAT_SER;}
 <INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count();
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count();
-												sr_cfg_compat=SR_COMPAT_MAX;}
+											sr_cfg_compat=SR_COMPAT_MAX;}
 
-<INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(0);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
-<INITIAL>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(1);
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(1);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
-<INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
+<INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
+									ksr_cfg_print_part(yytext);
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
 									exit(-1);
 								}
 <DEFINE_ID>{ID}                 {	count();
+									ksr_cfg_print_part(yytext);
 									if (pp_define(yyleng, yytext)) return 1;
 									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
-<DEFINE_EOL>{EAT_ABLE}			{	count(); }
+<DEFINE_EOL>{EAT_ABLE}			{	count(); ksr_cfg_print_part(yytext); }
 <DEFINE_EOL>{CR}				{	count();
-									state = INITIAL; BEGIN(INITIAL); }
+									ksr_cfg_print_part(yytext);
+									state = INITIAL;
+									ksr_cfg_print_initial_state();
+								}
 <DEFINE_EOL>.                   {	count();
+									ksr_cfg_print_part(yytext);
 									addstr(&s_buf, yytext, yyleng);
 									state = DEFINE_DATA_S; BEGIN(DEFINE_DATA); }
-<DEFINE_DATA>\\{CR}		{	count(); } /* eat the escaped CR */
+<DEFINE_DATA>\\{CR}		{	count(); ksr_cfg_print_part(yytext); } /* eat the escaped CR */
 <DEFINE_DATA>{CR}		{	count();
+							ksr_cfg_print_part(yytext);
 							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
 							memset(&s_buf, 0, sizeof(s_buf));
-							state = INITIAL; BEGIN(INITIAL); }
+							state = INITIAL;
+							ksr_cfg_print_initial_state();
+						}
 <DEFINE_DATA>.          {	count();
+							ksr_cfg_print_part(yytext);
 							addstr(&s_buf, yytext, yyleng); }
 
 <INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
 <INITIAL>{PREP_START}{SUBSTDEF}	{ count();  return SUBSTDEF;}
 <INITIAL>{PREP_START}{SUBSTDEFS}	{ count();  return SUBSTDEFS;}
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
-<INITIAL,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
 <IFDEF_ID>{ID}{MINUS}           { count();
@@ -1307,18 +1355,25 @@ IMPORTFILE      "import_file"
 								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
 
-<INITIAL,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
 															pp_endif(); }
 
 	/* we're in an ifdef that evaluated to false -- throw it away */
 <IFDEF_SKIP>.|{CR}    { count(); }
 
 	/* this is split so the shebangs match more, giving them priority */
-<INITIAL>{COM_LINE}        { count(); state = LINECOMMENT_S;
-								BEGIN(LINECOMMENT); }
-<LINECOMMENT>.*{CR}        { count(); state = INITIAL_S; BEGIN(INITIAL); }
+<INITIAL,CFGPRINTMODE>{COM_LINE}        { count();
+								ksr_cfg_print_part(yytext);
+								state = LINECOMMENT_S;
+								BEGIN(LINECOMMENT);
+							}
+<LINECOMMENT>.*{CR}        { count();
+								ksr_cfg_print_part(yytext);
+								state = INITIAL_S;
+								ksr_cfg_print_initial_state();
+							}
 
 <INITIAL>{ID}		{	if ((sdef = pp_define_get(yyleng, yytext))!=NULL) {
 							for (r=sdef->len-1; r>=0; r--)
@@ -1350,7 +1405,7 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				BEGIN(INITIAL);
+				ksr_cfg_print_initial_state();
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
@@ -1364,9 +1419,44 @@ IMPORTFILE      "import_file"
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
-				BEGIN(INITIAL);
+				ksr_cfg_print_initial_state();
 }
 
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFENV}  { count();
+			ksr_cfg_print_part(yytext);
+			state = DEFINE_S;
+			BEGIN(DEFENV_ID);
+}
+
+<DEFENV_ID>[ \t]*      { /* eat the whitespace */
+				count();
+				ksr_cfg_print_part(yytext);
+			}
+<DEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
+				count();
+				ksr_cfg_print_part(yytext);
+				if(pp_define_env(yytext, yyleng) < 0) {
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
+					exit(-1);
+				}
+				state = INITIAL;
+				ksr_cfg_print_initial_state();
+}
+
+<CFGPRINTMODE>{LOADMODULE}	{ count(); printf("%s", yytext);
+				BEGIN(CFGPRINTLOADMOD);
+			}
+<CFGPRINTMODE>.|{CR}  { count(); printf("%s", yytext); }
+
+
+<CFGPRINTLOADMOD>[ \t]* { /* eat the whitespace */
+				count(); printf("%s", yytext);
+			}
+<CFGPRINTLOADMOD>[^ \t\r\n]+   { /* get the module name */
+				count(); printf("%s", yytext);
+				ksr_cfg_print_define_module(yytext, yyleng);
+				ksr_cfg_print_initial_state();
+}
 
 <<EOF>>							{
 									switch(state){
@@ -1418,6 +1508,69 @@ IMPORTFILE      "import_file"
 
 %%
 
+static void ksr_cfg_print_part(char *text)
+{
+	if(ksr_cfg_print_mode == 1) {
+		printf("%s", text);
+	}
+}
+
+static void ksr_cfg_print_define_module(char *modpath, int modpathlen)
+{
+	char defmod[64];
+	str modname;
+	char *p;
+
+	modname.s = modpath;
+	modname.len = modpathlen;
+
+	if(modname.len <= 2) {
+		return;
+	}
+	if(modname.s[0] == '\'' && modname.s[modname.len - 1] == '\'') {
+		modname.s++;
+		modname.len -= 2;
+	} else if(modname.s[0] == '"' && modname.s[modname.len - 1] == '"') {
+		modname.s++;
+		modname.len -= 2;
+	}
+
+	if(modname.len>3 && strncmp(modname.s + modname.len-3, ".so", 3)==0) {
+		modname.len -= 3;
+	}
+	if (strchr(modpath, '/')) {
+		/* only the name */
+		p = modname.s + modname.len - 1;
+		modname.len = 0;
+		while(p>=modname.s && *p!='/') {
+			p--;
+			modname.len++;
+		}
+		modname.s = p + 1;
+	}
+
+	/* add cfg define for each module: MOD_modulename */
+	if(modname.len >= 60) {
+		printf("\n# ***** ERROR: too long module name: %s\n", modpath);
+		return;
+	}
+	memcpy(defmod, "MOD_", 4);
+	memcpy(defmod+4, modname.s, modname.len);
+	pp_define_set_type(0);
+	if(pp_define(modname.len + 4, defmod)<0) {
+		printf("\n# ***** ERROR: unable to set cfg define for module: %s\n",
+				modpath);
+	}
+}
+
+void ksr_cfg_print_initial_state(void)
+{
+	if(ksr_cfg_print_mode == 1) {
+		BEGIN(CFGPRINTMODE);
+	} else {
+		BEGIN(INITIAL);
+	}
+}
 
 static char* addchar(struct str_buf* dst, char c)
 {
@@ -1877,6 +2030,47 @@ int pp_define_set(int len, char *text)
 	return 0;
 }
 
+int pp_define_env(const char * text, int len)
+{
+	char *r;
+	str defname;
+	str defvalue;
+
+	r = strchr(text, '=');
+
+	defname.s = (char*)text;
+	if(r == NULL) {
+		defname.len = len;
+		r = (char*)text;
+	} else {
+		defname.len = r - text;
+		r++;
+		if(strlen(r) == 0) {
+			LM_ERR("invalid defenv id [%s]\n", (char*)text);
+			return -1;
+		}
+	}
+	defvalue.s = getenv(r);
+
+	if(defvalue.s == NULL) {
+		LM_ERR("env variable not defined [%s]\n", (char*)text);
+		return -1;
+	}
+	defvalue.len = strlen(defvalue.s);
+
+	pp_define_set_type(0);
+	if(pp_define(defname.len, defname.s)<0) {
+		LM_ERR("cannot set define name [%s]\n", (char*)text);
+		return -1;
+	}
+	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+		LM_ERR("cannot set define value [%s]\n", (char*)text);
+		return -1;
+	}
+
+	return 0;
+}
+
 str *pp_define_get(int len, const char * text)
 {
 	str var = {(char *)text, len};
@@ -1934,7 +2128,8 @@ static void pp_update_state()
 			return;
 		}
 
-	state = INITIAL; BEGIN(INITIAL);
+	state = INITIAL;
+	ksr_cfg_print_initial_state();
 }
 
 static void pp_ifdef()

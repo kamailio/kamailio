@@ -29,7 +29,7 @@
 #include "jsonrpc_io.h"
 
 
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 
 int memory_error() {
 	LM_ERR("Out of memory!");

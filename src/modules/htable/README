@@ -80,9 +80,10 @@ Ovidiu Sas
               6.4. htable.seti htable key value
               6.5. htable.dump htable
               6.6. htable.reload htable
-              6.7. htable.flush htable
-              6.8. htable.listTables
-              6.9. htable.stats
+              6.7. htable.store htable
+              6.8. htable.flush htable
+              6.9. htable.listTables
+              6.10. htable.stats
 
         7. Event routes
 
@@ -94,7 +95,7 @@ Ovidiu Sas
    1.1. Accessing $sht(htname=>key)
    1.2. Dictionary attack limitation
    1.3. Storing array values
-   1.4. Set hash_size parameter
+   1.4. Set htable parameter
    1.5. Set db_url parameter
    1.6. Set key_name_column parameter
    1.7. Set key_type_column parameter
@@ -183,9 +184,10 @@ Chapter 1. Admin Guide
         6.4. htable.seti htable key value
         6.5. htable.dump htable
         6.6. htable.reload htable
-        6.7. htable.flush htable
-        6.8. htable.listTables
-        6.9. htable.stats
+        6.7. htable.store htable
+        6.8. htable.flush htable
+        6.9. htable.listTables
+        6.10. htable.stats
 
    7. Event routes
 
@@ -442,11 +444,17 @@ $ kamcmd htable.dump htable
    configuration file.
      * htname - string specifying the name of the hash table. This string
        is used by $sht(...) to refer to the hash table.
-     * size - number specifying the size of hash table. Larger value means
-       less collisions. The number of entries (aka slots or buckets) in
-       the table is 2^size. The possible range for this value is from 2 to
-       31, smaller or larger values will be increased to 3 (8 slots) or
-       decreased to 14 (16384 slots).
+     * size - number to control how many slots (buckets) to create for the
+       hash table. Larger value means more slots with higher probability
+       for less collisions. The actual number slots (or buckets) created
+       for the table is 2^size. The possible range for this value is from
+       2 to 31, smaller or larger values will be increased to 3 (8 slots)
+       or decreased to 14 (16384 slots). Note that each slot can store
+       more than one item, when there are collisions of hash ids computed
+       for keys. The items in the same slot are stored in a linked list.
+       In other words, the size is not setting a limit of how many items
+       can be stored in a hash table, as long as there is enough free
+       shared memory, new items can be added.
      * autoexpire -time in seconds to delete an item from a hash table if
        no update was done to it. If is missing or set to 0, the items
        won't expire.
@@ -481,7 +489,7 @@ $ kamcmd htable.dump htable
 
    Default value is NULL.
 
-   Example 1.4. Set hash_size parameter
+   Example 1.4. Set htable parameter
 ...
 modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=>size=5;")
@@ -977,9 +985,10 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.4. htable.seti htable key value
    6.5. htable.dump htable
    6.6. htable.reload htable
-   6.7. htable.flush htable
-   6.8. htable.listTables
-   6.9. htable.stats
+   6.7. htable.store htable
+   6.8. htable.flush htable
+   6.9. htable.listTables
+   6.10. htable.stats
 
 6.1.  htable.get htable key
 
@@ -1063,7 +1072,7 @@ kamcmd htable.sets test x[0] 123
 
    Lists all the values in a hash table
 
-   Name: dhtable.dump
+   Name: htable.dump
 
    Parameters:
      * htable : Name of the hash table to dump
@@ -1077,7 +1086,7 @@ kamcmd htable.dump ipban
 
    Reload hash table from database.
 
-   Name: dhtable.reload
+   Name: htable.reload
 
    Parameters:
      * htable : Name of the hash table to reload
@@ -1087,7 +1096,21 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-6.7.  htable.flush htable
+6.7.  htable.store htable
+
+   Store hash table to database.
+
+   Name: htable.store
+
+   Parameters:
+     * htable : Name of the hash table to store
+
+   Example:
+...
+kamcmd htable.store ipban
+...
+
+6.8.  htable.flush htable
 
    Empty the hash table
 
@@ -1101,7 +1124,7 @@ kamcmd htable.reload ipban
 kamcmd htable.flush ipban
 ...
 
-6.8.  htable.listTables
+6.9.  htable.listTables
 
    Lists all defined tables
 
@@ -1115,7 +1138,7 @@ kamcmd htable.flush ipban
 kamcmd htable.listTables
 ...
 
-6.9.  htable.stats
+6.10.  htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.

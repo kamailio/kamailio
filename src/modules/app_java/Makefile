@@ -1,5 +1,5 @@
 #
-# WARNING: do not run this directly, it should be run by the master Makefile
+# WARNING: do not run this directly, it should be run by the main Makefile
 
 # to generate readme file on a system without java, use DOCBUILD=yes in make command
 

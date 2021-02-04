@@ -456,6 +456,26 @@ modparam("usrloc", "instance_column", "myinstance")
 		</example>
 	</section>
 
+	<section id="usrloc.p.reg_id_column">
+		<title><varname>reg_id_column</varname> (string)</title>
+		<para>
+		Name of database table column containing the value for reg-id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>reg_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reg_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "reg_id_column", "r_id")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.server_id_column">
 		<title><varname>server_id_column</varname> (string)</title>
 		<para>
@@ -527,7 +547,7 @@ modparam("usrloc", "keepalive_column", "kalive")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>partitioncolumn</varname> parameter</title>
+		<title>Set <varname>partition_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "partition_column", "part")
@@ -584,8 +604,8 @@ modparam("usrloc", "desc_time_order", 1)
 		<title><varname>timer_interval</varname> (int)</title>
 		<para>
 		Number of seconds between two timer runs. The module uses a timer to
-		delete expired contacts, synchronize with database and other tasks,
-		that need to be run periodically.
+		delete expired contacts, synchronize with database, send keepalives
+		and other tasks, that need to be run periodically.
 		</para>
 		<para>
 		<emphasis>
@@ -952,6 +972,14 @@ modparam("usrloc", "db_check_update", 1)
 			database. If set to 0, no dedicated timer is started, the one from
 			core will be used.
 		</para>
+
+		<para>
+			If the number of timer processes is greater than 1, the workload 
+			of synchronization and record expiration is split up among the 
+			multiple processes. (Each process is assigned a range of slots 
+			from the internal hash table, and is responsible for cleanup and
+			storage on those slots.)
+		</para>
 		<para>
 		<emphasis>
 			Default value is <quote>0</quote>.
@@ -1201,9 +1229,12 @@ modparam("usrloc", "rm_expired_delay", 30)
 	<section id="usrloc.p.server_id_filter">
 		<title><varname>server_id_filter</varname> (int)</title>
 		<para>
-			Enable (1) or disable (0) filter records by server_id on load and during cleaning of expired db records.
-                        It could be useful when you want to use the same location table for several kamailio instances which are configured to work in db_mode=1 or db_mode=2 (cache modes).
-                        Otherwise one instance of proxy cleans records made by another proxy and that breaks its cache.
+			Enable (1) or disable (0) filter records by server_id on load and
+			during cleaning of expired db records. It could be useful when you
+			want to use the same location table for several kamailio instances
+			which are configured to work in db_mode=1 or db_mode=2 (cache modes).
+			Otherwise one instance of proxy cleans records made by another proxy
+			and that breaks its cache.
 		</para>
 		<para>
 		<emphasis>
@@ -1234,6 +1265,234 @@ modparam("usrloc", "server_id_filter", 1)
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "version_table", 0)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_mode">
+		<title><varname>ka_mode</varname> (int)</title>
+		<para>
+		Keepalive mode - control the internal keepalive mechanism. With this feature
+		enabled, the module sends periodically (based on timer interval) SIP requests
+		to location contacts and measures the round trip in microseconds (the
+		round trip value can be seen in the response of the RPC command 'ul.dump'). 
+		</para>
+		<para>
+		Its value is a set of flags:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - if the value is zero, no keepalive is sent
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 (bit 1 set) - if set to 1, the keepalive is enabled for all contacts
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			2 (bit 2 set) - the keepalive is sent only for natted contacts
+			(nat_bflag set)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			4 (bit 3 set) - the keepalive is sent only for UDP contacts
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		For example, if set to 6, then keepalive is sent only natted UDP contacs.
+		</para>
+		<para>
+		Note: the internal keepalive of usrloc module conflicts in some way with
+		the keepalive done by nathelper module. It is recommended to enable only
+		one.
+		</para>
+		<para>
+		Note: the internal keepalive is for the moment implemented only for
+		contact records stored in memory.
+		</para>
+		<para>
+		Note: it is recommeder to set 'timer_procs' parameter in order to have
+		dedicated timer processes for usrloc module and off-load the keepalive
+		sending process from the core timers.
+		</para>
+		<para>
+		Default value is <quote>0 (keepalive disabled)</quote>.
+		</para>
+		<example>
+		<title><varname>ka_mode</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_method">
+		<title><varname>ka_method</varname> (str)</title>
+		<para>
+		The SIP method type for keepalive requests.
+		</para>
+		<para>
+		Default value is <quote>OPTIONS</quote>.
+		</para>
+		<example>
+		<title><varname>ka_method</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_method", "NOTIFY")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_from">
+		<title><varname>ka_from</varname> (str)</title>
+		<para>
+		The SIP URI to be set in the From header of the keepalive requests.
+		</para>
+		<para>
+		Default value is <quote>sip:server@kamailio.org</quote>.
+		</para>
+		<example>
+		<title><varname>ka_from</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_from", "sip:server@mydomain.com")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_domain">
+		<title><varname>ka_domain</varname> (str)</title>
+		<para>
+		The domain to be set in To header URI if the multi-domain is not enabled.
+		If multi-domain is enabled, then the domain from the location record is
+		used and this parameter is ignored.
+		</para>
+		<para>
+		Default value is <quote>kamailio.org</quote>.
+		</para>
+		<example>
+		<title><varname>ka_domain</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_domain", "mydomain.com")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_filter">
+		<title><varname>ka_filter</varname> (int)</title>
+		<para>
+		Set filters for keepalive processing.
+		</para>
+		<para>
+		Its value is a set of flags:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - if the value is zero, no filter is enabled for keepalives
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 (bit 1 set) - keepalives sent only to records matching the
+			server_id global parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>0</quote> (no filter).
+		</para>
+		<example>
+		<title><varname>ka_filter</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_filter", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_timeout">
+		<title><varname>ka_timeout</varname> (int)</title>
+		<para>
+		The parameter sets the interval in seconds after which a
+		contact is removed from location table if it does not reply to SIP
+		keepalives (usually OPTIONS ping requests).
+		</para>
+		<para>
+		The features is available only for contacts that are stored in memory
+		(not working for db only mode of the usrloc module).
+		</para>
+		<para>
+		Keepalives are sent stateless, not using TM module. The value of this
+		parameter has to be few times higher than timer interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_timeout", 120)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_loglevel">
+		<title><varname>ka_loglevel</varname> (int)</title>
+		<para>
+		The level to print the log message when the keepalive response is
+		received. It should be a value between -5 (L_ALERT) and 3 (L_DBG).
+		</para>
+		<para>
+		Default value is <quote>255</quote> (disabled).
+		</para>
+		<example>
+		<title><varname>ka_loglevel</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_loglevel", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.ka_logmsg">
+		<title><varname>ka_logmsg</varname> (str)</title>
+		<para>
+		The formatted log specification to be added to the message printed when
+		the keepalive is received and roundtrip time is computed. The log
+		message starts with "keepalive roundtrip: %u.%06u sec - ruid [%.*s]",
+		then concatenates the value of this parameter and the end of line.
+		</para>
+		<para>
+		The value of this parameter can contain script variables that are
+		evaluated with the SIP response.
+		</para>
+		<para>
+		Default value is <quote> to-uri: [$tu] remote-addr: [$sas]</quote>.
+		</para>
+		<example>
+		<title><varname>ka_logmsg</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 ...
 		</programlisting>
 		</example>

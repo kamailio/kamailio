@@ -36,7 +36,7 @@
 #include "../../core/route.h"
 #include "../../core/dset.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "dlg_hash.h"
 #include "dlg_var.h"
 #include "dlg_handlers.h"

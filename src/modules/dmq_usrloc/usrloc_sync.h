@@ -24,7 +24,7 @@
 #define _DMQ_SYNC_USRLOC_H_
 
 #include "../dmq/bind_dmq.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_content.h"
 #include "../usrloc/usrloc.h"

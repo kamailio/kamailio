@@ -83,6 +83,7 @@ int acc_prepare_always = 0; /* prepare the request always for later acc */
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 char *acc_time_format = "%Y-%m-%d %H:%M:%S";
 int reason_from_hf = 0; /*!< assign reason from reason hf if present */
+int acc_extra_nullable  = 0;
 
 /* ----- time mode variables ------- */
 /*! \name AccTimeModeVariables  Time Mode Variables */
@@ -121,6 +122,7 @@ int cdr_start_on_confirmed = 0;
 int cdr_expired_dlg_enable = 0;
 static char* cdr_facility_str = 0;
 static char* cdr_log_extra_str = 0;
+str cdr_skip = {NULL, 0};
 
 str cdr_start_str = str_init("start_time");
 str cdr_end_str = str_init("end_time");
@@ -198,6 +200,7 @@ static param_export_t params[] = {
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
 	{"acc_prepare_always",      INT_PARAM, &acc_prepare_always      },
 	{"reason_from_hf",          INT_PARAM, &reason_from_hf          },
+	{"acc_extra_nullable",      INT_PARAM, &acc_extra_nullable      },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
@@ -206,6 +209,7 @@ static param_export_t params[] = {
 	{"log_extra",            PARAM_STRING, &log_extra_str        },
 	/* cdr specific */
 	{"cdr_enable",           INT_PARAM, &cdr_enable                 },
+	{"cdr_skip",             PARAM_STR, &cdr_skip                   },
 	{"cdr_log_enable",         INT_PARAM, &cdr_log_enable           },
 	{"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
 	{"cdr_facility",         PARAM_STRING, &cdr_facility_str           },

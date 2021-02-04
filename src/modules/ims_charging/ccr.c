@@ -11,6 +11,7 @@ extern struct cdp_binds cdpb;
 int Ro_write_event_type_avps(AAA_AVP_LIST * avp_list, event_type_t * x) {
     AAA_AVP_LIST aList = {0, 0};
 
+    LM_DBG("write event type AVPs\n");
     if (x->sip_method) {
         if (!cdp_avp->epcapp.add_SIP_Method(&aList, *(x->sip_method), AVP_DUPLICATE_DATA))
             goto error;
@@ -37,6 +38,7 @@ error:
 int Ro_write_time_stamps_avps(AAA_AVP_LIST * avp_list, time_stamps_t* x) {
     AAA_AVP_LIST aList = {0, 0};
 
+    LM_DBG("write timestamp AVPs\n");
     if (x->sip_request_timestamp)
         if (!cdp_avp->epcapp.add_SIP_Request_Timestamp(&aList, *(x->sip_request_timestamp)))
             goto error;
@@ -74,6 +76,8 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
     service_specific_info_list_element_t * info = 0;
     ioi_list_element_t * ioi_elem = 0;
 
+    LM_DBG("write IMS information AVPs\n");
+
     if (x->event_type)
         if (!Ro_write_event_type_avps(&aList2, x->event_type))
             goto error;
@@ -90,11 +94,15 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
     for (sl = x->calling_party_address.head; sl; sl = sl->next) {
         if (!cdp_avp->epcapp.add_Calling_Party_Address(&aList2, sl->data, 0))
             goto error;
+        LM_DBG("added calling party address %.*s\n", sl->data.len, sl->data.s);
     }
 
-    if (x->called_party_address)
+    if (x->called_party_address) {
         if (!cdp_avp->epcapp.add_Called_Party_Address(&aList2, *(x->called_party_address), 0))
             goto error;
+        LM_DBG("added called party address %.*s\n",
+                x->called_party_address->len, x->called_party_address->s);
+    }
     
     if (x->incoming_trunk_id && (x->incoming_trunk_id->len > 0) && x->outgoing_trunk_id && (x->outgoing_trunk_id->len > 0)) {
 	if (!cdp_avp->epcapp.add_Outgoing_Trunk_Group_Id(&aList, *(x->outgoing_trunk_id), 0))
@@ -168,6 +176,15 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
         if (!cdp_avp->epcapp.add_Cause_Code(&aList2, *(x->cause_code)))
             goto error;
 
+    if (x->app_provided_party) {
+        if (!cdp_avp->epcapp.add_Application_Provided_Called_Party_Address(&aList, *(x->app_provided_party),0))
+            goto error;
+        if (!cdp_avp->epcapp.add_Application_Server_Information(&aList2, &aList, 0))
+            goto error;
+        cdp_avp->cdp->AAAFreeAVPList(&aList);
+        aList.head = aList.tail = 0;
+    }
+
     if (!cdp_avp->epcapp.add_IMS_Information(avp_list, &aList2, AVP_FREE_DATA))//TODO check why not DONT FREE DATA
         goto error;
 
@@ -176,7 +193,7 @@ error:
     /*free aList*/
     cdp_avp->cdp->AAAFreeAVPList(&aList);
     cdp_avp->cdp->AAAFreeAVPList(&aList2);
-    LM_ERR("could not add ims information avps\n");
+    LM_ERR("could not add ims information AVPs\n");
     return 0;
 }
 
@@ -184,6 +201,7 @@ int Ro_write_service_information_avps(AAA_AVP_LIST * avp_list, service_informati
     subscription_id_list_element_t * elem = 0;
     AAA_AVP_LIST aList = {0, 0};
 
+    LM_DBG("write service information\n");
     for (elem = x->subscription_id.head; elem; elem = elem->next) {
 
         if (!cdp_avp->ccapp.add_Subscription_Id_Group(&aList, elem->s.type, elem->s.id, 0))
@@ -207,6 +225,7 @@ error:
 AAAMessage * Ro_write_CCR_avps(AAAMessage * ccr, Ro_CCR_t* x) {
 
     if (!ccr) return 0;
+    LM_DBG("write all CCR AVPs\n");
 
     if (x->origin_host.s && x->origin_host.len > 0) {
         if (!cdp_avp->base.add_Origin_Host(&(ccr->avpList), x->origin_host, 0)) goto error;
@@ -215,7 +234,11 @@ AAAMessage * Ro_write_CCR_avps(AAAMessage * ccr, Ro_CCR_t* x) {
     if (x->origin_realm.s && x->origin_realm.len > 0) {
         if (!cdp_avp->base.add_Origin_Realm(&(ccr->avpList), x->origin_realm, 0)) goto error;
     }
-    
+
+    if (x->destination_host.s && x->destination_host.len > 0) {
+        if (!cdp_avp->base.add_Destination_Host(&(ccr->avpList), x->destination_host, 0)) goto error;
+    }
+
     if (x->destination_realm.s && x->destination_realm.len > 0) {
         if (!ro_add_destination_realm_avp(ccr, x->destination_realm)) goto error;
     }
@@ -250,6 +273,7 @@ error:
 AAAMessage *Ro_new_ccr(AAASession * session, Ro_CCR_t * ro_ccr_data) {
 
     AAAMessage * ccr = 0;
+    LM_DBG("create a new CCR\n");
     ccr = cdp_avp->cdp->AAACreateRequest(IMS_Ro, Diameter_CCR, Flag_Proxyable, session);
     if (!ccr) {
         LM_ERR("could not create CCR\n");
@@ -265,6 +289,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
     if (!cca)
         return 0;
 
+    LM_DBG("parse CCA AVPs\n");
     Ro_CCA_t *ro_cca_data = 0;
     mem_new(ro_cca_data, sizeof (Ro_CCR_t), pkg);
     multiple_services_credit_control_t *mscc = 0;
@@ -300,7 +325,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                 mscc_avp_list_ptr = &mscc_avp_list;
                 AAA_AVP *mscc_avp = mscc_avp_list_ptr->head;
                 while (mscc_avp != NULL) {
-                    LM_DBG("MSCC AVP code is [%i] and data length is [%i]", mscc_avp->code, mscc_avp->data.len);
+                    LM_DBG("MSCC AVP code is [%i] and data length is [%i]\n", mscc_avp->code, mscc_avp->data.len);
                     switch (mscc_avp->code) {
                             AAA_AVP_LIST y;
                             AAA_AVP *z;

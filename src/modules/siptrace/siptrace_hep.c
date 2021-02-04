@@ -40,11 +40,13 @@
 extern int hep_version;
 extern int hep_capture_id;
 extern int hep_vendor_id;
-extern str auth_key_str;
-extern str force_send_sock_str;
-extern sip_uri_t *force_send_sock_uri;
-extern str dup_uri_str;
-extern sip_uri_t *dup_uri;
+extern str hep_auth_key_str;
+extern str trace_send_sock_str;
+extern sip_uri_t *trace_send_sock_uri;
+extern str trace_send_sock_name_str;
+extern socket_info_t *trace_send_sock_info;
+extern str trace_dup_uri_str;
+extern sip_uri_t *trace_dup_uri;
 
 /**
  *
@@ -111,8 +113,8 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 	len += sizeof(struct hep_chunk_uint32); // capture ID
 	len += sizeof(struct hep_chunk);		// payload
 
-	if(auth_key_str.s && auth_key_str.len > 0) {
-		len += sizeof(struct hep_chunk) + auth_key_str.len;
+	if(hep_auth_key_str.s && hep_auth_key_str.len > 0) {
+		len += sizeof(struct hep_chunk) + hep_auth_key_str.len;
 	}
 
 	if(correlation_id_str) {
@@ -162,17 +164,16 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 					0, 0x0011, correlation_id_str->s, correlation_id_str->len);
 		}
 	}
-	if(auth_key_str.s && auth_key_str.len > 0) {
-		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
+	if(hep_auth_key_str.s && hep_auth_key_str.len > 0) {
+		HEP3_PACK_CHUNK_DATA(0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA(0, 0x000f, body->s, body->len);
 	HEP3_PACK_FINALIZE(buffer, &len);
 
 	if(!dst2) {
 		init_dest_info(&dst);
-		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		dst.proto = trace_dup_uri->proto;
+		p = mk_proxy(&trace_dup_uri->host, trace_dup_uri->port_no, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			goto error;
@@ -186,12 +187,11 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 		dst_fin = dst2;
 	}
 
-	if(force_send_sock_str.s) {
-		LM_DBG("force_send_sock activated, grep for the sock_info\n");
-		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
+	if(trace_send_sock_str.s) {
+		LM_DBG("send sock activated, grep for the sock_info\n");
+		si = grep_sock_info(&trace_send_sock_uri->host,
+				trace_send_sock_uri->port_no,
+				trace_send_sock_uri->proto);
 		if(!si) {
 			LM_WARN("cannot grep socket info\n");
 		} else {
@@ -257,7 +257,7 @@ int trace_send_hep2_duplicate(
 	if(body->s == NULL || body->len <= 0)
 		return -1;
 
-	if(dup_uri_str.s == 0 || dup_uri == NULL)
+	if(trace_dup_uri_str.s == 0 || trace_dup_uri == NULL)
 		return 0;
 
 
@@ -289,9 +289,8 @@ int trace_send_hep2_duplicate(
 	if(!dst2) {
 		init_dest_info(&dst);
 		/* create a temporary proxy*/
-		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		dst.proto = trace_dup_uri->proto;
+		p = mk_proxy(&trace_dup_uri->host, trace_dup_uri->port_no, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			goto error;
@@ -305,12 +304,11 @@ int trace_send_hep2_duplicate(
 		dst_fin = dst2;
 	}
 
-	if(force_send_sock_str.s) {
-		LM_DBG("force_send_sock activated, grep for the sock_info\n");
-		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
+	if(trace_send_sock_str.s) {
+		LM_DBG("send sock activated, grep for the sock_info\n");
+		si = grep_sock_info(&trace_send_sock_uri->host,
+				trace_send_sock_uri->port_no,
+				trace_send_sock_uri->proto);
 		if(!si) {
 			LM_WARN("cannot grep socket info\n");
 		} else {
@@ -538,7 +536,6 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	struct timezone tz;
 	struct dest_info dst;
 	struct proxy_l *p = NULL;
-	struct socket_info *si;
 
 	if(!correlationid) {
 		if(msg->callid == NULL && ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
@@ -563,8 +560,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 		  + sizeof(hep_chunk_t) + correlationid->len + sizeof(hep_chunk_t)
 		  + message->len;
 
-	if(auth_key_str.len) {
-		len += sizeof(hep_chunk_t) + auth_key_str.len;
+	if(hep_auth_key_str.len) {
+		len += sizeof(hep_chunk_t) + hep_auth_key_str.len;
 	}
 
 	buf = pkg_malloc(len);
@@ -577,9 +574,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	gettimeofday(&tvb, &tz);
 
 	init_dest_info(&dst);
-	dst.proto = PROTO_UDP;
-	p = mk_proxy(&dup_uri->host,
-			(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+	dst.proto = trace_dup_uri->proto;
+	p = mk_proxy(&trace_dup_uri->host, trace_dup_uri->port_no, dst.proto);
 	if(p == 0) {
 		LM_ERR("bad host name in uri\n");
 		goto error;
@@ -591,18 +587,24 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);
 
-	if(force_send_sock_str.s) {
-		LM_DBG("force_send_sock activated, grep for the sock_info\n");
-		si = grep_sock_info(&force_send_sock_uri->host,
-				(force_send_sock_uri->port_no) ? force_send_sock_uri->port_no
-											   : SIP_PORT,
-				PROTO_UDP);
-		if(!si) {
-			LM_WARN("cannot grep socket info\n");
+	if(trace_send_sock_name_str.s) {
+		dst.send_sock = trace_send_sock_info;
+	} else if(trace_send_sock_str.s) {
+		LM_DBG("send sock activated - find the sock info\n");
+		if(trace_send_sock_info) {
+			dst.send_sock = trace_send_sock_info;
 		} else {
-			LM_DBG("found socket while grep: [%.*s] [%.*s]\n", si->name.len,
-					si->name.s, si->address_str.len, si->address_str.s);
-			dst.send_sock = si;
+			dst.send_sock = grep_sock_info(&trace_send_sock_uri->host,
+					trace_send_sock_uri->port_no,
+					trace_send_sock_uri->proto);
+		}
+		if(!dst.send_sock) {
+			LM_WARN("local socket not found for: [%.*s]\n",
+					trace_send_sock_str.len, trace_send_sock_str.s);
+		} else {
+			LM_DBG("using local send socket: [%.*s] [%.*s]\n",
+					dst.send_sock->name.len, dst.send_sock->name.s,
+					dst.send_sock->address_str.len, dst.send_sock->address_str.s);
 		}
 	}
 
@@ -639,8 +641,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	HEP3_PACK_CHUNK_UINT8(0, 0x000b, 0x64); /* protocol type: log */
 	HEP3_PACK_CHUNK_UINT32(0, 0x000c, hep_capture_id);
 	HEP3_PACK_CHUNK_DATA(0, 0x0011, correlationid->s, correlationid->len);
-	if(auth_key_str.s && auth_key_str.len > 0) {
-		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
+	if(hep_auth_key_str.s && hep_auth_key_str.len > 0) {
+		HEP3_PACK_CHUNK_DATA(0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA(0, 0x000f, message->s, message->len);
 	HEP3_PACK_FINALIZE(buf, &len);

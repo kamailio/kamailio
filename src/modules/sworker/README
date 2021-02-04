@@ -1,0 +1,132 @@
+SWORKER Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2020 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. sworker_active()
+              3.2. swork_task(gname)
+
+   List of Examples
+
+   1.1. sworker_active() usage
+   1.2. sworker_task() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. sworker_active()
+        3.2. swork_task(gname)
+
+1. Overview
+
+   This module can delegate processing of SIP requests to a group of
+   workers in the configuration file by using
+   event_route[core:pre-routing]. The async workers have to defined with
+   the global parameter. The worker process that received the message
+   internally does the usual execution of the config script, running
+   request_route or reply_route.
+
+   Note: the behaviour is different than the async module, because it does
+   not create the transaction (obviously also not performing suspend).
+
+   Note: it does not propagate anything set in the event_route, therefore
+   any set flag, or avp, etc. are lost. The SIP message is processed by
+   the delegated worker as it was fresh received from the network
+   (including parsing).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Functions
+
+   3.1. sworker_active()
+   3.2. swork_task(gname)
+
+3.1.  sworker_active()
+
+   Return 1 (true) if the processing happens in an asyn process, or -1
+   (false) if the processing is happening in a SIP receiving process.
+
+   This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
+
+   Example 1.1. sworker_active() usage
+...
+request_route {
+    ...
+    if(sworker_active()) {
+    }
+    ...
+}
+...
+
+3.2.  swork_task(gname)
+
+   Delegate the processing of SIP message to a group of async workers. The
+   function is restricted to be used inside event_route[core:pre-routing].
+
+   The parameter gname provides the name of the group workers, it can
+   contain pseudo-variables.
+
+   The function returns 1 (true) in case the task is delegated. After
+   that, 'drop' must be used so processing of the message does not
+   continue to request_route or reply_route in the same process, it is
+   going to be done by the delegated group of workers. It returns -1
+   (false) in case there was a proble delegating the processing.
+
+   This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
+
+   Example 1.2. sworker_task() usage
+...
+event_route[core:pre-routing] {
+        if(sworker_task("default")) {
+                xinfo("===== delegate processing [$Tf] [$si:$sp]\n");
+                drop;
+        }
+        xinfo("===== processing continues [$Tf] [$si:$sp]\n");
+    ...
+}
+...

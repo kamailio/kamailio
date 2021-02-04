@@ -134,7 +134,7 @@ modparam("dmq_usrloc", "sync", 0)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>batch size</varname> parameter</title>
+		<title>Set <varname>batch_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("dmq_usrloc", "batch_size", 4000)
@@ -249,7 +249,58 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 </programlisting>
 		</example>
 	</section>
+	<section id="usrloc_dmq.p.replicate_socket_info">
+		<title><varname>replicate_socket_info</varname> (int)</title>
+		<para>
+			The parameter controls whether the socket replication is active or not.
+			This is important for anycast scenarios.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>replicate_socket_info</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "replicate_socket_info", 0)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.usrloc_delete">
+		<title><varname>usrloc_delete</varname> (int)</title>
+		<para>
+			Enable (1) or disable (0) synchronizing usrloc delete actions. Disabling delete actions can be useful when user location data is ephemeral.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>usrloc_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "usrloc_delete", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>
-

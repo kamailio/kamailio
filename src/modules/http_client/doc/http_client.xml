@@ -56,9 +56,8 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="http_client_admin.xml"/>
 	<xi:include href="http_client_devel.xml"/>
-	
-	
+
 </book>

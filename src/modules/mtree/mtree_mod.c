@@ -1196,6 +1196,7 @@ static int mtree_init_rpc(void)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_mtree_exports[] = {
 	{ str_init("mtree"), str_init("mt_match"),
 		SR_KEMIP_INT, mt_match,
@@ -1205,7 +1206,7 @@ static sr_kemi_t sr_kemi_mtree_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
-
+/* clang-format on */
 
 /**
  * load mtree module API

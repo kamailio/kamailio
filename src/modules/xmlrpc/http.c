@@ -64,14 +64,14 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	via_cnt++;
 	vb = pkg_malloc(sizeof(struct via_body));
 	if (vb == 0){
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(vb, 0, sizeof(struct via_body));
 
 	msg->h_via1 = pkg_malloc(sizeof(hdr_field_t));
 	if (!msg->h_via1) {
-		ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(msg->h_via1, 0, sizeof(hdr_field_t));

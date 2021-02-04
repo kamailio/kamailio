@@ -141,7 +141,7 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	long long_val;
 	double double_val;
 	char * end;
-	struct tm *t;
+	struct tm t;
 	char cdr_time_format_buf[MAX_CDR_CORE][TIME_STR_BUFFER_SIZE];
 
 	if(acc_cdrs_table.len<=0)
@@ -191,9 +191,9 @@ static int db_write_cdr( struct dlg_cell* dialog,
 				}
 				if (acc_time_mode==4) {
 					VAL_TYPE(db_cdr_vals+i)=DB1_STRING;
-					t = gmtime(&timeval_val.tv_sec);
+					gmtime_r(&timeval_val.tv_sec, &t);
 					/* Convert time_t structure to format accepted by the database */
-					if (strftime(cdr_time_format_buf[i], TIME_STR_BUFFER_SIZE, TIME_STRING_FORMAT, t) <= 0) {
+					if (strftime(cdr_time_format_buf[i], TIME_STR_BUFFER_SIZE, TIME_STRING_FORMAT, &t) <= 0) {
 						cdr_time_format_buf[i][0] = '\0';
 					}
 
@@ -390,6 +390,16 @@ static int write_cdr( struct dlg_cell* dialog,
 	if ( !cdr_expired_dlg_enable && !message ){
 		LM_ERR( "message is empty!");
 		return -1;
+	}
+
+	/* Skip cdr if cdr_skip dlg_var exists */
+	if (cdr_skip.len > 0) {
+		str* nocdr_val = 0;
+		nocdr_val = dlgb.get_dlg_var( dialog, &cdr_skip);
+		if ( nocdr_val ){
+			LM_DBG( "cdr_skip dlg_var set, skip cdr!");
+			return 0;
+		}
 	}
 
 	ret = log_write_cdr(dialog, message);

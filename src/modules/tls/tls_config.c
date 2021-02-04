@@ -154,6 +154,15 @@ static cfg_option_t ksr_tls_token_any[] = {
 };
 
 
+static cfg_option_t verify_client_params[] = {
+	{"off",            .val = TLS_VERIFY_CLIENT_OFF},
+	{"on",             .val = TLS_VERIFY_CLIENT_ON},
+	{"optional",       .val = TLS_VERIFY_CLIENT_OPTIONAL},
+	{"optional_no_ca", .val = TLS_VERIFY_CLIENT_OPTIONAL_NO_CA},
+	{0}
+};
+
+
 static cfg_option_t options[] = {
 	{"method",              .param = methods, .f = cfg_parse_enum_opt},
 	{"tls_method",          .param = methods, .f = cfg_parse_enum_opt},
@@ -173,6 +182,7 @@ static cfg_option_t options[] = {
 	{"server_name",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 	{"server_name_mode",    .f = cfg_parse_int_opt},
 	{"server_id",           .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"verify_client",       .param = verify_client_params, .f = cfg_parse_enum_opt},
 	{0}
 };
 
@@ -199,6 +209,9 @@ static void update_opt_variables(void)
 	options[15].param = &_ksr_tls_domain->server_name;
 	options[16].param = &_ksr_tls_domain->server_name_mode;
 	options[17].param = &_ksr_tls_domain->server_id;
+	for(i = 0; verify_client_params[i].name; i++) {
+		verify_client_params[i].param = &_ksr_tls_domain->verify_client;
+	}
 }
 
 
@@ -513,6 +526,24 @@ int tls_parse_method(str* method)
 		return -1;
 	}
 #endif
+
+	return opt->val;
+}
+
+/*
+ * Convert TLS verify_client string to integer
+ */
+int tls_parse_verify_client(str* verify_client)
+{
+	cfg_option_t* opt;
+
+	if (!verify_client) {
+		LM_BUG("Invalid parameter value\n");
+		return -1;
+	}
+
+	opt = cfg_lookup_token(verify_client_params, verify_client);
+	if (!opt) return -1;
 
 	return opt->val;
 }

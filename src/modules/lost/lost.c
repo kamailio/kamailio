@@ -1,7 +1,7 @@
 /*
  * lost module
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2020 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -49,6 +49,17 @@ MODULE_VERSION
 /* Module parameter variables */
 httpc_api_t httpapi;
 
+/* lost: any (0), cid (1), http (2) or https (3) (default: 0) */
+int lost_geoloc_type = 0;
+/* lost: Geolocation header value order: first (0) or last (1) (default: 0) */
+int lost_geoloc_order = 0;
+/* held request: response time (default: 0 = no timeout) */
+int held_resp_time = 0;
+/* held request: exact is true (1) or false (0) (default: false) */
+int held_exact_type = 0;
+/* held request: location type */
+str held_loc_type = STR_NULL;
+
 /* Module management function prototypes */
 static int mod_init(void);
 static int child_init(int);
@@ -91,13 +102,19 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
+/* Exported parameters */
+static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
+		{"response_time", PARAM_INT, &held_resp_time},
+		{"location_type", PARAM_STR, &held_loc_type},
+		{"geoheader_type", PARAM_INT, &lost_geoloc_type},
+		{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}};
 
 /* Module interface */
 struct module_exports exports = {
 		"lost",			 /* module name*/
 		DEFAULT_DLFLAGS, /* dlopen flags */
 		cmds,			 /* exported functions */
-		0,				 /* exported parameters */
+		params,			 /* exported parameters */
 		0,				 /* RPC method exports */
 		0,				 /* exported pseudo-variables */
 		0,				 /* response handling function */
@@ -112,9 +129,18 @@ static int mod_init(void)
 	LM_DBG("init lost module\n");
 
 	if(httpc_load_api(&httpapi) != 0) {
-		LM_ERR("Can not bind to http_client API \n");
+		LM_ERR("can not bind to http_client API \n");
 		return -1;
 	}
+
+	if(held_loc_type.len > 0) {
+		held_loc_type.s = lost_held_type(
+				held_loc_type.s, &held_exact_type, &held_loc_type.len);
+		LM_DBG("**** init lost: held location type: %.*s \n", held_loc_type.len,
+				held_loc_type.s);
+	}
+
+	LM_DBG("**** init lost: held response time: %d \n", held_resp_time);
 
 	LM_DBG("**** init lost module done.\n");
 
@@ -129,7 +155,7 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	;
+	pkg_free(held_loc_type.s);
 	/* do nothing */
 }
 
@@ -308,7 +334,7 @@ static int fixup_free_lost_query_all(void **param, int param_no)
 static int w_lost_held_query(
 		struct sip_msg *_m, char *_con, char *_pidf, char *_url, char *_err)
 {
-	return lost_function_held(_m, _con, _pidf, _url, _err, NULL);
+	return lost_held_function(_m, _con, _pidf, _url, _err, NULL);
 }
 
 /*
@@ -317,7 +343,7 @@ static int w_lost_held_query(
 static int w_lost_held_query_id(struct sip_msg *_m, char *_con, char *_id,
 		char *_pidf, char *_url, char *_err)
 {
-	return lost_function_held(_m, _con, _pidf, _url, _err, _id);
+	return lost_held_function(_m, _con, _pidf, _url, _err, _id);
 }
 
 /*

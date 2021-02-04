@@ -36,10 +36,14 @@
 #include "siptrace_send.h"
 
 
-extern int *xheaders_write_flag;
-extern int *xheaders_read_flag;
-extern str dup_uri_str;
-extern sip_uri_t *dup_uri;
+extern int trace_xheaders_write;
+extern int trace_xheaders_read;
+extern str trace_dup_uri_str;
+extern sip_uri_t *trace_dup_uri;
+extern str trace_send_sock_str;
+extern str trace_send_sock_name_str;
+extern sip_uri_t *trace_send_sock_uri;
+extern socket_info_t *trace_send_sock_info;
 
 /**
  *
@@ -85,14 +89,15 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	int eoh_offset = 0;
 	char *new_eoh = NULL;
 
-	if(xheaders_write_flag == NULL || *xheaders_write_flag == 0)
+	if(trace_xheaders_write == 0) {
 		return 0;
+	}
 
 	// Memory for the message with some additional headers.
 	// It gets free()ed in sip_trace_xheaders_free().
 	buf = pkg_malloc(sto->body.len + XHEADERS_BUFSIZE);
 	if(buf == NULL) {
-		LM_ERR("sip_trace_xheaders_write: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 
@@ -102,7 +107,7 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	buf[sto->body.len] = '\0';
 	eoh = strstr(buf, "\r\n\r\n");
 	if(eoh == NULL) {
-		LM_ERR("sip_trace_xheaders_write: malformed message\n");
+		LM_ERR("malformed message\n");
 		goto error;
 	}
 	eoh += 2; // the first \r\n belongs to the last header => skip it
@@ -121,7 +126,7 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 					(unsigned long long)sto->tv.tv_usec, sto->method.len,
 					sto->method.s, sto->dir);
 	if(bytes_written >= XHEADERS_BUFSIZE) {
-		LM_ERR("sip_trace_xheaders_write: string too long\n");
+		LM_ERR("string too long\n");
 		goto error;
 	}
 
@@ -136,8 +141,9 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	sto->body.len += bytes_written;
 	return 0;
 error:
-	if(buf != NULL)
+	if(buf != NULL) {
 		pkg_free(buf);
+	}
 	return -1;
 }
 
@@ -152,8 +158,9 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	char *xheaders = NULL;
 	long long unsigned int tv_sec, tv_usec;
 
-	if(xheaders_read_flag == NULL || *xheaders_read_flag == 0)
+	if(trace_xheaders_read == 0) {
 		return 0;
+	}
 
 	// Find the end-of-header marker \r\n\r\n
 	searchend = sto->body.s + sto->body.len - 3;
@@ -164,7 +171,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 		eoh = memchr(eoh + 1, '\r', searchend - eoh);
 	}
 	if(eoh == NULL) {
-		LM_ERR("sip_trace_xheaders_read: malformed message\n");
+		LM_ERR("malformed message\n");
 		return -1;
 	}
 
@@ -175,7 +182,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	*eoh = '\0';
 	xheaders = strstr(sto->body.s, "\r\nX-Siptrace-Fromip: ");
 	if(xheaders == NULL) {
-		LM_ERR("sip_trace_xheaders_read: message without x-headers "
+		LM_ERR("message without x-headers "
 			   "from %.*s, callid %.*s\n",
 				sto->fromip.len, sto->fromip.s, sto->callid.len, sto->callid.s);
 		return -1;
@@ -188,7 +195,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	sto->method.s = pkg_malloc(51);
 	sto->dir = pkg_malloc(4);
 	if(!(sto->fromip.s && sto->toip.s && sto->method.s && sto->dir)) {
-		LM_ERR("sip_trace_xheaders_read: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		goto erroraftermalloc;
 	}
 
@@ -202,7 +209,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 			   sto->fromip.s, sto->toip.s, &tv_sec, &tv_usec, sto->method.s,
 			   sto->dir)
 			== EOF) {
-		LM_ERR("sip_trace_xheaders_read: malformed x-headers\n");
+		LM_ERR("malformed x-headers\n");
 		goto erroraftermalloc;
 	}
 	sto->fromip.len = strlen(sto->fromip.s);
@@ -221,14 +228,22 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	return 0;
 
 erroraftermalloc:
-	if(sto->fromip.s)
+	if(sto->fromip.s) {
 		pkg_free(sto->fromip.s);
-	if(sto->toip.s)
+		sto->fromip.s = 0;
+	}
+	if(sto->toip.s) {
 		pkg_free(sto->toip.s);
-	if(sto->method.s)
+		sto->toip.s = 0;
+	}
+	if(sto->method.s) {
 		pkg_free(sto->method.s);
-	if(sto->dir)
+		sto->method.s = 0;
+	}
+	if(sto->dir) {
 		pkg_free(sto->dir);
+		sto->dir = 0;
+	}
 	return -1;
 }
 
@@ -237,18 +252,26 @@ erroraftermalloc:
  */
 int sip_trace_xheaders_free(struct _siptrace_data *sto)
 {
-	if(xheaders_write_flag != NULL && *xheaders_write_flag != 0) {
-		if(sto->body.s)
+	if(trace_xheaders_write != 0) {
+		if(sto->body.s) {
 			pkg_free(sto->body.s);
+			sto->body.s = 0;
+		}
 	}
 
-	if(xheaders_read_flag != NULL && *xheaders_read_flag != 0) {
-		if(sto->fromip.s)
+	if(trace_xheaders_read != 0) {
+		if(sto->fromip.s) {
 			pkg_free(sto->fromip.s);
-		if(sto->toip.s)
+			sto->fromip.s = 0;
+		}
+		if(sto->toip.s) {
 			pkg_free(sto->toip.s);
-		if(sto->dir)
+			sto->toip.s = 0;
+		}
+		if(sto->dir) {
 			pkg_free(sto->dir);
+			sto->dir = 0;
+		}
 	}
 
 	return 0;
@@ -258,16 +281,18 @@ int sip_trace_xheaders_free(struct _siptrace_data *sto)
 /**
  *
  */
-int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
+int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 {
-	struct dest_info dst;
-	struct proxy_l *p = NULL;
+	dest_info_t dst;
+	dest_info_t *pdst = NULL;
+	proxy_l_t *p = NULL;
 
-	if(buf == NULL || len <= 0)
+	if(buf == NULL || len <= 0) {
 		return -1;
+	}
 
 	/* either modparam dup_uri or siptrace param dst2 */
-	if((dup_uri_str.s == 0 || dup_uri == NULL) && (dst2 == NULL)) {
+	if((trace_dup_uri_str.s == 0 || trace_dup_uri == NULL) && (dst2 == NULL)) {
 		LM_WARN("Neither dup_uri modparam or siptrace destination uri param used!\n");
 		return 0;
 	}
@@ -277,25 +302,54 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 	if(!dst2) {
 		/* create a temporary proxy from dst param */
 		dst.proto = PROTO_UDP;
-		p = mk_proxy(&dup_uri->host,
-				(dup_uri->port_no) ? dup_uri->port_no : SIP_PORT, dst.proto);
+		p = mk_proxy(&trace_dup_uri->host,
+				(trace_dup_uri->port_no) ? trace_dup_uri->port_no : SIP_PORT, dst.proto);
 		if(p == 0) {
 			LM_ERR("bad host name in uri\n");
 			return -1;
 		}
 		hostent2su(
 				&dst.to, &p->host, p->addr_idx, (p->port) ? p->port : SIP_PORT);
+		pdst = &dst;
+	} else {
+		pdst = dst2;
+	}
 
-		dst.send_sock = get_send_socket(0, &dst.to, dst.proto);
-		if(dst.send_sock == 0) {
-			LM_ERR("can't forward to af %d, proto %d no corresponding"
+	if(pdst->send_sock == NULL) {
+		if(trace_send_sock_name_str.s) {
+			pdst->send_sock = trace_send_sock_info;
+		} else if(trace_send_sock_str.s) {
+			LM_DBG("send sock activated, grep for the sock_info\n");
+			if(trace_send_sock_info) {
+				pdst->send_sock = trace_send_sock_info;
+			} else {
+				pdst->send_sock = grep_sock_info(&trace_send_sock_uri->host,
+						trace_send_sock_uri->port_no,
+						trace_send_sock_uri->proto);
+			}
+			if(!pdst->send_sock) {
+				LM_WARN("local socket not found for: [%.*s]\n",
+						trace_send_sock_str.len, trace_send_sock_str.s);
+			} else {
+				LM_DBG("using local send socket: [%.*s] [%.*s]\n",
+						pdst->send_sock->name.len,
+						pdst->send_sock->name.s, pdst->send_sock->address_str.len,
+						pdst->send_sock->address_str.s);
+			}
+		}
+	}
+
+	if(pdst->send_sock == NULL) {
+		pdst->send_sock = get_send_socket(0, &pdst->to, pdst->proto);
+		if(pdst->send_sock == 0) {
+			LM_ERR("cannot forward to af %d, proto %d - no corresponding"
 				   " listening socket\n",
-					dst.to.s.sa_family, dst.proto);
+					pdst->to.s.sa_family, pdst->proto);
 			goto error;
 		}
 	}
 
-	if(msg_send((dst2) ? dst2 : &dst, buf, len) < 0) {
+	if(msg_send(pdst, buf, len) < 0) {
 		LM_ERR("cannot send duplicate message\n");
 		goto error;
 	}

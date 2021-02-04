@@ -28,15 +28,16 @@ Anca-Maria Vamanu
               3.3. disable_presence(int)
               3.4. disable_winfo(int)
               3.5. disable_bla(int)
-              3.6. force_active (int)
-              3.7. integrated_xcap_server (int)
-              3.8. xcap_server (str)
-              3.9. passive_mode(int)
-              3.10. xcapauth_userdel_reason(str)
-              3.11. force_dummy_presence(int)
-              3.12. force_presence_single_body(int)
-              3.13. presence_single_body_priorities(str)
-              3.14. presence_single_body_lookup_element(str)
+              3.6. disable_xcapdiff(int)
+              3.7. force_active (int)
+              3.8. integrated_xcap_server (int)
+              3.9. xcap_server (str)
+              3.10. passive_mode(int)
+              3.11. xcapauth_userdel_reason(str)
+              3.12. force_dummy_presence(int)
+              3.13. force_presence_single_body(int)
+              3.14. presence_single_body_priorities(str)
+              3.15. presence_single_body_lookup_element(str)
 
         4. Functions
 
@@ -54,17 +55,18 @@ Anca-Maria Vamanu
    1.3. Set disable_presence parameter
    1.4. Set disable_winfo parameter
    1.5. Set disable_bla parameter
-   1.6. Set force_active parameter
-   1.7. Set integrated_xcap_server parameter
-   1.8. Set xcap_server parameter
-   1.9. Set passive_mode parameter
-   1.10. Set xcapauth_userdel_reason parameter
-   1.11. Set force_dummy_presence parameter
-   1.12. Set force_presence_single_body parameter
-   1.13. Set presence_single_body_priorities parameter
-   1.14. Set presence_single_body_lookup_element parameter
-   1.15. pres_check_basic usage
-   1.16. pres_check_activities usage
+   1.6. Set disable_xcapdiff parameter
+   1.7. Set force_active parameter
+   1.8. Set integrated_xcap_server parameter
+   1.9. Set xcap_server parameter
+   1.10. Set passive_mode parameter
+   1.11. Set xcapauth_userdel_reason parameter
+   1.12. Set force_dummy_presence parameter
+   1.13. Set force_presence_single_body parameter
+   1.14. Set presence_single_body_priorities parameter
+   1.15. Set presence_single_body_lookup_element parameter
+   1.16. pres_check_basic usage
+   1.17. pres_check_activities usage
 
 Chapter 1. Admin Guide
 
@@ -83,15 +85,16 @@ Chapter 1. Admin Guide
         3.3. disable_presence(int)
         3.4. disable_winfo(int)
         3.5. disable_bla(int)
-        3.6. force_active (int)
-        3.7. integrated_xcap_server (int)
-        3.8. xcap_server (str)
-        3.9. passive_mode(int)
-        3.10. xcapauth_userdel_reason(str)
-        3.11. force_dummy_presence(int)
-        3.12. force_presence_single_body(int)
-        3.13. presence_single_body_priorities(str)
-        3.14. presence_single_body_lookup_element(str)
+        3.6. disable_xcapdiff(int)
+        3.7. force_active (int)
+        3.8. integrated_xcap_server (int)
+        3.9. xcap_server (str)
+        3.10. passive_mode(int)
+        3.11. xcapauth_userdel_reason(str)
+        3.12. force_dummy_presence(int)
+        3.13. force_presence_single_body(int)
+        3.14. presence_single_body_priorities(str)
+        3.15. presence_single_body_lookup_element(str)
 
    4. Functions
 
@@ -144,15 +147,16 @@ Chapter 1. Admin Guide
    3.3. disable_presence(int)
    3.4. disable_winfo(int)
    3.5. disable_bla(int)
-   3.6. force_active (int)
-   3.7. integrated_xcap_server (int)
-   3.8. xcap_server (str)
-   3.9. passive_mode(int)
-   3.10. xcapauth_userdel_reason(str)
-   3.11. force_dummy_presence(int)
-   3.12. force_presence_single_body(int)
-   3.13. presence_single_body_priorities(str)
-   3.14. presence_single_body_lookup_element(str)
+   3.6. disable_xcapdiff(int)
+   3.7. force_active (int)
+   3.8. integrated_xcap_server (int)
+   3.9. xcap_server (str)
+   3.10. passive_mode(int)
+   3.11. xcapauth_userdel_reason(str)
+   3.12. force_dummy_presence(int)
+   3.13. force_presence_single_body(int)
+   3.14. presence_single_body_priorities(str)
+   3.15. presence_single_body_lookup_element(str)
 
 3.1. db_url(str)
 
@@ -210,7 +214,18 @@ modparam("presence_xml", "disable_winfo", 1)
 modparam("presence_xml", "disable_bla", 1)
 ...
 
-3.6. force_active (int)
+3.6. disable_xcapdiff(int)
+
+   Set this parameter to disable the handling of the "xcap-diff" event.
+
+   Default value: “0”.
+
+   Example 1.6. Set disable_xcapdiff parameter
+...
+modparam("presence_xml", "disable_xcapdiff", 1)
+...
+
+3.7. force_active (int)
 
    This parameter is used for permissions when handling Subscribe
    messages. If set to 1, subscription state is considered active and the
@@ -225,12 +240,12 @@ modparam("presence_xml", "disable_bla", 1)
 
    Default value is “0”.
 
-   Example 1.6. Set force_active parameter
+   Example 1.7. Set force_active parameter
 ...
 modparam("presence_xml", "force_active", 1)
 ...
 
-3.7. integrated_xcap_server (int)
+3.8. integrated_xcap_server (int)
 
    This parameter is a flag for the type of XCAP servers used. If the XCAP
    server is integrated with Kamailio presence_xml module and access the
@@ -247,25 +262,25 @@ modparam("presence_xml", "force_active", 1)
 
    Default value is “0”.
 
-   Example 1.7. Set integrated_xcap_server parameter
+   Example 1.8. Set integrated_xcap_server parameter
 ...
 modparam("presence_xml", "integrated_xcap_server", 1)
 ...
 
-3.8. xcap_server (str)
+3.9. xcap_server (str)
 
    The address of the xcap servers used for storage. This parameter is
    compulsory if the integrated_xcap_server parameter is not set. It can
    be set more that once, to construct an address list of trusted XCAP
    servers.
 
-   Example 1.8. Set xcap_server parameter
+   Example 1.9. Set xcap_server parameter
 ...
 modparam("presence_xml", "xcap_server", "xcap_server.example.org")
 modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 ...
 
-3.9. passive_mode(int)
+3.10. passive_mode(int)
 
    If set to 1, module acts in passive mode - no bind to presence module,
    no connection to database. Useful when needing only to use $xml(...)
@@ -273,12 +288,12 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 
    Default value: “0” (0 - active mode, 1 - passive mode).
 
-   Example 1.9. Set passive_mode parameter
+   Example 1.10. Set passive_mode parameter
 ...
 modparam("presence_xml", "passive_mode", 1)
 ...
 
-3.10. xcapauth_userdel_reason(str)
+3.11. xcapauth_userdel_reason(str)
 
    This parameter represents the reason that will be included in the
    Subscription-State header of the Notify when a rule is no longer found
@@ -292,25 +307,25 @@ modparam("presence_xml", "passive_mode", 1)
    parameter to specify after at least how may seconds the client should
    reattempt to resubscribe, you can include this in the parameter also.
 
-   Example 1.10. Set xcapauth_userdel_reason parameter
+   Example 1.11. Set xcapauth_userdel_reason parameter
 ...
 modparam("presence_xml", "xcapauth_userdel_reason", "probation;retry-after=30")
 modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
 ...
 
-3.11. force_dummy_presence(int)
+3.12. force_dummy_presence(int)
 
    Set this parameter to enable simple body notify with status 'open' when
    presentity info is not available.
 
    Default value: “0”.
 
-   Example 1.11. Set force_dummy_presence parameter
+   Example 1.12. Set force_dummy_presence parameter
 ...
 modparam("presence_xml", "force_dummy_presence", 1)
 ...
 
-3.12. force_presence_single_body(int)
+3.13. force_presence_single_body(int)
 
    Set this parameter to enable single body notify. One presentity can
    have multiple dialogs and will by default notify all the dialogs and
@@ -321,12 +336,12 @@ modparam("presence_xml", "force_dummy_presence", 1)
 
    Default value: “0”.
 
-   Example 1.12. Set force_presence_single_body parameter
+   Example 1.13. Set force_presence_single_body parameter
 ...
 modparam("presence_xml", "force_presence_single_body", 1)
 ...
 
-3.13. presence_single_body_priorities(str)
+3.14. presence_single_body_priorities(str)
 
    Change this parameter to set the priorities when choosing the dialog
    that will be the final.
@@ -335,13 +350,13 @@ modparam("presence_xml", "force_presence_single_body", 1)
 
    Default value: “Available|Ringing|On the Phone”.
 
-   Example 1.13. Set presence_single_body_priorities parameter
+   Example 1.14. Set presence_single_body_priorities parameter
 ...
 modparam("presence_xml", "presence_single_body_priorities", "Offline|Online|Busy
 |Really Busy")
 ...
 
-3.14. presence_single_body_lookup_element(str)
+3.15. presence_single_body_lookup_element(str)
 
    Set the name of the element that should be used to get the priority. If
    the value obtained is not in the list of
@@ -349,7 +364,7 @@ modparam("presence_xml", "presence_single_body_priorities", "Offline|Online|Busy
 
    Default value: “note”.
 
-   Example 1.14. Set presence_single_body_lookup_element parameter
+   Example 1.15. Set presence_single_body_lookup_element parameter
 ...
 modparam("presence_xml", "presence_single_body_lookup_element", "status")
 ...
@@ -370,7 +385,7 @@ modparam("presence_xml", "presence_single_body_lookup_element", "status")
      * 1 - if a match is found.
      * -1 - if a match is not found.
 
-   Example 1.15. pres_check_basic usage
+   Example 1.16. pres_check_basic usage
 ...
     if (pres_check_basic("$ru", "open")) {
         ...
@@ -394,7 +409,7 @@ modparam("presence_xml", "presence_single_body_lookup_element", "status")
      * -1 - if a match is not found.
      * -2 - if /presence/person or /presence/person/activity do not exist.
 
-   Example 1.16. pres_check_activities usage
+   Example 1.17. pres_check_activities usage
 ...
     if (pres_check_basic("$ru", "open")) {
         pres_check_activities("$ru", "unknown");

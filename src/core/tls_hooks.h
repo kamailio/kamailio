@@ -37,13 +37,14 @@
 #endif
 
 #include "tcp_conn.h"
+#include "tcp_read.h"
 
 
 
-struct tls_hooks{
+typedef struct tls_hooks{
 	/* read using tls (should use tcp internal read functions to
 	   get the data from the connection) */
-	int  (*read)(struct tcp_connection* c, int* flags);
+	int  (*read)(struct tcp_connection* c, rd_conn_flags_t* flags);
 	/* process data for sending. Should replace pbuf & plen with
 	   an internal buffer containing the tls records. If it was not able
 	   to process the whole pbuf, it should set (rest_buf, rest_len) to
@@ -76,7 +77,7 @@ struct tls_hooks{
 	/* generic pre-init function (called at kamailio start, before module
 	 * initialization (after modparams) */
 	int (*pre_init)(void);
-};
+} tls_hooks_t;
 
 
 extern struct tls_hooks tls_hook;

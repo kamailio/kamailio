@@ -43,7 +43,7 @@
 #include "../../core/parser/parse_to.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "tps_storage.h"
 #include "api.h"
@@ -54,6 +54,12 @@ extern db1_con_t* _tps_db_handle;
 extern db_func_t _tpsdbf;
 
 extern str _tps_contact_host;
+extern int _tps_contact_mode;
+extern str _tps_cparam_name;
+extern str _tps_acontact_avp;
+extern str _tps_bcontact_avp;
+extern pv_spec_t _tps_acontact_spec;
+extern pv_spec_t _tps_bcontact_spec;
 
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
@@ -205,12 +211,14 @@ int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td)
 /**
  *
  */
-int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
+int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir, int ctmode)
 {
 	str sv;
-	sip_uri_t puri;
+	sip_uri_t puri, curi;
+	pv_value_t pv_val;
 	int i;
 	int contact_len;
+	int cparam_len;
 
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
@@ -231,11 +239,17 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 	if (_tps_contact_host.len)
 		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
 
-	if(td->cp + 8 + (2*uuid->len) + contact_len >= td->cbuf + TPS_DATA_SIZE) {
+	if (ctmode == 1 || ctmode == 2) {
+		cparam_len = _tps_cparam_name.len;
+	} else {
+		cparam_len = 0;
+	}
+
+	if(td->cp + 8 + (2*uuid->len) + cparam_len + contact_len >= td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
 		return -1;
 	}
-
+	// copy uuid
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		td->b_uuid.s = td->cp;
 		*td->cp = 'b';
@@ -255,51 +269,153 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 
 		td->as_contact.s = td->cp;
 	}
+
 	*td->cp = '<';
 	td->cp++;
+	// look for sip:
 	for(i=0; i<sv.len; i++) {
 		*td->cp = sv.s[i];
 		td->cp++;
 		if(sv.s[i]==':') break;
 	}
-	if(dir==TPS_DIR_DOWNSTREAM) {
-		*td->cp = 'b';
-	} else {
-		*td->cp = 'a';
-	}
-	td->cp++;
-	memcpy(td->cp, uuid->s, uuid->len);
-	td->cp += uuid->len;
-	*td->cp = '@';
-	td->cp++;
-
-	if (_tps_contact_host.len) { // using configured hostname in the contact header
-		memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
-		td->cp += _tps_contact_host.len;
-	} else {
-		memcpy(td->cp, puri.host.s, puri.host.len);
-		td->cp += puri.host.len;
-	}
-
-	if(puri.port.len>0) {
-		*td->cp = ':';
+	// create new URI parameter for Contact header
+	if (ctmode == 1 || ctmode == 2) {
+		if (ctmode == 1) {
+			if (dir==TPS_DIR_DOWNSTREAM) {
+				/* extract the contact address */
+				if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact==NULL) {
+					LM_WARN("bad sip message or missing Contact hdr\n");
+					return -1;
+				} else {
+					if(parse_contact(msg->contact)<0
+							|| ((contact_body_t*)msg->contact->parsed)->contacts==NULL
+							|| ((contact_body_t*)msg->contact->parsed)->contacts->next!=NULL) {
+						LM_ERR("bad Contact header\n");
+						return -1;
+					} else {
+						if (parse_uri(((contact_body_t*)msg->contact->parsed)->contacts->uri.s,
+						((contact_body_t*)msg->contact->parsed)->contacts->uri.len, &curi) < 0) {
+							LM_ERR("failed to parse the contact uri\n");
+							return -1;
+						}
+					}
+				}
+				memcpy(td->cp, curi.user.s, curi.user.len);
+				td->cp += curi.user.len;
+			} else {
+				/* extract the ruri */
+				if(parse_sip_msg_uri(msg)<0) {
+					LM_ERR("failed to parse r-uri\n");
+					return -1;
+				}
+				if(msg->parsed_uri.user.len==0) {
+					LM_ERR("no r-uri user\n");
+					return -1;
+				}
+				memcpy(td->cp, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
+				td->cp += msg->parsed_uri.user.len;
+			}
+		} else if (ctmode == 2) {
+			if (dir==TPS_DIR_DOWNSTREAM) {
+				/* extract the a contact */
+				if ((pv_get_spec_value(msg, &_tps_acontact_spec, &pv_val) != 0)
+						&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len <= 0)) {
+					LM_ERR("could not evaluate a_contact AVP\n");
+					return -1;
+				}
+				memcpy(td->cp, pv_val.rs.s, pv_val.rs.len);
+				td->cp += pv_val.rs.len;
+			} else {
+				/* extract the b contact */
+				if ((pv_get_spec_value(msg, &_tps_bcontact_spec, &pv_val) != 0)
+						&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len <= 0)) {
+					LM_ERR("could not evaluate b_contact AVP\n");
+					return -1;
+				}
+				memcpy(td->cp, pv_val.rs.s, pv_val.rs.len);
+				td->cp += pv_val.rs.len;
+			}
+		}
+		*td->cp = '@';
 		td->cp++;
-		memcpy(td->cp, puri.port.s, puri.port.len);
-		td->cp += puri.port.len;
-	}
-	if(puri.transport_val.len>0) {
-		memcpy(td->cp, ";transport=", 11);
-		td->cp += 11;
-		memcpy(td->cp, puri.transport_val.s, puri.transport_val.len);
-		td->cp += puri.transport_val.len;
+
+		if (_tps_contact_host.len) { // using configured hostname in the contact header
+			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+			td->cp += _tps_contact_host.len;
+		} else {
+			memcpy(td->cp, puri.host.s, puri.host.len);
+			td->cp += puri.host.len;
+		}
+		if(puri.port.len>0) {
+			*td->cp = ':';
+			td->cp++;
+			memcpy(td->cp, puri.port.s, puri.port.len);
+			td->cp += puri.port.len;
+		}
+		if(puri.transport_val.len>0) {
+			memcpy(td->cp, ";transport=", 11);
+			td->cp += 11;
+			memcpy(td->cp, puri.transport_val.s, puri.transport_val.len);
+			td->cp += puri.transport_val.len;
+		}
+
+		*td->cp = ';';
+		td->cp++;
+		memcpy(td->cp, _tps_cparam_name.s, _tps_cparam_name.len);
+		td->cp += _tps_cparam_name.len;
+		*td->cp = '=';
+		td->cp++;
+		if(dir==TPS_DIR_DOWNSTREAM) {
+			*td->cp = 'b';
+		} else {
+			*td->cp = 'a';
+		}
+		td->cp++;
+		memcpy(td->cp, uuid->s, uuid->len);
+		td->cp += uuid->len;
+
+	// create new user part for Contact header URI
+	} else {
+		if(dir==TPS_DIR_DOWNSTREAM) {
+			*td->cp = 'b';
+		} else {
+			*td->cp = 'a';
+		}
+		td->cp++;
+		memcpy(td->cp, uuid->s, uuid->len);
+		td->cp += uuid->len;
+		*td->cp = '@';
+		td->cp++;
+
+		if (_tps_contact_host.len) { // using configured hostname in the contact header
+			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+			td->cp += _tps_contact_host.len;
+		} else {
+			memcpy(td->cp, puri.host.s, puri.host.len);
+			td->cp += puri.host.len;
+		}
+		if(puri.port.len>0) {
+			*td->cp = ':';
+			td->cp++;
+			memcpy(td->cp, puri.port.s, puri.port.len);
+			td->cp += puri.port.len;
+		}
+		if(puri.transport_val.len>0) {
+			memcpy(td->cp, ";transport=", 11);
+			td->cp += 11;
+			memcpy(td->cp, puri.transport_val.s, puri.transport_val.len);
+			td->cp += puri.transport_val.len;
+		}
 	}
 
 	*td->cp = '>';
 	td->cp++;
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		td->bs_contact.len = td->cp - td->bs_contact.s;
+		LM_DBG("td->bs %.*s\n",  td->bs_contact.len,  td->bs_contact.s);
 	} else {
 		td->as_contact.len = td->cp - td->as_contact.s;
+		LM_DBG("td->as %.*s\n",  td->as_contact.len,  td->as_contact.s);
 	}
 	return 0;
 }
@@ -355,8 +471,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 		if(msg->first_line.type==SIP_REPLY) {
 			if(msg->first_line.u.reply.statuscode>=100
-					&& msg->first_line.u.reply.statuscode<200
-					&& msg->first_line.u.reply.statuscode!=183) {
+					&& msg->first_line.u.reply.statuscode<200) {
 				/* provisional response with no mandatory contact header */
 				return 0;
 			}
@@ -374,6 +489,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		LM_ERR("bad Contact header\n");
 		return -1;
 	}
+
 	if(msg->first_line.type==SIP_REQUEST) {
 		if(dir==TPS_DIR_DOWNSTREAM) {
 			td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
@@ -422,12 +538,14 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 		suid.len--;
 	}
 
-	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_DOWNSTREAM);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_DOWNSTREAM, _tps_contact_mode);
 	if(ret<0) goto error;
-	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM, _tps_contact_mode);
 	if(ret<0) goto error;
 
 	ret = tps_storage_link_msg(msg, td, dir);
+	if(ret<0) goto error;
+	ret = _tps_storage_api.insert_branch(td);
 	if(ret<0) goto error;
 	if(dialog==0) {
 		if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
@@ -436,8 +554,6 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret<0) goto error;
 	}
-	ret = _tps_storage_api.insert_branch(td);
-	if(ret<0) goto error;
 
 	return 0;
 
@@ -1227,7 +1343,7 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	nr_keys = 0;
 	nr_ucols = 0;
 
-	db_keys[nr_keys]=&td_col_a_uuid;
+	db_keys[nr_keys]=&tt_col_a_uuid;
 	db_ops[nr_keys]=OP_EQ;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
@@ -1250,8 +1366,7 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	}
 
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
-		if(sd->b_tag.len<=0
-				&& msg->first_line.u.reply.statuscode>=180
+		if(msg->first_line.u.reply.statuscode>=180
 				&& msg->first_line.u.reply.statuscode<200) {
 
 			db_ucols[nr_ucols] = &tt_col_y_rr;
@@ -1377,6 +1492,29 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 			nr_ucols++;
 		}
 	}
+	if(sd->b_tag.len>0 && ((mode & TPS_DBU_BRR) || (mode & TPS_DBU_ARR))) {
+		if(((md->direction == TPS_DIR_DOWNSTREAM) && (msg->first_line.type==SIP_REPLY)) ||
+					((md->direction == TPS_DIR_UPSTREAM) && (msg->first_line.type==SIP_REQUEST))) {
+			if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_BRR)) {
+				db_ucols[nr_ucols] = &td_col_b_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
+				nr_ucols++;
+			}
+		} else {
+			if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_ARR)) {
+				db_ucols[nr_ucols] = &td_col_a_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->a_rr);
+				nr_ucols++;
+				db_ucols[nr_ucols] = &td_col_s_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->s_rr);
+				nr_ucols++;
+			}
+		}
+	}
+
 	if(nr_ucols==0) {
 		return 0;
 	}

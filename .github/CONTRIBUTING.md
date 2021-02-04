@@ -37,7 +37,10 @@ and commit history, there are several *rules* required for each contribution.
 ### Basic Rules ###
 
   * github pull request is the favorited mechanism to submit contributions
-  (patches)
+  (patches). See more about at:
+    * [Github Docs On Proposing Changes With Pull Requests](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests)
+    * the URL to Kamailio project pull requests portal:
+    * https://github.com/kamailio/kamailio/pulls
   * make a pull request against **master branch**
     * commit can be later backported to stable branch(es)
   * make a pull request for each new feature
@@ -81,28 +84,48 @@ Please create the commit messages following the GIT convention:
   * start with one short line, preferably less then 50 chars summarizing the
   changes (this is referred later as "first line of the commit message")
   * then one empty line
-  * then a more detailed description
+  * then a more detailed description (the "commit message content")
+
+#### First Line Of The Commit Message ####
 
 Think of the first line as of an email "Subject" line. In fact it will be used
 as "Subject" in the generated commit emails and it will also be used when
 generating the Changelog (e.g. git log --pretty=oneline).
 
-Please start always with the prefix of the component (subsystem) that is modified by the commit, for example:
+
+The first line (subject has to contain meaningful text about what that commit
+does, do not put just a reference to bug tracker or pull request items
+
+Please start always with the prefix of the component (subsystem) that is modified
+by the commit, for example:
   * `core`: more fixup helper functions
     * `core`: tcp - support for haproxy protocol
     * `core`: mem - added faster malloc
   * `modname`: support for foo rfc extension
     * `usrloc`: support for gruu rfc extension
   * `lib`: srutils - critical bug fix for abc case
+  * `etc`: kamailio.cfg - added core reply route block
+  * `misc`: examples/kemi lua - added debug callback function
   * `kamctl`: added support for management of module xyz
+
+It is acceptable to use slightly different formats, like `etc/kamailio.cfg: ...`
+instead of `etc: kamailio.cfg - ...` or `modules/usrloc: ...` instead of
+`usrloc: ...`, the important aspect is to indicate the component where the
+changes were done.
+
+At the end of the first line some CI flags can be added. Available at this
+moment:
+
+  * `[skip ci]` - skip continous integration builds for source code, recommended
+  to be added when updating documentation, example configs or other utilities.
+  Example:
+    * `msilo: docs - updated example for m_dump() function [skip ci]`
 
 #### Commit Message Content ####
 
-  * first line (subject line) has to contain meaningful text about what that commit
-  does, do not put just a reference to bug tracker or pull request items
-  * commit message must describe the changes done by the patch
+* commit message must describe the changes done by the patch
     * other details (e.g., how to reproduce, backtrace, sip packets, ...) belong
-    to content (comments) of the pull request. Example:
+    to content (comments) of the pull request. Example of a full commit message:
 ```
 core: added latency_limit_cfg global parameter
 
@@ -148,7 +171,7 @@ dialplan: basic safety for concurrent rpc reload
 
 #### Commit Message Examples ####
 
-  * change to usrloc module from modules
+  * changes to usrloc module from modules
 
 ```
 usrloc: fixed name conflict
@@ -157,7 +180,7 @@ usrloc: fixed name conflict
   with the usr_avp.h version
 ```
 
-  * change to core
+  * changes to core
 
 ```
 core: loadpath can now use a list of directories
@@ -167,6 +190,15 @@ core: loadpath can now use a list of directories
   First match wins (e.g. for loadmodule "textops" if
   modules/textops.so or modules/textops/textops.so exists, it will
   be loaded and the search will stop).
+```
+
+  * changes to `etc/kamailio.cfg` file
+
+```
+etc: kamailio.cfg - set load_backends to 1 for permissions module
+
+- the config uses only address table
+
 ```
 
 #### See Also ####
@@ -224,8 +256,8 @@ replaced with tokens like a.b.c.d, f.g.h.j).
 Kamailio Main License: *GPLv2*.
 
 Each source code file refers to the license and copyright details in the top
-of the file. Most of the code is licensed under GPLv2, some parts of the code
-are licensed under BSD.
+of the file. Most of the code is licensed under GPLv2 (with the "any later
+version" clause), some parts of the code are licensed under BSD.
 
 ### License Of New Code Contributions ###
 

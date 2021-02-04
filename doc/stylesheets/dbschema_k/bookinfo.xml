@@ -12,10 +12,6 @@
 		<editor>
 			<firstname>Henning</firstname>
 			<surname>Westerholt</surname>
-			<affiliation><orgname>1und1 Internet AG</orgname></affiliation>
-			<address>
-				<email>henning.westerholt@1und1.de</email>
-			</address>
 		</editor>
 		<editor>
 			<firstname>Norman</firstname>
@@ -23,7 +19,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2008-2017</year>
+		<year>2008-2020</year>
 		<holder>&kamailio; Project</holder>
 	</copyright>
 </bookinfo>

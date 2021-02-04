@@ -26,7 +26,7 @@
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/kemi.h"
 #include "rd_funcs.h"
@@ -180,7 +180,7 @@ static int get_redirect_fixup(void** param, int param_no)
 		/* set the reason str */
 		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
 		if (accp==0) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;
 		}
 		memset( accp, 0, sizeof(struct acc_param));
@@ -241,8 +241,10 @@ static int regexp_compile(char *re_s, regex_t **re)
 	if (re_s==0 || strlen(re_s)==0 ) {
 		return 0;
 	} else {
-		if ((*re=pkg_malloc(sizeof(regex_t)))==0)
+		if ((*re=pkg_malloc(sizeof(regex_t)))==0) {
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
+		}
 		if (regcomp(*re, re_s, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
 			pkg_free(*re);
 			*re = 0;

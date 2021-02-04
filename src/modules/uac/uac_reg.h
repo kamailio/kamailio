@@ -23,7 +23,7 @@
 
 #include "../../core/pvar.h"
 
-#define UACREG_TABLE_VERSION 4
+#define UACREG_TABLE_VERSION 5
 
 #define UACREG_REQTO_MASK_USER 1
 #define UACREG_REQTO_MASK_AUTH 2

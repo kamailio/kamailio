@@ -26,6 +26,7 @@
 #include "../../core/timer.h"	/* ticks_t */
 
 #include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "pike_top.h"
 
 #include <stdlib.h>
@@ -39,11 +40,11 @@
 
 static unsigned int g_max_hits = 0;
 
-static void traverse_subtree( struct ip_node *node, int depth, int options )
+static void traverse_subtree( pike_ip_node_t *node, int depth, int options )
 {
 	static unsigned char ip_addr[MAX_DEPTH];
 
-	struct ip_node *foo;
+	pike_ip_node_t *foo;
 
 	DBG("pike:rpc traverse_subtree, depth: %d, byte: %d", depth, node->byte);
 
@@ -128,11 +129,11 @@ static void pike_top(rpc_t *rpc, void *c)
 		stropts = "HOT";
 
 	DBG("pike:top: string options: '%s'", stropts);
-	if ( strstr(stropts, "ALL") ) {
+	if ( strz_casesearch_strz(stropts, "ALL") ) {
 		options = NODE_STATUS_ALL;
-	} else if ( strstr(stropts, "HOT") ) {
+	} else if ( strz_casesearch_strz(stropts, "HOT") ) {
 		options |= NODE_STATUS_HOT;
-	} else if ( strstr(stropts, "WARM") ) {
+	} else if ( strz_casesearch_strz(stropts, "WARM") ) {
 		options |= NODE_STATUS_WARM;
 	}
 	DBG("pike:top: options: 0x%02x\n", options);

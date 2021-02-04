@@ -47,12 +47,12 @@
 
     <itemizedlist>
       <listitem>
-        <para>add_rr_param() - see <xref linkend="add-rr-param-id"/></para>
+        <para>add_rr_param() - see <xref linkend="rr.f.add_rr_param"/></para>
       </listitem>
 
       <listitem>
         <para>check_route_param() - see <xref
-        linkend="check-route-param-id"/></para>
+        linkend="rr.f.check_route_param"/></para>
       </listitem>
     </itemizedlist>
 
@@ -313,6 +313,26 @@ modparam("rr", "ignore_sips", 1)
 </programlisting>
       </example>
     </section>
+	<section id="rr.p.sockname_mode">
+		<title><varname>sockname_mode</varname> (int)</title>
+		<para>
+		If set to 1, the Record-Route URI is built to contain socket name in 'sn'
+		parameter.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sockname_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "sockname_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
   </section>
 
   <section>
@@ -391,6 +411,61 @@ modparam("rr", "ignore_sips", 1)
         <programlisting format="linespecific">
 ...
 loose_route();
+...
+</programlisting>
+      </example>
+    </section>
+
+	<section id="rr.f.loose_route_preloaded">
+      <title><function moreinfo="none">loose_route_preloaded()</function></title>
+
+	  <para>The function is similar to `loose_route()`, but it returns 1 (true)
+	  when the Route header is preloaded (is in an initial request) and -1
+	  (false) if processing of the Route header failed or it is for requests
+	  within dialog.</para>
+      <para>It is a convenient function to use for routing initial requests on
+      an edge proxy that adds Path header to REGISTER requests.
+      </para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>loose_route_preloaded</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(!loose_route_preloaded()) {
+   sl_send_reply("404" "Preloaded route expected");
+   exit;
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+	<section id="rr.f.loose_route_mode">
+      <title><function moreinfo="none">loose_route_mode(vmode)</function></title>
+
+	  <para>The function is similar to `loose_route()`, but it does only
+	  loose routing processing if vmode==1, skipping the testing of r-uri==myself
+	  for performing strict routing. If vmode==0, it behaves like loose_route().
+      </para>
+      <para>It is a convenient function to use with application servers that
+      set the Contact URI to SIP server address.
+      </para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>loose_route_mode</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(has_totag() and uri==myself) {
+    if(loose_route_mode("1")) {
+        rewritehostport("my.app.server:5090");
+        t_relay();
+        exit;
+    }
+}
 ...
 </programlisting>
       </example>
@@ -547,8 +622,8 @@ record_route_advertised_address("1.2.3.4:5080");
       <para>Adds a parameter to the Record-Route URI (param must be in
       <quote>;name=value</quote> format. The function may be called also
       before or after the record_route() or record_route_advertised_address()
-      calls (see <xref linkend="record-route-id"/> or <xref
-      linkend="record-route-adv-addr-id"/>)).</para>
+      calls (see <xref linkend="rr.f.record_route"/> or <xref
+      linkend="rr.f.record_route_adv_addr"/>)).</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -581,7 +656,7 @@ add_rr_param(";nat=yes");
       <para>The function checks if the URI parameters of the local Route
       header (corresponding to the local server) matches the given regular
       expression. It must be call after loose_route() (see <xref
-      linkend="loose-route-id"/>).</para>
+      linkend="rr.f.loose_route"/>).</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -612,9 +687,9 @@ if (check_route_param("nat=yes")) {
 
       <para>The function checks the flow direction of in-dialog requests. This
       function uses the <quote>ftag</quote> parameter from the Route header,
-      therefore the append_fromtag (see <xref linkend="append-fromtag-id"/>
+      therefore the append_fromtag (see <xref linkend="rr.p.append_fromtag"/>
       module parameter must be enabled. Also this must be called only after
-      loose_route() (see <xref linkend="loose-route-id"/>).</para>
+      loose_route() (see <xref linkend="rr.f.loose_route"/>).</para>
 
       <para>The function returns true if the <quote>dir</quote> is the same
       with the request's flow direction.</para>
@@ -649,6 +724,35 @@ if (is_direction("downstream")) {
 </programlisting>
       </example>
     </section>
+
+    <section id="rr.f.rr_next_hop_route">
+		<title><function moreinfo="none">rr_next_hop_route()</function></title>
+
+		<para>The function returns 1 (true) if there is a Route header for the
+			next hop address. It has to be used after loose_route(), when the
+			local Route headers are processed.
+		</para>
+
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+
+      <example>
+        <title><function>rr_next_hop_route</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(loose_route) {
+    if(rr_next_hop_route()) {
+        # next hop address is from Route header
+    }
+
+}
+...
+</programlisting>
+      </example>
+  </section>
+
   </section>
 
   <section>

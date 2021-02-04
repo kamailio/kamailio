@@ -1,0 +1,379 @@
+DLGS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2020 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. active_lifetime (int)
+              3.2. init_lifetime (int)
+              3.3. finish_lifetime (int)
+              3.4. timer_interval (int)
+
+        4. Functions
+
+              4.1. dlgs_init(src, dst, data)
+              4.2. dlgs_update()
+              4.3. dlgs_count(field, op, data)
+              4.4. dlgs_tags_add(vtag)
+              4.5. dlgs_tags_rm(vtag)
+              4.6. dlgs_tags_count(vtag)
+
+        5. RPC Commands
+
+              5.1. dlgs.list
+              5.2. dlgs.briefing
+              5.3. dlgs.get
+              5.4. dlgs.getall
+              5.5. dlgs.stats
+
+   List of Examples
+
+   1.1. Set active_lifetime parameter
+   1.2. Set init_lifetime parameter
+   1.3. Set finish_lifetime parameter
+   1.4. Set timer_interval parameter
+   1.5. dlgs_init usage
+   1.6. dlgs_update usage
+   1.7. dlgs_count usage
+   1.8. dlgs_tags_add usage
+   1.9. dlgs_tags_rm usage
+   1.10. dlgs_tags_count usage
+   1.11. dlgs.list usage
+   1.12. dlgs.briefing usage
+   1.13. dlgs.get usage
+   1.14. dlgs.get usage
+   1.15. dlgs.stats usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. active_lifetime (int)
+        3.2. init_lifetime (int)
+        3.3. finish_lifetime (int)
+        3.4. timer_interval (int)
+
+   4. Functions
+
+        4.1. dlgs_init(src, dst, data)
+        4.2. dlgs_update()
+        4.3. dlgs_count(field, op, data)
+        4.4. dlgs_tags_add(vtag)
+        4.5. dlgs_tags_rm(vtag)
+        4.6. dlgs_tags_count(vtag)
+
+   5. RPC Commands
+
+        5.1. dlgs.list
+        5.2. dlgs.briefing
+        5.3. dlgs.get
+        5.4. dlgs.getall
+        5.5. dlgs.stats
+
+1. Overview
+
+   This module tracks dialogs (active calls) in stateless mode and offers
+   statistics about them.
+
+   The dialogs can be tagged and the number of dialogs with the same tag
+   can be retrieved in configuration file.
+
+   The module aims to be a lightweight alternative to dialog module, to
+   enable SIP server instances (such as an edge proxy or SBC) to know how
+   many active calls they route, without being a call stateful proxy. The
+   tracking of active calls is done without any dependency on other
+   modules, in other words, it does not need the tm (transaction
+   management) module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. active_lifetime (int)
+   3.2. init_lifetime (int)
+   3.3. finish_lifetime (int)
+   3.4. timer_interval (int)
+
+3.1. active_lifetime (int)
+
+   The lifetime in seconds of an active dialog in memory. A dialog is
+   considered active after the ACK of 200OK for INVITE.
+
+   Default value is 10800 (3 hours).
+
+   Example 1.1. Set active_lifetime parameter
+...
+modparam("dlgs", "active_lifetime", 3600)
+...
+
+3.2. init_lifetime (int)
+
+   The lifetime in seconds of an initial dialog in memory. A dialog is in
+   initial state from the moment of creation until it gets to active
+   state. If the dialog stays longer in the initial state, then it is
+   destroyed by the next timer cleanup.
+
+   Default value is 180 (3 minutes).
+
+   Example 1.2. Set init_lifetime parameter
+...
+modparam("dlgs", "init_lifetime", 240)
+...
+
+3.3. finish_lifetime (int)
+
+   The lifetime in seconds of a finished dialog in memory. A dialog is
+   finished if the initial INVITE was not answered or the BYE was
+   received. Once this lifetime passes, the dialog record is removed from
+   memory by the next timer cleanup.
+
+   Default value is 10 (seconds).
+
+   Example 1.3. Set finish_lifetime parameter
+...
+modparam("dlgs", "finish_lifetime", 20)
+...
+
+3.4. timer_interval (int)
+
+   The value in secods to run the timer callback function for cleaning up
+   dialogs past the lifetime limit.
+
+   Default value is 30.
+
+   Example 1.4. Set timer_interval parameter
+...
+modparam("dlgs", "timer_interval", 60)
+...
+
+4. Functions
+
+   4.1. dlgs_init(src, dst, data)
+   4.2. dlgs_update()
+   4.3. dlgs_count(field, op, data)
+   4.4. dlgs_tags_add(vtag)
+   4.5. dlgs_tags_rm(vtag)
+   4.6. dlgs_tags_count(vtag)
+
+4.1.  dlgs_init(src, dst, data)
+
+   Start track the dialog corresponding to the current SIP message. It has
+   to be used for INVITE messages.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   ONREPLY_ROUTE, ONSEND_ROUTE.
+
+   Example 1.5. dlgs_init usage
+...
+onsend_route {
+    ...
+    if(is_method("INVITE")) {
+        dlgs_init("$fu", "$tu", "my data");
+    }
+    ...
+}
+...
+
+4.2.  dlgs_update()
+
+   Update dialog state. It has to be used for SIP requests only, the SIP
+   responses are handled automatically.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   ONSEND_ROUTE.
+
+   Example 1.6. dlgs_update usage
+...
+request_route {
+    ...
+    if(is_method("ACK|BYE|CANCEL")) {
+        dlgs_update();
+    }
+    ...
+}
+...
+
+4.3.  dlgs_count(field, op, data)
+
+   Return the number of dialogs matching the filter specified by the
+   parameters. It does not count the dialogs that are finished (not
+   answered or terminated with BYE).
+
+   The field parameter can be: 'src', 'dst', 'data' to specify what dialog
+   attribute has to be used for matching. It can be also 'any' to get the
+   count of all ongoing dialogs.
+
+   The op parameter can be: 'eq' - equal; 'ne' - not equal; 're' - regex;
+   'sw' - start with; 'fm' - fnmatch.
+
+   In case of error or no dialog matched, it returns -1 or other negative
+   (false) value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. dlgs_count usage
+...
+request_route {
+    ...
+    $var(count) = dlgs_count("src", "eq", "$fu");
+    if($var(count) > 0) {
+        # caller has ongoing dialogs
+    }
+    ...
+    $var(allcalls) = dlgs_count("any", "eq", "*");
+    if($var(allcalls) > 0) {
+        # there are ongoing dialogs
+    }
+    ...
+}
+...
+
+4.4.  dlgs_tags_add(vtag)
+
+   Add a tag to current dialog.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. dlgs_tags_add usage
+...
+request_route {
+    ...
+    dlgs_tags_add("$si");
+    ...
+}
+...
+
+4.5.  dlgs_tags_rm(vtag)
+
+   Remove a tag from current dialog.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. dlgs_tags_rm usage
+...
+request_route {
+    ...
+    dlgs_tags_rm("$si");
+    ...
+}
+...
+
+4.6.  dlgs_tags_count(vtag)
+
+   Count all tags for ongoing dialogs matching the parameter.
+
+   It returns -1 if no tag for ongoing dialogs is matched or there was an
+   error.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. dlgs_tags_count usage
+...
+request_route {
+    ...
+    $var(tcount) = dlgs_tags_count("$si");
+    ...
+}
+...
+
+5. RPC Commands
+
+   5.1. dlgs.list
+   5.2. dlgs.briefing
+   5.3. dlgs.get
+   5.4. dlgs.getall
+   5.5. dlgs.stats
+
+5.1.  dlgs.list
+
+   List dialog records.
+
+   Example 1.11. dlgs.list usage
+...
+kamctl rpc dlgs.list
+...
+
+5.2.  dlgs.briefing
+
+   List dialog records with fewer attributes per record.
+
+   Example 1.12. dlgs.briefing usage
+...
+kamctl rpc dlgs.briefing
+...
+
+5.3.  dlgs.get
+
+   Prototype: dlgs.get field op data
+
+   List first dialog record matching the filter. The parameters have the
+   same meaning like those for dlgs_count(...).
+
+   Example 1.13. dlgs.get usage
+...
+kamctl rpc dlgs.get src eq sip:alice@sipserver.com
+...
+
+5.4.  dlgs.getall
+
+   Prototype: dlgs.getall field op data
+
+   List all dialog records matching the filter. The parameters have the
+   same meaning like those for dlgs_count(...).
+
+   Example 1.14. dlgs.get usage
+...
+kamctl rpc dlgs.get src eq sip:alice@sipserver.com
+...
+
+5.5.  dlgs.stats
+
+   Return dialog statistics.
+
+   Example 1.15. dlgs.stats usage
+...
+kamctl rpc dlgs.stats
+...

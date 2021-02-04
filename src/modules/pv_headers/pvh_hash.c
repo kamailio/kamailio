@@ -1,16 +1,18 @@
 /*
- * PV Headers
+ * pv_headers
  *
- * Copyright (C) 2018 Kirill Solomko <ksolomko@sipwise.com>
+ * Copyright (C)
+ * 2020 Victor Seva <vseva@sipwise.com>
+ * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
- * This file is part of SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP Router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -78,11 +80,12 @@ int pvh_str_hash_add_key(struct str_hash_table *ht, str *key)
 		goto err;
 	pvh_str_copy(&e->key, key, key->len + 1);
 
-	str_hash_add(ht, e);
+	str_hash_case_add(ht, e);
 	return 1;
 
 err:
 	pvh_str_free(&e->key);
+	pkg_free(e);
 	return -1;
 }
 
@@ -114,7 +117,7 @@ int pvh_skip_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_get(&skip_headers, hname->s, hname->len))
+	if(str_hash_case_get(&skip_headers, hname->s, hname->len))
 		return 1;
 
 	return 0;
@@ -125,7 +128,7 @@ int pvh_single_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_get(&single_headers, hname->s, hname->len))
+	if(str_hash_case_get(&single_headers, hname->s, hname->len))
 		return 1;
 
 	return 0;

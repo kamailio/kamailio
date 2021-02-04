@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -59,7 +59,7 @@ typedef struct dmq_node_list
 } dmq_node_list_t;
 
 extern str dmq_node_status_str;
-extern dmq_node_list_t *node_list;
+extern dmq_node_list_t *dmq_node_list;
 
 dmq_node_list_t *init_dmq_node_list();
 dmq_node_t *build_dmq_node(str *uri, int shm);
@@ -80,7 +80,7 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params);
 str *dmq_get_status_str(int status);
 int build_node_str(dmq_node_t *node, char *buf, int buflen);
 
-extern dmq_node_t *self_node;
-extern dmq_node_t *notification_node;
+extern dmq_node_t *dmq_self_node;
+extern dmq_node_t *dmq_notification_node;
 
 #endif

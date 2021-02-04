@@ -80,6 +80,7 @@ MODULE_VERSION
 #define INSTANCE_COL   "instance"
 #define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
+#define UNIQ_COL       "uniq"
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
@@ -143,6 +144,7 @@ str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the
 str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
 str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
+str uniq_col        = str_init(UNIQ_COL);		/*!< Name of column containing the uniq value*/
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
@@ -183,7 +185,7 @@ str default_db_type   = str_init(DEFAULT_DB_TYPE);
 str domain_db         = str_init(DEFAULT_DOMAIN_DB);
 int default_dbt       = 0;
 int expire            = 0;
-db_shared_param_t *write_on_master_db_shared;
+int *mdb_w_available;
 
 /*! \brief
  * Exported functions
@@ -216,7 +218,7 @@ static param_export_t params[] = {
 	{"path_column",       PARAM_STR, &path_col      },
 	{"socket_column",     PARAM_STR, &sock_col      },
 	{"methods_column",    PARAM_STR, &methods_col   },
-	{"matching_mode",     INT_PARAM, &matching_mode   },
+	{"matching_mode",     INT_PARAM, &default_p_usrloc_cfg.matching_mode},
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
@@ -247,7 +249,7 @@ static param_export_t params[] = {
 	{"write_on_master_db",   INT_PARAM, &db_master_write     },
 	{"connection_expires",   INT_PARAM, &connection_expires  },
 	{"alg_location",         INT_PARAM, &alg_location },
-    {"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
+	{"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
 	{"db_update_as_insert",  INT_PARAM, &default_p_usrloc_cfg.db_update_as_insert},
 	{"mdb_availability_control", INT_PARAM, &mdb_availability_control},
 	{0, 0, 0}
@@ -299,6 +301,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int matching_mode_cfg = cfg_get(p_usrloc, p_usrloc_cfg, matching_mode);
+
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
@@ -306,13 +310,6 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-
-	if((write_on_master_db_shared = shm_malloc(sizeof(db_shared_param_t))) == NULL) {
-		LM_ERR("couldn't allocate shared memory.\n");
-		return -1;
-	} else {
-		write_on_master_db_shared->val = db_master_write;
-	}
 
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
@@ -325,13 +322,13 @@ static int mod_init(void)
 	        return -1;
 	}
 	/* check matching mode */
-	switch (matching_mode) {
+	switch (matching_mode_cfg) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
 			break;
 		default:
-			LM_ERR("invalid matching mode %d\n", matching_mode);
+			LM_ERR("invalid matching mode %d\n", matching_mode_cfg);
 	}
 
 	if(ul_init_locks()!=0)
@@ -402,14 +399,18 @@ static int mod_init(void)
 		LM_ERR("could not init database watch environment.\n");
 		return -1;
 	}
-	if (lock_init(&write_on_master_db_shared->lock)==0){
-		LM_ERR("could not initialise lock\n");
+
+	if((mdb_w_available = shm_malloc(sizeof(int))) == NULL) {
+		LM_ERR("couldn't allocate shared memory. \n");
+		return -1;
 	}
-	if(write_on_master_db_shared->val){
+	if (db_master_write) {
 		/* register extra dummy timer to be created in init_db_check() */
 		register_dummy_timers(1);
+		if (mdb_availability_control) {
+			check_master_db();
+		}
 	}
-        check_master_db(db_master_write);
 	return 0;
 }
 
@@ -418,7 +419,7 @@ static int child_init(int _rank)
 {
 	if(_rank==PROC_INIT) {
 		if(init_db_check() < 0){
-				LM_ERR("could not initialise database check.\n");
+			LM_ERR("could not initialise database check.\n");
 			return -1;
 		}
 		return 0;

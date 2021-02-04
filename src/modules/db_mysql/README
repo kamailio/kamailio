@@ -31,6 +31,7 @@ Daniel-Constantin Mierla
               3.4. auto_reconnect (integer)
               3.5. insert_delayed (integer)
               3.6. update_affected_found (integer)
+              3.7. opt_ssl_mode (integer)
 
         4. Functions
         5. Installation
@@ -44,9 +45,10 @@ Daniel-Constantin Mierla
    1.4. Set auto_reconnect parameter
    1.5. Set insert_delayed parameter
    1.6. Set update_affected_found parameter
-   1.7. Set a my.cnf group in db_url parameter
-   1.8. Adding a kamailio group to my.cnf
-   1.9. Using [client] and specific group
+   1.7. Set opt_ssl_mode parameter
+   1.8. Set a my.cnf group in db_url parameter
+   1.9. Adding a kamailio group to my.cnf
+   1.10. Using [client] and specific group
 
 Chapter 1. Admin Guide
 
@@ -66,6 +68,7 @@ Chapter 1. Admin Guide
         3.4. auto_reconnect (integer)
         3.5. insert_delayed (integer)
         3.6. update_affected_found (integer)
+        3.7. opt_ssl_mode (integer)
 
    4. Functions
    5. Installation
@@ -101,6 +104,7 @@ Chapter 1. Admin Guide
    3.4. auto_reconnect (integer)
    3.5. insert_delayed (integer)
    3.6. update_affected_found (integer)
+   3.7. opt_ssl_mode (integer)
 
 3.1. ping_interval (integer)
 
@@ -181,6 +185,30 @@ modparam("db_mysql", "insert_delayed", 1)
 modparam("db_mysql", "update_affected_found", 1)
 ...
 
+3.7. opt_ssl_mode (integer)
+
+   Control how the connection to MySQL server is done in regards to
+   SSL/TLS. If set to 1, SSL/TLS mode is disabled.
+
+   The 'include/mysql.h' starting with MySQL 5.7.11 defines the values for
+   this option as enum: 'mysql_ssl_mode { SSL_MODE_DISABLED=1,
+   SSL_MODE_PREFERRED, SSL_MODE_REQUIRED, SSL_MODE_VERIFY_CA,
+   SSL_MODE_VERIFY_IDENTITY}'.
+
+   Note: if the value of this parameter is 1, it enforces
+   SSL_MODE_DISABLED, any other value is passed to the mysql_options(),
+   not checking if it is defined.
+
+   Note: this option is supported only by libmysqlclient, not by
+   libmariadbclient.
+
+   Default value is 0 (0 - off).
+
+   Example 1.7. Set opt_ssl_mode parameter
+...
+modparam("db_mysql", "opt_ssl_mode", 1)
+...
+
 4. Functions
 
    No function exported to be used from configuration file.
@@ -207,12 +235,12 @@ modparam("db_mysql", "update_affected_found", 1)
      * mysql://user:pass@[group]/db
      * mysql://[group]/db
 
-   Example 1.7. Set a my.cnf group in db_url parameter
+   Example 1.8. Set a my.cnf group in db_url parameter
 ...
 modparam("usrloc", "db_url", "mysql://[kamailio]/kamailio)
 ...
 
-   Example 1.8. Adding a kamailio group to my.cnf
+   Example 1.9. Adding a kamailio group to my.cnf
 ...
 [kamailio]
 socket = /path/to/mysql.sock
@@ -226,7 +254,7 @@ default-character-set = utf8
    both your specific group and the client group, then the value is taken
    from the last one.
 
-   Example 1.9. Using [client] and specific group
+   Example 1.10. Using [client] and specific group
 ...
 [client]
 socket = /run/mysql/mysqld.sock

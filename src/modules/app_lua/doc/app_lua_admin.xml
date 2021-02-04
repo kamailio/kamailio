@@ -31,6 +31,10 @@
     	</itemizedlist>
 	</para>
 	<para>
+		Note: to have the old Lua module 'sr' available, load the 'app_lua_sr'
+		&kamailio; module.
+	</para>
+	<para>
 		Lua (http://www.lua.org) is a fast and easy to embed scripting
 		language. Exported API from SIP router to Lua is documented in the
 		dokuwiki.
@@ -207,7 +211,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 		<title><function>lua_dostring</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
+if(!lua_dostring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
     xdbg("SCRIPT: failed to execute lua script!\n");
 }
@@ -257,7 +261,7 @@ lua_run("lua_func3", "$rU", "2", "$si");
 		<title><function>lua_runstring</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
+if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
     xdbg("SCRIPT: failed to execute lua script!\n");
 }
@@ -346,7 +350,7 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 <programlisting format="linespecific">
 ...
 function sr_append_fu_to_reply()
-	sr.hdr.append_to_reply("P-From: " .. sr.pv.get("$fu") .. "\r\n");
+	KSR.hdr.append_to_reply("P-From: " .. KSR.pv.get("$fu") .. "\r\n");
 end
 ...
 </programlisting>

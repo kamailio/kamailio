@@ -26,6 +26,7 @@
 #include <limits.h>
 
 #include "../../core/lvalue.h"
+#include "../../core/xavp.h"
 
 #include "jansson_utils.h"
 
@@ -75,6 +76,56 @@ int jansson_to_val(pv_value_t* val, char** freeme, json_t* v) {
 		}
 	}else if(json_is_null(v)) {
 		val->flags = PV_VAL_NULL;
+	}else {
+		ERR("unrecognized json type: %d\n", json_typeof(v));
+		return -1;
+	}
+	return 0;
+}
+
+int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
+	if(json_is_object(v) || json_is_array(v)) {
+		const char* value = json_dumps(v, JSON_COMPACT|JSON_PRESERVE_ORDER);
+		*freeme = (char*)value;
+		val->type = SR_XTYPE_STR;
+		val->v.s.s = (char*)value;
+		val->v.s.len = strlen(value);
+	}else if(json_is_string(v)) {
+		const char* value = json_string_value(v);
+		val->type = SR_XTYPE_STR;
+		val->v.s.s = (char*)value;
+		val->v.s.len = strlen(value);
+	}else if(json_is_boolean(v)) {
+		val->type = SR_XTYPE_INT;
+		val->v.i = json_is_true(v) ? 1 : 0;
+	}else if(json_is_real(v)) {
+		char* value = NULL;
+		if(asprintf(&value, "%.15g", json_real_value(v))<0) {
+			ERR("asprintf failed\n");
+			return -1;
+		}
+		*freeme = value;
+		val->type = SR_XTYPE_STR;
+		val->v.s.s = value;
+		val->v.s.len = strlen(value);
+	}else if(json_is_integer(v)) {
+		long long value = json_integer_value(v);
+		if ((value > INT_MAX) || (value < INT_MIN))  {
+			char* svalue = NULL;
+			if (asprintf(&svalue, "%"JSON_INTEGER_FORMAT, value) < 0) {
+				ERR("asprintf failed\n");
+				return -1;
+			}
+			*freeme = svalue;
+			val->type = SR_XTYPE_STR;
+			val->v.s.s = svalue;
+			val->v.s.len = strlen(svalue);
+		} else {
+			val->type = SR_XTYPE_INT;
+			val->v.i = (int)value;
+		}
+	}else if(json_is_null(v)) {
+		val->type = SR_XTYPE_NULL;
 	}else {
 		ERR("unrecognized json type: %d\n", json_typeof(v));
 		return -1;

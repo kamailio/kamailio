@@ -2,9 +2,9 @@ Standalone libraries:
 ---------------------
 
 binrpc - A library that provides common interface for different communication
-         methods (UNIX sockets, TCP, UDP) using binary RPC as a transport form 
-         of data. The interface is documented directly in binrpc_api.h file and 
-         can by generated into HTML form by using Doxygen. There is no 
+         methods (UNIX sockets, TCP, UDP) using binary RPC as a transport form
+         of data. The interface is documented directly in binrpc_api.h file and
+         can by generated into HTML form by using Doxygen. There is no
          difference between compilation "with" or "without" SER (see compilation
          section below).
 
@@ -30,7 +30,7 @@ shm_regex - Wrapper functions for regcomp, regexec, regfree and regerror
 Used by modules: pa, rls, dialog, rpa
 
 trie - Common digit trie implementation for prefix matching, used by
-       carrierroute and userblacklist
+       carrierroute and userblocklist
 
 Used by IMS modules: icscf, usrloc_scscf, usrloc_pcscf, registrar_scscf, registrar_pcscf
 

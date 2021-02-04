@@ -258,11 +258,11 @@ int put_task(peer *p, AAAMessage *msg) {
 		length_percentage = num_tasks/tasks->max*100;
 		if(length_percentage > workerq_length_threshold_percentage) {
 			LM_WARN("Queue length has exceeded length threshold percentage"
-					" [%i] and is length [%i]", length_percentage, num_tasks);
+					" [%i] and is length [%i]\n", length_percentage, num_tasks);
 		}
 	}
 	//int num_tasks = tasks->end - tasks->start;
-	//LM_ERR("Added task to task queue.  Queue length [%i]", num_tasks);
+	//LM_ERR("Added task to task queue.  Queue length [%i]\n", num_tasks);
 
 
 	return 1;
@@ -300,7 +300,7 @@ task_t take_task() {
 	lock_release(tasks->lock);
 
 	//int num_tasks = tasks->end - tasks->start;
-	//LM_ERR("Taken task from task queue.  Queue length [%i]", num_tasks);
+	//LM_ERR("Taken task from task queue.  Queue length [%i]\n", num_tasks);
 
 
 	return t;

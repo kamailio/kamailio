@@ -182,7 +182,7 @@
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>backend(string)</varname></title>
+		<title><varname>backend</varname> (string)</title>
 		<para>
 		The mode you are using the module; it can be either "component" or "server".
 		</para>
@@ -230,7 +230,7 @@
 		<para>
 			The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA has to
 			use outbound proxy to SIP-to-XMPP gateway IP address. It has to be used
-			as domain in the the destination address of the messages sent by SIP users
+			as domain in the destination address of the messages sent by SIP users
 			to XMPP users:
 			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain".
 		</para>

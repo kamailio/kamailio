@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,11 +31,11 @@
 #include "peer.h"
 #include "dmq_funcs.h"
 
-extern str notification_content_type;
+extern str dmq_notification_content_type;
 extern int *dmq_init_callback_done;
 
 int add_notification_peer();
-int dmq_notification_callback(
+int dmq_notification_callback_f(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node);
 int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg);
 str *build_notification_body();
@@ -44,7 +44,7 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen);
  * this is acomplished by a KDMQ request
  * KDMQ notification@server:port
  * node - the node to send to
- * forward - flag that tells if the node receiving the message is allowed to 
+ * forward - flag that tells if the node receiving the message is allowed to
  *           forward the request to its own list
  */
 int request_nodelist(dmq_node_t *node, int forward);
@@ -53,6 +53,6 @@ dmq_node_t *add_server_and_notify(str *server_address);
 /* helper functions */
 extern int notification_resp_callback_f(
 		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
-extern dmq_resp_cback_t notification_callback;
+extern dmq_resp_cback_t dmq_notification_resp_callback;
 
 #endif

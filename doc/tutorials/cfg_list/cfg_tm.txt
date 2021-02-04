@@ -153,35 +153,35 @@ Configuration Variables for tm
         Type: integer.
 
 25. tm.blst_503
-        if set to 1, blacklist 503 SIP response sources.
+        if set to 1, blocklist 503 SIP response sources.
         Default: 0.
         Range: 0 - 1.
         Type: integer.
 
 26. tm.blst_503_def_timeout
-        default 503 blacklist time (in s), when no Retry-After header
+        default 503 blocklist time (in s), when no Retry-After header
         is present.
         Default: 0.
         Type: integer.
 
 27. tm.blst_503_min_timeout
-        minimum 503 blacklist time (in s).
+        minimum 503 blocklist time (in s).
         Default: 0.
         Type: integer.
 
 28. tm.blst_503_max_timeout
-        maximum 503 blacklist time (in s).
+        maximum 503 blocklist time (in s).
         Default: 3600.
         Type: integer.
 
 29. tm.blst_methods_add
-        bitmap of method types that trigger blacklisting on transaction
+        bitmap of method types that trigger blocklisting on transaction
         timeouts.
         Default: 1.
         Type: integer.
 
 30. tm.blst_methods_lookup
-        Bitmap of method types that are looked-up in the blacklist
+        Bitmap of method types that are looked-up in the blocklist
         before statefull forwarding.
         Default: -9.
         Type: integer.

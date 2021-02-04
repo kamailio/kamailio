@@ -240,7 +240,7 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 				_pkg_proc_stats_list[i].total_size = _pkg_proc_stats_list[0].total_size;
 				_pkg_proc_stats_list[i].rank = PROC_NOCHLDINIT;
 			}
-			if(rpc->struct_add(th, "dddddddd",
+			if(rpc->struct_add(th, "dddddddds",
 							"entry",     i,
 							"pid",       _pkg_proc_stats_list[i].pid,
 							"rank",      _pkg_proc_stats_list[i].rank,
@@ -248,7 +248,8 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 							"free",      _pkg_proc_stats_list[i].available,
 							"real_used", _pkg_proc_stats_list[i].real_used,
 							"total_size",  _pkg_proc_stats_list[i].total_size,
-							"total_frags", _pkg_proc_stats_list[i].total_frags
+							"total_frags", _pkg_proc_stats_list[i].total_frags,
+							"desc",pt[i].desc
 						)<0)
 			{
 				rpc->fault(ctx, 500, "Internal error creating rpc");
@@ -261,8 +262,36 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 /**
  *
  */
+static const char* rpc_pkg_info_doc[2] = {
+	"Private memory manager details",
+	0
+};
+
+/**
+ *
+ */
+static void rpc_pkg_info(rpc_t* rpc, void* ctx)
+{
+	void* th;
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return;
+	}
+	if(rpc->struct_add(th, "su",
+			"name", (_pkg_root.mname)?_pkg_root.mname:"unknown",
+			"size", (unsigned int)pkg_mem_size) <0) {
+		rpc->fault(ctx, 500, "Internal error adding fields");
+		return;
+	}
+}
+
+/**
+ *
+ */
 rpc_export_t kex_pkg_rpc[] = {
 	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       RET_ARRAY},
+	{"pkg.info",  rpc_pkg_info,   rpc_pkg_info_doc,        0},
 	{0, 0, 0, 0}
 };
 

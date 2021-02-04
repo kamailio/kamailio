@@ -626,6 +626,29 @@ modparam("acc", "acc_prepare_always", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.acc_extra_nullable">
+		<title><varname>acc_extra_nullable</varname> (integer)</title>
+		<para>
+			If set to 1, the database acc extra fields are set to NULL if the
+			corresponding script variable is not defined or has $null value. If
+			set to 0, the value is saved as empty string (the existing behavior).
+		</para>
+		<para>
+		Database columns may need to be altered to DROP NOT NULL constraints
+		and DROP DEFAULT values in order to accept NULL values.
+		</para>
+		<para>
+		Default value is 0.
+		</para>
+		<example>
+		<title>acc_extra_nullable example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "acc_extra_nullable", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="acc.p.multi_leg_info">
 		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
@@ -1037,6 +1060,23 @@ modparam("acc", "cdr_enable", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="acc.p.cdr_skip">
+		<title><varname>cdr_skip</varname> (string)</title>
+		<para>
+		Skip cdr generation for dialogs with this dlg_var set.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>cdr_skip example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_skip", "nocdr")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="acc.p.cdr_expired_dlg_enable">
 		<title><varname>cdr_expired_dlg_enable</varname> (integer)</title>
 		<para>
@@ -1119,6 +1159,10 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 		<para>
 		If set to 0, custom CDR fields not defined in config operation (or set to $null) will be saved as empty string.
 		If set to 1, custom CDR fields not defined in config operation (or set to $null) will be saved as NULL.
+		</para>
+		<para>
+		Database columns may need to be altered to DROP NOT NULL constraints
+		and DROP DEFAULT values in order to accept NULL values.
 		</para>
 		<para>
 		Default value is 0.

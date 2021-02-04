@@ -228,6 +228,7 @@ static int ki_rtjson_update_branch(sip_msg_t *msg)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_rtjson_exports[] = {
 	{ str_init("rtjson"), str_init("init_routes"),
 		SR_KEMIP_INT, ki_rtjson_init_routes,
@@ -252,6 +253,7 @@ static sr_kemi_t sr_kemi_rtjson_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

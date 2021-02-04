@@ -16,7 +16,7 @@
 
 /*! \file
  * \brief
- * blst module :: Blacklist related script functions
+ * blst module :: Blocklist related script functions
  *
  */
 
@@ -25,7 +25,7 @@
 #include "../../core/dprint.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/hf.h"
-#include "../../core/dst_blacklist.h"
+#include "../../core/dst_blocklist.h"
 #include "../../core/timer_ticks.h"
 #include "../../core/ip_addr.h"
 #include "../../core/compiler_opt.h"
@@ -43,7 +43,7 @@ static int blst_add0_f(struct sip_msg*, char*, char*);
 static int blst_add1_f(struct sip_msg*, char*, char*);
 static int blst_add_retry_after_f(struct sip_msg*, char*, char*);
 static int blst_del_f(struct sip_msg*, char*, char*);
-static int blst_is_blacklisted_f(struct sip_msg*, char*, char*);
+static int blst_is_blocklisted_f(struct sip_msg*, char*, char*);
 static int blst_set_ignore_f(struct sip_msg*, char*, char*);
 static int blst_clear_ignore_f(struct sip_msg*, char*, char*);
 static int blst_rpl_set_ignore_f(struct sip_msg*, char*, char*);
@@ -60,7 +60,7 @@ static cmd_export_t cmds[]={
 			ANY_ROUTE},
 	{"blst_del",              blst_del_f,              0, 0, 0,
 			ANY_ROUTE},
-	{"blst_is_blacklisted",   blst_is_blacklisted_f,   0, 0, 0,
+	{"blst_is_blocklisted",   blst_is_blocklisted_f,   0, 0, 0,
 			ANY_ROUTE},
 	{"blst_set_ignore",       blst_set_ignore_f,       0,  0, 0,
 			ANY_ROUTE},
@@ -104,10 +104,10 @@ struct module_exports exports= {
  */
 static int ki_blst_add(sip_msg_t* msg, int t)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	struct dest_info src;
 
-	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+	if (likely(cfg_get(core, core_cfg, use_dst_blocklist))){
 		if (t==0)
 			t=cfg_get(core, core_cfg, blst_timeout);
 		init_dest_info(&src);
@@ -115,16 +115,16 @@ static int ki_blst_add(sip_msg_t* msg, int t)
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
-		dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
+		dst_blocklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
 									S_TO_TICKS(t));
 		return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_add: blacklist support disabled\n");
+		LOG(L_WARN, "WARNING: blst: blst_add: blocklist support disabled\n");
 	}
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_add: blacklist support not compiled-in"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_add: blocklist support not compiled-in"
 			" - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -162,12 +162,12 @@ static int blst_add1_f(struct sip_msg* msg, char* to, char* foo)
  */
 static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	int t;
 	struct dest_info src;
 	struct hdr_field* hf;
 
-	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+	if (likely(cfg_get(core, core_cfg, use_dst_blocklist))){
 		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
@@ -189,17 +189,17 @@ static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 		t=MAX_unsigned(t, t_min);
 		t=MIN_unsigned(t, t_max);
 		if (likely(t))
-			dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
+			dst_blocklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
 										S_TO_TICKS(t));
 		return 1;
 	}else{
 		LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
-					" blacklist support disabled\n");
+					" blocklist support disabled\n");
 	}
-#else /* USE_DST_BLACKLIST */
+#else /* USE_DST_BLOCKLIST */
 	LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
-			" blacklist support not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+			" blocklist support not compiled-in - no effect -\n");
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -228,25 +228,25 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
  */
 static int ki_blst_del(sip_msg_t* msg)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	struct dest_info src;
 
-	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+	if (likely(cfg_get(core, core_cfg, use_dst_blocklist))){
 
 		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
-		if (dst_blacklist_del(&src, msg))
+		if (dst_blocklist_del(&src, msg))
 			return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_del: blacklist support disabled\n");
+		LOG(L_WARN, "WARNING: blst: blst_del: blocklist support disabled\n");
 	}
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_del: blacklist support not compiled-in"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_del: blocklist support not compiled-in"
 			" - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return -1;
 }
 
@@ -263,27 +263,27 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 /**
  *
  */
-static int ki_blst_is_blacklisted(sip_msg_t* msg)
+static int ki_blst_is_blocklisted(sip_msg_t* msg)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	struct dest_info src;
 
-	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+	if (likely(cfg_get(core, core_cfg, use_dst_blocklist))){
 		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
-		if (dst_is_blacklisted(&src, msg))
+		if (dst_is_blocklisted(&src, msg))
 			return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_is_blacklisted:"
-					" blacklist support disabled\n");
+		LOG(L_WARN, "WARNING: blst: blst_is_blocklisted:"
+					" blocklist support disabled\n");
 	}
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_is_blacklisted:"
-				" blacklist support not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_is_blocklisted:"
+				" blocklist support not compiled-in - no effect -\n");
+#endif /* USE_DST_BLOCKLIST */
 	return -1;
 }
 
@@ -291,9 +291,9 @@ static int ki_blst_is_blacklisted(sip_msg_t* msg)
 /**
  *
  */
-static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
+static int blst_is_blocklisted_f(struct sip_msg* msg, char* foo, char* bar)
 {
-	return ki_blst_is_blacklisted(msg);
+	return ki_blst_is_blocklisted(msg);
 }
 
 
@@ -302,16 +302,16 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
  */
 static int ki_blst_set_ignore(sip_msg_t* msg, int mask)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	unsigned char blst_imask;
 
 	blst_imask=mask;
 	msg->fwd_send_flags.blst_imask|=blst_imask;
 	return 1;
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
 				" not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -342,16 +342,16 @@ static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
  */
 static int ki_blst_clear_ignore(sip_msg_t* msg, int mask)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	unsigned char blst_imask;
 
 	blst_imask=mask;
 	msg->fwd_send_flags.blst_imask&=~blst_imask;
 	return 1;
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
 				" not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -383,16 +383,16 @@ static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
  */
 static int ki_blst_rpl_set_ignore(sip_msg_t* msg, int mask)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	unsigned char blst_imask;
 
 	blst_imask=mask;
 	msg->rpl_send_flags.blst_imask|=blst_imask;
 	return 1;
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
 				" not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -425,16 +425,16 @@ static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
  */
 static int ki_blst_rpl_clear_ignore(sip_msg_t* msg, int mask)
 {
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 	unsigned char blst_imask;
 
 	blst_imask=mask;
 	msg->rpl_send_flags.blst_imask&=~blst_imask;
 	return 1;
-#else /* USE_DST_BLACKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+#else /* USE_DST_BLOCKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
 				" not compiled-in - no effect -\n");
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
 
@@ -486,8 +486,8 @@ static sr_kemi_t sr_kemi_blst_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("blst"), str_init("blst_is_blacklisted"),
-		SR_KEMIP_INT, ki_blst_is_blacklisted,
+	{ str_init("blst"), str_init("blst_is_blocklisted"),
+		SR_KEMIP_INT, ki_blst_is_blocklisted,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

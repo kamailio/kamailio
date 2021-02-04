@@ -97,8 +97,8 @@ void check_dbs(unsigned int ticks, void *param){
 	int found;
 	int i;
 
-	if(mdb_availability_control) {
-		check_master_db(db_master_write);
+	if (db_master_write && mdb_availability_control) {
+		check_master_db();
 	}
 	if(!list_lock){
 		return;
@@ -152,20 +152,19 @@ void check_dbs(unsigned int ticks, void *param){
 	lock_release(list_lock);
 }
 
-void check_master_db(int dbm_write_default) {
+void check_master_db() {
 	if(mdb.write.dbh){
 		mdb.write.dbf.close(mdb.write.dbh);
 		mdb.write.dbh = NULL;
 	}
 
-	lock_get(&write_on_master_db_shared->lock);
 	if((mdb.write.dbh  = mdb.write.dbf.init(mdb.write.url)) == NULL) {
-		write_on_master_db_shared->val = 0;
-		LM_WARN("Master db is unavailable.\n");
+		LM_INFO("Master db is unavailable.\n");
+		*mdb_w_available = 0;
 	} else {
-		write_on_master_db_shared->val = dbm_write_default;
+		LM_INFO("Master db is available.\n");
+		*mdb_w_available = 1;
 	}
-	lock_release(&write_on_master_db_shared->lock);
 }
 
 int ul_register_watch_db(int id){

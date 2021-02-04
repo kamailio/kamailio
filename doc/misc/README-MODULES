@@ -52,7 +52,7 @@ auth_radius		Radius authentication
 avp			Collection of functions for handling AVP's (from SER)
 avpops			Attribute-value pair operations ("variables")
 benchmark		Development benchmark module
-blst			Blacklisting API for configuration scripts
+blst			Blocklisting API for configuration scripts
 call_control		Call timeouts and management (depends on Dialog module)
 carrierroute		A telephony routing module
 cdp			C Diameter Peer - core communication engine

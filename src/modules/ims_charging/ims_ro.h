@@ -28,5 +28,6 @@ void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, 
 int get_direction_as_int(str* direction);
 
 void init_custom_user(pv_spec_t *custom_user_avp);
+void init_app_provided_party(pv_spec_t *app_provided_party_avp_p);
 
 #endif /* CLIENT_RF_IMS_RO_H */

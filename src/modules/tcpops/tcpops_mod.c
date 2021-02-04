@@ -62,6 +62,8 @@ static int w_tcp_conid_state(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_get_conid(sip_msg_t* msg, char *paddr, char *pvn);
 static int fixup_numpv(void** param, int param_no);
+static int w_tcp_set_otcpid(sip_msg_t* msg, char* conid, char *p2);
+static int w_tcp_set_otcpid_flag(sip_msg_t* msg, char* mode, char *p2);
 
 str tcpops_event_callback = STR_NULL;
 
@@ -98,6 +100,10 @@ static cmd_export_t cmds[]={
 			fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
 	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1,
 			fixup_numpv, 0, ANY_ROUTE},
+	{"tcp_set_otcpid", (cmd_function)w_tcp_set_otcpid, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_set_otcpid_flag", (cmd_function)w_tcp_set_otcpid_flag, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -586,7 +592,7 @@ static int ki_tcp_get_conid_helper(sip_msg_t* msg, str *saddr, pv_spec_t *pvs)
 setvalue:
 	memset(&val, 0, sizeof(pv_value_t));
 	val.ri = conid;
-	val.flags = PV_VAL_INT;
+	val.flags = PV_VAL_INT|PV_TYPE_INT;
 	if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val)<0) {
 		LM_ERR("failed to set the output var\n");
 		return -1;
@@ -610,6 +616,62 @@ static int w_tcp_get_conid(sip_msg_t* msg, char *paddr, char *pvn)
 	}
 
 	return ki_tcp_get_conid_helper(msg, &saddr, (pv_spec_t*)pvn);
+}
+
+/**
+ *
+ */
+static int ki_tcp_set_otcpid(sip_msg_t* msg, int vconid)
+{
+	if(msg == NULL) {
+		return -1;
+	}
+	msg->otcpid = vconid;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_tcp_set_otcpid(sip_msg_t* msg, char* conid, char *p2)
+{
+	int vconid = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)conid, &vconid)<0) {
+		LM_ERR("failed to get connection id\n");
+		return -1;
+	}
+	return ki_tcp_set_otcpid(msg, vconid);
+}
+
+/**
+ *
+ */
+static int ki_tcp_set_otcpid_flag(sip_msg_t* msg, int vmode)
+{
+	if(msg == NULL) {
+		return -1;
+	}
+	if(vmode) {
+		msg->msg_flags |= FL_USE_OTCPID;
+	} else {
+		msg->msg_flags &= ~(FL_USE_OTCPID);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_tcp_set_otcpid_flag(sip_msg_t* msg, char* mode, char *p2)
+{
+	int vmode = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)mode, &vmode)<0) {
+		LM_ERR("failed to get mode parameter\n");
+		return -1;
+	}
+	return ki_tcp_set_otcpid_flag(msg, vmode);
 }
 
 /**
@@ -733,6 +795,16 @@ static sr_kemi_t sr_kemi_tcpops_exports[] = {
 	},
 	{ str_init("tcpops"), str_init("tcp_conid_state"),
 		SR_KEMIP_INT, ki_tcp_conid_state,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_set_otcpid"),
+		SR_KEMIP_INT, ki_tcp_set_otcpid,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_set_otcpid_flag"),
+		SR_KEMIP_INT, ki_tcp_set_otcpid_flag,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

@@ -1,7 +1,7 @@
 /*
  * lost module functions
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2020 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -49,7 +49,16 @@
 #define LOST_CLIENT_ERROR 400
 #define LOST_SERVER_ERROR 500
 
+#define HELD_DEFAULT_TYPE "geodetic locationURI"
+#define HELD_DEFAULT_TYPE_LEN (sizeof(HELD_DEFAULT_TYPE) - 1)
+
 extern httpc_api_t httpapi;
+
+extern int lost_geoloc_type;
+extern int lost_geoloc_order;
+extern int held_resp_time;
+extern int held_exact_type;
+extern str held_loc_type;
 
 char mtheld[] = "application/held+xml;charset=utf-8";
 char mtlost[] = "application/lost+xml;charset=utf-8";
@@ -59,10 +68,88 @@ char name_element[] = "displayName";
 char errors_element[] = "errors";
 
 /*
+ * lost_held_type(type, exact, lgth)
+ * verifies module params and returns valid HELD loaction type
+ * allocated in private memory
+ */
+char *lost_held_type(char *type, int *exact, int *lgth)
+{
+	char *ret = NULL;
+	char *tmp = NULL;
+	int len = 0;
+
+	ret = (char *)pkg_malloc(1);
+	memset(ret, 0, 1);
+	*lgth = 0;
+
+	if(strstr(type, HELD_TYPE_ANY)) {
+		len = strlen(ret) + strlen(HELD_TYPE_ANY) + 1;
+		tmp = pkg_realloc(ret, len);
+		if(tmp == NULL)
+			goto err;
+		ret = tmp;
+		strcat(ret, HELD_TYPE_ANY);
+		*exact = 0;
+	} else {
+		if(strstr(type, HELD_TYPE_CIV)) {
+			len = strlen(ret) + strlen(HELD_TYPE_CIV) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL)
+				goto err;
+			ret = tmp;
+			strcat(ret, HELD_TYPE_CIV);
+		}
+		if(strstr(type, HELD_TYPE_GEO)) {
+			if(strlen(ret) > 1) {
+				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
+				tmp = pkg_realloc(ret, len);
+				if(tmp == NULL)
+					goto err;
+				ret = tmp;
+				strcat(ret, HELD_TYPE_SEP);
+			}
+			len = strlen(ret) + strlen(HELD_TYPE_GEO) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL)
+				goto err;
+			ret = tmp;
+			strcat(ret, HELD_TYPE_GEO);
+		}
+		if(strstr(type, HELD_TYPE_URI)) {
+			if(strlen(ret) > 1) {
+				len = strlen(ret) + strlen(HELD_TYPE_SEP) + 1;
+				tmp = pkg_realloc(ret, len);
+				if(tmp == NULL)
+					goto err;
+				ret = tmp;
+				strcat(ret, HELD_TYPE_SEP);
+			}
+			len = strlen(ret) + strlen(HELD_TYPE_URI) + 1;
+			tmp = pkg_realloc(ret, len);
+			if(tmp == NULL)
+				goto err;
+			ret = tmp;
+			strcat(ret, HELD_TYPE_URI);
+		}
+	}
+
+	*lgth = strlen(ret);
+	return ret;
+
+err:
+	LM_ERR("no more private memory\n");
+	if(ret != NULL) {
+		pkg_free(ret);
+	}
+	*lgth = 0;
+	return NULL;
+}
+
+/*
  * lost_function_held(msg, con, pidf, url, err, id)
  * assembles and runs HELD locationRequest, parses results
  */
-int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
+int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		char *_err, char *_id)
 {
 	pv_spec_t *pspidf;
@@ -73,8 +160,11 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	pv_value_t pvurl;
 	pv_value_t pverr;
 
+	p_held_t held = NULL;
+
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root = NULL;
+	xmlNodePtr cur_node = NULL;
 
 	str did = {NULL, 0};
 	str que = {NULL, 0};
@@ -83,12 +173,20 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	str err = {NULL, 0};
 	str res = {NULL, 0};
 	str idhdr = {NULL, 0};
+	str pidfuri = {NULL, 0};
+	str rtype = {HELD_DEFAULT_TYPE, HELD_DEFAULT_TYPE_LEN};
 
 	int curlres = 0;
+	int presence = 0;
 
 	if(_con == NULL || _pidf == NULL || _url == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
 		goto err;
+	}
+	/* module parameter */
+	if(held_loc_type.len > 0) {
+		rtype.s = held_loc_type.s;
+		rtype.len = held_loc_type.len;
 	}
 	/* connection from parameter */
 	if(fixup_get_svalue(_m, (gparam_p)_con, &con) != 0) {
@@ -101,8 +199,8 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			LM_ERR("cannot get device id\n");
 			goto err;
 		}
-		if(!did.s) {
-			LM_ERR("no device found\n");
+		if(did.len == 0) {
+			LM_ERR("no device id found\n");
 			goto err;
 		}
 	} else {
@@ -115,7 +213,7 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			LM_WARN("P-A-I header not found, trying From header ...\n");
 
 			LM_DBG("parsing From header\n");
-			
+
 			/* id from From header */
 			idhdr.s = lost_get_from_header(_m, &idhdr.len);
 			if(idhdr.len == 0) {
@@ -131,17 +229,29 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	/* check if connection exists */
 	if(httpapi.http_connection_exists(&con) == 0) {
 		LM_ERR("connection: [%s] does not exist\n", con.s);
+		lost_free_string(&idhdr);
 		goto err;
 	}
 
 	/* assemble locationRequest */
-	que.s = lost_held_location_request(did.s, &que.len);
+	held = lost_new_held(did, rtype, held_resp_time, held_exact_type);
+
+	if(held == NULL) {
+		LM_ERR("held object allocation failed\n");
+		lost_free_string(&idhdr);
+		goto err;
+	}
+	que.s = lost_held_location_request(held, &que.len);
+
 	/* free memory */
-	lost_free_string(&idhdr);
 	did.s = NULL;
 	did.len = 0;
-	if(!que.s) {
+	lost_free_held(held);
+	lost_free_string(&idhdr);
+
+	if(que.len == 0) {
 		LM_ERR("held request document error\n");
+		que.s = NULL;
 		goto err;
 	}
 
@@ -149,11 +259,10 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 
 	/* send locationRequest to location server - HTTP POST */
 	curlres = httpapi.http_connect(_m, &con, NULL, &res, mtheld, &que);
-	/* only HTTP 2xx responses are accepted */ 
+	/* only HTTP 2xx responses are accepted */
 	if(curlres >= 300 || curlres < 100) {
 		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
-		res.s = NULL;
-		res.len = 0;
+		lost_free_string(&res);
 		goto err;
 	}
 
@@ -164,42 +273,93 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	/* read and parse the returned xml */
 	doc = xmlReadMemory(res.s, res.len, 0, NULL,
 			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
-	if(!doc) {
+	if(doc == NULL) {
 		LM_WARN("invalid xml document: [%.*s]\n", res.len, res.s);
 		doc = xmlRecoverMemory(res.s, res.len);
-		if(!doc) {
-			LM_ERR("xml document recovery failed on: [%.*s]\n", res.len,
-					res.s);
+		if(doc == NULL) {
+			LM_ERR("xml document recovery failed on: [%.*s]\n", res.len, res.s);
 			goto err;
 		}
 
 		LM_DBG("xml document recovered\n");
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root) {
+	if(root == NULL) {
 		LM_ERR("empty xml document\n");
 		goto err;
 	}
-	/* check the root element, shall be locationResponse, or errors */
-	if(!xmlStrcmp(root->name, (const xmlChar *)"locationResponse")) {
+	/* check the root element ... shall be locationResponse, or errors */
+	if(xmlStrcmp(root->name, (const xmlChar *)"locationResponse") == 0) {
 
 		LM_DBG("HELD location response [%.*s]\n", res.len, res.s);
 
-		/* get the locationUri element */
-		geo.s = lost_get_content(root, (char *)"locationURI", &geo.len);
-		if(!geo.s) {
-			LM_ERR("no locationURI element found\n");
-			goto err;
+		for(cur_node = root->children; cur_node; cur_node = cur_node->next) {
+			if(cur_node->type == XML_ELEMENT_NODE) {
+				if(xmlStrcmp(cur_node->name, (const xmlChar *)"locationUriSet")
+						== 0) {
+
+					LM_DBG("*** node '%s' found\n", cur_node->name);
+
+					/* get the locationUri element */
+					geo.s = lost_get_content(
+							root, (char *)HELD_TYPE_URI, &geo.len);
+					if(geo.len == 0) {
+						LM_WARN("%s element not found\n", HELD_TYPE_URI);
+						geo.s = NULL;
+					} else {
+						geo.s = lost_trim_content(geo.s, &geo.len);
+					}
+				}
+				if(xmlStrcmp(cur_node->name, (const xmlChar *)"presence")
+						== 0) {
+
+					LM_DBG("*** node '%s' found\n", cur_node->name);
+
+					/* response contains presence node */
+					presence = 1;
+				}
+			}
 		}
-	} else if(!xmlStrcmp(root->name, (const xmlChar *)"error")) {
+
+		/* if we do not have a presence node but a location URI */
+		/* dereference pidf.lo at location server via HTTP GET */
+		if((presence == 0) && (geo.len > 0)) {
+
+			LM_INFO("presence node not found in HELD response, trying URI "
+					"...\n");
+
+			curlres =
+					httpapi.http_client_query(_m, geo.s, &pidfuri, NULL, NULL);
+			/* only HTTP 2xx responses are accepted */
+			if(curlres >= 300 || curlres < 100) {
+				LM_ERR("dereferencing location failed: %d\n", curlres);
+				/* free memory */
+				lost_free_string(&pidfuri);
+				goto err;
+			}
+
+			if(pidfuri.len == 0) {
+
+				LM_WARN("HELD location request failed [%.*s]\n", geo.len,
+						geo.s);
+
+			} else {
+
+				LM_DBG("HELD location response [%.*s]\n", pidfuri.len,
+						pidfuri.s);
+
+				res.s = pidfuri.s;
+				res.len = pidfuri.len;
+			}
+		}
+	} else if(xmlStrcmp(root->name, (const xmlChar *)"error") == 0) {
 
 		LM_DBG("HELD error response [%.*s]\n", res.len, res.s);
 
 		/* get the error patterm */
 		err.s = lost_get_property(root, (char *)"code", &err.len);
-		if(!err.s) {
-			LM_ERR("error - code property not found: [%.*s]\n", res.len,
-					res.s);
+		if(err.len == 0) {
+			LM_ERR("error - code property not found: [%.*s]\n", res.len, res.s);
 			goto err;
 		}
 		LM_WARN("locationRequest error response: [%.*s]\n", err.len, err.s);
@@ -208,6 +368,7 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		goto err;
 	}
 	xmlFreeDoc(doc);
+	doc = NULL;
 
 	/* set writeable pvars */
 	pvpidf.rs = res;
@@ -237,11 +398,9 @@ int lost_function_held(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	if(doc)
+	if(doc != NULL) {
 		xmlFreeDoc(doc);
-	
-	lost_free_string(&idhdr);
-	lost_free_string(&que);
+	}
 
 	return LOST_CLIENT_ERROR;
 }
@@ -262,26 +421,30 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	pv_value_t pverr;
 
 	p_loc_t loc = NULL;
+	p_geolist_t geolist = NULL;
+	int geotype;
 
-	xmlDocPtr doc = NULL;
-	xmlNodePtr root = NULL;
-
+	str url = {NULL, 0};
 	str uri = {NULL, 0};
 	str urn = {NULL, 0};
 	str err = {NULL, 0};
-	str res = {NULL, 0};
+	str req = {NULL, 0};
 	str con = {NULL, 0};
 	str ret = {NULL, 0};
-	str geo = {NULL, 0};
-	str geohdr = {NULL, 0};
 	str name = {NULL, 0};
 	str pidf = {NULL, 0};
+	str geohdr = {NULL, 0};
 	str pidfhdr = {NULL, 0};
 
 	struct msg_start *fl;
 	char *search = NULL;
+	char *geoval = NULL;
 	int curlres = 0;
-	
+	int geoitems = 0;
+
+	xmlDocPtr doc = NULL;
+	xmlNodePtr root = NULL;
+
 	if(_con == NULL || _uri == NULL || _name == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
 		goto err;
@@ -311,7 +474,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 				&& ((*(search + 1) == 'r') || (*(search + 1) == 'R'))
 				&& ((*(search + 2) == 'n') || (*(search + 2) == 'N'))
 				&& (*(search + 3) == ':')) {
-			LM_INFO("### LOST urn [%.*s]\n", urn.len, urn.s);
+			LM_INFO("### LOST urn\t[%.*s]\n", urn.len, urn.s);
 		} else {
 			LM_ERR("service urn not found\n");
 			goto err;
@@ -323,150 +486,178 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	/* pidf from parameter */
 	if(_pidf) {
 		if(fixup_get_svalue(_m, (gparam_p)_pidf, &pidf) != 0) {
-			LM_ERR("cannot get pidf-lo\n");
-			goto err;
-		}
-	}
-	/* pidf from geolocation header */
-	if(pidf.len == 0) {
-		LM_WARN("no pidf parameter, trying geolocation header ...\n");
-		geohdr.s = lost_get_geolocation_header(_m, &geohdr.len);
-		if(!geohdr.s) {
-			LM_ERR("geolocation header not found\n");
-			goto err;
+			LM_WARN("cannot get pidf-lo parameter\n");
 		} else {
 
-			LM_DBG("geolocation header found\n");
+			LM_DBG("parsing pidf-lo from paramenter\n");
 
-			/* pidf from multipart body, check cid scheme */
-			if(geohdr.len > 6) {
-				search = geohdr.s;
-				if((*(search + 0) == '<')
-						&& ((*(search + 1) == 'c') || (*(search + 1) == 'C'))
-						&& ((*(search + 2) == 'i') || (*(search + 2) == 'I'))
-						&& ((*(search + 3) == 'd') || (*(search + 3) == 'D'))
-						&& (*(search + 4) == ':')) {
-					search += 4;
-					*search = '<';
-					geo.s = search;
-					geo.len = geo.len - 4;
+			if(pidf.len > 0) {
 
-					LM_DBG("cid: [%.*s]\n", geo.len, geo.s);
+				LM_DBG("pidf-lo: [%.*s]\n", pidf.len, pidf.s);
 
-					/* get body part - filter=>content id */
-					pidf.s = get_body_part_by_filter(
-							_m, 0, 0, geo.s, NULL, &pidf.len);
-					if(!pidf.s) {
-						LM_ERR("no multipart body found\n");
-						goto err;
-					}
-				}
-				/* no pidf-lo so far ... check http(s) scheme */
-				if(((*(search + 0) == 'h') || (*(search + 0) == 'H'))
-						&& ((*(search + 1) == 't') || (*(search + 1) == 'T'))
-						&& ((*(search + 2) == 't') || (*(search + 2) == 'T'))
-						&& ((*(search + 3) == 'p') || (*(search + 3) == 'P'))) {
-					geo.s = geohdr.s;
-					geo.len = geohdr.len;
-
-					if(*(search + 4) == ':') {
-					
-						LM_DBG("http url: [%.*s]\n", geo.len, geo.s);
-					
-					} else if(((*(search + 4) == 's') || (*(search + 4) == 'S'))
-							&& (*(search + 5) == ':')) {
-					
-						LM_DBG("https url: [%.*s]\n", geo.len, geo.s);
-					
-					} else {
-						LM_ERR("invalid url: [%.*s]\n", geo.len, geo.s);
-						goto err;
-					}
-
-					/* ! dereference pidf.lo at location server - HTTP GET */
-					/* ! requires hack in http_client module */
-					/* ! functions.c => http_client_query => query_params.oneline = 0; */
-					curlres = httpapi.http_client_query(_m, geo.s, &pidfhdr, NULL, NULL);
-					/* free memory */
-					lost_free_string(&geohdr);
-					geo.s = NULL;
-					geo.len = 0;
-					/* only HTTP 2xx responses are accepted */ 
-					if(curlres >= 300 || curlres < 100) {
-						LM_ERR("http GET failed with error: %d\n", curlres);
-						pidfhdr.s = NULL;
-						pidfhdr.len = 0;
-						goto err;
-					}
-
-					LM_DBG("http GET returned: %d\n", curlres);
-
-					if(!pidfhdr.s) {
-						LM_ERR("dereferencing location failed\n");
-						goto err;
-					}
-					pidf.s = pidfhdr.s;
-					pidf.len = pidfhdr.len;
-				}
+				/* parse the pidf-lo */
+				loc = lost_parse_pidf(pidf, urn);
+				/* free memory */
+				pidf.s = NULL;
+				pidf.len = 0;
 			} else {
-				LM_ERR("invalid geolocation header\n");
-				goto err;
+				LM_WARN("no valid pidf parameter ...\n");
 			}
 		}
 	}
 
-	/* no pidf-lo return error */
-	if(!pidf.s) {
-		LM_ERR("pidf-lo not found\n");
-		goto err;
-	}
+	/* no pidf-lo so far ... check geolocation header */
+	if(loc == NULL) {
 
-	LM_DBG("pidf-lo: [%.*s]\n", pidf.len, pidf.s);
+		LM_DBG("looking for geolocation header ...\n");
 
-	/* read and parse pidf-lo */
-	doc = xmlReadMemory(pidf.s, pidf.len, 0, NULL,
-			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
-
-	if(!doc) {
-		LM_WARN("invalid xml (pidf-lo): [%.*s]\n", pidf.len, pidf.s);
-		doc = xmlRecoverMemory(pidf.s, pidf.len);
-		if(!doc) {
-			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len,
-					pidf.s);
+		geohdr.s = lost_get_geolocation_header(_m, &geohdr.len);
+		if(geohdr.len == 0) {
+			LM_ERR("geolocation header not found\n");
 			goto err;
 		}
 
-		LM_DBG("xml (pidf-lo) recovered\n");
-	}
+		LM_DBG("geolocation header found\n");
 
-	root = xmlDocGetRootElement(doc);
-	if(!root) {
-		LM_ERR("empty pidf-lo document\n");
-		goto err;
-	}
-	if((!xmlStrcmp(root->name, (const xmlChar *)"presence"))
-			|| (!xmlStrcmp(root->name, (const xmlChar *)"locationResponse"))) {
-		/* get the geolocation: point or circle, urn, ... */
-		loc = lost_new_loc(urn);
-		if(!loc) {
-			LM_ERR("location object allocation failed\n");
-			goto err;			
-		}
-		if(lost_parse_location_info(root, loc) < 0) {
-			LM_ERR("location element not found\n");
+		/* parse Geolocation header */
+		geolist = lost_new_geoheader_list(geohdr, &geoitems);
+		if(geoitems == 0) {
+			LM_ERR("invalid geolocation header\n");
+			lost_free_string(&geohdr);
 			goto err;
 		}
-	} else {
-		LM_ERR("findServiceResponse or presence element not found in "
-			   "[%.*s]\n",
-				pidf.len, pidf.s);
-		goto err;
+
+		LM_DBG("number of location URIs: %d\n", geoitems);
+
+		if(lost_geoloc_order == 0) {
+
+			LM_DBG("reversing location URI sequence\n");
+
+			lost_reverse_geoheader_list(&geolist);
+		}
+
+		switch(lost_geoloc_type) {
+			case ANY: /* type: 0 */
+				geoval = lost_get_geoheader_value(geolist, ANY, &geotype);
+
+				LM_DBG("geolocation header field (any): %s\n", geoval);
+
+				break;
+			case CID: /* type: 1 */
+				geoval = lost_get_geoheader_value(geolist, CID, &geotype);
+
+				LM_DBG("geolocation header field (LbV): %s\n", geoval);
+
+				break;
+			case HTTP: /* type: 2 */
+				geoval = lost_get_geoheader_value(geolist, HTTP, &geotype);
+				/* fallback to https */
+				if(geoval == NULL) {
+					LM_WARN("no valid http URL ... trying https\n");
+					geoval = lost_get_geoheader_value(geolist, HTTPS, &geotype);
+				}
+
+				LM_DBG("geolocation header field (LbR): %s\n", geoval);
+
+				break;
+			case HTTPS: /* type: 3 */
+				/* prefer https */
+				geoval = lost_get_geoheader_value(geolist, HTTPS, &geotype);
+				/* fallback to http */
+				if(geoval == NULL) {
+					LM_WARN("no valid https URL ... trying http\n");
+					geoval = lost_get_geoheader_value(geolist, HTTP, &geotype);
+				}
+
+				LM_DBG("geolocation header field (LbR): %s\n", geoval);
+
+				break;
+			default:
+				LM_WARN("unknown module parameter value\n");
+				geoval = lost_get_geoheader_value(geolist, UNKNOWN, &geotype);
+
+				LM_DBG("geolocation header field (any): %s\n", geoval);
+
+				break;
+		}
+
+		if(geoval == NULL) {
+			LM_ERR("invalid geolocation header\n");
+			/* free memory */
+			lost_delete_geoheader_list(geolist);
+			lost_free_string(&geohdr);
+			goto err;
+		}
+
+		LM_INFO("### LOST loc\t[%s]\n", geoval);
+
+		/* use location by value */
+		if(geotype == CID) {
+
+			/* get body part - filter=>content-indirection */
+			pidf.s = get_body_part_by_filter(_m, 0, 0, geoval, NULL, &pidf.len);
+			if(pidf.len > 0) {
+
+				LM_DBG("LbV pidf-lo: [%.*s]\n", pidf.len, pidf.s);
+
+				/* parse the pidf-lo */
+				loc = lost_parse_pidf(pidf, urn);
+				/* free memory */
+				pidf.s = NULL;
+				pidf.len = 0;
+			} else {
+				LM_WARN("no multipart body found\n");
+			}
+		}
+
+		/* use location by reference */
+		if((geotype == HTTPS) || (geotype == HTTP)) {
+			url.s = geoval;
+			url.len = strlen(geoval);
+			/* ! dereference pidf.lo at location server - HTTP GET */
+			/* ! requires hack in http_client module */
+			/* ! functions.c => http_client_query => query_params.oneline = 0; */
+			curlres =
+					httpapi.http_client_query(_m, url.s, &pidfhdr, NULL, NULL);
+			/* free memory */
+			url.s = NULL;
+			url.len = 0;
+			/* only HTTP 2xx responses are accepted */
+			if(curlres >= 300 || curlres < 100) {
+				LM_ERR("http GET failed with error: %d\n", curlres);
+				/* free memory */
+				lost_delete_geoheader_list(geolist);
+				lost_free_string(&pidfhdr);
+				lost_free_string(&geohdr);
+				goto err;
+			}
+
+			pidf.s = pidfhdr.s;
+			pidf.len = pidfhdr.len;
+
+			if(pidf.len > 0) {
+
+				LM_DBG("LbR pidf-lo: [%.*s]\n", pidf.len, pidf.s);
+
+				/* parse the pidf-lo */
+				loc = lost_parse_pidf(pidf, urn);
+				/* free memory */
+				pidf.s = NULL;
+				pidf.len = 0;
+			} else {
+				LM_WARN("dereferencing location failed\n");
+			}
+		}
+		/* free memory */
+		lost_delete_geoheader_list(geolist);
+		lost_free_string(&geohdr);
+		lost_free_string(&pidfhdr);
 	}
 
-	/* free memory */
-	lost_free_string(&pidfhdr);
-	pidf.s = NULL;
-	pidf.len = 0;
+	if(loc == NULL) {
+		LM_ERR("location object not found\n");
+		goto err;
+	}
 
 	/* check if connection exits */
 	if(httpapi.http_connection_exists(&con) == 0) {
@@ -474,38 +665,33 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		goto err;
 	}
 	/* assemble findService request */
-	res.s = lost_find_service_request(loc, &res.len);
+	req.s = lost_find_service_request(loc, &req.len);
 	/* free memory */
-	if(loc) {
-		lost_free_loc(loc);
-		loc = NULL;
-	}
-	xmlFreeDoc(doc);
-	doc = NULL;
+	lost_free_loc(loc);
+	loc = NULL;
 
-	if(!res.s) {
+	if(req.len == 0) {
 		LM_ERR("lost request failed\n");
 		goto err;
 	}
 
-	LM_DBG("findService request: [%.*s]\n", res.len, res.s);
+	LM_DBG("findService request: [%.*s]\n", req.len, req.s);
 
 	/* send findService request to mapping server - HTTP POST */
-	curlres = httpapi.http_connect(_m, &con, NULL, &ret, mtlost, &res);
-	/* only HTTP 2xx responses are accepted */ 
+	curlres = httpapi.http_connect(_m, &con, NULL, &ret, mtlost, &req);
+	/* only HTTP 2xx responses are accepted */
 	if(curlres >= 300 || curlres < 100) {
 		LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curlres);
-		ret.s = NULL;
-		ret.len = 0;
+		lost_free_string(&ret);
 		goto err;
 	}
 
 	LM_DBG("[%.*s] returned: %d\n", con.len, con.s, curlres);
 
 	/* free memory */
-	lost_free_string(&res);
+	lost_free_string(&req);
 
-	if(!ret.s) {
+	if(ret.len == 0) {
 		LM_ERR("findService request failed\n");
 		goto err;
 	}
@@ -516,58 +702,65 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	doc = xmlReadMemory(ret.s, ret.len, 0, 0,
 			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
 
-	if(!doc) {
+	if(doc == NULL) {
 		LM_ERR("invalid xml document: [%.*s]\n", ret.len, ret.s);
 		doc = xmlRecoverMemory(ret.s, ret.len);
-		if(!doc) {
-			LM_ERR("xml document recovery failed on: [%.*s]\n", ret.len,
-					ret.s);
+		if(doc == NULL) {
+			LM_ERR("xml document recovery failed on: [%.*s]\n", ret.len, ret.s);
 			goto err;
 		}
 
 		LM_DBG("xml document recovered\n");
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root) {
+	if(root == NULL) {
 		LM_ERR("empty xml document: [%.*s]\n", ret.len, ret.s);
+		/* free memory */
+		lost_free_string(&ret);
 		goto err;
 	}
 	/* check the root element, shall be findServiceResponse, or errors */
 	if((!xmlStrcmp(root->name, (const xmlChar *)"findServiceResponse"))) {
 		/* get the uri element */
 		uri.s = lost_get_content(root, uri_element, &uri.len);
-		if(!uri.s) {
+		if(uri.len == 0) {
 			LM_ERR("uri element not found: [%.*s]\n", ret.len, ret.s);
+			/* free memory */
+			lost_free_string(&ret);
 			goto err;
 		}
-		LM_INFO("### LOST uri [%.*s]\n", uri.len, uri.s);
+		LM_INFO("### LOST uri\t[%.*s]\n", uri.len, uri.s);
 		/* get the displayName element */
 		name.s = lost_get_content(root, name_element, &name.len);
-		if(!name.s) {
+		if(name.len == 0) {
 			LM_ERR("displayName element not found: [%.*s]\n", ret.len, ret.s);
+			/* free memory */
+			lost_free_string(&ret);
 			goto err;
 		}
-		LM_INFO("### LOST name [%.*s]\n", name.len, name.s);
+		LM_INFO("### LOST din\t[%.*s]\n", name.len, name.s);
 	} else if((!xmlStrcmp(root->name, (const xmlChar *)"errors"))) {
 
 		LM_DBG("findService error response received\n");
 
 		/* get the error patterm */
 		err.s = lost_get_childname(root, errors_element, &err.len);
-		if(!err.s) {
-			LM_ERR("error pattern element not found: [%.*s]\n", ret.len,
-					ret.s);
+		LM_DBG("findService error response: [%.*s]\n", err.len, err.s);
+		if(err.len == 0) {
+			LM_ERR("error pattern element not found: [%.*s]\n", ret.len, ret.s);
+			/* free memory */
+			lost_free_string(&ret);
 			goto err;
 		}
 		LM_WARN("findService error response: [%.*s]\n", err.len, err.s);
 	} else {
 		LM_ERR("root element is not valid: [%.*s]\n", ret.len, ret.s);
+		/* free memory */
+		lost_free_string(&ret);
 		goto err;
 	}
 
 	/* free memory */
-	xmlFreeDoc(doc);
-	doc = NULL;
 	lost_free_string(&ret);
 
 	/* set writable pvars */
@@ -598,14 +791,14 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	if(loc)
-		lost_free_loc(loc);
-	if(doc)
+	/* free memory */
+	if(doc != NULL) {
 		xmlFreeDoc(doc);
-
-	lost_free_string(&pidfhdr);
-	lost_free_string(&geohdr);
-	lost_free_string(&ret);
+		doc = NULL;
+	}
+	if(loc != NULL) {
+		lost_free_loc(loc);
+	}
 
 	return LOST_CLIENT_ERROR;
 }

@@ -1,0 +1,14 @@
+# Copyright 1999-2020 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+# Additional options to start Kamailio with
+#
+# see "kamailio -h" for a list of options
+#
+# default: run Kamailio as user:group = kamailio:kamailio
+#
+KAMAILIO_OPTS="-u kamailio -g kamailio -f /etc/kamailio/kamailio.cfg"
+
+#rc_use="mysql"
+#rc_ulimit="-n 1048576"

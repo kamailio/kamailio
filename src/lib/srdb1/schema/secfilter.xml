@@ -36,15 +36,15 @@
 
     <column id="action">
         <name>action</name>
-        <type>tinyint</type>
-        <default/>
+        <type>short</type>
+        <default>0</default>
         <description>Action to do (0=blacklisted data, 1=whitelisted data, 2=blacklisted destination).</description>
     </column>
 
     <column id="type">
         <name>type</name>
-        <type>tinyint</type>
-        <default/>
+        <type>short</type>
+        <default>0</default>
         <description>Type of data (0=user-agent, 1=country, 2=domain, 3=IP address, 4=user).</description>
     </column>
 

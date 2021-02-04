@@ -60,6 +60,10 @@ class DBText(object):
         if not os.path.isdir(location):
             raise ParseError(location + ' is not a directory')
 
+    def __del__(self):
+        if getattr(self, 'fd', False):
+            self.fd.close()
+
     def _ParseOrderBy(self):
         """Parse out the column name to be used for ordering the dataset.
 
@@ -146,11 +150,11 @@ class DBText(object):
         # check if there is a function modifier on the columns
         if self.tokens[0] == 'COUNT':
             self.count = True
-        if col_end == 1:
-            raise ParseError('COUNT must be followed by column name[s]')
-        if not self.tokens[1].startswith(self._paren_placeholder):
-            raise ParseError('COUNT must be followed by ()')
-        cols_str = self._ReplaceParens(self.tokens[1])
+            if col_end == 1:
+                raise ParseError('COUNT must be followed by column name[s]')
+            if not self.tokens[1].startswith(self._paren_placeholder):
+                raise ParseError('COUNT must be followed by ()')
+            cols_str = self._ReplaceParens(self.tokens[1])
 
         cols = cols_str.split(',')
         for col in cols:
@@ -300,7 +304,7 @@ class DBText(object):
             if self.tokens.pop(0) != 'SET':
                 raise ParseError('UPDATE command must be followed by SET')
 
-        self.targets = self._ParsePairs(' '.join(self.tokens), ',')
+            self.targets = self._ParsePairs(' '.join(self.tokens), ',')
 
         # INSERT
         if self.command == 'INSERT':
@@ -356,7 +360,7 @@ class DBText(object):
         # test that the value is string, if not return it as is
         try:
             value.find('a')
-        except:
+        except Exception:
             return value
 
         escaped = value
@@ -377,7 +381,7 @@ class DBText(object):
         # test that the value is string, if not return it as is
         try:
             value.find('a')
-        except:
+        except Exception:
             return value
 
         escaped = value
@@ -438,6 +442,8 @@ class DBText(object):
         self.command = ''     # which command are we executing
         self.strings = []     # list of string literals parsed from the query
         self.parens = []      # list of parentheses parsed from the query
+        if getattr(self, 'fd', False):
+            self.fd.close()
 
     def ParseQuery(self, query):
         """External wrapper for the query parsing routines.
@@ -570,19 +576,19 @@ class DBText(object):
                         string = '%s%s' % (string, c)
                         continue  # wait for matching delim
 
-                started -= 1
-                if not started:
-                    values.append(string)
-                    new_args = '%s %s' % (new_args, '%s%d' % (placeholder,
-                                                              my_id))
-                    my_id += 1
-                    string = ''
+                    started -= 1
+                    if not started:
+                        values.append(string)
+                        new_args = '%s %s' % (new_args, '%s%d' % (placeholder,
+                                                                  my_id))
+                        my_id += 1
+                        string = ''
 
-        else:
-            if not started:
-                new_args = '%s%s' % (new_args, c)
             else:
-                string = '%s%s' % (string, c)
+                if not started:
+                    new_args = '%s%s' % (new_args, c)
+                else:
+                    string = '%s%s' % (string, c)
 
         if started:
             if mode == 'parens':
@@ -714,8 +720,8 @@ class DBText(object):
             elif self.header[col]['auto']:
                 new_row[col] = self._GetNextAuto(col)
 
-        else:
-            raise ExecuteError(col + ' cannot be empty or null')
+            else:
+                raise ExecuteError(col + ' cannot be empty or null')
 
         self.data.append(new_row)
         return [1]
@@ -988,21 +994,19 @@ class DBText(object):
         if not val and not self.header[col]['null']:
             raise ExecuteError(col + ' cannot be empty or null')
 
-        if (self.header[col]['type'].lower() == 'int' or
-           self.header[col]['type'].lower() == 'double'):
+        hdr_t = self.header[col]['type'].lower()
+        if hdr_t == 'int' or hdr_t == 'double':
             try:
                 if val:
                     val = eval(val)
-            except (NameError, e):
+            except NameError as e:
                 raise ExecuteError('Failed to parse %s in %s '
                                    '(unable to convert to type %s): %s' %
-                                   (col, self.table, self.header[col]['type'],
-                                    e))
-            except (SyntaxError, e):
+                                   (col, self.table, hdr_t, e))
+            except SyntaxError as e:
                 raise ExecuteError('Failed to parse %s in %s '
                                    '(unable to convert to type %s): %s' %
-                                   (col, self.table, self.header[col]['type'],
-                                    e))
+                                   (col, self.table, hdr_t, e))
 
         return val
 
@@ -1083,7 +1087,7 @@ class DBText(object):
             # save a copy of the data before modifying
             self.orig_data = self.data[:]
 
-        except (IOError, e):
+        except IOError as e:
             raise ExecuteError('Unable to open table %s: %s' % (self.table, e))
 
         Debug('Header is: %s' % self.header)
@@ -1230,7 +1234,7 @@ def main(argv):
                     print('Updated %s, rows affected: %d' % (conn.table, row))
                 else:
                     print(row)
-    except (Error, e):
+    except Error as e:
         print(e)
         sys.exit(1)
 

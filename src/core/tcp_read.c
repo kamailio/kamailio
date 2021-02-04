@@ -58,9 +58,9 @@
 #else
 #include "tls_hooks.h"
 #endif /* CORE_TLS */
-#ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
-#endif /* USE_DST_BLACKLIST */
+#ifdef USE_DST_BLOCKLIST
+#include "dst_blocklist.h"
+#endif /* USE_DST_BLOCKLIST */
 
 #define HANDLE_IO_INLINE
 #include "io_wait.h"
@@ -109,27 +109,12 @@ int tcp_set_clone_rcvbuf(int v)
 	return r;
 }
 
-#ifdef READ_HTTP11
-static inline char *strfindcasestrz(str *haystack, char *needlez)
+int tcp_get_clone_rcvbuf(void)
 {
-	int i,j;
-	str needle;
-
-	needle.s = needlez;
-	needle.len = strlen(needlez);
-	for(i=0;i<haystack->len-needle.len;i++) {
-		for(j=0;j<needle.len;j++) {
-			if ( !((haystack->s[i+j]==needle.s[j]) ||
-					( isalpha((int)haystack->s[i+j])
-						&& ((haystack->s[i+j])^(needle.s[j]))==0x20 )) )
-				break;
-		}
-		if (j==needle.len)
-			return haystack->s+i;
-	}
-	return 0;
+	return tcp_clone_rcvbuf;
 }
 
+#ifdef READ_HTTP11
 int tcp_http11_continue(struct tcp_connection *c)
 {
 	struct dest_info dst;
@@ -161,7 +146,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 
 	/* check for Expect header */
-	if(strfindcasestrz(&msg, "Expect: 100-continue")!=NULL)
+	if(str_casesearch_strz(&msg, "Expect: 100-continue")!=NULL)
 	{
 		init_dst_from_rcv(&dst, &c->rcv);
 		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
@@ -169,7 +154,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		}
 	}
 	/* check for Transfer-Encoding header */
-	if(strfindcasestrz(&msg, "Transfer-Encoding: chunked")!=NULL)
+	if(str_casesearch_strz(&msg, "Transfer-Encoding: chunked")!=NULL)
 	{
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
@@ -178,7 +163,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 	 * - HTTP Via format is different that SIP Via
 	 * - workaround: replace with Hia to be ignored by SIP parser
 	 */
-	if((p=strfindcasestrz(&msg, "\nVia:"))!=NULL)
+	if((p=str_casesearch_strz(&msg, "\nVia:"))!=NULL)
 	{
 		p++;
 		*p = 'H';
@@ -210,10 +195,10 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
 
 
 /** reads data from an existing tcp connection.
- * Side-effects: blacklisting, sets connection state to S_CONN_OK, tcp stats.
+ * Side-effects: blocklisting, sets connection state to S_CONN_OK, tcp stats.
  * @param fd - connection file descriptor
  * @param c - tcp connection structure. c->state might be changed and
- *             receive info might be used for blacklisting.
+ *             receive info might be used for blocklisting.
  * @param buf - buffer where the received data will be stored.
  * @param b_size - buffer size.
  * @param flags - value/result - used to signal a seen or "forced" EOF on the
@@ -238,7 +223,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_rea
  * EOF checking should be done by checking the RD_CONN_EOF flag.
  */
 int tcp_read_data(int fd, struct tcp_connection *c,
-					char* buf, int b_size, int* flags)
+					char* buf, int b_size, rd_conn_flags_t* flags)
 {
 	int bytes_read;
 
@@ -255,20 +240,20 @@ again:
 				if (unlikely(c->state==S_CONN_CONNECT)){
 					switch(errno){
 						case ECONNRESET:
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
 												&c->rcv.src_su,
 												&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
 						case ETIMEDOUT:
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
 												&c->rcv.src_su,
 												&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
@@ -281,18 +266,18 @@ again:
 						switch(errno){
 							case ECONNRESET:
 								TCP_STATS_CON_RESET();
-#ifdef USE_DST_BLACKLIST
-								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
 													&c->rcv.src_su,
 													&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 								break;
 							case ETIMEDOUT:
-#ifdef USE_DST_BLACKLIST
-								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+#ifdef USE_DST_BLOCKLIST
+								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
 													&c->rcv.src_su,
 													&c->send_flags, 0);
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 								break;
 						}
 				}
@@ -311,12 +296,14 @@ again:
 			}
 		}else if (unlikely((bytes_read==0) ||
 					(*flags & RD_CONN_FORCE_EOF))){
+			LM_DBG("EOF on connection %p (state: %u, flags: %x) - FD %d,"
+					" bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
+					c, c->state, c->flags, fd, bytes_read, *flags,
+					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
 			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
-			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
-			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -349,7 +336,7 @@ again:
  * (to distinguish from reads that would block which could return 0)
  * RD_CONN_SHORT_READ is also set in *flags for short reads.
  * sets also r->error */
-int tcp_read(struct tcp_connection *c, int* flags)
+int tcp_read(struct tcp_connection *c, rd_conn_flags_t* flags)
 {
 	int bytes_free, bytes_read;
 	struct tcp_req *r;
@@ -389,7 +376,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_connection *c, int* read_flags)
+int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes, remaining;
 	char *p;
@@ -1102,7 +1089,7 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #endif
 
 #ifdef READ_WS
-static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
+static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	uint32_t size, pos, mask_present, len;
@@ -1257,7 +1244,7 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 }
 #endif
 
-static int tcp_read_hep3(struct tcp_connection *c, int* read_flags)
+static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	uint32_t size, len;
@@ -1375,12 +1362,8 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
 #ifdef TCP_CLONE_RCVBUF
-#ifdef DYN_BUF
-	char *buf = NULL;
-#else
 	static char *buf = NULL;
 	static unsigned int bsize = 0;
-#endif
 	int blen;
 
 	/* cloning is disabled via parameter */
@@ -1404,13 +1387,6 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(blen < BUF_SIZE)
 		blen = BUF_SIZE;
 
-#ifdef DYN_BUF
-	buf=pkg_malloc(blen+1);
-	if (buf==0) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-#else
 	/* allocate buffer when needed
 	 * - no buffer yet
 	 * - existing buffer too small (min size is BUF_SIZE - to accomodate most
@@ -1431,7 +1407,6 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		}
 		bsize = blen;
 	}
-#endif
 
 	memcpy(buf, tcpbuf, len);
 	buf[len] = '\0';
@@ -1461,7 +1436,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif /* TCP_CLONE_RCVBUF */
 }
 
-int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
+int tcp_read_req(struct tcp_connection* con, int* bytes_read, rd_conn_flags_t* read_flags)
 {
 	int bytes;
 	int total_bytes;
@@ -1701,10 +1676,10 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 {
 	struct tcp_connection *c;
-	
-	c=(struct tcp_connection*)data; 
+
+	c=(struct tcp_connection*)data;
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
-	
+
 	if (likely(!(c->state<0) && TICKS_LT(t, c->timeout))){
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
@@ -1718,9 +1693,10 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	}
-	tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
-	release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
-	
+	if(tcp_conn_lst!=NULL) {
+		tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
+		release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
+	}
 	return 0;
 }
 
@@ -1732,7 +1708,7 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
  *          idx - index in the fd_array (or -1 if not known)
  * return: -1 on error, or when we are not interested any more on reads
  *            from this fd (e.g.: we are closing it )
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Usefull to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -1740,18 +1716,19 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
  *            queued -- the receive buffer might still be non-empty)
  */
 inline static int handle_io(struct fd_map* fm, short events, int idx)
-{	
+{
 	int ret;
 	int n;
-	int read_flags;
+	rd_conn_flags_t read_flags;
 	struct tcp_connection* con;
 	int s;
 	long resp;
 	ticks_t t;
-	
+	fd_map_t *ee = NULL;
+
 	/* update the local config */
 	cfg_update();
-	
+
 	switch(fm->type){
 		case F_TCPMAIN:
 again:
@@ -1815,7 +1792,7 @@ repeat_1st_read:
 			if (unlikely(read_flags & RD_CONN_REPEAT_READ))
 				goto repeat_1st_read;
 #endif /* USE_TLS */
-			
+
 			/* must be before io_watch_add, io_watch_add might catch some
 			 * already existing events => might call handle_io and
 			 * handle_io might decide to del. the new connection =>
@@ -1828,15 +1805,29 @@ repeat_1st_read:
 			local_timer_reinit(&con->timer);
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
-			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con)<0)){
+			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con)<0)) {
 				LM_CRIT("io_watch_add failed for %p id %d fd %d, state %d, flags %x,"
 							" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
 							con, con->id, con->fd, con->state, con->flags,
 							con->s, atomic_get(&con->refcnt),
 							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
-				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
-				local_timer_del(&tcp_reader_ltimer, &con->timer);
+				ee = get_fd_map(&io_w, s);
+				if(ee!=0 && ee->type==F_TCPCONN) {
+					tcp_connection_t *ec;
+					ec = (tcp_connection_t*)ee->data;
+					LM_CRIT("existing tcp con %p id %d fd %d, state %d, flags %x,"
+							" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
+							ec, ec->id, ec->fd, ec->state, ec->flags,
+							ec->s, atomic_get(&ec->refcnt),
+							ip_addr2a(&ec->rcv.src_ip), ec->rcv.src_port,
+							ip_addr2a(&ec->rcv.dst_ip), ec->rcv.dst_port);
+
+				}
+				if(tcp_conn_lst!=NULL) {
+					tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
+					local_timer_del(&tcp_reader_ltimer, &con->timer);
+				}
 				goto con_error;
 			}
 			break;
@@ -1845,8 +1836,11 @@ repeat_1st_read:
 			if (unlikely(con->state==S_CONN_BAD)){
 				resp=CONN_ERROR;
 				if (!(con->send_flags.f & SND_F_CON_CLOSE))
-					LM_WARN("F_TCPCONN connection marked as bad: %p id %d refcnt %d\n",
-							con, con->id, atomic_get(&con->refcnt));
+					LM_WARN("F_TCPCONN connection marked as bad: %p id %d fd %d"
+							" refcnt %d ([%s]:%u -> [%s]:%u)\n",
+							con, con->id, con->fd, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				goto read_error;
 			}
 			read_flags=((
@@ -1873,11 +1867,20 @@ read_error:
 							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				}
-				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
-				local_timer_del(&tcp_reader_ltimer, &con->timer);
-				if (unlikely(resp!=CONN_EOF))
-					con->state=S_CONN_BAD;
-				release_tcpconn(con, resp, tcpmain_sock);
+				if(tcp_conn_lst!=NULL) {
+					LM_DBG("removing from list %p id %d fd %d,"
+							" state %d, flags %x, main fd %d, refcnt %d"
+							" ([%s]:%u -> [%s]:%u)\n",
+							con, con->id, con->fd, con->state,
+							con->flags, con->s, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
+					tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
+					local_timer_del(&tcp_reader_ltimer, &con->timer);
+					if (unlikely(resp!=CONN_EOF))
+						con->state=S_CONN_BAD;
+					release_tcpconn(con, resp, tcpmain_sock);
+				}
 			}else{
 #ifdef USE_TLS
 				if (unlikely(read_flags & RD_CONN_REPEAT_READ))
@@ -1885,8 +1888,8 @@ read_error:
 #endif /* USE_TLS */
 				/* update timeout */
 				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
-				/* ret= 0 (read the whole socket buffer) if short read & 
-				 *  !POLLPRI,  bytes read otherwise */
+				/* ret= 0 (read the whole socket buffer) if short read
+				 * & !POLLPRI,  bytes read otherwise */
 				ret&=(((read_flags & RD_CONN_SHORT_READ) &&
 						!(events & POLLPRI)) - 1);
 			}
@@ -1900,7 +1903,7 @@ read_error:
 			LM_CRIT("unknown fd type %d\n", fm->type);
 			goto error;
 	}
-	
+
 	return ret;
 con_error:
 	con->state=S_CONN_BAD;

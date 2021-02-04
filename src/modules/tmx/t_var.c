@@ -117,7 +117,7 @@ int pv_t_update_req(struct sip_msg *msg)
 		_pv_treq.buf = (char*)pkg_malloc(_pv_treq.buf_size*sizeof(char));
 		if(_pv_treq.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_treq.buf_size = 0;
 			return -1;
 		}
@@ -195,7 +195,7 @@ int pv_t_update_rpl(struct sip_msg *msg)
 		_pv_trpl.buf = (char*)pkg_malloc(_pv_trpl.buf_size*sizeof(char));
 		if(_pv_trpl.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_trpl.buf_size = 0;
 			return -1;
 		}
@@ -263,7 +263,7 @@ int pv_t_update_inv(struct sip_msg *msg)
 		_pv_tinv.buf = (char*)pkg_malloc(_pv_tinv.buf_size*sizeof(char));
 		if(_pv_tinv.buf==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			_pv_tinv.buf_size = 0;
 			goto error;
 		}
@@ -305,6 +305,11 @@ int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 {
 	pv_spec_t *pv=NULL;
 
+	if(!is_route_type(CORE_ONREPLY_ROUTE|TM_ONREPLY_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
+
 	if(pv_t_update_req(msg))
 		return pv_get_null(msg, param, res);
 
@@ -319,6 +324,11 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	pv_spec_t *pv=NULL;
+
+	if(!is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
 
 	if(pv_t_update_rpl(msg))
 		return pv_get_null(msg, param, res);
@@ -335,6 +345,11 @@ int pv_get_t_var_branch(struct sip_msg *msg,  pv_param_t *param,
 {
 	pv_spec_t *pv=NULL;
 
+	if(!is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE|TM_ONREPLY_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
+
 	if(pv_t_update_rpl(msg))
 		return pv_get_null(msg, param, res);
 
@@ -349,6 +364,11 @@ int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	pv_spec_t *pv=NULL;
+
+	if(!is_route_type(REQUEST_ROUTE)) {
+		LM_DBG("used in unsupported route block - type %d\n", get_route_type());
+		return pv_get_null(msg, param, res);
+	}
 
 	if(pv_t_update_inv(msg))
 		return pv_get_null(msg, param, res);
@@ -368,8 +388,10 @@ int pv_parse_t_var_name(pv_spec_p sp, str *in)
 		return -1;
 
 	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if(pv==NULL)
+	if(pv==NULL) {
+		PKG_MEM_ERROR;
 		return -1;
+	}
 
 	memset(pv, 0, sizeof(pv_spec_t));
 
@@ -682,6 +704,8 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 		case 12:
 			if(strncmp(in->s, "branch_index", 12)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "reply_reason", 12)==0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else goto error;
 			break;
 		default:
@@ -713,6 +737,8 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_tm_reply_code(msg, param, res);
 		case 4:
 			return pv_get_tm_branch_idx(msg, param, res);
+		case 10:
+			return pv_get_tm_reply_reason(msg, param, res);
 	}
 
 	t = _tmx_tmb.t_gett();
@@ -779,14 +805,24 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 								" in MODE_ONFAILURE\n", branch);
 						return pv_get_null(msg, param, res);
 					}
-					res->ri = t->uac[branch].branch_flags;
-					res->flags = PV_VAL_INT;
-					LM_DBG("branch flags is [%u]\n", res->ri);
+					break;
+				case TM_ONREPLY_ROUTE:
+					tcx = _tmx_tmb.tm_ctx_get();
+					if(tcx == NULL) {
+						LM_ERR("no reply branch\n");
+						return pv_get_null(msg, param, res);
+					}
+					branch = tcx->branch_index;
 					break;
 				default:
 					LM_ERR("unsupported route_type %d\n", get_route_type());
 					return pv_get_null(msg, param, res);
 			}
+			if(branch<0 || branch>=t->nr_of_outgoings) {
+				return pv_get_null(msg, param, res);
+			}
+			LM_DBG("branch flags is [%u]\n", t->uac[branch].branch_flags);
+			return pv_get_uintval(msg, param, res, t->uac[branch].branch_flags);
 			break;
 		case 6: /* $T_branch(uri) */
 			if (get_route_type() != TM_ONREPLY_ROUTE) {

@@ -4,7 +4,7 @@
 
 <book id="blst" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-        <title>Blst Module - Blacklist Management</title>
+        <title>Blst Module - Blocklist Management</title>
 	<authorgroup>
 	    <author>
 		<firstname>Andrei</firstname>
@@ -26,7 +26,7 @@
     <section id="blst.overview">
 	<title>Overview</title>
 	<para>
-		This module exports blacklist related functions to the script.
+		This module exports blocklist related functions to the script.
 	</para>
     </section>
 

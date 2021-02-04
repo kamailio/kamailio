@@ -71,7 +71,7 @@
 #define macro_name(_rc)	#_rc
 
 //extern struct tm_binds tmb;
-usrloc_api_t ul;
+extern usrloc_api_t ul;
 
 extern struct ims_qos_counters_h ims_qos_cnts_h;
 
@@ -176,8 +176,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
             passed_rx_session_id->len = 0;
             STR_SHM_DUP(*passed_rx_session_id, aaa->sessionId->data, "cb_passed_rx_session_id");
             LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
-
-            dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
+            dlgb.register_dlgcb_nodlg( data->dlg, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
         }
         result = CSCF_RETURN_TRUE;
     } else {
@@ -277,7 +276,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
     if (cdp_result >= 2000 && cdp_result < 3000) {
         counter_inc(ims_qos_cnts_h.successful_registration_aars);
         if (is_rereg) {
-            LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
+            LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
             goto done;
@@ -322,7 +321,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         contact_info.via_prot = local_data->via_proto;
         contact_info.reg_state = PCONTACT_ANY;
 
-        if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+        if (ul.get_pcontact(domain_t, &contact_info, &pcontact, 0) != 0) {
             LM_ERR("Shouldn't get here, can't find contact....\n");
             ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
             goto error;

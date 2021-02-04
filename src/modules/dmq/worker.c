@@ -79,14 +79,14 @@ void worker_loop(int id)
 	int not_parsed;
 	dmq_node_t *dmq_node = NULL;
 
-	worker = &workers[id];
+	worker = &dmq_workers[id];
 	for(;;) {
-		if(worker_usleep <= 0) {
+		if(dmq_worker_usleep <= 0) {
 			LM_DBG("dmq_worker [%d %d] getting lock\n", id, my_pid());
 			lock_get(&worker->lock);
 			LM_DBG("dmq_worker [%d %d] lock acquired\n", id, my_pid());
 		} else {
-			sleep_us(worker_usleep);
+			sleep_us(dmq_worker_usleep);
 		}
 
 		/* remove from queue until empty */
@@ -105,7 +105,7 @@ void worker_loop(int id)
 				if(parse_from_header(current_job->msg) < 0) {
 					LM_ERR("bad sip message or missing From hdr\n");
 				} else {
-					dmq_node = find_dmq_node_uri(node_list,
+					dmq_node = find_dmq_node_uri(dmq_node_list,
 							&((struct to_body *)current_job->msg->from->parsed)
 									 ->uri);
 				}
@@ -126,12 +126,17 @@ void worker_loop(int id)
 					}
 				}
 				/* send the reply */
-				if(slb.freply(current_job->msg, peer_response.resp_code,
-						   &peer_response.reason)
-						< 0) {
-					LM_ERR("error sending reply\n");
+				if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
+						&& peer_response.reason.len>0) {
+					if(slb.freply(current_job->msg, peer_response.resp_code,
+							   &peer_response.reason)
+							< 0) {
+						LM_ERR("error sending reply\n");
+					} else {
+						LM_DBG("done sending reply\n");
+					}
 				} else {
-					LM_DBG("done sending reply\n");
+					LM_WARN("no reply sent\n");
 				}
 				worker->jobs_processed++;
 
@@ -180,26 +185,26 @@ int add_dmq_job(struct sip_msg *msg, dmq_peer_t *peer)
 	new_job.f = peer->callback;
 	new_job.msg = cloned_msg;
 	new_job.orig_peer = peer;
-	if(!num_workers) {
+	if(!dmq_num_workers) {
 		LM_ERR("error in add_dmq_job: no workers spawned\n");
 		goto error;
 	}
-	if(!workers[0].queue) {
+	if(!dmq_workers[0].queue) {
 		LM_ERR("workers not (yet) initialized\n");
 		goto error;
 	}
 	/* initialize the worker with the first one */
-	worker = workers;
+	worker = dmq_workers;
 	/* search for an available worker, or, if not possible,
 	 * for the least busy one */
-	for(i = 0; i < num_workers; i++) {
-		if(job_queue_size(workers[i].queue) == 0) {
-			worker = &workers[i];
+	for(i = 0; i < dmq_num_workers; i++) {
+		if(job_queue_size(dmq_workers[i].queue) == 0) {
+			worker = &dmq_workers[i];
 			found_available = 1;
 			break;
-		} else if(job_queue_size(workers[i].queue)
+		} else if(job_queue_size(dmq_workers[i].queue)
 				  < job_queue_size(worker->queue)) {
-			worker = &workers[i];
+			worker = &dmq_workers[i];
 		}
 	}
 	if(!found_available) {
@@ -210,7 +215,7 @@ int add_dmq_job(struct sip_msg *msg, dmq_peer_t *peer)
 	if(job_queue_push(worker->queue, &new_job) < 0) {
 		goto error;
 	}
-	if(worker_usleep <= 0) {
+	if(dmq_worker_usleep <= 0) {
 		lock_release(&worker->lock);
 	}
 	return 0;
@@ -224,15 +229,20 @@ error:
 /**
  * @brief init dmq worker
  */
-void init_worker(dmq_worker_t *worker)
+int init_worker(dmq_worker_t *worker)
 {
 	memset(worker, 0, sizeof(*worker));
-	if(worker_usleep <= 0) {
+	if(dmq_worker_usleep <= 0) {
 		lock_init(&worker->lock);
 		// acquire the lock for the first time - so that dmq_worker_loop blocks
 		lock_get(&worker->lock);
 	}
 	worker->queue = alloc_job_queue();
+	if(worker->queue==NULL) {
+		LM_ERR("queue could not be initialized\n");
+		return -1;
+	}
+	return 0;
 }
 
 /**

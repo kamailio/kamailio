@@ -41,7 +41,7 @@
 static int     tag_avp_type;
 static int_str tag_avp;
 
-extern int peer_tag_mode;
+extern int perm_peer_tag_mode;
 
 
 extern int _perm_max_subnets;
@@ -321,7 +321,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 					return -1;
 				}
 			}
-			if (!peer_tag_mode)
+			if (!perm_peer_tag_mode)
 				return 1;
 			count++;
 		}
@@ -443,7 +443,7 @@ void free_addr_hash_table(struct addr_list** table)
  * Add <grp, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
-		ip_addr_t *addr, unsigned int port, char *tagv)
+		ip_addr_t *addr, unsigned int port, str *tagv)
 {
 	struct addr_list *np;
 	unsigned int hash_val;
@@ -451,8 +451,9 @@ int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
 	int len;
 
 	len = sizeof(struct addr_list);
-	if(tagv!=NULL)
-		len += strlen(tagv) + 1;
+	if(tagv!=NULL && tagv->s!=NULL) {
+		len += tagv->len + 1;
+	}
 
 	np = (struct addr_list *) shm_malloc(len);
 	if (np == NULL) {
@@ -465,11 +466,12 @@ int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
 	np->grp = grp;
 	memcpy(&np->addr, addr, sizeof(ip_addr_t));
 	np->port = port;
-	if(tagv!=NULL)
+	if(tagv!=NULL && tagv->s!=NULL)
 	{
 		np->tag.s = (char*)np + sizeof(struct addr_list);
-		np->tag.len = strlen(tagv);
-		strcpy(np->tag.s, tagv);
+		np->tag.len = tagv->len;
+		memcpy(np->tag.s, tagv->s, tagv->len);
+		np->tag.s[np->tag.len] = '\0';
 	}
 
 	addr_str.s = (char*)addr->u.addr;
@@ -646,7 +648,7 @@ struct subnet* new_subnet_table(void)
  */
 int subnet_table_insert(struct subnet* table, unsigned int grp,
 		ip_addr_t *subnet, unsigned int mask,
-		unsigned int port, char *tagv)
+		unsigned int port, str *tagv)
 {
 	int i;
 	unsigned int count;
@@ -659,19 +661,20 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
 		return 0;
 	}
 
-	if(tagv==NULL)
+	if(tagv==NULL || tagv->s==NULL)
 	{
 		tags.s = NULL;
 		tags.len = 0;
 	} else {
-		tags.len = strlen(tagv);
+		tags.len = tagv->len;
 		tags.s = (char*)shm_malloc(tags.len+1);
 		if(tags.s==NULL)
 		{
 			LM_ERR("No more shared memory\n");
 			return 0;
 		}
-		strcpy(tags.s, tagv);
+		memcpy(tags.s, tagv->s, tags.len);
+		tags.s[tags.len] = '\0';
 	}
 
 	i = count - 1;
@@ -961,15 +964,16 @@ int find_group_in_domain_name_table(struct domain_name_list** table,
  * Add <grp, domain_name, port> into hash table
  */
 int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
-		str *domain_name, unsigned int port, char *tagv)
+		str *domain_name, unsigned int port, str *tagv)
 {
 	struct domain_name_list *np;
 	unsigned int hash_val;
 	int len;
 
 	len = sizeof(struct domain_name_list) + domain_name->len;
-	if(tagv!=NULL)
-		len += strlen(tagv) + 1;
+	if(tagv!=NULL && tagv->s!=NULL) {
+		len += tagv->len + 1;
+	}
 
 	np = (struct domain_name_list *) shm_malloc(len);
 	if (np == NULL) {
@@ -984,10 +988,11 @@ int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
 	memcpy(np->domain.s, domain_name->s, domain_name->len);
 	np->domain.len = domain_name->len;
 	np->port = port;
-	if(tagv!=NULL) {
+	if(tagv!=NULL && tagv->s!=NULL) {
 		np->tag.s = (char*)np + sizeof(struct domain_name_list) + domain_name->len;
-		np->tag.len = strlen(tagv);
-		strcpy(np->tag.s, tagv);
+		np->tag.len = tagv->len;
+		memcpy(np->tag.s, tagv->s, np->tag.len);
+		np->tag.s[np->tag.len] = '\0';
 	}
 
 	LM_DBG("** Added domain name: %.*s\n", np->domain.len, np->domain.s);

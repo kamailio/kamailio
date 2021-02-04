@@ -58,7 +58,7 @@ struct jsonrpc_server_group {
 	struct jsonrpc_server_group *next_group;
 };
 
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 
 struct jsonrpc_server_group *server_group;
 

@@ -110,12 +110,13 @@ static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
 static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
 static int set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
+static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int is_rfc1918_f(struct sip_msg *, char *, char *);
-static int extract_mediaip(str *, str *, int *, char *);
+static int nh_extract_mediaip(str *, str *, int *, char *, int);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void **param, int param_no);
@@ -143,18 +144,26 @@ static int cblen = 0;
 static int natping_interval = 0;
 struct socket_info *force_socket = 0;
 
+static int nh_nat_addr_mode = 1;
 
 /* clang-format off */
-static struct {
+typedef struct nh_netaddr {
 	const char *cnetaddr;
 	uint32_t netaddr;
 	uint32_t mask;
-} nets_1918[] = {
+} nh_netaddr_t;
+
+static nh_netaddr_t nh_nets_1918[] = {
 	{"10.0.0.0",    0, 0xffffffffu << 24},
 	{"172.16.0.0",  0, 0xffffffffu << 20},
 	{"192.168.0.0", 0, 0xffffffffu << 16},
 	{"100.64.0.0",  0, 0xffffffffu << 22}, /* rfc6598 - cg-nat */
 	{"192.0.0.0",   0, 0xffffffffu <<  3}, /* rfc7335 - IPv4 Service Continuity Prefix */
+	{NULL, 0, 0}
+};
+
+static nh_netaddr_t nh_nets_extra[] = {
+	{"192.0.0.0",   0, 0xffffffffu <<  8}, /* rfc7335 - IETF Protocol Assignments */
 	{NULL, 0, 0}
 };
 /* clang-format on */
@@ -204,6 +213,8 @@ static cmd_export_t cmds[] = {
 	{"set_contact_alias",  (cmd_function)set_contact_alias_f,  0,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"set_contact_alias",  (cmd_function)w_set_contact_alias_f, 1,
+		fixup_int_1, 0, REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
 		REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
@@ -257,6 +268,7 @@ static param_export_t params[] = {
 	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
 	{"append_sdp_oldmediaip", INT_PARAM, &sdp_oldmediaip        },
 	{"filter_server_id",      INT_PARAM, &nh_filter_srvid },
+	{"nat_addr_mode",         INT_PARAM, &nh_nat_addr_mode },
 
 	{0, 0, 0}
 };
@@ -535,10 +547,17 @@ static int mod_init(void)
 	}
 
 	/* Prepare 1918 networks list */
-	for(i = 0; nets_1918[i].cnetaddr != NULL; i++) {
-		if(inet_aton(nets_1918[i].cnetaddr, &addr) != 1)
+	for(i = 0; nh_nets_1918[i].cnetaddr != NULL; i++) {
+		if(inet_aton(nh_nets_1918[i].cnetaddr, &addr) != 1)
 			abort();
-		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
+		nh_nets_1918[i].netaddr = ntohl(addr.s_addr) & nh_nets_1918[i].mask;
+	}
+
+	/* Prepare reserved/extra networks list */
+	for(i = 0; nh_nets_extra[i].cnetaddr != NULL; i++) {
+		if(inet_aton(nh_nets_extra[i].cnetaddr, &addr) != 1)
+			abort();
+		nh_nets_extra[i].netaddr = ntohl(addr.s_addr) & nh_nets_extra[i].mask;
 	}
 
 	register_select_table(sel_declaration);
@@ -688,10 +707,12 @@ static int fix_nated_contact_f(struct sip_msg *msg, char *str1, char *str2)
  * Replaces ip:port pair in the Contact: field with the source address
  * of the packet.
  */
-static int set_contact_alias(struct sip_msg *msg)
+static int set_contact_alias(struct sip_msg *msg, int trim)
 {
 	char nbuf[MAX_URI_SIZE];
+	char cbuf[MAX_URI_SIZE];
 	str nuri;
+	str curi;
 	int br;
 
 	int offset, len;
@@ -702,16 +723,24 @@ static int set_contact_alias(struct sip_msg *msg)
 
 	nuri.s = nbuf;
 	nuri.len = MAX_URI_SIZE;
+	curi.s = cbuf;
+	curi.len = MAX_URI_SIZE;
 	if(get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
 	if((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
 		LM_ERR("you can't update contact twice, check your config!\n");
 		return -1;
 	}
-
-	if(uri_add_rcv_alias(msg, &c->uri, &nuri) < 0) {
-		LM_DBG("cannot add the alias parameter\n");
-		return -1;
+	if(trim > 0 && uri_trim_rcv_alias(&c->uri, &curi) > 0) {
+		if(uri_add_rcv_alias(msg, &curi, &nuri) < 0) {
+			LM_DBG("cannot add the alias parameter\n");
+			return -1;
+		}
+	} else {
+		if(uri_add_rcv_alias(msg, &c->uri, &nuri) < 0) {
+			LM_DBG("cannot add the alias parameter\n");
+			return -1;
+		}
 	}
 
 	br = 1;
@@ -751,9 +780,31 @@ static int set_contact_alias(struct sip_msg *msg)
 	return 1;
 }
 
+static int ki_set_contact_alias(struct sip_msg *msg)
+{
+	return set_contact_alias(msg, 0);
+}
+
+static int ki_set_contact_alias_trim(struct sip_msg *msg)
+{
+	return set_contact_alias(msg, 1);
+}
+
 static int set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	return set_contact_alias(msg);
+	return set_contact_alias(msg, 0);
+}
+
+static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	int i = 0;
+	if(str1) {
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
+	}
+	if(i > 1)
+		i = 1;
+	return set_contact_alias(msg, i);
 }
 
 #define SALIAS ";alias="
@@ -1267,9 +1318,16 @@ static inline int is1918addr_n(uint32_t netaddr)
 	uint32_t hl;
 
 	hl = ntohl(netaddr);
-	for(i = 0; nets_1918[i].cnetaddr != NULL; i++) {
-		if((hl & nets_1918[i].mask) == nets_1918[i].netaddr) {
+	for(i = 0; nh_nets_1918[i].cnetaddr != NULL; i++) {
+		if((hl & nh_nets_1918[i].mask) == nh_nets_1918[i].netaddr) {
 			return 1;
+		}
+	}
+	if(nh_nat_addr_mode==1) {
+		for(i = 0; nh_nets_extra[i].cnetaddr != NULL; i++) {
+			if((hl & nh_nets_extra[i].mask) == nh_nets_extra[i].netaddr) {
+				return 1;
+			}
 		}
 	}
 	return 0;
@@ -1553,7 +1611,7 @@ static int is_rfc1918_f(struct sip_msg *msg, char *str1, char *str2)
 
 /* replace ip addresses in SDP and return umber of replacements */
 static inline int replace_sdp_ip(
-		struct sip_msg *msg, str *org_body, char *line, str *ip)
+		struct sip_msg *msg, str *org_body, char *line, str *ip, int linelen)
 {
 	str body1, oldip, newip;
 	str body = *org_body;
@@ -1573,7 +1631,7 @@ static inline int replace_sdp_ip(
 	}
 	body1 = body;
 	for(;;) {
-		if(extract_mediaip(&body1, &oldip, &pf, line) == -1)
+		if(nh_extract_mediaip(&body1, &oldip, &pf, line, linelen) == -1)
 			break;
 		if(pf != AF_INET) {
 			LM_ERR("not an IPv4 address in '%s' SDP\n", line);
@@ -1676,20 +1734,31 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 		}
 	}
 
-	if(level & FIX_MEDIP) {
-		/* Iterate all c= and replace ips in them. */
-		ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0);
-		if(ret == -1)
-			return -1;
-		count += ret;
-	}
+	if(level & (FIX_MEDIP | FIX_ORGIP)) {
 
-	if(level & FIX_ORGIP) {
-		/* Iterate all o= and replace ips in them. */
-		ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0);
+		/* Iterate all a=rtcp and replace ips in them. rfc3605 */
+		ret = replace_sdp_ip(msg, &body, "a=rtcp", (ip && ip->len>0) ? ip : 0, 6);
 		if(ret == -1)
-			return -1;
-		count += ret;
+			LM_DBG("a=rtcp parameter does not exist. nothing to do.\n");
+		else 
+			count += ret;
+
+		if(level & FIX_MEDIP) {
+			/* Iterate all c= and replace ips in them. */
+			ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0, 2);
+			if(ret == -1)
+				return -1;
+			count += ret;
+		}
+
+		if(level & FIX_ORGIP) {
+			/* Iterate all o= and replace ips in them. */
+			ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0, 2);
+			if(ret == -1)
+				return -1;
+			count += ret;
+		}
+
 	}
 
 	return count > 0 ? 1 : 2;
@@ -1717,22 +1786,23 @@ static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 	return ki_fix_nated_sdp_ip(msg, level, &ip);
 }
 
-static int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
+static int nh_extract_mediaip(str *body, str *mediaip, int *pf, char *line,
+		int linelen)
 {
 	char *cp, *cp1;
 	int len, nextisip;
 
 	cp1 = NULL;
 	for(cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, line, len, 2);
+		cp1 = ser_memmem(cp, line, len, linelen);
 		if(cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
 			break;
-		cp = cp1 + 2;
+		cp = cp1 + linelen;
 	}
 	if(cp1 == NULL)
 		return -1;
 
-	mediaip->s = cp1 + 2;
+	mediaip->s = cp1 + linelen;
 	mediaip->len =
 			eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
 	trim_len(mediaip->len, mediaip->s, *mediaip);
@@ -2084,8 +2154,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		} else if(path.len && udpping_from_path) {
 			path_ip_str = extract_last_path_ip(path);
 			if(path_ip_str == NULL) {
-				LM_ERR("ERROR:nathelper:nh_timer: unable to parse path from "
-					   "location\n");
+				LM_ERR("unable to parse path from location\n");
 				continue;
 			}
 			if(get_natping_socket(path_ip_str, &path_ip, &path_port)) {
@@ -2666,7 +2735,12 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("nathelper"), str_init("set_contact_alias"),
-		SR_KEMIP_INT, set_contact_alias,
+		SR_KEMIP_INT, ki_set_contact_alias,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nathelper"), str_init("set_contact_alias_trim"),
+		SR_KEMIP_INT, ki_set_contact_alias_trim,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

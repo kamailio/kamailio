@@ -953,14 +953,9 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 cisco_restart() {
 	require_ctlengine
 	myhost=`get_my_host`
-	CMDPARAMS="tm.t_uac_start NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
+	CMDPARAMS="= tm.t_uac_start NOTIFY \"$1\" \".\" \".\" \"From:sip:daemon@$myhost=CRLF=To:<$1>=CRLF=Event:check-sync=CRLF=Contact:sip:daemon@$myhost=CRLF=\""
 
-	if [ $CTLENGINETYPE -eq 1 ] ; then
-		ctl_cmd_run $CMDPARAMS
-	else
-		RET=`ctl_cmd_run $CMDPARAMS | head -1`
-		print_status $RET
-	fi
+	ctl_cmd_run $CMDPARAMS
 }
 
 #
@@ -2036,13 +2031,8 @@ kamailio_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	CMDPARAMS="tm.t_uac_start OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
-	if [ $CTLENGINETYPE -eq 1 ] ; then
-		ctl_cmd_run $CMDPARAMS
-	else
-		RET=`ctl_cmd_run $CMDPARAMS | head -1`
-		print_status $RET
-	fi
+	CMDPARAMS="= tm.t_uac_wait_block OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost=CRLF=To:<$1>=CRLF=Contact:sip:daemon@$myhost=CRLF=\""
+	ctl_cmd_run $CMDPARAMS
 }
 
 #
@@ -2652,12 +2642,12 @@ usrloc() {
 				UL_EXPIRES=0
 				UL_FLAGS=0
 				BR_FLAGS=0
-				UL_PATH=0
+				UL_PATH="."
 			elif [ $# -eq 4 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
 				BR_FLAGS=0
-				UL_PATH=0
+				UL_PATH="."
 			elif [ $# -eq 5 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
@@ -2909,7 +2899,7 @@ extcmd() {
 }
 
 ##### ================================================ #####
-### trap with gdb kamailio processes
+### trap with gdb kamailio processes using RPC core.psx
 #
 
 kamailio_trap() {
@@ -2918,7 +2908,7 @@ kamailio_trap() {
 		exit
 	fi
 	DATE=`/bin/date +%Y%m%d_%H%M%S`
-	LOG_FILE=/tmp/gdb_kamailio_$DATE
+	LOG_FILE=/tmp/gdb_kamailio_${DATE}.txt
 	minfo "Trap file: $LOG_FILE"
 	ctl_cmd_run core.psx > $LOG_FILE
 	echo -n "Trapping Kamailio with gdb: "
@@ -2930,6 +2920,35 @@ kamailio_trap() {
 		echo "" >> $LOG_FILE
 		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
 		$GDB kamailio $PID -batch --eval-command="bt full" >> $LOG_FILE 2>&1
+		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
+	done
+	echo "."
+}
+
+##### ================================================ #####
+### trap with gdb kamailio processes using ps command
+#
+
+kamailio_pstrap() {
+	if [ -z "$GDB" ] ; then
+		merr "'gdb' tool not found: set GDB variable to correct tool path"
+		exit
+	fi
+	DATE=`/bin/date +%Y%m%d_%H%M%S`
+	LOG_FILE=/tmp/gdb_kamailio_${DATE}.txt
+	minfo "Trap file: $LOG_FILE"
+	ps axw | grep kamailio | grep -v grep | grep -v kamctl | sort > $LOG_FILE
+	echo "" >> $LOG_FILE
+	echo "" >> $LOG_FILE
+	echo -n "Trapping Kamailio with gdb: "
+	PID_TIMESTAMP_VECTOR=`ps axw | grep kamailio | grep -v grep | grep -v kamctl | sort | awk '{print $1}'`
+	for pid in $PID_TIMESTAMP_VECTOR
+	do
+		echo -n "."
+		PID=`echo $pid | cut -d '-' -f 1`
+		echo "" >> $LOG_FILE
+		echo "---start $PID -----------------------------------------------------" >> $LOG_FILE
+		$GDB kamailio $PID -batch --eval-command="p process_no" --eval-command="p pt[process_no]" --eval-command="bt full" >> $LOG_FILE 2>&1
 		echo "---end $PID -------------------------------------------------------" >> $LOG_FILE
 	done
 	echo "."
@@ -3145,6 +3164,10 @@ case $1 in
 	trap)
 		require_ctlengine
 		kamailio_trap
+		;;
+
+	pstrap)
+		kamailio_pstrap
 		;;
 
 	start)

@@ -42,7 +42,9 @@ struct diameter_avp_value {
 struct impu_data {
     str identity;
     str contact;
-} impu_data_t;
+};
+
+extern struct impu_data impu_data_t;
 
 struct ro_session {
     volatile int ref;
@@ -56,6 +58,7 @@ struct ro_session {
     str incoming_trunk_id;
     str outgoing_trunk_id;
     str pani;
+    str app_provided_party;
     unsigned int hop_by_hop;
     struct ro_tl ro_tl;
     unsigned int reserved_secs;
@@ -107,7 +110,7 @@ extern struct ro_session_table *ro_session_table;
  * \param _entry locked entry
  */
 #define ro_session_lock(_table, _entry) \
-		{ LM_DBG("LOCKING %d", (_entry)->lock_idx); lock_set_get( (_table)->locks, (_entry)->lock_idx); LM_DBG("LOCKED %d", (_entry)->lock_idx);}
+		{ LM_DBG("LOCKING %d\n", (_entry)->lock_idx); lock_set_get( (_table)->locks, (_entry)->lock_idx); LM_DBG("LOCKED %d\n", (_entry)->lock_idx);}
 
 
 /*!
@@ -116,7 +119,7 @@ extern struct ro_session_table *ro_session_table;
  * \param _entry locked entry
  */
 #define ro_session_unlock(_table, _entry) \
-		{ LM_DBG("UNLOCKING %d", (_entry)->lock_idx); lock_set_release( (_table)->locks, (_entry)->lock_idx); LM_DBG("UNLOCKED %d", (_entry)->lock_idx); }
+		{ LM_DBG("UNLOCKING %d\n", (_entry)->lock_idx); lock_set_release( (_table)->locks, (_entry)->lock_idx); LM_DBG("UNLOCKED %d\n", (_entry)->lock_idx); }
 
 /*!
  * \brief Reference an ro_session without locking
@@ -205,7 +208,7 @@ void remove_aaa_session(str *session_id);
 
 struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity,
         str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani);
+        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani, str *app_provided_party);
 
 /*!
  * \brief Refefence a ro_session with locking

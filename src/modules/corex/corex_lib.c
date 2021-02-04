@@ -63,11 +63,13 @@ int corex_append_branch(sip_msg_t *msg, str *uri, str *qv)
 		msg->dst_uri.len = 0;
 
 		/* if this is a cloned message, don't free the path vector as it was copied into shm memory and will be freed as contiguous block*/
-		if (!(msg->msg_flags&FL_SHM_CLONE)) {
-			if(msg->path_vec.s!=0)
+		if (!shm_address_in(msg->path_vec.s)) {
+			if (msg->path_vec.s)
 				pkg_free(msg->path_vec.s);
 			msg->path_vec.s = 0;
 			msg->path_vec.len = 0;
+		} else {
+			LM_WARN("Found path_vec that is not in pkg mem!\n");
 		}
 	}
 

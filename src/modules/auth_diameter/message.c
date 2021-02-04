@@ -185,7 +185,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 															int attach_buf)
 {
 	unsigned char *ptr;
-	AAAMessage    *msg;
+	AAAMessage    *msg = NULL;
 	unsigned char version;
 	unsigned int  msg_len;
 	AAA_AVP       *avp;
@@ -310,7 +310,9 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	return  msg;
 error:
 	LM_ERR(" message conversion dropped!!\n");
-	AAAFreeMessage(&msg);
+	if (msg) {
+		AAAFreeMessage(&msg);
+	}
 	return 0;
 }
 

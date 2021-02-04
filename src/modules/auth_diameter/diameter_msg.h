@@ -13,15 +13,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
 
-#ifndef _AAA_DIAMETER_MSG_H
-#define _AAA_DIAMETER_MSG_H
+#ifndef _AUTH_DIAM_MESSAGE_H_
+#define _AUTH_DIAM_MESSAGE_H_
 
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"

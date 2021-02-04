@@ -39,7 +39,7 @@
 #include "rms_media.h"
 #include "rms_dialog_info.h"
 
-ser_lock_t dialog_list_mutex;
+extern gen_lock_t *dialog_list_mutex;
 
 
 
@@ -51,7 +51,7 @@ typedef struct rms
 	char *local_ip;
 } rms_t;
 
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 
 
 #endif

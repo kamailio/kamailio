@@ -1,16 +1,18 @@
 /*
  * pv_headers
  *
- * Copyright (C) 2018 Kirill Solomko <ksolomko@sipwise.com>
+ * Copyright (C)
+ * 2020 Victor Seva <vseva@sipwise.com>
+ * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
- * This file is part of SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP Router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -21,18 +23,38 @@
  *
  */
 
-#include "../../core/dset.h"
+#include "../../core/strutils.h"
 
 #include "pv_headers.h"
-#include "pvh_str.h"
-#include "pvh_hdr.h"
-#include "pvh_hash.h"
+#include "pvh_func.h"
 #include "pvh_xavp.h"
+#include "pvh_str.h"
+#include "pvh_hash.h"
+#include "pvh_hdr.h"
 
-static str xavp_helper_xname = str_init("modparam_pv_headers");
-static str xavp_helper_name = str_init("xavp_name");
+static str xavi_helper_name = str_init("xavi_name");
 
-int pvh_collect_headers(struct sip_msg *msg, int is_auto)
+int pvh_parse_msg(sip_msg_t *msg)
+{
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(!IS_SIP(msg)) {
+			LM_DBG("non SIP request message\n");
+			return 1;
+		}
+	} else if(msg->first_line.type == SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg)) {
+			LM_DBG("non SIP reply message\n");
+			return 1;
+		}
+	} else {
+		LM_DBG("non SIP message\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+int pvh_collect_headers(struct sip_msg *msg)
 {
 	struct hdr_field *hf = NULL;
 	str name = STR_NULL;
@@ -40,36 +62,16 @@ int pvh_collect_headers(struct sip_msg *msg, int is_auto)
 	char hvals[header_name_size][header_value_size];
 	int idx = 0, d_size = 0;
 	str val_part = STR_NULL;
-	int br_idx;
 
-	pvh_get_branch_index(msg, &br_idx);
-	LM_DBG("br_idx: %d\n", br_idx);
-	if(!is_auto) {
-		if(msg->first_line.type == SIP_REPLY) {
-			if(isflagset(msg, FL_PV_HDRS_COLLECTED) == 1) {
-				LM_ERR("headers are already collected\n");
-				return -1;
-			}
-		} else {
-			if(isbflagset(br_idx, FL_PV_HDRS_COLLECTED)) {
-				LM_ERR("headers are already collected\n");
-				return -1;
-			}
-		}
+	if(pvh_hdrs_collected(msg)) {
+		LM_ERR("headers are already collected\n");
+		return -1;
 	}
 
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("error parsing headers\n");
 		return -1;
 	}
-
-	if(pvh_str_new(&name, header_name_size) < 0)
-		goto err;
-	if(pvh_str_new(&val, header_value_size) < 0)
-		goto err;
-
-	if(name.s == NULL || val.s == NULL)
-		goto err;
 
 	for(hf = msg->headers; hf; hf = hf->next) {
 		LM_DBG("collect header[%.*s]: %.*s\n", hf->name.len, hf->name.s,
@@ -77,88 +79,75 @@ int pvh_collect_headers(struct sip_msg *msg, int is_auto)
 
 		switch(hf->type) {
 			case HDR_FROM_T:
-				pvh_str_copy(&name, &_hdr_from, header_name_size);
+				name.len = _hdr_from.len;
+				name.s = _hdr_from.s;
 				LM_DBG("force [From] as key\n");
 				break;
 			case HDR_TO_T:
-				pvh_str_copy(&name, &_hdr_to, header_name_size);
+				name.len = _hdr_to.len;
+				name.s = _hdr_to.s;
 				LM_DBG("force [To] as key\n");
 				break;
 			default:
-				pvh_str_copy(&name, &hf->name, header_name_size);
+				name.len = hf->name.len;
+				name.s = hf->name.s;
 		}
-		pvh_str_copy(&val, &hf->body, header_value_size);
+		val.len = hf->body.len;
+		val.s = hf->body.s;
 
-		if(str_hash_get(&split_headers, name.s, name.len)
-				&& strchr(val.s, ',') != NULL) {
+		if(strchr(val.s, ',') != NULL
+				&& str_hash_case_get(&split_headers, name.s, name.len)) {
 
 			if(pvh_split_values(&val, hvals, &d_size, 1) < 0) {
-				LM_ERR("could not parse Diversion header comma separated "
-					   "value");
+				LM_ERR("could not parse %.*s header comma separated "
+					   "value",
+						name.len, name.s);
 				return -1;
 			}
 
 			for(idx = 0; idx < d_size; idx++) {
 				val_part.s = hvals[idx];
 				val_part.len = strlen(hvals[idx]);
-				if(pvh_set_xavp(msg, &xavp_name, &name, &val_part, SR_XTYPE_STR,
+				if(pvh_set_xavi(msg, &xavi_name, &name, &val_part, SR_XTYPE_STR,
 						   0, 1)
 						< 0)
-					goto err;
+					return -1;
 			}
 			continue;
 		}
-		if(pvh_set_xavp(msg, &xavp_name, &name, &val, SR_XTYPE_STR, 0, 1) < 0)
-			goto err;
+		if(pvh_set_xavi(msg, &xavi_name, &name, &val, SR_XTYPE_STR, 0, 1) < 0)
+			return -1;
 	}
 
-	if(pvh_set_xavp(msg, &xavp_helper_xname, &xavp_helper_name, &xavp_name,
+	if(pvh_set_xavi(msg, &xavi_helper_xname, &xavi_helper_name, &xavi_name,
 			   SR_XTYPE_STR, 0, 0)
 			< 0)
-		goto err;
+		return -1;
 
-	pvh_str_free(&name);
-	pvh_str_free(&val);
-
-	msg->first_line.type == SIP_REPLY ? setflag(msg, FL_PV_HDRS_COLLECTED)
-									  : setbflag(br_idx, FL_PV_HDRS_COLLECTED);
+	pvh_hdrs_set_collected(msg);
 
 	return 1;
-
-err:
-	pvh_str_free(&name);
-	pvh_str_free(&val);
-	return -1;
 }
 
-int pvh_apply_headers(struct sip_msg *msg, int is_auto)
+int pvh_apply_headers(struct sip_msg *msg)
 {
-	sr_xavp_t *xavp = NULL;
+	sr_xavp_t *xavi = NULL;
 	sr_xavp_t *sub = NULL;
-	str display = STR_NULL;
-	str uri = STR_NULL;
 	struct str_hash_table rm_hdrs;
 	int from_cnt = 0, to_cnt = 0;
-	str br_xname = STR_NULL;
-	int br_idx, keys_count;
+	char t[header_name_size];
+	char tv[2][header_value_size];
+	str display = {tv[0], header_value_size};
+	str uri = {tv[1], header_value_size};
+	str br_xname = {t, header_name_size};
+	int skip_from_to = 0, keys_count = 0;
 	int res = -1;
 
-	rm_hdrs.size = 0;
+	memset(&rm_hdrs, 0, sizeof(struct str_hash_table));
 
-	pvh_get_branch_index(msg, &br_idx);
-
-	if(!is_auto) {
-		if(msg->first_line.type == SIP_REPLY) {
-			if(isflagset(msg, FL_PV_HDRS_APPLIED) == 1) {
-				LM_ERR("headers are already applied\n");
-				return -1;
-			}
-		} else {
-			if(isbflagset(br_idx, FL_PV_HDRS_APPLIED) == 1) {
-				LM_ERR("headers are already applied\n");
-				return -1;
-			}
-		}
+	if(pvh_hdrs_applied(msg)) {
+		LM_ERR("headers are already applied\n");
+		return -1;
 	}
 
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
@@ -166,53 +155,55 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 		return -1;
 	}
 
-	if(pvh_str_new(&display, header_value_size) < 0)
-		goto err;
-	if(pvh_str_new(&uri, header_value_size) < 0)
-		goto err;
-	if(pvh_str_new(&br_xname, header_value_size) < 0)
-		goto err;
+	pvh_get_branch_xname(msg, &xavi_name, &br_xname);
 
-	pvh_get_branch_xname(msg, &xavp_name, &br_xname);
-
-	if((xavp = xavp_get(&br_xname, NULL)) == NULL
-			&& (xavp = xavp_get(&xavp_name, NULL)) == NULL) {
-		LM_ERR("missing xavp %s, run pv_collect_headers() first\n",
-				xavp_name.s);
-		goto err;
+	if((xavi = xavi_get(&br_xname, NULL)) == NULL
+			&& (xavi = xavi_get(&xavi_name, NULL)) == NULL) {
+		LM_ERR("missing xavi %.*s, run pv_collect_headers() first\n",
+				xavi_name.len, xavi_name.s);
+		return -1;
 	}
-	if(xavp->val.type != SR_XTYPE_XAVP) {
-		LM_ERR("not xavp child type %s\n", xavp_name.s);
-		goto err;
+	if(xavi->val.type != SR_XTYPE_XAVP) {
+		LM_ERR("not xavp child type %.*s\n", xavi_name.len, xavi_name.s);
+		return -1;
 	}
 
-	if((sub = xavp->val.v.xavp) == NULL) {
-		LM_ERR("invalid xavp structure: %s\n", xavp_name.s);
-		goto err;
+	if((sub = xavi->val.v.xavp) == NULL) {
+		LM_ERR("invalid xavp structure: %.*s\n", xavi_name.len, xavi_name.s);
+		return -1;
 	}
-	keys_count = pvh_xavp_keys_count(&sub);
+	keys_count = pvh_xavi_keys_count(&sub);
 	if(str_hash_alloc(&rm_hdrs, keys_count) < 0) {
 		PKG_MEM_ERROR;
-		goto err;
+		return -1;
 	}
-	LM_DBG("xavp->name:%.*s br_xname:%.*s keys_count: %d\n", xavp->name.len,
-			xavp->name.s, br_xname.len, br_xname.s, keys_count);
+	LM_DBG("xavi->name:%.*s br_xname:%.*s keys_count: %d\n", xavi->name.len,
+			xavi->name.s, br_xname.len, br_xname.s, keys_count);
 	str_hash_init(&rm_hdrs);
+
+	if(msg->first_line.type == SIP_REPLY
+			|| msg->first_line.u.request.method_value == METHOD_ACK
+			|| msg->first_line.u.request.method_value == METHOD_PRACK
+			|| msg->first_line.u.request.method_value == METHOD_BYE) {
+		skip_from_to = 1;
+		if(msg->to == NULL) {
+			LM_DBG("no To header, can't store To info in parsed\n");
+		} else {
+			if(pvh_set_parsed(msg, &_hdr_to, &msg->to->body, NULL) == NULL)
+				LM_ERR("can't store To info in parsed\n");
+		}
+	}
 
 	do {
 		if(pvh_skip_header(&sub->name))
 			continue;
 
-		if(strncasecmp(sub->name.s, _hdr_from.s, sub->name.len) == 0) {
-			if(msg->first_line.type == SIP_REPLY
-					|| msg->first_line.u.request.method_value == METHOD_ACK
-					|| msg->first_line.u.request.method_value == METHOD_PRACK
-					|| msg->first_line.u.request.method_value == METHOD_BYE) {
+		if(cmpi_str(&sub->name, &_hdr_from) == 0) {
+			if(skip_from_to) {
 				LM_DBG("skip From header change in reply messages\n");
 				continue;
 			}
-			if(strncmp(sub->val.v.s.s, msg->from->body.s, sub->val.v.s.len)
-					== 0) {
+			if(cmp_str(&sub->val.v.s, &msg->from->body) == 0) {
 				LM_DBG("skip unchanged From header\n");
 				continue;
 			}
@@ -239,16 +230,12 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 			continue;
 		}
 
-		if(strncasecmp(sub->name.s, _hdr_to.s, sub->name.len) == 0) {
-			if(msg->first_line.type == SIP_REPLY
-					|| msg->first_line.u.request.method_value == METHOD_ACK
-					|| msg->first_line.u.request.method_value == METHOD_PRACK
-					|| msg->first_line.u.request.method_value == METHOD_BYE) {
+		if(cmpi_str(&sub->name, &_hdr_to) == 0) {
+			if(skip_from_to) {
 				LM_DBG("skip To header change in reply messages\n");
 				continue;
 			}
-			if(strncmp(sub->val.v.s.s, msg->to->body.s, sub->val.v.s.len)
-					== 0) {
+			if(cmp_str(&sub->val.v.s, &msg->to->body) == 0) {
 				LM_DBG("skip unchanged To header\n");
 				continue;
 			}
@@ -275,16 +262,16 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 			continue;
 		}
 
-		if(strncasecmp(sub->name.s, "@Reply-Reason", sub->name.len) == 0) {
-			if(str_hash_get(&rm_hdrs, sub->name.s, sub->name.len))
+		if(cmpi_str(&sub->name, &_hdr_reply_reason) == 0) {
+			if(str_hash_case_get(&rm_hdrs, sub->name.s, sub->name.len))
 				continue;
 			pvh_real_replace_reply_reason(msg, &sub->val.v.s);
 			pvh_str_hash_add_key(&rm_hdrs, &sub->name);
 			continue;
 		}
 
-		if(!str_hash_get(&rm_hdrs, sub->name.s, sub->name.len)) {
-			if(!pvh_xavp_is_null(sub) && xavp_count(&sub->name, &sub) == 1) {
+		if(!str_hash_case_get(&rm_hdrs, sub->name.s, sub->name.len)) {
+			if(!pvh_avp_is_null(sub) && xavi_count(&sub->name, &sub) == 1) {
 				LM_DBG("replace header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
 				pvh_real_hdr_replace(msg, &sub->name, &sub->val.v.s);
 				pvh_str_hash_add_key(&rm_hdrs, &sub->name);
@@ -295,21 +282,17 @@ int pvh_apply_headers(struct sip_msg *msg, int is_auto)
 			pvh_str_hash_add_key(&rm_hdrs, &sub->name);
 		}
 
-		if(!pvh_xavp_is_null(sub) && !pvh_single_header(&sub->name)) {
+		if(!pvh_avp_is_null(sub) && !pvh_single_header(&sub->name)) {
 			pvh_real_hdr_append(msg, &sub->name, &sub->val.v.s);
 			LM_DBG("append header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
 		}
 	} while((sub = sub->next) != NULL);
 
-	msg->first_line.type == SIP_REPLY ? setflag(msg, FL_PV_HDRS_APPLIED)
-									  : setbflag(br_idx, FL_PV_HDRS_APPLIED);
+	pvh_hdrs_set_applied(msg);
 
 	res = 1;
 
 err:
-	pvh_str_free(&display);
-	pvh_str_free(&uri);
-	pvh_str_free(&br_xname);
 	if(rm_hdrs.size)
 		pvh_str_hash_free(&rm_hdrs);
 	return res;
@@ -317,28 +300,17 @@ err:
 
 int pvh_reset_headers(struct sip_msg *msg)
 {
-	str br_xname = STR_NULL;
-	int br_idx;
+	char t[header_name_size];
+	str br_xname = {t, header_name_size};
 
-	if(pvh_str_new(&br_xname, header_name_size) < 0)
-		return -1;
+	pvh_get_branch_xname(msg, &xavi_name, &br_xname);
+	LM_DBG("clean xavi:%.*s\n", br_xname.len, br_xname.s);
+	xavi_rm_by_name(&br_xname, 1, NULL);
+	pvh_get_branch_xname(msg, &xavi_parsed_xname, &br_xname);
+	LM_DBG("clean xavi:%.*s\n", br_xname.len, br_xname.s);
+	xavi_rm_by_name(&br_xname, 1, NULL);
 
-	pvh_get_branch_index(msg, &br_idx);
-	pvh_get_branch_xname(msg, &xavp_name, &br_xname);
-
-	pvh_free_xavp(&br_xname);
-	pvh_get_branch_xname(msg, &xavp_parsed_xname, &br_xname);
-	pvh_free_xavp(&br_xname);
-
-	if(msg->first_line.type == SIP_REPLY) {
-		resetflag(msg, FL_PV_HDRS_COLLECTED);
-		resetflag(msg, FL_PV_HDRS_APPLIED);
-	} else {
-		resetbflag(br_idx, FL_PV_HDRS_COLLECTED);
-		resetbflag(br_idx, FL_PV_HDRS_APPLIED);
-	}
-
-	pvh_str_free(&br_xname);
+	pvh_hdrs_reset_flags(msg);
 
 	return 1;
 }
@@ -346,7 +318,7 @@ int pvh_reset_headers(struct sip_msg *msg)
 int pvh_check_header(struct sip_msg *msg, str *hname)
 {
 
-	if(pvh_xavp_get_child(msg, &xavp_name, hname) == NULL)
+	if(pvh_xavi_get_child(msg, &xavi_name, hname) == NULL)
 		return -1;
 
 	return 1;
@@ -354,12 +326,12 @@ int pvh_check_header(struct sip_msg *msg, str *hname)
 
 int pvh_append_header(struct sip_msg *msg, str *hname, str *hvalue)
 {
-	return pvh_set_xavp(msg, &xavp_name, hname, hvalue, SR_XTYPE_STR, 0, 1);
+	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, 0, 1);
 }
 
 int pvh_modify_header(struct sip_msg *msg, str *hname, str *hvalue, int indx)
 {
-	return pvh_set_xavp(msg, &xavp_name, hname, hvalue, SR_XTYPE_STR, indx, 0);
+	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, indx, 0);
 }
 
 int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
@@ -367,19 +339,19 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 	sr_xavp_t *avp = NULL;
 	int count = 0;
 
-	if((avp = pvh_xavp_get_child(msg, &xavp_name, hname)) == NULL)
+	if((avp = pvh_xavi_get_child(msg, &xavi_name, hname)) == NULL)
 		return 1;
 
 	if(indx < 0) {
-		count = xavp_count(hname, &avp);
+		count = xavi_count(hname, &avp);
 		do {
-			if(pvh_set_xavp(
-					   msg, &xavp_name, hname, NULL, SR_XTYPE_STR, indx++, 0)
+			if(pvh_set_xavi(
+					   msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx++, 0)
 					< 1)
 				return -1;
 		} while(indx < count);
 	} else {
-		if(pvh_set_xavp(msg, &xavp_name, hname, NULL, SR_XTYPE_STR, indx, 0)
+		if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx, 0)
 				< 1)
 			return -1;
 	}

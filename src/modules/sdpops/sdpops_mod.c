@@ -1080,7 +1080,7 @@ static int sdp_remove_media(sip_msg_t *msg, str *media)
 						media->len)==0)
 			{
 				/* found - remove */
-				LM_DBG("removing media stream: %.*s", media->len, media->s);
+				LM_DBG("removing media stream: %.*s\n", media->len, media->s);
 				nxt_stream = get_sdp_stream(msg, sdp_session_num,
 						sdp_stream_num+1);
 				/* skip back 'm=' */
@@ -1319,6 +1319,26 @@ static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar)
 	}
 
 	if(sdp_with_transport(msg, &ltransport, 1)<=0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_sdp_with_transport(sip_msg_t* msg, str* transport)
+{
+	if(sdp_with_transport(msg, transport, 0)<=0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_sdp_with_transport_like(sip_msg_t* msg, str* transport)
+{
+	if(sdp_with_transport(msg, transport, 1)<=0)
 		return -1;
 	return 1;
 }
@@ -2153,6 +2173,7 @@ error:
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("remove_codecs_by_name"),
 		SR_KEMIP_INT, sdp_remove_codecs_by_name,
@@ -2229,6 +2250,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sdpops"), str_init("sdp_with_transport"),
+		SR_KEMIP_INT, ki_sdp_with_transport,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_transport_like"),
+		SR_KEMIP_INT, ki_sdp_with_transport_like,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("sdpops"), str_init("sdp_get_line_startswith"),
 		SR_KEMIP_INT, ki_sdp_get_line_startswith,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -2242,6 +2273,7 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

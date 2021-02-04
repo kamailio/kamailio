@@ -33,7 +33,7 @@
 		</listitem>
 		<listitem>
 		<para>
-		by setting <quote>trace_mode</quote> to mirror all traffic.
+		by setting <quote>trace_mode</quote> to mirror or store to db all traffic.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -43,10 +43,10 @@
 	The tracing can be turned on/off using Kamailio <acronym>RPC</acronym> commands.
 	</para>
 	<para>
-	&ctltool; fifo sip_trace on
+	&ctltool; rpc siptrace.status on
 	</para>
 	<para>
-	&ctltool; fifo sip_trace off
+	&ctltool; rpc siptrace.status off
 	</para>
 	</section>
 	<section>
@@ -118,7 +118,7 @@ modparam("siptrace", "db_url", "&exampledb;")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sip_trace</varname> parameter</title>
+		<title>Set <varname>table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("siptrace", "table", "strace")
@@ -183,8 +183,7 @@ modparam("siptrace", "trace_on", 1)
 		<title>Set <varname>traced_user_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("siptrace", "traced_user_avp", "$avp(i:123)")
-modparam("siptrace", "traced_user_avp", "$avp(s:user)")
+modparam("siptrace", "traced_user_avp", "$avp(user)")
 ...
 </programlisting>
 		</example>
@@ -218,7 +217,7 @@ modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 		<title><varname>duplicate_uri</varname> (str)</title>
 		<para>
 		The address in form of a SIP URI where to send a duplicate
-		of traced message. It uses UDP all the time.
+		of traced message.
 		</para>
 		<para>
 		<emphasis>
@@ -238,12 +237,12 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 		<title><varname>trace_to_database</varname> (integer)</title>
 		<para>
 		Parameter to enable/disable inserts to the database from this
-		&kamailio;. 
+		&kamailio;.
 		</para>
 		<para>
-		In case we only want to send the SIP messages to the 
-		<quote>duplicate_uri</quote> and not store the information to the local 
-		database we can set this to "0".  
+		In case we only want to send the SIP messages to the
+		<quote>duplicate_uri</quote> and not store the information to the local
+		database we can set this to "0".
 		</para>
 		<para>
 		<emphasis>
@@ -325,7 +324,7 @@ modparam("siptrace", "trace_sl_acks", 0)
 		side.
 		</para>
 		<para>
-		<emphasis>Note:</emphasis> The headers are first read, then written. This allows 
+		<emphasis>Note:</emphasis> The headers are first read, then written. This allows
 		relaying the information over more than two &kamailio; servers by setting both
 		<varname>xheaders_write</varname> and <varname>xheaders_read</varname>
 		to "1" on the servers in the middle.
@@ -387,7 +386,7 @@ modparam("siptrace", "hep_mode_on", 1)
 </programlisting>
                 </example>
         </section>
-        
+
 	<section id="siptrace.p.hep_version">
                 <title><varname>hep_version</varname> (integer)</title>
                 <para>
@@ -431,14 +430,42 @@ modparam("siptrace", "hep_capture_id", 234)
 </programlisting>
                 </example>
         </section>
-	<section id="siptrace.p.trace_delayed">
-                <title><varname>trace_delayed</varname> (integer)</title>
+	<section id="siptrace.p.trace_db_mode">
+                <title><varname>trace_db_mode</varname> (integer)</title>
                 <para>
-		Use <quote>INSERT DELAYED</quote> to store to database when it is available,
-		instead of <quote>INSERT</quote>.
+				If set to 1, the module uses <quote>INSERT DELAYED</quote> to
+				store to database (when it is available, otherwise falls back
+				to <quote>INSERT</quote>).
                 </para>
                 <para>
-                Default value is <emphasis>0 (off)</emphasis>.
+				If set to 2, the module uses <quote>ASYNC-INSERT</quote> to
+				store to database (when it is available, otherwise falls back
+				to <quote>INSERT</quote>).
+                </para>
+                <para>
+                Default value is <emphasis>0 (use <quote>INSERT</quote>)</emphasis>.
+                </para>
+                <example>
+                <title>Set <varname>trace_db_mode</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "trace_db_mode", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="siptrace.p.trace_delayed">
+                <title><varname>trace_delayed</varname> (integer)</title>
+				<para>
+					Kept for backward compatibily, use trace_db_mode instead.
+                </para>
+                <para>
+					If set to non-zero, ot sets trace_db_mode parameter to 1
+					when the module is initialized.
+                </para>
+                <para>
+                Default value is <emphasis>0</emphasis>.
                 </para>
                 <example>
                 <title>Set <varname>trace_delayed</varname>
@@ -450,18 +477,81 @@ modparam("siptrace", "trace_delayed", 1)
 </programlisting>
                 </example>
         </section>
-	<section id="siptrace.p.force_send_sock">
-                <title><varname>force_send_sock</varname> (str)</title>
+	<section id="siptrace.p.send_sock_name">
+                <title><varname>send_sock_name</varname> (str)</title>
+                <para>
+			The name of the local listen socket from where to send
+			the duplicated traffic via SIP or HEP. In the absence of this parameter
+			&kamailio; automatically picks an interface. It has priority over
+			'send_sock_addr' parameter.
+                </para>
+                <example>
+                <title>Set <varname>send_sock_name</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "send_sock_name", "sock1")
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="siptrace.p.send_sock_addr">
+                <title><varname>send_sock_addr</varname> (str)</title>
                 <para>
 			The local interface in the form of SIP URI from where to send
 			the duplicated traffic. In the absence of this parameter
 			&kamailio; automatically picks an interface.
                 </para>
                 <example>
-                <title>Set <varname>force_send_sock</varname> parameter</title>
+                <title>Set <varname>send_sock_addr</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
-modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
+modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
+...
+</programlisting>
+                </example>
+        </section>
+	<section id="siptrace.p.force_send_sock">
+                <title><varname>force_send_sock</varname> (str)</title>
+				<para>It is the same as 'send_sock_addr' parameter, this being
+				kept for backward compatibility when 'send_sock_name' and
+				'send_sock_addr' were introduced.</para>
+        </section>
+
+	<section id="siptrace.p.trace_init_mode">
+                <title><varname>trace_init_mode</varname> (integer)</title>
+				<para>
+					Control what tracing modes are initialized.
+                </para>
+				<para>
+				The value of the parameter can be a combination of next values:
+				<itemizedlist>
+				<listitem>
+                <para>
+                0 - all modes are initialized.
+                </para>
+				</listitem>
+				<listitem>
+                <para>
+				1 - module initialized to do tracing only with core callback
+				functions (see also 'trace_mode' parameter).
+                </para>
+				</listitem>
+				<listitem>
+                <para>
+				2 - module initialized to do tracing only using config script flags
+				and functions.
+                </para>
+				</listitem>
+				</itemizedlist>
+				</para>
+                <para>
+                Default value is <emphasis>0</emphasis>.
+                </para>
+                <example>
+                <title>Set <varname>trace_init_mode</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "trace_init_mode", 1)
 ...
 </programlisting>
                 </example>
@@ -469,15 +559,43 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 	<section id="siptrace.p.trace_mode">
                 <title><varname>trace_mode</varname> (integer)</title>
                 <para>
-				If set to 1, the module uses core events triggered when receiving
-				or sending SIP traffic to mirror traffic to a SIP capture server
-				using HEP. It will automatically do the mirroring of all SIP traffic.
+				If not set to 0, the module uses core events triggered when receiving
+				or sending SIP traffic to store it to database or mirror it to a SIP
+				capture server using HEP or UDP forwarding.
+				It will automatically do the handling of all SIP traffic.
 				It is no longer needed to set the siptrace flag per request or
-				execute sip_trace(), if it is done, then there mirroring is
+				execute sip_trace(), if it is done, then the storing and mirroring is
 				duplicated.
                 </para>
+				<para>
+				The value of the parameter can be a combination of next values:
+				<itemizedlist>
+				<listitem>
                 <para>
-                If set to 0, no automatic mirroring of SIP traffic via HEP.
+                0 - no automatic mirroring or storing of SIP traffic.
+                </para>
+				</listitem>
+				<listitem>
+				<para>
+				1 (1st bit set) - mirror the traffic to HEP server.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				2 (2nd bit set) - store the traffic to database server.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				4 (3rd bit set) - mirro the traffic to the SIP URI specified by
+				duplicate_uri.
+				</para>
+				</listitem>
+				</itemizedlist>
+				</para>
+                <para>
+                The trace_on parameter still has to be set, allowing also to control
+                this mode of mirroring via RPC commands.
                 </para>
                 <para>
                 Default value is <emphasis>0</emphasis>.
@@ -487,7 +605,10 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
                 parameter</title>
                 <programlisting format="linespecific">
 ...
+modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
+...
+modparam("siptrace", "trace_mode", 3)
 ...
 </programlisting>
                 </example>
@@ -511,6 +632,25 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 </programlisting>
                 </example>
         </section>
+		<section id="siptrace.p.evcb_msg">
+                <title><varname>evcb_msg</varname> (str)</title>
+                <para>
+				Set the name of KEMI function to be executed instead of
+				event_route[siptrace:msg].
+                </para>
+                <para>
+                Default value is empty.
+                </para>
+                <example>
+                <title>Set <varname>evcb_msg</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
 
 	<section>
@@ -522,7 +662,9 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 		<para>
 		Store or forward the current processed SIP message/transaction/dialog in database.
 		It is stored in the form prior applying changes made to it. Based on mode, one can trace
-		the current message('m' - default), the current transaction('t') or the current dialog('d').
+		the current message('m'), the current transaction('t') or the current dialog('d').
+		If no mode is given, it falls back to the default mode - transaction tracking when
+		trace_flag is set, otherwise only the current message.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -671,15 +813,42 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 	</section>
 	</section><!-- RPC commands -->
 
+    <section>
+	<title>Event Routes</title>
+	<section id="siptrace.ev.siptrace_msg">
+		<title>
+		<function moreinfo="none">event_route[siptrace:msg]</function>
+		</title>
+		<para>
+		The event route is executed when mirroring SIP traffic using core event
+		callbacks (data in/out on network). If drop() is used, then the mirroring
+		is no longer done.
+		</para>
+		<para>
+		Note: now only message content (e.g., headers, body) can be used for
+		conditions in the event route, the source and destination addresses are
+		not yet available.
+		</para>
+		<programlisting  format="linespecific">
+...
+event_route[siptrace:msg] {
+    if(is_method("OPTIONS")) {
+        drop();
+    }
+}
+...
+		</programlisting>
+	</section>
+	</section><!-- event routes -->
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with siptrace, you have to setup the database 
-		tables where the module will store the data. For that, if the
-		table were not created by the installation script or you choose
-		to install everything by yourself you can use the siptrace-create.sql
-		<acronym>SQL</acronym> script in the database directories in the
-		kamailio/scripts folder as template.
+		Before running &kamailio; with siptrace and activated trace_to_database
+		parameter, you have to setup the database tables where the module will
+		store the data. For that, if the table were not created by the
+		installation script or you choose to install everything by yourself
+		you can use the siptrace-create.sql <acronym>SQL</acronym> script in
+		the database directories in the kamailio/scripts folder as template.
 		You can also find the complete database documentation on the
 		project webpage, &kamailiodbdocslink;.
 		</para>
@@ -714,6 +883,6 @@ onsend_route {
 </programlisting>
 	</example>
 	</section>
-	
+
 </chapter>
 

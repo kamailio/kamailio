@@ -1,7 +1,7 @@
 -- Kamailio - equivalent of routing blocks in Lua
 --
--- KSR - the new dynamic object exporting Kamailio functions (kemi)
--- sr - the old static object exporting Kamailio functions
+-- KSR - the object exporting Kamailio KEMI functions (app_lua module)
+-- sr - the old object exporting Kamailio functions (app_lua_sr module)
 --
 
 -- Relevant remarks:
@@ -11,7 +11,47 @@
 --  * KSR.drop() is only marking the SIP message for drop, but doesn't stop
 --  the execution of the script. Use KSR.x.exit() after it or KSR.x.drop()
 --
+-- Hints:
+--  * Lua syntax check: luac -p /path/to/script.lua
+--
 
+-- debug callback function to print details of execution trace
+--[[
+local ksr_exec_level=0
+
+local function ksr_exec_hook(event)
+	local s = "";
+	local t = debug.getinfo(3)
+	s = s .. ksr_exec_level .. ">>> " .. string.rep(" ", ksr_exec_level);
+	if t~=nil and t.currentline>=0 then
+		s = s .. t.short_src .. ":" .. t.currentline .. " ";
+	end
+	t=debug.getinfo(2)
+	if event=="call" then
+		ksr_exec_level = ksr_exec_level + 1;
+	else
+		ksr_exec_level = ksr_exec_level - 1;
+		if ksr_exec_level < 0 then
+			ksr_exec_level = 0;
+		end
+	end
+	if t.what=="main" then
+		if event=="call" then
+			s = s .. "begin " .. t.short_src;
+		else
+			s = s .. "end " .. t.short_src;
+		end
+	elseif t.what=="Lua" then
+		s = s .. event .. " " .. t.name or "(Lua)" .. " <" .. t.linedefined .. ":" .. t.short_src .. ">";
+	else
+		s = s .. event .. " " .. t.name or "(C)" .. " [" .. t.what .. "] ";
+	end
+	KSR.info(s .. "\n");
+end
+
+debug.sethook(ksr_exec_hook, "cr")
+ksr_exec_level=0
+]]--
 
 -- global variables corresponding to defined values (e.g., flags) in kamailio.cfg
 FLT_ACC=1
@@ -122,26 +162,24 @@ function ksr_route_reqinit()
 		local srcip = KSR.kx.get_srcip();
 		if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 then
 			-- ip is already blocked
-			KSR.dbg("request from blocked IP - " .. KSR.pv.get("$rm")
-					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+			KSR.dbg("request from blocked IP - " .. KSR.kx.get_method()
+					.. " from " .. KSR.kx.get_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.x.exit();
 		end
 		if KSR.pike.pike_check_req() < 0 then
-			KSR.err("ALERT: pike blocking " .. KSR.pv.get("$rm")
-					.. " from " .. KSR.kx.gete_furi() .. " (IP:"
+			KSR.err("ALERT: pike blocking " .. KSR.kx.get_method()
+					.. " from " .. KSR.kx.get_furi() .. " (IP:"
 					.. srcip .. ":" .. KSR.kx.get_srcport() .. ")\n");
 			KSR.htable.sht_seti("ipban", srcip, 1);
 			KSR.x.exit();
 		end
 	end
-	if KSR.corex.has_user_agent() > 0 then
-		local ua = KSR.kx.gete_ua();
-		if string.find(ua, "friendly-scanner")
-				or string.find(ua, "sipcli") then
-			KSR.sl.sl_send_reply(200, "OK");
-			KSR.x.exit();
-		end
+	local ua = KSR.kx.gete_ua();
+	if string.find(ua, "friendly") or string.find(ua, "scanner")
+			or string.find(ua, "sipcli") or string.find(ua, "sipvicious") then
+		KSR.sl.sl_send_reply(200, "OK");
+		KSR.x.exit();
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
@@ -222,10 +260,10 @@ function ksr_route_location()
 	if rc<0 then
 		KSR.tm.t_newtran();
 		if rc==-1 or rc==-3 then
-			KSR.sl.send_reply("404", "Not Found");
+			KSR.sl.send_reply(404, "Not Found");
 			KSR.x.exit();
 		elseif rc==-2 then
-			KSR.sl.send_reply("405", "Method Not Allowed");
+			KSR.sl.send_reply(405, "Method Not Allowed");
 			KSR.x.exit();
 		end
 	end
@@ -240,10 +278,13 @@ function ksr_route_location()
 end
 
 
--- IP authorization and user uthentication
+-- IP authorization and user authentication
 function ksr_route_auth()
+	if not KSR.auth then
+		return 1;
+	end
 
-	if not KSR.is_REGISTER() then
+	if KSR.permissions and not KSR.is_REGISTER() then
 		if KSR.permissions.allow_source_address(1)>0 then
 			-- source IP allowed
 			return 1;
@@ -252,8 +293,8 @@ function ksr_route_auth()
 
 	if KSR.is_REGISTER() or KSR.is_myself_furi() then
 		-- authenticate requests
-		if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 then
-			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
+		if KSR.auth_db.auth_check(KSR.kx.gete_fhost(), "subscriber", 1)<0 then
+			KSR.auth.auth_challenge(KSR.kx.gete_fhost(), 0);
 			KSR.x.exit();
 		end
 		-- user authenticated - remove auth header
@@ -275,6 +316,9 @@ end
 
 -- Caller NAT detection
 function ksr_route_natdetect()
+	if not KSR.nathelper then
+		return 1;
+	end
 	KSR.force_rport();
 	if KSR.nathelper.nat_uac_test(19)>0 then
 		if KSR.is_REGISTER() then
@@ -289,6 +333,9 @@ end
 
 -- RTPProxy control
 function ksr_route_natmanage()
+	if not KSR.rtpproxy then
+		return 1;
+	end
 	if KSR.siputils.is_request()>0 then
 		if KSR.siputils.has_totag()>0 then
 			if KSR.rr.check_route_param("nat=yes")>0 then
@@ -319,6 +366,9 @@ end
 
 -- URI update for dialog requests
 function ksr_route_dlguri()
+	if not KSR.nathelper then
+		return 1;
+	end
 	if not KSR.isdsturiset() then
 		KSR.nathelper.handle_ruri_alias();
 	end
@@ -338,7 +388,7 @@ end
 -- equivalent of branch_route[...]{}
 function ksr_branch_manage()
 	KSR.dbg("new branch [".. KSR.pv.get("$T_branch_idx")
-				.. "] to ".. KSR.pv.get("$ru") .. "\n");
+				.. "] to " .. KSR.kx.get_ruri() .. "\n");
 	ksr_route_natmanage();
 	return 1;
 end
@@ -347,7 +397,7 @@ end
 -- equivalent of onreply_route[...]{}
 function ksr_onreply_manage()
 	KSR.dbg("incoming reply\n");
-	local scode = KSR.pv.get("$rs");
+	local scode = KSR.kx.get_status();
 	if scode>100 and scode<299 then
 		ksr_route_natmanage();
 	end

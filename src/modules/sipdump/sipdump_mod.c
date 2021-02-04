@@ -34,6 +34,7 @@
 #include "../../core/pt.h"
 #include "../../core/timer_proc.h"
 #include "../../core/mod_fix.h"
+#include "../../core/fmsg.h"
 #include "../../core/events.h"
 #include "../../core/kemi.h"
 
@@ -46,6 +47,10 @@ int sipdump_rotate = 7200;
 static int sipdump_wait = 100;
 static str sipdump_folder = str_init("/tmp");
 static str sipdump_fprefix = str_init("kamailio-sipdump-");
+int sipdump_mode = SIPDUMP_MODE_WTEXT;
+static str sipdump_event_callback = STR_NULL;
+
+static int sipdump_event_route_idx = -1;
 
 static int mod_init(void);
 static int child_init(int);
@@ -56,6 +61,10 @@ static int w_sipdump_send(sip_msg_t *msg, char *ptag, char *str2);
 int sipdump_msg_received(sr_event_param_t *evp);
 int sipdump_msg_sent(sr_event_param_t *evp);
 
+int pv_parse_sipdump_name(pv_spec_t *sp, str *in);
+int pv_get_sipdump(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{"sipdump_send", (cmd_function)w_sipdump_send, 1, fixup_spve_null,
@@ -64,12 +73,23 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"enable",   PARAM_INT,   &sipdump_enable},
-	{"wait",     PARAM_INT,   &sipdump_wait},
-	{"rotate",   PARAM_INT,   &sipdump_rotate},
-	{"folder",   PARAM_STR,   &sipdump_folder},
-	{"fprefix",  PARAM_STR,   &sipdump_fprefix},
+	{"enable",         PARAM_INT,   &sipdump_enable},
+	{"wait",           PARAM_INT,   &sipdump_wait},
+	{"rotate",         PARAM_INT,   &sipdump_rotate},
+	{"folder",         PARAM_STR,   &sipdump_folder},
+	{"fprefix",        PARAM_STR,   &sipdump_fprefix},
+	{"mode",           PARAM_INT,   &sipdump_mode},
+	{"event_callback", PARAM_STR,   &sipdump_event_callback},
+
 	{0, 0, 0}
+};
+
+static pv_export_t mod_pvs[] = {
+
+	{ {"sipdump", (sizeof("sipdump")-1)}, PVT_OTHER, pv_get_sipdump, 0,
+		pv_parse_sipdump_name, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 struct module_exports exports = {
@@ -78,7 +98,7 @@ struct module_exports exports = {
 	cmds,           /* exported functions */
 	params,         /* exported parameters */
 	0,              /* exported rpc functions */
-	0,              /* exported pseudo-variables */
+	mod_pvs,        /* exported pseudo-variables */
 	0,              /* response handling function */
 	mod_init,       /* module init function */
 	child_init,     /* per child init function */
@@ -92,6 +112,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(!(sipdump_mode & (SIPDUMP_MODE_WTEXT |SIPDUMP_MODE_WPCAP
+							| SIPDUMP_MODE_EVROUTE))) {
+		LM_ERR("invalid mode parameter\n");
+		return -1;
+	}
+
 	if(sipdump_rpc_init()<0) {
 		LM_ERR("failed to register rpc commands\n");
 		return -1;
@@ -107,7 +133,21 @@ static int mod_init(void)
 		return -1;
 	}
 
-	register_basic_timers(1);
+	if(sipdump_mode & SIPDUMP_MODE_EVROUTE) {
+		sipdump_event_route_idx = route_lookup(&event_rt, "sipdump:msg");
+		if (sipdump_event_route_idx>=0 && event_rt.rlist[sipdump_event_route_idx]==0) {
+			sipdump_event_route_idx = -1; /* disable */
+		}
+		if(faked_msg_init() <0) {
+			LM_ERR("cannot initialize faked msg structure\n");
+			return -1;
+		}
+	}
+
+	if(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP)) {
+		register_basic_timers(1);
+	}
+
 	sr_event_register_cb(SREV_NET_DATA_IN, sipdump_msg_received);
 	sr_event_register_cb(SREV_NET_DATA_OUT, sipdump_msg_sent);
 
@@ -122,6 +162,10 @@ static int child_init(int rank)
 
 	if(rank != PROC_MAIN)
 		return 0;
+
+	if(!(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP))) {
+		return 0;
+	}
 
 	if(fork_basic_utimer(PROC_TIMER, "SIPDUMP WRITE TIMER", 1 /*socks flag*/,
 			   sipdump_timer_exec, NULL, sipdump_wait /*usec*/)
@@ -141,109 +185,59 @@ static void mod_destroy(void)
 	sipdump_list_destroy();
 }
 
-#define SIPDUMP_WBUF_SIZE 65536
-static char _sipdump_wbuf[SIPDUMP_WBUF_SIZE];
-
-typedef struct sipdump_info {
-	str tag;
-	str buf;
-	str af;
-	str proto;
-	str src_ip;
-	int src_port;
-	str dst_ip;
-	int dst_port;
-} sipdump_info_t;
-
-/**
- *
- */
-int sipdump_buffer_write(sipdump_info_t *sdi, str *obuf)
-{
-	struct timeval tv;
-	struct tm *ti;
-
-	gettimeofday(&tv, NULL);
-	ti = localtime(&tv.tv_sec);
-	obuf->len = snprintf(_sipdump_wbuf, SIPDUMP_WBUF_SIZE,
-		"====================\n"
-		"tag: %.*s\n"
-		"pid: %d\n"
-		"process: %d\n"
-		"time: %lu.%06lu\n"
-		"date: %s"
-		"proto: %.*s %.*s\n"
-		"srcip: %.*s\n"
-		"srcport: %d\n"
-		"dstip: %.*s\n"
-		"dstport: %d\n"
-		"~~~~~~~~~~~~~~~~~~~~\n"
-		"%.*s"
-		"||||||||||||||||||||\n",
-		sdi->tag.len, sdi->tag.s,
-		my_pid(),
-		process_no,
-		(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
-		asctime(ti),
-		sdi->proto.len, sdi->proto.s, sdi->af.len, sdi->af.s,
-		sdi->src_ip.len, sdi->src_ip.s, sdi->src_port,
-		sdi->dst_ip.len, sdi->dst_ip.s, sdi->dst_port,
-		sdi->buf.len, sdi->buf.s
-	);
-	obuf->s = _sipdump_wbuf;
-
-	return 0;
-}
-
 /**
  *
  */
 int ki_sipdump_send(sip_msg_t *msg, str *stag)
 {
-	str wdata;
-	sipdump_info_t sdi;
+	sipdump_data_t isd;
+	sipdump_data_t *osd = NULL;
 	char srcip_buf[IP_ADDR_MAX_STRZ_SIZE];
 
 	if(!sipdump_enabled())
 		return 1;
-	
-	memset(&sdi, 0, sizeof(sipdump_info_t));
 
-	sdi.buf.s = msg->buf;
-	sdi.buf.len = msg->len;
-	sdi.tag = *stag;
-	sdi.src_ip.len = ip_addr2sbufz(&msg->rcv.src_ip, srcip_buf,
+	if(!(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP))) {
+		LM_WARN("writing to file is disabled - ignoring\n");
+		return 1;
+	}
+
+	memset(&isd, 0, sizeof(sipdump_data_t));
+
+	gettimeofday(&isd.tv, NULL);
+	isd.data.s = msg->buf;
+	isd.data.len = msg->len;
+	isd.pid = my_pid();
+	isd.procno = process_no;
+	isd.tag = *stag;
+	isd.protoid = msg->rcv.proto;
+	isd.afid = msg->rcv.src_ip.af;
+	isd.src_ip.len = ip_addr2sbufz(&msg->rcv.src_ip, srcip_buf,
 			IP_ADDR_MAX_STRZ_SIZE);
-	sdi.src_ip.s = srcip_buf;
-	sdi.src_port = msg->rcv.src_port;
+	isd.src_ip.s = srcip_buf;
+	isd.src_port = msg->rcv.src_port;
 	if(msg->rcv.bind_address==NULL
 			|| msg->rcv.bind_address->address_str.s==NULL) {
-		sdi.dst_ip.len = 7;
-		sdi.dst_ip.s = "0.0.0.0";
-		sdi.dst_port = 0;
+		if(msg->rcv.src_ip.af == AF_INET6) {
+			isd.dst_ip.len = 3;
+			isd.dst_ip.s = "::2";
+		} else {
+			isd.dst_ip.len = 7;
+			isd.dst_ip.s = "0.0.0.0";
+		}
+		isd.dst_port = 0;
 	} else {
-		sdi.dst_ip = msg->rcv.bind_address->address_str;
-		sdi.dst_port = (int)msg->rcv.bind_address->port_no;
+		isd.dst_ip = msg->rcv.bind_address->address_str;
+		isd.dst_port = (int)msg->rcv.bind_address->port_no;
 	}
 
-	sdi.af.len = 4;
-	if(msg->rcv.bind_address!=NULL
-			&& msg->rcv.bind_address->address.af==AF_INET6) {
-		sdi.af.s = "ipv6";
-	} else {
-		sdi.af.s = "ipv4";
-	}
-	sdi.proto.s = "none";
-	sdi.proto.len = 4;
-	get_valid_proto_string(msg->rcv.proto, 0, 0, &sdi.proto);
-
-	if(sipdump_buffer_write(&sdi, &wdata)<0) {
-		LM_ERR("failed to write to buffer\n");
+	if(sipdump_data_clone(&isd, &osd)<0) {
+		LM_ERR("failed to clone sipdump data\n");
 		return -1;
 	}
 
-	if(sipdump_list_add(&wdata)<0) {
-		LM_ERR("failed to add data to write list\n");
+	if(sipdump_list_add(osd)<0) {
+		LM_ERR("failed to add data to dump queue\n");
 		return -1;
 	}
 	return 1;
@@ -267,103 +261,242 @@ static int w_sipdump_send(sip_msg_t *msg, char *ptag, char *str2)
 }
 
 /**
- * 
+ *
+ */
+static sipdump_data_t* sipdump_event_data = NULL;
+
+/**
+ *
+ */
+int sipdump_event_route(sipdump_data_t* sdi)
+{
+	int backup_rt;
+	run_act_ctx_t ctx;
+	run_act_ctx_t *bctx;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("sipdump:msg");
+	sip_msg_t *fmsg = NULL;
+
+	backup_rt = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	init_run_actions_ctx(&ctx);
+	fmsg = faked_msg_next();
+	sipdump_event_data = sdi;
+
+	if(sipdump_event_route_idx>=0) {
+		run_top_route(event_rt.rlist[sipdump_event_route_idx], fmsg, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if (keng!=NULL) {
+			bctx = sr_kemi_act_ctx_get();
+			sr_kemi_act_ctx_set(&ctx);
+			(void)sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+						&sipdump_event_callback, &evname);
+			sr_kemi_act_ctx_set(bctx);
+		}
+	}
+	sipdump_event_data = NULL;
+	set_route_type(backup_rt);
+	if(ctx.run_flags & DROP_R_F) {
+		return DROP_R_F;
+	}
+	return RETURN_R_F;
+}
+
+/**
+ *
  */
 int sipdump_msg_received(sr_event_param_t *evp)
 {
-	str wdata;
-	sipdump_info_t sdi;
+	sipdump_data_t isd;
+	sipdump_data_t *osd = NULL;
 	char srcip_buf[IP_ADDR_MAX_STRZ_SIZE];
-	
+
 	if(!sipdump_enabled())
 		return 0;
 
-	memset(&sdi, 0, sizeof(sipdump_info_t));
+	memset(&isd, 0, sizeof(sipdump_data_t));
 
-	sdi.buf = *((str*)evp->data);
-	sdi.tag.s = "rcv";
-	sdi.tag.len = 3;
-	sdi.src_ip.len = ip_addr2sbufz(&evp->rcv->src_ip, srcip_buf,
+	gettimeofday(&isd.tv, NULL);
+	isd.data = *((str*)evp->data);
+	isd.tag.s = "rcv";
+	isd.tag.len = 3;
+	isd.pid = my_pid();
+	isd.procno = process_no;
+	isd.protoid = evp->rcv->proto;
+	isd.afid = (evp->rcv->bind_address!=NULL
+				&& evp->rcv->bind_address->address.af==AF_INET6)?AF_INET6:AF_INET;
+	isd.src_ip.len = ip_addr2sbufz(&evp->rcv->src_ip, srcip_buf,
 					IP_ADDR_MAX_STRZ_SIZE);
-	sdi.src_ip.s = srcip_buf;
-	sdi.src_port = evp->rcv->src_port;
+	isd.src_ip.s = srcip_buf;
+	isd.src_port = evp->rcv->src_port;
 	if(evp->rcv->bind_address==NULL
 			|| evp->rcv->bind_address->address_str.s==NULL) {
-		sdi.dst_ip.len = 7;
-		sdi.dst_ip.s = "0.0.0.0";
-		sdi.dst_port = 0;
+		if(isd.afid == AF_INET6) {
+			isd.dst_ip.len = 3;
+			isd.dst_ip.s = "::2";
+		} else {
+			isd.dst_ip.len = 7;
+			isd.dst_ip.s = "0.0.0.0";
+		}
+		isd.dst_port = 0;
 	} else {
-		sdi.dst_ip = evp->rcv->bind_address->address_str;
-		sdi.dst_port = (int)evp->rcv->bind_address->port_no;
+		isd.dst_ip = evp->rcv->bind_address->address_str;
+		isd.dst_port = (int)evp->rcv->bind_address->port_no;
 	}
-	sdi.af.len = 4;
-	if(evp->rcv->bind_address!=NULL
-			&& evp->rcv->bind_address->address.af==AF_INET6) {
-		sdi.af.s = "ipv6";
-	} else {
-		sdi.af.s = "ipv4";
+
+	if(sipdump_mode & SIPDUMP_MODE_EVROUTE) {
+		if(sipdump_event_route(&isd) == DROP_R_F) {
+			/* drop() used in event_route - all done */
+			return 0;
+		}
 	}
-	sdi.proto.s = "none";
-	sdi.proto.len = 4;
-	get_valid_proto_string(evp->rcv->proto, 0, 0, &sdi.proto);
-	if(sipdump_buffer_write(&sdi, &wdata)<0) {
-		LM_ERR("failed to write to buffer\n");
+
+	if(!(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP))) {
+		return 0;
+	}
+
+	if(sipdump_data_clone(&isd, &osd)<0) {
+		LM_ERR("failed to close sipdump data\n");
 		return -1;
 	}
 
-	if(sipdump_list_add(&wdata)<0) {
-		LM_ERR("failed to add data to write list\n");
+	if(sipdump_list_add(osd)<0) {
+		LM_ERR("failed to add data to dump queue\n");
 		return -1;
 	}
 	return 0;
 }
 
 /**
- * 
+ *
  */
 int sipdump_msg_sent(sr_event_param_t *evp)
 {
-	str wdata;
-	sipdump_info_t sdi;
+	sipdump_data_t isd;
+	sipdump_data_t *osd = NULL;
 	ip_addr_t ip;
 	char dstip_buf[IP_ADDR_MAX_STRZ_SIZE];
-	
+
 	if(!sipdump_enabled())
 		return 0;
 
-	memset(&sdi, 0, sizeof(sipdump_info_t));
+	memset(&isd, 0, sizeof(sipdump_data_t));
 
-	sdi.buf = *((str*)evp->data);
-	sdi.tag.s = "snd";
-	sdi.tag.len = 3;
+	gettimeofday(&isd.tv, NULL);
+	isd.data = *((str*)evp->data);
+	isd.tag.s = "snd";
+	isd.tag.len = 3;
+	isd.pid = my_pid();
+	isd.procno = process_no;
+	isd.protoid = evp->dst->proto;
+	isd.afid = evp->dst->send_sock->address.af;
 
-	sdi.src_ip = evp->dst->send_sock->address_str;
-	sdi.src_port = (int)evp->dst->send_sock->port_no;
-	su2ip_addr(&ip, &evp->dst->to);
-	sdi.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
-	sdi.dst_ip.s = dstip_buf;
-	sdi.dst_port = (int)su_getport(&evp->dst->to);
-
-	sdi.af.len = 4;
-	if(evp->dst->send_sock->address.af==AF_INET6) {
-		sdi.af.s = "ipv6";
+	if(evp->dst->send_sock==NULL || evp->dst->send_sock->address_str.s==NULL) {
+		if(evp->dst->send_sock->address.af == AF_INET6) {
+			isd.src_ip.len = 3;
+			isd.src_ip.s = "::2";
+		} else {
+			isd.src_ip.len = 7;
+			isd.src_ip.s = "0.0.0.0";
+		}
+		isd.src_port = 0;
 	} else {
-		sdi.af.s = "ipv4";
+		isd.src_ip = evp->dst->send_sock->address_str;
+		isd.src_port = (int)evp->dst->send_sock->port_no;
 	}
-	sdi.proto.s = "none";
-	sdi.proto.len = 4;
-	get_valid_proto_string(evp->dst->proto, 0, 0, &sdi.proto);
+	su2ip_addr(&ip, &evp->dst->to);
+	isd.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
+	isd.dst_ip.s = dstip_buf;
+	isd.dst_port = (int)su_getport(&evp->dst->to);
 
-	if(sipdump_buffer_write(&sdi, &wdata)<0) {
-		LM_ERR("failed to write to buffer\n");
+	if(sipdump_mode & SIPDUMP_MODE_EVROUTE) {
+		sipdump_event_route(&isd);
+	}
+
+	if(!(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP))) {
+		return 0;
+	}
+
+	if(sipdump_data_clone(&isd, &osd)<0) {
+		LM_ERR("failed to clone sipdump data\n");
 		return -1;
 	}
 
-	if(sipdump_list_add(&wdata)<0) {
-		LM_ERR("failed to add data to write list\n");
+	if(sipdump_list_add(osd)<0) {
+		LM_ERR("failed to add data to dump queue\n");
 		return -1;
 	}
 	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _ksr_kemi_sipdump_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sipdump_get_buf(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_data==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_data->data;
+	return &_ksr_kemi_sipdump_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sipdump_get_tag(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_data==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_data->tag;
+	return &_ksr_kemi_sipdump_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sipdump_get_src_ip(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_data==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_data->src_ip;
+	return &_ksr_kemi_sipdump_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sipdump_get_dst_ip(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_sipdump_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (sipdump_event_data==NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sipdump_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_sipdump_xval;
+	}
+	_ksr_kemi_sipdump_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sipdump_xval.v.s = sipdump_event_data->dst_ip;
+	return &_ksr_kemi_sipdump_xval;
 }
 
 /**
@@ -376,10 +509,128 @@ static sr_kemi_t sr_kemi_sipdump_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sipdump"), str_init("get_buf"),
+		SR_KEMIP_XVAL, ki_sipdump_get_buf,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipdump"), str_init("get_tag"),
+		SR_KEMIP_XVAL, ki_sipdump_get_tag,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipdump"), str_init("get_src_ip"),
+		SR_KEMIP_XVAL, ki_sipdump_get_src_ip,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sipdump"), str_init("get_dst_ip"),
+		SR_KEMIP_XVAL, ki_sipdump_get_dst_ip,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+/**
+ *
+ */
+int pv_parse_sipdump_name(pv_spec_t *sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "af", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		case 3:
+			if(strncmp(in->s, "buf", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "tag", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "proto", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "sproto", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "src_ip", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else if(strncmp(in->s, "dst_ip", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else goto error;
+		break;
+		case 8:
+			if(strncmp(in->s, "src_port", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			if(strncmp(in->s, "dst_port", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV snd name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_sipdump(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str saf = str_init("ipv4");
+	str sproto = str_init("none");
+
+	if (sipdump_event_data==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 1: /* buf */
+			return pv_get_strval(msg, param, res, &sipdump_event_data->data);
+		case 2: /* len */
+			return pv_get_uintval(msg, param, res, sipdump_event_data->data.len);
+		case 3: /* af */
+			if(sipdump_event_data->afid==AF_INET6) {
+				saf.s = "ipv6";
+			}
+			return pv_get_strval(msg, param, res, &saf);
+		case 4: /* proto */
+			get_valid_proto_string(sipdump_event_data->protoid, 0, 0, &sproto);
+			return pv_get_strval(msg, param, res, &sproto);
+		case 6: /* src_ip*/
+			return pv_get_strval(msg, param, res, &sipdump_event_data->src_ip);
+		case 7: /* dst_ip*/
+			return pv_get_strval(msg, param, res, &sipdump_event_data->dst_ip);
+		case 8: /* src_port */
+			return pv_get_uintval(msg, param, res, sipdump_event_data->src_port);
+		case 9: /* dst_port */
+			return pv_get_uintval(msg, param, res, sipdump_event_data->dst_port);
+		default:
+			/* 0 - tag */
+			return pv_get_strval(msg, param, res, &sipdump_event_data->tag);
+	}
+}
 
 /**
  *

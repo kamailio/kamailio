@@ -23,7 +23,7 @@
 #define _HT_DMQ_H_
 
 #include "../dmq/bind_dmq.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_content.h"
 
@@ -31,15 +31,14 @@ extern dmq_api_t ht_dmqb;
 extern dmq_peer_t* ht_dmq_peer;
 extern dmq_resp_cback_t ht_dmq_resp_callback;
 
-int ht_dmq_init_sync;
-
 typedef enum {
 		HT_DMQ_NONE,
+        HT_DMQ_SYNC,
         HT_DMQ_SET_CELL,
         HT_DMQ_SET_CELL_EXPIRE,
         HT_DMQ_DEL_CELL,
         HT_DMQ_RM_CELL_RE,
-        HT_DMQ_SYNC
+        HT_DMQ_RM_CELL_SW
 } ht_dmq_action_t;
 
 int ht_dmq_initialize();

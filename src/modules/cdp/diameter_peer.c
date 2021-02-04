@@ -257,7 +257,7 @@ int diameter_peer_start(int blocking)
 
 	/* fork receiver for unknown peers */
 	seed = random();
-	pid = fork_process(1001+k,"cdp_receiver_peer_unkown",1);
+	pid = fork_process(1001+k,"cdp_receiver_peer_unknown",1);
 
 	if (pid==-1){
 		LM_CRIT("init_diameter_peer(): Error on fork() for unknown peer receiver!\n");

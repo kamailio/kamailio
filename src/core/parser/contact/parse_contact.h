@@ -70,5 +70,9 @@ void print_contact(FILE* _o, contact_body_t* _c);
  */
 int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev);
 
+/*
+ * parse all Contact headers
+ */
+int parse_contact_headers(sip_msg_t *msg);
 
 #endif /* PARSE_CONTACT_H */

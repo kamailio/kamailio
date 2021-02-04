@@ -169,29 +169,36 @@ int xavp_rcd_helper(ucontact_t* ptr)
 
 	list = xavp_get(&reg_xavp_rcd, NULL);
 	xavp = list ? &list->val.v.xavp : &new_xavp;
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->ruid;
-	xavp_add_value(&xname_ruid, &xval, xavp);
 
-	if(ptr->received.len > 0) {
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RUID)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->ruid;
+		xavp_add_value(&xname_ruid, &xval, xavp);
+	}
+
+	if(!(reg_xavp_rcd_mask & AVP_RCD_RCV) && (ptr->received.len > 0)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = ptr->received;
 		xavp_add_value(&xname_received, &xval, xavp);
 	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_STR;
-	xval.v.s = ptr->c;
-	xavp_add_value(&xname_contact, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_CNT)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->c;
+		xavp_add_value(&xname_contact, &xval, xavp);
+	}
 
-	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = (int) (ptr->expires - time(0));
-	xavp_add_value(&xname_expires, &xval, xavp);
+	if(!(reg_xavp_rcd_mask & AVP_RCD_EXP)) {
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_INT;
+		xval.v.i = (int) (ptr->expires - time(0));
+		xavp_add_value(&xname_expires, &xval, xavp);
+	}
 
-	if(ptr->path.len > 0) {
+	if(!(reg_xavp_rcd_mask & AVP_RCD_PATH) && (ptr->path.len > 0)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = ptr->path;
@@ -297,7 +304,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		ret = -1;
 		/* look first for an un-expired and suported contact */
 		while (ptr) {
-			if(VALID_CONTACT(ptr,act_time)) {
+			if(VALID_CONTACT(ptr,act_time) || cfg_get(registrar,registrar_cfg,use_expired_contacts)) {
 				if(allowed_method(_m,ptr)) {
 					/* match on instance, if pub-gruu */
 					if(inst.len>0) {
@@ -339,7 +346,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		aor = *ptr->aor;
 		/* test if not expired and contact with suported method */
 		if(ptr) {
-			if(!(VALID_CONTACT(ptr,act_time))) {
+			if(!(VALID_CONTACT(ptr,act_time) || cfg_get(registrar,registrar_cfg,use_expired_contacts))) {
 				goto done;
 			} else if(!allowed_method(_m,ptr)) {
 				ret=-2;
@@ -478,7 +485,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	if (!cfg_get(registrar, registrar_cfg, append_branches)) goto done;
 
 	for( ; ptr ; ptr = ptr->next ) {
-		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)
+		if ((VALID_CONTACT(ptr, act_time) || cfg_get(registrar,registrar_cfg,use_expired_contacts)) && allowed_method(_m, ptr)
 				&& reg_lookup_filter_match(ptr)) {
 			path_dst.len = 0;
 			if(ptr->path.s && ptr->path.len) {
@@ -840,7 +847,7 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag,
 
 		get_act_time();
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
-			if(!VALID_CONTACT(ptr, act_time)) continue;
+			if(!(VALID_CONTACT(ptr, act_time) || cfg_get(registrar,registrar_cfg,use_expired_contacts))) continue;
 			if (match_callid.s && /* optionally enforce tighter matching w/ Call-ID */
 				match_callid.len > 0 &&
 				(match_callid.len != ptr->callid.len ||

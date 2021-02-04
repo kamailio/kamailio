@@ -32,6 +32,13 @@ MODULE_VERSION
 extern gen_lock_t* process_lock; /* lock on the process table */
 
 struct cdp_binds cdpb;
+cdp_avp_bind_t *cdp_avp;
+
+AAAMessage *request;
+str responsejson;
+str requestjson;
+
+struct cdp_binds cdpb;
 
 cdp_avp_bind_t *cdp_avp;
 

@@ -31,14 +31,26 @@ typedef struct _async_task {
 	void *param;
 } async_task_t;
 
+typedef struct _async_wgroup {
+	str name;
+	int workers;
+	int sockets[2];
+	int usleep;
+	int nonblock;
+	struct _async_wgroup *next;
+} async_wgroup_t;
+
 int async_task_init(void);
 int async_task_child_init(int rank);
 int async_task_initialized(void);
 int async_task_set_workers(int n);
 int async_task_set_nonblock(int n);
+int async_task_set_workers_group(char *data);
 int async_task_push(async_task_t *task);
 int async_task_set_usleep(int n);
 int async_task_workers_get(void);
 int async_task_workers_active(void);
+
+int async_task_group_push(str *gname, async_task_t *task);
 
 #endif

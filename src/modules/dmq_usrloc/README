@@ -19,9 +19,18 @@ Julien Chavanton
    flowroute.com
    <jchavanton@gmail.com>
 
+Edited by
+
+Emmanuel Schmidbauer
+
+   TextNow Inc.
+   <emmanuel.schmidbauer@textnow.com>
+
    Copyright © 2014
 
    Copyright © 2017
+
+   Copyright © 2020
      __________________________________________________________________
 
    Table of Contents
@@ -42,16 +51,20 @@ Julien Chavanton
               3.5. batch_msg_size (int)
               3.6. batch_msg_contacts (int)
               3.7. usrloc_domain (string)
+              3.8. replicate_socket_info (int)
+              3.9. usrloc_delete (int)
 
    List of Examples
 
    1.1. Set enable parameter
    1.2. Set sync parameter
-   1.3. Set batch size parameter
+   1.3. Set batch_size parameter
    1.4. Set batch_usleep parameter
    1.5. Set batch_msg_size parameter
    1.6. Set batch_msg_contacts parameter
    1.7. Set usrloc_domain parameter
+   1.8. Set replicate_socket_info parameter
+   1.9. Set usrloc_domain parameter
 
 Chapter 1. Admin Guide
 
@@ -71,6 +84,8 @@ Chapter 1. Admin Guide
         3.5. batch_msg_size (int)
         3.6. batch_msg_contacts (int)
         3.7. usrloc_domain (string)
+        3.8. replicate_socket_info (int)
+        3.9. usrloc_delete (int)
 
 1. Overview
 
@@ -96,6 +111,8 @@ Chapter 1. Admin Guide
    3.5. batch_msg_size (int)
    3.6. batch_msg_contacts (int)
    3.7. usrloc_domain (string)
+   3.8. replicate_socket_info (int)
+   3.9. usrloc_delete (int)
 
 3.1. enable (int)
 
@@ -135,7 +152,7 @@ modparam("dmq_usrloc", "sync", 0)
 
    Default value is 0.
 
-   Example 1.3. Set batch size parameter
+   Example 1.3. Set batch_size parameter
 ...
 modparam("dmq_usrloc", "batch_size", 4000)
 ...
@@ -200,4 +217,31 @@ modparam("dmq_usrloc", "batch_usleep", 500000)    # one batch every 500ms
    Example 1.7. Set usrloc_domain parameter
 ...
 modparam("dmq_usrloc", "usrloc_domain", "my_domain")
+...
+
+3.8. replicate_socket_info (int)
+
+   The parameter controls whether the socket replication is active or not.
+   This is important for anycast scenarios. The value can be:
+     * 0 - disabled
+     * 1 - enabled
+
+   Default value is 0.
+
+   Example 1.8. Set replicate_socket_info parameter
+...
+modparam("dmq_usrloc", "replicate_socket_info", 0)
+...
+
+3.9. usrloc_delete (int)
+
+   Enable (1) or disable (0) synchronizing usrloc delete actions.
+   Disabling delete actions can be useful when user location data is
+   ephemeral.
+
+   Default value is 1.
+
+   Example 1.9. Set usrloc_domain parameter
+...
+modparam("dmq_usrloc", "usrloc_delete", 0)
 ...

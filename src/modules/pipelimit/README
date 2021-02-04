@@ -8,8 +8,6 @@ Edited by
 
 Ovidiu Sas
 
-Edited by
-
 Daniel-Constantin Mierla
 
    Copyright © 2013 VoIPEmbedded Inc.
@@ -364,7 +362,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
 4.12. clean_unused (int)
 
-   Clean unused pipes afetr this number of timer intervals.
+   Clean unused pipes after this number of timer intervals.
 
    Default value is 0 (cleanup disabled).
 
@@ -594,8 +592,8 @@ kamcmd pl.get_pid
    Name: pl.push_load
 
    Parameters:
-     * load - the forced value of load (it must be greater then 0.0 and
-       smaller then 1.0).
+     * load - the forced value of load (it must be greater than 0.0 and
+       smaller than 1.0).
 
    RPC Command Format:
 ...

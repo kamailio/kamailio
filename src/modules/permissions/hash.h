@@ -137,7 +137,7 @@ void destroy_addr_hash_table(struct addr_list** table);
  * Add <group, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** hash_table, unsigned int grp,
-		ip_addr_t *addr, unsigned int port, char *tagv);
+		ip_addr_t *addr, unsigned int port, str *tagv);
 
 
 /*
@@ -222,7 +222,7 @@ void free_subnet_table(struct subnet* table);
  */
 int subnet_table_insert(struct subnet* table, unsigned int grp,
 			ip_addr_t *subnet, unsigned int mask,
-			unsigned int port, char *tagv);
+			unsigned int port, str *tagv);
 
 
 /*
@@ -269,7 +269,7 @@ int match_domain_name_table(struct domain_name_list** table, unsigned int group,
  * Add <grp, domain_name, port> into hash table
  */
 int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
-		str *domain_name, unsigned int port, char *tagv);
+		str *domain_name, unsigned int port, str *tagv);
 
 /*
  * Check if an domain_name/port entry exists in hash table in any group.

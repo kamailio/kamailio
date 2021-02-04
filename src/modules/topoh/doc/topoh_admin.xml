@@ -311,11 +311,32 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="topoh.p.event_mode">
+		<title><varname>event_mode</varname> (int)</title>
+		<para>
+			Control what event_route blocks to be executed. It is a bitmask of:
+			1 - execute event_route[topoh:msg-outgoing]; 2 - execute
+			event_route[topoh:msg-sending].
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3 (execute both event_route blocks).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "event_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
 	<title>Event Routes</title>
-	<section>
+	<section id="topoh.e.msg_outgoing">
 		<title>event_route[topoh:msg-outgoing]</title>
 		<para>
 		It is executed before doing topology hiding processing for an outgoing
@@ -335,6 +356,30 @@ end
 ...
 event_route[topoh:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topoh.e.msg_sending">
+		<title>event_route[topoh:msg-sending]</title>
+		<para>
+		It is executed before doing topology hiding processing for a SIP
+		message to be sent out, being executed after event_route[topoh:msg-outgoing].
+		</para>
+		<para>
+		Inside the event route the variables $sndto(ip), $sndto(port) and
+		$sndto(proto) point to the destination. The SIP message is the one
+		to be sent out.
+		</para>
+		<example>
+		<title>Usage of event_route[topoh:msg-sending]</title>
+		<programlisting format="linespecific">
+...
+event_route[topoh:msg-sending] {
+  if(is_request() and $fU=="alice") {
     drop;
   }
 }

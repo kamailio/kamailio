@@ -44,6 +44,7 @@ typedef struct uac_req {
 	str	*headers;
 	str	*body;
 	str *ssock;
+	str *ssockname;
 	dlg_t	*dialog;
 	int	cb_flags;
 	transaction_cb	*cb;

@@ -231,10 +231,10 @@ int add_event(pres_ev_t *event)
 	ev->default_expires = event->default_expires;
 
 	if(not_in_list) {
-		ev->next = EvList->events;
-		EvList->events = ev;
+		ev->next = pres_evlist->events;
+		pres_evlist->events = ev;
 	}
-	EvList->ev_count++;
+	pres_evlist->ev_count++;
 
 	LM_DBG("successfully added event: %.*s - len= %d\n", ev->name.len,
 			ev->name.s, ev->name.len);
@@ -319,7 +319,7 @@ void free_event_params(param_t *params, int mem_type)
 pres_ev_t *search_event(event_t *event)
 {
 	pres_ev_t *pres_ev;
-	pres_ev = EvList->events;
+	pres_ev = pres_evlist->events;
 
 	LM_DBG("start event= [%.*s/%d]\n", event->name.len, event->name.s,
 			event->type);
@@ -388,13 +388,14 @@ int search_event_params(event_t *ev, event_t *searched_ev)
 }
 int get_event_list(str **ev_list)
 {
-	pres_ev_t *ev = EvList->events;
+	pres_ev_t *ev = pres_evlist->events;
 	int i;
 	str *list;
 	*ev_list = NULL;
 
-	if(EvList->ev_count == 0)
+	if(pres_evlist->ev_count == 0) {
 		return 0;
+	}
 
 	list = (str *)pkg_malloc(sizeof(str));
 	if(list == NULL) {
@@ -402,7 +403,7 @@ int get_event_list(str **ev_list)
 		return -1;
 	}
 	memset(list, 0, sizeof(str));
-	list->s = (char *)pkg_malloc(EvList->ev_count * MAX_EVNAME_SIZE);
+	list->s = (char *)pkg_malloc(pres_evlist->ev_count * MAX_EVNAME_SIZE);
 	if(list->s == NULL) {
 		LM_ERR("No more memory\n");
 		pkg_free(list);
@@ -410,7 +411,7 @@ int get_event_list(str **ev_list)
 	}
 	list->s[0] = '\0';
 
-	for(i = 0; i < EvList->ev_count; i++) {
+	for(i = 0; i < pres_evlist->ev_count; i++) {
 		if(i > 0) {
 			memcpy(list->s + list->len, ", ", 2);
 			list->len += 2;
@@ -427,13 +428,14 @@ int get_event_list(str **ev_list)
 void destroy_evlist(void)
 {
 	pres_ev_t *e1, *e2;
-	if(EvList) {
-		e1 = EvList->events;
+	if(pres_evlist) {
+		e1 = pres_evlist->events;
 		while(e1) {
 			e2 = e1->next;
 			free_pres_event(e1);
 			e1 = e2;
 		}
-		shm_free(EvList);
+		shm_free(pres_evlist);
+		pres_evlist = NULL;
 	}
 }

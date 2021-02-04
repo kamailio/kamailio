@@ -60,6 +60,10 @@ int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri);
  */
 int lookup_branches(sip_msg_t *msg, udomain_t *d);
 
+/*! \brief
+ * add xavp with details of the record (ruid, ...)
+ */
+int xavp_rcd_helper(ucontact_t* ptr);
 
 /*! \brief
  * Return true if the AOR in the Request-URI is registered,

@@ -10,8 +10,6 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-Edited by
-
 Carsten Bock
 
    <carsten@ng-voice.com>
@@ -35,7 +33,9 @@ Carsten Bock
               3.2. jansson_set(type, key/path, value, result)
               3.3. jansson_append(type, key/path, value, result)
               3.4. jansson_array_size(key/path, src, dst)
-              3.5. jansson_get_field(src, field_name, dst)
+              3.5. jansson_xdecode(json, xavp)
+              3.6. jansson_xencode(xavp, pv)
+              3.7. jansson_get_field(src, field_name, dst)
 
    List of Examples
 
@@ -44,7 +44,9 @@ Carsten Bock
    1.3. jansson_append usage
    1.4. jansson_array_size usage
    1.5. array concatenation
-   1.6. jansson_get_field usage
+   1.6. jansson_xdecode usage
+   1.7. jansson_xencode usage
+   1.8. jansson_get_field usage
 
 Chapter 1. Admin Guide
 
@@ -62,7 +64,9 @@ Chapter 1. Admin Guide
         3.2. jansson_set(type, key/path, value, result)
         3.3. jansson_append(type, key/path, value, result)
         3.4. jansson_array_size(key/path, src, dst)
-        3.5. jansson_get_field(src, field_name, dst)
+        3.5. jansson_xdecode(json, xavp)
+        3.6. jansson_xencode(xavp, pv)
+        3.7. jansson_get_field(src, field_name, dst)
 
 1. Overview
 
@@ -91,7 +95,9 @@ Chapter 1. Admin Guide
    3.2. jansson_set(type, key/path, value, result)
    3.3. jansson_append(type, key/path, value, result)
    3.4. jansson_array_size(key/path, src, dst)
-   3.5. jansson_get_field(src, field_name, dst)
+   3.5. jansson_xdecode(json, xavp)
+   3.6. jansson_xencode(xavp, pv)
+   3.7. jansson_get_field(src, field_name, dst)
 
 3.1.  jansson_get(key/path, src, dst)
 
@@ -225,7 +231,31 @@ while($var(count) < $var(appendme_size)) {
 }
 ...
 
-3.5.  jansson_get_field(src, field_name, dst)
+3.5.  jansson_xdecode(json, xavp)
+
+   Parse a JSON string in 'json' and store the elements in xapv 'xavp'.
+   Top-level JSON must be an object or an array of objects. Nested arrays
+   and objects are not decoded but stored as string.
+
+   Example 1.6. jansson_xdecode usage
+...
+jansson_xdecode('{"foo":"bar"}', "js");
+xlog("foo is $xavp(js=>foo)");
+...
+
+3.6.  jansson_xencode(xavp, pv)
+
+   Encode the items in the xavp 'xavp' as JSON and store the result in a
+   pv. Nested xavps's are not supported.
+
+   Example 1.7. jansson_xencode usage
+...
+$xavp(a=>foo) = "bar";
+jansson_xencode("a", "$var(js)");
+# $var(js) = '{"foo":"bar"}'
+...
+
+3.7.  jansson_get_field(src, field_name, dst)
 
    Copy field 'field_name' from json object 'src' and store it in pvar
    'dst'.
@@ -234,7 +264,7 @@ while($var(count) < $var(appendme_size)) {
    now it is just a wrapper around jansson_get, and its functionality is
    the same.
 
-   Example 1.6. jansson_get_field usage
+   Example 1.8. jansson_get_field usage
 ...
 jansson_get_field("{'foo':'bar'}", "foo", "$var(foo)");
 xlog("foo is $var(foo)");

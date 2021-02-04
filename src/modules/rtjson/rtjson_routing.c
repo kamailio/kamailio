@@ -30,7 +30,7 @@
 #include "../../core/dset.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/data_lump.h"
-#include "../../lib/srutils/srjson.h"
+#include "../../core/utils/srjson.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/uac/api.h"
 

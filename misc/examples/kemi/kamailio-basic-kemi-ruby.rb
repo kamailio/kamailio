@@ -41,7 +41,7 @@ def ksr_request_route()
 
   # Auth
   ksr_route_auth()
-  
+
   # Record routing for dialog forming requests (in case they are routed)
   KSR::HDR.remove("Route")
   if KSR.is_method_in("IS") then
@@ -65,7 +65,8 @@ end
 def ksr_route_reqinit()
   if KSR::COREX.has_user_agent() > 0 then
     ua = KSR::PV.gete("$ua");
-    if ua.include? 'friendly-scanner' or ua.include? 'sipcli' then
+    if ua.include? 'friendly' or ua.include? 'scanner'
+        or ua.include? 'sipcli' or ua.include? 'sipvicious' then
       KSR::SL.sl_send_reply(200, "OK");
       exit
     end
@@ -82,7 +83,7 @@ def ksr_route_reqinit()
   end
 
   if KSR::SANITY.sanity_check(1511, 7) < 0 then
-    KSR.err("Malformed SIP message from #{KSR::PV.get("$si")}:#{KSR::PV.get("$sp")}\n");
+    KSR.err("Malformed SIP message from #{KSR::PV.get('$si')}:#{KSR::PV.get('$sp')}\n");
     exit
   end
 end

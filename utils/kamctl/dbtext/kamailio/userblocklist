@@ -1,0 +1,2 @@
+id(int,auto) username(string) domain(string) prefix(string) allowlist(int) 
+0:userblocklist:1

@@ -43,7 +43,7 @@ typedef struct dlist {
 } dlist_t;
 
 /*! \brief Global list of all registered domains */
-extern dlist_t* root;
+extern dlist_t *_ksr_ul_root;
 
 
 /*!

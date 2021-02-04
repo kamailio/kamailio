@@ -14,7 +14,7 @@
     <description>
 		<db:para>
 			This table us used by the msilo module to provide offline message
-			storage More information about the msilo module can be found at:
+			storage. More information about the msilo module can be found at:
 			<itemizedlist>
 			<listitem>
 			<ulink url="&KAMAILIO_MOD_DOC;msilo.html">&KAMAILIO_MOD_DOC;msilo.html</ulink>.

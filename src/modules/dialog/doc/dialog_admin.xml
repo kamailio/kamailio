@@ -2376,6 +2376,48 @@ if(has_totag()) {
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.f.dlg_reset_property">
+		<title>
+		<function moreinfo="none">dlg_reset_property(attr)</function>
+		</title>
+		<para>
+			Reset a dialog property - an attribute that enable/disable
+			various behaviours (e.g., sending keep alive requests).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>attr</emphasis> - name of property. It can be:
+				<itemizedlist>
+					<listitem>
+						'ka-src' - send keep alive OPTION requests to caller
+					</listitem>
+					<listitem>
+						'ka-dst' - send keep alive OPTION requests to callee
+					</listitem>
+					<listitem>
+						'timeout-noreset' - don't reset timeout on in-dialog messages reception
+					</listitem>
+				</itemizedlist>
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_reset_property</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_reset_property("ka-src");
+dlg_reset_property("ka-dst");
+dlg_reset_property("timeout-noreset");
+...
+
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
@@ -2491,6 +2533,24 @@ if(has_totag()) {
 		<programlisting  format="linespecific">
 ...
 &kamcmd; dlg.list_match_ctx furi sw sip:alice@
+...
+		</programlisting>
+		</section>
+
+		<section id="dlg.r.dump_file">
+		<title>dlg.dump_file</title>
+		<para>Dump all dialogs in a json file. (much faster than dlg.list)</para>
+		<para>Name: <emphasis>dlg.dump_file</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>file name</emphasis> output file name
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; dlg.dump_file "/tmp/dlg.json"
 ...
 		</programlisting>
 		</section>
@@ -2805,19 +2865,58 @@ if(has_totag()) {
 		<section id="dlg.r.briefing">
 		<title>dlg.briefing</title>
 		<para>
-		Lists fewer attributes for dialog records in memory.
+		Lists fewer attributes for dialog records in memory. The dialog hash
+		entry and id are added always, the rest of them are a matter of 'attrs'
+		parameter.
 		</para>
 		<para>Name: <emphasis>dlg.briefing</emphasis></para>
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>none</emphasis> - no parameter
-			</para></listitem>
+			<emphasis>attrs</emphasis> - (optional) a list of characters (flags)
+			representing the fields to be added to the response. If is missing,
+			its default value is 'ftcFT' (note the characters are case sensitive).
+			</para>
+			<para>
+				The characters can be:
+				<itemizedlist>
+				<listitem><para>
+					<emphasis>f</emphasis> - From URI
+				</para></listitem>
+				<listitem><para>
+					<emphasis>t</emphasis> - To URI
+				</para></listitem>
+				<listitem><para>
+					<emphasis>c</emphasis> - Call-ID
+				</para></listitem>
+				<listitem><para>
+					<emphasis>F</emphasis> - From tag
+				</para></listitem>
+				<listitem><para>
+					<emphasis>T</emphasis> - To tag
+				</para></listitem>
+				<listitem><para>
+					<emphasis>I</emphasis> - Init time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>S</emphasis> - Start time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>E</emphasis> - End time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>s</emphasis> - State
+				</para></listitem>
+				</itemizedlist>
+			</para>
+			</listitem>
 		</itemizedlist>
 		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
 ...
 kamctl rpc dlg.briefing
+...
+kamctl rpc dlg.briefing "ft"
 ...
 		</programlisting>
 		</section>

@@ -99,7 +99,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 {
 	int content_length;
 	str body;
-	dlg_cell_t *dlg;
+	dlg_cell_t *dlg = NULL;
 	int unref = 0;
 	int ret;
 	srjson_doc_t jdoc, prof_jdoc;
@@ -115,6 +115,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	unsigned int state = 1;
 	srjson_t *vj;
 	int newdlg = 0;
+	dlg_entry_t *d_entry = NULL;
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
@@ -216,9 +217,10 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		}
 	}
 
-	dlg = dlg_get_by_iuid(&iuid);
+	dlg = dlg_get_by_iuid_mode(&iuid, 1);
 	if (dlg) {
 		LM_DBG("found dialog [%u:%u] at %p\n", iuid.h_entry, iuid.h_id, dlg);
+		d_entry = &(d_table->entries[dlg->h_entry]);
 		unref++;
 	}
 
@@ -237,6 +239,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 					LM_ERR("inconsistent hash data from peer: "
 						"make sure all Kamailio's use the same hash size\n");
 					shm_free(dlg);
+					dlg = NULL;
 					goto error;
 				}
 
@@ -391,8 +394,14 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		case DLG_DMQ_NONE:
 			break;
 	}
-	if (dlg && unref)
-		dlg_unref(dlg, unref);
+	if (dlg) {
+		if(unref) {
+			dlg_unref(dlg, unref);
+		}
+	}
+	if(newdlg == 0 && d_entry!=NULL) {
+		dlg_unlock(d_table, d_entry);
+	}
 
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_200_rpl;
@@ -407,6 +416,9 @@ invalid2:
 	return 0;
 
 error:
+	if(newdlg == 0 && d_entry!=NULL) {
+		dlg_unlock(d_table, d_entry);
+	}
 	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_500_rpl;
 	resp->resp_code = 500;
@@ -522,11 +534,11 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 			if (dlg->vars != NULL) {
 				srjson_t *pj = NULL;
 				pj = srjson_CreateObject(&jdoc);
-                for(var=dlg->vars ; var ; var=var->next) {
+				for(var=dlg->vars ; var ; var=var->next) {
 					srjson_AddStrToObject(&jdoc, pj, var->key.s,
 							var->value.s, var->value.len);
-                }
-                srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
+				}
+				srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
 			}
 
 			if (dlg->profile_links) {
@@ -634,22 +646,22 @@ error:
 
 int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 	int index;
-	dlg_entry_t entry;
+	dlg_entry_t *entry;
 	dlg_cell_t *dlg;
 
 	LM_DBG("sending all dialogs \n");
 
 	for(index = 0; index< d_table->size; index++){
 		/* lock the whole entry */
-		entry = (d_table->entries)[index];
-		dlg_lock( d_table, &entry);
+		entry = &d_table->entries[index];
+		dlg_lock( d_table, entry);
 
-		for(dlg = entry.first; dlg != NULL; dlg = dlg->next){
-				dlg->dflags |= DLG_FLAG_CHANGED_PROF;
-				dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
+		for(dlg = entry->first; dlg != NULL; dlg = dlg->next){
+			dlg->dflags |= DLG_FLAG_CHANGED_PROF;
+			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
 		}
 
-		dlg_unlock( d_table, &entry);
+		dlg_unlock( d_table, entry);
 	}
 
 	return 0;
@@ -660,7 +672,7 @@ int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 * @brief dmq response callback
 */
 int dlg_dmq_resp_callback_f(struct sip_msg* msg, int code,
-                            dmq_node_t* node, void* param)
+		dmq_node_t* node, void* param)
 {
 	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;

@@ -33,4 +33,9 @@ at each step during the chain of certificates (this function
 is not the certificate_verification one!). */
 int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx);
 
+/* Post-verification callback handler which unconditionally returns 1 (success)
+   Note that actual verification result can be retrieved through TLS PVs after-the-fact
+ */
+int verify_callback_unconditional_success(int pre_verify_ok, X509_STORE_CTX *ctx);
+
 #endif /* _TLS_VERIFY_H */

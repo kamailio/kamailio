@@ -93,24 +93,24 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
   */
 int timetToSipDateStr(time_t date, char* buf, int bufLen)
 {
-	struct tm *gmt;
+	struct tm gmt;
 	char* dayArray[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 	char* monthArray[12] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 	int len = 0;
 
-	gmt = gmtime(&date);
+	gmtime_r(&date, &gmt);
 	/* In RFC 3261 the format is always GMT and in the string form like
 	 * "Wkday, Day Month Year HOUR:MIN:SEC GMT"
 	 * "Mon, 19 Feb 2007 18:42:27 GMT"
 	 */
 	len = snprintf(buf,bufLen,"Date: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		dayArray[gmt->tm_wday],
-		gmt->tm_mday,
-		monthArray[gmt->tm_mon],
-		1900 + gmt->tm_year,
-		gmt->tm_hour,
-		gmt->tm_min,
-		gmt->tm_sec
+		dayArray[gmt.tm_wday],
+		gmt.tm_mday,
+		monthArray[gmt.tm_mon],
+		1900 + gmt.tm_year,
+		gmt.tm_hour,
+		gmt.tm_min,
+		gmt.tm_sec
 		);
 
 	/* snprintf returns number of chars it should have printed, so you 
@@ -243,7 +243,7 @@ error:
 	return -1;
 }
 
-/** build MESSAGE body --- add incoming time and 'from' 
+/** build MESSAGE body --- add incoming time and 'from'
  *
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
@@ -252,11 +252,12 @@ error:
 int m_build_body(str *body, time_t date, str msg, time_t sdate)
 {
 	char *p;
-	
+	char t_buf[26] = {0};
+
 	if(!body || !(body->s) || body->len <= 0 || msg.len <= 0
 			|| date < 0 || msg.len < 0 || (46+msg.len > body->len) )
 		goto error;
-	
+
 	p = body->s;
 
 	if(ms_add_date!=0)
@@ -265,28 +266,28 @@ int m_build_body(str *body, time_t date, str msg, time_t sdate)
 		{
 			memcpy(p, "[Reminder message - ", 20);
 			p += 20;
-		
-			memcpy(p, ctime(&sdate), 24);
+			ctime_r(&sdate, t_buf);
+			memcpy(p, t_buf, 24);
 			p += 24;
 
 			*p++ = ']';
 		} else {
 			memcpy(p, "[Offline message - ", 19);
 			p += 19;
-	
-			memcpy(p, ctime(&date), 24);
+			ctime_r(&date, t_buf);
+			memcpy(p, t_buf, 24);
 			p += 24;
 
 			*p++ = ']';
 		}
 		*p++ = ' ';
 	}
-	
+
 	memcpy(p, msg.s, msg.len);
 	p += msg.len;
 
 	body->len = p - body->s;
-	
+
 	return 0;
 error:
 	return -1;

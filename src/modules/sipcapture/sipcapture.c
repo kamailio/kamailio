@@ -244,6 +244,7 @@ int db_insert_mode = 0;
 int promisc_on = 0;
 int bpf_on = 0;
 int hep_capture_on = 0;
+int parse_bad_msgs = 0;
 int insert_retries = 0;
 int insert_retry_timeout = 60;
 int hep_offset = 0;
@@ -294,7 +295,7 @@ enum hash_source source = hs_error;
 
 //unsigned int rr_idx = 0;
 
-struct hep_timeinfo *heptime;
+struct hep_timeinfo *heptime = NULL;
 
 /*! \brief
  * Exported functions
@@ -388,7 +389,7 @@ static param_export_t params[] = {
 	{"raw_moni_capture_on", INT_PARAM, &moni_capture_on},
 	{"db_insert_mode", INT_PARAM, &db_insert_mode},
 	{"raw_interface", PARAM_STR, &raw_interface},
-	{"promiscious_on", INT_PARAM, &promisc_on},
+	{"promiscuous_on", INT_PARAM, &promisc_on},
 	{"raw_moni_bpf_on", INT_PARAM, &bpf_on},
 	{"callid_aleg_header", PARAM_STR, &callid_aleg_header},
 	{"custom_field1_header", PARAM_STR, &custom_field1_header},
@@ -396,6 +397,7 @@ static param_export_t params[] = {
 	{"custom_field3_header", PARAM_STR, &custom_field3_header},
 	{"capture_mode", PARAM_STRING | USE_FUNC_PARAM,
 		(void *)capture_mode_param},
+	{"capture_bad_msgs",    INT_PARAM, &parse_bad_msgs },
 	{"insert_retries", INT_PARAM, &insert_retries},
 	{"insert_retry_timeout", INT_PARAM, &insert_retry_timeout},
 	{"table_time_sufix", PARAM_STR, &table_time_sufix},
@@ -434,6 +436,39 @@ struct module_exports exports = {
 	destroy          /* module destroy function */
 };
 
+int force_capture_callid (struct sip_msg *msg, struct _sipcapture_object *sco)
+{
+	char *tmp = NULL;
+	char *end;
+	struct hdr_field *hdr = NULL;
+
+	tmp= msg->unparsed;
+	end = msg->buf+msg->len;
+	tmp = _strnstr(tmp, "Call-ID", (int)(end - tmp) );
+
+	if (tmp == NULL) {
+		LM_DBG("Bad msg callid not found\n");
+		EMPTY_STR(sco->callid);
+	} else {
+		hdr=pkg_malloc(sizeof(struct hdr_field));
+		if (unlikely(hdr==0)){
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memset(hdr,0, sizeof(struct hdr_field));
+		hdr->type=HDR_ERROR_T;
+		get_hdr_field(tmp ,end, hdr);
+		if (hdr->type != HDR_CALLID_T ) {
+			LM_DBG("Bad msg callid error\n");
+			pkg_free(hdr);
+			EMPTY_STR(sco->callid);
+		} else {
+			sco->callid = hdr->body;
+		}
+	}
+
+	return 0;
+}
 
 /* returns number of tables if successful
  * <0 if failed
@@ -824,7 +859,7 @@ static int mod_init(void)
 	c = capture_modes_root;
 
 	while(c) {
-		/*for the default capture_mode, don't add it's name to the stat name*/
+		/*for the default capture_mode, don't add its name to the stat name*/
 		def = (capture_def && c == capture_def) ? 1 : 0;
 		stat_name = (char *)shm_malloc(
 				sizeof(char)
@@ -1411,8 +1446,12 @@ static int sip_capture_prepare(sip_msg_t *msg)
 {
 	/* We need parse all headers */
 	if(parse_headers(msg, HDR_CALLID_F | HDR_EOH_F, 0) != 0) {
-		LM_ERR("cannot parse headers\n");
-		return 0;
+		if (!parse_bad_msgs) {
+			LM_ERR("cannot parse headers\n");
+			return -1;
+		} else {
+			LM_DBG("trying to capture bad message\n");
+		}
 	}
 
 	return 0;
@@ -1840,20 +1879,32 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 	if(msg->from) {
 
 		if(parse_from_header(msg) != 0) {
-			LOG(L_ERR, "ERROR: eval_elem: bad or missing"
-					" From: header\n");
-			return -1;
+			if (!parse_bad_msgs) {
+				LOG(L_ERR, "ERROR: eval_elem: bad or missing"
+						" From: header\n");
+				return -1;
+			} else {
+				LM_DBG("bad From header\n");
+				memset(&from, 0 ,sizeof(from));
+			}
+		} else {
+			if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len, &from) < 0) {
+				if (!parse_bad_msgs) {
+					LOG(L_ERR, "ERROR: do_action: bad from dropping"" packet\n");
+					return -1;
+				} else {
+					LM_DBG("bad From URI\n");
+					memset(&from, 0 ,sizeof(from));
+				}
+			}
 		}
-
-		if(parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len, &from) < 0) {
-			LOG(L_ERR, "ERROR: do_action: bad from dropping"
-					" packet\n");
-			return -1;
-		}
-
 		sco.from_user = from.user;
 		sco.from_domain = from.host;
-		sco.from_tag = get_from(msg)->tag_value;
+		if (get_from(msg) && get_from(msg)->tag_value.len) {
+			sco.from_tag = get_from(msg)->tag_value;
+		} else {
+			EMPTY_STR(sco.from_tag);
+		}
 	} else {
 		EMPTY_STR(sco.from_user);
 		EMPTY_STR(sco.from_domain);
@@ -1864,16 +1915,21 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 	if(msg->to) {
 
 		if(parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len, &to) < 0) {
-			LOG(L_ERR, "ERROR: do_action: bad to dropping"
-					" packet\n");
-			return -1;
+			if (!parse_bad_msgs) {
+				LOG(L_ERR, "ERROR: do_action: bad to dropping"
+						" packet\n");
+				return -1;
+			} else {
+				LM_DBG("bad To URI\n");
+				memset(&to, 0, sizeof(to));
+			}
 		}
 
 		sco.to_user = to.user;
 		sco.to_domain = to.host;
-		if(get_to(msg)->tag_value.len)
+		if (get_to(msg)->tag_value.len) {
 			sco.to_tag = get_to(msg)->tag_value;
-		else {
+		} else {
 			EMPTY_STR(sco.to_tag);
 		}
 	} else {
@@ -1883,10 +1939,16 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 	}
 
 	/* Call-id */
-	if(msg->callid)
+	if (msg->callid) {
 		sco.callid = msg->callid->body;
-	else {
-		EMPTY_STR(sco.callid);
+	} else {
+		if (!parse_bad_msgs) {
+			EMPTY_STR(sco.callid);
+		} else {
+			if (force_capture_callid(msg, &sco) < 0) {
+				return -1;
+			}
+		}
 	}
 
 	/* P-Asserted-Id */
@@ -1946,30 +2008,35 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 
 	if(msg->contact) {
 
-		if(msg->contact->parsed == 0 && parse_contact(msg->contact) == -1) {
-			LOG(L_ERR, "assemble_msg: error while parsing <Contact:> header\n");
-			return -1;
-		}
-
-		cb = (contact_body_t *)msg->contact->parsed;
-
-		if(cb) {
-			if(cb->contacts) {
-				if(parse_uri(
-							cb->contacts->uri.s, cb->contacts->uri.len, &contact)
-						< 0) {
-					LOG(L_ERR, "ERROR: do_action: bad contact dropping"
-							" packet\n");
-					return -1;
-				}
+		if (msg->contact->parsed == 0 && parse_contact(msg->contact) < 0) {
+			if (!parse_bad_msgs){
+				LOG(L_ERR, "assemble_msg: error while parsing <Contact:> header\n");
+				return -1;
 			} else {
-				if(cb->star) { /* in the case Contact is "*" */
-					memset(&contact, 0, sizeof(contact));
-					contact.user.s = star_contact.s;
-					contact.user.len = star_contact.len;
+				LM_DBG("error while parsing <Contact:> header\n");
+			}
+		} else {
+			cb = (contact_body_t*)msg->contact->parsed;
+			if (cb) {
+				if (cb->contacts) {
+					if (parse_uri(cb->contacts->uri.s, cb->contacts->uri.len, &contact) < 0) {
+						if (!parse_bad_msgs) {
+						   LOG(L_ERR, "ERROR: do_action: bad contact dropping packet\n");
+						   return -1;
+						} else {
+							LM_DBG("bad contact URI\n");
+							memset(&contact, 0, sizeof(contact));
+						}
+					}
 				} else {
-					LOG(L_NOTICE, "Invalid contact\n");
-					memset(&contact, 0, sizeof(contact));
+					if (cb->star) { /* in the case Contact is "*" */
+						memset(&contact, 0, sizeof(contact));
+						contact.user.s =  star_contact.s;
+						contact.user.len = star_contact.len;
+					} else {
+						LOG(L_NOTICE,"Invalid contact\n");
+						memset(&contact, 0, sizeof(contact));
+					}
 				}
 			}
 		}
@@ -1990,7 +2057,9 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 	}
 
 	/* VIA 1 */
-	sco.via_1 = msg->h_via1->body;
+	if (msg->h_via1) {
+		sco.via_1 = msg->h_via1->body;
+	}
 
 	/* Via branch */
 	if(msg->via1->branch)
@@ -2421,7 +2490,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip)
 			ri.bind_address = si;
 
 
-			/* and now recieve message */
+			/* and now receive message */
 			receive_msg(buf + offset, len, &ri);
 			if(si)
 				pkg_free(si);
@@ -3043,14 +3112,6 @@ static int pv_parse_hep_name(pv_spec_p sp, str *in)
 					else
 						goto error;
 				} break;
-		case 6: {
-					if(!strncmp(in->s, "src_ip", 6))
-						sp->pvp.pvn.u.isname.name.n = 2;
-					else if(!strncmp(in->s, "dst_ip", 6))
-						sp->pvp.pvn.u.isname.name.n = 3;
-					else
-						goto error;
-				} break;
 		case 7: {
 					if(!strncmp(in->s, "version", 7))
 						sp->pvp.pvn.u.isname.name.n = 0;
@@ -3073,27 +3134,12 @@ error:
 
 static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sc_buf_ip[IP_ADDR_MAX_STR_SIZE + 12];
-	int sc_buf_ip_len;
-
 	if(param == NULL)
 		return -1;
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0:
 			return pv_get_uintval(msg, param, res, hep_version(msg));
-		case 1:
-			return pv_get_uintval(msg, param, res, hep_version(msg));
-		case 2:
-			sc_buf_ip_len = ip_addr2sbuf(
-					&msg->rcv.src_ip, sc_buf_ip, sizeof(sc_buf_ip) - 1);
-			sc_buf_ip[sc_buf_ip_len] = 0;
-			return pv_get_strlval(msg, param, res, sc_buf_ip, sc_buf_ip_len);
-		case 3:
-			sc_buf_ip_len = ip_addr2sbuf(
-					&msg->rcv.dst_ip, sc_buf_ip, sizeof(sc_buf_ip) - 1);
-			sc_buf_ip[sc_buf_ip_len] = 0;
-			return pv_get_strlval(msg, param, res, sc_buf_ip, sc_buf_ip_len);
 		default:
 			return hepv3_get_chunk(msg, msg->buf, msg->len,
 					param->pvn.u.isname.name.n, param, res);

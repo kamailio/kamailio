@@ -75,7 +75,11 @@
 
 MODULE_VERSION
 
-		extern gen_lock_t* process_lock; /* lock on the process table */
+extern gen_lock_t* process_lock; /* lock on the process table */
+
+stat_var* stat_aar_timeouts;
+stat_var* aar_replies_received;
+stat_var* aar_replies_response_time;
 
 str orig_session_key = str_init("originating");
 str term_session_key = str_init("terminating");
@@ -936,17 +940,23 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 												//get dialog and get the req URI from there
 												dlg = dlgb.get_dlg(msg);
 												if (!dlg) {
-														LM_ERR("Unable to find dialog and cannot do Rx without it\n");
+													if (!cscf_get_to_uri(orig_sip_request_msg, &uri)) {
+														LM_ERR("Error assigning P-Asserted-Identity using To hdr in req");
 														goto error;
-												}
-												LM_DBG("dlg req uri : [%.*s] going to remove parameters if any\n", dlg->req_uri.len, dlg->req_uri.s);
+													}
+													LM_DBG("going to remove parameters if any from identity: [%.*s]\n", uri.len, uri.s);
+													get_identifier(&uri);
+													LM_DBG("identifier from uri : [%.*s]\n", identifier.len, identifier.s);
+												}else{
+													LM_DBG("dlg req uri : [%.*s] going to remove parameters if any\n", dlg->req_uri.len, dlg->req_uri.s);
 
-												if (get_identifier(&dlg->req_uri) != 0) {
-														dlgb.release_dlg(dlg);
-														goto error;
+													if (get_identifier(&dlg->req_uri) != 0) {
+															dlgb.release_dlg(dlg);
+															goto error;
+													}
+													dlgb.release_dlg(dlg);
+													LM_DBG("identifier from dlg req uri : [%.*s]\n", identifier.len, identifier.s);
 												}
-												dlgb.release_dlg(dlg);
-												LM_DBG("identifier from dlg req uri : [%.*s]\n", identifier.len, identifier.s);
 										} else {
 												get_identifier(&uri);
 										}
@@ -1084,6 +1094,13 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 				}
 				saved_t_data->aar_update = 1; //this is an update aar - we set this so on async_aar we know this is an update and act accordingly
 		}
+
+                dlg = dlgb.get_dlg(msg);
+                if (!dlg) {
+                    LM_ERR("Unable to find dialog and cannot do Rx without it\n");
+                    goto error;
+                }
+                saved_t_data->dlg = dlg;
 
 		LM_DBG("Suspending SIP TM transaction\n");
 		if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) != 0) {
@@ -1297,7 +1314,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 								contact_info.received_host.len = 0;
 								contact_info.reg_state = PCONTACT_ANY; //search for any state
 
-								if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+								if (ul.get_pcontact(domain_t, &contact_info, &pcontact, 0) != 0) {
 										LM_ERR("This contact does not exist in PCSCF usrloc - error in cfg file\n");
 										ul.unlock_udomain(domain_t, &vb->host, vb->port, vb->proto);
 										lock_release(saved_t_data->lock);

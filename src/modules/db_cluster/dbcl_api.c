@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -254,6 +254,148 @@ extern int dbcl_max_query_length;
 	} while(0)
 
 
+#define DBCL_WRITEX(qfunc, command, qfuncx, commandx) \
+	do {\
+	int ret;\
+	int rc;\
+	int rok;\
+	int i;\
+	int j;\
+	int k;\
+	unsigned int sec = 0;\
+	db1_con_t  *dbh=NULL;\
+	dbcl_cls_t *cls=NULL;\
+	cls = (dbcl_cls_t*)_h->tail;\
+	ret = -1;\
+	rok = 0;\
+	rc = 0;\
+	for(i=DBCL_PRIO_SIZE-1; i>0; i--)\
+	{\
+		if(cls->wlist[i].clen<=0) continue; \
+		switch(cls->wlist[i].mode) {\
+			case 's':\
+			case 'S':\
+				for(j=0; j<cls->wlist[i].clen; j++)\
+				{\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
+					{\
+						LM_DBG("serial operation - cluster [%.*s] (%d/%d)\n",\
+								cls->name.len, cls->name.s, i, j);\
+						sec = get_ticks();\
+						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->wlist[i].clist[j]->dbf.qfuncx==NULL) {\
+							if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
+								LM_ERR("unsupported command by db connector\n");\
+								return -1;\
+							} else {\
+								ret = cls->wlist[i].clist[j]->dbf.command;\
+							}\
+						} else {\
+							ret = cls->wlist[i].clist[j]->dbf.commandx;\
+						}\
+						if (ret==0) {\
+							cls->usedcon = cls->wlist[i].clist[j];\
+							return 0;\
+						} else {\
+							LM_DBG("serial operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							sec = get_ticks() - sec;\
+							if(sec >= dbcl_max_query_length){\
+								dbcl_inactive_con(cls->wlist[i].clist[j]);\
+							}\
+						}\
+					}\
+				}\
+				break;\
+			case 'r':\
+			case 'R':\
+				for(k=0; k<cls->wlist[i].clen; k++)\
+				{\
+					j = (process_no + k + cls->wlist[i].crt) % cls->wlist[i].clen;\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
+					{\
+						LM_DBG("round robin operation - cluster [%.*s] (%d/%d)\n",\
+								cls->name.len, cls->name.s, i, j);\
+						sec = get_ticks();\
+						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->wlist[i].clist[j]->dbf.qfuncx==NULL) {\
+							if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
+								LM_ERR("unsupported command by db connector\n");\
+								return -1;\
+							} else {\
+								ret = cls->wlist[i].clist[j]->dbf.command;\
+							}\
+						} else {\
+							ret = cls->wlist[i].clist[j]->dbf.commandx;\
+						}\
+						if (ret==0)\
+						{\
+							cls->usedcon = cls->wlist[i].clist[j];\
+							cls->wlist[i].crt = (j+1) % cls->wlist[i].clen;\
+							return 0;\
+						} else {\
+							LM_DBG("round robin operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							sec = get_ticks() - sec;\
+							if(sec >= dbcl_max_query_length){\
+								dbcl_inactive_con(cls->wlist[i].clist[j]);\
+							}\
+						}\
+					}\
+				}\
+				break;\
+			case 'p':\
+			case 'P':\
+				for(j=0; j<cls->wlist[i].clen; j++)\
+				{\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
+					{\
+						LM_DBG("parallel operation - cluster [%.*s] (%d/%d)\n",\
+								cls->name.len, cls->name.s, i, j);\
+						sec = get_ticks();\
+						dbh = cls->wlist[i].clist[j]->dbh;\
+						if(cls->wlist[i].clist[j]->dbf.qfuncx==NULL) {\
+							if(cls->wlist[i].clist[j]->dbf.qfunc==NULL) {\
+								LM_ERR("unsupported command by db connector\n");\
+								return -1;\
+							} else {\
+								ret = cls->wlist[i].clist[j]->dbf.command;\
+							}\
+						} else {\
+							ret = cls->wlist[i].clist[j]->dbf.commandx;\
+						}\
+						if(rc==0) {\
+							cls->usedcon = cls->wlist[i].clist[j];\
+							rok = 1;\
+						} else {\
+							LM_DBG("parallel operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							sec = get_ticks() - sec;\
+							if(sec >= dbcl_max_query_length){\
+								dbcl_inactive_con(cls->wlist[i].clist[j]);\
+							}\
+						}\
+						ret |= rc;\
+					}\
+				}\
+				if (rok==1 && cls->wlist[i].clen>0)\
+					return 0;\
+				break;\
+			default:\
+				LM_ERR("invalid mode %c (%d)\n", cls->rlist[i].mode,\
+						cls->rlist[i].mode);\
+				return -1;\
+		}\
+	}\
+	LM_DBG("no successful write on cluster [%.*s]\n",\
+			cls->name.len, cls->name.s);\
+	return ret;\
+	} while(0)
+
+
 
 /*! \brief
  * Initialize database connection
@@ -381,9 +523,20 @@ int db_cluster_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _
 
 
 /*! \brief
+ * Async insert a row into table
+ */
+int db_cluster_insert_async(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+{
+	LM_DBG("executing db cluster insert async command\n");
+	DBCL_WRITEX(insert, insert(dbh, _k, _v, _n), insert_async,
+			insert_async(dbh, _k, _v, _n));
+}
+
+
+/*! \brief
  * Delete a row from table
  */
-int db_cluster_delete(const db1_con_t* _h, const db_key_t* _k, const 
+int db_cluster_delete(const db1_con_t* _h, const db_key_t* _k, const
 	db_op_t* _o, const db_val_t* _v, const int _n)
 {
 	LM_DBG("executing db cluster delete command\n");

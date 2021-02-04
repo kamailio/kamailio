@@ -30,7 +30,7 @@
 		follow the requirements of the core contributions.
 	</para>
 	<para>
-		This module now also provides access to network input / output data through
+		This module now also provides access to network input / output (nio) data through
 		event_route[network:msg]. The raw data received from a remote host or about to
 		be sent to a remote host is available in variable $mb. The script writer may
 		manipulate this data and save the final result in an AVP defined by msg_avp
@@ -96,8 +96,82 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
-    <section id="corex.p.network_io_intercept">
-        <title><varname>network_io_intercept</varname> (int)</title>
+	<section id="corex.p.dns_cache">
+	    <title><varname>dns_cache</varname> (string)</title>
+	    <para>
+		Add A or AAAA records to internal DNS cache at startup. It can be set
+		many times to add more than one record.
+	    </para>
+	    <para>
+		The format of the value follows the SIP params style:
+		"attr1=val1;attr2=val2;...". The attributes can be:
+	    </para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>type</emphasis> - it can be "A" (IPv4) or "AAAA" (IPv6)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>name</emphasis> - the domain name
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>addr</emphasis> - the IP address
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>ttl</emphasis> - TTL value
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> - can be: 1 - the domain is unresolvable
+			(like blocklisted); 2 - the record is permanent (never times out,
+			never deleted, never overwritten)
+			</para>
+		</listitem>
+		</itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>dns_cache</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "dns_cache", "type=A;name=kamailio.org;addr=193.22.119.66;ttl=3600000;flags=0")
+modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400::2;ttl=3600000;flags=0")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="corex.p.evcb_reply_out">
+	    <title><varname>evcb_reply_out</varname> (string)</title>
+	    <para>
+		Name of KEMI callback function to be executed instead of
+		event_route[corex:reply-out].
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>evcb_reply_out</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "evcb_reply_out", "ksr_corex_reply_out")
+...
+</programlisting>
+	    </example>
+	</section>
+    <section id="corex.p.nio_intercept">
+        <title><varname>nio_intercept</varname> (int)</title>
         <para>
             If set to non-zero then raw data received from a remote host or about to
 			be sent to a remote host is made available in event_route[network:msg].
@@ -110,19 +184,19 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>network_io_intercept</varname> parameter</title>
+        <title>Set <varname>nio_intercept</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "network_io_intercept", 1)
+modparam("corex", "nio_intercept", 1)
 ...
 </programlisting>
         </example>
     </section>
-    <section id="corex.p.min_msg_len">
-        <title><varname>min_msg_len</varname> (int)</title>
+    <section id="corex.p.nio_min_msg_len">
+        <title><varname>nio_min_msg_len</varname> (int)</title>
         <para>
             Minimum content length of the packet to execute the event_route[network:msg].
-			This only works if network_io_intercept parameter is set to non-zero.
+			This only works if nio_intercept parameter is set to non-zero.
         </para>
         <para>
         <emphasis>
@@ -130,20 +204,20 @@ modparam("corex", "network_io_intercept", 1)
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>min_msg_len</varname> parameter</title>
+        <title>Set <varname>nio_min_msg_len</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "min_msg_len", 32)
+modparam("corex", "nio_min_msg_len", 32)
 ...
 </programlisting>
         </example>
     </section>
-    <section id="corex.p.msg_avp">
-        <title><varname>msg_avp</varname> (string)</title>
+    <section id="corex.p.nio_msg_avp">
+        <title><varname>nio_msg_avp</varname> (string)</title>
         <para>
             AVP name to store modified content to be set in the packet. If not set in
             event_route[network:msg], then all changes are lost and original contents
-            are used. This only works if network_io_intercept parameter is to set non-zero.
+            are used. This only works if nio_intercept parameter is to set non-zero.
         </para>
         <para>
         <emphasis>
@@ -151,10 +225,10 @@ modparam("corex", "min_msg_len", 32)
         </emphasis>
         </para>
         <example>
-        <title>Set <varname>msg_avp</varname> parameter</title>
+        <title>Set <varname>nio_msg_avp</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("corex", "msg_avp", "$avp(msg)")
+modparam("corex", "nio_msg_avp", "$avp(msg)")
 ...
 </programlisting>
         </example>
@@ -316,7 +390,7 @@ sendx("sip:example.com:5070;transport=sctp", "sctp:2.3.4.5:5060", "Message at $T
             Returns true if contents of message buffer $mb are the data received from
             remote host, otherwise false indicating that the contents of $mb are data
             that is about to be sent out to remote host. This only works if
-			network_io_intercept parameter is set to non-zero.
+			nio_intercept parameter is set to non-zero.
         </para>
         <para>
         This function can be used from event_route[network:msg].
@@ -559,6 +633,33 @@ set_send_socket("udp:127.0.0.1:5060");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.set_send_socket_name">
+		<title><function moreinfo="none">set_send_socket_name(sname)</function></title>
+		<para>
+			Set the socket for sending out.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>sname</emphasis> - the name of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_send_socket_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_send_socket_name("sock1");
+...
+</programlisting>
+		</example>
+		</section>
 		<section id="corex.f.set_recv_socket">
 		<title><function moreinfo="none">set_recv_socket(saddr)</function></title>
 		<para>
@@ -582,6 +683,33 @@ set_send_socket("udp:127.0.0.1:5060");
 		<programlisting format="linespecific">
 ...
 set_recv_socket("udp:127.0.0.1:5060");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.set_recv_socket_name">
+		<title><function moreinfo="none">set_recv_socket_name(sname)</function></title>
+		<para>
+			Switch local socket used for receiving the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>sname</emphasis> - the name of the local socket
+				(listen address). Can be a static string or contain
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_recv_socket_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_recv_socket_name("sock1");
 ...
 </programlisting>
 		</example>
@@ -662,7 +790,15 @@ via_add_srv("1");
 		<title><function>via_add_xavp_params</function> usage</title>
 		<programlisting format="linespecific">
 ...
-via_add_xavp_params("1");
+xavp_via_params="xvia"
+...
+request_route {
+    ...
+	$xavp(xvia=&gt;srvid) = "1";
+	$xavp(xvia[0]=&gt;myval) = "xyz";
+    via_add_xavp_params("1");
+    ...
+}
 ...
 </programlisting>
 		</example>
@@ -690,11 +826,49 @@ via_add_xavp_params("1");
 		<title><function>via_use_xavp_fields</function> usage</title>
 		<programlisting format="linespecific">
 ...
-via_use_xavp_fields("1");
+xavp_via_fields="mvia"
+...
+request_route {
+    ...
+	$xavp(mvia=&gt;address) = "10.10.10.10";
+	$xavp(mvia[0]=&gt;port) = "5060";
+    via_use_xavp_fields("1");
+    ...
+}
 ...
 </programlisting>
 		</example>
 		</section>
+	<section id="corex.f.is_faked_msg">
+		<title>
+			<function moreinfo="none">is_faked_msg()</function>
+		</title>
+        <para>
+			Returns 1 (native config true) if the SIP message under processing
+			is the internal faked msg structure. Returns -1 (native config false)
+			if the SIP message under processing is received from the network.
+        </para>
+        <para>
+			The function should be useful in event route blocks or async route
+			blocks where it can be processed either a message from the network
+			or the internal faked message.
+        </para>
+        <para>
+        This function can be used in ANY_ROUTE.
+        </para>
+        <example>
+        <title><function>is_faked_msg</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[dispatcher:dst-down] {
+    if (is_faked_msg()) {
+        xinfo("Running with faked message\n");
+    }
+}
+...
+</programlisting>
+        </example>
+    </section>
 	</section>
 
 	<section>
@@ -795,11 +969,39 @@ via_use_xavp_fields("1");
 		&sercmd; corex.pkg_summary idx 1
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.info">
+		<title>
+		<function moreinfo="none">corex.shm.info</function>
+		</title>
+		<para>
+			Return shared memory manager details.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc shm.info
+		</programlisting>
+    </section>
+	<section id="corex.rpc.shm.stats">
+		<title>
+		<function moreinfo="none">corex.shm.stats</function>
+		</title>
+		<para>
+			Return shared memory statistics (values are in bytes).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc shm.stats
+		</programlisting>
+    </section>
     </section>
 
     <section>
     <title>Event Routes</title>
-    <section id="async.evr.network_io">
+    <section id="corex.evr.network_msg">
         <title>
         <function moreinfo="none">event_route[network:msg]</function>
         </title>
@@ -825,6 +1027,14 @@ via_use_xavp_fields("1");
             decryption, compression/decompression etc. of the message sent to or 
 			received from remote host. Therefore, except text operations,
 			no module functions or pseudo variables are available in this event route.
+        </para>
+    </section>
+    <section id="corex.evr.reply_out">
+        <title>
+        <function moreinfo="none">event_route[corex:reply-out]</function>
+        </title>
+        <para>
+            Event route block to be executed when a SIP reply is sent out.
         </para>
     </section>
     </section>
@@ -877,7 +1087,7 @@ via_use_xavp_fields("1");
 			by server can be decrypted at client app.
         </para>
         <para>
-			Next is a basic usage example where encoding and decoding is done using PERL,
+			Next is a basic usage example where encoding and decoding is done using PERL.
         </para>
         <example>
         <title><function>event_route[network:msg]</function> use cases</title>
@@ -891,9 +1101,9 @@ modparam("app_perl", "filename", "/usr/local/etc/kamailio/custom_compress.pl")
 modparam("app_perl", "modpath", "/usr/local/lib64/kamailio/perl")
 
 # ----- corex params -----
-modparam("corex", "network_io_intercept", 32)
-modparam("corex", "min_msg_len", 32)
-modparam("corex", "msg_avp", "$avp(msg)")
+modparam("corex", "nio_intercept", 32)
+modparam("corex", "nio_min_msg_len", 32)
+modparam("corex", "nio_msg_avp", "$avp(msg)")
 ...
 event_route[network:msg] {
 	if (is_incoming()) {

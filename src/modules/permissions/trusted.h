@@ -26,9 +26,9 @@
 #include "../../core/parser/msg_parser.h"
 
 
-extern struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
-extern struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
-extern struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
+extern struct trusted_list ***perm_trust_table;    /* Pointer to current trusted hash table pointer */
+extern struct trusted_list **perm_trust_table_1;   /* Pointer to trusted hash table 1 */
+extern struct trusted_list **perm_trust_table_2;   /* Pointer to trusted hash table 2 */
 
 
 /*
@@ -55,6 +55,10 @@ int reload_trusted_table(void);
  */
 void clean_trusted(void);
 
+/*
+ * Check if request comes from trusted ip address with matching from URI
+ */
+int ki_allow_trusted(sip_msg_t* _msg);
 
 /*
  * Check if request comes from trusted ip address with matching from URI

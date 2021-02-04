@@ -116,24 +116,26 @@ function ksr_route_relay()
 function ksr_route_reqinit()
 {
 	if (!KSR.is_myself_srcip()) {
-		if (!KSR.pv.is_null("$sht(ipban=>$si)")) {
+		var srcip = KSR.kx.get_srcip();
+		if (KSR.htable.sht_match_name("ipban", "eq", srcip) > 0) {
 			// ip is already blocked
-			KSR.dbg("request from blocked IP - " + KSR.pv.get("$rm")
-					+ " from " + KSR.pv.get("$fu") + " (IP:"
-					+ KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") + ")\n");
+			KSR.dbg("request from blocked IP - " + KSR.kx.get_method()
+					+ " from " + KSR.kx.get_furi() + " (IP:"
+					+ srcip + ":" + KSR.kx.get_srcport() + ")\n");
 			KSR.x.exit();
 		}
 		if (KSR.pike.pike_check_req()<0) {
-			KSR.err("ALERT: pike blocking " + KSR.pv.get("$rm")
-					+ " from " + KSR.pv.get("$fu") + " (IP:"
-					+ KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") + ")\n");
-			KSR.pv.seti("$sht(ipban=>$si)", 1);
+			KSR.err("ALERT: pike blocking " + KSR.kx.get_method()
+					+ " from " + KSR.kx.get_furi() + " (IP:"
+					+ srcip + ":" + KSR.kx.get_srcport() + ")\n");
+			KSR.htable.sht_seti("ipban", srcip, 1);
 			KSR.x.exit();
 		}
 	}
 	if (KSR.corex.has_user_agent()>0) {
-		var UA = KSR.pv.gete("$ua");
-		if (UA.indexOf("friendly-scanner")>=0 || UA.indexOf("sipcli")>=0) {
+		var UA = KSR.kx.gete_ua();
+		if (UA.indexOf("friendly")>=0 || UA.indexOf("scanner")>=0
+				|| UA.indexOf("sipcli")>=0 || UA.indexOf("sipvicious")>=0) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
@@ -153,7 +155,7 @@ function ksr_route_reqinit()
 
 	if (KSR.sanity.sanity_check(1511, 7)<0) {
 		KSR.err("Malformed SIP message from "
-				+ KSR.pv.get("$si") + ":" + KSR.pv.get("$sp") + "\n");
+				+ KSR.kx.get_srcip() + ":" + KSR.kx.get_srcport() + "\n");
 		KSR.x.exit();
 	}
 }
@@ -219,10 +221,10 @@ function ksr_route_location()
 	if (rc<0) {
 		KSR.tm.t_newtran();
 		if (rc==-1 || rc==-3) {
-			KSR.sl.send_reply("404", "Not Found");
+			KSR.sl.send_reply(404, "Not Found");
 			KSR.x.exit();
 		} else if (rc==-2) {
-			KSR.sl.send_reply("405", "Method Not Allowed");
+			KSR.sl.send_reply(405, "Method Not Allowed");
 			KSR.x.exit();
 		}
 	}
@@ -237,7 +239,7 @@ function ksr_route_location()
 }
 
 
-// IP authorization and user uthentication
+// IP authorization and user authentication
 function ksr_route_auth()
 {
 	if (!KSR.is_REGISTER()) {
@@ -249,8 +251,8 @@ function ksr_route_auth()
 
 	if (KSR.is_REGISTER() || KSR.is_myself_furi()) {
 		// authenticate requests
-		if (KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0) {
-			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
+		if (KSR.auth_db.auth_check(KSR.kx.gete_fhost(), "subscriber", 1)<0) {
+			KSR.auth.auth_challenge(KSR.kx.gete_fhost(), 0);
 			KSR.x.exit();
 		}
 		// user authenticated - remove auth header
@@ -339,8 +341,8 @@ function ksr_route_sipout()
 // equivalent of branch_route[...]{}
 function ksr_branch_manage()
 {
-	KSR.dbg("new branch [" + KSR.pv.get("$T_branch_idx")
-				+ "] to " + KSR.pv.get("$ru") + "\n");
+	KSR.dbg("new branch [" + KSR.tm.t_get_branch_index()
+				+ "] to " + KSR.kx.get_ruri() + "\n");
 	ksr_route_natmanage();
 	return;
 }
@@ -350,7 +352,7 @@ function ksr_branch_manage()
 function ksr_onreply_manage()
 {
 	KSR.dbg("incoming reply\n");
-	var scode = KSR.pv.get("$rs");
+	var scode = KSR.kx.gets_status();
 	if (scode>100 && scode<=299) {
 		ksr_route_natmanage();
 	}

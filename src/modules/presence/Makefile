@@ -1,5 +1,5 @@
 #
-# WARNING: do not run this directly, it should be run by the master Makefile
+# WARNING: do not run this directly, it should be run by the main Makefile
 
 include ../../Makefile.defs
 auto_gen=
@@ -7,6 +7,12 @@ NAME=presence.so
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
+ifeq ($(XML2CFG),)
+XML2CFG=$(shell \
+	if pkg-config --exists libxml-2.0; then \
+		echo 'pkg-config libxml-2.0'; \
+	fi)
+endif
 ifeq ($(OS), darwin)
 ICU_BUILDER = $(shell \
 	if pkg-config --exists icu-uc; then \
@@ -31,5 +37,4 @@ endif
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
-SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 include ../../Makefile.modules

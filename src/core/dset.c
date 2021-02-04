@@ -1029,6 +1029,90 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	return 0;
 }
 
+
+/**
+ * trim alias parameter from uri
+ * - nuri->s must point to a buffer of nuri->len size
+ */
+int uri_trim_rcv_alias(str *uri, str *nuri)
+{
+	char *p;
+	str skip;
+	str ip, port;
+
+	if(uri == NULL || nuri == NULL) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	/* sip:x;alias=1.1.1.1~0~0 */
+	if(uri->len < 23) {
+		/* no alias possible */
+		return 0;
+	}
+	p = uri->s + uri->len - 18;
+	skip.s = 0;
+	while(p > uri->s + 5) {
+		if(strncmp(p, ";alias=", 7) == 0) {
+			skip.s = p;
+			break;
+		}
+		p--;
+	}
+	if(skip.s == 0) {
+		/* alias parameter not found */
+		return 0;
+	}
+	p += 7;
+	ip.s = p;
+	p = (char *)memchr(ip.s, '~', (size_t)(uri->s + uri->len - ip.s));
+	if(p == NULL) {
+		/* proper alias parameter not found */
+		return 0;
+	}
+	ip.len = p - ip.s;
+	p++;
+	if(p >= uri->s + uri->len) {
+		/* proper alias parameter not found */
+		return 0;
+	}
+	port.s = p;
+	p = (char *)memchr(port.s, '~', (size_t)(uri->s + uri->len - port.s));
+	if(p == NULL) {
+		/* proper alias parameter not found */
+		return 0;
+	}
+	port.len = p - port.s;
+	p++;
+	if(p >= uri->s + uri->len) {
+		/* proper alias parameter not found */
+		return 0;
+	}
+	/* jump over proto */
+	p++;
+
+	if(p != uri->s + uri->len && *p != ';') {
+		/* proper alias parameter not found */
+		return 0;
+	}
+	skip.len = (int)(p - skip.s);
+	if(nuri->len <= uri->len - skip.len) {
+		LM_ERR("uri buffer too small\n");
+		return -1;
+	}
+
+	p = nuri->s;
+	memcpy(p, uri->s, (size_t)(skip.s - uri->s));
+	p += skip.s - uri->s;
+	memcpy(p, skip.s + skip.len,
+			(size_t)(uri->s + uri->len - skip.s - skip.len));
+	p += uri->s + uri->len - skip.s - skip.len;
+	nuri->len = p - nuri->s;
+
+	LM_DBG("decoded <%.*s> => [%.*s]\n", uri->len, uri->s, nuri->len, nuri->s);
+	return 1;
+}
+
 /* address of record (aor) management */
 
 /* address of record considered case sensitive

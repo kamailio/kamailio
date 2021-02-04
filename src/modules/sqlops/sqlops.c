@@ -79,6 +79,8 @@ static int sql_res_param(modparam_t type, void* val);
 
 extern int sqlops_tr_buf_size;
 
+int sqlops_results_maxsize = 32;
+
 static int sqlops_connect_mode = 0;
 
 static pv_export_t mod_pvs[] = {
@@ -111,6 +113,7 @@ static param_export_t params[]={
 	{"sqlres",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_res_param},
 	{"tr_buf_size",     PARAM_INT,   &sqlops_tr_buf_size},
 	{"connect_mode",    PARAM_INT,   &sqlops_connect_mode},
+	{"results_maxsize", PARAM_INT,   &sqlops_results_maxsize},
 	{0,0,0}
 };
 
@@ -492,6 +495,60 @@ static int ki_sqlops_query(sip_msg_t *msg, str *scon, str *squery, str *sres)
 	return sqlops_do_query(scon, squery, sres);
 }
 
+static int ki_sqlops_pvquery(sip_msg_t *msg, str *scon, str *squery, str *sres)
+{
+	pv_elem_t *query = NULL;
+	pvname_list_t *pv_res = NULL;
+	pvname_list_t *pvl = NULL;
+	sql_con_t *con = NULL;
+	int i, res;
+
+	if (scon == NULL || scon->s == NULL || scon->len<=0) {
+		LM_ERR("invalid connection name\n");
+		return -1;
+	}
+
+	con = sql_get_connection(scon);
+	if(con==NULL) {
+		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
+		return -1;
+	}
+
+	if(pv_parse_format(squery, &query)<0)
+	{
+		LM_ERR("invalid query string [%s]\n", squery->s);
+		return -1;
+	}
+
+	/* parse result variables into list of pv_spec_t's */
+	pv_res = parse_pvname_list(sres, 0);
+	if(pv_res==NULL)
+	{
+		LM_ERR("invalid result parameter [%s]\n", sres->s);
+		pv_elem_free_all(query);
+		return -1;
+	}
+	/* check if all result variables are writable */
+	pvl = pv_res;
+	i = 1;
+	while (pvl) {
+		if (pvl->sname.setf == NULL)
+		{
+			LM_ERR("result variable [%d] is read-only\n", i);
+			pv_elem_free_all(query);
+			free_pvname_list(pv_res);
+			return -1;
+		}
+		i++;
+		pvl = pvl->next;
+	}
+	res = sql_do_pvquery(msg, con, query, pv_res);
+
+	pv_elem_free_all(query);
+	free_pvname_list(pv_res);
+	return res;
+}
+
 static int ki_sqlops_query_async(sip_msg_t *msg, str *scon, str *squery)
 {
 	sql_con_t *con = NULL;
@@ -534,6 +591,87 @@ static int ki_sqlops_is_null(sip_msg_t *msg, str *sres, int i, int j)
 /**
  *
  */
+static sr_kemi_xval_t _ksr_kemi_sqlops_xval = {0};
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_get_mode(sip_msg_t *msg, str *resid,
+		int row, int col, int rmode)
+{
+	sql_result_t *res = NULL;
+
+	memset(&_ksr_kemi_sqlops_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if (resid == NULL || resid->s == NULL || resid->len == 0) {
+		LM_ERR("invalid result name\n");
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
+		return &_ksr_kemi_sqlops_xval;
+	}
+
+	res = sql_get_result(resid);
+	if(res==NULL) {
+		LM_ERR("invalid result container [%.*s]\n", resid->len, resid->s);
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
+		return &_ksr_kemi_sqlops_xval;
+	}
+
+	if(row >= res->nrows) {
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
+		return &_ksr_kemi_sqlops_xval;
+	}
+	if(col >= res->ncols) {
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
+		return &_ksr_kemi_sqlops_xval;
+	}
+	if(res->vals[row][col].flags&PV_VAL_NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_sqlops_xval, rmode);
+		return &_ksr_kemi_sqlops_xval;
+	}
+	if(res->vals[row][col].flags&PV_VAL_INT) {
+		_ksr_kemi_sqlops_xval.vtype = SR_KEMIP_INT;
+		_ksr_kemi_sqlops_xval.v.n = res->vals[row][col].value.n;
+		return &_ksr_kemi_sqlops_xval;
+	}
+	_ksr_kemi_sqlops_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_sqlops_xval.v.s = res->vals[row][col].value.s;
+	return &_ksr_kemi_sqlops_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_get(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_gete(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_sqlops_result_getz(sip_msg_t *msg, str *resid,
+		int row, int col)
+{
+	return ki_sqlops_result_get_mode(msg, resid, row, col,
+			SR_KEMI_XVAL_NULL_ZERO);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_sqlops_exports[] = {
 	{ str_init("sqlops"), str_init("sql_query"),
@@ -561,6 +699,11 @@ static sr_kemi_t sr_kemi_sqlops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("sqlops"), str_init("sql_pvquery"),
+		SR_KEMIP_INT, ki_sqlops_pvquery,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("sqlops"), str_init("sql_xquery"),
 		SR_KEMIP_INT, sqlops_do_xquery,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
@@ -569,6 +712,21 @@ static sr_kemi_t sr_kemi_sqlops_exports[] = {
 	{ str_init("sqlops"), str_init("sql_query_async"),
 		SR_KEMIP_INT, ki_sqlops_query_async,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_get"),
+		SR_KEMIP_XVAL, ki_sqlops_result_get,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_gete"),
+		SR_KEMIP_XVAL, ki_sqlops_result_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sqlops"), str_init("sql_result_getz"),
+		SR_KEMIP_XVAL, ki_sqlops_result_getz,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

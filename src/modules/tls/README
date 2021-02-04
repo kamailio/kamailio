@@ -69,6 +69,7 @@ Olle E. Johansson
               10.35. engine (string)
               10.36. engine_config (string)
               10.37. engine_algorithms (string)
+              10.38. verify_client (string)
 
         11. Functions
 
@@ -139,8 +140,10 @@ Olle E. Johansson
    1.43. Set xavp_cfg parameter
    1.44. Set event_callback parameter
    1.45. Set rand_engine parameter
-   1.46. is_peer_verified usage
-   1.47. Use of event_route[tls:connection-out]
+   1.46. Set verify_client modparam parameter
+   1.47. Set verify_client tls.cfg parameter
+   1.48. is_peer_verified usage
+   1.49. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -194,6 +197,7 @@ Chapter 1. Admin Guide
         10.35. engine (string)
         10.36. engine_config (string)
         10.37. engine_algorithms (string)
+        10.38. verify_client (string)
 
    11. Functions
 
@@ -613,6 +617,7 @@ Place holder
    10.35. engine (string)
    10.36. engine_config (string)
    10.37. engine_algorithms (string)
+   10.38. verify_client (string)
 
 10.1. tls_method (string)
 
@@ -633,7 +638,7 @@ Place holder
        use SSLv3 for anything which should be secure.
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be secure. Newer
-       versions of libssl don't include support for it anymore.
+       versions of OpenSSL libraries don't include support for it anymore.
      * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 or newer methods will be
        accepted.
        From the OpenSSL manual: "A TLS/SSL connection established with
@@ -644,9 +649,9 @@ Place holder
        TLSv1.2 and permits a fallback to SSLv3. A server will support
        SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols. This is the best
        choice when compatibility is a concern."
-       Note: For older libssl version, this option allows SSLv2, with
-       hello messages done over SSLv2. You shouldn't use SSLv2 or SSLv3
-       for anything which should be secure.
+       Note: For older OpenSSL library versions, this option allows SSLv2,
+       with hello messages done over SSLv2. You shouldn't use SSLv2 or
+       SSLv3 for anything which should be secure.
 
    If RFC 3261 conformance is desired, at least TLSv1 must be used. For
    compatibility with older clients SSLv23 is the option, but again, be
@@ -699,7 +704,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 
    Example 1.5. Set private_key parameter
 ...
-modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
+modparam("tls", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
 ...
 
 10.4. ca_list (string)
@@ -1215,7 +1220,7 @@ modparam("tls", "session_cache", 1)
    The value for session ID context, making sense when session caching is
    enabled.
 
-   By default TLS session_id is "sip-router-tls-3.1".
+   By default TLS session_id is "kamailio-tls-5.x.y".
 
    Example 1.38. Set session_id parameter
 ...
@@ -1261,6 +1266,7 @@ modparam("tls", "renegotiation", 1)
      * tls_method - (str) - TLS methods
      * verify_certificate - (bool) - see modparam
      * require_certificate - (bool) - see modparam
+     * verify_client - (str) - see modparam
      * private_key - (str) - see modparam
      * certificate - (str) - see modparam
      * verify_depth - (int) - see modparam
@@ -1397,7 +1403,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   modparam("tls", "xavp_cfg", "tls")
  ...
   $xavp(tls=>server_name) = "kamailio.org";
-  $xavp(tls=>server_id) = "kamailio.org";
+  $xavp(tls[0]=>server_id) = "kamailio.org";
   $du = "sip:kamailio.org:5061;transport=tls";
   route(RELAY);
 ...
@@ -1426,7 +1432,7 @@ end
 
 10.34. rand_engine (str)
 
-   Set the ranondom number generator engine for libssl.
+   Set the random number generator engine for libssl.
 
    Note: the default random number generator (PRNG) engine of libssl
    v1.1.x is not designed for multi-process applications and can result in
@@ -1471,7 +1477,7 @@ modparam("tls", "private_key", "/engine:my_HSM_key_label")
 modparam("tls", "engine", "pkcs11")
 modparam("tls", "private_key", "/engine:pkcs11:token=MYTOKEN;object=MYKEYLABEL")
 
-modparam("tls", "engine_conf", "/usr/local/etc/kamailio/openssl.cnf")
+modparam("tls", "engine_config", "/usr/local/etc/kamailio/openssl.cnf")
 modparam("tls", "engine_algorithms", "ALL")
 ...
 
@@ -1494,6 +1500,55 @@ modparam("tls", "engine_algorithms", "ALL")
    The default is not to set any methods as default. This global param is
    not supported in the tls config file.
 
+10.38. verify_client (string)
+
+   Provides an alternative to verify_certificate and require_certificate
+   modparam and tls.cfg parameters, and creates an additional
+   opportunistic connection establishment option for connections with with
+   unverifiable certificates (optional_no_ca).
+
+   This is useful for allowing connections from SIP phones with
+   self-signed certificates, signed by unrecognized root CAs, expired
+   certificates, etc.
+
+   The following values have respective behaviors:
+     * off - no client certificate request performed.
+     * on - require a verified certificate from the client.
+     * optional - ask client for certificate. If one is provided, it must
+       be verified. Allowing missing certificate.
+     * optional_no_ca - ask client for certificate. Opportunistically try
+       to verify certificate. Allow connection regardless of whether there
+       is no certificate or whether certificate is present (verified or
+       not). Note that verification status can be retrieved via
+       $tls_peer_verified.
+
+   Default value is 'off' (no client certificate request performed).
+
+   Recommendation: when using this parameter, do not use
+   verify_certificate or require_certificate parameters. Conversion table
+   is as follows:
+     * verify_certificate=0, require_certificate=0 => verify_client="off"
+     * verify_certificate=1, require_certificate=0 =>
+       verify_client="optional"
+     * verify_certificate=1, require_certificate=1 => verify_client="on"
+
+   Example 1.46. Set verify_client modparam parameter
+...
+modparam("tls", "verify_client", "on")
+...
+
+   Example 1.47. Set verify_client tls.cfg parameter
+...
+[server:1.2.3.4:5061]
+method = TLSv1
+verify_client = on
+...
+
+[server:5.6.7.8:5061]
+method = TLSv1.2
+verify_client = optional_no_ca
+...
+
 11. Functions
 
    11.1. is_peer_verified()
@@ -1506,7 +1561,7 @@ modparam("tls", "engine_algorithms", "ALL")
 
    It can be used only in a request route.
 
-   Example 1.46. is_peer_verified usage
+   Example 1.48. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
                 exit;
@@ -1583,7 +1638,7 @@ modparam("tls", "engine_algorithms", "ALL")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.47. Use of event_route[tls:connection-out]
+   Example 1.49. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {

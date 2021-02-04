@@ -52,8 +52,8 @@
 #include "../../core/msg_translator.h"
 #include "lw_parser.h"
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "../../core/dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "../../core/dst_blocklist.h"
 #endif
 #include "../../core/atomic_ops.h" /* membar_depends() */
 #include "../../core/kemi.h"
@@ -229,6 +229,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		i_req->parsed_uri_ok=0;
 		i_req->new_uri.s=pkg_malloc(uri->len);
 		if (unlikely(i_req->new_uri.s==0)){
+			PKG_MEM_ERROR;
 			ret=E_OUT_OF_MEM;
 			goto error03;
 		}
@@ -474,8 +475,12 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	}
 	/* ... and build it now */
 	shbuf=build_req_buf_from_sip_req( i_req, &len, dst, BUILD_IN_SHM);
-	if (!shbuf) {
+	if (!shbuf || len<=0) {
 		LM_ERR("could not build request\n");
+		if(shbuf) {
+			shm_free(shbuf);
+			shbuf = NULL;
+		}
 		ret=E_OUT_OF_MEM;
 		goto error01;
 	}
@@ -494,6 +499,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->path_vec.s && i_req->path_vec.len)){
 		t->uac[branch].path.s=shm_malloc(i_req->path_vec.len+1);
 		if (unlikely(t->uac[branch].path.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -509,6 +515,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->instance.s && i_req->instance.len)){
 		t->uac[branch].instance.s=shm_malloc(i_req->instance.len+1);
 		if (unlikely(t->uac[branch].instance.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -524,6 +531,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->ruid.s && i_req->ruid.len)){
 		t->uac[branch].ruid.s=shm_malloc(i_req->ruid.len+1);
 		if (unlikely(t->uac[branch].ruid.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -539,6 +547,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(i_req->location_ua.s && i_req->location_ua.len)){
 		t->uac[branch].location_ua.s=shm_malloc(i_req->location_ua.len+1);
 		if (unlikely(t->uac[branch].location_ua.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -666,7 +675,7 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
 		ser_error=E_OUT_OF_MEM;
-		LM_ERR("no shmem\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 
@@ -883,7 +892,11 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	shbuf=print_uac_request_from_buf( t, request, branch, uri,
 			&len, &t->uac[branch].request.dst,
 			buf, buf_len);
-	if (!shbuf) {
+	if (!shbuf || len<=0) {
+		if(shbuf) {
+			shm_free(shbuf);
+			shbuf = NULL;
+		}
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error;
 	}
@@ -898,6 +911,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(path && path->s)){
 		t->uac[branch].path.s=shm_malloc(path->len+1);
 		if (unlikely(t->uac[branch].path.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -914,6 +928,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(instance && instance->s)){
 		t->uac[branch].instance.s=shm_malloc(instance->len+1);
 		if (unlikely(t->uac[branch].instance.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -930,6 +945,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(ruid && ruid->s)){
 		t->uac[branch].ruid.s=shm_malloc(ruid->len+1);
 		if (unlikely(t->uac[branch].ruid.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -946,6 +962,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 	if (unlikely(location_ua && location_ua->s)){
 		t->uac[branch].location_ua.s=shm_malloc(location_ua->len+1);
 		if (unlikely(t->uac[branch].location_ua.s==0)) {
+			SHM_MEM_ERROR;
 			shm_free(shbuf);
 			t->uac[branch].request.buffer=0;
 			t->uac[branch].request.buffer_len=0;
@@ -1109,7 +1126,11 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 				CANCEL_LEN, &t_invite->to
 				, 0
 				);
-		if (unlikely(!shbuf)) {
+		if (unlikely(!shbuf) || len<=0) {
+			if(shbuf) {
+				shm_free(shbuf);
+				shbuf = NULL;
+			}
 			LM_ERR("printing e2e cancel failed\n");
 			ret=ser_error=E_OUT_OF_MEM;
 			goto error;
@@ -1201,8 +1222,10 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 		if (unlikely(reason_len == 0))
 			return 0; /* nothing to do, no reason */
 		cr = shm_malloc(sizeof(struct cancel_reason) + reason_len);
-		if (unlikely(cr == 0))
+		if (unlikely(cr == 0)) {
+			SHM_MEM_ERROR;
 			goto error;
+		}
 		d = (char*)cr +sizeof(*cr);
 		cr->cause = CANCEL_REAS_PACKED_HDRS;
 		cr->u.packed_hdrs.s = d;
@@ -1250,6 +1273,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	branch_bm_t cancel_bm;
 #ifndef E2E_CANCEL_HOP_BY_HOP
 	branch_bm_t tmp_bm;
+	int reply_status;
 #endif /* E2E_CANCEL_HOP_BY_HOP */
 	struct cancel_reason* reason;
 	int free_reason;
@@ -1390,9 +1414,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				if (cfg_get(tm, tm_cfg, cancel_b_flags) &
 						F_CANCEL_B_FAKE_REPLY){
 					LOCK_REPLIES(t_invite);
-					if (relay_reply(t_invite, FAKED_REPLY, i,
-								487, &tmp_bm, 1) == RPS_ERROR) {
+					reply_status = relay_reply(t_invite, FAKED_REPLY, i,
+								487, &tmp_bm, 1);
+					if(reply_status == RPS_ERROR) {
 						lowest_error = -1;
+					} else if(reply_status == RPS_TGONE) {
+						break;
 					}
 				}
 			}
@@ -1448,7 +1475,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
  *  the destination resolves to several addresses
  *  Takes care of starting timers a.s.o. (on send success)
  *  returns: -2 on error, -1 on drop,  current branch id on success,
- *   new branch id on send error/blacklist, when failover is possible
+ *   new branch id on send error/blocklist, when failover is possible
  *    (ret>=0 && ret!=branch)
  *    if lock_replies is 1, the replies for t will be locked when adding
  *     new branches (to prevent races). Use 0 from failure routes or other
@@ -1493,15 +1520,15 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #endif /* USE_DNS_FAILOVER*/
 		return -1; /* drop, try next branch */
 	}
-#ifdef USE_DST_BLACKLIST
-	if (cfg_get(core, core_cfg, use_dst_blacklist)
+#ifdef USE_DST_BLOCKLIST
+	if (cfg_get(core, core_cfg, use_dst_blocklist)
 			&& p_msg
 			&& (p_msg->REQ_METHOD
 				& cfg_get(tm, tm_cfg, tm_blst_methods_lookup))
 		){
-		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
+		if (dst_is_blocklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
-			LM_DBG("blacklisted destination: %s:%d (%d)\n",
+			LM_DBG("blocklisted destination: %s:%d (%d)\n",
 					ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 					uac->request.dst.proto);
 			/* disable the current branch: set a "fake" timeout
@@ -1517,7 +1544,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 				if (ret>=0){
 					su2ip_addr(&ip, &uac->request.dst.to);
-					LM_DBG("send on branch %d failed (blacklist),"
+					LM_DBG("send on branch %d failed (blocklist),"
 							" trying another ip %s:%d (%d)\n", branch,
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 							uac->request.dst.proto);
@@ -1529,7 +1556,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 			return -1; /* don't send */
 		}
 	}
-#endif /* USE_DST_BLACKLIST */
+#endif /* USE_DST_BLOCKLIST */
 	if (SEND_BUFFER( &uac->request)==-1) {
 		/* disable the current branch: set a "fake" timeout
 		 *  reply code but don't set uac->reply, to avoid overriding
@@ -1541,8 +1568,8 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		LM_DBG("send to %s:%d (%d) failed\n",
 				ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 				uac->request.dst.proto);
-#ifdef USE_DST_BLACKLIST
-		dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
+#ifdef USE_DST_BLOCKLIST
+		dst_blocklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if the destination resolves to more ips, add another
@@ -1673,7 +1700,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		if (t->flags & T_CANCELED) goto canceled;
 		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-			t->uac[branch_ret].request.dst.id = p_msg->otcpid;
+			if(p_msg->msg_flags & FL_USE_OTCPID) {
+				t->uac[branch_ret].request.dst.id = p_msg->otcpid;
+			}
 		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
 		}
@@ -1700,7 +1729,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		 * branch result */
 		if (branch_ret>=0) {
 			added_branches |= 1<<branch_ret;
-			t->uac[branch_ret].request.dst.id = obranch.otcpid;
+			if(p_msg->msg_flags & FL_USE_OTCPID) {
+				t->uac[branch_ret].request.dst.id = p_msg->otcpid;
+			}
 		} else {
 			lowest_ret=MIN_int(lowest_ret, branch_ret);
 		}
@@ -1756,7 +1787,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	}
 	if (success_branch<=0) {
 		/* return always E_SEND for now
-		 * (the real reason could be: denied by onsend routes, blacklisted,
+		 * (the real reason could be: denied by onsend routes, blocklisted,
 		 *  send failed or any of the errors listed before + dns failed
 		 *  when attempting dns failover) */
 		ser_error=E_SEND;

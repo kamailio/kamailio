@@ -51,8 +51,7 @@ typedef void (param_free_cb) (void *param);
 typedef int (*ims_register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 		dialog_cb f, void *param, param_free_cb ff);
 
-typedef int (*ims_register_dlgcb_nodlg_f)(str *callid, str *ftag, str *ttag,
-		int cb_types, dialog_cb f, void *param, param_free_cb ff);
+typedef int (*ims_register_dlgcb_nodlg_f)(struct dlg_cell* dlg, int cb_types, dialog_cb f, void *param, param_free_cb ff);
 
 /* method to set a variable within a dialog */
 //typedef int (*set_dlg_variable_f)( struct dlg_cell* dlg,
@@ -103,7 +102,7 @@ void destroy_dlg_callbacks(unsigned int type);
 
 void destroy_dlg_callbacks_list(struct dlg_callback *cb);
 
-int register_dlgcb_nodlg(str *callid, str *ftag, str *ttag, int types, dialog_cb f, void *param, param_free_cb ff );
+int register_dlgcb_nodlg(struct dlg_cell* dlg, int types, dialog_cb f, void *param, param_free_cb ff);
 int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param, param_free_cb ff);
 
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);

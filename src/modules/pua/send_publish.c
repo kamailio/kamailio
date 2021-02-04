@@ -59,7 +59,7 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	str_hdr =(str*)pkg_malloc(sizeof(str));
 	if(str_hdr== NULL)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(str_hdr, 0 , sizeof(str));
@@ -79,12 +79,12 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
-	
+
 
 	memcpy(str_hdr->s+str_hdr->len ,"Expires: ", 9);
 	str_hdr->len += 9;
 
-	t= expires; 
+	t= expires;
 
 	if( t<=0 )
 	{
@@ -100,7 +100,7 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	str_hdr->len+= len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
-	
+
 	if(etag)
 	{
 		LM_DBG("UPDATE_TYPE [etag]= %.*s\n", etag->len, etag->s);
@@ -112,13 +112,13 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str_hdr->len += CRLF_LEN;
 	}
 	if(is_body)
-	{	
+	{
 		if(content_type== NULL || content_type->s== NULL || content_type->len== 0)
 		{
-			ctype= ev->content_type; /* use event default value */ 
+			ctype= ev->content_type; /* use event default value */
 		}
 		else
-		{	
+		{
 			ctype.s=   content_type->s;
 			ctype.len= content_type->len;
 		}
@@ -135,9 +135,9 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	{
 		memcpy(str_hdr->s+str_hdr->len,extra_headers->s , extra_headers->len);
 		str_hdr->len += extra_headers->len;
-	}	
+	}
 	str_hdr->s[str_hdr->len] = '\0';
-	
+
 	return str_hdr;
 
 }
@@ -194,7 +194,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field* hdr= NULL;
 	struct sip_msg* msg= NULL;
 	ua_pres_t* presentity= NULL;
-	ua_pres_t* db_presentity= NULL; 
+	ua_pres_t* db_presentity= NULL;
 	ua_pres_t* hentity= NULL;
 	int found = 0;
 	int size= 0;
@@ -233,7 +233,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LM_ERR("no reply message found\n ");
 		goto error;
 	}
-	
+
 
 	if(msg== FAKED_REPLY)
 	{
@@ -255,9 +255,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			LM_DBG("received a 412 reply- try again to send PUBLISH\n");
 			publ_info_t publ;
 			memset(&publ, 0, sizeof(publ_info_t));
-			publ.pres_uri= hentity->pres_uri; 
+			publ.pres_uri= hentity->pres_uri;
 			publ.body= hentity->body;
-			
+
 			if(hentity->desired_expires== 0)
 				publ.expires= -1;
 			else
@@ -268,7 +268,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 			publ.source_flag|= hentity->flag;
 			publ.event|= hentity->event;
-			publ.content_type= hentity->content_type;	
+			publ.content_type= hentity->content_type;
 			publ.id= hentity->id;
 			publ.extra_headers= hentity->extra_headers;
 			publ.outbound_proxy = hentity->outbound_proxy;
@@ -293,18 +293,18 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		}
 		goto done;
 	} /* code >= 300 */
-	
+
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
 		goto error;
-	}	
+	}
 	if(msg->expires== NULL || msg->expires->body.len<= 0)
 	{
 			LM_ERR("No Expires header found\n");
 			goto error;
-	}	
-	
+	}
+
 	if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 	{
 		LM_ERR("cannot parse Expires header\n");
@@ -312,7 +312,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 	LM_DBG("lexpire= %u\n", lexpire);
-		
+
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
@@ -324,12 +324,12 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		hdr = hdr->next;
 	}
 	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
-	{	
+	{
 		LM_ERR("no SIP-ETag header field found\n");
 		goto error;
 	}
 	etag= hdr->body;
-		
+
 	LM_DBG("completed with status %d [contact:%.*s]\n",
 	       ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
 
@@ -354,8 +354,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		}
 	}
 
-	size= sizeof(ua_pres_t)+ sizeof(str)+ 
-		(hentity->pres_uri->len+ hentity->tuple_id.len + 
+	size= sizeof(ua_pres_t)+ sizeof(str)+
+		(hentity->pres_uri->len+ hentity->tuple_id.len +
 		 hentity->id.len)* sizeof(char);
 	if(hentity->extra_headers)
 		size+= sizeof(str)+ hentity->extra_headers->len* sizeof(char);
@@ -363,9 +363,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		goto error;
-	}	
+	}
 	memset(presentity, 0, size);
 
 	size= sizeof(ua_pres_t);
@@ -373,11 +373,11 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= sizeof(str);
 
 	presentity->pres_uri->s= (char*)presentity+ size;
-	memcpy(presentity->pres_uri->s, hentity->pres_uri->s, 
+	memcpy(presentity->pres_uri->s, hentity->pres_uri->s,
 			hentity->pres_uri->len);
 	presentity->pres_uri->len= hentity->pres_uri->len;
 	size+= hentity->pres_uri->len;
-	
+
 	presentity->tuple_id.s= (char*)presentity+ size;
 	memcpy(presentity->tuple_id.s, hentity->tuple_id.s,
 			hentity->tuple_id.len);
@@ -385,17 +385,17 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= presentity->tuple_id.len;
 
 	presentity->id.s=(char*)presentity+ size;
-	memcpy(presentity->id.s, hentity->id.s, 
+	memcpy(presentity->id.s, hentity->id.s,
 			hentity->id.len);
-	presentity->id.len= hentity->id.len; 
+	presentity->id.len= hentity->id.len;
 	size+= presentity->id.len;
-		
+
 	if(hentity->extra_headers)
 	{
 		presentity->extra_headers= (str*)((char*)presentity+ size);
 		size+= sizeof(str);
 		presentity->extra_headers->s= (char*)presentity+ size;
-		memcpy(presentity->extra_headers->s, hentity->extra_headers->s, 
+		memcpy(presentity->extra_headers->s, hentity->extra_headers->s,
 				hentity->extra_headers->len);
 		presentity->extra_headers->len= hentity->extra_headers->len;
 		size+= hentity->extra_headers->len;
@@ -409,7 +409,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 	if(presentity->etag.s== NULL)
 	{
-		LM_ERR("No more share memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memcpy(presentity->etag.s, etag.s, etag.len);
@@ -473,7 +473,7 @@ error:
 	}
 
 	return;
-}	
+}
 
 int send_publish( publ_info_t* publ )
 {
@@ -491,12 +491,12 @@ int send_publish( publ_info_t* publ )
 	pua_event_t* ev= NULL;
 	uac_req_t uac_r;
 	db1_res_t *res=NULL;
-	ua_pres_t dbpres; 
+	ua_pres_t dbpres;
 	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
 	int ret = -1;
 
 	LM_DBG("pres_uri=%.*s\n", publ->pres_uri->len, publ->pres_uri->s );
-	
+
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
 		if (pua_dbf.start_transaction(pua_db, db_table_lock) < 0)
@@ -512,18 +512,15 @@ int send_publish( publ_info_t* publ )
 	{
 		LM_ERR("event not found in list\n");
 		goto error;
-	}	
+	}
 
 	if (dbmode==PUA_DB_ONLY)
 	{
-		if (publ->etag) {
-			memset(&dbpres, 0, sizeof(dbpres));
-			dbpres.pres_uri = &pres_uri;
-			dbpres.watcher_uri = &watcher_uri;
-			dbpres.extra_headers = &extra_headers;
-			presentity = get_record_puadb(publ->id, publ->etag,
-						      &dbpres, &res);
-		}
+		memset(&dbpres, 0, sizeof(dbpres));
+		dbpres.pres_uri = &pres_uri;
+		dbpres.watcher_uri = &watcher_uri;
+		dbpres.extra_headers = &extra_headers;
+		presentity = get_record_puadb(publ->id, publ->etag, &dbpres, &res);
 	}
 	else
 	{
@@ -544,7 +541,7 @@ int send_publish( publ_info_t* publ )
 
 	if(publ->etag && presentity== NULL)
 	{
-		if (dbmode!=PUA_DB_ONLY) 
+		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
 		ret = 418;
 		goto error;
@@ -555,14 +552,14 @@ int send_publish( publ_info_t* publ )
 		LM_DBG("Insert flag set\n");
 		goto insert;
 	}
-	
+
 	if(presentity== NULL)
 	{
-insert:	
-		if (dbmode!=PUA_DB_ONLY) 
+insert:
+		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
-		LM_DBG("insert type\n"); 
-		
+		LM_DBG("insert type\n");
+
 		if(publ->flag & UPDATE_TYPE )
 		{
 			LM_DBG("UPDATE_TYPE and no record found \n");
@@ -573,7 +570,7 @@ insert:
 			LM_DBG("request for a publish with expires 0 and"
 					" no record found\n");
 			goto done;
-			
+
 		}
 		if(publ->body== NULL)
 		{
@@ -589,8 +586,8 @@ insert:
 		etag.s= (char*)pkg_malloc(presentity->etag.len* sizeof(char));
 		if(etag.s== NULL)
 		{
-			LM_ERR("while allocating memory\n");
-			if (dbmode!=PUA_DB_ONLY) 
+			PKG_MEM_ERROR;
+			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
@@ -598,24 +595,24 @@ insert:
 		etag.len= presentity->etag.len;
 
 		if(presentity->tuple_id.s && presentity->tuple_id.len)
-		{	
+		{
 			/* get tuple_id*/
 			tuple_id=(str*)pkg_malloc(sizeof(str));
 			if(tuple_id== NULL)
 			{
-				LM_ERR("No more memory\n");
-				if (dbmode!=PUA_DB_ONLY) 
+				PKG_MEM_ERROR;
+				if (dbmode!=PUA_DB_ONLY)
 					lock_release(&HashT->p_records[hash_code].lock);
 				goto error;
-			}	
+			}
 			tuple_id->s= (char*)pkg_malloc(presentity->tuple_id.len* sizeof(char));
 			if(tuple_id->s== NULL)
 			{
-				LM_ERR("No more memory\n");
-				if (dbmode!=PUA_DB_ONLY) 
+				PKG_MEM_ERROR;
+				if (dbmode!=PUA_DB_ONLY)
 					lock_release(&HashT->p_records[hash_code].lock);
 				goto error;
-			}	
+			}
 			memcpy(tuple_id->s, presentity->tuple_id.s, presentity->tuple_id.len);
 			tuple_id->len= presentity->tuple_id.len;
 		}
@@ -623,16 +620,16 @@ insert:
 		if(publ->expires== 0)
 		{
 			LM_DBG("expires= 0- delete from hash table\n");
-			if (dbmode!=PUA_DB_ONLY) 
+			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
 			goto send_publish;
 		}
 
-		presentity->version++; 
+		presentity->version++;
 		ver= presentity->version;
 
 		if (dbmode==PUA_DB_ONLY)
-		{ 
+		{
 			update_version_puadb(presentity);
 		}
 		else
@@ -655,9 +652,9 @@ insert:
 	}
 	if(tuple_id)
 		LM_DBG("tuple_id= %.*s\n", tuple_id->len, tuple_id->s  );
-	
+
 send_publish:
-	
+
 	/* construct the callback parameter */
 	if(etag.s && etag.len)
 		publ->etag = &etag;
@@ -671,7 +668,7 @@ send_publish:
 
 	if(publ->flag & UPDATE_TYPE)
 		LM_DBG("etag:%.*s\n", etag.len, etag.s);
-	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type, 
+	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type,
 				(publ->flag & UPDATE_TYPE)?&etag:NULL, publ->extra_headers, (body)?1:0);
 
 	if(str_hdr == NULL)
@@ -733,7 +730,7 @@ finish:
 		if(body->s)
 			xmlFree(body->s);
 		pkg_free(body);
-	}	
+	}
 	if(str_hdr)
 		pkg_free(str_hdr);
 	if(tuple_id)
@@ -753,7 +750,7 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	int size;
 	ua_pres_t* cb_param= NULL;
 
-	size= sizeof(ua_pres_t)+ sizeof(str)+ (publ->pres_uri->len+ 
+	size= sizeof(ua_pres_t)+ sizeof(str)+ (publ->pres_uri->len+
 		+ publ->content_type.len+ publ->id.len+ 1)*sizeof(char);
 
 	if(publ->outbound_proxy)
@@ -770,12 +767,11 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	cb_param= (ua_pres_t*)shm_malloc(size);
 	if(cb_param== NULL)
 	{
-		LM_ERR("ERROR no more share memory while allocating cb_param"
-				" - size= %d\n", size);
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(cb_param, 0, size);
-	
+
 	size =  sizeof(ua_pres_t);
 
 	cb_param->pres_uri = (str*)((char*)cb_param + size);
@@ -787,7 +783,7 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	size+= publ->pres_uri->len;
 
 	if(publ->id.s && publ->id.len)
-	{	
+	{
 		cb_param->id.s = ((char*)cb_param+ size);
 		memcpy(cb_param->id.s, publ->id.s, publ->id.len);
 		cb_param->id.len= publ->id.len;
@@ -798,7 +794,7 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	{
 		cb_param->body = (str*)((char*)cb_param  + size);
 		size+= sizeof(str);
-		
+
 		cb_param->body->s = (char*)cb_param + size;
 		memcpy(cb_param->body->s, body->s ,
 			body->len ) ;
@@ -822,7 +818,7 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 			publ->extra_headers->len ) ;
 		cb_param->extra_headers->len= publ->extra_headers->len;
 		size+= publ->extra_headers->len;
-	}	
+	}
 	if(publ->outbound_proxy)
 	{
 		cb_param->outbound_proxy = (str*)((char*)cb_param + size);
@@ -832,7 +828,7 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 		       publ->outbound_proxy->len);
 		cb_param->outbound_proxy->len = publ->outbound_proxy->len;
 		size+= publ->outbound_proxy->len;
-	}	
+	}
 
 	if(publ->content_type.s && publ->content_type.len)
 	{
@@ -840,9 +836,9 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 		memcpy(cb_param->content_type.s, publ->content_type.s, publ->content_type.len);
 		cb_param->content_type.len= publ->content_type.len;
 		size+=  publ->content_type.len;
-	}	
+	}
 	if(tuple_id)
-	{	
+	{
 		cb_param->tuple_id.s = (char*)cb_param+ size;
 		memcpy(cb_param->tuple_id.s, tuple_id->s ,tuple_id->len);
 		cb_param->tuple_id.len= tuple_id->len;

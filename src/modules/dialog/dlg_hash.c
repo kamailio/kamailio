@@ -762,9 +762,10 @@ error:
  * the reference counter by one again iff a dialog has been found.
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
+ * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t *dlg_lookup( unsigned int h_entry, unsigned int h_id)
+dlg_cell_t *dlg_lookup_mode(unsigned int h_entry, unsigned int h_id, int lmode)
 {
 	dlg_cell_t *dlg;
 	dlg_entry_t *d_entry;
@@ -777,23 +778,58 @@ dlg_cell_t *dlg_lookup( unsigned int h_entry, unsigned int h_id)
 
 	d_entry = &(d_table->entries[h_entry]);
 
-	dlg_lock( d_table, d_entry);
+	dlg_lock(d_table, d_entry);
 
 	for( dlg=d_entry->first ; dlg ; dlg=dlg->next ) {
 		if (dlg->h_id == h_id) {
 			ref_dlg_unsafe(dlg, 1);
-			dlg_unlock( d_table, d_entry);
+			if (likely(lmode == 0)) {
+				dlg_unlock(d_table, d_entry);
+			}
 			LM_DBG("dialog id=%u found on entry %u\n", h_id, h_entry);
 			return dlg;
 		}
 	}
 
-	dlg_unlock( d_table, d_entry);
+	dlg_unlock(d_table, d_entry);
 not_found:
 	LM_DBG("no dialog id=%u found on entry %u\n", h_id, h_entry);
 	return 0;
 }
 
+
+/*!
+ * \brief Lookup a dialog in the global list
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again iff a dialog has been found.
+ * \param h_entry number of the hash table entry
+ * \param h_id id of the hash table entry
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t *dlg_lookup(unsigned int h_entry, unsigned int h_id)
+{
+	return dlg_lookup_mode(h_entry, h_id, 0);
+}
+
+/*!
+ * \brief Search a dialog in the global list by iuid
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * \param diuid internal unique id per dialog
+ * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode)
+{
+	if(diuid==NULL)
+		return NULL;
+	if(diuid->h_id==0)
+		return NULL;
+	/* dlg ref counter is increased by next line */
+	return dlg_lookup_mode(diuid->h_entry, diuid->h_id, lmode);
+}
 
 /*!
  * \brief Search a dialog in the global list by iuid
@@ -810,7 +846,7 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
 	if(diuid->h_id==0)
 		return NULL;
 	/* dlg ref counter is increased by next line */
-	return dlg_lookup(diuid->h_entry, diuid->h_id);
+	return dlg_lookup_mode(diuid->h_entry, diuid->h_id, 0);
 }
 
 /*!
@@ -821,7 +857,7 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \param mode let hash table slot locked or not
+ * \param mode let hash table slot locked or not, even when dlg is not found
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
@@ -829,24 +865,50 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 						unsigned int *dir, int mode)
 {
 	struct dlg_cell *dlg;
+	struct dlg_cell *dlg_no_totag=NULL;
 	struct dlg_entry *d_entry;
+	unsigned int dir_no_totag = DLG_DIR_NONE;
 
 	d_entry = &(d_table->entries[h_entry]);
 
 	dlg_lock( d_table, d_entry);
 
 	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
-		/* Check callid / fromtag / totag */
+		/* check callid / fromtag / totag */
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
+			/* if to-tag is empty continue to search in case another dialog
+			 * is found with a matching to-tag. */
+			if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
+				dlg_no_totag = dlg;
+				dir_no_totag = *dir;
+				continue;
+			}
+
 			ref_dlg_unsafe(dlg, 1);
-			if(likely(mode==0)) dlg_unlock( d_table, d_entry);
-			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
-				callid->len, callid->s,h_entry,*dir);
+			if(likely(mode==0)) {
+				dlg_unlock( d_table, d_entry);
+			}
+			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d to-tag='%.*s'\n",
+				callid->len, callid->s, h_entry, *dir,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+
 			return dlg;
 		}
 	}
 
-	if(likely(mode==0)) dlg_unlock( d_table, d_entry);
+	if (dlg_no_totag) {
+		ref_dlg_unsafe(dlg_no_totag, 1);
+	}
+	if(likely(mode==0)) {
+		dlg_unlock(d_table, d_entry);
+	}
+	if (dlg_no_totag) {
+		*dir = dir_no_totag;
+		LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d no-to-tag\n",
+				callid->len, callid->s, h_entry, *dir);
+		return dlg_no_totag;
+	}
+
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }

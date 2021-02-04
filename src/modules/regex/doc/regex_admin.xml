@@ -432,7 +432,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 ^PJSUA
 
 
-### Blacklisted source IP's
+### Blocklisted source IP's
 [1]
 
 ^190\.232\.250\.226$

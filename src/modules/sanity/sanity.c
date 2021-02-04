@@ -299,8 +299,21 @@ int check_ruri_scheme(sip_msg_t* msg) {
 	return SANITY_CHECK_PASSED;
 }
 
+#define SANITY_HDR_DUPCHECK(_hf, _hdr_flags, _hdr_type, _hdr_flag, _hdr_name) \
+	do { \
+		if((_hf)->type == _hdr_type) { \
+			if(_hdr_flags & _hdr_flag) { \
+				LM_DBG("duplicated %s header\n", _hdr_name); \
+				return SANITY_CHECK_FAILED; \
+			} \
+			_hdr_flags |= _hdr_flag; \
+		} \
+	} while(0)
+
 /* check for the presence of the minimal required headers */
 int check_required_headers(sip_msg_t* msg) {
+	hdr_field_t* hf;
+	hdr_flags_t hdr_flags = 0;
 
 	LM_DBG("check_required_headers entered\n");
 
@@ -309,6 +322,20 @@ int check_required_headers(sip_msg_t* msg) {
 		LM_DBG("check_required_headers failed\n");
 		return SANITY_CHECK_FAILED;
 	}
+	if (parse_headers(msg, HDR_EOH_F, 0) != 0) {
+		LM_ERR("failed to parse headers\n");
+		if (sanity_reply(msg, 400, "Bad Headers") < 0) {
+			LM_WARN("failed to send 400 reply\n");
+		}
+		return SANITY_CHECK_FAILED;
+	}
+	for (hf=msg->headers; hf; hf=hf->next) {
+		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_FROM_T, HDR_FROM_F, "From");
+		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_TO_T, HDR_TO_F, "To");
+		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_CALLID_T, HDR_CALLID_F, "Call-Id");
+		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_CSEQ_T, HDR_CSEQ_F, "CSeq");
+	}
+
 	/* TODO: check for other required headers according to request type */
 	LM_DBG("check_required_headers passed\n");
 

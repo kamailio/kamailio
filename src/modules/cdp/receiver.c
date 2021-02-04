@@ -396,7 +396,7 @@ again:
 		*fd = *tmp;
 	}else{
 		if(!cmsg)
-			LM_ERR("receive_fd: no descriptor passed, empty control message");
+			LM_ERR("receive_fd: no descriptor passed, empty control message\n");
 		else
 			LM_ERR("receive_fd: no descriptor passed, cmsg=%p,"
 					"len=%d\n", cmsg, (unsigned)cmsg->cmsg_len);
@@ -768,7 +768,7 @@ int receive_loop(peer *original_peer)
 							}
 							LM_DBG("select_recv(): Send pipe says [%p] %d\n",msg,cnt);
 							if (sp->tcp_socket<0){
-								LM_ERR("select_recv(): got a signal to send something, but the connection was not opened");
+								LM_ERR("select_recv(): got a signal to send something, but the connection was not opened\n");
 							} else {
 								while( (cnt=write(sp->tcp_socket,msg->buf.s,msg->buf.len))==-1 ) {
 									if (errno==EINTR)
@@ -883,7 +883,7 @@ int peer_connect(peer *p)
 
 		/* try to set the local socket used to connect to the peer */
 		if (p->src_addr.s && p->src_addr.len > 0) {
-			LM_DBG("peer_connect(): connetting to peer via src addr=%.*s",p->src_addr.len, p->src_addr.s);
+			LM_DBG("peer_connect(): connecting to peer via src addr=%.*s\n",p->src_addr.len, p->src_addr.s);
 			memset (&hints, 0, sizeof(hints));
 			hints.ai_flags = AI_NUMERICHOST;
 			hints.ai_socktype = SOCK_STREAM;

@@ -84,14 +84,20 @@ sanity_api_t scb;
 
 int th_msg_received(sr_event_param_t *evp);
 int th_msg_sent(sr_event_param_t *evp);
-int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp);
+int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
+		int evtype, int evidx, str *evname);
 
 /** module functions */
 static int mod_init(void);
 
+#define TH_EVENTRT_OUTGOING 1
+#define TH_EVENTRT_SENDING  2
+static int _th_eventrt_mode = TH_EVENTRT_OUTGOING | TH_EVENTRT_SENDING;
 static int _th_eventrt_outgoing = -1;
 static str _th_eventrt_callback = STR_NULL;
-static str _th_eventrt_name = str_init("topoh:msg-outgoing");
+static str _th_eventrt_outgoing_name = str_init("topoh:msg-outgoing");
+static int _th_eventrt_sending = -1;
+static str _th_eventrt_sending_name = str_init("topoh:msg-sending");
 
 static param_export_t params[]={
 	{"mask_key",		PARAM_STR, &_th_key},
@@ -105,6 +111,7 @@ static param_export_t params[]={
 	{"sanity_checks",	PARAM_INT, &th_sanity_checks},
 	{"uri_prefix_checks",	PARAM_INT, &th_uri_prefix_checks},
 	{"event_callback",	PARAM_STR, &_th_eventrt_callback},
+	{"event_mode",		PARAM_INT, &_th_eventrt_mode},
 	{0,0,0}
 };
 
@@ -136,10 +143,15 @@ static int mod_init(void)
 	sip_uri_t puri;
 	char buri[MAX_URI_SIZE];
 
-	_th_eventrt_outgoing = route_lookup(&event_rt, _th_eventrt_name.s);
+	_th_eventrt_outgoing = route_lookup(&event_rt, _th_eventrt_outgoing_name.s);
 	if(_th_eventrt_outgoing<0
 			|| event_rt.rlist[_th_eventrt_outgoing]==NULL) {
 		_th_eventrt_outgoing = -1;
+	}
+	_th_eventrt_sending = route_lookup(&event_rt, _th_eventrt_sending_name.s);
+	if(_th_eventrt_sending<0
+			|| event_rt.rlist[_th_eventrt_sending]==NULL) {
+		_th_eventrt_sending = -1;
 	}
 
 	if(faked_msg_init()<0) {
@@ -186,7 +198,7 @@ static int mod_init(void)
 	th_via_prefix.s = (char*)pkg_malloc(th_via_prefix.len+1);
 	if(th_via_prefix.s==NULL)
 	{
-		LM_ERR("via prefix parameter is invalid\n");
+		PKG_MEM_ERROR_FMT("via prefix parameter\n");
 		goto error;
 	}
 	/* 'sip:' + ip + ';' + param + '=' + prefix (+ '\0') */
@@ -195,7 +207,7 @@ static int mod_init(void)
 	th_uri_prefix.s = (char*)pkg_malloc(th_uri_prefix.len+1);
 	if(th_uri_prefix.s==NULL)
 	{
-		LM_ERR("uri prefix parameter is invalid\n");
+		PKG_MEM_ERROR_FMT("uri prefix parameter\n");
 		goto error;
 	}
 	/* build via prefix */
@@ -249,8 +261,14 @@ int th_prepare_msg(sip_msg_t *msg)
 			LM_DBG("non sip request message\n");
 			return 1;
 		}
-	} else if(msg->first_line.type!=SIP_REPLY) {
-		LM_DBG("non sip message\n");
+	} else if(msg->first_line.type==SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg))
+		{
+			LM_DBG("non sip reply message\n");
+			return 1;
+		}
+	} else {
+		LM_DBG("unknown sip message type %d\n", msg->first_line.type);
 		return 1;
 	}
 
@@ -415,7 +433,8 @@ int th_msg_sent(sr_event_param_t *evp)
 
 	obuf = (str*)evp->data;
 
-	if(th_execute_event_route(NULL, evp)==1) {
+	if(th_execute_event_route(NULL, evp, TH_EVENTRT_OUTGOING,
+				_th_eventrt_outgoing, &_th_eventrt_outgoing_name)==1) {
 		return 0;
 	}
 
@@ -436,6 +455,12 @@ int th_msg_sent(sr_event_param_t *evp)
 	if(th_cookie_value.s[0]!='x') {
 		th_del_cookie(&msg);
 	}
+
+	if(th_execute_event_route(&msg, evp, TH_EVENTRT_SENDING,
+				_th_eventrt_sending, &_th_eventrt_sending_name)==1) {
+		goto done;
+	}
+
 	if(msg.first_line.type==SIP_REQUEST) {
 		direction = (th_cookie_value.s[0]=='u')?1:0; /* upstream/downstram */
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
@@ -516,7 +541,8 @@ done:
 /**
  *
  */
-int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
+int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
+		int evtype, int evidx, str *evname)
 {
 	struct sip_msg *fmsg;
 	struct run_act_ctx ctx;
@@ -524,7 +550,11 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	sr_kemi_eng_t *keng = NULL;
 	struct onsend_info onsnd_info = {0};
 
-	if(_th_eventrt_outgoing<0) {
+	if(!(_th_eventrt_mode & evtype)) {
+		return 0;
+	}
+
+	if(evidx<0) {
 		if(_th_eventrt_callback.s!=NULL || _th_eventrt_callback.len>0) {
 			keng = sr_kemi_eng_get();
 			if(keng==NULL) {
@@ -535,7 +565,7 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 		}
 	}
 
-	if(_th_eventrt_outgoing<0 && keng==NULL) {
+	if(evidx<0 && keng==NULL) {
 		return 0;
 	}
 
@@ -559,12 +589,12 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp)
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	if(_th_eventrt_outgoing>=0) {
-		run_top_route(event_rt.rlist[_th_eventrt_outgoing], fmsg, &ctx);
+	if(evidx>=0) {
+		run_top_route(event_rt.rlist[evidx], (msg)?msg:fmsg, &ctx);
 	} else {
 		if(keng!=NULL) {
-			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
-						&_th_eventrt_callback, &_th_eventrt_name)<0) {
+			if(sr_kemi_ctx_route(keng, &ctx, (msg)?msg:fmsg, EVENT_ROUTE,
+						&_th_eventrt_callback, evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend=NULL;
 				return -1;

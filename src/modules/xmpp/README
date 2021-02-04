@@ -25,7 +25,7 @@ Andreea Spirea
 
         3. Parameters
 
-              3.1. backend(string)
+              3.1. backend (string)
               3.2. domain_separator (string)
               3.3. gateway_domain (string)
               3.4. xmpp_domain (string)
@@ -66,7 +66,7 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. backend(string)
+        3.1. backend (string)
         3.2. domain_separator (string)
         3.3. gateway_domain (string)
         3.4. xmpp_domain (string)
@@ -185,7 +185,7 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. backend(string)
+   3.1. backend (string)
    3.2. domain_separator (string)
    3.3. gateway_domain (string)
    3.4. xmpp_domain (string)
@@ -195,7 +195,7 @@ Chapter 1. Admin Guide
    3.8. outbound_proxy (string)
    3.9. gwmap (string)
 
-3.1. backend(string)
+3.1. backend (string)
 
    The mode you are using the module; it can be either "component" or
    "server".
@@ -228,8 +228,8 @@ Chapter 1. Admin Guide
 
    The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA
    has to use outbound proxy to SIP-to-XMPP gateway IP address. It has to
-   be used as domain in the the destination address of the messages sent
-   by SIP users to XMPP users:
+   be used as domain in the destination address of the messages sent by
+   SIP users to XMPP users:
    "sip:username<delim>jabber_server@gateway_domain".
 
    Default value is "sip-xmpp.example.org".

@@ -22,7 +22,9 @@
 #ifndef CNXCC_SIP_MSG_FAKER_H_
 #define CNXCC_SIP_MSG_FAKER_H_
 
-int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag,
-		str *to_uri, str *to_tag, struct sip_msg **msg);
+#include "../../core/str.h"
+
+int cnxcc_faked_msg_init_with_dlg_info(str *callid, str *from_uri,
+		str *from_tag, str *to_uri, str *to_tag, struct sip_msg **msg);
 
 #endif /* CNXCC_SIP_MSG_FAKER_H_ */

@@ -7,7 +7,7 @@ $(error Please start "make cfg" first)
 endif
 
 RPMBUILD_TOP := /tmp/kamailio_rpmbuild
-RPM_VER = ${shell echo "$(RELEASE)" | sed -e "s/-dev[0-9]//" -e "s/-rc[0-9]//"}
+RPM_VER = ${shell echo "$(RELEASE)" | sed -e "s/-dev[0-9]//" -e "s/-rc[0-9]//" -e "s/-pre[0-9]//"}
 RPM_REL = ${shell echo "$(RELEASE)." | grep -o -P "dev[0-9]\." }
 DIST_ARCHIVE = ${shell echo "kamailio-$(RPM_VER)_src.tar.gz"}
 APK_VERSION = ${shell echo "$(RELEASE)" | grep -o "^[0-9.]*"}

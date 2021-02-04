@@ -40,8 +40,8 @@
  */
 
 #include "dprint.h"
-#ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "dst_blocklist.h"
 #endif
 #include "resolve.h"
 #ifdef USE_DNS_CACHE
@@ -60,9 +60,9 @@ struct cfg_group_core default_core_cfg = {
 	L_WARN, 	/*!<  print only msg. < L_WARN */
 	LOG_DAEMON,	/*!< log_facility -- see syslog(3) */
 	L_DBG+1,    /*!< memdbg */
-#ifdef USE_DST_BLACKLIST
-	/* blacklist */
-	0, /*!< dst blacklist is disabled by default */
+#ifdef USE_DST_BLOCKLIST
+	/* blocklist */
+	0, /*!< dst blocklist is disabled by default */
 	DEFAULT_BLST_TIMEOUT,
 	DEFAULT_BLST_MAX_MEM,
 	0, /* blst_udp_imask */
@@ -115,6 +115,7 @@ struct cfg_group_core default_core_cfg = {
 	1, /*!< mem_safety - 0 disabled; 1 enabled */
 	1, /*!< mem_join - 1 enabled */
 	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
+	L_ERR, /*!< sip msg parser error log level*/
 	L_ERR, /*!< corelog */
 	L_DBG, /*!< latency cfg log */
 	L_ERR, /*!< latency log */
@@ -185,23 +186,23 @@ cfg_def_t core_cfg_def[] = {
 		"syslog facility, see \"man 3 syslog\""},
 	{"memdbg",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for memory debugging messages"},
-#ifdef USE_DST_BLACKLIST
-	/* blacklist */
-	{"use_dst_blacklist",	CFG_VAR_INT,	0, 1, use_dst_blacklist_fixup, 0,
-		"enable/disable destination blacklisting"},
-	{"dst_blacklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
-		"how much time (in s) a blacklisted destination is kept in the list"},
-	{"dst_blacklist_mem",	CFG_VAR_INT,	0, 0, blst_max_mem_fixup, 0,
-		"maximum shared memory amount (in KB) used for keeping the blacklisted"
+#ifdef USE_DST_BLOCKLIST
+	/* blocklist */
+	{"use_dst_blocklist",	CFG_VAR_INT,	0, 1, use_dst_blocklist_fixup, 0,
+		"enable/disable destination blocklisting"},
+	{"dst_blocklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
+		"how much time (in s) a blocklisted destination is kept in the list"},
+	{"dst_blocklist_mem",	CFG_VAR_INT,	0, 0, blst_max_mem_fixup, 0,
+		"maximum shared memory amount (in KB) used for keeping the blocklisted"
 			" destinations"},
-	{"dst_blacklist_udp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
-		"blacklist event ignore mask for UDP"},
-	{"dst_blacklist_tcp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
-		"blacklist event ignore mask for TCP"},
-	{"dst_blacklist_tls_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
-		"blacklist event ignore mask for TLS"},
-	{"dst_blacklist_sctp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
-		"blacklist event ignore mask for SCTP"},
+	{"dst_blocklist_udp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blocklist event ignore mask for UDP"},
+	{"dst_blocklist_tcp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blocklist event ignore mask for TCP"},
+	{"dst_blocklist_tls_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blocklist event ignore mask for TLS"},
+	{"dst_blocklist_sctp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blocklist event ignore mask for SCTP"},
 #endif
 	/* resolver */
 #ifdef USE_DNS_CACHE
@@ -318,6 +319,8 @@ cfg_def_t core_cfg_def[] = {
 		"join free memory fragments"},
 	{"mem_status_mode",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"print status for free or all memory fragments"},
+	{"sip_parser_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for sip msg parser error messages"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},
 	{"latency_cfg_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,

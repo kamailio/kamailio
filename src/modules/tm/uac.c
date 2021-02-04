@@ -187,12 +187,12 @@ int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
 	tcell->cseq_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
 
 	LM_DBG("cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return 0;
 
 error:
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return -1;
 }
@@ -305,16 +305,20 @@ static inline int t_run_local_req(
 	setsflagsval(sflag_bk);
 
 	if (unlikely(ra_ctx.run_flags&DROP_R_F)) {
-		LM_DBG("tm:local-request dropped msg. to %.*s\n", 
+		LM_DBG("tm:local-request dropped msg. to %.*s\n",
 				lreq.dst_uri.len, lreq.dst_uri.s);
 		refresh_shortcuts = E_DROP;
 		goto clean;
 	}
+
 	/* rebuild the new message content */
-	if(lreq.force_send_socket != uac_r->dialog->send_sock) {
-		LM_DBG("Send socket updated to: %.*s",
+	if((lreq.force_send_socket != uac_r->dialog->send_sock)
+			|| (lreq.msg_flags&(FL_ADD_LOCAL_RPORT|FL_ADD_SRVID
+					|FL_ADD_XAVP_VIA_PARAMS|FL_USE_XAVP_VIA_FIELDS))) {
+		LM_DBG("local Via update - socket: [%.*s] - msg-flags: %u",
 				lreq.force_send_socket->address_str.len,
-				lreq.force_send_socket->address_str.s);
+				lreq.force_send_socket->address_str.s,
+				lreq.msg_flags);
 
 		/* rebuild local Via - remove previous value
 			* and add the one for the new send socket */
@@ -378,7 +382,7 @@ clean:
 		lreq.dst_uri.s=0;
 		lreq.dst_uri.len=0;
 	}
-	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return refresh_shortcuts;
 }
@@ -503,10 +507,12 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	request->flags |= nhtype;
 
 #ifdef SO_REUSEPORT
-	if (cfg_get(tcp, tcp_cfg, reuse_port) && 
-			uac_r->ssock!=NULL && uac_r->ssock->len>0 &&
-			request->dst.send_sock->proto == PROTO_TCP) {
-		request->dst.send_flags.f |= SND_F_FORCE_SOCKET;
+	if (cfg_get(tcp, tcp_cfg, reuse_port)
+			&& request->dst.send_sock->proto == PROTO_TCP) { 
+		if((uac_r->ssockname!=NULL && uac_r->ssockname->len>0)
+				|| (uac_r->ssock!=NULL && uac_r->ssock->len>0)) {
+			request->dst.send_flags.f |= SND_F_FORCE_SOCKET;
+		}
 	}
 #endif
 
@@ -520,7 +526,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 	buf = build_uac_req(uac_r->method, uac_r->headers, uac_r->body, uac_r->dialog, 0, new_cell,
 		&buf_len, &dst);
-	if (!buf) {
+	if (!buf || buf_len<=0) {
 		LM_ERR("Error while building message\n");
 		ret=E_OUT_OF_MEM;
 		goto error1;
@@ -544,7 +550,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				LM_ERR("failed to parse headers on uas for failover\n");
 			} else {
 				new_cell->uas.request = sip_msg_cloner(&lreq, &sip_msg_len);
-				lreq.buf=0; /* covers the obsolete DYN_BUF */
+				lreq.buf=0;
 				free_sip_msg(&lreq);
 				if (!new_cell->uas.request) {
 					LM_ERR("no more shmem\n");
@@ -780,19 +786,23 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	struct dest_info dst;
 
 	buf_len = (unsigned)sizeof(struct retr_buf);
-	if (! (buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body,
-			&buf_len, &dst))) {
+	buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body,
+			&buf_len, &dst);
+	if (!buffer || buf_len<=0) {
+		if(buffer) {
+			shm_free(buffer);
+		}
 		return 0;
-	} else {
-		/* 'buffer' now points into a contiguous chunk of memory with enough
-		 * room to hold both the retr. buffer and the string raw buffer: it
-		 * points to the begining of the string buffer; we iterate back to get
-		 * the begining of the space for the retr. buffer. */
-		lack = &((struct retr_buf *)buffer)[-1];
-		lack->buffer = buffer;
-		lack->buffer_len = buf_len;
-		lack->dst = dst;
 	}
+	/* 'buffer' now points into a contiguous chunk of memory with enough
+	 * room to hold both the retr. buffer and the string raw buffer: it
+	 * points to the begining of the string buffer; we iterate back to get
+	 * the begining of the space for the retr. buffer. */
+	lack = &((struct retr_buf *)buffer)[-1];
+	lack->buffer = buffer;
+	lack->buffer_len = buf_len;
+	lack->dst = dst;
+
 
 	/* TODO: need next 2? */
 	lack->rbtype = TYPE_LOCAL_ACK;
@@ -922,10 +932,14 @@ int req_within(uac_req_t *uac_r)
 		goto err;
 	}
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	/* handle alias parameter in uri
@@ -1002,10 +1016,14 @@ int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	if (next_hop) uac_r->dialog->dst_uri = *next_hop;
 	w_calculate_hooks(uac_r->dialog);
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	return t_uac(uac_r);
@@ -1062,10 +1080,14 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	 */
 	uac_r->dialog = dialog;
 
-	if(uac_r->ssock!=NULL && uac_r->ssock->len>0
-			&& uac_r->dialog->send_sock==NULL) {
-		/* set local send socket */
-		uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+	if(uac_r->dialog->send_sock==NULL) {
+		if(uac_r->ssockname!=NULL && uac_r->ssockname->len>0) {
+			/* set local send socket by name */
+			uac_r->dialog->send_sock = ksr_get_socket_by_name(uac_r->ssockname);
+		} else if(uac_r->ssock!=NULL && uac_r->ssock->len>0) {
+			/* set local send socket by address */
+			uac_r->dialog->send_sock = lookup_local_socket(uac_r->ssock);
+		}
 	}
 
 	res = t_uac(uac_r);

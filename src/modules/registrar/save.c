@@ -43,7 +43,7 @@
 #include "../../core/dset.h"
 #include "../../core/xavp.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../core/strutils.h"
 #include "../../core/parser/parse_require.h"
 #include "../../core/parser/parse_supported.h"
@@ -61,6 +61,8 @@
 #include "path.h"
 #include "save.h"
 #include "config.h"
+
+#define REG_SOCK_USE_ADVERTISED 1 /* 1<<0 */
 
 static int mem_only = 0;
 
@@ -229,6 +231,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
+	static struct socket_info si = {0};
 	int_str val;
 
 	if (_m!=0) {
@@ -254,10 +257,17 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* set received socket */
 		if (_m->flags&sock_flag) {
 			ci.sock = get_sock_val(_m);
-			if (ci.sock==0)
+		}
+		if (ci.sock==NULL) {
+			if ((reg_sock_mode & REG_SOCK_USE_ADVERTISED)
+					&& _m->rcv.bind_address != NULL
+					&& _m->rcv.bind_address->useinfo.sock_str.len > 0) {
+				memset(&si, 0, sizeof(struct socket_info));
+				si.sock_str = _m->rcv.bind_address->useinfo.sock_str;
+				ci.sock = &si;
+			} else {
 				ci.sock = _m->rcv.bind_address;
-		} else {
-			ci.sock = _m->rcv.bind_address;
+			}
 		}
 
 		/* set tcp connection id */
@@ -412,6 +422,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 	return &ci;
 error:
+
 	return 0;
 }
 
@@ -483,6 +494,10 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires, novariation);
+		if(rerrno == R_LOW_EXP) {
+			LM_DBG("expires lower than minimum value\n");
+			goto error;
+		}
 		/* Skip contacts with zero expires */
 		if (expires == 0)
 			continue;
@@ -555,7 +570,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	} else { /* No contacts found */
 		build_contact(_m, NULL, &u->host);
 	}
-
+	
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
@@ -568,6 +583,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 error:
 	if (r)
 		ul.delete_urecord(_d, _a, r);
+
 	return -1;
 }
 
@@ -680,6 +696,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires, novariation);
+		if(rerrno == R_LOW_EXP) {
+			LM_DBG("expires lower than minimum value\n");
+			goto error;
+		}
 
 		/* pack the contact info */
 		if ( (ci=pack_ci( 0, _c, expires, 0, _use_regid))==0 ) {
@@ -808,6 +828,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 
 	return rc;
 error:
+
 	return -1;
 }
 

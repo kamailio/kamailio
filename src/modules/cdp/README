@@ -8,11 +8,7 @@ Edited by
 
 Jason Penton
 
-Edited by
-
 Richard Good
-
-Edited by
 
 Carsten Bock
 
@@ -40,8 +36,9 @@ Carsten Bock
 
               4.1. config_file (string)
               4.2. latency_threshold (int)
-              4.3. workerq_length_threshold_percentage (int)
-              4.4. debug_heavy (int)
+              4.3. workerq_latency_threshold (int)
+              4.4. workerq_length_threshold_percentage (int)
+              4.5. debug_heavy (int)
 
         5. Functions
 
@@ -136,12 +133,13 @@ Carsten Bock
 
    1.1. Set config_file parameter
    1.2. Set latency_threshold parameter
-   1.3. Set workerq_length_threshold_percentage parameter
-   1.4. Set debug_heavy parameter
-   1.5. cdp_check_peer usage
+   1.3. Set workerq_latency_threshold parameter
+   1.4. Set workerq_length_threshold_percentage parameter
+   1.5. Set debug_heavy parameter
    1.6. cdp_check_peer usage
    1.7. cdp_check_peer usage
-   1.8. DiameterPeer.xml example
+   1.8. cdp_check_peer usage
+   1.9. DiameterPeer.xml example
 
 Chapter 1. Admin Guide
 
@@ -158,8 +156,9 @@ Chapter 1. Admin Guide
 
         4.1. config_file (string)
         4.2. latency_threshold (int)
-        4.3. workerq_length_threshold_percentage (int)
-        4.4. debug_heavy (int)
+        4.3. workerq_latency_threshold (int)
+        4.4. workerq_length_threshold_percentage (int)
+        4.5. debug_heavy (int)
 
    5. Functions
 
@@ -230,8 +229,9 @@ Chapter 1. Admin Guide
 
    4.1. config_file (string)
    4.2. latency_threshold (int)
-   4.3. workerq_length_threshold_percentage (int)
-   4.4. debug_heavy (int)
+   4.3. workerq_latency_threshold (int)
+   4.4. workerq_length_threshold_percentage (int)
+   4.5. debug_heavy (int)
 
 4.1. config_file (string)
 
@@ -256,7 +256,19 @@ modparam("cdp", "config_file", "/etc/kamailio/diametercfg.xml")
 modparam("cdp", "latency_threshold", 1000)
 ...
 
-4.3. workerq_length_threshold_percentage (int)
+4.3. workerq_latency_threshold (int)
+
+   The time in ms above which a log error is written to log file for
+   putting tasks into task queue.
+
+   Default value is “100”.
+
+   Example 1.3. Set workerq_latency_threshold parameter
+...
+modparam("cdp", "workerq_latency_threshold", 250)
+...
+
+4.4. workerq_length_threshold_percentage (int)
 
    The threshold of the length of the worker queue as a percentage of the
    maximum queue size - when exceeded a warning is written to the log
@@ -264,12 +276,12 @@ modparam("cdp", "latency_threshold", 1000)
 
    Default value is “0”.
 
-   Example 1.3. Set workerq_length_threshold_percentage parameter
+   Example 1.4. Set workerq_length_threshold_percentage parameter
 ...
 modparam("cdp", "workerq_length_threshold_percentage", 25)
 ...
 
-4.4. debug_heavy (int)
+4.5. debug_heavy (int)
 
    Flag to enable a more verbose log, which tells you more details about
    peers. This is disabled by default because it brings to a log too much
@@ -277,7 +289,7 @@ modparam("cdp", "workerq_length_threshold_percentage", 25)
 
    Default value is “0”.
 
-   Example 1.4. Set debug_heavy parameter
+   Example 1.5. Set debug_heavy parameter
 ...
 modparam("cdp", "debug_heavy", 1)
 ...
@@ -295,7 +307,7 @@ modparam("cdp", "debug_heavy", 1)
      * fqdn - the Fully qualified domain name of the peer, that should be
        checked. The parameter may contain pseudovariables.
 
-   Example 1.5. cdp_check_peer usage
+   Example 1.6. cdp_check_peer usage
 ...
 if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
         send_reply("503", "HSS not ready");
@@ -312,7 +324,7 @@ if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
      * vendorid - The Vendor ID of the App
        application - The Application ID
 
-   Example 1.6. cdp_check_peer usage
+   Example 1.7. cdp_check_peer usage
 ...
 if(!cdp_has_app("10415", "4")) {
         send_reply("503", "Charging Server not ready");
@@ -320,7 +332,7 @@ if(!cdp_has_app("10415", "4")) {
 }
 ...
 
-   Example 1.7. cdp_check_peer usage
+   Example 1.8. cdp_check_peer usage
 ...
 if(!cdp_has_app("16777216")) {
         send_reply("503", "Cx/Dx Interface not ready");
@@ -353,7 +365,7 @@ if(!cdp_has_app("16777216")) {
    This is an example CDP configuration file. The location of this file is
    configured as a CDP parameter (config_file) - See section 4.1 Above
 
-   Example 1.8. DiameterPeer.xml example
+   Example 1.9. DiameterPeer.xml example
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
@@ -926,28 +938,28 @@ Chapter 3. Frequently Asked Questions
 
    3.1.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at https://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    3.2.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.kamailio.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.kamailio.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.kamailio.org>.
 
    3.3.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       https://github.com/kamailio/kamailio/issues.
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues.

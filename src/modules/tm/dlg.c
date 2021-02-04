@@ -73,8 +73,10 @@ int register_new_dlg_cb(int type, dialog_cb f, void *param)
 	struct new_dlg_cb *dlg_cb;
 
 	dlg_cb = shm_malloc(sizeof(struct new_dlg_cb));
-	if(dlg_cb == 0)
+	if(dlg_cb == 0) {
+		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
+	}
 	dlg_cb->types = type;
 	dlg_cb->callback = f;
 	dlg_cb->param = param;
@@ -195,7 +197,7 @@ static inline int str_duplicate(str *_d, str *_s)
 {
 	_d->s = shm_malloc(_s->len);
 	if(!_d->s) {
-		LM_ERR("no share memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -323,7 +325,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 
 	res = (dlg_t *)shm_malloc(sizeof(dlg_t));
 	if(res == 0) {
-		LM_ERR("no memory left\n");
+		SHM_MEM_ERROR;
 		return -2;
 	}
 
@@ -908,7 +910,7 @@ static inline int get_dlg_uri(struct hdr_field *_h, str *_s)
 
 	_s->s = shm_malloc(_h->body.len - tag_len);
 	if(!_s->s) {
-		LM_ERR("no share memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -1024,7 +1026,7 @@ int new_dlg_uas(struct sip_msg *_req, int _code, /*str* _tag,*/ dlg_t **_d)
 
 	res = (dlg_t *)shm_malloc(sizeof(dlg_t));
 	if(res == 0) {
-		LM_ERR("no memory left\n");
+		SHM_MEM_ERROR;
 		return -3;
 	}
 	/* Clear everything */

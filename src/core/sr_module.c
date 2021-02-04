@@ -42,7 +42,9 @@
 #include "rpc_lookup.h"
 #include "sr_compat.h"
 #include "ppcfg.h"
+#include "fmsg.h"
 #include "async_task.h"
+#include "shm_init.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -107,6 +109,24 @@ unsigned int set_modinit_delay(unsigned int v)
 	r =  modinit_delay;
 	modinit_delay = v;
 	return r;
+}
+
+/* shut down phase for instance - kept in shared memory */
+static int *_ksr_shutdown_phase = NULL;
+
+int ksr_shutdown_phase_init(void)
+{
+	if((_ksr_shutdown_phase == NULL) && (shm_initialized())) {
+		_ksr_shutdown_phase = (int*)shm_malloc(sizeof(int));
+	}
+	return 0;
+}
+/**
+ * return destroy modules phase state
+ */
+int ksr_shutdown_phase(void)
+{
+	return (_ksr_shutdown_phase)?(*_ksr_shutdown_phase):0;
 }
 
 /* keep state if server is in destroy modules phase */
@@ -593,6 +613,29 @@ skip:
 }
 
 /**
+ *
+ */
+int load_modulex(char* mod_path)
+{
+	str seval;
+	str sfmt;
+	sip_msg_t *fmsg;
+	char* emod;
+
+	emod = mod_path;
+	if(strchr(mod_path, '$') != NULL) {
+		fmsg = faked_msg_get_next();
+		sfmt.s = mod_path;
+		sfmt.len = strlen(sfmt.s);
+		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+			emod = seval.s;
+		}
+	}
+
+	return load_module(emod);
+}
+
+/**
  * test if command flags are compatible with route block flags (type)
  * - decide if the command is allowed to run within a specific route block
  * - return: 1 if allowed; 0 if not allowed
@@ -738,6 +781,10 @@ void destroy_modules()
 	struct sr_module* t, *foo;
 
 	_sr_destroy_modules_phase = 1;
+	if(_ksr_shutdown_phase!=NULL) {
+		*_ksr_shutdown_phase = 1;
+	}
+
 	/* call first destroy function from each module */
 	t=modules;
 	while(t) {

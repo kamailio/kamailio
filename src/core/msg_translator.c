@@ -114,6 +114,7 @@ extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
+int ksr_local_rport = 0;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -592,7 +593,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	#define RCVCOMP_LUMP_LEN
 	#define SENDCOMP_LUMP_LEN
 #endif /*USE_COMP */
-	
+
 #define SUBST_LUMP_LEN(subst_l) \
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
@@ -644,6 +645,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_RCV_ALL: \
+			case SUBST_RCV_ALL_EX: \
 				if (msg->rcv.bind_address){ \
 					new_len+=recv_address_str->len; \
 					if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -679,6 +681,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						LM_CRIT("unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ msg->rcv.bind_address->sockname.len; \
+					} \
 					RCVCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -732,6 +739,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_SND_ALL: \
+			case SUBST_SND_ALL_EX: \
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
 					if ((send_sock->address.af==AF_INET6) && \
@@ -767,6 +775,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+								&& send_sock->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ send_sock->sockname.len; \
+					} \
 					SENDCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -1003,6 +1016,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_RCV_ALL: \
+		case SUBST_RCV_ALL_EX: \
 			if (msg->rcv.bind_address){  \
 				/* address */ \
 				if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -1066,6 +1080,15 @@ void process_lumps( struct sip_msg* msg,
 					default: \
 						LM_CRIT("unknown proto %d\n", msg->rcv.bind_address->proto); \
 				} \
+				if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+								SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, msg->rcv.bind_address->sockname.s, \
+							msg->rcv.bind_address->sockname.len); \
+					offset+=msg->rcv.bind_address->sockname.len; \
+				} \
 				RCVCOMP_PARAM_ADD \
 			}else{  \
 				/*FIXME*/ \
@@ -1101,6 +1124,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_SND_ALL: \
+		case SUBST_SND_ALL_EX: \
 			if (send_sock){  \
 				/* address */ \
 				if ((send_sock->address.af==AF_INET6)\
@@ -1163,6 +1187,15 @@ void process_lumps( struct sip_msg* msg,
 						break; \
 					default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
+				} \
+				if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+							&& send_sock->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+							SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, send_sock->sockname.s, \
+							send_sock->sockname.len); \
+					offset+=send_sock->sockname.len; \
 				} \
 				SENDCOMP_PARAM_ADD \
 			}else{  \
@@ -1710,16 +1743,14 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 
 	params.s = memchr(msg->content_type->body.s, ';',
 		msg->content_type->body.len);
-	if (params.s == NULL)
-	{
+	if (params.s == NULL) {
 		LM_INFO("Content-Type hdr has no boundary params <%.*s>\n",
 				msg->content_type->body.len, msg->content_type->body.s);
-		return -1;
+		return -2;
 	}
 	params.len = msg->content_type->body.len -
 		(params.s - msg->content_type->body.s);
-	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0)
-	{
+	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0) {
 		LM_ERR("while parsing Content-Type params\n");
 		return -1;
 	}
@@ -1727,11 +1758,9 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 	boundary->len = 0;
 	for (p = list; p; p = p->next) {
 		if ((p->name.len == 8)
-			&& (strncasecmp(p->name.s, "boundary", 8) == 0))
-		{
+			&& (strncasecmp(p->name.s, "boundary", 8) == 0)) {
 			boundary->s = pkg_malloc(p->body.len + 2);
-			if (boundary->s == NULL)
-			{
+			if (boundary->s == NULL) {
 				free_params(list);
 				PKG_MEM_ERROR;
 				return -1;
@@ -1764,9 +1793,17 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 	int t, ret, lb_size;
 	char *pb;
 
-	if(!(msg->msg_flags&FL_BODY_MULTIPART)) return 0;
-	else
-	{
+	if(!(msg->msg_flags&FL_BODY_MULTIPART)) {
+		LM_DBG("no multi-part body\n");
+		return 0;
+	} else {
+		if((t = get_boundary(msg, &ob)) != 0) {
+			if(t==-2) {
+				LM_INFO("no boundary - maybe just turning into multipart body\n");
+				return -2;
+			}
+			return -1;
+		}
 		buf.s = build_body(msg, (unsigned int *)&buf.len, &ret, send_info);
 		if(ret) {
 			LM_ERR("Can't get body\n");
@@ -1774,10 +1811,6 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		}
 		tmp.s = buf.s;
 		t = tmp.len = buf.len;
-		if(get_boundary(msg, &ob)!=0) {
-			if(tmp.s) pkg_free(tmp.s);
-			return -1;
-		}
 		if(str_append(&ob, &bsuffix, &b)!=0) {
 			LM_ERR("Can't append suffix to boundary\n");
 			goto error;
@@ -1961,6 +1994,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	unsigned int flags;
 	unsigned int udp_mtu;
 	struct dest_info di;
+	int ret;
 
 	via_insert_param=0;
 	uri_len=0;
@@ -1978,9 +2012,10 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	path_buf.len=0;
 
 	flags=msg->msg_flags|global_req_flags;
-	if(check_boundaries(msg, send_info)<0){
-		LM_WARN("check_boundaries error\n");
+	if((ret = check_boundaries(msg, send_info)) < 0){
+		LM_INFO("check boundaries negative (%d)\n", ret);
 	}
+
 	/* Calculate message body difference and adjust Content-Length */
 	body_delta = lumps_len(msg, msg->body_lumps, send_info);
 	if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
@@ -2941,7 +2976,7 @@ char* create_via_hf(unsigned int *len,
 #endif /* USE_TCP || USE_SCTP */
 
 	/* test and add rport parameter to local via - rfc3581 */
-	if(msg && msg->msg_flags&FL_ADD_LOCAL_RPORT) {
+	if((ksr_local_rport) || (msg && (msg->msg_flags&FL_ADD_LOCAL_RPORT))) {
 		/* params so far + ';rport' + '\0' */
 		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
 		if(via==0) {
@@ -3217,7 +3252,12 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		LM_ERR("invalid buffer parameter\n");
 		return -1;
 	}
-
+#ifdef USE_TCP
+	if(tcp_get_clone_rcvbuf()==0) {
+		LM_ERR("tcp clone received buffer not enabled\n");
+		return -1;
+	}
+#endif
 	if(obuf->len >= BUF_SIZE) {
 		LM_ERR("new buffer is too large (%d)\n", obuf->len);
 		return -1;
@@ -3242,11 +3282,13 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	/* restore msg fields */
 	msg->buf = tmp.buf;
 	msg->id = tmp.id;
+	msg->pid = tmp.pid;
 	msg->rcv = tmp.rcv;
 	msg->set_global_address = tmp.set_global_address;
 	msg->set_global_port = tmp.set_global_port;
 	msg->flags = tmp.flags;
 	msg->msg_flags = tmp.msg_flags;
+	memcpy(msg->xflags, tmp.xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
 	msg->hash_index = tmp.hash_index;
 	msg->force_send_socket = tmp.force_send_socket;
 	msg->fwd_send_flags = tmp.fwd_send_flags;

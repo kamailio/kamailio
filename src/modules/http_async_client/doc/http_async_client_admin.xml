@@ -501,6 +501,21 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 		<listitem><para>
 			<emphasis>$http_rb</emphasis> and <emphasis>$http_bs</emphasis>: HTTP response body and body length
 		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_time</emphasis>: provides access to broken-down transfer time in microseconds calculated by cURL (https://curl.se/libcurl/c/curl_easy_getinfo.html). 
+				<para>
+					<emphasis>'name'</emphasis> can be:
+					<itemizedlist>
+						<listitem><para>total - total time for the transfer</para></listitem>
+						<listitem><para>lookup - name lookup time</para></listitem>
+						<listitem><para>connect - time from the start until the connection to the remote host (or proxy) was completed.</para></listitem>
+						<listitem><para>appconnect - time from start until SSL/SSH handshake completed</para></listitem>
+						<listitem><para>pretransfer - time from start until just before the transfer begins</para></listitem>
+						<listitem><para>starttransfer - time from start until just when the first byte is received</para></listitem>
+						<listitem><para>redirect - time taken for all redirect steps before the final transfer.</para></listitem>
+					</itemizedlist>
+				</para>	
+		</para></listitem>
 	</itemizedlist>
 </section>
 <section>

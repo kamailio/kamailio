@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010-2019 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010-2019 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -138,7 +138,7 @@ Chapter 1. Admin Guide
    Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
    Lua.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.2. Set register parameter
 ...

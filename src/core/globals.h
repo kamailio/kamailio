@@ -198,6 +198,7 @@ extern int onsend_route_reply;
 
 extern int ksr_evrt_received_mode;
 extern str kemi_received_route_callback;
+extern str kemi_pre_routing_callback;
 
 /* real time stuff */
 extern int real_time;
@@ -214,8 +215,15 @@ extern int ksr_verbose_startup;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
+extern int ksr_sip_parser_mode;
+extern int ksr_cfg_print_mode;
 
 extern char *_sr_uri_host_extra_chars;
+extern unsigned char *_ksr_hname_extra_chars;
+
+extern char *ksr_stats_namesep;
+extern str ksr_ipv6_hex_style;
+extern int ksr_local_rport;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
@@ -233,17 +241,17 @@ struct t_dns_cache_stats{
 extern struct t_dns_cache_stats* dns_cache_stats;
 #endif /* USE_DNS_CACHE_STATS */
 #endif
-#ifdef USE_DST_BLACKLIST
-extern int dst_blacklist_init; /* if 0, the dst blacklist is not initialized at startup */
-extern unsigned int blst_timer_interval; /*blacklist gc timer interval (in s)*/
+#ifdef USE_DST_BLOCKLIST
+extern int dst_blocklist_init; /* if 0, the dst blocklist is not initialized at startup */
+extern unsigned int blst_timer_interval; /*blocklist gc timer interval (in s)*/
 
-#ifdef USE_DST_BLACKLIST_STATS
-struct t_dst_blacklist_stats{
+#ifdef USE_DST_BLOCKLIST_STATS
+struct t_dst_blocklist_stats{
 	unsigned long bkl_hit_cnt;
 	unsigned long bkl_lru_cnt;
 };
-extern struct t_dst_blacklist_stats* dst_blacklist_stats;
-#endif /* USE_DST_BLACKLIST_STATS */
+extern struct t_dst_blocklist_stats* dst_blocklist_stats;
+#endif /* USE_DST_BLOCKLIST_STATS */
 #endif
 
 #endif

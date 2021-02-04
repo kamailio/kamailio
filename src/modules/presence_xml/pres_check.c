@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -22,12 +22,13 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 
-#include "pres_check.h"
-#include "pidf.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/str.h"
 #include "../presence/event_list.h"
+#include "pres_check.h"
+#include "pidf.h"
+#include "presence_xml.h"
 
 int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 {
@@ -45,13 +46,13 @@ int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 		return -1;
 	}
 
-	ev = pres_contains_event(&event, NULL);
+	ev = psapi.contains_event(&event, NULL);
 	if(ev == NULL) {
 		LM_ERR("event presence is not registered\n");
 		return -1;
 	}
 
-	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
+	presentity = psapi.get_presentity(presentity_uri, ev, NULL, NULL);
 
 	if(presentity == NULL || presentity->len <= 0 || presentity->s == NULL) {
 		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len,
@@ -92,7 +93,7 @@ int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 error:
 	if(xmlDoc != NULL)
 		xmlFreeDoc(xmlDoc);
-	pres_free_presentity(presentity, ev);
+	psapi.free_presentity(presentity, ev);
 	return retval;
 }
 
@@ -113,7 +114,7 @@ int presxml_check_activities(
 		return -1;
 	}
 
-	ev = pres_contains_event(&event, NULL);
+	ev = psapi.contains_event(&event, NULL);
 	if(ev == NULL) {
 		LM_ERR("event presence is not registered\n");
 		return -1;
@@ -126,7 +127,7 @@ int presxml_check_activities(
 	memcpy(nodeName, activity.s, activity.len);
 	nodeName[activity.len] = '\0';
 
-	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
+	presentity = psapi.get_presentity(presentity_uri, ev, NULL, NULL);
 
 	if(presentity == NULL || presentity->len <= 0 || presentity->s == NULL) {
 		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len,
@@ -179,6 +180,6 @@ error:
 	if(xmlDoc != NULL)
 		xmlFreeDoc(xmlDoc);
 	if(presentity != NULL)
-		pres_free_presentity(presentity, ev);
+		psapi.free_presentity(presentity, ev);
 	return retval;
 }

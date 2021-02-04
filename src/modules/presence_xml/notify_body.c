@@ -1,5 +1,5 @@
 /*
- * presence_xml module -  
+ * presence_xml module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -38,10 +38,10 @@
 #include "notify_body.h"
 #include "presence_xml.h"
 
-extern int force_dummy_presence;
-extern int presence_force_single_body;
-extern str presence_single_body_priorities;
-extern str presence_single_body_lookup_element;
+extern int pxml_force_dummy_presence;
+extern int pxml_force_single_body;
+extern str pxml_single_body_priorities;
+extern str pxml_single_body_lookup_element;
 
 str *offline_nbody(str *body);
 str *agregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
@@ -62,14 +62,18 @@ void free_xml_body(char *body)
 
 #define PRESENCE_EMPTY_BODY \
 	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
-<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\"> \
+<presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\
+ xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\"\
+ xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\"\
+ xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\">\
 <tuple xmlns=\"urn:ietf:params:xml:ns:pidf\" id=\"615293b33c62dec073e05d9421e9f48b\">\
 <status>\
 <basic>open</basic>\
 </status>\
 </tuple>\
 <note xmlns=\"urn:ietf:params:xml:ns:pidf\">Available</note>\
-<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
+<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\"\
+ xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
 <rpid:activities/>\
 <dm:note>Available</dm:note>\
 </dm:person>\
@@ -135,7 +139,7 @@ str *pres_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
 	str *n_body = NULL;
 	str *body = NULL;
 
-	if(body_array == NULL && (!force_dummy_presence))
+	if(body_array == NULL && (!pxml_force_dummy_presence))
 		return NULL;
 
 	if(body_array == NULL)
@@ -152,7 +156,7 @@ str *pres_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
 	}
 	LM_DBG("[user]=%.*s  [domain]= %.*s\n", pres_user->len, pres_user->s,
 			pres_domain->len, pres_domain->s);
-	if(presence_force_single_body == 0) {
+	if(pxml_force_single_body == 0) {
 		n_body = agregate_xmls(pres_user, pres_domain, body_array, n);
 	} else {
 		n_body = agregate_xmls_priority(pres_user, pres_domain, body_array, n);
@@ -180,8 +184,9 @@ int pres_apply_auth(str *notify_body, subs_t *subs, str **final_nbody)
 	str *n_body = NULL;
 
 	*final_nbody = NULL;
-	if(force_active)
+	if(pxml_force_active) {
 		return 0;
+	}
 
 	if(subs->auth_rules_doc == NULL) {
 		LM_ERR("NULL rules doc\n");
@@ -678,15 +683,16 @@ str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, 
 	}
 
 	idx = --j;
-	if(strlen(presence_single_body_priorities.s) > 0 && strlen(presence_single_body_lookup_element.s) > 0) {
+	if(strlen(pxml_single_body_priorities.s) > 0
+				&& strlen(pxml_single_body_lookup_element.s) > 0) {
 		p_root = xmlDocGetNodeByName(xml_array[j], "presence", NULL);
 		if(p_root == NULL) {
 			LM_ERR("while getting the xml_tree root\n");
 			goto error;
 		}
-		cur = xmlNodeGetNodeContentByName(p_root, presence_single_body_lookup_element.s, NULL);
+		cur = xmlNodeGetNodeContentByName(p_root, pxml_single_body_lookup_element.s, NULL);
 		if(cur) {
-			priority = strstr(presence_single_body_priorities.s, cur);
+			priority = strstr(pxml_single_body_priorities.s, cur);
 		}
 
 		for(i = j - 1; i >= 0; i--) {
@@ -696,9 +702,9 @@ str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, 
 				goto error;
 			}
 
-			cmp = xmlNodeGetNodeContentByName(new_p_root, presence_single_body_lookup_element.s, NULL);
+			cmp = xmlNodeGetNodeContentByName(new_p_root, pxml_single_body_lookup_element.s, NULL);
 			if(cur != NULL && cmp != NULL && strcasecmp(cur,cmp)) {
-				char *x1 = strstr(presence_single_body_priorities.s, cmp);
+				char *x1 = strstr(pxml_single_body_priorities.s, cmp);
 				if(x1 > priority) {
 					idx = i;
 					cur = cmp;

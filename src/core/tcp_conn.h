@@ -35,7 +35,7 @@
 #define TCP_CON_MAX_ALIASES (4*3)
 
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns"
-							 * the connection to the tcp master process */
+							 * the connection to the tcp maing process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 
@@ -72,9 +72,9 @@
 #define READ_WS
 #endif
 
-enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
-						TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN };
-enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND,
+typedef enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
+		TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN } tcp_req_errors_t;
+typedef enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND,
 		H_SKIP_EMPTY_CRLF_FOUND, H_SKIP_EMPTY_CRLFCR_FOUND,
 		H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
@@ -89,18 +89,18 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND,
 #ifdef READ_MSRP
 		, H_MSRP_BODY, H_MSRP_BODY_LF, H_MSRP_BODY_END, H_MSRP_FINISH
 #endif
-	};
+	} tcp_req_states_t;
 
-enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1,
+typedef enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1,
 						S_CONN_OK=0, /* established (write or read) */
 						S_CONN_INIT, /* initial state (invalid) */
 						S_CONN_EOF,
 						S_CONN_ACCEPT, S_CONN_CONNECT
-					};
+					} tcp_conn_states_t;
 
 
 /* fd communication commands */
-enum conn_cmds {
+typedef enum conn_cmds {
 	CONN_DESTROY=-3 /* destroy connection & auto-dec. refcnt */,
 	CONN_ERROR=-2   /* error on connection & auto-dec. refcnt */,
 	CONN_EOF=-1     /* eof received or conn. closed & auto-dec refcnt */,
@@ -117,11 +117,32 @@ enum conn_cmds {
 							* non-empty); refcnts are not touced */,
 	CONN_NEW_COMPLETE  /* like CONN_NEW_PENDING_WRITE, but there is no
 						* pending write (the write queue might be empty) */
-};
+} conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
 
-struct tcp_req{
+/* tcp_req flags */
+typedef enum tcp_req_flags {
+	F_TCP_REQ_HAS_CLEN      = (1<<0),
+	F_TCP_REQ_COMPLETE      = (1<<1),
+#ifdef READ_HTTP11
+	F_TCP_REQ_BCHUNKED      = (1<<2),
+#endif
+#ifdef READ_MSRP
+	F_TCP_REQ_MSRP_NO       = (1<<3),
+	F_TCP_REQ_MSRP_FRAME    = (1<<4),
+	F_TCP_REQ_MSRP_BODY     = (1<<5),
+#endif
+	F_TCP_REQ_HEP3          = (1<<6),
+} tcp_req_flags_t;
+
+#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
+#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
+#ifdef READ_HTTP11
+#define TCP_REQ_BCHUNKED(tr)  ((tr)->flags & F_TCP_REQ_BCHUNKED)
+#endif
+
+typedef struct tcp_req {
 	struct tcp_req* next;
 	/* sockaddr ? */
 	char* buf; /* bytes read so far (+0-terminator)*/
@@ -135,31 +156,11 @@ struct tcp_req{
 #ifdef READ_HTTP11
 	int chunk_size;
 #endif
-	unsigned int flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
+	enum tcp_req_flags flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
-};
-
-/* tcp_req flags */
-#define F_TCP_REQ_HAS_CLEN 1
-#define F_TCP_REQ_COMPLETE 2
-#ifdef READ_HTTP11
-#define F_TCP_REQ_BCHUNKED 4
-#endif
-#ifdef READ_MSRP
-#define F_TCP_REQ_MSRP_NO     8
-#define F_TCP_REQ_MSRP_FRAME  16
-#define F_TCP_REQ_MSRP_BODY   32
-#endif
-#define F_TCP_REQ_HEP3        64
-
-#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
-#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
-#ifdef READ_HTTP11
-#define TCP_REQ_BCHUNKED(tr)  ((tr)->flags & F_TCP_REQ_BCHUNKED)
-#endif
-
+} tcp_req_t;
 
 struct tcp_connection;
 

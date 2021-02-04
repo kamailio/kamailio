@@ -864,4 +864,7 @@ int init_basex(void);
 char* b58_encode(char *b58, int *b58sz, char *data, int binsz);
 char* b58_decode(char *outb, int *outbszp, char *b58, int b58sz);
 
+int base64url_enc(char *in, int ilen, char *out, int osize);
+int base64url_dec(char *in, int ilen, char *out, int osize);
+
 #endif /* _basex_h */

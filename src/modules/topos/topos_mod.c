@@ -56,7 +56,7 @@
 #include "../../core/kemi.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "../../modules/sanity/api.h"
 
@@ -78,6 +78,7 @@ sruid_t _tps_sruid;
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
 int _tps_sanity_checks = 0;
+int _tps_rr_update = 0;
 str _tps_storage = str_init("db");
 
 extern int _tps_branch_expire;
@@ -94,6 +95,12 @@ static str _tps_eventrt_outgoing_name = str_init("topos:msg-outgoing");
 static int _tps_eventrt_sending = -1;
 static str _tps_eventrt_sending_name = str_init("topos:msg-sending");
 str _tps_contact_host = str_init("");
+int _tps_contact_mode = 0;
+str _tps_cparam_name = str_init("tps");
+str _tps_acontact_avp;
+str _tps_bcontact_avp;
+pv_spec_t _tps_acontact_spec;
+pv_spec_t _tps_bcontact_spec;
 
 sanity_api_t scb;
 
@@ -131,6 +138,11 @@ static param_export_t params[]={
 	{"event_callback",	PARAM_STR, &_tps_eventrt_callback},
 	{"event_mode",		PARAM_INT, &_tps_eventrt_mode},
 	{"contact_host",	PARAM_STR, &_tps_contact_host},
+	{"contact_mode",	PARAM_INT, &_tps_contact_mode},
+	{"cparam_name",		PARAM_STR, &_tps_cparam_name},
+	{"a_contact_avp",	PARAM_STR, &_tps_acontact_avp},
+	{"b_contact_avp",	PARAM_STR, &_tps_bcontact_avp},
+	{"rr_update",       PARAM_INT, &_tps_rr_update},
 	{0,0,0}
 };
 
@@ -203,6 +215,26 @@ static int mod_init(void)
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC)<0)
 		return -1;
 
+	if (_tps_contact_mode == 2 && (_tps_acontact_avp.s == NULL || _tps_acontact_avp.len == 0 ||
+			 _tps_bcontact_avp.s == NULL || _tps_bcontact_avp.len == 0)) {
+		LM_ERR("contact_mode parameter is 2, but a_contact and/or b_contact AVPs not defined\n");
+		return -1;
+	}
+	if(_tps_acontact_avp.len > 0 && _tps_acontact_avp.s != NULL) {
+		if(pv_parse_spec(&_tps_acontact_avp, &_tps_acontact_spec) == 0 || _tps_acontact_spec.type != PVT_AVP) {
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+				_tps_acontact_avp.len, _tps_acontact_avp.s);
+			return -1;
+		}
+	}
+	if(_tps_bcontact_avp.len > 0 && _tps_bcontact_avp.s != NULL) {
+		if(pv_parse_spec(&_tps_bcontact_avp, &_tps_bcontact_spec) == 0 || _tps_bcontact_spec.type != PVT_AVP) {
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+				_tps_bcontact_avp.len, _tps_bcontact_avp.s);
+			return -1;
+		}
+	}
+
 	sr_event_register_cb(SREV_NET_DATA_IN,  tps_msg_received);
 	sr_event_register_cb(SREV_NET_DATA_OUT, tps_msg_sent);
 
@@ -269,8 +301,13 @@ int tps_prepare_msg(sip_msg_t *msg)
 			LM_DBG("non sip request message\n");
 			return 1;
 		}
-	} else if(msg->first_line.type!=SIP_REPLY) {
-		LM_DBG("non sip message\n");
+	} else if(msg->first_line.type==SIP_REPLY) {
+		if(!IS_SIP_REPLY(msg)) {
+			LM_DBG("non sip reply message\n");
+			return 1;
+		}
+	} else {
+		LM_DBG("unknown sip message type %d\n", msg->first_line.type);
 		return 1;
 	}
 

@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,9 +27,9 @@
 #include "../pua/pua_bind.h"
 #include "../usrloc/usrloc.h"
 
-str default_domain;
-str outbound_proxy;
-str server_address;
+extern str default_domain;
+extern str outbound_proxy;
+extern str server_address;
 
 extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 extern pua_api_t pua; /*!< Structure containing pointers to PUA functions*/

@@ -304,15 +304,14 @@ int xcaps_xpath_hack(str *buf, int type)
 {
 	char *match;
 	char *repl;
-	char c;
 	char *p;
 	char *start;
+	char *end;
 
 	if(buf==NULL || buf->len <=10)
 		return 0;
 
-	if(type==0)
-	{
+	if(type==0) {
 		match = " xmlns=";
 		repl  = " x____=";
 	} else {
@@ -321,14 +320,11 @@ int xcaps_xpath_hack(str *buf, int type)
 	}
 
 	start = buf->s;
-	c = buf->s[buf->len-1];
-	buf->s[buf->len-1] = '\0';
-	while((p = strstr(start, match))!=NULL)
-	{
+	end = buf->s + buf->len - 10;
+	while((p = stre_search_strz(start, end, match))!=NULL) {
 		memcpy(p, repl, 7);
 		start = p + 7;
 	}
-	buf->s[buf->len-1] = c;
 	return 0;
 }
 

@@ -20,9 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2004-09-01: first version (ramona)
  */
 
 
@@ -42,6 +39,8 @@
 
 MODULE_VERSION
 
+
+/* clang-format off */
 
 /* Module destroy function prototype */
 static void destroy(void);
@@ -122,23 +121,23 @@ struct module_exports exports = {
 	child_init,	/* per-child·init·function */
 	destroy		/* destroy function */
 };
+/* clang-format on */
 
 
-static int alias_flags_fixup(void** param)
+static int alias_flags_fixup(void **param)
 {
 	char *c;
 	unsigned int flags;
 
-	c = (char*)*param;
+	c = (char *)*param;
 	flags = 0;
 
 	if(alias_db_use_domain) {
 		flags |= ALIAS_DOMAIN_FLAG;
 	}
 
-	while (*c) {
-		switch (*c)
-		{
+	while(*c) {
+		switch(*c) {
 			case 'd':
 			case 'D':
 				flags &= ~ALIAS_DOMAIN_FLAG;
@@ -152,61 +151,58 @@ static int alias_flags_fixup(void** param)
 				flags |= ALIAS_DOMAIN_FLAG;
 				break;
 			default:
-				LM_ERR("unsupported flag '%c'\n",*c);
+				LM_ERR("unsupported flag '%c'\n", *c);
 				return -1;
 		}
 		c++;
 	}
 	pkg_free(*param);
-	*param = (void*)(unsigned long)flags;
+	*param = (void *)(unsigned long)flags;
 	return 0;
 }
 
 
-static int lookup_fixup(void** param, int param_no)
+static int lookup_fixup(void **param, int param_no)
 {
-	if (param_no==1)
-	{
+	if(param_no == 1) {
 		/* string or pseudo-var - table name */
 		return fixup_spve_null(param, 1);
-	} else if (param_no==2) {
+	} else if(param_no == 2) {
 		/* string - flags ? */
 		return alias_flags_fixup(param);
 	} else {
-		LM_CRIT(" invalid number of params %d \n",param_no);
+		LM_CRIT(" invalid number of params %d \n", param_no);
 		return -1;
 	}
 }
 
 
-static int find_fixup(void** param, int param_no)
+static int find_fixup(void **param, int param_no)
 {
 	pv_spec_t *sp;
 
-	if (param_no==1)
-	{
+	if(param_no == 1) {
 		/* string or pseudo-var - table name */
 		return fixup_spve_null(param, 1);
-	} else if(param_no==2) {
+	} else if(param_no == 2) {
 		/* pseudo-var - source URI */
 		return fixup_pvar_null(param, 1);
-	} else if(param_no==3) {
+	} else if(param_no == 3) {
 		/* pvar (AVP or VAR) - destination URI */
-		if (fixup_pvar_null(param, 1))
+		if(fixup_pvar_null(param, 1))
 			return E_CFG;
-		sp = (pv_spec_t*)*param;
-		if (sp->type!=PVT_AVP && sp->type!=PVT_SCRIPTVAR)
-		{
+		sp = (pv_spec_t *)*param;
+		if(sp->type != PVT_AVP && sp->type != PVT_SCRIPTVAR) {
 			LM_ERR("PV type %d (param 3) cannot be written\n", sp->type);
 			pv_spec_free(sp);
 			return E_CFG;
 		}
 		return 0;
-	} else if (param_no==4) {
+	} else if(param_no == 4) {
 		/* string - flags  ? */
 		return alias_flags_fixup(param);
 	} else {
-		LM_CRIT(" invalid number of params %d \n",param_no);
+		LM_CRIT(" invalid number of params %d \n", param_no);
 		return -1;
 	}
 }
@@ -217,17 +213,15 @@ static int find_fixup(void** param, int param_no)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
 	db_handle = adbf.init(&db_url);
-	if (!db_handle)
-	{
+	if(!db_handle) {
 		LM_ERR("unable to connect database\n");
 		return -1;
 	}
 	return 0;
-
 }
 
 
@@ -237,15 +231,13 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	/* Find a database module */
-	if (db_bind_mod(&db_url, &adbf))
-	{
+	if(db_bind_mod(&db_url, &adbf)) {
 		LM_ERR("unable to bind database module\n");
 		return -1;
 	}
-	if (!DB_CAPABILITY(adbf, DB_CAP_QUERY))
-	{
+	if(!DB_CAPABILITY(adbf, DB_CAP_QUERY)) {
 		LM_CRIT("database modules does not "
-			"provide all functions needed by alias_db module\n");
+				"provide all functions needed by alias_db module\n");
 		return -1;
 	}
 
@@ -258,13 +250,13 @@ static int mod_init(void)
  */
 static void destroy(void)
 {
-	if (db_handle) {
+	if(db_handle) {
 		adbf.close(db_handle);
 		db_handle = 0;
 	}
 }
 
-static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2)
+static int w_alias_db_lookup1(struct sip_msg *_msg, char *_table, char *p2)
 {
 	str table_s;
 	unsigned long flags;
@@ -274,7 +266,8 @@ static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2)
 		flags |= ALIAS_DOMAIN_FLAG;
 	}
 
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+	if(_table == NULL
+			|| fixup_get_svalue(_msg, (gparam_p)_table, &table_s) != 0) {
 		LM_ERR("invalid table parameter\n");
 		return -1;
 	}
@@ -282,20 +275,21 @@ static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2)
 	return alias_db_lookup_ex(_msg, table_s, flags);
 }
 
-static int w_alias_db_lookup2(struct sip_msg* _msg, char* _table, char* flags)
+static int w_alias_db_lookup2(struct sip_msg *_msg, char *_table, char *flags)
 {
 	str table_s;
 
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+	if(_table == NULL
+			|| fixup_get_svalue(_msg, (gparam_p)_table, &table_s) != 0) {
 		LM_ERR("invalid table parameter\n");
-        return -1;
+		return -1;
 	}
 
 	return alias_db_lookup_ex(_msg, table_s, (unsigned long)flags);
 }
 
-static int w_alias_db_find3(struct sip_msg* _msg, char* _table, char* _in,
-		char* _out)
+static int w_alias_db_find3(
+		struct sip_msg *_msg, char *_table, char *_in, char *_out)
 {
 	str table_s;
 	unsigned long flags;
@@ -305,20 +299,22 @@ static int w_alias_db_find3(struct sip_msg* _msg, char* _table, char* _in,
 		flags |= ALIAS_DOMAIN_FLAG;
 	}
 
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+	if(_table == NULL
+			|| fixup_get_svalue(_msg, (gparam_p)_table, &table_s) != 0) {
 		LM_ERR("invalid table parameter\n");
 		return -1;
 	}
 
-	return alias_db_find(_msg, table_s, _in, _out, (char*)flags);
+	return alias_db_find(_msg, table_s, _in, _out, (char *)flags);
 }
 
-static int w_alias_db_find4(struct sip_msg* _msg, char* _table, char* _in,
-		char* _out, char* flags)
+static int w_alias_db_find4(
+		struct sip_msg *_msg, char *_table, char *_in, char *_out, char *flags)
 {
 	str table_s;
 
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+	if(_table == NULL
+			|| fixup_get_svalue(_msg, (gparam_p)_table, &table_s) != 0) {
 		LM_ERR("invalid table parameter\n");
 		return -1;
 	}
@@ -328,8 +324,9 @@ static int w_alias_db_find4(struct sip_msg* _msg, char* _table, char* _in,
 
 int bind_alias_db(struct alias_db_binds *pxb)
 {
-	if (pxb == NULL) {
-		LM_WARN("bind_alias_db: Cannot load alias_db API into a NULL pointer\n");
+	if(pxb == NULL) {
+		LM_WARN("bind_alias_db: Cannot load alias_db API into a NULL "
+				"pointer\n");
 		return -1;
 	}
 
@@ -342,7 +339,7 @@ int bind_alias_db(struct alias_db_binds *pxb)
 /**
  *
  */
-static int ki_alias_db_lookup(sip_msg_t* msg, str* stable)
+static int ki_alias_db_lookup(sip_msg_t *msg, str *stable)
 {
 	unsigned long flags;
 
@@ -357,7 +354,7 @@ static int ki_alias_db_lookup(sip_msg_t* msg, str* stable)
 /**
  *
  */
-static int ki_alias_db_lookup_ex(sip_msg_t* msg, str* stable, str* sflags)
+static int ki_alias_db_lookup_ex(sip_msg_t *msg, str *stable, str *sflags)
 {
 	unsigned long flags;
 	int i;
@@ -366,9 +363,8 @@ static int ki_alias_db_lookup_ex(sip_msg_t* msg, str* stable, str* sflags)
 	if(alias_db_use_domain) {
 		flags |= ALIAS_DOMAIN_FLAG;
 	}
-	for(i=0; i<sflags->len; i++) {
-		switch (sflags->s[i])
-		{
+	for(i = 0; i < sflags->len; i++) {
+		switch(sflags->s[i]) {
 			case 'd':
 			case 'D':
 				flags &= ~ALIAS_DOMAIN_FLAG;

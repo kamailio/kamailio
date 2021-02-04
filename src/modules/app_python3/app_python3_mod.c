@@ -53,6 +53,7 @@ static int child_init(int rank);
 static void mod_destroy(void);
 
 PyObject *_sr_apy_handler_obj = NULL;
+PyObject *format_exc_obj = NULL;
 
 char *dname = NULL, *bname = NULL;
 

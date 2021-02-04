@@ -39,7 +39,7 @@
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
-#include "../../lib/srutils/tmrec.h"
+#include "../../core/utils/tmrec.h"
 #include "period.h"
 
 
@@ -128,9 +128,9 @@ static void mod_destroy(void)
 static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
 {
 	time_t tv;
-	struct tm *tb;
+	struct tm tb;
 	int y;
-	
+
 	if(msg==NULL)
 		return -1;
 
@@ -143,8 +143,8 @@ static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
 		}
 	} else {
 		tv = time(NULL);
-		tb = localtime(&tv);
-		y = 1900 + tb->tm_year;
+		localtime_r(&tv, &tb);
+		y = 1900 + tb.tm_year;
 	}
 
 	if(tr_is_leap_year(y))
@@ -155,12 +155,12 @@ static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
 static int ki_is_leap_year_now(sip_msg_t* msg)
 {
 	time_t tv;
-	struct tm *tb;
+	struct tm tb;
 	int y;
 
 	tv = time(NULL);
-	tb = localtime(&tv);
-	y = 1900 + tb->tm_year;
+	localtime_r(&tv, &tb);
+	y = 1900 + tb.tm_year;
 
 	if(tr_is_leap_year(y))
 		return 1;

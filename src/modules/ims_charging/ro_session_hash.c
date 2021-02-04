@@ -22,7 +22,7 @@ struct ro_session_table *ro_session_table = 0;
 void link_ro_session(struct ro_session *ro_session, int n) {
     struct ro_session_entry *ro_session_entry;
     
-    LM_DBG("Linking Ro session [%.*s] into entries hash index [%d]", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->h_entry);
+    LM_DBG("Linking Ro session [%.*s] into entries hash index [%d]\n", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->h_entry);
 
     ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 
@@ -196,11 +196,11 @@ void destroy_dlg_table(void) {
 
 struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, 
 	str* called_asserted_identity, str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani){
-    LM_DBG("Building Ro Session **********");
+	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani, str *app_provided_party){
+    LM_DBG("Building Ro Session **********\n");
     char *p;
     unsigned int len = /*session_id->len + */callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + 
-        incoming_trunk_id->len + outgoing_trunk_id->len + pani->len + sizeof (struct ro_session);
+        incoming_trunk_id->len + outgoing_trunk_id->len + pani->len + app_provided_party->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
     if (!new_ro_session) {
@@ -275,6 +275,11 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, pani->s, pani->len);
     new_ro_session->pani.len = pani->len;
     p += pani->len;
+
+    new_ro_session->app_provided_party.s = p;
+    memcpy(p, app_provided_party->s, app_provided_party->len);
+    new_ro_session->app_provided_party.len = app_provided_party->len;
+    p += app_provided_party->len;
 
     if (p != (((char*) new_ro_session) + len)) {
         LM_ERR("buffer overflow\n");

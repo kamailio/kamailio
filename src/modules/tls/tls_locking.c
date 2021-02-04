@@ -140,6 +140,8 @@ unsigned long sr_ssl_id_f()
 /* returns -1 on error, 0 on success */
 int tls_init_locks()
 {
+/* OpenSSL is no longer supporting to set locking callbacks since 1.1.0 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* init "static" tls locks */
 	n_static_locks=CRYPTO_num_locks();
 	if (n_static_locks<0){
@@ -167,13 +169,10 @@ int tls_init_locks()
 		CRYPTO_set_locking_callback(locking_f);
 	}
 
-/* OpenSSL is thread-safe since 1.1.0 */
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* set "dynamic" locks callbacks */
 	CRYPTO_set_dynlock_create_callback(dyn_create_f);
 	CRYPTO_set_dynlock_lock_callback(dyn_lock_f);
 	CRYPTO_set_dynlock_destroy_callback(dyn_destroy_f);
-#endif
 
 	/* starting with v1.0.0 openssl does not use anymore getpid(), but address
 	 * of errno which can point to same virtual address in a multi-process
@@ -191,4 +190,8 @@ int tls_init_locks()
 error:
 	tls_destroy_locks();
 	return -1;
+
+#else
+	return 0;
+#endif
 }

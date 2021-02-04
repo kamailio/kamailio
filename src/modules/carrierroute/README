@@ -55,6 +55,11 @@ Lucian Balaceanu
 
               5.1. cr.reload_routes
               5.2. cr.dump_routes
+              5.3. cr.add_host
+              5.4. cr.delete_host
+              5.5. cr.activate_host
+              5.6. cr.deactivate_host
+              5.7. cr.replace_host
 
         6. Configuration examples
         7. Installation and Running
@@ -194,6 +199,11 @@ Chapter 1. Admin Guide
 
         5.1. cr.reload_routes
         5.2. cr.dump_routes
+        5.3. cr.add_host
+        5.4. cr.delete_host
+        5.5. cr.activate_host
+        5.6. cr.deactivate_host
+        5.7. cr.replace_host
 
    6. Configuration examples
    7. Installation and Running
@@ -204,10 +214,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   A module which provides routing, balancing and blacklisting
+   A module which provides routing, balancing and blocklisting
    capabilities.
 
-   The module provides routing, balancing and blacklisting capabilities.
+   The module provides routing, balancing and blocklisting capabilities.
    It reads routing entries from a database source or from a config file
    at Kamailio startup. It can uses one routing tree (for one carrier), or
    if needed for every user a different routing tree (unique for each
@@ -355,7 +365,8 @@ modparam("carrierroute", "config_source", "file")
 
 3.6. config_file (string)
 
-   Specifies the path to the config file.
+   Specifies the path to the config file. The file has to be owned by the
+   user and group used to run Kamailio.
 
    Default value is “/etc/kamailio/carrierroute.conf”.
 
@@ -632,6 +643,11 @@ dstavp)
 
    5.1. cr.reload_routes
    5.2. cr.dump_routes
+   5.3. cr.add_host
+   5.4. cr.delete_host
+   5.5. cr.activate_host
+   5.6. cr.deactivate_host
+   5.7. cr.replace_host
 
 5.1.  cr.reload_routes
 
@@ -657,6 +673,75 @@ dstavp)
 
    Parameters:
      * none
+
+5.3.  cr.add_host
+
+   This command adds a new host to the route rules
+
+   Name: cr.add_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.add_host -- '-h test.domain.com:5060 -d proxy -p null -w
+       0.1'
+
+5.4.  cr.delete_host
+
+   This command deletes a host from the route rules
+
+   Name: cr.delete_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.delete_host -- '-h test.domain.com:5060 -d proxy -p null'
+
+5.5.  cr.activate_host
+
+   This command activates a host from the route rules
+
+   Name: cr.activate_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.activate_host -- '-h test.domain.com:5060 -d proxy -p
+       null'
+
+5.6.  cr.deactivate_host
+
+   This command deactivates a host from the route rules
+
+   Name: cr.deactivate_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.deactivate_host -- '-h test.domain.com:5060 -d proxy -p
+       null'
+
+5.7.  cr.replace_host
+
+   This command replaces a host from the route rules
+
+   Name: cr.replace_host
+
+   Parameters:
+     * One long string parameter that contains the arguments for this
+       command
+
+   Example:
+     * kamcmd cr.replace_host -- '-h test1.domain.com:5060 -d proxy -t
+       test2.domain.com:5060'
 
 6. Configuration examples
 
@@ -1097,7 +1182,7 @@ modparam("carrierroute", "carrierroute_strip_col", "strip")
 
    Name of column contains the rewrite prefixes. Here you can define a
    rewrite prefix for the localpart of the SIP URI. An empty field
-   represents a blacklist entry, anything else is put as domain part into
+   represents a blocklist entry, anything else is put as domain part into
    the Request URI of the SIP message.
 
    Example 2.11. Set carrierroute_rewrite_host_col parameter
@@ -1128,7 +1213,7 @@ modparam("carrierroute", "carrierroute_rewrite_suffix_col", "rewrite_suffix")
 14. carrierroute_description_col (string)
 
    A comment for the route entry, useful for larger routing tables. The
-   comment is also displayed by the fifo cmd "cr_dump_routes".
+   comment is also displayed by the rpc cmd "cr.dump_routes".
 
    Example 2.14. Set carrierroute_description_col parameter
 ...
@@ -1177,7 +1262,7 @@ modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
 
 19. carrierfailureroute_scan_prefix_col (string)
 
-   Name of column contains the the scan prefixes. Scan prefixes define the
+   Name of column contains the scan prefixes. Scan prefixes define the
    matching portion of a phone number, e.g. we have the scan prefixes
    49721 and 49, the called number is 49721913740, it matches 49721,
    because the longest match is taken. If no prefix matches, the number is

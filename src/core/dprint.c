@@ -1,5 +1,5 @@
 /*
- * debug print 
+ * debug print
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -27,14 +27,16 @@
  */
 
 
- 
-#include "globals.h"
-#include "dprint.h"
-#include "pvar.h"
- 
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
+
+#include "globals.h"
+#include "dprint.h"
+#include "pvar.h"
+
+static void log_callid_set(sip_msg_t *msg);
 
 char *_km_log_engine_type = NULL;
 char *_km_log_engine_data = NULL;
@@ -51,7 +53,7 @@ void km_log_func_set(km_log_f f)
 
 #ifndef NO_SIG_DEBUG
 /* signal protection: !=0 when LOG/DBG/... are printing */
-volatile int dprint_crit = 0; 
+volatile int dprint_crit = 0;
 #endif
 
 static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
@@ -63,7 +65,7 @@ static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
 			"LOG_AUTHPRIV","LOG_FTP","LOG_SYSLOG",
 #endif
 			0};
-			
+
 static int int_fac[]={LOG_AUTH ,  LOG_CRON , LOG_DAEMON ,
 		      LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
 		      LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
@@ -447,7 +449,7 @@ static pv_elem_t *log_prefix_pvs = NULL;
 
 #define LOG_PREFIX_SIZE	1024
 static char log_prefix_buf[LOG_PREFIX_SIZE];
-static str log_prefix_str;
+static str log_prefix_str = STR_NULL;
 
 void log_prefix_init(void)
 {
@@ -465,6 +467,7 @@ void log_prefix_init(void)
 
 void log_prefix_set(sip_msg_t *msg)
 {
+	log_callid_set(msg);
 	if(log_prefix_pvs == NULL)
 		return;
 	if(msg==NULL || !(IS_SIP(msg) || IS_SIP_REPLY(msg))) {
@@ -478,4 +481,286 @@ void log_prefix_set(sip_msg_t *msg)
 	if(log_prefix_str.len<=0)
 		return;
 	log_prefix_val = &log_prefix_str;
+}
+
+/* structured logging */
+
+ksr_slog_f _ksr_slog_func = NULL;
+
+#define LOG_CALLID_SIZE	256
+static char log_callid_buf[LOG_CALLID_SIZE];
+static str log_callid_str = STR_NULL;
+
+static int _ksr_slog_json_flags = 0;
+#define KSR_SLOGJSON_FL_STRIPMSGNL (1<<0)
+#define KSR_SLOGJSON_FL_NOLOGNL (1<<1)
+#define KSR_SLOGJSON_FL_APPPREFIX (1<<2)
+#define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1<<3)
+#define KSR_SLOGJSON_FL_CALLID (1<<4)
+
+
+#define LOGV_CALLID_STR (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			&& (log_callid_str.len>0))?log_callid_str.s:"")
+#define LOGV_CALLID_LEN (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			&& (log_callid_str.len>0))?log_callid_str.len:0)
+
+static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
+{
+	char *p1, *p2;
+	int len = 0;
+	char token;
+	int i;
+
+	s_out->len = 0;
+	if (!s_in || !s_in->s) {
+		s_out->s = strdup("");
+		*emode = 1;
+		return;
+	}
+	for(i = 0; i < s_in->len; i++) {
+		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
+			len += 2;
+		} else if (s_in->s[i] < 32) {
+			len += 6;
+		} else {
+			len++;
+		}
+	}
+	if(len == s_in->len) {
+		s_out->s = s_in->s;
+		s_out->len = s_in->len;
+		*emode = 0;
+		return;
+	}
+
+	s_out->s = (char*)malloc(len + 2);
+	if (!s_out->s) {
+		return;
+	}
+	*emode = 1;
+
+	p2 = s_out->s;
+	p1 = s_in->s;
+	while (p1 < s_in->s + s_in->len) {
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\') {
+			*p2++ = *p1++;
+		} else {
+			*p2++ = '\\';
+			switch (token = *p1++) {
+			case '\\':
+				*p2++ = '\\';
+				break;
+			case '\"':
+				*p2++ = '\"';
+				break;
+			case '\b':
+				*p2++ = 'b';
+				break;
+			case '\f':
+				*p2++ = 'f';
+				break;
+			case '\n':
+				*p2++ = 'n';
+				break;
+			case '\r':
+				*p2++ = 'r';
+				break;
+			case '\t':
+				*p2++ = 't';
+				break;
+			default:
+				/* escape and print */
+				snprintf(p2, 6, "u%04x", token);
+				p2 += 5;
+				break;
+			}
+		}
+	}
+	*p2++ = 0;
+	s_out->len = len;
+	return;
+}
+
+#define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_CFMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_PFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_CPFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
+	" \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_CFMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_PFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_CPFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
+	" \"%smessage\": \"%.*s\" }%s"
+
+void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
+{
+	va_list arglist;
+#define KSR_SLOG_MAX_SIZE 32*1024
+	char obuf[KSR_SLOG_MAX_SIZE];
+	int n;
+	str s_in = STR_NULL;
+	str s_out = STR_NULL;
+	int emode = 0;
+	char *prefmsg;
+	const char *efmt;
+	const char *sfmt;
+
+	va_start(arglist, format);
+	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
+	if(n<0 || n>=KSR_SLOG_MAX_SIZE - s_in.len) {
+		va_end(arglist);
+		goto error;
+	}
+	s_in.len += n;
+	va_end(arglist);
+
+	s_in.s = obuf;
+	if (_ksr_slog_json_flags & KSR_SLOGJSON_FL_STRIPMSGNL) {
+		if(s_in.s[s_in.len - 1] == '\n') {
+			s_in.len--;
+		}
+	}
+
+	ksr_slog_json_str_escape(&s_in, &s_out, &emode);
+	if(s_out.s == NULL) {
+		goto error;
+	}
+
+	if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_APPPREFIX) {
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOAPPPREFIXMSG) {
+			prefmsg = "";
+		} else {
+			prefmsg = NAME ".";
+		}
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
+			efmt = KSR_SLOG_STDERR_JSON_CPFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_CPFMT;
+		} else {
+			efmt = KSR_SLOG_STDERR_JSON_PFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_PFMT;
+		}
+	} else {
+		prefmsg = "";
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
+			efmt = KSR_SLOG_STDERR_JSON_CFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_CFMT;
+		} else {
+			efmt = KSR_SLOG_STDERR_JSON_FMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
+		}
+	}
+	if (unlikely(log_stderr)) {
+		if (unlikely(log_color)) dprint_color(kld->v_level);
+		fprintf(stderr,
+				efmt, process_no, my_pid(),
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
+				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
+				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+		if (unlikely(log_color)) dprint_color_reset();
+	} else {
+		_km_log_func(kld->v_facility,
+				sfmt,
+				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
+				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
+				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+	}
+	if(emode && s_out.s) {
+		free(s_out.s);
+	}
+	return;
+error:
+	return;
+}
+
+void ksr_slog_init(char *ename)
+{
+	char *p;
+	int elen = 0;
+
+	if (!ename) {
+		return;
+	}
+
+	p = strchr(ename, ':');
+	if(p) {
+		elen = p - ename;
+	} else {
+		elen = strlen(ename);
+	}
+
+	if ((elen==4) && (strncasecmp(ename, "json", 4)==0)) {
+		_km_log_engine_type = "json";
+		_ksr_slog_func = &ksr_slog_json;
+		if(p) {
+			_km_log_engine_data = p + 1;
+			while (*p) {
+				switch (*p) {
+					case 'M':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_STRIPMSGNL;
+					break;
+					case 'N':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOLOGNL;
+					break;
+					case 'a':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_APPPREFIX;
+					break;
+					case 'A':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOAPPPREFIXMSG;
+					break;
+					case 'c':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_CALLID;
+					break;
+				}
+				p++;
+			}
+		}
+	}
+}
+
+static void log_callid_set(sip_msg_t *msg)
+{
+	if(!(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID)) {
+		return;
+	}
+	if(msg==NULL) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
+			|| (msg->callid==NULL))) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	if(msg->callid->body.len >= LOG_CALLID_SIZE) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	log_callid_str.len = msg->callid->body.len;
+	memcpy(log_callid_buf, msg->callid->body.s, msg->callid->body.len);
+	log_callid_str.s = log_callid_buf;
+	log_callid_str.s[log_callid_str.len] = '\0';
 }

@@ -52,7 +52,7 @@ static void corex_rpc_list_sockets(rpc_t* rpc, void* ctx)
 	struct socket_info** list;
 	struct addr_info* ai;
 	unsigned short proto;
-	
+
 	proto=PROTO_UDP;
 	do {
 		list=get_sock_info_list(proto);
@@ -79,7 +79,7 @@ static void corex_rpc_list_sockets(rpc_t* rpc, void* ctx)
 				rpc->fault(ctx, 500, "Internal error address structure");
 				return;
 			}
-	
+
 			if (si->addr_info_lst)
 			{
 
@@ -95,10 +95,11 @@ static void corex_rpc_list_sockets(rpc_t* rpc, void* ctx)
 				}
 			}
 
-			if(rpc->struct_add(th, "ssss",
+			if(rpc->struct_add(th, "sssss",
 					"PORT", si->port_no_str.s,
 					"MCAST", si->flags & SI_IS_MCAST ? "yes" : "no",
 					"MHOMED", si->flags & SI_IS_MHOMED? "yes" : "no",
+					"SOCKNAME", si->sockname.s? si->sockname.s : "-",
 					"ADVERTISE", si->useinfo.name.s?si->useinfo.name.s:"-")<0)
 			{
 				rpc->fault(ctx, 500, "Internal error attrs structure");

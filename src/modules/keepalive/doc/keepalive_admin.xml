@@ -93,13 +93,51 @@ modparam("keepalive", "destination", "sip.provider.com")
 					</programlisting>
 				</example>
 			</section>
+			<section>
+				<title><varname>delete_counter</varname>(int)</title>
+				<para>
+					Unsuccesful attemps increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
+				</para>
+				<para>
+				<emphasis>
+					Default value is 5 .
+				</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>delete_counter</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("keepalive", "delete_counter", "5")
+...
+					</programlisting>
+				</example>
+			</section>
+			<section>
+				<title><varname>ping_from</varname>(string)</title>
+				<para>
+					Sets from header's uri.
+				</para>
+				<para>
+				<emphasis>
+					Default value is "sip:keepalive@kamailio.org" .
+				</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>ping_from</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("keepalive", "ping_from", "sip:keepalive@kamailio.org")
+...
+					</programlisting>
+				</example>
+			</section>
 		</section>
 
 		<section>
 			<title>Functions</title>
-			<section id="keepalive.is_alive">
+			<section id="keepalive.ka_is_alive">
 			    <title>
-					<function moreinfo="none">is_alive(destination)</function>
+					<function moreinfo="none">ka_is_alive(destination)</function>
 			    </title>
 				<para>
 					Get destination status.
@@ -119,16 +157,184 @@ modparam("keepalive", "destination", "sip.provider.com")
 				    This function can be used from ANY_ROUTE.
 		        </para>
 				<example>
-					<title><function>is_alive()</function> usage</title>
+					<title><function>ka_is_alive()</function> usage</title>
 					<programlisting format="linespecific">
 ...
-if(is_alive("192.168.10.20") == 1) {
+if(ka_is_alive("192.168.10.20") == 1) {
   // do stuff
 };
 ...
 			        </programlisting>
 			    </example>
 			</section>
+			<section id="keepalive.ka_add_destination">
+			    <title>
+					<function moreinfo="none">ka_add_destination(sip_uri, owner)</function>
+			    </title>
+				<para>
+					Adds SIP URI in the memory destinations list to perform keep alive to it.
+				</para>
+				<para>
+					Meaning of the parameters:
+					<itemizedlist>
+						<listitem>sip_uri (string) - address of destination to monitor.
+						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						by default; 'port' is optional (using default standard port 5060
+						for sip and 5061 for sips)</listitem>
+					    <listitem>owner (string) - module name “owning” the destination
+					    (for informational purpose)</listitem>
+					</itemizedlist>
+				</para>
+        		<para>
+					Returned value:
+					<itemizedlist>
+						<listitem>1  - successful </listitem>
+					    <listitem>-1 - on error</listitem>
+					</itemizedlist>
+        		</para>
+		        <para>
+				    This function can be used from REQUEST_ROUTE,BRANCH_ROUTE,ONREPLY_ROUTE.
+		        </para>
+				<example>
+					<title><function>ka_add_destination(sip_uri, ownder)</function> usage</title>
+					<programlisting format="linespecific">
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_add_destination("$avp(duri3)", "config");
+ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
+...
+			        </programlisting>
+			    </example>
+			</section>
+						<section id="keepalive.ka_del_destination">
+			    <title>
+					<function moreinfo="none">ka_del_destination(sip_uri, owner)</function>
+			    </title>
+				<para>
+					Deletes the SIP URI from the memory destinations list used for monitoring.
+				</para>
+				<para>
+					Meaning of the parameters:
+					<itemizedlist>
+						<listitem>sip_uri (string) - address of monitored destination.
+						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						by default; 'port' is optional (using default standard port 5060
+						for sip and 5061 for sips)</listitem>
+					    <listitem>owner (string) - module name “owning” the destination
+					    (for informational purpose)</listitem>
+					</itemizedlist>
+				</para>
+
+        		<para>
+					Returned value:
+					<itemizedlist>
+						<listitem> 1 - successful </listitem>
+					    <listitem>-1 - on error</listitem>
+					</itemizedlist>
+        		</para>
+		        <para>
+				    This function can be used from ANY_ROUTE.
+		        </para>
+				<example>
+					<title><function>ka_del_destination(sip_uri, owner)</function> usage</title>
+					<programlisting format="linespecific">
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_del_destination("$avp(duri3)", "config");
+ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
+...
+			        </programlisting>
+			    </example>
+			</section>
+		</section>
+		<section>
+			<title>RPC Commands</title>
+			<section id="keepalive.list">
+			<title><function>keepalive.list</function></title>
+			<para>
+				Lists destinations in memory.
+			</para>
+			<para>
+			Name: <emphasis>keepalive.list</emphasis>
+			</para>
+			<para>Parameters: <emphasis>none</emphasis></para>
+			<example>
+			<title><function>keepalive.list</function> RPC example</title>
+			<programlisting  format="linespecific">
+			 keepalive.list
+			</programlisting>
+			</example>
+			</section>
+			<section id="keepalive.add">
+			<title><function>keepalive.add</function></title>
+			<para>
+				Adds destination in memory.
+			</para>
+			<para>
+			Name: <emphasis>keepalive.add</emphasis>
+			</para>
+			<para>Parameters: <emphasis>sip_uri listname</emphasis></para>
+			<example>
+			<title><function>keepalive.add</function> RPC example</title>
+			<programlisting  format="linespecific">
+			 keepalive.add sip:username@domain listname
+			</programlisting>
+			</example>
+			</section>	
+			<section id="keepalive.del">
+			<title><function>keepalive.del</function></title>
+			<para>
+				Deletes destination in memory.
+			</para>
+			<para>
+			Name: <emphasis>keepalive.del</emphasis>
+			</para>
+			<para>Parameters: <emphasis>sip_uri listname</emphasis></para>
+			<example>
+			<title><function>keepalive.del</function> RPC example</title>
+			<programlisting  format="linespecific">
+			 keepalive.del sip:username@domain listname
+			</programlisting>
+			</example>
+			</section>	
+			<section id="keepalive.get">
+			<title><function>keepalive.get</function></title>
+			<para>
+				Gets destination in memory.
+			</para>
+			<para>
+			Name: <emphasis>keepalive.get</emphasis>
+			</para>
+			<para>Parameters: <emphasis>sip_uri listname</emphasis></para>
+			<example>
+			<title><function>keepalive.get</function> RPC example</title>
+			<programlisting  format="linespecific">
+			 keepalive.get sip:username@domain listname
+			</programlisting>
+			</example>
+			</section>	
+			<section id="keepalive.flush">
+			<title><function>keepalive.flush</function></title>
+			<para>
+				Deletes all destinations in memory.
+			</para>
+			<para>
+			Name: <emphasis>keepalive.flush</emphasis>
+			</para>
+			<para>Parameters: <emphasis></emphasis></para>
+			<example>
+			<title><function>keepalive.flush</function> RPC example</title>
+			<programlisting  format="linespecific">
+			 keepalive.flush
+			</programlisting>
+			</example>
+			</section>				
 		</section>
 	</section>
 </chapter>

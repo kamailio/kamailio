@@ -31,6 +31,7 @@ Bogdan-Andrei Iancu
         4. Functions
 
               4.1. pike_check_req()
+              4.2. pike_check_ip(ipaddr)
 
         5. RPC Commands
 
@@ -39,6 +40,7 @@ Bogdan-Andrei Iancu
    2. RPC calls
 
         1. pike.top
+        2. pike.list
 
    3. Developer Guide
 
@@ -49,6 +51,8 @@ Bogdan-Andrei Iancu
    1.3. Set remove_latency parameter
    1.4. Set pike_log_level parameter
    1.5. pike_check_req usage
+   1.6. pike_check_ip usage
+   2.1. Using pike.top
    3.1. Tree of IP addresses
 
 Chapter 1. Admin Guide
@@ -71,6 +75,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. pike_check_req()
+        4.2. pike_check_ip(ipaddr)
 
    5. RPC Commands
 
@@ -173,6 +178,7 @@ modparam("pike", "pike_log_level", -1)
 4. Functions
 
    4.1. pike_check_req()
+   4.2. pike_check_ip(ipaddr)
 
 4.1.  pike_check_req()
 
@@ -189,11 +195,28 @@ Warning
      * -2 (false) - IP is detected as a new source of flooding - first
        time detection
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
 
    Example 1.5. pike_check_req usage
 ...
 if (!pike_check_req()) { exit; };
+...
+
+4.2.  pike_check_ip(ipaddr)
+
+   Process the IP address parameter and return false if it was exceeding
+   the blocking limit. The return codes are the same from
+   pike_check_req().
+
+   The parameter can contain variables.
+
+   This function can be used from REQUEST_ROUTE|ONREPLY_ROUTE.
+
+   Example 1.6. pike_check_ip usage
+...
+if (!pike_check_ip("1.2.3.4")) { exit; };
+...
+if (!pike_check_ip("$si")) { exit; };
 ...
 
 5. RPC Commands
@@ -219,6 +242,7 @@ Chapter 2. RPC calls
    Table of Contents
 
    1. pike.top
+   2. pike.list
 
 1.  pike.top
 
@@ -230,15 +254,24 @@ Chapter 2. RPC calls
 
    Some IPs could be marked as HOT depending on theirs request rates.
 
-   pike.top command takes one string parameter which specifies what kind
-   of nodes you are interested in. Possible values are HOT or ALL. If no
-   argument is given, it behaves as HOT was used.
+   pike.top command can take one string parameter which specifies what
+   kind of nodes you are interested in. Possible values are HOT or ALL. If
+   no argument is given, it behaves as HOT was used.
 
    Marking nodes HOT is done on server side, client only presents given
    data and make some postprocessing like sorting.
 
    Output of this command is a simple dump of ip_tree nodes marked as
    ip-leafs.
+
+   Example 2.1. Using pike.top
+...
+kamcli rpc pike.top ALL
+...
+
+2.  pike.list
+
+   Alias for "pike.top" command.
 
 Chapter 3. Developer Guide
 
@@ -247,9 +280,9 @@ Chapter 3. Developer Guide
 
    Example 3.1. Tree of IP addresses
            / 193 - 175 - 132 - 164
-tree root /                  \ 142
+tree root /                \ - 142
           \ 195 - 37 - 78 - 163
-           \ 79 - 134
+                   \ - 79 - 134
 
    To detect the whole address, step by step, from the root to the leafs,
    the nodes corresponding to each byte of the ip address are expanded. In

@@ -44,7 +44,7 @@
 /*! contact matching mode */
 int ul_matching_mode = CONTACT_ONLY;
 /*! retransmission detection interval in seconds */
-int cseq_delay = 20;
+int ul_cseq_delay = 20;
 
 /*!
  * \brief Create and initialize new record structure
@@ -57,14 +57,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*_r, 0, sizeof(urecord_t));
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		shm_free(*_r);
 		*_r = 0;
 		return -2;
@@ -96,7 +96,7 @@ void free_urecord(urecord_t* _r)
 	}
 
 	/* if mem cache is not used, the urecord struct is static*/
-	if (db_mode!=DB_ONLY) {
+	if (ul_db_mode!=DB_ONLY) {
 		if (_r->aor.s) shm_free(_r->aor.s);
 		shm_free(_r);
 	}
@@ -153,7 +153,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 
 	ptr = _r->contacts;
 
-	if (!desc_time_order) {
+	if (!ul_desc_time_order) {
 		while(ptr) {
 			if (ptr->q < c->q) break;
 			prev = ptr;
@@ -279,12 +279,12 @@ static inline void nodb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
-		if (handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
+		if (ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
 			LM_DBG("tcp connection has been lost, expiring contact %.*s\n", ptr->c.len, ptr->c.s);
 			ptr->expires = UL_EXPIRED_TIME;
 		}
 
-		if (!VALID_CONTACT(ptr, act_time)) {
+		if (!VALID_CONTACT(ptr, ul_act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (!(ptr->flags&FL_EXPCLB) && exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
@@ -295,7 +295,7 @@ static inline void nodb_timer(urecord_t* _r)
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 
-			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+			if (ul_close_expired_tcp && is_valid_tcpconn(ptr)) {
 				close_connection(ptr->tcpconn_id);
 			}
 
@@ -326,7 +326,7 @@ static inline void wt_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
-		if (!VALID_CONTACT(ptr, act_time)) {
+		if (!VALID_CONTACT(ptr, ul_act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
@@ -336,7 +336,7 @@ static inline void wt_timer(urecord_t* _r)
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 
-			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+			if (ul_close_expired_tcp && is_valid_tcpconn(ptr)) {
 				close_connection(ptr->tcpconn_id);
 			}
 
@@ -373,12 +373,12 @@ static inline void wb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
-		if (handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
+		if (ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
 			LM_DBG("tcp connection has been lost, expiring contact %.*s\n", ptr->c.len, ptr->c.s);
 			ptr->expires = UL_EXPIRED_TIME;
 		}
 
-		if (!VALID_CONTACT(ptr, act_time)) {
+		if (!VALID_CONTACT(ptr, ul_act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
@@ -389,7 +389,7 @@ static inline void wb_timer(urecord_t* _r)
 				ptr->c.len, ZSW(ptr->c.s));
 			update_stat( _r->slot->d->expires, 1);
 
-			if (close_expired_tcp && is_valid_tcpconn(ptr)) {
+			if (ul_close_expired_tcp && is_valid_tcpconn(ptr)) {
 				close_connection(ptr->tcpconn_id);
 			}
 
@@ -452,16 +452,19 @@ static inline void wb_timer(urecord_t* _r)
  */
 void timer_urecord(urecord_t* _r)
 {
-	switch(db_mode) {
-	case DB_READONLY:
-	case NO_DB:         nodb_timer(_r);
-						break;
-	/* use also the write_back timer routine to handle the failed
-	 * realtime inserts/updates */
-	case WRITE_THROUGH: wb_timer(_r); /*wt_timer(_r);*/
-						break;
-	case WRITE_BACK:    wb_timer(_r);
-						break;
+	switch(ul_db_mode) {
+		case DB_READONLY:
+		case NO_DB:
+			nodb_timer(_r);
+			break;
+		/* use also the write_back timer routine to handle the failed
+		* realtime inserts/updates */
+		case WRITE_THROUGH:
+			wb_timer(_r); /*wt_timer(_r);*/
+			break;
+		case WRITE_BACK:
+			wb_timer(_r);
+			break;
 	}
 }
 
@@ -477,14 +480,14 @@ int db_delete_urecord(urecord_t* _r)
 	db_val_t vals[2];
 	char* dom;
 
-	keys[0] = &user_col;
-	keys[1] = &domain_col;
+	keys[0] = &ul_user_col;
+	keys[1] = &ul_domain_col;
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _r->aor.s;
 	vals[0].val.str_val.len = _r->aor.len;
 
-	if (use_domain) {
+	if (ul_use_domain) {
 		dom = memchr(_r->aor.s, '@', _r->aor.len);
 		vals[0].val.str_val.len = dom - _r->aor.s;
 
@@ -499,7 +502,7 @@ int db_delete_urecord(urecord_t* _r)
 		return -1;
 	}
 
-	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (ul_use_domain) ? (2) : (1)) < 0) {
 		LM_ERR("failed to delete from database\n");
 		return -1;
 	}
@@ -517,7 +520,7 @@ int db_delete_urecord_by_ruid(str *_table, str *_ruid)
 	db_key_t keys[1];
 	db_val_t vals[1];
 
-	keys[0] = &ruid_col;
+	keys[0] = &ul_ruid_col;
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _ruid->s;
@@ -551,7 +554,7 @@ int db_delete_urecord_by_ruid(str *_table, str *_ruid)
  */
 void release_urecord(urecord_t* _r)
 {
-	if (db_mode==DB_ONLY) {
+	if (ul_db_mode==DB_ONLY) {
 		free_urecord(_r);
 	} else if (_r->contacts == 0) {
 		mem_delete_urecord(_r->slot->d, _r);
@@ -576,7 +579,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 		return -1;
 	}
 
-	if (db_mode==DB_ONLY) {
+	if (ul_db_mode==DB_ONLY) {
 		/* urecord is static generate a copy for later */
 		memcpy(&_ur, _r, sizeof(struct urecord));
 
@@ -592,7 +595,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 		run_ul_callbacks( UL_CONTACT_INSERT, *_c);
 	}
 
-	switch (db_mode) {
+	switch (ul_db_mode) {
 		case WRITE_THROUGH:
 			if (db_insert_ucontact(*_c) < 0) {
 				LM_ERR("failed to insert in database\n");
@@ -622,7 +625,7 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	int ret = 0;
 	struct urecord _ur;
 
-	if (db_mode==DB_ONLY) {
+	if (ul_db_mode==DB_ONLY) {
 		/* urecord is static generate a copy for later */
 		memcpy(&_ur, _r, sizeof(struct urecord));
 	}
@@ -631,13 +634,13 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 		run_ul_callbacks( UL_CONTACT_DELETE, _c);
 	}
 
-	if (db_mode==DB_ONLY) {
+	if (ul_db_mode==DB_ONLY) {
 		/* urecord was static restore copy */
 		memcpy(_r, &_ur, sizeof(struct urecord));
 	}
 
 	if (st_delete_ucontact(_c) > 0) {
-		if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
+		if (ul_db_mode == WRITE_THROUGH || ul_db_mode==DB_ONLY) {
 			if (db_delete_ucontact(_c) < 0) {
 				LM_ERR("failed to remove contact from database\n");
 				ret = -1;
@@ -653,7 +656,7 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 
 int delete_urecord_by_ruid(udomain_t* _d, str *_ruid)
 {
-	if (db_mode != DB_ONLY) {
+	if (ul_db_mode != DB_ONLY) {
 		LM_ERR("delete_urecord_by_ruid currently available only in db_mode=3\n");
 		return -1;
 	}
@@ -797,8 +800,8 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 			if (_cseq<ptr->cseq)
 				return -1;
 			if (_cseq==ptr->cseq) {
-				get_act_time();
-				return (ptr->last_modified+cseq_delay>act_time)?-2:-1;
+				ul_get_act_time();
+				return (ptr->last_modified+ul_cseq_delay>ul_act_time)?-2:-1;
 			}
 		}
 		*_co = ptr;

@@ -125,7 +125,7 @@ dberror:
 }
 
 int load_ro_info_from_db(int hash_size, int fetch_num_rows) {
-    LM_WARN("not supported yet");
+    LM_WARN("not supported yet\n");
     return 0;
 }
 

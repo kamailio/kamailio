@@ -62,8 +62,8 @@
 #ifdef USE_DNS_FAILOVER
 #include "dns_cache.h"
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "dst_blocklist.h"
 #endif
 #include "compiler_opt.h"
 #include "core_stats.h"
@@ -407,15 +407,23 @@ int run_check_self_func(str* host, unsigned short port, unsigned short proto)
  */
 int check_self(str* host, unsigned short port, unsigned short proto)
 {
-	if (grep_sock_info(host, port, proto)) goto found;
-	/* try to look into the aliases*/
-	if (grep_aliases(host->s, host->len, port, proto)==0){
-		LM_DBG("host != me\n");
-		return (_check_self_func_list==NULL)?0:run_check_self_func(host,
-														port, proto);
+	int ret = 1;
+	if (grep_sock_info(host, port, proto)) {
+		goto done;
 	}
-found:
-	return 1;
+	/* try to look into the aliases*/
+	if (grep_aliases(host->s, host->len, port, proto)==0) {
+		ret = (_check_self_func_list==NULL)?0:run_check_self_func(host,
+					port, proto);
+	}
+
+done:
+	if(ret==1) {
+		LM_DBG("host (%d:%.*s:%d) == me\n", proto, host->len, host->s, port);
+	} else {
+		LM_DBG("host (%d:%.*s:%d) != me\n", proto, host->len, host->s, port);
+	}
+	return ret;
 }
 
 /** checks if the proto:port is one of the ports we listen on;
@@ -424,11 +432,14 @@ found:
  */
 int check_self_port(unsigned short port, unsigned short proto)
 {
-	if (grep_sock_info_by_port(port, proto))
-		/* as aliases do not contain different ports we can skip them */
+	/* aliases do not contain different ports we can skip them */
+	if (grep_sock_info_by_port(port, proto)) {
+		LM_DBG("proto:port (%d:%d) == me\n", proto, port);
 		return 1;
-	else
+	} else {
+		LM_DBG("proto:port (%d:%d) != me\n", proto, port);
 		return 0;
+	}
 }
 
 
@@ -572,11 +583,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error; /* error ? */
 #endif
 		}
-#ifdef USE_DST_BLACKLIST
-		if (cfg_get(core, core_cfg, use_dst_blacklist)){
-			if (dst_is_blacklisted(send_info, msg)){
+#ifdef USE_DST_BLOCKLIST
+		if (cfg_get(core, core_cfg, use_dst_blocklist)){
+			if (dst_is_blocklisted(send_info, msg)){
 				su2ip_addr(&ip, &send_info->to);
-				LM_DBG("blacklisted destination:%s:%d (%d)\n",
+				LM_DBG("blocklisted destination:%s:%d (%d)\n",
 					ip_addr2a(&ip), su_getport(&send_info->to), send_info->proto);
 				ret=ser_error=E_SEND;
 #ifdef USE_DNS_FAILOVER
@@ -600,8 +611,8 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (msg_send(send_info, buf, len)<0){
 			p_onsend=0;
 			ret=ser_error=E_SEND;
-#ifdef USE_DST_BLACKLIST
-			(void)dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
+#ifdef USE_DST_BLOCKLIST
+			(void)dst_blocklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 			continue; /* try another ip */

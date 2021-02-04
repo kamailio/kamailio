@@ -34,7 +34,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_uri.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 
 #include "flags.h"
 #include "km_core.h"

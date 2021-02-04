@@ -1,16 +1,18 @@
 /*
- * PV Headers
+ * pv_headers
  *
- * Copyright (C) 2018 Kirill Solomko <ksolomko@sipwise.com>
+ * Copyright (C)
+ * 2020 Victor Seva <vseva@sipwise.com>
+ * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
- * This file is part of SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP Router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,15 +24,73 @@
  */
 
 #include "../../core/data_lump.h"
+#include "../../core/dset.h"
 
 #include "pvh_hdr.h"
+
+int pvh_hdrs_collected(struct sip_msg *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		if(isflagset(msg, FL_PV_HDRS_COLLECTED) == 1) {
+			return 1;
+		}
+	} else {
+		if(isbflagset(_branch, FL_PV_HDRS_COLLECTED) == 1) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int pvh_hdrs_applied(struct sip_msg *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		if(isflagset(msg, FL_PV_HDRS_APPLIED) == 1) {
+			return 1;
+		}
+	} else {
+		if(isbflagset(_branch, FL_PV_HDRS_APPLIED) == 1) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void pvh_hdrs_set_applied(struct sip_msg *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		setflag(msg, FL_PV_HDRS_APPLIED);
+	} else {
+		setbflag(_branch, FL_PV_HDRS_APPLIED);
+	}
+}
+
+void pvh_hdrs_set_collected(struct sip_msg *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		setflag(msg, FL_PV_HDRS_COLLECTED);
+	} else {
+		setbflag(_branch, FL_PV_HDRS_COLLECTED);
+	}
+}
+
+void pvh_hdrs_reset_flags(struct sip_msg *msg)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		resetflag(msg, FL_PV_HDRS_COLLECTED);
+		resetflag(msg, FL_PV_HDRS_APPLIED);
+	} else {
+		resetbflag(_branch, FL_PV_HDRS_COLLECTED);
+		resetbflag(_branch, FL_PV_HDRS_APPLIED);
+	}
+}
 
 int pvh_real_hdr_append(struct sip_msg *msg, str *hname, str *hvalue)
 {
 	struct lump *anchor = NULL;
 	hdr_field_t *hf = NULL;
 	hdr_field_t *m_hf = NULL;
-	str new_h;
+	str new_h = STR_NULL;
 
 	if(hname->s == NULL || hvalue->s == NULL) {
 		LM_ERR("header name/value cannot be empty");
@@ -75,7 +135,7 @@ int pvh_real_hdr_replace(struct sip_msg *msg, str *hname, str *hvalue)
 {
 	struct lump *anchor = NULL;
 	hdr_field_t *hf = NULL;
-	str new_h;
+	str new_h = STR_NULL;
 	int new = 1;
 
 	if(hname->s == NULL || hvalue->s == NULL) {

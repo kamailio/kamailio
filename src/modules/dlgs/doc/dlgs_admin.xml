@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module tracks dialogs (active calls) in stateless mode and offers
+		statistics about them.
+	</para>
+	<para>
+		The dialogs can be tagged and the number of dialogs with the same tag
+		can be retrieved in configuration file.
+	</para>
+	<para>
+		The module aims to be a lightweight alternative to dialog module, to
+		enable SIP server instances (such as an edge proxy or SBC) to know how
+		many active calls they route, without being a call stateful proxy. The
+		tracking of active calls is done without any dependency on other modules,
+		in other words, it does not need the tm (transaction management) module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="dlgs.p.active_lifetime">
+		<title><varname>active_lifetime</varname> (int)</title>
+		<para>
+			The lifetime in seconds of an active dialog in memory. A dialog is
+			considered active after the ACK of 200OK for INVITE.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10800 (3 hours).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>active_lifetime</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "active_lifetime", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.p.init_lifetime">
+		<title><varname>init_lifetime</varname> (int)</title>
+		<para>
+			The lifetime in seconds of an initial dialog in memory. A dialog is
+			in initial state from the moment of creation until it gets to active
+			state. If the dialog stays longer in the initial state, then it is
+			destroyed by the next timer cleanup.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 180 (3 minutes).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>init_lifetime</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "init_lifetime", 240)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.p.finish_lifetime">
+		<title><varname>finish_lifetime</varname> (int)</title>
+		<para>
+			The lifetime in seconds of a finished dialog in memory. A dialog is
+			finished if the initial INVITE was not answered or the BYE was
+			received. Once this lifetime passes, the dialog record is removed
+			from memory by the next timer cleanup.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10 (seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>finish_lifetime</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "finish_lifetime", 20)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.p.timer_interval">
+		<title><varname>timer_interval</varname> (int)</title>
+		<para>
+			The value in secods to run the timer callback function for cleaning
+			up dialogs past the lifetime limit.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "timer_interval", 60)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="dlgs.f.dlgs_init">
+		<title>
+		<function moreinfo="none">dlgs_init(src, dst, data)</function>
+		</title>
+		<para>
+			Start track the dialog corresponding to the current SIP message.
+			It has to be used for INVITE messages.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+		ONREPLY_ROUTE, ONSEND_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_init</function> usage</title>
+		<programlisting format="linespecific">
+...
+onsend_route {
+    ...
+    if(is_method("INVITE")) {
+        dlgs_init("$fu", "$tu", "my data");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_update">
+		<title>
+		<function moreinfo="none">dlgs_update()</function>
+		</title>
+		<para>
+			Update dialog state. It has to be used for SIP requests only, the
+			SIP responses are handled automatically.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, ONSEND_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_update</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(is_method("ACK|BYE|CANCEL")) {
+        dlgs_update();
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_count">
+		<title>
+		<function moreinfo="none">dlgs_count(field, op, data)</function>
+		</title>
+		<para>
+			Return the number of dialogs matching the filter specified by the
+			parameters. It does not count the dialogs that are finished (not
+			answered or terminated with BYE).
+		</para>
+		<para>
+			The field parameter can be: 'src', 'dst', 'data' to specify what
+			dialog attribute has to be used for matching. It can be also 'any'
+			to get the count of all ongoing dialogs.
+		</para>
+		<para>
+			The op parameter can be: 'eq' - equal; 'ne' - not equal; 're' - regex;
+			'sw' - start with; 'fm' - fnmatch.
+		</para>
+		<para>
+			In case of error or no dialog matched, it returns -1 or other negative
+			(false) value.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_count</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    $var(count) = dlgs_count("src", "eq", "$fu");
+    if($var(count) > 0) {
+        # caller has ongoing dialogs
+    }
+    ...
+    $var(allcalls) = dlgs_count("any", "eq", "*");
+    if($var(allcalls) > 0) {
+        # there are ongoing dialogs
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_tags_add">
+		<title>
+		<function moreinfo="none">dlgs_tags_add(vtag)</function>
+		</title>
+		<para>
+			Add a tag to current dialog.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_tags_add</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    dlgs_tags_add("$si");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_tags_rm">
+		<title>
+		<function moreinfo="none">dlgs_tags_rm(vtag)</function>
+		</title>
+		<para>
+			Remove a tag from current dialog.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_tags_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    dlgs_tags_rm("$si");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.f.dlgs_tags_count">
+		<title>
+		<function moreinfo="none">dlgs_tags_count(vtag)</function>
+		</title>
+		<para>
+			Count all tags for ongoing dialogs matching the parameter.
+		</para>
+		<para>
+			It returns -1 if no tag for ongoing dialogs is matched or there
+			was an error.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_tags_count</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    $var(tcount) = dlgs_tags_count("$si");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<section id="dlgs.rpc.list">
+		<title>
+		<function moreinfo="none">dlgs.list</function>
+		</title>
+		<para>
+			List dialog records.
+		</para>
+		<example>
+		<title><function>dlgs.list</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.list
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.rpc.briefing">
+		<title>
+		<function moreinfo="none">dlgs.briefing</function>
+		</title>
+		<para>
+			List dialog records with fewer attributes per record.
+		</para>
+		<example>
+		<title><function>dlgs.briefing</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.briefing
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.rpc.get">
+		<title>
+		<function moreinfo="none">dlgs.get</function>
+		</title>
+		<para>
+		Prototype: dlgs.get field op data
+		</para>
+		<para>
+			List first dialog record matching the filter. The parameters have
+			the same meaning like those for dlgs_count(...).
+		</para>
+		<example>
+		<title><function>dlgs.get</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.get src eq sip:alice@sipserver.com
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.rpc.getall">
+		<title>
+		<function moreinfo="none">dlgs.getall</function>
+		</title>
+		<para>
+		Prototype: dlgs.getall field op data
+		</para>
+		<para>
+			List all dialog records matching the filter. The parameters have
+			the same meaning like those for dlgs_count(...).
+		</para>
+		<example>
+		<title><function>dlgs.get</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.get src eq sip:alice@sipserver.com
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dlgs.rpc.stats">
+		<title>
+		<function moreinfo="none">dlgs.stats</function>
+		</title>
+		<para>
+			Return dialog statistics.
+		</para>
+		<example>
+		<title><function>dlgs.stats</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.stats
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>

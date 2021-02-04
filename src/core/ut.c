@@ -296,6 +296,76 @@ char *str_search(str *text, str *needle)
     return NULL;
 }
 
+/**
+ * @brief search for occurence of needlez starting from vstart and before vend
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *stre_search_strz(char *vstart, char *vend, char *needlez)
+{
+    str text;
+    str needle;
+
+	if(vend <= vstart) {
+		return NULL;
+	}
+
+	text.s = vstart;
+	text.len = vend - vstart;
+
+	needle.s = needlez;
+	needle.len = strlen(needlez);
+
+    return str_search(&text, &needle);
+}
+
+/**
+ * @brief case insensitive search for occurence of needle in text
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_casesearch(str *text, str *needle)
+{
+	int i,j;
+	for(i=0;i<text->len-needle->len;i++) {
+		for(j=0;j<needle->len;j++) {
+			if ( !((text->s[i+j]==needle->s[j]) ||
+					( isalpha((int)text->s[i+j])
+						&& ((text->s[i+j])^(needle->s[j]))==0x20 )) )
+				break;
+		}
+		if (j==needle->len)
+			return text->s+i;
+	}
+	return 0;
+}
+
+/**
+ * portable strcasestr() - the libc version requires #define _GNU_SOURCE
+ */
+char *strz_casesearch_strz(char *textz, char *needlez)
+{
+	str text;
+
+	text.s = textz;
+	text.len = strlen(textz);
+
+	return str_casesearch_strz(&text, needlez);
+}
+
+/**
+ * case insensitive search of a charz string 'needlez' inside str 'text'
+ */
+char *str_casesearch_strz(str *text, char *needlez)
+{
+	str needle;
+
+	needle.s = needlez;
+	needle.len = strlen(needlez);
+
+	return str_casesearch(text, &needle);
+}
+
 /*
  * ser_memmem() returns the location of the first occurrence of data
  * pattern b2 of size len2 in memory block b1 of size len1 or

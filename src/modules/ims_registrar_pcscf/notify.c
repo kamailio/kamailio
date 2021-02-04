@@ -182,7 +182,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
         LM_DBG("Contact in NOTIFY does not have an alias....\n");
     }
 
-    if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //contact does not exist
+    if (ul.get_pcontact(_d, &ci, &pcontact, 0) != 0) { //contact does not exist
         if (contact_state == STATE_TERMINATED) {
             LM_DBG("This contact: <%.*s> is in state terminated and is not in usrloc, ignore\n", contact_uri.len, contact_uri.s);
             ret = RESULT_CONTACTS_FOUND;

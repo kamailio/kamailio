@@ -34,14 +34,24 @@
 
 #include "../str.h"
 
-/* Message is request */
-#define SIP_REQUEST 1
-
-/* Message is reply */
-#define SIP_REPLY   2
 
 /* Invalid message */
 #define SIP_INVALID 0
+#define MSG_INVALID 0
+
+/* Message is request */
+#define SIP_REQUEST 1
+#define MSG_REQUEST 1
+
+/* Message is reply */
+#define SIP_REPLY   2
+#define MSG_REPLY   2
+
+/* flags for first line
+ * - stored on a short field (16 flags) */
+#define FLINE_FLAG_PROTO_SIP	(1<<0) /* sip 2.0 protocol */
+#define FLINE_FLAG_PROTO_HTTP	(1<<1) /* any http protocol */
+#define FLINE_FLAG_PROTO_HTTP2	(1<<2) /* additional for http 2 */
 
 #define SIP_VERSION "SIP/2.0"
 #define SIP_VERSION_LEN 7
@@ -85,7 +95,7 @@ typedef struct msg_start {
 			str method;			/*!< Method string */
 			str uri;			/*!< Request URI */
 			str version;		/*!< SIP version */
-			int method_value;
+			int method_value;	/*!< Method id value */
 		} request;
 		struct {
 			str version;		/*!< SIP version */

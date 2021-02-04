@@ -36,11 +36,13 @@ static int child_init(int);
 
 int dmq_usrloc_enable = 0;
 int _dmq_usrloc_sync = 1;
+int _dmq_usrloc_replicate_socket_info = 0;
 int _dmq_usrloc_batch_size = 0;
 int _dmq_usrloc_batch_msg_contacts = 1;
 int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
+int _dmq_usrloc_delete = 1;
 
 usrloc_api_t dmq_ul;
 
@@ -49,11 +51,13 @@ MODULE_VERSION
 static param_export_t params[] = {
 	{"enable", INT_PARAM, &dmq_usrloc_enable},
 	{"sync",   INT_PARAM, &_dmq_usrloc_sync},
+	{"replicate_socket_info",   INT_PARAM, &_dmq_usrloc_replicate_socket_info},
 	{"batch_msg_contacts",   INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
 	{"batch_msg_size",   INT_PARAM, &_dmq_usrloc_batch_msg_size},
 	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
 	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
+	{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete},
 	{0, 0, 0}
 };
 

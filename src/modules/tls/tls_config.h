@@ -44,5 +44,9 @@ tls_domains_cfg_t* tls_load_config(str* filename);
  */
 int tls_parse_method(str* method);
 
+/*
+ * Convert TLS verify_client string to integer
+ */
+int tls_parse_verify_client(str* verify_client);
 
 #endif /* _TLS_CONFIG_H */

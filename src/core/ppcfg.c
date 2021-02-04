@@ -29,6 +29,7 @@
 #include "mem/mem.h"
 #include "ut.h"
 #include "re.h"
+#include "pvar.h"
 #include "dprint.h"
 
 #include "ppcfg.h"
@@ -80,7 +81,7 @@ int pp_subst_add(char *data)
 	}
 	pp_subst_rules_tail = pr;
 
-	LM_INFO("### added subst expression: %s\n", data);
+	LM_DBG("### added subst expression: [%s]\n", data);
 
 	return 0;
 }
@@ -91,6 +92,8 @@ int pp_substdef_add(char *data, int mode)
 	char *p;
 	str defname;
 	str defvalue;
+	str newval;
+	sip_msg_t *fmsg;
 
 	if(pp_subst_add(data)<0) {
 		LM_ERR("subst rule cannot be added\n");
@@ -146,6 +149,12 @@ found_repl:
 		defvalue.s[defvalue.len] = '"';
 		defvalue.s--;
 		defvalue.len += 2;
+	}
+	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
+		fmsg = faked_msg_get_next();
+		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
+			defvalue = newval;
+		}
 	}
 	if(pp_define_set(defvalue.len, defvalue.s)<0) {
 		LM_ERR("cannot set define value\n");
@@ -216,19 +225,27 @@ void pp_ifdef_level_update(int val)
 /**
  *
  */
-void pp_ifdef_level_check(void)
+int pp_ifdef_level_check(void)
 {
 	if(_pp_ifdef_level!=0) {
-		if (_pp_ifdef_level > 0) {
-	                LM_WARN("different number of preprocessor directives:"
-				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
-		} else {
-			LM_WARN("different number of preprocessor directives:"
-				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
-		}
+		return -1;
 	} else {
 		LM_DBG("same number of pairing preprocessor directives"
 			" #!IF[N]DEF - #!ENDIF\n");
+	}
+	return 0;
+}
+
+void pp_ifdef_level_error(void)
+{
+	if(_pp_ifdef_level!=0) {
+		if (_pp_ifdef_level > 0) {
+			LM_ERR("different number of preprocessor directives:"
+				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
+		} else {
+			LM_ERR("different number of preprocessor directives:"
+				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
+		}
 	}
 }
 

@@ -341,11 +341,17 @@ $ kamcmd htable.dump htable
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>size</emphasis> - number specifying the size of hash
-			table.  Larger value means less collisions. The number of entries
-			(aka slots or buckets) in the table is 2^size. The possible range
+			<emphasis>size</emphasis> - number to control how many slots
+			(buckets) to create for the hash table. Larger value means more
+			slots with higher probability for less collisions. The actual number
+			slots (or buckets) created for the table is 2^size. The possible range
 			for this value is from 2 to 31, smaller or larger values will be
-			increased to 3 (8 slots) or decreased to 14 (16384 slots).
+			increased to 3 (8 slots) or decreased to 14 (16384 slots). Note
+			that each slot can store more than one item, when there are
+			collisions of hash ids computed for keys. The items in the same
+			slot are stored in a linked list. In other words, the size is not
+			setting a limit of how many items can be stored in a hash table, as
+			long as there is enough free shared memory, new items can be added.
 		</para>
 		</listitem>
 		<listitem>
@@ -414,7 +420,7 @@ $ kamcmd htable.dump htable
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>hash_size</varname> parameter</title>
+		<title>Set <varname>htable</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
@@ -1253,7 +1259,6 @@ if(sht_match_str_value("ha", "eq", "alice")) {
                         </listitem>
                         <listitem><para>key : Key name of the hash table value to dump</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1284,7 +1289,6 @@ kamcmd htable.get students course[0]
                         </listitem>
                         <listitem><para>key : Key name of the hash table value to delete</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1317,7 +1321,6 @@ kamcmd htable.delete students course[0]
                         </listitem>
                         <listitem><para>Value : String value for the item</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1350,7 +1353,6 @@ kamcmd htable.sets test x[0] abc
                         </listitem>
                         <listitem><para>Value : Integer value for the item</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1373,13 +1375,12 @@ kamcmd htable.sets test x[0] 123
 		Lists all the values in a hash table
                 </para>
                 <para>
-                Name: <emphasis>dhtable.dump</emphasis>
+                Name: <emphasis>htable.dump</emphasis>
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table to dump</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1395,16 +1396,15 @@ kamcmd htable.dump ipban
                 <function moreinfo="none">htable.reload htable</function>
                 </title>
                 <para>
-		Reload hash table from database.
+                Reload hash table from database.
                 </para>
                 <para>
-                Name: <emphasis>dhtable.reload</emphasis>
+                Name: <emphasis>htable.reload</emphasis>
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table to reload</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1412,6 +1412,30 @@ kamcmd htable.dump ipban
 <programlisting  format="linespecific">
 ...
 kamcmd htable.reload ipban
+...
+</programlisting>
+	</section>
+        <section id="htable.rpc.store">
+                <title>
+                <function moreinfo="none">htable.store htable</function>
+                </title>
+                <para>
+                Store hash table to database.
+                </para>
+                <para>
+                Name: <emphasis>htable.store</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : Name of the hash table to store</para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.store ipban
 ...
 </programlisting>
 	</section>
@@ -1452,7 +1476,6 @@ kamcmd htable.flush ipban
                 <itemizedlist>
                         <listitem><para>None</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:
@@ -1479,7 +1502,6 @@ kamcmd htable.listTables
                 <itemizedlist>
                         <listitem><para>None</para>
                         </listitem>
-
                 </itemizedlist>
                 <para>
                 Example:

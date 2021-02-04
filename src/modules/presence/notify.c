@@ -294,7 +294,7 @@ int get_wi_subs_db(subs_t *subs, watcher_t *watchers)
 	query_ops[n_query_cols] = OP_GT;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) + expires_offset;
+	query_vals[n_query_cols].val.int_val = (int)time(NULL) + pres_expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col = n_result_cols++] = &str_status_col;
@@ -387,7 +387,7 @@ str *get_wi_notify_body(subs_t *subs, subs_t *watcher_subs)
 		goto done;
 	}
 
-	if(subs_dbmode == DB_ONLY) {
+	if(pres_subs_dbmode == DB_ONLY) {
 		if(get_wi_subs_db(subs, watchers) < 0) {
 			LM_ERR("getting watchers from database\n");
 			goto error;
@@ -579,7 +579,8 @@ error:
 	return NULL;
 }
 
-str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
+str *ps_db_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
+		str *contact)
 {
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
@@ -609,7 +610,7 @@ str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
 	}
 
 	/* if in db_only mode, get the presentity information from database - skip htable search */
-	if(publ_cache_enabled) {
+	if(publ_cache_mode == PS_PCACHE_HYBRID) {
 		/* search in hash table if any record exists */
 		hash_code = core_case_hash(&pres_uri, NULL, phtable_size);
 		if(search_phtable(&pres_uri, event->evp->type, hash_code) == NULL) {
@@ -860,6 +861,214 @@ error:
 		pkg_free(body_array);
 	}
 	return NULL;
+}
+
+str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
+		str *contact)
+{
+	sip_uri_t uri;
+	ps_presentity_t ptm;
+	ps_presentity_t *pti;
+	ps_presentity_t *ptlist = NULL;
+	int n = 0;
+	int i = 0;
+	str **body_array = NULL;
+	str *notify_body = NULL;
+	str *body;
+	int size = 0;
+	int build_off_n = -1;
+
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri) < 0) {
+		LM_ERR("while parsing uri\n");
+		return NULL;
+	}
+	memset(&ptm, 0, sizeof(ps_presentity_t));
+
+	ptm.user = uri.user;
+	ptm.domain = uri.host;
+	ptm.event = event->name;
+	if(pres_startup_mode == 1) {
+		ptm.expires = (int)time(NULL);
+	}
+
+	ptlist = ps_ptable_search(&ptm, 1, pres_retrieve_order);
+
+	if(ptlist == NULL) {
+		LM_DBG("the query returned no result\n[username]= %.*s"
+			   "\t[domain]= %.*s\t[event]= %.*s\n",
+				uri.user.len, uri.user.s, uri.host.len, uri.host.s,
+				event->name.len, event->name.s);
+
+		if(event->agg_nbody) {
+			notify_body = event->agg_nbody(&uri.user, &uri.host, NULL, 0, -1);
+			if(notify_body) {
+				goto done;
+			}
+		}
+		return NULL;
+	}
+
+	if(event->agg_nbody == NULL) {
+		LM_DBG("event does not require aggregation\n");
+		pti = ptlist;
+		while(pti->next) {
+			pti = pti->next;
+		}
+
+		/* if event BLA - check if sender is the same as contact */
+		/* if so, send an empty dialog info document */
+		if(EVENT_DIALOG_SLA(event->evp) && contact) {
+			if(pti->sender.s == NULL || pti->sender.len <= 0) {
+				LM_DBG("no sender address\n");
+				goto after_sender_check;
+			}
+
+			if(pti->sender.len == contact->len
+					&& presence_sip_uri_match(&pti->sender, contact) == 0) {
+				notify_body = build_empty_bla_body(pres_uri);
+				ps_presentity_list_free(ptlist, 1);
+				return notify_body;
+			}
+		}
+
+	after_sender_check:
+		if(pti->body.s == NULL || pti->body.len <= 0) {
+			LM_ERR("NULL notify body record\n");
+			goto error;
+		}
+
+		notify_body = (str *)pkg_malloc(sizeof(str));
+		if(notify_body == NULL) {
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memset(notify_body, 0, sizeof(str));
+		notify_body->s = (char *)pkg_malloc((pti->body.len+1) * sizeof(char));
+		if(notify_body->s == NULL) {
+			pkg_free(notify_body);
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(notify_body->s, pti->body.s, pti->body.len);
+		notify_body->len = pti->body.len;
+		ps_presentity_list_free(ptlist, 1);
+
+		return notify_body;
+	}
+
+	LM_DBG("event requires aggregation\n");
+
+	n = 0;
+	pti = ptlist;
+	while(pti) {
+		n++;
+		pti = pti->next;
+	}
+	body_array = (str **)pkg_malloc((n + 2) * sizeof(str *));
+	if(body_array == NULL) {
+		ERR_MEM(PKG_MEM_STR);
+	}
+	memset(body_array, 0, (n + 2) * sizeof(str *));
+
+	if(etag != NULL) {
+		LM_DBG("searched etag = %.*s len= %d\n", etag->len, etag->s,
+				etag->len);
+		LM_DBG("etag not NULL\n");
+		pti = ptlist;
+		i = 0;
+		while(pti) {
+			LM_DBG("etag = %.*s len= %d\n", pti->etag.len, pti->etag.s,
+					pti->etag.len);
+			if((pti->etag.len == etag->len)
+					&& (strncmp(pti->etag.s, etag->s, pti->etag.len) == 0)) {
+				LM_DBG("found etag\n");
+				build_off_n = i;
+			}
+			if(pti->body.s == NULL || pti->body.len <= 0) {
+				LM_ERR("Empty notify body record\n");
+				goto error;
+			}
+
+			size = sizeof(str) + (pti->body.len +1) * sizeof(char);
+			body = (str *)pkg_malloc(size);
+			if(body == NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memset(body, 0, size);
+			size = sizeof(str);
+			body->s = (char *)body + size;
+			memcpy(body->s, pti->body.s, pti->body.len);
+			body->len = pti->body.len;
+
+			body_array[i] = body;
+			i++;
+			pti = pti->next;
+		}
+	} else {
+		pti = ptlist;
+		i = 0;
+		while(pti) {
+			if(pti->body.s == NULL || pti->body.len <= 0) {
+				LM_ERR("Empty notify body record\n");
+				goto error;
+			}
+
+			size = sizeof(str) + (pti->body.len+1) * sizeof(char);
+			body = (str *)pkg_malloc(size);
+			if(body == NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memset(body, 0, size);
+			size = sizeof(str);
+			body->s = (char *)body + size;
+			memcpy(body->s, pti->body.s, pti->body.len);
+			body->len = pti->body.len;
+
+			body_array[i] = body;
+			i++;
+			pti = pti->next;
+		}
+	}
+
+	ps_presentity_list_free(ptlist, 1);
+
+	notify_body = event->agg_nbody(
+			&uri.user, &uri.host, body_array, n, build_off_n);
+
+done:
+	if(body_array != NULL) {
+		for(i = 0; i < n; i++) {
+			if(body_array[i]) {
+				pkg_free(body_array[i]);
+			}
+		}
+		pkg_free(body_array);
+	}
+	return notify_body;
+
+error:
+	if(ptlist != NULL) {
+		ps_presentity_list_free(ptlist, 1);
+	}
+
+	if(body_array != NULL) {
+		for(i = 0; i < n; i++) {
+			if(body_array[i])
+				pkg_free(body_array[i]);
+			else
+				break;
+		}
+
+		pkg_free(body_array);
+	}
+	return NULL;
+}
+
+str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact)
+{
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		return ps_cache_get_p_notify_body(pres_uri, event, etag, contact);
+	} else {
+		return ps_db_get_p_notify_body(pres_uri, event, etag, contact);
+	}
 }
 
 void free_notify_body(str *body, pres_ev_t *ev)
@@ -1131,7 +1340,7 @@ int get_subs_db(
 
 		s.event = event;
 		s.local_cseq = row_vals[cseq_col].val.int_val + 1;
-		if(row_vals[expires_col].val.int_val < (int)time(NULL) + expires_offset)
+		if(row_vals[expires_col].val.int_val < (int)time(NULL) + pres_expires_offset)
 			s.expires = 0;
 		else
 			s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
@@ -1169,11 +1378,10 @@ subs_t *get_subs_dialog(str *pres_uri, pres_ev_t *event, str *sender)
 	subs_t *s_array = NULL;
 	int n = 0;
 
-	/* if subs_dbmode!=DB_ONLY, should take the subscriptions from the hashtable only
-	   in DB_ONLY mode should take all dialogs from db
-	*/
+	/* if pres_subs_dbmode!=DB_ONLY, should take the subscriptions from the
+		hashtable only in DB_ONLY mode should take all dialogs from db */
 
-	if(subs_dbmode == DB_ONLY) {
+	if(pres_subs_dbmode == DB_ONLY) {
 		if(get_subs_db(pres_uri, event, sender, &s_array, &n) < 0) {
 			LM_ERR("getting dialogs from database\n");
 			goto error;
@@ -1578,7 +1786,7 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 				&subs->pres_uri, &subs->event->name, shtable_size);
 
 		/* if subscriptions are held also in memory, update the subscription hashtable */
-		if(subs_dbmode != DB_ONLY) {
+		if(pres_subs_dbmode != DB_ONLY) {
 			if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE) < 0) {
 				/* subscriptions are held only in memory, and hashtable update failed */
 				LM_ERR("updating subscription record in hash table\n");
@@ -1587,8 +1795,8 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 		}
 		/* if DB_ONLY mode or WRITE_THROUGH update in database */
 		if(subs->recv_event != PRES_SUBSCRIBE_RECV
-				&& ((subs_dbmode == DB_ONLY && pres_notifier_processes == 0)
-						   || subs_dbmode == WRITE_THROUGH)) {
+				&& ((pres_subs_dbmode == DB_ONLY && pres_notifier_processes == 0)
+						   || pres_subs_dbmode == WRITE_THROUGH)) {
 			LM_DBG("updating subscription to database\n");
 			if(update_subs_db(subs, LOCAL_TYPE) < 0) {
 				LM_ERR("updating subscription in database\n");
@@ -1764,7 +1972,7 @@ void p_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	run_notify_reply_event(t, ps);
 
 	if(ps->code == 404 || ps->code == 481
-			|| (ps->code == 408 && timeout_rm_subs
+			|| (ps->code == 408 && pres_timeout_rm_subs
 					   && subs->status != TERMINATED_STATUS)
 			|| pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
@@ -2601,7 +2809,7 @@ static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 				goto error;
 			} else if(num_other_watchers == 0)
 				attempt_delete_presentities = 1;
-		} else if(!send_fast_notify)
+		} else if(!pres_send_fast_notify)
 			goto done;
 	}
 
@@ -2692,7 +2900,7 @@ int process_dialogs(int round, int presence_winfo)
 	}
 
 	if(pa_dbf.start_transaction) {
-		if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
@@ -2796,7 +3004,7 @@ int process_dialogs(int round, int presence_winfo)
 		}
 
 		if(pa_dbf.start_transaction) {
-			if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+			if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 				LM_ERR("in start_transaction\n");
 				goto error;
 			}
@@ -2856,7 +3064,7 @@ int process_dialogs(int round, int presence_winfo)
 		cached_updated_winfo = sub.updated_winfo =
 				VAL_INT(&dvalues[updated_winfo_col]);
 
-		if(VAL_INT(&dvalues[expires_col]) > now + expires_offset)
+		if(VAL_INT(&dvalues[expires_col]) > now + pres_expires_offset)
 			sub.expires = VAL_INT(&dvalues[expires_col]) - now;
 		else
 			sub.expires = 0;

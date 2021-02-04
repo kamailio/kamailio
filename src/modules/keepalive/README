@@ -4,11 +4,19 @@ Guillaume Bour
 
    <guillaume@bour.cc>
 
+Yasin CANER
+
+   <caner_yaso@hotmail.com>
+
 Edited by
 
 Guillaume Bour
 
    <guillaume@bour.cc>
+
+Yasin CANER
+
+   <caner_yaso@hotmail.com>
 
    Copyright © 2017 Guillaume Bour
      __________________________________________________________________
@@ -26,17 +34,29 @@ Guillaume Bour
 
                     2.3.1. ping_interval (integer)
                     2.3.2. destination (string)
+                    2.3.3. delete_counter(int)
+                    2.3.4. ping_from(string)
 
               2.4. Functions
 
-                    2.4.1. is_alive(destination)
+                    2.4.1. ka_is_alive(destination)
+                    2.4.2. ka_add_destination(sip_uri, owner)
+                    2.4.3. ka_del_destination(sip_uri, owner)
+
+              2.5. RPC Commands
+
+                    2.5.1. keepalive.list
+                    2.5.2. keepalive.add
+                    2.5.3. keepalive.del
+                    2.5.4. keepalive.get
+                    2.5.5. keepalive.flush
 
    2. Developer Guide
 
         1. Available Functions
 
-              1.1. add_destination(uri, owner, flags, [callback,
-                      [user_attr]])
+              1.1. add_destination(uri, owner, flags, ping_interval,
+                      [statechanged_clb, response_clb, [user_attr]])
 
               1.2. Examples
 
@@ -44,7 +64,16 @@ Guillaume Bour
 
    1.1. Set ping_interval parameter
    1.2. Set destination parameter
-   1.3. is_alive() usage
+   1.3. Set delete_counter parameter
+   1.4. Set ping_from parameter
+   1.5. ka_is_alive() usage
+   1.6. ka_add_destination(sip_uri, ownder) usage
+   1.7. ka_del_destination(sip_uri, owner) usage
+   1.8. keepalive.list RPC example
+   1.9. keepalive.add RPC example
+   1.10. keepalive.del RPC example
+   1.11. keepalive.get RPC example
+   1.12. keepalive.flush RPC example
    2.1. Loading KeepAlive module's API from another module, adding a
           destination to monitor & registering a callback
 
@@ -61,10 +90,22 @@ Chapter 1. Admin Guide
 
               2.3.1. ping_interval (integer)
               2.3.2. destination (string)
+              2.3.3. delete_counter(int)
+              2.3.4. ping_from(string)
 
         2.4. Functions
 
-              2.4.1. is_alive(destination)
+              2.4.1. ka_is_alive(destination)
+              2.4.2. ka_add_destination(sip_uri, owner)
+              2.4.3. ka_del_destination(sip_uri, owner)
+
+        2.5. RPC Commands
+
+              2.5.1. keepalive.list
+              2.5.2. keepalive.add
+              2.5.3. keepalive.del
+              2.5.4. keepalive.get
+              2.5.5. keepalive.flush
 
 1. Overview
 
@@ -84,10 +125,22 @@ Chapter 1. Admin Guide
 
         2.3.1. ping_interval (integer)
         2.3.2. destination (string)
+        2.3.3. delete_counter(int)
+        2.3.4. ping_from(string)
 
    2.4. Functions
 
-        2.4.1. is_alive(destination)
+        2.4.1. ka_is_alive(destination)
+        2.4.2. ka_add_destination(sip_uri, owner)
+        2.4.3. ka_del_destination(sip_uri, owner)
+
+   2.5. RPC Commands
+
+        2.5.1. keepalive.list
+        2.5.2. keepalive.add
+        2.5.3. keepalive.del
+        2.5.4. keepalive.get
+        2.5.5. keepalive.flush
 
 2.1. Kamailio Modules
 
@@ -123,9 +176,33 @@ modparam("keepalive", "destination", "192.168.10.20")
 modparam("keepalive", "destination", "sip.provider.com")
 ...
 
+2.3.3. delete_counter(int)
+
+   Unsuccesful attemps increase delete_counter. After passing it,
+   keepalive module doesn't try to send options requests. Ignored if it's
+   set to 0.
+
+   Default value is 5 .
+
+   Example 1.3. Set delete_counter parameter
+...
+modparam("keepalive", "delete_counter", "5")
+...
+
+2.3.4. ping_from(string)
+
+   Sets from header's uri.
+
+   Default value is "sip:keepalive@kamailio.org" .
+
+   Example 1.4. Set ping_from parameter
+...
+modparam("keepalive", "ping_from", "sip:keepalive@kamailio.org")
+...
+
 2.4. Functions
 
-2.4.1.  is_alive(destination)
+2.4.1.  ka_is_alive(destination)
 
    Get destination status.
 
@@ -138,12 +215,128 @@ modparam("keepalive", "destination", "sip.provider.com")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. is_alive() usage
+   Example 1.5. ka_is_alive() usage
 ...
-if(is_alive("192.168.10.20") == 1) {
+if(ka_is_alive("192.168.10.20") == 1) {
   // do stuff
 };
 ...
+
+2.4.2.  ka_add_destination(sip_uri, owner)
+
+   Adds SIP URI in the memory destinations list to perform keep alive to
+   it.
+
+   Meaning of the parameters:
+     * sip_uri (string) - address of destination to monitor. Valid format
+       is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
+       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       'port' is optional (using default standard port 5060 for sip and
+       5061 for sips)
+     * owner (string) - module name âowningâ the destination (for
+       informational purpose)
+
+   Returned value:
+     * 1 - successful
+     * -1 - on error
+
+   This function can be used from
+   REQUEST_ROUTE,BRANCH_ROUTE,ONREPLY_ROUTE.
+
+   Example 1.6. ka_add_destination(sip_uri, ownder) usage
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_add_destination("$avp(duri3)", "config");
+ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
+...
+
+2.4.3.  ka_del_destination(sip_uri, owner)
+
+   Deletes the SIP URI from the memory destinations list used for
+   monitoring.
+
+   Meaning of the parameters:
+     * sip_uri (string) - address of monitored destination. Valid format
+       is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
+       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       'port' is optional (using default standard port 5060 for sip and
+       5061 for sips)
+     * owner (string) - module name âowningâ the destination (for
+       informational purpose)
+
+   Returned value:
+     * 1 - successful
+     * -1 - on error
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. ka_del_destination(sip_uri, owner) usage
+...
+$avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
+$avp(duri2)="sip:192.168.1.11:5061";
+$avp(duri3)="sip:192.168.1.12"
+ka_del_destination("$avp(duri3)", "config");
+ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
+...
+
+2.5. RPC Commands
+
+2.5.1. keepalive.list
+
+   Lists destinations in memory.
+
+   Name: keepalive.list
+
+   Parameters: none
+
+   Example 1.8. keepalive.list RPC example
+                         keepalive.list
+
+2.5.2. keepalive.add
+
+   Adds destination in memory.
+
+   Name: keepalive.add
+
+   Parameters: sip_uri listname
+
+   Example 1.9. keepalive.add RPC example
+                         keepalive.add sip:username@domain listname
+
+2.5.3. keepalive.del
+
+   Deletes destination in memory.
+
+   Name: keepalive.del
+
+   Parameters: sip_uri listname
+
+   Example 1.10. keepalive.del RPC example
+                         keepalive.del sip:username@domain listname
+
+2.5.4. keepalive.get
+
+   Gets destination in memory.
+
+   Name: keepalive.get
+
+   Parameters: sip_uri listname
+
+   Example 1.11. keepalive.get RPC example
+                         keepalive.get sip:username@domain listname
+
+2.5.5. keepalive.flush
+
+   Deletes all destinations in memory.
+
+   Name: keepalive.flush
+
+   Parameters:
+
+   Example 1.12. keepalive.flush RPC example
+                         keepalive.flush
 
 Chapter 2. Developer Guide
 
@@ -151,7 +344,9 @@ Chapter 2. Developer Guide
 
    1. Available Functions
 
-        1.1. add_destination(uri, owner, flags, [callback, [user_attr]])
+        1.1. add_destination(uri, owner, flags, ping_interval,
+                [statechanged_clb, response_clb, [user_attr]])
+
         1.2. Examples
 
    The KeepAlive module provides an internal API to be used by other
@@ -163,10 +358,13 @@ Chapter 2. Developer Guide
 
 1. Available Functions
 
-   1.1. add_destination(uri, owner, flags, [callback, [user_attr]])
+   1.1. add_destination(uri, owner, flags, ping_interval,
+          [statechanged_clb, response_clb, [user_attr]])
+
    1.2. Examples
 
-1.1.  add_destination(uri, owner, flags, [callback, [user_attr]])
+1.1.  add_destination(uri, owner, flags, ping_interval, [statechanged_clb,
+response_clb, [user_attr]])
 
    This function registers a new destination to monitor. Monitoring of the
    destination starts as soon as it returns with success (0 value).
@@ -181,7 +379,9 @@ Chapter 2. Developer Guide
      * owner (string) - module name “owning” the destination (for
        information purpose)
      * flags (integer) - destination flags (unused for now, use 0 value)
-     * callback (ka_statechanged_f, optional) - callback function,
+     * ping_interval (integer) - Pinging interval in seconds for this
+       destination
+     * statechanged_clb (ka_statechanged_f, optional) - callback function,
        executed on destination's state change.
        The callback function is of type void (*ka_statechanged_f)(str
        *uri, int state, void *user_attr);. Use NULL to set no callback.
@@ -190,9 +390,17 @@ Chapter 2. Developer Guide
             waiting first ping replies or timeout)
           + 1 - destination is UP
           + 2 - destination is DOWN
-     * user_attr (void * pointer, optional) - If callback function is
-       setup, this parameter will be forwarded to it, as last parameter.
-       Use NULL to set no user_attr parameter.
+     * response_clb (ka_response_f, optional) - callback function,
+       executed on destination's response provided.
+       The callback function is of type void (*ka_response_f)(str *uri,
+       struct tmcb_params *ps, void *user_attr);. Use NULL to set no
+       callback.
+       ps is a pack structure with all params passed to callback function.
+       Defined in t_hooks.h
+     * user_attr (void * pointer, optional) - If any callback function is
+       setup, this parameter will be forwarded to it (or both callbacks in
+       both are defined), as last parameter. Use NULL to set no user_attr
+       parameter.
 
    Returned values:
      * 0 if ok
@@ -215,17 +423,18 @@ if (bind_keepalive( &ka_api ) != 0) {
 }
 ...
 ...
-/* callback function */
-void my_callback(str uri, int state, void *user_attr) {
-
+/* callback function (on state changed) */
+void my_state_changed_clb(str uri, int state, void *user_attr) {
         printf("%.*s new state is: %d\n", uri.len, uri.str, state)
 }
 
-/* register a new destination */
-str dest  = str_init("sip:192.168.10.21:5060");
-str owner = str_init("mymodule");
+/* callback function (on each response received) */
+void my_response_clb(str *uri, struct tmcb_params *ps, void *user_attr) {
+        printf("response [%d] from %.*s\n", ps->code, uri.len, uri.str)
+}
 
-if (ka_api.add_destination(dest, owner, 0, my_callback, NULL) != 0) {
+if (ka_api.add_destination(dest, owner, 0, 60, my_state_changed_clb,
+                                my_response_clb, NULL) != 0) {
     LM_ERR("can't add destination\n");
     goto error;
 }

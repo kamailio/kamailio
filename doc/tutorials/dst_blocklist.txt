@@ -1,0 +1,69 @@
+Destination blocklist Overview
+------------------------------
+
+ The destination blocklist (dst_blocklist) is used to try to mark bad
+ destinations and avoid possible future expensive send operation to them.
+ A destination is added to the blocklist when an attempt to send to it fails (e.g.
+ timeout while trying to send or connect on TCP), or when a SIP timeout occurs
+ while trying to forward statefully an INVITE (using tm) and the remote side
+ doesn't send back any response.
+
+ The blocklist (if enabled) is checked before any send attempt.
+
+Drawbacks
+---------
+
+ Using the destination blocklist will cause some performance degradation,
+ especially on multi cpu machines. If you don't need it you can easily
+ disable it, either in sip-router's config or at compile time. Disabling it at
+ compile time is slightly better (but not in a "measurable" way) than
+ disabling it at runtime, from the config file.
+
+ Whether the destination blocklist is a good solution for you depends a lot
+ on the setup. In general it is better to turn it on when:
+   - sending to clients that don't respond is expensive (e.g. lots of clients
+     use tcp and they have the habit of silently discarding tcp traffic from time
+     to time)
+   - stateful forwarding is used (tm) and lower memory usage is desired
+     (a transaction will fail immediately if the destination is already 
+     blocklisted by a previous transaction to the same destination that failed
+     due to timeout)
+   - faster dns failover is desired, especially when stateful forwarding (tm)
+     and UDP are used
+   - better chances of DOS attack survival are important
+
+Config Variables
+----------------
+
+ use_dst_blocklist = on | off (default off) - enable the destination blocklist:
+  If on each failed send attempt will cause the destination to be blocklisted.
+  Before any send operation this blocklist will be checked and if a match is found the
+  send is no longer attempted (an error is returned immediately).
+  Note: using the blocklist incurs a small performance penalty.
+
+ dst_blocklist_mem = size in Kb (default 250 Kb) - maximum
+  shared memory amount used for keeping the blocklisted destinations.
+
+ dst_blocklist_expire = time in s (default 60 s) - how long time a 
+  blocklisted destination will be kept in the blocklist (w/o any update).
+
+ dst_blocklist_gc_interval = time in s (default 60 s) - how often the 
+  garbage collection will run (eliminating old, expired entries).
+
+ dst_blocklist_init = on | off (default on) - if off, the blocklist
+  is not initialized at startup and cannot be enabled at runtime,
+  which saves some memory.
+
+Compile Time Options
+--------------------
+
+ USE_DST_BLOCKLIST - if defined the blocklist support will be compiled-in
+  (default).
+
+
+ Note: To remove a compile time option,  edit the file Makefile.defs and remove
+    USE_DST_BLOCKLIST from the list named DEFS. 
+    To add a compile time option, just add it to the make command line,
+     e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
+    or for a permanent solution, edit Makefile.defs and add it to DEFS 
+    (don't forget to prefix it with -D).

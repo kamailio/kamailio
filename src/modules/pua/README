@@ -193,7 +193,7 @@ modparam("pua", "hash_size", 11)
 
    Example 1.2. Set db_url parameter
 ...
-modparam("pua", "db_url" "dbdriver://username:password@dbhost/dbname")
+modparam("pua", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
 3.3. db_table (str)

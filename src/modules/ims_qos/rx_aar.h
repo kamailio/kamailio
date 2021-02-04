@@ -54,8 +54,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/locking.h"
 
-struct cdp_binds cdpb;
-cdp_avp_bind_t *cdp_avp;
+extern struct cdp_binds cdpb;
+extern cdp_avp_bind_t *cdp_avp;
 
 /*this is the parcel to pass for CDP async for AAR*/
 typedef struct saved_transaction {
@@ -72,6 +72,7 @@ typedef struct saved_transaction {
         str ftag;
         str ttag;
 	unsigned int aar_update;
+        struct dlg_cell* dlg;
 } saved_transaction_t;
 
 typedef struct saved_transaction_local {

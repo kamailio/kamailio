@@ -219,13 +219,14 @@ static void tls_options(rpc_t* rpc, void* c)
 {
 	void* handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSdSSdddddddddddddd",
+	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddddd",
 		"force_run",	cfg_get(tls, tls_cfg, force_run),
 		"method",		&cfg_get(tls, tls_cfg, method),
 		"verify_certificate", cfg_get(tls, tls_cfg, verify_cert),
 
 		"verify_depth",		cfg_get(tls, tls_cfg, verify_depth),
 		"require_certificate",	cfg_get(tls, tls_cfg, require_cert),
+		"verify_client",	&cfg_get(tls, tls_cfg, verify_client),
 		"private_key",		&cfg_get(tls, tls_cfg, private_key),
 		"ca_list",			&cfg_get(tls, tls_cfg, ca_list),
 		"certificate",		&cfg_get(tls, tls_cfg, certificate),

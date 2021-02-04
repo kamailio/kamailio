@@ -20,9 +20,9 @@
  *
  */
 
-#include "../../core/select.h"
-#include "../../core/select_buf.h"
+#include "../../core/ut.h"
 
+#include "cnxcc_select.h"
 #include "cnxcc_mod.h"
 
 extern data_t _data;

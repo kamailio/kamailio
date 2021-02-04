@@ -114,7 +114,7 @@ typedef struct dlg_cell
 	unsigned int         dflags;		/*!< internal dialog memory flags */
 	unsigned int         iflags;		/*!< internal dialog persistent flags */
 	unsigned int         sflags;		/*!< script dialog persistent flags */
-	unsigned int         toroute;		/*!< index of route that is executed on timeout */
+	int                  toroute;		/*!< index of route that is executed on timeout */
 	str                  toroute_name;	/*!< name of route that is executed on timeout */
 	unsigned int         from_rr_nb;	/*!< information from record routing */
 	struct dlg_tl        tl;			/*!< dialog timer list */
@@ -200,6 +200,21 @@ extern dlg_table_t *d_table;
 				(_entry)->rec_lock_level--; \
 			} \
 		} while(0)
+
+/*!
+ * \brief Set a dialog lock (re-entrant)
+ * \param _dlg dialog cell
+ */
+#define dlg_cell_lock(_dlg) \
+	dlg_lock(d_table, &(d_table->entries[(_dlg)->h_entry]))
+
+/*!
+ * \brief Set a dialog lock (re-entrant)
+ * \param _dlg dialog cell
+ */
+#define dlg_cell_unlock(_dlg) \
+	dlg_unlock(d_table, &(d_table->entries[(_dlg)->h_entry]))
+
 
 /*!
  * \brief Unlink a dialog from the list without locking
@@ -313,12 +328,35 @@ int dlg_set_toroute(dlg_cell_t *dlg, str *route);
  * \brief Lookup a dialog in the global list
  *
  * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again iff a dialog has been found.
+ * \param h_entry number of the hash table entry
+ * \param h_id id of the hash table entry
+ * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t *dlg_lookup_mode(unsigned int h_entry, unsigned int h_id, int lmode);
+
+/*!
+ * \brief Lookup a dialog in the global list
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
  * the reference counter by one again if a dialog has been found.
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
  * \return dialog structure on success, NULL on failure
  */
 dlg_cell_t* dlg_lookup(unsigned int h_entry, unsigned int h_id);
+
+/*!
+ * \brief Search a dialog in the global list by iuid
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * \param diuid internal unique id per dialog
+ * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode);
 
 /*!
  * \brief Search and return dialog in the global list by iuid

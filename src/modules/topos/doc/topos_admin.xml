@@ -16,20 +16,23 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module offers topology hiding by stripping the SIP routing
-		headers that show topology details.
+		This module offers topology hiding for INVITE-based dialogs, by stripping
+		the SIP routing headers that show topology details .
 		The script interpreter gets the SIP messages with full content,
 		so all existing functionality is preserved.
 	</para>
 	<para>
 		The module is transparent for the configuration writer. It only needs to be
-		loaded (tune the parameters if needed).
+		loaded (tune the module parameters if needed).
 	</para>
 	<para>
 		It also works for SIP MESSAGE or other requests that do not create
-		a call dialog -- record_route() must be used for them as well, the
+		a dialog -- record_route() must be used for them as well, the
 		headers are not going to be in the messages sent to the network, they
 		are needed to know local addresses used to communicate with each side.
+		At this moment it is not designed to work for presence (SUBSCRIBE-based)
+		dialogs. The REGISTER and PUBLISH requests are skipped from processing
+		by this module, expected to be terminated on a local SIP server.
 	</para>
 	</section>
 	<section>
@@ -265,8 +268,8 @@ end
 		<title><varname>event_mode</varname> (int)</title>
 		<para>
 			Control what event_route blocks to be executed. It is a bitmask of:
-			1 - execute event_route[topos:outgoing]; 2 - execute
-			event_route[topos:sending].
+			1 - execute event_route[topos:msg-outgoing]; 2 - execute
+			event_route[topos:msg-sending].
 		</para>
 		<para>
 		<emphasis>
@@ -303,6 +306,129 @@ modparam("topos", "event_mode", 2)
 		<programlisting format="linespecific">
 ...
 modparam("topos", "contact_host", "proxy.domain.com")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.contact_mode">
+		<title><varname>contact_mode</varname> (int)</title>
+		<para>
+		Control the mode where the key to lookup the message data from
+		the database or redis server is stored. The default is to use
+		the Contact user (0), alternatively a Contact URI parameter
+		can be used (1) with values from the SIP message, or from AVP
+		variables (2). This can be useful for interoperating which
+		gateways that need a certain user part in the Contact URI.
+		</para>
+		<para>In mode (1) the a-side contact user is taken from the
+		request URI and the b-side contact user from the Contact header
+		of the processed initial SIP request.
+		</para>
+		<para>If you use the mode (2), you need to configure the
+		<emphasis>a_contact_avp</emphasis> and <emphasis>b_contact_avp</emphasis>
+		parameter. Furthermore you need to assign values to them during
+		the processing of the initial SIP request.
+		</para>
+		<para>
+		The name of the Contact URI parameter can be customized with
+		the <emphasis>cparam_name</emphasis> parameter.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 - use the Contact user
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "contact_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.cparam_name">
+		<title><varname>cparam_name</varname> (int)</title>
+		<para>
+		Name of the Contact URI parameter to store the database or
+		redis server key for message lookup.
+		</para>
+		<para>
+		This parameter is only used when the <emphasis>contact_mode</emphasis>
+		parameter is set to <emphasis>1</emphasis> or <emphasis>2</emphasis>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>tps</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cparam_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "cparam_name", "xyz")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.a_contact_avp">
+		<title><varname>a_contact_avp</varname> (str)</title>
+		<para>
+			Name of the AVP parameter to evaluate for the A-side
+			Contact Header user part. This parameter is only
+			necessary in contact_mode (2).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>a_contact_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "a_contact_avp", "$avp(tps-act)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.b_contact_avp">
+		<title><varname>b_contact_avp</varname> (str)</title>
+		<para>
+			Name of the AVP parameter to evaluate for the B-side
+			Contact Header user part. This parameter is only
+			necessary in contact_mode (2).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>b_contact_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "b_contact_avp", "$avp(tps-bct)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.rr_update">
+		<title><varname>rr_update</varname> (int)</title>
+		<para>
+			If set to 1, topos module will track and update record
+			route changes on re-invite.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not update record route changes within dialog).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rr_update</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "rr_update", 1)
 ...
 </programlisting>
 		</example>

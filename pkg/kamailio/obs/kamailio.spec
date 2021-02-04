@@ -1,137 +1,13 @@
 %define name    kamailio
-%define ver 5.2.0
+%define ver 5.4.0
 %define rel dev1.0%{dist}
 
-%if 0%{?fedora} == 27
+%if 0%{?fedora}
 %define dist_name fedora
 %define dist_version %{?fedora}
 %bcond_without cnxcc
 %bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 28
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 29
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 30
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 31
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
-%if 0%{?fedora} == 99
-%define dist_name fedora
-%define dist_version %{?fedora}
-%bcond_without cnxcc
-%bcond_with dnssec
+%bcond_without evapi
 %bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
@@ -157,6 +33,7 @@
 %define dist_version %{?centos}
 %bcond_with cnxcc
 %bcond_without dnssec
+%bcond_without evapi
 %bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
@@ -183,6 +60,7 @@
 %define dist .el7.centos
 %bcond_without cnxcc
 %bcond_with dnssec
+%bcond_without evapi
 %bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
@@ -209,7 +87,8 @@
 %define dist .el8.centos
 %bcond_without cnxcc
 %bcond_with dnssec
-%bcond_with geoip
+%bcond_without evapi
+%bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -219,7 +98,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_with phonenum
+%bcond_without phonenum
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -234,6 +113,7 @@
 %define dist_version %{?suse_version}
 %bcond_without cnxcc
 %bcond_with dnssec
+%bcond_with evapi
 %bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
@@ -259,6 +139,7 @@
 %define dist_version %{?rhel}
 %bcond_with cnxcc
 %bcond_without dnssec
+%bcond_without evapi
 %bcond_with geoip
 %bcond_with http_async_client
 %bcond_with ims
@@ -284,6 +165,7 @@
 %define dist_version %{?rhel}
 %bcond_without cnxcc
 %bcond_with dnssec
+%bcond_without evapi
 %bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
@@ -309,7 +191,8 @@
 %define dist_version %{?rhel}
 %bcond_without cnxcc
 %bcond_with dnssec
-%bcond_with geoip
+%bcond_without evapi
+%bcond_without geoip
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -319,7 +202,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without perl
-%bcond_with phonenum
+%bcond_without phonenum
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -355,11 +238,11 @@
 %endif
 
 
-Summary:    Kamailio (former OpenSER) - the Open Source SIP Server
+Summary:    Kamailio - the Open Source SIP Server
 Name:       %name
 Version:    %ver
 Release:    %rel
-Packager:   Peter Dunkley <peter@dunkley.me.uk>
+Packager:   Sergey Safarov <s.safarov@gmail.com>
 License:    GPL-2.0
 Group:      %{PKGGROUP}
 Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
@@ -388,11 +271,12 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
-BuildRequires:  bison, flex
+BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig
 %if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
 %endif
+
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
 BuildRequires:  shadow
@@ -570,6 +454,21 @@ BuildRequires:  dnssec-tools-libs-devel
 
 %description    dnssec
 DNSSEC support for Kamailio.
+%endif
+
+
+%if %{with evapi}
+%package    evapi
+Summary:    Module can be used to create an event message flow from Kamailio to any application that can connect to a TCP socket
+Group:      %{PKGGROUP}
+Requires:   libev, kamailio = %ver
+BuildRequires:  libev-devel
+
+%description    evapi
+The remote application can also issue messages received by Kamailio.
+There is no protocol definition, it is all up to the author of the routing script.
+Events can be generated for any event in Kamailio. For 3rd party transaction control, a transaction can be automatically
+suspended when sending the event, to be resumed at a later point, maybe triggered by an incoming message on the event socket.
 %endif
 
 
@@ -1215,6 +1114,10 @@ UUID module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
+# python3 does not exist in RHEL 6 and similar dist.
+%if 0%{?rhel} == 6
+sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
+%endif
 
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
@@ -1241,6 +1144,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with dnssec}
     kdnssec \
 %endif
+%if %{with evapi}
+    kev \
+%endif
 %if %{with geoip}
     kgeoip \
 %endif
@@ -1248,6 +1154,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with http_async_client}
     khttp_async \
 %endif
+    kxhttp_prom \
 %if %{with ims}
     kims \
 %endif
@@ -1261,10 +1168,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with kazoo}
     kkazoo \
 %endif
-%if %{with rabbitmq}
-    krabbitmq \
-%endif
-    kldap 
+    kldap \
 %if %{with lua}
     klua \
 %endif
@@ -1287,6 +1191,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kpostgres kpresence kpython \
 %if %{with python3}
     kpython3 \
+%endif
+%if %{with rabbitmq}
+    krabbitmq \
 %endif
     kradius \
 %if %{with redis}
@@ -1329,6 +1236,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with dnssec}
     kdnssec \
 %endif
+%if %{with evapi}
+    kev \
+%endif
 %if %{with geoip}
     kgeoip \
 %endif
@@ -1336,6 +1246,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with http_async_client}
     khttp_async \
 %endif
+    kxhttp_prom \
 %if %{with ims}
     kims \
 %endif
@@ -1348,9 +1259,6 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
-%endif
-%if %{with rabbitmq}
-    krabbitmq \
 %endif
     kldap \
 %if %{with lua}
@@ -1375,6 +1283,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kpostgres kpresence kpython \
 %if %{with python3}
     kpython3 \
+%endif
+%if %{with rabbitmq}
+    krabbitmq \
 %endif
     kradius \
 %if %{with redis}
@@ -1518,6 +1429,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.dialog
 %doc %{_docdir}/kamailio/modules/README.dispatcher
 %doc %{_docdir}/kamailio/modules/README.diversion
+%doc %{_docdir}/kamailio/modules/README.dlgs
 %doc %{_docdir}/kamailio/modules/README.dmq
 %doc %{_docdir}/kamailio/modules/README.domain
 %doc %{_docdir}/kamailio/modules/README.domainpolicy
@@ -1579,6 +1491,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sst
 %doc %{_docdir}/kamailio/modules/README.statistics
 %doc %{_docdir}/kamailio/modules/README.stun
+%doc %{_docdir}/kamailio/modules/README.sworker
 %doc %{_docdir}/kamailio/modules/README.textops
 %doc %{_docdir}/kamailio/modules/README.textopsx
 %doc %{_docdir}/kamailio/modules/README.timer
@@ -1594,7 +1507,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.uid_gflags
 %doc %{_docdir}/kamailio/modules/README.uid_uri_db
 %doc %{_docdir}/kamailio/modules/README.uri_db
-%doc %{_docdir}/kamailio/modules/README.userblacklist
+%doc %{_docdir}/kamailio/modules/README.userblocklist
 %doc %{_docdir}/kamailio/modules/README.usrloc
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_prom
@@ -1643,8 +1556,6 @@ fi
 %{_libdir}/kamailio/libsrdb1.so.1.0
 %{_libdir}/kamailio/libsrdb2.so.1
 %{_libdir}/kamailio/libsrdb2.so.1.0
-%{_libdir}/kamailio/libsrutils.so.1
-%{_libdir}/kamailio/libsrutils.so.1.0
 %{_libdir}/kamailio/libtrie.so.1
 %{_libdir}/kamailio/libtrie.so.1.0
 
@@ -1676,6 +1587,7 @@ fi
 %{_libdir}/kamailio/modules/dialog.so
 %{_libdir}/kamailio/modules/dispatcher.so
 %{_libdir}/kamailio/modules/diversion.so
+%{_libdir}/kamailio/modules/dlgs.so
 %{_libdir}/kamailio/modules/dmq.so
 %{_libdir}/kamailio/modules/domain.so
 %{_libdir}/kamailio/modules/domainpolicy.so
@@ -1737,6 +1649,7 @@ fi
 %{_libdir}/kamailio/modules/sst.so
 %{_libdir}/kamailio/modules/statistics.so
 %{_libdir}/kamailio/modules/stun.so
+%{_libdir}/kamailio/modules/sworker.so
 %{_libdir}/kamailio/modules/textops.so
 %{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/timer.so
@@ -1752,7 +1665,7 @@ fi
 %{_libdir}/kamailio/modules/uid_gflags.so
 %{_libdir}/kamailio/modules/uid_uri_db.so
 %{_libdir}/kamailio/modules/uri_db.so
-%{_libdir}/kamailio/modules/userblacklist.so
+%{_libdir}/kamailio/modules/userblocklist.so
 %{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_prom.so
@@ -1877,6 +1790,14 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.dnssec
 %{_libdir}/kamailio/modules/dnssec.so
+%endif
+
+
+%if %{with evapi}
+%files      evapi
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.evapi
+%{_libdir}/kamailio/modules/evapi.so
 %endif
 
 

@@ -208,12 +208,12 @@ int parse_tw_append( modparam_t type, void* val)
 	/* new tw_append structure */
 	app = (struct tw_append*)pkg_malloc( sizeof(struct tw_append) );
 	if (app==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	app->name.s = (char*)pkg_malloc( foo.len+1 );
 	if (app->name.s==0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy( app->name.s, foo.s, foo.len);
@@ -234,7 +234,7 @@ int parse_tw_append( modparam_t type, void* val)
 		/* new hdr_avp structure */
 		ha = (struct hdr_avp*)pkg_malloc( sizeof(struct hdr_avp) );
 		if (ha==0) {
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset( ha, 0, sizeof(struct hdr_avp));
@@ -250,7 +250,7 @@ int parse_tw_append( modparam_t type, void* val)
 			/* set the title */
 			ha->title.s = (char*)pkg_malloc( foo.len+1 );
 			if (ha->title.s==0) {
-				LM_ERR("no more pkg memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy( ha->title.s, foo.s, foo.len);
@@ -297,7 +297,7 @@ int parse_tw_append( modparam_t type, void* val)
 				/* string name */
 				ha->sval.s = (char*)pkg_malloc(avp_name.s.len+1);
 				if (ha->sval.s==0) {
-					LM_ERR("no more pkg mem\n");
+					PKG_MEM_ERROR;
 					goto error;
 				}
 				memcpy( ha->sval.s, avp_name.s.s, avp_name.s.len);
@@ -313,7 +313,7 @@ int parse_tw_append( modparam_t type, void* val)
 					foo.s=int2str((unsigned long)ha->ival, &foo.len);
 					ha->title.s = (char*)pkg_malloc( n+1 );
 					if (ha->title.s==0) {
-						LM_ERR("no more pkg memory\n");
+						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy( ha->title.s, foo.s, foo.len);
@@ -336,7 +336,7 @@ int parse_tw_append( modparam_t type, void* val)
 				/* duplicate hdr name */
 				ha->sval.s = (char*)pkg_malloc(foo.len+1);
 				if (ha->sval.s==0) {
-					LM_ERR("no more pkg mem\n");
+					PKG_MEM_ERROR;
 					goto error;
 				}
 				memcpy( ha->sval.s, foo.s, foo.len);
@@ -413,7 +413,7 @@ int fixup_t_write( void** param, int param_no)
 	if (param_no==2) {
 		twi = (struct tw_info*)pkg_malloc( sizeof(struct tw_info) );
 		if (twi==0) {
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset( twi, 0 , sizeof(struct tw_info));

@@ -206,7 +206,7 @@ static int init_xhttp_pi_reply(pi_ctx_t *ctx)
 	reply->reason = XHTTP_PI_REASON_OK;
 	reply->buf.s = pkg_malloc(buf_size);
 	if (!reply->buf.s) {
-		LM_ERR("oom\n");
+		PKG_MEM_ERROR;
 		pi_fault(ctx, 500, "Internal Server Error (No memory left)");
 		return -1;
 	}
@@ -340,7 +340,7 @@ static int ki_xhttp_pi_dispatch(sip_msg_t* msg)
 			/* Unescape args */
 			ctx.arg.s = pkg_malloc((arg.len)*sizeof(char));
 			if (ctx.arg.s==NULL){
-				LM_ERR("oom\n");
+				PKG_MEM_ERROR;
 				pi_fault(&ctx, 500, "Internal Server Error (oom)");
 				goto send_reply;
 			}

@@ -268,6 +268,7 @@ int add_dst(rt_data_t *r,
 #define GWABUF_MAX_SIZE 512
 	char gwabuf[GWABUF_MAX_SIZE];
 	str gwas;
+	unsigned short port;
 
 	if(NULL == r || NULL == ip) {
 		LM_ERR("invalid parametres\n");
@@ -331,7 +332,8 @@ int add_dst(rt_data_t *r,
 	}
 	/* note we discard the port discovered by the resolve function - we are
 	interested only in the port that was actually configured. */
-	if((he = sip_resolvehost(&uri.host, NULL, (char *)(void *)&uri.proto))
+	port = 0;
+	if((he = sip_resolvehost(&uri.host, &port, (char *)(void *)&uri.proto))
 			== 0) {
 		if(dr_force_dns) {
 			LM_ERR("cannot resolve <%.*s>\n", uri.host.len, uri.host.s);

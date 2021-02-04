@@ -46,6 +46,7 @@ struct cfg_group_tls {
 	int verify_cert;
 	int verify_depth;
 	int require_cert;
+	str verify_client;
 	str private_key;
 	str ca_list;
 	str crl;

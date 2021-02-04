@@ -9,7 +9,7 @@ Edited by
 
 Wolfgang Kampichler
 
-   Copyright © 20018-2019 Wolfgang Kampichler
+   Copyright © 2018-2020 Wolfgang Kampichler
      __________________________________________________________________
 
    Table of Contents
@@ -23,6 +23,13 @@ Wolfgang Kampichler
               2.2. External Libraries or Applications
 
         3. Parameters
+
+              3.1. exact_type (int)
+              3.2. response_time (int)
+              3.3. location_type (string)
+              3.4. geoheader_type (int)
+              3.5. geoheader_order (int)
+
         4. Functions
 
               4.1. lost_held_query(con, [id,] pidf-lo, url, error)
@@ -33,8 +40,13 @@ Wolfgang Kampichler
 
    List of Examples
 
-   1.1. lost_held_query() usage
-   1.2. lost() usage
+   1.1. Set exact_type parameter
+   1.2. Set response_time parameter
+   1.3. Set location_type parameter
+   1.4. Set geoheader_type parameter
+   1.5. Set geoheader_order parameter
+   1.6. lost_held_query() usage
+   1.7. lost() usage
 
 Chapter 1. Admin Guide
 
@@ -47,6 +59,13 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. Parameters
+
+        3.1. exact_type (int)
+        3.2. response_time (int)
+        3.3. location_type (string)
+        3.4. geoheader_type (int)
+        3.5. geoheader_order (int)
+
    4. Functions
 
         4.1. lost_held_query(con, [id,] pidf-lo, url, error)
@@ -60,9 +79,9 @@ Chapter 1. Admin Guide
    SIP requests may be forwarded based on a location provided with the
    request or retrieved from a specific location server using an identity
    (HELD). This module implements the basic functionality to get or parse
-   location information and to query a mapping service (LOST) in order to
-   get next hop based on location and service urn either specified or
-   provided with the request.
+   location information (civic and geodetic) and to query a mapping
+   service (LOST) in order to get next hop based on location and service
+   urn either specified or provided with the request.
 
    This module implements protocol functions that use the http_client api
    to fetch data from external LOST and HELD servers. The module is using
@@ -81,15 +100,15 @@ Chapter 1. Admin Guide
 
    The function lost_query allows Kamailio to assemble a LOST findService
    request as defined in RFC5222 (https://tools.ietf.org/html/rfc5255) to
-   query routing information for a given (geodetic) location and a service
-   URN. Both, PIDF-LO and service URN may be provided as function
-   parameter, or are taken from the request message if applicable. The
-   findServiceResponse is parsed and represented asdisplay name and SIP
-   URI typically used as next hop in a Route header.
+   query routing information for a given (geodetic or civic) location and
+   a service URN. Both, PIDF-LO and service URN may be provided as
+   function parameter, or are taken from the request message if
+   applicable. The findServiceResponse is parsed and represented as
+   display name and SIP URI typically used as next hop in a Route header.
 
    The http_client module use the CURL library setting up connections. The
-   CURL library by default use the system configured DNS resolvers, not
-   the Kamailio resolver.
+   CURL library by default use the system configured DNS resolver, not the
+   Kamailio resolver.
 
    The module is limited to using HTTP and HTTPS protocols.
 
@@ -115,8 +134,95 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   This module has no specific paramater but uses http_client therfore
+   3.1. exact_type (int)
+   3.2. response_time (int)
+   3.3. location_type (string)
+   3.4. geoheader_type (int)
+   3.5. geoheader_order (int)
+
+   Besides parameters listed, this module uses http_client therefore
    according parameters may apply.
+
+3.1. exact_type (int)
+
+   Indicates to the location server that the contents of the
+   "location_type" parameter must be strictly followed. Values are 0
+   (false) or 1 (true).
+
+   Default: 0 (false)
+
+   Example 1.1. Set exact_type parameter
+    ...
+    modparam("lost", "exact_type", 1)
+    ...
+
+3.2. response_time (int)
+
+   A time value indicating to the location server how long the client is
+   prepared to wait for a response.
+
+   The value is expressed as a non-negative integer in units of
+   milliseconds. Note: The time value is indicative only.
+
+   Default: 0 (response time not set)
+
+   Example 1.2. Set response_time parameter
+    ...
+    modparam("lost", "response_time", 5000)
+    ...
+
+3.3. location_type (string)
+
+   The "locationType" element contains a list of types that are requested.
+   Values are "any", "geodetic", "civic" or "locationURI" and
+   combinations.
+     * any - returns location information in all forms available
+     * geodetic - returns a location by value in the form of a geodetic
+       location
+     * civic - returns a location by value in the form of a civic address
+     * locationURI - returns a set of location URIs (location by
+       reference)
+
+   Default: "geodetic locationURI".
+
+   Example 1.3. Set location_type parameter
+    ...
+    modparam("lost", "location_type, "civic geodetic locationURI")
+    ...
+
+3.4. geoheader_type (int)
+
+   A Geolocation header may include a list of locationValues pointing to
+   either a Presence Information Data Format Location Object (PIDF-LO) in
+   the SIP body using a content-indirection (cid:) URI per RFC4483
+   (https://tools.ietf.org/html/rfc4483), or an http(s) URI pointing to an
+   external source. This parameter supports filtering of the following
+   types:
+     * 0 (any) - any URI (first or last)
+     * 1 (cid) - cid URI (aka Location-by-Value)
+     * 2 (http) - http URI (aka Location-by-Reference)
+     * 3 (https) - https URI (aka Location-by-Reference)
+
+   Default: 0 (any)
+
+   Example 1.4. Set geoheader_type parameter
+    ...
+    modparam("lost", "geoheader_type", 1)
+    ...
+
+3.5. geoheader_order (int)
+
+   A Geolocation header may include a list of locationValues. This
+   parameter sets the order of the URI used to retrieve location
+   information, either the first element of a certain type or the last.
+   Values are 0 (first) or 1 (last).
+
+   Default: 0 (first)
+
+   Example 1.5. Set geoheader_order parameter
+    ...
+    modparam("lost", "geoheader_order", 0)
+    ...
 
 4. Functions
 
@@ -128,13 +234,14 @@ Chapter 1. Admin Guide
    Sends a HELD locationRequest to a given connection. The device identity
    is either specified, or the P-A-I header value, or the From header
    value.
-     * con - the name of an existing HTTP connection, definied by a
-       httpcon modparam
+     * con - the name of an existing HTTP connection, defined by a httpcon
+       modparam
      * id - the device id used in the HELD locationRequest
      * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
      * url - the location reference returned in the HELD locationRequest
        response - this reference may be added as Geolocation header value
-       and forwarded downstream
+       and forwarded downstream. Note: to work properly, it is required to
+       include "locationURI" in the location_type parameter.
      * error - any error code returned in the HELD locationRequest
        response
 
@@ -145,7 +252,7 @@ Chapter 1. Admin Guide
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.1. lost_held_query() usage
+   Example 1.6. lost_held_query() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 ...
@@ -156,7 +263,7 @@ $var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)");
 ...
-$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)"", "$var(err)");
+$var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)\n");
 ...
@@ -167,7 +274,7 @@ r(pidf)\n");
    are either specified, or, if omitted, parsed from the message body
    (PIDF-LO) and request line (URN). Either "pidf-lo" or "urn" can be set
    to an empty string in order to be ignored.
-     * con - the name of an existing HTTP connection definied by a httpcon
+     * con - the name of an existing HTTP connection defined by a httpcon
        modparam
      * pidf-lo - the PIDF-LO used to create the LOST findService request
      * urn - the URN used to create the LOST findService request
@@ -181,7 +288,7 @@ r(pidf)\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.2. lost() usage
+   Example 1.7. lost() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 modparam("http_client", "httpcon", "lostsrv=>http://service.org/api/lost");
@@ -196,24 +303,24 @@ $var(id) = "urn:service:sos";
 $var(res) = lost_query("lostsrv", "$var(pidf)", "$var(urn)", "$var(uri)", "$var(
 name)", "$var(err)");
 xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
-var(uri)\n");
+var(name)\n");
 ...
 # LOST findService request - pidf-lo as parameter, urn taken from request line
 $var(res) = lost_query("lostsrv", "$var(pidf)", "", "$var(uri)", "$var(name)", "
 $var(err)");
 xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
-var(uri)\n");
+var(name)\n");
 ...
 # LOST findService request - urn as parameter, pidf-lo taken from message body
 $var(res) = lost_query("lostsrv", "", "$var(urn)", "$var(uri)", "$var(name)", "$
 var(err)");
 xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
-var(uri)\n");
+var(name\n");
 ...
 # LOST findService request - pidf-lo and urn taken from message
 $var(res) = lost_query("lostsrv", "$var(uri)", "$var(name)", "$var(err)");
 xlog("L_INFO", "LOST findService: Result code $var(res)\nUri: $var(uri)\nName: $
-var(uri)\n");
+var(name)\n");
 ...
 
 5. Counters
@@ -228,13 +335,20 @@ var(uri)\n");
    standard libcurl-7.19.7-52 has a memory leak. To fix this memory,
    install libcurl from city-fan repository. More details at:
    https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
-   -centos6
+   -centos6.
 
    Note: http_client_query exported by the http_client API returns by
-   default the first line of the HTTP response (query_params.oneline = 1),
-   but the lost module requires the complete response message, which
-   requires query_params.oneline set to 0. In the case lost_query is used
-   with the default http_client API, dereferencing location via HTTP
-   provided with the Geolocation header causes an error. Therefore, to
-   work properlu=y, it requires to set http_client module parameter
-   query_result to 0.
+   default the first line of the HTTP response, but the lost module
+   requires the complete response message, otherwise dereferencing
+   location via the HTTP URL provided with the Geolocation header causes
+   an error. Therefore, to work properly, it is required to set the
+   http_client module parameter query_result to 0. More details at:
+   https://www.kamailio.org/docs/modules/devel/modules/http_client.html#ht
+   tp_client.p.query_result.
+
+   Note: to test the module with a mapping service (LOST), an API key may
+   be requested under the following link (search for "GET ACCESS"):
+   https://gridgears.at/.
+
+   Note: in case modparam "geoheader_type" is set to 2 (http), the module
+   may use 3 (https) as fallback and vice versa.

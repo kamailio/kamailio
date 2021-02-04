@@ -38,6 +38,7 @@ Luis Azedo
                     4.1.4. amqp_consumer_event_subkey(str)
                     4.1.5. amqp_max_channels(str)
                     4.1.6. amqp_connection(str)
+                    4.1.7. event_callback(str)
 
               4.2. execution control
 
@@ -97,28 +98,29 @@ Luis Azedo
    1.5. Set amqp_consumer_event_subkey parameter
    1.6. Set amqp_max_channels parameter
    1.7. Set amqp_connection parameter
-   1.8. Set amqp_consumer_loop_count parameter
-   1.9. Set amqp_internal_loop_count parameter
-   1.10. Set amqp_consumer_ack_loop_count parameter
-   1.11. Set consume_messages_on_reconnect parameter
-   1.12. Set single_consumer_on_reconnect parameter
-   1.13. Set amqp_consumer_ack_timeout parameter
-   1.14. Set amqp_interprocess_timeout parameter
-   1.15. Set amqp_waitframe_timeout parameter
-   1.16. Set amqp_query_timeout parameter
-   1.17. >Set amqp_query_timeout_avp parameter
-   1.18. Set db_url parameter
-   1.19. Set presentity_table parameter
-   1.20. Set pua_mode parameter
-   1.21. kazoo_publish usage
-   1.22. kazoo_query usage
-   1.23. kazoo_subscribe usage
+   1.8. Set event_callback parameter
+   1.9. Set amqp_consumer_loop_count parameter
+   1.10. Set amqp_internal_loop_count parameter
+   1.11. Set amqp_consumer_ack_loop_count parameter
+   1.12. Set consume_messages_on_reconnect parameter
+   1.13. Set single_consumer_on_reconnect parameter
+   1.14. Set amqp_consumer_ack_timeout parameter
+   1.15. Set amqp_interprocess_timeout parameter
+   1.16. Set amqp_waitframe_timeout parameter
+   1.17. Set amqp_query_timeout parameter
+   1.18. >Set amqp_query_timeout_avp parameter
+   1.19. Set db_url parameter
+   1.20. Set presentity_table parameter
+   1.21. Set pua_mode parameter
+   1.22. kazoo_publish usage
+   1.23. kazoo_query usage
    1.24. kazoo_subscribe usage
-   1.25. kazoo_pua_publish usage
-   1.26. kazoo_encode usage
-   1.27. kazoo_json usage
-   1.28. kz.json usage
-   1.29. kz.encode usage
+   1.25. kazoo_subscribe usage
+   1.26. kazoo_pua_publish usage
+   1.27. kazoo_encode usage
+   1.28. kazoo_json usage
+   1.29. kz.json usage
+   1.30. kz.encode usage
 
 Chapter 1. Admin Guide
 
@@ -145,6 +147,7 @@ Chapter 1. Admin Guide
               4.1.4. amqp_consumer_event_subkey(str)
               4.1.5. amqp_max_channels(str)
               4.1.6. amqp_connection(str)
+              4.1.7. event_callback(str)
 
         4.2. execution control
 
@@ -317,6 +320,7 @@ event_route[kazoo:consumer-event]
         4.1.4. amqp_consumer_event_subkey(str)
         4.1.5. amqp_max_channels(str)
         4.1.6. amqp_connection(str)
+        4.1.7. event_callback(str)
 
    4.2. execution control
 
@@ -410,6 +414,20 @@ modparam("kazoo", "amqp_connection", "amqp://guest:guest@localhost:5672")
 modparam("kazoo", "amqp_connection", "kazoo://guest:guest@otherhost:5672")
 ...
 
+4.1.7. event_callback(str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values can be: 'kazoo:mod-init', 'kazoo:consumer-event'.
+
+   Example 1.8. Set event_callback parameter
+    ...
+    modparam("kazoo", "event_callback", "ksr_kazoo_event")
+    ...
+
 4.2. execution control
 
    execution control of main loop can be controlled by changing the
@@ -436,7 +454,7 @@ while(true) // main  loop
 
    Default value is 10.
 
-   Example 1.8. Set amqp_consumer_loop_count parameter
+   Example 1.9. Set amqp_consumer_loop_count parameter
 ...
 modparam("kazoo", "amqp_consumer_loop_count", 3)
 ...
@@ -447,7 +465,7 @@ modparam("kazoo", "amqp_consumer_loop_count", 3)
 
    Default value is 5.
 
-   Example 1.9. Set amqp_internal_loop_count parameter
+   Example 1.10. Set amqp_internal_loop_count parameter
 ...
 modparam("kazoo", "amqp_internal_loop_count", 1)
 ...
@@ -458,7 +476,7 @@ modparam("kazoo", "amqp_internal_loop_count", 1)
 
    Default value is 20.
 
-   Example 1.10. Set amqp_consumer_ack_loop_count parameter
+   Example 1.11. Set amqp_consumer_ack_loop_count parameter
 ...
 modparam("kazoo", "amqp_consumer_ack_loop_count", 5)
 ...
@@ -470,7 +488,7 @@ modparam("kazoo", "amqp_consumer_ack_loop_count", 5)
 
    Default value is 1.
 
-   Example 1.11. Set consume_messages_on_reconnect parameter
+   Example 1.12. Set consume_messages_on_reconnect parameter
 ...
 modparam("kazoo", "consume_messages_on_reconnect", 0)
 ...
@@ -483,7 +501,7 @@ modparam("kazoo", "consume_messages_on_reconnect", 0)
 
    Default value is 1.
 
-   Example 1.12. Set single_consumer_on_reconnect parameter
+   Example 1.13. Set single_consumer_on_reconnect parameter
 ...
 modparam("kazoo", "single_consumer_on_reconnect", 0)
 ...
@@ -499,7 +517,7 @@ modparam("kazoo", "single_consumer_on_reconnect", 0)
 
    Default value is 100000 micro.
 
-   Example 1.13. Set amqp_consumer_ack_timeout parameter
+   Example 1.14. Set amqp_consumer_ack_timeout parameter
 ...
 modparam("kazoo", "amqp_consumer_ack_timeout_sec", 1)
 modparam("kazoo", "amqp_consumer_ack_timeout_micro", 200000)
@@ -512,7 +530,7 @@ modparam("kazoo", "amqp_consumer_ack_timeout_micro", 200000)
 
    Default value is 100000 micro.
 
-   Example 1.14. Set amqp_interprocess_timeout parameter
+   Example 1.15. Set amqp_interprocess_timeout parameter
 ...
 modparam("kazoo", "amqp_interprocess_timeout_sec", 1)
 modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
@@ -524,7 +542,7 @@ modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
 
    Default value is 100000 micro.
 
-   Example 1.15. Set amqp_waitframe_timeout parameter
+   Example 1.16. Set amqp_waitframe_timeout parameter
 ...
 modparam("kazoo", "amqp_waitframe_timeout_sec", 1)
 modparam("kazoo", "amqp_waitframe_timeout_micro", 200000)
@@ -537,7 +555,7 @@ modparam("kazoo", "amqp_waitframe_timeout_micro", 200000)
 
    Default value is 2 sec.
 
-   Example 1.16. Set amqp_query_timeout parameter
+   Example 1.17. Set amqp_query_timeout parameter
 ...
 modparam("kazoo", "amqp_query_timeout_sec", 1)
 modparam("kazoo", "amqp_query_timeout_micro", 200000)
@@ -550,7 +568,7 @@ modparam("kazoo", "amqp_query_timeout_micro", 200000)
 
    Default value is NULL (no value).
 
-   Example 1.17. >Set amqp_query_timeout_avp parameter
+   Example 1.18. >Set amqp_query_timeout_avp parameter
 ...
 modparam("kazoo", "amqp_query_timeout_avp", "$var(kz_timeout)")
 
@@ -573,7 +591,7 @@ route[SOME_ROUTE]
 
    Default value is “NULL”.
 
-   Example 1.18. Set db_url parameter
+   Example 1.19. Set db_url parameter
 ...
 modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
@@ -584,7 +602,7 @@ modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    Default value is “presentity”.
 
-   Example 1.19. Set presentity_table parameter
+   Example 1.20. Set presentity_table parameter
 ...
 modparam("kazoo", "presentity_table", "my_presentity_table")
 ...
@@ -596,7 +614,7 @@ modparam("kazoo", "presentity_table", "my_presentity_table")
 
    Default value is “1”.
 
-   Example 1.20. Set pua_mode parameter
+   Example 1.21. Set pua_mode parameter
 ...
 modparam("kazoo", "pua_mode", 0)
 ...
@@ -632,7 +650,7 @@ modparam("kazoo", "pua_mode", 0)
 
    This function can be used from ANY ROUTE.
 
-   Example 1.21. kazoo_publish usage
+   Example 1.22. kazoo_publish usage
 ...
 $var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : 'r
 eg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "',
@@ -652,7 +670,7 @@ kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 
    This function can be used from ANY ROUTE.
 
-   Example 1.22. kazoo_query usage
+   Example 1.23. kazoo_query usage
 ...
 $var(amqp_payload_request) = "{'Event-Category' : 'call_event' , 'Event-Name' :
 'query_user_channels_req', 'Realm' : '" + $fd + "', 'Username' : '" + $fU + "',
@@ -676,7 +694,7 @@ var(amqp_result)")) {
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.23. kazoo_subscribe usage
+   Example 1.24. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
@@ -708,7 +726,7 @@ event_route[kazoo:consumer-event]
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.24. kazoo_subscribe usage
+   Example 1.25. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
@@ -733,7 +751,7 @@ event_route[kazoo:consumer-event]
 
    This function can be used from ANY ROUTE.
 
-   Example 1.25. kazoo_pua_publish usage
+   Example 1.26. kazoo_pua_publish usage
 ...
 event_route[kazoo:consumer-event-presence-update]
 {
@@ -754,7 +772,7 @@ son,From})");
 
    This function can be used from ANY ROUTE.
 
-   Example 1.26. kazoo_encode usage
+   Example 1.27. kazoo_encode usage
 ...
 kazoo_encode("$ci", "$var(callid_encoded)");
 $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
@@ -767,7 +785,7 @@ $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
 
    This function can be used from ANY ROUTE.
 
-   Example 1.27. kazoo_json usage
+   Example 1.28. kazoo_json usage
 ...
 kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 if($du != $null) {
@@ -785,7 +803,7 @@ if($du != $null) {
 
    The prefix for kazoo transformations is kz.
      * json
-       Example 1.28. kz.json usage
+       Example 1.29. kz.json usage
 ...
 #kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 $du = $kzR{kz.json,Channels[0].switch_url};
@@ -795,7 +813,7 @@ if($du != $null) {
 }
 ...
      * encode
-       Example 1.29. kz.encode usage
+       Example 1.30. kz.encode usage
 ...
 #kazoo_encode("$ci", "$var(callid_encoded)");
 #$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";

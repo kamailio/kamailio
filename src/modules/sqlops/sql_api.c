@@ -35,7 +35,7 @@
 
 #include "sql_api.h"
 
-#define SQLOPS_RESULT_MAXSIZE 32
+extern int sqlops_results_maxsize;
 
 sql_con_t *_sql_con_root = NULL;
 sql_result_t *_sql_result_root = NULL;
@@ -225,7 +225,7 @@ sql_result_t* sql_get_result(str *name)
 		i++;
 		sr = sr->next;
 	}
-	if(i>SQLOPS_RESULT_MAXSIZE)
+	if(i>sqlops_results_maxsize)
 	{
 		LM_ERR("too many result containers defined\n");
 		return NULL;

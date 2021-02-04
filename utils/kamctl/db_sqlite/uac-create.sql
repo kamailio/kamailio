@@ -13,6 +13,7 @@ CREATE TABLE uacreg (
     expires INTEGER DEFAULT 0 NOT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
     reg_delay INTEGER DEFAULT 0 NOT NULL,
+    contact_addr VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(128) DEFAULT '' NOT NULL,
     CONSTRAINT uacreg_l_uuid_idx UNIQUE (l_uuid)
 );

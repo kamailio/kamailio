@@ -1,5 +1,5 @@
 .\"
-.TH kamailio 8 06.12.2016 kamailio "Kamailio SIP Server"
+.TH kamailio 8 03.02.2021 kamailio "Kamailio SIP Server"
 .\" Process with
 .\" groff -man -Tascii kamailio.8
 .\"
@@ -8,39 +8,39 @@ kamailio \- a very fast and configurable SIP server
 .SH SYNOPSIS
 .B kamailio
 [
-.B \-hcrRvdDEVTI
+.B \-hfcmMdVIhEeblLnvKrRDTNWwtugPGSQOaAxXY
+] [
+.BI \-a " auto\-aliases\-mode"
+] [
+.BI \-A " pre\-processor\-define"
+] [
+.BI \-b " max_rcv_buf_size"
 ] [
 .BI \-f " config\-file"
 ] [
+.BI \-g " gid"
+] [
+.BI \-G " pgid\-file"
+] [
 .BI \-l " address"
+] [
+.BI \-L " modules\-dir"
+] [
+.BI \-M " private_mem_size"
+] [
+.BI \-m " shared_mem_size"
 ] [
 .BI \-n " processes\-no"
 ] [
 .BI \-N " tcp processes\-no"
 ] [
-.BI \-b " max_rcv_buf_size"
-] [
-.BI \-m " shared_mem_size"
-] [
-.BI \-M " private_mem_size"
-] [
-.BI \-w " working\-dir"
+.BI \-P " pid\-file"
 ] [
 .BI \-t " chroot\-dir"
 ] [
 .BI \-u " uid"
 ] [
-.BI \-g " gid"
-] [
-.BI \-P " pid\-file"
-] [
-.BI \-G " pgid\-file"
-] [
-.BI \-L " modules\-dir"
-] [
-.BI \-a " auto\-aliases\-mode"
-] [
-.BI \-A " pre\-processor\-define"
+.BI \-w " working\-dir"
 ]
 
 .SH DESCRIPTION
@@ -49,27 +49,40 @@ is a very fast and configurable SIP (RFC3261) server.
 
 .SH OPTIONS
 .TP 12
-.B \-h
-Displays a short usage description, including all available options.
+.B
+.TP
+.BI \-a " auto\-aliases\-mode"
+Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
+.TP
+.BI \-\-alias\fR=\fIval
+Add an alias, the value has to be '[proto:]hostname[:port]'
+(like for 'alias' global parameter)
+.TP
+.BI \-\-atexit\fR=\fIval
+Control atexit callbacks execution from external libraries
+which may access destroyed shm memory causing crash on shutdown.
+Can be y[es] or 1 to enable atexit callbacks, n[o] or 0 to disable,
+default is yes.
+.TP
+.BI \-A " pre\-processor\-define"
+Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
+.TP
+.BI \-b " max_rcv_buf_size"
+Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
 .TP
 .BI \-c
 Checks the config file and displays the aliases and listen interface list.
 .TP
-.BI \-r
-Uses dns to check if it is necessary to add a "received=" field to a via.
-.TP
-.BI \-R
-Same as
-.B \-r
-but uses reverse dns.
-.TP
-.BI \-K
-Turns on via host checking when forwarding replies.
+.BI \-\-cfg\-print
+Print configuration file evaluating includes and ifdefs
 .TP
 .BI \-d
 Turns on debugging, multiple
 .B \-d
 increase the debug level.
+.TP
+.BI \-\-debug\fR=\fIval
+Debugging level value
 .TP
 .BI \-D
 Control how daemonize is done:
@@ -83,17 +96,11 @@ Control how daemonize is done:
 .B \-DDD
 - daemonize (default)
 .TP
+.BI \-e
+Log messages printed in terminal colors (requires -E)
+.TP
 .BI \-E
 Sends all the log messages to stderr.
-.TP
-.BI \-T
-Disables TCP support.
-.TP
-.BI \-V
-Displays the version number.
-.TP
-.BI \-I
-Displays details of internal constants and attributes.
 .TP
 .BI \-f " config\-file"
 Reads the configuration from
@@ -101,6 +108,25 @@ Reads the configuration from
 (default
 .I  /etc/kamailio/kamailio.cfg
 ).
+.TP
+.BI \-g " gid"
+Changes the group id under which
+.B kamailio
+runs.
+.TP
+.BI \-G " pgid\-file"
+Creates a file containing the pgid of the main
+.B kamailio
+process.
+.TP
+.B \-h \-\-help
+Displays a short usage description, including all available options.
+.TP
+.BI \-I
+Displays details of internal constants and attributes.
+.TP
+.BI \-K
+Turns on via host checking when forwarding replies.
 .TP
 .BI \-l " address"
 Listens on the specified address/interface. Multiple
@@ -111,6 +137,27 @@ address = host|ip_address|interface_name. Example: -l localhost,
 -l udp:127.0.0.1:5080, -l eth0:5062.
 The default behaviour is to listen on all the ipv4 interfaces.
 .TP
+.BI \-\-loadmodule\fR=\fIname
+load the module specified by name
+.TP
+.BI \-\-log\-engine\fR=\fIname
+log engine name and data
+.TP
+.BI \-L " modules\-dir"
+Specifies the directory where to look for
+.B kamailio
+modules (default: /usr/lib/kamailio/modules or /usr/lib64/kamailio/modules)
+.TP
+.BI \-m " shared_mem_size"
+Size of the shared memory which will be allocated (in Megabytes).
+.TP
+.BI \-\-modparam\fR=\fImodname:paramname:type:value
+set the module parameter type has to be 's' for string value and 'i' for int value,
+example: --modparam=corex:alias_subdomains:s:" NAME ".org
+.TP
+.BI \-M " private_mem_size"
+Size of the private memory which will be allocated per process (in Megabytes).
+.TP
 .BI \-n " processes\-no"
 Specifies the number of children processes forked per interface (default 8).
 .TP
@@ -119,56 +166,83 @@ Specifies the number of children processes forked to handle tcp incoming connect
 .BI \-n
 ).
 .TP
-.BI \-b " max_rcv_buf_size"
-Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
-.TP
-.BI \-m " shared_mem_size"
-Size of the shared memory which will be allocated (in Megabytes).
-.TP
-.BI \-M " private_mem_size"
-Size of the private memory which will be allocated per process (in Megabytes).
-.TP
-.BI \-w " working\-dir"
-Specifies the working directory. In the very improbable event that
+.BI \-P " pid\-file"
+Creates a file containing the pid of the main
 .B kamailio
-will crash, the core file will be generated here.
+process.
 .TP
-.BI \-t " chroot\-dir"
-Forces
-.B kamailio
-to chroot after reading the config file.
-.TP
-.BI \-u " uid"
-Changes the user id under which
-.B kamailio
-runs.
-.TP
-.BI \-g " gid"
-Changes the group id under which
-.B kamailio
-runs.
+.BI \-O " optimization\-level"
+Script optimization level (debugging option).
 .TP
 .BI \-P " pid\-file"
 Creates a file containing the pid of the main
 .B kamailio
 process.
 .TP
-.BI \-G " pgid\-file"
-Creates a file containing the pgid of the main
+.BI \-Q
+Number of sctp child processes (default: equal to
+.BI \-n
+).
+.TP
+.BI \-r
+Uses dns to check if it is necessary to add a "received=" field to a via.
+.TP
+.BI \-R
+Same as
+.B \-r
+but uses reverse dns (to use both:
+.BI \-rR
+).
+.TP
+.BI \-\-server\-id\fR=\fInum
+Set the value for server_id
+.TP
+.BI \-\-subst\fR=\fIexp
+Set a subst preprocessor directive
+.TP
+.BI \-\-substdef\fR=\fIexp
+Set a substdef preprocessor directive
+.TP
+.BI \-\-substdefs\fR=\fIexp
+Set a substdefs preprocessor directive.
+.TP
+.BI \-S
+Disables SCTP support.
+.TP
+.BI \-t " chroot\-dir"
+Forces
 .B kamailio
-process.
+to chroot after reading the config file.
 .TP
-.BI \-L " modules\-dir"
-Specifies the directory where to look for
+.BI \-T
+Disables TCP support.
+.TP
+.BI \-u " uid"
+Changes the user id under which
 .B kamailio
-modules (default: /usr/lib/kamailio/modules or /usr/lib64/kamailio/modules)
+runs.
 .TP
-.BI \-a " auto\-aliases\-mode"
-Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
+.BI "\-v \-V \-\-version"
+Displays the version number.
 .TP
-.BI \-A " pre\-processor\-define"
-Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
-
+.BI \-x " name"
+Specify internal manager for shared memory (shm) can be: fm, qm or tlsf
+.TP
+.BI \-X " name"
+Specify internal manager for private memory (pkg) if omitted, the one for shm is used
+.TP
+ .BI \-Y " dir"
+ Runtime dir path
+.TP
+.BI \-w " working\-dir"
+Specifies the working directory. In the very improbable event that
+.B kamailio
+will crash, the core file will be generated here.
+.TP
+.BI \-W " type"
+poll method (depending on support in OS, it can be: poll,
+epoll_lt, epoll_et, sigio_rt, select, kqueue, /dev/poll).
+.TP
 .SH FILES
 .PD 0
 .B /usr/sbin/kamailio

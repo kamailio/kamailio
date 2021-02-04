@@ -223,7 +223,7 @@ static int dr_update_keepalive(pgw_t *addrs)
 	for(cur = addrs; cur != NULL; cur = cur->next) {
 		LM_DBG("uri: %.*s\n", cur->ip.len, cur->ip.s);
 		keepalive_api.add_destination(
-				&cur->ip, &owner, 0, dr_keepalive_statechanged, cur);
+				&cur->ip, &owner, 0, 0, dr_keepalive_statechanged, 0, cur);
 	}
 
 	return 0;

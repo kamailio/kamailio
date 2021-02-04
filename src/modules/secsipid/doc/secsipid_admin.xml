@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module implements secure SIP identity specifications - STIR
+		(Secure Telephony Identity Revisited) and SHAKEN
+		(Signature-based Handling of Asserted information using toKENs)
+		IETF extensions for SIP (RFC8224, RFC8588).
+	</para>
+	<para>
+		It exports the functions to check and generate SIP Identity header.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libsecsipid</emphasis> - https://github.com/asipto/secsipidx/.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>expire</varname> (int)</title>
+		<para>
+		The interval in seconds after which the Identity header JWT is considered
+		to be expired.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 300.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "expire", 600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timeout</varname> (int)</title>
+		<para>
+		The interval in seconds after which the HTTP GET operation to download
+		the public key times out.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "timeout", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>cache_dir</varname> (str)</title>
+		<para>
+		The path to the directory where to save cached pyblic keys. If set,
+		it activates the public key file caching in the libsecsipid library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cache_dir</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "cache_dir", "/tmp/kamailio/secsipid")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>cache_expire</varname> (int)</title>
+		<para>
+		The interval in seconds after which a cached public key is considered
+		expired. This value is passed to the libsecsipid library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3600.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cache_expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "cache_expire", 7200)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="secsipid.f.secsipid_check_identity">
+		<title>
+		<function moreinfo="none">secsipid_check_identity(keyPath)</function>
+		</title>
+		<para>
+			Check the validity of the Identity header using the keys stored
+			in the file specified by "keyPath". If the parameter is empty,
+			the function is downloading the key using the URL from "info"
+			parameter of the Identity header, using the value od "timeout"
+			parameter to limit the download time. The validity of the JWT
+			body in the Identity header is also checked against the "expire"
+			parameter.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_check_identity</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+	if(secsipid_check_identity("/secsipid/$si/cert.pem")) { ... }
+    ...
+	if(secsipid_check_identity("")) { ... }
+    ...
+}
+...
+</programlisting>
+		</example>
+		<para>
+			Further checks can be done with config operations, decoding the JWT header
+			and payload using {s.select} and {s.decode.base64t} transformations
+			together with jansson module.
+		</para>
+	</section>
+	<section id="secsipid.f.secsipid_check_identity_pubkey">
+		<title>
+		<function moreinfo="none">secsipid_check_identity(pubkeyVal)</function>
+		</title>
+		<para>
+			Similar to secsipid_check_identity() with the public key value
+			provided in the parameter.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_check_identity_pubkey</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+  ...
+  http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)");
+  ...
+  if(secsipid_check_identity_pubkey("$var(pubkey)")) { ... }
+  ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="secsipid.f.secsipid_get_url">
+		<title>
+		<function moreinfo="none">secsipid_get_url(url, ovar)</function>
+		</title>
+		<para>
+			Get the content of a URL and store the result in a variable.
+		</para>
+		<para>
+		The url parameters can contain pseudo-variables and ovar has to be
+		the name of a writtable pseudo-variable.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_get_url</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+  ...
+  if(secsipid_get_url("https://$fd/stirshaken/cert.pem", "$var(pubkey)")) { ... }
+  ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="secsipid.f.secsipid_add_identity">
+		<title>
+		<function moreinfo="none">secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)</function>
+		</title>
+		<para>
+			Add Identity header using the key specified by "keyPath" to sign the JWT body.
+			If origID is empty, a UUID string is generated to fill the field. The origTN
+			represents the origination telephone number; destTN represents the destination
+			telephone number; x5u is the HTTP URL referencing to the public key that
+			should be used to verify the signature; attest represents the attestation
+			level (should be "A", "B" or "C").
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_add_identity</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    secsipid_add_identity("$fU", "$rU", "A", "",
+        "https://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section id="secsipid.s.installation">
+	<title>Installation</title>
+	<para>
+		The module depends on "libsecsipid", which is a component of "sipsecidx"
+		project from https://github.com/asipto/secsipidx/. The library is
+		implemented in Go language, with generated C API and library. Until the
+		libsecsipid is going to be packaged in OS distributions, the secsipid
+		module can be compiled by copying secsipid.h libsecsipid.h and libsecsipid.a
+		files in the folder of the module.
+	</para>
+	<para>
+		To generate the libsecsipid.a file, it requires to have Go language
+		installed and its environment configured, then run the following commands:
+	</para>
+		<example>
+		<title>Libsecsipid usage</title>
+		<programlisting format="linespecific">
+...
+go get https://github.com/asipto/secsipidx
+cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
+make liba
+cp secsipid.h libsecsipid.h libsecsipid.a \
+    /path/to/kamailio/src/modules/secsipid/
+cd /path/to/kamailio/
+make modules modules=src/modules/secsipid/
+...
+</programlisting>
+		</example>
+	</section>
+
+</chapter>
+

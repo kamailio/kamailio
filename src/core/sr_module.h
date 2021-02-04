@@ -109,6 +109,7 @@ typedef int (*child_init_function)(int rank);
 #define PARAM_STRING     (1U<<0)  /**< String (char *) parameter type */
 #define PARAM_INT        (1U<<1)  /**< Integer parameter type */
 #define PARAM_STR        (1U<<2)  /**< struct str parameter type */
+#define PARAM_VAR        (1U<<3)  /**< var parameter type - mdoparamx */
 #define PARAM_USE_FUNC   (1U<<(8*sizeof(int)-1))
 #define PARAM_TYPE_MASK(_x)   ((_x)&(~PARAM_USE_FUNC))
 
@@ -329,6 +330,7 @@ extern int mod_response_cbk_no; /**< size of reponse callbacks array */
 
 int register_builtin_modules(void);
 int load_module(char* path);
+int load_modulex(char* path);
 ksr_cmd_export_t* find_export_record(char* name, int param_no, int flags);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
@@ -544,5 +546,7 @@ int is_rpc_worker(int rank);
 
 unsigned int set_modinit_delay(unsigned int v);
 int destroy_modules_phase(void);
+int ksr_shutdown_phase_init(void);
+int ksr_shutdown_phase(void);
 
 #endif /* sr_module_h */

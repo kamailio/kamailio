@@ -822,10 +822,11 @@ clean:
  *
  * \param topic_name name of the topic
  * \param message message to send.
+ * \param key to send.
  *
  * \return 0 on success.
  */
-int kfk_message_send(str *topic_name, str *message)
+int kfk_message_send(str *topic_name, str *message, str *key)
 {
     /* Get topic from name. */
 	rd_kafka_topic_t *rkt = kfk_topic_get(topic_name);
@@ -835,6 +836,15 @@ int kfk_message_send(str *topic_name, str *message)
 		return -1;
 	}
 
+	/* Default key values (No key) */
+	void *keyp = NULL;
+	size_t key_len = 0;
+	if (key != NULL && key->len > 0 && key->s != NULL) {
+		keyp = key->s;
+		key_len = key->len;
+		LM_DBG("Key: %.*s\n", (int)key_len, (char*)keyp);
+	}
+	
 	/* Send a message. */
 	if (rd_kafka_produce(
 			rkt,
@@ -844,7 +854,7 @@ int kfk_message_send(str *topic_name, str *message)
 			message->s,
 			message->len,
 			/* Optional key and its length */
-			NULL, 0,
+			keyp, key_len,
 			/* Message opaque, provided in
 			 * delivery report callback as
 			 * msg_opaque. */

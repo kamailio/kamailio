@@ -21,9 +21,9 @@
  */
 /*!
 * \file
-* \brief srutils :: SHA and other hashing utilities
-* \ingroup srutils
-* Module: \ref srutils
+* \brief core/crypto :: SHA and other hashing utilities
+* \ingroup core/crypto
+* Module: \ref core/crypto
 */
 
 #ifndef _SHAUTILS_H_

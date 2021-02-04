@@ -19,7 +19,7 @@
 	<title>Overview</title>
 	<para>
 		The main goal of the module is to offload the intermediate header processing
-	into the XAVP dynamic container as well as provide with high level methods
+	into the XAVI dynamic container as well as provide with high level methods
 	and pseudovariables to simplify &sip; message header modifications.
 	</para>
 	</section>

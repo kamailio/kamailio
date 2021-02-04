@@ -128,21 +128,37 @@ modparam("cnxcc", "credit_check_period", 1)
 			<para>
 				Associates the call with a customer id and sets the max credit,
 				connect cost, cost per second, initial pulse and final pulse. The discount
-				is calculated in pulses (30/6, 1/1, etc) and subtracted from the pool
+				is calculated in pulses (1/1, 60/1, etc) and subtracted from the pool
 				of credit.
 			</para>
 			<para>
 				The customer value can be provided as a string or a variable holding
-				a string.
+				a string. This value identifies all calls from the same customer.
 			</para>
 			<para>
-				The maxcredit, connect and cps can be double (float) or integer values, they
-				have to be provided as static string values of variables holding string
-				values.
+				The maxcredit (float) value is the maximum credit available for the current call.
 			</para>
 			<para>
-				The ipulse and fpulse values are integer values, they can be also
-				given via variables holding integers.
+				The connect (float) value is the connect cost for the current call.
+			</para>
+			<para>
+				The cps (float) value is the cost per second for the current call.
+			</para>
+			<para>
+				The ipuse (integer) value is the initial pulse and establishes the minimum 
+				time to be charged. For example, value 1 establishes a charge per second 
+				and value 60 sets a charge per minute. If it is taken as value 60, even 
+				if the duration is 5 seconds, 1 minute will be charged.
+			</para>
+			<para>
+				The fpulse (integer) value is the final pulse and establishes, from the initial 
+				pulse, the time range to be charged. For example, the value 1 establishes a charge 
+				per second, 5 sets a charge in blocks of 5 seconds, 60 sets a full minute charge.
+			</para>
+			<para>
+				1/1 will make a charge per seconds for the entire call. 60/1 will make a 
+				charge per seconds with the first full minute. 60/60 always perform 
+				a full minute charge.
 			</para>
 			<para>
 				<emphasis>Return code:</emphasis>
@@ -161,10 +177,9 @@ modparam("cnxcc", "credit_check_period", 1)
 
 					<listitem>
 						<para>
-							<emphasis>-2 - failed, credit value is less than initial pulse value</emphasis>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
-
 				</itemizedlist>
 			</para>
 			<example>
@@ -173,12 +188,15 @@ modparam("cnxcc", "credit_check_period", 1)
 ...
 cnxcc_set_max_credit("john-doe", "100", "3.0", "0.5", 60, 1);
 ...
-$var(customer)  = "john-doe-premium"; # customer id
-$var(credit)    = "100";  # max credit
-$var(connect)   = "3.0";  # connect const
-$var(cps)       = "0.5";  # cost per second
-$var(initial_p) = 60;     # initial pulse
-$var(final_p)   = 1;      # final pulse
+$var(customer)  = "john-doe"; # customer id
+$var(credit)    = "100";      # max credit for all calls with the same
+                              # customer id
+$var(connect)   = "3.0";      # connect cost or initial cost for the call
+$var(cps)       = "0.5";      # cost per second
+$var(initial_p) = 60;         # initial pulse (60 = the first minute will be
+                              # charged even if the call is shorter)
+$var(final_p)   = 1;          # final pulse (after the first minute, it will
+                              # be charge in ranges of 1 second)
 cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
         "$var(cps)", "$var(initial_p)", "$var(final_p)");
 ...
@@ -213,6 +231,11 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
 					<listitem>
 						<para>
 							<emphasis>-1 - failed, error logged</emphasis>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>-4 - call-id already present for this client</emphasis>
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -326,6 +349,11 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
 						</para>
 					</listitem>
 
+					<listitem>
+						<para>
+							<emphasis>-4 - call-id already present for this client</emphasis>
+						</para>
+					</listitem>
 				</itemizedlist>
 			</para>
 			<example>
@@ -524,14 +552,21 @@ route[CNXCC]
 	$var(i_pulse)             = 30;
 	$var(f_pulse)             = 6;
 
-	if (!cnxcc_set_max_credit("$var(client)",
+
+	cnxcc_set_max_credit("$var(client)",
 			"$var(credit)",
 			"$var(connect_cost)",
 			"$var(cost_per_sec)",
 			"$var(i_pulse)",
-			"$var(f_pulse)")) {
-		xlog("Error setting up credit control");
-	}
+			"$var(f_pulse)");
+
+	switch ($?) {
+		case -1:
+			xerr("Error setting up credit control");
+			sl_send_reply("503", "Internal Server Error");
+		case -4:
+			xwarn("$ci already present for client $var(client)");
+	};
 }
 
 event_route[cnxcc:call-shutdown]

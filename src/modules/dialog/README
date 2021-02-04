@@ -135,6 +135,7 @@ Julien Klingenmeyer
               7.18. dlg_set_ruri()
               7.19. dlg_db_load_callid(cival)
               7.20. dlg_db_load_extra()
+              7.21. dlg_reset_property(attr)
 
         8. Statistics
 
@@ -150,17 +151,18 @@ Julien Klingenmeyer
               9.2. dlg.list_ctx
               9.3. dlg.list_match
               9.4. dlg.list_match_ctx
-              9.5. dlg.dlg_list
-              9.6. dlg.dlg_list_ctx
-              9.7. dlg.terminate_dlg
-              9.8. dlg.end_dlg
-              9.9. dlg.set_state
-              9.10. dlg.profile_get_size
-              9.11. dlg.profile_list
-              9.12. dlg.bridge_dlg
-              9.13. dlg.stats_active
-              9.14. dlg.is_alive
-              9.15. dlg.briefing
+              9.5. dlg.dump_file
+              9.6. dlg.dlg_list
+              9.7. dlg.dlg_list_ctx
+              9.8. dlg.terminate_dlg
+              9.9. dlg.end_dlg
+              9.10. dlg.set_state
+              9.11. dlg.profile_get_size
+              9.12. dlg.profile_list
+              9.13. dlg.bridge_dlg
+              9.14. dlg.stats_active
+              9.15. dlg.is_alive
+              9.16. dlg.briefing
 
         10. Exported Variables
 
@@ -271,6 +273,7 @@ Julien Klingenmeyer
    1.80. dlg_set_ruri() usage
    1.81. dlg_db_load_callid() usage
    1.82. dlg_db_load_extra() usage
+   1.83. dlg_reset_property usage
 
 Chapter 1. Admin Guide
 
@@ -372,6 +375,7 @@ Chapter 1. Admin Guide
         7.18. dlg_set_ruri()
         7.19. dlg_db_load_callid(cival)
         7.20. dlg_db_load_extra()
+        7.21. dlg_reset_property(attr)
 
    8. Statistics
 
@@ -387,17 +391,18 @@ Chapter 1. Admin Guide
         9.2. dlg.list_ctx
         9.3. dlg.list_match
         9.4. dlg.list_match_ctx
-        9.5. dlg.dlg_list
-        9.6. dlg.dlg_list_ctx
-        9.7. dlg.terminate_dlg
-        9.8. dlg.end_dlg
-        9.9. dlg.set_state
-        9.10. dlg.profile_get_size
-        9.11. dlg.profile_list
-        9.12. dlg.bridge_dlg
-        9.13. dlg.stats_active
-        9.14. dlg.is_alive
-        9.15. dlg.briefing
+        9.5. dlg.dump_file
+        9.6. dlg.dlg_list
+        9.7. dlg.dlg_list_ctx
+        9.8. dlg.terminate_dlg
+        9.9. dlg.end_dlg
+        9.10. dlg.set_state
+        9.11. dlg.profile_get_size
+        9.12. dlg.profile_list
+        9.13. dlg.bridge_dlg
+        9.14. dlg.stats_active
+        9.15. dlg.is_alive
+        9.16. dlg.briefing
 
    10. Exported Variables
 
@@ -1452,6 +1457,7 @@ modparam("dialog", "keep_proxy_rr", 1)
    7.18. dlg_set_ruri()
    7.19. dlg_db_load_callid(cival)
    7.20. dlg_db_load_extra()
+   7.21. dlg_reset_property(attr)
 
 7.1.  set_dlg_profile(profile,[value])
 
@@ -1875,6 +1881,27 @@ if(has_totag()) {
 }
 ...
 
+7.21.  dlg_reset_property(attr)
+
+   Reset a dialog property - an attribute that enable/disable various
+   behaviours (e.g., sending keep alive requests).
+
+   Meaning of the parameters is as follows:
+     * attr - name of property. It can be:
+          + 'ka-src' - send keep alive OPTION requests to caller
+          + 'ka-dst' - send keep alive OPTION requests to callee
+          + 'timeout-noreset' - don't reset timeout on in-dialog messages
+            reception
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.83. dlg_reset_property usage
+...
+dlg_reset_property("ka-src");
+dlg_reset_property("ka-dst");
+dlg_reset_property("timeout-noreset");
+...
+
 8. Statistics
 
    8.1. active_dialogs
@@ -1910,17 +1937,18 @@ if(has_totag()) {
    9.2. dlg.list_ctx
    9.3. dlg.list_match
    9.4. dlg.list_match_ctx
-   9.5. dlg.dlg_list
-   9.6. dlg.dlg_list_ctx
-   9.7. dlg.terminate_dlg
-   9.8. dlg.end_dlg
-   9.9. dlg.set_state
-   9.10. dlg.profile_get_size
-   9.11. dlg.profile_list
-   9.12. dlg.bridge_dlg
-   9.13. dlg.stats_active
-   9.14. dlg.is_alive
-   9.15. dlg.briefing
+   9.5. dlg.dump_file
+   9.6. dlg.dlg_list
+   9.7. dlg.dlg_list_ctx
+   9.8. dlg.terminate_dlg
+   9.9. dlg.end_dlg
+   9.10. dlg.set_state
+   9.11. dlg.profile_get_size
+   9.12. dlg.profile_list
+   9.13. dlg.bridge_dlg
+   9.14. dlg.stats_active
+   9.15. dlg.is_alive
+   9.16. dlg.briefing
 
 9.1. dlg.list
 
@@ -1983,7 +2011,21 @@ kamcmd dlg.list_match furi sw sip:alice@
 kamcmd dlg.list_match_ctx furi sw sip:alice@
 ...
 
-9.5. dlg.dlg_list
+9.5. dlg.dump_file
+
+   Dump all dialogs in a json file. (much faster than dlg.list)
+
+   Name: dlg.dump_file
+
+   Parameters:
+     * file name output file name
+
+   RPC Command Format:
+...
+kamcmd dlg.dump_file "/tmp/dlg.json"
+...
+
+9.6. dlg.dlg_list
 
    Lists the description of one dialog. The dialog identifiers are to be
    passed as parameter (callid and optionally fromtag).
@@ -2002,7 +2044,7 @@ kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1
 ...
 
-9.6. dlg.dlg_list_ctx
+9.7. dlg.dlg_list_ctx
 
    The same as the “dlg.list_list” but including in the dialog description
    the associated context from modules sitting on top of the dialog
@@ -2019,7 +2061,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
 ...
 
-9.7. dlg.terminate_dlg
+9.8. dlg.terminate_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions,
    matching the dialog on call-id, from tag and to tag.
@@ -2036,7 +2078,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
    RPC Command Format:
                 kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
 
-9.8. dlg.end_dlg
+9.9. dlg.end_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions.
 
@@ -2056,7 +2098,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
 kamcmd dlg.end_dlg 342 56
 ...
 
-9.9. dlg.set_state
+9.10. dlg.set_state
 
    Set state for the dialog matching the dialog on Call-ID, From-Tag and
    To-Tag.
@@ -2084,7 +2126,7 @@ kamcmd dlg.end_dlg 342 56
 kamcmd dlg.set_state callid12345 fromtag123 totag123 5
 ...
 
-9.10. dlg.profile_get_size
+9.11. dlg.profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -2104,7 +2146,7 @@ kamcmd dlg.set_state callid12345 fromtag123 totag123 5
 kamcmd dlg.dlg.profile_get_size inbound_calls
 ...
 
-9.11. dlg.profile_list
+9.12. dlg.profile_list
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -2124,7 +2166,7 @@ kamcmd dlg.dlg.profile_get_size inbound_calls
 kamcmd dlg.profile_list inbound_calls
 ...
 
-9.12. dlg.bridge_dlg
+9.13. dlg.bridge_dlg
 
    Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -2149,7 +2191,7 @@ kamcmd dlg.profile_list inbound_calls
 kamcmd dlg.bridge_dlg _from_ _to_ _op_
 ...
 
-9.13. dlg.stats_active
+9.14. dlg.stats_active
 
    Get stats about active dialogs by scanning internal list of dialogs
    (not relying on core stats framework).
@@ -2173,7 +2215,7 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
 kamcmd dlg.stats_active
 ...
 
-9.14. dlg.is_alive
+9.15. dlg.is_alive
 
    Check whether a dialog matching the parameter is in confirmed state
    (answered and alive).
@@ -2193,18 +2235,34 @@ kamcmd dlg.stats_active
 kamcmd dlg.is_alive callid123 fromtag123 totag123
 ...
 
-9.15. dlg.briefing
+9.16. dlg.briefing
 
-   Lists fewer attributes for dialog records in memory.
+   Lists fewer attributes for dialog records in memory. The dialog hash
+   entry and id are added always, the rest of them are a matter of 'attrs'
+   parameter.
 
    Name: dlg.briefing
 
    Parameters:
-     * none - no parameter
+     * attrs - (optional) a list of characters (flags) representing the
+       fields to be added to the response. If is missing, its default
+       value is 'ftcFT' (note the characters are case sensitive).
+       The characters can be:
+          + f - From URI
+          + t - To URI
+          + c - Call-ID
+          + F - From tag
+          + T - To tag
+          + I - Init time
+          + S - Start time
+          + E - End time
+          + s - State
 
    RPC Command Example:
 ...
 kamctl rpc dlg.briefing
+...
+kamctl rpc dlg.briefing "ft"
 ...
 
 10. Exported Variables

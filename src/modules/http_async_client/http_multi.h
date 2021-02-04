@@ -37,7 +37,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <curl/curl.h>
 #include <event2/event.h>
 #include <fcntl.h>

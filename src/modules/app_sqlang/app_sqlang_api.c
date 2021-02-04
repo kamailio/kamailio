@@ -898,6 +898,16 @@ int sr_kemi_sqlang_return_xval(HSQUIRRELVM J, sr_kemi_t *ket, sr_kemi_xval_t *rx
 				sq_pushbool(J, SRSQLANG_FALSE);
 			}
 			return 1;
+		case SR_KEMIP_ARRAY:
+			LM_ERR("unsupported return type: array\n");
+			sr_kemi_xval_free(rx);
+			sqlang_pushstring(J, NULL);
+			return 1;
+		case SR_KEMIP_DICT:
+			LM_ERR("unsupported return type: map\n");
+			sr_kemi_xval_free(rx);
+			sqlang_pushstring(J, NULL);
+			return 1;
 		case SR_KEMIP_XVAL:
 			/* unknown content - return false */
 			sq_pushbool(J, SRSQLANG_FALSE);

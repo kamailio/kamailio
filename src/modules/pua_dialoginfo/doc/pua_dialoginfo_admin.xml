@@ -314,6 +314,25 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 		</example>
 		</section>
 
+	<section>
+		<title><varname>include_req_uri</varname> (int)</title>
+		<para>
+			controls if R-URI is going to be used instead of To header value in
+			the PUBLISH as "identity" on "remote" node.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>. Disabled</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>include_req_uri</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "include_req_uri", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 		<section>
 		<title><varname>caller_confirmed</varname> (int)</title>
 		<para>
@@ -416,7 +435,7 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 		</section>
 		
 		<section>
-		<title><varname>pubruri_caller_avp</varname> (int)</title>
+		<title><varname>pubruri_caller_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.  
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
@@ -436,7 +455,7 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 		</section>
 		
 		<section>
-		<title><varname>pubruri_callee_avp</varname> (int)</title>
+		<title><varname>pubruri_callee_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.  
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
@@ -478,7 +497,7 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 		</section>
 		
 		<section id="pua_dialoginfo.p.pubruri_callee_dlg_var">
-		<title><varname>pubruri_callee_dlg_var</varname> (int)</title>
+		<title><varname>pubruri_callee_dlg_var</varname> (str)</title>
 		<para>
 			Must be set to the name of dialog variable where to store
 			the URI for callee, used to send the notifications. This is needed

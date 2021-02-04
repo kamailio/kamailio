@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -42,13 +42,16 @@ enum _tr_s_subtype {
 	TR_S_TIMEFORMAT, TR_S_TRIM, TR_S_RTRIM, TR_S_LTRIM, TR_S_RM, TR_S_STRIPTO,
 	TR_S_URLENCODEPARAM, TR_S_URLDECODEPARAM, TR_S_NUMERIC, TR_S_ESCAPECSV,
 	TR_S_ENCODEBASE58, TR_S_DECODEBASE58, TR_S_COREHASH, TR_S_UNQUOTE,
-	TR_S_UNBRACKET, TR_S_COUNT
+	TR_S_UNBRACKET, TR_S_COUNT, TR_S_ENCODEBASE64T, TR_S_DECODEBASE64T,
+	TR_S_ENCODEBASE64URL, TR_S_DECODEBASE64URL,
+	TR_S_ENCODEBASE64URLT, TR_S_DECODEBASE64URLT, TR_S_RMWS
 };
 enum _tr_uri_subtype {
 	TR_URI_NONE=0, TR_URI_USER, TR_URI_HOST, TR_URI_PASSWD, TR_URI_PORT,
 	TR_URI_PARAMS, TR_URI_PARAM, TR_URI_HEADERS, TR_URI_TRANSPORT, TR_URI_TTL,
 	TR_URI_UPARAM, TR_URI_MADDR, TR_URI_METHOD, TR_URI_LR,
-	TR_URI_R2, TR_URI_SCHEME, TR_URI_TOSOCKET
+	TR_URI_R2, TR_URI_SCHEME, TR_URI_TOSOCKET, TR_URI_SAOR, TR_URI_DURI,
+	TR_URI_SURI
 };
 enum _tr_param_subtype {
 	TR_PL_NONE=0, TR_PL_VALUE, TR_PL_VALUEAT, TR_PL_NAME, TR_PL_COUNT

@@ -15,7 +15,8 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
 				   textopsx tm tmx topoh xlog rtpengine stun sipt tcpops \
-				   auth_xkeys smsops tsilo cfgt statsc topos sipdump pv_headers
+				   auth_xkeys smsops tsilo cfgt statsc topos sipdump pv_headers \
+				   kemix
 
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
@@ -29,7 +30,7 @@ mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
 			  db_cluster dialog dispatcher domain drouting group \
 			  htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
-			  sqlops uac uri_db userblacklist usrloc secfilter
+			  sqlops uac uri_db userblocklist usrloc secfilter
 
 
 # - common modules depending on database, using UID db schema
@@ -210,6 +211,12 @@ mod_list_phonenum=phonenum
 # - modules depending on rdkafka library
 mod_list_kafka=kafka
 
+# - modules depending on mqtt mosquitto and ev library
+mod_list_mqtt=mqtt
+
+# - modules depending on secsipid library
+mod_list_secsipid=secsipid
+
 # - modules depending on oRTP and mediastreamer2 libraries
 mod_list_rtp_media_server=rtp_media_server
 
@@ -247,6 +254,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt)) \
 			   $(mod_list_phonenum) \
 			   $(mod_list_kafka) \
+			   $(mod_list_mqtt) \
+			   $(mod_list_secsipid) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -463,6 +472,12 @@ module_group_kphonenum=$(mod_list_phonenum)
 
 # K kafka modules
 module_group_kkafka=$(mod_list_kafka)
+
+# K mqtt modules
+module_group_kmqtt=$(mod_list_mqtt)
+
+# K secsipid modules
+module_group_ksecsipid=$(mod_list_secsipid)
 
 # K rtp_media_server modules
 module_group_krtp_media_server=$(mod_list_rtp_media_server)

@@ -39,6 +39,8 @@
 /* counter flags */
 #define CNT_F_NO_RESET 1 /* don't reset */
 
+#define KSR_STATS_NAMESEP "_"
+
 typedef long counter_val_t;
 
 /* use a struct. to force errors on direct access attempts */

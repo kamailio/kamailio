@@ -170,6 +170,7 @@ static struct rpc_data_struct *new_data_struct(rpc_ctx_t* ctx)
 	if (!ctx) return NULL;
 	ds = (struct rpc_data_struct*)pkg_malloc(sizeof(struct rpc_data_struct));
 	if (!ds) {
+		PKG_MEM_ERROR;
 		rpc_fault(ctx, 500, "Internal Server Error (oom)");
 		return NULL;
 	}
@@ -196,7 +197,7 @@ static int init_xhttp_rpc_reply(rpc_ctx_t *ctx)
 	reply->reason = XHTTP_RPC_REASON_OK;
 	reply->buf.s = pkg_malloc(buf_size);
 	if (!reply->buf.s) {
-		LM_ERR("oom\n");
+		PKG_MEM_ERROR;
 		rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 		return -1;
 	}
@@ -282,7 +283,7 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
 	str *sp;
 	char buf[PRINT_VALUE_BUF_LEN];
 	time_t dt;
-	struct tm* t;
+	struct tm t;
 
 	switch(fmt) {
 	case 'd':
@@ -305,9 +306,9 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
 		body.s = buf;
 		body.len = sizeof("19980717T14:08:55") - 1;
 		dt = va_arg(*ap, time_t);
-		t = gmtime(&dt);
+		gmtime_r(&dt, &t);
 		if (strftime(buf, PRINT_VALUE_BUF_LEN,
-				"%Y%m%dT%H:%M:%S", t) == 0) {
+				"%Y%m%dT%H:%M:%S", &t) == 0) {
 			LM_ERR("Error while converting time\n");
 			return -1;
 		}
@@ -751,7 +752,7 @@ static int child_init(int rank)
 		xhttp_rpc_mod_cmds =
 			(xhttp_rpc_mod_cmds_t*)pkg_malloc(sizeof(xhttp_rpc_mod_cmds_t));
 		if (xhttp_rpc_mod_cmds==NULL){
-			LM_ERR("oom\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		xhttp_rpc_mod_cmds->rpc_e_index = 0;
@@ -853,7 +854,7 @@ static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
 			/* Unescape args */
 			ctx.arg.s = pkg_malloc((arg.len+1)*sizeof(char));
 			if (ctx.arg.s==NULL){
-				LM_ERR("oom\n");
+				PKG_MEM_ERROR;
 				rpc_fault(&ctx, 500, "Internal Server Error (oom)");
 				goto send_reply;
 			}

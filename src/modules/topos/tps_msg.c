@@ -47,6 +47,9 @@
 #include "tps_storage.h"
 
 extern int _tps_param_mask_callid;
+extern int _tps_contact_mode;
+extern str _tps_cparam_name;
+extern int _tps_rr_update;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
@@ -163,8 +166,7 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	hs.len = hname->len + 2 + hbody->len;
 	hs.s  = (char*)pkg_malloc(hs.len + 3);
 	if (hs.s==NULL) {
-		LM_ERR("no pkg memory left (%.*s - %d)\n",
-				hname->len, hname->s, hs.len);
+		PKG_MEM_ERROR_FMT("(%.*s - %d)\n", hname->len, hname->s, hs.len);
 		return -1;
 	}
 	memcpy(hs.s, hname->s, hname->len);
@@ -299,26 +301,58 @@ error:
 /**
  *
  */
-int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd)
+int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 {
+	str tmp;
+	int ret;
+
 	if(parse_sip_msg_uri(msg)<0) {
 		LM_ERR("failed to parse r-uri\n");
 		return -1;
 	}
-	if(msg->parsed_uri.user.len<10) {
-		LM_DBG("not an expected user format\n");
-		return 1;
+
+	if (ctmode == 1 || ctmode == 2) {
+		if(msg->parsed_uri.sip_params.len<10) {
+			LM_DBG("not an expected param format\n");
+			return 1;
+		}
+		// find parameter, there might be others
+		ret = tps_get_param_value(&msg->parsed_uri.params,
+			&_tps_cparam_name, &tmp);
+		if (ret < 0) {
+			LM_ERR("failed to parse param\n");
+			return -1;
+		}
+		if (ret == 1) {
+			LM_DBG("prefix para not found\n");
+			return 1;
+		}
+		if(memcmp(tmp.s, "atpsh-", 6)==0) {
+			ptsd->a_uuid = tmp;
+			return 0;
+		}
+		if(memcmp(tmp.s, "btpsh-", 6)==0) {
+			ptsd->a_uuid = tmp;
+			ptsd->b_uuid = tmp;
+			return 0;
+		}
+
+	} else {
+		if(msg->parsed_uri.user.len<10) {
+			LM_DBG("not an expected user format\n");
+			return 1;
+		}
+		if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
+			ptsd->a_uuid = msg->parsed_uri.user;
+			return 0;
+		}
+		if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
+			ptsd->a_uuid = msg->parsed_uri.user;
+			ptsd->b_uuid = msg->parsed_uri.user;
+			return 0;
+		}
 	}
-	if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
-		ptsd->a_uuid = msg->parsed_uri.user;
-		return 0;
-	}
-	if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
-		ptsd->a_uuid = msg->parsed_uri.user;
-		ptsd->b_uuid = msg->parsed_uri.user;
-		return 0;
-	}
-	LM_DBG("not an expected user prefix\n");
+	LM_DBG("not an expected prefix\n");
 
 	return 1;
 }
@@ -335,9 +369,16 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 	int vlen;
 	int r2;
 	int isreq;
+	int rr_update = _tps_rr_update;
 
 	if(ptsd->cp==NULL) {
 		ptsd->cp = ptsd->cbuf;
+	}
+
+	if(_tps_rr_update) {
+		if((msg->first_line.type==SIP_REQUEST) && !(get_to(msg)->tag_value.len>0)) {
+			rr_update = 0;
+		}
 	}
 
 	i = 0;
@@ -396,7 +437,7 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				LM_ERR("no more space to pack rr headers\n");
 				return -1;
 			}
-			if(isreq==1) {
+			if(isreq==1 || rr_update) {
 				/* sip request - get a+s-side record route */
 				if(i>1) {
 					if(i==2 &&r2==0) {
@@ -408,6 +449,12 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 					*ptsd->cp = ',';
 					ptsd->cp++;
 					ptsd->a_rr.len++;
+					if(rr_update) {
+						ptsd->b_rr.len++;
+					}
+				}
+				if(i==1 && rr_update) {
+					ptsd->b_rr.s = ptsd->cp;
 				}
 				*ptsd->cp = '<';
 				if(i==1) {
@@ -425,6 +472,9 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 
 				ptsd->cp++;
 				ptsd->a_rr.len++;
+				if(rr_update) {
+					ptsd->b_rr.len++;
+				}
 
 				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
 				if(i==1) {
@@ -450,6 +500,10 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				*ptsd->cp = '>';
 				ptsd->cp++;
 				ptsd->a_rr.len++;
+				if(rr_update) {
+					ptsd->b_rr.len += rr->nameaddr.uri.len;
+					ptsd->b_rr.len++;
+				}
 			} else {
 				/* sip response - get b-side record route */
 				if(i==1) {
@@ -754,7 +808,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		return -1;
 	}
 
-	ret = tps_dlg_message_update(msg, &mtsd);
+	ret = tps_dlg_message_update(msg, &mtsd, _tps_contact_mode);
 	if(ret<0) {
 		LM_ERR("failed to update on dlg message\n");
 		return -1;
@@ -846,6 +900,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	}
 	if(dialog!=0) {
 		tps_append_xuuid(msg, &stsd.a_uuid);
+		if(_tps_rr_update) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS|TPS_DBU_BRR)<0) {
+				goto error;
+			}
+		}
 	}
 	return 0;
 
@@ -901,7 +960,9 @@ int tps_response_received(sip_msg_t *msg)
 				TPS_DBU_CONTACT|TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
-	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS)<0) {
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd,
+			(_tps_rr_update)?(TPS_DBU_RPLATTRS|TPS_DBU_BRR|TPS_DBU_ARR)
+					:TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
 	tps_storage_lock_release(&lkey);
@@ -1004,7 +1065,9 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	if(dialog!=0) {
 		tps_storage_end_dialog(msg, &mtsd, ptsd);
-		if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
+		if(tps_storage_update_dialog(msg, &mtsd, &stsd,
+					(_tps_rr_update)?(TPS_DBU_CONTACT|TPS_DBU_ARR)
+						:TPS_DBU_CONTACT)<0) {
 			goto error;
 		}
 	}

@@ -5,7 +5,7 @@
 #include "ims_charging_stats.h"
 #include "../../core/parser/hf.h"
 
-struct cdp_binds cdpb;
+extern struct cdp_binds cdpb;
 
 extern int ro_db_mode;
 extern char *domain;
@@ -58,7 +58,7 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     ro_session_lock(ro_session_table, ro_session_entry);
 
     if (session->active) {
-        LM_CRIT("Why the heck am i receiving a double confirmation of the dialog? Ignoring... ");
+        LM_CRIT("Why the heck am i receiving a double confirmation of the dialog? Ignoring...\n");
         ro_session_unlock(ro_session_table, ro_session_entry);
         return;
     } else if (session->active < 0) {   //session has already been terminated - we can't reactivate...
@@ -152,7 +152,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
 			s_reason = h->body;
 		}
 	} else if (_params->rpl) {
-		LM_DBG("Reply is [%d - %.*s]", _params->rpl->first_line.u.reply.statuscode, _params->rpl->first_line.u.reply.reason.len, _params->rpl->first_line.u.reply.reason.s);
+		LM_DBG("Reply is [%d - %.*s]\n", _params->rpl->first_line.u.reply.statuscode, _params->rpl->first_line.u.reply.reason.len, _params->rpl->first_line.u.reply.reason.s);
 	}
 	
 	ro_session = (struct ro_session*)*_params->param;
@@ -182,7 +182,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
 				//If however, the call was never answered, then we can continue as normal
 				ro_session_lock(ro_session_table, ro_session_entry);
                                 
-                                LM_DBG("processing dlg_terminated in Ro and session [%.*s] has active = %d", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->active);
+                                LM_DBG("processing dlg_terminated in Ro and session [%.*s] has active = %d\n", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->active);
 				if ((!ro_session->active && (ro_session->start_time != 0)) || (ro_session->ccr_sent == 1)) {
 					unref_ro_session(ro_session,1,0);
 					LM_DBG("CCR already sent or Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);

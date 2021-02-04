@@ -35,6 +35,7 @@ Javier Gallart
               2.4. Functions
 
                     2.4.1. kafka_send(topic, msg)
+                    2.4.2. kafka_send_key(topic, msg, key)
 
               2.5. RPC Commands
 
@@ -47,8 +48,9 @@ Javier Gallart
    1.2. Set configuration parameter
    1.3. Set topic parameter
    1.4. kafka_send usage
-   1.5. kafka.stats usage
+   1.5. kafka_send_key usage
    1.6. kafka.stats usage
+   1.7. kafka.stats usage
 
 Chapter 1. Admin Guide
 
@@ -68,6 +70,7 @@ Chapter 1. Admin Guide
         2.4. Functions
 
               2.4.1. kafka_send(topic, msg)
+              2.4.2. kafka_send_key(topic, msg, key)
 
         2.5. RPC Commands
 
@@ -91,6 +94,7 @@ Chapter 1. Admin Guide
    2.4. Functions
 
         2.4.1. kafka_send(topic, msg)
+        2.4.2. kafka_send_key(topic, msg, key)
 
    2.5. RPC Commands
 
@@ -206,13 +210,34 @@ modparam("kafka", "topic", "name=third_topic")
 kafka_send("my_topic", "test message");
 ...
 
+2.4.2.  kafka_send_key(topic, msg, key)
+
+   Send a message with an associated key to a specific topic via Kafka
+   server.
+
+   This function returns -1 for all sort of errors. (So execution of
+   script continues)
+
+   Parameters:
+     * topic: (string) name of the topic. It is mandatory.
+     * msg: (string) message to send. It is mandatory.
+     * key: (string) associate this key with the message. It is mandatory.
+
+   Available via KEMI framework as kafka.send_key.
+
+   Example 1.5. kafka_send_key usage
+...
+# Send "test message" to topic "my_topic" with key "my_key"
+kafka_send_key("my_topic", "test message", "my_key");
+...
+
 2.5. RPC Commands
 
 2.5.1. kafka.stats
 
    Show statistics about total sent messages and failed to deliver ones.
 
-   Example 1.5. kafka.stats usage
+   Example 1.6. kafka.stats usage
 ...
 kamcmd kafka.stats
 Total messages: 26  Errors: 0
@@ -225,7 +250,7 @@ Total messages: 26  Errors: 0
 
    Parameter: topic (string) name of the topic. Required.
 
-   Example 1.6. kafka.stats usage
+   Example 1.7. kafka.stats usage
 ...
 # Show statistics for my_topic.
 kamcmd kafka.stats_topic "my_topic"

@@ -86,8 +86,6 @@ static inline int get_expires_hf(struct sip_msg* _m)
  */
 int parse_message(struct sip_msg* _m)
 {
-	struct hdr_field* ptr;
-
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
 		LM_ERR("failed to parse headers\n");
@@ -118,18 +116,10 @@ int parse_message(struct sip_msg* _m)
 		return -5;
 	}
 
-	if (_m->contact) {
-		ptr = _m->contact;
-		while(ptr) {
-			if (ptr->type == HDR_CONTACT_T) {
-				if (!ptr->parsed && (parse_contact(ptr) < 0)) {
-					rerrno = R_PARSE_CONT;
-					LM_ERR("failed to parse Contact body\n");
-					return -6;
-				}
-			}
-			ptr = ptr->next;
-		}
+	if(parse_contact_headers(_m) < 0) {
+		rerrno = R_PARSE_CONT;
+		LM_ERR("failed to parse Contact body\n");
+		return -6;
 	}
 
 	return 0;
@@ -256,33 +246,50 @@ contact_t* get_next_contact(contact_t* _c)
 void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novariation)
 {
 	int range = 0;
+	sr_xavp_t *vavp = NULL;
+	str xename = str_init("expires");
 
-	if (!_ep || !_ep->body.len) {
-		*_e = get_expires_hf(_m);
+	if (reg_xavp_cfg.s != NULL) {
+		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xename);
+	}
 
-		if ( *_e < 0 ) {
-			*_e = cfg_get(registrar, registrar_cfg, default_expires);
-			range = cfg_get(registrar, registrar_cfg, default_expires_range);
-		} else {
-			range = cfg_get(registrar, registrar_cfg, expires_range);
-		}
+	if (vavp != NULL && vavp->val.v.i >= 0) {
+		*_e = vavp->val.v.i;
 	} else {
-		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
-			*_e = cfg_get(registrar, registrar_cfg, default_expires);
-			range = cfg_get(registrar, registrar_cfg, default_expires_range);
+		if (!_ep || !_ep->body.len) {
+			*_e = get_expires_hf(_m);
+
+			if ( *_e < 0 ) {
+				*_e = cfg_get(registrar, registrar_cfg, default_expires);
+				range = cfg_get(registrar, registrar_cfg, default_expires_range);
+			} else {
+				range = cfg_get(registrar, registrar_cfg, expires_range);
+			}
 		} else {
-			range = cfg_get(registrar, registrar_cfg, expires_range);
+			if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
+				*_e = cfg_get(registrar, registrar_cfg, default_expires);
+				range = cfg_get(registrar, registrar_cfg, default_expires_range);
+			} else {
+				range = cfg_get(registrar, registrar_cfg, expires_range);
+			}
 		}
 	}
 
-	if ( *_e != 0 )
-	{
-		if (!novariation) {
-			*_e = randomize_expires( *_e, range );
+	if ( *_e != 0 ) {
+		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
+			if(reg_min_expires_mode) {
+				rerrno = R_LOW_EXP;
+				return;
+			} else {
+				*_e = cfg_get(registrar, registrar_cfg, min_expires);
+			}
 		}
 
-		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
-			*_e = cfg_get(registrar, registrar_cfg, min_expires);
+		if (!novariation) {
+			*_e = randomize_expires( *_e, range );
+			if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
+				*_e = cfg_get(registrar, registrar_cfg, min_expires);
+			}
 		}
 
 		if (cfg_get(registrar, registrar_cfg, max_expires) && (*_e > cfg_get(registrar, registrar_cfg, max_expires))) {

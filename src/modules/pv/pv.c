@@ -31,6 +31,7 @@
 #include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/strutils.h"
 
 
 #include "pv_branch.h"
@@ -93,6 +94,12 @@ static pv_export_t mod_pvs[] = {
 	{ {"xavp", sizeof("xavp")-1}, /* xavp */
 		PVT_XAVP, pv_get_xavp, pv_set_xavp,
 		pv_parse_xavp_name, 0, 0, 0 },
+	{ {"xavu", sizeof("xavu")-1}, /* xavu */
+		PVT_XAVU, pv_get_xavu, pv_set_xavu,
+		pv_parse_xavu_name, 0, 0, 0 },
+	{ {"xavi", sizeof("xavi")-1}, /* xavi */
+		PVT_XAVI, pv_get_xavi, pv_set_xavi,
+		pv_parse_xavi_name, 0, 0, 0 },
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
 	{{"hdr", (sizeof("hdr")-1)}, PVT_HDR, pv_get_hdr, 0, pv_parse_hdr_name,
@@ -189,8 +196,6 @@ static pv_export_t mod_pvs[] = {
 	{{"dd", (sizeof("dd")-1)}, /* */
 		PVT_OTHER, pv_get_dsturi_attr, 0,
 		0, 0, pv_init_iname, 1},
-	{{"def", (sizeof("env")-1)}, PVT_OTHER, pv_get_def, 0,
-		pv_parse_def_name, 0, 0, 0},
 	{{"di", (sizeof("di")-1)}, /* */
 		PVT_OTHER, pv_get_diversion, 0,
 		0, 0, pv_init_iname, 1},
@@ -218,8 +223,6 @@ static pv_export_t mod_pvs[] = {
 	{{"duri", (sizeof("duri")-1)}, /* */
 		PVT_DSTURI, pv_get_dsturi, pv_set_dsturi,
 		0, 0, 0, 0},
-	{{"env", (sizeof("env")-1)}, PVT_OTHER, pv_get_env, 0,
-		pv_parse_env_name, 0, 0, 0},
 	{{"err.class", (sizeof("err.class")-1)}, /* */
 		PVT_OTHER, pv_get_errinfo_attr, 0,
 		0, 0, 0, 0},
@@ -247,6 +250,12 @@ static pv_export_t mod_pvs[] = {
 	{{"fs", (sizeof("fs")-1)}, /* */
 		PVT_OTHER, pv_get_force_sock, pv_set_force_sock,
 		0, 0, 0, 0},
+	{{"fsn", (sizeof("fsn")-1)}, /* */
+		PVT_OTHER, pv_get_force_sock_name, pv_set_force_sock_name,
+		0, 0, 0, 0},
+	{{"fsp", (sizeof("fsp")-1)}, /* */
+		PVT_OTHER, pv_get_force_sock_port, 0,
+		0, 0, 0, 0},
 	{{"ft", (sizeof("ft")-1)}, /* */
 		PVT_OTHER, pv_get_from_attr, 0,
 		0, 0, pv_init_iname, 4},
@@ -262,6 +271,9 @@ static pv_export_t mod_pvs[] = {
 	{{"from.user", (sizeof("from.user")-1)}, /* */
 		PVT_OTHER, pv_get_from_attr, pv_set_from_username,
 		0, 0, pv_init_iname, 2},
+	{{"fUl", (sizeof("fUl")-1)}, /* */
+		PVT_OTHER, pv_get_from_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"mb", (sizeof("mb")-1)}, /* */
 		PVT_OTHER, pv_get_msg_buf, 0,
 		0, 0, 0, 0},
@@ -283,6 +295,9 @@ static pv_export_t mod_pvs[] = {
 	{{"mt", (sizeof("mt")-1)}, /* */
 		PVT_OTHER, pv_get_msgtype, 0,
 		0, 0, 0, 0},
+	{{"mts", (sizeof("mts")-1)}, /* */
+		PVT_OTHER, pv_get_msgtypes, 0,
+		0, 0, 0, 0},
 	{{"od", (sizeof("od")-1)}, /* */
 		PVT_OTHER, pv_get_ouri_attr, 0,
 		0, 0, pv_init_iname, 2},
@@ -301,6 +316,9 @@ static pv_export_t mod_pvs[] = {
 	{{"oU", (sizeof("oU")-1)}, /* */
 		PVT_OTHER, pv_get_ouri_attr, 0,
 		0, 0, pv_init_iname, 1},
+	{{"oUl", (sizeof("oUl")-1)}, /* */
+		PVT_OTHER, pv_get_ouri_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"pd", (sizeof("pd")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
 		0, pv_parse_index, pv_init_iname, 3},
@@ -328,12 +346,6 @@ static pv_export_t mod_pvs[] = {
 	{{"rb", (sizeof("rb")-1)}, /* */
 		PVT_MSG_BODY, pv_get_msg_body, 0,
 		0, 0, 0, 0},
-	/* {{"rc", (sizeof("rc")-1)},
-		PVT_OTHER, pv_get_return_code, 0,
-		0, 0, 0, 0},
-	{{"retcode", (sizeof("retcode")-1)},
-		PVT_OTHER, pv_get_return_code, 0,
-		0, 0, 0, 0}, */
 	{{"rd", (sizeof("rd")-1)}, /* */
 		PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host,
 		0, 0, pv_init_iname, 2},
@@ -376,6 +388,9 @@ static pv_export_t mod_pvs[] = {
 	{{"ruri.user", (sizeof("ruri.user")-1)}, /* */
 		PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user,
 		0, 0, pv_init_iname, 1},
+	{{"rUl", (sizeof("rUl")-1)}, /* */
+		PVT_RURI_USERNAME, pv_get_ruri_attr, 0,
+		0, 0, pv_init_iname, 6},
 	{{"rv", (sizeof("rv")-1)}, /* */
 		PVT_OTHER, pv_get_version, 0,
 		0, 0, 0, 0},
@@ -393,6 +408,9 @@ static pv_export_t mod_pvs[] = {
 		0, 0, 0, 0},
 	{{"Rut", (sizeof("Rut")-1)}, /* */
 		PVT_OTHER, pv_get_rcvaddr_uri_full, 0,
+		0, 0, 0, 0},
+	{{"Rn", (sizeof("Rn")-1)}, /* */
+		PVT_OTHER, pv_get_rcvsname, 0,
 		0, 0, 0, 0},
 	{{"RAi", (sizeof("RAi")-1)}, /* */
 		PVT_OTHER, pv_get_rcv_advertised_ip, 0,
@@ -463,6 +481,9 @@ static pv_export_t mod_pvs[] = {
 	{{"to.user", (sizeof("to.user")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
 		0, 0, pv_init_iname, 2},
+	{{"tUl", (sizeof("tUl")-1)}, /* */
+		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
+		0, 0, pv_init_iname, 6},
 	{{"true", (sizeof("true")-1)}, /* */
 		PVT_OTHER, pv_get_true, 0,
 		0, 0, 0, 0},
@@ -536,9 +557,12 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
 static int w_xavp_copy(sip_msg_t *msg, char *src_name, char *src_idx, char *dst_name);
-static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx, char *dst_name, char *dst_idx);
+static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx,
+		char *dst_name, char *dst_idx);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
+static int w_xavp_slist_explode(sip_msg_t *msg, char *pslist, char *psep,
+		char *pmode, char *pxname);
 static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
 static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
@@ -550,6 +574,13 @@ static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
 static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
 static int w_xavp_to_var(sip_msg_t *msg, char *p1);
+
+static int w_xavi_child_seti(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval);
+static int w_xavi_child_sets(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval);
+static int w_xavi_rm(sip_msg_t *msg, char *prname, char *p2);
+static int w_xavi_child_rm(sip_msg_t *msg, char *prname, char *pcname);
 
 int pv_xavp_copy_fixup(void** param, int param_no);
 int pv_evalx_fixup(void** param, int param_no);
@@ -568,6 +599,10 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0,
 		ANY_ROUTE },
+	{"pv_xavu_print",  (cmd_function)pv_xavu_print,  0, 0, 0,
+		ANY_ROUTE },
+	{"pv_xavi_print",  (cmd_function)pv_xavi_print,  0, 0, 0,
+		ANY_ROUTE },
 	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE },
 	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
@@ -579,6 +614,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
 		fixup_free_pvar_null,
+		ANY_ROUTE},
+	{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode,
+		4, fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
 		2, fixup_spve_spve, fixup_free_spve_spve,
@@ -600,6 +638,18 @@ static cmd_export_t cmds[]={
 		1, fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"xavp_child_rm", (cmd_function)w_xavp_child_rm,
+		2, fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"xavi_child_seti", (cmd_function)w_xavi_child_seti,
+		3, fixup_xavp_child_seti, fixup_free_xavp_child_seti,
+		ANY_ROUTE},
+	{"xavi_child_sets", (cmd_function)w_xavi_child_sets,
+		3, fixup_spve_all, fixup_free_spve_all,
+		ANY_ROUTE},
+	{"xavi_rm", (cmd_function)w_xavi_rm,
+		1, fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"xavi_child_rm", (cmd_function)w_xavi_child_rm,
 		2, fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
@@ -818,6 +868,120 @@ static int ki_xavp_print(sip_msg_t* msg)
 	return 1;
 }
 
+static int ki_xavu_print(sip_msg_t* msg)
+{
+	xavu_print_list(NULL);
+	return 1;
+}
+
+static int ki_xavi_print(sip_msg_t* msg)
+{
+	xavi_print_list(NULL);
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_copy_dst_mode(str *src_name, int src_idx, str *dst_name,
+		int dst_idx, int dimode)
+{
+	sr_xavp_t *src_xavp = NULL;
+	sr_xavp_t *dst_xavp = NULL;
+	sr_xavp_t *new_xavp = NULL;
+	sr_xavp_t *prev_xavp = NULL;
+
+	src_xavp = xavp_get_by_index(src_name, src_idx, NULL);
+	if(!src_xavp) {
+		LM_ERR("missing can not find source xavp [%.*s]\n",
+				src_name->len, src_name->s);
+		return -1;
+	}
+
+	LM_DBG("dst_name xavp [%.*s]\n", dst_name->len, dst_name->s);
+	new_xavp = xavp_clone_level_nodata_with_new_name(src_xavp, dst_name);
+	if (!new_xavp) {
+		LM_ERR("error cloning xavp\n");
+		return -1;
+	}
+
+	if (dimode) {
+		dst_xavp = xavp_get_by_index(dst_name, dst_idx, NULL);
+		if(!dst_xavp) {
+			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n",
+					dst_name->len, dst_name->s);
+			xavp_destroy_list(&new_xavp);
+			return -1;
+		}
+
+		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n",
+				src_name->len, src_name->s, src_idx,
+				dst_name->len, dst_name->s, dst_idx);
+		if(dst_idx == 0) {
+			if(xavp_add(new_xavp, NULL)<0) {
+				LM_ERR("error adding new xavp\n");
+				xavp_destroy_list(&new_xavp);
+				return -1;
+			}
+		} else {
+			prev_xavp = xavp_get_by_index(dst_name, dst_idx-1, NULL);
+			if(!prev_xavp) {
+				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n",
+						dst_name->len, dst_name->s, dst_idx);
+				xavp_destroy_list(&new_xavp);
+				return -1;
+			}
+			xavp_add_after(new_xavp, prev_xavp);
+		}
+		if(xavp_rm(dst_xavp, NULL)<0) {
+			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n",
+					dst_name->len, dst_name->s, dst_idx);
+			return -1;
+		}
+	} else {
+		/* check if destination exists,
+		 * if it does we will append, similar to XAVP assigment */
+		dst_xavp = xavp_get(dst_name, NULL);
+		if (!dst_xavp) {
+			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name->len, src_name->s, src_idx, dst_name->len,
+					dst_name->s);
+			if(xavp_add(new_xavp, NULL)<0) {
+				LM_ERR("error adding new xavp\n");
+				xavp_destroy_list(&dst_xavp);
+				return -1;
+			}
+		} else {
+			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
+					src_name->len, src_name->s, src_idx,
+					dst_name->len, dst_name->s);
+			if(xavp_add_last(new_xavp, &dst_xavp)<0) {
+				LM_ERR("error appending new xavp\n");
+				xavp_destroy_list(&dst_xavp);
+				return -1;
+			}
+		}
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_copy(sip_msg_t *msg, str *src_name, int src_idx, str *dst_name)
+{
+	return ki_xavp_copy_dst_mode(src_name, src_idx, dst_name, 0, 0);
+}
+
+/**
+ *
+ */
+static int ki_xavp_copy_dst(sip_msg_t *msg, str *src_name, int src_idx,
+		str *dst_name, int dst_idx)
+{
+	return ki_xavp_copy_dst_mode(src_name, src_idx, dst_name, dst_idx, 0);
+}
+
 /**
  *
  */
@@ -829,12 +993,14 @@ static int w_xavp_copy(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_d
 /**
  *
  */
-static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char *_dst_name, char *_dst_idx)
+static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx,
+		char *_dst_name, char *_dst_idx)
 {
 	str src_name;
 	int src_idx;
 	str dst_name;
 	int dst_idx;
+	int dimode;
 
 	if(get_str_fparam(&src_name, msg, (gparam_p)_src_name) != 0) {
 		LM_ERR("xavp_copy: missing source\n");
@@ -848,72 +1014,17 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *_src_name, char *_src_idx, char
 		LM_ERR("failed to get the src_idx value\n");
 		return -1;
 	}
-	sr_xavp_t *src_xavp = xavp_get_by_index(&src_name, src_idx, NULL);
-	if(!src_xavp) {
-		LM_ERR("xavp_copy: missing can not find source xavp [%.*s]\n", src_name.len, src_name.s);
-		return -1;
-	}
-
-	sr_xavp_t *dst_xavp = NULL;
-	LM_DBG("xavp_copy: dst_name xavp [%.*s]\n", dst_name.len, dst_name.s);
-	sr_xavp_t *new_xavp = xavp_clone_level_nodata_with_new_name(src_xavp, &dst_name);
-	if (!new_xavp) {
-		LM_ERR("error cloning xavp\n");
-		return -1;
-	}
-
+	dst_idx = 0;
 	if (_dst_idx) {
 		if(get_int_fparam(&dst_idx, msg, (gparam_t*)_dst_idx)<0) {
 			LM_ERR("failed to get the dst_idx value\n");
 			return -1;
 		}
-		dst_xavp = xavp_get_by_index(&dst_name, dst_idx, NULL);
-		if(!dst_xavp) {
-			LM_ERR("xavp_copy: missing can not find destination xavp [%.*s]\n", dst_name.len, dst_name.s);
-			xavp_destroy_list(&new_xavp);
-			return -1;
-		}
-
-		LM_DBG("xavp_copy(replace): $xavp(%.*s[%d]) >> $xavp(%.*s[%d])\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s, dst_idx);
-		if(dst_idx == 0) {
-			if(xavp_add(new_xavp, NULL)<0) {
-				LM_ERR("error adding new xavp\n");
-				xavp_destroy_list(&new_xavp);
-				return -1;
-			}
-		} else {
-			sr_xavp_t *prev_xavp = xavp_get_by_index(&dst_name, dst_idx-1, NULL);
-			if(!prev_xavp) {
-				LM_ERR("error inserting xavp, parent not found $xavp(%.*s[%d])\n", dst_name.len, dst_name.s, dst_idx);
-				xavp_destroy_list(&new_xavp);
-				return -1;
-			}
-			xavp_add_after(new_xavp, prev_xavp);
-		}
-		if(xavp_rm(dst_xavp, NULL)<0) {
-			LM_ERR("can not remove the exiting index $xavp(%.*s[%d])\n", dst_name.len, dst_name.s, dst_idx);
-			return -1;
-		}
+		dimode = 1;
 	} else {
-		// Check if destination exist, if it does we will append, similar to XAVP assigment
-		dst_xavp = xavp_get(&dst_name, NULL);
-		if (!dst_xavp) {
-			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
-			if(xavp_add(new_xavp, NULL)<0) {
-				LM_ERR("error adding new xavp\n");
-				xavp_destroy_list(&dst_xavp);
-				return -1;
-			}
-		} else {
-			LM_DBG("xavp_copy(append): $xavp(%.*s[%d]) >> $xavp(%.*s)\n", src_name.len, src_name.s, src_idx, dst_name.len, dst_name.s);
-			if(xavp_add_last(new_xavp, &dst_xavp)<0) {
-				LM_ERR("error appending new xavp\n");
-				xavp_destroy_list(&dst_xavp);
-				return -1;
-			}
-		}
+		dimode = 0;
 	}
-	return 1;
+	return ki_xavp_copy_dst_mode(&src_name, src_idx, &dst_name, dst_idx, dimode);
 }
 
 /**
@@ -1010,7 +1121,54 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 /**
  *
  */
-static int ki_xavp_seti(sip_msg_t *msg, str *rname, int ival)
+static int w_xavp_slist_explode(sip_msg_t *msg, char *pslist, char *psep,
+		char *pmode, char *pxname)
+{
+	str slist;
+	str sep;
+	str smode;
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pslist, &slist)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)psep, &sep)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pmode, &smode)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &sxname)!=0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	if(xavp_slist_explode(&slist, &sep, &smode, &sxname)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_slist_explode(sip_msg_t *msg, str *slist, str *sep, str *mode,
+		str *sxname)
+{
+	if(xavp_slist_explode(slist, sep, mode, sxname)<0)
+		return -1;
+
+	return 1;
+}
+
+
+/**
+ *
+ */
+static int ki_xav_seti(sip_msg_t *msg, str *rname, int ival, int _case)
 {
 	sr_xavp_t *xavp = NULL;
 	sr_xval_t xval;
@@ -1019,15 +1177,28 @@ static int ki_xavp_seti(sip_msg_t *msg, str *rname, int ival)
 	xval.type = SR_XTYPE_INT;
 	xval.v.i = ival;
 
-	xavp = xavp_add_value(rname, &xval, NULL);
-
+	if(_case) {
+		xavp = xavi_add_value(rname, &xval, NULL);
+	} else {
+		xavp = xavp_add_value(rname, &xval, NULL);
+	}
 	return (xavp!=NULL)?1:-1;
+}
+
+static int ki_xavp_seti(sip_msg_t *msg, str *rname, int ival)
+{
+	return ki_xav_seti(msg, rname, ival, 0);
+}
+
+static int ki_xavi_seti(sip_msg_t *msg, str *rname, int ival)
+{
+	return ki_xav_seti(msg, rname, ival, 1);
 }
 
 /**
  *
  */
-static int ki_xavp_sets(sip_msg_t *msg, str *rname, str *sval)
+static int ki_xav_sets(sip_msg_t *msg, str *rname, str *sval, int _case)
 {
 	sr_xavp_t *xavp = NULL;
 	sr_xval_t xval;
@@ -1036,29 +1207,56 @@ static int ki_xavp_sets(sip_msg_t *msg, str *rname, str *sval)
 	xval.type = SR_XTYPE_STR;
 	xval.v.s = *sval;
 
-	xavp = xavp_add_value(rname, &xval, NULL);
-
+	if(_case) {
+		xavp = xavi_add_value(rname, &xval, NULL);
+	} else {
+		xavp = xavp_add_value(rname, &xval, NULL);
+	}
 	return (xavp!=NULL)?1:-1;
 }
 
-/**
- *
- */
-static int ki_xavp_child_seti(sip_msg_t *msg, str *rname, str *cname,
-		int ival)
+static int ki_xavp_sets(sip_msg_t *msg, str *rname, str *sval)
 {
-	int ret;
+	return ki_xav_sets(msg, rname, sval, 0);
+}
 
-	ret = xavp_set_child_ival(rname, cname, ival);
-
-	return (ret<0)?ret:1;
+static int ki_xavi_sets(sip_msg_t *msg, str *rname, str *sval)
+{
+	return ki_xav_sets(msg, rname, sval, 1);
 }
 
 /**
  *
  */
-static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
-		char *pval)
+static int ki_xav_child_seti(sip_msg_t *msg, str *rname, str *cname,
+		int ival, int _case)
+{
+	int ret;
+	if(_case) {
+		ret = xavi_set_child_ival(rname, cname, ival);
+	} else {
+		ret = xavp_set_child_ival(rname, cname, ival);
+	}
+	return (ret<0)?ret:1;
+}
+
+static int ki_xavp_child_seti(sip_msg_t *msg, str *rname, str *cname,
+		int ival)
+{
+	return ki_xav_child_seti(msg, rname, cname, ival, 0);
+}
+
+static int ki_xavi_child_seti(sip_msg_t *msg, str *rname, str *cname,
+		int ival)
+{
+	return ki_xav_child_seti(msg, rname, cname, ival, 1);
+}
+
+/**
+ *
+ */
+static int w_xav_child_seti(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval, int _case)
 {
 	str rname = STR_NULL;
 	str cname = STR_NULL;
@@ -1077,27 +1275,53 @@ static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		return -1;
 	}
 
-	return ki_xavp_child_seti(msg, &rname, &cname, ival);
+	return ki_xav_child_seti(msg, &rname, &cname, ival, _case);
+}
+
+static int w_xavp_child_seti(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval)
+{
+	return w_xav_child_seti(msg, prname, pcname, pval, 0);
+}
+
+static int w_xavi_child_seti(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval)
+{
+	return w_xav_child_seti(msg, prname, pcname, pval, 1);
 }
 
 /**
  *
  */
-static int ki_xavp_child_sets(sip_msg_t *msg, str *rname, str *cname,
-		str *sval)
+static int ki_xav_child_sets(sip_msg_t *msg, str *rname, str *cname,
+		str *sval, int _case)
 {
 	int ret;
-
-	ret = xavp_set_child_sval(rname, cname, sval);
-
+	if(_case) {
+		ret = xavi_set_child_sval(rname, cname, sval);
+	} else {
+		ret = xavp_set_child_sval(rname, cname, sval);
+	}
 	return (ret<0)?ret:1;
 }
 
+static int ki_xavp_child_sets(sip_msg_t *msg, str *rname, str *cname,
+		str *sval)
+{
+	return ki_xav_child_sets(msg, rname, cname, sval, 0);
+}
+
+static int ki_xavi_child_sets(sip_msg_t *msg, str *rname, str *cname,
+		str *sval)
+{
+	return ki_xav_child_sets(msg, rname, cname, sval, 1);
+}
+
 /**
  *
  */
-static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
-		char *pval)
+static int w_xav_child_sets(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval, int _case)
 {
 	str rname;
 	str cname;
@@ -1116,7 +1340,17 @@ static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
 		return -1;
 	}
 
-	return ki_xavp_child_sets(msg, &rname, &cname, &sval);
+	return ki_xav_child_sets(msg, &rname, &cname, &sval, _case);
+}
+
+static int w_xavp_child_sets(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval) {
+	return w_xav_child_sets(msg, prname, pcname, pval, 0);
+}
+
+static int w_xavi_child_sets(sip_msg_t *msg, char *prname, char *pcname,
+		char *pval) {
+	return w_xav_child_sets(msg, prname, pcname, pval, 1);
 }
 
 /**
@@ -1147,19 +1381,32 @@ static int fixup_free_xavp_child_seti(void** param, int param_no)
 /**
  *
  */
-static int ki_xavp_rm(sip_msg_t *msg, str *rname)
+static int ki_xav_rm(sip_msg_t *msg, str *rname, int _case)
 {
 	int ret;
-
-	ret = xavp_rm_by_index(rname, 0, NULL);
+	if(_case) {
+		ret = xavi_rm_by_index(rname, 0, NULL);
+	} else {
+		ret = xavp_rm_by_index(rname, 0, NULL);
+	}
 
 	return (ret==0)?1:ret;
+}
+
+static int ki_xavp_rm(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_rm(msg, rname, 0);
+}
+
+static int ki_xavi_rm(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_rm(msg, rname, 1);
 }
 
 /**
  *
  */
-static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2)
+static int w_xav_rm(sip_msg_t *msg, char *prname, char *p2, int _case)
 {
 	str rname;
 
@@ -1168,25 +1415,45 @@ static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2)
 		return -1;
 	}
 
-	return ki_xavp_rm(msg, &rname);
+	return ki_xav_rm(msg, &rname, _case);
+}
+
+static int w_xavp_rm(sip_msg_t *msg, char *prname, char *p2) {
+	return w_xav_rm(msg, prname, p2, 0);
+}
+
+static int w_xavi_rm(sip_msg_t *msg, char *prname, char *p2) {
+	return w_xav_rm(msg, prname, p2, 1);
 }
 
 /**
  *
  */
-static int ki_xavp_child_rm(sip_msg_t *msg, str *rname, str *cname)
+static int ki_xav_child_rm(sip_msg_t *msg, str *rname, str *cname, int _case)
 {
 	int ret;
-
-	ret = xavp_rm_child_by_index(rname, cname, 0);
-
+	if(_case) {
+		ret = xavi_rm_child_by_index(rname, cname, 0);
+	} else {
+		ret = xavp_rm_child_by_index(rname, cname, 0);
+	}
 	return (ret==0)?1:ret;
 }
 
+static int ki_xavp_child_rm(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_rm(msg, rname, cname, 0);
+}
+
+static int ki_xavi_child_rm(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_rm(msg, rname, cname, 1);
+}
+
 /**
  *
  */
-static int w_xavp_child_rm(sip_msg_t *msg, char *prname, char *pcname)
+static int w_xav_child_rm(sip_msg_t *msg, char *prname, char *pcname, int _case)
 {
 	str rname;
 	str cname;
@@ -1200,17 +1467,28 @@ static int w_xavp_child_rm(sip_msg_t *msg, char *prname, char *pcname)
 		return -1;
 	}
 
-	return ki_xavp_child_rm(msg, &rname, &cname);
+	return ki_xav_child_rm(msg, &rname, &cname, _case);
+}
+
+static int w_xavp_child_rm(sip_msg_t *msg, char *prname, char *pcname) {
+	return w_xav_child_rm(msg, prname, pcname, 0);
+}
+
+static int w_xavi_child_rm(sip_msg_t *msg, char *prname, char *pcname) {
+	return w_xav_child_rm(msg, prname, pcname, 1);
 }
 
 /**
  *
  */
-static int ki_xavp_is_null(sip_msg_t *msg, str *rname)
+static int ki_xav_is_null(sip_msg_t *msg, str *rname, int _case)
 {
 	sr_xavp_t *xavp=NULL;
-
-	xavp = xavp_get_by_index(rname, 0, NULL);
+	if(_case) {
+		xavp = xavi_get_by_index(rname, 0, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, 0, NULL);
+	}
 	if(xavp==NULL) {
 		return 1;
 	}
@@ -1220,6 +1498,13 @@ static int ki_xavp_is_null(sip_msg_t *msg, str *rname)
 	return -1;
 }
 
+static int ki_xavp_is_null(sip_msg_t *msg, str *rname) {
+	return ki_xav_is_null(msg, rname, 0);
+}
+
+static int ki_xavi_is_null(sip_msg_t *msg, str *rname) {
+	return ki_xav_is_null(msg, rname, 1);
+}
 /**
  *
  */
@@ -1291,13 +1576,17 @@ static sr_kemi_xval_t* ki_xavp_get_xval(sr_xavp_t *xavp, int rmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_get_mode(sip_msg_t *msg, str *rname, int rmode)
+static sr_kemi_xval_t* ki_xav_get_mode(sip_msg_t *msg, str *rname, int rmode,
+		int _case)
 {
 	sr_xavp_t *xavp=NULL;
 
 	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
-
-	xavp = xavp_get_by_index(rname, 0, NULL);
+	if(_case) {
+		xavp = xavi_get_by_index(rname, 0, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, 0, NULL);
+	}
 	if(xavp==NULL) {
 		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
 		return &_sr_kemi_pv_xval;
@@ -1311,7 +1600,15 @@ static sr_kemi_xval_t* ki_xavp_get_mode(sip_msg_t *msg, str *rname, int rmode)
  */
 static sr_kemi_xval_t* ki_xavp_get(sip_msg_t *msg, str *rname)
 {
-	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_NONE);
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_NONE, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_get(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_NONE, 1);
 }
 
 /**
@@ -1319,7 +1616,15 @@ static sr_kemi_xval_t* ki_xavp_get(sip_msg_t *msg, str *rname)
  */
 static sr_kemi_xval_t* ki_xavp_gete(sip_msg_t *msg, str *rname)
 {
-	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY);
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_gete(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY, 1);
 }
 
 /**
@@ -1327,24 +1632,375 @@ static sr_kemi_xval_t* ki_xavp_gete(sip_msg_t *msg, str *rname)
  */
 static sr_kemi_xval_t* ki_xavp_getw(sip_msg_t *msg, str *rname)
 {
-	return ki_xavp_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT, 0);
 }
 
 /**
  *
  */
-static int ki_xavp_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+static sr_kemi_xval_t* ki_xavi_getw(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT, 1);
+}
+
+/**
+ *
+ */
+sr_kemi_dict_item_t* ki_xav_dict(sr_xavp_t *xavp, int _case);
+
+/**
+ * SR_KEMIP_ARRAY with values of xavp=>name
+ */
+sr_kemi_dict_item_t* ki_xav_dict_name(sr_xavp_t *xavp, str *name, int _case)
+{
+	sr_kemi_dict_item_t *ini = NULL;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
+	sr_xavp_t *avp = xavp;
+
+	ini = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+	if(ini==NULL) {
+		PKG_MEM_ERROR;
+		return NULL;
+	}
+	memset(ini, 0, sizeof(sr_kemi_xval_t));
+	ini->vtype = SR_KEMIP_ARRAY;
+	if(_case) {
+		while(avp!=NULL&&!cmpi_str(&avp->name, name))
+		{
+			avp = avp->next;
+		}
+	} else {
+		while(avp!=NULL&&!STR_EQ(avp->name,*name))
+		{
+			avp = avp->next;
+		}
+	}
+	while(avp!=NULL){
+		switch(avp->val.type) {
+			case SR_XTYPE_XAVP:
+			break;
+			default:
+				val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+				if(val==NULL) {
+					PKG_MEM_ERROR;
+					goto error;
+				}
+				memset(val, 0, sizeof(sr_kemi_xval_t));
+			break;
+		}
+		switch(avp->val.type) {
+			case SR_XTYPE_NULL:
+				val->vtype = SR_KEMIP_NULL;
+			break;
+			case SR_XTYPE_INT:
+				val->vtype = SR_KEMIP_INT;
+				val->v.n = avp->val.v.i;
+			break;
+			case SR_XTYPE_STR:
+				val->vtype = SR_KEMIP_STR;
+				val->v.s.s = avp->val.v.s.s;
+				val->v.s.len = avp->val.v.s.len;
+			break;
+			case SR_XTYPE_TIME:
+			case SR_XTYPE_LONG:
+			case SR_XTYPE_LLONG:
+			case SR_XTYPE_DATA:
+				val->vtype = SR_KEMIP_NULL;
+				LM_WARN("XAVP type:%d value not supported\n", avp->val.type);
+			break;
+			case SR_XTYPE_XAVP:
+				val = ki_xav_dict(avp->val.v.xavp, _case);
+			break;
+			default:
+				val->vtype = SR_KEMIP_NULL;
+				LM_ERR("xavp:%.*s unknown type: %d\n",
+					avp->name.len, avp->name.s, avp->val.type);
+			break;
+		}
+		if(last) {
+			last->next = val;
+		} else {
+			ini->v.dict = val;
+		}
+		last = val;
+		if(_case) {
+			avp = xavi_get_next(avp);
+		} else {
+			avp = xavp_get_next(avp);
+		}
+	}
+	return ini;
+error:
+	while(ini) {
+		last = ini;
+		ini = ini->next;
+		pkg_free(last);
+	}
+	return NULL;
+}
+
+/**
+ * SR_KEMIP_DICT of xavp
+ */
+sr_kemi_dict_item_t* ki_xav_dict(sr_xavp_t *xavp, int _case)
+{
+	sr_xavp_t *avp = NULL;
+	struct str_list *keys;
+	struct str_list *k;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *ini = NULL;
+	sr_kemi_dict_item_t *last = NULL;
+
+	if(xavp->val.type!=SR_XTYPE_XAVP) {
+		LM_ERR("%s not xavp?\n", xavp->name.s);
+		return NULL;
+	}
+	avp = xavp->val.v.xavp;
+	if(_case) {
+		keys = xavi_get_list_key_names(xavp);
+	} else {
+		keys = xavp_get_list_key_names(xavp);
+	}
+	if( keys != NULL) {
+		do {
+			val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+			if(val==NULL) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+			memset(val, 0, sizeof(sr_kemi_xval_t));
+			val->vtype = SR_KEMIP_DICT;
+			val->name.s = keys->s.s;
+			val->name.len = keys->s.len;
+			val->v.dict = ki_xav_dict_name(avp, &keys->s, _case);
+			if(last) {
+				last->next = val;
+			} else {
+				ini = val;
+			}
+			last = val;
+			k = keys;
+			keys = keys->next;
+			pkg_free(k);
+		} while(keys!=NULL);
+	}
+	return ini;
+error:
+	while(keys!=NULL) {
+		k = keys;
+		keys = keys->next;
+		pkg_free(k);
+	}
+	while(ini) {
+		val = ini;
+		ini = ini->next;
+		pkg_free(val);
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xav_getd_helper(sip_msg_t *msg, str *rname,
+		int *_indx, int _case)
 {
 	sr_xavp_t *xavp=NULL;
+	int xavp_size = 0;
+	int indx = 0;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
 
-	xavp = xavp_get_by_index(rname, 0, NULL);
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+	if(_indx) {
+		indx = *_indx;
+		/* we're going to retrive just one */
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_DICT;
+	} else {
+		/* we're going to retrive all */
+		_sr_kemi_pv_xval.vtype = SR_KEMIP_ARRAY;
+	}
+	if(_case) {
+		xavp_size = xavi_count(rname, NULL);
+	} else {
+		xavp_size = xavp_count(rname, NULL);
+	}
+	if(indx<0)
+	{
+		if((indx*-1)>xavp_size)
+		{
+			sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+			return &_sr_kemi_pv_xval;
+		}
+		indx = xavp_size + indx;
+	}
+
+	if(_case) {
+		xavp = xavi_get_by_index(rname, indx, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, indx, NULL);
+	}
+	if(xavp==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_pv_xval;
+	}
+	do {
+		val = ki_xav_dict(xavp, _case);
+		if(last) {
+			last->next = val;
+		} else {
+			_sr_kemi_pv_xval.v.dict = val;
+		}
+		if(val) last = val;
+		if(_indx) {
+			xavp = NULL;
+		} else {
+			indx = indx + 1;
+			if(_case) {
+				xavp = xavi_get_by_index(rname, indx, NULL);
+			} else {
+				xavp = xavp_get_by_index(rname, indx, NULL);
+			}
+		}
+	} while(xavp!=NULL);
+	return &_sr_kemi_pv_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_getd(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_getd_helper(msg, rname, NULL, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_getd(sip_msg_t *msg, str *rname)
+{
+	return ki_xav_getd_helper(msg, rname, NULL, 1);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_getd_p1(sip_msg_t *msg, str *rname, int indx)
+{
+	return ki_xav_getd_helper(msg, rname, &indx, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_getd_p1(sip_msg_t *msg, str *rname, int indx)
+{
+	return ki_xav_getd_helper(msg, rname, &indx, 1);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xav_get_keys(sip_msg_t *msg, str *rname, int indx, int _case)
+{
+	sr_xavp_t *xavp=NULL;
+	struct str_list *keys, *k;
+	sr_kemi_dict_item_t *val;
+	sr_kemi_dict_item_t *last = NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(_case) {
+		xavp = xavi_get_by_index(rname, indx, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, indx, NULL);
+	}
+	if(xavp==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_pv_xval;
+	}
+	if(_case) {
+		keys = xavi_get_list_key_names(xavp);
+	} else {
+		keys = xavp_get_list_key_names(xavp);
+	}
+	_sr_kemi_pv_xval.vtype = SR_KEMIP_ARRAY;
+	while(keys!=NULL){
+		k = keys;
+		val = (sr_kemi_dict_item_t*)pkg_malloc(sizeof(sr_kemi_dict_item_t));
+		if(val==NULL) {
+			PKG_MEM_ERROR;
+			goto error;
+		}
+		memset(val, 0, sizeof(sr_kemi_xval_t));
+		val->vtype = SR_KEMIP_STR;
+		val->v.s.len = k->s.len;
+		val->v.s.s = k->s.s;
+		keys = k->next;
+		pkg_free(k);
+		if(last) {
+			last->next = val;
+		} else {
+			_sr_kemi_pv_xval.v.dict = val;
+		}
+		last = val;
+	}
+	return &_sr_kemi_pv_xval;
+error:
+	while(keys!=NULL) {
+		k = keys;
+		keys = keys->next;
+		pkg_free(k);
+	}
+	last = _sr_kemi_pv_xval.v.dict;
+	while(last) {
+		val = last;
+		last = last->next;
+		pkg_free(val);
+	}
+	sr_kemi_xval_null(&_sr_kemi_pv_xval, SR_KEMI_XVAL_NULL_NONE);
+	return &_sr_kemi_pv_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavp_get_keys(sip_msg_t *msg, str *rname, int indx)
+{
+	return ki_xav_get_keys(msg, rname, indx, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_get_keys(sip_msg_t *msg, str *rname, int indx)
+{
+	return ki_xav_get_keys(msg, rname, indx, 1);
+}
+
+/**
+ *
+ */
+static int ki_xav_child_is_null(sip_msg_t *msg, str *rname, str *cname, int _case)
+{
+	sr_xavp_t *xavp=NULL;
+	if(_case) {
+		xavp = xavi_get_by_index(rname, 0, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, 0, NULL);
+	}
 	if(xavp==NULL) {
 		return 1;
 	}
 	if(xavp->val.type != SR_XTYPE_XAVP) {
 		return 1;
 	}
-	xavp = xavp_get_by_index(cname, 0, &xavp->val.v.xavp);
+	if(_case) {
+		xavp = xavi_get_by_index(cname, 0, &xavp->val.v.xavp);
+	} else {
+		xavp = xavp_get_by_index(cname, 0, &xavp->val.v.xavp);
+	}
 	if(xavp==NULL) {
 		return 1;
 	}
@@ -1357,14 +2013,34 @@ static int ki_xavp_child_is_null(sip_msg_t *msg, str *rname, str *cname)
 /**
  *
  */
-static sr_kemi_xval_t* ki_xavp_child_get_mode(sip_msg_t *msg, str *rname,
-		str *cname, int rmode)
+static int ki_xavp_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_is_null(msg, rname, cname, 0);
+}
+
+/**
+ *
+ */
+static int ki_xavi_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_is_null(msg, rname, cname, 1);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xav_child_get_mode(sip_msg_t *msg, str *rname,
+		str *cname, int rmode, int _case)
 {
 	sr_xavp_t *xavp=NULL;
 
 	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
 
-	xavp = xavp_get_by_index(rname, 0, NULL);
+	if(_case) {
+		xavp = xavi_get_by_index(rname, 0, NULL);
+	} else {
+		xavp = xavp_get_by_index(rname, 0, NULL);
+	}
 	if(xavp==NULL) {
 		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
 		return &_sr_kemi_pv_xval;
@@ -1375,7 +2051,11 @@ static sr_kemi_xval_t* ki_xavp_child_get_mode(sip_msg_t *msg, str *rname,
 		return &_sr_kemi_pv_xval;
 	}
 
-	xavp = xavp_get_by_index(cname, 0, &xavp->val.v.xavp);
+	if(_case) {
+		xavp = xavi_get_by_index(cname, 0, &xavp->val.v.xavp);
+	} else {
+		xavp = xavp_get_by_index(cname, 0, &xavp->val.v.xavp);
+	}
 	if(xavp==NULL) {
 		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
 		return &_sr_kemi_pv_xval;
@@ -1389,25 +2069,260 @@ static sr_kemi_xval_t* ki_xavp_child_get_mode(sip_msg_t *msg, str *rname,
  */
 static sr_kemi_xval_t* ki_xavp_child_get(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE, 0);
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_child_get(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE, 1);
+}
 
 /**
  *
  */
 static sr_kemi_xval_t* ki_xavp_child_gete(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY, 0);
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_child_gete(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY, 1);
+}
 
 /**
  *
  */
 static sr_kemi_xval_t* ki_xavp_child_getw(sip_msg_t *msg, str *rname, str *cname)
 {
-	return ki_xavp_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT, 0);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavi_child_getw(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xav_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT, 1);
+}
+
+/**
+ *
+ */
+static int ki_xavu_is_null(sip_msg_t *msg, str *rname)
+{
+	sr_xavp_t *xavu=NULL;
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_rm(sip_msg_t *msg, str *rname)
+{
+	int ret;
+
+	ret = xavu_rm_by_name(rname, NULL);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_rm(sip_msg_t *msg, str *rname, str *cname)
+{
+	int ret;
+
+	ret = xavu_rm_child_by_name(rname, cname);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int ki_xavu_seti(sip_msg_t *msg, str *rname, int ival)
+{
+	sr_xavp_t *xavp = NULL;
+
+	xavp = xavu_set_ival(rname, ival);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_sets(sip_msg_t *msg, str *rname, str *sval)
+{
+	sr_xavp_t *xavp = NULL;
+
+	xavp = xavu_set_sval(rname, sval);
+
+	return (xavp!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_seti(sip_msg_t *msg, str *rname, str *cname,
+		int ival)
+{
+	sr_xavp_t *xavu = NULL;
+
+	xavu = xavu_set_child_ival(rname, cname, ival);
+
+	return (xavu!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_sets(sip_msg_t *msg, str *rname, str *cname,
+		str *sval)
+{
+	sr_xavp_t *xavu = NULL;
+
+	xavu = xavu_set_child_sval(rname, cname, sval);
+
+	return (xavu!=NULL)?1:-1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_get_mode(sip_msg_t *msg, str *rname, int rmode)
+{
+	sr_xavp_t *xavu=NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	return ki_xavp_get_xval(xavu, rmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_get(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_gete(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_getw(sip_msg_t *msg, str *rname)
+{
+	return ki_xavu_get_mode(msg, rname, SR_KEMI_XVAL_NULL_PRINT);
+}
+
+/**
+ *
+ */
+static int ki_xavu_child_is_null(sip_msg_t *msg, str *rname, str *cname)
+{
+	sr_xavp_t *xavu=NULL;
+
+	xavu = xavp_get_by_index(rname, 0, NULL);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type != SR_XTYPE_XAVP) {
+		return 1;
+	}
+	xavu = xavp_get_by_index(cname, 0, &xavu->val.v.xavp);
+	if(xavu==NULL) {
+		return 1;
+	}
+	if(xavu->val.type == SR_XTYPE_NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_get_mode(sip_msg_t *msg, str *rname,
+		str *cname, int rmode)
+{
+	sr_xavp_t *xavu=NULL;
+
+	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	xavu = xavu_lookup(rname, NULL);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	if(xavu->val.type != SR_XTYPE_XAVP) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	xavu = xavp_get_by_index(cname, 0, &xavu->val.v.xavp);
+	if(xavu==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
+		return &_sr_kemi_pv_xval;
+	}
+
+	return ki_xavp_get_xval(xavu, rmode);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_get(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_NONE);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_gete(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_EMPTY);
+}
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_xavu_child_getw(sip_msg_t *msg, str *rname, str *cname)
+{
+	return ki_xavu_child_get_mode(msg, rname, cname, SR_KEMI_XVAL_NULL_PRINT);
 }
 
 /**
@@ -1761,6 +2676,36 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("var_seti"),
+		SR_KEMIP_INT, ki_var_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("var_sets"),
+		SR_KEMIP_INT, ki_var_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("var_get"),
+		SR_KEMIP_XVAL, ki_var_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("shv_seti"),
+		SR_KEMIP_INT, ki_shv_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("shv_sets"),
+		SR_KEMIP_INT, ki_shv_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("shv_get"),
+		SR_KEMIP_XVAL, ki_shv_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("pv_var_to_xavp"),
 		SR_KEMIP_INT, ki_var_to_xavp,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -1776,6 +2721,16 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("pv_xavu_print"),
+		SR_KEMIP_INT, ki_xavu_print,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("pv_xavi_print"),
+		SR_KEMIP_INT, ki_xavi_print,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("xavp_params_explode"),
 		SR_KEMIP_INT, ki_xavp_params_explode,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -1785,6 +2740,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		SR_KEMIP_INT, ki_xavp_params_implode,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_slist_explode"),
+		SR_KEMIP_INT, ki_xavp_slist_explode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pvx"), str_init("xavp_seti"),
 		SR_KEMIP_INT, ki_xavp_seti,
@@ -1809,6 +2769,21 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("xavp_getw"),
 		SR_KEMIP_XVAL, ki_xavp_getw,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getd"),
+		SR_KEMIP_XVAL, ki_xavp_getd,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_getd_p1"),
+		SR_KEMIP_XVAL, ki_xavp_getd_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_get_keys"),
+		SR_KEMIP_XVAL, ki_xavp_get_keys,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pvx"), str_init("xavp_rm"),
@@ -1856,6 +2831,161 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("xavu_seti"),
+		SR_KEMIP_INT, ki_xavu_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_sets"),
+		SR_KEMIP_INT, ki_xavu_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_get"),
+		SR_KEMIP_XVAL, ki_xavu_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_gete"),
+		SR_KEMIP_XVAL, ki_xavu_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_getw"),
+		SR_KEMIP_XVAL, ki_xavu_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_rm"),
+		SR_KEMIP_INT, ki_xavu_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_is_null"),
+		SR_KEMIP_INT, ki_xavu_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_seti"),
+		SR_KEMIP_INT, ki_xavu_child_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_sets"),
+		SR_KEMIP_INT, ki_xavu_child_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_rm"),
+		SR_KEMIP_INT, ki_xavu_child_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_is_null"),
+		SR_KEMIP_INT, ki_xavu_child_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_get"),
+		SR_KEMIP_XVAL, ki_xavu_child_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_gete"),
+		SR_KEMIP_XVAL, ki_xavu_child_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavu_child_getw"),
+		SR_KEMIP_XVAL, ki_xavu_child_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_seti"),
+		SR_KEMIP_INT, ki_xavi_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_sets"),
+		SR_KEMIP_INT, ki_xavi_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_get"),
+		SR_KEMIP_XVAL, ki_xavi_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_gete"),
+		SR_KEMIP_XVAL, ki_xavi_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_getw"),
+		SR_KEMIP_XVAL, ki_xavi_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_getd"),
+		SR_KEMIP_XVAL, ki_xavi_getd,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_getd_p1"),
+		SR_KEMIP_XVAL, ki_xavi_getd_p1,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_get_keys"),
+		SR_KEMIP_XVAL, ki_xavi_get_keys,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_rm"),
+		SR_KEMIP_INT, ki_xavi_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_is_null"),
+		SR_KEMIP_INT, ki_xavi_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_seti"),
+		SR_KEMIP_INT, ki_xavi_child_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_sets"),
+		SR_KEMIP_INT, ki_xavi_child_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_rm"),
+		SR_KEMIP_INT, ki_xavi_child_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_is_null"),
+		SR_KEMIP_INT, ki_xavi_child_is_null,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_get"),
+		SR_KEMIP_XVAL, ki_xavi_child_get,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_gete"),
+		SR_KEMIP_XVAL, ki_xavi_child_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavi_child_getw"),
+		SR_KEMIP_XVAL, ki_xavi_child_getw,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("evalx"),
 		SR_KEMIP_INT, ki_pv_evalx,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -1895,6 +3025,16 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		SR_KEMIP_INT, ki_avp_is_null,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_copy"),
+		SR_KEMIP_INT, ki_xavp_copy,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_copy_dst"),
+		SR_KEMIP_INT, ki_xavp_copy_dst,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

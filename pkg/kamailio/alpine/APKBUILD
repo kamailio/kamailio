@@ -70,7 +70,7 @@ _mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
 		db_cluster dialog dispatcher domain drouting group \
 		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 		pipelimit prefix_route registrar sipcapture siptrace speeddial \
-		sqlops uac uri_db userblacklist usrloc"
+		sqlops uac uri_db userblocklist usrloc"
 
 # - common modules depending on database, using UID db schema
 _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
@@ -157,7 +157,7 @@ _mod_list_presence="presence presence_conference presence_dialoginfo \
 			rls xcap_client xcap_server"
 
 # - modules depending on lua library
-_mod_list_lua="app_lua"
+_mod_list_lua="app_lua app_lua_sr"
 
 # - modules depending on perl library
 _mod_list_perl="app_perl db_perlvdb"

@@ -26,7 +26,7 @@
 #include "../../core/hashes.h"
 #include "../../core/ut.h"
 
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/sr_module.h"
@@ -421,6 +421,7 @@ static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
 	msrp_citem_t *it;
 	int i;
 	int n;
+	char t_buf[26] = {0};
 	str edate;
 
 	if(_msrp_cmap_head==NULL)
@@ -457,7 +458,8 @@ static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
 				lock_release(&_msrp_cmap_head->cslots[i].lock);
 				return;
 			}
-			edate.s = ctime(&it->expires);
+			ctime_r(&it->expires, t_buf);
+			edate.s = t_buf;
 			edate.len = 24;
 			if(rpc->struct_add(vh, "dSSSSSdd",
 						"CITEMID", it->citemid,

@@ -16,5 +16,6 @@
 		<column><field>expires</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
 		<column><field>reg_delay</field><type>DB1_INT</type></column>
+		<column><field>contact_addr</field><type>DB1_STR</type></column>
 		<column><field>socket</field><type>DB1_STR</type></column>
 	</db_table>

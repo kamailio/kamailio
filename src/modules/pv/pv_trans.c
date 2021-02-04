@@ -107,78 +107,6 @@ char *tr_set_crt_buffer(void)
 
 /* -- helper functions */
 
-/* Converts a hex character to its integer value */
-static char pv_from_hex(char ch)
-{
-	return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
-}
-
-/* Converts an integer value to its hex character */
-static char pv_to_hex(char code)
-{
-	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
-}
-
-/*! \brief
- *  URL Encodes a string for use in a HTTP query
- */
-static int urlencode_param(str *sin, str *sout)
-{
-	char *at, *p;
-
-	if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
-			sin->len<0 || sout->len < 3*sin->len+1)
-		return -1;
-
-	at = sout->s;
-	p  = sin->s;
-
-	while (p < sin->s+sin->len) {
-		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
-			*at++ = *p;
-		else if (*p == ' ')
-			*at++ = '+';
-		else
-			*at++ = '%', *at++ = pv_to_hex(*p >> 4), *at++ = pv_to_hex(*p & 15);
-		p++;
-	}
-
-	*at = 0;
-	sout->len = at - sout->s;
-	LM_DBG("urlencoded string is <%s>\n", sout->s);
-
-	return 0;
-}
-
-/* URL Decode a string */
-static int urldecode_param(str *sin, str *sout) {
-	char *at, *p;
-
-	at = sout->s;
-	p  = sin->s;
-
-	while (p < sin->s+sin->len) {
-		if (*p == '%') {
-			if (p[1] && p[2]) {
-				*at++ = pv_from_hex(p[1]) << 4 | pv_from_hex(p[2]);
-				p += 2;
-			}
-		} else if (*p == '+') {
-			*at++ = ' ';
-		} else {
-			*at++ = *p;
-		}
-		p++;
-	}
-
-	*at = 0;
-	sout->len = at - sout->s;
-
-	LM_DBG("urldecoded string is <%s>\n", sout->s);
-	return 0;
-}
-
 /* Encode 7BIT PDU */
 static int pdu_7bit_encode(str sin) {
 	int i, j;
@@ -215,8 +143,8 @@ static int pdu_7bit_decode(str sin) {
 	unsigned char oldfill = 0;
 	j = 0;
 	for(i = 0; i < sin.len; i += 2) {
-		_tr_buffer[j] = (unsigned char)pv_from_hex(sin.s[i]) << 4;
-		_tr_buffer[j] |= (unsigned char)pv_from_hex(sin.s[i+1]);
+		_tr_buffer[j] = (unsigned char)hex_to_char(sin.s[i]) << 4;
+		_tr_buffer[j] |= (unsigned char)hex_to_char(sin.s[i+1]);
 		fill = (unsigned char)_tr_buffer[j];
 		fill >>= (8 - nleft);
 		_tr_buffer[j] <<= (nleft -1 );
@@ -267,6 +195,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	pv_value_t v, w;
 	time_t t;
 	uint32_t sz1, sz2;
+	struct tm tmv;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -294,6 +223,25 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 
 			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
+			break;
+		case TR_S_RMWS:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len >= TR_BUFFER_SIZE - 1)
+				return -1;
+			j = 0;
+			for(i=0; i < val->rs.len; i++) {
+				if(val->rs.s[i] != ' ' && val->rs.s[i] != '\t'
+						&& val->rs.s[i] != '\r' && val->rs.s[i] != '\n') {
+					_tr_buffer[j] = val->rs.s[i];
+					j++;
+				}
+			}
+			_tr_buffer[j] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
 			break;
 		case TR_S_MD5:
 			if(!(val->flags&PV_VAL_STR))
@@ -457,6 +405,130 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				val->rs.s = int2str(val->ri, &val->rs.len);
 			i = base64_dec((unsigned char *) val->rs.s, val->rs.len,
 					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_ENCODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64_enc((unsigned char *) val->rs.s, val->rs.len,
+					(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			if (i>1 && _tr_buffer[i-1] == '=') {
+				i--;
+				if (i>1 && _tr_buffer[i-1] == '=') {
+					i--;
+				}
+			}
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64T:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len % 4) {
+				if(val->rs.len + 4 >= TR_BUFFER_SIZE-1) {
+					LM_ERR("not enough space to insert padding\n");
+					return -1;
+				}
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+				for(i=0; i < (4 - (val->rs.len % 4)); i++) {
+					_tr_buffer[val->rs.len + i] = '=';
+				}
+				st.s = _tr_buffer;
+				st.len = val->rs.len + (4 - (val->rs.len % 4));
+				/* move to next buffer */
+				tr_set_crt_buffer();
+				i = base64_dec((unsigned char *) st.s, st.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			} else {
+				i = base64_dec((unsigned char *) val->rs.s, val->rs.len,
+						(unsigned char *) _tr_buffer, TR_BUFFER_SIZE-1);
+			}
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_ENCODEBASE64URL:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64url_enc(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64URL:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64url_dec(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0 || (i == 0 && val->rs.len > 0))
+				return -1;
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_ENCODEBASE64URLT:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			i = base64url_enc(val->rs.s, val->rs.len,
+					_tr_buffer, TR_BUFFER_SIZE-1);
+			if (i < 0)
+				return -1;
+			if (i>1 && _tr_buffer[i-1] == '=') {
+				i--;
+				if (i>1 && _tr_buffer[i-1] == '=') {
+					i--;
+				}
+			}
+			_tr_buffer[i] = '\0';
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_DECODEBASE64URLT:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len % 4) {
+				if(val->rs.len + 4 >= TR_BUFFER_SIZE-1) {
+					LM_ERR("not enough space to insert padding\n");
+					return -1;
+				}
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+				for(i=0; i < (4 - (val->rs.len % 4)); i++) {
+					_tr_buffer[val->rs.len + i] = '=';
+				}
+				st.s = _tr_buffer;
+				st.len = val->rs.len + (4 - (val->rs.len % 4));
+				/* move to next buffer */
+				tr_set_crt_buffer();
+				i = base64url_dec(st.s, st.len,
+						_tr_buffer, TR_BUFFER_SIZE-1);
+			} else {
+				i = base64url_dec(val->rs.s, val->rs.len,
+						_tr_buffer, TR_BUFFER_SIZE-1);
+			}
 			if (i < 0 || (i == 0 && val->rs.len > 0))
 				return -1;
 			_tr_buffer[i] = '\0';
@@ -837,6 +909,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(!(val->flags&PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
 
+
 			/* Set maximum prefix length */
 			max = val->rs.len;
 			if(tp!=NULL) {
@@ -875,7 +948,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
-			val->rs.len = j-1;
+			val->rs.len = (j>0)?(j-1):0;
 			break;
 
 
@@ -974,8 +1047,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memcpy(s, st.s, st.len);
 			s[st.len] = '\0';
 			t = val->ri;
-			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s,
-					localtime(&t));
+			localtime_r(&t, &tmv);
+			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s, &tmv);
 			pkg_free(s);
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
@@ -1103,7 +1176,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				return -1;
 			st.s = _tr_buffer;
 			st.len = TR_BUFFER_SIZE;
-			if (urlencode_param(&val->rs, &st) < 0)
+			if (urlencode(&val->rs, &st) < 0)
 				return -1;
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
@@ -1117,7 +1190,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				return -1;
 			st.s = _tr_buffer;
 			st.len = TR_BUFFER_SIZE;
-			if (urldecode_param(&val->rs, &st) < 0)
+			if (urldecode(&val->rs, &st) < 0)
 				return -1;
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
@@ -1335,6 +1408,67 @@ int tr_eval_uri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			break;
 		case TR_URI_PASSWD:
 			val->rs = (_tr_parsed_uri.passwd.s)?_tr_parsed_uri.passwd:_tr_empty;
+			break;
+		case TR_URI_DURI:
+		case TR_URI_SAOR:
+		case TR_URI_SURI:
+			if(_tr_uri.len >= TR_BUFFER_SIZE) {
+				LM_WARN("uri too long [%.*s] (%d)\n",
+						_tr_uri.len, _tr_uri.s, _tr_uri.len);
+				val->rs = _tr_empty;
+				break;
+			}
+
+			tr_set_crt_buffer();
+			sv.s = _tr_uri.s;
+			sv.len = 0;
+			while(sv.len<_tr_uri.len) {
+				if(_tr_uri.s[sv.len]==':') {
+					break;
+				}
+				sv.len++;
+			}
+			if(_tr_uri.s[sv.len]!=':') {
+				LM_WARN("uri schema not found [%.*s] (%d)\n",
+						_tr_uri.len, _tr_uri.s, _tr_uri.len);
+				val->rs = _tr_empty;
+				break;
+			}
+			sv.len++;
+			memcpy(_tr_buffer, sv.s, sv.len);
+			sv.s = _tr_buffer;
+			sv.len++;
+			if((_tr_parsed_uri.user.len > 0)
+					&& (subtype != TR_URI_DURI)) {
+				memcpy(sv.s + sv.len, _tr_parsed_uri.user.s,
+						_tr_parsed_uri.user.len);
+				sv.len += _tr_parsed_uri.user.len;
+				sv.s[sv.len] = '@';
+				sv.len++;
+			}
+			if(_tr_parsed_uri.host.len > 0) {
+				memcpy(sv.s + sv.len, _tr_parsed_uri.host.s,
+						_tr_parsed_uri.host.len);
+				sv.len += _tr_parsed_uri.host.len;
+			}
+			if(subtype != TR_URI_SAOR) {
+				if(_tr_parsed_uri.port.len > 0) {
+					sv.s[sv.len] = ':';
+					sv.len++;
+					memcpy(sv.s + sv.len, _tr_parsed_uri.port.s,
+							_tr_parsed_uri.port.len);
+					sv.len += _tr_parsed_uri.port.len;
+				}
+				if(_tr_parsed_uri.transport_val.len > 0) {
+					memcpy(sv.s + sv.len, ";transport=", 11);
+					sv.len += 11;
+					memcpy(sv.s + sv.len, _tr_parsed_uri.transport_val.s,
+							_tr_parsed_uri.transport_val.len);
+					sv.len += _tr_parsed_uri.transport_val.len;
+				}
+			}
+			sv.s[sv.len] = '\0';
+			val->rs = sv;
 			break;
 		case TR_URI_PORT:
 			val->flags |= PV_TYPE_INT|PV_VAL_INT;
@@ -2273,6 +2407,9 @@ char* tr_parse_string(str* in, trans_t *t)
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
 		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "rmws", 4)==0) {
+		t->subtype = TR_S_RMWS;
+		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "sha256", 6)==0) {
 		t->subtype = TR_S_SHA256;
 		goto done;
@@ -2314,6 +2451,24 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "decode.base64", 13)==0) {
 		t->subtype = TR_S_DECODEBASE64;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "encode.base64t", 14)==0) {
+		t->subtype = TR_S_ENCODEBASE64T;
+		goto done;
+	} else if(name.len==14 && strncasecmp(name.s, "decode.base64t", 14)==0) {
+		t->subtype = TR_S_DECODEBASE64T;
+		goto done;
+	} else if(name.len==16 && strncasecmp(name.s, "encode.base64url", 16)==0) {
+		t->subtype = TR_S_ENCODEBASE64URL;
+		goto done;
+	} else if(name.len==16 && strncasecmp(name.s, "decode.base64url", 16)==0) {
+		t->subtype = TR_S_DECODEBASE64URL;
+		goto done;
+	} else if(name.len==17 && strncasecmp(name.s, "encode.base64urlt", 17)==0) {
+		t->subtype = TR_S_ENCODEBASE64URLT;
+		goto done;
+	} else if(name.len==17 && strncasecmp(name.s, "decode.base64urlt", 17)==0) {
+		t->subtype = TR_S_DECODEBASE64URLT;
 		goto done;
 	} else if(name.len==13 && strncasecmp(name.s, "escape.common", 13)==0) {
 		t->subtype = TR_S_ESCAPECOMMON;
@@ -2694,6 +2849,15 @@ char* tr_parse_uri(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "port", 4)==0) {
 		t->subtype = TR_URI_PORT;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "saor", 4)==0) {
+		t->subtype = TR_URI_SAOR;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "suri", 4)==0) {
+		t->subtype = TR_URI_SURI;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "duri", 4)==0) {
+		t->subtype = TR_URI_DURI;
 		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "params", 6)==0) {
 		t->subtype = TR_URI_PARAMS;

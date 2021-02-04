@@ -270,7 +270,7 @@ static inline int ldap_gentime2db_datetime(time_t* dst, str* src)
 		 * of expiration by one hour when daylight saving is used
 		 */
 		time.tm_isdst = -1;
-		*dst = timelocal(&time);
+		*dst = mktime(&time);
 	}
 	
 	return 0;

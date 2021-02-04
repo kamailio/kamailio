@@ -219,17 +219,6 @@
 		<column><field>attrs</field><type>DB1_STR</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of domainpolicy table-->
-	<db_table id="domainpolicy">
-		<table_name>domainpolicy</table_name>
-		<db_url_id>mysql</db_url_id>
-		<column><field>id</field><type>DB1_INT</type></column>
-		<column><field>rule</field><type>DB1_STR</type></column>
-		<column><field>type</field><type>DB1_STR</type></column>
-		<column><field>att</field><type>DB1_STR</type></column>
-		<column><field>val</field><type>DB1_STR</type></column>
-		<column><field>description</field><type>DB1_STR</type></column>
-	</db_table>
 	<!-- Declaration of domain table-->
 	<db_table id="domain">
 		<table_name>domain</table_name>
@@ -249,6 +238,17 @@
 		<column><field>type</field><type>DB1_INT</type></column>
 		<column><field>value</field><type>DB1_STR</type></column>
 		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of domainpolicy table-->
+	<db_table id="domainpolicy">
+		<table_name>domainpolicy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rule</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_STR</type></column>
+		<column><field>att</field><type>DB1_STR</type></column>
+		<column><field>val</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of dr_gateways table-->
 	<db_table id="dr_gateways">
@@ -388,6 +388,7 @@
 	<db_table id="matrix">
 		<table_name>matrix</table_name>
 		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>first</field><type>DB1_INT</type></column>
 		<column><field>second</field><type>DB1_INT</type></column>
 		<column><field>res</field><type>DB1_INT</type></column>
@@ -712,6 +713,15 @@
 		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
 		<column><field>server_id</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of secfilter table-->
+	<db_table id="secfilter">
+		<table_name>secfilter</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>action</field><type>DB1_INT</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>data</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of sip_trace table-->
 	<db_table id="sip_trace">
 		<table_name>sip_trace</table_name>
@@ -748,6 +758,7 @@
 	<db_table id="version">
 		<table_name>version</table_name>
 		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>table_name</field><type>DB1_STR</type></column>
 		<column><field>table_version</field><type>DB1_INT</type></column>
 	</db_table>
@@ -828,6 +839,7 @@
 		<column><field>expires</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
 		<column><field>reg_delay</field><type>DB1_INT</type></column>
+		<column><field>contact_addr</field><type>DB1_STR</type></column>
 		<column><field>socket</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of uid_credentials table-->
@@ -936,6 +948,25 @@
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>prefix</field><type>DB1_STR</type></column>
 		<column><field>whitelist</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of userblocklist table-->
+	<db_table id="userblocklist">
+		<table_name>userblocklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>allowlist</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of globalblocklist table-->
+	<db_table id="globalblocklist">
+		<table_name>globalblocklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>allowlist</field><type>DB1_INT</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of location table-->
@@ -2510,6 +2541,7 @@
 			<db_table_id>matrix</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>first</field></col>
 				<col><field>second</field></col>
 				<col><field>res</field></col>
@@ -2523,6 +2555,25 @@
 				<col><field>second</field></col>
 				<col><field>res</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>matrix</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>first</field></col>
+				<col><field>second</field></col>
+				<col><field>res</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>matrix</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- mohqcalls provisionning -->
@@ -3779,6 +3830,47 @@
 			</clause_cols>
 		</cmd>
 	</mod>
+	<!-- secfilter provisionning -->
+	<mod><mod_name>secfilter</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>secfilter</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>action</field></col>
+				<col><field>type</field></col>
+				<col><field>data</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>secfilter</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>action</field></col>
+				<col><field>type</field></col>
+				<col><field>data</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>secfilter</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>action</field></col>
+				<col><field>type</field></col>
+				<col><field>data</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>secfilter</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
 	<!-- sip_trace provisionning -->
 	<mod><mod_name>sip_trace</mod_name>
 		<cmd><cmd_name>show</cmd_name>
@@ -3909,6 +4001,7 @@
 			<db_table_id>version</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>table_name</field></col>
 				<col><field>table_version</field></col>
 			</query_cols>
@@ -3920,6 +4013,24 @@
 				<col><field>table_name</field></col>
 				<col><field>table_version</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>version</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>table_name</field></col>
+				<col><field>table_version</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>version</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- topos_d provisionning -->
@@ -4147,6 +4258,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
@@ -4167,6 +4279,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
@@ -4190,6 +4303,7 @@
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
 				<col><field>reg_delay</field></col>
+				<col><field>contact_addr</field></col>
 				<col><field>socket</field></col>
 			</query_cols>
 		</cmd>
@@ -4659,6 +4773,91 @@
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
 			<db_table_id>globalblacklist</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- userblocklist provisionning -->
+	<mod><mod_name>userblocklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>userblocklist</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- globalblocklist provisionning -->
+	<mod><mod_name>globalblocklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>prefix</field></col>
+				<col><field>allowlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>globalblocklist</db_table_id>
 			<cmd_type>DB1_DELETE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>

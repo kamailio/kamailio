@@ -80,8 +80,7 @@ again:
 			lock_set_dealloc(reply_semaphore);
 		}
 		if(i == 0) {
-			LOG(L_CRIT, "lock_initialize: could not allocate semaphore"
-						" sets\n");
+			LOG(L_CRIT, "could not allocate semaphore sets\n");
 			goto error;
 		}
 

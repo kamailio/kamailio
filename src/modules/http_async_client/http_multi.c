@@ -66,8 +66,8 @@ void timer_cb(int fd, short kind, void *userp)
 
 	LM_DBG("timeout on socket %d\n", fd);
 
-	rc = curl_multi_socket_action(g->multi,
-                                  CURL_SOCKET_TIMEOUT, 0, &g->still_running);
+	rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &g->still_running);
+
 	if (check_mcode(rc, error) < 0) {
 		LM_ERR("curl_multi_socket_action error: %s", error);
 	}
@@ -122,8 +122,7 @@ void event_cb(int fd, short kind, void *userp)
 		LM_DBG("removing handle %p\n", easy);
 		curl_multi_remove_handle(g->multi, easy);
 		curl_easy_cleanup(easy);
-		rc = curl_multi_socket_action(g->multi,
-                                  CURL_SOCKET_TIMEOUT, 0, &g->still_running);
+		rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &g->still_running);
 
 	} else {
 		LM_DBG("performing action %d on socket %d\n", action, fd);
@@ -385,7 +384,6 @@ void set_curl_mem_callbacks(void)
 			LM_ERR ("invalid memory manager: %d\n", curl_memory_manager);
 			break;
 	}
-
 }
 
 int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
@@ -393,7 +391,6 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	g = wg;
 	g->evbase = evbase;
 
-	set_curl_mem_callbacks();
 
 	g->multi = curl_multi_init();
 	LM_DBG("curl_multi %p initialized on global %p (evbase %p)\n", g->multi, g, evbase);
@@ -570,6 +567,7 @@ void check_multi_info(struct http_m_global *g)
 	CURLcode res;
 
 	struct http_m_cell *cell;
+	double tmp_time;
 
 	LM_DBG("REMAINING: %d\n", g->still_running);
 	while ((msg = curl_multi_info_read(g->multi, &msgs_left))) {
@@ -578,6 +576,8 @@ void check_multi_info(struct http_m_global *g)
 			res = msg->data.result;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &cell);
 			curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &eff_url);
+
+
 			LM_DBG("DONE: %s => (%d) %s\n", eff_url, res, cell->error);
 
 			cell = http_m_cell_lookup(easy);
@@ -586,6 +586,22 @@ void check_multi_info(struct http_m_global *g)
 				update_stat(errors, 1);
 				reply_error(cell);
 			} else {
+				
+				if (curl_easy_getinfo(cell->easy, CURLINFO_TOTAL_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.total=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_NAMELOOKUP_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.lookup=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_CONNECT_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.connect=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_REDIRECT_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.redirect=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_APPCONNECT_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.appconnect=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_PRETRANSFER_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.pretransfer=(uint32_t)(tmp_time*1000000);
+				if (curl_easy_getinfo(cell->easy, CURLINFO_STARTTRANSFER_TIME, &tmp_time) == CURLE_OK)
+					cell->reply->time.starttransfer=(uint32_t)(tmp_time*1000000);
+				
 				cell->reply->error[0] = '\0';
 				cell->cb(cell->reply, cell->param);
 

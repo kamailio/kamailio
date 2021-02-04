@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 
 #include "ip_addr.h"
 #include "dprint.h"
@@ -36,13 +37,360 @@
 #include "resolve.h"
 #include "trim.h"
 
+/**
+ * ipv6 style for string representation
+ * - A: uppercase expanded format
+ * - a: lowercase expanded format
+ * - c: lowercase compacted format
+ */
+str ksr_ipv6_hex_style = str_init("c");
+
+
+/* inits a struct sockaddr_union from a struct hostent, an address index in
+ * the hostent structure and a port no. (host byte order)
+ * WARNING: no index overflow  checks!
+ * returns 0 if ok, -1 on error (unknown address family) */
+int hostent2su(union sockaddr_union* su,
+		struct hostent* he,
+		unsigned int idx,
+		unsigned short port)
+{
+	memset(su, 0, sizeof(union sockaddr_union)); /*needed on freebsd*/
+	su->s.sa_family=he->h_addrtype;
+	switch(he->h_addrtype){
+		case	AF_INET6:
+			memcpy(&su->sin6.sin6_addr, he->h_addr_list[idx], he->h_length);
+#ifdef HAVE_SOCKADDR_SA_LEN
+			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
+#endif
+			su->sin6.sin6_port=htons(port);
+			break;
+		case AF_INET:
+			memcpy(&su->sin.sin_addr, he->h_addr_list[idx], he->h_length);
+#ifdef HAVE_SOCKADDR_SA_LEN
+			su->sin.sin_len=sizeof(struct sockaddr_in);
+#endif
+			su->sin.sin_port=htons(port);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", he->h_addrtype);
+			return -1;
+	}
+	return 0;
+}
+
+
+/* converts a raw ipv6 addr (16 bytes) to ascii */
+int ip6tosbuf(unsigned char* ip6, char* buff, int len)
+{
+	int offset;
+	register unsigned char a,b,c;
+	register unsigned char d;
+	register unsigned short hex4;
+	int r;
+
+	if(ksr_ipv6_hex_style.s[0] == 'c') {
+		if (inet_ntop(AF_INET6, ip6, buff, len) == NULL) {
+			return 0;
+		}
+		return strlen(buff);
+	}
+
+#define HEXDIG(x) (((x)>=10)?(x)-10+ksr_ipv6_hex_style.s[0]:(x)+'0')
+
+	offset=0;
+	if (unlikely(len<IP6_MAX_STR_SIZE))
+		return 0;
+	for(r=0;r<7;r++){
+		hex4=((unsigned char)ip6[r*2]<<8)+(unsigned char)ip6[r*2+1];
+		a=hex4>>12;
+		b=(hex4>>8)&0xf;
+		c=(hex4>>4)&0xf;
+		d=hex4&0xf;
+		if (a){
+			buff[offset]=HEXDIG(a);
+			buff[offset+1]=HEXDIG(b);
+			buff[offset+2]=HEXDIG(c);
+			buff[offset+3]=HEXDIG(d);
+			buff[offset+4]=':';
+			offset+=5;
+		}else if(b){
+			buff[offset]=HEXDIG(b);
+			buff[offset+1]=HEXDIG(c);
+			buff[offset+2]=HEXDIG(d);
+			buff[offset+3]=':';
+			offset+=4;
+		}else if(c){
+			buff[offset]=HEXDIG(c);
+			buff[offset+1]=HEXDIG(d);
+			buff[offset+2]=':';
+			offset+=3;
+		}else{
+			buff[offset]=HEXDIG(d);
+			buff[offset+1]=':';
+			offset+=2;
+		}
+	}
+	/* last int16*/
+	hex4=((unsigned char)ip6[r*2]<<8)+(unsigned char)ip6[r*2+1];
+	a=hex4>>12;
+	b=(hex4>>8)&0xf;
+	c=(hex4>>4)&0xf;
+	d=hex4&0xf;
+	if (a){
+		buff[offset]=HEXDIG(a);
+		buff[offset+1]=HEXDIG(b);
+		buff[offset+2]=HEXDIG(c);
+		buff[offset+3]=HEXDIG(d);
+		offset+=4;
+	}else if(b){
+		buff[offset]=HEXDIG(b);
+		buff[offset+1]=HEXDIG(c);
+		buff[offset+2]=HEXDIG(d);
+		offset+=3;
+	}else if(c){
+		buff[offset]=HEXDIG(c);
+		buff[offset+1]=HEXDIG(d);
+		offset+=2;
+	}else{
+		buff[offset]=HEXDIG(d);
+		offset+=1;
+	}
+
+	return offset;
+}
+
+
+/* converts a raw ipv4 addr (4 bytes) to ascii */
+int ip4tosbuf(unsigned char* ip4, char* buff, int len)
+{
+	int offset;
+	register unsigned char a,b,c;
+	int r;
+
+	offset=0;
+	if (unlikely(len<IP4_MAX_STR_SIZE))
+		return 0;
+	for(r=0;r<3;r++){
+		a=(unsigned char)ip4[r]/100;
+		c=(unsigned char)ip4[r]%10;
+		b=(unsigned char)ip4[r]%100/10;
+		if (a){
+			buff[offset]=a+'0';
+			buff[offset+1]=b+'0';
+			buff[offset+2]=c+'0';
+			buff[offset+3]='.';
+			offset+=4;
+		}else if (b){
+			buff[offset]=b+'0';
+			buff[offset+1]=c+'0';
+			buff[offset+2]='.';
+			offset+=3;
+		}else{
+			buff[offset]=c+'0';
+			buff[offset+1]='.';
+			offset+=2;
+		}
+	}
+	/* last number */
+	a=(unsigned char)ip4[r]/100;
+	c=(unsigned char)ip4[r]%10;
+	b=(unsigned char)ip4[r]%100/10;
+	if (a){
+		buff[offset]=a+'0';
+		buff[offset+1]=b+'0';
+		buff[offset+2]=c+'0';
+		offset+=3;
+	}else if (b){
+		buff[offset]=b+'0';
+		buff[offset+1]=c+'0';
+		offset+=2;
+	}else{
+		buff[offset]=c+'0';
+		offset+=1;
+	}
+
+	return offset;
+}
+
+
+/* fast ip_addr -> string converter;
+ * returns number of bytes written in buf on success, <=0 on error
+ * The buffer must have enough space to hold the maximum size ip address
+ *  of the corresponding address (see IP[46] above) or else the function
+ *  will return error (no detailed might fit checks are made, for example
+ *   if len==7 the function will fail even for 1.2.3.4).
+ */
+int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
+{
+	switch(ip->af){
+		case AF_INET6:
+			return ip6tosbuf(ip->u.addr, buff, len);
+			break;
+		case AF_INET:
+			return ip4tosbuf(ip->u.addr, buff, len);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", ip->af);
+			return 0;
+	}
+}
+
+
+/* same as ip_addr2sbuf, but with [  ] around IPv6 addresses */
+int ip_addr2sbufz(struct ip_addr* ip, char* buff, int len)
+{
+	char *p;
+	int sz;
+
+	p = buff;
+	switch(ip->af){
+		case AF_INET6:
+			*p++ = '[';
+			sz = ip6tosbuf(ip->u.addr, p, len-2);
+			p += sz;
+			*p++ = ']';
+			*p=0;
+			return sz + 2;
+			break;
+		case AF_INET:
+			return ip4tosbuf(ip->u.addr, buff, len);
+			break;
+		default:
+			LM_CRIT("unknown address family %d\n", ip->af);
+			return 0;
+	}
+}
+
+
+/* fast ip_addr -> string converter;
+ * it uses an internal buffer
+ */
+char* ip_addr2a(struct ip_addr* ip)
+{
+	static char buff[IP_ADDR_MAX_STR_SIZE];
+	int len;
+
+	len=ip_addr2sbuf(ip, buff, sizeof(buff)-1);
+	buff[len]=0;
+
+	return buff;
+}
+
+
+/* full address in text representation, including [] for ipv6 */
+char* ip_addr2strz(struct ip_addr* ip)
+{
+
+	static char buff[IP_ADDR_MAX_STRZ_SIZE];
+	char *p;
+	int len;
+
+	p = buff;
+	if(ip->af==AF_INET6) {
+		*p++ = '[';
+	}
+	len=ip_addr2sbuf(ip, p, sizeof(buff)-3);
+	p += len;
+	if(ip->af==AF_INET6) {
+		*p++ = ']';
+	}
+	*p=0;
+
+	return buff;
+}
+
+
+/* returns an asciiz string containing the ip and the port
+ *  (<ip_addr>:port or [<ipv6_addr>]:port)
+ */
+char* su2a(union sockaddr_union* su, int su_len)
+{
+	static char buf[SU2A_MAX_STR_SIZE];
+	int offs;
+
+	if (unlikely(su->s.sa_family==AF_INET6)){
+		if (unlikely(su_len<sizeof(su->sin6)))
+			return "<addr. error>";
+		buf[0]='[';
+		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
+				sizeof(buf)-4);
+		buf[offs]=']';
+		offs++;
+	} else {
+		if (unlikely(su_len<sizeof(su->sin)))
+			return "<addr. error>";
+		else
+			offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
+	}
+	buf[offs]=':';
+	offs+=1+ushort2sbuf(su_getport(su), &buf[offs+1], sizeof(buf)-(offs+1)-1);
+	buf[offs]=0;
+	return buf;
+}
+
+
+/* returns an asciiz string containing the ip
+ *  (<ipv4_addr> or [<ipv6_addr>])
+ */
+char* suip2a(union sockaddr_union* su, int su_len)
+{
+	static char buf[SUIP2A_MAX_STR_SIZE];
+	int offs;
+
+	if (unlikely(su->s.sa_family==AF_INET6)){
+		if (unlikely(su_len<sizeof(su->sin6)))
+			return "<addr. error>";
+		buf[0]='[';
+		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
+				IP6_MAX_STR_SIZE);
+		buf[offs]=']';
+		offs++;
+	}else
+		if (unlikely(su_len<sizeof(su->sin)))
+			return "<addr. error>";
+		else
+			offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, IP4_MAX_STR_SIZE);
+	buf[offs]=0;
+	return buf;
+}
+
+
+/* converts an ip_addr structure to a hostent, returns pointer to internal
+ * statical structure */
+struct hostent* ip_addr2he(str* name, struct ip_addr* ip)
+{
+	static struct hostent he;
+	static char hostname[256];
+	static char* p_aliases[1];
+	static char* p_addr[2];
+	static char address[16];
+	int len;
+
+	p_aliases[0]=0; /* no aliases*/
+	p_addr[1]=0; /* only one address*/
+	p_addr[0]=address;
+	len = (name->len<255)?name->len:255;
+	memcpy(hostname, name->s, len);
+	hostname[len] = '\0';
+	if (ip->len>16) return 0;
+	memcpy(address, ip->u.addr, ip->len);
+
+	he.h_addrtype=ip->af;
+	he.h_length=ip->len;
+	he.h_addr_list=p_addr;
+	he.h_aliases=p_aliases;
+	he.h_name=hostname;
+	return &he;
+}
+
 
 struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 {
 	struct net* n;
 	int warning;
 	int r;
-	
+
 	warning=0;
 	if ((ip->af != mask->af) || (ip->len != mask->len)){
 		LM_CRIT("trying to use a different mask family"
@@ -50,7 +398,7 @@ struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 		goto error;
 	}
 	n=(struct net*)pkg_malloc(sizeof(struct net));
-	if (n==0){ 
+	if (n==0){
 		PKG_MEM_CRITICAL;
 		goto error;
 	}
@@ -79,7 +427,7 @@ struct net* mk_new_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 {
 	struct ip_addr mask;
 	int r;
-	
+
 	if (bitlen>ip->len*8){
 		LM_CRIT("bad bitlen number %d\n", bitlen);
 		goto error;
@@ -89,7 +437,7 @@ struct net* mk_new_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 	if (bitlen%8) mask.u.addr[r]=  ~((1<<(8-(bitlen%8)))-1);
 	mask.af=ip->af;
 	mask.len=ip->len;
-	
+
 	return mk_new_net(ip, &mask);
 error:
 	return 0;
@@ -110,7 +458,7 @@ error:
 int mk_net(struct net* n, struct ip_addr* ip, struct ip_addr* mask)
 {
 	int r;
-	
+
 	if (unlikely((ip->af != mask->af) || (ip->len != mask->len))) {
 		return -1;
 	}
@@ -139,7 +487,7 @@ int mk_net_bitlen(struct net* n, struct ip_addr* ip, unsigned int bitlen)
 {
 	struct ip_addr mask;
 	int r;
-	
+
 	if (unlikely(bitlen>ip->len*8))
 		/* bitlen too big */
 		return -1;
@@ -148,7 +496,7 @@ int mk_net_bitlen(struct net* n, struct ip_addr* ip, unsigned int bitlen)
 	if (bitlen%8) mask.u.addr[r]=  ~((1<<(8-(bitlen%8)))-1);
 	mask.af=ip->af;
 	mask.len=ip->len;
-	
+
 	return mk_net(n, ip, &mask);
 }
 
@@ -167,7 +515,7 @@ int mk_net_str(struct net* dst, str* s)
 	str addr;
 	str mask;
 	unsigned int bitlen;
-	
+
 	/* test for ip only */
 	t = str2ip(s);
 	if (unlikely(t == 0))

@@ -127,3 +127,9 @@ int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx) {
 	LM_NOTICE("tls init - verify return: %d\n", pre_verify_ok);
 	return(pre_verify_ok);
 }
+
+
+int verify_callback_unconditional_success(int pre_verify_ok, X509_STORE_CTX *ctx) {
+	LM_NOTICE("Post-verification callback: unconditional success\n");
+	return 1;
+}

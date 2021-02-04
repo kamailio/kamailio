@@ -352,7 +352,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 			}
 			compute_sha256(xout, (u_int8_t*)xdata.s, xdata.len);
 			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("no digest sha256 matched for key [%.*s:%.*s]\n",
+				LM_DBG("digest sha256 matched for key [%.*s:%.*s]\n",
 						key->len, key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}
@@ -364,7 +364,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 			}
 			compute_sha384(xout, (u_int8_t*)xdata.s, xdata.len);
 			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("no digest sha384 matched for key [%.*s:%.*s]\n",
+				LM_DBG("digest sha384 matched for key [%.*s:%.*s]\n",
 						key->len, key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}
@@ -376,7 +376,7 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 			}
 			compute_sha512(xout, (u_int8_t*)xdata.s, xdata.len);
 			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("no digest sha512 matched for key [%.*s:%.*s]\n",
+				LM_DBG("digest sha512 matched for key [%.*s:%.*s]\n",
 						key->len, key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}

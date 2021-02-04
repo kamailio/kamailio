@@ -1,1 +1,1 @@
-first(int) second(int) res(int) 
+id(int,auto) first(int) second(int) res(int) 

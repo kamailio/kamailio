@@ -566,6 +566,25 @@ modparam("rls", "max_notify_body_length", 32000)
 		</programlisting>
 		</example>
 	</section>
+	<section id="rls.p.reload_db_subs">
+	    <title><varname>reload_db_subs</varname> (integer)</title>
+	    <para>
+		    Reload subscriptions on module initialization (requires db_mode 0 (memory only mode)).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0 (do not load rows from db).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reload_db_subs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "reload_db_subs", 1)
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="rls.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>

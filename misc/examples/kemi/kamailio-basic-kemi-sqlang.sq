@@ -137,7 +137,8 @@ function ksr_route_reqinit()
 	if (KSR.corex.has_user_agent()>0) {
 		local UA = KSR.pv.get("$ua");
 		// if (sipscanregex.match(UA)) {
-		if (UA.find("friendly-scanner")!=null || UA.find("sipcli")!=null) {
+		if (UA.find("friendly")!=null || UA.find("scanner")!=null
+				|| UA.find("sipcli")!=null || UA.find("sipvicious")!=null) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
@@ -223,10 +224,10 @@ function ksr_route_location()
 	if (rc<0) {
 		KSR.tm.t_newtran();
 		if (rc==-1 || rc==-3) {
-			KSR.sl.send_reply("404", "Not Found");
+			KSR.sl.send_reply(404, "Not Found");
 			KSR.x.exit();
 		} else if (rc==-2) {
-			KSR.sl.send_reply("405", "Method Not Allowed");
+			KSR.sl.send_reply(405, "Method Not Allowed");
 			KSR.x.exit();
 		}
 	}

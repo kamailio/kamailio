@@ -168,7 +168,7 @@ modparam("carrierroute", "carrierroute_strip_col", "strip")
   <section>
     <title><varname>carrierroute_rewrite_host_col</varname> (string)</title>
     <para>Name of column contains the rewrite prefixes. Here you can define a rewrite prefix
-			  for the localpart of the SIP URI. An empty field represents a blacklist entry, anything else
+			  for the localpart of the SIP URI. An empty field represents a blocklist entry, anything else
 			  is put as domain part into the Request URI of the SIP message.</para>
     <example>
       <title>Set <varname>carrierroute_rewrite_host_col</varname> parameter</title>
@@ -208,7 +208,7 @@ modparam("carrierroute", "carrierroute_rewrite_suffix_col", "rewrite_suffix")
   <section>
     <title><varname>carrierroute_description_col</varname> (string)</title>
     <para>A comment for the route entry, useful for larger routing tables.
-			  The comment is also displayed by the fifo cmd "cr_dump_routes".</para>
+			  The comment is also displayed by the rpc cmd "cr.dump_routes".</para>
     <example>
       <title>Set <varname>carrierroute_description_col</varname> parameter</title>
       <programlisting format="linespecific">
@@ -273,7 +273,7 @@ modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
   </section>
   <section>
     <title><varname>carrierfailureroute_scan_prefix_col</varname> (string)</title>
-    <para>Name of column contains the the scan prefixes. Scan prefixes define the matching
+    <para>Name of column contains the scan prefixes. Scan prefixes define the matching
 			  portion of a phone number, e.g. we have the scan prefixes 49721 and 49, the called number is
 			  49721913740, it matches 49721, because the longest match is taken. If no prefix matches,
 			  the number is not failure routed. To prevent this, an empty prefix value of 

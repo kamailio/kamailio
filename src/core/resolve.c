@@ -407,6 +407,7 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 		PKG_MEM_ERROR;
 		goto error;
 	}
+	naptr->skip_record = 0;
 	naptr->order=ntohs(order);
 	naptr->pref=ntohs(pref);
 	

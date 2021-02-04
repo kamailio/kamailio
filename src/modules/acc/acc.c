@@ -52,6 +52,7 @@ extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
 extern struct acc_enviroment acc_env;
 extern char *acc_time_format;
+extern int acc_extra_nullable;
 
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
@@ -121,6 +122,13 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 	} else {
 		SET_EMPTY_VAL(2);
 		t_vals[2] = TYPE_NULL;
+	}
+
+	LM_DBG("default - totag[%.*s]\n", c_vals[2].len, c_vals[2].s);
+	if (c_vals[2].len == 0 && acc_env.to_tag.s && acc_env.to_tag.len > 0) {
+		LM_DBG("extra [%p] totag[%.*s]\n", acc_env.to_tag.s, acc_env.to_tag.len, acc_env.to_tag.s);
+		c_vals[2].len = acc_env.to_tag.len;
+		c_vals[2].s = acc_env.to_tag.s;
 	}
 
 	/* Callid */
@@ -195,7 +203,7 @@ int acc_log_request( struct sip_msg *rq)
 	int m;
 	int o;
 	int i;
-	struct tm *t;
+	struct tm t;
 	double dtime;
 
 	/* get default values */
@@ -262,12 +270,12 @@ int acc_log_request( struct sip_msg *rq)
 				acc_time_attr.s, dtime, log_msg);
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
-			t = localtime(&acc_env.ts);
+			localtime_r(&acc_env.ts, &t);
 		} else {
-			t = gmtime(&acc_env.ts);
+			gmtime_r(&acc_env.ts, &t);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<=0) {
+					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
@@ -412,7 +420,7 @@ int acc_db_request( struct sip_msg *rq)
 	int n;
 	int i;
 	int o;
-	struct tm *t;
+	struct tm t;
 	double dtime;
 
 	/* formated database columns */
@@ -435,12 +443,12 @@ int acc_db_request( struct sip_msg *rq)
 		i++;
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
-			t = localtime(&acc_env.ts);
+			localtime_r(&acc_env.ts, &t);
 		} else {
-			t = gmtime(&acc_env.ts);
+			gmtime_r(&acc_env.ts, &t);
 		}
 		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, t)<=0) {
+					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
@@ -451,8 +459,13 @@ int acc_db_request( struct sip_msg *rq)
 	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
-	for( i++ ; i<m; i++)
-		VAL_STR(db_vals+i) = val_arr[i];
+	for( i++ ; i<m; i++) {
+		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+			VAL_NULL(db_vals + i) = 1;
+		} else {
+			VAL_STR(db_vals+i) = val_arr[i];
+		}
+	}
 
 	if (acc_dbf.use_table(db_handle, &acc_env.text/*table*/) < 0) {
 		LM_ERR("error in use_table\n");
@@ -481,8 +494,13 @@ int acc_db_request( struct sip_msg *rq)
 	} else {
 		n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m,1);
 		do {
-			for (i=m; i<m+n; i++)
-				VAL_STR(db_vals+i)=val_arr[i];
+			for (i=m; i<m+n; i++) {
+			if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+					VAL_NULL(db_vals + i) = 1;
+				} else {
+					VAL_STR(db_vals+i)=val_arr[i];
+				}
+			}
 			if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
 				if(acc_dbf.insert_delayed(db_handle,db_keys,db_vals,m+n)<0) {
 					LM_ERR("failed to insert delayed into database\n");

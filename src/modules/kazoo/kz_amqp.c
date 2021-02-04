@@ -46,7 +46,7 @@
 #include "../../core/receive.h"
 #include "../../core/action.h"
 #include "../../core/script_cb.h"
-
+#include "../../core/kemi.h"
 
 #include "kz_amqp.h"
 #include "kz_json.h"
@@ -80,6 +80,9 @@ extern int kz_amqps_verify_peer;
 extern int kz_amqps_verify_hostname;
 
 extern pv_spec_t kz_query_timeout_spec;
+
+extern int kazoo_kemi_enabled;
+extern str kazoo_event_callback;
 
 const amqp_bytes_t kz_amqp_empty_bytes = { 0, NULL };
 const amqp_table_t kz_amqp_empty_table = { 0, NULL };
@@ -1215,7 +1218,7 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
 
 int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _pub_flags)
 {
-	  str json_s;
+	  str pl_s;
 	  str exchange_s;
 	  str routing_key_s;
 
@@ -1229,7 +1232,7 @@ int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, c
 			return -1;
 		}
 
-		if (fixup_get_svalue(msg, (gparam_p)payload, &json_s) != 0) {
+		if (fixup_get_svalue(msg, (gparam_p)payload, &pl_s) != 0) {
 			LM_ERR("cannot get json string value : %s\n", payload);
 			return -1;
 		}
@@ -1239,19 +1242,22 @@ int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, c
 			return -1;
 		}
 
-		struct json_object *j = json_tokener_parse(json_s.s);
-
-		if (j==NULL) {
-			LM_ERR("empty or invalid JSON payload : %.*s\n", json_s.len, json_s.s);
-			return -1;
-		}
-
-		json_object_put(j);
-
-		return kz_amqp_pipe_send(&exchange_s, &routing_key_s, &json_s );
-
-
+		return ki_kz_amqp_publish(msg, &exchange_s, &routing_key_s, &pl_s);
 };
+
+int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload)
+{
+	  char *pl = ((str*)payload)->s;
+	  struct json_object *j = json_tokener_parse(pl);
+
+	  if (j==NULL) {
+	  	  LM_ERR("empty or invalid JSON payload : %.*s\n", payload->len, payload->s);
+	  	  return -1;
+	  }
+
+	  json_object_put(j);
+	  return kz_amqp_pipe_send(exchange, routing_key, payload);
+}
 
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
 {
@@ -1794,9 +1800,20 @@ kz_amqp_exchange_binding_ptr kz_amqp_exchange_binding_from_json(json_object* JOb
 
 int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 {
+	str payload_s = STR_NULL;
+
+	if (fixup_get_svalue(msg, (gparam_p)payload, &payload_s) != 0) {
+		LM_ERR("cannot get payload value\n");
+		return -1;
+	}
+
+	return ki_kz_amqp_subscribe(msg, &payload_s);
+}
+
+int ki_kz_amqp_subscribe(struct sip_msg* msg, str* payload)
+{
 	str exchange_s = STR_NULL;
 	str queue_s = STR_NULL;
-	str payload_s = STR_NULL;
 	str key_s = STR_NULL;
 	str subkey_s = STR_NULL;
 	int no_ack = 1;
@@ -1816,15 +1833,11 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	kz_amqp_bind_ptr bind = NULL;
 	kz_amqp_binding_ptr binding = NULL;
 
-	if (fixup_get_svalue(msg, (gparam_p)payload, &payload_s) != 0) {
-		LM_ERR("cannot get payload value\n");
-		return -1;
-	}
+	char* pl = payload->s;
+	json_obj = kz_json_parse(pl);
 
-	json_obj = kz_json_parse(payload_s.s);
 	if (json_obj == NULL)
 		return -1;
-    
 
 	json_extract_field("exchange", exchange_s);
 	json_extract_field("queue", queue_s);
@@ -1873,7 +1886,7 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload)
 	}
 
 	if(routing == NULL) {
-		LM_INFO("creating empty routing key : %s\n", payload_s.s);
+		LM_INFO("creating empty routing key : %s\n", pl);
 		routing = kz_amqp_routing_new("");
 	}
 
@@ -2331,63 +2344,99 @@ int kz_amqp_consumer_fire_event(char *eventkey)
 	return 0;
 }
 
-void kz_amqp_consumer_event(kz_amqp_consumer_delivery_ptr Evt)
+static void kz_amqp_consumer_event_cfg(kz_amqp_consumer_delivery_ptr Evt, json_obj_ptr json_obj)
 {
-    json_obj_ptr json_obj = NULL;
-    str ev_name = {0, 0}, ev_category = {0, 0};
-    char buffer[512];
-    char * p;
+	str ev_name = {0, 0}, ev_category = {0, 0};
+	char buffer[512];
+	char * p;
 
-    eventData = Evt->payload;
-    if(Evt->routing_key) {
-    	eventKey = Evt->routing_key->s;
-    }
 
-    json_obj = kz_json_parse(Evt->payload);
-    if (json_obj == NULL)
-		return;
+	char* key = (Evt->event_key == NULL ? dbk_consumer_event_key.s : Evt->event_key);
+	char* subkey = (Evt->event_subkey == NULL ? dbk_consumer_event_subkey.s : Evt->event_subkey);
 
-    char* key = (Evt->event_key == NULL ? dbk_consumer_event_key.s : Evt->event_key);
-    char* subkey = (Evt->event_subkey == NULL ? dbk_consumer_event_subkey.s : Evt->event_subkey);
+	json_extract_field(key, ev_category);
+	if(ev_category.len == 0 && Evt->event_key) {
+		ev_category.s = Evt->event_key;
+		ev_category.len = strlen(Evt->event_key);
+	}
 
-    json_extract_field(key, ev_category);
-    if(ev_category.len == 0 && Evt->event_key) {
-	    ev_category.s = Evt->event_key;
-	    ev_category.len = strlen(Evt->event_key);
-    }
+	json_extract_field(subkey, ev_name);
+	if(ev_name.len == 0 && Evt->event_subkey) {
+		ev_name.s = Evt->event_subkey;
+		ev_name.len = strlen(Evt->event_subkey);
+	}
 
-    json_extract_field(subkey, ev_name);
-    if(ev_name.len == 0 && Evt->event_subkey) {
-	    ev_name.s = Evt->event_subkey;
-	    ev_name.len = strlen(Evt->event_subkey);
-    }
-
-    sprintf(buffer, "kazoo:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
-    for (p=buffer ; *p; ++p) *p = tolower(*p);
-    for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-    if(kz_amqp_consumer_fire_event(buffer) != 0) {
-        sprintf(buffer, "kazoo:consumer-event-%.*s",ev_category.len, ev_category.s);
-        for (p=buffer ; *p; ++p) *p = tolower(*p);
-        for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-        if(kz_amqp_consumer_fire_event(buffer) != 0) {
-            sprintf(buffer, "kazoo:consumer-event-%s-%s", key, subkey);
-            for (p=buffer ; *p; ++p) *p = tolower(*p);
-            for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-            if(kz_amqp_consumer_fire_event(buffer) != 0) {
-                sprintf(buffer, "kazoo:consumer-event-%s", key);
-                for (p=buffer ; *p; ++p) *p = tolower(*p);
-                for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
+	sprintf(buffer, "kazoo:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
+	for (p=buffer ; *p; ++p) *p = tolower(*p);
+	for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
+	if(kz_amqp_consumer_fire_event(buffer) != 0) {
+		sprintf(buffer, "kazoo:consumer-event-%.*s",ev_category.len, ev_category.s);
+		for (p=buffer ; *p; ++p) *p = tolower(*p);
+		for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
+		if(kz_amqp_consumer_fire_event(buffer) != 0) {
+			sprintf(buffer, "kazoo:consumer-event-%s-%s", key, subkey);
+			for (p=buffer ; *p; ++p) *p = tolower(*p);
+			for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
+			if(kz_amqp_consumer_fire_event(buffer) != 0) {
+				sprintf(buffer, "kazoo:consumer-event-%s", key);
+				for (p=buffer ; *p; ++p) *p = tolower(*p);
+				for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
 				if(kz_amqp_consumer_fire_event(buffer) != 0) {
 					sprintf(buffer, "kazoo:consumer-event");
 					if(kz_amqp_consumer_fire_event(buffer) != 0) {
 						LM_ERR("kazoo:consumer-event not found\n");
 					}
 				}
-            }
-        }
-    }
+			}
+		}
+	}
+}
+
+static void kz_amqp_consumer_event_kemi(void)
+{
+	sr_kemi_eng_t *keng = NULL;
+    int rtb;
+	
+	keng = sr_kemi_eng_get();
+	if(keng!=NULL) {
+		sip_msg_t *msg;
+		str evrtname = str_init("kazoo:consumer-event");
+
+		rtb = get_route_type();
+		msg = faked_msg_next();
+		if(sr_kemi_route(keng, msg, EVENT_ROUTE, &kazoo_event_callback, &evrtname)<0)                {
+			LM_ERR("error running event route kemi callback\n");
+		}
+
+		set_route_type(rtb);
+	} else {
+		LM_ERR("no event route or kemi callback found for execution\n");
+	}
+
+}
+
+void kz_amqp_consumer_event(kz_amqp_consumer_delivery_ptr Evt)
+{
+	json_obj_ptr json_obj = NULL;
+
+	eventData = Evt->payload;
+	if(Evt->routing_key) {
+		eventKey = Evt->routing_key->s;
+	}
+
+	json_obj = kz_json_parse(Evt->payload);
+	if (json_obj == NULL)
+		return;
+
+	if (kazoo_kemi_enabled) {
+		kz_amqp_consumer_event_kemi();
+	} 
+	else {
+		kz_amqp_consumer_event_cfg(Evt, json_obj);
+	}
+
 	if(json_obj)
-    	json_object_put(json_obj);
+		json_object_put(json_obj);
 
 	eventData = NULL;
 	eventKey = NULL;

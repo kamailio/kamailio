@@ -1,6 +1,6 @@
 #include "dlg_ng_stats.h"
 
-struct dialog_ng_counters_h dialog_ng_cnts_h;
+struct dialog_ng_counters_h dialog_ng_cnts_h = {0};
 
 /* dialog_ng counters definitions */
 counter_def_t dialog_ng_cnt_defs[] =  {

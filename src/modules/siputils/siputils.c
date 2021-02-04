@@ -108,6 +108,11 @@ sl_api_t opt_slb;
 static int mod_init(void);
 static void mod_destroy(void);
 
+static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr);
+static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2);
+static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p2);
+static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2);
+
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void** param, int param_no);
 static int fixup_free_set_uri(void** param, int param_no);
@@ -132,10 +137,14 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"uri_param",          (cmd_function)uri_param_2,       2, fixup_spve_spve,
 		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"uri_param_any",      (cmd_function)w_uri_param_any,   1, fixup_spve_null,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_uri_param",      (cmd_function)add_uri_param,     1, fixup_str_null,
 		0, REQUEST_ROUTE},
 	{"get_uri_param",      (cmd_function)get_uri_param,     2, fixup_get_uri_param,
 		free_fixup_get_uri_param, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"uri_param_rm",       (cmd_function)w_uri_param_rm,    1, fixup_spve_null,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
@@ -186,6 +195,14 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
+	{"contact_param_encode",      (cmd_function)w_contact_param_encode,    2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"contact_param_decode",      (cmd_function)w_contact_param_decode,    1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"contact_param_rm",      (cmd_function)w_contact_param_rm,    1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
 
 	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
 		0, 0},
@@ -460,6 +477,59 @@ static int fixup_option(void** param, int param_no) {
 	return 0;
 }
 
+static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr)
+{
+	str nparam = STR_NULL;
+	str saddr = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)psaddr, &saddr)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+	return ki_contact_param_encode(msg, &nparam, &saddr);
+}
+
+static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_decode(msg, &nparam);
+}
+
+static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p3)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_decode_ruri(msg, &nparam);
+}
+
+static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_rm(msg, &nparam);
+}
+
 /*
  * Check if pseudo variable contains a valid uri
  */
@@ -479,6 +549,7 @@ static int ki_is_uri(sip_msg_t* msg, str* suri)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("has_totag"),
 		SR_KEMIP_INT, has_totag,
@@ -520,6 +591,16 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("uri_param_any"),
+		SR_KEMIP_INT, ki_uri_param_any,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("uri_param_rm"),
+		SR_KEMIP_INT, ki_uri_param_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("siputils"), str_init("is_tel_number"),
 		SR_KEMIP_INT, ki_is_tel_number,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -545,9 +626,45 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("encode_contact"),
+		SR_KEMIP_INT, ki_encode_contact,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("decode_contact"),
+		SR_KEMIP_INT, ki_decode_contact,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("decode_contact_header"),
+		SR_KEMIP_INT, ki_decode_contact_header,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_encode"),
+		SR_KEMIP_INT, ki_contact_param_encode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_decode"),
+		SR_KEMIP_INT, ki_contact_param_decode,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_decode_ruri"),
+		SR_KEMIP_INT, ki_contact_param_decode_ruri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_rm"),
+		SR_KEMIP_INT, ki_contact_param_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

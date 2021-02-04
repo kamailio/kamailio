@@ -46,9 +46,9 @@ int pv_get_evapi(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
 int pv_set_evapi(sip_msg_t *msg, pv_param_t *param, int op,
 		pv_value_t *val);
 
-/* set evapi env to shortcut of hdr date - not used in faked msg */
-#define evapi_set_msg_env(_msg, _evenv) do { _msg->date=(hdr_field_t*)_evenv; } while(0)
-#define evapi_get_msg_env(_msg) ((evapi_env_t*)_msg->date)
+/* set/get evapi env */
+#define evapi_set_msg_env(_msg, _evenv) do { _msg->ldv.vdata=(void*)_evenv; } while(0)
+#define evapi_get_msg_env(_msg) ((evapi_env_t*)_msg->ldv.vdata)
 
 int evapi_cfg_close(sip_msg_t *msg);
 int evapi_set_tag(sip_msg_t* msg, str* stag);

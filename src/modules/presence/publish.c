@@ -59,7 +59,7 @@ struct p_modif
 	str uri;
 };
 
-void msg_presentity_clean(unsigned int ticks, void *param)
+void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 {
 	db_key_t db_keys[2], result_cols[4];
 	db_val_t db_vals[2], *values;
@@ -72,6 +72,10 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 	presentity_t pres;
 	str uri = {0, 0}, event, *rules_doc = NULL;
 	static str query_str;
+
+	if(pa_db == NULL) {
+		return;
+	}
 
 	LM_DBG("cleaning expired presentity information\n");
 	if(pa_dbf.use_table(pa_db, &presentity_table) < 0) {
@@ -140,7 +144,7 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 			}
 
 			/* delete from hash table */
-			if(publ_cache_enabled
+			if(publ_cache_mode==PS_PCACHE_HYBRID
 					&& delete_phtable(&uri, pres.event->evp->type) < 0) {
 				LM_ERR("deleting from presentity hash table\n");
 				goto error;
@@ -156,7 +160,7 @@ void msg_presentity_clean(unsigned int ticks, void *param)
 				}
 			} else if(pres_notifier_processes > 0) {
 				if(pa_dbf.start_transaction) {
-					if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+					if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 						LM_ERR("in start_transaction\n");
 						goto error;
 					}
@@ -248,6 +252,95 @@ error:
 }
 
 /**
+ *
+ */
+void ps_ptable_timer_clean(unsigned int ticks, void *param)
+{
+	presentity_t pres;
+	ps_presentity_t *ptlist = NULL;
+	ps_presentity_t *ptn = NULL;
+	int eval = 0;
+	str uri = STR_NULL;
+	str *rules_doc = NULL;
+
+	eval = (int)time(NULL);
+	ptlist = ps_ptable_get_expired(eval);
+
+	if(ptlist==NULL) {
+		return;
+	}
+	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
+		memset(&pres, 0, sizeof(presentity_t));
+
+		pres.user = ptn->user;
+		pres.domain = ptn->domain;
+		pres.etag = ptn->etag;
+		pres.event = contains_event(&ptn->event, NULL);
+		if(pres.event == NULL || pres.event->evp == NULL) {
+			LM_ERR("event not found\n");
+			goto error;
+		}
+
+		if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
+			LM_ERR("constructing uri\n");
+			goto error;
+		}
+
+		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+				pres.user.len, pres.user.s, pres.domain.len, pres.domain.s);
+
+		if(pres_force_delete == 1) {
+			if(ps_ptable_remove(ptn) <0) {
+				LM_ERR("Deleting presentity\n");
+				goto error;
+			}
+		} else {
+			if(pres.event->get_rules_doc
+					&& pres.event->get_rules_doc(
+								&pres.user, &pres.domain, &rules_doc)
+								< 0) {
+				LM_ERR("getting rules doc\n");
+				goto error;
+			}
+			if(publ_notify(&pres, uri, NULL, &pres.etag, rules_doc) < 0) {
+				LM_ERR("sending Notify request\n");
+				goto error;
+			}
+			if(rules_doc) {
+				if(rules_doc->s)
+					pkg_free(rules_doc->s);
+				pkg_free(rules_doc);
+				rules_doc = NULL;
+			}
+		}
+
+		pkg_free(uri.s);
+		uri.s = NULL;
+	}
+
+error:
+	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
+		if(ps_ptable_remove(ptn) <0) {
+			LM_ERR("failed deleting presentity item\n");
+		}
+	}
+
+	if(ptlist != NULL) {
+		ps_presentity_list_free(ptlist, 1);
+	}
+	if(uri.s) {
+		pkg_free(uri.s);
+	}
+	if(rules_doc) {
+		if(rules_doc->s) {
+			pkg_free(rules_doc->s);
+		}
+		pkg_free(rules_doc);
+	}
+	return;
+}
+
+/**
  * PUBLISH request handling
  *
  */
@@ -274,7 +367,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 	reply_code = 500;
 	reply_str = pu_500_rpl;
 
-	counter++;
+	pres_counter++;
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("parsing headers\n");
 		reply_code = 400;
@@ -292,8 +385,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 			reply_str = pu_400a_rpl;
 			goto error;
 		}
-	} else
+	} else {
 		goto unsupported_event;
+	}
 
 	/* search event in the list */
 	event = search_event((event_t *)msg->event->parsed);
@@ -345,8 +439,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		LM_DBG("'expires' not found; default=%d\n", event->default_expires);
 		lexpire = event->default_expires;
 	}
-	if(lexpire > max_expires)
-		lexpire = max_expires;
+	if(lexpire > pres_max_expires) {
+		lexpire = pres_max_expires;
+	}
 
 	/* get pres_uri from Request-URI*/
 	if(parse_sip_msg_uri(msg) < 0) {
@@ -382,11 +477,11 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 			reply_str = pu_400a_rpl;
 			goto error;
 		}
-		body.len = get_content_length(msg);
+		body.len = msg->buf + msg->len - body.s;
 
-		if(sphere_enable && event->evp->type == EVENT_PRESENCE
+		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE
 				&& get_content_type(msg) == SUBTYPE_PIDFXML) {
-			sphere = extract_sphere(body);
+			sphere = extract_sphere(&body);
 		}
 	}
 	memset(&puri, 0, sizeof(struct sip_uri));
@@ -422,7 +517,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 	}
 
 	/* now we have all the necessary values */
-	/* fill in the filds of the structure */
+	/* fill in the fields of the structure */
 
 	presentity = new_presentity(
 			&pres_domain, &pres_user, lexpire, event, &etag, sender);
@@ -431,22 +526,25 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		goto error;
 	}
 
-	/* querry the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere,
-			   NULL, NULL, 0)
-			< 0) {
+	/* query the database and update or insert */
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply,
+			sphere, NULL, NULL, 0) < 0) {
 		LM_ERR("when updating presentity\n");
 		goto error;
 	}
 
-	if(presentity)
+	if(presentity) {
 		pkg_free(presentity);
-	if(etag.s)
+	}
+	if(etag.s) {
 		pkg_free(etag.s);
-	if(sender)
+	}
+	if(sender) {
 		pkg_free(sender);
-	if(sphere)
+	}
+	if(sphere) {
 		pkg_free(sphere);
+	}
 
 	return 1;
 
@@ -454,8 +552,9 @@ unsupported_event:
 
 	LM_WARN("Missing or unsupported event header field value\n");
 
-	if(msg->event && msg->event->body.s && msg->event->body.len > 0)
+	if(msg->event && msg->event->body.s && msg->event->body.len > 0) {
 		LM_ERR("    event=[%.*s]\n", msg->event->body.len, msg->event->body.s);
+	}
 
 	reply_code = BAD_EVENT_CODE;
 	reply_str = pu_489_rpl;
@@ -467,14 +566,18 @@ error:
 		}
 	}
 
-	if(presentity)
+	if(presentity) {
 		pkg_free(presentity);
-	if(etag.s)
+	}
+	if(etag.s) {
 		pkg_free(etag.s);
-	if(sender)
+	}
+	if(sender) {
 		pkg_free(sender);
-	if(sphere)
+	}
+	if(sphere) {
 		pkg_free(sphere);
+	}
 
 	return -1;
 }
@@ -536,8 +639,9 @@ int update_hard_presentity(
 		LM_DBG("INSERT/REPLACE\n");
 		xmlDocPtr doc;
 
-		if(sphere_enable)
-			sphere = extract_sphere(*pidf_doc);
+		if(pres_sphere_enable) {
+			sphere = extract_sphere(pidf_doc);
+		}
 
 		doc = xmlParseMemory(pidf_doc->s, pidf_doc->len);
 		if(doc == NULL) {

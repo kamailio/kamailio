@@ -28,7 +28,7 @@
 
 
 
-void append_to_timer(struct list_link *head, struct list_link *new_ll )
+void append_to_timer(pike_list_link_t *head, pike_list_link_t *new_ll )
 {
 	LM_DBG("%p in %p(%p,%p)\n",	new_ll, head,head->prev,head->next);
 	assert( !has_timer_set(new_ll) );
@@ -41,7 +41,7 @@ void append_to_timer(struct list_link *head, struct list_link *new_ll )
 
 
 
-void remove_from_timer(struct list_link *head, struct list_link *ll)
+void remove_from_timer(pike_list_link_t *head, pike_list_link_t *ll)
 {
 	LM_DBG("%p from %p(%p,%p)\n", ll, head,head->prev,head->next);
 	assert( has_timer_set(ll) );
@@ -55,11 +55,11 @@ void remove_from_timer(struct list_link *head, struct list_link *ll)
 
 
 /* "head" list MUST not be empty */
-void check_and_split_timer(struct list_link *head, unsigned int time,
-							struct list_link *split, unsigned char *mask)
+void check_and_split_timer(pike_list_link_t *head, unsigned int time,
+							pike_list_link_t *split, unsigned char *mask)
 {
-	struct list_link *ll;
-	struct ip_node   *node;
+	pike_list_link_t *ll;
+	pike_ip_node_t   *node;
 	unsigned char b;
 	int i;
 
@@ -93,10 +93,7 @@ void check_and_split_timer(struct list_link *head, unsigned int time,
 		ll->prev = head;
 	}
 
-	LM_DBG("succ. to split (h=%p)(p=%p,n=%p)\n", head,head->prev,head->next);
+	LM_DBG("succeeded to split (h=%p)(p=%p,n=%p)\n", head, head->prev, head->next);
 	return;
 }
-
-
-
 

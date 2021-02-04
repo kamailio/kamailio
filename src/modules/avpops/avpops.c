@@ -30,6 +30,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/sr_module.h"
+#include "../../core/kemi.h"
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/error.h"
@@ -67,6 +68,8 @@ static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
 static int fixup_op_avp(void** param, int param_no);
 static int fixup_subst(void** param, int param_no);
+static int fixup_subst_pv(void** param, int param_no);
+static int fixup_free_subst_pv(void** param, int param_no);
 static int fixup_is_avp_set(void** param, int param_no);
 
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
@@ -81,6 +84,7 @@ static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
 static int w_op_avps(struct sip_msg* msg, char* param, char *op);
 static int w_subst(struct sip_msg* msg, char* src, char *subst);
+static int w_subst_pv(struct sip_msg* msg, char* src, char *param);
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
 
 /*! \brief
@@ -110,6 +114,9 @@ static cmd_export_t cmds[] = {
 	{"avp_op",     (cmd_function)w_op_avps, 2, fixup_op_avp, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"avp_subst",  (cmd_function)w_subst,   2, fixup_subst, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
+	{"avp_subst_pv", (cmd_function)w_subst_pv, 2, fixup_subst_pv,
+		fixup_free_subst_pv,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"is_avp_set", (cmd_function)w_is_avp_set, 1, fixup_is_avp_set, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
@@ -708,6 +715,16 @@ static int fixup_check_avp(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_subst_pv(void** param, int param_no)
+{
+	if(param_no==1) {
+		return fixup_subst(param, param_no);
+	} else if (param_no==2) {
+		return fixup_var_str_2(param, param_no);
+	}
+	return 0;
+}
+
 static int fixup_subst(void** param, int param_no)
 {
 	struct subst_expr* se;
@@ -837,6 +854,14 @@ static int fixup_subst(void** param, int param_no)
 		/* replace it with the compiled subst. re */
 		*param=se;
 	}
+
+	return 0;
+}
+
+static int fixup_free_subst_pv(void** param, int param_no)
+{
+	if (param_no==2)
+		fparam_free_restore(param);
 
 	return 0;
 }
@@ -1054,6 +1079,40 @@ static int w_subst(struct sip_msg* msg, char* src, char *subst)
 	return ops_subst(msg, (struct fis_param**)src, (struct subst_expr*)subst);
 }
 
+static int w_subst_pv(struct sip_msg* msg, char* src, char *param)
+{
+	str tstr = STR_NULL;
+	str subst = STR_NULL;
+	struct subst_expr* se;
+	fparam_t *fp;
+	int res;
+
+	fp = (fparam_t*)param;
+	if(get_str_fparam(&tstr, msg, fp) != 0)
+	{
+		LM_ERR("error fetching subst re\n");
+		return -1;
+	}
+
+	LM_DBG("preparing to evaluate: [%.*s]\n", tstr.len, tstr.s);
+	if(pv_eval_str(msg, &subst, &tstr)<0){
+		subst.s = tstr.s;
+		subst.len = tstr.len;
+	}
+
+	LM_DBG("preparing %s\n", subst.s);
+	se = subst_parser(&subst);
+	if(se==0)
+	{
+		LM_ERR("bad subst re %s\n", subst.s);
+		return E_BAD_RE;
+	}
+
+	res = ops_subst(msg, (struct fis_param**)src, se);
+	subst_expr_free(se);
+	return res;
+}
+
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *op)
 {
 	return ops_is_avp_set(msg, (struct fis_param*)param);
@@ -1064,3 +1123,165 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)
 	return ops_print_avp();
 }
 
+static int ki_check_avps(struct sip_msg* msg, str* param, str *check)
+{
+	struct fis_param *fparam, *fcheck;
+	regex_t* re = NULL;
+	int res;
+
+	if((fparam = avpops_parse_pvar(param->s)) == NULL)
+	{
+		LM_ERR("unable to get pseudo-variable in param 1\n");
+		return E_OUT_OF_MEM;
+	}
+	/* attr name is mandatory */
+	if (fparam->u.sval->type==PVT_NULL)
+	{
+		LM_ERR("null pseudo-variable in param 1\n");
+		pkg_free(fparam);
+		return E_UNSPEC;
+	}
+
+	if((fcheck = avpops_parse_pvar(check->s)) == NULL)
+	{
+		LM_ERR("failed to parse checked value \n");
+		pkg_free(fparam);
+		return E_UNSPEC;
+	}
+	/* if REGEXP op -> compile the expresion */
+	if(fcheck->ops&AVPOPS_OP_RE)
+	{
+		if( (fcheck->opd&AVPOPS_VAL_STR) != 0 )
+		{
+			if((re = (regex_t*) pkg_malloc(sizeof(regex_t))) == NULL)
+			{
+				PKG_MEM_ERROR;
+				pkg_free(fparam);
+				pkg_free(fcheck);
+				return E_OUT_OF_MEM;
+			}
+			LM_DBG("compiling regexp <%.*s>\n", fcheck->u.s.len, fcheck->u.s.s);
+			if (regcomp(re, fcheck->u.s.s,REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+			{
+				LM_ERR("bad re <%.*s>\n", fcheck->u.s.len, fcheck->u.s.s);
+				pkg_free(fparam);
+				pkg_free(re);
+				pkg_free(fcheck);
+				return E_BAD_RE;
+			}
+			fcheck->u.s.s = (char*)re;
+		}
+	} else if (fcheck->ops&AVPOPS_OP_FM) {
+		if (!( fcheck->opd&AVPOPS_VAL_PVAR ||
+			(!(fcheck->opd&AVPOPS_VAL_PVAR) && fcheck->opd&AVPOPS_VAL_STR) ) )
+		{
+			LM_ERR("fast_match operation requires string value or "
+					"avp name/alias (%d/%d)\n",	fcheck->opd, fcheck->ops);
+			pkg_free(fparam);
+			pkg_free(fcheck);
+			return E_UNSPEC;
+		}
+	}
+
+	res = ops_check_avp(msg, fparam, fcheck);
+	pkg_free(fparam);
+	pkg_free(fcheck);
+	if(re) pkg_free(re);
+	return res;
+}
+
+static int ki_copy_avps(struct sip_msg* msg, str *name1, str *name2)
+{
+	struct fis_param *fname1, *fname2;
+	char *p = NULL;
+	int res;
+
+	if((fname1 = avpops_parse_pvar(name1->s)) == NULL)
+	{
+		LM_ERR("unable to get pseudo-variable in param 1\n");
+		return E_OUT_OF_MEM;
+	}
+	/* attr name is mandatory */
+	if (fname1->u.sval->type != PVT_AVP)
+	{
+		LM_ERR("you must specify only AVP as parameter\n");
+		pkg_free(fname1);
+		return E_UNSPEC;
+	}
+
+	/* avp / flags */
+	if ( (p=strchr(name2->s,'/')) != 0 )
+		*(p++) = 0;
+
+	if((fname2 = avpops_parse_pvar(name2->s)) == NULL)
+	{
+		LM_ERR("unable to get pseudo-variable in param 2\n");
+		pkg_free(fname1);
+		return E_OUT_OF_MEM;
+	}
+	/* attr name is mandatory */
+	if (fname2->u.sval->type != PVT_AVP)
+	{
+		LM_ERR("you must specify only AVP as parameter\n");
+		pkg_free(fname1);
+		pkg_free(fname2);
+		return E_UNSPEC;
+	}
+
+	/* flags */
+	for( ; p&&*p ; p++ )
+	{
+		switch (*p) {
+			case 'g':
+			case 'G':
+				fname2->ops|=AVPOPS_FLAG_ALL;
+				break;
+			case 'd':
+			case 'D':
+				fname2->ops|=AVPOPS_FLAG_DELETE;
+				break;
+			case 'n':
+			case 'N':
+				fname2->ops|=AVPOPS_FLAG_CASTN;
+				break;
+			case 's':
+			case 'S':
+				fname2->ops|=AVPOPS_FLAG_CASTS;
+				break;
+			default:
+				LM_ERR("bad flag <%c>\n",*p);
+				pkg_free(fname1);
+				pkg_free(fname2);
+				return E_UNSPEC;
+		}
+	}
+
+	res = ops_copy_avp( msg, fname1, fname2);
+	pkg_free(fname1);
+	pkg_free(fname2);
+	return res;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_rtpengine_exports[] = {
+    { str_init("avpops"), str_init("avp_check"),
+        SR_KEMIP_INT, ki_check_avps,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("avpops"), str_init("avp_copy"),
+        SR_KEMIP_INT, ki_copy_avps,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2) {
+    sr_kemi_modules_add(sr_kemi_rtpengine_exports);
+    return 0;
+}

@@ -130,10 +130,12 @@ int ac_tm_fill(ac_tm_p _atp, struct tm *_tm)
 
 int ac_tm_set_time(ac_tm_p _atp, time_t _t)
 {
+	struct tm _tm;
 	if(!_atp)
 		return -1;
 	_atp->time = _t;
-	return ac_tm_fill(_atp, localtime(&_t));
+	localtime_r(&_t, &_tm);
+	return ac_tm_fill(_atp, &_tm);
 }
 
 int ac_get_mweek(struct tm *_tm)

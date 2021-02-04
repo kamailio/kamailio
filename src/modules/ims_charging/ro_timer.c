@@ -98,12 +98,12 @@ static inline void insert_ro_timer_unsafe(struct ro_tl *tl) {
     }
 
     LM_DBG("inserting %p for %d\n", tl, tl->timeout);
-    LM_DBG("BEFORE ptr [%p], ptr->next [%p], ptr->next->prev [%p]", ptr, ptr->next, ptr->next->prev);
+    LM_DBG("BEFORE ptr [%p], ptr->next [%p], ptr->next->prev [%p]\n", ptr, ptr->next, ptr->next->prev);
     tl->prev = ptr;
     tl->next = ptr->next;
     tl->prev->next = tl;
     tl->next->prev = tl;
-    LM_DBG("AFTER tl->prev [%p], tl->next [%p]", tl->prev, tl->next);
+    LM_DBG("AFTER tl->prev [%p], tl->next [%p]\n", tl->prev, tl->next);
 }
 
 /*!
@@ -126,7 +126,7 @@ int insert_ro_timer(struct ro_tl *tl, int interval) {
     insert_ro_timer_unsafe(tl);
 
 
-    LM_DBG("TIMER inserted");
+    LM_DBG("TIMER inserted\n");
     lock_release(roi_timer->lock);
 
     return 0;
@@ -249,7 +249,7 @@ static inline struct ro_tl* get_expired_ro_sessions(unsigned int time) {
 void ro_timer_routine(unsigned int ticks, void * attr) {
 
     struct ro_tl *tl, *ctl;
-    LM_DBG("getting expired ro-sessions");
+    LM_DBG("getting expired ro-sessions\n");
 
     tl = get_expired_ro_sessions(ticks);
 
@@ -275,7 +275,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
 
     ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
     ro_session_lock(ro_session_table, ro_session_entry);
-    LM_DBG("credit=%d credit_valid_for=%d", i_req->new_credit, i_req->credit_valid_for);
+    LM_DBG("credit=%d credit_valid_for=%d\n", i_req->new_credit, i_req->credit_valid_for);
 
     used_secs = rint((now - ((timeout_or_error==1 && i_req->ro_session->last_event_timestamp_backup>0)?i_req->ro_session->last_event_timestamp_backup : i_req->ro_session->last_event_timestamp)) / (float) 1000000);
 
@@ -353,7 +353,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
             dlgb.lookup_terminate_dlg(i_req->ro_session->dlg_h_entry, i_req->ro_session->dlg_h_id, NULL);
             call_terminated = 1;
         } else {
-            LM_DBG("No more credit for user - letting call run out of money in [%i] seconds", whatsleft);
+            LM_DBG("No more credit for user - letting call run out of money in [%i] seconds\n", whatsleft);
             int ret = insert_ro_timer(&i_req->ro_session->ro_tl, whatsleft);
             if (ret != 0) {
                 LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
@@ -373,7 +373,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
     }
 
     shm_free(i_req);
-    LM_DBG("Exiting async ccr interim nicely");
+    LM_DBG("Exiting async ccr interim nicely\n");
 }
 
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
@@ -392,14 +392,14 @@ void ro_session_ontimeout(struct ro_tl *tl) {
     LM_DBG("offset for ro_tl is [%lu] and ro_session id is [%.*s]\n", (unsigned long) (&((struct ro_session*) 0)->ro_tl), ro_session->ro_session_id.len, ro_session->ro_session_id.s);
 
     if (!ro_session) {
-        LM_ERR("Can't find a session. This is bad");
+        LM_ERR("Can't find a session. This is bad\n");
         return;
     }
 
-    LM_DBG("event-type=%d", ro_session->event_type);
+    LM_DBG("event-type=%d\n", ro_session->event_type);
 
     //	if (!ro_session->active) {
-    //		LM_ALERT("Looks like this session was terminated while requesting more units");
+    //		LM_ALERT("Looks like this session was terminated while requesting more units\n");
     //		goto exit;
     //		return;
     //	}
@@ -438,7 +438,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
                         ro_session->asserted_identity.len,
                         ro_session->asserted_identity.s);
 
-                LM_DBG("Call session has been active for %i seconds. The last reserved secs was [%i] and the last event was [%i seconds] ago",
+                LM_DBG("Call session has been active for %i seconds. The last reserved secs was [%i] and the last event was [%i seconds] ago\n",
                         (unsigned int) call_time,
                         (unsigned int) ro_session->reserved_secs,
                         (unsigned int) used_secs);

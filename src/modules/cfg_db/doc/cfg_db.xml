@@ -78,9 +78,9 @@
 			<programlisting>
 	cfg_transl table:
 	group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_field|cfg_table_value_field
-	core|use_dst_blacklist|cfg_dns|||
-	core|dst_blacklist_mem|cfg_dns|||
-	core|dst_blacklist_expire|||
+	core|use_dst_blocklist|cfg_dns|||
+	core|dst_blocklist_mem|cfg_dns|||
+	core|dst_blocklist_expire|||
 	my|route_addr|cfg_my|my_group_name|my_name|my_value	; overrides &lt;default&gt; values
 	my|use_rtp_proxy|cfg_my|my_group_name|my_name|my_value
 	*|*||||	; matches all param ids, points to tables defined in row &lt;default&gt;
@@ -102,9 +102,9 @@
 	
 	cfg_dns table:
 	group_name|name|value
-	dns|use_dst_blacklist|1
-	dns|dst_blacklist_mem|1024
-	dns|dst_blacklist_expire|60
+	dns|use_dst_blocklist|1
+	dns|dst_blocklist_mem|1024
+	dns|dst_blocklist_expire|60
 	
 			</programlisting>
 

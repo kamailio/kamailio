@@ -546,8 +546,9 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		if (rpc->scan(c, "d", &ival) != 1) {
 			rpc->fault(c, 500, "Missing integer parameter value (Parameters: varname type value)");
 			return;
-	}
+		}
 		isv.n = ival;
+		LM_DBG("setting %.*s to int %d\n", varname.len, varname.s, ival);
 	} else  if (strcasecmp(type.s, "str") == 0 ) {
 		/* String value */
 		if (rpc->scan(c, "S", &value) != 1) {
@@ -556,6 +557,8 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		}
 		isv.s = value;
 		flags = VAR_VAL_STR;
+		LM_DBG("setting %.*s to str %.*s\n", varname.len, varname.s,
+				value.len, value.s);
 	} else {
 		rpc->fault(c, 500, "Unknown parameter type (Types: int or str)");
 		return;
@@ -655,6 +658,110 @@ int param_set_var( modparam_t type, void* val)
 int param_set_shvar( modparam_t type, void* val)
 {
 	return param_set_xvar(type, val, 1);
+}
+
+/**
+ *
+ */
+int ki_shv_seti(sip_msg_t *msg, str *vname, int ival)
+{
+	sh_var_t *shv = NULL;
+	int_str isv;
+
+	shv = get_shvar_by_name(vname);
+
+	if(shv==NULL) {
+		LM_ERR("$shv(%.*s) is not defined\n", vname->len, vname->s);
+		return -1;
+	}
+
+	lock_shvar(shv);
+	isv.n = ival;
+	if(set_shvar_value(shv, &isv, 0)==NULL) {
+		LM_ERR("error - cannot set $shv(%.*s) to ival\n", vname->len, vname->s);
+		unlock_shvar(shv);
+		return -1;
+	}
+	unlock_shvar(shv);
+	return 1;
+}
+
+/**
+ *
+ */
+int ki_shv_sets(sip_msg_t *msg, str *vname, str *sval)
+{
+	sh_var_t *shv = NULL;
+	int_str isv;
+
+	shv = get_shvar_by_name(vname);
+
+	if(shv==NULL) {
+		LM_ERR("$shv(%.*s) is not defined\n", vname->len, vname->s);
+		return -1;
+	}
+
+	lock_shvar(shv);
+	isv.s = *sval;
+	if(set_shvar_value(shv, &isv, VAR_VAL_STR)==NULL) {
+		LM_ERR("error - cannot set $shv(%.*s) to sval\n", vname->len, vname->s);
+		unlock_shvar(shv);
+		return -1;
+	}
+	unlock_shvar(shv);
+	return 1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_shv_xval = {0};
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname)
+{
+	sh_var_t *shv = NULL;
+
+	memset(&_sr_kemi_shv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	shv = get_shvar_by_name(vname);
+	if(shv==NULL) {
+		LM_WARN("$shv(%.*s) is not defined - return value 0\n",
+				vname->len, vname->s);
+		_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_shv_xval.v.n = 0;
+		return &_sr_kemi_shv_xval;
+	}
+
+	lock_shvar(shv);
+	if(shv->v.flags&VAR_VAL_STR) {
+		if(shv_cpy.s==NULL || shv_cpy.len < shv->v.value.s.len) {
+			if(shv_cpy.s!=NULL)
+				pkg_free(shv_cpy.s);
+			shv_cpy.s = (char*)pkg_malloc((shv->v.value.s.len+1)*sizeof(char));
+			if(shv_cpy.s==NULL) {
+				unlock_shvar(shv);
+				LM_ERR("no more pkg mem\n");
+				_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+				_sr_kemi_shv_xval.v.n = 0;
+				return &_sr_kemi_shv_xval;
+			}
+		}
+		strncpy(shv_cpy.s, shv->v.value.s.s, shv->v.value.s.len);
+		shv_cpy.len = shv->v.value.s.len;
+		unlock_shvar(shv);
+		shv_cpy.s[shv_cpy.len] = '\0';
+		_sr_kemi_shv_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_shv_xval.v.s = shv_cpy;
+		return &_sr_kemi_shv_xval;
+	} else {
+		_sr_kemi_shv_xval.v.n = shv->v.value.n;
+		unlock_shvar(shv);
+		_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+		return &_sr_kemi_shv_xval;
+	}
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

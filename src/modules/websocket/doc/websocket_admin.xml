@@ -499,7 +499,7 @@ modparam("websocket", "timer_interval", 5)
 		</para>
 		<para><emphasis>Default value is 5.</emphasis></para>
 		<example>
-		<title>Set <varname>rm_timer_interval</varname>parameter</title>
+		<title>Set <varname>rm_delay_interval</varname>parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("websocket", "rm_delay_interval", 2)
@@ -695,7 +695,7 @@ ws_close(4000, "Because I say so");
 			When defined, the module calls
 			event_route[websocket:closed] when a connection
 			closes.  The connection may be identified using the
-			the $si and $sp pseudo-variables.
+			$si and $sp pseudo-variables.
 		</para>
 		<example>
 		<title><function moreinfo="none">event_route[websocket:closed]</function> usage</title>

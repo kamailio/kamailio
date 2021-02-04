@@ -13,10 +13,10 @@
 	    <function>blst_add([timeout])</function>
 	</title>
 	<para>
-		Adds the source of the current message to the blacklist for
+		Adds the source of the current message to the blocklist for
 		<varname>timeout</varname> seconds. If timeout is missing or 0
-		 it uses the default blacklist timeout 
-		 (<varname>dst_blacklist_expire</varname>).
+		 it uses the default blocklist timeout 
+		 (<varname>dst_blocklist_expire</varname>).
 	</para>
 	<example>
 	    <title><function>blst_add</function> usage</title>
@@ -25,7 +25,7 @@
 if (src_ip==10.0.0.0/9)
     blst_add(30); # 30 s
 else
-    blst_add();  # use default blacklist timeout
+    blst_add();  # use default blocklist timeout
 ...
 	    </programlisting>
 	</example>
@@ -37,7 +37,7 @@ else
 	    <function>blst_add_retry_after(min, max)</function>
 	</title>
 	<para>
-		Adds the source of the current message to the blacklist for
+		Adds the source of the current message to the blocklist for
 		the time interval specified in the <emphasis>Retry-After</emphasis> 
 		header.
 		If the <emphasis>Retry-After</emphasis> header is missing, it will 
@@ -54,7 +54,7 @@ else
 	    <programlisting>
 ...
 # on_reply route
-if (msg_status==503){ # blacklist 503 source for Retry-After seconds
+if (msg_status==503){ # blocklist 503 source for Retry-After seconds
     if (! blst_add_retry_after(30, 3600))
         blst_add(60); # if no retry_after header add it for 60s
 }
@@ -68,8 +68,8 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	    <function>blst_del()</function>
 	</title>
 	<para>
-		Removes the source of the current message from the blacklist.
-		If the address is not present in the blacklist at the time of the call
+		Removes the source of the current message from the blocklist.
+		If the address is not present in the blocklist at the time of the call
 		it returns false.
 	</para>
 	<example>
@@ -82,19 +82,19 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	</example>
     </section>
 
-    <section id="blst_is_blacklisted">
+    <section id="blst_is_blocklisted">
 	<title>
-	    <function>blst_is_blacklisted()</function>
+	    <function>blst_is_blocklisted()</function>
 	</title>
 	<para>
-		Returns true if the source of the current message is blacklisted.
+		Returns true if the source of the current message is blocklisted.
 	</para>
 	<example>
-	    <title><function>blst_is_blacklisted</function> usage</title>
+	    <title><function>blst_is_blocklisted</function> usage</title>
 	    <programlisting>
 ...
-    if (blst_is_blacklisted()){
-        log("message from a blacklisted source");
+    if (blst_is_blocklisted()){
+        log("message from a blocklisted source");
         drop;
    }
 ...
@@ -108,7 +108,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	</title>
 	<para>
 		Set errors that will not be taken into account when deciding
-		whether to blacklist a destination for the current message
+		whether to blocklist a destination for the current message
 		or a local reply to the current message.
 	</para>
 	<para>
@@ -146,7 +146,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	</para>
 	<note>
 		TCP and TLS send and connect errors are handled per connection and
-		not per message. The connection blacklist ignore flags are inherited
+		not per message. The connection blocklist ignore flags are inherited
 		from the message that caused the connection establishment.
 	</note>
 	<example>
@@ -173,7 +173,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 		<function>blst_clear_ignore([flags])</function>
 	</title>
 	<para>
-		Clears blacklist ignore flags previously set by the corresponding
+		Clears blocklist ignore flags previously set by the corresponding
 		<function>blst_set_ignore(...)</function> or
 		<function>blst_rpl_set_ignore(...)</function> functions.
 	</para>

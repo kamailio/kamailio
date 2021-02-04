@@ -79,8 +79,11 @@ MODULE_VERSION
 
 extern gen_lock_t* process_lock; /* lock on the process table */
 
-int * callback_singleton; /**< Cx callback singleton 								*/
+int *callback_singleton; /**< Cx callback singleton 								*/
 
+stat_var* stat_sar_timeouts;
+stat_var* sar_replies_received;
+stat_var* sar_replies_response_time;
 
 struct tm_binds tmb;
 
@@ -176,7 +179,10 @@ int max_notification_list_size = 0;
 
 int notification_processes = 4; /*Number of processes that processes the notification queue*/
 
-extern reg_notification_list *notification_list; /**< list of notifications for reg to be sent			*/
+reg_notification_list *notification_list; /**< list of notifications for reg to be sent			*/
+
+IMS_Events_enum_t IMS_Events;
+IMS_Registrar_events_enum_t IMS_Registrar_events;
 
 #define RCV_NAME "received"
 str rcv_param = str_init(RCV_NAME);

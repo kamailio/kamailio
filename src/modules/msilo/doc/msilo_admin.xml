@@ -10,39 +10,39 @@
 <!-- Module User's Guide -->
 
 <chapter xmlns:xi="http://www.w3.org/2001/XInclude">
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides offline message storage for &kamailioname;. It 
-		stores received messages for an offline user and sends them when the 
+		This module provides offline message storage for &kamailioname;. It
+		stores received messages for an offline user and sends them when the
 		user comes back online. It can also send reminders and auto-expire
 		messages.
 	</para>
 	<para>
-		For each message, the modules stores <quote>Request-URI</quote> 
-		(<quote>R-URI</quote>) only if it is a complete address of record 
-		(<quote>username@hostname</quote>), &uri; from <quote>To</quote> 
+		For each message, the modules stores <quote>Request-URI</quote>
+		(<quote>R-URI</quote>) only if it is a complete address of record
+		(<quote>username@hostname</quote>), &uri; from <quote>To</quote>
 		header, &uri; from <quote>From</quote> header, incoming time,
-		expiration time, content type and body of the message. If 
-		<quote>R-URI</quote> is not an address of record (it might be the 
+		expiration time, content type and body of the message. If
+		<quote>R-URI</quote> is not an address of record (it might be the
 		contact address for current &sip; session) the &uri;
 		from <quote>To</quote> header will be used as <abbrev>R-URI</abbrev>.
 	</para>
 	<para>
-		When the expiration time is passed, the message is discarded from 
-		database.  Expiration time is computed based on incoming time and 
+		When the expiration time is passed, the message is discarded from
+		database.  Expiration time is computed based on incoming time and
 		one of the module's parameters.
 	</para>
 	<para>
-		Every time when a user registers with &kamailio;, the module is looking in 
-		database for offline messages intended for that user. All of them will 
+		Every time when a user registers with &kamailio;, the module is looking in
+		database for offline messages intended for that user. All of them will
 		be sent to contact address provided in REGISTER request and then be deleted.
 	</para>
 	<para>
-		It may happen that the &sip; user registering use a &sip; User Agent 
+		It may happen that the &sip; user registering use a &sip; User Agent
 		that has no support for MESSAGE requests. In this case the <quote>failure_route</quote>
 		should be used to re-store the undelivered requests.
 	</para>
@@ -62,15 +62,15 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>database module</emphasis> - mysql, dbtext or other 
-				module that implements the <quote>db</quote> interface and 
-				provides support for storing/receiving data to/from a 
+				<emphasis>database module</emphasis> - mysql, dbtext or other
+				module that implements the <quote>db</quote> interface and
+				provides support for storing/receiving data to/from a
 				database system.
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>TM</emphasis>--transaction module-- used to 
+				<emphasis>TM</emphasis>--transaction module-- used to
 				send &sip; requests.
 			</para>
 			</listitem>
@@ -80,7 +80,7 @@
 	<section>
 		<title>External libraries or applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module:
 			<itemizedlist>
 			<listitem>
@@ -101,7 +101,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is 
+			Default value is
 			<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
@@ -137,7 +137,7 @@ modparam("msilo", "db_table", "silo")
 	<section id="msilo.p.sc_mid">
 		<title><varname>sc_mid</varname> (string)</title>
 		<para>
-		The name of the column in silo table used to store the message id. 
+		The name of the column in silo table used to store the message id.
 		</para>
 		<para>Default value is <quote>mid</quote>.</para>
 		<example>
@@ -148,12 +148,12 @@ modparam("msilo", "sc_mid", "other_mid")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 
 	<section id="msilo.p.sc_from">
 		<title><varname>sc_from</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the source address. 
+		The name of the column in silo table, storing the source address.
 		</para>
 		<para>Default value is <quote>src_addr</quote>.</para>
 		<example>
@@ -164,11 +164,11 @@ modparam("msilo", "sc_from", "source_address")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_to">
 		<title><varname>sc_to</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the destination address. 
+		The name of the column in silo table, storing the destination address.
 		</para>
 		<para>Default value is <quote>dst_addr</quote>.</para>
 		<example>
@@ -179,7 +179,7 @@ modparam("msilo", "sc_to", "destination_address")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_uri_user">
 		<title><varname>sc_uri_user</varname> (string)</title>
 		<para>
@@ -194,103 +194,118 @@ modparam("msilo", "sc_uri_user", "user")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_uri_host">
 		<title><varname>sc_uri_host</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the domain. 
+		The name of the column in silo table, storing the domain.
 		</para>
 		<para>Default value is <quote>domain</quote>.</para>
 		<example>
 		<title>Set the <quote>sc_uri_host</quote> parameter</title>
-         <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_uri_host", "domain")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_body">
 		<title><varname>sc_body</varname> (string)</title>
 		<para>
-		The name of the column storing the message body in silo table. 
+		The name of the column storing the message body in silo table.
 		</para>
 		<para>Default value is <quote>body</quote>.</para>
-        <example>
+		<example>
 		<title>Set the <quote>sc_body</quote> parameter</title>
-        <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_body", "message_body")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_ctype">
 		<title><varname>sc_ctype</varname> (string)</title>
 		<para>
 		The name of the column in silo table, storing content type.
 		</para>
 		<para>Default value is <quote>ctype</quote>.</para>
-        <example>
+		<example>
 		<title>Set the <quote>sc_ctype</quote> parameter</title>
-        <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_ctype", "content_type")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_exp_time">
 		<title><varname>sc_exp_time</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the expire time of the message. 
+		The name of the column in silo table, storing the expire time of the message.
 		</para>
 		<para>Default value is <quote>exp_time</quote>.</para>
-        <example>
+		<example>
 		<title>Set the <quote>sc_exp_time</quote> parameter</title>
-        <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_exp_time", "expire_time")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_inc_time">
 		<title><varname>sc_inc_time</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the incoming time of the message. 
+		The name of the column in silo table, storing the incoming time of the message.
 		</para>
 		<para>Default value is <quote>inc_time</quote>.</para>
-        <example>
+		<example>
 		<title>Set the <quote>sc_inc_time</quote> parameter</title>
-        <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_inc_time", "incoming_time")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
 	<section id="msilo.p.sc_snd_time">
 		<title><varname>sc_snd_time</varname> (string)</title>
 		<para>
-		The name of the column in silo table, storing the send time for the reminder. 
+		The name of the column in silo table, storing the send time for the reminder.
 		</para>
 		<para>Default value is <quote>snd_time</quote>.</para>
-        <example>
+		<example>
 		<title>Set the <quote>sc_snd_time</quote> parameter</title>
-        <programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "sc_snd_time", "send_reminder_time")
 ...
 </programlisting>
 		</example>
-    </section>
+	</section>
+	<section id="msilo.p.sc_stored_hdrs">
+		<title><varname>sc_stored_hdrs</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the extra headers.
+		</para>
+		<para>Default value is <quote>extra_hdrs</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_stored_hdrs</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "sc_stored_hdrs", "extra_headers")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="msilo.p.from_address">
 		<title><varname>from_address</varname> (string)</title>
 		<para>
-		The &sip; address used to inform users that destination of their 
-		message is not online and the message will be delivered next time 
-		when that user goes online. If the parameter is not set, the module 
+		The &sip; address used to inform users that destination of their
+		message is not online and the message will be delivered next time
+		when that user goes online. If the parameter is not set, the module
 		will not send any notification. This parameter may contain pseudo-variables.
 		</para>
 		<para>
@@ -481,7 +496,7 @@ modparam("msilo", "check_time", 10)
 		<title><varname>send_time</varname> (int)</title>
 		<para>
 		Timer interval in seconds to check if there are reminder messages.
-		The module takes all reminder messages that must be sent at that moment 
+		The module takes all reminder messages that must be sent at that moment
 		or before that moment.
 		</para>
 		<para>
@@ -688,10 +703,10 @@ m_store(...);
 	<section id="msilo.f.m_store">
 		<title><function moreinfo="none">m_store([owner])</function></title>
 		<para>
-		The method stores certain parts of the current &sip; request (it 
-		should be called when the request type is MESSAGE and the destination 
-		user is offline or his UA does not support MESSAGE requests). If the 
-		user is registered with a UA which does not support MESSAGE requests 
+		The method stores certain parts of the current &sip; request (it
+		should be called when the request type is MESSAGE and the destination
+		user is offline or his UA does not support MESSAGE requests). If the
+		user is registered with a UA which does not support MESSAGE requests
 		you should not use mode=<quote>0</quote> if you have
 		changed the request uri with the contact address of user's &ua;.
 		</para>
@@ -723,7 +738,7 @@ m_store("$tu");
 		<title><function moreinfo="none">m_dump([owner])</function></title>
 		<para>
 		The method sends stored messages for the &sip; user that has
-		registered to the contact address in the registration. 
+		registered to the contact address in the registration.
 		The method should be called when a REGISTER request is received
 		and the <quote>Expire</quote> header has a value greater than zero.
 		</para>
@@ -787,7 +802,6 @@ m_dump("$fu");
 	</section>
 	</section>
 
-	
 	<section>
 	<title>Installation and Running</title>
 		<section>
@@ -806,4 +820,3 @@ m_dump("$fu");
 	</section>
 	</section>
 </chapter>
-

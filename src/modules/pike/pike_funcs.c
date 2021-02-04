@@ -32,6 +32,7 @@
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
 #include "../../core/counters.h"
+#include "../../core/mod_fix.h"
 #include "ip_tree.h"
 #include "pike_funcs.h"
 #include "timer.h"
@@ -39,9 +40,9 @@
 
 
 
-extern gen_lock_t*       timer_lock;
-extern struct list_link* timer;
-extern int               timeout;
+extern gen_lock_t*       pike_timer_lock;
+extern pike_list_link_t* pike_timer;
+extern int               pike_timeout;
 extern int               pike_log_level;
 
 counter_handle_t blocked;
@@ -53,28 +54,11 @@ void pike_counter_init()
 
 
 
-int pike_check_req(sip_msg_t *msg)
+int pike_check_ipaddr(sip_msg_t *msg, ip_addr_t* ip)
 {
-	struct ip_node *node;
-	struct ip_node *father;
+	pike_ip_node_t *node;
+	pike_ip_node_t *father;
 	unsigned char flags;
-	struct ip_addr* ip;
-
-
-#ifdef _test
-	/* get the ip address from second via */
-	if (parse_headers(msg, HDR_VIA1_F, 0)!=0 )
-		return -1;
-	if (msg->via1==0 )
-		return -1;
-	/* convert from string to ip_addr */
-	ip = str2ip( &msg->via1->host );
-	if (ip==0)
-		return -1;
-#else
-	ip = &(msg->rcv.src_ip);
-#endif
-
 
 	/* first lock the proper tree branch and mark the IP with one more hit*/
 	lock_tree_branch( ip->u.addr[0] );
@@ -93,12 +77,12 @@ int pike_check_req(sip_msg_t *msg)
 		node->flags, flags);
 
 	/* update the timer */
-	lock_get(timer_lock);
+	lock_get(pike_timer_lock);
 	if ( flags&NEW_NODE ) {
 		/* put this node into the timer list and remove its
 		 * father only if this has one kid and is not a LEAF_NODE*/
-		node->expires =  get_ticks() + timeout;
-		append_to_timer( timer, &(node->timer_ll) );
+		node->expires =  get_ticks() + pike_timeout;
+		append_to_timer( pike_timer, &(node->timer_ll) );
 		node->flags |= NODE_INTIMER_FLAG;
 		if (father) {
 			LM_DBG("father %p: flags=%d kids->next=%p\n",
@@ -110,7 +94,7 @@ int pike_check_req(sip_msg_t *msg)
 				/* if the node is maked as expired by timer, let the timer
 				 * to finish and remove the node */
 				if ( !(father->flags&NODE_EXPIRED_FLAG) ) {
-					remove_from_timer( timer, &(father->timer_ll) );
+					remove_from_timer( pike_timer, &(father->timer_ll) );
 					father->flags &= ~NODE_INTIMER_FLAG;
 				} else {
 					father->flags &= ~NODE_EXPIRED_FLAG;
@@ -129,8 +113,8 @@ int pike_check_req(sip_msg_t *msg)
 			/* if node exprired, ignore the current hit and let is
 			 * expire in timer process */
 			if ( !(flags&NO_UPDATE) && !(node->flags&NODE_EXPIRED_FLAG) ) {
-				node->expires = get_ticks() + timeout;
-				update_in_timer( timer, &(node->timer_ll) );
+				node->expires = get_ticks() + pike_timeout;
+				update_in_timer( pike_timer, &(node->timer_ll) );
 			}
 		} else {
 			/* debug */
@@ -140,8 +124,8 @@ int pike_check_req(sip_msg_t *msg)
 			assert( !(node->flags&NODE_IPLEAF_FLAG) && node->kids );
 		}
 	}
-	/*print_timer_list( timer );*/ /* debug*/
-	lock_release(timer_lock);
+	/*print_timer_list( pike_timer );*/ /* debug*/
+	lock_release(pike_timer_lock);
 
 	unlock_tree_branch( ip->u.addr[0] );
 	/*print_tree( 0 );*/ /* debug */
@@ -159,36 +143,86 @@ int pike_check_req(sip_msg_t *msg)
 }
 
 
-int w_pike_check_req(struct sip_msg *msg, char *foo, char *bar)
+int pike_check_req(sip_msg_t *msg)
+{
+	ip_addr_t* ip;
+
+
+#ifdef _test
+	/* get the ip address from second via */
+	if (parse_headers(msg, HDR_VIA1_F, 0)!=0 )
+		return -1;
+	if (msg->via1==0 )
+		return -1;
+	/* convert from string to ip_addr */
+	ip = str2ip( &msg->via1->host );
+	if (ip==0)
+		return -1;
+#else
+	ip = &(msg->rcv.src_ip);
+#endif
+
+	return pike_check_ipaddr(msg, ip);
+}
+
+int w_pike_check_req(sip_msg_t *msg, char *foo, char *bar)
 {
 	return pike_check_req(msg);
+}
+
+int pike_check_ip(sip_msg_t *msg, str *strip)
+{
+	ip_addr_t* ip;
+
+	if(strip==NULL || strip->len<=0) {
+		return -1;
+	}
+
+	ip = str2ip(strip);
+	if (ip==0) {
+		LM_ERR("failed to parse ip address: %.*s\n", strip->len, strip->s);
+		return -1;
+	}
+
+	return pike_check_ipaddr(msg, ip);
+}
+
+int w_pike_check_ip(sip_msg_t *msg, char *pip, char *bar)
+{
+	str strip;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pip, &strip)<0) {
+		LM_ERR("failed to get the ip parameter\n");
+		return -1;
+	}
+	return pike_check_ip(msg, &strip);
 }
 
 void clean_routine(unsigned int ticks , void *param)
 {
 	static unsigned char mask[32];  /* 256 positions mask */
-	struct list_link head;
-	struct list_link *ll;
-	struct ip_node   *dad;
-	struct ip_node   *node;
+	pike_list_link_t head;
+	pike_list_link_t *ll;
+	pike_ip_node_t   *dad;
+	pike_ip_node_t   *node;
 	int i;
 
 	/* LM_DBG("entering (%d)\n",ticks); */
 	/* before locking check first if the list is not empty and if can
 	 * be at least one element removed */
-	if (timer==0 || is_list_empty( timer )) return; /* quick exit */
+	if (pike_timer==0 || is_list_empty( pike_timer )) return; /* quick exit */
 
-	memset(&head, 0, sizeof(struct list_link));
+	memset(&head, 0, sizeof(pike_list_link_t));
 	/* get the expired elements */
-	lock_get( timer_lock );
+	lock_get( pike_timer_lock );
 	/* check again for empty list */
-	if (is_list_empty(timer) || (ll2ipnode(timer->next)->expires>ticks )){
-		lock_release( timer_lock );
+	if (is_list_empty(pike_timer) || (ll2ipnode(pike_timer->next)->expires>ticks )){
+		lock_release( pike_timer_lock );
 		return;
 	}
-	check_and_split_timer( timer, ticks, &head, mask);
-	/*print_timer_list(timer);*/ /* debug */
-	lock_release( timer_lock );
+	check_and_split_timer( pike_timer, ticks, &head, mask);
+	/*print_timer_list(pike_timer);*/ /* debug */
+	lock_release( pike_timer_lock );
 	/*print_tree( 0 );*/  /*debug*/
 
 	/* got something back? */
@@ -244,12 +278,12 @@ void clean_routine(unsigned int ticks , void *param)
 						/* put it in the list only if it's not an IP leaf
 						 * (in this case, it's already there) */
 						if ( !(dad->flags&NODE_IPLEAF_FLAG) ) {
-							lock_get(timer_lock);
-							dad->expires = get_ticks() + timeout;
+							lock_get(pike_timer_lock);
+							dad->expires = get_ticks() + pike_timeout;
 							assert( !has_timer_set(&(dad->timer_ll)) );
-							append_to_timer( timer, &(dad->timer_ll));
+							append_to_timer(pike_timer, &(dad->timer_ll));
 							dad->flags |= NODE_INTIMER_FLAG;
-							lock_release(timer_lock);
+							lock_release(pike_timer_lock);
 						} else {
 							assert( has_timer_set(&(dad->timer_ll)) );
 						}
@@ -267,7 +301,7 @@ void clean_routine(unsigned int ticks , void *param)
 
 
 
-static inline void refresh_node( struct ip_node *node)
+static inline void refresh_node( pike_ip_node_t *node)
 {
 	for( ; node ; node=node->next ) {
 		node->hits[PREV_POS] = node->hits[CURR_POS];
@@ -288,7 +322,7 @@ static inline void refresh_node( struct ip_node *node)
 
 void swap_routine( unsigned int ticks, void *param)
 {
-	struct ip_node *node;
+	pike_ip_node_t *node;
 	int i;
 
 	/* LM_DBG("entering \n"); */

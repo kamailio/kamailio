@@ -44,7 +44,7 @@
 #include "../../core/dset.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../core/counters.h"
-#include "../../lib/srutils/sruid.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
@@ -126,17 +126,20 @@ int_str rcv_avp_name;
 
 str reg_xavp_cfg = {0};
 str reg_xavp_rcd = {0};
-
+int reg_xavp_rcd_mask = 0;
 int reg_use_domain = 0;
 
 int sock_flag = -1;
 str sock_hdr_name = {0,0};
+
+int reg_sock_mode = 0;
 
 /* where to go for event route ("usrloc:contact-expired") */
 int reg_expire_event_rt = -1; /* default disabled */
 str reg_event_callback = STR_NULL;
 
 int reg_lookup_filter_mode = 0;
+int reg_min_expires_mode = 0;
 
 sr_kemi_eng_t *keng = NULL;
 
@@ -229,6 +232,7 @@ static param_export_t params[] = {
 	{"received_avp",       PARAM_STRING, &rcv_avp_param       					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
+	{"sock_mode",          PARAM_INT, &reg_sock_mode						},
 	{"sock_flag",          INT_PARAM, &sock_flag           					},
 	{"sock_hdr_name",      PARAM_STR, &sock_hdr_name     					},
 	{"method_filtering",   INT_PARAM, &method_filtering    					},
@@ -238,6 +242,7 @@ static param_export_t params[] = {
 	{"path_check_local",   INT_PARAM, &path_check_local                     },
 	{"xavp_cfg",           PARAM_STR, &reg_xavp_cfg     					},
 	{"xavp_rcd",           PARAM_STR, &reg_xavp_rcd     					},
+	{"xavp_rcd_mask",      INT_PARAM, &reg_xavp_rcd_mask   					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
@@ -245,6 +250,8 @@ static param_export_t params[] = {
 	{"contact_max_size",   INT_PARAM, &contact_max_size					},
 	{"event_callback",     PARAM_STR, &reg_event_callback				},
 	{"lookup_filter_mode", INT_PARAM, &reg_lookup_filter_mode			},
+	{"min_expires_mode",   PARAM_INT, &reg_min_expires_mode				},
+	{"use_expired_contacts",  INT_PARAM, &default_registrar_cfg.use_expired_contacts	 },
 	{0, 0, 0}
 };
 
@@ -911,6 +918,7 @@ void expires_range_update(str* gname, str* name){
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_registrar_exports[] = {
 	{ str_init("registrar"), str_init("save"),
 		SR_KEMIP_INT, regapi_save,
@@ -999,6 +1007,7 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

@@ -135,6 +135,7 @@ static int w_geoip2_match(sip_msg_t* msg, char* target, char* pvname)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_geoip2_exports[] = {
     { str_init("geoip2"), str_init("match"),
         SR_KEMIP_INT, geoip2_match,
@@ -144,6 +145,7 @@ static sr_kemi_t sr_kemi_geoip2_exports[] = {
 
     { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2) {
     sr_kemi_modules_add(sr_kemi_geoip2_exports);

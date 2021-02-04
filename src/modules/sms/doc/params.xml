@@ -218,8 +218,8 @@ modparam("sms", "max_sms_parts", 10)
 	</example>
     </section>
 
-    <section id="domain_str">
-	<title><varname>domain_str</varname> (string)</title>
+    <section id="domain">
+	<title><varname>domain</varname> (string)</title>
 	<para>
 	    Specify a fake domain name to be used by the gateway. The Contact
 	    headers and the From header from request will be construct based on
@@ -231,10 +231,10 @@ modparam("sms", "max_sms_parts", 10)
 	    Default is the name of the machine the gateway is running on.
 	</para>
 	<example>
-	    <title>Set <varname>domain_str</varname> parameter</title>
+	    <title>Set <varname>domain</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("sms", "domain_str", "foo.bar")
+modparam("sms", "domain", "foo.bar")
 ...
 	    </programlisting>
 	</example>

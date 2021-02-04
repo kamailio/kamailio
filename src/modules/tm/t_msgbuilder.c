@@ -170,7 +170,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf) {
-		LM_ERR("cannot allocate memory\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 	p = cancel_buf;
@@ -252,7 +252,7 @@ error:
  *
  * Can not be used to build other type of requests!
  */
-char *build_local_reparse(struct cell *Trans,unsigned int branch,
+char *build_local_reparse(tm_cell_t *Trans,unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
 	, struct cancel_reason *reason
 	)
@@ -268,11 +268,12 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	struct hdr_field *reas1, *reas_last, *hdr;
 	int hadded = 0;
 	sr_cfgenv_t *cenv = NULL;
+	hdr_flags_t hdr_flags = 0;
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
 
-	if (!invite_buf || !invite_len) {
+	if (!invite_buf || invite_len<=0) {
 		LM_ERR("INVITE is missing\n");
 		goto error;
 	}
@@ -327,7 +328,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
-		LM_ERR("cannot allocate shared memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	d = cancel_buf;
@@ -361,6 +362,11 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		switch(hf_type) {
 			case HDR_CSEQ_T:
 				/* find the method name and replace it */
+				if(hdr_flags &  HDR_CSEQ_F) {
+					LM_DBG("duplicate CSeq header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_CSEQ_F;
 				while ((s < invite_buf_end)
 					&& ((*s == ':') || (*s == ' ') || (*s == '\t') ||
 						((*s >= '0') && (*s <= '9')))
@@ -381,6 +387,12 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				break;
 
 			case HDR_TO_T:
+				if(hdr_flags &  HDR_TO_F) {
+					LM_DBG("duplicate To header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_TO_F;
+
 				if (to_len == 0) {
 					/* there is no To tag required, just copy paste
 					 * the header */
@@ -395,7 +407,25 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				break;
 
 			case HDR_FROM_T:
+				/* copy hf */
+				if(hdr_flags &  HDR_FROM_F) {
+					LM_DBG("duplicate From header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_FROM_F;
+				s = lw_next_line(s, invite_buf_end);
+				append_str(d, s1, s - s1);
+				break;
 			case HDR_CALLID_T:
+				/* copy hf */
+				if(hdr_flags &  HDR_CALLID_F) {
+					LM_DBG("duplicate Call-Id header\n");
+					goto errorhdr;
+				}
+				hdr_flags |=  HDR_CALLID_F;
+				s = lw_next_line(s, invite_buf_end);
+				append_str(d, s1, s - s1);
+				break;
 			case HDR_ROUTE_T:
 			case HDR_MAXFORWARDS_T:
 				/* copy hf */
@@ -454,7 +484,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				/* final (end-of-headers) CRLF */
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
-				/* LOG(L_DBG, "DBG: build_local: %.*s\n", *len, cancel_buf); */
+				/* LOG(L_DBG, "%.*s\n", *len, cancel_buf); */
 				return cancel_buf;
 
 			default:
@@ -495,6 +525,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	/* HDR_EOH_T was not found in the buffer, the message is corrupt */
 	LM_ERR("HDR_EOH_T was not found\n");
 
+errorhdr:
 	shm_free(cancel_buf);
 error:
 	LM_ERR("cannot build %.*s request\n", method_len, method);
@@ -651,7 +682,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 		p = (rr_t*)ptr->parsed;
 		while(p) {
 			if (! (t = pkg_malloc(sizeof(struct rte)))) {
-				LM_ERR("out of pkg mem (asked for: %d).\n",
+				PKG_MEM_ERROR_FMT("(asked for: %d).\n",
 						(int)sizeof(struct rte));
 				goto err;
 			}
@@ -999,7 +1030,7 @@ eval_flags:
 				 * header parser's allocator (using pkg/shm) */
 				chklen = sizeof(struct rte) + sizeof(rr_t);
 				if (! (t = pkg_malloc(chklen))) {
-					ERR("out of pkg memory (%d required)\n", (int)chklen);
+					PKG_MEM_ERROR_FMT("(%d required)\n", (int)chklen);
 					/* last element was freed, unlink it */
 					if(prev_t == NULL) {
 						/* there is only one elem in route set: the remote target */
@@ -1204,7 +1235,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	req_buf = shm_malloc(offset + *len + 1);
 	req_buf += offset;
 	if (!req_buf) {
-		LM_ERR("Cannot allocate memory (%u+1)\n", *len);
+		SHM_MEM_ERROR_FMT("required (%u+1)\n", *len);
 		goto error01;
 	}
 	p = req_buf;
@@ -1565,7 +1596,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LM_ERR("no more shared memory (%d)\n", *len);
+		SHM_MEM_ERROR_FMT("required (%d)\n", *len);
 		goto error;
 	}
 
@@ -1688,7 +1719,7 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		goto error01;
 	}
 	p = cancel_buf;

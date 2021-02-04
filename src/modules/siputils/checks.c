@@ -197,6 +197,7 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 
 	return ki_is_user(_m, &suser);
 }
+
 /*
  * Find if Request URI has a given parameter with no value
  */
@@ -286,6 +287,73 @@ ok:
 int ki_uri_param(sip_msg_t *_msg, str *sparam)
 {
 	return ki_uri_param_value(_msg, sparam, NULL);
+}
+
+/*
+ * Check if param with or without value exists in Request URI
+ */
+int ki_uri_param_any(sip_msg_t *msg, str *sparam)
+{
+	str t;
+	str ouri;
+	sip_uri_t puri;
+	param_hooks_t hooks;
+	param_t* params, *pit;
+
+	if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
+		ouri = msg->first_line.u.request.uri;
+		if(ouri.s == NULL) {
+			LM_ERR("r-uri not found\n");
+			return -1;
+		}
+	} else {
+		ouri = msg->new_uri;
+	}
+
+	if (parse_uri(ouri.s, ouri.len, &puri) < 0) {
+		LM_ERR("failed to parse r-uri [%.*s]\n", ouri.len, ouri.s);
+		return -1;
+	}
+	if(puri.sip_params.len>0) {
+		t = puri.sip_params;
+	} else if(puri.params.len>0) {
+		t = puri.params;
+	} else {
+		LM_DBG("no uri params [%.*s]\n", ouri.len, ouri.s);
+		return -1;
+	}
+
+	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
+	}
+
+	for (pit = params; pit; pit = pit->next) {
+		if ((pit->name.len == sparam->len)
+				&& (strncasecmp(pit->name.s, sparam->s, sparam->len) == 0)) {
+			break;
+		}
+	}
+	if(pit==NULL) {
+		free_params(params);
+		return -1;
+	}
+
+	free_params(params);
+	return 1;
+}
+
+/*
+ * Find if Request URI has a given parameter with or without value
+ */
+int w_uri_param_any(struct sip_msg* _msg, char* _param, char* _str2)
+{
+	str sparam;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	return ki_uri_param_any(_msg, &sparam);
 }
 
 /*
@@ -397,6 +465,103 @@ ok:
 	return 1;
 }
 
+/*
+ * Remove param from Request URI
+ */
+int ki_uri_param_rm(sip_msg_t *msg, str *sparam)
+{
+	str t;
+	char buri[MAX_URI_SIZE];
+	str ouri;
+	str nuri;
+	sip_uri_t puri;
+	param_hooks_t hooks;
+	param_t* params, *pit;
+
+	if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
+		ouri = msg->first_line.u.request.uri;
+		if(ouri.s == NULL) {
+			LM_ERR("r-uri not found\n");
+			return -1;
+		}
+	} else {
+		ouri = msg->new_uri;
+	}
+	if(ouri.len>=MAX_URI_SIZE) {
+		LM_ERR("r-uri is too long (%d)\n", ouri.len);
+		return -1;
+	}
+
+	if (parse_uri(ouri.s, ouri.len, &puri) < 0) {
+		LM_ERR("failed to parse r-uri [%.*s]\n", ouri.len, ouri.s);
+		return -1;
+	}
+	if(puri.sip_params.len>0) {
+		t = puri.sip_params;
+	} else if(puri.params.len>0) {
+		t = puri.params;
+	} else {
+		LM_DBG("no uri params [%.*s]\n", ouri.len, ouri.s);
+		return 1;
+	}
+
+	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
+	}
+
+	for (pit = params; pit; pit = pit->next) {
+		if ((pit->name.len == sparam->len) &&
+				(strncasecmp(pit->name.s, sparam->s, sparam->len) == 0)) {
+			break;
+		}
+	}
+	if(pit==NULL) {
+		free_params(params);
+		return 1;
+	}
+
+	nuri.s = pit->name.s;
+	while(nuri.s > ouri.s && *nuri.s != ';') {
+		nuri.s--;
+	}
+	memcpy(buri, ouri.s, nuri.s - ouri.s);
+	nuri.len = nuri.s - ouri.s;
+	nuri.s = buri;
+	if(pit->body.len>0) {
+		if(pit->body.s + pit->body.len < ouri.s + ouri.len) {
+			memcpy(nuri.s + nuri.len, pit->body.s + pit->body.len,
+					ouri.s + ouri.len - pit->body.s - pit->body.len);
+			nuri.len += ouri.s + ouri.len - pit->body.s - pit->body.len;
+		}
+	} else {
+		if(pit->name.s + pit->name.len < ouri.s + ouri.len) {
+			memcpy(nuri.s + nuri.len, pit->name.s + pit->name.len,
+					ouri.s + ouri.len - pit->name.s - pit->name.len);
+			nuri.len += ouri.s + ouri.len - pit->name.s - pit->name.len;
+		}
+	}
+
+	free_params(params);
+	if(rewrite_uri(msg, &nuri) < 0) {
+		return -1;
+	}
+	return 1;
+
+}
+
+/*
+ * Remove param from Request URI
+ */
+int w_uri_param_rm(struct sip_msg* _msg, char* _param, char* _str2)
+{
+	str sparam;
+	if(fixup_get_svalue(_msg, (gparam_t*)_param, &sparam)<0) {
+		LM_ERR("failed to get parameter\n");
+		return -1;
+	}
+	return ki_uri_param_rm(_msg, &sparam);
+}
 
 /*
  * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if

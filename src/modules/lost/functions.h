@@ -32,8 +32,11 @@
 #ifndef LOST_FUNCTIONS_H
 #define LOST_FUNCTIONS_H
 
-int lost_function_held(
+char *lost_held_type(char *, int *, int *);
+
+int lost_held_function(
 		struct sip_msg *, char *, char *, char *, char *, char *);
+
 int lost_function(
 		struct sip_msg *, char *, char *, char *, char *, char *, char *);
 

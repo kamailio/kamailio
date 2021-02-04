@@ -246,10 +246,16 @@ int pv_get_timenowf(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	str s;
+	static char t_buf[26] = {0};
 	time_t t;
 
 	t = time(NULL);
-	s.s = ctime(&t);
+
+	s.s = ctime_r(&t, t_buf);
+	if(s.s == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	s.s = t_buf;
 	s.len = strlen(s.s)-1;
 	return pv_get_strintval(msg, param, res, &s, (int)t);
 }
@@ -269,13 +275,18 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	str s;
+	static char t_buf[26] = {0};
 
 	if(msg==NULL)
 		return -1;
 
 	msg_set_time(msg);
 
-	s.s = ctime(&msg->tval.tv_sec);
+	s.s = ctime_r(&msg->tval.tv_sec, t_buf);
+	if(s.s == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	s.s = t_buf;
 	s.len = strlen(s.s)-1;
 	return pv_get_strintval(msg, param, res, &s, (int)msg->tval.tv_sec);
 }

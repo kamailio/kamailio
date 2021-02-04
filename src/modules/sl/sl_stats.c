@@ -73,7 +73,7 @@ static void rpc_stats(rpc_t* rpc, void* c)
 			"202", total.err[RT_202],
 			"2xx", total.err[RT_2xx]);
 
-	rpc->struct_add(st, "ddd",
+	rpc->struct_add(st, "dddd",
 			"300", total.err[RT_300],
 			"301", total.err[RT_301],
 			"302", total.err[RT_302],

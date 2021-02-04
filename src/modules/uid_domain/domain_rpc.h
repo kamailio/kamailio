@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _DOMAIN_RPC_H
-#define _DOMAIN_RPC_H
+#ifndef _UID_DOMAIN_RPC_H_
+#define _UID_DOMAIN_RPC_H_
 
 #include "../../core/rpc.h"
 
