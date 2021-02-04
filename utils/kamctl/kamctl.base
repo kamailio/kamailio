@@ -554,6 +554,7 @@ cat <<EOF
  srv sockets ................... show the list of listen sockets
  srv aliases ................... show the list of server aliases
  srv rpclist ................... show the list of server rpc commands
+ srv debug [<level>] ........... control the server debug level
  srv version ................... show the server version
 EOF
 }
