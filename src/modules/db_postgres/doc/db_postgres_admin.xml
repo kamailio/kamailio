@@ -170,6 +170,27 @@ modparam("db_postgres", "bytea_output_escape", 0)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>con_param</varname> (str)</title>
+		<para>
+			Specifies the connection string parameters. 
+			Parameter definition must be in the format name=something;value=something.
+			Many parameters can be set.
+		</para>
+		<para>
+			NOTE: See postgres connection keyword list (https://www.postgresql.org/docs/12/libpq-connect.html#LIBPQ-PARAMKEYWORDS)
+		</para>
+		<example>
+		<title>Set <varname>con_param</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_postgres", "con_param", "name=connect_timeout;value=15")
+modparam("db_postgres", "con_param", "name=tcp_user_timeout;value=5000")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
