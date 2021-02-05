@@ -188,8 +188,10 @@ static int w_add_destination(sip_msg_t *msg, char *uri, char *owner)
  */
 static int ki_add_destination(sip_msg_t *msg, str *uri, str *owner)
 {
-	if(ka_alloc_destinations_list() < 0)
+	if(ka_destinations_list == NULL) {
+		LM_ERR("destinations list not initialized\n");
 		return -1;
+	}
 
 	return ka_add_dest(uri, owner, 0, ka_ping_interval, 0, 0, 0);
 }
