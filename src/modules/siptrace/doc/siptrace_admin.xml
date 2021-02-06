@@ -587,7 +587,7 @@ modparam("siptrace", "trace_init_mode", 1)
 				</listitem>
 				<listitem>
 				<para>
-				4 (3rd bit set) - mirro the traffic to the SIP URI specified by
+				4 (3rd bit set) - mirror the traffic to the SIP URI specified by
 				duplicate_uri.
 				</para>
 				</listitem>
