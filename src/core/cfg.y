@@ -149,6 +149,7 @@ static pv_spec_t* pv_spec = NULL;
 static struct action *mod_func_action = NULL;
 static struct lvalue* lval_tmp = NULL;
 static struct rvalue* rval_tmp = NULL;
+static struct rval_expr* rve_tmp = NULL;
 
 static void warn(char* s, ...);
 static void warn_at(struct cfg_pos* pos, char* s, ...);
@@ -560,6 +561,7 @@ extern char *default_routename;
 /* no precedence, they use () */
 %token STRLEN
 %token STREMPTY
+%token SELVAL
 
 /* values */
 %token <intval> NUMBER
@@ -3031,6 +3033,14 @@ rval_expr: rval						{ $$=$1;
 		| STRLEN LPAREN rval_expr RPAREN { $$=mk_rve1(RVE_STRLEN_OP, $3);}
 		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
 		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
+		| SELVAL LPAREN rval_expr COMMA rval_expr COMMA rval_expr RPAREN {
+				rve_tmp=mk_rve2(RVE_SELVALOPT_OP, $5, $7);
+				if(rve_tmp == NULL) {
+					$$=0;
+					yyerror("faild to create tenary target expression");
+				}
+				$$=mk_rve2(RVE_SELVALEXP_OP, $3, rve_tmp);
+		}
 		| rve_un_op error %prec UNARY 		{ $$=0; yyerror("bad expression"); }
 		| INTCAST error					{ $$=0; yyerror("bad expression"); }
 		| STRCAST error					{ $$=0; yyerror("bad expression"); }
@@ -3049,6 +3059,7 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr LOG_OR error		{ $$=0; yyerror("bad expression"); }
 		| STRLEN LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| STREMPTY LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
+		| SELVAL LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| DEFINED error					{ $$=0; yyerror("bad expression"); }
 		;
 

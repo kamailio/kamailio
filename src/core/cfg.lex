@@ -258,6 +258,7 @@ MODULO	"mod"
 STRLEN	"strlen"
 STREMPTY	"strempty"
 DEFINED		"defined"
+SELVAL		"selval"
 STREQ	eq
 INTEQ	ieq
 STRDIFF	ne
@@ -1041,6 +1042,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{INTDIFF}	{ count(); return INTDIFF; }
 <INITIAL>{INTCAST}	{ count(); return INTCAST; }
 <INITIAL>{STRCAST}	{ count(); return STRCAST; }
+<INITIAL>{SELVAL}	{ count(); return SELVAL; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
