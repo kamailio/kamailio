@@ -98,7 +98,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	keywords[i] = "password";
 	values[i++] = id->password;
 
-	/* add other connections parameters */
+	/* add other connection parameters */
 	pg_con_param = pg_con_param_list;
 	while(pg_con_param){
 		keywords[i] = pg_con_param->name;

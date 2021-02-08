@@ -280,7 +280,7 @@ int pg_con_connect(db_con_t *con)
 	keywords[i] = "password";
 	values[i++] = puri->password;
 
-	/* add other connections parameters */
+	/* add other connection parameters */
 	pg_con_param = pg_con_param_list;
 	while(pg_con_param){
 		keywords[i] = pg_con_param->name;
