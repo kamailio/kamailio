@@ -773,6 +773,7 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 		}
 		if(pit==NULL || pit->body.len<=0) {
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 
@@ -816,6 +817,8 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 			pkg_free(nval.s);
 			return -2;
 		}
+		free_params(params);
+		params = NULL;
 	}
 
 	return 1;
@@ -974,6 +977,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 		}
 		if(pit==NULL) {
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 		rms.s = pit->name.s;
@@ -984,6 +988,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 			LM_ERR("failed to find start of the parameter delimiter [%.*s]\n",
 					c->uri.len, c->uri.s);
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 		if(pit->body.len>0) {
@@ -1004,6 +1009,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 			continue;
 		}
 		free_params(params);
+		params = NULL;
 	}
 
 	return 1;
