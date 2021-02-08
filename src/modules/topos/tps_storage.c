@@ -41,6 +41,7 @@
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_expires.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../core/utils/sruid.h"
@@ -336,8 +337,11 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 				td->cp += pv_val.rs.len;
 			}
 		}
-		*td->cp = '@';
-		td->cp++;
+
+		if (!((ctmode == 1) && (dir==TPS_DIR_DOWNSTREAM) && (curi.user.len <= 0))) {
+			*td->cp = '@';
+			td->cp++;
+		}
 
 		if (_tps_contact_host.len) { // using configured hostname in the contact header
 			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
@@ -465,8 +469,8 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
-		if(td->s_method_id != METHOD_INVITE) {
-			/* no mandatory contact unless is INVITE - done */
+		if((td->s_method_id != METHOD_INVITE) && (td->s_method_id != METHOD_SUBSCRIBE)){
+			/* no mandatory contact unless is INVITE or SUBSCRIBE - done */
 			return 0;
 		}
 		if(msg->first_line.type==SIP_REPLY) {
@@ -503,6 +507,13 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 			td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
 		}
 	}
+
+	if  (td->s_method_id == METHOD_SUBSCRIBE) {
+		if(msg->expires && (msg->expires->body.len > 0) && (msg->expires->parsed || (parse_expires(msg->expires) >= 0))) {
+			td->expires = ((exp_body_t *)msg->expires->parsed)->val;
+		}
+	}
+
 
 	LM_DBG("downstream: %s - acontact: [%.*s] - bcontact: [%.*s]\n",
 			(dir==TPS_DIR_DOWNSTREAM)?"yes":"no",
@@ -1036,6 +1047,8 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
 	str sinv = str_init("INVITE");
+	str ssub = str_init("SUBSCRIBE");
+	int bInviteDlg = 1;
 	int nr_keys;
 	int nr_cols;
 	int n;
@@ -1046,6 +1059,10 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 
 	nr_keys = 0;
 	nr_cols = 0;
+
+	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE) || ((get_cseq(msg)->method_id == METHOD_NOTIFY) && (msg->event->len > 0))) {
+		bInviteDlg = 0;
+	}
 
 	if(mode==0) {
 		/* load same transaction using Via branch */
@@ -1075,7 +1092,7 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_ops[nr_keys]=OP_EQ;
 		db_vals[nr_keys].type = DB1_STR;
 		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val = sinv;
+		db_vals[nr_keys].val.str_val = bInviteDlg ? sinv : ssub;
 		nr_keys++;
 	}
 
@@ -1407,7 +1424,7 @@ int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_INVITE) {
+	if((md->s_method_id != METHOD_INVITE) && (md->s_method_id != METHOD_SUBSCRIBE)) {
 		return 0;
 	}
 
@@ -1514,6 +1531,14 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 			}
 		}
 	}
+	if ((mode & TPS_DBU_TIME) && ((sd->b_tag.len > 0)
+			&& ((md->direction == TPS_DIR_UPSTREAM) && (msg->first_line.type==SIP_REQUEST))
+			&& (msg->first_line.u.request.method_value == METHOD_SUBSCRIBE))) {
+		db_ucols[nr_ucols] = &td_col_rectime;
+		db_uvals[nr_ucols].type = DB1_DATETIME;
+		db_uvals[nr_ucols].val.time_val = time(NULL);
+		nr_ucols++;
+	}
 
 	if(nr_ucols==0) {
 		return 0;
@@ -1543,7 +1568,7 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_INVITE) {
+	if((md->s_method_id != METHOD_INVITE) && (md->s_method_id != METHOD_SUBSCRIBE)) {
 		return 0;
 	}
 	if(msg->first_line.type==SIP_REPLY) {
@@ -1575,7 +1600,7 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_BYE) {
+	if((md->s_method_id != METHOD_BYE) && !((md->s_method_id == METHOD_SUBSCRIBE) && (md->expires == 0))) {
 		return 0;
 	}
 

@@ -905,6 +905,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 				goto error;
 			}
 		}
+		if((get_cseq(msg)->method_id)&(METHOD_SUBSCRIBE)) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT|TPS_DBU_TIME)<0) {
+				goto error;
+			}
+		}
 	}
 	return 0;
 
