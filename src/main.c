@@ -2882,7 +2882,7 @@ try_again:
 					strerror(errno), errno);
 	}
 	/* else terminate process */
-	return ret;
+	ksr_exit(ret);
 
 error:
 	/*kill everything*/
@@ -2892,7 +2892,7 @@ error:
 			fprintf(stderr, "error sending exit status: %s [%d]\n",
 					strerror(errno), errno);
 	}
-	return -1;
+	ksr_exit(-1);
 }
 
 
