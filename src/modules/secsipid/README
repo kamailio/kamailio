@@ -70,10 +70,12 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module implements secure SIP identity specifications - STIR and
-   SHAKEN IETF extensions for SIP (RFC8224, RFC 8588).
+   The module implements secure SIP identity specifications - STIR (Secure
+   Telephony Identity Revisited) and SHAKEN (Signature-based Handling of
+   Asserted information using toKENs) IETF extensions for SIP (RFC8224,
+   RFC8588).
 
-   It exports the functions to check and generate Identity header.
+   It exports the functions to check and generate SIP Identity header.
 
 2. Dependencies
 
@@ -173,7 +175,7 @@ request_route {
 request_route {
     ...
     secsipid_add_identity("$fU", "$rU", "A", "",
-        "http://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem");
+        "https://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem");
     ...
 }
 ...

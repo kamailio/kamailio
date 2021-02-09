@@ -514,7 +514,7 @@ modparam("siptrace", "trace_init_mode", 1)
      * 0 - no automatic mirroring or storing of SIP traffic.
      * 1 (1st bit set) - mirror the traffic to HEP server.
      * 2 (2nd bit set) - store the traffic to database server.
-     * 4 (3rd bit set) - mirro the traffic to the SIP URI specified by
+     * 4 (3rd bit set) - mirror the traffic to the SIP URI specified by
        duplicate_uri.
 
    The trace_on parameter still has to be set, allowing also to control
