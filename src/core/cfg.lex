@@ -42,6 +42,9 @@
 	#include "daemonize.h"
 	#include "ppcfg.h"
 
+	static void yynoreturn ksr_yy_fatal_error(const char* msg);
+	#define YY_FATAL_ERROR(msg) ksr_yy_fatal_error(msg);
+
 	/* states */
 	#define INITIAL_S		0
 	#define COMMENT_S		1
@@ -1971,3 +1974,8 @@ static void pp_endif()
 	pp_update_state();
 }
 
+static void yynoreturn ksr_yy_fatal_error(const char* msg)
+{
+	fprintf( stderr, "%s\n", msg );
+	ksr_exit( YY_EXIT_FAILURE );
+}
