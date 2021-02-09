@@ -52,6 +52,7 @@
 #include "ut.h"
 #include "trim.h"
 #include "pt.h"
+#include "daemonize.h"
 #include "cfg/cfg_struct.h"
 #ifdef CORE_TLS
 #include "tls/tls_server.h"
@@ -2009,7 +2010,7 @@ void tcp_receive_loop(int unix_sock)
 error:
 	destroy_io_wait(&io_w);
 	LM_CRIT("exiting...");
-	exit(-1);
+	ksr_exit(-1);
 }
 
 

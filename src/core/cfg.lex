@@ -39,6 +39,7 @@
 	#include "select.h"
 	#include "cfg.tab.h"
 	#include "sr_compat.h"
+	#include "daemonize.h"
 	#include "ppcfg.h"
 
 	/* states */
@@ -1308,7 +1309,7 @@ IMPORTFILE      "import_file"
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
-									exit(-1);
+									ksr_exit(-1);
 								}
 <DEFINE_ID>{ID}                 {	count();
 									ksr_cfg_print_part(yytext);
@@ -1350,7 +1351,7 @@ IMPORTFILE      "import_file"
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
-									exit(-1);
+									ksr_exit(-1);
 								}
 <IFDEF_ID>{ID}                { count();
 								pp_ifdef_var(yyleng, yytext);
@@ -1404,7 +1405,7 @@ IMPORTFILE      "import_file"
 				if(sr_push_yy_state(s_buf.s, 0)<0)
 				{
 					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
 				ksr_cfg_print_initial_state();
@@ -1418,7 +1419,7 @@ IMPORTFILE      "import_file"
 				if(sr_push_yy_state(s_buf.s, 1)<0)
 				{
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
 				ksr_cfg_print_initial_state();
@@ -1439,7 +1440,7 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_part(yytext);
 				if(pp_define_env(yytext, yyleng) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				state = INITIAL;
 				ksr_cfg_print_initial_state();
@@ -1610,7 +1611,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 	return dst_b->s;
 error:
 	PKG_MEM_CRITICAL;
-	exit(-1);
+	ksr_exit(-1);
 }
 
 
