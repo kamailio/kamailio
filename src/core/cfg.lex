@@ -42,7 +42,6 @@
 	#include "daemonize.h"
 	#include "ppcfg.h"
 
-	static void yynoreturn yy_fatal_error ( const char* msg ) __attribute__((unused));
 	static void yynoreturn ksr_yy_fatal_error(const char* msg);
 	#define YY_FATAL_ERROR(msg) ksr_yy_fatal_error(msg);
 
@@ -2170,6 +2169,10 @@ static void pp_endif()
 
 static void yynoreturn ksr_yy_fatal_error(const char* msg)
 {
+	if(ksr_atexit_mode==1) {
+		yy_fatal_error(msg);
+	}
+
 	fprintf( stderr, "%s\n", msg );
-	ksr_exit( YY_EXIT_FAILURE );
+	_exit( YY_EXIT_FAILURE );
 }
