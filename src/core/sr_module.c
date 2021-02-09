@@ -43,6 +43,8 @@
 #include "sr_compat.h"
 #include "ppcfg.h"
 #include "async_task.h"
+#include "shm_init.h"
+#include "daemonize.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -521,7 +523,7 @@ reload:
 	}
 	/* version control */
 	if (!version_control(handle, path)) {
-		exit(-1);
+		ksr_exit(-1);
 	}
 	/* launch register */
 	mr = (mod_register_function)dlsym(handle, "mod_register");

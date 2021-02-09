@@ -69,6 +69,7 @@
 #include "ppcfg.h"
 #include "pvapi.h"
 #include "config.h"
+#include "daemonize.h"
 #include "cfg_core.h"
 #include "cfg/cfg.h"
 #ifdef CORE_TLS
@@ -3436,7 +3437,7 @@ cmd:
 		if (mod_func_action != NULL) {
 			LM_ERR("function used inside params of another function: %s\n", $1);
 			yyerror("use of function execution inside params not allowed\n");
-			exit(-1);
+			ksr_exit(-1);
 		}
 		mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0);
 		} LPAREN func_params RPAREN	{
