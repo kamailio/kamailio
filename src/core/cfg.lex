@@ -42,6 +42,7 @@
 	#include "daemonize.h"
 	#include "ppcfg.h"
 
+	static void yynoreturn yy_fatal_error ( const char* msg ) __attribute__((unused));
 	static void yynoreturn ksr_yy_fatal_error(const char* msg);
 	#define YY_FATAL_ERROR(msg) ksr_yy_fatal_error(msg);
 
