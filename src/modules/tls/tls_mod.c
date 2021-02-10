@@ -495,7 +495,7 @@ static int ki_is_peer_verified(sip_msg_t* msg)
 	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0,
 					cfg_get(tls, tls_cfg, con_lifetime));
 	if (!c) {
-		LM_ERR("connection no longer exits\n");
+		LM_ERR("connection no longer exists\n");
 		return -1;
 	}
 
