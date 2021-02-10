@@ -118,7 +118,7 @@ static int *_ksr_shutdown_phase = NULL;
 int ksr_shutdown_phase_init(void)
 {
 	if((_ksr_shutdown_phase == NULL) && (shm_initialized())) {
-		_ksr_shutdown_phase = (int*)shm_malloc(sizeof(int));
+		_ksr_shutdown_phase = (int*)shm_mallocxz(sizeof(int));
 	}
 	return 0;
 }
@@ -785,6 +785,8 @@ void destroy_modules()
 	if(_ksr_shutdown_phase!=NULL) {
 		*_ksr_shutdown_phase = 1;
 	}
+
+	LM_DBG("starting modules destroy phase\n");
 
 	/* call first destroy function from each module */
 	t=modules;
