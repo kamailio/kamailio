@@ -495,6 +495,7 @@ again:
 		DBG("handle_stream read: eof on %s\n", s_c->parent->name);
 		goto close_connection;
 	}
+	LM_INFO("bytes read: %d\n", bytes_read);
 	r->end+=bytes_read;
 	if (bytes_read && (bytes_read<r->bytes_to_go)){
 		r->bytes_to_go-=bytes_read;
@@ -514,6 +515,7 @@ again:
 			/* error while processing the packet => close the connection */
 			goto close_connection;
 		}
+		LM_INFO("bytes processed: %d\n", bytes_processed);
 		r->proc+=bytes_processed;
 		r->bytes_to_go=bytes_needed;
 		if (bytes_needed>0){
