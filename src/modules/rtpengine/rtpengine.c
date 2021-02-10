@@ -1794,6 +1794,9 @@ static int build_rtpp_socks(int lmode, int rtest) {
 
 	if(_rtpe_list_vernum_local == _rtpe_list_version->vernum) {
 		/* same version for the list of rtpengines */
+		LM_DBG("same rtpengines list version: %d (%u)\n",
+			_rtpe_list_version->vernum,
+			(unsigned int)_rtpe_list_version->vertime);
 		return 0;
 	}
 
@@ -1840,6 +1843,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (hostname==NULL) {
 				LM_ERR("no more pkg memory\n");
 				rtpp_socks[pnode->idx] = -1;
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 			strcpy(hostname, pnode->rn_address);
@@ -1860,6 +1868,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 				LM_ERR("%s\n", gai_strerror(n));
 				pkg_free(hostname);
 				rtpp_socks[pnode->idx] = -1;
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 			pkg_free(hostname);
@@ -1869,6 +1882,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (rtpp_socks[pnode->idx] == -1) {
 				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
@@ -1899,6 +1917,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
@@ -1907,6 +1930,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
