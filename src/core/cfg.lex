@@ -42,7 +42,7 @@
 	#include "daemonize.h"
 	#include "ppcfg.h"
 
-	static void yynoreturn ksr_yy_fatal_error(const char* msg);
+	static void ksr_yy_fatal_error(const char* msg);
 	#define YY_FATAL_ERROR(msg) ksr_yy_fatal_error(msg);
 
 	/* states */
@@ -1974,7 +1974,7 @@ static void pp_endif()
 	pp_update_state();
 }
 
-static void yynoreturn ksr_yy_fatal_error(const char* msg)
+static void ksr_yy_fatal_error(const char* msg)
 {
 	if(ksr_atexit_mode==1) {
 		yy_fatal_error(msg);
