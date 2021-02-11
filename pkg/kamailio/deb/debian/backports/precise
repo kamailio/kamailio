@@ -90,7 +90,12 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ ruby/' ${DIST}/rules
 
 # no python3 for app_python3
 sed -i -e '/python3-dev/d' -e '/^Package: kamailio-python3-modules/,/^$/d' \
-	-e '/python3/d' ${DIST}/control
+	${DIST}/control
+# this removes python3 from Package: kamalio
+sed -i -e '/python3/d' ${DIST}/control
+# add that again
+sed -i '/lsb-base,/a \ python3,' ${DIST}/control
+
 sed -i -e 's/ python3[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ python3/' ${DIST}/rules
 
