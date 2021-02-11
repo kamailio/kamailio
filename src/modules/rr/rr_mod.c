@@ -349,6 +349,8 @@ static int ki_record_route_preset(sip_msg_t *msg, str *addr1, str *addr2)
 		return -1;
 
 done:
+	reset_rr_param();
+
 	msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 

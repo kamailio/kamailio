@@ -504,11 +504,14 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	str user = {NULL, 0};
 	struct to_body* from = NULL;
 	struct lump* l;
-	char* hdr, *p;
-	int hdr_len;
+	struct lump* l2;
+	char *p;
+	str hdr = STR_NULL;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	char *rr_prefix;
 	int rr_prefix_len;
+	str suffix = STR_NULL;
+	str term = STR_NULL;
 	int sips = 0;
 	int ret = 0;
 
@@ -555,37 +558,47 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	}
 
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
-	if (!l) {
-		LM_ERR("failed to create lump anchor\n");
+	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	if (!l || !l2) {
+		LM_ERR("failed to create lump anchors\n");
 		ret = -3;
 		goto error;
 	}
 
-	hdr_len = rr_prefix_len;
+	hdr.len = rr_prefix_len;
 	if (user.len)
-		hdr_len += user.len + 1; /* @ */
-	hdr_len += _data->len;
+		hdr.len += user.len + 1; /* @ */
+	hdr.len += _data->len;
 
 	if (append_fromtag && from->tag_value.len) {
-		hdr_len += RR_FROMTAG_LEN + from->tag_value.len;
+		hdr.len += RR_FROMTAG_LEN + from->tag_value.len;
+	}
+
+	if (rr_param_buf.len > 0) {
+		hdr.len += rr_param_buf.len;
 	}
 
 	if (enable_full_lr) {
-		hdr_len += RR_LR_FULL_LEN;
+		suffix.len = RR_LR_FULL_LEN;
 	} else {
-		hdr_len += RR_LR_LEN;
+		suffix.len = RR_LR_LEN;
 	}
 
-	hdr_len += RR_TERM_LEN;
+	term.len = RR_TERM_LEN;
 
-	hdr = pkg_malloc(hdr_len);
-	if (!hdr) {
+	hdr.s = pkg_malloc(hdr.len);
+	suffix.s = pkg_malloc(suffix.len);
+	term.s = pkg_malloc(term.len);
+	if (!hdr.s || !suffix.s || !term.s) {
 		LM_ERR("no pkg memory left\n");
+		if(hdr.s) pkg_free(hdr.s);
+		if(suffix.s) pkg_free(suffix.s);
+		if(term.s) pkg_free(term.s);
 		ret = -4;
 		goto error;
 	}
 
-	p = hdr;
+	p = hdr.s;
 	memcpy(p, rr_prefix, rr_prefix_len);
 	p += rr_prefix_len;
 
@@ -606,22 +619,42 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		p += from->tag_value.len;
 	}
 
-	if (enable_full_lr) {
-		memcpy(p, RR_LR_FULL, RR_LR_FULL_LEN);
-		p += RR_LR_FULL_LEN;
-	} else {
-		memcpy(p, RR_LR, RR_LR_LEN);
-		p += RR_LR_LEN;
+	if (rr_param_buf.len > 0) {
+		memcpy(p, rr_param_buf.s, rr_param_buf.len);
+		p += rr_param_buf.len;
 	}
 
-	memcpy(p, RR_TERM, RR_TERM_LEN);
 
-	if (!insert_new_lump_after(l, hdr, hdr_len, 0)) {
+	if (enable_full_lr) {
+		memcpy(suffix.s, RR_LR_FULL, RR_LR_FULL_LEN);
+	} else {
+		memcpy(suffix.s, RR_LR, RR_LR_LEN);
+	}
+
+	memcpy(term.s, RR_TERM, RR_TERM_LEN);
+
+	if (!insert_new_lump_after(l, hdr.s, hdr.len, 0)) {
 		LM_ERR("failed to insert new lump\n");
-		pkg_free(hdr);
+		pkg_free(hdr.s);
+		pkg_free(suffix.s);
+		pkg_free(term.s);
 		ret = -5;
 		goto error;
 	}
+
+	l2 = insert_new_lump_before(l2, suffix.s, suffix.len, HDR_RECORDROUTE_T);
+	if (l2 == NULL) {
+		pkg_free(suffix.s);
+		pkg_free(term.s);
+		ret = -6;
+		goto error;
+	}
+	if (!(l2 = insert_new_lump_before(l2, term.s, term.len, 0))) {
+		pkg_free(term.s);
+		ret = -7;
+		goto error;
+	}
+
 	LM_DBG("inserted preset record route\n");
 	ret = 1;
 error:
@@ -947,4 +980,15 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 
 error:
 	return -1;
+}
+
+/*!
+ * \brief Reset Record-Route parameters buffer
+ * \param msg SIP message
+ * \return 0 on success, -1 on failure
+ */
+void reset_rr_param(void)
+{
+	rr_param_buf.len = 0;
+	return;
 }
