@@ -3411,7 +3411,7 @@ cmd:
 		}else{
 			if (mod_func_action && mod_f_params_pre_fixup(mod_func_action)<0) {
 				/* error messages are printed inside the function */
-				free_mod_func_action(mod_func_action);
+				/* free_mod_func_action(mod_func_action); */
 				mod_func_action = 0;
 				YYERROR;
 			}
