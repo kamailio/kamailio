@@ -82,5 +82,6 @@ int add_rr_param(struct sip_msg* msg, str* rr_param);
 
 void init_custom_user(pv_spec_t *custom_user_avp);
 
+void reset_rr_param(void);
 
 #endif /* RECORD_H */
