@@ -546,7 +546,8 @@ record_route_advertised_address("1.2.3.4:5080");
 
       <para>Adds a parameter to the Record-Route URI (param must be in
       <quote>;name=value</quote> format. The function may be called also
-      before or after the record_route() or record_route_advertised_address()
+      before or after the record_route(),
+      record_route_advertised_address(), and record_route_preset()
       calls (see <xref linkend="rr.f.record_route"/> or <xref
       linkend="rr.f.record_route_adv_addr"/>)).</para>
 
