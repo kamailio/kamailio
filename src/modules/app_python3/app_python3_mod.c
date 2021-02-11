@@ -346,7 +346,9 @@ int apy_load_script(void)
 	}
 
 	Py_Initialize();
+#if PY_VERSION_HEX < 0x03070000
 	PyEval_InitThreads();
+#endif
 	myThreadState = PyThreadState_Get();
 
 	PY_GIL_ENSURE;
