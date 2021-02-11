@@ -533,7 +533,7 @@ remove_record_route();
 	  the value has to be like "address:port;parameters", the port and
 	  parameters are optional. If the second parameter is provided, do not
 	  forget to add the parameter "r2=0" so the proxy processes both
-	  corresponding Route headers at once.
+	  corresponding Route headers at once.</para>
 
       <para>When the <quote>outbound</quote> module was loaded before this
       module this function will determine whether outbound is required for the
