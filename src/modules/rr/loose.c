@@ -761,9 +761,9 @@ static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
 			return;
 		}
 		for (pit = plist; pit; pit=pit->next) {
-			if (pit->name.len==SOCKNAME_PARAM_LEN
-					&& strncasecmp(pit->name.s, SOCKNAME_PARAM,
-							SOCKNAME_PARAM_LEN)==0) {
+			if (pit->name.len==SOCKNAME_ATTR_LEN
+					&& strncasecmp(pit->name.s, SOCKNAME_ATTR,
+							SOCKNAME_ATTR_LEN)==0) {
 				if(pit->body.len>0) {
 					si = ksr_get_socket_by_name(&pit->body);
 					if(si != NULL) {
