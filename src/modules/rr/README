@@ -370,7 +370,8 @@ modparam("rr", "ignore_sips", 1)
 4.9. sockname_mode (int)
 
    If set to 1, the Record-Route URI is built to contain socket name in
-   'sn' parameter.
+   'sn' parameter and then it is used to lookup the local socket for Route
+   header processing.
 
    Default value is 0.
 
@@ -502,8 +503,8 @@ remove_record_route();
 
 5.5. record_route_preset(string [,string2])
 
-   This function will put the string into Record-Route, don't use unless
-   you know what you are doing.
+   This function will put the string params into Record-Route, avoid to
+   use it unless you know what you are doing.
 
    Meaning of the parameters is as follows:
      * string - String to be inserted into the first header field; it may
@@ -514,6 +515,13 @@ remove_record_route();
    Note: If 'string2' is present, then the 'string' param is pointing to
    the outbound interface and the 'string2' param is pointing to the
    inbound interface.
+
+   Note: The value of parameters must not contain the SIP protocol scheme
+   (sip: or sips:), one is added based on routing requirements. Thus the
+   value has to be like "address:port;parameters", the port and parameters
+   are optional. If the second parameter is provided, do not forget to add
+   the parameter "r2=on" so the proxy processes both corresponding Route
+   headers at once.
 
    When the “outbound” module was loaded before this module this function
    will determine whether outbound is required for the request and
@@ -559,9 +567,9 @@ record_route_advertised_address("1.2.3.4:5080");
 
    Adds a parameter to the Record-Route URI (param must be in
    “;name=value” format. The function may be called also before or after
-   the record_route() or record_route_advertised_address() calls (see
-   Section 5.3, “record_route([sparams])” or Section 5.6,
-   “record_route_advertised_address(address)”)).
+   the record_route(), record_route_advertised_address(), and
+   record_route_preset() calls (see Section 5.3, “record_route([sparams])”
+   or Section 5.6, “record_route_advertised_address(address)”)).
 
    Meaning of the parameters is as follows:
      * param - String containing the URI parameter to be added. It must
