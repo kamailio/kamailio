@@ -111,7 +111,10 @@
 #define COMP_PARAM ";comp="
 #define COMP_PARAM_LEN (sizeof(COMP_PARAM)-1)
 
-#define SOCKNAME_PARAM ";sn="
+#define SOCKNAME_ATTR "sn"
+#define SOCKNAME_ATTR_LEN (sizeof(SOCKNAME_ATTR)-1)
+
+#define SOCKNAME_PARAM ";" SOCKNAME_ATTR "="
 #define SOCKNAME_PARAM_LEN (sizeof(SOCKNAME_PARAM)-1)
 
 #define SIGCOMP_NAME "sigcomp"
