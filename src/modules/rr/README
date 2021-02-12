@@ -373,7 +373,8 @@ modparam("rr", "ignore_sips", 1)
 4.9. sockname_mode (int)
 
    If set to 1, the Record-Route URI is built to contain socket name in
-   'sn' parameter.
+   'sn' parameter and then it is used to lookup the local socket for Route
+   header processing.
 
    Default value is 0.
 
