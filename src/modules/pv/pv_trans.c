@@ -2596,7 +2596,7 @@ char* tr_parse_string(str* in, trans_t *t)
 		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
 		if(*p!=TR_RBRACKET)
 		{
-			LM_ERR("invalid ftime transformation: %.*s!!\n",
+			LM_ERR("invalid rm transformation: %.*s!!\n",
 					in->len, in->s);
 			goto error;
 		}
