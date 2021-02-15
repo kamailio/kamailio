@@ -19,14 +19,14 @@ endif
 
 ifeq ($(BUILDER),)
 	DEFS+= -I.
-	LIBS = -L. -lsecsipid
+	LIBS = -L. -lsecsipid -lpthread
 else
 	DEFS+= $(shell pkg-config --cflags secsipid-1)
-	LIBS = $(shell pkg-config --libs secsipid-1)
+	LIBS = $(shell pkg-config --libs secsipid-1) -lpthread
 endif
 
 ifeq ($(OS), darwin)
-LIBS+= -framework CoreFoundation -framework Security -lpthread
+LIBS+= -framework CoreFoundation -framework Security
 endif
 
 include ../../Makefile.modules
