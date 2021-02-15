@@ -376,44 +376,24 @@ static inline int version_control(void *handle, char *path)
 }
 
 /**
- * \brief load a sr module
+ *  \brief lookup a module and fill the new path
  *
- * tries to load the module specified by mod_path.
- * If mod_path is 'modname' or 'modname.so' then
- *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
- *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
- * If mod_path contain a '/' it is assumed to be the
- * path to the module and tried first. If fails and mod_path is not
- * absolute path (not starting with '/') then will try:
- * \<MODS_DIR\>/mod_path
  * @param mod_path path or module name
+ * @param new_path resolved path to the module, must be pkg_free() if != mod_path
  * @return 0 on success , <0 on error
  */
-int load_module(char* mod_path)
+int ksr_locate_module(char *mod_path, char **new_path)
 {
-	void* handle;
-	char* error;
-	mod_register_function mr;
-	module_exports_t* exp;
-	struct sr_module* t;
 	struct stat stat_buf;
 	str modname;
 	char* mdir;
 	char* nxt_mdir;
 	char* path;
 	int mdir_len;
-	int len;
-	int dlflags;
-	int new_dlflags;
-	int retries;
 	int path_type;
-	str expref;
-	char exbuf[64];
+	int len;
 
-#ifndef RTLD_NOW
-/* for openbsd */
-#define RTLD_NOW DL_LAZY
-#endif
+	*new_path = NULL;
 	path=mod_path;
 	path_type = 0;
 	modname.s = path;
@@ -523,6 +503,57 @@ int load_module(char* mod_path)
 			goto error;
 		}
 	}
+
+	LM_DBG("found module to load <%s>\n", path);
+	*new_path = path;
+	return 0;
+
+error:
+	if(path!=mod_path) {
+		pkg_free(path);
+	}
+
+	return -1;
+}
+
+/**
+ * \brief load a sr module
+ *
+ * tries to load the module specified by mod_path.
+ * If mod_path is 'modname' or 'modname.so' then
+ *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
+ *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
+ * If mod_path contain a '/' it is assumed to be the
+ * path to the module and tried first. If fails and mod_path is not
+ * absolute path (not starting with '/') then will try:
+ * \<MODS_DIR\>/mod_path
+ * @param mod_path path or module name
+ * @return 0 on success , <0 on error
+ */
+int load_module(char* mod_path)
+{
+	void* handle;
+	char* error;
+	mod_register_function mr;
+	module_exports_t* exp;
+	struct sr_module* t;
+	int dlflags;
+	int new_dlflags;
+	int retries;
+	char* path = NULL;
+	str expref;
+	char exbuf[64];
+	char* mdir;
+
+#ifndef RTLD_NOW
+/* for openbsd */
+#define RTLD_NOW DL_LAZY
+#endif
+
+	if(ksr_locate_module(mod_path, &path)<0) {
+		return -1;
+	}
+
 	LM_DBG("trying to load <%s>\n", path);
 
 	retries=2;

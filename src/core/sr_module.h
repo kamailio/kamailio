@@ -549,4 +549,6 @@ int destroy_modules_phase(void);
 int ksr_shutdown_phase_init(void);
 int ksr_shutdown_phase(void);
 
+int ksr_locate_module(char *mod_path, char **new_path);
+
 #endif /* sr_module_h */
