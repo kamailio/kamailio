@@ -24,17 +24,23 @@
 	<para>
 		It exports the functions to check and generate SIP Identity header.
 	</para>
+	<para>
+		Note that this module needs "secsipid_proc.so" module to be installed,
+		but without loading the "secsipid_proc.so" via "loadmodule". This module
+		loads "secsipid_proc.so" in child init callback in order to initialize
+		the "libsecsipid" per child process.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
 		<para>
-		The following modules must be loaded before this module:
+		The following modules must be installed (but not loaded) to use this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>secsipid_proc</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -48,7 +54,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libsecsipid</emphasis> - https://github.com/asipto/secsipidx/.
+				<emphasis>none</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -137,7 +143,25 @@ modparam("secsipid", "cache_expire", 7200)
 </programlisting>
 		</example>
 	</section>
-
+	<section id="secsipid.p.modproc">
+		<title><varname>modproc</varname> (str)</title>
+		<para>
+		The name of or the path to the required per-process API module.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "secsipid_proc.so".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>modproc</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "modproc", "secsipid_proc2.so")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
