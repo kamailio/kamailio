@@ -509,7 +509,7 @@ int ksr_locate_module(char *mod_path, char **new_path)
 	return 0;
 
 error:
-	if(path!=mod_path) {
+	if(path!=NULL && path!=mod_path) {
 		pkg_free(path);
 	}
 
