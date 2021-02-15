@@ -1,3 +1,773 @@
+===================== 2021-02-15 Version 5.4.4 Released =====================
+
+===================== Changes Since Version 5.4.3 ===========================
+
+commit b87099f5a26845aaf11d55c8fa56f9a9e4255b8c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 15 11:28:16 2021 +0100
+
+    Makefile.defs: version set to 5.4.4
+
+commit 57fb85e2a1dc50618179b79901563bab502169da
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Feb 15 10:11:25 2021 +0300
+
+    pkg/kamailio/obs: added --atexit=no into systemd unit file [skip ci]
+    
+    (cherry picked from commit 9a35a5b95e8144dbdb18003f40e49e5b497274f3)
+
+commit 9cf3a7991919a27410aec6658ec8e77d4e381e01
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Feb 15 09:32:05 2021 +0100
+
+    pkg/kamailio/deb: version set 5.4.4
+
+commit 864238f68588923ca60758251bd5f5ab3ac838fd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Feb 11 13:26:49 2021 +0100
+
+    pkg/kamailio/deb: restore python3 dependency of kamailio package
+    
+    (cherry picked from commit ab8e680e0dd3a8078d40b72c50d41db55d442240)
+
+commit 0f093556d0ad9e8bcf92222ac0cc7c1887ea0527
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 15 09:24:57 2021 +0100
+
+    pkg/kamailio: version set to 5.4.4 for rpm specs and alpine
+
+commit e8595172d317b03a335bfd7c29fdf09d2e6da8b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 13 20:59:30 2021 +0100
+
+    pv: proper transfomation name in the log message
+    
+    (cherry picked from commit b4d1def5d8a5ffaddbd87708d8dc99f0f5f8853c)
+
+commit 807ff5d216ad0dd8a620201b49c125c9c26d3559
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Feb 12 16:16:30 2021 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0e0d067be489296ccffbc0a44ca37c89f105cece
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 16:14:18 2021 +0100
+
+    rr: docs - more details for sockname_mode param
+    
+    (cherry picked from commit 86a5f81b776eab3e2b9a3a5470094546b94253f7)
+
+commit 9f7cb97ded57e6980dcb86752484ed8fda519b80
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 15:26:56 2021 +0100
+
+    core: define sockname attribute name
+    
+    - used in the sockname r-r parameter
+    
+    (cherry picked from commit 274d32651d7886b7f424239565a2714e2dd0991d)
+
+commit 48e84d70e42f17712e4718fc1ae9418dc67b4468
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 15:27:35 2021 +0100
+
+    rr: compare sockname parameter name with the attribute name
+    
+    (cherry picked from commit 86e8bfdee87558fcee3e5b821b506b934c6b6790)
+
+commit e0461d1c4026dd2953e4352bea0586419980180b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 17:32:45 2021 +0100
+
+    htable: docs - not about use of event_route[htable:mod-init]
+    
+    (cherry picked from commit e0dcb1617bedf13cc3fc76cf7f3b5cd516806bc8)
+
+commit 0f4eecdca36e9fc3311175a354a2404367b1e2fb
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Feb 11 17:44:19 2021 +0200
+
+    Improved README.
+    
+    (cherry picked from commit 857e9deb4c2455ee2ea0c05446da54f97e1f0a63)
+
+commit 73e849cb3e5771402fb1a9249457ae3ce4b60d3b
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Feb 11 17:27:44 2021 +0200
+
+    Fixed typo.
+    
+    (cherry picked from commit 2664a51c35a1e8b5adc4c7e6cedde60bc01f0b28)
+
+commit a61d308c4460afcaab19934ade23a7ee8e8b1b5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 16:22:06 2021 +0100
+
+    rr: docs - added missing end tag for para introduced in previous commit
+    
+    (cherry picked from commit f8e60bcba548b25657cc295f8a593adf371f9fda)
+
+commit 2e6a4024ae35b95d3f4b777ec6eb346ba072f80f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 16:06:12 2021 +0100
+
+    rr: docs - note about format of record_route_preset() parameters
+    
+    (cherry picked from commit f318fab629c308250531046d453a8ac76f80ca42)
+
+commit a0e796754a0e51f635d6bf899711294e805bff4c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 15:59:31 2021 +0100
+
+    rr: use rr params with record_route_preset()
+    
+    - param buffer was checked, but not used
+    
+    (cherry picked from commit 76b886da8ddf11a94a62850c19bad8c83bd113fc)
+
+commit 38dd7fd703f043c51756df936abc56103c891545
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 10:27:20 2021 +0100
+
+    core: cfg.lex - do not destroy action if pre-fixup fails
+    
+    - params might be in inconsistent state, shutdown is triggered which
+    cleans the pkg anyhow
+    - GH #2630
+    
+    (cherry picked from commit dddd530ed9fa7b6ca8b31ff299105a53c39c1a5e)
+
+commit f1a4f695e530e387e2f14d257263b7c99315b32a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 10 17:01:36 2021 +0100
+
+    core: initialize allocated _ksr_shutdown_phase pointer
+    
+    (cherry picked from commit f27c2e06d7467c4c33ff289175862ae7614a3018)
+
+commit ee6b30c1556d4591ef92f8696e583a94c75e3c93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 10 17:10:25 2021 +0100
+
+    ctl: fail when requested to process rpc commands in shutdown phase
+    
+    (cherry picked from commit 2015cfdfd777085dad98a606fc41946af186db1b)
+
+commit 57c9794350d36fe1965212bca2bd42f147d100db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 10 16:23:11 2020 +0200
+
+    ctl: skip handling rpc commands if kamilio is in shutdown phase
+    
+    - related to #2433
+    
+    (cherry picked from commit 6d928b59a3dbd6eb291da3d3936be6e8f18588af)
+
+commit 23d24f9db87e5b5d384af70e466df9d23f2bd900
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 27 07:49:27 2020 +0100
+
+    core: test if shm is initialized on early shutdown
+    
+    (cherry picked from commit b7d42f248bef70a06d8ae23f4a7652fd3f0e4e61)
+
+commit 72b88989f359ddd14e83a7b2f8c108753072ae3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 11 16:33:02 2020 +0200
+
+    core: proper test when initializing _ksr_shutdown_phase shm pointer
+    
+    (cherry picked from commit 27b2ddf926240b1dd269eb1d96767d73edf9c6e6)
+
+commit bc65cba661747c960d6d62807e0bedf755f2f668
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 10 16:15:04 2020 +0200
+
+    core: keep a global flag in shm for shut down phase
+    
+    - set when destroy modules is starting
+    - useful to check from other processes if shut down started
+    
+    (cherry picked from commit 6da946e4a3d6d6949dd6babe9cf3919edc0b4519)
+
+commit a36805a26aa84e865ba18260d94587be44688883
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 10 16:35:09 2021 +0100
+
+    tls: fixed small typo in log message
+    
+    (cherry picked from commit 3c1a454a1ac4fe8e668f709d3e278bbce59c51d3)
+
+commit e4fd58083274a774dae528437a01200a86ad7fa8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 10 08:27:58 2021 +0100
+
+    cfg.lex: removed yynoreturn attribute for ksr_yy_fatal_error()
+    
+    - it is defined only by newer flex version, resulting in compile
+    failure on older versions (e.g., centos 7)
+    
+    (cherry picked from commit f230035d8275cbad8d7515f73ba242f77a7a16db)
+
+commit bf8ab95cffdb1d2ab98c68ca84ad80626c093085
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 21:16:52 2021 +0100
+
+    core: cfg.lex - removed __attribute__((unused))
+    
+    - not supported on some distros
+    - workaround to avoid unused warning
+    
+    (cherry picked from commit 20fdab545a5f5c3ef1b8d8c4c392acaf4f9e8aae)
+
+commit 58dfc4cb7e1de233dfb2ceed2fb2a17a8511905c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 14:00:23 2021 +0100
+
+    core: main - terminate using ksr_exit() instead of return
+    
+    (cherry picked from commit d8643cd2caf38aa1efaeff73783920fab1d9bf0d)
+
+commit cfd9a30e5cad869c7188a524e24d1b6f53664f9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 13:27:34 2021 +0100
+
+    core: cfg.lex - declare auto-generated yy_fatal_error() with unused attribute
+    
+    (cherry picked from commit 346d99d1f98178a71d482e5724135f65257427dd)
+
+commit 1202f7ba0033a83ade2839cab06b2f2d35d63f64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 12:57:57 2021 +0100
+
+    core: cfg.lex - overwrite yy_fatal_error() to use ksr_exit() macro
+    
+    (cherry picked from commit 9f326234f40f2c02f4833647112c3a4f4912aa17)
+
+commit 1c6a04517d924d3f806573529f915a4528afd317
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 10:50:03 2021 +0100
+
+    core: more use of ksr_exit() macro to follow --atexit param
+    
+    (cherry picked from commit 4f6243e8e6e2012af35aae67da7b93af2127f02c)
+
+commit 2f912a17d09a6e7aad89b5df4629a360330522d3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 5 09:55:58 2021 +0100
+
+    keepalive: check if the destinations list is initialized at runtime use
+    
+    - do not initialize, because is no longer seen in all processes,
+    initialization must be done in mod init
+    
+    (cherry picked from commit b2b7ec826055fd67ecf5ffb052afa609e0aa9e5b)
+
+commit e4994b28b2052ff864c16aaa2305d7356ad4d812
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Feb 3 13:33:32 2021 +0100
+
+    doc: update manpage for atexit option
+    
+    (cherry picked from commit 351efd29d332703e79104a106ade08c9d1df6e20)
+
+commit 97ba470451ecde8c97531fdce3ddd2ef47955b0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 3 12:49:29 2021 +0100
+
+    core: replaced --no-atexit with --atexit=val
+    
+    - val can be y[es] or 1 to enable execution of atexit callbacks; n[o] or
+    0 to disable the execution of atexit callbacks
+    - default yes
+    - simplified ksr_exit() macro
+    
+    (cherry picked from commit 9b1472275530ed4cc32a65cd247dc9997e8b964b)
+
+commit c603f69179872775fcf8f35fd0a0d2c7d9e9d2a7
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Feb 3 09:41:12 2021 +0100
+
+    doc: update options at manpage
+    
+    * put them in order too
+    
+    (cherry picked from commit 377bb3bdfd20bedabbe0f92e53bdded44be267e9)
+
+commit 0dbdf13df804e26337a7b88b16f18c31223bd62e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 3 08:29:32 2021 +0100
+
+    core: use macro for exit variants based on --no-atexit
+    
+    (cherry picked from commit 06aec5a81cb22d06ad3bf613a05951f91e7e21bc)
+
+commit eadd50a92bfe7fb0cdfa90276cdb5df0e85a942e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 2 21:36:57 2021 +0100
+
+    core: take in consideration --no-atexit for daemonize()
+    
+    (cherry picked from commit 7ab2e85437482b4dba86937a29da025503450014)
+
+commit 91ae11588b6d038b97e803f4afaf44dffe561322
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 1 23:39:40 2021 +0100
+
+    core: added --no-atexit cli parameter
+    
+    - skip atexit callbacks execution from external libraries which may access
+    destroyed shm memory causing crash on shutdown
+    
+    (cherry picked from commit 9f12d314268d1d2cd990cb3c5556f79343869e47)
+
+commit be0e0fc4da2a6a901cacda9b3574147639b9f9ea
+Author: tsearle <tsearle@gmail.com>
+Date:   Wed Dec 16 21:47:11 2020 +0100
+
+    modules/siptrace: fix regression preventing variables to be used (#2588)
+    
+    * modules/siptrace: fix regression preventing variables to be used
+    
+    Commit fa7eb2a switched the 2 parameter version of sip_trace from
+    using the builtin fixup_spve_spve to the custom fixup method to
+    using the custom fixup_siptrace. As it is a custom fixup method,
+    the corresponding free method can not be auto-detected causing the
+    config parser to require the parameters to be a constant.  This
+    patch adds a free method, allowing variables to be once again passed
+    as the 2nd parameter of this method (as well as fixing a memory leak
+    for the 3rd parameter).
+    
+    * change free for parameter 3
+    
+    Co-authored-by: Torrey Searle <tsearle@voxbone.com>
+    (cherry picked from commit 7c98d547996637a7bf1c7025c93142f574fe3ac9)
+
+commit f9f33d37f80003836cf87338a4dd96b1b4614c22
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 09:14:06 2021 +0100
+
+    app_python3: handle deprecated PyEval_InitThreads()
+    
+    - https://docs.python.org/3/c-api/init.html#c.PyEval_InitThreads
+    - GH #2626
+    
+    (cherry picked from commit ca37f9247ecb6754fbdbd210fc59158bf0f32def)
+
+commit a7170a4fa6f4b0498fb192291842eb497f6f9507
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Feb 9 10:16:59 2021 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 95e7399481e61ec54bb226c122c5617f03553b5d
+Author: Wolfgang Kampichler <dev@kampichler.info>
+Date:   Wed Jan 27 19:53:24 2021 +0100
+
+    http_client: http_client_request to include default clientcert, clientkey,...
+    
+    - the lost module uses http_client API functions and in the course of NG112
+      client certificates are used for authentication when querying LIS or ECRF,
+      the fix allows these to be read out via http_client module parameters.
+    
+    (cherry picked from commit 7d5868ab1242eb8166e6af1bb8a21b39001df663)
+
+commit 73826e75b6699f3bd1bfb27eabf9582cbf09c19f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 6 16:06:47 2021 +0100
+
+    siptrace: docs - fixed small typo
+    
+    (cherry picked from commit 7d846f928b75a3bc1b8e8c1a70e39bfede939c15)
+
+commit ee7838842a175ffb4898dade606377c91cc8ecb8
+Author: dvillaume <david.villaume@gmail.com>
+Date:   Wed Feb 3 10:19:46 2021 +0100
+
+    rtpengine : add node fallback if node out of port
+    
+    When rtpengine answers with error-reason 'Ran out of ports' adopt the same behavor that when node answers 'Parallel session limit reached'
+    
+    (cherry picked from commit 853068a26c34deff86e17b63f49abea2c8f4403c)
+
+commit 3027f8b9daed5ca4f36d0779cd6f79e596bf42e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 4 14:01:52 2021 +0100
+
+    kamctl: added srv debug subcommand
+    
+    - control server debug level via rpc
+    
+    (cherry picked from commit 6b5aa70f09e294338a65a0bf2fcae8b92fdc6fae)
+
+commit a2e0e4912b5a81a88cccd2fb58652be5662ef4f0
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Feb 2 18:42:35 2021 +0000
+
+    xhttp: do not call memset on a null-pointer, related to GH #2619
+    
+    (cherry picked from commit 2db8884945844e5040dfed2b24fe84de097c0b2b)
+
+commit 989baffd9cbb934c8d0fd42dc9ef08db36c33f11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 27 14:10:34 2021 +0100
+
+    tm: prper timer cleanup of responses for rpc tm.t_uac_wait_block
+    
+    (cherry picked from commit 5a6a679985fecfc168b9b26f0be3c0e64e641e64)
+
+commit 0ab7142d8f60d04c386674263f35f87ac602bebe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 26 11:52:36 2021 +0100
+
+    core: ut.h - add inline to static function to avoid warning from including files
+    
+    - for shm_str_dup_block()
+    
+    (cherry picked from commit 34301ea16812eccbb914ea14cafb0140ac9bba61)
+
+commit 33da663ec8d730fa570018bbdb7239e595b4838d
+Author: Marat Gareev <maratkin94@gmail.com>
+Date:   Mon Jan 25 18:40:47 2021 +0300
+
+    dispatcher: Log dest sets after variable update
+    
+    (cherry picked from commit f4b8bede6a247415eda84a7db9569747905f9fa0)
+
+commit 0ff67c573f3bb59dc7872a48310c28d2d08734e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 25 12:42:36 2021 +0100
+
+    tm: docs for reply_relay_mode parameter
+    
+    (cherry picked from commit 00b1aba770c26f75c31cf2a28e7ca425f18788dc)
+
+commit be9081621e71965f90be490cdaa01f31dd02d842
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 25 12:34:33 2021 +0100
+
+    tm: new parameter reply_relay_mode
+    
+    - control the behaviour introduced by 18410da0
+    - if set to 0, the behaviour is like before the commit referenced above,
+    tm is attemptime to send suspended 200ok after another final response
+    that was forwarded while 200ok was suspended
+    - default is 1 (behave as the patch changed the forwarding policy, not
+    to overwrite the response buffer)
+    
+    (cherry picked from commit 90dfc421dab438a8ef62cc8f68b2c1f7fb50b0dc)
+
+commit 31f8466f1d493db8baaa215d34d4ed4545d4ff79
+Author: Theo <theodor.scherney@kapsch.net>
+Date:   Fri Apr 17 08:53:00 2020 +0000
+
+    tm: 200 OK not processed correctly by Proxy after final non-2xx
+    
+    Description:
+       Problem:
+          Forwarding of 200 OK while sent 488 waits for ACK, destroys the UAS send buffer
+       Scenario:
+          During suspension of 200 OK by ims_qos module function Rx_AAR() at terminating PCSCF,
+          The PCRF sends an AA Answer with result code DIAMETER_TOO_BUSY (3004), which triggers
+          the PCSCF to send a 488 âSorry no QoS availableâ to the originating side (ims_dialog
+          module function dlg_terminate()).
+          Afterwards neither the 200 OK nor the ACK(488) is processed correctly by the PCSCF.
+       Solution:
+          The UAS send buffer should not be overwritten during processing of 200 OK,
+          because non-2xx is needed to associate the ACK message in a correct way.
+          200 OK must be forwarded statelessly.
+       Side-Effect (potentially breaks existing function):
+          Some callbacks cannot be called for the 200 OK, to avoid messing the stored 488.
+    (cherry picked from commit 18410da04c7f7bbc9628820427fedb92cf893526)
+
+commit b0e29edea36778be91acfe1907a94a5d1134a5ca
+Author: Nicolas C <nchaigne@capgemini.fr>
+Date:   Fri Jan 22 15:16:56 2021 +0100
+
+    core: fix to xavp_rm_internal (#2604)
+    
+    This fixes the following issue:
+    https://github.com/kamailio/kamailio/issues/2604
+    
+    Description of the issue:
+    
+    When called to remove a specific index from a given xavp, function xavp_rm_by_index removes the index (as expected) but also all others before it.
+    
+    E.g :
+    If called with idx = 1, it removes indexes 0 and 1.
+    Likewise if invoked with idx = 2 => the first 3 elements are removed.
+    
+    This bug is located in function xavp_rm_internal. An assignment was missing when looping over the xavp list.
+    Same for xavi_rm_internal.
+    
+    (cherry picked from commit 12414972ad0c28ac50ece3c14f98134c3f06c522)
+
+commit b6ab0ba329f11e7baabe194994c095b4cb225af4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 21 14:05:50 2021 +0100
+
+    kamctl: removed condition on CTLENGINETYPE
+    
+    - done again inside ctl_cmd_run
+    
+    (cherry picked from commit 4a4f0475716cbf824b2ab9684457e21f6732aa74)
+
+commit b8a7d2bfd1118d556c9e46dcab97fbcb45fa6187
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 21 10:00:46 2021 +0100
+
+    kamctl: use param evaluation mode for cisco restart command
+    
+    (cherry picked from commit 359050f9be40002aec1d3894dc43a2a8762ce8cc)
+
+commit 4b606ec029703420a74f4246a7bcdb06a9d67635
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 20 08:54:49 2021 +0100
+
+    kamctl: use tm.t_uac_wait_block rpc for ping command
+    
+    (cherry picked from commit 47a98532af5512a4597bbf9ad3834c62dd633256)
+
+commit 254790bdb27e081765958a8b099921219c0f6e41
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 20 08:54:21 2021 +0100
+
+    tm: docs for rpc t_uac_wait_block
+    
+    (cherry picked from commit 89eea7edb8832124dc325d8303b23ea5f36c88f4)
+
+commit ff34dc44bba76c6ee2828a03655e03087f5a5db6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 20 08:11:45 2021 +0100
+
+    tm: implemented t_uac_wait_block rpc command
+    
+    - it blocks while waiting for the reply to return the code and reason
+    text
+    
+    (cherry picked from commit dc5a548a9e6327674615aa7ddc8708e0ba5252aa)
+
+commit c3f12eb469995a03166bf801bc4a391095202452
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 19 21:00:54 2021 +0100
+
+    core: utils - functions to shm-duplicate str in a block
+    
+    (cherry picked from commit 6684b57641396ba494716e7f63a0f15afc1d8637)
+
+commit 6769d44cfab686824a6b077bc8cbb4a347fd3356
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 19 07:49:24 2021 +0100
+
+    kamctl: use tm.t_uac_wait for ping command
+    
+    (cherry picked from commit 20d075a17189961baf63ac000e4417d7f04d8a08)
+
+commit 9b5eade1faa8deeb3fcc8f9cb010f803c17ee309
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 18 10:19:05 2021 +0100
+
+    kamctl: option for rpc command to replace tokens in parameters
+    
+    - supported now: replace '=CRLF=' with '\r\n'
+    - fix 'kamctl ping' command by replacing '=CRLF=' with '\r\n'
+    in multi-headers parameter
+    
+    (cherry picked from commit 1c66f6a1a5d04c33f1912609a36729b06b6eebd7)
+
+commit 784ad65fe5abde677f5155e3d7ff0bfbd04286bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 12 10:05:32 2021 +0100
+
+    misc/examples/kemi: use local variable instead of many function calls for js
+    
+    (cherry picked from commit b4f439301c2dffbfc6a389354e840142fc3b965b)
+
+commit e085bdb9a35f7a5b4624b7afdef96ca2fd3ba6fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 12 09:52:31 2021 +0100
+
+    misc/examples/kemi: use kx functions instead of pv
+    
+    (cherry picked from commit 6e541feb9184e193f9c486c8f97d73360c69250d)
+
+commit df7ca5dce4c41ad6f05064fe2940943685a98f61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 12 08:52:00 2021 +0100
+
+    app_jsdt: duktape interpreter upgraded to v2.6.0
+    
+    (cherry picked from commit 2590165e278efb947edb9cb5a75104f2f760c4c2)
+
+commit 23000a3ab3d88419d4f0ac797aae201a22f0e1fb
+Author: Paul Komkoff <i@stingr.net>
+Date:   Mon Jan 4 18:18:01 2021 +0400
+
+    core: fix unused argument in socket_info.c:get_flags
+    
+    get_flags has an argument - family - which is supposed to be used
+    in netlink message, otherwise why would we need it?
+    
+    (cherry picked from commit 42f7702430c312b2c9caea8f617af4e3719ef12f)
+
+commit 252b0dd2d778c15ac6e96c7c415296619df3dc3e
+Author: Paul Komkoff <i@stingr.net>
+Date:   Mon Jan 4 18:13:28 2021 +0400
+
+    core: work around interface enum buffer overrun
+    
+    When a system has too many interfaces and too many addresses,
+    8 kilobytes isn't enough to fit all of the netlink responses.
+    As the result, kamailio gets stuck in a loop where it tries
+    to do a 0-length recv.
+    
+    Increase the buffer to 32K. It's a miniscule amount for modern
+    times anyway. Also, add diagnostics to make further troubleshooting
+    easier.
+    
+    Proper fix would be to switch to libnl here, which would make a
+    good weekend project.
+    
+    (cherry picked from commit d2fd204b0ae35512a04702e480bb0d16878e98be)
+
+commit f64d41efc8bf08daa8f4a36cb81d4620bea2b367
+Author: Dennis <dennis_y@mail.ru>
+Date:   Mon Jan 4 18:35:44 2021 +0300
+
+    rtpengine: fixing wrong parsing the pair of IPv6 addr:port (#2592)
+    
+    - fixing wrong parsing the pair of IPv6 addr:port in rtpengine module, when loading node information from database.
+    
+    (cherry picked from commit 13d786e33d6f04a718af40ba345cf0827f752c2f)
+
+commit d0af9aa7f46c90461288ef5241dba9c081fd40e4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 24 10:09:02 2020 +0100
+
+    secsipid: docs - details of the acronyms
+    
+    (cherry picked from commit c1e06e029b192a4db45841fa78e9bcfee91f125d)
+
+commit 0b98ddb1ea04603851ce581a69111581a1d30a67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 22 20:33:27 2020 +0100
+
+    core: info message made dbg when adding a subst expression
+    
+    (cherry picked from commit 80b3d5d036da493316a93594c770df1ef8218e5e)
+
+commit ff5283b156f6aa934bd5f621537427d9f2b31b1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 19 15:34:05 2020 +0100
+
+    core: kemi - KSR.is_method_in() uses E/e to match PRACK
+    
+    (cherry picked from commit b04111b583b454b12ea0c6a265a14858c195b213)
+
+commit d992a7cf2d42e9c4efcb2153091f4410090e4be6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 08:18:51 2020 +0100
+
+    http_client: docs - section title to get proper entry in toc
+    
+    - bits of whitespacing fixing
+    
+    (cherry picked from commit fadc0fc499fb57a763aa71a76b24cff152bbd927)
+
+commit 82ca29e2c51667bbfb8962006c8b4a93ed2160ee
+Author: balajeesv <balajee.sv@gmail.com>
+Date:   Fri Dec 11 21:31:27 2020 +0530
+
+    evapi: export async_multicast() to kemi
+    
+    (cherry picked from commit ccaba976cd1c599ba64067df0896fdd4888af00f)
+
+commit 9a793eeeb6c39b11b9125ca8455c2d5d2b0d415d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 16 08:29:41 2020 +0100
+
+    xhttp: clang format code
+    
+    (cherry picked from commit d620aab9d2bc16e7785d5be0ddecd016329055de)
+
+commit 218350f089be9c3b5505079079df63d25dd74cc4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 8 11:54:32 2021 +0100
+
+    siputils: free params for contact param decode and remove
+    
+    (cherry picked from commit d6504e28f7fef8d48480861ea12e9bd457288661)
+
+commit dbe358d2d0df1ea2d8441b39ae460966e5edb164
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Feb 1 11:55:24 2021 +0300
+
+    pkg/docker: updated submodule [skip ci]
+
+commit a96451324076e0043fe25407c5dd6a42d5ff9f69
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 25 14:46:38 2021 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4e2c049d27594c30069d1e29caca4f4521d6fe43
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Mon Jan 25 08:37:26 2021 -0500
+
+    tmrec: fix typos in docs
+    
+    (cherry picked from commit 8be74b2fe0f59a9cef472b781feeae4cf3357bea)
+
+commit 06bd17a8387008a3c7b797bd820a687ece5e3627
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 8 08:21:55 2021 +0100
+
+    secsipid: include secsipid.h from standard path
+    
+    (cherry picked from commit c1a3443b09cee8a923f8801f8f3034f078034bf5)
+
+commit b7cff8de3b3d26b1120678fac331ca52424e6c01
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 7 17:34:36 2021 +0100
+
+    secsipid: Makefile - detect of pkg-config knows about libsecsipid
+    
+    (cherry picked from commit 664542adf42a4d829ddf9b9e482aba81f30883d8)
+
+commit b0a629ef9b366f4946dd1e73ce4aed2e028c119b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 7 11:14:53 2021 +0100
+
+    secsipid: use pkg-config when available
+    
+    (cherry picked from commit 231a6eceeb67318cf4708a765b47df6c336350da)
+
+commit 573dd7e63ac3d2629367f72c967ec7fbd4edfcf1
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Wed Nov 25 15:28:40 2020 +0000
+
+    tls: log version, gh #2561
+    
+    (cherry picked from commit c9f0adddde8321bfaf368691fea74079e40bd789)
+
+commit 88d1eb7a79acd6afecb3d6760889433f69646b5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 17 14:54:04 2020 +0100
+
+    dialog: handle CANCEL requests for CSeq updates
+    
+    (cherry picked from commit fd35a1a4eee2c50a3b7bf4ee6b1f6f20f4fa7d62)
+
+commit d9df74d43d736dd330f4f9aa364a9f0560717e1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 16 20:54:57 2020 +0100
+
+    http_client: do not set empty headers and body
+    
+    (cherry picked from commit ce58411c462231d6ea1fc3b4acbf50520c2962ce)
+
+
 ===================== 2020-12-14 Version 5.4.3 Released =====================
 
 ===================== Changes Since Version 5.4.2 ===========================
