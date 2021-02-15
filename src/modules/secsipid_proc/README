@@ -1,0 +1,62 @@
+SecSIPId Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2021 http://www.asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+1. Overview
+
+   The module implements per-child-process C API functions required by
+   secsipid module.
+
+   Important: this module must not be loaded standalone via loadmodule,
+   the secsipid module loads it in each child process. This is required
+   because libsecsipid is multi-threaded and must be initialized per each
+   child process, after forking, otherwise threads locks and resources are
+   inherited and can lead to unpredictable behaviour, such as deadlocks.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded to use this module:
+     * secsipid.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libsecsipid - https://github.com/asipto/secsipidx/.

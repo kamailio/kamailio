@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module implements per-child-process C API functions required by
+		secsipid module.
+	</para>
+	<para>
+		Important: this module must not be loaded standalone via loadmodule,
+		the secsipid module loads it in each child process. This is required
+		because libsecsipid is multi-threaded and must be initialized per each
+		child process, after forking, otherwise threads locks and resources
+		are inherited and can lead to unpredictable behaviour, such as deadlocks.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded to use this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>secsipid</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libsecsipid</emphasis> - https://github.com/asipto/secsipidx/.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+</chapter>
+
