@@ -134,6 +134,10 @@ static int child_init(int rank)
 	/* launch register */
 	bind_f = (secsipid_proc_bind_f)dlsym(handle, "secsipid_proc_bind");
 	if (((errstr=(char*)dlerror())==NULL) && bind_f!=NULL) {
+		/* version control */
+		if (!ksr_version_control(handle, modpath)) {
+			goto error;
+		}
 		/* no error - call it */
 		if(bind_f(&_secsipid_papi)<0) {
 			LM_ERR("filed to bind the api of proc module: %s\n", modpath);
