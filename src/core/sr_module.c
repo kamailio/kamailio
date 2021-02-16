@@ -335,7 +335,10 @@ error:
 	return ret;
 }
 
-static inline int version_control(void *handle, char *path)
+/**
+ * check the version of loaded module
+ */
+int ksr_version_control(void *handle, char *path)
 {
 	char **m_ver;
 	char **m_flags;
@@ -572,7 +575,7 @@ reload:
 		}
 	}
 	/* version control */
-	if (!version_control(handle, path)) {
+	if (!ksr_version_control(handle, path)) {
 		ksr_exit(-1);
 	}
 	/* launch register */
