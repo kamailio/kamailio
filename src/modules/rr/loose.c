@@ -127,6 +127,11 @@ static inline int is_myself(sip_uri_t *_puri)
 {
 	int ret;
 
+	if(_puri->host.len==0) {
+		/* catch uri without host (e.g., tel uri) */
+		return 0;
+	}
+
 	ret = check_self(&_puri->host,
 			_puri->port_no?_puri->port_no:SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
