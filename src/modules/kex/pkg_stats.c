@@ -240,7 +240,7 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 				_pkg_proc_stats_list[i].total_size = _pkg_proc_stats_list[0].total_size;
 				_pkg_proc_stats_list[i].rank = PROC_NOCHLDINIT;
 			}
-			if(rpc->struct_add(th, "dddddddds",
+			if(rpc->struct_add(th, "duduuuuus",
 							"entry",     i,
 							"pid",       _pkg_proc_stats_list[i].pid,
 							"rank",      _pkg_proc_stats_list[i].rank,
