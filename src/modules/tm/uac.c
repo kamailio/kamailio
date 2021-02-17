@@ -343,7 +343,8 @@ static inline int t_run_local_req(
 
 		LM_DBG("apply new updates with Via to sip msg\n");
 		buf1 = build_req_buf_from_sip_req(&lreq,
-				(unsigned int*)&buf_len1, &request->dst, BUILD_IN_SHM);
+				(unsigned int*)&buf_len1, &request->dst,
+				BUILD_NEW_LOCAL_VIA|BUILD_IN_SHM);
 		if (likely(buf1)){
 			shm_free(*buf);
 			*buf = buf1;
