@@ -233,21 +233,19 @@ static param_export_t params[] = {
         {0, 0, 0}
 };
 
-struct module_exports exports = {
-        "lreproxy",
+/** module exports */
+struct module_exports exports= {
+        "lreproxy",        /* module name */
         DEFAULT_DLFLAGS, /* dlopen flags */
-        cmds,
-        params,
-        0,           /* exported statistics */
-        0,           /* exported MI functions */
-        0,     /* exported pseudo-variables */
-        0,           /* extra processes */
-        mod_init,
-        0,           /* reply processing */
-        mod_destroy, /* destroy function */
-        child_init
+        cmds,            /* cmd exports */
+        params,          /* param exports */
+        0,               /* RPC method exports */
+        0,         /* exported pseudo-variables */
+        0,               /* response handling function */
+        mod_init,        /* module initialization function */
+        child_init,               /* per-child init function */
+        mod_destroy                /* module destroy function */
 };
-
 
 
 static int rtpproxy_set_store(modparam_t type, void * val){

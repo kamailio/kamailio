@@ -399,29 +399,48 @@ get_via_branch(struct sip_msg* msg, int vianum, str* _branch)
 }
 
 int get_sdp_ipaddr_media(struct sip_msg *msg, str *ip_addr) {
-
     sdp_session_cell_t *sdp_session;
-
-    int sdp_session_num = 0;
-
+    sdp_stream_cell_t *sdp_stream;
     sdp_info_t *sdp = (sdp_info_t *) msg->body;
     if (!sdp) {
                 LM_INFO("sdp null\n");
         return -1;
     }
 
+
+    int sdp_session_num = 0;
     sdp_session = get_sdp_session(msg, sdp_session_num);
+
     if (!sdp_session) {
                 LM_INFO("can not get the sdp session\n");
-        return -1;
-    } else {
+        return 0;
+    }
+
+    if (sdp_session->ip_addr.s && sdp_session->ip_addr.len > 0) {
+                LM_INFO("sdp_session->ip_addr:%.*s\n", sdp_session->ip_addr.len, sdp_session->ip_addr.s);
         ip_addr->s = sdp_session->ip_addr.s;
         ip_addr->len = sdp_session->ip_addr.len;
         trim(ip_addr);
     }
+    else {
+        int sdp_stream_num = 0;
+        sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+        if (!sdp_stream) {
+                    LM_INFO("can not get the sdp stream\n");
+            return 0;
+        }
+        if (sdp_stream->ip_addr.s && sdp_stream->ip_addr.len > 0) {
+            LM_INFO("sdp_stream->ip_addr:%.*s\n", sdp_stream->ip_addr.len, sdp_stream->ip_addr.s);
+            ip_addr->s = sdp_stream->ip_addr.s;
+            ip_addr->len = sdp_stream->ip_addr.len;
+            trim(ip_addr);
+        }
+    }
 
+    
     return 0;
 }
+
 
 int get_sdp_port_media(struct sip_msg *msg, str *port){
 //    sdp_session_cell_t *sdp_session;
