@@ -120,7 +120,11 @@ static inline int find_first_route(struct sip_msg* _m)
  */
 static inline int is_myself(sip_uri_t *_puri)
 {
-	int ret;
+	int ret = 0;
+	param_hooks_t phooks;
+	param_t* plist = NULL;
+	param_t *pit = NULL;
+	str s;
 
 	if(_puri->host.len==0) {
 		/* catch uri without host (e.g., tel uri) */
@@ -144,6 +148,27 @@ static inline int is_myself(sip_uri_t *_puri)
 		/* match on host:port, but if gruu, then fail */
 		if(_puri->gr.s!=NULL)
 			return 0;
+	}
+
+	/* Check if URI has ;sn parameter naming existing socket */
+	if (ret == 0 && _puri->params.len > 0) {
+		s = _puri->params;
+		if (s.s[s.len-1] == ';')
+			s.len--;
+		if (parse_params(&s, CLASS_ANY, &phooks, &plist) < 0) {
+			LM_ERR("bad sip uri parameters: %.*s\n", s.len, s.s);
+			return 0;
+		}
+		for (pit = plist; pit; pit=pit->next)
+			if (pit->name.len == SOCKNAME_ATTR_LEN
+			    && strncasecmp(pit->name.s, SOCKNAME_ATTR,
+					   SOCKNAME_ATTR_LEN) == 0) {
+				if (pit->body.len > 0 &&
+				    ksr_get_socket_by_name(&pit->body) != NULL)
+					return 1;
+				else
+					break;
+			}
 	}
 
 	return ret;
