@@ -472,6 +472,7 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 	time_t dt;
 	struct tm t;
 	str *sp;
+	char *cp;
 
 	switch(fmt) {
 	case 'd':
@@ -497,11 +498,20 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 		nj = srjson_CreateString(ctx->jrpl, buf);
 		break;
 	case 's':
-		nj = srjson_CreateString(ctx->jrpl, va_arg(*ap, char*));
+		cp = va_arg(*ap, char*);
+		if(cp!=NULL) {
+			nj = srjson_CreateString(ctx->jrpl, cp);
+		} else {
+			nj = srjson_CreateNull(ctx->jrpl);
+		}
 		break;
 	case 'S':
 		sp = va_arg(*ap, str*);
-		nj = srjson_CreateStr(ctx->jrpl, sp->s, sp->len);
+		if(sp!=NULL && sp->s!=NULL) {
+			nj = srjson_CreateStr(ctx->jrpl, sp->s, sp->len);
+		} else {
+			nj = srjson_CreateNull(ctx->jrpl);
+		}
 		break;
 	default:
 		LM_ERR("Invalid formatting character [%c]\n", fmt);
