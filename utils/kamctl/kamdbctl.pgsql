@@ -168,7 +168,7 @@ then
 	fi
 fi
 
-minfo "Core Kamailio tables succesfully created."
+minfo "Core Kamailio tables successfully created."
 
 get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
 if [ "$ANSWER" = "y" ]; then
@@ -216,7 +216,7 @@ for TABLE in $PRESENCE_TABLES; do
 	fi
 done
 
-minfo "Presence tables succesfully created."
+minfo "Presence tables successfully created."
 }  # end presence_create
 
 
@@ -251,7 +251,7 @@ for TABLE in $EXTRA_TABLES; do
 	fi
 done
 
-minfo "Extra tables succesfully created."
+minfo "Extra tables successfully created."
 }  # end extra_create
 
 
@@ -272,5 +272,5 @@ dbuid_create () # pars: <database name>
 			exit 1
 			fi
 		done
-	minfo "UID tables succesfully created."
+	minfo "UID tables successfully created."
 }  # end uid_create
