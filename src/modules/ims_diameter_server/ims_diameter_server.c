@@ -280,6 +280,10 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		}
 		LM_DBG("Peer %.*s\n", s_peer.len, s_peer.s);
 	}
+	if (get_str_fparam(&s_message, msg, (fparam_t*)message) < 0) {
+		LM_ERR("failed to get Message\n");
+		return -1;
+	}
 	if (get_str_fparam(&s_appid, msg, (fparam_t*)appid) < 0) {
 		LM_ERR("failed to get App-ID\n");
 		return -1;
