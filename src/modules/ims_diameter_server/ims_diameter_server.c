@@ -310,6 +310,11 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 	session = cdpb.AAACreateSession(0);
 
 	req = cdpb.AAACreateRequest(i_appid, i_commandcode, Flag_Proxyable, session);
+        if (session) {
+	        cdpb.AAADropSession(session);
+                session = 0;
+        }
+
 	if (!req) goto error1;
 
 	if (addAVPsfromJSON(req, &s_message)) {
