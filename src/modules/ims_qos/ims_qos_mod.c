@@ -597,7 +597,7 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param)
 
 
 		if (type == PCSCF_CONTACT_EXPIRE || type == PCSCF_CONTACT_DELETE) {
-				//we dont need to send STR if no QoS was ever succesfully registered!
+				// we dont need to send STR if no QoS was ever successfully registered!
 				if (must_send_str && (c->reg_state != PCONTACT_REG_PENDING) && (c->reg_state != PCONTACT_REG_PENDING_AAR)) {
 						LM_DBG("Received notification of contact (in state [%d] deleted for signalling bearer with  with Rx session ID: [%.*s]\n",
 								c->reg_state, c->rx_session_id.len, c->rx_session_id.s);
