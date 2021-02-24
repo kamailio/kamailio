@@ -322,7 +322,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		} else {
 			resp = cdpb.AAASendRecvMessageToPeer(req, &s_peer);
 			LM_DBG("Successfully sent diameter\n");
-			if (AAAmsg2json(resp, &responsejson) == 1) {
+			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
@@ -337,7 +337,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		} else {
 			resp = cdpb.AAASendRecvMessage(req);
 			LM_DBG("Successfully sent diameter\n");
-			if (AAAmsg2json(resp, &responsejson) == 1) {
+			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
