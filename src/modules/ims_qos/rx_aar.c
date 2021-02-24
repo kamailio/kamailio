@@ -328,7 +328,8 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         }
 
         //at this point we have the contact
-        /*set the contact state to say we have succesfully done ARR for register and that we dont need to do it again
+        /*set the contact state to say we have successfully done ARR for register
+         * and that we dont need to do it again
          * for the duration of the registration.
          * */
         if (ul.update_rx_regsession(domain_t, &local_data->auth_session_id, pcontact) != 0) {
