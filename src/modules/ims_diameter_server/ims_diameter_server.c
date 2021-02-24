@@ -317,7 +317,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 
 	if (!req) goto error1;
 
-	if (addAVPsfromJSON(req, &s_message)) {
+	if (!addAVPsfromJSON(req, &s_message)) {
 		LM_ERR("Failed to parse JSON Request\n");
 		return -1;
 	}
