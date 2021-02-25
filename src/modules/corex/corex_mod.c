@@ -68,6 +68,7 @@ static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
 static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
+static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -145,6 +146,8 @@ static cmd_export_t cmds[]={
 	{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1, fixup_igp_null,
 		0, ANY_ROUTE },
 	{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0,
+		0, ANY_ROUTE },
+	{"is_socket_name", (cmd_function)w_is_socket_name, 1, fixup_spve_null,
 		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
@@ -1112,6 +1115,46 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_is_socket_name(sip_msg_t *msg, str *sockname)
+{
+	socket_info_t *si = NULL;
+
+	if (sockname==NULL || sockname->len<=0) {
+		LM_ERR("invalid socket name value\n");
+		return -1;
+	}
+
+	si = ksr_get_socket_by_name(sockname);
+	if(si != NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2)
+{
+	str sockname;
+	socket_info_t *si = NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)psockname, &sockname)!=0
+			|| sockname.len<=0) {
+		LM_ERR("cannot get socket name value\n");
+		return -1;
+	}
+
+	si = ksr_get_socket_by_name(&sockname);
+	if(si != NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 static int corex_sip_reply_out(sr_event_param_t *evp)
 {
 	onsend_info_t sndinfo;
@@ -1236,6 +1279,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("file_write"),
 		SR_KEMIP_INT, ki_file_write,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("is_socket_name"),
+		SR_KEMIP_INT, ki_is_socket_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
