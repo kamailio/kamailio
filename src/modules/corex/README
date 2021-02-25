@@ -61,6 +61,7 @@ Muhammad Shahzad Shafi
               4.21. via_add_xavp_params(flags)
               4.22. via_use_xavp_fields(flags)
               4.23. is_faked_msg()
+              4.24. is_socket_name(sockname)
 
         5. RPC Commands
 
@@ -111,8 +112,9 @@ Muhammad Shahzad Shafi
    1.27. via_add_xavp_params usage
    1.28. via_use_xavp_fields usage
    1.29. is_faked_msg usage
-   1.30. event_route[network:msg] use cases
-   1.31. Sample PERL code for do_compress and do_uncompress
+   1.30. is_socket_name usage
+   1.31. event_route[network:msg] use cases
+   1.32. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -158,6 +160,7 @@ Chapter 1. Admin Guide
         4.21. via_add_xavp_params(flags)
         4.22. via_use_xavp_fields(flags)
         4.23. is_faked_msg()
+        4.24. is_socket_name(sockname)
 
    5. RPC Commands
 
@@ -342,6 +345,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.21. via_add_xavp_params(flags)
    4.22. via_use_xavp_fields(flags)
    4.23. is_faked_msg()
+   4.24. is_socket_name(sockname)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -720,6 +724,21 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
+4.24.  is_socket_name(sockname)
+
+   Returns 1 (native config true) if the parameter matches a local socket
+   name, otherwise -1 (native config false). The parameter can contain
+   variables.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.30. is_socket_name usage
+...
+    if (is_socket_name("socktls")) {
+        xinfo("matched local socket name\n");
+    }
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -875,7 +894,7 @@ event_route[dispatcher:dst-down] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.30. event_route[network:msg] use cases
+   Example 1.31. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -906,7 +925,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.31. Sample PERL code for do_compress and do_uncompress
+   Example 1.32. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
