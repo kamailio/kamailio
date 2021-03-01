@@ -264,6 +264,7 @@ static str member_prefix  = STR_STATIC_INIT("<member>");
 static str member_suffix  = STR_STATIC_INIT("</member>");
 static str name_prefix    = STR_STATIC_INIT("<name>");
 static str name_suffix    = STR_STATIC_INIT("</name>");
+static str nil_value     = STR_STATIC_INIT("<nil/>");
 
 /** Garbage collection data structure.
  *
@@ -1066,17 +1067,29 @@ static int print_value(struct xmlrpc_reply* res,
 			break;
 
 		case 's':
-			prefix = string_prefix;
-			suffix = string_suffix;
 			body.s = va_arg(*ap, char*);
-			body.len = strlen(body.s);
+			if(body.s!=NULL) {
+				prefix = string_prefix;
+				suffix = string_suffix;
+				body.len = strlen(body.s);
+			} else {
+				prefix = "";
+				suffix = "";
+				body = nil_value;
+			}
 			break;
 
 		case 'S':
-			prefix = string_prefix;
-			suffix = string_suffix;
 			sp = va_arg(*ap, str*);
-			body = *sp;
+			if(sp!=NULL && sp->s!=NULL) {
+				prefix = string_prefix;
+				suffix = string_suffix;
+				body = *sp;
+			} else {
+				prefix = "";
+				suffix = "";
+				body = nil_value;
+			}
 			break;
 
 		default:
