@@ -264,7 +264,8 @@ static str member_prefix  = STR_STATIC_INIT("<member>");
 static str member_suffix  = STR_STATIC_INIT("</member>");
 static str name_prefix    = STR_STATIC_INIT("<name>");
 static str name_suffix    = STR_STATIC_INIT("</name>");
-static str nil_value     = STR_STATIC_INIT("<nil/>");
+static str empty_value    = STR_STATIC_INIT("");
+static str nil_value      = STR_STATIC_INIT("<nil/>");
 
 /** Garbage collection data structure.
  *
@@ -1073,8 +1074,8 @@ static int print_value(struct xmlrpc_reply* res,
 				suffix = string_suffix;
 				body.len = strlen(body.s);
 			} else {
-				prefix = "";
-				suffix = "";
+				prefix = empty_value;
+				suffix = empty_value;
 				body = nil_value;
 			}
 			break;
@@ -1086,8 +1087,8 @@ static int print_value(struct xmlrpc_reply* res,
 				suffix = string_suffix;
 				body = *sp;
 			} else {
-				prefix = "";
-				suffix = "";
+				prefix = empty_value;
+				suffix = empty_value;
 				body = nil_value;
 			}
 			break;
