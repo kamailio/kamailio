@@ -46,7 +46,8 @@ Daniel-Constantin Mierla
         5. Functions
 
               5.1. pl_check(name [, algorithm, limit])
-              5.2. pl_drop([ [min ], max ])
+              5.2. pl_active(name)
+              5.3. pl_drop([ [min ], max ])
 
         6. RPC Commands
 
@@ -76,7 +77,8 @@ Daniel-Constantin Mierla
    1.14. Set clean_unused parameter
    1.15. Set clean_unused parameter at runtime
    1.16. pl_check usage
-   1.17. pl_drop usage
+   1.17. pl_active usage
+   1.18. pl_drop usage
 
 Chapter 1. Admin Guide
 
@@ -107,7 +109,8 @@ Chapter 1. Admin Guide
    5. Functions
 
         5.1. pl_check(name [, algorithm, limit])
-        5.2. pl_drop([ [min ], max ])
+        5.2. pl_active(name)
+        5.3. pl_drop([ [min ], max ])
 
    6. RPC Commands
 
@@ -379,7 +382,8 @@ kamcmd cfg.set_now_int pipelimit clean_unused 10
 5. Functions
 
    5.1. pl_check(name [, algorithm, limit])
-   5.2. pl_drop([ [min ], max ])
+   5.2. pl_active(name)
+   5.3. pl_drop([ [min ], max ])
 
 5.1.  pl_check(name [, algorithm, limit])
 
@@ -460,7 +464,22 @@ with unexpected retcode=$var(check_result)\n");
         }
 ...
 
-5.2.  pl_drop([ [min ], max ])
+5.2.  pl_active(name)
+
+   Check the pipe 'name' was already created. Return 1 (true) if the pipe
+   is found, -1 (false) if the pipe is not found.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. pl_active usage
+...
+        if (!pl_active("one")) {
+                # pipe does not exist
+                exit;
+        }
+...
+
+5.3.  pl_drop([ [min ], max ])
 
    For the current request, a "503 - Server Unavailable" reply is sent
    back. The reply may or may not have a "Retry-After" header. If no
@@ -477,7 +496,7 @@ with unexpected retcode=$var(check_result)\n");
    This function can be used from
    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE.
 
-   Example 1.17. pl_drop usage
+   Example 1.18. pl_drop usage
 ...
         if (!pl_check("one")) {
                 # send back a "503 - Server Unavailable"
