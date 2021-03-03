@@ -91,6 +91,10 @@ From: medabeda
 		</listitem>
 		</itemizedlist>
 		<para>
+			Note: it performs Posix regex matching and the 're' parameter
+			is compiled with the flags REG_EXTENDED|REG_ICASE|REG_NEWLINE.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
