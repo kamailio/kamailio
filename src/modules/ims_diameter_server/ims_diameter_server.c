@@ -280,6 +280,10 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		}
 		LM_DBG("Peer %.*s\n", s_peer.len, s_peer.s);
 	}
+	if (get_str_fparam(&s_message, msg, (fparam_t*)message) < 0) {
+		LM_ERR("failed to get Message\n");
+		return -1;
+	}
 	if (get_str_fparam(&s_appid, msg, (fparam_t*)appid) < 0) {
 		LM_ERR("failed to get App-ID\n");
 		return -1;
@@ -306,9 +310,14 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 	session = cdpb.AAACreateSession(0);
 
 	req = cdpb.AAACreateRequest(i_appid, i_commandcode, Flag_Proxyable, session);
+        if (session) {
+	        cdpb.AAADropSession(session);
+                session = 0;
+        }
+
 	if (!req) goto error1;
 
-	if (addAVPsfromJSON(req, &s_message)) {
+	if (!addAVPsfromJSON(req, &s_message)) {
 		LM_ERR("Failed to parse JSON Request\n");
 		return -1;
 	}
@@ -322,7 +331,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		} else {
 			resp = cdpb.AAASendRecvMessageToPeer(req, &s_peer);
 			LM_DBG("Successfully sent diameter\n");
-			if (AAAmsg2json(resp, &responsejson) == 1) {
+			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
@@ -337,7 +346,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 		} else {
 			resp = cdpb.AAASendRecvMessage(req);
 			LM_DBG("Successfully sent diameter\n");
-			if (AAAmsg2json(resp, &responsejson) == 1) {
+			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
