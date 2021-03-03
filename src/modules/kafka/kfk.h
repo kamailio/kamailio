@@ -56,9 +56,13 @@ int kfk_topic_parse(char *spec);
 /**
  * \brief send a message to a topic.
  *
+ * \param topic_name name of the topic
+ * \param message message to send.
+ * \param key to send.
+ *
  * \return 0 on success.
  */
-int kfk_message_send(str *topic, str *message);
+int kfk_message_send(str *topic_name, str *message, str *key);
 
 /**
  * \brief Initialize statistics.

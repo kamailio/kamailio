@@ -198,7 +198,7 @@ int t_append_branches(void) {
 	}
 	if (success_branch<=0) {
 		/* return always E_SEND for now
-		 * (the real reason could be: denied by onsend routes, blacklisted,
+		 * (the real reason could be: denied by onsend routes, blocklisted,
 		 *  send failed or any of the errors listed before + dns failed
 		 *  when attempting dns failover) */
 		ser_error=E_SEND;

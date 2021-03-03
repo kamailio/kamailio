@@ -46,8 +46,8 @@ int get_stored_info(
 		struct sip_msg *msg, subs_t *subs, int *error_ret, str *reply_str);
 int get_database_info(
 		struct sip_msg *msg, subs_t *subs, int *error_ret, str *reply_str);
-int get_db_subs_auth(subs_t *subs, int *found);
-int insert_db_subs_auth(subs_t *subs);
+static int ps_get_subs_auth(subs_t *subs, int *found);
+static int ps_insert_subs_auth(subs_t *subs);
 
 static str su_200_rpl = str_init("OK");
 static str pu_481_rpl = str_init("Subscription does not exist");
@@ -478,7 +478,7 @@ void delete_subs(
 	subs.callid = *callid;
 
 	/* delete record from hash table also if not in dbonly mode */
-	if(subs_dbmode != DB_ONLY) {
+	if(pres_subs_dbmode != DB_ONLY) {
 		unsigned int hash_code =
 				core_case_hash(pres_uri, ev_name, shtable_size);
 		if(delete_shtable(subs_htable, hash_code, &subs) < 0) {
@@ -490,7 +490,7 @@ void delete_subs(
 		}
 	}
 
-	if(subs_dbmode != NO_DB && delete_db_subs(to_tag, from_tag, callid) < 0)
+	if(pres_subs_dbmode != NO_DB && delete_db_subs(to_tag, from_tag, callid) < 0)
 		LM_ERR("Failed to delete subscription from database\n");
 }
 
@@ -605,7 +605,7 @@ int update_subscription(
 			return 1;
 		}
 		/* if subscriptions are stored in memory, update them */
-		if(subs_dbmode != DB_ONLY) {
+		if(pres_subs_dbmode != DB_ONLY) {
 			hash_code = core_case_hash(
 					&subs->pres_uri, &subs->event->name, shtable_size);
 			if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE) < 0) {
@@ -614,7 +614,7 @@ int update_subscription(
 			}
 		}
 		/* for modes that update the subscription synchronously in database, write in db */
-		if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH) {
+		if(pres_subs_dbmode == DB_ONLY || pres_subs_dbmode == WRITE_THROUGH) {
 			/* update in database table */
 			if(update_subs_db(subs, REMOTE_TYPE | LOCAL_TYPE) < 0) {
 				LM_ERR("updating subscription in database table\n");
@@ -624,9 +624,9 @@ int update_subscription(
 	} else {
 		LM_DBG("subscription not in dialog\n");
 		if(subs->expires != 0) {
-			if(subs_dbmode != DB_ONLY) {
+			if(pres_subs_dbmode != DB_ONLY) {
 				LM_DBG("inserting in shtable\n");
-				subs->db_flag = (subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
+				subs->db_flag = (pres_subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
 															   : INSERTDB_FLAG;
 				hash_code = core_case_hash(
 						&subs->pres_uri, &subs->event->name, shtable_size);
@@ -637,7 +637,7 @@ int update_subscription(
 				}
 			}
 
-			if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH) {
+			if(pres_subs_dbmode == DB_ONLY || pres_subs_dbmode == WRITE_THROUGH) {
 				subs->version = 1;
 				if(insert_subs_db(subs, REMOTE_TYPE) < 0) {
 					LM_ERR("failed to insert new record in database\n");
@@ -676,7 +676,7 @@ int update_subscription(
 				}
 			}
 		} else {
-			if(send_fast_notify && (notify(subs, NULL, NULL, 0, 0) < 0)) {
+			if(pres_send_fast_notify && (notify(subs, NULL, NULL, 0, 0) < 0)) {
 				LM_ERR("Could not send notify\n");
 				goto error;
 			}
@@ -689,7 +689,7 @@ int update_subscription(
 		}
 		*sent_reply = 1;
 
-		if(send_fast_notify && (notify(subs, NULL, NULL, 0, 0) < 0)) {
+		if(pres_send_fast_notify && (notify(subs, NULL, NULL, 0, 0) < 0)) {
 			LM_ERR("sending notify request\n");
 			goto error;
 		}
@@ -702,11 +702,15 @@ error:
 	return -1;
 }
 
-void msg_watchers_clean(unsigned int ticks, void *param)
+void ps_watchers_db_timer_clean(unsigned int ticks, void *param)
 {
 	db_key_t db_keys[2];
 	db_val_t db_vals[2];
 	db_op_t db_ops[2];
+
+	if(pa_db == NULL) {
+		return;
+	}
 
 	LM_DBG("cleaning pending subscriptions\n");
 
@@ -1044,8 +1048,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		}
 	}
 
-	/* ??? rename to avoid collisions with other symbols */
-	counter++;
+	pres_counter++;
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -1066,8 +1069,9 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 			reply_str = pu_400_rpl;
 			goto error;
 		}
-	} else
+	} else {
 		goto bad_event;
+	}
 
 	/* search event in the list */
 	parsed_event = (event_t *)msg->event->parsed;
@@ -1087,20 +1091,20 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		ev_param = ev_param->next;
 	}
 
-	if(extract_sdialog_info_ex(&subs, msg, min_expires, max_expires,
-			   &to_tag_gen, server_address, watcher_user, watcher_domain,
+	if(extract_sdialog_info_ex(&subs, msg, pres_min_expires, pres_max_expires,
+			   &to_tag_gen, pres_server_address, watcher_user, watcher_domain,
 			   &reply_code, &reply_str)
 			< 0) {
 		goto error;
 	}
 
-	if(pres_notifier_processes > 0 && !send_fast_notify
+	if(pres_notifier_processes > 0 && !pres_send_fast_notify
 			&& pa_dbf.start_transaction) {
 		if(pa_dbf.use_table(pa_db, &active_watchers_table) < 0) {
 			LM_ERR("unsuccessful use_table sql operation\n");
 			goto error;
 		}
-		if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
@@ -1146,11 +1150,11 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		subs.updated = NO_UPDATE_TYPE;
 		subs.updated_winfo = NO_UPDATE_TYPE;
 
-		if(!event->req_auth)
+		if(!event->req_auth) {
 			subs.status = ACTIVE_STATUS;
-		else {
+		} else {
 			/* query in watchers_table */
-			if(get_db_subs_auth(&subs, &found) < 0) {
+			if(ps_get_subs_auth(&subs, &found) < 0) {
 				LM_ERR("getting subscription status from watchers table\n");
 				goto error;
 			}
@@ -1181,7 +1185,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 					goto error;
 				}
 
-				if(insert_db_subs_auth(&subs) < 0) {
+				if(ps_insert_subs_auth(&subs) < 0) {
 					LM_ERR("while inserting record in watchers table\n");
 					goto error;
 				}
@@ -1203,7 +1207,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 	LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status),
 			(found == 0) ? "inserted" : "found in watcher table");
 
-	if(pres_notifier_processes > 0 && !send_fast_notify) {
+	if(pres_notifier_processes > 0 && !pres_send_fast_notify) {
 		if(update_subscription_notifier(msg, &subs, to_tag_gen, &sent_reply)
 				< 0) {
 			LM_ERR("in update_subscription_notifier\n");
@@ -1214,7 +1218,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		goto error;
 	}
 
-	if(pres_notifier_processes > 0 && !send_fast_notify
+	if(pres_notifier_processes > 0 && !pres_send_fast_notify
 			&& pa_dbf.end_transaction) {
 		if(pa_dbf.end_transaction(pa_db) < 0) {
 			LM_ERR("in end_transaction\n");
@@ -1232,7 +1236,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 	if(subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 
-	if((!server_address.s) || (server_address.len == 0)) {
+	if((!pres_server_address.s) || (pres_server_address.len == 0)) {
 		pkg_free(subs.local_contact.s);
 	}
 	if(subs.record_route.s)
@@ -1270,7 +1274,7 @@ error:
 	if(reason.s)
 		pkg_free(reason.s);
 
-	if(((!server_address.s) || (server_address.len == 0))
+	if(((!pres_server_address.s) || (pres_server_address.len == 0))
 			&& subs.local_contact.s) {
 		pkg_free(subs.local_contact.s);
 	}
@@ -1315,7 +1319,7 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 		lexpire = mexp;
 
 	if(lexpire && miexp && lexpire < miexp) {
-		if(min_expires_action == 1) {
+		if(pres_min_expires_action == 1) {
 			LM_DBG("subscription expiration invalid , requested=%u, minimum=%u,"
 				   " returning error \"423 Interval Too brief\"\n",
 					lexpire, miexp);
@@ -1512,7 +1516,7 @@ int extract_sdialog_info(subs_t *subs, struct sip_msg *msg, int mexp,
 {
 	int reply_code = 500;
 	str reply_str = pu_500_rpl;
-	return extract_sdialog_info_ex(subs, msg, min_expires, mexp, to_tag_gen,
+	return extract_sdialog_info_ex(subs, msg, pres_min_expires, mexp, to_tag_gen,
 			scontact, watcher_user, watcher_domain, &reply_code, &reply_str);
 }
 
@@ -1524,8 +1528,9 @@ int get_stored_info(
 	int i;
 	unsigned int hash_code;
 
-	if(subs_dbmode == DB_ONLY)
+	if(pres_subs_dbmode == DB_ONLY) {
 		return get_database_info(msg, subs, reply_code, reply_str);
+	}
 
 	/* first try to_user== pres_user and to_domain== pres_domain */
 	if(subs->pres_uri.s == NULL) {
@@ -1836,7 +1841,7 @@ void update_db_subs_timer_notifier(void)
 	query_cols[n_query_cols] = &str_expires_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) - expires_offset;
+	query_vals[n_query_cols].val.int_val = (int)time(NULL) - pres_expires_offset;
 	query_ops[n_query_cols] = OP_LT;
 	n_query_cols++;
 
@@ -1852,7 +1857,7 @@ void update_db_subs_timer_notifier(void)
 	result_cols[r_from_tag_col = n_result_cols++] = &str_from_tag_col;
 
 	if(pa_dbf.start_transaction) {
-		if(pa_dbf.start_transaction(pa_db, db_table_lock) < 0) {
+		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
@@ -1936,7 +1941,7 @@ void update_db_subs_timer_dbonly(void)
 	qcols[0] = &str_expires_col;
 	qvals[0].type = DB1_INT;
 	qvals[0].nul = 0;
-	qvals[0].val.int_val = (int)time(NULL) - expires_offset;
+	qvals[0].val.int_val = (int)time(NULL) - pres_expires_offset;
 	qops[0] = OP_LT;
 
 	/* query the expired subscriptions */
@@ -2083,7 +2088,7 @@ void update_db_subs_timer_dbnone(int no_lock)
 
 		while(s) {
 			printf_subs(s);
-			if(s->expires < now - expires_offset) {
+			if(s->expires < now - pres_expires_offset) {
 				LM_DBG("Found expired record\n");
 				if(!no_lock) {
 					if(handle_expired_subs(s) < 0) {
@@ -2308,7 +2313,7 @@ void update_db_subs_timer(db1_con_t *db, db_func_t *dbf, shtable_t hash_table,
 
 		while(s) {
 			printf_subs(s);
-			if(s->expires < now - expires_offset) {
+			if(s->expires < now - pres_expires_offset) {
 				LM_DBG("Found expired record\n");
 				if(!no_lock) {
 					if(handle_expired_func(s) < 0)
@@ -2408,7 +2413,7 @@ void update_db_subs_timer(db1_con_t *db, db_func_t *dbf, shtable_t hash_table,
 			lock_release(&hash_table[i].lock);
 	}
 
-	update_vals[0].val.int_val = (int)time(NULL) - expires_offset;
+	update_vals[0].val.int_val = (int)time(NULL) - pres_expires_offset;
 	update_ops[0] = OP_LT;
 	if(dbf->delete(db, update_cols, update_ops, update_vals, 1) < 0) {
 		LM_ERR("deleting expired information from database\n");
@@ -2430,7 +2435,7 @@ void timer_db_update(unsigned int ticks, void *param)
 		no_lock = 1;
 
 
-	switch(subs_dbmode) {
+	switch(pres_subs_dbmode) {
 		case DB_ONLY:
 			if(pres_notifier_processes > 0)
 				update_db_subs_timer_notifier();
@@ -2597,8 +2602,8 @@ int restore_db_subs(void)
 					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 					goto error;
 				}
-				event->next = EvList->events;
-				EvList->events = event;
+				event->next = pres_evlist->events;
+				pres_evlist->events = event;
 			}
 
 			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
@@ -2634,7 +2639,7 @@ int restore_db_subs(void)
 
 			s.sockinfo_str.s = (char *)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len = strlen(s.sockinfo_str.s);
-			s.db_flag = (subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
+			s.db_flag = (pres_subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
 													   : NO_UPDATEDB_FLAG;
 			hash_code =
 					core_case_hash(&s.pres_uri, &s.event->name, shtable_size);
@@ -2650,7 +2655,7 @@ int restore_db_subs(void)
 	pa_dbf.free_result(pa_db, result);
 
 	/* delete all records  only if in memory mode */
-	if(subs_dbmode == NO_DB) {
+	if(pres_subs_dbmode == NO_DB) {
 		if(pa_dbf.delete(pa_db, 0, 0, 0, 0) < 0) {
 			LM_ERR("deleting all records from database table\n");
 			return -1;
@@ -2664,7 +2669,7 @@ error:
 	return -1;
 }
 
-int get_db_subs_auth(subs_t *subs, int *found)
+static int ps_get_db_subs_auth(subs_t *subs, int *found)
 {
 	db_key_t db_keys[5];
 	db_val_t db_vals[5];
@@ -2751,7 +2756,20 @@ error:
 	return -1;
 }
 
-int insert_db_subs_auth(subs_t *subs)
+static int ps_get_subs_auth(subs_t *subs, int *found)
+{
+	if(pa_db==NULL) {
+		/* expecting the cache only mode -- watchers considered active */
+		subs->reason.s = NULL;
+		subs->status = ACTIVE_STATUS;
+		*found = 1;
+		return 0;
+	} else {
+		return ps_get_db_subs_auth(subs, found);
+	}
+}
+
+static int ps_insert_db_subs_auth(subs_t *subs)
 {
 	db_key_t db_keys[10];
 	db_val_t db_vals[10];
@@ -2833,6 +2851,17 @@ error:
 	return -1;
 }
 
+static int ps_insert_subs_auth(subs_t *subs)
+{
+	if(pa_db==NULL) {
+		/* expecting the cache only mode
+		 * - no insert, watchers considered active */
+		return 0;
+	} else {
+		return ps_insert_db_subs_auth(subs);
+	}
+}
+
 int get_subscribers_count_from_mem(struct sip_msg *msg, str pres_uri, str event)
 {
 	subs_t *s;
@@ -2894,7 +2923,7 @@ int get_subscribers_count_from_db(struct sip_msg *msg, str pres_uri, str event)
 
 int get_subscribers_count(struct sip_msg *msg, str pres_uri, str event)
 {
-	if(subs_dbmode == DB_ONLY) {
+	if(pres_subs_dbmode == DB_ONLY) {
 		return get_subscribers_count_from_db(msg, pres_uri, event);
 	} else {
 		return get_subscribers_count_from_mem(msg, pres_uri, event);

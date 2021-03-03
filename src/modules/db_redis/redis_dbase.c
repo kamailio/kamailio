@@ -81,6 +81,7 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
     const char *s;
     const str *tmpstr;
     int vtype = VAL_TYPE(v);
+    struct tm _time;
     _str->s = NULL;
     _str->len = 32; // default for numbers
 
@@ -144,7 +145,8 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
             LM_DBG("converting datetime value %ld to str\n", VAL_TIME(v));
             _str->s = (char*)pkg_malloc(_str->len);
             if (!_str->s) goto memerr;
-            strftime(_str->s, _str->len, "%Y-%m-%d %H:%M:%S", localtime(&(VAL_TIME(v))));
+            localtime_r(&(VAL_TIME(v)), &_time);
+            strftime(_str->s, _str->len, "%Y-%m-%d %H:%M:%S", &_time);
             _str->len = strlen(_str->s);
             break;
         case DB1_DOUBLE:
@@ -1150,6 +1152,7 @@ static int db_redis_compare_column(db_key_t k, db_val_t *v, db_op_t op, redisRep
     double d_value;
     str *tmpstr;
     char tmp[32] = "";
+    struct tm _time;
 
     int vtype = VAL_TYPE(v);
 
@@ -1281,7 +1284,8 @@ static int db_redis_compare_column(db_key_t k, db_val_t *v, db_op_t op, redisRep
             return -1;
         case DB1_DATETIME:
             // TODO: insert int value to db for faster comparison!
-            strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", localtime(&(VAL_TIME(v))));
+            localtime_r(&(VAL_TIME(v)), &_time);
+            strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", &_time);
             LM_DBG("comparing DATETIME %s %s %s\n", reply->str, op, tmp);
             if (!strcmp(op, OP_EQ)) {
                 return (strcmp(reply->str, tmp) == 0) ? 0 : -1;
@@ -1694,12 +1698,6 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         if (tmp)
             db_redis_key_free(&tmp);
 
-        // skip if delete all rows
-        if (!*manual_keys_count) {
-          db_redis_key_free (&query_v);
-          goto skipkeys;
-        }
-
         if (db_redis_key_prepend_string(&query_v, "HMGET", 5) != 0) {
             LM_ERR("Failed to set hmget command to pre-delete query\n");
             goto error;
@@ -1791,7 +1789,6 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         db_vals = NULL;
         db_redis_free_reply(&reply);
 
-      skipkeys:
         if (db_redis_key_add_string(&query_v, "DEL", 3) != 0) {
             LM_ERR("Failed to add del command to delete query\n");
             goto error;
@@ -2651,6 +2648,7 @@ int db_redis_delete(const db1_con_t* _h, const db_key_t* _k,
     } else {
         LM_DBG("no columns given to build query keys, falling back to full table scan\n");
         keys_count = 0;
+        do_table_scan = 1;
     }
 
     if (db_redis_perform_delete(_h, con, _k, _v, query_ops, _n,

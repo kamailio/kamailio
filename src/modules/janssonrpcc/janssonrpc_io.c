@@ -51,7 +51,7 @@
 #include "janssonrpc_connect.h"
 #include "netstring.h"
 
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 
 /* event bases */
 struct event_base* global_ev_base = NULL;

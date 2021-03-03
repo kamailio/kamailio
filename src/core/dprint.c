@@ -36,6 +36,8 @@
 #include "dprint.h"
 #include "pvar.h"
 
+static void log_callid_set(sip_msg_t *msg);
+
 char *_km_log_engine_type = NULL;
 char *_km_log_engine_data = NULL;
 
@@ -447,7 +449,7 @@ static pv_elem_t *log_prefix_pvs = NULL;
 
 #define LOG_PREFIX_SIZE	1024
 static char log_prefix_buf[LOG_PREFIX_SIZE];
-static str log_prefix_str;
+static str log_prefix_str = STR_NULL;
 
 void log_prefix_init(void)
 {
@@ -465,6 +467,7 @@ void log_prefix_init(void)
 
 void log_prefix_set(sip_msg_t *msg)
 {
+	log_callid_set(msg);
 	if(log_prefix_pvs == NULL)
 		return;
 	if(msg==NULL || !(IS_SIP(msg) || IS_SIP_REPLY(msg))) {
@@ -484,11 +487,22 @@ void log_prefix_set(sip_msg_t *msg)
 
 ksr_slog_f _ksr_slog_func = NULL;
 
+#define LOG_CALLID_SIZE	256
+static char log_callid_buf[LOG_CALLID_SIZE];
+static str log_callid_str = STR_NULL;
+
 static int _ksr_slog_json_flags = 0;
 #define KSR_SLOGJSON_FL_STRIPMSGNL (1<<0)
 #define KSR_SLOGJSON_FL_NOLOGNL (1<<1)
 #define KSR_SLOGJSON_FL_APPPREFIX (1<<2)
 #define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1<<3)
+#define KSR_SLOGJSON_FL_CALLID (1<<4)
+
+
+#define LOGV_CALLID_STR (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			&& (log_callid_str.len>0))?log_callid_str.s:"")
+#define LOGV_CALLID_LEN (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			&& (log_callid_str.len>0))?log_callid_str.len:0)
 
 static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 {
@@ -507,7 +521,7 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
 			len += 2;
 		} else if (s_in->s[i] < 32) {
-			len += 5;
+			len += 6;
 		} else {
 			len++;
 		}
@@ -528,9 +542,9 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 	p2 = s_out->s;
 	p1 = s_in->s;
 	while (p1 < s_in->s + s_in->len) {
-		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\')
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\') {
 			*p2++ = *p1++;
-		else {
+		} else {
 			*p2++ = '\\';
 			switch (token = *p1++) {
 			case '\\':
@@ -555,9 +569,10 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 				*p2++ = 't';
 				break;
 			default:
+				/* escape and print */
 				snprintf(p2, 6, "u%04x", token);
 				p2 += 5;
-				break;	/* escape and print */
+				break;
 			}
 		}
 	}
@@ -567,18 +582,34 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 }
 
 #define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_CFMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
 
 #define KSR_SLOG_SYSLOG_JSON_PFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_SYSLOG_JSON_CPFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
+	" \"%smessage\": \"%.*s\" }%s"
 
 #define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
 	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_CFMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\"," \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
 
 #define KSR_SLOG_STDERR_JSON_PFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
 	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": \"%.*s\", \"%smessage\": \"%.*s\" }%s"
+
+#define KSR_SLOG_STDERR_JSON_CPFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
+	" \"%smessage\": \"%.*s\" }%s"
 
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
@@ -620,28 +651,38 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		} else {
 			prefmsg = NAME ".";
 		}
-		efmt = KSR_SLOG_STDERR_JSON_PFMT;
-		sfmt = KSR_SLOG_SYSLOG_JSON_PFMT;
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
+			efmt = KSR_SLOG_STDERR_JSON_CPFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_CPFMT;
+		} else {
+			efmt = KSR_SLOG_STDERR_JSON_PFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_PFMT;
+		}
 	} else {
 		prefmsg = "";
-		efmt = KSR_SLOG_STDERR_JSON_FMT;
-		sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
+		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
+			efmt = KSR_SLOG_STDERR_JSON_CFMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_CFMT;
+		} else {
+			efmt = KSR_SLOG_STDERR_JSON_FMT;
+			sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
+		}
 	}
 	if (unlikely(log_stderr)) {
 		if (unlikely(log_color)) dprint_color(kld->v_level);
 		fprintf(stderr,
 				efmt, process_no, my_pid(),
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
-				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
-				prefmsg, s_out.len, s_out.s,
+				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
+				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 		if (unlikely(log_color)) dprint_color_reset();
 	} else {
 		_km_log_func(kld->v_facility,
 				sfmt,
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
-				kld->v_func, LOGV_PREFIX_LEN, LOGV_PREFIX_STR,
-				prefmsg, s_out.len, s_out.s,
+				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
+				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 	}
 	if(emode && s_out.s) {
@@ -687,9 +728,39 @@ void ksr_slog_init(char *ename)
 					case 'A':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOAPPPREFIXMSG;
 					break;
+					case 'c':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_CALLID;
+					break;
 				}
 				p++;
 			}
 		}
 	}
+}
+
+static void log_callid_set(sip_msg_t *msg)
+{
+	if(!(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID)) {
+		return;
+	}
+	if(msg==NULL) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
+			|| (msg->callid==NULL))) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	if(msg->callid->body.len >= LOG_CALLID_SIZE) {
+		log_callid_str.len = 0;
+		log_callid_str.s = NULL;
+		return;
+	}
+	log_callid_str.len = msg->callid->body.len;
+	memcpy(log_callid_buf, msg->callid->body.s, msg->callid->body.len);
+	log_callid_str.s = log_callid_buf;
+	log_callid_str.s[log_callid_str.len] = '\0';
 }

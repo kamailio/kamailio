@@ -36,19 +36,13 @@
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_param.h"
 #include "../../core/mem/mem.h"
 #include "../../core/dset.h"
 #include "loose.h"
 #include "rr_cb.h"
 #include "rr_mod.h"
 
-
-#define RR_ERROR -1		/*!< An error occurred while processing route set */
-#define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
-#define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
-#define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
-#define FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
-#define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
 
 #define RR_ROUTE_PREFIX ROUTE_PREFIX "<"
 #define RR_ROUTE_PREFIX_LEN (sizeof(RR_ROUTE_PREFIX)-1)
@@ -61,6 +55,7 @@ static msg_ctx_id_t routed_msg_id = {0};
 static str routed_params = {0,0};
 
 extern int rr_force_send_socket;
+extern int rr_sockname_mode;
 
 /*!
  * \brief Test whether we are processing pre-loaded route set by looking at the To tag
@@ -126,6 +121,11 @@ static inline int find_first_route(struct sip_msg* _m)
 static inline int is_myself(sip_uri_t *_puri)
 {
 	int ret;
+
+	if(_puri->host.len==0) {
+		/* catch uri without host (e.g., tel uri) */
+		return 0;
+	}
 
 	ret = check_self(&_puri->host,
 			_puri->port_no?_puri->port_no:SIP_PORT, 0);/* match all protos*/
@@ -620,7 +620,7 @@ static inline int after_strict(struct sip_msg* _m)
 			}
 			if (res > 0) { /* No next route found */
 				LM_DBG("after_strict: No next URI found\n");
-				return NOT_RR_DRIVEN;
+				return RR_NOT_DRIVEN;
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -749,7 +749,44 @@ static inline int after_strict(struct sip_msg* _m)
 static inline void rr_do_force_send_socket(sip_msg_t *_m, sip_uri_t *puri,
 		rr_t* rt, int rr2on)
 {
-	socket_info_t *si;
+	socket_info_t *si = NULL;
+	param_hooks_t phooks;
+	param_t* plist = NULL;
+	param_t *pit=NULL;
+	str s;
+
+
+	if(rr_sockname_mode!=0 && puri->params.len>0) {
+		s = puri->params;
+		if(s.s[s.len-1]==';') {
+			s.len--;
+		}
+		if (parse_params(&s, CLASS_ANY, &phooks, &plist)<0) {
+			LM_ERR("bad sip uri parameters: %.*s\n", s.len, s.s);
+			return;
+		}
+		for (pit = plist; pit; pit=pit->next) {
+			if (pit->name.len==SOCKNAME_ATTR_LEN
+					&& strncasecmp(pit->name.s, SOCKNAME_ATTR,
+							SOCKNAME_ATTR_LEN)==0) {
+				if(pit->body.len>0) {
+					si = ksr_get_socket_by_name(&pit->body);
+					if(si != NULL) {
+						LM_DBG("found socket with name: %.*s\n",
+								pit->body.len, pit->body.s);
+						set_force_socket(_m, si);
+						free_params(plist);
+						return;
+					} else {
+						LM_DBG("failed to find socket with name: %.*s\n",
+								pit->body.len, pit->body.s);
+					}
+				}
+			}
+		}
+		LM_DBG("use of sockname parameter enabled, but failed to find it\n");
+		free_params(plist);
+	}
 
 	if ((si = grep_sock_info(&puri->host,
 				puri->port_no?puri->port_no:proto_default_port(puri->proto),
@@ -823,7 +860,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 
 		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
 			LM_INFO("failed to process outbound flow-token\n");
-			return FLOW_TOKEN_BROKEN;
+			return RR_FLOW_TOKEN_BROKEN;
 		}
 
 		if (rr_force_send_socket && !use_ob) {
@@ -898,7 +935,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #ifdef ENABLE_USER_CHECK
 		/* check if it the ignored user */
 		if(uri_is_myself < 0)
-			return NOT_RR_DRIVEN;
+			return RR_NOT_DRIVEN;
 #endif
 		LM_DBG("Topmost URI is NOT myself\n");
 		routed_params.s = NULL;
@@ -958,9 +995,10 @@ done:
 /*!
  * \brief Do loose routing as per RFC3261
  * \param _m SIP message
- * \return -1 on failure, 1 on success
+ * \param _mode - 0: try loose or strict routing; 1: try loose routing only
+ * \return negative on failure or preloaded, 1 on success
  */
-int loose_route(struct sip_msg* _m)
+int loose_route_mode(sip_msg_t* _m, int _mode)
 {
 	int ret;
 
@@ -980,12 +1018,22 @@ int loose_route(struct sip_msg* _m)
 	} else if (ret == 1) {
 		return after_loose(_m, 1);
 	} else {
-		if (is_myself(&_m->parsed_uri)) {
+		if ((_mode==0) && (is_myself(&_m->parsed_uri))) {
 			return after_strict(_m);
 		} else {
 			return after_loose(_m, 0);
 		}
 	}
+}
+
+/*!
+ * \brief Do loose routing as per RFC3261
+ * \param _m SIP message
+ * \return negative on failure or preloaded, 1 on success
+ */
+int loose_route(struct sip_msg* _m)
+{
+	return loose_route_mode(_m, 0);
 }
 
 /**

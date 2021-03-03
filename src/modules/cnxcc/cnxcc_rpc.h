@@ -23,6 +23,8 @@
 #ifndef CNXCC_RPC_H_
 #define CNXCC_RPC_H_
 
+#include "../../core/rpc.h"
+
 void rpc_active_clients(rpc_t *rpc, void *ctx);
 void rpc_kill_call(rpc_t *rpc, void *ctx);
 void rpc_active_clients(rpc_t *rpc, void *ctx);

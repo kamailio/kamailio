@@ -461,15 +461,15 @@ modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
     <section id="tm.p.blst_503">
 	<title><varname>blst_503</varname> (integer)</title>
 	<para>
-		If set and the &kamailio; blacklist support is enabled, every 503 reply source is
-		added to the blacklist. The initial blacklist timeout (or ttl) depends
+		If set and the &kamailio; blocklist support is enabled, every 503 reply source is
+		added to the blocklist. The initial blocklist timeout (or ttl) depends
 		on the presence of a "Retry-After" header in the reply and the values of
 		the following tm parameters: <varname>blst_503_def_timeout</varname>, 
 		<varname>blst_503_min_timeout</varname> and 
 		<varname>blst_503_max_timeout</varname>.
 	</para>
 	<para>
-		<emphasis>WARNING:</emphasis>blindly allowing 503 blacklisting could 
+		<emphasis>WARNING:</emphasis>blindly allowing 503 blocklisting could 
 		be very easily exploited for DOS attacks in most network setups.
 	</para>
 	<para>
@@ -489,7 +489,7 @@ modparam("tm", "blst_503", 1)
 	<title><varname>blst_503_def_timeout</varname> (integer)</title>
 	<para>
 		
-		Blacklist interval in seconds for a 503 reply with no "Retry-After"
+		Blocklist interval in seconds for a 503 reply with no "Retry-After"
 		header.
 		See also <varname>blst_503</varname>, 
 		<varname>blst_503_min_timeout</varname> and 
@@ -497,7 +497,7 @@ modparam("tm", "blst_503", 1)
 	</para>
 	<para>
 		The default value is 0, which means that if no "Retry-After" header is
-		present, the 503 reply source will not be blacklisted (RFC 3261 conformant
+		present, the 503 reply source will not be blocklisted (RFC 3261 conformant
 		 behaviour).
 	</para>
 	<example>
@@ -514,7 +514,7 @@ modparam("tm", "blst_503_def_timeout", 120)
 	<title><varname>blst_503_min_timeout</varname> (integer)</title>
 	<para>
 		
-		Minimum blacklist interval in seconds for a 503 reply with a 
+		Minimum blocklist interval in seconds for a 503 reply with a 
 		"Retry-After" header. It will be used if the "Retry-After" value is 
 		smaller than this value.
 	</para>
@@ -540,7 +540,7 @@ modparam("tm", "blst_503_min_timeout", 30)
 	<title><varname>blst_503_max_timeout</varname> (integer)</title>
 	<para>
 		
-		Maximum blacklist interval in seconds for a 503 reply with a 
+		Maximum blocklist interval in seconds for a 503 reply with a 
 		"Retry-After header". It will be used if the "Retry-After" value is 
 		greater than this limit.
 	</para>
@@ -565,9 +565,9 @@ modparam("tm", "blst_503_max_timeout", 604800)
     <section id="tm.p.blst_methods_add">
 	<title><varname>blst_methods_add</varname> (unsigned integer)</title>
 	<para>
-		Bitmap of method types that trigger blacklisting on
+		Bitmap of method types that trigger blocklisting on
 		transaction timeouts. (This setting has no
-		effect on blacklisting because of send failures.)
+		effect on blocklisting because of send failures.)
 	</para>
 	<para>
 		The following values are associated to the request methods:
@@ -579,19 +579,19 @@ modparam("tm", "blst_503_max_timeout", 604800)
 	<para>
 		Change the value carefully, because requests that doesn't get
 		a provisional response (everything but INVITE) can easily
-		cause the next hop to be inserted into the blacklist
+		cause the next hop to be inserted into the blocklist
 		by mistake. For example the next hop is a proxy, it is alive,
 		but waiting for the response of the UAS, and has higher
 		fr_timer value.
 	</para>
 	<para>
-		The default value is 1, only INVITEs trigger blacklisting
+		The default value is 1, only INVITEs trigger blocklisting
 	</para>
 	<example>
 	    <title>Set <varname>blst_methods_add</varname> parameter</title>
 	    <programlisting>
 ...
-# INVITEs and REGISTERs trigger blacklisting
+# INVITEs and REGISTERs trigger blocklisting
 modparam("tm", "blst_methods_add", 33)
 ...
 	    </programlisting>
@@ -601,7 +601,7 @@ modparam("tm", "blst_methods_add", 33)
     <section id="tm.p.blst_methods_lookup">
 	<title><varname>blst_methods_lookup</varname> (unsigned integer)</title>
 	<para>
-		Bitmap of method types that are looked-up in the blacklist
+		Bitmap of method types that are looked-up in the blocklist
 		before being forwarded statefully.
 		See also <varname>blst_methods_add</varname>
 	</para>
@@ -1440,7 +1440,7 @@ end
 	</section>
 
 	<section id="tm.p.event_callback_lres_sent">
-		<title><varname>event_callback_lres</varname> (str)</title>
+		<title><varname>event_callback_lres_sent</varname> (str)</title>
 		<para>
 			The name of the function in the kemi configuration file (embedded
 			scripting language such as Lua, Python, ...) to be executed instead
@@ -1523,6 +1523,60 @@ modparam("tm", "relay_100", 1)
 modparam("tm", "rich_redirect", 3)
 ....
 			</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.exec_time_check">
+		<title><varname>exec_time_check</varname> (int)</title>
+		<para>
+			Duration in milliseconds for executing transaction failure callbacks
+			and failure_route block after which to do a safety check if
+			transaction is still active.
+		</para>
+		<para>
+			Set it to 0 in order to disable this check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5000 (5 seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>exec_time_check</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "exec_time_check", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.reply_relay_mode">
+		<title><varname>reply_relay_mode</varname> (int)</title>
+		<para>
+			If set to 1, a received 200ok response that was suspeneded is no
+			longer forwarded in the transactional context if another final
+			response was forward while 200ok was suspended. Forwarding the 200ok,
+			even it was received first, results in overwritting the transaction
+			response buffer that can impact matching of incoming ACKs.
+		</para>
+		<para>
+			Set it to 0 in order to disable this behaviour and attempt to forward
+			suspended 200ok in the transaction context. This was the behaviour
+			before the commit 18410da0.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_relay_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "reply_relay_mode", 0)
+...
+</programlisting>
 		</example>
 	</section>
 

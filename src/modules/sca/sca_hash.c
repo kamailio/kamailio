@@ -31,14 +31,14 @@ int sca_hash_table_create(sca_hash_table **ht, unsigned int size)
 	assert(ht != NULL);
 
 	*ht = shm_malloc(sizeof(sca_hash_table));
-	if (*ht == NULL) {
+	if(*ht == NULL) {
 		LM_ERR("Failed to shm_malloc space for hash table\n");
 		return (-1);
 	}
 
 	(*ht)->size = size;
-	(*ht)->slots = (sca_hash_slot *) shm_malloc(size * sizeof(sca_hash_slot));
-	if ((*ht)->slots == NULL) {
+	(*ht)->slots = (sca_hash_slot *)shm_malloc(size * sizeof(sca_hash_slot));
+	if((*ht)->slots == NULL) {
 		LM_ERR("Failed to shm_malloc hash table slots\n");
 		shm_free(*ht);
 		*ht = NULL;
@@ -46,8 +46,8 @@ int sca_hash_table_create(sca_hash_table **ht, unsigned int size)
 	}
 	memset((*ht)->slots, 0, size * sizeof(sca_hash_slot));
 
-	for (i = 0; i < (*ht)->size; i++) {
-		if (lock_init(&(*ht)->slots[i].lock) == NULL) {
+	for(i = 0; i < (*ht)->size; i++) {
+		if(lock_init(&(*ht)->slots[i].lock) == NULL) {
 			LM_ERR("Failed to initialized lock in hash table slot %d\n", i);
 			shm_free(*ht);
 			*ht = NULL;
@@ -69,8 +69,8 @@ int sca_hash_table_slot_kv_insert_unsafe(sca_hash_slot *slot, void *value,
 	assert(value != NULL);
 	assert(e_free != NULL);
 
-	new_entry = (sca_hash_entry *) shm_malloc(sizeof(sca_hash_entry));
-	if (new_entry == NULL) {
+	new_entry = (sca_hash_entry *)shm_malloc(sizeof(sca_hash_entry));
+	if(new_entry == NULL) {
 		LM_ERR("Failed to shm_malloc new hash table entry for slot %p\n", slot);
 		return (-1);
 	}
@@ -95,8 +95,8 @@ int sca_hash_table_slot_kv_insert(sca_hash_slot *slot, void *value,
 
 	lock_get(&slot->lock);
 
-	rc = sca_hash_table_slot_kv_insert_unsafe(slot, value, e_compare,
-			e_description, e_free);
+	rc = sca_hash_table_slot_kv_insert_unsafe(
+			slot, value, e_compare, e_description, e_free);
 
 	lock_release(&slot->lock);
 
@@ -111,8 +111,8 @@ int sca_hash_table_index_kv_insert(sca_hash_table *ht, int slot_idx,
 	assert(ht->slots != NULL);
 	assert(slot_idx >= 0 && slot_idx < ht->size);
 
-	return (sca_hash_table_slot_kv_insert(&ht->slots[slot_idx], value,
-			e_compare, e_description, e_free));
+	return (sca_hash_table_slot_kv_insert(
+			&ht->slots[slot_idx], value, e_compare, e_description, e_free));
 }
 
 int sca_hash_table_kv_insert(sca_hash_table *ht, str *key, void *value,
@@ -125,8 +125,8 @@ int sca_hash_table_kv_insert(sca_hash_table *ht, str *key, void *value,
 	assert(ht != NULL && !SCA_STR_EMPTY(key) && value != NULL);
 
 	hash_idx = sca_hash_table_index_for_key(ht, key);
-	rc = sca_hash_table_index_kv_insert(ht, hash_idx, value, e_compare,
-			e_description, e_free);
+	rc = sca_hash_table_index_kv_insert(
+			ht, hash_idx, value, e_compare, e_description, e_free);
 
 	return (rc);
 }
@@ -138,8 +138,8 @@ void *sca_hash_table_slot_kv_find_unsafe(sca_hash_slot *slot, str *key)
 
 	assert(slot != NULL && !SCA_STR_EMPTY(key));
 
-	for (e = slot->entries; e != NULL; e = e->next) {
-		if (e->compare(key, e->value) == 0) {
+	for(e = slot->entries; e != NULL; e = e->next) {
+		if(e->compare(key, e->value) == 0) {
 			value = e->value;
 		}
 	}
@@ -158,8 +158,8 @@ void *sca_hash_table_slot_kv_find(sca_hash_slot *slot, str *key)
 	return (value);
 }
 
-void *sca_hash_table_index_kv_find_unsafe(sca_hash_table *ht, int slot_idx,
-		str *key)
+void *sca_hash_table_index_kv_find_unsafe(
+		sca_hash_table *ht, int slot_idx, str *key)
 {
 	assert(ht != NULL && !SCA_STR_EMPTY(key));
 	assert(slot_idx >= 0 && slot_idx < ht->size);
@@ -167,8 +167,7 @@ void *sca_hash_table_index_kv_find_unsafe(sca_hash_table *ht, int slot_idx,
 	return (sca_hash_table_slot_kv_find_unsafe(&ht->slots[slot_idx], key));
 }
 
-void *
-sca_hash_table_index_kv_find(sca_hash_table *ht, int slot_idx, str *key)
+void *sca_hash_table_index_kv_find(sca_hash_table *ht, int slot_idx, str *key)
 {
 	assert(ht != NULL && !SCA_STR_EMPTY(key));
 	assert(slot_idx >= 0 && slot_idx < ht->size);
@@ -185,15 +184,15 @@ void *sca_hash_table_kv_find(sca_hash_table *ht, str *key)
 	return (sca_hash_table_index_kv_find(ht, slot_idx, key));
 }
 
-sca_hash_entry *sca_hash_table_slot_kv_find_entry_unsafe(sca_hash_slot *slot,
-		str *key)
+sca_hash_entry *sca_hash_table_slot_kv_find_entry_unsafe(
+		sca_hash_slot *slot, str *key)
 {
 	sca_hash_entry *e = NULL;
 
 	assert(slot != NULL && !SCA_STR_EMPTY(key));
 
-	for (e = slot->entries; e != NULL; e = e->next) {
-		if (e->compare(key, e->value) == 0) {
+	for(e = slot->entries; e != NULL; e = e->next) {
+		if(e->compare(key, e->value) == 0) {
 			break;
 		}
 	}
@@ -220,16 +219,16 @@ void sca_hash_entry_free(sca_hash_entry *e)
 	shm_free(e);
 }
 
-sca_hash_entry *sca_hash_table_slot_unlink_entry_unsafe(sca_hash_slot *slot,
-		sca_hash_entry *e)
+sca_hash_entry *sca_hash_table_slot_unlink_entry_unsafe(
+		sca_hash_slot *slot, sca_hash_entry *e)
 {
 	sca_hash_entry **cur_e;
 
 	assert(slot != NULL);
 	assert(e != NULL);
 
-	for (cur_e = &slot->entries; *cur_e != NULL; cur_e = &(*cur_e)->next) {
-		if (*cur_e == e) {
+	for(cur_e = &slot->entries; *cur_e != NULL; cur_e = &(*cur_e)->next) {
+		if(*cur_e == e) {
 			*cur_e = e->next;
 
 			/* ensure any attempted traversal using this entry goes nowhere */
@@ -248,12 +247,12 @@ int sca_hash_table_slot_kv_delete_unsafe(sca_hash_slot *slot, str *key)
 	sca_hash_entry *e;
 
 	e = sca_hash_table_slot_kv_find_entry_unsafe(slot, key);
-	if (e == NULL) {
+	if(e == NULL) {
 		return (-1);
 	}
 
 	e = sca_hash_table_slot_unlink_entry_unsafe(slot, e);
-	if (e) {
+	if(e) {
 		e->free_entry(e->value);
 		shm_free(e);
 	}
@@ -290,8 +289,8 @@ static void sca_hash_slot_print(sca_hash_slot *hs)
 {
 	sca_hash_entry *e;
 
-	for (e = hs->entries; e != NULL; e = e->next) {
-		if (e->description != NULL) {
+	for(e = hs->entries; e != NULL; e = e->next) {
+		if(e->description != NULL) {
 			e->description(e->value);
 		} else {
 			LM_DBG("0x%p\n", e->value);
@@ -303,7 +302,7 @@ void sca_hash_table_print(sca_hash_table *ht)
 {
 	unsigned int i;
 
-	for (i = 0; i < ht->size; i++) {
+	for(i = 0; i < ht->size; i++) {
 		LM_DBG("SLOT %d:\n", i);
 		sca_hash_slot_print(&ht->slots[i]);
 	}
@@ -314,18 +313,18 @@ void sca_hash_table_free(sca_hash_table *ht)
 	sca_hash_entry *e, *e_tmp;
 	unsigned int i;
 
-	if (ht == NULL) {
+	if(ht == NULL) {
 		return;
 	}
 
-	for (i = 0; i < ht->size; i++) {
-		if (ht->slots[i].entries == NULL) {
+	for(i = 0; i < ht->size; i++) {
+		if(ht->slots[i].entries == NULL) {
 			continue;
 		}
 
 		sca_hash_table_lock_index(ht, i);
 
-		for (e = ht->slots[i].entries; e != NULL; e = e_tmp) {
+		for(e = ht->slots[i].entries; e != NULL; e = e_tmp) {
 			e_tmp = e->next;
 
 			e->free_entry(e->value);

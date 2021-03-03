@@ -1,0 +1,2 @@
+id(int,auto) prefix(string) allowlist(int) description(string,null) 
+0:globalblocklist:1

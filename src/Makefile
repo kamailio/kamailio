@@ -614,7 +614,7 @@ deb:
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/sid debian; \
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)
@@ -626,7 +626,7 @@ deb-stable:
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/jessie debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/buster debian; \
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)

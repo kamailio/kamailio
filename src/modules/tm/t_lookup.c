@@ -1067,8 +1067,7 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 			if (cfg_get(tm, tm_cfg, tm_aggregate_auth) &&
 					(p_msg->REPLY_STATUS==401 || p_msg->REPLY_STATUS==407)){
 				if (parse_headers(p_msg, HDR_EOH_F,0)==-1){
-					LM_WARN("WARNING: the reply cannot be "
-							"completely parsed\n");
+					LM_WARN("the reply cannot be completely parsed\n");
 					/* try to continue, via1 & cseq are checked below */
 				}
 			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F|HDR_CALLID_F,
@@ -1495,7 +1494,8 @@ int t_unref( struct sip_msg* p_msg  )
 				LM_BUG("called w/ kr=REQ_ERR_DELAYED in failure"
 						" route for %p\n", T);
 			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
-				LM_ERR("generation of a delayed stateful reply"
+				// could be a valid error, or due to a immediate CANCEL
+				LM_WARN("generation of a delayed stateful reply"
 						" failed\n");
 				t_release_transaction(T);
 			}
@@ -1635,6 +1635,55 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 		unsigned int label)
 {
 	return t_lookup_ident_filter(trans, hash_index, label, 0);
+}
+
+/** find a transaction based on its identifier (hash_index:label).
+ * @param trans - double pointer to cell structure, that will be filled
+ *                with the result (a pointer to an existing transaction or
+ *                0).
+ * @param hash_index - searched transaction hash_index (part of the ident).
+ * @param label - searched transaction label (part of the ident).
+ * @param filter - if 1, skip transaction put on-wait (terminated state).
+ * @return transaction cell pointer
+ * Note: it does not sets T and T_branch, nor reference the transaction,
+ *   useful to quickly check if a transaction still exists
+ */
+tm_cell_t *t_find_ident_filter(unsigned int hash_index, unsigned int label,
+		int filter)
+{
+	tm_cell_t *p_cell;
+	tm_entry_t *hash_bucket;
+
+	if(unlikely(hash_index >= TABLE_ENTRIES)){
+		LM_ERR("invalid hash_index=%u\n", hash_index);
+		return NULL;
+	}
+
+	LOCK_HASH(hash_index);
+
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
+	/* all the transactions from the entry are compared */
+	clist_foreach(hash_bucket, p_cell, next_c) {
+		prefetch_loc_r(p_cell->next_c, 1);
+		if(p_cell->label == label) {
+			if(filter==1) {
+				if(t_on_wait(p_cell)) {
+					/* transaction in terminated state */
+					UNLOCK_HASH(hash_index);
+					LM_DBG("transaction in terminated phase - skipping\n");
+					return NULL;
+				}
+			}
+			UNLOCK_HASH(hash_index);
+			LM_DBG("transaction found\n");
+			return p_cell;
+		}
+	}
+
+	UNLOCK_HASH(hash_index);
+	LM_DBG("transaction not found\n");
+
+	return NULL;
 }
 
 /** check if a transaction is local or not.

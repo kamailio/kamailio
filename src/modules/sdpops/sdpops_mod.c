@@ -1324,6 +1324,26 @@ static int w_sdp_with_transport_like(sip_msg_t* msg, char* transport, char *bar)
 }
 
 /**
+ *
+ */
+static int ki_sdp_with_transport(sip_msg_t* msg, str* transport)
+{
+	if(sdp_with_transport(msg, transport, 0)<=0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_sdp_with_transport_like(sip_msg_t* msg, str* transport)
+{
+	if(sdp_with_transport(msg, transport, 1)<=0)
+		return -1;
+	return 1;
+}
+
+/**
  * @brief remove streams matching the m=media port 'transport'
  * @return -1 - error; 0 - not found; >=1 - found
  */
@@ -2227,6 +2247,16 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	},
 	{ str_init("sdpops"), str_init("sdp_transport"),
 		SR_KEMIP_INT, ki_sdp_transport,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_transport"),
+		SR_KEMIP_INT, ki_sdp_with_transport,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_with_transport_like"),
+		SR_KEMIP_INT, ki_sdp_with_transport_like,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

@@ -31,6 +31,7 @@
 #include "../../core/counters.h"
 #include "../../core/kemi.h"
 #include "../../core/mem/mem.h"
+#include "../../core/events.h"
 #include "ws_conn.h"
 #include "websocket.h"
 
@@ -184,14 +185,14 @@ void wsconn_destroy(void)
 	}
 }
 
-int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
+int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 {
 	int cur_cons, max_cons;
-	int id = rcv.proto_reserved1;
+	int id = rcv->proto_reserved1;
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
-	LM_DBG("wsconn_add id [%d]\n", id);
+	LM_DBG("connection id [%d]\n", id);
 
 	/* Allocate and fill in new WebSocket connection */
 	wsc = shm_malloc(sizeof(ws_connection_t) + BUF_SIZE + 1);
@@ -203,13 +204,13 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 	wsc->id = id;
 	wsc->id_hash = id_hash;
 	wsc->state = WS_S_OPEN;
-	wsc->rcv = rcv;
+	wsc->rcv = *rcv;
 	wsc->sub_protocol = sub_protocol;
 	wsc->run_event = 0;
 	wsc->frag_buf.s = ((char *)wsc) + sizeof(ws_connection_t);
 	atomic_set(&wsc->refcnt, 0);
 
-	LM_DBG("wsconn_add new wsc => [%p], ref => [%d]\n", wsc,
+	LM_DBG("new wsc => [%p], ref => [%d]\n", wsc,
 			atomic_get(&wsc->refcnt));
 
 	WSCONN_LOCK;
@@ -229,7 +230,7 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 
 	WSCONN_UNLOCK;
 
-	LM_DBG("wsconn_add added to conn_table wsc => [%p], ref => [%d]\n", wsc,
+	LM_DBG("added to conn_table wsc => [%p], ref => [%d]\n", wsc,
 			atomic_get(&wsc->refcnt));
 
 	/* Update connection statistics */
@@ -259,6 +260,14 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 	lock_release(wsstat_lock);
 
 	return 0;
+}
+
+static void wsconn_run_close_callback(ws_connection_t *wsc)
+{
+	sr_event_param_t evp = {0};
+	wsc->rcv.proto_reserved1 = wsc->id;
+	evp.rcv = &wsc->rcv;
+	sr_event_exec(SREV_TCP_WS_CLOSE, &evp);
 }
 
 static void wsconn_run_route(ws_connection_t *wsc)
@@ -320,6 +329,8 @@ static void wsconn_dtor(ws_connection_t *wsc)
 
 	if(wsc->run_event)
 		wsconn_run_route(wsc);
+
+	wsconn_run_close_callback(wsc);
 
 	shm_free(wsc);
 

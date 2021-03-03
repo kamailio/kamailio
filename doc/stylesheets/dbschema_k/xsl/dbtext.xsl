@@ -53,6 +53,7 @@
 
     <!-- version data template -->
     <xsl:template match="version">
+	<xsl:text>0:</xsl:text>
 	<xsl:call-template name="get-name">
 	    <xsl:with-param name="select" select="parent::table"/>
 	</xsl:call-template>

@@ -337,7 +337,7 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 	}
 
 	/* Check if anything needs to be done */
-	LM_DBG("nr_branches is %d\n", nr_branches);
+	LM_DBG("nr_branches is %d - new uri mode %d\n", nr_branches, ruri_is_new);
 
 	if ((nr_branches == 0) || ((nr_branches == 1) && !ruri_is_new)) {
 		LM_DBG("nothing to do - only one contact!\n");
@@ -347,7 +347,7 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 	/* Allocate memory for first contact */
 	contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
 	if (!contacts) {
-		LM_ERR("no memory for contact info\n");
+		PKG_MEM_ERROR_FMT("for contact info\n");
 		return -1;
 	}
 	memset(contacts, 0, sizeof(struct contact));
@@ -418,7 +418,7 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 
 		next = (struct contact *)pkg_malloc(sizeof(struct contact));
 		if (!next) {
-			LM_ERR("no memory for contact info\n");
+			PKG_MEM_ERROR_FMT("for contact info\n");
 			free_contact_list(contacts);
 			return -1;
 		}
@@ -459,11 +459,20 @@ int ki_t_load_contacts_mode(struct sip_msg* msg, int mode)
 
 		prev = (struct contact *)0;
 		curr = contacts;
-		while (curr &&
-				((curr->q_index < next->q_index) ||
-				 ((curr->q_index == next->q_index) && (next->path.len == 0)))) {
-			prev = curr;
-			curr = curr->next;
+		if (mode == T_LOAD_PROPORTIONAL) {
+			while (curr &&
+					((curr->q_index < next->q_index) ||
+					 ((curr->q_index == next->q_index) && (next->path.len == 0)))) {
+				prev = curr;
+				curr = curr->next;
+			}
+		} else {
+			while (curr &&
+					((curr->q < next->q) ||
+					 ((curr->q == next->q) && (next->path.len == 0)))) {
+				prev = curr;
+				curr = curr->next;
+			}
 		}
 		if (!curr) {
 			next->next = (struct contact *)0;
@@ -680,13 +689,13 @@ int ki_t_next_contacts(struct sip_msg* msg)
 		instance = vavp->val.v.s;
 		il = (struct instance_list *)pkg_malloc(sizeof(struct instance_list));
 		if (!il) {
-			LM_ERR("no memory for instance list entry\n");
+			PKG_MEM_ERROR_FMT("for instance list entry\n");
 			return -1;
 		}
 		il->instance.s = pkg_malloc(instance.len);
 		if (!il->instance.s) {
 			pkg_free(il);
-			LM_ERR("no memory for instance list instance\n");
+			PKG_MEM_ERROR_FMT("for instance list instance\n");
 			return -1;
 		}
 		il->instance.len = instance.len;
@@ -859,13 +868,13 @@ int ki_t_next_contacts(struct sip_msg* msg)
 				ilp = (struct instance_list *)
 					pkg_malloc(sizeof(struct instance_list));
 				if (!ilp) {
-					LM_ERR("no memory for instance list element\n");
+					PKG_MEM_ERROR_FMT("for instance list element\n");
 					free_instance_list(il);
 					return -1;
 				}
 				ilp->instance.s = pkg_malloc(instance.len);
 				if (!ilp->instance.s) {
-					LM_ERR("no memory for instance list instance\n");
+					PKG_MEM_ERROR_FMT("for instance list instance\n");
 					pkg_free(ilp);
 					free_instance_list(il);
 					return -1;

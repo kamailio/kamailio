@@ -124,7 +124,7 @@ static const char* dns_str_errors[]={
 	"bad A or AAAA entry",
 	"unresolvable A or AAAA request",
 	"invalid ip in A or AAAA record",
-	"blacklisted ip",
+	"blocklisted ip",
 	"name too long ", /* try again with a shorter name */
 	"ip AF mismatch", /* address family mismatch */
 	"unresolvable NAPTR request",
@@ -2304,6 +2304,7 @@ inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 						return 0;
 				}
 				memcpy(p_addr[i], ip, len);
+				rr_no++;
 	}
 	if (i==0){
 		LM_DBG("no good records found (%d) for %.*s (%d)\n",
@@ -2487,37 +2488,6 @@ struct hostent* dns_resolvehost(char* name)
 }
 
 
-
-
-#if 0
-/* resolves a host name trying  NAPTR,  SRV, A & AAAA lookups, for details
- *  see dns_sip_resolve()
- *  FIXME: this version will return only the first ip
- * returns: hostent struct & *port filled with the port from the SRV record;
- *  0 on error
- */
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
-										char* proto)
-{
-	struct dns_srv_handle h;
-	struct ip_addr ip;
-	int ret;
-
-	if ((cfg_get(core, core_cfg, use_dns_cache==0)) || (dns_hash==0)){
-		/* not init or off => use normal, non-cached version */
-		return _sip_resolvehost(name, port, proto);
-	}
-	dns_srv_handle_init(&h);
-	ret=dns_sip_resolve(&h, name, &ip, port, proto, dns_flags);
-	dns_srv_handle_put(&h);
-	if (ret>=0)
-		return ip_addr2he(name, &ip);
-	return 0;
-}
-#endif
-
-
-
 /* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
@@ -2643,6 +2613,10 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 		}
 		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n",
 				naptr->repl_len, naptr->repl, (int)naptr_proto);
+		if (naptr->skip_record) {
+			i++;
+			continue;
+		}
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
 								naptr, naptr_proto))
@@ -3202,6 +3176,63 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 
 
 #ifdef USE_NAPTR
+
+
+static void mark_skip_current_naptr(struct dns_rr* naptr_head, struct dns_hash_entry* srv)
+{
+	int i;
+	struct dns_rr* l;
+	struct naptr_rdata* naptr;
+
+	if (!naptr_head || !srv) {
+		return;
+	}
+
+	for(l=naptr_head, i=0; l && (i<MAX_NAPTR_RRS); l=l->next, i++) {
+		naptr = (struct naptr_rdata *) l->rdata;
+		if (naptr == 0) {
+			break;
+		}
+		if (naptr->skip_record) {
+			continue;
+		}
+		if (srv->name_len == naptr->repl_len && !memcmp(srv->name, naptr->repl, srv->name_len)) {
+			naptr->skip_record = 1;
+			LM_NOTICE("Mark to skip %.*s NAPTR record due to all IPs are unreachable\n", naptr->repl_len, naptr->repl);
+			break;
+		}
+	}
+}
+
+
+inline static int have_more_active_naptr(struct dns_rr* naptr_head)
+{
+	int i, res = 0;
+	struct dns_rr* l;
+	struct naptr_rdata* naptr;
+	char naptr_proto;
+
+	if (!naptr_head) {
+		return res;
+	}
+
+	for(l=naptr_head, i=0; l && (i<MAX_NAPTR_RRS); l=l->next, i++) {
+		naptr = (struct naptr_rdata *) l->rdata;
+		if (naptr == 0) {
+			break;
+		}
+		if (naptr->skip_record) {
+			continue;
+		} else if ((naptr_proto = naptr_get_sip_proto(naptr)) <= 0) {
+			continue;
+		} else if ((naptr_proto_supported(naptr_proto))) {
+			res = 1;
+			break;
+		}
+	}
+	return res;
+}
+
 /* resolves a host name trying:
  * - NAPTR lookup if the address is not an ip and proto!=0, port!=0
  *    *port==0 and *proto=0 and if flags allow NAPTR lookups
@@ -3226,9 +3257,11 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 	char n_proto, origproto;
 	str srv_name;
 	int ret;
+	int try_lookup_naptr = 0;
 
 	ret=-E_DNS_NO_NAPTR;
 	if(proto) origproto=*proto;
+	else origproto = PROTO_NONE;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LM_WARN("called before dns cache initialization\n");
 		h->srv=h->a=0;
@@ -3258,9 +3291,30 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 			*port=h->port;
 			return 0;
 		}
-		/* do naptr lookup */
-		if ((e=dns_get_entry(name, T_NAPTR))==0)
-			goto naptr_not_found;
+		try_lookup_naptr = 1;
+	}
+	/* check if it's an ip address, dns_srv_sip_resolve will return the right failure */
+	if (str2ip(name) || str2ip6(name))
+		goto naptr_not_found;
+	/* do naptr lookup */
+	if ((e=dns_get_entry(name, T_NAPTR))==0)
+		goto naptr_not_found;
+
+	if (!try_lookup_naptr) {
+		if(proto) *proto=origproto;
+		int res = dns_srv_sip_resolve(h, name, ip, port, proto, flags);
+		if (res) {
+			mark_skip_current_naptr(e->rr_lst, h->srv);
+			if (have_more_active_naptr(e->rr_lst)) {
+				// No more avaliable IP for current NAPTR record, let's try next one
+				try_lookup_naptr = 1;
+			}
+		} else {
+			return res;
+		}
+	}
+
+	if (try_lookup_naptr) {
 		naptr_iterate_init(&tried_bmp);
 		while(dns_naptr_sip_iterate(e->rr_lst, &tried_bmp,
 												&srv_name, &n_proto)){

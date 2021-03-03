@@ -870,8 +870,10 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		SET_STR_VALUE(values+6, cell->tag[DLG_CALLEE_LEG]);
 		SET_PROPER_NULL_FLAG(cell->tag[DLG_CALLEE_LEG], values, 6);
 
-		LM_DBG("sock_info is %.*s\n", 
+		LM_DBG("caller sock_info is %.*s, callee sock_info is %.*s\n",
 			cell->bind_addr[DLG_CALLER_LEG]->sock_str.len,
+			cell->bind_addr[DLG_CALLER_LEG]->sock_str.s,
+			cell->bind_addr[DLG_CALLEE_LEG]->sock_str.len,
 			cell->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
 
 		SET_STR_VALUE(values+7, cell->bind_addr[DLG_CALLER_LEG]->sock_str);

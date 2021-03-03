@@ -26,8 +26,8 @@
 #include "dmqnode.h"
 #include "dmq.h"
 
-dmq_node_t *self_node;
-dmq_node_t *notification_node;
+dmq_node_t *dmq_self_node;
+dmq_node_t *dmq_notification_node;
 
 /* name */
 str dmq_node_status_str = str_init("status");
@@ -240,7 +240,7 @@ dmq_node_t *find_dmq_node_uri(dmq_node_list_t *list, str *uri)
 
 dmq_node_t *find_dmq_node_uri2(str *uri)
 {
-	return find_dmq_node_uri(node_list, uri);
+	return find_dmq_node_uri(dmq_node_list, uri);
 }
 
 /**

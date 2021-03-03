@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 iptelorg GmbH 
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,17 +70,17 @@ inline static int str_hash_alloc(struct str_hash_table* ht, int size)
 inline static void str_hash_init(struct str_hash_table* ht)
 {
 	int r;
-	
+
 	for (r=0; r<ht->size; r++) clist_init(&(ht->table[r]), next, prev);
 }
 
 
 
-inline static void str_hash_add(struct str_hash_table* ht, 
+inline static void str_hash_add(struct str_hash_table* ht,
 								struct str_hash_entry* e)
 {
 	int h;
-	
+
 	h=get_hash1_raw(e->key.s, e->key.len) % ht->size;
 	clist_insert(&ht->table[h], e, next, prev);
 }
@@ -92,7 +92,7 @@ inline static struct str_hash_entry* str_hash_get(struct str_hash_table* ht,
 {
 	int h;
 	struct str_hash_entry* e;
-	
+
 	h=get_hash1_raw(key, len) % ht->size;
 	clist_foreach(&ht->table[h], e, next){
 		if ((e->key.len==len) && (memcmp(e->key.s, key, len)==0))
@@ -101,6 +101,30 @@ inline static struct str_hash_entry* str_hash_get(struct str_hash_table* ht,
 	return 0;
 }
 
+inline static void str_hash_case_add(struct str_hash_table* ht,
+								struct str_hash_entry* e)
+{
+	int h;
+
+	h=get_hash1_case_raw(e->key.s, e->key.len) % ht->size;
+	clist_insert(&ht->table[h], e, next, prev);
+}
+
+
+
+inline static struct str_hash_entry* str_hash_case_get(struct str_hash_table* ht,
+									const char* key, int len)
+{
+	int h;
+	struct str_hash_entry* e;
+
+	h=get_hash1_case_raw(key, len) % ht->size;
+	clist_foreach(&ht->table[h], e, next){
+		if ((e->key.len==len) && (strncasecmp(e->key.s, key, len)==0))
+			return e;
+	}
+	return 0;
+}
 
 #define str_hash_del(e) clist_rm(e, next, prev)
 

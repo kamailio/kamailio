@@ -125,8 +125,7 @@ struct action* mk_action(enum action_type type, int count, ...)
 	for (i=0; i<a->count; i++) {
 		a->val[i].type = va_arg(args, int);
 		a->val[i].u.data = va_arg(args, void *);
-
-		DBG("ACTION_#%d #%d/%d: %d(%x)/ %p\n", a->type, i, a->count, a->val[i].type, a->val[i].type, a->val[i].u.data);
+		DBG("ACTION type%d, i/count %d/%d: type %d(%x)/ data %p\n", a->type, i, a->count, a->val[i].type, a->val[i].type, a->val[i].u.data);
 	}
 	va_end(args);
 

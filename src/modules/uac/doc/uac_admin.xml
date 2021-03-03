@@ -334,7 +334,7 @@ modparam("uac","credential","username:domain:password")
 				<title>Set <varname>auth_realm_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_realm_avp","$avp(i:10)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
 ...
 				</programlisting>
 			</example>
@@ -356,7 +356,7 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
 				<title>Set <varname>auth_username_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_username_avp","$avp(i:11)")
+modparam("uac","auth_username_avp","$avp(auser)")
 ...
 				</programlisting>
 			</example>
@@ -378,7 +378,7 @@ modparam("uac","auth_username_avp","$avp(i:11)")
 				<title>Set <varname>auth_password_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","auth_password_avp","$avp(i:12)")
+modparam("uac","auth_password_avp","$avp(apasswd)")
 ...
 				</programlisting>
 			</example>
@@ -487,6 +487,10 @@ modparam("uac", "reg_db_table", "uacreg")
 			host part, can have port and parameters. Must not include 'sip:'.
 			The username part of the Contact: URI will be the L_UUID field in the database.
 			</para>
+			<para>
+			A contact_addr value in the uacreg table will
+			override the parameter for this particular entry.
+			</para>
 			<example>
 				<title>Set <varname>reg_contact_addr</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -593,6 +597,38 @@ modparam("uac", "reg_gc_interval", 60)
 		</example>
 	</section>
 
+	<section id="uac.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[uac:reply] block.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the value can be: 'uac:reply'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+ <programlisting format="linespecific">
+ ...
+modparam("uac", "event_callback", "ksr_uac_event")
+
+function ksr_uac_event(evname)
+	KSR.info("===== uac module triggered event: " .. evname .. "\n");
+	return 1;
+end
+ ...
+ </programlisting>
+		</example>
+	</section>
+  
+  
 	</section>
 
 	<section>
@@ -841,9 +877,10 @@ failure_route[TRUNKAUTH] {
         $avp(auser) = "test";
         $avp(apass) = "test";
         # $avp(apass) = "36d0a02793542b4961e8348347236dbf";
-        uac_auth();
-        # uac_auth("1");
-        t_relay();
+        # if (uac_auth("1")) {
+        if (uac_auth()) {
+            t_relay();
+        }
         exit;
     }
 }
@@ -1239,6 +1276,28 @@ event_route[uac:reply] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_unregister">
+			<title>
+				<function moreinfo="none">uac.reg_unregister</function>
+			</title>
+		<para>
+			Send REGISTER with expires 0 for matching record, disabling it.
+			The command has two parameter: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matched against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_unregister</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_unregister l_uuid account123
+   kamcmd uac.reg_unregister l_uuid s:12345678
+...
+			</programlisting>
+		</example>
+		</section>
+
 		<section id="uac.r.uac.reg_reload">
 			<title>
 				<function moreinfo="none">uac.reg_reload</function>
@@ -1324,10 +1383,12 @@ event_route[uac:reply] {
 			<listitem><para>flags</para></listitem>
 			<listitem><para>reg_delay</para></listitem>
 			<listitem><para>socket</para></listitem>
+			<listitem><para>contact_addr</para></listitem>
 		</itemizedlist>
 		</para>
 		<para>
-		Use a dot (.) if no value should be set for auth_password or auth_ha1.
+			Use a dot (.) if no value should be set for auth_password, auth_ha1,
+			or contact_addr.
 		</para>
 
 		<example>
@@ -1338,7 +1399,25 @@ event_route[uac:reply] {
 ...
 			</programlisting>
 		</example>
-	</section>
+		</section>
+
+		<section id="uac.r.uac.reg_remove">
+			<title>
+				<function moreinfo="none">uac.reg_remove</function>
+			</title>
+		<para>
+		Remove a UAC remote registration record by l_uuid.
+		</para>
+
+		<example>
+		<title><function>uac.reg_remove</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_remove my_l_uuid
+...
+			</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
@@ -1422,6 +1501,13 @@ event_route[uac:reply] {
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>reg_delay</emphasis> - delay initial registration with at least reg_delay seconds, e.g.,: 3
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>contact_addr</emphasis> - contact address to be used for this record
+			instead of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It can
+			be set to '.' (dot) to skip setting it and then reg_contact_addr modparam is used.
 			</para></listitem>
 		</itemizedlist>
 		<itemizedlist>

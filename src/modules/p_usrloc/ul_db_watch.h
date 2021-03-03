@@ -35,6 +35,6 @@ int ul_register_watch_db(int id);
 
 int ul_unregister_watch_db(int id);
 
-void check_master_db(int dbm_write_default);
+void check_master_db();
 
 #endif

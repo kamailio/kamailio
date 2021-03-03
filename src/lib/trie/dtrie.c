@@ -27,13 +27,13 @@
  * Provides a generic trie datastructure and utility functions to
  * initialize and manage individual nodes. Its optimized towards
  * the usecase of a matching tree that contains only digits, e.g.
- * for LCR or blacklist modules. Nevertheless it also supports the
+ * for LCR or blocklist modules. Nevertheless it also supports the
  * matching of characters when configured correctly. For normal
  * digit only matching you need to use a branches parameter of
  * 10, when you use 128, the complete standard ascii charset is
  * available for matching. The trie is setup in shared memory.
  * - Module: \ref carrierroute
- * - Module: \ref userblacklist
+ * - Module: \ref userblocklist
  * @{
  */
 

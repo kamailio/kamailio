@@ -36,10 +36,12 @@ Daniel-Constantin Mierla
               3.9. sanity_checks (integer)
               3.10. uri_prefix_checks (integer)
               3.11. event_callback (str)
+              3.12. event_mode (int)
 
         4. Event Routes
 
               4.1. event_route[topoh:msg-outgoing]
+              4.2. event_route[topoh:msg-sending]
 
    List of Examples
 
@@ -54,7 +56,9 @@ Daniel-Constantin Mierla
    1.9. Set sanity_checks parameter
    1.10. Set uri_prefix_checks parameter
    1.11. Set event_callback parameter
-   1.12. Usage of event_route[topoh:msg-outgoing]
+   1.12. Set event_mode parameter
+   1.13. Usage of event_route[topoh:msg-outgoing]
+   1.14. Usage of event_route[topoh:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -79,10 +83,12 @@ Chapter 1. Admin Guide
         3.9. sanity_checks (integer)
         3.10. uri_prefix_checks (integer)
         3.11. event_callback (str)
+        3.12. event_mode (int)
 
    4. Event Routes
 
         4.1. event_route[topoh:msg-outgoing]
+        4.2. event_route[topoh:msg-sending]
 
 1. Overview
 
@@ -130,6 +136,7 @@ Chapter 1. Admin Guide
    3.9. sanity_checks (integer)
    3.10. uri_prefix_checks (integer)
    3.11. event_callback (str)
+   3.12. event_mode (int)
 
 3.1. mask_key (str)
 
@@ -284,9 +291,23 @@ function ksr_topoh_event(evname)
 end
 ...
 
+3.12. event_mode (int)
+
+   Control what event_route blocks to be executed. It is a bitmask of: 1 -
+   execute event_route[topoh:msg-outgoing]; 2 - execute
+   event_route[topoh:msg-sending].
+
+   Default value is 3 (execute both event_route blocks).
+
+   Example 1.12. Set event_mode parameter
+...
+modparam("topoh", "event_mode", 2)
+...
+
 4. Event Routes
 
    4.1. event_route[topoh:msg-outgoing]
+   4.2. event_route[topoh:msg-sending]
 
 4.1. event_route[topoh:msg-outgoing]
 
@@ -300,10 +321,29 @@ end
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.12. Usage of event_route[topoh:msg-outgoing]
+   Example 1.13. Usage of event_route[topoh:msg-outgoing]
 ...
 event_route[topoh:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
+    drop;
+  }
+}
+...
+
+4.2. event_route[topoh:msg-sending]
+
+   It is executed before doing topology hiding processing for a SIP
+   message to be sent out, being executed after
+   event_route[topoh:msg-outgoing].
+
+   Inside the event route the variables $sndto(ip), $sndto(port) and
+   $sndto(proto) point to the destination. The SIP message is the one to
+   be sent out.
+
+   Example 1.14. Usage of event_route[topoh:msg-sending]
+...
+event_route[topoh:msg-sending] {
+  if(is_request() and $fU=="alice") {
     drop;
   }
 }

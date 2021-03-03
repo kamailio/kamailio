@@ -23,6 +23,8 @@
 #ifndef _CNXCC_H
 #define _CNXCC_H
 
+#include <time.h>
+
 #include "../../core/str.h"
 
 #define DATETIME_SIZE sizeof("0001-01-01 00:00:00")
@@ -37,12 +39,12 @@ static inline unsigned int get_current_timestamp()
 static inline int timestamp2isodt(str *dest, unsigned int timestamp)
 {
 	time_t tim;
-	struct tm *tmPtr;
+	struct tm tmPtr;
 
 	tim = timestamp;
-	tmPtr = localtime(&tim);
+	localtime_r(&tim, &tmPtr);
 
-	strftime(dest->s, DATETIME_SIZE, "%Y-%m-%d %H:%M:%S", tmPtr);
+	strftime(dest->s, DATETIME_SIZE, "%Y-%m-%d %H:%M:%S", &tmPtr);
 	dest->len = DATETIME_LENGTH;
 
 	return 0;

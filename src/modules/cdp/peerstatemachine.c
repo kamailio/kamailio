@@ -678,7 +678,8 @@ void add_peer_application(peer *p, int id, int vendor, app_type type)
 	p->applications[p->applications_cnt].id = id;
 	p->applications[p->applications_cnt].vendor = vendor;
 	p->applications[p->applications_cnt].type = type;
-	LM_DBG("Application %i of maximum %i\n", p->applications_cnt, p->applications_max);
+	LM_DBG("Application number %i with id %d and vendor %d added, maximum %i\n",
+			p->applications_cnt, id, vendor, p->applications_max);
 	p->applications_cnt++;
 }
 
@@ -695,7 +696,7 @@ int count_Supported_Vendor_Id_AVPS(AAAMessage *msg)
 			break;
 		avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
 	}
-	LM_DBG("Found %i Supported_Vendor AVPS", avp_vendor_cnt);
+	LM_DBG("Found %i Supported_Vendor AVPS\n", avp_vendor_cnt);
 	return avp_vendor_cnt;
 }
 
@@ -715,6 +716,12 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 
 	supported_vendor_id_avp_cnt = count_Supported_Vendor_Id_AVPS(msg);
 
+	if (supported_vendor_id_avp_cnt == 0) {
+		LM_INFO("No Supported-Vendor-Id AVP found, assuming compability with %d vendor(s) from our CER msg\n",
+				config->supported_vendors_cnt);
+				supported_vendor_id_avp_cnt = 1;
+	}
+
 	for(avp=msg->avpList.head;avp;avp = avp->next)
 
 		switch (avp->code){
@@ -728,6 +735,8 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 				total_cnt+=2;/* wasteful, but let's skip decoding */
 				break;
 		}
+	LM_DBG("Total count of applications is %d\n", total_cnt);
+
 	p->applications_cnt = 0;
 	p->applications = shm_malloc(sizeof(app_config)*total_cnt);
 	p->applications_max = total_cnt;
@@ -745,7 +754,6 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 				add_peer_application(p,id,0,DP_AUTHORIZATION);
 				avp_vendor = AAAFindMatchingAVP(msg,0,AVP_Supported_Vendor_Id,0,0);
 				while (avp_vendor) {
-
 					vendor = get_4bytes(avp_vendor->data.s);
 					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_AUTHORIZATION, vendor);
 					add_peer_application(p,id,vendor,DP_AUTHORIZATION);

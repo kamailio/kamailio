@@ -30,11 +30,9 @@
 #include "utime.h"
 
 
-time_t act_time;
+time_t ul_act_time = 0;
 
-
-void get_act_time(void)
+void ul_get_act_time(void)
 {
-
-	act_time = time(0);
+	ul_act_time = time(0);
 }

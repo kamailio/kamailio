@@ -84,7 +84,7 @@ int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str)
 	str hdr_append;
 	char buffer[256];
 	int i;
-	pres_ev_t *ev = EvList->events;
+	pres_ev_t *ev = pres_evlist->events;
 
 	if(reply_code == BAD_EVENT_CODE) {
 		hdr_append.s = buffer;
@@ -95,7 +95,7 @@ int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str)
 			return -1;
 		}
 
-		for(i = 0; i < EvList->ev_count; i++) {
+		for(i = 0; i < pres_evlist->ev_count; i++) {
 			if(i > 0) {
 				memcpy(hdr_append.s + hdr_append.len, ", ", 2);
 				hdr_append.len += 2;
@@ -116,7 +116,7 @@ int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str)
 
 		hdr_append.s = buffer;
 		hdr_append.s[0] = '\0';
-		hdr_append.len = sprintf(hdr_append.s, "Min-Expires: %d", min_expires);
+		hdr_append.len = sprintf(hdr_append.s, "Min-Expires: %d", pres_min_expires);
 		if(hdr_append.len < 0) {
 			LM_ERR("unsuccessful sprintf\n");
 			return -1;

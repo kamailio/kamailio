@@ -40,7 +40,8 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		0,	/* retry_after */
 		0,	/* case_sensitive */
 		Q_UNSPECIFIED,	/* default_q */
-		1	/* append_branches */
+		1,	/* append_branches */
+		0	/* use_expired_contacts */
 	};
 
 void	*registrar_cfg = &default_registrar_cfg;
@@ -68,5 +69,7 @@ cfg_def_t	registrar_cfg_def[] = {
 		"The parameter represents default q value for new contacts."}, /* Q_UNSPECIFIED is -1 */
 	{"append_branches",	CFG_VAR_INT ,			0, 0, 0, 0,
 		"If set to 1(default), lookup will put all contacts found in msg structure"},
+	{"use_expired_contacts",CFG_VAR_INT ,			0, 0, 0, 0,
+		"Toggles using expired contacts as if they were active."},
 	{0, 0, 0, 0, 0, 0}
 };

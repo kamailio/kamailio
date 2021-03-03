@@ -32,7 +32,7 @@ struct TopListItem_t {
 	unsigned int  	leaf_hits[2];
 	unsigned int  	hits[2];
 	unsigned int    expires;	/*!< in seconds */
-	node_status_t   status;
+	pike_node_status_t   status;
 
 	struct TopListItem_t *next;
 };
@@ -40,7 +40,7 @@ struct TopListItem_t {
 // returns 1 when OK and 0 when failed
 int pike_top_add_entry( unsigned char *ip_addr, int addr_len,
 		unsigned short leaf_hits[2], unsigned short hits[2],
-		unsigned int expires, node_status_t status );
+		unsigned int expires, pike_node_status_t status );
 
 struct TopListItem_t *pike_top_get_root();
 void pike_top_list_clear();

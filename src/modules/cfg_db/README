@@ -114,9 +114,9 @@ modparam("cfg_db", "db_url", "mysql://SER:123@127.0.0.1:12345/SER");
         cfg_transl table:
         group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_fiel
 d|cfg_table_value_field
-        core|use_dst_blacklist|cfg_dns|||
-        core|dst_blacklist_mem|cfg_dns|||
-        core|dst_blacklist_expire|||
+        core|use_dst_blocklist|cfg_dns|||
+        core|dst_blocklist_mem|cfg_dns|||
+        core|dst_blocklist_expire|||
         my|route_addr|cfg_my|my_group_name|my_name|my_value     ; overrides <def
 ault> values
         my|use_rtp_proxy|cfg_my|my_group_name|my_name|my_value
@@ -140,6 +140,6 @@ t>
 
         cfg_dns table:
         group_name|name|value
-        dns|use_dst_blacklist|1
-        dns|dst_blacklist_mem|1024
-        dns|dst_blacklist_expire|60
+        dns|use_dst_blocklist|1
+        dns|dst_blocklist_mem|1024
+        dns|dst_blocklist_expire|60

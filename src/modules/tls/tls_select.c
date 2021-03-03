@@ -41,6 +41,7 @@
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/strutils.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"
@@ -58,6 +59,8 @@ enum {
 	CERT_SELFSIGNED,  /* self-signed certificate test */
 	CERT_NOTBEFORE,   /* Select validity end from certificate */
 	CERT_NOTAFTER,    /* Select validity start from certificate */
+	CERT_RAW,         /* Select raw PEM-encoded certificate */
+	CERT_URLENCODED,  /* Select urlencoded PEM-encoded certificate */
 	COMP_CN,          /* Common name */
 	COMP_O,           /* Organization name */
 	COMP_OU,          /* Organization unit */
@@ -85,21 +88,23 @@ enum {
 	PV_CERT_SELFSIGNED = 1<<7,   /* self-signed certificate test */
 	PV_CERT_NOTBEFORE  = 1<<8,   /* Select validity end from certificate */
 	PV_CERT_NOTAFTER   = 1<<9,   /* Select validity start from certificate */
+	PV_CERT_RAW        = 1<<10,  /* Select raw PEM-encoded certificate */
+	PV_CERT_URLENCODED = 1<<11,  /* Select urlencoded PEM-encoded certificate */
 
-	PV_COMP_CN = 1<<10,          /* Common name */
-	PV_COMP_O  = 1<<11,          /* Organization name */
-	PV_COMP_OU = 1<<12,          /* Organization unit */
-	PV_COMP_C  = 1<<13,          /* Country name */
-	PV_COMP_ST = 1<<14,          /* State */
-	PV_COMP_L  = 1<<15,          /* Locality/town */
+	PV_COMP_CN = 1<<12,          /* Common name */
+	PV_COMP_O  = 1<<13,          /* Organization name */
+	PV_COMP_OU = 1<<14,          /* Organization unit */
+	PV_COMP_C  = 1<<15,          /* Country name */
+	PV_COMP_ST = 1<<16,          /* State */
+	PV_COMP_L  = 1<<17,          /* Locality/town */
 
-	PV_COMP_HOST = 1<<16,        /* hostname from subject/alternative */
-	PV_COMP_URI  = 1<<17,        /* URI from subject/alternative */
-	PV_COMP_E    = 1<<18,        /* Email address */
-	PV_COMP_IP   = 1<<19,        /* IP from subject/alternative */
-	PV_COMP_UID  = 1<<20,        /* UserID*/
+	PV_COMP_HOST = 1<<18,        /* hostname from subject/alternative */
+	PV_COMP_URI  = 1<<19,        /* URI from subject/alternative */
+	PV_COMP_E    = 1<<20,        /* Email address */
+	PV_COMP_IP   = 1<<21,        /* IP from subject/alternative */
+	PV_COMP_UID  = 1<<22,        /* UserID*/
 
-	PV_TLSEXT_SNI = 1<<21,       /* Peer's server name (TLS extension) */
+	PV_TLSEXT_SNI = 1<<23,       /* Peer's server name (TLS extension) */
 };
 
 
@@ -682,6 +687,208 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
+static int cert_to_buf(X509 *cert, char **bufptr, size_t *len)
+{
+#define MAX_CERT_SIZE 16384
+	static char buf[MAX_CERT_SIZE];
+	BIO     *mem = NULL;
+
+	mem = BIO_new(BIO_s_mem());
+	if (!mem) {
+		ERR("Error while creating memory BIO\n");
+		goto err;
+	}
+
+	/* Write a certificate to a BIO */
+	if (!PEM_write_bio_X509(mem, cert)) {
+		goto err;
+	}
+
+	*len = BIO_pending(mem);
+	if (*len > MAX_CERT_SIZE) {
+		ERR("certificate is too long\n");
+		goto err;
+	}
+
+	if (BIO_read(mem, buf, *len) <= 0) {
+		ERR("problem reading data out of BIO");
+		goto err;
+	}
+
+	*bufptr = buf;
+
+	BIO_free(mem);
+	return 0;
+err:
+
+	if (mem) BIO_free(mem);
+	return -1;
+}
+
+
+static int get_ssl_cert(str* res, int local, int urlencoded, sip_msg_t* msg)
+{
+	char *buf = NULL;
+	/* buf2 holds the urlencoded version of buf, which can be up to 3 times its size */
+	static char buf2[MAX_CERT_SIZE*3+1];
+	X509* cert;
+	struct tcp_connection* c;
+	size_t   len;
+	str     temp_str;
+
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	if (cert_to_buf(cert, &buf, &len) < 0) {
+		ERR("cert to buf failed\n");
+		goto err;
+	}
+
+	if (urlencoded)
+	{
+		temp_str.len = len;
+		temp_str.s = buf;
+		res->s = buf2;
+		res->len = MAX_CERT_SIZE*3+1;
+
+		if (urlencode(&temp_str, res) < 0) {
+			ERR("Problem with urlencode()\n");
+			goto err;
+		}
+	}
+	else
+	{
+		res->s = buf;
+		res->len = len;
+	}
+
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return 0;
+
+ err:
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return -1;
+}
+
+
+static int sel_ssl_cert(str* res, select_t* s, sip_msg_t* msg)
+{
+	int i, local = 0, urlencoded = 0;
+
+	for(i = 1; i <= s->n - 1; i++) {
+		switch(s->params[i].v.i) {
+		case CERT_PEER:       local = 0; break;
+		case CERT_LOCAL:      local = 1; break;
+		case CERT_RAW:        urlencoded = 0; break;
+		case CERT_URLENCODED: urlencoded = 1; break;
+		default:
+			BUG("Bug in call to sel_ssl_cert\n");
+			return -1;
+		}
+	}
+
+	return get_ssl_cert(res, local, urlencoded, msg);
+}
+
+
+static int pv_ssl_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int local, urlencoded;
+
+	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
+		local = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
+		local = 1;
+	} else {
+		BUG("bug in call to pv_ssl_cert\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (param->pvn.u.isname.name.n & PV_CERT_RAW) {
+		urlencoded = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_URLENCODED) {
+		urlencoded = 1;
+	} else {
+		BUG("bug in call to pv_ssl_cert\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (get_ssl_cert(&res->rs, local, urlencoded, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
+/* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
+static int get_verified_cert_chain(STACK_OF(X509)** chain, struct tcp_connection** c, struct sip_msg* msg)
+{
+	SSL* ssl;
+
+	*chain = 0;
+	*c = get_cur_connection(msg);
+	if (!(*c)) {
+		INFO("TLS connection not found\n");
+		return -1;
+	}
+	ssl = get_ssl(*c);
+	if (!ssl) goto err;
+	*chain = SSL_get0_verified_chain(ssl);
+	if (!*chain) {
+		ERR("Unable to retrieve peer TLS verified chain from SSL structure\n");
+		goto err;
+	}
+
+	return 0;
+err:
+	tcpconn_put(*c);
+	return -1;
+}
+
+
+static int sel_ssl_verified_cert_chain(str* res, select_t* s, sip_msg_t* msg)
+{
+	char *buf = NULL;
+	struct tcp_connection* c;
+	size_t   len;
+	STACK_OF(X509)* chain;
+	X509* cert;
+	int i;
+
+	if (get_verified_cert_chain(&chain, &c, msg) < 0) return -1;
+
+	if (s->params[s->n-1].type == SEL_PARAM_INT) {
+		i = s->params[s->n-1].v.i;
+	} else
+		return -1;
+
+	if (i < 0 || i >= sk_X509_num(chain))
+		return -1;
+
+	cert = sk_X509_value(chain, i);
+	if (!cert)
+		return -1;
+
+	if (cert_to_buf(cert, &buf, &len) < 0) {
+		ERR("cert to buf failed\n");
+		goto err;
+	}
+
+	res->s = buf;
+	res->len = len;
+
+	tcpconn_put(c);
+	return 0;
+
+err:
+	tcpconn_put(c);
+	return -1;
+}
+#endif /* (OPENSSL_VERSION_NUMBER >= 0x10100001L) */
+
 
 static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
 {
@@ -1082,6 +1289,15 @@ select_row_t tls_sel[] = {
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("version"), sel_cert_version, 0},
 
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("rawCert"), sel_ssl_cert, DIVERSION | CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("raw_cert"), sel_ssl_cert, DIVERSION | CERT_RAW},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("URLEncodedCert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"), sel_ssl_cert, DIVERSION | CERT_URLENCODED},
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified_cert_chain"), sel_ssl_verified_cert_chain, CONSUME_NEXT_INT},
+#endif
+
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("sn"),            sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serialNumber"),  sel_sn, 0},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serial_number"), sel_sn, 0},
@@ -1162,6 +1378,19 @@ pv_export_t tls_pv[] = {
 	{{"tls_cipher_bits", sizeof("tls_cipher_bits")-1},
 		PVT_OTHER,  pv_bits, 0,
 		0, 0, 0, 0 },
+	/* raw and urlencoded versions of peer and local certificates */
+	{{"tls_peer_raw_cert", sizeof("tls_peer_raw_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER | PV_CERT_RAW},
+	{{"tls_my_raw_cert", sizeof("tls_my_raw_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_RAW},
+	{{"tls_peer_urlencoded_cert", sizeof("tls_peer_urlencoded_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER | PV_CERT_URLENCODED},
+	{{"tls_my_urlencoded_cert", sizeof("tls_my_urlencoded_cert")-1},
+		PVT_OTHER, pv_ssl_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_URLENCODED},
 	/* general certificate parameters for peer and local */
 	{{"tls_peer_version", sizeof("tls_peer_version")-1},
 		PVT_OTHER, pv_cert_version, 0,
@@ -1175,7 +1404,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_serial", sizeof("tls_my_serial")-1},
 		PVT_OTHER, pv_sn,0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL },
-	/* certificate parameters for peer and local, for subject and issuer*/	
+	/* certificate parameters for peer and local, for subject and issuer*/
 	{{"tls_peer_subject", sizeof("tls_peer_subject")-1},
 		PVT_OTHER, pv_comp, 0,
 		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT },
@@ -1267,7 +1496,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_subject_uid", sizeof("tls_my_subject_uid")-1},
 		PVT_OTHER, pv_comp, 0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_UID },
-	/* subject alternative name parameters for peer and local */	
+	/* subject alternative name parameters for peer and local */
 	{{"tls_peer_san_email", sizeof("tls_peer_san_email")-1},
 		PVT_OTHER, pv_alt, 0,
 		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_E },
@@ -1292,7 +1521,7 @@ pv_export_t tls_pv[] = {
 	{{"tls_my_san_ip", sizeof("tls_my_san_ip")-1},
 		PVT_OTHER, pv_alt, 0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_IP },
-	/* peer certificate validation parameters */		
+	/* peer certificate validation parameters */
 	{{"tls_peer_verified", sizeof("tls_peer_verified")-1},
 		PVT_OTHER, pv_check_cert, 0,
 		0, 0, pv_init_iname, PV_CERT_VERIFIED },
@@ -1311,11 +1540,71 @@ pv_export_t tls_pv[] = {
 	{{"tls_peer_notAfter", sizeof("tls_peer_notAfter")-1},
 		PVT_OTHER, pv_validity, 0,
 		0, 0, pv_init_iname, PV_CERT_NOTAFTER },
-	/* peer certificate validation parameters */		
+	/* peer certificate validation parameters */
 	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
 		PVT_OTHER, pv_tlsext_sn, 0,
 		0, 0, pv_init_iname, PV_TLSEXT_SNI },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 
-}; 
+};
+
+
+/**
+ *
+ */
+static sr_kemi_xval_t _ksr_kemi_tls_xval = {0};
+
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname)
+{
+	pv_param_t param;
+	pv_value_t value;
+	int i;
+
+	memset(&_ksr_kemi_tls_xval, 0, sizeof(sr_kemi_xval_t));
+	for(i=0; tls_pv[i].name.s != NULL; i++) {
+		if((tls_pv[i].name.len == aname->len)
+				&& strncmp(tls_pv[i].name.s, aname->s, aname->len) == 0) {
+			break;
+		}
+	}
+	if(tls_pv[i].name.s==NULL) {
+		LM_WARN("unknown attribute: %.*s\n", aname->len, aname->s);
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(tls_pv[i].parse_name!=NULL || tls_pv[i].parse_index!=NULL) {
+		LM_WARN("unsupported attribute: %.*s\n", aname->len, aname->s);
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	memset(&param, 0, sizeof(pv_param_t));
+	memset(&value, 0, sizeof(pv_value_t));
+
+	if(tls_pv[i].getf(msg, &param, &value) != 0) {
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_VAL_NULL) {
+		sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_TYPE_INT) {
+		_ksr_kemi_tls_xval.vtype = SR_KEMIP_INT;
+		_ksr_kemi_tls_xval.v.n = value.ri;
+		return &_ksr_kemi_tls_xval;
+	}
+	if(value.flags & PV_VAL_STR) {
+		_ksr_kemi_tls_xval.vtype = SR_KEMIP_STR;
+		_ksr_kemi_tls_xval.v.s = value.rs;
+		return &_ksr_kemi_tls_xval;
+	}
+
+	LM_WARN("unsupported value for attribute: %.*s\n", aname->len, aname->s);
+	sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
+	return &_ksr_kemi_tls_xval;
+}

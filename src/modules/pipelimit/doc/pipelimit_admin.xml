@@ -383,7 +383,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 	<section id="pipelimit.p.clean_unused">
 		<title><varname>clean_unused</varname> (int)</title>
 		<para>
-		Clean unused pipes afetr this number of timer intervals.
+		Clean unused pipes after this number of timer intervals.
 		</para>
 		<para>
 		<emphasis>
@@ -511,6 +511,30 @@ with unexpected retcode=$var(check_result)\n");
 </programlisting>
 		</example>
 	</section>
+	<section id="pipelimit.f.pl_active">
+		<title>
+		<function moreinfo="none">pl_active(name)</function>
+		</title>
+		<para>
+		Check the pipe 'name' was already created. Return 1 (true) if the pipe
+		is found, -1 (false) if the pipe is not found.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pl_active</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if (!pl_active("one")) {
+		# pipe does not exist
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="pipelimit.f.pl_drop">
 		<title>
 		<function moreinfo="none">pl_drop([ [min ], max ])</function>
@@ -720,7 +744,7 @@ kamcmd pl.get_pid
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>load</emphasis> - the forced value of load
-			(it must be greater then 0.0 and smaller then 1.0).
+			(it must be greater than 0.0 and smaller than 1.0).
 			</para></listitem>
 		</itemizedlist>
 		<para>

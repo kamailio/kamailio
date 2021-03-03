@@ -1,0 +1,605 @@
+userblocklist Module
+
+Edited by
+
+Henning Westerholt
+
+   1&1 Internet AG
+   <henning.westerholt@1und1.de>
+
+Pawel Kuzak
+
+   1&1 Internet AG
+   <pawel.kuzak@1und1.de>
+
+   Copyright © 2008 1&1 Internet AG
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. use_domain (integer)
+              3.2. match_mode (integer)
+              3.3. db_url (String)
+              3.4. userblocklist_table (String)
+              3.5. userblocklist_id_col (string)
+              3.6. userblocklist_username_col (string)
+              3.7. userblocklist_domain_col (string)
+              3.8. userblocklist_prefix_col (string)
+              3.9. userblocklist_whitelist_col (string)
+              3.10. globalblocklist_table (String)
+              3.11. globalblocklist_id_col (string)
+              3.12. globalblocklist_prefix_col (string)
+              3.13. globalblocklist_whitelist_col (string)
+              3.14. globalblocklist_description_col (string)
+
+        4. Functions
+
+              4.1. check_user_blocklist (string user, string domain,
+                      string number, string table)
+
+              4.2. check_user_whitelist (string user, string domain,
+                      string number, string table)
+
+              4.3. check_blocklist ([string table])
+              4.4. check_whitelist (string table)
+
+        5. RPC Commands
+
+              5.1. userblocklist.reload_blocklist
+
+        6. MI Commands
+
+              6.1. reload_blocklist
+              6.2. dump_blocklist
+              6.3. check_blocklist prefix
+              6.4. check_whitelist prefix
+              6.5. check_userblocklist user [domain] prefix
+              6.6. check_userwhitelist user [domain] prefix
+
+        7. Installation and Running
+
+              7.1. Database setup
+
+   List of Examples
+
+   1.1. Set use_domain parameter
+   1.2. Set match_mode parameter
+   1.3. Set db_url parameter
+   1.4. Set userblocklist_table parameter
+   1.5. Set userblocklist_id_col parameter
+   1.6. Set userblocklist_username_col parameter
+   1.7. Set userblocklist_domain_col parameter
+   1.8. Set userblocklist_prefix_col parameter
+   1.9. Set userblocklist_whitelist_col parameter
+   1.10. Set globalblocklist_table parameter
+   1.11. Set globalblocklist_id_col parameter
+   1.12. Set globalblocklist_prefix_col parameter
+   1.13. Set globalblocklist_whitelist_col parameter
+   1.14. Set globalblocklist_description_col parameter
+   1.15. check_user_blocklist usage
+   1.16. check_user_whitelist usage
+   1.17. check_blocklist usage
+   1.18. check_whitelist usage
+   1.19. userblocklist.reload_blocklist usage
+   1.20. reload_blocklist usage
+   1.21. dump_blocklist usage
+   1.22. check_blocklist usage
+   1.23. check_whitelist usage
+   1.24. check_userblocklist usage
+   1.25. check_userwhitelist usage
+   1.26. Example database content - globalblocklist table
+   1.27. Example database content - userblocklist table
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. use_domain (integer)
+        3.2. match_mode (integer)
+        3.3. db_url (String)
+        3.4. userblocklist_table (String)
+        3.5. userblocklist_id_col (string)
+        3.6. userblocklist_username_col (string)
+        3.7. userblocklist_domain_col (string)
+        3.8. userblocklist_prefix_col (string)
+        3.9. userblocklist_whitelist_col (string)
+        3.10. globalblocklist_table (String)
+        3.11. globalblocklist_id_col (string)
+        3.12. globalblocklist_prefix_col (string)
+        3.13. globalblocklist_whitelist_col (string)
+        3.14. globalblocklist_description_col (string)
+
+   4. Functions
+
+        4.1. check_user_blocklist (string user, string domain, string
+                number, string table)
+
+        4.2. check_user_whitelist (string user, string domain, string
+                number, string table)
+
+        4.3. check_blocklist ([string table])
+        4.4. check_whitelist (string table)
+
+   5. RPC Commands
+
+        5.1. userblocklist.reload_blocklist
+
+   6. MI Commands
+
+        6.1. reload_blocklist
+        6.2. dump_blocklist
+        6.3. check_blocklist prefix
+        6.4. check_whitelist prefix
+        6.5. check_userblocklist user [domain] prefix
+        6.6. check_userwhitelist user [domain] prefix
+
+   7. Installation and Running
+
+        7.1. Database setup
+
+1. Overview
+
+   The userblocklist module allows Kamailio to handle blocklists on a per
+   user basis. This information is stored in a database table, which is
+   queried to decide if the number (more exactly, the request URI user) is
+   blocklisted or not.
+
+   An additional functionality that this module provides is the ability to
+   handle global blocklists. This lists are loaded on startup into memory,
+   thus providing a better performance than the userblocklist case. These
+   global blocklists are useful to allow only calls to certain
+   international destinations, i.e. block all not whitelisted numbers.
+   They could also be used to prevent the blocklisting of important
+   numbers, as whitelisting is supported too. This is useful for example
+   to prevent the customer from blocking emergency call number or service
+   hotlines.
+
+   The module exports four functions, check_blocklist, check_whitelist,
+   check_user_blocklist and check_user_whitelist for usage in the
+   configuration file. Furthermore it provides a MI function to reload the
+   global blocklist cache.
+
+   Please note that only numerical strings for matching are supported at
+   the moment (the used library supports this already, but its not yet
+   implemented in the module). Non-digits on the beginning of the matched
+   string are skipped, any later non-digits will stop the matching on this
+   position.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
+     * database -- Any db_* database module
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Parameters
+
+   3.1. use_domain (integer)
+   3.2. match_mode (integer)
+   3.3. db_url (String)
+   3.4. userblocklist_table (String)
+   3.5. userblocklist_id_col (string)
+   3.6. userblocklist_username_col (string)
+   3.7. userblocklist_domain_col (string)
+   3.8. userblocklist_prefix_col (string)
+   3.9. userblocklist_whitelist_col (string)
+   3.10. globalblocklist_table (String)
+   3.11. globalblocklist_id_col (string)
+   3.12. globalblocklist_prefix_col (string)
+   3.13. globalblocklist_whitelist_col (string)
+   3.14. globalblocklist_description_col (string)
+
+3.1. use_domain (integer)
+
+   If set to non-zero value, the domain column in the userblocklist table
+   is used.
+
+   Default value is “0”.
+
+   Example 1.1. Set use_domain parameter
+...
+modparam("userblocklist", "use_domain", 1)
+...
+
+3.2. match_mode (integer)
+
+   The number of individual characters that are used for matching. Valid
+   values are 10 or 128. When you specify 10, only digits will be used for
+   matching, this operation mode is equivalent to the old behaviour. When
+   configured with 128, all standard ASCII chars are available for
+   matching. Please be aware that memory requirements for storing the
+   routing tree in shared memory will also increase by a factor of 12.8.
+
+   Default value is “10”.
+
+   Example 1.2. Set match_mode parameter
+...
+modparam("userblocklist", "match_mode", 128)
+...
+
+3.3. db_url (String)
+
+   URL to the database containing the data.
+
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
+
+   Example 1.3. Set db_url parameter
+...
+modparam("userblocklist", "db_url", "dbdriver://username:password@dbhost/dbname"
+)
+...
+
+3.4. userblocklist_table (String)
+
+   Name of the userblocklist table for the userblocklist module.
+
+   Default value is “userblocklist”.
+
+   Example 1.4. Set userblocklist_table parameter
+...
+modparam("userblocklist", "userblocklist_table", "userblocklist")
+...
+
+3.5. userblocklist_id_col (string)
+
+   unique ID
+
+   Example 1.5. Set userblocklist_id_col parameter
+...
+modparam("userblocklist", "userblocklist_id_col", "id")
+...
+
+3.6. userblocklist_username_col (string)
+
+   The user that is used for the blocklist lookup.
+
+   Example 1.6. Set userblocklist_username_col parameter
+...
+modparam("userblocklist", "userblocklist_username_col", "username")
+...
+
+3.7. userblocklist_domain_col (string)
+
+   The domain that is used for the blocklist lookup.
+
+   Example 1.7. Set userblocklist_domain_col parameter
+...
+modparam("userblocklist", "userblocklist_domain_col", "domain")
+...
+
+3.8. userblocklist_prefix_col (string)
+
+   The prefix that is matched for the blocklist.
+
+   Example 1.8. Set userblocklist_prefix_col parameter
+...
+modparam("userblocklist", "userblocklist_prefix_col", "prefix")
+...
+
+3.9. userblocklist_whitelist_col (string)
+
+   Specify if this a blocklist (0) or a whitelist (1) entry.
+
+   Example 1.9. Set userblocklist_whitelist_col parameter
+...
+modparam("userblocklist", "userblocklist_whitelist_col", "whitelist")
+...
+
+3.10. globalblocklist_table (String)
+
+   Name of the globalblocklist table for the userblocklist module. Please
+   note that this table is used when the check_blocklist function is
+   called with no parameters.
+
+   Default value is “globalblocklist”.
+
+   Example 1.10. Set globalblocklist_table parameter
+...
+modparam("userblocklist", "globalblocklist_table", "globalblocklist")
+...
+
+3.11. globalblocklist_id_col (string)
+
+   unique ID
+
+   Example 1.11. Set globalblocklist_id_col parameter
+...
+modparam("userblocklist", "globalblocklist_id_col", "id")
+...
+
+3.12. globalblocklist_prefix_col (string)
+
+   The prefix that is matched for the blocklist.
+
+   Example 1.12. Set globalblocklist_prefix_col parameter
+...
+modparam("userblocklist", "globalblocklist_prefix_col", "prefix")
+...
+
+3.13. globalblocklist_whitelist_col (string)
+
+   Specify if this a blocklist (0) or a whitelist (1) entry.
+
+   Example 1.13. Set globalblocklist_whitelist_col parameter
+...
+modparam("userblocklist", "globalblocklist_whitelist_col", "whitelist")
+...
+
+3.14. globalblocklist_description_col (string)
+
+   A comment for the entry.
+
+   Example 1.14. Set globalblocklist_description_col parameter
+...
+modparam("userblocklist", "globalblocklist_description_col", "description")
+...
+
+4. Functions
+
+   4.1. check_user_blocklist (string user, string domain, string number,
+          string table)
+
+   4.2. check_user_whitelist (string user, string domain, string number,
+          string table)
+
+   4.3. check_blocklist ([string table])
+   4.4. check_whitelist (string table)
+
+4.1.  check_user_blocklist (string user, string domain, string number, string
+table)
+
+   Finds the longest prefix that matches the request URI user (or the
+   number parameter) for the given user and domain name in the database.
+   If a match is found and it is not set to whitelist, false is returned.
+   Otherwise, true is returned. Pseudo-variables or AVPs can be used for
+   the user, domain and number parameters. The number and table variables
+   are optional, the defaults are used if they are omitted. The number
+   parameter can be used to check for example against the from URI user.
+
+   Example 1.15. check_user_blocklist usage
+...
+$avp(i:80) = $rU;
+# rewrite the R-URI
+if (!check_user_blocklist("$avp(i:80)", "$avp(i:82)")) {
+        sl_send_reply("403", "Forbidden");
+        exit;
+}
+...
+
+4.2.  check_user_whitelist (string user, string domain, string number, string
+table)
+
+   Finds the longest prefix that matches the request URI user (or the
+   number parameter) for the given user and domain name in the database.
+   If a match is found and it is set to whitelist, true is returned.
+   Otherwise, false is returned. Pseudo-variables or AVPs can be used for
+   the user, domain and number parameters. The number and table variables
+   are optional, the defaults are used if they are omitted. The number
+   parameter can be used to check for example against the from URI user.
+
+   Example 1.16. check_user_whitelist usage
+...
+$avp(i:80) = $rU;
+# rewrite the R-URI
+if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
+        # process request
+        exit;
+}
+...
+
+4.3.  check_blocklist ([string table])
+
+   Finds the longest prefix that matches the request URI for the given
+   table. If a match is found and it is not set to whitelist, false is
+   returned. Otherwise, true is returned. If no table is given, then
+   globalblocklist_table is used.
+
+   Example 1.17. check_blocklist usage
+...
+if (!check_blocklist("globalblocklist")) {
+        sl_send_reply("403", "Forbidden");
+        exit;
+}
+...
+
+4.4.  check_whitelist (string table)
+
+   Finds the longest prefix that matches the request URI for the given
+   table. If a match is found and it is set to whitelist, true is
+   returned. Otherwise, false is returned.
+
+   Example 1.18. check_whitelist usage
+...
+if (!check_whitelist("globalblocklist")) {
+        sl_send_reply("403", "Forbidden");
+        exit;
+}
+...
+
+5. RPC Commands
+
+   5.1. userblocklist.reload_blocklist
+
+5.1.  userblocklist.reload_blocklist
+
+   Reload the internal global blocklist cache. This is necessary after the
+   database tables for the global blocklist have been changed.
+
+   Example 1.19. userblocklist.reload_blocklist usage
+...
+kamcmd userblocklist.reload_blocklist
+...
+
+6. MI Commands
+
+   6.1. reload_blocklist
+   6.2. dump_blocklist
+   6.3. check_blocklist prefix
+   6.4. check_whitelist prefix
+   6.5. check_userblocklist user [domain] prefix
+   6.6. check_userwhitelist user [domain] prefix
+
+6.1.  reload_blocklist
+
+   Reload the internal global blocklist cache. This is necessary after the
+   database tables for the global blocklist have been changed.
+
+   Example 1.20. reload_blocklist usage
+                                        ...
+                                        kamctl fifo reload_blocklist
+                                        ...
+
+6.2.  dump_blocklist
+
+   Dumps the default, in memory, global_blocklist content to stdout. Note
+   that a reload_blocklist should be issued before, in order to see the
+   latest content of the database.
+
+   Example 1.21. dump_blocklist usage
+                                        ...
+                                        kamctl fifo reload_blocklist
+                                        kamctl fifo dump_blocklist
+                                        ...
+
+6.3.  check_blocklist prefix
+
+   Searches in the default, in memory, global list. Finds the longest
+   prefix that matches the given prefix parameter. Returns true if the
+   prefix is found and the whitelist is not set. Returns false otherwise -
+   either prefix found and whitelist set or prefix not found. Note that a
+   reload_blocklist should be issued before, in order to check through the
+   latest content of the database.
+
+   Example 1.22. check_blocklist usage
+                                        ...
+                                        kamctl fifo reload_blocklist
+                                        kamctl fifo check_blocklist prefix
+                                        ...
+
+6.4.  check_whitelist prefix
+
+   Searches in the default, in memory, global list. Finds the longest
+   prefix that matches the given prefix parameter. Returns true if the
+   prefix is found and the whitelist is set. Returns false otherwise -
+   either prefix found and whitelist not set or prefix not found. Note
+   that a reload_blocklist should be issued before, in order to check
+   through the latest content of the database.
+
+   Example 1.23. check_whitelist usage
+                                        ...
+                                        kamctl fifo reload_blocklist
+                                        kamctl fifo check_whitelist prefix
+                                        ...
+
+6.5.  check_userblocklist user [domain] prefix
+
+   Searches in the default user list table. Finds the longest prefix for
+   the given user@domain that matches the given prefix parameter. Returns
+   true if the prefix is found and the whitelist is not set. Returns false
+   otherwise - either prefix found and whitelist set or prefix not found.
+   Note that the domain parameter is optional. If not given, the second
+   parameter is the considered to be the prefix.
+
+   Example 1.24. check_userblocklist usage
+                                        ...
+                                        kamctl fifo check_userblocklist user [do
+main] prefix
+                                        ...
+
+6.6.  check_userwhitelist user [domain] prefix
+
+   Searches in the default user list table. Finds the longest prefix for
+   the given user@domain that matches the given prefix parameter. Returns
+   true if the prefix is found and the whitelist is set. Returns false
+   otherwise - either prefix found and whitelist not set or prefix not
+   found. Note that the domain parameter is optional. If not given, the
+   second parameter is the considered to be the prefix.
+
+   Example 1.25. check_userwhitelist usage
+                                        ...
+                                        kamctl fifo check_userwhitelist user [do
+main] prefix
+                                        ...
+
+7. Installation and Running
+
+   7.1. Database setup
+
+7.1. Database setup
+
+   Before running Kamailio with the userblocklist module, you have to
+   setup the database table where the module will read the blocklist data.
+   For that, if the table was not created by the installation script or
+   you choose to install everything by yourself you can use the
+   userblocklist-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. Database and table name can be set
+   with module parameters so they can be changed, but the name of the
+   columns must be as they are in the SQL script. You can also find the
+   complete database documentation on the project webpage,
+   https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+   Example 1.26. Example database content - globalblocklist table
+...
++----+-----------+-----------+
+| id | prefix    | whitelist |
++----+-----------+-----------+
+|  1 |           |         0 |
+|  2 | 1         |         1 |
+|  3 | 123456    |         0 |
+|  4 | 123455787 |         0 |
++----+-----------+-----------+
+...
+
+   This table will setup a global blocklist for all numbers, only allowing
+   calls starting with “1”. Numbers that starts with “123456” and
+   “123455787” are also blocklisted, because the longest prefix will be
+   matched.
+
+   Example 1.27. Example database content - userblocklist table
+...
++----+----------------+-------------+-----------+-----------+
+| id | username       | domain      | prefix    | whitelist |
++----+----------------+-------------+-----------+-----------+
+| 23 | 49721123456788 |             | 1234      |         0 |
+| 22 | 49721123456788 |             | 123456788 |         1 |
+| 21 | 49721123456789 |             | 12345     |         0 |
+| 20 | 494675231      |             | 499034133 |         1 |
+| 19 | 494675231      | test        | 499034132 |         0 |
+| 18 | 494675453      | test.domain | 49901     |         0 |
+| 17 | 494675454      |             | 49900     |         0 |
++----+----------------+-------------+-----------+-----------+
+...
+
+   This table will setup user specific blocklists for certain usernames.
+   For example for user “49721123456788” the prefix “1234” will be not
+   allowed, but the number “123456788” is allowed. Additionally a domain
+   could be specified that is used for username matching if the
+   “use_domain” parameter is set.

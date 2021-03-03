@@ -59,7 +59,7 @@
 			  <type>string</type>
 			  <size>&user_len;</size>
 			  <default/>
-			  <description>Name of column contains the the scan prefixes. Scan prefixes define the matching
+			  <description>Name of column contains the scan prefixes. Scan prefixes define the matching
 			  portion of a phone number, e.g. we have the scan prefixes 49721 and 49, the called number is
 			  49721913740, it matches 49721, because the longest match is taken. If no prefix matches,
 			  the number is not failure routed. To prevent this, an empty prefix value of <quote></quote>

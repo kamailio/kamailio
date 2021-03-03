@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _UID_DOMAIN_MOD_H
-#define _UID_DOMAIN_MOD_H
+#ifndef _UID_DOMAIN_MOD_H_
+#define _UID_DOMAIN_MOD_H_
 
 #include "../../lib/srdb2/db.h"
 #include "../../core/str.h"

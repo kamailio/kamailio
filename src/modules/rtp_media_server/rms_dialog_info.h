@@ -58,7 +58,8 @@ typedef struct rms_action
 
 int rms_check_msg(struct sip_msg *msg);
 rms_action_t *rms_action_new(rms_action_type_t t);
-int init_rms_dialog_list();
+int rms_dialog_list_init();
+void rms_dialog_list_free();
 rms_dialog_info_t *rms_dialog_search(struct sip_msg *msg);
 rms_dialog_info_t *rms_dialog_search_sync(struct sip_msg *msg);
 void rms_dialog_add(rms_dialog_info_t *di);
@@ -68,6 +69,7 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg);
 rms_dialog_info_t *rms_dialog_new_bleg(struct sip_msg *msg);
 int rms_dialogs_dump_f(struct sip_msg *msg, char *param1, char *param2);
 rms_dialog_info_t *rms_get_dialog_list(void);
+
 
 typedef struct ms_res
 {
@@ -79,9 +81,12 @@ typedef enum rms_dialog_state {
 	RMS_ST_DEFAULT,
 	RMS_ST_CONNECTING,
 	RMS_ST_CONNECTED,
+	RMS_ST_CONNECTED_ACK,
 	RMS_ST_DISCONNECTING,
 	RMS_ST_DISCONNECTED,
 } rms_dialog_state_t;
+
+int rms_dialog_info_set_state(rms_dialog_info_t *di, rms_dialog_state_t state);
 
 typedef struct rms_dialog_info
 {

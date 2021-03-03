@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -34,17 +34,16 @@ int pv_parse_select_name(pv_spec_p sp, str *in)
 	if (in == NULL || in->s == NULL || sp == NULL)
 		return -1;
 
-	c = in->s[in->len];
-	in->s[in->len] = '\0';
+	STR_VTOZ(in->s[in->len], c);
 	p = in->s;
 	if(parse_select(&p, &sel)<0)
 	{
 		LM_ERR("invalid select name [%.*s]\n",
 				in->len, in->s);
-		in->s[in->len] = c;
+		STR_ZTOV(in->s[in->len], c);
 		return -1;
 	}
-	in->s[in->len] = c;
+	STR_ZTOV(in->s[in->len], c);
 	sp->pvp.pvn.u.dname = (void*)sel;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;

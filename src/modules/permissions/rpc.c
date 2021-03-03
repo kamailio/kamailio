@@ -30,10 +30,32 @@
 #include "permissions.h"
 
 
+int rpc_check_reload(rpc_t *rpc, void *ctx)
+{
+	if(perm_rpc_reload_time == NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return -1;
+	}
+	if(*perm_rpc_reload_time != 0
+			&& *perm_rpc_reload_time > time(NULL) - perm_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "ongoing reload");
+		return -1;
+	}
+	*perm_rpc_reload_time = time(NULL);
+	return 0;
+}
+
 /*! \brief
  * RPC function to reload trusted table
  */
 void rpc_trusted_reload(rpc_t* rpc, void* c) {
+
+	if(rpc_check_reload(rpc, c) < 0) {
+		return;
+	}
+
 	if (reload_trusted_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
@@ -49,12 +71,12 @@ void rpc_trusted_reload(rpc_t* rpc, void* c) {
  */
 void rpc_trusted_dump(rpc_t* rpc, void* c) {
 
-	if (hash_table==NULL) {
+	if (perm_trust_table==NULL) {
 		rpc->fault(c, 500, "No trusted table");
 		return;
 	}
 
-	if(hash_table_rpc_print(*hash_table, rpc, c) < 0) {
+	if(hash_table_rpc_print(*perm_trust_table, rpc, c) < 0) {
 		LM_DBG("failed to print a hash_table dump\n");
 		return;
 	}
@@ -67,6 +89,11 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
  * RPC function to reload address table
  */
 void rpc_address_reload(rpc_t* rpc, void* c) {
+
+	if(rpc_check_reload(rpc, c) < 0) {
+		return;
+	}
+
 	if (reload_address_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
@@ -82,11 +109,11 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
  */
 void rpc_address_dump(rpc_t* rpc, void* c) {
 
-	if(addr_hash_table==NULL) {
+	if(perm_addr_table==NULL) {
 		rpc->fault(c, 500, "No address table");
 		return;
 	}
-	if(addr_hash_table_rpc_print(*addr_hash_table, rpc, c) < 0 ) {
+	if(addr_hash_table_rpc_print(*perm_addr_table, rpc, c) < 0 ) {
 		LM_DBG("failed to print address table dump\n");
 	}
 	return;
@@ -97,11 +124,11 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
  * RPC function to dump subnet table
  */
 void rpc_subnet_dump(rpc_t* rpc, void* c) {
-	if(subnet_table==NULL) {
+	if(perm_subnet_table==NULL) {
 		rpc->fault(c, 500, "No subnet table");
 		return;
 	}
-	if(subnet_table_rpc_print(*subnet_table, rpc, c) < 0) {
+	if(subnet_table_rpc_print(*perm_subnet_table, rpc, c) < 0) {
 		LM_DBG("failed to print subnet table dump\n");
 	}
 
@@ -114,11 +141,11 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
  */
 void rpc_domain_name_dump(rpc_t* rpc, void* c) {
 
-	if(domain_list_table==NULL) {
+	if(perm_domain_table==NULL) {
 		rpc->fault(c, 500, "No domain list table");
 		return;
 	}
-	if ( domain_name_table_rpc_print(*domain_list_table, rpc, c) < 0 ) {
+	if ( domain_name_table_rpc_print(*perm_domain_table, rpc, c) < 0 ) {
 		LM_DBG("failed to print domain table dump\n");
 	}
 	return;
@@ -155,14 +182,14 @@ void rpc_test_uri(rpc_t* rpc, void* c)
 		rpc->fault(c, 500, "Contact is too long");
 		return;
 	}
-	allow_suffix_len = strlen(allow_suffix);
+	allow_suffix_len = strlen(perm_allow_suffix);
 	if (basenamep.len + allow_suffix_len + 1 > MAX_FILE_LEN) {
 		rpc->fault(c, 500, "Basename is too long");
 		return;
 	}
 
 	memcpy(basename, basenamep.s, basenamep.len);
-	memcpy(basename + basenamep.len, allow_suffix, allow_suffix_len);
+	memcpy(basename + basenamep.len, perm_allow_suffix, allow_suffix_len);
 	basename[basenamep.len + allow_suffix_len] = 0;
 	memcpy(uri, urip.s, urip.len);
 	memcpy(contact, contactp.s, contactp.len);

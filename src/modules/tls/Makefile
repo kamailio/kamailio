@@ -2,11 +2,18 @@
 # TLS module makefile
 #
 #
-# WARNING: do not run this directly, it should be run by the master Makefile
+# WARNING: do not run this directly, it should be run by the main Makefile
 
 include ../../Makefile.defs
 auto_gen=
 NAME=tls.so
+
+# set to yes when wanting to link with static libraries
+LIBSSL_STATIC ?= no
+# set to yes when wanting to link with static libraries compiled from source
+LIBSSL_STATIC_SRCLIB ?= no
+# set to the path of the folder with static libraries compiled from source
+LIBSSL_STATIC_SRCPATH ?= /usr/local/src/openssl
 
 ifeq ($(CROSS_COMPILE),)
 SSL_BUILDER=$(shell \
@@ -16,8 +23,21 @@ SSL_BUILDER=$(shell \
 endif
 
 ifneq ($(SSL_BUILDER),)
+ifneq ($(LIBSSL_STATIC),yes)
 	DEFS += $(shell $(SSL_BUILDER) --cflags)
 	LIBS += $(shell $(SSL_BUILDER) --libs)
+else
+ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
+	## when static libs (*.a) from packages are compiled with -fPIC
+	DEFS += $(shell $(SSL_BUILDER) --cflags)
+	LIBS += $(shell $(SSL_BUILDER) --libs-only-L)
+	LIBS += -l:libssl.a -l:libcrypto.a -l:libz.a -l:libdl.a
+else
+	## when linking against static libs compiled from sources
+	DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
+	LIBS += $(LIBSSL_STATIC_SRCPATH)/libssl.a $(LIBSSL_STATIC_SRCPATH)/libcrypto.a
+endif # ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
+endif # ifneq ($(LIBSSL_STATIC),yes)
 else
 	DEFS += -I$(LOCALBASE)/ssl/include
 	LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \

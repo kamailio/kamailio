@@ -1,16 +1,18 @@
 /*
  * pv_headers
  *
- * Copyright (C) 2018 Kirill Solomko <ksolomko@sipwise.com>
+ * Copyright (C)
+ * 2020 Victor Seva <vseva@sipwise.com>
+ * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
- * This file is part of SIP Router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * SIP Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * SIP Router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,76 +24,128 @@
  */
 
 #include "../../core/sr_module.h"
-#include "../../core/mod_fix.h"
 #include "../../core/script_cb.h"
+#include "../../core/mod_fix.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/kemi.h"
 
 #include "pv_headers.h"
 #include "pvh_func.h"
-#include "pvh_xavp.h"
 #include "pvh_hash.h"
+#include "pvh_xavp.h"
 
 MODULE_VERSION
 
 #define MODULE_NAME "pv_headers"
-
 #define XAVP_NAME "headers"
-
-#define FL_NAME_PV_HDRS_COLLECTED "pv_headers_collected"
-#define FL_NAME_PV_HDRS_APPLIED "pv_headers_applied"
-
-int FL_PV_HDRS_COLLECTED = 27;
-int FL_PV_HDRS_APPLIED = 28;
 
 uac_api_t uac;
 static tm_api_t tmb;
 
-str xavp_name = str_init(XAVP_NAME);
-
-str xavp_parsed_xname = str_init("parsed_pv_headers");
+str xavi_name = str_init(XAVP_NAME);
+str xavi_helper_xname = str_init("modparam_pv_headers");
+str xavi_parsed_xname = str_init("parsed_pv_headers");
+unsigned int header_name_size = 255;
+unsigned int header_value_size = 1024;
+int FL_PV_HDRS_COLLECTED = 27;
+int FL_PV_HDRS_APPLIED = 28;
 static str skip_headers_param =
 		str_init("Record-Route,Via,Route,Content-Length,Max-Forwards,CSeq");
 static str split_headers_param = STR_NULL;
-static int auto_msg_param = 1;
-
 static str single_headers_param = str_init("");
+static int auto_msg_param = 1;
 
 str _hdr_from = {"From", 4};
 str _hdr_to = {"To", 2};
-
-unsigned int header_name_size = 255;
-unsigned int header_value_size = 1024;
-
+str _hdr_reply_reason = {"@Reply-Reason", 13};
+int _branch = T_BR_UNDEFINED;
+int _reply_counter = -1;
 
 static void mod_destroy(void);
 static int mod_init(void);
 
 static void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params);
 static int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb);
+static int handle_msg_branch_cb(
+		struct sip_msg *msg, unsigned int flags, void *cb);
+static int handle_msg_reply_cb(
+		struct sip_msg *msg, unsigned int flags, void *cb);
+
+/**
+ *
+ */
+static int pvh_get_branch_index(struct sip_msg *msg, int *br_idx)
+{
+	int os = 0;
+	int len = 0;
+	char parsed_br_idx[header_value_size];
+
+	if(msg->add_to_branch_len > header_value_size) {
+		LM_ERR("branch name is too long\n");
+		return -1;
+	}
+
+	os = msg->add_to_branch_len;
+	while(os > 0 && memcmp(msg->add_to_branch_s + os - 1, ".", 1))
+		os--;
+	len = msg->add_to_branch_len - os;
+	if(os > 0 && len > 0) {
+		memcpy(parsed_br_idx, msg->add_to_branch_s + os, len);
+		parsed_br_idx[len] = '\0';
+		*br_idx = atoi(parsed_br_idx) + 1;
+	} else {
+		*br_idx = 0;
+	}
+
+	return 1;
+}
 
 static int w_pvh_collect_headers(struct sip_msg *msg, char *p1, char *p2)
 {
-	return pvh_collect_headers(msg, 0);
+	sr_xavp_t **backup_xavis = NULL;
+
+	if(pvh_get_branch_index(msg, &_branch) < 0)
+		return -1;
+	if(msg->first_line.type == SIP_REPLY) {
+		if((_reply_counter = pvh_reply_append(backup_xavis)) < 0) {
+			return -1;
+		}
+	}
+	return pvh_collect_headers(msg);
 }
 
 static int ki_pvh_collect_headers(struct sip_msg *msg)
 {
-	return pvh_collect_headers(msg, 0);
+	sr_xavp_t **backup_xavis = NULL;
+
+	if(pvh_get_branch_index(msg, &_branch) < 0)
+		return -1;
+	if(msg->first_line.type == SIP_REPLY) {
+		if((_reply_counter = pvh_reply_append(backup_xavis)) < 0) {
+			return -1;
+		}
+	}
+	return pvh_collect_headers(msg);
 }
 
 static int w_pvh_apply_headers(struct sip_msg *msg, char *p1, char *p2)
 {
-	return pvh_apply_headers(msg, 0);
+	if(pvh_get_branch_index(msg, &_branch) < 0)
+		return -1;
+	return pvh_apply_headers(msg);
 }
 
 static int ki_pvh_apply_headers(struct sip_msg *msg)
 {
-	return pvh_apply_headers(msg, 0);
+	if(pvh_get_branch_index(msg, &_branch) < 0)
+		return -1;
+	return pvh_apply_headers(msg);
 }
 
 static int w_pvh_reset_headers(struct sip_msg *msg, char *p1, char *p2)
 {
+	if(pvh_get_branch_index(msg, &_branch) < 0)
+		return -1;
 	return pvh_reset_headers(msg);
 }
 
@@ -151,79 +205,83 @@ static int w_pvh_remove_header(
 	return pvh_remove_header(msg, &hname, indx);
 }
 
-/*
- * Exported functions
- */
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"pvh_collect_headers", (cmd_function)w_pvh_collect_headers, 0, 0, 0,
-				ANY_ROUTE},
-		{"pvh_apply_headers", (cmd_function)w_pvh_apply_headers, 0, 0, 0,
-				ANY_ROUTE},
-		{"pvh_reset_headers", (cmd_function)w_pvh_reset_headers, 0, 0, 0,
-				ANY_ROUTE},
-		{"pvh_check_header", (cmd_function)w_pvh_check_header, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"pvh_append_header", (cmd_function)w_pvh_append_header, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"pvh_modify_header", (cmd_function)w_pvh_modify_header, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"pvh_modify_header", (cmd_function)w_pvh_modify_header, 3,
-				fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
-		{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"pvh_collect_headers", (cmd_function)w_pvh_collect_headers, 0, 0, 0,
+			ANY_ROUTE},
+	{"pvh_apply_headers", (cmd_function)w_pvh_apply_headers, 0, 0, 0,
+			ANY_ROUTE},
+	{"pvh_reset_headers", (cmd_function)w_pvh_reset_headers, 0, 0, 0,
+			ANY_ROUTE},
+	{"pvh_check_header", (cmd_function)w_pvh_check_header, 1,
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"pvh_append_header", (cmd_function)w_pvh_append_header, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pvh_modify_header", (cmd_function)w_pvh_modify_header, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pvh_modify_header", (cmd_function)w_pvh_modify_header, 3,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 1,
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"x_hdr", (sizeof("x_hdr") - 1)}, PVT_OTHER, pvh_get_header,
-				pvh_set_header, pvh_parse_header_name, pv_parse_index, 0, 0},
-		{{"x_fu", (sizeof("x_fu") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 1},
-		{{"x_fU", (sizeof("x_fU") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 2},
-		{{"x_fd", (sizeof("x_fd") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 3},
-		{{"x_fn", (sizeof("x_fn") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 4},
-		{{"x_ft", (sizeof("x_ft") - 1)}, PVT_OTHER, pvh_get_uri, /* ro */ 0, 0,
-				0, pv_init_iname, 5},
-		{{"x_tu", (sizeof("x_tu") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 6},
-		{{"x_tU", (sizeof("x_tU") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 7},
-		{{"x_td", (sizeof("x_td") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 8},
-		{{"x_tn", (sizeof("x_tn") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
-				0, pv_init_iname, 9},
-		{{"x_tt", (sizeof("x_tt") - 1)}, PVT_OTHER, pvh_get_uri, /* ro */ 0, 0,
-				0, pv_init_iname, 10},
-		{{"x_rs", (sizeof("x_rs") - 1)}, PVT_OTHER, pvh_get_reply_sr,
-				pvh_set_reply_sr, 0, 0, pv_init_iname, 1},
-		{{"x_rr", (sizeof("x_rr") - 1)}, PVT_OTHER, pvh_get_reply_sr,
-				pvh_set_reply_sr, 0, 0, pv_init_iname, 2},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"x_hdr", (sizeof("x_hdr") - 1)}, PVT_OTHER, pvh_get_header,
+			pvh_set_header, pvh_parse_header_name, pv_parse_index, 0, 0},
+	{{"x_fu", (sizeof("x_fu") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 1},
+	{{"x_fU", (sizeof("x_fU") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 2},
+	{{"x_fd", (sizeof("x_fd") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 3},
+	{{"x_fn", (sizeof("x_fn") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 4},
+	{{"x_ft", (sizeof("x_ft") - 1)}, PVT_OTHER, pvh_get_uri, /* ro */ 0, 0,
+			0, pv_init_iname, 5},
+	{{"x_tu", (sizeof("x_tu") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 6},
+	{{"x_tU", (sizeof("x_tU") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 7},
+	{{"x_td", (sizeof("x_td") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 8},
+	{{"x_tn", (sizeof("x_tn") - 1)}, PVT_OTHER, pvh_get_uri, pvh_set_uri, 0,
+			0, pv_init_iname, 9},
+	{{"x_tt", (sizeof("x_tt") - 1)}, PVT_OTHER, pvh_get_uri, /* ro */ 0, 0,
+			0, pv_init_iname, 10},
+	{{"x_rs", (sizeof("x_rs") - 1)}, PVT_OTHER, pvh_get_reply_sr,
+			pvh_set_reply_sr, 0, 0, pv_init_iname, 1},
+	{{"x_rr", (sizeof("x_rr") - 1)}, PVT_OTHER, pvh_get_reply_sr,
+			pvh_set_reply_sr, 0, 0, pv_init_iname, 2},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"xavp_name", PARAM_STR, &xavp_name},
-		{"header_value_size", PARAM_INT, &header_value_size},
-		{"header_collect_flag", PARAM_INT, &FL_PV_HDRS_COLLECTED},
-		{"header_apply_flag", PARAM_INT, &FL_PV_HDRS_APPLIED},
-		{"skip_headers", PARAM_STR, &skip_headers_param},
-		{"split_headers", PARAM_STR, &split_headers_param},
-		{"auto_msg", PARAM_INT, &auto_msg_param}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"xavi_name", PARAM_STR, &xavi_name},
+	{"header_value_size", PARAM_INT, &header_value_size},
+	{"header_collect_flag", PARAM_INT, &FL_PV_HDRS_COLLECTED},
+	{"header_apply_flag", PARAM_INT, &FL_PV_HDRS_APPLIED},
+	{"skip_headers", PARAM_STR, &skip_headers_param},
+	{"split_headers", PARAM_STR, &split_headers_param},
+	{"auto_msg", PARAM_INT, &auto_msg_param},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		MODULE_NAME,	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	MODULE_NAME,	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	0,				 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 int mod_init(void)
 {
@@ -238,19 +296,25 @@ int mod_init(void)
 		LM_NOTICE("could not bind to the 'tm' module, automatic headers "
 				  "collect/apply is disabled\n");
 		auto_msg_param = 0;
-	} else {
-		if(auto_msg_param
-				&& register_script_cb(
-						   handle_msg_cb, PRE_SCRIPT_CB | REQUEST_CB, 0)
-						   < 0) {
-			LM_ERR("cannot register PRE_SCRIPT_CB callbacks\n");
+	}
+	if(auto_msg_param) {
+		if(register_script_cb(handle_msg_cb, PRE_SCRIPT_CB | REQUEST_CB, 0)
+				< 0) {
+			LM_ERR("cannot register PRE_SCRIPT_CB REQUEST_CB callbacks\n");
 			return -1;
 		}
-	}
-
-	if(header_value_size == 0) {
-		LM_ERR("header_value_size must be >=0\n");
-		return -1;
+		if(register_script_cb(
+				   handle_msg_branch_cb, PRE_SCRIPT_CB | BRANCH_CB, 0)
+				< 0) {
+			LM_ERR("cannot register PRE_SCRIPT_CB BRANCH_CB callbacks\n");
+			return -1;
+		}
+		if(register_script_cb(
+				   handle_msg_reply_cb, PRE_SCRIPT_CB | ONREPLY_CB, 0)
+				< 0) {
+			LM_ERR("cannot register PRE_SCRIPT_CB ONREPLY_CB callbacks\n");
+			return -1;
+		}
 	}
 
 	pvh_str_hash_init(&skip_headers, &skip_headers_param, "skip_headers");
@@ -262,25 +326,81 @@ int mod_init(void)
 
 void mod_destroy(void)
 {
-	pvh_str_hash_free(&skip_headers);
-	pvh_str_hash_free(&split_headers);
-	pvh_str_hash_free(&single_headers);
-	pvh_free_xavp(&xavp_name);
-	pvh_free_xavp(&xavp_parsed_xname);
 	LM_INFO("%s module unload...\n", MODULE_NAME);
+}
+
+/* just for debug */
+static inline char *tm_type_to_string(int type)
+{
+	switch(type) {
+		case TMCB_REQUEST_IN:
+			return "TMCB_REQUEST_IN";
+		case TMCB_RESPONSE_IN:
+			return "TMCB_RESPONSE_IN";
+		case TMCB_E2EACK_IN:
+			return "TMCB_E2EACK_IN";
+		case TMCB_REQUEST_PENDING:
+			return "TMCB_REQUEST_PENDING";
+		case TMCB_REQUEST_FWDED:
+			return "TMCB_REQUEST_FWDED";
+		case TMCB_RESPONSE_FWDED:
+			return "TMCB_RESPONSE_FWDED";
+		case TMCB_ON_FAILURE_RO:
+			return "TMCB_ON_FAILURE_RO";
+		case TMCB_ON_FAILURE:
+			return "TMCB_ON_FAILURE";
+		case TMCB_REQUEST_OUT:
+			return "TMCB_REQUEST_OUT";
+		case TMCB_RESPONSE_OUT:
+			return "TMCB_RESPONSE_OUT";
+		case TMCB_LOCAL_COMPLETED:
+			return "TMCB_LOCAL_COMPLETED";
+		case TMCB_LOCAL_RESPONSE_OUT:
+			return "TMCB_LOCAL_RESPONSE_OUT";
+		case TMCB_ACK_NEG_IN:
+			return "TMCB_ACK_NEG_IN";
+		case TMCB_REQ_RETR_IN:
+			return "TMCB_REQ_RETR_IN";
+		case TMCB_LOCAL_RESPONSE_IN:
+			return "TMCB_LOCAL_RESPONSE_IN";
+		case TMCB_LOCAL_REQUEST_IN:
+			return "TMCB_LOCAL_REQUEST_IN";
+		case TMCB_DLG:
+			return "TMCB_DLG";
+		case TMCB_DESTROY:
+			return "TMCB_DESTROY";
+		case TMCB_E2ECANCEL_IN:
+			return "TMCB_E2ECANCEL_IN";
+		case TMCB_E2EACK_RETR_IN:
+			return "TMCB_E2EACK_RETR_IN";
+		case TMCB_RESPONSE_READY:
+			return "TMCB_RESPONSE_READY";
+		case TMCB_DONT_ACK:
+			return "TMCB_DONT_ACK";
+		case TMCB_REQUEST_SENT:
+			return "TMCB_REQUEST_SENT";
+		case TMCB_RESPONSE_SENT:
+			return "TMCB_RESPONSE_SENT";
+		case TMCB_ON_BRANCH_FAILURE:
+			return "TMCB_ON_BRANCH_FAILURE";
+		case TMCB_ON_BRANCH_FAILURE_RO:
+			return "TMCB_ON_BRANCH_FAILURE_RO";
+		case TMCB_MAX:
+			return "TMCB_MAX";
+	}
+
+	return "UNKNOWN";
 }
 
 void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params)
 {
 	struct sip_msg *msg = NULL;
 
-	if(type & TMCB_RESPONSE_IN) {
-		msg = params->rpl;
-		if(msg != NULL && msg != FAKED_REPLY) {
-			pvh_reset_headers(msg);
-			pvh_collect_headers(msg, 1);
-		}
-	} else if(type & TMCB_REQUEST_FWDED) {
+	LM_DBG("T:%p params->branch:%d type:%s\n", t, params->branch,
+			tm_type_to_string(type));
+
+
+	if(type & TMCB_REQUEST_FWDED) {
 		msg = params->req;
 	} else if(type & (TMCB_ON_BRANCH_FAILURE | TMCB_RESPONSE_FWDED)) {
 		msg = params->rpl;
@@ -289,26 +409,93 @@ void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params)
 		return;
 	}
 
-	if(msg != NULL && msg != FAKED_REPLY)
-		pvh_apply_headers(msg, 1);
 
+	LM_DBG("T:%p picked_branch:%d label:%d branches:%d\n", t,
+			tmb.t_get_picked_branch(), t->label, t->nr_of_outgoings);
+
+	if(msg != NULL && msg != FAKED_REPLY) {
+		pvh_get_branch_index(msg, &_branch);
+		LM_DBG("T:%p set branch:%d\n", t, _branch);
+		pvh_apply_headers(msg);
+	}
 	return;
 }
 
+static int msg_cbs =
+		TMCB_REQUEST_FWDED | TMCB_RESPONSE_FWDED | TMCB_ON_BRANCH_FAILURE;
+
 int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
-	int cbs = TMCB_REQUEST_FWDED | TMCB_RESPONSE_FWDED | TMCB_RESPONSE_IN
-			  | TMCB_ON_BRANCH_FAILURE;
+	if(pvh_parse_msg(msg) != 0)
+		return 1;
 
-	if(flags & (PRE_SCRIPT_CB | REQUEST_CB)) {
-		if(tmb.register_tmcb(msg, 0, cbs, handle_tm_t, 0, 0) <= 0) {
-			LM_ERR("cannot register TM callbacks\n");
-			return -1;
-		}
-		pvh_collect_headers(msg, 1);
-	} else {
-		LM_ERR("unknown callback: %d\n", flags);
+	if(tmb.register_tmcb(msg, 0, msg_cbs, handle_tm_t, 0, 0) <= 0) {
+		LM_ERR("cannot register TM callbacks\n");
+		return -1;
 	}
+
+	_branch = 0;
+	LM_DBG("msg:%p set branch:%d\n", msg, _branch);
+	pvh_collect_headers(msg);
+	return 1;
+}
+
+int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
+{
+
+	LM_DBG("msg:%p previous branch:%d\n", msg, _branch);
+
+	if(flags & PRE_SCRIPT_CB) {
+		pvh_get_branch_index(msg, &_branch);
+		LM_DBG("msg:%p set branch:%d\n", msg, _branch);
+		pvh_clone_branch_xavi(msg, &xavi_name);
+	}
+
+	return 1;
+}
+
+int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
+{
+	tm_cell_t *t = NULL;
+	sr_xavp_t **backup_xavis = NULL;
+	sr_xavp_t **list = NULL;
+
+	if(pvh_parse_msg(msg) != 0)
+		return 1;
+	LM_DBG("msg:%p previous branch:%d\n", msg, _branch);
+
+	if(tmb.t_check(msg, &_branch) == -1) {
+		LM_ERR("failed find UAC branch\n");
+	} else {
+		t = tmb.t_gett();
+		if(t == NULL || t == T_UNDEFINED) {
+			LM_DBG("cannot lookup the transaction\n");
+		} else {
+			LM_DBG("T:%p t_check-branch:%d xavi_list:%p branches:%d\n", t,
+					_branch, &t->xavis_list, t->nr_of_outgoings);
+			list = &t->xavis_list;
+			backup_xavis = xavi_set_list(&t->xavis_list);
+		}
+	}
+
+	pvh_get_branch_index(msg, &_branch);
+	LM_DBG("T:%p set branch:%d picked_branch:%d\n", t, _branch,
+			tmb.t_get_picked_branch());
+
+	if((_reply_counter = pvh_reply_append(list)) < 0) {
+		return -1;
+	}
+	pvh_collect_headers(msg);
+	if(backup_xavis) {
+		xavi_set_list(backup_xavis);
+		LM_DBG("restored backup_xavis:%p\n", *backup_xavis);
+	}
+	if(t) {
+		tmb.unref_cell(t);
+		LM_DBG("T:%p unref\n", t);
+	}
+	tmb.t_sett(T_UNDEFINED, T_BR_UNDEFINED);
+	LM_DBG("reset tm\n");
 
 	return 1;
 }

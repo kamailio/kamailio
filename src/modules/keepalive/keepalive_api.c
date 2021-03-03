@@ -62,8 +62,8 @@ int bind_keepalive(keepalive_api_t *api)
 /*
  * Add a new destination in keepalive pool
  */
-int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
-		void *user_attr)
+int ka_add_dest(str *uri, str *owner, int flags, int ping_interval,
+    ka_statechanged_f statechanged_clb, ka_response_f response_clb, void *user_attr)
 {
 	struct sip_uri _uri;
 	ka_dest_t *dest=0,*hollow=0;
@@ -103,9 +103,31 @@ int ka_add_dest(str *uri, str *owner, int flags, ka_statechanged_f callback,
 	if(ka_str_copy(owner, &(dest->owner), NULL) < 0)
 		goto err;
 
+	if(sruid_next(&ka_sruid) < 0)
+		goto err;
+	ka_str_copy(&(ka_sruid.uid), &(dest->uuid), NULL);
+
 	dest->flags = flags;
-	dest->statechanged_clb = callback;
+	dest->statechanged_clb = statechanged_clb;
+	dest->response_clb = response_clb;
 	dest->user_attr = user_attr;
+	dest->ping_interval = MS_TO_TICKS((ping_interval == 0 ? ka_ping_interval : ping_interval) * 1000) ;
+	if (lock_init(&dest->lock)==0){
+		LM_ERR("failed initializing Lock \n");
+	}
+
+    dest->timer = timer_alloc();
+	if (dest->timer == NULL) {
+		LM_ERR("failed allocating timer\n");
+		goto err;
+  	}
+
+	timer_init(dest->timer, ka_check_timer, dest, 0);
+
+	if(timer_add(dest->timer, MS_TO_TICKS(KA_FIRST_TRY_DELAY)) < 0){
+		LM_ERR("failed to start timer\n");
+		goto err;
+	}
 
 	dest->next = ka_destinations_list->first;
 	ka_destinations_list->first = dest;
@@ -158,7 +180,7 @@ ka_state ka_destination_state(str *destination)
 * @result 1 successful  , -1 fail
 */
 int ka_del_destination(str *uri, str *owner){
-
+	LM_DBG("removing destination: %.*s\n", uri->len, uri->s);
 	ka_dest_t *target=0,*head=0;
 	ka_lock_destination_list();
 
@@ -171,15 +193,14 @@ int ka_del_destination(str *uri, str *owner){
 		LM_ERR("Couldn't find destination \r\n");
 		goto err;
 	}
-
+	lock_get(&target->lock);
 	if(!head){
 		LM_DBG("There isn't any head so maybe it is first \r\n");
 		ka_destinations_list->first = target->next;
-		free_destination(target);
-		ka_unlock_destination_list();
-		return 1;
+	} else {
+		head->next = target->next;
 	}
-	head->next = target->next;
+	lock_release(&target->lock);
 	free_destination(target);
 	ka_unlock_destination_list();
 	return 1;
@@ -192,7 +213,7 @@ err:
 * @abstract find given destination uri address in destination_list stack
 *           don't forget to add lock via ka_lock_destination_list to prevent crashes
 * @param *uri given uri
-* @param *owner given owner name, not using now
+* @param *owner given owner name
 * @param **target searched address in stack
 * @param **head which points target
 *	*
@@ -207,10 +228,7 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 		if(!dest)
 			break;
 
-		if(uri->len!=dest->uri.len)
-			continue;
-
-		if(memcmp(dest->uri.s , uri->s , uri->len>dest->uri.len?dest->uri.len : uri->len)==0){
+		if (STR_EQ(*uri, dest->uri) && STR_EQ(*owner, dest->owner)){
 			*head = temp;
 			*target = dest;
 			LM_DBG("destination is found [target : %p] [head : %p] \r\n",target,temp);
@@ -221,6 +239,39 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 	return 0;
 
 }
+
+/*!
+* @function ka_find_destination_by_uuid
+*			don't forget to add lock via ka_lock_destination_list to prevent crashes
+*
+* @param *uuid uuid of ka_dest record
+* @param **target searched address in stack
+* @param **head which points target
+*	*
+* @result 1 successful  , 0 fail
+*/
+int ka_find_destination_by_uuid(str uuid, ka_dest_t **target, ka_dest_t **head){
+	ka_dest_t  *dest=0 ,*temp=0;
+
+	LM_DBG("finding destination with uuid:%.*s\n", uuid.len, uuid.s);
+
+	for(dest = ka_destinations_list->first ;dest ; temp = dest, dest = dest->next ){
+		if(!dest)
+			break;
+
+		if (STR_EQ(uuid, dest->uuid)){
+			*head = temp;
+			*target = dest;
+			LM_DBG("destination is found [target : %p] [head : %p] \r\n",target,temp);
+			return 1;
+		}
+	}
+
+	return 0;
+
+}
+
+
 /*!
 * @function free_destination
 * @abstract free ka_dest_t members
@@ -230,14 +281,24 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 * @result 1 successful  , -1 fail
 */
 int free_destination(ka_dest_t *dest){
-
+	
 	if(dest){
+        if(timer_del(dest->timer) < 0){
+          LM_ERR("failed to remove timer for destination <%.*s>\n", dest->uri.len, dest->uri.s);
+          return -1;
+        }
+
+        timer_free(dest->timer);
+		lock_destroy(dest->lock);
 		if(dest->uri.s)
 			shm_free(dest->uri.s);
 
 		if(dest->owner.s)
 			shm_free(dest->owner.s);
 
+		if(dest->uuid.s)
+			shm_free(dest->uuid.s);
+		
 		shm_free(dest);
 	}
 

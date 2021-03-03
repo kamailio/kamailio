@@ -42,7 +42,10 @@
 #include "rpc_lookup.h"
 #include "sr_compat.h"
 #include "ppcfg.h"
+#include "fmsg.h"
 #include "async_task.h"
+#include "shm_init.h"
+#include "daemonize.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -107,6 +110,24 @@ unsigned int set_modinit_delay(unsigned int v)
 	r =  modinit_delay;
 	modinit_delay = v;
 	return r;
+}
+
+/* shut down phase for instance - kept in shared memory */
+static int *_ksr_shutdown_phase = NULL;
+
+int ksr_shutdown_phase_init(void)
+{
+	if((_ksr_shutdown_phase == NULL) && (shm_initialized())) {
+		_ksr_shutdown_phase = (int*)shm_mallocxz(sizeof(int));
+	}
+	return 0;
+}
+/**
+ * return destroy modules phase state
+ */
+int ksr_shutdown_phase(void)
+{
+	return (_ksr_shutdown_phase)?(*_ksr_shutdown_phase):0;
 }
 
 /* keep state if server is in destroy modules phase */
@@ -314,7 +335,10 @@ error:
 	return ret;
 }
 
-static inline int version_control(void *handle, char *path)
+/**
+ * check the version of loaded module
+ */
+int ksr_version_control(void *handle, char *path)
 {
 	char **m_ver;
 	char **m_flags;
@@ -355,44 +379,24 @@ static inline int version_control(void *handle, char *path)
 }
 
 /**
- * \brief load a sr module
+ *  \brief lookup a module and fill the new path
  *
- * tries to load the module specified by mod_path.
- * If mod_path is 'modname' or 'modname.so' then
- *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
- *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
- * If mod_path contain a '/' it is assumed to be the
- * path to the module and tried first. If fails and mod_path is not
- * absolute path (not starting with '/') then will try:
- * \<MODS_DIR\>/mod_path
  * @param mod_path path or module name
+ * @param new_path resolved path to the module, must be pkg_free() if != mod_path
  * @return 0 on success , <0 on error
  */
-int load_module(char* mod_path)
+int ksr_locate_module(char *mod_path, char **new_path)
 {
-	void* handle;
-	char* error;
-	mod_register_function mr;
-	module_exports_t* exp;
-	struct sr_module* t;
 	struct stat stat_buf;
 	str modname;
 	char* mdir;
 	char* nxt_mdir;
 	char* path;
 	int mdir_len;
-	int len;
-	int dlflags;
-	int new_dlflags;
-	int retries;
 	int path_type;
-	str expref;
-	char exbuf[64];
+	int len;
 
-#ifndef RTLD_NOW
-/* for openbsd */
-#define RTLD_NOW DL_LAZY
-#endif
+	*new_path = NULL;
 	path=mod_path;
 	path_type = 0;
 	modname.s = path;
@@ -502,6 +506,57 @@ int load_module(char* mod_path)
 			goto error;
 		}
 	}
+
+	LM_DBG("found module to load <%s>\n", path);
+	*new_path = path;
+	return 0;
+
+error:
+	if(path!=NULL && path!=mod_path) {
+		pkg_free(path);
+	}
+
+	return -1;
+}
+
+/**
+ * \brief load a sr module
+ *
+ * tries to load the module specified by mod_path.
+ * If mod_path is 'modname' or 'modname.so' then
+ *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
+ *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
+ * If mod_path contain a '/' it is assumed to be the
+ * path to the module and tried first. If fails and mod_path is not
+ * absolute path (not starting with '/') then will try:
+ * \<MODS_DIR\>/mod_path
+ * @param mod_path path or module name
+ * @return 0 on success , <0 on error
+ */
+int load_module(char* mod_path)
+{
+	void* handle;
+	char* error;
+	mod_register_function mr;
+	module_exports_t* exp;
+	struct sr_module* t;
+	int dlflags;
+	int new_dlflags;
+	int retries;
+	char* path = NULL;
+	str expref;
+	char exbuf[64];
+	char* mdir;
+
+#ifndef RTLD_NOW
+/* for openbsd */
+#define RTLD_NOW DL_LAZY
+#endif
+
+	if(ksr_locate_module(mod_path, &path)<0) {
+		return -1;
+	}
+
 	LM_DBG("trying to load <%s>\n", path);
 
 	retries=2;
@@ -520,8 +575,8 @@ reload:
 		}
 	}
 	/* version control */
-	if (!version_control(handle, path)) {
-		exit(-1);
+	if (!ksr_version_control(handle, path)) {
+		ksr_exit(-1);
 	}
 	/* launch register */
 	mr = (mod_register_function)dlsym(handle, "mod_register");
@@ -590,6 +645,29 @@ skip:
 	if (path && path!=mod_path)
 		pkg_free(path);
 	return -1;
+}
+
+/**
+ *
+ */
+int load_modulex(char* mod_path)
+{
+	str seval;
+	str sfmt;
+	sip_msg_t *fmsg;
+	char* emod;
+
+	emod = mod_path;
+	if(strchr(mod_path, '$') != NULL) {
+		fmsg = faked_msg_get_next();
+		sfmt.s = mod_path;
+		sfmt.len = strlen(sfmt.s);
+		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+			emod = seval.s;
+		}
+	}
+
+	return load_module(emod);
 }
 
 /**
@@ -738,6 +816,12 @@ void destroy_modules()
 	struct sr_module* t, *foo;
 
 	_sr_destroy_modules_phase = 1;
+	if(_ksr_shutdown_phase!=NULL) {
+		*_ksr_shutdown_phase = 1;
+	}
+
+	LM_DBG("starting modules destroy phase\n");
+
 	/* call first destroy function from each module */
 	t=modules;
 	while(t) {

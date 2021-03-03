@@ -41,6 +41,7 @@ Build-Depends:
  libreadline-dev,
  libsasl2-dev,
  libsctp-dev,
+ libsecsipid-dev,
  libsnmp-dev,
  libsqlite3-dev,
  libssl-dev,
@@ -71,7 +72,7 @@ Pre-Depends:
 Depends:
  adduser,
  lsb-base,
- python,
+ python3,
  ${misc:Depends},
  ${shlibs:Depends},
 Replaces:
@@ -823,6 +824,22 @@ Description: MQTT modules for the Kamailio SIP Server
  .
  Messages can be published from any point in the routing script. Also
  the subscriptions can be fully controlled by scripting commands.
+
+Package: kamailio-secsipid-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: contains the secsipid module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the secsipid Module.
 
 Package: kamailio-extra-modules
 Architecture: linux-any

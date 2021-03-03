@@ -87,11 +87,14 @@ out_of_memory:
 }
 
 ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t * time_stamps, str * user_session_id, str * outgoing_session_id, str * calling_party, 
-	str * called_party, str * icid, str * orig_ioi, str * term_ioi, int node_role, str *incoming_trunk_id, str *outgoing_trunk_id, str* pani) {
+	str * called_party, str * icid, str * orig_ioi, str * term_ioi, int node_role, str *incoming_trunk_id, str *outgoing_trunk_id, str* pani,
+	str * app_provided_party) {
 
     str_list_slot_t *sl = 0;
     ims_information_t *x = 0;
     ioi_list_element_t * ioi_elem = 0;
+
+    LM_DBG("create new IMS information\n");
 
     mem_new(x, sizeof (ims_information_t), pkg);
 
@@ -115,8 +118,9 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
         WL_APPEND(&(x->calling_party_address), sl);
     }
 
-    if (called_party && called_party->s)
+    if (called_party && called_party->s) {
         str_dup_ptr(x->called_party_address, *called_party, pkg);
+    }
     
     if (incoming_trunk_id && incoming_trunk_id->s)
         str_dup_ptr(x->incoming_trunk_id, *incoming_trunk_id, pkg);
@@ -126,6 +130,10 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
     
     if (pani && pani->s && (pani->len > 0)) {
 	str_dup_ptr(x->access_network_info, *pani, pkg);
+    }
+
+    if (app_provided_party && app_provided_party->s && (app_provided_party->len > 0)) {
+	str_dup_ptr(x->app_provided_party, *app_provided_party, pkg);
     }
 
     //WL_FREE_ALL(&(x->called_asserted_identity),str_list_t,pkg);
@@ -154,6 +162,7 @@ service_information_t * new_service_information(ims_information_t * ims_info, su
     service_information_t * x = 0;
     subscription_id_list_element_t * sl = 0;
 
+    LM_DBG("create new service information\n");
     mem_new(x, sizeof (service_information_t), pkg);
 
     x->ims_information = ims_info;
@@ -177,7 +186,7 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     Ro_CCR_t *x = 0;
 
     service_information_t * service_info = 0;
-
+    LM_DBG("create new Ro CCR\n");
     mem_new(x, sizeof (Ro_CCR_t), pkg);
 
     if (cfg.origin_host.s && cfg.origin_host.len > 0)
@@ -185,6 +194,9 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     
     if (cfg.origin_realm.s && cfg.origin_realm.len >0)
         str_dup(x->origin_realm, cfg.origin_realm, pkg);
+
+    if (cfg.destination_host.s && cfg.destination_host.len > 0)
+        str_dup(x->destination_host, cfg.destination_host, pkg);
     
     if (cfg.destination_realm.s && cfg.destination_realm.len > 0)
         str_dup(x->destination_realm, cfg.destination_realm, pkg);
@@ -198,9 +210,11 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
     if (cfg.service_context_id && cfg.service_context_id->s)
         str_dup_ptr(x->service_context_id, *(cfg.service_context_id), pkg);
 
-    if (ims_info)
+    if (ims_info) {
         if (!(service_info = new_service_information(ims_info, subscription)))
             goto error;
+        LM_DBG("Created service information\n");
+    }
 
     x->service_information = service_info;
     service_info = 0;
@@ -250,6 +264,7 @@ void ims_information_free(ims_information_t *x) {
     str_free_ptr(x->incoming_trunk_id, pkg);
     str_free_ptr(x->outgoing_trunk_id, pkg);
     str_free_ptr(x->access_network_info, pkg);
+    str_free_ptr(x->app_provided_party, pkg);
 
     time_stamps_free(x->time_stamps);
 
@@ -281,6 +296,7 @@ void Ro_free_CCR(Ro_CCR_t *x) {
 
     str_free(x->origin_host, pkg);
     str_free(x->origin_realm, pkg);
+    str_free(x->destination_host, pkg);
     str_free(x->destination_realm, pkg);
 
     str_free_ptr(x->user_name, pkg);

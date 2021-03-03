@@ -402,7 +402,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		memcpy(p, AT_SIGN.s, AT_SIGN.len);
 		p += AT_SIGN.len;
 	}
-	/* this could be an error, or a blacklisted destination */
+	/* this could be an error, or a blocklisted destination */
 	if (rs->host.len == 0) {
 		*p = '\0';
 		return -1;

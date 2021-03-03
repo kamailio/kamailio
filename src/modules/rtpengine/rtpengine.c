@@ -118,7 +118,9 @@ enum {
 struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
-		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask;
+		       *t38,
+		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask,
+		       *codec_set, *codec_except;
 	str call_id, from_tag, to_tag;
 };
 
@@ -147,6 +149,7 @@ struct minmax_mos_stats {
 	str packetloss_param;
 	str jitter_param;
 	str roundtrip_param;
+	str roundtrip_leg_param;
 	str samples_param;
 
 	pv_elem_t *mos_pv;
@@ -154,6 +157,7 @@ struct minmax_mos_stats {
 	pv_elem_t *packetloss_pv;
 	pv_elem_t *jitter_pv;
 	pv_elem_t *roundtrip_pv;
+	pv_elem_t *roundtrip_leg_pv;
 	pv_elem_t *samples_pv;
 };
 struct minmax_mos_label_stats {
@@ -172,6 +176,7 @@ struct minmax_stats_vals {
 	long long packetloss;
 	long long jitter;
 	long long roundtrip;
+	long long roundtrip_leg;
 	long long samples;
 	long long avg_samples; /* our own running count to average the averages */
 };
@@ -256,7 +261,7 @@ static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpengine_set_store()*/
 static int rtpp_set_count = 0;
 static unsigned int current_msg_id = (unsigned int)-1;
-/* RTP proxy balancing list */
+/* RTPEngine balancing list */
 static struct rtpp_set_head * rtpp_set_list =0;
 static struct rtpp_set * active_rtpp_set =0;
 static struct rtpp_set * selected_rtpp_set_1 =0;
@@ -288,6 +293,9 @@ static pv_spec_t *media_duration_pvar = NULL;
 
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
+
+#define RTPENGINE_SESS_OUT_OF_PORTS_MSG "Ran out of ports"
+#define RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN (sizeof(RTPENGINE_SESS_OUT_OF_PORTS_MSG)-1)
 
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
@@ -461,15 +469,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_pv",     PARAM_STR, &global_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_pv",         PARAM_STR, &global_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_pv",      PARAM_STR, &global_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_pv",                PARAM_STR, &global_mos_stats.max.mos_param             },
 	{"mos_max_at_pv",             PARAM_STR, &global_mos_stats.max.at_param              },
 	{"mos_max_packetloss_pv",     PARAM_STR, &global_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_pv",         PARAM_STR, &global_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_pv",      PARAM_STR, &global_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_pv",            PARAM_STR, &global_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_pv", PARAM_STR, &global_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_pv",     PARAM_STR, &global_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_pv",  PARAM_STR, &global_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_pv", PARAM_STR, &global_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_pv",    PARAM_STR, &global_mos_stats.average.samples_param     },
 
 	/* designated side A */
@@ -479,15 +490,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_A_pv",     PARAM_STR, &side_A_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_A_pv",         PARAM_STR, &side_A_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_A_pv",      PARAM_STR, &side_A_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_A_pv",                PARAM_STR, &side_A_mos_stats.max.mos_param             },
 	{"mos_max_at_A_pv",             PARAM_STR, &side_A_mos_stats.max.at_param              },
 	{"mos_max_packetloss_A_pv",     PARAM_STR, &side_A_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_A_pv",         PARAM_STR, &side_A_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_A_pv",      PARAM_STR, &side_A_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_A_pv",            PARAM_STR, &side_A_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_A_pv", PARAM_STR, &side_A_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_A_pv",     PARAM_STR, &side_A_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_A_pv",  PARAM_STR, &side_A_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_A_pv",  PARAM_STR, &side_A_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_A_pv",    PARAM_STR, &side_A_mos_stats.average.samples_param     },
 
 	/* designated side B */
@@ -497,15 +511,18 @@ static param_export_t params[] = {
 	{"mos_min_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.min.packetloss_param      },
 	{"mos_min_jitter_B_pv",         PARAM_STR, &side_B_mos_stats.min.jitter_param          },
 	{"mos_min_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.min.roundtrip_leg_param   },
 	{"mos_max_B_pv",                PARAM_STR, &side_B_mos_stats.max.mos_param             },
 	{"mos_max_at_B_pv",             PARAM_STR, &side_B_mos_stats.max.at_param              },
 	{"mos_max_packetloss_B_pv",     PARAM_STR, &side_B_mos_stats.max.packetloss_param      },
 	{"mos_max_jitter_B_pv",         PARAM_STR, &side_B_mos_stats.max.jitter_param          },
 	{"mos_max_roundtrip_B_pv",      PARAM_STR, &side_B_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.max.roundtrip_leg_param   },
 	{"mos_average_B_pv",            PARAM_STR, &side_B_mos_stats.average.mos_param         },
 	{"mos_average_packetloss_B_pv", PARAM_STR, &side_B_mos_stats.average.packetloss_param  },
 	{"mos_average_jitter_B_pv",     PARAM_STR, &side_B_mos_stats.average.jitter_param      },
 	{"mos_average_roundtrip_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_B_pv",    PARAM_STR, &side_B_mos_stats.average.samples_param     },
 
 	{0, 0, 0}
@@ -861,7 +878,7 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 		if(!rtpp_list)
 		{
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("no shm memory left to create new rtpproxy set %u\n", my_current_id);
+			LM_ERR("no shm memory left to create new rtpengine set %u\n", my_current_id);
 			return NULL;
 		}
 		memset(rtpp_list, 0, sizeof(struct rtpp_set));
@@ -869,14 +886,14 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 		rtpp_list->rset_lock = lock_alloc();
 		if (!rtpp_list->rset_lock) {
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("no shm memory left to create rtpproxy set lock\n");
+			LM_ERR("no shm memory left to create rtpengine set lock\n");
 			shm_free(rtpp_list);
 			rtpp_list = NULL;
 			return NULL;
 		}
 		if (lock_init(rtpp_list->rset_lock) == 0) {
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("could not init rtpproxy set lock\n");
+			LM_ERR("could not init rtpengine set lock\n");
 			lock_dealloc((void*)rtpp_list->rset_lock);
 			rtpp_list->rset_lock = NULL;
 			shm_free(rtpp_list);
@@ -914,17 +931,17 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 }
 
 
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
+int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 			unsigned int weight, int disabled, unsigned int ticks, int isDB)
 {
-	/* Make rtp proxies list. */
+	/* Make rtpengine instances list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
 	struct rtpp_node *rtpp_node;
 	unsigned int local_weight, port;
 	str s1;
 
-	p = rtpproxy;
+	p = rtpengine;
 	plim = p + strlen(p);
 
 	for(;;) {
@@ -1008,7 +1025,14 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 
 		/* Check the rn_address is 'hostname:port' */
 		/* Check the rn_address port is valid */
-		p1 = strchr(pnode->rn_address, ':');
+		if(pnode->rn_umode == 6) {
+                        p1 = strstr(pnode->rn_address, "]:");
+                        if(p1 != NULL) {
+                                p1++;
+                        }
+                } else {
+                        p1 = strchr(pnode->rn_address, ':');
+                }
 		if (p1 != NULL) {
 			p1++;
 		}
@@ -1099,7 +1123,7 @@ static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, 
 	rtp_proxies = strstr(p, "==");
 	if(rtp_proxies){
 		if(*(rtp_proxies +2)=='\0'){
-			LM_ERR("script error -invalid rtp proxy list!\n");
+			LM_ERR("script error -invalid rtpengine list!\n");
 			return -1;
 		}
 
@@ -1251,7 +1275,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	}
 	_rtpe_list_version->vertime = tnow;
 
-	if (init_rtpproxy_db() < 0) {
+	if (init_rtpengine_db() < 0) {
 		// fail reloading from database
 		rpc->fault(ctx, 500, "Failed reloading db");
 		return;
@@ -1599,14 +1623,14 @@ mod_init(void)
 		}
 
 		if (lock_init(rtpp_set_list->rset_head_lock) == 0) {
-			LM_ERR("could not init rtpproxy list of proxysets lock\n");
+			LM_ERR("could not init lock sets for rtpengine list\n");
 			return -1;
 		}
 	}
 
 	if (rtpp_db_url.s == NULL)
 	{
-		/* storing the list of rtp proxy sets in shared memory*/
+		/* storing the list of rtpengine sets in shared memory*/
 		for(i=0;i<rtpp_sets;i++){
 			if(rtpengine_add_rtpengine_set(rtpp_strings[i], 1, 0, 0) !=0){
 				for(;i<rtpp_sets;i++)
@@ -1621,10 +1645,10 @@ mod_init(void)
 	}
 	else
 	{
-		LM_INFO("Loading rtp proxy definitions from DB\n");
-		if ( init_rtpproxy_db() < 0)
+		LM_INFO("Loading rtpengine definitions from DB\n");
+		if ( init_rtpengine_db() < 0)
 		{
-			LM_ERR("error while loading rtp proxies from database\n");
+			LM_ERR("error while loading rtpengine instances from database\n");
 			return -1;
 		}
 	}
@@ -1770,6 +1794,9 @@ static int build_rtpp_socks(int lmode, int rtest) {
 
 	if(_rtpe_list_vernum_local == _rtpe_list_version->vernum) {
 		/* same version for the list of rtpengines */
+		LM_DBG("same rtpengines list version: %d (%u)\n",
+			_rtpe_list_version->vernum,
+			(unsigned int)_rtpe_list_version->vertime);
 		return 0;
 	}
 
@@ -1816,6 +1843,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (hostname==NULL) {
 				LM_ERR("no more pkg memory\n");
 				rtpp_socks[pnode->idx] = -1;
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 			strcpy(hostname, pnode->rn_address);
@@ -1836,6 +1868,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 				LM_ERR("%s\n", gai_strerror(n));
 				pkg_free(hostname);
 				rtpp_socks[pnode->idx] = -1;
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 			pkg_free(hostname);
@@ -1845,6 +1882,11 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (rtpp_socks[pnode->idx] == -1) {
 				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
@@ -1875,14 +1917,24 @@ static int build_rtpp_socks(int lmode, int rtest) {
 				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
 			if (connect(rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
-				LM_ERR("can't connect to a RTP proxy\n");
+				LM_ERR("can't connect to a RTPEngine instance\n");
 				close(rtpp_socks[pnode->idx]);
 				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
+
+				/* retry later */
+				_rtpe_list_version->vernum += 1;
+				_rtpe_list_version->vertime = time(NULL);
+
 				continue;
 			}
 
@@ -1922,6 +1974,8 @@ static int minmax_pv_parse(struct minmax_mos_stats *s, int *got_any) {
 	if (pv_parse_var(&s->jitter_param, &s->jitter_pv, got_any))
 		return -1;
 	if (pv_parse_var(&s->roundtrip_param, &s->roundtrip_pv, got_any))
+		return -1;
+	if (pv_parse_var(&s->roundtrip_leg_param, &s->roundtrip_leg_pv, got_any))
 		return -1;
 	if (pv_parse_var(&s->samples_param, &s->samples_pv, got_any))
 		return -1;
@@ -1967,7 +2021,7 @@ child_init(int rank)
 	}
 	memset(queried_nodes_ptr, 0, MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 
-	/* Iterate known RTP proxies - create sockets */
+	/* Iterate known RTPEngine instances - create sockets */
 	if(rank==PROC_SIPINIT) {
 		/* probe rtpengines only in first worker */
 		if (build_rtpp_socks(0, 1))
@@ -2081,6 +2135,29 @@ static const char *transports[] = {
 	[0x06]	= "UDP/TLS/RTP/SAVPF",
 };
 
+static int parse_codec_flag(struct ng_flags_parse *ng_flags, const str *key, const str *val,
+		const char *cmp1, const char *cmp2, const char *dictstr,
+		bencode_item_t **dictp)
+{
+	str s;
+
+	if (!str_key_val_prefix(key, cmp1, val, &s)) {
+		if (!cmp2)
+			return 0;
+		if (!str_key_val_prefix(key, cmp2, val, &s))
+			return 0;
+	}
+
+	if (!*dictp) {
+		*dictp = bencode_list(ng_flags->dict->buffer);
+		bencode_dictionary_add(ng_flags->codec, dictstr,
+			*dictp);
+	}
+	bencode_list_add_str(*dictp, &s);
+
+	return 1;
+}
+
 static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enum rtpe_operation *op,
 		const char *flags_str)
 {
@@ -2125,52 +2202,27 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 			bencode_list_add_str(ng_flags->sdes, &s);
 			goto next;
 		}
+		if (str_key_val_prefix(&key, "T38", &val, &s) || str_key_val_prefix(&key, "T.38", &val, &s)) {
+			bencode_list_add_str(ng_flags->t38, &s);
+			goto next;
+		}
 		if (str_key_val_prefix(&key, "rtcp-mux", &val, &s)) {
 			bencode_list_add_str(ng_flags->rtcp_mux, &s);
 			goto next;
 		}
 
-		if (str_key_val_prefix(&key, "transcode", &val, &s)
-				|| str_key_val_prefix(&key, "codec-transcode", &val, &s))
-		{
-			if (!ng_flags->codec_transcode) {
-				ng_flags->codec_transcode = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "transcode",
-					ng_flags->codec_transcode);
-			}
-			bencode_list_add_str(ng_flags->codec_transcode, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "transcode", "codec-transcode", "transcode", &ng_flags->codec_transcode))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-strip", &val, &s)) {
-			if (!ng_flags->codec_strip) {
-				ng_flags->codec_strip = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "strip",
-					ng_flags->codec_strip);
-			}
-			bencode_list_add_str(ng_flags->codec_strip, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-strip", NULL, "strip", &ng_flags->codec_strip))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-offer", &val, &s)) {
-			if (!ng_flags->codec_offer) {
-				ng_flags->codec_offer = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "offer",
-					ng_flags->codec_offer);
-			}
-			bencode_list_add_str(ng_flags->codec_offer, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-offer", NULL, "offer", &ng_flags->codec_offer))
 			goto next;
-		}
-
-		if (str_key_val_prefix(&key, "codec-mask", &val, &s)) {
-			if (!ng_flags->codec_mask) {
-				ng_flags->codec_mask = bencode_list(ng_flags->dict->buffer);
-				bencode_dictionary_add(ng_flags->codec, "mask",
-					ng_flags->codec_mask);
-			}
-			bencode_list_add_str(ng_flags->codec_mask, &s);
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-mask", NULL, "mask", &ng_flags->codec_mask))
 			goto next;
-		}
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-set", NULL, "set", &ng_flags->codec_set))
+			goto next;
+		if (parse_codec_flag(ng_flags, &key, &val, "codec-except", NULL, "except", &ng_flags->codec_except))
+			goto next;
 
 		/* check for specially handled items */
 		switch (key.len) {
@@ -2396,12 +2448,14 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, "load limit");
 
 	body.s = NULL;
+	ng_flags.flags = bencode_list(bencbuf);
+
 	if (op == OP_OFFER || op == OP_ANSWER) {
-		ng_flags.flags = bencode_list(bencbuf);
 		ng_flags.direction = bencode_list(bencbuf);
 		ng_flags.replace = bencode_list(bencbuf);
 		ng_flags.rtcp_mux = bencode_list(bencbuf);
 		ng_flags.sdes = bencode_list(bencbuf);
+		ng_flags.t38 = bencode_list(bencbuf);
 		ng_flags.codec = bencode_dictionary(bencbuf);
 
 		if (read_sdp_pvar!= NULL) {
@@ -2421,11 +2475,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body_intermediate);
 		else
 			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
-	}
-	else if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
-			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING)
-	{
-		ng_flags.flags = bencode_list(bencbuf);
 	}
 
 	/*** parse flags & build dictionary ***/
@@ -2455,6 +2504,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		bencode_dictionary_add(ng_flags.dict, "rtcp-mux", ng_flags.rtcp_mux);
 	if (ng_flags.sdes && ng_flags.sdes->child)
 		bencode_dictionary_add(ng_flags.dict, "SDES", ng_flags.sdes);
+	if (ng_flags.t38 && ng_flags.t38->child)
+		bencode_dictionary_add(ng_flags.dict, "T.38", ng_flags.t38);
 
 	bencode_dictionary_add_str(ng_flags.dict, "call-id", &ng_flags.call_id);
 
@@ -2612,6 +2663,13 @@ select_node:
 				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
 				goto select_node;
 			}
+			if ((RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN == error.len) &&
+				(strncmp(error.s, RTPENGINE_SESS_OUT_OF_PORTS_MSG, RTPENGINE_SESS_OUT_OF_PORTS_MSG_LEN) == 0))
+			{
+				LM_WARN("proxy %.*s: %.*s", node->rn_url.len, node->rn_url.s , error.len, error.s);
+				goto select_node;
+			}
+
 			LM_ERR("proxy replied with error: %.*s\n", error.len, error.s);
 		}
 		goto error;
@@ -2774,7 +2832,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		goto error;
 	}
 
-	LM_INFO("rtp proxy <%s> found, support for it %senabled\n",
+	LM_INFO("rtpengine instance <%s> found, support for it %senabled\n",
 		node->rn_url.s, force == 0 ? "re-" : "");
 
 	bencode_buffer_free(&bencbuf);
@@ -2823,7 +2881,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 			close(fd);
-			LM_ERR("can't connect to RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't connect to RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 
@@ -2832,7 +2890,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
-			LM_ERR("can't send command to RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't send command to RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 		do {
@@ -2840,7 +2898,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		} while (len == -1 && errno == EINTR);
 		close(fd);
 		if (len <= 0) {
-			LM_ERR("can't read reply from RTP proxy <%s>\n", node->rn_url.s);
+			LM_ERR("can't read reply from RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
 	} else {
@@ -2863,7 +2921,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
 				bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n",
+				LM_ERR("can't send command \"%.*s\" to RTPEngine <%s>\n",
 					cmd.len, cmd.s, node->rn_url.s);
 				goto badproxy;
 			}
@@ -2875,7 +2933,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
 					bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-					LM_ERR("can't read reply for command \"%.*s\" from RTP proxy <%s>\n",
+					LM_ERR("can't read reply for command \"%.*s\" from RTPEngine <%s>\n",
 						cmd.len, cmd.s, node->rn_url.s);
 					goto badproxy;
 				}
@@ -2894,7 +2952,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		if (i == rtpengine_retr) {
 			bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-			LM_ERR("timeout waiting reply for command \"%.*s\" from RTP proxy <%s>\n",
+			LM_ERR("timeout waiting reply for command \"%.*s\" from RTPEngine <%s>\n",
 				cmd.len, cmd.s, node->rn_url.s);
 			goto badproxy;
 		}
@@ -2970,6 +3028,9 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 			}
 
 			break;
+		case RTP_HASH_CRC32_CALLID:
+			crc32_uint(&callid, &sum);
+			goto retry;
 		default:
 			LM_ERR("unknown hashing algo %d\n", hash_algo);
 			return NULL;
@@ -2987,6 +3048,7 @@ select_rtpp_node_new(str callid, str viabranch, int do_test, struct rtpp_node **
 	}
 
 retry:
+	LM_DBG("sum is = %u\n", sum);
 	weight_sum = 0;
 
 	lock_get(active_rtpp_set->rset_lock);
@@ -3212,7 +3274,7 @@ set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 
 	active_rtpp_set = select_rtpp_set(setid_val.n);
 	if(active_rtpp_set == NULL) {
-		LM_ERR("could not locate rtpproxy set %u\n", setid_val.n);
+		LM_ERR("could not locate engine set %u\n", setid_val.n);
 		return -1;
 	}
 
@@ -3269,6 +3331,7 @@ static void avp_print_mos(struct minmax_mos_stats *s, struct minmax_stats_vals *
 	avp_print_int(s->packetloss_pv, vals->packetloss / vals->avg_samples, msg);
 	avp_print_int(s->jitter_pv, vals->jitter / vals->avg_samples, msg);
 	avp_print_int(s->roundtrip_pv, vals->roundtrip / vals->avg_samples, msg);
+	avp_print_int(s->roundtrip_leg_pv, vals->roundtrip_leg / vals->avg_samples, msg);
 	avp_print_int(s->samples_pv, vals->samples / vals->avg_samples, msg);
 }
 
@@ -3284,6 +3347,7 @@ static int decode_mos_vals_dict(struct minmax_stats_vals *vals, bencode_item_t *
 	vals->packetloss = bencode_dictionary_get_integer(mos_ent, "packet loss", -1);
 	vals->jitter = bencode_dictionary_get_integer(mos_ent, "jitter", -1);
 	vals->roundtrip = bencode_dictionary_get_integer(mos_ent, "round-trip time", -1);
+	vals->roundtrip_leg = bencode_dictionary_get_integer(mos_ent, "round-trip time leg", -1);
 	vals->samples = bencode_dictionary_get_integer(mos_ent, "samples", -1);
 	vals->avg_samples = 1;
 
@@ -3413,6 +3477,7 @@ ssrc_ok:
 			average_vals.packetloss += vals_decoded.packetloss;
 			average_vals.jitter += vals_decoded.jitter;
 			average_vals.roundtrip += vals_decoded.roundtrip;
+			average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
 			average_vals.samples += vals_decoded.samples;
 		}
 
@@ -3616,20 +3681,25 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 	int nosdp;
 	tm_cell_t *t = NULL;
 
+	if(route_type==BRANCH_FAILURE_ROUTE) {
+		/* do nothing in branch failure event route
+		 * - delete done on transaction failure route */
+		return 1;
+	}
+
 	if (msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-	   (msg->cseq==NULL)))
-	{
+	   (msg->cseq==NULL))) {
 		LM_ERR("no CSEQ header\n");
 		return -1;
 	}
 
 	method = get_cseq(msg)->method_id;
 
-	if (!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
-	   || method==METHOD_BYE || method==METHOD_UPDATE))
+	if (!(method & (METHOD_INVITE|METHOD_ACK|METHOD_CANCEL|METHOD_BYE
+					|METHOD_UPDATE|METHOD_PRACK)))
 		return -1;
 
-	if (method==METHOD_CANCEL || method==METHOD_BYE)
+	if (method & (METHOD_CANCEL|METHOD_BYE))
 		return rtpengine_delete(msg, flags);
 
 	if (msg->msg_flags & FL_SDP_BODY)
@@ -3638,7 +3708,7 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 		nosdp = parse_sdp(msg);
 
 	if (msg->first_line.type == SIP_REQUEST) {
-		if(method==METHOD_ACK && nosdp==0)
+		if((method & (METHOD_ACK|METHOD_PRACK)) && nosdp==0)
 			return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
 		if(method==METHOD_UPDATE && nosdp==0)
 			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
@@ -3706,7 +3776,8 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 
 	if (msg->first_line.type == SIP_REQUEST)
-		if (msg->first_line.u.request.method_value != METHOD_ACK)
+		if (!(msg->first_line.u.request.method_value
+					& (METHOD_ACK | METHOD_PRACK)))
 			return -1;
 
 	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_answer_wrap, str1, 2, OP_ANSWER);
@@ -4024,6 +4095,55 @@ static int ki_stop_recording(sip_msg_t *msg)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_STOP_RECORDING);
 }
 
+
+static int ki_block_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_BLOCK_MEDIA);
+}
+static int ki_block_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_BLOCK_MEDIA);
+}
+static int ki_unblock_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_UNBLOCK_MEDIA);
+}
+static int ki_unblock_media(sip_msg_t *msg , str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNBLOCK_MEDIA);
+}
+
+static int ki_block_dtmf0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_BLOCK_DTMF);
+}
+static int ki_block_dtmf(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_BLOCK_DTMF);
+}
+static int ki_unblock_dtmf0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_UNBLOCK_DTMF);
+}
+static int ki_unblock_dtmf(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNBLOCK_DTMF);
+}
+
+static int ki_play_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_PLAY_MEDIA);
+}
+static int ki_stop_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_STOP_MEDIA);
+}
+static int ki_stop_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_STOP_MEDIA);
+}
+
+
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
 {
 	rtpp_set_link_t rtpl1;
@@ -4139,6 +4259,65 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+
+	{ str_init("rtpengine"), str_init("block_media0"),
+        SR_KEMIP_INT, ki_block_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("block_media"),
+        SR_KEMIP_INT, ki_block_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("unblock_media0"),
+        SR_KEMIP_INT, ki_unblock_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("unblock_media"),
+        SR_KEMIP_INT, ki_unblock_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+	{ str_init("rtpengine"), str_init("block_dtmf0"),
+        SR_KEMIP_INT, ki_block_dtmf0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("block_dtmf"),
+        SR_KEMIP_INT, ki_block_dtmf,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("unblock_dtmf0"),
+        SR_KEMIP_INT, ki_unblock_dtmf0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("unblock_dtmf"),
+        SR_KEMIP_INT, ki_unblock_dtmf,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { str_init("rtpengine"), str_init("play_media"),
+        SR_KEMIP_INT, ki_play_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+		{ str_init("rtpengine"), str_init("stop_media0"),
+        SR_KEMIP_INT, ki_stop_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_media"),
+        SR_KEMIP_INT, ki_stop_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
     { str_init("rtpengine"), str_init("set_rtpengine_set"),
         SR_KEMIP_INT, ki_set_rtpengine_set,
         { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,

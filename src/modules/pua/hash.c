@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,7 +31,7 @@
 #include "../../core/hashes.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
-#include "hash.h" 
+#include "hash.h"
 #include "pua.h"
 #include "pua_db.h"
 #include "send_publish.h"
@@ -40,14 +40,14 @@ void print_ua_pres(ua_pres_t* p)
 {
 	LM_DBG("\tpres_uri= %.*s   len= %d\n", p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
 	if(p->watcher_uri)
-	{	
+	{
 		LM_DBG("\twatcher_uri= %.*s  len= %d\n", p->watcher_uri->len, p->watcher_uri->s, p->watcher_uri->len);
 		LM_DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
 		LM_DBG("\tfrom_tag= %.*s   len= %d\n", p->from_tag.len, p->from_tag.s, p->from_tag.len);
 		LM_DBG("\tto_tag= %.*s  len= %d\n", p->to_tag.len, p->to_tag.s, p->to_tag.len);
 		LM_DBG("\tflag= %d\n", p->flag);
 		LM_DBG("\tevent= %d\n", p->event);
-	}	
+	}
 	else
 	{
 		LM_DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
@@ -71,7 +71,7 @@ htable_t* new_htable(void)
 
 	if(H== NULL)
 	{
-		LM_ERR("No more memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(H, 0, sizeof(htable_t));
@@ -79,8 +79,8 @@ htable_t* new_htable(void)
 	H->p_records= (hash_entry_t*)shm_malloc(HASH_SIZE* sizeof(hash_entry_t));
 	if(H->p_records== NULL)
 	{
-		LM_ERR("No more share memory\n");
-		goto error;		
+		SHM_MEM_ERROR;
+		goto error;
 	}
 
 	for(i=0; i<HASH_SIZE; i++)
@@ -93,9 +93,9 @@ htable_t* new_htable(void)
 		H->p_records[i].entity= (ua_pres_t*)shm_malloc(sizeof(ua_pres_t));
 		if(H->p_records[i].entity== NULL)
 		{
-			LM_ERR("No more share memory\n");
-			goto error;		
-		}	
+			SHM_MEM_ERROR;
+			goto error;
+		}
 		H->p_records[i].entity->next= NULL;
 	}
 	return H;
@@ -138,12 +138,12 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 			if((p->pres_uri->len==pres->pres_uri->len) &&
 					(strncmp(p->pres_uri->s, pres->pres_uri->s,pres->pres_uri->len)==0))
 			{
-				if(pres->id.s && pres->id.len) 
-				{	
+				if(pres->id.s && pres->id.len)
+				{
 					if(!(pres->id.len== p->id.len &&
 						strncmp(p->id.s, pres->id.s,pres->id.len)==0))
 							continue;
-				}				
+				}
 
 				if(pres->watcher_uri)
 				{
@@ -167,7 +167,7 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 					{
 						if(pres->etag.len== p->etag.len &&
 							strncmp(p->etag.s, pres->etag.s,pres->etag.len)==0)
-							break;		
+							break;
 					}
 					else
 					{
@@ -198,16 +198,20 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 	}
 
 	if(etag)
-	{	
+	{
 		shm_free(p->etag.s);
 		p->etag.s= (char*)shm_malloc(etag->len);
+		if(p->etag.s == NULL) {
+			SHM_MEM_ERROR;
+			return;
+		}
 		memcpy(p->etag.s, etag->s, etag->len);
 		p->etag.len= etag->len;
 	}
 
 	p->expires= expires+ (int)time(NULL);
 	p->desired_expires= desired_expires;
-		
+
 	if(p->db_flag & NO_UPDATEDB_FLAG)
 		p->db_flag= UPDATEDB_FLAG;
 
@@ -216,7 +220,7 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 
 	if(contact)
 	{
-		if(!(p->remote_contact.len== contact->len && 
+		if(!(p->remote_contact.len== contact->len &&
 				strncmp(p->remote_contact.s, contact->s, contact->len)==0))
 		{
 			/* update remote contact */
@@ -224,7 +228,7 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 			p->remote_contact.s= (char*)shm_malloc(contact->len* sizeof(char));
 			if(p->remote_contact.s== NULL)
 			{
-				LM_ERR("no more shared memory\n");
+				SHM_MEM_ERROR;
 				return;
 			}
 			memcpy(p->remote_contact.s, contact->s, contact->len);
@@ -247,7 +251,7 @@ void insert_htable(ua_pres_t* presentity, unsigned int hash_code)
 
 	presentity->db_flag= INSERTDB_FLAG;
 	presentity->next= p->next;
-	
+
 	p->next= presentity;
 }
 
@@ -256,7 +260,7 @@ void insert_htable(ua_pres_t* presentity, unsigned int hash_code)
    everywhere it is used it is passed a pointer to the correct
    hash table entry already...  so let's just delete that */
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
-{ 
+{
 	ua_pres_t *q = NULL;
 
 	if (dbmode==PUA_DB_ONLY)
@@ -273,7 +277,7 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	while (q->next != presentity)
 		q = q->next;
 	q->next = presentity->next;
-	
+
 	if(presentity->etag.s)
 		shm_free(presentity->etag.s);
 	else
@@ -284,7 +288,7 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	presentity = NULL;
 
 }
-	
+
 void destroy_htable(void)
 {
 	ua_pres_t* p= NULL,*q= NULL;
@@ -297,7 +301,7 @@ void destroy_htable(void)
 	}
 
 	for(i=0; i<HASH_SIZE; i++)
-	{	
+	{
 		lock_destroy(&HashT->p_records[i].lock);
 		p=HashT->p_records[i].entity;
 		while(p->next)
@@ -317,7 +321,7 @@ void destroy_htable(void)
 	}
     shm_free(HashT->p_records);
 	shm_free(HashT);
-  
+
   return;
 }
 
@@ -326,7 +330,7 @@ int convert_temporary_dialog(ua_pres_t *dialog)
 	ua_pres_t *temp_dialog;
 	unsigned int hash_code;
 
-	hash_code= core_hash(dialog->pres_uri,dialog->watcher_uri, HASH_SIZE); 
+	hash_code= core_hash(dialog->pres_uri,dialog->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	temp_dialog = get_temporary_dialog(dialog, hash_code);
@@ -374,19 +378,19 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 
 			LM_DBG("searched to_tag= %.*s\tfrom_tag= %.*s\n",
 				 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
-	    
+
 			if( (strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
 				p->to_tag.len > 0 &&
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
-				{	
+				{
 					LM_DBG("FOUND dialog\n");
 					break;
 				}
-		}	
-	
+		}
+
 	}
-		
+
 	return p;
 }
 
@@ -449,14 +453,14 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	id= (str*)pkg_malloc(sizeof(str));
 	if(id== NULL)
 	{
-		LM_ERR("No more memory\n");
+		PKG_MEM_ERROR;
 		lock_release(&HashT->p_records[hash_code].lock);
 		return -1;
 	}
 	id->s= (char*)pkg_malloc(rec->id.len* sizeof(char));
 	if(id->s== NULL)
 	{
-		LM_ERR("No more memory\n");
+		PKG_MEM_ERROR;
 		pkg_free(id);
 		lock_release(&HashT->p_records[hash_code].lock);
 		return -1;
@@ -484,7 +488,7 @@ int is_dialog(ua_pres_t* dialog)
 	if (dbmode==PUA_DB_ONLY)
 	{
 		return( is_dialog_puadb(dialog) );
-	}	
+	}
 
 	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
@@ -499,7 +503,7 @@ int is_dialog(ua_pres_t* dialog)
 		ret_code= 0;
 	}
 	lock_release(&HashT->p_records[hash_code].lock);
-	
+
 	return ret_code;
 
 }
@@ -522,8 +526,8 @@ int ki_pua_update_contact(struct sip_msg* msg)
 	{
 		LM_ERR("cannot parse callid header\n");
 		return -1;
-	}		
-	
+	}
+
 	if (!msg->from || !msg->from->body.s)
 	{
 		LM_ERR("cannot find 'from' header!\n");
@@ -531,27 +535,27 @@ int ki_pua_update_contact(struct sip_msg* msg)
 	}
 	if (msg->from->parsed == NULL)
 	{
-		if ( parse_from_header( msg )<0 ) 
+		if ( parse_from_header( msg )<0 )
 		{
 			LM_ERR("cannot parse From header\n");
 			return -1;
 		}
 	}
-	
+
 	pfrom = (struct to_body*)msg->from->parsed;
-	
+
 	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 	{
 		LM_ERR("no from tag value present\n");
 		return -1;
-	}		
-	
+	}
+
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
 		LM_ERR("cannot parse TO header\n");
 		return -1;
-	}			
-	
+	}
+
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
@@ -561,24 +565,24 @@ int ki_pua_update_contact(struct sip_msg* msg)
 	{
 		parse_to(msg->to->body.s,msg->to->body.s +
 			msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) 
+		if(TO.uri.len <= 0)
 		{
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
 		}
 		pto = &TO;
-	}			
+	}
 	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 	{
 		LM_ERR("no from tag value present\n");
 		goto error;
 	}
 	hentity.watcher_uri= &pto->uri;
-	hentity.pres_uri= &pfrom->uri; 
+	hentity.pres_uri= &pfrom->uri;
 	hentity.call_id=  msg->callid->body;
 	hentity.to_tag= pto->tag_value;
 	hentity.from_tag= pfrom->tag_value;
-	
+
 
 	/* extract the contact */
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
@@ -610,7 +614,7 @@ int ki_pua_update_contact(struct sip_msg* msg)
 
 	shm_free(p->remote_contact.s);
 
-	if(!(p->remote_contact.len== contact.len && 
+	if(!(p->remote_contact.len== contact.len &&
 				strncmp(p->remote_contact.s, contact.s, contact.len)==0))
 	{
 		/* update remote contact */
@@ -618,7 +622,7 @@ int ki_pua_update_contact(struct sip_msg* msg)
 		p->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
 		if(p->remote_contact.s== NULL)
 		{
-			LM_ERR("no more shared memory\n");
+			SHM_MEM_ERROR;
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
@@ -665,14 +669,14 @@ list_entry_t *get_subs_list(str *did)
 			{
 				if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
 				{
-					LM_ERR("out of private memory\n");
+					PKG_MEM_ERROR;
 					lock_release(&HashT->p_records[i].lock);
 					goto done;
 				}
 				if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * dialog->pres_uri->len + 1)) == NULL)
 				{
 					pkg_free(tmp_str);
-					LM_ERR("out of private memory\n");
+					PKG_MEM_ERROR;
 					lock_release(&HashT->p_records[i].lock);
 					goto done;
 				}

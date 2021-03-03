@@ -850,7 +850,7 @@ int process_bind_action(as_p as,unsigned char processor_id,unsigned int flags,ch
    memcpy(&port,payload+k,2);
    k+=2;
    port=ntohs(port);
-   print_ip_buf(&my_addr,buffer,300);
+   ip_addr2sbuf(&my_addr,buffer,300);
    switch(proto){
       case PROTO_UDP:
 	 proto_s="UDP";

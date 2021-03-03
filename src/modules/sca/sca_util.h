@@ -22,7 +22,8 @@
 
 #include "sca_common.h"
 
-enum {
+enum
+{
 	SCA_AOR_TYPE_AUTO = (1 << 0),
 	SCA_AOR_TYPE_UAC = (1 << 1),
 	SCA_AOR_TYPE_UAS = (1 << 2),

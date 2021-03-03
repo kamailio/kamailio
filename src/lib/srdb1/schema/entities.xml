@@ -1,5 +1,6 @@
 <!ENTITY user_len "64">
 <!ENTITY domain_len "64">
+<!ENTITY contact_addr_len "255">
 <!ENTITY socket_len "128">
 <!ENTITY from_tag_len "128">
 <!ENTITY to_tag_len "128">

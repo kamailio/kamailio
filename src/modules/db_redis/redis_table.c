@@ -491,18 +491,18 @@ int db_redis_parse_keys(km_redis_con_t *con) {
     char *start;
     char *end;
 
-    str table_name;
+    str table_name = str_init("");
     str type_name;
     str column_name;
     str version_code;
 
-    struct str_hash_entry *table_entry;
-    redis_table_t *table;
-    redis_type_t *type;
-    redis_type_t *type_target;
-    redis_key_t *key;
-    redis_key_t **key_target;
-    redis_key_t *key_location;
+    struct str_hash_entry *table_entry = NULL;
+    redis_table_t *table = NULL;
+    redis_type_t *type = NULL;
+    redis_type_t *type_target = NULL;
+    redis_key_t *key = NULL;
+    redis_key_t **key_target = NULL;
+    redis_key_t *key_location = NULL;
 
     enum {
         DBREDIS_KEYS_TABLE_ST,
@@ -550,7 +550,8 @@ int db_redis_parse_keys(km_redis_con_t *con) {
 
                 table_entry = str_hash_get(&con->tables, table_name.s, table_name.len);
                 if (!table_entry) {
-                    LM_ERR("No table schema found for table '%.*s', fix config by adding one to the 'schema' mod-param!\n",
+                    LM_ERR("No table schema found for table '%.*s', fix config"
+                    		" by adding one to the 'schema' mod-param!\n",
                             table_name.len, table_name.s);
                     goto err;
                 }
@@ -558,6 +559,10 @@ int db_redis_parse_keys(km_redis_con_t *con) {
                 table->version_code = version_code;
                 break;
             case DBREDIS_KEYS_TYPE_ST:
+            	if(!table) {
+            		LM_ERR("invalid definition, table not set\n");
+            		goto err;
+				}
                 while(p != end && *p != ':')
                     ++p;
                 if (p == end) {
@@ -631,8 +636,6 @@ int db_redis_parse_keys(km_redis_con_t *con) {
             case DBREDIS_KEYS_END_ST:
                 LM_DBG("done parsing keys definition\n");
                 return 0;
-
-
         }
     } while (p != end);
 
@@ -654,13 +657,13 @@ int db_redis_parse_schema(km_redis_con_t *con) {
     struct dirent* dent;
     char *dir_name;
 
-    str table_name;
+    str table_name = str_init("");
     str column_name;
     str type_name;
 
-    struct str_hash_entry *table_entry;
-    struct str_hash_entry *column_entry;
-    redis_table_t *table;
+    struct str_hash_entry *table_entry = NULL;
+    struct str_hash_entry *column_entry = NULL;
+    redis_table_t *table = NULL;
 
     char full_path[_POSIX_PATH_MAX + 1];
     int path_len;

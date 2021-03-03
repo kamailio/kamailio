@@ -31,6 +31,7 @@
 #ifndef _HM_HASH_
 #define _HM_HASH_
 
+#include <stdint.h>
 #include <curl/curl.h>
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
@@ -39,11 +40,23 @@
 
 extern struct http_m_table *hm_table;
 
+typedef struct http_m_time
+{
+	uint32_t total;
+	uint32_t lookup;
+	uint32_t connect;
+	uint32_t appconnect;
+	uint32_t pretransfer;
+	uint32_t starttransfer;
+	uint32_t redirect;
+} http_m_time_t;
+
 typedef struct http_m_reply
 {
 	long retcode;
 	str *result;
 	char error[CURL_ERROR_SIZE];
+	http_m_time_t time;
 } http_m_reply_t;
 
 typedef void (*http_multi_cbe_t)(struct http_m_reply *reply, void *param);

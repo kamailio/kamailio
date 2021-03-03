@@ -114,6 +114,7 @@ extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
+int ksr_local_rport = 0;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -592,7 +593,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	#define RCVCOMP_LUMP_LEN
 	#define SENDCOMP_LUMP_LEN
 #endif /*USE_COMP */
-	
+
 #define SUBST_LUMP_LEN(subst_l) \
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
@@ -644,6 +645,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_RCV_ALL: \
+			case SUBST_RCV_ALL_EX: \
 				if (msg->rcv.bind_address){ \
 					new_len+=recv_address_str->len; \
 					if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -679,6 +681,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						LM_CRIT("unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ msg->rcv.bind_address->sockname.len; \
+					} \
 					RCVCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -732,6 +739,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_SND_ALL: \
+			case SUBST_SND_ALL_EX: \
 				if (send_sock){ \
 					new_len+=send_address_str->len; \
 					if ((send_sock->address.af==AF_INET6) && \
@@ -767,6 +775,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
 					}\
+					if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+								&& send_sock->sockname.len>0) { \
+						new_len+=SOCKNAME_PARAM_LEN \
+								+ send_sock->sockname.len; \
+					} \
 					SENDCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
@@ -1003,6 +1016,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_RCV_ALL: \
+		case SUBST_RCV_ALL_EX: \
 			if (msg->rcv.bind_address){  \
 				/* address */ \
 				if ((msg->rcv.bind_address->address.af==AF_INET6)\
@@ -1066,6 +1080,15 @@ void process_lumps( struct sip_msg* msg,
 					default: \
 						LM_CRIT("unknown proto %d\n", msg->rcv.bind_address->proto); \
 				} \
+				if((subst_l)->u.subst==SUBST_RCV_ALL_EX \
+								&& msg->rcv.bind_address->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+								SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, msg->rcv.bind_address->sockname.s, \
+							msg->rcv.bind_address->sockname.len); \
+					offset+=msg->rcv.bind_address->sockname.len; \
+				} \
 				RCVCOMP_PARAM_ADD \
 			}else{  \
 				/*FIXME*/ \
@@ -1101,6 +1124,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_SND_ALL: \
+		case SUBST_SND_ALL_EX: \
 			if (send_sock){  \
 				/* address */ \
 				if ((send_sock->address.af==AF_INET6)\
@@ -1163,6 +1187,15 @@ void process_lumps( struct sip_msg* msg,
 						break; \
 					default: \
 						LM_CRIT("unknown proto %d\n", send_sock->proto); \
+				} \
+				if((subst_l)->u.subst==SUBST_SND_ALL_EX \
+							&& send_sock->sockname.len>0) { \
+					memcpy(new_buf+offset, SOCKNAME_PARAM, \
+							SOCKNAME_PARAM_LEN); \
+					offset+=SOCKNAME_PARAM_LEN; \
+					memcpy(new_buf+offset, send_sock->sockname.s, \
+							send_sock->sockname.len); \
+					offset+=send_sock->sockname.len; \
 				} \
 				SENDCOMP_PARAM_ADD \
 			}else{  \
@@ -1938,7 +1971,7 @@ clean:
   * depending on the presence of the BUILD_IN_SHM flag, needs freeing when
   *   done) and sets returned_len or 0 on error.
   */
-char * build_req_buf_from_sip_req( struct sip_msg* msg,
+char * build_req_buf_from_sip_req(struct sip_msg* msg,
 								unsigned int *returned_len,
 								struct dest_info* send_info,
 								unsigned int mode)
@@ -1954,6 +1987,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	unsigned int offset, s_offset, size;
 	struct lump* via_anchor;
 	struct lump* via_lump;
+	struct lump* via_rm;
 	struct lump* via_insert_param;
 	struct lump* path_anchor;
 	struct lump* path_lump;
@@ -1999,10 +2033,21 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 
 	via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
 	if (unlikely(via_anchor==0)) goto error00;
-	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
+	line_buf = create_via_hf(&via_len, msg, send_info, &branch);
 	if (unlikely(!line_buf)){
 		LM_ERR("could not create Via header\n");
 		goto error00;
+	}
+	if(unlikely(mode&BUILD_NEW_LOCAL_VIA)) {
+		/* delete exiting top Via header */
+		via_rm = del_lump(msg, msg->h_via1->name.s - msg->buf,
+				msg->h_via1->len, 0);
+		if (via_rm==0) {
+			LM_ERR("failed to remove exiting Via header\n");
+			goto error00;
+		}
+		/* do not update old Via header anymore */
+		mode |= BUILD_NO_VIA1_UPDATE;
 	}
 after_local_via:
 	if(unlikely(mode&BUILD_NO_VIA1_UPDATE))
@@ -2943,7 +2988,7 @@ char* create_via_hf(unsigned int *len,
 #endif /* USE_TCP || USE_SCTP */
 
 	/* test and add rport parameter to local via - rfc3581 */
-	if(msg && msg->msg_flags&FL_ADD_LOCAL_RPORT) {
+	if((ksr_local_rport) || (msg && (msg->msg_flags&FL_ADD_LOCAL_RPORT))) {
 		/* params so far + ';rport' + '\0' */
 		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
 		if(via==0) {
@@ -3219,7 +3264,12 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		LM_ERR("invalid buffer parameter\n");
 		return -1;
 	}
-
+#ifdef USE_TCP
+	if(tcp_get_clone_rcvbuf()==0) {
+		LM_ERR("tcp clone received buffer not enabled\n");
+		return -1;
+	}
+#endif
 	if(obuf->len >= BUF_SIZE) {
 		LM_ERR("new buffer is too large (%d)\n", obuf->len);
 		return -1;
@@ -3244,11 +3294,13 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	/* restore msg fields */
 	msg->buf = tmp.buf;
 	msg->id = tmp.id;
+	msg->pid = tmp.pid;
 	msg->rcv = tmp.rcv;
 	msg->set_global_address = tmp.set_global_address;
 	msg->set_global_port = tmp.set_global_port;
 	msg->flags = tmp.flags;
 	msg->msg_flags = tmp.msg_flags;
+	memcpy(msg->xflags, tmp.xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
 	msg->hash_index = tmp.hash_index;
 	msg->force_send_socket = tmp.force_send_socket;
 	msg->fwd_send_flags = tmp.fwd_send_flags;

@@ -237,7 +237,7 @@ typedef struct pcontact {
     struct pcontact* next; /*!< Previous item in the hash entry */
 } pcontact_t;
 
-typedef int (*get_pcontact_t)(struct udomain* _d, pcontact_info_t* contact_info, struct pcontact** _c);
+typedef int (*get_pcontact_t)(struct udomain* _d, pcontact_info_t* contact_info, struct pcontact** _c, int reverse_search);
 
 typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 

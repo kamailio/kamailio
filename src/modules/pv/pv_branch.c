@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -241,16 +241,15 @@ int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 				br->force_send_socket = NULL;
 				break;
 			}
-			backup = val->rs.s[val->rs.len];
-			val->rs.s[val->rs.len] = '\0';
+			STR_VTOZ(val->rs.s[val->rs.len], backup);
 			if (parse_phostport(val->rs.s, &host.s, &host.len, &port,
 						&proto) < 0)
 			{
 				LM_ERR("invalid socket specification\n");
-				val->rs.s[val->rs.len] = backup;
+				STR_ZTOV(val->rs.s[val->rs.len], backup);
 				return -1;
 			}
-			val->rs.s[val->rs.len] = backup;
+			STR_ZTOV(val->rs.s[val->rs.len], backup);
 			si = grep_sock_info(&host, (unsigned short)port,
 					(unsigned short)proto);
 			if (si!=NULL)

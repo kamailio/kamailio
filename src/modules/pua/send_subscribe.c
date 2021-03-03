@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -50,7 +50,7 @@ extern db_locking_t db_table_lock;
 
 void print_subs(subs_info_t* subs)
 {
-	LM_DBG("pres_uri= %.*s - len: %d\n", 
+	LM_DBG("pres_uri= %.*s - len: %d\n",
 			subs->pres_uri->len,  subs->pres_uri->s, subs->pres_uri->len );
 	LM_DBG("watcher_uri= %.*s - len: %d\n",
 			subs->watcher_uri->len,  subs->watcher_uri->s,
@@ -64,18 +64,18 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 	static char buf[3000];
 	char* subs_expires= NULL;
 	int len= 1;
-	pua_event_t* ev;	
+	pua_event_t* ev;
 
 	str_hdr= (str*)pkg_malloc(sizeof(str));
 	if(str_hdr== NULL)
 	{
-		LM_ERR("no more memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(str_hdr, 0, sizeof(str));
 	str_hdr->s= buf;
-	
-	ev= get_event(event);	
+
+	ev= get_event(event);
 	if(ev== NULL)
 	{
 		LM_ERR("getting event from list\n");
@@ -94,10 +94,10 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
-	
+
 	memcpy(str_hdr->s+ str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
-	memcpy(str_hdr->s +str_hdr->len, contact->s, 
+	memcpy(str_hdr->s +str_hdr->len, contact->s,
 			contact->len);
 	str_hdr->len+= contact->len;
 	memcpy(str_hdr->s+ str_hdr->len, ">", 1);
@@ -109,10 +109,10 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 	str_hdr->len += 9;
 
 	if( expires<= min_expires)
-		subs_expires= int2str(min_expires, &len);  
+		subs_expires= int2str(min_expires, &len);
 	else
 		subs_expires= int2str(expires+ 10, &len);
-		
+
 	if(subs_expires == NULL || len == 0)
 	{
 		LM_ERR("while converting int to str\n");
@@ -138,21 +138,21 @@ error:
 	if(str_hdr)
 		pkg_free(str_hdr);
 	return NULL;
-}	
+}
 
-dlg_t* pua_build_dlg_t(ua_pres_t* presentity)	
+dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 {
 	dlg_t* td =NULL;
 	int size;
 
 	size= sizeof(dlg_t)+ presentity->call_id.len+ presentity->to_tag.len+
-		presentity->from_tag.len+ presentity->watcher_uri->len+ 
+		presentity->from_tag.len+ presentity->watcher_uri->len+
 		presentity->pres_uri->len+ presentity->remote_contact.len;
 
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
 	{
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(td, 0, size);
@@ -167,18 +167,18 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	memcpy(td->id.rem_tag.s, presentity->to_tag.s, presentity->to_tag.len);
 	td->id.rem_tag.len = presentity->to_tag.len;
 	size+= presentity->to_tag.len;
-	
+
 	td->id.loc_tag.s = (char*)td+ size;
 	memcpy(td->id.loc_tag.s, presentity->from_tag.s, presentity->from_tag.len);
 	td->id.loc_tag.len =presentity->from_tag.len;
 	size+= presentity->from_tag.len;
-	
+
 	td->loc_uri.s = (char*)td+ size;
 	memcpy(td->loc_uri.s, presentity->watcher_uri->s,
 			presentity->watcher_uri->len) ;
 	td->loc_uri.len = presentity->watcher_uri->len;
 	size+= td->loc_uri.len;
-	
+
 	td->rem_uri.s = (char*)td+ size;
 	memcpy(td->rem_uri.s, presentity->pres_uri->s, presentity->pres_uri->len) ;
 	td->rem_uri.len = presentity->pres_uri->len;
@@ -189,7 +189,7 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 			presentity->remote_contact.len) ;
 	td->rem_target.len = presentity->remote_contact.len;
 	size+= td->rem_target.len;
-	
+
 	if(presentity->record_route.s && presentity->record_route.len)
 	{
 		if(parse_rr_body(presentity->record_route.s, presentity->record_route.len,
@@ -199,12 +199,12 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 			pkg_free(td);
 			return NULL;
 		}
-	}	
+	}
 
 	td->loc_seq.value = presentity->cseq;
 	td->loc_seq.is_set = 1;
 	td->state= DLG_CONFIRMED ;
-	
+
 	LM_DBG("size = %d\n", size);
 
 	return td;
@@ -331,7 +331,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		callid = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field));
 		if (callid == NULL)
 		{
-			LM_ERR("Out of memory\n");
+			PKG_MEM_ERROR;
 			goto faked_error;
 		}
 		memset(callid, 0, sizeof(struct hdr_field));
@@ -341,18 +341,18 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		from = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field));
 		if (from == NULL)
 		{
-			LM_ERR("Out of memory\n");
+			PKG_MEM_ERROR;
 			goto faked_error;
 		}
 		memset(from, 0, sizeof(struct hdr_field));
 		get_hdr_field(t->from.s, t->from.s + t->from.len, from);
 		parse_to(from->body.s, from->body.s + from->body.len + 1, &FROM);
-		if(FROM.uri.len <= 0) 
+		if(FROM.uri.len <= 0)
 		{
 			LM_ERR("'From' header NOT parsed\n");
 			goto faked_error;
 		}
-	
+
 		hentity->call_id = callid->body;
 		hentity->from_tag = (&FROM)->tag_value;
 		hentity->to_tag.s = NULL;
@@ -365,7 +365,7 @@ faked_error:
 		if (from) pkg_free(from);
 		goto done;
 	}
-	
+
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("when parsing headers\n");
@@ -393,7 +393,7 @@ faked_error:
 			LM_ERR("cannot parse callid header\n");
 			goto error;
 		}
-		
+
 		if (!msg->from || !msg->from->body.s)
 		{
 			LM_ERR("cannot find 'from' header!\n");
@@ -401,14 +401,14 @@ faked_error:
 		}
 		if (msg->from->parsed == NULL)
 		{
-			if ( parse_from_header( msg )<0 ) 
+			if ( parse_from_header( msg )<0 )
 			{
 				LM_ERR("cannot parse From header\n");
 				goto error;
 			}
 		}
 		pfrom = (struct to_body*)msg->from->parsed;
-	
+
 		if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 		{
 			LM_ERR("no from tag value present\n");
@@ -430,7 +430,7 @@ faked_error:
 		{
 			LM_ERR("cannot parse TO header\n");
 			goto error;
-		}			
+		}
 		if(msg->to->parsed != NULL)
 		{
 			pto = (struct to_body*)msg->to->parsed;
@@ -440,13 +440,13 @@ faked_error:
 		{
 			parse_to(msg->to->body.s,msg->to->body.s +
 				msg->to->body.len + 1, &TO);
-			if(TO.uri.len <= 0) 
+			if(TO.uri.len <= 0)
 			{
 				LM_ERR("'To' header NOT parsed\n");
 				goto error;
 			}
 			pto = &TO;
-		}			
+		}
 		if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 		{
 			LM_ERR("no to tag value present\n");
@@ -456,9 +456,9 @@ faked_error:
 	}
 
 	if(ps->code >= 300 )
-	{	/* if an error code and a stored dialog delete it and try to send 
-		   a subscription with type= INSERT_TYPE, else return*/	
-		
+	{	/* if an error code and a stored dialog delete it and try to send
+		   a subscription with type= INSERT_TYPE, else return*/
+
 		subs_info_t subs;
 
 		hentity->to_tag.s = NULL;
@@ -478,7 +478,7 @@ faked_error:
 
 		/* Redirect if the response 3XX */
 		memset(&subs, 0, sizeof(subs_info_t));
-		subs.pres_uri= hentity->pres_uri; 
+		subs.pres_uri= hentity->pres_uri;
 		subs.watcher_uri= hentity->watcher_uri;
 		subs.contact= &hentity->contact;
 
@@ -500,7 +500,7 @@ faked_error:
 		subs.outbound_proxy= hentity->outbound_proxy;
 		subs.extra_headers= hentity->extra_headers;
 		subs.cb_param= hentity->cb_param;
-	
+
 		if(send_subscribe(&subs)< 0)
 		{
 			LM_ERR("when trying to send SUBSCRIBE\n");
@@ -559,7 +559,7 @@ faked_error:
 		rt = print_rr_body(msg->record_route, &record_route, 1, 0);
 		if(rt != 0)
 		{
-			LM_ERR("parsing record route [%d]\n", rt);	
+			LM_ERR("parsing record route [%d]\n", rt);
 			record_route.s=NULL;
 			record_route.len=0;
 		}
@@ -576,10 +576,10 @@ faked_error:
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
-	
+
 	memset(presentity, 0, size);
 	size= sizeof(ua_pres_t);
 
@@ -598,19 +598,19 @@ faked_error:
 	size+= pfrom->uri.len;
 
 	presentity->call_id.s= (char*)presentity + size;
-	memcpy(presentity->call_id.s,msg->callid->body.s, 
+	memcpy(presentity->call_id.s,msg->callid->body.s,
 		msg->callid->body.len);
 	presentity->call_id.len= msg->callid->body.len;
 	size+= presentity->call_id.len;
 
 	presentity->to_tag.s= (char*)presentity + size;
-	memcpy(presentity->to_tag.s,pto->tag_value.s, 
+	memcpy(presentity->to_tag.s,pto->tag_value.s,
 			pto->tag_value.len);
 	presentity->to_tag.len= pto->tag_value.len;
 	size+= pto->tag_value.len;
 
 	presentity->from_tag.s= (char*)presentity + size;
-	memcpy(presentity->from_tag.s,pfrom->tag_value.s, 
+	memcpy(presentity->from_tag.s,pfrom->tag_value.s,
 			pfrom->tag_value.len);
 	presentity->from_tag.len= pfrom->tag_value.len;
 	size+= pfrom->tag_value.len;
@@ -633,9 +633,9 @@ faked_error:
 	if(hentity->id.s)
 	{
 		presentity->id.s=(char*)presentity+ size;
-		memcpy(presentity->id.s, hentity->id.s, 
+		memcpy(presentity->id.s, hentity->id.s,
 			hentity->id.len);
-		presentity->id.len= hentity->id.len; 
+		presentity->id.len= hentity->id.len;
 		size+= presentity->id.len;
 	}
 
@@ -644,9 +644,9 @@ faked_error:
 		presentity->extra_headers= (str*)((char*)presentity+ size);
 		size+= sizeof(str);
 		presentity->extra_headers->s=(char*)presentity+ size;
-		memcpy(presentity->extra_headers->s, hentity->extra_headers->s, 
+		memcpy(presentity->extra_headers->s, hentity->extra_headers->s,
 			hentity->extra_headers->len);
-		presentity->extra_headers->len= hentity->extra_headers->len; 
+		presentity->extra_headers->len= hentity->extra_headers->len;
 		size+= hentity->extra_headers->len;
 	}
 
@@ -668,7 +668,7 @@ faked_error:
 	if(BLA_SUBSCRIBE & presentity->flag)
 	{
 		LM_DBG("BLA_SUBSCRIBE FLAG inserted\n");
-	}	
+	}
 	LM_DBG("record for subscribe from %.*s to %.*s inserted in database\n",
 			presentity->watcher_uri->len, presentity->watcher_uri->s,
 			presentity->pres_uri->len, presentity->pres_uri->s);
@@ -726,7 +726,7 @@ done:
 
 	goto end;
 
-error:	
+error:
         if (presentity)
 	{
 		if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
@@ -745,7 +745,7 @@ error:
 end:
 
 	if(hentity)
-	{	
+	{
 		shm_free(hentity);
 		hentity= NULL;
 	}
@@ -772,7 +772,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
-		LM_ERR("No more share memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(hentity, 0, size);
@@ -860,7 +860,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
-		LM_ERR("No more share memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(hentity, 0, size);
@@ -962,7 +962,7 @@ int send_subscribe(subs_info_t* subs)
 	memset(&dbpres, 0, sizeof(dbpres));
 	dbpres.pres_uri = &pres_uri;
 	dbpres.watcher_uri = &watcher_uri;
-	dbpres.extra_headers = &extra_headers; 
+	dbpres.extra_headers = &extra_headers;
 
 	print_subs(subs);
 
@@ -975,7 +975,7 @@ int send_subscribe(subs_info_t* subs)
 	else
 		expires= subs->expires;
 
-	str_hdr= subs_build_hdr(subs->contact, expires, subs->event, 
+	str_hdr= subs_build_hdr(subs->contact, expires, subs->event,
 			subs->extra_headers);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
@@ -1023,12 +1023,12 @@ int send_subscribe(subs_info_t* subs)
 		LM_DBG("A subscription request with insert type\n");
 		goto insert;
 	}
-	
+
 	if(presentity== NULL )
 	{
 		int size;
 insert:
-	
+
 		if (subs->expires == 0)
 		{
 			/* Don't create a new dialog when expires == 0 */
@@ -1042,7 +1042,7 @@ insert:
 			LM_DBG("request for a subscription with update type"
 					" and no record found\n");
 			subs->flag= INSERT_TYPE;
-		}	
+		}
 		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
 		{
@@ -1061,7 +1061,7 @@ insert:
 		subs->remote_target?subs->remote_target:subs->pres_uri,/* Request-URI*/
 			subs->pres_uri,				  /* To */
 			subs->watcher_uri,			  /* From */
-			subs->outbound_proxy		  /* Outbound_proxy */	
+			subs->outbound_proxy		  /* Outbound_proxy */
 			);
 		if(result< 0)
 		{
@@ -1096,8 +1096,8 @@ insert:
 		presentity= (ua_pres_t*)shm_malloc(size);
 		if(presentity== NULL)
 		{
-			LM_ERR("no more share memory\n");
-       			if (dbmode != PUA_DB_ONLY)
+			SHM_MEM_ERROR;
+			if (dbmode != PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
@@ -1193,7 +1193,7 @@ insert:
 				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
-				
+
 		hentity= subs_cbparam_indlg(presentity, expires, REQ_OTHER);
 		if(hentity== NULL)
 		{
@@ -1205,7 +1205,7 @@ insert:
 		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
 
-		LM_DBG("event parameter: %d\n", hentity->event);	
+		LM_DBG("event parameter: %d\n", hentity->event);
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
 				subs_cback_func, (void*)hentity);

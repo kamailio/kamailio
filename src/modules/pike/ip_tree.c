@@ -32,19 +32,19 @@
 
 
 
-static struct ip_tree*  root = 0;
+static pike_ip_tree_t*  pike_root = 0;
 
 
-static inline struct ip_node* prv_get_tree_branch(unsigned char b)
+static inline pike_ip_node_t* prv_get_tree_branch(unsigned char b)
 {
-	return root->entries[b].node;
+	return pike_root->entries[b].node;
 }
 
 
 /* locks a tree branch */
 static inline void prv_lock_tree_branch(unsigned char b)
 {
-	lock_set_get( root->entry_lock_set, root->entries[b].lock_idx);
+	lock_set_get(pike_root->entry_lock_set, pike_root->entries[b].lock_idx);
 }
 
 
@@ -52,12 +52,12 @@ static inline void prv_lock_tree_branch(unsigned char b)
 /* unlocks a tree branch */
 static inline void prv_unlock_tree_branch(unsigned char b)
 {
-	lock_set_release( root->entry_lock_set, root->entries[b].lock_idx);
+	lock_set_release(pike_root->entry_lock_set, pike_root->entries[b].lock_idx);
 }
 
 
 /* wrapper functions */
-struct ip_node* get_tree_branch(unsigned char b)
+pike_ip_node_t* get_tree_branch(unsigned char b)
 {
 	return prv_get_tree_branch(b);
 }
@@ -111,43 +111,48 @@ int init_ip_tree(int maximum_hits)
 	int size;
 	int i;
 
-	/* create the root */
-	root = (struct ip_tree*)shm_malloc(sizeof(struct ip_tree));
-	if (root==0) {
+	/* create the pike_root */
+	pike_root = (pike_ip_tree_t*)shm_malloc(sizeof(pike_ip_tree_t));
+	if (pike_root==0) {
 		LM_ERR("shm malloc failed\n");
 		goto error;
 	}
-	memset( root, 0, sizeof(struct ip_tree));
+	memset(pike_root, 0, sizeof(pike_ip_tree_t));
 
 	/* init lock set */
 	size = MAX_IP_BRANCHES;
-	root->entry_lock_set = init_lock_set( &size );
-	if (root->entry_lock_set==0) {
+	pike_root->entry_lock_set = init_lock_set( &size );
+	if (pike_root->entry_lock_set==0) {
 		LM_ERR("failed to create locks\n");
 		goto error;
 	}
 	/* assign to each branch a lock */
 	for(i=0;i<MAX_IP_BRANCHES;i++) {
-		root->entries[i].node = 0;
-		root->entries[i].lock_idx = i % size;
+		pike_root->entries[i].node = 0;
+		pike_root->entries[i].lock_idx = i % size;
 	}
 
-	root->max_hits = maximum_hits;
+	pike_root->max_hits = maximum_hits;
 
 	return 0;
 error:
-	if (root)
-		shm_free(root);
+	if (pike_root) {
+		shm_free(pike_root);
+		pike_root = NULL;
+	}
 	return -1;
 }
 
-unsigned int get_max_hits() { return root != 0 ? root->max_hits : -1; }
+unsigned int get_max_hits()
+{
+	return (pike_root != 0) ? pike_root->max_hits : -1;
+}
 
 /* destroy an ip_node and all nodes under it; the nodes must be first removed
  * from any other lists/timers */
-static inline void destroy_ip_node(struct ip_node *node)
+static inline void destroy_ip_node(pike_ip_node_t *node)
 {
-	struct ip_node *foo, *bar;
+	pike_ip_node_t *foo, *bar;
 
 	foo = node->kids;
 	while (foo){
@@ -166,22 +171,22 @@ void destroy_ip_tree(void)
 {
 	int i;
 
-	if (root==0)
+	if (pike_root==0)
 		return;
 
 	/* destroy and free the lock set */
-	if (root->entry_lock_set) {
-		lock_set_destroy(root->entry_lock_set);
-		lock_set_dealloc(root->entry_lock_set);
+	if (pike_root->entry_lock_set) {
+		lock_set_destroy(pike_root->entry_lock_set);
+		lock_set_dealloc(pike_root->entry_lock_set);
 	}
 
 	/* destroy all the nodes */
 	for(i=0;i<MAX_IP_BRANCHES;i++)
-		if (root->entries[i].node)
-			destroy_ip_node(root->entries[i].node);
+		if (pike_root->entries[i].node)
+			destroy_ip_node(pike_root->entries[i].node);
 
-	shm_free( root );
-	root = 0;
+	shm_free( pike_root );
+	pike_root = 0;
 
 	return;
 }
@@ -189,16 +194,16 @@ void destroy_ip_tree(void)
 
 
 /* builds a new ip_node corresponding to a byte value */
-static inline struct ip_node *new_ip_node(unsigned char byte)
+static inline pike_ip_node_t *new_ip_node(unsigned char byte)
 {
-	struct ip_node *new_node;
+	pike_ip_node_t *new_node;
 
-	new_node = (struct ip_node*)shm_malloc(sizeof(struct ip_node));
+	new_node = (pike_ip_node_t*)shm_malloc(sizeof(pike_ip_node_t));
 	if (!new_node) {
 		LM_ERR("no more shm mem\n");
 		return 0;
 	}
-	memset( new_node, 0, sizeof(struct ip_node));
+	memset( new_node, 0, sizeof(pike_ip_node_t));
 	new_node->byte = byte;
 	return new_node;
 }
@@ -206,9 +211,9 @@ static inline struct ip_node *new_ip_node(unsigned char byte)
 
 
 /* splits from the current node (dad) a new child */
-struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
+pike_ip_node_t *split_node(pike_ip_node_t* dad, unsigned char byte)
 {
-	struct ip_node *new_node;
+	pike_ip_node_t *new_node;
 
 	/* create a new node */
 	if ( (new_node=new_ip_node(byte))==0 )
@@ -233,32 +238,32 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 
 
 #define is_hot_non_leaf(_node) \
-	( (_node)->hits[PREV_POS]>=root->max_hits>>2 ||\
-		(_node)->hits[CURR_POS]>=root->max_hits>>2 ||\
+	( (_node)->hits[PREV_POS]>=pike_root->max_hits>>2 ||\
+		(_node)->hits[CURR_POS]>=pike_root->max_hits>>2 ||\
 		(((_node)->hits[PREV_POS]+(_node)->hits[CURR_POS])>>1)>=\
-			root->max_hits>>2 )
+			pike_root->max_hits>>2 )
 
 #define is_hot_leaf(_node) \
-	( (_node)->leaf_hits[PREV_POS]>=root->max_hits ||\
-		(_node)->leaf_hits[CURR_POS]>=root->max_hits ||\
+	( (_node)->leaf_hits[PREV_POS]>=pike_root->max_hits ||\
+		(_node)->leaf_hits[CURR_POS]>=pike_root->max_hits ||\
 		(((_node)->leaf_hits[PREV_POS]+(_node)->leaf_hits[CURR_POS])>>1)>=\
-			root->max_hits )
+			pike_root->max_hits )
 
 #define is_warm_leaf(_node) \
-	( (_node)->hits[CURR_POS]>=root->max_hits>>2 )
+	( (_node)->hits[CURR_POS]>=pike_root->max_hits>>2 )
 
 #define MAX_TYPE_VAL(_x) \
 	(( (1<<(8*sizeof(_x)-1))-1 )|( (1<<(8*sizeof(_x)-1)) ))
 
 
-int is_node_hot_leaf(struct ip_node *node)
+int is_node_hot_leaf(pike_ip_node_t *node)
 {
 	return is_hot_leaf(node);
 }
 
 /*! \brief Used by the rpc function */
 char *node_status_array[] = {"", "WARM", "HOT", "ALL"};
-node_status_t node_status(struct ip_node *node)
+pike_node_status_t node_status(pike_ip_node_t *node)
 {
 	if ( is_hot_leaf(node) )
 		return NODE_STATUS_HOT;
@@ -272,14 +277,14 @@ node_status_t node_status(struct ip_node *node)
 
 
 /* mark with one more hit the given IP address - */
-struct ip_node* mark_node(unsigned char *ip,int ip_len,
-							struct ip_node **father,unsigned char *flag)
+pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
+							pike_ip_node_t **father,unsigned char *flag)
 {
-	struct ip_node *node;
-	struct ip_node *kid;
+	pike_ip_node_t *node;
+	pike_ip_node_t *kid;
 	int    byte_pos;
 
-	kid = root->entries[ ip[0] ].node;
+	kid = pike_root->entries[ ip[0] ].node;
 	node = 0;
 	byte_pos = 0;
 
@@ -325,8 +330,8 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 		node->hits[CURR_POS] = 1;
 		node->branch = ip[0];
 		*flag = NEW_NODE ;
-		/* set this node as root of the branch starting with first byte of IP*/
-		root->entries[ ip[0] ].node = node;
+		/* set this node as pike_root of the branch starting with first byte of IP*/
+		pike_root->entries[ ip[0] ].node = node;
 	} else{
 		/* only a non-empty prefix of the IP was found */
 		if ( node->hits[CURR_POS]<MAX_TYPE_VAL(node->hits[CURR_POS])-1 )
@@ -352,13 +357,13 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 
 
 /* remove and destroy a IP node along with its subtree */
-void remove_node(struct ip_node *node)
+void remove_node(pike_ip_node_t *node)
 {
 	LM_DBG("destroying node %p\n",node);
-	/* is it a branch root node? (these nodes have no prev (father)) */
+	/* is it a branch pike_root node? (these nodes have no prev (father)) */
 	if (node->prev==0) {
-		assert(root->entries[node->byte].node==node);
-		root->entries[node->byte].node = 0;
+		assert(pike_root->entries[node->byte].node==node);
+		pike_root->entries[node->byte].node = 0;
 	} else {
 		/* unlink it from kids list */
 		if (node->prev->kids==node)
@@ -376,9 +381,9 @@ void remove_node(struct ip_node *node)
 	destroy_ip_node(node);
 }
 
-static void print_node(struct ip_node *node,int sp, FILE *f)
+static void print_node(pike_ip_node_t *node,int sp, FILE *f)
 {
-	struct ip_node *foo;
+	pike_ip_node_t *foo;
 
 	/* print current node */
 	if (!f) {

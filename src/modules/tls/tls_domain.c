@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -61,9 +63,11 @@ static void setup_ecdh(SSL_CTX *ctx)
 {
    EC_KEY *ecdh;
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
    if (SSLeay() < 0x1000005fL) {
       return;
    }
+#endif
 
    ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
@@ -1036,7 +1040,11 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 			d->ctx[i] = SSL_CTX_new((SSL_METHOD*)ssl_methods[d->method - 1]);
 		}
 		if (d->ctx[i] == NULL) {
-			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			unsigned long e = 0;
+			e = ERR_peek_last_error();
+			ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+					tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+					ERR_reason_error_string(e));
 			return -1;
 		}
 		if(d->method>TLS_USE_TLSvRANGE) {
@@ -1046,7 +1054,11 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 		/* libssl >= 1.1.0 */
 		d->ctx[i] = SSL_CTX_new(sr_tls_methods[d->method - 1].TLSMethod);
 		if (d->ctx[i] == NULL) {
-			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			unsigned long e = 0;
+			e = ERR_peek_last_error();
+			ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+					tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+					ERR_reason_error_string(e));
 			return -1;
 		}
 		if(d->method>TLS_USE_TLSvRANGE) {

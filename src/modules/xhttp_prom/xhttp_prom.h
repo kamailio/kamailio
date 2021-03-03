@@ -21,11 +21,11 @@
  *
  */
 
-/*!
- * \file
- * \brief XHTTP_PROM :: 
- * \ingroup xhttp_prom
- * Module: \ref xhttp_prom
+/**
+ * @file
+ * @brief xHTTP_PROM :: General structures and variables.
+ * @ingroup xhttp_prom
+ * - Module: @ref xhttp_prom
  */
 
 #ifndef _XHTTP_PROM_H
@@ -40,7 +40,8 @@
 
 
 
-/** Representation of the xhttp_prom reply being constructed.
+/**
+ * @brief Representation of the xhttp_prom reply being constructed.
  *
  * This data structure describes the xhttp_prom reply that is being constructed
  * and will be sent to the client.
@@ -55,7 +56,8 @@ struct xhttp_prom_reply {
 };
 
 
-/** The context of the xhttp_prom request being processed.
+/**
+ * @brief The context of the xhttp_prom request being processed.
  *
  * This is the data structure that contains all data related to the xhttp_prom
  * request being processed, such as the reply code and reason, data to be sent
@@ -69,6 +71,15 @@ typedef struct prom_ctx {
 	int reply_sent;
 } prom_ctx_t;
 
+/**
+ * @brief string for beginning of metrics.
+ */
+extern str xhttp_prom_beginning;
+
+/**
+ * @brief timeout in minutes to delete old metrics.
+ */
+extern int timeout_minutes;
 
 #endif /* _XHTTP_PROM_H */
 

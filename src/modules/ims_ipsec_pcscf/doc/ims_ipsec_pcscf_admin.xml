@@ -217,6 +217,11 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
           If a database is used then this must be name of the table which
           stores the contacts.
           </para>
+          <para>
+          <emphasis>flags</emphasis> - bitwise flag:
+          0x01 - if set - delete unused tunnels before every registration.
+          This is an optional parameter, default value - 0.
+          </para>
         </listitem>
 		  </itemizedlist>
       <example>
@@ -225,6 +230,8 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
         <programlisting format="linespecific">
 ...
 ipsec_create("location");
+# or
+ipsec_create("location", "1");
 ...
         </programlisting>
       </example>
@@ -243,8 +250,9 @@ ipsec_create("location");
           stores the contacts.
           </para>
           <para>
-          <emphasis>flags</emphasis> - Set send force socket for request messages.
-          If 1 - set force socket for request messages. Useful for ipsec and TCP.
+          <emphasis>flags</emphasis> - bitwise flag:
+          0x01 - set force socket for request messages. Useful for ipsec and TCP.
+          0x02 - reverse search for a contact in the memory. Useful when contact alias is disabled.
           This is an optional parameter, default value - 0.
           </para>
         </listitem>

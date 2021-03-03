@@ -42,5 +42,17 @@ struct mem_info{
 	unsigned long total_frags; /** number of total memory fragments */
 };
 
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	const char *mname;
+	unsigned long line;
+
+	unsigned long size;
+	int count;
+
+	struct _mem_counter *next;
+} mem_counter;
+
 #endif
 

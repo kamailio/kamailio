@@ -1,4 +1,4 @@
-/* 
+/*
  * Generic db cluster module interface
  *
  * Copyright (C) 2012 Daniel-Constantin Mierla (asipto.com)
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -56,7 +56,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-struct module_exports exports = {	
+struct module_exports exports = {
 	"db_cluster",		/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,				/* exported functions */
@@ -95,6 +95,7 @@ int db_cluster_bind_api(db_func_t *dbb)
 	dbb->update           = db_cluster_update;
 	dbb->replace          = db_cluster_replace;
 	dbb->last_inserted_id = db_cluster_last_inserted_id;
+	dbb->insert_async     = db_cluster_insert_async;
 	dbb->insert_update    = db_cluster_insert_update;
 	dbb->insert_delayed   = db_cluster_insert_delayed;
 	dbb->affected_rows    = db_cluster_affected_rows;

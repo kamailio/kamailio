@@ -23,11 +23,14 @@
  */
 
 #include "ipsec.h"
+#include "spi_gen.h"
+#include "port_gen.h"
 
 #include "../../core/dprint.h"
 #include "../../core/mem/pkg.h"
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
+#include "../ims_usrloc_pcscf/usrloc.h"
 
 #include <errno.h>
 #include <arpa/inet.h>
@@ -40,7 +43,12 @@
 #define NLMSG_BUF_SIZE 4096
 #define NLMSG_DELETEALL_BUF_SIZE 8192
 
+extern usrloc_api_t ul;
 
+extern str ipsec_listen_addr;
+extern str ipsec_listen_addr6;
+extern ip_addr_t ipsec_listen_ip_addr;
+extern ip_addr_t ipsec_listen_ip_addr6;
 extern int xfrm_user_selector;
 
 struct xfrm_buffer {
@@ -48,6 +56,10 @@ struct xfrm_buffer {
     int offset;
 };
 
+struct del_tunnels {
+    void *contacts;
+    struct xfrm_buffer delmsg_buf;
+};
 
 //
 // This file contains all Linux specific IPSec code.
@@ -533,7 +545,7 @@ int clean_sa(struct mnl_socket*  mnl_socket)
 {
     struct {
         struct nlmsghdr n;
-        //char buf[NLMSG_BUF_SIZE];
+        //char buf[NLMSG_DELETEALL_BUF_SIZE];
     } req = {
         .n.nlmsg_len = NLMSG_HDRLEN,
         .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
@@ -546,7 +558,7 @@ int clean_sa(struct mnl_socket*  mnl_socket)
         return 1;
     }
 
-    char buf[NLMSG_BUF_SIZE];
+    char buf[NLMSG_DELETEALL_BUF_SIZE];
     memset(&buf, 0, sizeof(buf));
 
     struct xfrm_buffer delmsg_buf;
@@ -575,7 +587,7 @@ int clean_policy(struct mnl_socket*  mnl_socket)
 {
     struct {
         struct nlmsghdr n;
-        //char buf[NLMSG_BUF_SIZE];
+        //char buf[NLMSG_DELETEALL_BUF_SIZE];
     } req = {
         .n.nlmsg_len = NLMSG_HDRLEN,
         .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
@@ -588,7 +600,7 @@ int clean_policy(struct mnl_socket*  mnl_socket)
         return 1;
     }
 
-    char buf[NLMSG_BUF_SIZE];
+    char buf[NLMSG_DELETEALL_BUF_SIZE];
     memset(&buf, 0, sizeof(buf));
 
     struct xfrm_buffer delmsg_buf;
@@ -610,5 +622,462 @@ int clean_policy(struct mnl_socket*  mnl_socket)
         return 1;
     }
 
+    return 0;
+}
+
+static int delete_unused_sa_cb(const struct nlmsghdr *nlh, void *data)
+{
+    struct xfrm_usersa_info *xsinfo = NLMSG_DATA(nlh);
+
+    // Check if user id is different from Kamailio's
+    if (ntohl(xsinfo->sel.user) != xfrm_user_selector) {
+        return MNL_CB_OK;
+    }
+
+    ip_addr_t sa_src_addr, sa_dst_addr;
+    unsigned int sa_spi;
+    unsigned short sa_sport, sa_dport;
+
+    ip_addr_t *proxy_ip_addr = NULL;
+
+    sa_src_addr.af = sa_dst_addr.af = xsinfo->sel.family;
+    if(xsinfo->sel.family == AF_INET6) {
+        memcpy(sa_src_addr.u.addr32, xsinfo->sel.saddr.a6, sizeof(xsinfo->sel.saddr.a6));
+        memcpy(sa_dst_addr.u.addr32, xsinfo->sel.daddr.a6, sizeof(xsinfo->sel.daddr.a6));
+        sa_src_addr.len = sa_dst_addr.len = 16;
+
+        proxy_ip_addr = &ipsec_listen_ip_addr6;
+    } else if(xsinfo->sel.family == AF_INET) {
+        sa_src_addr.u.addr32[0] = xsinfo->sel.saddr.a4;
+        sa_dst_addr.u.addr32[0] = xsinfo->sel.daddr.a4;
+        sa_src_addr.len = sa_dst_addr.len = 4;
+
+        proxy_ip_addr = &ipsec_listen_ip_addr;
+    } else {
+        LM_CRIT("Unknown AF %d\n", xsinfo->sel.family);
+        return MNL_CB_OK;
+    }
+
+    sa_spi = htonl(xsinfo->id.spi);
+    sa_sport = htons(xsinfo->sel.sport);
+    sa_dport = htons(xsinfo->sel.dport);
+
+    char saddr_buf[IP_ADDR_MAX_STRZ_SIZE];
+    char daddr_buf[IP_ADDR_MAX_STRZ_SIZE];
+    memset(saddr_buf, 0, IP_ADDR_MAX_STRZ_SIZE);
+    memset(daddr_buf, 0, IP_ADDR_MAX_STRZ_SIZE);
+    ip_addr2sbufz(&sa_src_addr, saddr_buf, IP_ADDR_MAX_STRZ_SIZE);
+    ip_addr2sbufz(&sa_dst_addr, daddr_buf, IP_ADDR_MAX_STRZ_SIZE);
+
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |.............................................................................................|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |0000|
+//  * +----+
+    void  *cp;
+    str received_host;
+    ip_addr_t received_host_addr;
+    ipsec_t ipsec;
+    
+    cp = ((struct del_tunnels*)data)->contacts;
+    while (1) {
+        memcpy(&(received_host.len), cp, sizeof(received_host.len));
+        if (received_host.len == 0) {
+            break; // no more records
+        }
+
+        received_host.s = (char*)cp + sizeof(received_host.len);
+        cp = (char*)cp + sizeof(received_host.len) + received_host.len;
+
+        memcpy(&ipsec.spi_uc, cp, sizeof(ipsec.spi_uc));
+        cp = (char*)cp + sizeof(ipsec.spi_uc);
+
+        memcpy(&ipsec.spi_us, cp, sizeof(ipsec.spi_us));
+        cp = (char*)cp + sizeof(ipsec.spi_us);
+
+        memcpy(&ipsec.spi_pc, cp, sizeof(ipsec.spi_pc));
+        cp = (char*)cp + sizeof(ipsec.spi_pc);
+
+        memcpy(&ipsec.spi_ps, cp, sizeof(ipsec.spi_ps));
+        cp = (char*)cp + sizeof(ipsec.spi_ps);
+
+        memcpy(&ipsec.port_uc, cp, sizeof(ipsec.port_uc));
+        cp = (char*)cp + sizeof(ipsec.port_uc);
+
+        memcpy(&ipsec.port_us, cp, sizeof(ipsec.port_us));
+        cp = (char*)cp + sizeof(ipsec.port_us);
+
+        memcpy(&ipsec.port_pc, cp, sizeof(ipsec.port_pc));
+        cp = (char*)cp + sizeof(ipsec.port_pc);
+
+        memcpy(&ipsec.port_ps, cp, sizeof(ipsec.port_ps));
+        cp = (char*)cp + sizeof(ipsec.port_ps);
+
+        // convert 'received host' ip string to ip_addr_t
+        if (str2ipxbuf(&received_host, &received_host_addr) < 0){
+            LM_ERR("Unable to convert received host [%.*s]\n", received_host.len, received_host.s);
+            return 1;
+        }
+
+        // SA  Src address  Dst address Src port    Dst port        SPI
+        // SA1 UE-IP        Proxy-IP    UE-Server   Proxy-Client    Proxy-Client
+        // SA2 UE-IP        Proxy-IP    UE-Client   Proxy-Server    Proxy-Server
+        // SA3 Proxy-IP     UE-IP       P-Server    UE-Client       UE-Client
+        // SA4 Proxy-IP     UE-IP       P-Client    UE-Server       UE-Server
+
+        // Check for SA1 or SA2
+        if(ip_addr_cmp(&sa_src_addr, &received_host_addr) && ip_addr_cmp(&sa_dst_addr, proxy_ip_addr)) {
+            // check for SA1
+            if(sa_sport == ipsec.port_us && sa_dport == ipsec.port_pc && sa_spi == ipsec.spi_pc){
+                return MNL_CB_OK;
+            }
+
+            // check for SA2
+            if(sa_sport == ipsec.port_uc && sa_dport == ipsec.port_ps && sa_spi == ipsec.spi_ps){
+                return MNL_CB_OK;
+            }
+        }
+
+        // Check for SA3 or SA4
+        if(ip_addr_cmp(&sa_src_addr, proxy_ip_addr) && ip_addr_cmp(&sa_dst_addr, &received_host_addr)) {
+            // check for SA3
+            if(sa_sport == ipsec.port_ps && sa_dport == ipsec.port_uc && sa_spi == ipsec.spi_uc){
+                return MNL_CB_OK;
+            }
+
+            // check for SA4
+            if(sa_sport == ipsec.port_pc && sa_dport == ipsec.port_us && sa_spi == ipsec.spi_us){
+                return MNL_CB_OK;
+            }
+        }
+    }
+
+    LM_DBG("The SA is not used and will be deleted: spi:%u | saddr:%s:%u | daddr:%s:%u\n", sa_spi, saddr_buf, sa_sport, daddr_buf, sa_dport);
+
+    struct xfrm_buffer* delmsg_buf = &((struct del_tunnels*)data)->delmsg_buf;
+    uint32_t new_delmsg_len = NLMSG_LENGTH(sizeof(struct xfrm_usersa_id));
+
+    if(delmsg_buf->offset + new_delmsg_len > sizeof(delmsg_buf->buf)/sizeof(delmsg_buf->buf[0])) {
+        LM_ERR("Not enough memory allocated for delete SAs netlink command\n");
+        return MNL_CB_ERROR;
+    }
+
+    struct nlmsghdr *new_delmsg = (struct nlmsghdr *)&delmsg_buf->buf[delmsg_buf->offset];
+    new_delmsg->nlmsg_len = new_delmsg_len;
+    new_delmsg->nlmsg_flags = NLM_F_REQUEST;
+    new_delmsg->nlmsg_type = XFRM_MSG_DELSA;
+    new_delmsg->nlmsg_seq = time(NULL);
+
+    struct xfrm_usersa_id *xsid = NLMSG_DATA(new_delmsg);
+    xsid->family = xsinfo->family;
+    memcpy(&xsid->daddr, &xsinfo->id.daddr, sizeof(xsid->daddr));
+    xsid->spi = xsinfo->id.spi;
+    xsid->proto = xsinfo->id.proto;
+
+    mnl_attr_put(new_delmsg, XFRMA_SRCADDR, sizeof(xsid->daddr), &xsinfo->saddr);
+
+    delmsg_buf->offset += new_delmsg->nlmsg_len;
+
+    // NOTE: Release the Proxy SPIs and Ports only here. Do not release the same SPIs and ports in delete unsused policy callback.
+    // Release SPIs
+    release_spi(ipsec.spi_pc);
+    release_spi(ipsec.spi_ps);
+
+    // Release the client and the server ports
+    release_cport(ipsec.port_pc);
+    release_sport(ipsec.port_ps);
+
+    return MNL_CB_OK;
+}
+
+static int delete_unused_sa(struct mnl_socket *mnl_socket, void *contacts)
+{
+    struct {
+        struct nlmsghdr n;
+        //char buf[NLMSG_DELETEALL_BUF_SIZE];
+    } req = {
+        .n.nlmsg_len = NLMSG_HDRLEN,
+        .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+        .n.nlmsg_type = XFRM_MSG_GETSA,
+        .n.nlmsg_seq = time(NULL),
+    };
+
+    if(mnl_socket_sendto(mnl_socket, &req, req.n.nlmsg_len) == -1) {
+        LM_ERR("Error sending get all SAs command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    char buf[NLMSG_DELETEALL_BUF_SIZE];
+    memset(&buf, 0, sizeof(buf));
+
+    struct del_tunnels del_data;
+    del_data.contacts = contacts;
+    memset(&del_data.delmsg_buf, 0, sizeof(del_data.delmsg_buf));
+
+    int ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    while (ret > 0) {
+        ret = mnl_cb_run(buf, ret, req.n.nlmsg_seq, mnl_socket_get_portid(mnl_socket), delete_unused_sa_cb, &del_data);
+        if (ret <= MNL_CB_STOP) {
+            break;
+        }
+
+        ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    }
+
+    // DELETE unused SAs
+    if(mnl_socket_sendto(mnl_socket, &del_data.delmsg_buf.buf, del_data.delmsg_buf.offset) == -1) {
+        LM_ERR("Error sending delete unused SAs command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
+static int delete_unused_policy_cb(const struct nlmsghdr *nlh, void *data)
+{
+    struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(nlh);
+
+    //Check if user id is different from Kamailio's
+    if (ntohl(xpinfo->sel.user) != xfrm_user_selector) {
+        return MNL_CB_OK;
+    }
+
+    ip_addr_t sa_src_addr, sa_dst_addr;
+    unsigned short sa_sport, sa_dport;
+
+    ip_addr_t *proxy_ip_addr = NULL;
+
+    sa_src_addr.af = sa_dst_addr.af = xpinfo->sel.family;
+    if(xpinfo->sel.family == AF_INET6) {
+        memcpy(sa_src_addr.u.addr32, xpinfo->sel.saddr.a6, sizeof(xpinfo->sel.saddr.a6));
+        memcpy(sa_dst_addr.u.addr32, xpinfo->sel.daddr.a6, sizeof(xpinfo->sel.daddr.a6));
+        sa_src_addr.len = sa_dst_addr.len = 16;
+
+        proxy_ip_addr = &ipsec_listen_ip_addr6;
+    } else if(xpinfo->sel.family == AF_INET) {
+        sa_src_addr.u.addr32[0] = xpinfo->sel.saddr.a4;
+        sa_dst_addr.u.addr32[0] = xpinfo->sel.daddr.a4;
+        sa_src_addr.len = sa_dst_addr.len = 4;
+
+        proxy_ip_addr = &ipsec_listen_ip_addr;
+    } else {
+        LM_CRIT("Unknown AF %d\n", xpinfo->sel.family);
+        return MNL_CB_OK;
+    }
+
+    sa_sport = htons(xpinfo->sel.sport);
+    sa_dport = htons(xpinfo->sel.dport);
+
+    char saddr_buf[IP_ADDR_MAX_STRZ_SIZE];
+    char daddr_buf[IP_ADDR_MAX_STRZ_SIZE];
+    memset(saddr_buf, 0, IP_ADDR_MAX_STRZ_SIZE);
+    memset(daddr_buf, 0, IP_ADDR_MAX_STRZ_SIZE);
+    ip_addr2sbufz(&sa_src_addr, saddr_buf, IP_ADDR_MAX_STRZ_SIZE);
+    ip_addr2sbufz(&sa_dst_addr, daddr_buf, IP_ADDR_MAX_STRZ_SIZE);
+
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |.............................................................................................|
+//  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
+//  * |0000|
+//  * +----+
+    void  *cp;
+    str received_host;
+    ip_addr_t received_host_addr;
+    ipsec_t ipsec;
+
+    cp = ((struct del_tunnels*)data)->contacts;
+    while (1) {
+        memcpy(&(received_host.len), cp, sizeof(received_host.len));
+        if (received_host.len == 0) {
+            break; // no more records
+        }
+
+        received_host.s = (char*)cp + sizeof(received_host.len);
+        cp = (char*)cp + sizeof(received_host.len) + received_host.len;
+
+        memcpy(&ipsec.spi_uc, cp, sizeof(ipsec.spi_uc));
+        cp = (char*)cp + sizeof(ipsec.spi_uc);
+
+        memcpy(&ipsec.spi_us, cp, sizeof(ipsec.spi_us));
+        cp = (char*)cp + sizeof(ipsec.spi_us);
+
+        memcpy(&ipsec.spi_pc, cp, sizeof(ipsec.spi_pc));
+        cp = (char*)cp + sizeof(ipsec.spi_pc);
+
+        memcpy(&ipsec.spi_ps, cp, sizeof(ipsec.spi_ps));
+        cp = (char*)cp + sizeof(ipsec.spi_ps);
+
+        memcpy(&ipsec.port_uc, cp, sizeof(ipsec.port_uc));
+        cp = (char*)cp + sizeof(ipsec.port_uc);
+
+        memcpy(&ipsec.port_us, cp, sizeof(ipsec.port_us));
+        cp = (char*)cp + sizeof(ipsec.port_us);
+
+        memcpy(&ipsec.port_pc, cp, sizeof(ipsec.port_pc));
+        cp = (char*)cp + sizeof(ipsec.port_pc);
+
+        memcpy(&ipsec.port_ps, cp, sizeof(ipsec.port_ps));
+        cp = (char*)cp + sizeof(ipsec.port_ps);
+
+        // convert 'received host' ip string to ip_addr_t
+        if (str2ipxbuf(&received_host, &received_host_addr) < 0){
+            LM_ERR("Unable to convert received host [%.*s]\n", received_host.len, received_host.s);
+            return 1;
+        }
+
+        // Policy  Src address  Dst address Src port    Dst port
+        // Policy1 UE-IP        Proxy-IP    UE-Server   Proxy-Client
+        // Policy2 UE-IP        Proxy-IP    UE-Client   Proxy-Server
+        // Policy3 Proxy-IP     UE-IP       P-Server    UE-Client
+        // Policy4 Proxy-IP     UE-IP       P-Client    UE-Server
+
+        // Check for Policy1 or Policy2
+        if(ip_addr_cmp(&sa_src_addr, &received_host_addr) && ip_addr_cmp(&sa_dst_addr, proxy_ip_addr)) {
+            // check for SA1
+            if(sa_sport == ipsec.port_us && sa_dport == ipsec.port_pc){
+                return MNL_CB_OK;
+            }
+
+            // check for SA2
+            if(sa_sport == ipsec.port_uc && sa_dport == ipsec.port_ps){
+                return MNL_CB_OK;
+            }
+        }
+
+        // Check for Policy3 or Policy4
+        if(ip_addr_cmp(&sa_src_addr, proxy_ip_addr) && ip_addr_cmp(&sa_dst_addr, &received_host_addr)) {
+            // check for SA3
+            if(sa_sport == ipsec.port_ps && sa_dport == ipsec.port_uc){
+                return MNL_CB_OK;
+            }
+
+            // check for SA4
+            if(sa_sport == ipsec.port_pc && sa_dport == ipsec.port_us){
+                return MNL_CB_OK;
+            }
+        }
+    }
+
+    LM_DBG("The POLICY is not used and will be deleted: saddr:%s:%u | daddr:%s:%u\n", saddr_buf, sa_sport, daddr_buf, sa_dport);
+
+    struct xfrm_buffer* delmsg_buf = &((struct del_tunnels*)data)->delmsg_buf;
+    uint32_t new_delmsg_len = NLMSG_LENGTH(sizeof(struct xfrm_userpolicy_id));
+
+    if(delmsg_buf->offset + new_delmsg_len > sizeof(delmsg_buf->buf)/sizeof(delmsg_buf->buf[0])) {
+        LM_ERR("Not enough memory allocated for delete policies netlink command\n");
+        return MNL_CB_ERROR;
+    }
+
+    struct nlmsghdr *new_delmsg = (struct nlmsghdr *)&delmsg_buf->buf[delmsg_buf->offset];
+    new_delmsg->nlmsg_len = new_delmsg_len;
+    new_delmsg->nlmsg_flags = NLM_F_REQUEST;
+    new_delmsg->nlmsg_type = XFRM_MSG_DELPOLICY;
+    new_delmsg->nlmsg_seq = time(NULL);
+
+    struct xfrm_userpolicy_id *xpid = NLMSG_DATA(new_delmsg);
+    memcpy(&xpid->sel, &xpinfo->sel, sizeof(xpid->sel));
+    xpid->dir = xpinfo->dir;
+    xpid->index = xpinfo->index;
+
+    delmsg_buf->offset += new_delmsg->nlmsg_len;
+
+    return MNL_CB_OK;
+}
+
+static int delete_unused_policy(struct mnl_socket *mnl_socket, void *contacts)
+{
+    struct {
+        struct nlmsghdr n;
+        //char buf[NLMSG_DELETEALL_BUF_SIZE];
+    } req = {
+        .n.nlmsg_len = NLMSG_HDRLEN,
+        .n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+        .n.nlmsg_type = XFRM_MSG_GETPOLICY,
+        .n.nlmsg_seq = time(NULL),
+    };
+
+    if(mnl_socket_sendto(mnl_socket, &req, req.n.nlmsg_len) == -1) {
+        LM_ERR("Error sending get all POLICY command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    char buf[NLMSG_DELETEALL_BUF_SIZE];
+    memset(&buf, 0, sizeof(buf));
+
+    struct del_tunnels del_data;
+    del_data.contacts = contacts;
+    memset(&del_data.delmsg_buf, 0, sizeof(del_data.delmsg_buf));
+
+    int ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    while (ret > 0) {
+        ret = mnl_cb_run(buf, ret, req.n.nlmsg_seq, mnl_socket_get_portid(mnl_socket), delete_unused_policy_cb, &del_data);
+        if (ret <= MNL_CB_STOP) {
+            break;
+        }
+
+        ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
+    }
+
+    // DELETE unused POLICIES
+    if(mnl_socket_sendto(mnl_socket, &del_data.delmsg_buf.buf, del_data.delmsg_buf.offset) == -1) {
+        LM_ERR("Error sending delete unused policies command via netlink socket: %s\n", strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
+int delete_unused_tunnels()
+{
+    int rval, len = 0;
+    void *buf = NULL;
+
+    // first try to fetch required size for all contacts
+    rval = ul.get_all_ucontacts(buf, len, 0, 0, 1);
+    LM_DBG("Minimum required size %d\n", rval);
+    if (rval < 0) {
+        LM_ERR("Failed to fetch contacts\n");
+        return 1;
+    }
+
+    if (rval > 0) {
+        len = rval * 2;
+        buf = malloc(len);
+        if (buf == NULL) {
+            LM_ERR("Out of memory\n");
+            return 1;
+        }
+
+        rval = ul.get_all_ucontacts(buf, len, 0, 0, 1);
+        if (rval != 0) {
+            free(buf);
+            return 1;
+        }
+    }
+    if (buf == NULL) {
+        return 1;
+    }
+
+    struct mnl_socket* sock = init_mnl_socket();
+    if (sock == NULL) {
+        LM_ERR("Can't init mnl socket\n");
+        free(buf);
+        return 1;
+    }
+
+    delete_unused_sa(sock, buf);
+    delete_unused_policy(sock, buf);
+
+    close_mnl_socket(sock);
+
+    free(buf);
     return 0;
 }

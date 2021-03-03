@@ -45,9 +45,10 @@ Anca-Maria Vamanu
               3.20. outbound_proxy (str)
               3.21. server_address (str)
               3.22. max_notify_body_length (int)
-              3.23. fetch_rows (integer)
-              3.24. disable_remote_presence (integer)
-              3.25. max_backend_subs (integer)
+              3.23. reload_db_subs (integer)
+              3.24. fetch_rows (integer)
+              3.25. disable_remote_presence (integer)
+              3.26. max_backend_subs (integer)
 
         4. Functions
 
@@ -88,12 +89,13 @@ Anca-Maria Vamanu
    1.20. Set outbound_proxy parameter
    1.21. Set server_address parameter
    1.22. Set max_notify_body_length parameter
-   1.23. Set fetch_rows parameter
-   1.24. Set disable_remote_presence parameter
-   1.25. Set max_backend_subs parameter
-   1.26. rls_handle_subscribe usage
-   1.27. rls_handle_notify usage
-   1.28. rls_update_subs usage
+   1.23. Set reload_db_subs parameter
+   1.24. Set fetch_rows parameter
+   1.25. Set disable_remote_presence parameter
+   1.26. Set max_backend_subs parameter
+   1.27. rls_handle_subscribe usage
+   1.28. rls_handle_notify usage
+   1.29. rls_update_subs usage
 
 Chapter 1. Admin Guide
 
@@ -129,9 +131,10 @@ Chapter 1. Admin Guide
         3.20. outbound_proxy (str)
         3.21. server_address (str)
         3.22. max_notify_body_length (int)
-        3.23. fetch_rows (integer)
-        3.24. disable_remote_presence (integer)
-        3.25. max_backend_subs (integer)
+        3.23. reload_db_subs (integer)
+        3.24. fetch_rows (integer)
+        3.25. disable_remote_presence (integer)
+        3.26. max_backend_subs (integer)
 
    4. Functions
 
@@ -217,9 +220,10 @@ Chapter 1. Admin Guide
    3.20. outbound_proxy (str)
    3.21. server_address (str)
    3.22. max_notify_body_length (int)
-   3.23. fetch_rows (integer)
-   3.24. disable_remote_presence (integer)
-   3.25. max_backend_subs (integer)
+   3.23. reload_db_subs (integer)
+   3.24. fetch_rows (integer)
+   3.25. disable_remote_presence (integer)
+   3.26. max_backend_subs (integer)
 
 3.1. db_url(str)
 
@@ -513,18 +517,30 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 modparam("rls", "max_notify_body_length", 32000)
 ...
 
-3.23. fetch_rows (integer)
+3.23. reload_db_subs (integer)
+
+   Reload subscriptions on module initialization (requires db_mode 0
+   (memory only mode)).
+
+   Default value is 0 (do not load rows from db).
+
+   Example 1.23. Set reload_db_subs parameter
+...
+modparam("rls", "reload_db_subs", 1)
+...
+
+3.24. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 500.
 
-   Example 1.23. Set fetch_rows parameter
+   Example 1.24. Set fetch_rows parameter
 ...
 modparam("rls", "fetch_rows", 1000)
 ...
 
-3.24. disable_remote_presence (integer)
+3.25. disable_remote_presence (integer)
 
    When set to a non-zero value RLS will not perform back-end SUBSCRIBEs
    to non-local presentities. When people have large contact lists RLS
@@ -537,12 +553,12 @@ modparam("rls", "fetch_rows", 1000)
 
    Default value is 0
 
-   Example 1.24. Set disable_remote_presence parameter
+   Example 1.25. Set disable_remote_presence parameter
 ...
 modparam("rls", "disable_remote_presence", 1)
 ...
 
-3.25. max_backend_subs (integer)
+3.26. max_backend_subs (integer)
 
    When set to a non-zero value RLS will limit the number of back-end
    SUBSCRIBEs for each RLS SUBSCRIBE to this value. Leaving this at the
@@ -553,7 +569,7 @@ modparam("rls", "disable_remote_presence", 1)
 
    Default value is 0
 
-   Example 1.25. Set max_backend_subs parameter
+   Example 1.26. Set max_backend_subs parameter
 ...
 modparam("rls", "max_backend_subs", 30)
 ...
@@ -578,7 +594,7 @@ modparam("rls", "max_backend_subs", 30)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.26. rls_handle_subscribe usage
+   Example 1.27. rls_handle_subscribe usage
 ...
 For presence and rls on the same machine:
         modparam("rls", "to_presence_code", 10)
@@ -608,7 +624,7 @@ For rls only:
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.27. rls_handle_notify usage
+   Example 1.28. rls_handle_notify usage
 ...
 if(method=="NOTIFY")
     rls_handle_notify();
@@ -627,7 +643,7 @@ if(method=="NOTIFY")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. rls_update_subs usage
+   Example 1.29. rls_update_subs usage
 ...
 Within event_route[xhttp:request]:
         case "PUT":

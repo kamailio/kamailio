@@ -31,13 +31,13 @@
 #include <time.h>
 
 
-extern time_t act_time;
+extern time_t ul_act_time;
 
 
 /*! \brief
  * Get actual time
  */
-void get_act_time(void);
+void ul_get_act_time(void);
 
 
 #endif /* UTIME_H */

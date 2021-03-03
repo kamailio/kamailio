@@ -638,7 +638,7 @@ Place holder
        use SSLv3 for anything which should be secure.
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
        shouldn't use SSLv2 for anything which should be secure. Newer
-       versions of libssl don't include support for it anymore.
+       versions of OpenSSL libraries don't include support for it anymore.
      * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 or newer methods will be
        accepted.
        From the OpenSSL manual: "A TLS/SSL connection established with
@@ -649,9 +649,9 @@ Place holder
        TLSv1.2 and permits a fallback to SSLv3. A server will support
        SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols. This is the best
        choice when compatibility is a concern."
-       Note: For older libssl version, this option allows SSLv2, with
-       hello messages done over SSLv2. You shouldn't use SSLv2 or SSLv3
-       for anything which should be secure.
+       Note: For older OpenSSL library versions, this option allows SSLv2,
+       with hello messages done over SSLv2. You shouldn't use SSLv2 or
+       SSLv3 for anything which should be secure.
 
    If RFC 3261 conformance is desired, at least TLSv1 must be used. For
    compatibility with older clients SSLv23 is the option, but again, be
@@ -704,7 +704,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 
    Example 1.5. Set private_key parameter
 ...
-modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
+modparam("tls", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
 ...
 
 10.4. ca_list (string)
@@ -1220,7 +1220,7 @@ modparam("tls", "session_cache", 1)
    The value for session ID context, making sense when session caching is
    enabled.
 
-   By default TLS session_id is "sip-router-tls-3.1".
+   By default TLS session_id is "kamailio-tls-5.x.y".
 
    Example 1.38. Set session_id parameter
 ...
@@ -1432,7 +1432,7 @@ end
 
 10.34. rand_engine (str)
 
-   Set the ranondom number generator engine for libssl.
+   Set the random number generator engine for libssl.
 
    Note: the default random number generator (PRNG) engine of libssl
    v1.1.x is not designed for multi-process applications and can result in
@@ -1477,7 +1477,7 @@ modparam("tls", "private_key", "/engine:my_HSM_key_label")
 modparam("tls", "engine", "pkcs11")
 modparam("tls", "private_key", "/engine:pkcs11:token=MYTOKEN;object=MYKEYLABEL")
 
-modparam("tls", "engine_conf", "/usr/local/etc/kamailio/openssl.cnf")
+modparam("tls", "engine_config", "/usr/local/etc/kamailio/openssl.cnf")
 modparam("tls", "engine_algorithms", "ALL")
 ...
 

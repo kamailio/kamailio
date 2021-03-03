@@ -184,6 +184,14 @@ PyObject *sr_kemi_apy_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 			} else {
 				return sr_kemi_apy_return_false();
 			}
+		case SR_KEMIP_ARRAY:
+			LM_ERR("unsupported return type: array\n");
+			sr_kemi_xval_free(rx);
+			return sr_apy_kemi_return_none();
+		case SR_KEMIP_DICT:
+			LM_ERR("unsupported return type: map\n");
+			sr_kemi_xval_free(rx);
+			return sr_apy_kemi_return_none();
 		case SR_KEMIP_XVAL:
 			/* unknown content - return false */
 			return sr_kemi_apy_return_false();
@@ -1814,9 +1822,9 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					" took too long [%u ms] (file:%s func:%s line:%d)\n",
 					(ket->mname.len>0)?ket->mname.s:"",
 					(ket->mname.len>0)?".":"", ket->fname.s, tdiff,
-					(pframe)?PyBytes_AS_STRING(pframe->f_code->co_filename):"",
-					(pframe)?PyBytes_AS_STRING(pframe->f_code->co_name):"",
-					(pframe)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
+					(pframe && pframe->f_code)?PyBytes_AsString(pframe->f_code->co_filename):"",
+					(pframe && pframe->f_code)?PyBytes_AsString(pframe->f_code->co_name):"",
+					(pframe && pframe->f_code)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
 		}
 	}
 

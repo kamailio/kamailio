@@ -876,15 +876,14 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 				if (timeout_avp->setf(msg,&timeout_avp->pvp,EQ_T,&pv_val)!=0) {
 					LM_ERR("failed to set new dialog timeout value\n");
 				} else {
+					LM_DBG("Timeout avp value set to %d\n", value);
 					rtn = 0;
 				}
 			}
-		}
-		else {
+		} else {
 			LM_ERR("SST not reset. get avp result is %d\n", result);
 		}
-	}
-	else {
+	} else {
 		LM_ERR("SST needs to know the name of the dialog timeout AVP!\n");
 	}
 	return(rtn);

@@ -119,11 +119,13 @@ void free_ppublic(ppublic_t* _p)
 // Keep them in sync!
 void free_security(security_t* _p)
 {
-    if (!_p)
+    if (!_p) {
         return;
+    }
 
-	if(_p->sec_header.s)
-		shm_free(_p->sec_header.s);
+    if(_p->sec_header.s) {
+        shm_free(_p->sec_header.s);
+	}
 
     switch (_p->type)
     {
@@ -143,8 +145,9 @@ void free_security(security_t* _p)
         break;
 
         case SECURITY_TLS:
-			if(_p->data.tls)
+			if(_p->data.tls) {
 				shm_free(_p->data.tls);
+			}
         break;
         
         case SECURITY_NONE:

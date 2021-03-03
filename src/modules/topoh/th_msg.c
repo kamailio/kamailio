@@ -294,7 +294,7 @@ int th_mask_contact(sip_msg_t *msg)
 		p = (char*)pkg_malloc(out.len+3);
 		if(p==NULL)
 		{
-			LM_ERR("failed to get more pkg\n");
+			PKG_MEM_ERROR;
 			pkg_free(out.s);
 			return -1;
 		}
@@ -408,7 +408,7 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 				if (th_uri_prefix_checks && (via->host.len!=th_ip.len
 						|| strncasecmp(via->host.s, th_ip.s, th_ip.len)!=0))
 				{
-					LM_DBG("via %d is not encoded",i);
+					LM_DBG("via %d is not encoded - skip\n",i);
 					continue;
 				}
 
@@ -418,9 +418,16 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 					LM_ERR("cannot find param in via %d\n", i);
 					return -1;
 				}
-				if(vp->value.len <= th_vparam_prefix.len) {
-					LM_ERR("invalid param len in via %d\n", i);
-					return -1;
+				if(th_vparam_prefix.len > 0) {
+					if(vp->value.len <= th_vparam_prefix.len) {
+						LM_DBG("shorter param len in via %d - skip\n", i);
+						continue;
+					}
+					if(strncmp(vp->value.s, th_vparam_prefix.s,
+									th_vparam_prefix.len) != 0) {
+						LM_DBG("no prefix in via %d - skip\n", i);
+						continue;
+					}
 				}
 				if(i==2) {
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
@@ -441,7 +448,7 @@ int th_unmask_via(sip_msg_t *msg, str *cookie)
 					via2=pkg_malloc(sizeof(struct via_body));
 					if (via2==0)
 					{
-						LM_ERR("out of memory\n");
+						PKG_MEM_ERROR;
 						pkg_free(out.s);
 						return -1;
 
@@ -983,7 +990,7 @@ int th_add_via_cookie(sip_msg_t *msg, struct via_body *via)
 	out.s = (char*)pkg_malloc(out.len+1);
 	if(out.s==0)
 	{
-		LM_ERR("no pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	out.s[0] = ';';
@@ -1009,7 +1016,7 @@ int th_add_hdr_cookie(sip_msg_t *msg)
 	h.s = (char*)pkg_malloc(h.len+1);
 	if(h.s == 0)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);

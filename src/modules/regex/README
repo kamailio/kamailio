@@ -359,7 +359,7 @@ kamcmd regex.reload
 ^PJSUA
 
 
-### Blacklisted source IP's
+### Blocklisted source IP's
 [1]
 
 ^190\.232\.250\.226$

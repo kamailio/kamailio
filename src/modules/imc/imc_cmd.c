@@ -942,13 +942,15 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 	struct imc_uri room;
 
 	memset(&room, '\0', sizeof(room));
-	if (build_imc_uri(&room, cmd->param[0].s ? cmd->param[0] : dst->parsed.user, &dst->parsed))
-		goto error;
+	if (build_imc_uri(&room, cmd->param[0].s ? cmd->param[0] : dst->parsed.user,
+				&dst->parsed)) {
+		goto done;
+	}
 
 	rm = imc_get_room(&room.parsed.user, &room.parsed.host);
 	if (rm == NULL || (rm->flags & IMC_ROOM_DELETED)) {
 		LM_ERR("Room [%.*s] does not exist!\n",	STR_FMT(&room.uri));
-		goto error;
+		goto done;
 	}
 
 	/* verify if the user is a member of the room */
@@ -956,11 +958,12 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 	if (member == NULL) {
 		LM_ERR("User [%.*s] is not member of room [%.*s]!\n",
 				STR_FMT(&src->uri), STR_FMT(&rm->uri));
-		goto error;
+		goto done;
 	}
 
 	p = imc_body_buf;
-	left = sizeof(imc_body_buf);
+	imc_body_buf[IMC_BUF_SIZE - 1] = '\0';
+	left = sizeof(imc_body_buf) - 1;
 
 	memcpy(p, MEMBERS, sizeof(MEMBERS) - 1);
 	p += sizeof(MEMBERS) - 1;
@@ -975,22 +978,22 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 		}
 
 		if (imp->flags & IMC_MEMBER_OWNER) {
-			if (left < 1) goto overrun;
+			if (left < 2) goto overrun;
 			*p++ = '*';
 			left--;
 		} else if (imp->flags & IMC_MEMBER_ADMIN) {
-			if (left < 1) goto overrun;
+			if (left < 2) goto overrun;
 			*p++ = '~';
 			left--;
 		}
 
 		name = format_uri(imp->uri);
-		if (left < name->len) goto overrun;
+		if (left < name->len + 1) goto overrun;
 		strncpy(p, name->s, name->len);
 		p += name->len;
 		left -= name->len;
 
-		if (left < 1) goto overrun;
+		if (left < 2) goto overrun;
 		*p++ = '\n';
 		left--;
 
@@ -1003,13 +1006,16 @@ int imc_handle_members(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = p - body.s;
 
 	LM_DBG("members = '%.*s'\n", STR_FMT(&body));
-	LM_ERR("Message-ID: '%.*s'\n", STR_FMT(get_callid(msg)));
+	LM_DBG("Message-ID: '%.*s'\n", STR_FMT(get_callid(msg)));
 	imc_send_message(&rm->uri, &member->uri, build_headers(msg), &body);
 
 	rv = 0;
+	goto done;
+
 overrun:
 	LM_ERR("Buffer too small for member list message\n");
-error:
+
+done:
 	if (room.uri.s != NULL) pkg_free(room.uri.s);
 	if (rm != NULL) imc_release_room(rm);
 	return rv;
@@ -1026,7 +1032,7 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	size_t left;
 
 	p = imc_body_buf;
-	left = sizeof(imc_body_buf);
+	left = sizeof(imc_body_buf) - 2;
 
 	memcpy(p, ROOMS, sizeof(ROOMS) - 1);
 	p += sizeof(ROOMS) - 1;
@@ -1064,7 +1070,8 @@ int imc_handle_rooms(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("rooms = '%.*s'\n", STR_FMT(&body));
 	imc_send_message(&dst->uri, &src->uri, build_headers(msg), &body);
 
-	rv = 0;
+	return 0;
+
 error:
 	LM_ERR("Buffer too small for member list message\n");
 	return rv;

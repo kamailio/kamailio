@@ -33,6 +33,7 @@
 #include "strutils.h"
 #include "select_buf.h"
 #include "pvar.h"
+#include "trim.h"
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
 #include "parser/parse_from.h"
@@ -220,6 +221,38 @@ static int sr_kemi_core_is_myself_ruri(sip_msg_t *msg)
 	if (msg->new_uri.s!=NULL)
 		return sr_kemi_core_is_myself(msg, &msg->new_uri);
 	return sr_kemi_core_is_myself(msg, &msg->first_line.u.request.uri);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_duri(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (msg->dst_uri.s!=NULL)
+		return sr_kemi_core_is_myself(msg, &msg->dst_uri);
+
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_myself_nhuri(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (msg->dst_uri.s!=NULL)
+		return sr_kemi_core_is_myself(msg, &msg->dst_uri);
+
+	return sr_kemi_core_is_myself_ruri(msg);
 }
 
 /**
@@ -819,6 +852,12 @@ static int sr_kemi_core_is_method_in(sip_msg_t *msg, str *vmethod)
 					return SR_KEMI_TRUE;
 				}
 			break;
+			case 'E':
+			case 'e':
+				if(imethod==METHOD_PRACK) {
+					return SR_KEMI_TRUE;
+				}
+			break;
 			case 'P':
 			case 'p':
 				if(imethod==METHOD_PUBLISH) {
@@ -1025,6 +1064,57 @@ static int sr_kemi_core_is_method_prack(sip_msg_t *msg)
 	return sr_kemi_core_is_method_type(msg, METHOD_PRACK);
 }
 
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_message(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_MESSAGE);
+}
+
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_kdmq(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_KDMQ);
+}
+
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_get(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_GET);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_post(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_POST);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_put(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_PUT);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_method_delete(sip_msg_t *msg)
+{
+	return sr_kemi_core_is_method_type(msg, METHOD_DELETE);
+}
+
 /**
  *
  */
@@ -1071,6 +1161,59 @@ static int sr_kemi_core_is_proto_wss(sip_msg_t *msg)
 static int sr_kemi_core_is_proto_sctp(sip_msg_t *msg)
 {
 	return (msg->rcv.proto == PROTO_SCTP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_is_proto(sip_msg_t *msg, str *sproto)
+{
+	int i;
+	if (msg==NULL || sproto==NULL || sproto->s==NULL || sproto->len<=0) {
+		return SR_KEMI_FALSE;
+	}
+	for(i=0; i<sproto->len; i++) {
+		switch(sproto->s[i]) {
+			case 'e':
+			case 'E':
+				if (msg->rcv.proto == PROTO_TLS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 's':
+			case 'S':
+				if (msg->rcv.proto == PROTO_SCTP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 't':
+			case 'T':
+				if (msg->rcv.proto == PROTO_TCP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'u':
+			case 'U':
+				if (msg->rcv.proto == PROTO_UDP) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+			case 'v':
+			case 'V':
+				if (msg->rcv.proto == PROTO_WS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+
+			case 'w':
+			case 'W':
+				if (msg->rcv.proto == PROTO_WSS) {
+					return SR_KEMI_TRUE;
+				}
+			break;
+		}
+	}
+	return SR_KEMI_FALSE;
 }
 
 /**
@@ -1349,6 +1492,41 @@ static int sr_kemi_core_get_debug(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_route(sip_msg_t *msg, str *route)
+{
+	run_act_ctx_t tctx;
+	run_act_ctx_t *pctx = NULL;
+	int rtid = -1;
+	int ret = 0;
+
+	if(route == NULL || route->s == NULL) {
+		return -1;
+	}
+
+	rtid = route_lookup(&main_rt, route->s);
+	if (rtid < 0) {
+		return -1;
+	}
+
+	if(_sr_kemi_act_ctx != NULL) {
+		pctx = _sr_kemi_act_ctx;
+	} else {
+		init_run_actions_ctx(&tctx);
+		pctx = &tctx;
+	}
+
+	ret=run_actions(pctx, main_rt.rlist[rtid], msg);
+
+	if (pctx->run_flags & EXIT_R_F) {
+		return 0;
+	}
+
+	return ret;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -1397,6 +1575,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_myself_ruri"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_myself_ruri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_duri"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_duri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself_nhuri"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself_nhuri,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1645,6 +1833,36 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init(""), str_init("is_MESSAGE"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_message,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_KDMQ"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_kdmq,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_GET"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_get,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_POST"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_post,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_PUT"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_put,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_DELETE"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_method_delete,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init(""), str_init("is_UDP"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_proto_udp,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1675,6 +1893,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init(""), str_init("is_proto"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init(""), str_init("is_IPv4"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_af_ipv4,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1698,6 +1921,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("get_debug"),
 		SR_KEMIP_INT, sr_kemi_core_get_debug,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("route"),
+		SR_KEMIP_INT, sr_kemi_core_route,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
@@ -1810,7 +2038,7 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 /**
  *
  */
-static int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
+int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
 {
 	struct lump* anchor;
 	hdr_field_t *hf;
@@ -2053,8 +2281,6 @@ static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
 static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
 		int rmode)
 {
-	char hbuf[256];
-	str s;
 	hdr_field_t shdr;
 	hdr_field_t *ihdr;
 #define SR_KEMI_VHDR_SIZE 256
@@ -2074,23 +2300,12 @@ static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
-	if(hname->len>=252) {
-		LM_ERR("header name too long\n");
+	if (parse_hname2_str(hname, &shdr)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
 
-	memcpy(hbuf, hname->s, hname->len);
-	hbuf[hname->len] = ':';
-	hbuf[hname->len+1] = '\0';
-	s.s = hbuf;
-	s.len = hname->len + 1;
-
-	if (parse_hname2_short(s.s, s.s + s.len, &shdr)==0) {
-		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
-		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
-		return &_sr_kemi_xval;
-	}
 	n = 0;
 	for (ihdr=msg->headers; ihdr; ihdr=ihdr->next) {
 		hmatch = 0;
@@ -2191,6 +2406,165 @@ static sr_kemi_xval_t* sr_kemi_hdr_getw_idx(sip_msg_t *msg, str *hname, int idx)
 /**
  *
  */
+static int sr_kemi_hdr_match_content(sip_msg_t *msg, str *hname, str *op,
+		str *mval, str *hidx)
+{
+	hdr_field_t *hf;
+	hdr_field_t hfm;
+	int opval = 0;
+	int hidxval = 0;
+	int matched = 0;
+	int hnum = 0;
+	str hbody = STR_NULL;
+
+	if(hname==NULL || hname->s==NULL || msg==NULL) {
+		return SR_KEMI_FALSE;
+	}
+
+	if (parse_hname2_str(hname, &hfm)==0) {
+		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
+		return SR_KEMI_FALSE;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(op->len == 2) {
+		if(strncasecmp(op->s, "eq", 2) == 0) {
+			opval = 1;
+		} else if(strncasecmp(op->s, "ne", 2) == 0) {
+			opval = 2;
+		} else if(strncasecmp(op->s, "sw", 2) == 0) {
+			opval = 3;
+		} else if(strncasecmp(op->s, "in", 2) == 0) {
+			opval = 4;
+		} else if(strncasecmp(op->s, "re", 2) == 0) {
+			opval = 5;
+			LM_ERR("operator not implemented: %.*s\n", op->len, op->s);
+			return SR_KEMI_FALSE;
+		} else {
+			LM_ERR("invalid operator: %.*s\n", op->len, op->s);
+			return SR_KEMI_FALSE;
+		}
+	} else {
+		LM_ERR("invalid operator: %.*s\n", op->len, op->s);
+		return SR_KEMI_FALSE;
+	}
+
+
+	if(hidx->len >= 1) {
+		if(hidx->s[0]=='f' || hidx->s[0]=='F') {
+			/* first */
+			hidxval = 1;
+		} else if(hidx->s[0]=='l' || hidx->s[0]=='L') {
+			/* last */
+			hidxval = 2;
+		} else if(hidx->s[0]=='a' || hidx->s[0]=='A') {
+			/* all */
+			hidxval = 3;
+		} else if(hidx->s[0]=='o' || hidx->s[0]=='O') {
+			/* one - at least one */
+			hidxval = 4;
+		} else {
+			LM_ERR("invalid header index: %.*s\n", hidx->len, hidx->s);
+			return SR_KEMI_FALSE;
+		}
+	} else {
+		LM_ERR("invalid header index: %.*s\n", hidx->len, hidx->s);
+		return SR_KEMI_FALSE;
+	}
+
+	LM_DBG("searching hf: %.*s\n", hname->len, hname->s);
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hf->type) {
+				continue;
+			}
+		} else {
+			if (hf->name.len!=hname->len) {
+				continue;
+			}
+			if(strncasecmp(hf->name.s, hname->s, hname->len)!=0) {
+				continue;
+			}
+		}
+		hnum++;
+		matched = 0;
+		hbody = hf->body;
+		trim(&hbody);
+		switch(opval) {
+			case 1:
+			case 2:
+				if(mval->len != hbody.len) {
+					if(opval == 2) {
+						/* ne */
+						matched = 1;
+					}
+				} else {
+					if(strncasecmp(mval->s, hbody.s, hbody.len) == 0) {
+						if(opval == 1) {
+							/* eq */
+							matched = 1;
+						}
+					}
+				}
+				break;
+			case 3:
+				/* sw */
+				if(hbody.len >= mval->len) {
+					if(strncasecmp(hbody.s, mval->s, mval->len) == 0) {
+						matched = 1;
+					}
+				}
+				break;
+			case 4:
+				/* in */
+				if(hbody.len >= mval->len) {
+					if(str_casesearch(&hbody, mval) != NULL) {
+						matched = 1;
+					}
+				}
+				break;
+			case 5:
+				/* re */
+				break;
+		}
+		if(hnum==1 && hidxval==1) {
+			/* first */
+			if(matched == 1) {
+				return SR_KEMI_TRUE;
+			} else {
+				return SR_KEMI_FALSE;
+			}
+		}
+		if(hidxval==3) {
+			/* all */
+			if(matched == 0) {
+				return SR_KEMI_FALSE;
+			}
+		}
+		if(hidxval==4) {
+			/* one */
+			if(matched == 1) {
+				return SR_KEMI_TRUE;
+			}
+		}
+	}
+
+	/* last - all */
+	if(matched == 1) {
+		return SR_KEMI_TRUE;
+	} else {
+		return SR_KEMI_FALSE;
+	}
+}
+
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_hdr[] = {
 	{ str_init("hdr"), str_init("append"),
 		SR_KEMIP_INT, sr_kemi_hdr_append,
@@ -2267,6 +2641,11 @@ static sr_kemi_t _sr_kemi_hdr[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("hdr"), str_init("match_content"),
+		SR_KEMIP_BOOL, sr_kemi_hdr_match_content,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
@@ -2277,16 +2656,52 @@ static sr_kemi_t _sr_kemi_hdr[] = {
  */
 void sr_kemi_xval_null(sr_kemi_xval_t *xval, int rmode)
 {
-	if(rmode==SR_KEMI_XVAL_NULL_PRINT) {
-		xval->vtype = SR_KEMIP_STR;
-		xval->v.s = *pv_get_null_str();
-	} else if(rmode==SR_KEMI_XVAL_NULL_EMPTY) {
-		xval->vtype = SR_KEMIP_STR;
-		xval->v.s = *pv_get_empty_str();
-	} else {
-		xval->vtype = SR_KEMIP_NULL;
-		xval->v.s.s = NULL;
-		xval->v.s.len = 0;
+	switch(rmode) {
+		case SR_KEMI_XVAL_NULL_PRINT:
+			xval->vtype = SR_KEMIP_STR;
+			xval->v.s = *pv_get_null_str();
+			return;
+		case SR_KEMI_XVAL_NULL_EMPTY:
+			xval->vtype = SR_KEMIP_STR;
+			xval->v.s = *pv_get_empty_str();
+			return;
+		case SR_KEMI_XVAL_NULL_ZERO:
+			xval->vtype = SR_KEMIP_INT;
+			xval->v.n = 0;
+			return;
+		default:
+			xval->vtype = SR_KEMIP_NULL;
+			xval->v.s.s = NULL;
+			xval->v.s.len = 0;
+			return;
+	}
+}
+
+/**
+ *
+ */
+void sr_kemi_dict_item_free(sr_kemi_dict_item_t *item)
+{
+	sr_kemi_dict_item_t *v;
+
+	while(item) {
+		if (item->vtype == SR_KEMIP_ARRAY || item->vtype == SR_KEMIP_DICT) {
+			sr_kemi_dict_item_free(item->v.dict);
+		}
+		v = item;
+		item = item->next;
+		pkg_free(v);
+	}
+}
+
+/**
+ *
+ */
+void sr_kemi_xval_free(sr_kemi_xval_t *xval)
+{
+	if(xval && (xval->vtype == SR_KEMIP_ARRAY || xval->vtype == SR_KEMIP_DICT))
+	{
+		sr_kemi_dict_item_free(xval->v.dict);
 	}
 }
 

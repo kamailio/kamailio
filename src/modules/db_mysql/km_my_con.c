@@ -40,6 +40,8 @@
 #include "../../core/ut.h"
 #include "db_mysql.h"
 
+extern int db_mysql_opt_ssl_mode;
+
 /*! \brief
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
@@ -49,6 +51,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	struct my_con* ptr;
 	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
+
 #if MYSQL_VERSION_ID > 50012
 #if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
 	bool rec;
@@ -71,7 +74,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	egrp = 0;
 	memset(ptr, 0, sizeof(struct my_con));
 	ptr->ref = 1;
-	
+
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
 	        PKG_MEM_ERROR;
@@ -94,7 +97,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		}
 		// read [client] and [<grp>] sections in the order
 		// given in my.cnf
-		mysql_options(ptr->con, MYSQL_READ_DEFAULT_GROUP, grp);
+		mysql_options(ptr->con, MYSQL_READ_DEFAULT_GROUP, (const void*)grp);
 	}
 	else {
 		host = id->host;
@@ -109,14 +112,35 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	}
 
 	// set connect, read and write timeout, the value counts three times
-	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const char *)&db_mysql_timeout_interval);
-	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const char *)&db_mysql_timeout_interval);
-	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&db_mysql_timeout_interval);
+#if MYSQL_VERSION_ID > 50710 && !defined(MARIADB_BASE_VERSION)
+	if(db_mysql_opt_ssl_mode!=0) {
+		unsigned int optuint = 0;
+		if(db_mysql_opt_ssl_mode==1) {
+			if(db_mysql_opt_ssl_mode!=SSL_MODE_DISABLED) {
+				LM_WARN("ssl mode disabled is not 1 (value %u) - enforcing\n",
+						SSL_MODE_DISABLED);
+			}
+			optuint = SSL_MODE_DISABLED;
+		} else {
+			optuint = (unsigned int)db_mysql_opt_ssl_mode;
+		}
+		mysql_options(ptr->con, MYSQL_OPT_SSL_MODE, (const void*)&optuint);
+	}
+#else
+	if(db_mysql_opt_ssl_mode!=0) {
+		LM_WARN("ssl mode not supported by mysql version (value %u) - ignoring\n",
+						(unsigned int)db_mysql_opt_ssl_mode);
+	}
+#endif
+
 #if MYSQL_VERSION_ID > 50012
 	/* set reconnect flag if enabled */
 	if (db_mysql_auto_reconnect) {
 		rec = 1;
-		mysql_options(ptr->con, MYSQL_OPT_RECONNECT, &rec);
+		mysql_options(ptr->con, MYSQL_OPT_RECONNECT, (const void*)&rec);
 	}
 #else
 	if (db_mysql_auto_reconnect)

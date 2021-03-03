@@ -74,7 +74,7 @@ int init_ts_table(unsigned int size)
 
 	t_table = (struct ts_table*)shm_malloc( sizeof(struct ts_table));
 	if (t_table==0) {
-		LM_ERR("no more shm mem (1)\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -104,7 +104,7 @@ int init_ts_table(unsigned int size)
 
 	t_table->entries = (ts_entry_t*)shm_malloc(sizeof(ts_entry_t) * size);
 	if (!t_table->entries) {
-		LM_ERR("no more shm mem (2)\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 
@@ -210,14 +210,14 @@ int new_ts_urecord(str* ruri, ts_urecord_t** _r)
 {
 	*_r = (ts_urecord_t*)shm_malloc(sizeof(ts_urecord_t));
 	if (*_r == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*_r, 0, sizeof(ts_urecord_t));
 
 	(*_r)->ruri.s = (char*)shm_malloc(ruri->len);
 	if ((*_r)->ruri.s == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		shm_free(*_r);
 		*_r = 0;
 		return -2;
@@ -362,7 +362,7 @@ ts_transaction_t* new_ts_transaction(int tindex, int tlabel)
 	len = sizeof(ts_transaction_t);
 	ts = (ts_transaction_t*)shm_malloc(len);
 	if (ts==0) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR_FMT("len %d\n", len);
 		return 0;
 	}
 
@@ -388,7 +388,7 @@ ts_transaction_t* clone_ts_transaction(ts_transaction_t* ts)
 	len = sizeof(ts_transaction_t);
 	ts_clone = (ts_transaction_t*)shm_malloc(len);
 	if (ts_clone==NULL) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		SHM_MEM_ERROR_FMT("len %d\n", len);
 		return NULL;
 	}
 

@@ -3,10 +3,10 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="tm.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-    </sectioninfo>
 
     <title>Functions</title>
+    <sectioninfo>
+    </sectioninfo>
 
     <section id="tm.f.t_relay">
 	<title>
@@ -668,7 +668,7 @@ route {
 	    <function>t_reset_max_lifetime()</function>
 	</title>
 	<para>
-		Resets the the maximum lifetime for the current INVITE or non-INVITE 
+		Resets the maximum lifetime for the current INVITE or non-INVITE 
 		transaction to the default value (set using the tm module parameter
 		<varname>max_inv_lifetime</varname> or 
 		<varname>max_noninv_lifetime</varname>).
@@ -1890,4 +1890,21 @@ if($var(ts) == 500) { ... }
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.f.t_clean">
+	<title>
+	    <function>t_clean()</function>
+	</title>
+	<para>
+	Cleans active but very old transactions.  Returns true (1).  Can be
+    called from any route.
+	</para>
+	<example>
+	    <title><function>t_clean</function> usage</title>
+	    <programlisting>
+...
+t_clean();
+...
+	    </programlisting>
+	</example>
     </section>
+  </section>

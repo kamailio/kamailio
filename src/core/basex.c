@@ -387,3 +387,124 @@ char* b58_encode(char *b58, int *b58sz, char *data, int binsz)
 
 	return b58;
 }
+
+/* base64-url encoding table (RFC 4648 document) */
+static const char _ksr_b64url_encmap[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/* base64-url decoding table */
+static const int _ksr_b64url_decmap[] = {
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, 0x3E, -1, -1,
+	0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B,
+	0x3C, 0x3D, -1, -1, -1, -1, -1, -1,
+	-1, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+	0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+	0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+	0x17, 0x18, 0x19, -1, -1, -1, -1, 0x3F,
+	-1, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
+	0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+	0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
+	0x31, 0x32, 0x33, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1
+};
+
+int base64url_enc(char *in, int ilen, char *out, int osize)
+{
+	int  left;
+	int  idx;
+	int  i;
+	int  r;
+	char *p;
+	int  block;
+	int  olen;
+
+	olen = (((ilen+2)/3)<<2);
+	if (olen >= osize) {
+		LM_ERR("not enough output buffer size %d - need %d\n", osize, olen+1);
+		return -1;
+	}
+	memset(out, 0, (olen+1)*sizeof(char));
+
+	p = out;
+	for(idx=0; idx<ilen; idx+=3) {
+		left = ilen - idx - 1 ;
+		left = (left>1)?2:left;
+
+		block = 0;
+		for(i=0, r=16; i<=left; i++, r-=8)
+			block += ((unsigned char)in[idx+i]) << r;
+
+		*(p++) = _ksr_b64url_encmap[(block >> 18) & 0x3f];
+		*(p++) = _ksr_b64url_encmap[(block >> 12) & 0x3f];
+		*(p++) = (left>0)?_ksr_b64url_encmap[(block >> 6) & 0x3f]:'=';
+		*(p++) = (left>1)?_ksr_b64url_encmap[block & 0x3f]:'=';
+	}
+
+	return olen;
+}
+
+int base64url_dec(char *in, int ilen, char *out, int osize)
+{
+	int n;
+	int block;
+	int idx;
+	int i;
+	int j;
+	int end;
+	char c;
+	int olen;
+
+	for(n=0,i=ilen-1; in[i]=='='; i--)
+		n++;
+
+	olen = ((ilen * 6) >> 3) - n;
+
+	if (olen<=0) {
+		LM_ERR("invalid olen parameter calculated, can't continue %d\n", olen);
+		return -1;
+	}
+
+	if(olen >= osize) {
+		LM_ERR("not enough output buffer size %d - need %d\n", osize, olen+1);
+		return -1;
+	}
+	memset(out, 0, (olen+1)*sizeof(char));
+
+	end = ilen - n;
+	for(i=0, idx=0; i<end; idx+=3) {
+		block = 0;
+		for(j=0; j<4 && i<end ; j++) {
+			c = _ksr_b64url_decmap[(int)in[i++]];
+			if(c<0) {
+				LM_ERR("invalid input string\"%.*s\"\n", ilen, in);
+				return -1;
+			}
+			block += c << (18 - 6*j);
+		}
+
+		for(j=0, n=16; j<3 && idx+j<olen; j++, n-=8)
+			out[idx+j] = (char)((block >> n) & 0xff);
+	}
+
+	return olen;
+}
+

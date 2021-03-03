@@ -96,11 +96,19 @@ modparam("sipdump", "enable", 1)
 		<title><varname>mode</varname> (int)</title>
 		<para>
 			Set the type of activity done by the module, the value can be set
-			based on flags: 1 - write to files; 2 - execute event route
+			based on flags index: 0 (value 1) - write to text files;
+			1 (value 2) - execute event route;
+			2 (value 4) - write to pcap files; 3 (value 8) - insert the
+			P-KSR-SIPDump header with meta data inside the SIP message written
+			in pcap file.
+		</para>
+		<para>
+			To enable several activity modes, set the parameter to the sum of
+			corresponding values.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1 (write to files).
+			Default value is 1 (write to text files).
 		</emphasis>
 		</para>
 		<example>
@@ -173,7 +181,8 @@ modparam("sipdump", "folder", "/run/kamailio")
 		<title><varname>fprefix</varname> (str)</title>
 		<para>
 			File name prefix. The date is appended to this prefix in the format
-			yyyy-mm-dd--hh-mm-ss. The extension of the file is ".data".
+			yyyy-mm-dd--hh-mm-ss. The extension of the text file is ".data",
+			of the meta file is ".meta" and of the pcap file is ".pcap".
 		</para>
 		<para>
 		<emphasis>
@@ -284,6 +293,10 @@ sipdump_send("cfg");
 			Executed when sipdump handles messages and mode parameter has flag 2 set.
 			The variable $sipdump(...) is available inside the event route.
 		</para>
+		<para>
+			If drop() is used in event_route, then writing to file is no longer
+			done when mode parameter has also the flag 1 set.
+		</para>
 <programlisting  format="linespecific">
 ...
 event_route[sipdump:msg] {
@@ -292,6 +305,37 @@ event_route[sipdump:msg] {
 ...
 </programlisting>
 	</section>
+	</section>
+
+	<section id="sipdump.x.usage-remarks">
+	<title>Usage Remarks</title>
+		<para>
+			Note that the files with the SIP traffic and metadata are not deleted
+			by the module itself. They have to be deleted explicitely by other
+			means, such as cron.d job, or using rtimer and exec modules. Next
+			examples shows how to delete the files older than 2 days using
+			&kamailio; modules.
+		</para>
+<programlisting  format="linespecific">
+...
+loadmodule "rtimer.so
+loadmodule "exec.so
+...
+modparam("rtimer", "timer", "name=tjobs;interval=300;mode=1;")
+modparam("rtimer", "exec", "timer=tjobs;route=TCLEAN")
+...
+route[TCLEAN] {
+    exec_cmd("find /tmp -type f -name kamailio-sipdump-* -mtime +1 -delete &amp;");
+}
+...
+</programlisting>
+		<para>
+		If operational mode is set to write the pcap files, note that packets
+		in the pcap file are generated always with transport UDP, no matter
+		the SIP traffic was over another transport layer like TCP, TLS, SCTP
+		or WSS. The headers of the SIP message (e.g., Via, Route) should provide
+		hints about what the SIP transport layer.
+		</para>
 	</section>
 
 </chapter>

@@ -9,10 +9,12 @@
 			<title>
 				<function moreinfo="none">cr.reload_routes</function>
 			</title>
+
 			<para>This command reloads the routing data from the data source.</para>
 			<para>
 			Name: <emphasis>cr.reload_routes</emphasis>
 			</para>
+
 			<para>Parameters:</para>
 			<itemizedlist>
 				<listitem><para>
@@ -31,14 +33,141 @@
 			<title>
 				<function moreinfo="none">cr.dump_routes</function>
 			</title>
+
 			<para>This command prints the route rules on the command line.</para>
 			<para>
 			Name: <emphasis>cr.dump_routes</emphasis>
 			</para>
+
 			<para>Parameters:</para>
 			<itemizedlist>
 				<listitem><para>
 					<emphasis>none</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+	<section id="carrierroute.rpc.add_host">
+			<title>
+				<function moreinfo="none">cr.add_host</function>
+			</title>
+
+			<para>This command adds a new host to the route rules</para>
+			<para>
+				Name: <emphasis>cr.add_host</emphasis>
+			</para>
+
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>One long string parameter that contains the arguments for this command</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Example:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>kamcmd cr.add_host -- '-h test.domain.com:5060 -d proxy -p null -w 0.1'</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+	<section id="carrierroute.rpc.delete_host">
+			<title>
+				<function moreinfo="none">cr.delete_host</function>
+			</title>
+
+			<para>This command deletes a host from the route rules</para>
+			<para>
+				Name: <emphasis>cr.delete_host</emphasis>
+			</para>
+
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>One long string parameter that contains the arguments for this command</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Example:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>kamcmd cr.delete_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+	<section id="carrierroute.rpc.activate_host">
+			<title>
+				<function moreinfo="none">cr.activate_host</function>
+			</title>
+
+			<para>This command activates a host from the route rules</para>
+			<para>
+				Name: <emphasis>cr.activate_host</emphasis>
+			</para>
+
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>One long string parameter that contains the arguments for this command</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Example:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>kamcmd cr.activate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+	<section id="carrierroute.rpc.deactivate_host">
+			<title>
+				<function moreinfo="none">cr.deactivate_host</function>
+			</title>
+
+			<para>This command deactivates a host from the route rules</para>
+			<para>
+				Name: <emphasis>cr.deactivate_host</emphasis>
+			</para>
+
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>One long string parameter that contains the arguments for this command</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Example:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>kamcmd cr.deactivate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+				</para></listitem>
+			</itemizedlist>
+	</section>
+
+	<section id="carrierroute.rpc.replace_host">
+			<title>
+				<function moreinfo="none">cr.replace_host</function>
+			</title>
+
+			<para>This command replaces a host from the route rules</para>
+			<para>
+				Name: <emphasis>cr.replace_host</emphasis>
+			</para>
+
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>One long string parameter that contains the arguments for this command</emphasis>
+				</para></listitem>
+			</itemizedlist>
+
+			<para>Example:</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>kamcmd cr.replace_host -- '-h test1.domain.com:5060 -d proxy -t test2.domain.com:5060'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>

@@ -24,9 +24,9 @@ int my_pid() {return 0; };
 struct cfg_group_core default_core_cfg = {
 	L_DBG, /*  print only msg. < L_WARN */
 	LOG_DAEMON,	/* log_facility -- see syslog(3) */
-#ifdef USE_DST_BLACKLIST
-	/* blacklist */
-	0, /* dst blacklist is disabled by default */
+#ifdef USE_DST_BLOCKLIST
+	/* blocklist */
+	0, /* dst blocklist is disabled by default */
 	DEFAULT_BLST_TIMEOUT,
 	DEFAULT_BLST_MAX_MEM,
 #endif

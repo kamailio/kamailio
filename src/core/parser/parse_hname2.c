@@ -26,268 +26,292 @@
  * @ingroup parser
  */
 
-#include "../comp_defs.h"
+#include <stdio.h>
+#include <ctype.h>
+
+#include "../dprint.h"
+
 #include "parse_hname2.h"
-#include "keys.h"
-#include "../ut.h"  /* q_memchr */
 
-#define LOWER_BYTE(b) ((b) | 0x20)
-#define LOWER_DWORD(d) ((d) | 0x20202020)
+typedef struct ksr_hdr_map {
+	str hname;
+	hdr_types_t htype;
+	hdr_flags_t hflag;
+} ksr_hdr_map_t;
 
-/** Skip all white-chars and return position of the first non-white char.
+/* map with SIP header name
+ * - must be groupped by first letter - indexed for faster search */
+static ksr_hdr_map_t _ksr_hdr_map[] = {
+	{ str_init("a"), HDR_ACCEPTCONTACT_T, HDR_ACCEPTCONTACT_F },
+	{ str_init("Accept"), HDR_ACCEPT_T, HDR_ACCEPT_F },
+	{ str_init("Accept-Contact"), HDR_ACCEPTCONTACT_T, HDR_ACCEPTCONTACT_F },
+	{ str_init("Accept-Language"), HDR_ACCEPTLANGUAGE_T, HDR_ACCEPTLANGUAGE_F },
+	{ str_init("Allow"), HDR_ALLOW_T, HDR_ALLOW_F },
+	{ str_init("Allow-Events"), HDR_ALLOWEVENTS_T, HDR_ALLOWEVENTS_F },
+	{ str_init("Authorization"), HDR_AUTHORIZATION_T, HDR_AUTHORIZATION_F },
+
+	{ str_init("b"), HDR_REFERREDBY_T, HDR_REFERREDBY_F },
+
+	{ str_init("c"), HDR_CONTENTTYPE_T, HDR_CONTENTTYPE_F },
+	{ str_init("Call-Id"), HDR_CALLID_T, HDR_CALLID_F },
+	{ str_init("Call-Info"), HDR_CALLINFO_T, HDR_CALLINFO_F },
+	{ str_init("Contact"), HDR_CONTACT_T, HDR_CONTACT_F },
+	{ str_init("Content-Disposition"), HDR_CONTENTDISPOSITION_T, HDR_CONTENTDISPOSITION_F },
+	{ str_init("Content-Encoding"), HDR_CONTENTENCODING_T, HDR_CONTENTENCODING_F },
+	{ str_init("Content-Length"), HDR_CONTENTLENGTH_T, HDR_CONTENTLENGTH_F },
+	{ str_init("Content-Type"), HDR_CONTENTTYPE_T, HDR_CONTENTTYPE_F },
+	{ str_init("CSeq"), HDR_CSEQ_T, HDR_CSEQ_F },
+
+	{ str_init("d"), HDR_REQUESTDISPOSITION_T, HDR_REQUESTDISPOSITION_F },
+	{ str_init("Date"), HDR_DATE_T, HDR_DATE_F },
+	{ str_init("Diversion"), HDR_DIVERSION_T, HDR_DIVERSION_F },
+
+	{ str_init("e"), HDR_CONTENTENCODING_T, HDR_CONTENTENCODING_F },
+	{ str_init("Event"), HDR_EVENT_T, HDR_EVENT_F },
+	{ str_init("Expires"), HDR_EXPIRES_T, HDR_EXPIRES_F },
+
+	{ str_init("f"), HDR_FROM_T, HDR_FROM_F },
+	{ str_init("From"), HDR_FROM_T, HDR_FROM_F },
+
+	{ str_init("i"), HDR_CALLID_T, HDR_CALLID_F },
+	{ str_init("Identity"), HDR_IDENTITY_T, HDR_IDENTITY_F },
+	{ str_init("Identity-Info"), HDR_IDENTITY_INFO_T, HDR_IDENTITY_INFO_F },
+
+	{ str_init("j"), HDR_REJECTCONTACT_T, HDR_REJECTCONTACT_F },
+
+	{ str_init("k"), HDR_SUPPORTED_T, HDR_SUPPORTED_F },
+
+	{ str_init("l"), HDR_CONTENTLENGTH_T, HDR_CONTENTLENGTH_F },
+
+	{ str_init("m"), HDR_CONTACT_T, HDR_CONTACT_F },
+	{ str_init("Max-Forwards"), HDR_MAXFORWARDS_T, HDR_MAXFORWARDS_F },
+	{ str_init("Min-Expires"), HDR_MIN_EXPIRES_T, HDR_MIN_EXPIRES_F },
+	{ str_init("Min-SE"), HDR_MIN_SE_T, HDR_MIN_SE_F },
+
+	{ str_init("o"), HDR_EVENT_T, HDR_EVENT_F },
+	{ str_init("Organization"), HDR_ORGANIZATION_T, HDR_ORGANIZATION_F },
+
+	{ str_init("Path"), HDR_PATH_T, HDR_PATH_F },
+	{ str_init("Priority"), HDR_PRIORITY_T, HDR_PRIORITY_F },
+	{ str_init("Privacy"), HDR_PRIVACY_T, HDR_PRIVACY_F },
+	{ str_init("Proxy-Authenticate"), HDR_PROXY_AUTHENTICATE_T, HDR_PROXY_AUTHENTICATE_F },
+	{ str_init("Proxy-Authorization"), HDR_PROXYAUTH_T, HDR_PROXYAUTH_F },
+	{ str_init("Proxy-Require"), HDR_PROXYREQUIRE_T, HDR_PROXYREQUIRE_F },
+	{ str_init("P-Preferred-Identity"), HDR_PPI_T, HDR_PPI_F },
+	{ str_init("P-Asserted-Identity"), HDR_PAI_T, HDR_PAI_F },
+
+	{ str_init("r"), HDR_REFER_TO_T, HDR_REFER_TO_F },
+	{ str_init("Reason"), HDR_REASON_T, HDR_REASON_F },
+	{ str_init("Record-Route"), HDR_RECORDROUTE_T, HDR_RECORDROUTE_F },
+	{ str_init("Refer-To"), HDR_REFER_TO_T, HDR_REFER_TO_F },
+	{ str_init("Referred-By"), HDR_REFERREDBY_T, HDR_REFERREDBY_F },
+	{ str_init("Reject-Contact"), HDR_REJECTCONTACT_T, HDR_REJECTCONTACT_F },
+	{ str_init("Remote-Party-ID"), HDR_RPID_T, HDR_RPID_F },
+	{ str_init("Request-Disposition"), HDR_REQUESTDISPOSITION_T, HDR_REQUESTDISPOSITION_F },
+	{ str_init("Require"), HDR_REQUIRE_T, HDR_REQUIRE_F },
+	{ str_init("Retry-After"), HDR_RETRY_AFTER_T, HDR_RETRY_AFTER_F },
+	{ str_init("Route"), HDR_ROUTE_T, HDR_ROUTE_F },
+
+	{ str_init("s"), HDR_SUBJECT_T, HDR_SUBJECT_F },
+	{ str_init("Server"), HDR_SERVER_T, HDR_SERVER_F },
+	{ str_init("Session-Expires"), HDR_SESSIONEXPIRES_T, HDR_SESSIONEXPIRES_F },
+	{ str_init("SIP-If-Match"), HDR_SIPIFMATCH_T, HDR_SIPIFMATCH_F },
+	{ str_init("Subject"), HDR_SUBJECT_T, HDR_SUBJECT_F },
+	{ str_init("Subscription-State"), HDR_SUBSCRIPTION_STATE_T, HDR_SUBSCRIPTION_STATE_F },
+	{ str_init("Supported"), HDR_SUPPORTED_T, HDR_SUPPORTED_F },
+
+	{ str_init("t"), HDR_TO_T, HDR_TO_F },
+	{ str_init("To"), HDR_TO_T, HDR_TO_F },
+
+	{ str_init("u"), HDR_ALLOWEVENTS_T, HDR_ALLOWEVENTS_F },
+	{ str_init("Unsupported"), HDR_UNSUPPORTED_T, HDR_UNSUPPORTED_F },
+	{ str_init("User-Agent"), HDR_USERAGENT_T, HDR_USERAGENT_F },
+
+	{ str_init("v"), HDR_VIA_T, HDR_VIA_F },
+	{ str_init("Via"), HDR_VIA_T, HDR_VIA_F },
+
+	{ str_init("x"), HDR_SESSIONEXPIRES_T, HDR_SESSIONEXPIRES_F },
+
+	{ str_init("y"), HDR_IDENTITY_T, HDR_IDENTITY_F },
+
+	{ str_init("WWW-Authenticate"), HDR_WWW_AUTHENTICATE_T, HDR_WWW_AUTHENTICATE_F },
+
+	{ str_init(""), 0, 0 }
+};
+
+typedef struct ksr_hdr_map_idx {
+	int idxs;
+	int idxe;
+} ksr_hdr_map_idx_t;
+
+#define KSR_HDR_MAP_IDX_SIZE 256
+
+/**
+ * array to keep start and end indexes of header names groupped by first char
  */
-static inline char* skip_ws(char* p, unsigned int size)
-{
-	char* end;
+static ksr_hdr_map_idx_t _ksr_hdr_map_idx[KSR_HDR_MAP_IDX_SIZE];
 
-	end = p + size;
-	for(; p < end; p++) {
-		if ((*p != ' ') && (*p != '\t')) return p;
+/**
+ * valid chars in header names
+ */
+static unsigned char *_ksr_hname_chars_list = (unsigned char*)"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz-._+~";
+
+/**
+ * additional valid chars in header names (core param)
+ */
+unsigned char *_ksr_hname_extra_chars = (unsigned char*)"";
+
+/**
+ * indexed valid chars in 256-array for 1-byte-index access check
+ */
+static unsigned char _ksr_hname_chars_idx[KSR_HDR_MAP_IDX_SIZE];
+
+
+/**
+ * init header name parsing structures and indexes at very beginning of start up
+ */
+int ksr_hname_init_index(void)
+{
+	unsigned char c;
+	int i;
+
+	for(i=0; i<KSR_HDR_MAP_IDX_SIZE; i++) {
+		_ksr_hdr_map_idx[i].idxs = -1;
+		_ksr_hdr_map_idx[i].idxe = -1;
+		_ksr_hname_chars_idx[i] = 0;
 	}
-	return p;
+
+	for(i=0; _ksr_hdr_map[i].hname.len > 0; i++) {
+		c = _ksr_hdr_map[i].hname.s[0];
+		if(_ksr_hdr_map_idx[c].idxs == -1) {
+			_ksr_hdr_map_idx[tolower(c)].idxs = i;
+			_ksr_hdr_map_idx[toupper(c)].idxs = i;
+		}
+		if(c != _ksr_hdr_map[i+1].hname.s[0]) {
+			_ksr_hdr_map_idx[tolower(c)].idxe = i;
+			_ksr_hdr_map_idx[toupper(c)].idxe = i;
+		}
+	}
+
+	for(i=0; _ksr_hname_chars_list[i] != 0; i++) {
+		_ksr_hname_chars_idx[_ksr_hname_chars_list[i]] = 1;
+	}
+
+	return 0;
 }
 
-/*! \name 
- * Parser macros
+/**
+ * init header name parsing structures and indexes after config parsing
  */
-/*@{ */
-#include "case_via.h"      /* Via */
-#include "case_from.h"     /* From */
-#include "case_to.h"       /* To */
-#include "case_cseq.h"     /* CSeq */
-#include "case_call.h"     /* Call-ID */
-#include "case_cont.h"     /* Contact, Content-Type, Content-Length, Content-Purpose,
-			    * Content-Action, Content-Disposition */
-#include "case_rout.h"     /* Route */
-#include "case_max.h"      /* Max-Forwards */
-#include "case_reco.h"     /* Record-Route */
-#include "case_auth.h"     /* Authorization */
-#include "case_expi.h"     /* Expires */
-#include "case_prox.h"     /* Proxy-Authorization, Proxy-Require */
-#include "case_allo.h"     /* Allow */
-#include "case_unsu.h"     /* Unsupported */
-#include "case_even.h"     /* Event */
-#include "case_sip.h"      /* Sip-If-Match */
-#include "case_acce.h"     /* Accept, Accept-Language */
-#include "case_orga.h"     /* Organization */
-#include "case_prio.h"     /* Priority */
-#include "case_subj.h"     /* Subject */
-#include "case_user.h"     /* User-Agent */
-#include "case_serv.h"     /* Server */
-#include "case_supp.h"     /* Supported */
-#include "case_dive.h"     /* Diversion */
-#include "case_remo.h"     /* Remote-Party-ID */
-#include "case_refe.h"     /* Refer-To */
-#include "case_sess.h"     /* Session-Expires */
-#include "case_reje.h"     /* Reject-Contact */
-#include "case_min.h"      /* Min-SE */
-#include "case_subs.h"     /* Subscription-State */
-#include "case_requ.h"     /* Require */
-#include "case_www.h"      /* WWW-Authenticate */
-#include "case_date.h"     /* Date */
-#include "case_iden.h"     /* Identity, Identity-info */
-#include "case_retr.h"     /* Retry-After */
-#include "case_path.h"     /* Path */
-#include "case_priv.h"
-#include "case_reas.h"     /* Reason */
-#include "case_p_as.h"     /* P-Asserted-Identity */
-#include "case_p_pr.h"     /* P-Preferred-Identity */
-
-/*@} */
-
-#define SAFE_READ(val, len) \
-((len) == 1 ? READ1(val) : ((len) == 2 ? READ2(val) : ((len) == 3 ? READ3(val) : ((len) > 3 ? READ4(val) : READ0(val)))))
-
-#define READ(val) \
-READ4(val)
-
-#define READ4(val) \
-(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16) + (*((val) + 3) << 24))
-
-#define READ3(val) \
-(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16))
-
-#define READ2(val) \
-(*((val) + 0) + (*((val) + 1) << 8))
-
-#define READ1(val) \
-(*((val) + 0))
-
-#define READ0(val) \
-(0)
-
-#define FIRST_QUATERNIONS       \
-        case _via1_: via1_CASE; \
-	case _from_: from_CASE; \
-	case _to12_: to12_CASE; \
-	case _cseq_: cseq_CASE; \
-	case _call_: call_CASE; \
-	case _cont_: cont_CASE; \
-	case _rout_: rout_CASE; \
-	case _max__: max_CASE;  \
-	case _reco_: reco_CASE; \
-	case _via2_: via2_CASE; \
-	case _auth_: auth_CASE; \
-	case _supp_: supp_CASE; \
-	case _expi_: expi_CASE; \
-	case _prox_: prox_CASE; \
-	case _allo_: allo_CASE; \
-	case _unsu_: unsu_CASE; \
-        case _even_: even_CASE; \
-        case _sip_ : sip_CASE;  \
-        case _acce_: acce_CASE; \
-        case _orga_: orga_CASE; \
-        case _prio_: prio_CASE; \
-        case _subj_: subj_CASE; \
-        case _subs_: subs_CASE; \
-        case _user_: user_CASE; \
-        case _serv_: serv_CASE; \
-        case _dive_: dive_CASE; \
-        case _remo_: remo_CASE; \
-        case _refe_: refe_CASE; \
-	case _sess_: sess_CASE; \
-	case _reje_: reje_CASE; \
-	case _min__: min_CASE;  \
-	case _requ_: requ_CASE;  \
-	case _www__: www_CASE; \
-	case _date_: date_CASE; \
-	case _iden_: iden_CASE; \
-	case _retr_: retr_CASE; \
-	case _path_: path_CASE; \
-	case _priv_: priv_CASE; \
-	case _reas_: reas_CASE; \
-	case _p_as_: p_as_CASE; \
-	case _p_pr_: p_pr_CASE;
-
-
-#define PARSE_COMPACT(id)          \
-        switch(*(p + 1)) {         \
-        case ' ':                  \
-	        hdr->type = id;    \
-	        p += 2;            \
-	        goto dc_end;       \
-	                           \
-        case ':':                  \
-	        hdr->type = id;    \
-	        hdr->name.len = 1; \
-	        return (p + 2);    \
-        }
-
-char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr)
+int ksr_hname_init_config(void)
 {
-	register char* p;
-	register unsigned int val;
+	int i;
 
-	if ((end - begin) < 4) {
+	for(i=0; _ksr_hname_extra_chars[i] != 0; i++) {
+		_ksr_hname_chars_idx[_ksr_hname_extra_chars[i]] = 1;
+	}
+
+	return 0;
+}
+
+/**
+ * parse the sip header name in the buffer starting at 'begin' till before 'end'
+ * - fills hdr structure (must not be null)
+ * - set hdr->type=HDR_ERROR_T in case of parsing error
+ * - if emode==1, then parsing does not expect : after header name
+ * - returns pointer after : if emode==0 or after header name if emode==1
+ */
+char *parse_sip_header_name(char* const begin, const char* const end,
+		hdr_field_t* const hdr, int emode)
+{
+	char *p;
+	int i;
+
+	if (end <= begin) {
+		hdr->type = HDR_ERROR_T;
+		return begin;
+	}
+	if(_ksr_hname_chars_idx[(unsigned char)(*begin)] == 0) {
+		LM_ERR("invalid start of header name for [%.*s]\n",
+				(int)(end-begin), begin);
+		hdr->type = HDR_ERROR_T;
+		return begin;
+	}
+	hdr->type = HDR_OTHER_T;
+	hdr->name.s = begin;
+
+	for(p=begin+1; p<end; p++) {
+		if(_ksr_hname_chars_idx[(unsigned char)(*p)] == 0) {
+			/* char not allowed in header name */
+			break;
+		}
+	}
+	hdr->name.len = p - hdr->name.s;
+
+	if(emode == 1) {
+		/* allowed end of header name without finding : */
+		p = p - 1; /* function returns (p+1) */
+		goto done;
+	}
+
+	/* ensure no character or only white spaces till : */
+	for(; p<end; p++) {
+		if(*p == ':') {
+			/* end of header name */
+			break;
+		}
+		if(*p != ' ' && *p != '\t') {
+			/* no white space - bad header name format */
+			LM_ERR("invalid header name for [%.*s]\n",
+					(int)(end-begin), begin);
+			hdr->type = HDR_ERROR_T;
+			return begin;
+		}
+	}
+
+	if(p == end) {
+		/* no : found - emode==0 */
+		LM_ERR("invalid end of header name for [%.*s]\n",
+				(int)(end-begin), begin);
 		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
 
-	p = begin;
-
-	val = LOWER_DWORD(READ(p));
-	hdr->name.s = begin;
-
-	switch(val) {
-	FIRST_QUATERNIONS;
-
-	default:
-		switch(LOWER_BYTE(*p)) {
-		case 't':
-			switch(LOWER_BYTE(*(p + 1))) {
-			case 'o':
-			case ' ':
-				hdr->type = HDR_TO_T;
-				p += 2;
-				goto dc_end;
-
-			case ':':
-				hdr->type = HDR_TO_T;
-				hdr->name.len = 1;
-				return (p + 2);
+done:
+	/* lookup header type */
+	if(_ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxs >= 0) {
+		for(i = _ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxs;
+					i <= _ksr_hdr_map_idx[(unsigned char)(hdr->name.s[0])].idxe; i++) {
+			if(hdr->name.len == _ksr_hdr_map[i].hname.len
+					&& strncasecmp(hdr->name.s, _ksr_hdr_map[i].hname.s,
+							hdr->name.len) == 0) {
+				hdr->type = _ksr_hdr_map[i].htype;
 			}
-			break;
-
-		case 'v': PARSE_COMPACT(HDR_VIA_T);           break;
-		case 'f': PARSE_COMPACT(HDR_FROM_T);          break;
-		case 'i': PARSE_COMPACT(HDR_CALLID_T);        break;
-		case 'm': PARSE_COMPACT(HDR_CONTACT_T);       break;
-		case 'l': PARSE_COMPACT(HDR_CONTENTLENGTH_T); break;
-		case 'k': PARSE_COMPACT(HDR_SUPPORTED_T);     break;
-		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE_T);   break;
-		case 'o': PARSE_COMPACT(HDR_EVENT_T);         break;
-		case 'x': PARSE_COMPACT(HDR_SESSIONEXPIRES_T);break;
-		case 'a': PARSE_COMPACT(HDR_ACCEPTCONTACT_T); break;
-		case 'u': PARSE_COMPACT(HDR_ALLOWEVENTS_T);   break;
-		case 'e': PARSE_COMPACT(HDR_CONTENTENCODING_T); break;
-		case 'b': PARSE_COMPACT(HDR_REFERREDBY_T);    break;
-		case 'j': PARSE_COMPACT(HDR_REJECTCONTACT_T); break;
-		case 'd': PARSE_COMPACT(HDR_REQUESTDISPOSITION_T); break;
-		case 's': PARSE_COMPACT(HDR_SUBJECT_T);       break;
-		case 'r': PARSE_COMPACT(HDR_REFER_TO_T);      break;
-		case 'y': PARSE_COMPACT(HDR_IDENTITY_T);      break;
-		case 'n': PARSE_COMPACT(HDR_IDENTITY_INFO_T); break;
 		}
-		goto other;
-        }
-
-	     /* Double colon hasn't been found yet */
- dc_end:
-       	p = skip_ws(p, end - p);
-	if (*p != ':') {
-	        goto other;
-	} else {
-		hdr->name.len = p - hdr->name.s;
-		return (p + 1);
 	}
 
-	     /* Unknown header type */
- other:
-	p = q_memchr(p, ':', end - p);
-	if (!p) {        /* No double colon found, error.. */
-		hdr->type = HDR_ERROR_T;
-		hdr->name.s = 0;
-		hdr->name.len = 0;
-		return 0;
-	} else {
-		hdr->type = HDR_OTHER_T;
-		hdr->name.len = p - hdr->name.s;
-		/*hdr_update_type(hdr);*/
-		return (p + 1);
-	}
+	LM_DBG("parsed header name [%.*s] type %d\n", hdr->name.len, hdr->name.s,
+				hdr->type);
+
+	return (p+1);
+}
+
+char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr)
+{
+	return parse_sip_header_name(begin, end, hdr, 0);
 }
 
 /**
- * parse_hname2_short() - safer version to parse header name stored in short buffers
- *   - parse_hanem2() reads 4 bytes at once, expecting to walk through a buffer
- *   that contains more than the header name (e.g., sip msg buf, full header buf
- *   with name and body)
+ * kept for compatibility of code developed in the past
+ * - to be replace with parse_hname2() across the code
  */
 char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr)
 {
-#define HBUF_MAX_SIZE 256
-	char hbuf[HBUF_MAX_SIZE];
-	char *p;
-
-	if(end-begin>=HBUF_MAX_SIZE-4) {
-		p = q_memchr(begin, ':', end - begin);
-		if(p && p-4> begin) {
-			/* header name termination char found and enough space in buffer after it */
-			return parse_hname2(begin, end, hdr);
-		}
-		/* not enough space */
-		LM_ERR("not enough space to parse the header name in [%.*s] (%d)\n",
-				(int)(end-begin), begin, (int)(end-begin));
-		return NULL;
-	}
-	/* pad with whitespace - tipycal char after the ':' of the header name */
-	memset(hbuf, ' ', HBUF_MAX_SIZE);
-	memcpy(hbuf, begin, end-begin);
-	p = parse_hname2(hbuf, hbuf + 4 + (end-begin), hdr);
-	if(!p) {
-		LM_ERR("failed to parse the header name in [%.*s] (%d)\n",
-				(int)(end-begin), begin, (int)(end-begin));
-		return NULL;
-	}
-	return begin + (p-hbuf);
+	return parse_sip_header_name(begin, end, hdr, 0);
 }
+
+char* parse_hname2_str (str* const hbuf, hdr_field_t* const hdr)
+{
+	return parse_sip_header_name(hbuf->s, hbuf->s + hbuf->len, hdr, 1);
+}
+

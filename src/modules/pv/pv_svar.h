@@ -27,6 +27,7 @@
 #ifndef _PV_SVAR_H_
 #define _PV_SVAR_H_
 
+#include "../../core/kemi.h"
 #include "../../core/usr_avp.h"
 
 #define VAR_VAL_INT		(0)		/* value is INT (other flags not set) */
@@ -56,6 +57,10 @@ script_var_t* get_var_all(void);
 void reset_vars(void);
 void destroy_vars(void);
 void destroy_vars_list(script_var_t *svl);
+
+int ki_var_seti(sip_msg_t *msg, str *vname, int ival);
+int ki_var_sets(sip_msg_t *msg, str *vname, str *sval);
+sr_kemi_xval_t* ki_var_get(sip_msg_t *msg, str *vname);
 
 #endif
 

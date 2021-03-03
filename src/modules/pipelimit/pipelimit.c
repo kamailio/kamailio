@@ -122,6 +122,7 @@ static ticks_t pl_timer_handle(ticks_t, struct timer_ln*, void*);
 static void pl_timer_exec(unsigned int ticks, void *param);
 static int w_pl_check(struct sip_msg*, char *, char *);
 static int w_pl_check3(struct sip_msg*, char *, char *, char *);
+static int w_pl_active(sip_msg_t *, char *, char *);
 static int w_pl_drop_default(struct sip_msg*, char *, char *);
 static int w_pl_drop_forced(struct sip_msg*, char *, char *);
 static int w_pl_drop(struct sip_msg*, char *, char *);
@@ -132,6 +133,8 @@ static cmd_export_t cmds[]={
 	{"pl_check",      (cmd_function)w_pl_check,        1, fixup_spve_null,
 		0,    ANY_ROUTE},
 	{"pl_check",      (cmd_function)w_pl_check3,       3, fixup_pl_check3,
+		0,    ANY_ROUTE},
+	{"pl_active",     (cmd_function)w_pl_active,       1, fixup_spve_null,
 		0,    ANY_ROUTE},
 	{"pl_drop",       (cmd_function)w_pl_drop_default, 0, 0,
 		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
@@ -729,6 +732,36 @@ static int fixup_pl_check3(void** param, int param_no)
 	return 0;
 }
 
+static int pl_active(sip_msg_t *msg, str *pipeid)
+{
+	pl_pipe_t *pipe = NULL;
+
+	pipe = pl_pipe_get(pipeid, 0);
+	if(pipe==NULL) {
+		LM_ERR("pipe does not exist [%.*s]\n", pipeid->len, pipeid->s);
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ * checking if pipe is active
+ */
+static int w_pl_active(sip_msg_t* msg, char *p1, char *p2)
+{
+	str pipeid = {0, 0};
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &pipeid)!=0
+			|| pipeid.s == 0)
+	{
+		LM_ERR("invalid pipeid parameter");
+		return -1;
+	}
+
+	return pl_active(msg, &pipeid);
+}
+
 static void pl_timer_refresh(void)
 {
 	if(pl_load_fetch!=0) {
@@ -871,6 +904,11 @@ static sr_kemi_t sr_kemi_pipelimit_exports[] = {
 	{ str_init("pipelimit"), str_init("pl_check_limit"),
 		SR_KEMIP_INT, pl_check_limit,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pipelimit"), str_init("pl_active"),
+		SR_KEMIP_INT, pl_active,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pipelimit"), str_init("pl_drop"),

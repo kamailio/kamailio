@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -23,33 +23,36 @@
 
 #include <string.h>
 
-/** @defgroup str_string Counted-Length Strings 
+/** @defgroup str_string Counted-Length Strings
  * @{
- * 
+ *
  * Implementation of counted-length strings. In SER and its modules, strings
  * are often stored in the ::str structure. In addition to the pointer
  * pointing to the first character of the string, the structure also contains
  * the length of the string.
- * 
+ *
  * @section motivation Motivation
  * Storing the length of the string together with the pointer to the string
  * has two advantages. First, it makes many string operations faster because
  * it is not necessary to count the number of characters at runtime. Second,
  * the pointer can point to arbitrary substrings within a SIP message (which
  * itself is stored as one long string spanning the whole message) without the
- * need to make a zero-terminated copy of it. 
+ * need to make a zero-terminated copy of it.
  *
- * @section drawbacks Drawbacks 
- * Note well that the fact that string stored
- * using this data structure are not zero terminated makes them a little
- * incovenient to use with many standard libc string functions, because these
- * usually expect the input to be zero-terminated. In this case you have to
- * either make a zero-terminated copy or inject the terminating zero behind
- * the actuall string (if possible). Note that injecting a zero terminating
- * characters is considered to be dangerous.
+ * @section drawbacks Drawbacks
+ * Note well that the fact that a string stored
+ * using this data structure are not guaranteed to be zero terminated (by
+ * default they're not) makes them a little incovenient to use with many
+ * standard libc string functions, because these usually expect the input
+ * to be zero-terminated.
+ * In this case you have to either make a zero-terminated copy or inject the
+ * terminating zero behind the actuall string (if possible). Note that
+ * injecting a zero terminating characters is considered to be dangerous.
+ * The functions shm_str_dup() and pkg_str_dup() will always create a
+ * zero-terminated copy.
  */
 
-/** @file 
+/** @file
  * This header field defines the ::str data structure that is used across
  * SER sources to store counted-length strings. The file also defines several
  * convenience macros.
@@ -91,13 +94,13 @@ typedef struct _str str;
 #define STR_NULL {0, 0}
 
 /** Formats ::str string for use in printf-like functions.
- * This is a macro that prepares a ::str string for use in functions which 
- * use printf-like formatting strings. This macro is necessary  because 
- * ::str strings do not have to be zero-terminated and thus it is necessary 
- * to provide printf-like functions with the number of characters in the 
- * string manually. Here is an example how to use the macro: 
- * \code printf("%.*s\n", STR_FMT(var));\endcode Note well that the correct 
- * sequence in the formatting string is %.*, see the man page of printf for 
+ * This is a macro that prepares a ::str string for use in functions which
+ * use printf-like formatting strings. This macro is necessary  because
+ * ::str strings do not have to be zero-terminated and thus it is necessary
+ * to provide printf-like functions with the number of characters in the
+ * string manually. Here is an example how to use the macro:
+ * \code printf("%.*s\n", STR_FMT(var));\endcode Note well that the correct
+ * sequence in the formatting string is %.*, see the man page of printf for
  * more details.
  */
 #define STR_FMT(_pstr_)	\
@@ -106,8 +109,8 @@ typedef struct _str str;
 
 
 /** Compares two ::str strings.
- * This macro implements comparison of two strings represented using ::str 
- * structures. First it compares the lengths of both string and if and only 
+ * This macro implements comparison of two strings represented using ::str
+ * structures. First it compares the lengths of both string and if and only
  * if they are same then both strings are compared using memcmp.
  * @param x is first string to be compared
  * @param y is second string to be compared
@@ -115,6 +118,29 @@ typedef struct _str str;
  */
 #define STR_EQ(x,y) (((x).len == (y).len) && \
 					 (memcmp((x).s, (y).s, (x).len) == 0))
+
+/**
+ * If c != '\0', backup c in v and set c = '\0'
+ * - useful to terminate str->s with '\0' (if not already '\0'), keeping original
+ *   value in v, to be able to restore with STR_ZTOV(...)
+ */
+#define STR_VTOZ(c,v) do { \
+		v = '\0'; \
+		if(c!='\0') { \
+			v = c; \
+			c = '\0'; \
+		} \
+	} while(0)
+
+/**
+ * If v != '\0', set c = v
+ * - restore original value after using STR_VTOZ(...)
+ */
+#define STR_ZTOV(c,v) do { \
+		if (v != '\0') { \
+			c = v; \
+		} \
+	} while(0)
 
 /** @} */
 

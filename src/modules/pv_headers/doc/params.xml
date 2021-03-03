@@ -13,10 +13,10 @@
     </sectioninfo>
 
 	<title>Parameters</title>
-	<section id="pv_headers.p.xavp_name">
-		<title><varname>xavp_name</varname> (string)</title>
+	<section id="pv_headers.p.xavi_name">
+		<title><varname>xavi_name</varname> (string)</title>
 		<para>
-			Name of the XAVP there the collected headers are stored.
+			Name of the XAVI where the collected headers are stored.
 		</para>
 		<para>
 		<emphasis>
@@ -24,24 +24,24 @@
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavp_name</varname> parameter</title>
+		<title>Set <varname>xavi_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pv_headers", "xavp_name", "pvh")
+modparam("pv_headers", "xavi_name", "headers")
 ...
 </programlisting>
 		<para>
 		Result:
-			$xavp(headers[0]=>From)
-			$xavp(headers[0]=>To)
-			$xavp(headers[0]=>Call-ID)
+			$xavi(headers[0]=>From)
+			$xavi(headers[0]=>To)
+			$xavi(headers[0]=>Call-ID)
 		</para>
 		</example>
 	</section>
 	<section id="pv_headers.p.header_value_size">
 		<title><varname>header_value_size</varname> (int)</title>
 		<para>
-			Defines an internal maximum SIP header value size. Header values
+			Defines an internal maximum &sip; header value size. Header values
 			longer than this setting will be stripped down when collected or applied.
 		</para>
 		<para>
@@ -178,7 +178,7 @@ modparam("pv_headers", "split_headers", "Diversion")
 		<title>Set <varname>auto_msg</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pvh", "auto_msg", 1)
+modparam("pv_headers", "auto_msg", 1)
 ...
 </programlisting>
 		</example>

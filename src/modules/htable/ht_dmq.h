@@ -33,11 +33,12 @@ extern dmq_resp_cback_t ht_dmq_resp_callback;
 
 typedef enum {
 		HT_DMQ_NONE,
+        HT_DMQ_SYNC,
         HT_DMQ_SET_CELL,
         HT_DMQ_SET_CELL_EXPIRE,
         HT_DMQ_DEL_CELL,
         HT_DMQ_RM_CELL_RE,
-        HT_DMQ_SYNC
+        HT_DMQ_RM_CELL_SW
 } ht_dmq_action_t;
 
 int ht_dmq_initialize();

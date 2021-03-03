@@ -42,7 +42,8 @@
 #include "presentity.h"
 #include "../alias_db/alias_db.h"
 
-void msg_presentity_clean(unsigned int ticks, void *param);
+void ps_presentity_db_timer_clean(unsigned int ticks, void *param);
+void ps_ptable_timer_clean(unsigned int ticks, void *param);
 
 int w_handle_publish(struct sip_msg *msg, char *str1, char *str2);
 int ki_handle_publish(sip_msg_t *msg);

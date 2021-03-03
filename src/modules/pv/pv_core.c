@@ -188,11 +188,28 @@ int pv_get_msgtype(struct sip_msg *msg, pv_param_t *param,
 		return -1;
 
 	if(msg->first_line.type == SIP_REQUEST)
-		type = 1;
+		type = SIP_REQUEST; /* 1 */
 	else if(msg->first_line.type == SIP_REPLY)
-		type = 2;
+		type = SIP_REPLY; /* 2 */
 
 	return pv_get_uintval(msg, param, res, type);
+}
+
+int pv_get_msgtypes(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	char *types = "xx";
+
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		types = "rq";
+	} else if(msg->first_line.type == SIP_REPLY) {
+		types = "rp";
+	}
+
+	return pv_get_strzval(msg, param, res, types);
 }
 
 int pv_get_version(struct sip_msg *msg, pv_param_t *param,
@@ -306,6 +323,10 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 	} else if(param->pvn.u.isname.name.n==5) /* uri scheme */ {
 		return pv_get_strintval(msg, param, res, &pv_uri_scheme[parsed_uri->type],
 				(int)parsed_uri->type);
+	} else if(param->pvn.u.isname.name.n==6) /* username length */ {
+		if(parsed_uri->user.s==NULL || parsed_uri->user.len<=0)
+			return pv_get_sintval(msg, param, res, 0);
+		return pv_get_sintval(msg, param, res, parsed_uri->user.len);
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
@@ -435,6 +456,11 @@ int pv_get_xto_attr(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		}
 		return pv_get_strval(msg, param, res, &uri->host);
+	} else if(param->pvn.u.isname.name.n==6) /* username length */ {
+		if(uri->user.s==NULL || uri->user.len<=0) {
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		return pv_get_sintval(msg, param, res, uri->user.len);
 	}
 
 	LM_ERR("unknown specifier\n");
@@ -832,6 +858,19 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 			&msg->rcv.bind_address->port_no_str);
 }
 
+int pv_get_rcvsname(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address==NULL
+			|| msg->rcv.bind_address->sockname.s==NULL)
+		return pv_get_null(msg, param, res);
+
+	return pv_get_strval(msg, param, res, &msg->rcv.bind_address->sockname);
+}
+
 int pv_get_rcvaddr_uri_helper(struct sip_msg *msg, pv_param_t *param,
 		int tmode, pv_value_t *res)
 {
@@ -1019,6 +1058,34 @@ int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 	return pv_get_strval(msg, param, res, &msg->force_send_socket->sock_str);
+}
+
+int pv_get_force_sock_name(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL) {
+		return -1;
+	}
+
+	if (msg->force_send_socket==0
+				|| msg->force_send_socket->sockname.s == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_strval(msg, param, res, &msg->force_send_socket->sockname);
+}
+
+int pv_get_force_sock_port(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if (msg->force_send_socket==0)
+		return pv_get_uintval(msg, param, res, 0);
+
+	return pv_get_intstrval(msg, param, res, (int)msg->force_send_socket->port_no,
+			&msg->force_send_socket->port_no_str);
 }
 
 int pv_get_useragent(struct sip_msg *msg, pv_param_t *param,
@@ -1791,7 +1858,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	if ((avp=search_first_avp(name_type, avp_name, &avp_value, &state))==0)
 		return pv_get_null(msg, param, res);
 	res->flags = PV_VAL_STR;
-	if(idxf==0 && idx==0)
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
 	{
 		if(avp->flags & AVP_VAL_STR)
 		{
@@ -1949,7 +2016,7 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 
 	/* get the value */
 	res->flags = PV_VAL_STR;
-	if(idxf==0 && idx==0)
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
 	{
 		res->rs  = hf->body;
 		return 0;
@@ -2409,17 +2476,16 @@ int pv_set_ruri(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_URI_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2464,17 +2530,16 @@ int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_USER_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2503,17 +2568,16 @@ int pv_set_ruri_host(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_HOST_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2557,17 +2621,16 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 	memset(&act, 0, sizeof(act));
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val->rs.s;
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	act.type = SET_PORT_T;
 	init_run_actions_ctx(&h);
 	if (do_action(&h, &act, msg)<0)
 	{
 		LM_ERR("do action failed\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 
 	return 0;
 error:
@@ -2627,15 +2690,14 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		goto error;
 	}
 
-	backup = val->rs.s[val->rs.len];
-	val->rs.s[val->rs.len] = '\0';
+	STR_VTOZ(val->rs.s[val->rs.len], backup);
 	if (parse_phostport(val->rs.s, &host.s, &host.len, &port, &proto) < 0)
 	{
 		LM_ERR("invalid socket specification\n");
-		val->rs.s[val->rs.len] = backup;
+		STR_ZTOV(val->rs.s[val->rs.len], backup);
 		goto error;
 	}
-	val->rs.s[val->rs.len] = backup;
+	STR_ZTOV(val->rs.s[val->rs.len], backup);
 	LM_DBG("trying to set send-socket to [%.*s]\n", val->rs.len, val->rs.s);
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL)
@@ -2643,6 +2705,40 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		set_force_socket(msg, si);
 	} else {
 		LM_WARN("no socket found to match [%.*s]\n",
+				val->rs.len, val->rs.s);
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+int pv_set_force_sock_name(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	struct socket_info *si;
+
+	if(msg==NULL || param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(val==NULL || (val->flags&PV_VAL_NULL)) {
+		reset_force_socket(msg);
+		return 0;
+	}
+
+	if(!(val->flags&PV_VAL_STR) || val->rs.len<=0) {
+		LM_ERR("str value required to set the force send sock\n");
+		goto error;
+	}
+
+	LM_DBG("trying to set send-socket to name [%.*s]\n", val->rs.len, val->rs.s);
+	si = ksr_get_socket_by_name(&val->rs);
+	if (si!=NULL) {
+		set_force_socket(msg, si);
+	} else {
+		LM_WARN("no socket found to match name [%.*s]\n",
 				val->rs.len, val->rs.s);
 	}
 
@@ -3653,64 +3749,3 @@ int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 	}
 }
-
-int pv_parse_env_name(pv_spec_p sp, str *in)
-{
-	char *csname;
-
-	if(in->s==NULL || in->len<=0)
-		return -1;
-
-	csname = pkg_malloc(in->len + 1);
-
-	if (csname == NULL) {
-		LM_ERR("no more pkg memory");
-		return -1;
-	}
-
-	memcpy(csname, in->s, in->len);
-	csname[in->len] = '\0';
-
-	sp->pvp.pvn.u.dname = (void*)csname;
-	sp->pvp.pvn.type = PV_NAME_OTHER;
-	return 0;
-}
-
-int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
-{
-	char *val;
-	char *csname = (char *) param->pvn.u.dname;
-
-	if (csname) {
-		val = getenv(csname);
-
-		if (val) {
-			return pv_get_strzval(msg, param, res, val);
-		}
-	}
-	return pv_get_null(msg, param, res);
-}
-
-int pv_parse_def_name(pv_spec_p sp, str *in)
-{
-	if (in == NULL || in->s == NULL || sp == NULL) {
-		LM_ERR("INVALID DEF NAME\n");
-		return -1;
-	}
-	sp->pvp.pvn.type = PV_NAME_INTSTR;
-	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
-	sp->pvp.pvn.u.isname.name.s = *in;
-	return 0;
-
-}
-
-int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
-{
-	str *val = pp_define_get(param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
-
-	if (val) {
-		return pv_get_strval(msg, param, res, val);
-	}
-	return pv_get_null(msg, param, res);
-}
-

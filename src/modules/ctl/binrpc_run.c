@@ -627,10 +627,17 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 	rpc_export_t* rpc_e;
 	struct binrpc_ctx f_ctx;
 	struct binrpc_parse_ctx* ctx;
-	
+
+	if(ksr_shutdown_phase()) {
+		/* during shutdown - no more RPC command handling */
+		LM_DBG("shutdown phase - skipping rpc command\n");
+		return -1;
+	}
+
 	if (size<BINRPC_MIN_PKT_SIZE){
 		*bytes_needed=BINRPC_MIN_PKT_SIZE-size;
-		return 0; /* more data , nothing processed */
+		LM_DBG("more data needed - at least: %d bytes\n", *bytes_needed);
+		return 0; /* more data, nothing processed */
 	}
 	err=init_binrpc_ctx(&f_ctx, buf, size, sh);
 	ctx=&f_ctx.in.ctx;
@@ -954,10 +961,11 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 {
 	va_list ap;
 	int err;
-	char* s;
-	str* st;
+	str st;
+	str* sp;
 	struct rpc_struct_l* rs;
-	
+	str null_value = str_init("<null string>");
+
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
 		switch(*fmt){
@@ -969,15 +977,24 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				if (err<0) goto error_add;
 				break;
 			case 's': /* asciiz */
-				s=va_arg(ap, char*);
-				if (s==0) /* fix null strings */
-					s="<null string>"; 
-				err=binrpc_addstr(&ctx->out.pkt, s, strlen(s));
+				st.s=va_arg(ap, char*);
+				if (st.s==0) {
+					/* fix null strings */
+					st=null_value;
+				} else {
+					st.len=strlen(st.s);
+				}
+				err=binrpc_addstr(&ctx->out.pkt, st.s, st.len);
 				if (err<0) goto error_add;
 				break;
 			case 'S': /* str */
-				st=va_arg(ap, str*);
-				err=binrpc_addstr(&ctx->out.pkt, st->s, st->len);
+				sp=va_arg(ap, str*);
+				if(sp!=NULL && sp->s!=NULL) {
+					st=*sp;
+				} else {
+					st=null_value;
+				}
+				err=binrpc_addstr(&ctx->out.pkt, st.s, st.len);
 				if (err<0) goto error_add;
 				break;
 			case '{':
@@ -992,11 +1009,11 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				clist_append(&ctx->out.structs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
 				break;
-			case 'f': 
+			case 'f':
 				err=binrpc_adddouble(&ctx->out.pkt, va_arg(ap, double));
 				if (err<0) goto error_add;
 				break;
-			default: 
+			default:
 				rpc_fault(ctx, 500, "Internal server error: "
 								"invalid formatting character \'%c\'", *fmt);
 				LOG(L_CRIT, "BUG: binrpc: rpc_add: formatting char \'%c\'"
@@ -1060,6 +1077,8 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 	int err;
 	struct binrpc_val avp;
 	struct rpc_struct_l* rs;
+	str *sp;
+	str null_value = str_init("<null string>");
 
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
@@ -1078,13 +1097,21 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 's': /* asciiz */
 				avp.type=BINRPC_T_STR;
 				avp.u.strval.s=va_arg(ap, char*);
-				if (avp.u.strval.s==0) /* fix null strings */
-					avp.u.strval.s="<null string>";
-				avp.u.strval.len=strlen(avp.u.strval.s);
+				if (avp.u.strval.s==NULL) {
+					/* fix null strings */
+					avp.u.strval=null_value;
+				} else {
+					avp.u.strval.len=strlen(avp.u.strval.s);
+				}
 				break;
 			case 'S': /* str */
 				avp.type=BINRPC_T_STR;
-				avp.u.strval=*(va_arg(ap, str*));
+				sp = va_arg(ap, str*);
+				if(sp!=NULL && sp->s!=NULL) {
+					avp.u.strval=*sp;
+				} else {
+					avp.u.strval=null_value;
+				}
 				break;
 			case '{':
 			case '[':
@@ -1137,9 +1164,10 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 {
 	va_list ap;
 	int err;
-	char* sv;
-	str* st;
+	str st;
+	str *sp;
 	struct rpc_struct_l* rs;
+	str null_value = str_init("<null string>");
 
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
@@ -1152,15 +1180,24 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 				if (err<0) goto error_add;
 				break;
 			case 's': /* asciiz */
-				sv=va_arg(ap, char*);
-				if (sv==0) /* fix null strings */
-					sv="<null string>";
-				err=binrpc_addstr(&s->pkt, sv, strlen(sv));
+				st.s=va_arg(ap, char*);
+				if (st.s==0) {
+					/* fix null strings */
+					st=null_value;
+				} else {
+					st.len = strlen(st.s);
+				}
+				err=binrpc_addstr(&s->pkt, st.s, st.len);
 				if (err<0) goto error_add;
 				break;
 			case 'S': /* str */
-				st=va_arg(ap, str*);
-				err=binrpc_addstr(&s->pkt, st->s, st->len);
+				sp=va_arg(ap, str*);
+				if(sp!=NULL && sp->s!=NULL) {
+					st=*sp;
+				} else {
+					st=null_value;
+				}
+				err=binrpc_addstr(&s->pkt, st.s, st.len);
 				if (err<0) goto error_add;
 				break;
 			case '{':

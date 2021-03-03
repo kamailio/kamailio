@@ -35,6 +35,11 @@ Daniel-Constantin Mierla
               3.8. event_callback (str)
               3.9. event_mode (int)
               3.10. contact_host (str)
+              3.11. contact_mode (int)
+              3.12. cparam_name (int)
+              3.13. a_contact_avp (str)
+              3.14. b_contact_avp (str)
+              3.15. rr_update (int)
 
         4. Event Routes
 
@@ -53,8 +58,13 @@ Daniel-Constantin Mierla
    1.8. Set event_callback parameter
    1.9. Set event_mode parameter
    1.10. Set contact_host parameter
-   1.11. Usage of event_route[topos:msg-outgoing]
-   1.12. Usage of event_route[topos:msg-sending]
+   1.11. Set contact_mode parameter
+   1.12. Set cparam_name parameter
+   1.13. Set a_contact_avp parameter
+   1.14. Set b_contact_avp parameter
+   1.15. Set rr_update parameter
+   1.16. Usage of event_route[topos:msg-outgoing]
+   1.17. Usage of event_route[topos:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -78,6 +88,11 @@ Chapter 1. Admin Guide
         3.8. event_callback (str)
         3.9. event_mode (int)
         3.10. contact_host (str)
+        3.11. contact_mode (int)
+        3.12. cparam_name (int)
+        3.13. a_contact_avp (str)
+        3.14. b_contact_avp (str)
+        3.15. rr_update (int)
 
    4. Event Routes
 
@@ -86,17 +101,21 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offers topology hiding by stripping the SIP routing headers
-   that show topology details. The script interpreter gets the SIP
-   messages with full content, so all existing functionality is preserved.
+   This module offers topology hiding for INVITE-based dialogs, by
+   stripping the SIP routing headers that show topology details . The
+   script interpreter gets the SIP messages with full content, so all
+   existing functionality is preserved.
 
    The module is transparent for the configuration writer. It only needs
-   to be loaded (tune the parameters if needed).
+   to be loaded (tune the module parameters if needed).
 
    It also works for SIP MESSAGE or other requests that do not create a
-   call dialog -- record_route() must be used for them as well, the
-   headers are not going to be in the messages sent to the network, they
-   are needed to know local addresses used to communicate with each side.
+   dialog -- record_route() must be used for them as well, the headers are
+   not going to be in the messages sent to the network, they are needed to
+   know local addresses used to communicate with each side. At this moment
+   it is not designed to work for presence (SUBSCRIBE-based) dialogs. The
+   REGISTER and PUBLISH requests are skipped from processing by this
+   module, expected to be terminated on a local SIP server.
 
 2. Dependencies
 
@@ -130,6 +149,11 @@ Chapter 1. Admin Guide
    3.8. event_callback (str)
    3.9. event_mode (int)
    3.10. contact_host (str)
+   3.11. contact_mode (int)
+   3.12. cparam_name (int)
+   3.13. a_contact_avp (str)
+   3.14. b_contact_avp (str)
+   3.15. rr_update (int)
 
 3.1. storage (str)
 
@@ -245,8 +269,8 @@ end
 3.9. event_mode (int)
 
    Control what event_route blocks to be executed. It is a bitmask of: 1 -
-   execute event_route[topos:outgoing]; 2 - execute
-   event_route[topos:sending].
+   execute event_route[topos:msg-outgoing]; 2 - execute
+   event_route[topos:msg-sending].
 
    Default value is 3 (execute both event_route blocks).
 
@@ -270,6 +294,84 @@ modparam("topos", "event_mode", 2)
 modparam("topos", "contact_host", "proxy.domain.com")
 ...
 
+3.11. contact_mode (int)
+
+   Control the mode where the key to lookup the message data from the
+   database or redis server is stored. The default is to use the Contact
+   user (0), alternatively a Contact URI parameter can be used (1) with
+   values from the SIP message, or from AVP variables (2). This can be
+   useful for interoperating which gateways that need a certain user part
+   in the Contact URI.
+
+   In mode (1) the a-side contact user is taken from the request URI and
+   the b-side contact user from the Contact header of the processed
+   initial SIP request.
+
+   If you use the mode (2), you need to configure the a_contact_avp and
+   b_contact_avp parameter. Furthermore you need to assign values to them
+   during the processing of the initial SIP request.
+
+   The name of the Contact URI parameter can be customized with the
+   cparam_name parameter.
+
+   Default value is 0 - use the Contact user
+
+   Example 1.11. Set contact_mode parameter
+...
+modparam("topos", "contact_mode", 1)
+...
+
+3.12. cparam_name (int)
+
+   Name of the Contact URI parameter to store the database or redis server
+   key for message lookup.
+
+   This parameter is only used when the contact_mode parameter is set to 1
+   or 2.
+
+   Default value is “tps”.
+
+   Example 1.12. Set cparam_name parameter
+...
+modparam("topos", "cparam_name", "xyz")
+...
+
+3.13. a_contact_avp (str)
+
+   Name of the AVP parameter to evaluate for the A-side Contact Header
+   user part. This parameter is only necessary in contact_mode (2).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.13. Set a_contact_avp parameter
+...
+modparam("topos", "a_contact_avp", "$avp(tps-act)")
+...
+
+3.14. b_contact_avp (str)
+
+   Name of the AVP parameter to evaluate for the B-side Contact Header
+   user part. This parameter is only necessary in contact_mode (2).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.14. Set b_contact_avp parameter
+...
+modparam("topos", "b_contact_avp", "$avp(tps-bct)")
+...
+
+3.15. rr_update (int)
+
+   If set to 1, topos module will track and update record route changes on
+   re-invite.
+
+   Default value is 0 (do not update record route changes within dialog).
+
+   Example 1.15. Set rr_update parameter
+...
+modparam("topos", "rr_update", 1)
+...
+
 4. Event Routes
 
    4.1. event_route[topos:msg-outgoing]
@@ -287,7 +389,7 @@ modparam("topos", "contact_host", "proxy.domain.com")
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.11. Usage of event_route[topos:msg-outgoing]
+   Example 1.16. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -306,7 +408,7 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.12. Usage of event_route[topos:msg-sending]
+   Example 1.17. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {

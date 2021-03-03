@@ -19,7 +19,7 @@ Kamailio development was started back in 2001 by [Fraunhofer Fokus](https://www.
 
 Fraunhofer Fokus is no longer actively involved in the evolution of the project. Kamailio is  now developed and managed by its world wide community. Fokus still uses Kamailio in its research projects (such as OpenIMSCore) and it is hosting events related to the project, such as developer meetings or the Kamailio World Conference.
 
-For more information about Kamailio, see the the [website of the project](https://www.kamailio.org), where you can find pointers to documentation, the project wiki and much more.
+For more information about Kamailio, see the [website of the project](https://www.kamailio.org), where you can find pointers to documentation, the project wiki and much more.
 
 ## Contributions
 
@@ -104,6 +104,13 @@ An open IRC discussion channel is managed by the community:
 
   * irc server: irc.freenode.net
   * irc channel: #kamailio
+
+### Matrix Channel
+
+An open Matrix discussion channel is managed by the community:
+
+  * server: https://riot.kamailio.dev/
+  * Room: https://riot.kamailio.dev/#/room/#kamailio:matrix.kamailio.dev
 
 ## Useful Resources
 

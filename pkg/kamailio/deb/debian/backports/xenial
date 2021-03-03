@@ -25,6 +25,12 @@ sed -i 's/libphonenumber-dev/libgeocoding-dev \(>= 7\),\n libphonenumber-dev/' \
 sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
 	${DIST}/control
 
+# No secsipid module
+sed -i -e '/libsecsipid-dev/d' -e '/^Package: kamailio-secsipid-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ secsipid[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

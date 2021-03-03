@@ -112,4 +112,68 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen);
 int xavp_set_child_ival(str *rname, str *cname, int ival);
 int xavp_set_child_sval(str *rname, str *cname, str *sval);
 
+/** xavu api */
+void xavu_print_list_content(sr_xavp_t **head, int level);
+void xavu_print_list(sr_xavp_t **head);
+#define xavu_destroy_list_unsafe xavp_destroy_list_unsafe
+#define xavu_destroy_list xavp_destroy_list
+void xavu_reset_list(void);
+sr_xavp_t **xavu_set_list(sr_xavp_t **head);
+sr_xavp_t **xavu_get_crt_list(void);
+sr_xavp_t *xavu_get(str *name, sr_xavp_t *start);
+sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start);
+int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head);
+int xavu_rm_by_name(str *name, sr_xavp_t **head);
+int xavu_rm_child_by_name(str *rname, str *cname);
+sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavu_set_ival(str *rname, int ival);
+sr_xavp_t *xavu_set_sval(str *rname, str *sval);
+sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval);
+sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival);
+sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval);
+int xavu_serialize_fields(str *rname, char *obuf, int olen);
+
+/** xavi api */
+int xavi_init_head(void);
+#define xavi_free xavp_free
+
+int xavi_add(sr_xavp_t *xavp, sr_xavp_t **list);
+int xavi_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
+int xavi_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp);
+sr_xavp_t *xavi_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavi_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp);
+sr_xavp_t *xavi_add_xavi_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavi_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavi_get(str *name, sr_xavp_t *start);
+sr_xavp_t *xavi_get_by_index(str *name, int idx, sr_xavp_t **start);
+sr_xavp_t *xavi_get_next(sr_xavp_t *start);
+sr_xavp_t *xavi_get_last(str *xname, sr_xavp_t **list);
+int xavi_rm_by_name(str *name, int all, sr_xavp_t **head);
+int xavi_rm_by_index(str *name, int idx, sr_xavp_t **head);
+int xavi_rm(sr_xavp_t *xa, sr_xavp_t **head);
+int xavi_rm_child_by_index(str *rname, str *cname, int idx);
+int xavi_count(str *name, sr_xavp_t **start);
+#define xavi_destroy_list_unsafe xavp_destroy_list_unsafe
+#define xavi_destroy_list xavp_destroy_list
+void xavi_reset_list(void);
+sr_xavp_t **xavi_set_list(sr_xavp_t **head);
+sr_xavp_t **xavi_get_crt_list(void);
+struct str_list *xavi_get_list_key_names(sr_xavp_t *xavp);
+
+int xavi_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list);
+sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list);
+
+void xavi_print_list(sr_xavp_t **head);
+
+sr_xavp_t *xavi_clone_level_nodata(sr_xavp_t *xold);
+sr_xavp_t *xavi_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name);
+
+sr_xavp_t* xavi_get_child(str *rname, str *cname);
+sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname);
+sr_xavp_t* xavi_get_child_with_sval(str *rname, str *cname);
+int xavi_serialize_fields(str *rname, char *obuf, int olen);
+
+int xavi_set_child_ival(str *rname, str *cname, int ival);
+int xavi_set_child_sval(str *rname, str *cname, str *sval);
+
 #endif

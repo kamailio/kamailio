@@ -39,22 +39,21 @@
 #include "prom.h"
 #include "prom_metric.h"
 
-/** @addtogroup xhttp_prom
- * @ingroup modules
- * @{
+/**
+ * @file
+ * @brief xHTTP_PROM :: main file for xhttp_prom module.
  *
- * <h1>Overview of Operation</h1>
  * This module provides a web interface for Prometheus server.
  * It is built on top of the xhttp API module.
- */
-
-/** @file
  *
  * This is the main file of xhttp_prom module which contains all the functions
  * related to http processing, as well as the module interface.
+ *
+ * @addtogroup xhttp_prom
  */
 
 MODULE_VERSION
+
 
 /* Declaration of static functions. */
 
@@ -82,13 +81,19 @@ static int w_prom_gauge_set_l0(struct sip_msg* msg, char *pname, char* pnumber);
 static int w_prom_gauge_set_l1(struct sip_msg* msg, char *pname, char* pnumber, char *l1);
 static int w_prom_gauge_set_l2(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2);
 static int w_prom_gauge_set_l3(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2, char *l3);
+static int w_prom_histogram_observe_l0(struct sip_msg* msg, char *pname, char* pnumber);
+static int w_prom_histogram_observe_l1(struct sip_msg* msg, char *pname, char* pnumber, char *l1);
+static int w_prom_histogram_observe_l2(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2);
+static int w_prom_histogram_observe_l3(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2, char *l3);
 static int fixup_metric_reset(void** param, int param_no);
 static int fixup_counter_inc(void** param, int param_no);
 
 int prom_counter_param(modparam_t type, void *val);
 int prom_gauge_param(modparam_t type, void *val);
+int prom_histogram_param(modparam_t type, void *val);
 
-/** The context of the xhttp_prom request being processed.
+/**
+ * @brief The context of the xhttp_prom request being processed.
  *
  * This is a global variable that records the context of the xhttp_prom request
  * being currently processed.
@@ -98,11 +103,22 @@ static prom_ctx_t ctx;
 
 static xhttp_api_t xhttp_api;
 
-/* It does not show Kamailio statistics by default. */
+/**
+ * @brief String to indicate which statistics to display.
+ *
+ * It does not show Kamailio statistics by default.
+ */
 str xhttp_prom_stats = str_init("");
 
-int buf_size = 0;
-int timeout_minutes = 0;
+/**
+ * @brief string for beginning of metrics.
+ */
+str xhttp_prom_beginning = str_init("kamailio_");
+
+int buf_size = 0; /**< size of buffer that contains the reply. */
+
+int timeout_minutes = 60; /**< timeout in minutes to delete old metrics. */
+
 char error_buf[ERROR_REASON_BUF_LEN];
 
 /* module commands */
@@ -143,14 +159,24 @@ static cmd_export_t cmds[] = {
 	 0, ANY_ROUTE},
 	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l3, 5, fixup_metric_reset,
 	 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l0, 2, fixup_metric_reset,
+	 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3, fixup_metric_reset,
+	 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4, fixup_metric_reset,
+	 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5, fixup_metric_reset,
+	 0, ANY_ROUTE},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
 	{"xhttp_prom_buf_size",	INT_PARAM,	&buf_size},
 	{"xhttp_prom_stats",	PARAM_STR,	&xhttp_prom_stats},
+	{"xhttp_prom_beginning",	PARAM_STR,	&xhttp_prom_beginning},
 	{"prom_counter",        PARAM_STRING|USE_FUNC_PARAM, (void*)prom_counter_param},
 	{"prom_gauge",          PARAM_STRING|USE_FUNC_PARAM, (void*)prom_gauge_param},
+	{"prom_histogram",      PARAM_STRING|USE_FUNC_PARAM, (void*)prom_histogram_param},
 	{"xhttp_prom_timeout",	INT_PARAM,	&timeout_minutes},
 	{0, 0, 0}
 };
@@ -168,7 +194,8 @@ struct module_exports exports = {
 	mod_destroy     /* destroy function */
 };
 
-/** Implementation of prom_fault function required by the management API.
+/**
+ * @brief Implementation of prom_fault function required by the management API.
  *
  * This function will be called whenever a management function
  * indicates that an error ocurred while it was processing the request. The
@@ -215,13 +242,8 @@ static int mod_init(void)
 	if (buf_size == 0)
 		buf_size = pkg_mem_size/3;
 
-	/* Check xhttp_prom_timeout param */
-	if (timeout_minutes == 0) {
-		timeout_minutes = 60;
-	}
-
 	/* Initialize Prometheus metrics. */
-	if (prom_metric_init(timeout_minutes)) {
+	if (prom_metric_init()) {
 		LM_ERR("Cannot initialize Prometheus metrics\n");
 		return -1;
 	}
@@ -237,7 +259,7 @@ static void mod_destroy(void)
 }
 
 /**
- * Parse parameters to create a counter.
+ * @brief Parse parameters to create a counter.
  */
 int prom_counter_param(modparam_t type, void *val)
 {
@@ -245,14 +267,22 @@ int prom_counter_param(modparam_t type, void *val)
 }
 
 /**
- * Parse parameters to create a gauge.
+ * @brief Parse parameters to create a gauge.
  */
 int prom_gauge_param(modparam_t type, void *val)
 {
 	return prom_gauge_create((char*)val);
 }
 
-#define PROMETHEUS_URI "/metrics"
+/**
+ * @brief Parse parameters to create a histogram.
+ */
+int prom_histogram_param(modparam_t type, void *val)
+{
+	return prom_histogram_create((char*)val);
+}
+
+#define PROMETHEUS_URI "/metrics" /**< URI to get Prometheus metrics. */
 static str prom_uri = str_init(PROMETHEUS_URI);
 
 static int ki_xhttp_prom_check_uri(sip_msg_t* msg)
@@ -299,11 +329,13 @@ static int w_prom_check_uri(sip_msg_t* msg)
 	return -1;
 }
 
-/** Initialize xhttp_prom reply data structure.
+/**
+ * @brief Initialize xhttp_prom reply data structure.
  *
  * This function initializes the data structure that contains all data related
  * to the xhttp_prom reply being created. The function must be called before any
  * other function that adds data to the reply.
+ *
  * @param ctx prom_ctx_t structure to be initialized.
  * @return 0 on success, a negative number on error.
  */
@@ -326,7 +358,7 @@ static int init_xhttp_prom_reply(prom_ctx_t *ctx)
 }
 
 /**
- * Free buffer in reply.
+ * @brief Free buffer in reply.
  */
 static void xhttp_prom_reply_free(prom_ctx_t *ctx)
 {
@@ -439,7 +471,7 @@ static int fixup_metric_reset(void** param, int param_no)
 /* } */
 
 /**
- * Reset a counter (No labels)
+ * @brief Reset a counter (No labels)
  */
 static int ki_xhttp_prom_counter_reset_l0(struct sip_msg* msg, str *s_name)
 {
@@ -458,7 +490,7 @@ static int ki_xhttp_prom_counter_reset_l0(struct sip_msg* msg, str *s_name)
 }
 
 /**
- * Reset a counter (1 label)
+ * @brief Reset a counter (1 label)
  */
 static int ki_xhttp_prom_counter_reset_l1(struct sip_msg* msg, str *s_name, str *l1)
 {
@@ -485,7 +517,7 @@ static int ki_xhttp_prom_counter_reset_l1(struct sip_msg* msg, str *s_name, str 
 }
 
 /**
- * Reset a counter (2 labels)
+ * @brief Reset a counter (2 labels)
  */
 static int ki_xhttp_prom_counter_reset_l2(struct sip_msg* msg, str *s_name, str *l1, str *l2)
 {
@@ -521,7 +553,7 @@ static int ki_xhttp_prom_counter_reset_l2(struct sip_msg* msg, str *s_name, str 
 }
 
 /**
- * Reset a counter (3 labels)
+ * @brief Reset a counter (3 labels)
  */
 static int ki_xhttp_prom_counter_reset_l3(struct sip_msg* msg, str *s_name, str *l1, str *l2,
 										  str *l3)
@@ -565,7 +597,7 @@ static int ki_xhttp_prom_counter_reset_l3(struct sip_msg* msg, str *s_name, str 
 }
 
 /**
- * Reset a counter.
+ * @brief Reset a counter.
  */
 static int w_prom_counter_reset(struct sip_msg* msg, char* pname, char *l1, char *l2,
 								char *l3)
@@ -641,7 +673,7 @@ static int w_prom_counter_reset(struct sip_msg* msg, char* pname, char *l1, char
 }
 
 /**
- * Reset a counter (no labels)
+ * @brief Reset a counter (no labels)
  */
 static int w_prom_counter_reset_l0(struct sip_msg* msg, char* pname)
 {
@@ -649,7 +681,7 @@ static int w_prom_counter_reset_l0(struct sip_msg* msg, char* pname)
 }
 
 /**
- * Reset a counter (one label)
+ * @brief Reset a counter (one label)
  */
 static int w_prom_counter_reset_l1(struct sip_msg* msg, char* pname, char *l1)
 {
@@ -657,7 +689,7 @@ static int w_prom_counter_reset_l1(struct sip_msg* msg, char* pname, char *l1)
 }
 
 /**
- * Reset a counter (two labels)
+ * @brief Reset a counter (two labels)
  */
 static int w_prom_counter_reset_l2(struct sip_msg* msg, char* pname, char *l1, char *l2)
 {
@@ -665,7 +697,7 @@ static int w_prom_counter_reset_l2(struct sip_msg* msg, char* pname, char *l1, c
 }
 
 /**
- * Reset a counter (three labels)
+ * @brief Reset a counter (three labels)
  */
 static int w_prom_counter_reset_l3(struct sip_msg* msg, char* pname, char *l1, char *l2,
 	char *l3)
@@ -674,7 +706,7 @@ static int w_prom_counter_reset_l3(struct sip_msg* msg, char* pname, char *l1, c
 }
 
 /**
- * Reset a gauge (No labels)
+ * @brief Reset a gauge (No labels)
  */
 static int ki_xhttp_prom_gauge_reset_l0(struct sip_msg* msg, str *s_name)
 {
@@ -693,7 +725,7 @@ static int ki_xhttp_prom_gauge_reset_l0(struct sip_msg* msg, str *s_name)
 }
 
 /**
- * Reset a gauge (1 label)
+ * @brief Reset a gauge (1 label)
  */
 static int ki_xhttp_prom_gauge_reset_l1(struct sip_msg* msg, str *s_name, str *l1)
 {
@@ -720,7 +752,7 @@ static int ki_xhttp_prom_gauge_reset_l1(struct sip_msg* msg, str *s_name, str *l
 }
 
 /**
- * Reset a gauge (2 labels)
+ * @brief Reset a gauge (2 labels)
  */
 static int ki_xhttp_prom_gauge_reset_l2(struct sip_msg* msg, str *s_name, str *l1, str *l2)
 {
@@ -756,7 +788,7 @@ static int ki_xhttp_prom_gauge_reset_l2(struct sip_msg* msg, str *s_name, str *l
 }
 
 /**
- * Reset a gauge (3 labels)
+ * @brief Reset a gauge (3 labels)
  */
 static int ki_xhttp_prom_gauge_reset_l3(struct sip_msg* msg, str *s_name, str *l1, str *l2,
 										  str *l3)
@@ -800,7 +832,7 @@ static int ki_xhttp_prom_gauge_reset_l3(struct sip_msg* msg, str *s_name, str *l
 }
 
 /**
- * Reset a gauge.
+ * @brief Reset a gauge.
  */
 static int w_prom_gauge_reset(struct sip_msg* msg, char* pname, char *l1, char *l2,
 								char *l3)
@@ -876,7 +908,7 @@ static int w_prom_gauge_reset(struct sip_msg* msg, char* pname, char *l1, char *
 }
 
 /**
- * Reset a gauge (no labels)
+ * @brief Reset a gauge (no labels)
  */
 static int w_prom_gauge_reset_l0(struct sip_msg* msg, char* pname)
 {
@@ -884,7 +916,7 @@ static int w_prom_gauge_reset_l0(struct sip_msg* msg, char* pname)
 }
 
 /**
- * Reset a gauge (one label)
+ * @brief Reset a gauge (one label)
  */
 static int w_prom_gauge_reset_l1(struct sip_msg* msg, char* pname, char *l1)
 {
@@ -892,7 +924,7 @@ static int w_prom_gauge_reset_l1(struct sip_msg* msg, char* pname, char *l1)
 }
 
 /**
- * Reset a gauge (two labels)
+ * @brief Reset a gauge (two labels)
  */
 static int w_prom_gauge_reset_l2(struct sip_msg* msg, char* pname, char *l1, char *l2)
 {
@@ -900,7 +932,7 @@ static int w_prom_gauge_reset_l2(struct sip_msg* msg, char* pname, char *l1, cha
 }
 
 /**
- * Reset a gauge (three labels)
+ * @brief Reset a gauge (three labels)
  */
 static int w_prom_gauge_reset_l3(struct sip_msg* msg, char* pname, char *l1, char *l2,
 	char *l3)
@@ -927,7 +959,7 @@ static int fixup_counter_inc(void** param, int param_no)
 /* } */
 
 /**
- * Add an integer to a counter (No labels).
+ * @brief Add an integer to a counter (No labels).
  */
 static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int number)
 {
@@ -951,7 +983,7 @@ static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * Add an integer to a counter (1 label).
+ * @brief Add an integer to a counter (1 label).
  */
 static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int number, str *l1)
 {
@@ -987,7 +1019,7 @@ static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * Add an integer to a counter (2 labels).
+ * @brief Add an integer to a counter (2 labels).
  */
 static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int number,
 										str *l1, str *l2)
@@ -1031,7 +1063,7 @@ static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * Add an integer to a counter (3 labels).
+ * @brief Add an integer to a counter (3 labels).
  */
 static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int number,
 										str *l1, str *l2, str *l3)
@@ -1082,7 +1114,7 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * Add an integer to a counter.
+ * @brief Add an integer to a counter.
  */
 static int w_prom_counter_inc(struct sip_msg* msg, char *pname, char* pnumber,
 							  char *l1, char *l2, char *l3)
@@ -1168,7 +1200,7 @@ static int w_prom_counter_inc(struct sip_msg* msg, char *pname, char* pnumber,
 }
 
 /**
- * Add an integer to a counter (no labels)
+ * @brief Add an integer to a counter (no labels)
  */
 static int w_prom_counter_inc_l0(struct sip_msg* msg, char *pname, char* pnumber)
 {
@@ -1176,7 +1208,7 @@ static int w_prom_counter_inc_l0(struct sip_msg* msg, char *pname, char* pnumber
 }
 
 /**
- * Add an integer to a counter (1 labels)
+ * @brief Add an integer to a counter (1 labels)
  */
 static int w_prom_counter_inc_l1(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1)
@@ -1185,7 +1217,7 @@ static int w_prom_counter_inc_l1(struct sip_msg* msg, char *pname, char* pnumber
 }
 
 /**
- * Add an integer to a counter (2 labels)
+ * @brief Add an integer to a counter (2 labels)
  */
 static int w_prom_counter_inc_l2(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1, char *l2)
@@ -1194,7 +1226,7 @@ static int w_prom_counter_inc_l2(struct sip_msg* msg, char *pname, char* pnumber
 }
 
 /**
- * Add an integer to a counter (3 labels)
+ * @brief Add an integer to a counter (3 labels)
  */
 static int w_prom_counter_inc_l3(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1, char *l2, char *l3)
@@ -1203,57 +1235,7 @@ static int w_prom_counter_inc_l3(struct sip_msg* msg, char *pname, char* pnumber
 }
 
 /**
- * Parse a string and convert to double.
- *
- * /param s_number pointer to number string.
- * /param number double passed as reference.
- *
- * /return 0 on success.
- * On error value pointed by pnumber is undefined.
- */
-static int double_parse_str(str *s_number, double *pnumber)
-{
-	char *s = NULL;
-	
-	if (!s_number || !s_number->s || s_number->len == 0) {
-		LM_ERR("Bad s_number to convert to double\n");
-		goto error;
-	}
-
-	if (!pnumber) {
-		LM_ERR("No double passed by reference\n");
-		goto error;
-	}
-
-	/* We generate a zero terminated string. */
-
-	/* We set last character to zero to get a zero terminated string. */
-	int len = s_number->len;
-	s = pkg_malloc(len + 1);
-	if (!s) {
-		PKG_MEM_ERROR;
-		goto error;
-	}
-	memcpy(s, s_number->s, len);
-	s[len] = '\0'; /* Zero terminated string. */
-
-	/* atof function does not check for errors. */
-	double num = atof(s);
-	LM_DBG("double number (%.*s) -> %f\n", len, s, num);
-
-	*pnumber = num;
-	pkg_free(s);
-	return 0;
-
-error:
-	if (s) {
-		pkg_free(s);
-	}
-	return -1;
-}
-
-/**
- * Set a number to a gauge (No labels).
+ * @brief Set a number to a gauge (No labels).
  */
 static int ki_xhttp_prom_gauge_set_l0(struct sip_msg* msg, str *s_name, str *s_number)
 {
@@ -1283,7 +1265,7 @@ static int ki_xhttp_prom_gauge_set_l0(struct sip_msg* msg, str *s_name, str *s_n
 }
 
 /**
- * Assign a number to a gauge (1 label).
+ * @brief Assign a number to a gauge (1 label).
  */
 static int ki_xhttp_prom_gauge_set_l1(struct sip_msg* msg, str *s_name, str *s_number, str *l1)
 {
@@ -1324,7 +1306,7 @@ static int ki_xhttp_prom_gauge_set_l1(struct sip_msg* msg, str *s_name, str *s_n
 }
 
 /**
- * Assign a number to a gauge (2 labels).
+ * @brief Assign a number to a gauge (2 labels).
  */
 static int ki_xhttp_prom_gauge_set_l2(struct sip_msg* msg, str *s_name, str *s_number,
 									  str *l1, str *l2)
@@ -1374,7 +1356,7 @@ static int ki_xhttp_prom_gauge_set_l2(struct sip_msg* msg, str *s_name, str *s_n
 }
 
 /**
- * Assign a number to a gauge (3 labels).
+ * @brief Assign a number to a gauge (3 labels).
  */
 static int ki_xhttp_prom_gauge_set_l3(struct sip_msg* msg, str *s_name, str *s_number,
 									  str *l1, str *l2, str *l3)
@@ -1431,7 +1413,7 @@ static int ki_xhttp_prom_gauge_set_l3(struct sip_msg* msg, str *s_name, str *s_n
 }
 
 /**
- * Assign a number to a gauge.
+ * @brief Assign a number to a gauge.
  */
 static int w_prom_gauge_set(struct sip_msg* msg, char *pname, char* pnumber,
 							char *l1, char *l2, char *l3)
@@ -1523,7 +1505,7 @@ static int w_prom_gauge_set(struct sip_msg* msg, char *pname, char* pnumber,
 }
 
 /**
- * Assign a number to a gauge (no labels)
+ * @brief Assign a number to a gauge (no labels)
  */
 static int w_prom_gauge_set_l0(struct sip_msg* msg, char *pname, char* pnumber)
 {
@@ -1531,7 +1513,7 @@ static int w_prom_gauge_set_l0(struct sip_msg* msg, char *pname, char* pnumber)
 }
 
 /**
- * Assign a number to a gauge (1 labels)
+ * @brief Assign a number to a gauge (1 labels)
  */
 static int w_prom_gauge_set_l1(struct sip_msg* msg, char *pname, char* pnumber,
 							   char *l1)
@@ -1540,7 +1522,7 @@ static int w_prom_gauge_set_l1(struct sip_msg* msg, char *pname, char* pnumber,
 }
 
 /**
- * Assign a number to a gauge (2 labels)
+ * @brief Assign a number to a gauge (2 labels)
  */
 static int w_prom_gauge_set_l2(struct sip_msg* msg, char *pname, char* pnumber,
 							   char *l1, char *l2)
@@ -1549,12 +1531,318 @@ static int w_prom_gauge_set_l2(struct sip_msg* msg, char *pname, char* pnumber,
 }
 
 /**
- * Assign a number to a gauge (3 labels)
+ * @brief Assign a number to a gauge (3 labels)
  */
 static int w_prom_gauge_set_l3(struct sip_msg* msg, char *pname, char* pnumber,
 							   char *l1, char *l2, char *l3)
 {
 	return w_prom_gauge_set(msg, pname, pnumber, l1, l2, l3);
+}
+
+/**
+ * @brief Observe a number in a histogram (No labels).
+ */
+static int ki_xhttp_prom_histogram_observe_l0(struct sip_msg* msg, str *s_name, str *s_number)
+{
+	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
+		LM_ERR("Invalid name string\n");
+		return -1;
+	}
+
+	if (s_number == NULL || s_number->s == NULL || s_number->len == 0) {
+		LM_ERR("Invalid number string\n");
+		return -1;
+	}
+
+	double number;
+	if (double_parse_str(s_number, &number)) {
+		LM_ERR("Cannot parse double\n");
+		return -1;
+	}
+
+	if (prom_histogram_observe(s_name, number, NULL, NULL, NULL)) {
+		LM_ERR("Cannot observe number: %f in histogram: %.*s\n", number, s_name->len, s_name->s);
+		return -1;
+	}
+
+	LM_DBG("Observed %f in histogram %.*s\n", number, s_name->len, s_name->s);
+	return 1;
+}
+
+/**
+ * @brief Observe a number in a histogram (1 label).
+ */
+static int ki_xhttp_prom_histogram_observe_l1(struct sip_msg* msg, str *s_name, str *s_number, str *l1)
+{
+	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
+		LM_ERR("Invalid name string\n");
+		return -1;
+	}
+
+	if (s_number == NULL || s_number->s == NULL || s_number->len == 0) {
+		LM_ERR("Invalid number string\n");
+		return -1;
+	}
+
+	double number;
+	if (double_parse_str(s_number, &number)) {
+		LM_ERR("Cannot parse double\n");
+		return -1;
+	}
+
+	if (l1 == NULL || l1->s == NULL || l1->len == 0) {
+		LM_ERR("Invalid l1 string\n");
+		return -1;
+	}
+
+	if (prom_histogram_observe(s_name, number, l1, NULL, NULL)) {
+		LM_ERR("Cannot observe number: %f in histogram: %.*s (%.*s)\n",
+			   number, s_name->len, s_name->s,
+			   l1->len, l1->s
+			);
+		return -1;
+	}
+
+	LM_DBG("Observed %f in histogram %.*s (%.*s)\n", number,
+		   s_name->len, s_name->s,
+		   l1->len, l1->s
+		);
+	return 1;
+}
+
+/**
+ * @brief Observe a number in a histogram (2 labels).
+ */
+static int ki_xhttp_prom_histogram_observe_l2(struct sip_msg* msg, str *s_name, str *s_number,
+									  str *l1, str *l2)
+{
+	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
+		LM_ERR("Invalid name string\n");
+		return -1;
+	}
+
+	if (s_number == NULL || s_number->s == NULL || s_number->len == 0) {
+		LM_ERR("Invalid number string\n");
+		return -1;
+	}
+
+	double number;
+	if (double_parse_str(s_number, &number)) {
+		LM_ERR("Cannot parse double\n");
+		return -1;
+	}
+
+	if (l1 == NULL || l1->s == NULL || l1->len == 0) {
+		LM_ERR("Invalid l1 string\n");
+		return -1;
+	}
+
+	if (l2 == NULL || l2->s == NULL || l2->len == 0) {
+		LM_ERR("Invalid l2 string\n");
+		return -1;
+	}
+
+	if (prom_histogram_observe(s_name, number, l1, l2, NULL)) {
+		LM_ERR("Cannot observe number: %f in histogram: %.*s (%.*s, %.*s)\n",
+			   number, s_name->len, s_name->s,
+			   l1->len, l1->s,
+			   l2->len, l2->s
+			);
+		return -1;
+	}
+
+	LM_DBG("Observed %f in histogram %.*s (%.*s, %.*s)\n", number,
+		   s_name->len, s_name->s,
+		   l1->len, l1->s,
+		   l2->len, l2->s
+		);
+
+	return 1;
+}
+
+/**
+ * @brief Observe a number in a histogram (3 labels).
+ */
+static int ki_xhttp_prom_histogram_observe_l3(struct sip_msg* msg, str *s_name, str *s_number,
+									  str *l1, str *l2, str *l3)
+{
+	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
+		LM_ERR("Invalid name string\n");
+		return -1;
+	}
+
+	if (s_number == NULL || s_number->s == NULL || s_number->len == 0) {
+		LM_ERR("Invalid number string\n");
+		return -1;
+	}
+
+	double number;
+	if (double_parse_str(s_number, &number)) {
+		LM_ERR("Cannot parse double\n");
+		return -1;
+	}
+
+	if (l1 == NULL || l1->s == NULL || l1->len == 0) {
+		LM_ERR("Invalid l1 string\n");
+		return -1;
+	}
+
+	if (l2 == NULL || l2->s == NULL || l2->len == 0) {
+		LM_ERR("Invalid l2 string\n");
+		return -1;
+	}
+
+	if (l3 == NULL || l3->s == NULL || l3->len == 0) {
+		LM_ERR("Invalid l3 string\n");
+		return -1;
+	}
+
+	if (prom_histogram_observe(s_name, number, l1, l2, l3)) {
+		LM_ERR("Cannot observe number: %f in histogram: %.*s (%.*s, %.*s, %.*s)\n",
+			   number, s_name->len, s_name->s,
+			   l1->len, l1->s,
+			   l2->len, l2->s,
+			   l3->len, l3->s
+			);
+		return -1;
+	}
+
+	LM_DBG("Observed %f in histogram %.*s (%.*s, %.*s, %.*s)\n", number,
+		   s_name->len, s_name->s,
+		   l1->len, l1->s,
+		   l2->len, l2->s,
+		   l3->len, l3->s
+		);
+
+	return 1;
+}
+
+/**
+ * @brief Observe function for a histogram.
+ */
+static int w_prom_histogram_observe(struct sip_msg* msg, char *pname, char* pnumber,
+									char *l1, char *l2, char *l3)
+{
+	str s_number;
+	str s_name;
+
+	if (pname == NULL || pnumber == 0) {
+		LM_ERR("Invalid parameters\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&s_name, msg, (gparam_t*)pname)!=0) {
+		LM_ERR("No histogram name\n");
+		return -1;
+	}
+	if (s_name.s == NULL || s_name.len == 0) {
+		LM_ERR("Invalid name string\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&s_number, msg, (gparam_t*)pnumber)!=0) {
+		LM_ERR("No histogram number to observe\n");
+		return -1;
+	}
+	if (s_number.s == NULL || s_number.len == 0) {
+		LM_ERR("Invalid number string\n");
+		return -1;
+	}
+
+	double number;
+	if (double_parse_str(&s_number, &number)) {
+		LM_ERR("Cannot parse double\n");
+		return -1;
+	}
+
+	str l1_str, l2_str, l3_str;
+	if (l1 != NULL) {
+		if (get_str_fparam(&l1_str, msg, (gparam_t*)l1)!=0) {
+			LM_ERR("No label l1 in counter\n");
+			return -1;
+		}
+		if (l1_str.s == NULL || l1_str.len == 0) {
+			LM_ERR("Invalid l1 string\n");
+			return -1;
+		}
+
+		if (l2 != NULL) {
+			if (get_str_fparam(&l2_str, msg, (gparam_t*)l2)!=0) {
+				LM_ERR("No label l2 in counter\n");
+				return -1;
+			}
+			if (l2_str.s == NULL || l2_str.len == 0) {
+				LM_ERR("Invalid l2 string\n");
+				return -1;
+			}
+
+			if (l3 != NULL) {
+				if (get_str_fparam(&l3_str, msg, (gparam_t*)l3)!=0) {
+					LM_ERR("No label l3 in counter\n");
+					return -1;
+				}
+				if (l3_str.s == NULL || l3_str.len == 0) {
+					LM_ERR("Invalid l3 string\n");
+					return -1;
+				}
+			} /* if l3 != NULL */
+			
+		} else {
+			l3 = NULL;
+		} /* if l2 != NULL */
+		
+	} else {
+		l2 = NULL;
+		l3 = NULL;
+	} /* if l1 != NULL */
+
+	if (prom_histogram_observe(&s_name, number,
+							   (l1!=NULL)?&l1_str:NULL,
+							   (l2!=NULL)?&l2_str:NULL,
+							   (l3!=NULL)?&l3_str:NULL
+			)) {
+		LM_ERR("Cannot observe number: %f in histogram : %.*s\n",
+			   number, s_name.len, s_name.s);
+		return -1;
+	}
+
+	LM_DBG("Observed %f in histogram %.*s\n", number, s_name.len, s_name.s);
+	return 1;
+}
+
+/**
+ * @brief Observe a number in a histogram (no labels)
+ */
+static int w_prom_histogram_observe_l0(struct sip_msg* msg, char *pname, char* pnumber)
+{
+	return w_prom_histogram_observe(msg, pname, pnumber, NULL, NULL, NULL);
+}
+
+/**
+ * @brief Observe a number in a histogram (1 labels)
+ */
+static int w_prom_histogram_observe_l1(struct sip_msg* msg, char *pname, char* pnumber,
+									   char *l1)
+{
+	return w_prom_histogram_observe(msg, pname, pnumber, l1, NULL, NULL);
+}
+
+/**
+ * @brief Observe a number in a histogram (2 labels)
+ */
+static int w_prom_histogram_observe_l2(struct sip_msg* msg, char *pname, char* pnumber,
+									   char *l1, char *l2)
+{
+	return w_prom_histogram_observe(msg, pname, pnumber, l1, l2, NULL);
+}
+
+/**
+ * @brief Observe a number in a histogram (3 labels)
+ */
+static int w_prom_histogram_observe_l3(struct sip_msg* msg, char *pname, char* pnumber,
+									   char *l1, char *l2, char *l3)
+{
+	return w_prom_histogram_observe(msg, pname, pnumber, l1, l2, l3);
 }
 
 /**
@@ -1649,6 +1937,26 @@ static sr_kemi_t sr_kemi_xhttp_prom_exports[] = {
 	},
 	{ str_init("xhttp_prom"), str_init("gauge_set_l3"),
 	    SR_KEMIP_INT, ki_xhttp_prom_gauge_set_l3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("histogram_observe_l0"),
+	    SR_KEMIP_INT, ki_xhttp_prom_histogram_observe_l0,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("histogram_observe_l1"),
+	    SR_KEMIP_INT, ki_xhttp_prom_histogram_observe_l1,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("histogram_observe_l2"),
+	    SR_KEMIP_INT, ki_xhttp_prom_histogram_observe_l2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("histogram_observe_l3"),
+	    SR_KEMIP_INT, ki_xhttp_prom_histogram_observe_l3,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
@@ -2027,6 +2335,104 @@ static void rpc_prom_gauge_set(rpc_t *rpc, void *ct)
 	return;
 }
 
+/**
+ * @brief Observe a number in a histogram via RPC.
+ */
+static void rpc_prom_histogram_observe(rpc_t *rpc, void *ct)
+{
+	str s_name;
+
+	if (rpc->scan(ct, "S", &s_name) < 1) {
+		rpc->fault(ct, 400, "required histogram identifier");
+		return;
+	}
+
+	if (s_name.len == 0 || s_name.s == NULL) {
+		rpc->fault(ct, 400, "invalid histogram identifier");
+		return;
+	}
+
+	double number;
+	if (rpc->scan(ct, "f", &number) < 1) {
+		rpc->fault(ct, 400, "required number argument");
+		return;
+	}
+
+	str l1, l2, l3;
+	int res;
+	res = rpc->scan(ct, "*SSS", &l1, &l2, &l3);
+	if (res == 0) {
+		/* No labels */
+		if (prom_histogram_observe(&s_name, number, NULL, NULL, NULL)) {
+			LM_ERR("Cannot observe %f in histogram %.*s\n", number, s_name.len, s_name.s);
+			rpc->fault(ct, 500, "Failed to observe %f in histogram: %.*s", number,
+					   s_name.len, s_name.s);
+			return;
+		}
+		LM_DBG("Observed %f in histogram (%.*s)\n", number, s_name.len, s_name.s);
+		
+	} else if (res == 1) {
+		if (prom_histogram_observe(&s_name, number, &l1, NULL, NULL)) {
+			LM_ERR("Cannot observe %f in histogram %.*s (%.*s)\n",
+				   number, s_name.len, s_name.s,
+				   l1.len, l1.s);
+			rpc->fault(ct, 500, "Failed to observe %f in histogram: %.*s (%.*s)",
+					   number, s_name.len, s_name.s,
+					   l1.len, l1.s);
+			return;
+		}
+		LM_DBG("Observed %f in histogram: %.*s (%.*s)\n", number, s_name.len, s_name.s,
+			   l1.len, l1.s);
+
+	} else if (res == 2) {
+		if (prom_histogram_observe(&s_name, number, &l1, &l2, NULL)) {
+			LM_ERR("Cannot observe %f in histogram: %.*s (%.*s, %.*s)\n", number,
+				   s_name.len, s_name.s,
+				   l1.len, l1.s,
+				   l2.len, l2.s);
+			rpc->fault(ct, 500, "Failed to observe %f in histogram: %.*s (%.*s, %.*s)",
+					   number, s_name.len, s_name.s,
+					   l1.len, l1.s,
+					   l2.len, l2.s
+				);
+			return;
+		}
+		LM_DBG("Observed %f in histogram: %.*s (%.*s, %.*s)\n", number, s_name.len, s_name.s,
+			   l1.len, l1.s,
+			   l2.len, l2.s);
+
+	} else if (res == 3) {
+		if (prom_histogram_observe(&s_name, number, &l1, &l2, &l3)) {
+			LM_ERR("Cannot observe %f in histogram: %.*s (%.*s, %.*s, %.*s)\n",
+				   number, s_name.len, s_name.s,
+				   l1.len, l1.s,
+				   l2.len, l2.s,
+				   l3.len, l3.s
+				);
+			rpc->fault(ct, 500, "Failed to observe %f in histogram: %.*s (%.*s, %.*s, %.*s)",
+					   number, s_name.len, s_name.s,
+					   l1.len, l1.s,
+					   l2.len, l2.s,
+					   l3.len, l3.s
+				);
+			return;
+		}
+		LM_DBG("Observed %f in histogram: %.*s (%.*s, %.*s, %.*s)\n",
+			   number, s_name.len, s_name.s,
+			   l1.len, l1.s,
+			   l2.len, l2.s,
+			   l3.len, l3.s
+			);
+
+	} else {
+		LM_ERR("Strange return value: %d\n", res);
+		rpc->fault(ct, 500, "Strange return value: %d", res);
+
+	} /* if res == 0 */
+
+	return;
+}
+
 static void rpc_prom_metric_list_print(rpc_t *rpc, void *ct)
 {
 	/* We reuse ctx->reply for the occasion. */
@@ -2077,6 +2483,11 @@ static const char* rpc_prom_gauge_set_doc[2] = {
 	0
 };
 
+static const char* rpc_prom_histogram_observe_doc[2] = {
+	"Observe a number in a histogram",
+	0
+};
+
 static const char* rpc_prom_metric_list_print_doc[2] = {
 	"Print a list showing all user defined metrics",
 	0
@@ -2087,6 +2498,7 @@ static rpc_export_t rpc_cmds[] = {
 	{"xhttp_prom.counter_inc", rpc_prom_counter_inc, rpc_prom_counter_inc_doc, 0},
 	{"xhttp_prom.gauge_reset", rpc_prom_gauge_reset, rpc_prom_gauge_reset_doc, 0},
 	{"xhttp_prom.gauge_set", rpc_prom_gauge_set, rpc_prom_gauge_set_doc, 0},
+	{"xhttp_prom.histogram_observe", rpc_prom_histogram_observe, rpc_prom_histogram_observe_doc, 0},
 	{"xhttp_prom.metric_list_print", rpc_prom_metric_list_print, rpc_prom_metric_list_print_doc, 0},
 	{0, 0, 0, 0}
 };

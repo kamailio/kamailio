@@ -857,6 +857,7 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 	tr = 0;
 	pvstate = 0;
 	memset(e, 0, sizeof(pv_spec_t));
+	e->pvp.pvi.type = PV_IDX_NONE;
 	p = in->s;
 	p++;
 	if(*p==PV_LNBRACKET)
@@ -1366,6 +1367,12 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 	}
 	if(ip->pvi.type == PV_IDX_INT)
 	{
+		*idx = ip->pvi.u.ival;
+		return 0;
+	}
+	if(ip->pvi.type == PV_IDX_NONE)
+	{
+		*flags = PV_IDX_NONE;
 		*idx = ip->pvi.u.ival;
 		return 0;
 	}
@@ -2054,7 +2061,7 @@ tr_export_t* tr_lookup_class(str *tclass)
  * core PVs, initialization and destroy APIs
  ********************************************************/
 
-static pv_export_t _core_pvs[] = {
+static pv_export_t _core_init_pvs[] = {
 	{{"null", (sizeof("null")-1)}, /* */
 		PVT_NULL, pv_get_null, 0,
 		0, 0, 0, 0},
@@ -2078,7 +2085,7 @@ int pv_init_api(void)
 	strcpy(pv_str_null_buf, PV_STR_NULL_VAL);
 	pv_str_null.s = pv_str_null_buf;
 
-	if(register_pvars_mod("core", _core_pvs)<0)
+	if(register_pvars_mod("core", _core_init_pvs)<0)
 		return -1;
 	return 0;
 }

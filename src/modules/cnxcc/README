@@ -4,18 +4,9 @@ Carlos Ruiz Díaz
 
    ConexionGroup S.A.
 
-Edited by
-
-Jose Luis Verdeguer
-
-   Zoon Suite
-   <verdeguer@zoonsuite.com>
-
    Copyright © 2013 Carlos Ruiz Díaz, carlos.ruizdiaz@gmail.com
 
    Copyright © 2014 Carlos Ruiz Díaz, carlos@latamvoices.com
-
-   Copyright © 2018 Jose Luis Verdeguer
      __________________________________________________________________
 
    Table of Contents
@@ -218,7 +209,7 @@ modparam("cnxcc", "credit_check_period", 1)
    Return code:
      * 1 - successful
      * -1 - failed, error logged
-     * -2 - failed, credit value is less than initial pulse value
+     * -4 - call-id already present for this client
 
    Example 1.3. cnxcc_set_max_credit()
 ...
@@ -250,6 +241,7 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
    Return code:
      * 1 - successful
      * -1 - failed, error logged
+     * -4 - call-id already present for this client
 
    Example 1.4. cnxcc_set_max_time()
 ...
@@ -303,6 +295,7 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
        in more than the limit you specified
      * -3 - failed, number of calls established is more than the limit you
        specified
+     * -4 - call-id already present for this client
 
    Example 1.6. cnxcc_set_max_channels()
 ...
@@ -437,14 +430,21 @@ route[CNXCC]
         $var(i_pulse)             = 30;
         $var(f_pulse)             = 6;
 
-        if (!cnxcc_set_max_credit("$var(client)",
+
+        cnxcc_set_max_credit("$var(client)",
                         "$var(credit)",
                         "$var(connect_cost)",
                         "$var(cost_per_sec)",
                         "$var(i_pulse)",
-                        "$var(f_pulse)")) {
-                xlog("Error setting up credit control");
-        }
+                        "$var(f_pulse)");
+
+        switch ($?) {
+                case -1:
+                        xerr("Error setting up credit control");
+                        sl_send_reply("503", "Internal Server Error");
+                case -4:
+                        xwarn("$ci already present for client $var(client)");
+        };
 }
 
 event_route[cnxcc:call-shutdown]

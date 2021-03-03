@@ -301,7 +301,7 @@ void cfgutils_rpc_set_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_reset_gflag(rpc_t* rpc, void* ctx)
 {
-	long int flag;
+	unsigned int flag;
 	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -314,7 +314,7 @@ void cfgutils_rpc_reset_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_is_gflag(rpc_t* rpc, void* ctx)
 {
-	long int flag;
+	unsigned int flag;
 	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -328,7 +328,7 @@ void cfgutils_rpc_is_gflag(rpc_t* rpc, void* ctx)
 
 void cfgutils_rpc_get_gflags(rpc_t* rpc, void* ctx)
 {
-	static unsigned int flags;
+	unsigned int flags;
 
 	flags = *gflags;
 
@@ -790,28 +790,23 @@ static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
 
 /*! Check if a route block exists - only request routes
  */
-static int w_check_route_exists(struct sip_msg *msg, char *route)
+static int ki_check_route_exists(sip_msg_t *msg, str *route)
 {
-	str s;
-
-	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
-	{
-			LM_ERR("invalid route parameter\n");
-			return -1;
+	if(route == NULL || route->s == NULL) {
+		return -1;
 	}
-	if (route_lookup(&main_rt, s.s)<0) {
+
+	if (route_lookup(&main_rt, route->s)<0) {
 		/* not found */
 		return -1;
 	}
 	return 1;
 }
 
-/*! Run a request route block if it exists
+/*! Check if a route block exists - only request routes
  */
-static int w_route_exists(struct sip_msg *msg, char *route)
+static int w_check_route_exists(struct sip_msg *msg, char *route)
 {
-	struct run_act_ctx ctx;
-	int newroute, ret;
 	str s;
 
 	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0) {
@@ -819,16 +814,47 @@ static int w_route_exists(struct sip_msg *msg, char *route)
 			return -1;
 	}
 
-	newroute = route_lookup(&main_rt, s.s);
+	return ki_check_route_exists(msg, &s);
+}
+
+/*! Run a request route block if it exists
+ */
+static int ki_route_if_exists(sip_msg_t *msg, str *route)
+{
+	struct run_act_ctx ctx;
+	int newroute, ret;
+
+	if(route == NULL || route->s == NULL) {
+		return -1;
+	}
+
+	newroute = route_lookup(&main_rt, route->s);
 	if (newroute<0) {
 		return -1;
 	}
+
 	init_run_actions_ctx(&ctx);
 	ret=run_actions(&ctx, main_rt.rlist[newroute], msg);
 	if (ctx.run_flags & EXIT_R_F) {
 		return 0;
 	}
+
 	return ret;
+}
+
+
+/*! Run a request route block if it exists
+ */
+static int w_route_exists(struct sip_msg *msg, char *route)
+{
+	str s;
+
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0) {
+			LM_ERR("invalid route parameter\n");
+			return -1;
+	}
+
+	return ki_route_if_exists(msg, &s);
 }
 
 static int mod_init(void)
@@ -1076,6 +1102,16 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("usleep"),
 		SR_KEMIP_INT, ki_usleep,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("check_route_exists"),
+		SR_KEMIP_INT, ki_check_route_exists,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("route_if_exists"),
+		SR_KEMIP_INT, ki_route_if_exists,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

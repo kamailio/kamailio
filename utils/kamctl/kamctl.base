@@ -368,7 +368,8 @@ usage_base() {
 	mecho " -- command 'start|stop|restart|trap'"
 	echo
 cat <<EOF
- trap ............................... trap with gdb Kamailio processes
+ trap ............................... trap with gdb Kamailio processes using RPC
+ pstrap ............................. trap with gdb Kamailio processes using ps
  restart ............................ restart Kamailio
  start .............................. start Kamailio
  stop ............................... stop Kamailio
@@ -553,6 +554,7 @@ cat <<EOF
  srv sockets ................... show the list of listen sockets
  srv aliases ................... show the list of server aliases
  srv rpclist ................... show the list of server rpc commands
+ srv debug [<level>] ........... control the server debug level
  srv version ................... show the server version
 EOF
 }

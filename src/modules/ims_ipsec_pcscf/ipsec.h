@@ -49,4 +49,6 @@ int remove_policy(struct mnl_socket* mnl_socket, str src_addr_param, str dest_ad
 int clean_sa(struct mnl_socket*  mnl_socket);
 int clean_policy(struct mnl_socket*  mnl_socket);
 
+int delete_unused_tunnels();
+
 #endif /* IMS_IPSEC_PCSCF_IPSEC */

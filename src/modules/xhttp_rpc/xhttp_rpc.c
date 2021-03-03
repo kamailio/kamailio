@@ -283,7 +283,7 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
 	str *sp;
 	char buf[PRINT_VALUE_BUF_LEN];
 	time_t dt;
-	struct tm* t;
+	struct tm t;
 
 	switch(fmt) {
 	case 'd':
@@ -306,9 +306,9 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
 		body.s = buf;
 		body.len = sizeof("19980717T14:08:55") - 1;
 		dt = va_arg(*ap, time_t);
-		t = gmtime(&dt);
+		gmtime_r(&dt, &t);
 		if (strftime(buf, PRINT_VALUE_BUF_LEN,
-				"%Y%m%dT%H:%M:%S", t) == 0) {
+				"%Y%m%dT%H:%M:%S", &t) == 0) {
 			LM_ERR("Error while converting time\n");
 			return -1;
 		}

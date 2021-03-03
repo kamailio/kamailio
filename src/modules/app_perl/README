@@ -1650,45 +1650,45 @@ Chapter 4. Frequently Asked Questions
 
    4.1.
 
-       Are there known bugs in the Perl module?
+   Are there known bugs in the Perl module?
 
-       The Perl module does have a few shortcomings that may be regarded as
-       bugs.
-         * Missing module functions. Not all functions of other modules are
-           available for Perl access. The reason for this is a design property
-           of Kamailio. Making available more functions is work in progress.
-         * Perl and threads. Perl itself is, when compiled with the correct
-           parameters, thread safe; unfortunately, not all Perl modules are.
-           The DBI modules, especially (but not restricted to) DBI::ODBC are
-           known NOT to be thread safe.
-           Using DBI::ODBC -- and possibly other non-thread-safe Perl
-           extensions -- may result in erroneous behavior of Kamailio,
-           including (but not restricted to) server crashes and wrong routing.
+   The Perl module does have a few shortcomings that may be regarded as
+   bugs.
+     * Missing module functions. Not all functions of other modules are
+       available for Perl access. The reason for this is a design property
+       of Kamailio. Making available more functions is work in progress.
+     * Perl and threads. Perl itself is, when compiled with the correct
+       parameters, thread safe; unfortunately, not all Perl modules are.
+       The DBI modules, especially (but not restricted to) DBI::ODBC are
+       known NOT to be thread safe.
+       Using DBI::ODBC -- and possibly other non-thread-safe Perl
+       extensions -- may result in erroneous behavior of Kamailio,
+       including (but not restricted to) server crashes and wrong routing.
 
    4.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at https://www.kamailio.org/.
+   Take a look at https://www.kamailio.org/.
 
    4.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.kamailio.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.kamailio.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.kamailio.org>.
 
    4.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       https://github.com/kamailio/kamailio/issues.
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues.

@@ -2197,6 +2197,118 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 /**************************** RPC functions ******************************/
 /*!
+ * \brief Helper method that outputs a dialog in a file
+ * \see rpc_dump_file_dlg
+ * \param dlg printed dialog
+ * \param output file descriptor
+ * \return 0 on success, -1 on failure
+ */
+static inline void internal_rpc_dump_file_dlg(dlg_cell_t *dlg, FILE* dialogf)
+{
+	dlg_profile_link_t *pl;
+	dlg_var_t *var;
+	srjson_doc_t jdoc;
+	srjson_t * jdoc_caller = NULL;
+	srjson_t * jdoc_callee = NULL;
+	srjson_t * jdoc_profiles = NULL;
+	srjson_t * jdoc_variables = NULL;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_CreateObject(&jdoc);
+	if (!jdoc.root) {
+		LM_ERR("cannot create json\n");
+		goto clear;
+	}
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_entry", dlg->h_entry);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_id", dlg->h_id);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "ref", dlg->ref);
+	srjson_AddStrToObject(&jdoc, jdoc.root, "call_id", dlg->callid.s, dlg->callid.len);
+	srjson_AddStrToObject(&jdoc, jdoc.root, "from_uri", dlg->from_uri.s, dlg->from_uri.len);
+	srjson_AddStrToObject(&jdoc, jdoc.root, "to_uri", dlg->to_uri.s, dlg->to_uri.len);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "state", dlg->state);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts", dlg->start_ts);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "end_ts", dlg->end_ts);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime", dlg->lifetime);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "dflags", dlg->dflags);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "sflags", dlg->sflags);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "iflags", dlg->iflags);
+
+	jdoc_caller = srjson_CreateObject(&jdoc);
+	if (!jdoc_caller) {
+		LM_ERR("cannot create json caller\n");
+		goto clear;
+	}
+	srjson_AddStrToObject(&jdoc, jdoc_caller, "tag", dlg->tag[DLG_CALLER_LEG].s, dlg->tag[DLG_CALLER_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_caller, "contact", dlg->contact[DLG_CALLER_LEG].s, dlg->contact[DLG_CALLER_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_caller, "cseq", dlg->cseq[DLG_CALLER_LEG].s, dlg->cseq[DLG_CALLER_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_caller, "route_set", dlg->route_set[DLG_CALLER_LEG].s, dlg->route_set[DLG_CALLER_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_caller, "socket",
+			dlg->bind_addr[DLG_CALLER_LEG] ? dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s : empty_str.s,
+			dlg->bind_addr[DLG_CALLER_LEG] ? dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len : empty_str.len);
+	srjson_AddItemToObject(&jdoc, jdoc.root, "caller", jdoc_caller);
+
+	jdoc_callee = srjson_CreateObject(&jdoc);
+	if (!jdoc_callee) {
+		LM_ERR("cannot create json callee\n");
+		goto clear;
+	}
+	srjson_AddStrToObject(&jdoc, jdoc_callee, "tag", dlg->tag[DLG_CALLEE_LEG].s, dlg->tag[DLG_CALLEE_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_callee, "contact", dlg->contact[DLG_CALLEE_LEG].s, dlg->contact[DLG_CALLEE_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_callee, "cseq", dlg->cseq[DLG_CALLEE_LEG].s, dlg->cseq[DLG_CALLEE_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_callee, "route_set", dlg->route_set[DLG_CALLEE_LEG].s, dlg->route_set[DLG_CALLEE_LEG].len);
+	srjson_AddStrToObject(&jdoc, jdoc_callee, "socket",
+			dlg->bind_addr[DLG_CALLEE_LEG] ? dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s : empty_str.s,
+			dlg->bind_addr[DLG_CALLEE_LEG] ? dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len : empty_str.len);
+	srjson_AddItemToObject(&jdoc, jdoc.root, "callee", jdoc_callee);
+
+	// profiles section
+	jdoc_profiles = srjson_CreateObject(&jdoc);
+	if (!jdoc_profiles) {
+		LM_ERR("cannot create json profiles\n");
+		goto clear;
+	}
+	for (pl = dlg->profile_links ; pl && (dlg->state<DLG_STATE_DELETED) ; pl=pl->next) {
+		if (pl->profile->has_value) {
+			srjson_AddStrToObject(&jdoc, jdoc_profiles, pl->profile->name.s, pl->hash_linker.value.s, pl->hash_linker.value.len);
+		} else {
+			srjson_AddStrToObject(&jdoc, jdoc_profiles, pl->profile->name.s, empty_str.s, empty_str.len);
+		}
+	}
+	srjson_AddItemToObject(&jdoc, jdoc.root, "profiles", jdoc_profiles);
+
+	// variables section
+	jdoc_variables = srjson_CreateObject(&jdoc);
+	if (!jdoc_variables) {
+		LM_ERR("cannot create json variables\n");
+		goto clear;
+	}
+	for (var=dlg->vars ; var && (dlg->state<DLG_STATE_DELETED) ; var=var->next) {
+		srjson_AddStrToObject(&jdoc, jdoc_variables, var->key.s, var->value.s, var->value.len);
+	}
+	srjson_AddItemToObject(&jdoc, jdoc.root, "variables", jdoc_variables);
+
+	// serialize and print to file
+	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	if (!jdoc.buf.s) {
+		LM_ERR("unable to serialize data\n");
+		goto clear;
+	}
+	jdoc.buf.len = strlen(jdoc.buf.s);
+	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
+	fprintf(dialogf,"%s\n", jdoc.buf.s);
+
+clear:
+	if (jdoc.buf.s) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
+	return;
+}
+
+/*!
  * \brief Helper method that outputs a dialog via the RPC interface
  * \see rpc_print_dlg
  * \param rpc RPC node that should be filled
@@ -2274,6 +2386,38 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 error:
 	LM_ERR("Failed to add item to RPC response\n");
 	return;
+}
+
+/*!
+ * \brief Helper function that outputs all dialogs via the RPC interface
+ * \see rpc_dump_file_dlgs
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param with_context if 1 then the dialog context will be also printed
+ */
+static void internal_rpc_dump_file_dlgs(rpc_t *rpc, void *c, int with_context)
+{
+	dlg_cell_t *dlg;
+	str output_file_name;
+	FILE* dialogf;
+	unsigned int i;
+	if (rpc->scan(c, ".S", &output_file_name) < 1) return;
+
+	dialogf = fopen(output_file_name.s, "a+");
+	if (!dialogf) {
+		LM_ERR("failed to open output file: %s\n", output_file_name.s);
+		return;
+	}
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			internal_rpc_dump_file_dlg(dlg, dialogf);
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+	fclose(dialogf);
 }
 
 /*!
@@ -2415,6 +2559,9 @@ static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
 static const char *rpc_print_dlgs_doc[2] = {
 	"Print all dialogs", 0
 };
+static const char *rpc_dump_file_dlgs_doc[2] = {
+	"Print all dialogs to json file", 0
+};
 static const char *rpc_print_dlgs_ctx_doc[2] = {
 	"Print all dialogs with associated context", 0
 };
@@ -2458,6 +2605,9 @@ static const char *rpc_dlg_is_alive_doc[2] = {
 
 static void rpc_print_dlgs(rpc_t *rpc, void *c) {
 	internal_rpc_print_dlgs(rpc, c, 0);
+}
+static void rpc_dump_file_dlgs(rpc_t *rpc, void *c) {
+	internal_rpc_dump_file_dlgs(rpc, c, 0);
 }
 static void rpc_print_dlgs_ctx(rpc_t *rpc, void *c) {
 	internal_rpc_print_dlgs(rpc, c, 1);
@@ -2792,7 +2942,7 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		vkey = 1;
 	} else if(mkey.len==4 && strncmp(mkey.s, "turi", mkey.len)==0) {
 		vkey = 2;
-	} else if(mkey.len==5 && strncmp(mkey.s, "callid", mkey.len)==0) {
+	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
 		vkey = 3;
 	} else {
 		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
@@ -2914,9 +3064,17 @@ static const char *rpc_dlg_briefing_doc[2] = {
  */
 static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 {
-	dlg_cell_t *dlg;
-	unsigned int i;
-	void *h;
+	dlg_cell_t *dlg = NULL;
+	unsigned int i = 0;
+	int n = 0;
+	str fmt = STR_NULL;
+	void *h = NULL;
+
+	n = rpc->scan(c, "S", &fmt);
+	if (n < 1) {
+		fmt.s = "ftcFT";
+		fmt.len = 5;
+	}
 
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
@@ -2925,19 +3083,81 @@ static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 				rpc->fault(c, 500, "Failed to create the structure");
 				return;
 			}
-			if(rpc->struct_add(h, "ddSSSSSd",
+			if(rpc->struct_add(h, "dd",
 					"h_entry", dlg->h_entry,
-					"h_id", dlg->h_id,
-					"from_uri", &dlg->from_uri,
-					"to_uri", &dlg->to_uri,
-					"call-id", &dlg->callid,
-					"from_tag", &dlg->tag[DLG_CALLER_LEG],
-					"to_tag", &dlg->tag[DLG_CALLER_LEG],
-					"state", dlg->state) < 0) {
+					"h_id", dlg->h_id) < 0) {
 				rpc->fault(c, 500, "Failed to add fields");
 				return;
 
 			}
+			for(n=0; n<fmt.len; n++) {
+				switch(fmt.s[n]) {
+					case 'f':
+						if(rpc->struct_add(h, "S",
+									"from_uri", &dlg->from_uri) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 't':
+						if(rpc->struct_add(h, "S",
+									"to_uri", &dlg->to_uri) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'c':
+						if(rpc->struct_add(h, "S",
+									"call-id", &dlg->callid) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'F':
+						if(rpc->struct_add(h, "S",
+									"from_tag", &dlg->tag[DLG_CALLER_LEG]) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'T':
+						if(rpc->struct_add(h, "S",
+									"to_tag", &dlg->tag[DLG_CALLER_LEG]) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'I':
+						if(rpc->struct_add(h, "d",
+									"init_ts", dlg->init_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'S':
+						if(rpc->struct_add(h, "d",
+									"start_ts", dlg->start_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 'E':
+						if(rpc->struct_add(h, "d",
+									"end_ts", dlg->end_ts) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+					case 's':
+						if(rpc->struct_add(h, "d",
+									"state", dlg->state) < 0) {
+							rpc->fault(c, 500, "Failed to add fields");
+							return;
+						}
+					break;
+				}
+			}
+
 		}
 		dlg_unlock( d_table, &(d_table->entries[i]) );
 	}
@@ -2946,6 +3166,7 @@ static void rpc_dlg_briefing(rpc_t *rpc, void *c)
 static rpc_export_t rpc_methods[] = {
 	{"dlg.briefing", rpc_dlg_briefing, rpc_dlg_briefing_doc, RET_ARRAY},
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, RET_ARRAY},
+	{"dlg.dump_file", rpc_dump_file_dlgs, rpc_dump_file_dlgs_doc, 0},
 	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, RET_ARRAY},
 	{"dlg.list_match", rpc_dlg_list_match, rpc_dlg_list_match_doc, RET_ARRAY},
 	{"dlg.list_match_ctx", rpc_dlg_list_match_ctx, rpc_dlg_list_match_ctx_doc, RET_ARRAY},

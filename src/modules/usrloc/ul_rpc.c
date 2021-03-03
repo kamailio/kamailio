@@ -144,12 +144,12 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding state");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Flags", c->flags)<0)
+	if(rpc->struct_add(vh, "u", "Flags", c->flags)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding flags");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "CFlags", c->cflags)<0)
+	if(rpc->struct_add(vh, "u", "CFlags", c->cflags)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding cflags");
 		return -1;
@@ -159,7 +159,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding socket");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Methods", c->methods)<0)
+	if(rpc->struct_add(vh, "u", "Methods", c->methods)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding methods");
 		return -1;
@@ -175,7 +175,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 		rpc->fault(ctx, 500, "Internal error adding instance");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Reg-Id", c->reg_id)<0)
+	if(rpc->struct_add(vh, "u", "Reg-Id", c->reg_id)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding reg_id");
 		return -1;
@@ -198,6 +198,11 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 	if(rpc->struct_add(vh, "d", "Last-Keepalive", (int)c->last_keepalive)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding last_keepalive");
+		return -1;
+	}
+	if(rpc->struct_add(vh, "d", "KA-Roundtrip", (int)c->ka_roundtrip)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error adding keepalive roundtrip");
 		return -1;
 	}
 	if(rpc->struct_add(vh, "d", "Last-Modified", (int)c->last_modified)<0)
@@ -241,7 +246,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 		return;
 	}
 	
-	for( dl=root ; dl ; dl=dl->next ) {
+	for( dl=_ksr_ul_root ; dl ; dl=dl->next ) {
 		dom = dl->d;
 
 		if (rpc->struct_add(dah, "{", "Domain", &dh) < 0)
@@ -281,7 +286,7 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
-					if(rpc->struct_add(bh, "Sd[",
+					if(rpc->struct_add(bh, "Su[",
 								"AoR", &r->aor,
 								"HashID", r->aorhash,
 								"Contacts", &ih)<0)
@@ -333,7 +338,7 @@ static inline udomain_t* rpc_find_domain(str* table)
 {
 	dlist_t* dom;
 
-	for( dom=root ; dom ; dom=dom->next ) {
+	for( dom=_ksr_ul_root ; dom ; dom=dom->next ) {
 		if ((dom->name.len == table->len) &&
 				!memcmp(dom->name.s, table->s, table->len))
 			return dom->d;
@@ -354,7 +359,7 @@ static inline int rpc_fix_aor(str *aor)
 	char *p;
 
 	p = memchr( aor->s, '@', aor->len);
-	if (use_domain) {
+	if (ul_use_domain) {
 		if (p==NULL)
 			return -1;
 	} else {
@@ -416,7 +421,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	get_act_time();
+	ul_get_act_time();
 	rpl_tree = 0;
 
 	if (rpc->add(ctx, "{", &th) < 0)
@@ -438,7 +443,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 
 	/* We have contacts, list them */
 	for( con=rec->contacts ; con ; con=con->next) {
-		if (VALID_CONTACT( con, act_time)) {
+		if (VALID_CONTACT(con, ul_act_time)) {
 			rpl_tree++;
 			if (rpc_dump_contact(rpc, ctx, ih, con) == -1) {
 				release_urecord(rec);
@@ -618,7 +623,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 
 	memset(&ci, 0, sizeof(ucontact_info_t));
 
-	ret = rpc->scan(ctx, "SSSdfSddd*SS", &table, &aor, &contact, &ci.expires,
+	ret = rpc->scan(ctx, "SSSdfSuuu*SS", &table, &aor, &contact, &ci.expires,
 			&dtemp, &path, &ci.flags, &ci.cflags, &ci.methods, &received,
 			&socket);
 	if (ret < 9) {
@@ -695,14 +700,14 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 		}
 	}
 
-	get_act_time();
+	ul_get_act_time();
 
 	ci.callid = &rpc_ul_cid;
 	ci.user_agent = &rpc_ul_ua;
 	ci.cseq = RPC_UL_CSEQ;
 	/* 0 expires means permanent contact */
 	if (ci.expires!=0)
-		ci.expires += act_time;
+		ci.expires += ul_act_time;
 
 	if (c) {
 		if (update_ucontact( r, c, &ci) < 0)
@@ -742,7 +747,7 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}
@@ -752,7 +757,7 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if (user_col.len + domain_col.len + table.len + 32 > QUERY_LEN) {
+	if (ul_user_col.len + ul_domain_col.len + table.len + 32 > QUERY_LEN) {
 		rpc->fault(ctx, 500, "Too long database query");
 		return;
 	}
@@ -769,8 +774,8 @@ static void ul_rpc_db_users(rpc_t* rpc, void* ctx)
 	memset(query, 0, QUERY_LEN);
 	query_str.len = snprintf(query, QUERY_LEN,
 			"SELECT COUNT(DISTINCT %.*s, %.*s) FROM %.*s WHERE (UNIX_TIMESTAMP(expires) = 0) OR (expires > NOW())",
-			user_col.len, user_col.s,
-			domain_col.len, domain_col.s,
+			ul_user_col.len, ul_user_col.s,
+			ul_domain_col.len, ul_domain_col.s,
 			table.len, table.s);
 	query_str.s = query;
 	if (ul_dbf.raw_query(ul_dbh, &query_str, &res) < 0 || res==NULL) {
@@ -798,7 +803,7 @@ static void ul_rpc_db_contacts(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}
@@ -852,7 +857,7 @@ static void ul_rpc_db_expired_contacts(rpc_t* rpc, void* ctx)
 	db1_res_t* res = NULL;
 	int count = 0;
 
-	if (db_mode == NO_DB) {
+	if (ul_db_mode == NO_DB) {
 		rpc->fault(ctx, 500, "Command is not supported in db_mode=0");
 		return;
 	}

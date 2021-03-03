@@ -191,7 +191,7 @@ structure and the handle for it. Than use the handle of the core to access
 the variable:
 
 #include "../../cfg_core.h"
-cfg_get(core, core_cfg, use_dst_blacklist)
+cfg_get(core, core_cfg, use_dst_blocklist)
 
 2) For the core, module, or script: access the variables by their group
 and variable name:

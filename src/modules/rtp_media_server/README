@@ -24,23 +24,27 @@ Julien Chavanton
    1. Admin Guide
 
         1. Overview
-        2. Dependencies
+        2. Quick start, how-to build on debian
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              2.1. Building on Debian, Dockerfile and docker image
 
-        3. Parameters
+        3. Dependencies
 
-              3.1. log_file_name (string)
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        4. Functions
+        4. Parameters
 
-              4.1. rms_answer (event_route)
-              4.2. rms_hangup ()
-              4.3. rms_bridge (target URI, event_route)
-              4.4. rms_dialog_check ()
-              4.5. rms_sip_request ()
-              4.6. rms_play (file, event_route)
+              4.1. log_file_name (string)
+
+        5. Functions
+
+              5.1. rms_answer (event_route)
+              5.2. rms_hangup ()
+              5.3. rms_bridge (target URI, event_route)
+              5.4. rms_dialog_check ()
+              5.5. rms_sip_request ()
+              5.6. rms_play (file, event_route)
 
    List of Examples
 
@@ -57,23 +61,27 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
-   2. Dependencies
+   2. Quick start, how-to build on debian
 
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
+        2.1. Building on Debian, Dockerfile and docker image
 
-   3. Parameters
+   3. Dependencies
 
-        3.1. log_file_name (string)
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   4. Functions
+   4. Parameters
 
-        4.1. rms_answer (event_route)
-        4.2. rms_hangup ()
-        4.3. rms_bridge (target URI, event_route)
-        4.4. rms_dialog_check ()
-        4.5. rms_sip_request ()
-        4.6. rms_play (file, event_route)
+        4.1. log_file_name (string)
+
+   5. Functions
+
+        5.1. rms_answer (event_route)
+        5.2. rms_hangup ()
+        5.3. rms_bridge (target URI, event_route)
+        5.4. rms_dialog_check ()
+        5.5. rms_sip_request ()
+        5.6. rms_play (file, event_route)
 
 1. Overview
 
@@ -92,18 +100,29 @@ Chapter 1. Admin Guide
    mediastreamer2 is also providing a framework to create custom
    mediaprocessing modules.
 
-2. Dependencies
+2. Quick start, how-to build on debian
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+   2.1. Building on Debian, Dockerfile and docker image
 
-2.1. Kamailio Modules
+2.1. Building on Debian, Dockerfile and docker image
+
+   The module includes Dockerfile that can also be use as a reference on
+   how to build everything from source on Debian, the of libmediastreamer
+   on Linux is usually outdated. A docker image is also available from
+   dockerhub https://hub.docker.com/r/jchavanton/rtp_media_server
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
      * tm - accounting module
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
@@ -121,11 +140,11 @@ Chapter 1. Admin Guide
        fork of the defunct project CUnit, with several fixes and patches
        applied. CUnit is a Unit testing framework for C.
 
-3. Parameters
+4. Parameters
 
-   3.1. log_file_name (string)
+   4.1. log_file_name (string)
 
-3.1. log_file_name (string)
+4.1. log_file_name (string)
 
    oRTP and MediaStreamer2 log file settings the log mask is not
    configurable : MESSAGE | WARNING | ERROR | FATAL levels are activated.
@@ -137,16 +156,16 @@ Chapter 1. Admin Guide
 modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 ...
 
-4. Functions
+5. Functions
 
-   4.1. rms_answer (event_route)
-   4.2. rms_hangup ()
-   4.3. rms_bridge (target URI, event_route)
-   4.4. rms_dialog_check ()
-   4.5. rms_sip_request ()
-   4.6. rms_play (file, event_route)
+   5.1. rms_answer (event_route)
+   5.2. rms_hangup ()
+   5.3. rms_bridge (target URI, event_route)
+   5.4. rms_dialog_check ()
+   5.5. rms_sip_request ()
+   5.6. rms_play (file, event_route)
 
-4.1. rms_answer (event_route)
+5.1. rms_answer (event_route)
 
    Create a call leg : with a SIP dialog and an RTP session call the
    event_route
@@ -180,7 +199,7 @@ route {
         rms_sip_request();
 ...
 
-4.2. rms_hangup ()
+5.2. rms_hangup ()
 
    Send a BYE, delete the RTP session and the media ressources.
 
@@ -191,7 +210,7 @@ route {
         rms_hangup();
 ...
 
-4.3. rms_bridge (target URI, event_route)
+5.3. rms_bridge (target URI, event_route)
 
    Bridge the incoming call, create a second call leg using a UAC in a
    B2BUA manner, this is needed in case we want to un-bridge later, a
@@ -223,7 +242,7 @@ e in-dialog request needs to be handled by it.
                 rms_sip_request();
 ...
 
-4.4. rms_dialog_check ()
+5.4. rms_dialog_check ()
 
    Returns true if the current SIP message it handled/known by the RMS
    module, else it may be handle in any other way by Kamailio.
@@ -239,7 +258,7 @@ e in-dialog request needs to be handled by it.
         }
 ...
 
-4.5. rms_sip_request ()
+5.5. rms_sip_request ()
 
    This should be called for every in-dialog SIP request, it will be
    forwarded behaving as a B2BUA, the transaction will be suspended until
@@ -258,7 +277,7 @@ e in-dialog request needs to be handled by it.
         }
 ...
 
-4.6. rms_play (file, event_route)
+5.6. rms_play (file, event_route)
 
    Play a wav file, a resampler is automaticaly configured to resample and
    convert stereo to mono if needed.

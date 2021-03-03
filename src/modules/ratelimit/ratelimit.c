@@ -47,8 +47,8 @@
 
 MODULE_VERSION
 
-#define MAX_PIPES       16
-#define MAX_QUEUES      10
+#define MAX_PIPES       32
+#define MAX_QUEUES      32
 
 /*
  * timer interval length in seconds, tunable via modparam

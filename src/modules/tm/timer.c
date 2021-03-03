@@ -112,8 +112,8 @@
 #include "t_fwd.h"				 /* t_send_branch */
 #include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
-#ifdef USE_DST_BLACKLIST
-#include "../../core/dst_blacklist.h"
+#ifdef USE_DST_BLOCKLIST
+#include "../../core/dst_blocklist.h"
 #endif
 
 
@@ -294,14 +294,21 @@ static void fake_reply(struct cell *t, int branch, int code)
 		reply_status =
 				relay_reply(t, FAKED_REPLY, branch, code, &cancel_data, 0);
 	}
-/* now when out-of-lock do the cancel I/O */
-	if(do_cancel_branch)
+	if(reply_status==RPS_TGONE) {
+		return;
+	}
+
+	/* now when out-of-lock do the cancel I/O */
+	if(do_cancel_branch) {
 		cancel_branch(t, branch, &cancel_data.reason, 0);
+	}
+
 	/* it's cleaned up on error; if no error occurred and transaction
-	   completed regularly, I have to clean-up myself
-	*/
-	if(reply_status == RPS_COMPLETED)
+	 * completed regularly, I have to clean-up myself
+	 */
+	if(reply_status == RPS_COMPLETED) {
 		put_on_wait(t);
+	}
 }
 
 
@@ -426,11 +433,11 @@ inline static void final_response_handler(
 					   != NULL) /* not a blind UAC */
 			) {
 /* no reply received */
-#ifdef USE_DST_BLACKLIST
+#ifdef USE_DST_BLOCKLIST
 		if(r_buf->my_T && r_buf->my_T->uas.request
 				&& (r_buf->my_T->uas.request->REQ_METHOD
 						   & cfg_get(tm, tm_cfg, tm_blst_methods_add)))
-			dst_blacklist_add(
+			dst_blocklist_add(
 					BLST_ERR_TIMEOUT, &r_buf->dst, r_buf->my_T->uas.request);
 #endif
 #ifdef USE_DNS_FAILOVER

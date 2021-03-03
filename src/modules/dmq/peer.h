@@ -61,7 +61,7 @@ typedef struct dmq_peer_list
 	int count;
 } dmq_peer_list_t;
 
-extern dmq_peer_list_t *peer_list;
+extern dmq_peer_list_t *dmq_peer_list;
 
 dmq_peer_list_t *init_peer_list();
 dmq_peer_t *search_peer_list(dmq_peer_list_t *peer_list, dmq_peer_t *peer);

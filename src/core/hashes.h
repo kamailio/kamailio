@@ -27,7 +27,7 @@
 
 #include "str.h"
 
-
+#define core_hash_idx(hid, hsize) ((hid)&(hsize-1))
 
 /** internal use: hash update
  * params: char* s   - string start,

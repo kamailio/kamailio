@@ -55,7 +55,7 @@ int init_tm_stats_child(void)
 		size=sizeof(*tm_stats) * get_max_procs();
 		tm_stats=shm_malloc(size);
 		if (tm_stats == 0) {
-			ERR("No mem for stats\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(tm_stats, 0, size);

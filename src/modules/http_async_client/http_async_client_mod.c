@@ -98,6 +98,7 @@ static int ah_get_body_size(struct sip_msg *msg, pv_param_t *param, pv_value_t *
 static int ah_get_msg_buf(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_get_msg_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_parse_req_name(pv_spec_p sp, str *in);
+static int ah_parse_time_name(pv_spec_p sp, str *in);
 static int ah_set_req(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
 static int ah_get_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
@@ -107,6 +108,7 @@ static str pv_str_0 = {"0", 1};
 
 static int ah_get_ok(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_get_err(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int ah_get_time(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 /* tm */
 struct tm_binds tmb;
@@ -126,6 +128,12 @@ enum http_req_name_t {
 	E_HRN_BODY, E_HRN_AUTHMETHOD, E_HRN_USERNAME,
 	E_HRN_PASSWORD, E_HRN_TCP_KA, E_HRN_TCP_KA_IDLE,
 	E_HRN_TCP_KA_INTERVAL
+};
+
+enum http_time_name_t {
+	E_HT_TOTAL = 0,
+	E_HT_LOOKUP, E_HT_CONNECT, E_HT_REDIRECT,
+	E_HT_APPCONNECT, E_HT_PRETRANSFER, E_HT_STARTTRANSFER
 };
 
 static cmd_export_t cmds[]={
@@ -190,6 +198,9 @@ static pv_export_t pvs[] = {
 	{STR_STATIC_INIT("http_err"),
 		PVT_OTHER, ah_get_err, 0,
 		0, 0, 0, 0},
+	{STR_STATIC_INIT("http_time"),
+		PVT_OTHER, ah_get_time, 0,
+		ah_parse_time_name, 0, 0, 0},
 	{STR_STATIC_INIT("http_req"),
 		PVT_OTHER, pv_get_null, ah_set_req,
 		ah_parse_req_name, 0, 0, 0},
@@ -274,6 +285,8 @@ static int mod_init(void)
 		LM_ERR("invalid memory_manager parameter: '%s'\n", memory_manager);
 		return -1;
 	}
+
+	set_curl_mem_callbacks();
 
 	/* init faked sip msg */
 	if(faked_msg_init()<0) {
@@ -542,6 +555,31 @@ static int ah_get_err(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	}
 }
 
+static int ah_get_time(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case E_HT_LOOKUP:
+			return pv_get_uintval(msg, param, res, ah_time.lookup);
+		case E_HT_CONNECT:
+			return pv_get_uintval(msg, param, res, ah_time.connect);
+		case E_HT_REDIRECT:
+			return pv_get_uintval(msg, param, res, ah_time.redirect);
+		case E_HT_APPCONNECT:
+			return pv_get_uintval(msg, param, res, ah_time.appconnect);
+		case E_HT_PRETRANSFER:
+			return pv_get_uintval(msg, param, res, ah_time.pretransfer);
+		case E_HT_STARTTRANSFER:
+			return pv_get_uintval(msg, param, res, ah_time.starttransfer);
+		default:
+			return pv_get_uintval(msg, param, res, ah_time.total);
+	}
+}
+
 static int ah_parse_req_name(pv_spec_p sp, str *in) {
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
@@ -618,6 +656,60 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 
 error:
 	LM_ERR("unknown http_req name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+static int ah_parse_time_name(pv_spec_p sp, str *in) {
+	if(sp==NULL || in==NULL || in->len<0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 5:
+			if(strncmp(in->s, "total", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_TOTAL;
+			else goto error;
+			break;
+		case 6:
+			if(strncmp(in->s, "lookup", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_LOOKUP;
+			else goto error;
+			break;
+		case 7:
+			if(strncmp(in->s, "connect", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_CONNECT;
+			else goto error;
+			break;
+		case 8:
+			if(strncmp(in->s, "redirect", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_REDIRECT;
+			else goto error;
+			break;
+		case 10:
+			if(strncmp(in->s, "appconnect", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_APPCONNECT;
+			else goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "pretransfer", 11)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_PRETRANSFER;
+			else goto error;
+			break;
+		case 13:
+			if(strncmp(in->s, "starttransfer", 13)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HT_STARTTRANSFER;
+			else goto error;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown http_time name %.*s\n", in->len, in->s);
 	return -1;
 }
 

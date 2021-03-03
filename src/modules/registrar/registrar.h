@@ -99,6 +99,7 @@ extern int reg_flow_timer;
 
 extern str sock_hdr_name;
 extern int sock_flag;
+extern int reg_sock_mode;
 
 extern str reg_xavp_cfg;
 extern str reg_xavp_rcd;
@@ -108,6 +109,7 @@ extern usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 extern sl_api_t slb;
 
 extern int reg_expire_event_rt;
+extern int reg_min_expires_mode;
 
 extern stat_var *accepted_registrations;
 extern stat_var *rejected_registrations;

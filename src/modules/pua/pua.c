@@ -498,7 +498,7 @@ static int db_restore(void)
 			p= (ua_pres_t*)shm_malloc(size);
 			if(p== NULL)
 			{
-				LM_ERR("no more share memmory");
+				SHM_MEM_ERROR;
 				goto error;
 			}
 			memset(p, 0, size);
@@ -568,7 +568,7 @@ static int db_restore(void)
 				p->remote_contact.s= (char*)shm_malloc(remote_contact.len* sizeof(char));
 				if(p->remote_contact.s== NULL)
 				{
-					LM_ERR("No more shared memory\n");
+					SHM_MEM_ERROR;
 					goto error;
 				}
 				memcpy(p->remote_contact.s, remote_contact.s, remote_contact.len);
@@ -600,7 +600,7 @@ static int db_restore(void)
 				p->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 				if(p->etag.s==  NULL)
 				{
-					LM_ERR("no more share memory\n");
+					SHM_MEM_ERROR;
 					goto error;
 				}
 				memcpy(p->etag.s, etag.s, etag.len);

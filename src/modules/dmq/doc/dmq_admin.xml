@@ -15,29 +15,48 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The DMQ module implements a distributed message queue on top of Kamailio in order to enable the
-	passing/replication of data between multiple instances. The DMQ "nodes" within the system are grouped
-	in a logical entity called the DMQ "bus" and are able to communicate with each other by
-	sending/receiving messages (either by broadcast or directly to a specific node). The system
-	transparently deals with node discovery, consistency, retransmissions, etc.
+	The DMQ module implements a distributed message queue on top of Kamailio
+	in order to facilitate data propagation and replication between multiple
+	instances, referred as "nodes" (or "peers").
 	</para>
 	<para>
-	Other entities ("peers") are then able to utilize the DMQ bus to pass messages between themselves.
-	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers.
-	This grouping of peers can be compared to a topic in a typical pub/sub system.
+	The DMQ data flow between nodes is grouped in a logical entity referred as
+	"channel" (or "bus"), many flows (channels) can be active at the same time.
 	</para>
 	<para>
-	DMQ sends SIP requests using the <emphasis>KDMQ</emphasis> request method, that is private
-	to Kamailio.
+	The communication between the nodes is done using SIP messages, after all
+	Kamailio's best ability is routing SIP traffic, therefore reusing the same
+	protocol empowers DMQ cluster with flexible routing policies, advanced
+	authorization and security policies, a.s.o. DMQ sends SIP requests using the
+	<emphasis>KDMQ</emphasis> request method (a custom method type specific to
+	Kamailio, compliant with SIP specifications RFC3261). Data can be sent to
+	all the other active nodes (aka "broadcast") or to a specific single node
+	(aka "unicast").
 	</para>
-<example>
-                <title>Example of a KDMQ message</title>
+	<para>
+	The nodes can utilize the DMQ channels to pass messages between them to
+	distribute data for various services (e.g., cached items, location records,
+	active calls, ...). This grouping of messages on channels (per service)
+	is similar to the topic concept in a typical pub/sub system. The channel name
+	appears in the R-URI username part of KDMQ requests.
+	</para>
+	<para>
+	The DMQ cluster transparently deals with node discovery, availability,
+	consistency, retransmissions, etc. A new node can join the DMQ cluster by
+	sending an availability notification to an existing node in the clusters.
+	Nodes that are not responding to KDMQ reguests are removed the from local
+	list of active nodes, no longer being considered to be part of the KDMQ cluster.
+	</para>
+	<example>
+		<title>KDMQ Request Example</title>
 		<para>
-		This message is for basic DMQ bus handling. Other messages are produced
-		by other modules, like the <emphasis>htable</emphasis> module.
+		This request is generated for DMQ peers availability notifications.
+		Other messages can be produced by various modules, with different R-URI
+		username and body content, such as <emphasis>htable</emphasis>,
+		<emphasis>dialog</emphasis> or <emphasis>usrloc</emphasis> modules.
 		</para>
                 <programlisting format="linespecific">
-
+...
 
 KDMQ sip:notification_peer@192.168.40.15:5090 SIP/2.0
 Via: SIP/2.0/UDP 192.168.40.15;branch=z9hG4bK55e5.423d95110000
@@ -54,9 +73,9 @@ sip:192.168.40.16:5060;status=active
 sip:192.168.40.15:5060;status=disabled
 sip:192.168.40.17:5060;status=active
 
+...
 </programlisting>
-                </example>
-
+    </example>
 	</section>
 
 	<section>
@@ -86,8 +105,10 @@ sip:192.168.40.17:5060;status=active
 			<listitem>
 			<para>
 				<emphasis>
-				The DMQ module itself has no external dependencies. However, each peer will need 
-				to use its own (de)serialization mechanism. Some examples are libtpl, protobuf.
+				The DMQ module itself has no external dependencies. However,
+				each peer may need to use its own (de)serialization mechanism,
+				like JSON (via jannson module), XML (via xmlops) or string
+				operations with transformations.
 				</emphasis>.
 			</para>
 			</listitem>
@@ -127,6 +148,23 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 		<programlisting format="linespecific">
 ...
 modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.notification_channel">
+		<title><varname>notification_channel</varname>(str)</title>
+		<para>
+		The name of the channel for notifications about peers availability.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>notification_peer</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notification_channel</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "notification_channel", "peers")
 ...
 </programlisting>
 		</example>
@@ -243,17 +281,16 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_handle_message</function> usage</title>
                 <programlisting format="linespecific">
 ...
-        if(is_method("KDMQ"))
-        {
-                dmq_handle_message();
-        }
+    if(is_method("KDMQ")) {
+        dmq_handle_message();
+    }
 ...
 </programlisting>
                 </example>
         </section>
         <section id="dmq.f.dmq_send_message">
                 <title>
-               	<function moreinfo="none">dmq_send_message(peer, node, body, content_type)</function>
+               	<function moreinfo="none">dmq_send_message(channel, node, body, content_type)</function>
                 </title>
                 <para>
                 Sends a DMQ message directly from config file to a single node.
@@ -262,12 +299,12 @@ modparam("dmq", "ping_interval", 90)
                 <itemizedlist>
 	                <listitem>
         	                <para>
-               	        	<emphasis>peer</emphasis> - name of peer that should handle the message.
+               	        	<emphasis>channel</emphasis> - name of the channel that should handle the message.
                         	</para>
 	                </listitem>
         	        <listitem>
                 	        <para>
-                       		<emphasis>node</emphasis> - the node to which the message should be sent.
+                       		<emphasis>node</emphasis> - the SIP address of the node to which the message should be sent.
 	                        </para>
         	        </listitem>
                 	<listitem>
@@ -289,23 +326,24 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_send_message</function> usage</title>
                 <programlisting format="linespecific">
 ...
-	dmq_send_message("peer_name", "sip:10.0.0.21:5060", "Message body...", "text/plain");
+	dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "text/plain");
 ...
 </programlisting>
                 </example>
         </section>
         <section id="dmq.f.dmq_bcast_message">
                 <title>
-                <function moreinfo="none">dmq_bcast_message(peer, body, content_type)</function>
+                <function moreinfo="none">dmq_bcast_message(channel, body, content_type)</function>
                 </title>
                 <para>
-                Broadcasts a DMQ message from config file to all active nodes (except self).
+				Broadcasts a DMQ message from config file to all active nodes (except self) on the
+				specific channel.
                 </para>
                 <para>Meaning of parameters:</para>
                 <itemizedlist>
                         <listitem>
                                 <para>
-                                <emphasis>peer</emphasis> - name of peer that should handle the message.
+                                <emphasis>channel</emphasis> - name of the channel that should handle the message.
                                 </para>
                         </listitem>
                         <listitem>
@@ -327,7 +365,7 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_bcast_message</function> usage</title>
                 <programlisting format="linespecific">
 ...
-        dmq_bcast_message("peer_name", "Message body...", "text/plain");
+    dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
 </programlisting>
                 </example>
@@ -337,19 +375,19 @@ modparam("dmq", "ping_interval", 90)
                 <function moreinfo="none">dmq_t_replicate([skip_loop_test])</function>
                 </title>
                 <para>
-		Replicates the current SIP message to all active nodes (except self). Useful for replicating
-		REGISTER, PUBLISH etc. in a clustered environment.
+					Replicates the current SIP message to all active nodes (except self).
+					Useful for replicating REGISTER, PUBLISH etc. in a clustered environment.
                 </para>
                 <para>Meaning of parameters:</para>
                 <itemizedlist>
                         <listitem>
-                                <para>
+                        <para>
 				<emphasis>skip_loop_test</emphasis> - by default, DMQ checks the source IP of the
 				message prior to replication, to ensure it has not been sent by another DMQ node
 				(to avoid infinite loops). If this optional parameter is set to "1", the loop test
 				is not performed. This makes sense, from a performance perspective, if you have
 				already performed the necessary checks in the config script (see dmq_is_from_node()).
-                                </para>
+                        </para>
                         </listitem>
                 </itemizedlist>
                 <para>
@@ -360,7 +398,7 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_t_replicate</function> usage</title>
                 <programlisting format="linespecific">
 ...
-        dmq_t_replicate();
+    dmq_t_replicate();
 ...
 		</programlisting>
                 </example>
@@ -370,7 +408,8 @@ modparam("dmq", "ping_interval", 90)
                 <function moreinfo="none">dmq_is_from_node()</function>
                 </title>
                 <para>
-                Checks whether the current message has been sent by another DMQ node in the cluster.
+				Checks whether the current message has been sent by another active
+				DMQ node in the cluster.
                 </para>
                 <para>
                 This function can be used from REQUEST_ROUTE only.
@@ -380,14 +419,16 @@ modparam("dmq", "ping_interval", 90)
                 <title><function>dmq_is_from_node</function> usage</title>
                 <programlisting format="linespecific">
 ...
-	# Example REGISTER block
+	# basic example for REGISTER replication
+    if(is_method("REGISTER")) {
         if (dmq_is_from_node()) {
-		# Already authenticated, just save contact...
-	} else {
-		# Authenticate, save contact etc.
-		# Assuming all successful...
-		dmq_t_replicate("1"); # Already checked source, don't perform loop test again
-	}
+            # coming from a DMQ node - already authenticated there
+            # now just save contact, etc...
+        } else {
+            # coming from end point - authenticate, save contact, etc...
+            dmq_t_replicate("1"); # source address checked, skip the loop test
+        }
+    }
 ...
                 </programlisting>
                 </example>

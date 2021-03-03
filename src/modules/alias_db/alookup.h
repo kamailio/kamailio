@@ -1,6 +1,4 @@
-/* 
- * $Id$
- *
+/*
  * ALIAS_DB Module
  *
  * Copyright (C) 2004 Voice Sistem SRL
@@ -17,13 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2004-09-01: first version (ramona)
  */
 
 
@@ -32,12 +27,12 @@
 
 #include "../../core/parser/msg_parser.h"
 
-#define ALIAS_REVERSE_FLAG	(1<<0)
-#define ALIAS_DOMAIN_FLAG	(1<<1)
+#define ALIAS_REVERSE_FLAG (1 << 0)
+#define ALIAS_DOMAIN_FLAG (1 << 1)
 
-int alias_db_lookup(struct sip_msg* _msg, str _table);
-int alias_db_lookup_ex(struct sip_msg* _msg, str _table, unsigned long flags);
-int alias_db_find(struct sip_msg* _msg, str _table, char* _in, char* _out,
-		char* flags);
+int alias_db_lookup(struct sip_msg *_msg, str _table);
+int alias_db_lookup_ex(struct sip_msg *_msg, str _table, unsigned long flags);
+int alias_db_find(
+		struct sip_msg *_msg, str _table, char *_in, char *_out, char *flags);
 
 #endif /* _ALOOKUP_H_ */

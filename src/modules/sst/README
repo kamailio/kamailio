@@ -219,20 +219,36 @@ modparam("sst", "min_se", 2400)
 
 4.3. timeout_avp (string)
 
-   This parameter MUST be set to the same value as the dialog module
-   parameter of the same name. If this parameter is NOT set, the sst
-   module will not do anything!
+   This parameter must be set to the same value as the dialog module
+   parameter of the same name, when it is wanted to update dialog timeout
+   using Session-Expires header value. If this parameter is not set, the
+   sst module will not update dialog timeout.
 
-   This is how the sst module knows which avp in the dialog module it has
-   to change with the new expire value.
+   With this parameter, the sst module knows which avp is expected by the
+   dialog module to change to a new expire value.
 
-   Default value is “NULL!” it is not set by default.
+   Note that the avp is set only for requests within dialog, not for the
+   initial INVITE. For this one, it can be done using script operations,
+   see the next example for such solution.
+
+   Default value is “NULL” (not set by default).
 
    Example 1.4. Set timeout_avp parameter
 ...
-modparam("dialog", "timeout_avp", "$avp(i:10)")
+modparam("dialog", "timeout_avp", "$avp(dlgtimeout)")
 # Set the sst modules timeout_avp to be the same value
-modparam("sst", "timeout_avp", "$avp(i:10)")
+modparam("sst", "timeout_avp", "$avp(dlgtimeout)")
+...
+request_route {
+    ...
+    # when wanting to use Session-Expires value for initial INVITE
+    if(is_method("INVITE") and !has_totag()) {
+        if(is_present_hf("Session-Expires")) {
+            $avp(dlgtimeout) = $(hdr(Session-Expires){s.int});
+        }
+    }
+    ...
+}
 ...
 
 4.4. reject_to_small (integer)

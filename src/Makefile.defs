@@ -105,9 +105,9 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 
 # version number
 VERSION = 5
-PATCHLEVEL = 4
+PATCHLEVEL = 5
 SUBLEVEL =  0
-EXTRAVERSION = -dev3
+EXTRAVERSION = -dev4
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -210,9 +210,18 @@ endif
 
 endif
 
+# dlopen requires -ldl on some systems, but not others.  Until there
+# is clarity on which require -ldl, add just enough ifeq to fix
+# systems known not to use it.
+ifeq ($(OS), netbsd)
+LIBDL=""
+else
+LIBDL="-ldl"
+endif
+
 ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
 CC_PMUTEX_OPTS = -pthread -DKSR_PTHREAD_MUTEX_SHARED
-LD_PMUTEX_OPTS = -pthread -rdynamic -ldl -Wl,-Bsymbolic-functions
+LD_PMUTEX_OPTS = -pthread -rdynamic $(LIBDL) -Wl,-Bsymbolic-functions
 else
 CC_PMUTEX_OPTS =
 LD_PMUTEX_OPTS =
@@ -264,9 +273,9 @@ MKTAGS=ctags
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
 	RPAREN=)
-	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|\
+	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version 2>/dev/null|head -n 1|\
 				sed  -e 's/([^$(RPAREN)]*)//g' \
-					 -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
+					 -e 's/^.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
 					 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 #	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3\
 #				|sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
@@ -297,7 +306,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/8\.[0-9]\..*/8.0+/' \
 					-e 's/8\.[0-9]$$/8.0+/' \
 					-e 's/9\.[0-9]\..*/9.0+/' \
-					-e 's/9\.[0-9]$$/9.0+/')
+					-e 's/9\.[0-9]$$/9.0+/' \
+					-e 's/10\.[0-9]\..*/9.0+/' \
+					-e 's/10\.[0-9]$$/9.0+/')
 ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
@@ -326,7 +337,7 @@ endif
 ifneq (, $(findstring clang, $(CC_LONGVER)))
 	#clang should be gcc compatible
 	CC_NAME=clang
-	CC_FULLVER:=$(shell echo "$(CC_LONGVER)" | head -n 1 |  sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
+	CC_FULLVER:=$(shell $(CC) --version 2>/dev/null | head -n 1 | sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
 	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
 	CC_OPT=-O3
@@ -662,11 +673,11 @@ data_target = $(prefix)/$(data_dir)
 # -DUSE_DNS_FAILOVER
 #		if the destination resolves to multiple ips, on send error fall back
 #		to the others
-# -DUSE_DST_BLACKLIST
-#		blacklist bad destination (timeout, failed to connect, error sending
+# -DUSE_DST_BLOCKLIST
+#		blocklist bad destination (timeout, failed to connect, error sending
 #        a.s.o)
-# -DUSE_DST_BLACKLIST_STATS
-#		turns on blacklist bad destination measurements
+# -DUSE_DST_BLOCKLIST_STATS
+#		turns on blocklist bad destination measurements
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
@@ -713,11 +724,11 @@ C_DEFS+= -DSHM_MMAP \
 	 -DHAVE_RESOLV_RES \
 	 -DUSE_DNS_CACHE \
 	 -DUSE_DNS_FAILOVER \
-	 -DUSE_DST_BLACKLIST \
+	 -DUSE_DST_BLOCKLIST \
 	 -DUSE_NAPTR \
 	 -DWITH_XAVP \
 	 #-DUSE_DNS_CACHE_STATS \
-	 #-DUSE_DST_BLACKLIST_STATS \
+	 #-DUSE_DST_BLOCKLIST_STATS \
 	 #-DDNS_WATCHDOG_SUPPORT \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \
@@ -1970,12 +1981,11 @@ ifeq ($(OS), freebsd)
 	ifeq ($(RAW_SOCKS), yes)
 		C_DEFS+= -DUSE_RAW_SOCKS
 	endif
+	LIBS= -lm   # resolv and dlopen is in libc
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS+= -pthread   #dlopen is in libc
-	else
-		LIBS=   #dlopen is in libc
+		LIBS+= -pthread
 	endif
 	# check for ver >= 4.1
 	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
@@ -2056,7 +2066,7 @@ ifeq ($(OS), netbsd)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	LIBS=
+	LIBS=-lm
 endif
 
 # OS X support, same as freebsd
@@ -2157,10 +2167,10 @@ export exported_vars
 # variable changeable only at configure time (once saved in config.mak they
 #  cannot be overwritten from environment or command line, unless make cfg
 #  is run)
-saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
+saved_fixed_vars:=	MAIN_NAME CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
 		SRC_NAME RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
-		CC_MKDEP_OPTS \
+		CC_NAME CC_MKDEP_OPTS \
 		MOD_LDFLAGS LIB_LDFLAGS UTILS_LDFLAGS LIB_SONAME LD_RPATH \
 		LIB_SUFFIX LIB_PREFIX \
 		LIBS \

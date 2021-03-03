@@ -96,7 +96,7 @@ modparam("keepalive", "destination", "sip.provider.com")
 			<section>
 				<title><varname>delete_counter</varname>(int)</title>
 				<para>
-					Unsuccesful attemps  increase delete_counter . After passing it , keepalive module doesn't try to send options requests.
+					Unsuccesful attemps increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
 				</para>
 				<para>
 				<emphasis>
@@ -169,10 +169,22 @@ if(ka_is_alive("192.168.10.20") == 1) {
 			</section>
 			<section id="keepalive.ka_add_destination">
 			    <title>
-					<function moreinfo="none">ka_add_destination(sip_uri)</function>
+					<function moreinfo="none">ka_add_destination(sip_uri, owner)</function>
 			    </title>
 				<para>
-					Adds destination sip/sips uri in memory list to keep alive .
+					Adds SIP URI in the memory destinations list to perform keep alive to it.
+				</para>
+				<para>
+					Meaning of the parameters:
+					<itemizedlist>
+						<listitem>sip_uri (string) - address of destination to monitor.
+						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						by default; 'port' is optional (using default standard port 5060
+						for sip and 5061 for sips)</listitem>
+					    <listitem>owner (string) - module name “owning” the destination
+					    (for informational purpose)</listitem>
+					</itemizedlist>
 				</para>
         		<para>
 					Returned value:
@@ -185,25 +197,38 @@ if(ka_is_alive("192.168.10.20") == 1) {
 				    This function can be used from REQUEST_ROUTE,BRANCH_ROUTE,ONREPLY_ROUTE.
 		        </para>
 				<example>
-					<title><function>ka_add_destination(sip_uri)</function> usage</title>
+					<title><function>ka_add_destination(sip_uri, ownder)</function> usage</title>
 					<programlisting format="linespecific">
 ...
 $avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
 $avp(duri2)="sip:192.168.1.11:5061";
 $avp(duri3)="sip:192.168.1.12"
-ka_add_destination("$avp(duri3)");
-ka_add_destination("sip:192.168.1.10:5060;transport=tcp");
+ka_add_destination("$avp(duri3)", "config");
+ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 ...
 			        </programlisting>
 			    </example>
 			</section>
 						<section id="keepalive.ka_del_destination">
 			    <title>
-					<function moreinfo="none">ka_del_destination(sip_uri)</function>
+					<function moreinfo="none">ka_del_destination(sip_uri, owner)</function>
 			    </title>
 				<para>
-					Deletes destination sip/sips uri in memory list .
+					Deletes the SIP URI from the memory destinations list used for monitoring.
 				</para>
+				<para>
+					Meaning of the parameters:
+					<itemizedlist>
+						<listitem>sip_uri (string) - address of monitored destination.
+						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						by default; 'port' is optional (using default standard port 5060
+						for sip and 5061 for sips)</listitem>
+					    <listitem>owner (string) - module name “owning” the destination
+					    (for informational purpose)</listitem>
+					</itemizedlist>
+				</para>
+
         		<para>
 					Returned value:
 					<itemizedlist>
@@ -215,14 +240,14 @@ ka_add_destination("sip:192.168.1.10:5060;transport=tcp");
 				    This function can be used from ANY_ROUTE.
 		        </para>
 				<example>
-					<title><function>ka_del_destination(sip_uri)</function> usage</title>
+					<title><function>ka_del_destination(sip_uri, owner)</function> usage</title>
 					<programlisting format="linespecific">
 ...
 $avp(duri1)="sip:192.168.1.10:5060;transport=tcp";
 $avp(duri2)="sip:192.168.1.11:5061";
 $avp(duri3)="sip:192.168.1.12"
-ka_del_destination("$avp(duri3)");
-ka_del_destination("sip:192.168.1.10:5060;transport=tcp");
+ka_del_destination("$avp(duri3)", "config");
+ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 ...
 			        </programlisting>
 			    </example>

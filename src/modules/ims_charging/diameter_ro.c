@@ -31,7 +31,7 @@ void RoChargingResponseHandler(AAAMessage *response, void *param) {
             LM_ERR("DBG:"M_NAME":RoChargingResponseHandler(): - Received unknown response for app %d command %d\n",
                     response->applicationId,
                     response->commandCode);
-            LM_ERR("Response is [%s]", response->buf.s);
+            LM_ERR("Response is [%s]\n", response->buf.s);
             return;
 
     }

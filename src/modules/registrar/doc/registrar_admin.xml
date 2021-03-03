@@ -28,7 +28,7 @@
 		If path support is enabled in the registrar module, a call to save(...)
 		stores the values of the Path Header(s) along with the contact into usrloc. 
 		There are three modes regarding the reply to a REGISTER including
-		one or more Path HFs:
+		one or more Path header fields:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -42,7 +42,7 @@
 			<para>
 				<emphasis>lazy</emphasis> - stores the Path header and 
 				passes it back to the UAC if Path-support is indicated 
-				by the <quote>path</quote> param in the Supported HF.
+				by the <quote>path</quote> param in the Supported header field.
 			</para>
 			</listitem>
 			<listitem>
@@ -56,8 +56,8 @@
 		</itemizedlist>
 		<para>
 		A call to lookup(...) always uses the path header if
-		found, and inserts it as Route HF either in front of
-		the first Route HF, or after the last Via HF if no
+		found, and inserts it as Route header field either in front of
+		the first Route header field, or after the last Via header field if no
 		Route is present. It also sets the destination uri to
 		the first Path uri, thus overwriting the received-uri,
 		because NAT has to be handled at the outbound-proxy of
@@ -131,7 +131,7 @@
 		<title><varname>default_expires</varname> (integer)</title>
 		<para>
 		If the processed message contains neither Expires 
-		<acronym>HFs</acronym> nor expires contact parameters, this value 
+		header fields nor expires contact parameters, this value 
 		will be used for newly created usrloc records. The parameter contains 
 		number of second to expire (for example use 3600 for one hour). If it
 		is set to a lower value than the <quote>min_expires</quote> parameter
@@ -201,9 +201,10 @@ modparam("registrar", "expires_range", 30) # expires within [0.7*expires .. expi
 	<section id="registrar.p.min_expires">
 		<title><varname>min_expires</varname> (integer)</title>
 		<para>
-		The minimum expires value of a <quote>Contact</quote>. Values lower than this 
-		minimum will be automatically set to the minimum. Value 0 disables 
-		the checking. This parameter can be modified via the &kamailio; config framework.
+		The minimum expires value of a <quote>Contact</quote>. Values lower than this
+		minimum will be either set to the minimum or 423 response is sent back.
+		Value 0 disables the checking. This parameter can be modified via the
+		&kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -219,6 +220,29 @@ modparam("registrar", "min_expires", 60)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="registrar.p.min_expires_mode">
+		<title><varname>min_expires_mode</varname> (integer)</title>
+		<para>
+		Control what to do when expires value in REGISTER request is lower than
+		min_expires parameter. If set to 0, expires is set to min_expires. If
+		set to 1, then 423 Interval Too Brief is sent back.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>min_expires_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "min_expires_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.p.max_expires">
 		<title><varname>max_expires</varname> (integer)</title>
 		<para>
@@ -511,6 +535,32 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</example>
 	</section>
 
+	<section id="registrar.p.sock_mode">
+		<title><varname>sock_mode</varname> (integer)</title>
+		<para>
+		If set to 1, the server stores the advertised address in socket field,
+		instead of bind address.
+		</para>
+		<para>
+		This could be useful when kamailio is installed behind NAT and it is
+		necessary to store its public IP instead socket on which the register
+		request was received.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (store bind address).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sock_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "sock_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.p.method_filtering">
 		<title><varname>method_filtering</varname> (integer)</title>
 		<para>
@@ -695,6 +745,19 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<itemizedlist>
 		<listitem>
 			<para>
+				<emphasis>expires</emphasis> - the number of maximum
+				contacts to be stored for the current registration AoR. It
+				overwrites the 'max_contacts' module parameter value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - the expires value, to overwrite the
+				value from SIP headers.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for the current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
@@ -705,14 +768,6 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>socket</emphasis> - the string representing the
 				socket on which the register request was received, as alternative
 				to using the sock_hdr.
-			</para>
-		</listitem>
-		<listitem>
-			<para>
-				<emphasis>q</emphasis> - q value of contact
-				(integer 0-1000). It
-				overrides q value given in contact header and
-				default_q parameter.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -734,6 +789,7 @@ modparam("registrar", "xavp_cfg", "reg")
 request_route {
     ...
     $xavp(reg=&gt;max_contacts) = 4;
+    $xavp(reg[0]=&gt;expires) = 600;
     save("location");
     ...
 }
@@ -1076,6 +1132,46 @@ request_route {
 		</programlisting>
 		</example>
 	</section>
+
+
+	<section id="registrar.p.use_expired_contacts">
+		<title><varname>use_expired_contacts</varname> (int)</title>
+
+		<para>
+			Allow/Disallow the usage of the expired contacts.
+		</para>
+
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>0</emphasis> Disallow the usage of the expired contacts.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>1</emphasis> Allow the usage of the expired contacts.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+		<emphasis>
+			Default value is 0 (Disallow).
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Set <varname>use_expired_contacts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "use_expired_contacts", 1)
+...
+
+kamcmd cfg.set_now_int registrar use_expired_contacts 1
+kamcmd cfg.set_now_int registrar use_expired_contacts 0
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	
@@ -1087,10 +1183,11 @@ request_route {
 		</title>
 		<para>
 		The function processes a <emphasis>REGISTER</emphasis> message. It can add, remove or 
-		modify location records (in usrloc) depending on Contact and Expires HFs in the 
+		modify location records (in usrloc) depending on Contact and Expires header fields in the 
 		REGISTER message. On success and when called from the REQUEST_ROUTE, 
 		<quote>200 OK</quote> will be returned listing all contacts that are currently in 
-		the location database. On an error, an error message will be sent with a short
+		the location database. As a side effect, also branch flags are
+        stored in usrloc. On an error, an error message will be sent with a short
 		description in reason phrase.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -1110,7 +1207,7 @@ request_route {
 			<itemizedlist>
 				<listitem>
 					<para><emphasis>0x01</emphasis> - save the contacts only
-					in memory cache without no DB operation;
+					in memory cache with no DB operation;
 					</para>
 				</listitem>
 				<listitem>
@@ -1191,6 +1288,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 		Request-URI will be overwritten with the contact that has
 		the highest q value and optionally the rest will be appended to 
 		the message (depending on append_branches parameter value).
+        As a side effect, also branch flags are restored from usrloc.
 		</para>
 		<para>
 		If the <varname>method_filtering</varname> option is enabled and

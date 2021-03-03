@@ -84,6 +84,7 @@ extern str methods_col;
 extern str instance_col;
 extern str reg_id_col;
 extern str last_mod_col;
+extern str uniq_col;
 
 extern int db_mode;
 extern int use_domain;
@@ -99,7 +100,6 @@ extern int default_dbt;
 extern str domain_db;
 extern int expire;
 
-extern int matching_mode;
 
 extern str write_db_url;
 extern str read_db_url;
@@ -123,11 +123,7 @@ extern int connection_expires;
 extern int alg_location;
 
 extern int  max_loc_nr;
-typedef struct db_shared_param {
-	int val;
-	gen_lock_t lock;
-} db_shared_param_t;
-extern db_shared_param_t *write_on_master_db_shared;
+extern int * mdb_w_available;
 extern int mdb_availability_control;
 
 #endif /* UL_MOD_H */

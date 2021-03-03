@@ -37,13 +37,20 @@
 #define SREV_TCP_CLOSED			13
 #define SREV_NET_DATA_RECV		14
 #define SREV_NET_DATA_SEND		15
+#define SREV_SIP_REPLY_OUT		16
+#define SREV_TCP_WS_CLOSE		17
 
-#define SREV_CB_LIST_SIZE	3
+#define SREV_CB_LIST_SIZE	8
 
 typedef struct sr_event_param {
 	void *data;
+	str obuf;
 	receive_info_t* rcv;
 	dest_info_t *dst;
+	sip_msg_t *req;
+	sip_msg_t *rpl;
+	int rplcode;
+	int mode;
 } sr_event_param_t;
 
 typedef int (*sr_event_cb_f)(sr_event_param_t *evp);
@@ -64,6 +71,8 @@ typedef struct sr_event_cb {
 	sr_event_cb_f tcp_closed;
 	sr_event_cb_f net_data_recv;
 	sr_event_cb_f net_data_send;
+	sr_event_cb_f sip_reply_out[SREV_CB_LIST_SIZE];
+	sr_event_cb_f tcp_ws_close[SREV_CB_LIST_SIZE];
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);

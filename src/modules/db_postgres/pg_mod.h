@@ -38,6 +38,12 @@ extern int pg_retries;
 extern int pg_timeout;
 extern int pg_keepalive;
 
+typedef struct pg_con_param_s {
+	char* name;
+	char* value;
+	struct pg_con_param_s* next;
+} pg_con_param_t;
+
 /** @} */
 
 #endif /* _PG_MOD_H */

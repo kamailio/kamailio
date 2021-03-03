@@ -47,8 +47,6 @@ struct network networks[MAX_NETWORKS];
 int net_pipes_in[MAX_NETWORKS];
 int nr_of_networks;
 int nr_of_modems;
-int *queued_msgs;
-int use_contact;
 struct tm_binds tmb;
 
 

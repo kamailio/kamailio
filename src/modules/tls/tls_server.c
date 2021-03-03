@@ -90,12 +90,12 @@ int tls_run_event_routes(struct tcp_connection *c);
 #ifdef TLS_F_DEBUG
 	#ifdef __SUNPRO_C
 		#define TLS_F_TRACE(fmt, ...) \
-			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+			LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
 					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
 					_FUNC_NAME_,  __VA_ARGS__)
 	#else
 		#define TLS_F_TRACE(fmt, args...) \
-			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+			LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
 					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
 					_FUNC_NAME_, ## args)
 	#endif /* __SUNPRO_c */
@@ -627,7 +627,7 @@ err:
  * @param sock - socket (unused for now).
  * @return  0 on success, < 0 on error.
  */
-int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
+int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
@@ -640,7 +640,7 @@ int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 
 /** clean the extra data upon connection shut down.
  */
-void tls_h_tcpconn_clean(struct tcp_connection *c)
+void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	struct tls_extra_data* extra;
 	/*
@@ -668,7 +668,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 
 /** perform one-way shutdown, do not wait for notify from the remote peer.
  */
-void tls_h_close(struct tcp_connection *c, int fd)
+void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 {
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
 	struct tls_mbuf rd, wr;
@@ -740,7 +740,7 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
  *                     the message.
  * @return *plen on success (>=0), < 0 on error.
  */
-int tls_encode_f(struct tcp_connection *c,
+int tls_h_encode_f(struct tcp_connection *c,
 						const char** pbuf, unsigned int* plen,
 						const char** rest_buf, unsigned int* rest_len,
 						snd_flags_t* send_flags)
@@ -752,6 +752,7 @@ int tls_encode_f(struct tcp_connection *c,
 	struct tls_mbuf rd, wr;
 	int ssl_error;
 	char* err_src;
+	char ip_buf[64];
 	const char* buf;
 	unsigned int len;
 	int x;
@@ -881,7 +882,15 @@ redo_wr:
 				break; /* or goto end */
 			case SSL_ERROR_SSL:
 				/* protocol level error */
+				ERR("protocol level error\n");
 				TLS_ERR(err_src);
+				memset(ip_buf, 0, sizeof(buf));
+				ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
+				ERR("source IP: %s\n", ip_buf);
+				memset(ip_buf, 0, sizeof(buf));
+				ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
+				ERR("destination IP: %s\n", ip_buf);
+
 				goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
@@ -982,7 +991,7 @@ ssl_eof:
  *         tcp connection flags and might set c->state and r->error on
  *         EOF or error).
  */
-int tls_read_f(struct tcp_connection* c, int* flags)
+int tls_h_read_f(struct tcp_connection* c, rd_conn_flags_t* flags)
 {
 	struct tcp_req* r;
 	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;
@@ -994,6 +1003,7 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	struct tls_rd_buf* enc_rd_buf;
 	int n, flush_flags;
 	char* err_src;
+	char ip_buf[64];
 	int x;
 	int tls_dbg;
 
@@ -1270,7 +1280,15 @@ ssl_read_skipped:
 			goto bug;
 		case SSL_ERROR_SSL:
 			/* protocol level error */
+			ERR("protocol level error\n");
 			TLS_ERR(err_src);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
+			ERR("source IP: %s\n", ip_buf);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
+			ERR("destination IP: %s\n", ip_buf);
+
 			goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 		case SSL_ERROR_WANT_CONNECT:

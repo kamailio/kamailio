@@ -434,10 +434,11 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	/* unlock dialog */
 	if (dlg) {
 		dlg->dflags |= DLG_FLAG_CHANGED_VARS;
-		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-		if ( dlg_db_mode==DB_MODE_REALTIME )
+		if ( dlg_db_mode==DB_MODE_REALTIME ) {
+			/* dlg_lock() / dlg_unlock() are reentrant */
 			update_dialog_dbinfo(dlg);
-
+		}
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
 	print_lists(dlg);
 
@@ -478,8 +479,8 @@ int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dir);
 		case 7:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.to_route);
+			return pv_get_sintval(msg, param, res,
+					_dlg_ctx.to_route);
 		default:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.on);
@@ -601,6 +602,7 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 	int res_type = 0;
 	str sv = { 0 };
 	unsigned int ui = 0;
+	int si = 0;
 
 	if(param==NULL)
 		return -1;
@@ -683,8 +685,8 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 			sv.s[sv.len] = '\0';
 			break;
 		case 9:
-			res_type = 1;
-			ui = (unsigned int)dlg->toroute;
+			res_type = 3;
+			si = dlg->toroute;
 			break;
 		case 10:
 			if(dlg->cseq[DLG_CALLEE_LEG].s==NULL
@@ -817,6 +819,8 @@ done:
 			return pv_get_uintval(msg, param, res, ui);
 		case 2:
 			return pv_get_strval(msg, param, res, &sv);
+		case 3:
+			return pv_get_sintval(msg, param, res, si);
 		default:
 			return pv_get_null(msg, param, res);
 	}

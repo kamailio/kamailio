@@ -44,7 +44,7 @@ int _test_insert_to_reply( struct sip_msg *msg, char *str )
     len=strlen( str );
     buf=pkg_malloc( len );
     if (!buf) {
-        LM_ERR("no mem\n");
+        PKG_MEM_ERROR;
         return 0;
     }
     memcpy( buf, str, len );

@@ -82,6 +82,7 @@ static int version_table_check = 1;
 
 int calc_ha1                = 0;
 int use_domain              = 0; /* Use also domain when looking up in table */
+int force_generate_avps     = 0; /* Even when user failed to authenticate */
 
 db1_con_t* auth_db_handle    = 0; /* database connection handle */
 db_func_t auth_dbf;
@@ -128,6 +129,7 @@ static param_export_t params[] = {
 	{"use_domain",        INT_PARAM, &use_domain          },
 	{"load_credentials",  PARAM_STRING, &credentials_list    },
 	{"version_table",     INT_PARAM, &version_table_check },
+	{"force_generate_avps", INT_PARAM, &force_generate_avps},
 	{0, 0, 0}
 };
 

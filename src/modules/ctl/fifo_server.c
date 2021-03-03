@@ -1092,6 +1092,7 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap)
 	str str_val;
 	str* sp;
 	char buf[256];
+	str null_value = str_init("<null string>");
 
 	switch(fmt) {
 	case 'd':
@@ -1104,7 +1105,7 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap)
 			goto err;
 		}
 		break;
-		
+
 	case 'f':
 		str_val.s = buf;
 		str_val.len = snprintf(buf, 256, "%f", va_arg(*ap, double));
@@ -1120,39 +1121,48 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap)
 			goto err;
 		}
 		break;
-		
+
 	case 'b':
 		str_val.len = 1;
 		str_val.s = ((va_arg(*ap, int) == 0) ? "0" : "1");
 		l = new_chunk(&str_val);
 		if (!l) {
-			rpc_fault(ctx, 500, "Internal Server Error, line %d", 
+			rpc_fault(ctx, 500, "Internal Server Error, line %d",
 						ctx->line_no);
 			goto err;
 		}
 		break;
-				
+
 	case 's':
 		str_val.s = va_arg(*ap, char*);
-		str_val.len = strlen(str_val.s);
+		if(str_val.s!=NULL) {
+			str_val.len = strlen(str_val.s);
+		} else {
+			str_val = null_value;
+		}
 		l = new_chunk_escape(&str_val, 0);
 		if (!l) {
-			rpc_fault(ctx, 500, "Internal Server Error, line %d", 
+			rpc_fault(ctx, 500, "Internal Server Error, line %d",
 						ctx->line_no);
 			goto err;
 		}
 		break;
-		
+
 	case 'S':
 		sp = va_arg(*ap, str*);
-		l = new_chunk_escape(sp, 0);
+		if(sp!=NULL && sp->s!=NULL) {
+			str_val = *sp;
+		} else {
+			str_val = null_value;
+		}
+		l = new_chunk_escape(&str_val, 0);
 		if (!l) {
-			rpc_fault(ctx, 500, "Internal Server Error, line %d", 
+			rpc_fault(ctx, 500, "Internal Server Error, line %d",
 							ctx->line_no);
 			goto err;
 		}
 		break;
-		
+
 	default:
 		rpc_fault(ctx, 500, "Bug In SER (Invalid formatting character %c)", fmt);
 		ERR("Invalid formatting character\n");
@@ -1368,7 +1378,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		case 'd': /* Integer */
 			if (!line.len) {
 				if(nofault==0)
-					rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
+					rpc_fault(ctx, 400, "Invalid parameter value on line %d",
 									ctx->line_no);
 				goto error;
 			}
@@ -1379,14 +1389,14 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		case 'f': /* double */
 			if (!line.len) {
 				if(nofault==0)
-					rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
+					rpc_fault(ctx, 400, "Invalid parameter value on line %d",
 								ctx->line_no);
 				goto error;
 			}
 			double_ptr = va_arg(ap, double*);
 			*double_ptr = strtod(line.s, 0);
 			break;
-			
+
 		case 's': /* zero terminated string */
 		case 'S': /* str structure */
 			l = new_chunk_unescape(&line);
@@ -1444,6 +1454,7 @@ static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 	va_list ap;
 	struct text_chunk* m, *c;
 	rpc_ctx_t* ctx;
+	str null_value = str_init("<null string>");
 
 	ctx=(rpc_ctx_t*)s->ctx;
 	va_start(ap, fmt);
@@ -1457,7 +1468,7 @@ static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 			goto err;
 		}
 		m->flags |= CHUNK_MEMBER_NAME;
-		
+
 		if(*fmt=='{' || *fmt=='[') {
 			void_ptr = va_arg(ap, void**);
 			m->ctx=ctx;
@@ -1490,13 +1501,22 @@ static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 
 			case 's':
 				st.s = va_arg(ap, char*);
-				st.len = strlen(st.s);
+				if(st.s==NULL) {
+					st = null_value;
+				} else {
+					st.len = strlen(st.s);
+				}
 				c = new_chunk_escape(&st, 1);
 				break;
 
 			case 'S':
 				sp = va_arg(ap, str*);
-				c = new_chunk_escape(sp, 1);
+				if(sp!=NULL && sp->s!=NULL) {
+					st = *sp;
+				} else {
+					st = null_value;
+				}
+				c = new_chunk_escape(&st, 1);
 				break;
 
 			default:
@@ -1576,7 +1596,7 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 			va_end(ap);
 			return read;
 		}
-		
+
 		switch(*fmt) {
 		case 'b': /* Bool */
 		case 't': /* Date and time */
@@ -1599,7 +1619,7 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 			     /* String in text_chunk is always zero terminated */
 			*double_ptr = strtod(val->s.s, 0);
 			break;
-			
+
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
 			     /* String in text_chunk is always zero terminated */
@@ -1608,7 +1628,6 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			str_ptr->len = strlen(str_ptr->s);
 			*str_ptr = val->s;
 			break;
 		default:

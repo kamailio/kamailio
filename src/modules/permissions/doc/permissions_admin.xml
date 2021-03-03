@@ -192,15 +192,14 @@
 		<para>
 		The module can be used to determine if an address (IP
 		address and port or DNS domain name) matches any of the
-		addresses stored in a cached &kamailio; database table.
-		IP addresses in the database table can be subnet addresses.
-		Port 0 in cached database table matches any port. The
-		address and port to be matched can be either taken from
-		the request (allow_source_address) or given as pvar
-		arguments (allow_address).
+		addresses stored in a cached &kamailio; database table or file.
+		IP addresses in the database table or file can be subnet addresses.
+		Port 0 matches any port. The address and port to be matched can be
+		either taken from the source of IP packet of the request
+		(allow_source_address) or given as a variable argument (allow_address).
 		</para>
 		<para>
-		Addresses stored in the database table can be grouped
+		Addresses stored in the database table or file can be grouped
 		together into one or more groups specified by a group
 		identifier (positive integer value, i.e., equal or greater than 1).
 		The group identifier is given as an argument to the allow_address() and
@@ -433,11 +432,41 @@ modparam("permissions", "deny_suffix", ".deny")
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.address_file">
+		<title><varname>address_file</varname> (string)</title>
+		<para>
+		This is the name of full path to the file that store rules used by
+		<function moreinfo="none">allow_address</function> function (and
+		its variants). If it is only the file name, it is expected to be in the
+		same folder as &kamailio;.cfg file.
+		</para>
+		<para>
+		If set, this parameter has priority over the database backend, so the
+		address matching records are loaded from the file, not from database.
+		</para>
+		<para>
+		To see the format of the file see the section "Address File Format".
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>address_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "address_file", "address.list")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id ="permissions.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		This is URL of the database to be used to store rules used by
-		<function moreinfo="none">allow_trusted</function> function.
+		<function moreinfo="none">allow_trusted</function> or
+		<function moreinfo="none">allow_address</function> functions.
 		</para>
 		<para>
 		<emphasis>
@@ -519,8 +548,9 @@ modparam("permissions", "ip_addr_col", "ip_address")
 		<title><varname>mask_col</varname> (string)</title>
 		<para>
 		Name of address table column containing the network mask of
-		the address.  Possible values are 0-32 for IPv4 and 0-128 for
-		IPv6 addresses.
+		the address. Possible values are 0-32 for IPv4 and 0-128 for
+		IPv6 addresses. If the value is 0, the network mask is set to 32
+		for IPv4 addresses and to 128 for IPv6 addresses.
 		</para>
 		<para>
 		<emphasis>
@@ -814,6 +844,33 @@ modparam("permissions", "max_subnets", 1024)
 modparam("permissions", "load_backends", 1)
 ...
 </programlisting>
+		</example>
+	</section>
+	<section id ="permissions.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+		The number of seconds that have to be waited before executing a new
+		RPC reload. By default there is a rate limiting of maximum one reload
+		in five seconds.
+		</para>
+		<para>
+		If set to 0, no rate limit is configured. Note carefully: use this
+		configuration only in tests environments because executing two RPC
+		reloads of the same table at the same time can cause to kamailio
+		to crash.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reload_delta</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "reload_delta", 1)
+...
+		</programlisting>
 		</example>
 	</section>
 	</section>
@@ -1248,6 +1305,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (IPv6: 64 or smaller, IPv4: 32 or smaller).
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1329,6 +1388,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 		<para>
 			Causes the permissions module to re-read the contents of
 			the trusted database table into cache memory.
+			Note that there is a rate limiting defined by 'reload_delta'
+			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1344,5 +1405,60 @@ if (allow_trusted("$si", "any", "$ai")) {
 	</section>
 
 	</section> <!-- RPC commands -->
+
+	<section>
+		<title>Address File Format</title>
+		<para>
+		It is a text file with one record per line. Line starting with '#' are
+		considered comments and ignored. Comments can be also at the end of
+		records, by using '#' to start the comment part of the line.
+		</para>
+		<para>
+		Each record line has the format:
+		</para>
+		<programlisting format="linespecific">
+...
+(groupid,int) (address,str) (netmask,int,o), (port,int,o) (tag,str,o)
+...
+</programlisting>
+		<para>
+		The groupid, address, netmask, port and tag are the names of the
+		attributes whose values are expected in the respective order. The 'int'
+		indicates that the value has to be an integer number. The 'str'
+		indicates that the value has to be a string. The 'o' indicates that
+		the attribute is optional. If netmask is not provided, it is set to 32
+		for IPv4 addresses and 128 for IPv6 addresses. If port is not provided,
+		it is set to 0. The tag attribute is not set, if not provided. When
+		provided, the tag value has to be a single token, without whitespaces
+		(other punctuation signs can be in its value, like ',', '=', ';', ...).
+		</para>
+		<example>
+		<title>Address File Sample</title>
+		<programlisting format="linespecific">
+...
+# address file - records to match with allow_address(...) and variants
+# * file format details
+#   - comments start with # and go to end of line
+#   - each line corresponds to a record with following attributes:
+#
+#     (groupid,int) (address,str) (netmask,int,o), (port,int,o) (tag,str,o)
+#
+# * description of the tokens used to describe line format
+#   - int: expected integer value
+#   - str: expected string value
+#   - o: optional field
+
+1 127.0.0.1 32 0 tag1
+1 10.0.0.10
+
+2 192.168.1.0 24 0 tag2
+2 192.168.2.0 24 0 tag3
+
+3 [1:5ee::900d:c0de]
+...
+</programlisting>
+		</example>
+
+	</section> <!-- Address File Format -->
 
 </chapter>

@@ -2537,6 +2537,24 @@ dlg_reset_property("timeout-noreset");
 		</programlisting>
 		</section>
 
+		<section id="dlg.r.dump_file">
+		<title>dlg.dump_file</title>
+		<para>Dump all dialogs in a json file. (much faster than dlg.list)</para>
+		<para>Name: <emphasis>dlg.dump_file</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>file name</emphasis> output file name
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; dlg.dump_file "/tmp/dlg.json"
+...
+		</programlisting>
+		</section>
+
 		<section id="dlg.r.dlg_list">
 		<title>dlg.dlg_list</title>
 		<para>
@@ -2847,19 +2865,58 @@ dlg_reset_property("timeout-noreset");
 		<section id="dlg.r.briefing">
 		<title>dlg.briefing</title>
 		<para>
-		Lists fewer attributes for dialog records in memory.
+		Lists fewer attributes for dialog records in memory. The dialog hash
+		entry and id are added always, the rest of them are a matter of 'attrs'
+		parameter.
 		</para>
 		<para>Name: <emphasis>dlg.briefing</emphasis></para>
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>none</emphasis> - no parameter
-			</para></listitem>
+			<emphasis>attrs</emphasis> - (optional) a list of characters (flags)
+			representing the fields to be added to the response. If is missing,
+			its default value is 'ftcFT' (note the characters are case sensitive).
+			</para>
+			<para>
+				The characters can be:
+				<itemizedlist>
+				<listitem><para>
+					<emphasis>f</emphasis> - From URI
+				</para></listitem>
+				<listitem><para>
+					<emphasis>t</emphasis> - To URI
+				</para></listitem>
+				<listitem><para>
+					<emphasis>c</emphasis> - Call-ID
+				</para></listitem>
+				<listitem><para>
+					<emphasis>F</emphasis> - From tag
+				</para></listitem>
+				<listitem><para>
+					<emphasis>T</emphasis> - To tag
+				</para></listitem>
+				<listitem><para>
+					<emphasis>I</emphasis> - Init time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>S</emphasis> - Start time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>E</emphasis> - End time
+				</para></listitem>
+				<listitem><para>
+					<emphasis>s</emphasis> - State
+				</para></listitem>
+				</itemizedlist>
+			</para>
+			</listitem>
 		</itemizedlist>
 		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
 ...
 kamctl rpc dlg.briefing
+...
+kamctl rpc dlg.briefing "ft"
 ...
 		</programlisting>
 		</section>

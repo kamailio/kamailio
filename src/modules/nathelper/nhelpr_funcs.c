@@ -227,7 +227,7 @@ int extract_body(struct sip_msg *msg, str *body)
 		/* p2 is text limit for application parsing */
 		rest = eat_line(p1 + mpdel.len + 2, p2 - p1 - mpdel.len - 2);
 		if(rest > p2) {
-			LM_ERR("Unparsable <%.*s>\n", (int)(p1 - p1), p1);
+			LM_ERR("Unparsable <%.*s>\n", (int)(p2 - p1), p1);
 			return -1;
 		}
 		while(rest < p2) {

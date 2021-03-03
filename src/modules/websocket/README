@@ -73,7 +73,7 @@ Peter Dunkley
    1.10. Set verbose_list parameter
    1.11. Set event_callback parameter
    1.12. Set timer_intervalparameter
-   1.13. Set rm_timer_intervalparameter
+   1.13. Set rm_delay_intervalparameter
    1.14. ws_handle_handshake usage
    1.15. ws_close usage
    1.16. event_route[websocket:closed] usage
@@ -511,7 +511,7 @@ modparam("websocket", "timer_interval", 5)
 
    Default value is 5.
 
-   Example 1.13. Set rm_timer_intervalparameter
+   Example 1.13. Set rm_delay_intervalparameter
 ...
 modparam("websocket", "rm_delay_interval", 2)
 ...
@@ -672,8 +672,8 @@ kamcmd ws.enable
 7.1.  websocket:closed
 
    When defined, the module calls event_route[websocket:closed] when a
-   connection closes. The connection may be identified using the the $si
-   and $sp pseudo-variables.
+   connection closes. The connection may be identified using the $si and
+   $sp pseudo-variables.
 
    Example 1.16. event_route[websocket:closed] usage
 ...

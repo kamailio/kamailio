@@ -45,6 +45,7 @@
 #include <netinet/tcp.h>
 #include <time.h>
 
+extern pg_con_param_t* pg_con_param_list;
 
 /* Override the default notice processor to output the messages
  * using SER's output subsystem.
@@ -244,8 +245,8 @@ int pg_con_connect(db_con_t *con)
 	struct pg_uri *puri;
 	char *port_str;
 	int ret, i = 0;
-	const char *keywords[10], *values[10];
-	char to[16];
+	const char *keywords[32], *values[32];
+	pg_con_param_t* pg_con_param;
 
 	pcon = DB_GET_PAYLOAD(con);
 	puri = DB_GET_PAYLOAD(con->uri);
@@ -278,11 +279,14 @@ int pg_con_connect(db_con_t *con)
 	values[i++] = puri->username;
 	keywords[i] = "password";
 	values[i++] = puri->password;
-	if(pg_timeout > 0) {
-		snprintf(to, sizeof(to) - 1, "%d", pg_timeout + 3);
-		keywords[i] = "connect_timeout";
-		values[i++] = to;
-	}
+
+	/* add other connection parameters */
+	pg_con_param = pg_con_param_list;
+	while(pg_con_param){
+		keywords[i] = pg_con_param->name;
+		values[i++] = pg_con_param->value;
+		pg_con_param = pg_con_param->next;
+	}	
 
 	keywords[i] = values[i] = NULL;
 

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -30,19 +30,19 @@
 dmq_peer_t *register_dmq_peer(dmq_peer_t *peer)
 {
 	dmq_peer_t *new_peer;
-	if(!peer_list) {
+	if(!dmq_peer_list) {
 		LM_ERR("peer list not initialized\n");
 		return NULL;
 	}
-	lock_get(&peer_list->lock);
-	if(search_peer_list(peer_list, peer)) {
+	lock_get(&dmq_peer_list->lock);
+	if(search_peer_list(dmq_peer_list, peer)) {
 		LM_ERR("peer already exists: %.*s %.*s\n", peer->peer_id.len,
 				peer->peer_id.s, peer->description.len, peer->description.s);
-		lock_release(&peer_list->lock);
+		lock_release(&dmq_peer_list->lock);
 		return NULL;
 	}
-	new_peer = add_peer(peer_list, peer);
-	lock_release(&peer_list->lock);
+	new_peer = add_peer(dmq_peer_list, peer);
+	lock_release(&dmq_peer_list->lock);
 	return new_peer;
 }
 
@@ -124,8 +124,8 @@ int is_from_remote_node(sip_msg_t *msg)
 
 	ip = &msg->rcv.src_ip;
 
-	lock_get(&node_list->lock);
-	node = node_list->nodes;
+	lock_get(&dmq_node_list->lock);
+	node = dmq_node_list->nodes;
 
 	while(node) {
 		if(!node->local && ip_addr_cmp(ip, &node->ip_address)) {
@@ -135,7 +135,7 @@ int is_from_remote_node(sip_msg_t *msg)
 		node = node->next;
 	}
 done:
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	return result;
 }
 
@@ -153,8 +153,8 @@ int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
 {
 	dmq_node_t *node;
 
-	lock_get(&node_list->lock);
-	node = node_list->nodes;
+	lock_get(&dmq_node_list->lock);
+	node = dmq_node_list->nodes;
 	while(node) {
 		/* we do not send the message to the following:
 		 *   - the except node
@@ -175,10 +175,10 @@ int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		}
 		node = node->next;
 	}
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	return 0;
 error:
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	return -1;
 }
 
@@ -295,13 +295,13 @@ int ki_dmq_send_message(sip_msg_t *msg, str *peer_str, str *to_str,
 			goto error;
 		}
 	}
-	dmq_node_t *to_dmq_node = find_dmq_node_uri(node_list, to_str);
+	dmq_node_t *to_dmq_node = find_dmq_node_uri(dmq_node_list, to_str);
 	if(!to_dmq_node) {
 		LM_ERR("cannot find dmq_node: %.*s\n", to_str->len, to_str->s);
 		goto error;
 	}
 	if(dmq_send_message(destination_peer, body_str, to_dmq_node,
-			   &notification_callback, 1, ct_str)
+			   &dmq_notification_resp_callback, 1, ct_str)
 			< 0) {
 		LM_ERR("cannot send dmq message\n");
 		goto error;
@@ -366,7 +366,7 @@ int ki_dmq_bcast_message(sip_msg_t *msg, str *peer_str, str *body_str,
 			goto error;
 		}
 	}
-	if(bcast_dmq_message(destination_peer, body_str, 0, &notification_callback,
+	if(bcast_dmq_message(destination_peer, body_str, 0, &dmq_notification_resp_callback,
 			   1, ct_str) < 0) {
 		LM_ERR("cannot send dmq message\n");
 		goto error;
@@ -425,8 +425,8 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 		set_force_socket(msg, sock);
 	}
 
-	lock_get(&node_list->lock);
-	node = node_list->nodes;
+	lock_get(&dmq_node_list->lock);
+	node = dmq_node_list->nodes;
 	while(node) {
 		/* we do not send the message to the following:
 		 *   - ourself
@@ -456,10 +456,10 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 
 		node = node->next;
 	}
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	return 0;
 error:
-	lock_release(&node_list->lock);
+	lock_release(&dmq_node_list->lock);
 	return -1;
 }
 
@@ -504,15 +504,15 @@ void ping_servers(unsigned int ticks, void *param)
 	int ret;
 	LM_DBG("ping_servers\n");
 
-	if(!node_list->nodes
-			|| (node_list->nodes->local && !node_list->nodes->next)) {
+	if(!dmq_node_list->nodes
+			|| (dmq_node_list->nodes->local && !dmq_node_list->nodes->next)) {
 		LM_DBG("node list is empty - attempt to rebuild from notification "
 			   "address\n");
 		*dmq_init_callback_done = 0;
 		if(dmq_notification_address.s) {
-			notification_node =
+			dmq_notification_node =
 					add_server_and_notify(&dmq_notification_address);
-			if(!notification_node) {
+			if(!dmq_notification_node) {
 				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
 						STR_FMT(&dmq_notification_address));
 			}
@@ -528,7 +528,7 @@ void ping_servers(unsigned int ticks, void *param)
 		return;
 	}
 	ret = bcast_dmq_message1(dmq_notification_peer, body, NULL,
-			&notification_callback, 1, &notification_content_type, 1);
+			&dmq_notification_resp_callback, 1, &dmq_notification_content_type, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {

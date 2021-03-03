@@ -1,0 +1,26 @@
+{
+  "name": "secfilter",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "action": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "data": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

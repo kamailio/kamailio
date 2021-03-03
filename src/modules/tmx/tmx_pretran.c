@@ -89,7 +89,7 @@ int tmx_init_pretran_table(void)
 
 	_tmx_ptran_table = (pretran_slot_t*)shm_malloc(_tmx_ptran_size*sizeof(pretran_slot_t));
 	if(_tmx_ptran_table == NULL) {
-		LM_ERR("not enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_tmx_ptran_table, 0, _tmx_ptran_size*sizeof(pretran_slot_t));
@@ -249,7 +249,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	if(unlikely(_tmx_proc_ptran == NULL)) {
 		_tmx_proc_ptran = (pretran_t*)shm_malloc(sizeof(pretran_t));
 		if(_tmx_proc_ptran == NULL) {
-			LM_ERR("not enough memory for pretran structure\n");
+			SHM_MEM_ERROR_FMT("pretran structure\n");
 			return -1;
 		}
 		memset(_tmx_proc_ptran, 0, sizeof(pretran_t));
@@ -270,7 +270,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 		if(_tmx_proc_ptran->dbuf.s) shm_free(_tmx_proc_ptran->dbuf.s);
 		_tmx_proc_ptran->dbuf.s = (char*)shm_malloc(dsize);
 		if(_tmx_proc_ptran->dbuf.s==NULL) {
-			LM_ERR("not enough memory for pretran data\n");
+			SHM_MEM_ERROR_FMT("pretran data\n");
 			return -1;
 		}
 		_tmx_proc_ptran->dbuf.len = dsize;

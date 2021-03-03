@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,11 +36,11 @@ pua_event_t* init_pua_evlist(void)
 	list= (pua_event_t*)shm_malloc(sizeof(pua_event_t));
 	if(list== NULL)
 	{
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	list->next= NULL;
-	
+
 	return list;
 
 }
@@ -48,12 +48,12 @@ pua_event_t* init_pua_evlist(void)
 int add_pua_event(int ev_flag, char* name, char* content_type,
 		evs_process_body_t* process_body)
 {
-		
+
 	pua_event_t* event= NULL;
 	int size;
 	int name_len;
 	int ctype_len= 0;
-	str str_name;	
+	str str_name;
 
 	name_len= strlen(name);
 	str_name.s= name;
@@ -72,9 +72,9 @@ int add_pua_event(int ev_flag, char* name, char* content_type,
 	event= (pua_event_t*)shm_malloc(size);
 	if(event== NULL)
 	{
-		LM_ERR("No more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
-	}	
+	}
 	memset(event, 0, size);
 	size= sizeof(pua_event_t);
 
@@ -82,13 +82,13 @@ int add_pua_event(int ev_flag, char* name, char* content_type,
 	memcpy(event->name.s, name, name_len);
 	event->name.len= name_len;
 	size+= name_len;
-			
+
 	if(content_type)
 	{
 		event->content_type.s= (char*)event+ size;
 		memcpy(event->content_type.s, content_type, ctype_len);
 		event->content_type.len= ctype_len;
-		size+= ctype_len;		
+		size+= ctype_len;
 	}
 
 	event->process_body= process_body;
@@ -98,7 +98,7 @@ int add_pua_event(int ev_flag, char* name, char* content_type,
 	pua_evlist->next= event;
 
 	return 0;
-}	
+}
 
 pua_event_t* contains_pua_event(str* name)
 {
@@ -110,12 +110,12 @@ pua_event_t* contains_pua_event(str* name)
 		if(event->name.len== name->len &&
 				strncmp(event->name.s, name->s, name->len)== 0)
 		{
-			return event;	
+			return event;
 		}
 		event= event->next;
-	}	
+	}
 
-	return NULL;	
+	return NULL;
 }
 
 pua_event_t* get_event(int ev_flag)
@@ -127,11 +127,11 @@ pua_event_t* get_event(int ev_flag)
 	{
 		if(event->ev_flag== ev_flag)
 		{
-			return event;	
+			return event;
 		}
 		event= event->next;
-	}	
-	return NULL;	
+	}
+	return NULL;
 }
 
 
@@ -147,8 +147,8 @@ void destroy_pua_evlist(void)
 			e2= e1->next;
 			shm_free(e1);
 			e1= e2;
-		}	
+		}
 		shm_free(pua_evlist);
-	}	
+	}
 
-}	
+}

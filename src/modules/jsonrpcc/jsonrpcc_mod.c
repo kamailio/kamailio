@@ -49,6 +49,7 @@ int        fixup_pvar_shm(void** param, int param_no);
 
 char *servers_param;
 int  pipe_fds[2] = {-1,-1};
+int cmd_pipe = -1;
 
 extern int _jsonrpcc_max_conn_retry; /* max retries to connect */
 

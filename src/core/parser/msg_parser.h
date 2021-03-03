@@ -110,25 +110,30 @@ typedef enum request_method {
 #define FL_MSG_NOREPLY       (1<<23) /*!< do not send sip reply for request */
 #define FL_SIPTRACE          (1<<24) /*!< message to be traced in stateless replies */
 #define FL_ROUTE_ADDR        (1<<25) /*!< request has Route address for next hop */
+#define FL_USE_OTCPID        (1<<26) /*!< request to be routed using outboud tcp con id */
 
-/* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
+/* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
 
-/* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
+/* WARNING: Value (1 << 29) is reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
-/* WARNING: Value (1 << 30) is temporarily reserved for use in kamailio
+/* WARNING: Value (1 << 30) is reserved for use in kamailio
  * media proxy module (flag FL_USE_MEDIA_PROXY)! */
 
-/* WARNING: Value (1 << 31) is temporarily reserved for use in kamailio
+/* WARNING: Value (1 << 31) is reserved for use in kamailio
  * nat_traversal module (flag FL_DO_KEEPALIVE)! */
 
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
+/* sip parser mode flags (1<<n) */
+#define KSR_SIP_PARSER_MODE_NONE 0
+#define KSR_SIP_PARSER_MODE_STRICT 1
+
 #define IFISMETHOD(methodname,firstchar)                                  \
 if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
-		strncasecmp( tmp+1, #methodname +1, methodname##_LEN-1)==0 &&     \
+		strncasecmp( tmp+1, &#methodname[1], methodname##_LEN-1)==0 &&     \
 		*(tmp+methodname##_LEN)==' ') {                                   \
 				fl->type=SIP_REQUEST;                                     \
 				fl->u.request.method.len=methodname##_LEN;                \
@@ -136,28 +141,26 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 				tmp=buffer+methodname##_LEN;                              \
 }
 
-#define IS_HTTP(req)                                                \
-	((req)->first_line.u.request.version.len >= HTTP_VERSION_LEN && \
-	!strncasecmp((req)->first_line.u.request.version.s,             \
-		HTTP_VERSION, HTTP_VERSION_LEN))
 
-#define IS_SIP(req)                                                \
-	((req)->first_line.u.request.version.len >= SIP_VERSION_LEN && \
-	!strncasecmp((req)->first_line.u.request.version.s,             \
-		SIP_VERSION, SIP_VERSION_LEN))
+/* sip request */
+#define IS_SIP(req)                                     \
+	(((req)->first_line.type == SIP_REQUEST) &&           \
+	((req)->first_line.flags & FLINE_FLAG_PROTO_SIP))
 
-#define IS_HTTP_REPLY(rpl)                                                \
-	(((rpl)->first_line.u.reply.version.len >= HTTP_VERSION_LEN && \
-	!strncasecmp((rpl)->first_line.u.reply.version.s,             \
-		HTTP_VERSION, HTTP_VERSION_LEN)) ||                         \
-	((rpl)->first_line.u.reply.version.len >= HTTP2_VERSION_LEN && \
-	!strncasecmp((rpl)->first_line.u.reply.version.s,             \
-		HTTP2_VERSION, HTTP2_VERSION_LEN)))
+/* sip reply */
+#define IS_SIP_REPLY(rpl)                               \
+	(((rpl)->first_line.type == SIP_REPLY) &&             \
+	((rpl)->first_line.flags & FLINE_FLAG_PROTO_SIP))
 
-#define IS_SIP_REPLY(rpl)                                                \
-	((rpl)->first_line.u.reply.version.len >= SIP_VERSION_LEN && \
-	!strncasecmp((rpl)->first_line.u.reply.version.s,             \
-		SIP_VERSION, SIP_VERSION_LEN))
+/* http request */
+#define IS_HTTP(req)                                    \
+	(((req)->first_line.type == SIP_REQUEST) &&           \
+	((req)->first_line.flags & FLINE_FLAG_PROTO_HTTP))
+
+/* http reply */
+#define IS_HTTP_REPLY(rpl)                              \
+	(((rpl)->first_line.type == SIP_REPLY) &&             \
+	((rpl)->first_line.flags & FLINE_FLAG_PROTO_HTTP))
 
 /*! \brief
  * Return a URI to which the message should be really sent (not what should
@@ -267,6 +270,7 @@ typedef struct ocd_flow {
  * - add to msg_ldata_reset() if a field uses dynamic memory */
 typedef struct msg_ldata {
 	ocd_flow_t flow;
+	void *vdata;
 } msg_ldata_t;
 
 /*! \brief The SIP message */

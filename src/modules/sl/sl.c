@@ -71,6 +71,8 @@ str _sl_event_callback_lres_sent = STR_NULL;
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
+static int w_send_reply_mode(struct sip_msg* msg, char* str1, char* str2,
+		char *str3);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2);
 static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2);
@@ -80,6 +82,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
 static int fixup_sl_reply(void** param, int param_no);
+static int fixup_sl_reply_mode(void** param, int param_no);
 
 static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_ltt_name(pv_spec_p sp, str *in);
@@ -98,6 +101,8 @@ static cmd_export_t cmds[]={
 	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply, 0,
 		REQUEST_ROUTE},
 	{"send_reply",     w_send_reply,                2, fixup_sl_reply, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
+	{"send_reply_mode", (cmd_function)w_send_reply_mode, 3, fixup_sl_reply_mode, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"sl_reply_error", w_sl_reply_error,            0, 0, 0,
 		REQUEST_ROUTE},
@@ -334,6 +339,53 @@ static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
 }
 
 /**
+ * @brief send stateful reply if transaction was created
+ *
+ * Check if transation was created for respective SIP request and reply
+ * in stateful mode, otherwise send stateless reply
+ *
+ * @param msg - SIP message structure
+ * @param code - reply status code
+ * @param reason - reply reason phrase
+ * @param mode - execution mode
+ * @return 1 for success and -1 for failure
+ */
+int ki_send_reply_mode(struct sip_msg *msg, int code, str *reason, int mode)
+{
+	if(mode & SET_RPL_NO_CONNECT_T) {
+		msg->rpl_send_flags.f|= SND_F_FORCE_CON_REUSE;
+	} else if(mode & SET_RPL_CLOSE_T) {
+		msg->rpl_send_flags.f|= SND_F_CON_CLOSE;
+	}
+
+	return send_reply(msg, code, reason);
+}
+
+/**
+ * @brief Small wrapper around send_reply
+ */
+static int w_send_reply_mode(struct sip_msg* msg, char* p1, char* p2, char *p3)
+{
+	int code;
+	str reason;
+	int mode = 0;
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = default_code;
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason = default_reason;
+	}
+
+	if (get_int_fparam(&mode, msg, (fparam_t*)p3) < 0) {
+		mode = 0;
+	}
+
+	return ki_send_reply_mode(msg, code, &reason, mode);
+}
+
+/**
  * @brief store To-tag value in totag parameter
  */
 int get_reply_totag(struct sip_msg *msg, str *totag)
@@ -370,6 +422,21 @@ static int fixup_sl_reply(void** param, int param_no)
 		return fixup_var_int_12(param, 1);
 	} else if (param_no == 2) {
 		return fixup_var_pve_str_12(param, 2);
+	}
+	return 0;
+}
+
+/**
+ * @brief fixup for SL reply mode config file functions
+ */
+static int fixup_sl_reply_mode(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_var_int_12(param, 1);
+	} else if (param_no == 2) {
+		return fixup_var_pve_str_12(param, 2);
+	} else if (param_no == 3) {
+		return fixup_var_int_12(param, 1);
 	}
 	return 0;
 }
@@ -611,6 +678,11 @@ static sr_kemi_t sl_kemi_exports[] = {
 	{ str_init("sl"), str_init("send_reply"),
 		SR_KEMIP_INT, send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sl"), str_init("send_reply_mode"),
+		SR_KEMIP_INT, ki_send_reply_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("sl"), str_init("sl_reply_error"),

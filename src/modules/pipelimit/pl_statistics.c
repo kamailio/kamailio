@@ -137,9 +137,11 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 	struct socket_info  *si;
 	struct socket_info** list;
 
-	int num_ip_octets   = family == AF_INET ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
-	int numberOfSockets = 0;
+	unsigned int num_ip_octets   = 0;
+	unsigned int numberOfSockets = 0;
 	int currentRow      = 0;
+
+	num_ip_octets = (family == AF_INET) ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
 
 	/* I hate to use #ifdefs, but this is necessary because of the way
 	 * get_sock_info_list() is defined.  */
@@ -198,7 +200,7 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 
 	/* Extract out the IP Addresses and ports.  */
 	for(si=list?*list:0; si; si=si->next){
-		int i;
+		unsigned int i;
 
 		/* We currently only support IPV4. */
 		if (si->address.af != family) {

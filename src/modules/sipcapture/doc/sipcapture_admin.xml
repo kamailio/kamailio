@@ -365,7 +365,7 @@ modparam("sipcapture", "raw_sock_children", 6)
                 </emphasis>
                 </para>
                 <example>
-                <title>Set <varname>promiscous_on</varname> parameter</title>
+                <title>Set <varname>promiscuous_on</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("sipcapture", "promiscuous_on", 1)
@@ -542,6 +542,24 @@ function ksr_sipcapture_event(evname)
 end
 ...
 </programlisting>
+		</example>
+	</section>
+
+	<section id="sipcapture.p.capture_bad_msgs">
+		<title><varname>capture_bad_msgs</varname> (int)</title>
+		<para>
+			If set to something different than 0, tries to capture also the broken SIP messages.
+		</para>
+		<para>
+			Default value is <emphasis>0</emphasis>.
+		</para>
+		<example>
+			<title>Set <varname>capture_bad_msgs</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "capture_bad_msgs", 1)
+...
+			</programlisting>
 		</example>
 	</section>
 

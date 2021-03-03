@@ -15,13 +15,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
- * \brief Parser :: Fast 32-bit Header Field Name Parser
+ * \brief Parser :: Fast Header Field Name Parser
  *
  * \ingroup parser
  */
@@ -37,5 +37,9 @@
  */
 char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr);
 char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr);
+char* parse_hname2_str (str* const hbuf, hdr_field_t* const hdr);
+
+int ksr_hname_init_index(void);
+int ksr_hname_init_config(void);
 
 #endif /* PARSE_HNAME2_H */

@@ -24,6 +24,7 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/locking.h"
+#include "../../core/kemi.h"
 #include "pv_svar.h"
 
 typedef struct sh_var {
@@ -65,6 +66,10 @@ int param_set_shvar( modparam_t type, void* val);
 
 void rpc_shv_get(rpc_t* rpc, void* c);
 void rpc_shv_set(rpc_t* rpc, void* c);
+
+int ki_shv_seti(sip_msg_t *msg, str *vname, int ival);
+int ki_shv_sets(sip_msg_t *msg, str *vname, str *sval);
+sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname);
 
 #endif
 

@@ -63,6 +63,7 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/globals.h"
 #include "../../core/timer_ticks.h"
+#include "../../core/dset.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
@@ -207,6 +208,7 @@ static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 		char* pnexthop, char* psock, char *phdrs, char* pbody);
 static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2);
 
+static int t_clean(struct sip_msg* msg, char* key, char* value);
 
 /* by default the fr timers avps are not set, so that the avps won't be
  * searched for nothing each time a new transaction is created */
@@ -219,6 +221,13 @@ str ulattrs_xavp_name = {NULL, 0};
 str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
 str _tm_event_callback_lres_sent = {NULL, 0};
+
+/* control if reply should be relayed
+ * when transaction reply status is RPS_PUSHED_AFTER_COMPLETION */
+int tm_reply_relay_mode = 1;
+
+unsigned long tm_exec_time_check = 0; /* microseconds */
+int tm_exec_time_check_param = 5000; /* milliseconds */
 
 int tm_failure_exec_mode = 0;
 
@@ -410,6 +419,7 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contact_flow", t_next_contact_flow,            0, 0, 0,
 		REQUEST_ROUTE },
+	{"t_clean", t_clean, 0, 0, 0, ANY_ROUTE },
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0, 0},
@@ -473,6 +483,8 @@ static param_export_t params[]={
 	{"relay_100",           PARAM_INT, &default_tm_cfg.relay_100             },
 	{"rich_redirect" ,      PARAM_INT, &tm_rich_redirect                     },
 	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent    },
+	{"exec_time_check" ,    PARAM_INT, &tm_exec_time_check_param             },
+	{"reply_relay_mode",    PARAM_INT, &tm_reply_relay_mode                  },
 	{0,0,0}
 };
 
@@ -704,11 +716,20 @@ static int mod_init(void)
 	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n",
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
 
+	if(tm_exec_time_check_param > 0) {
+		tm_exec_time_check = (unsigned long)tm_exec_time_check_param * 1000;
+	}
+
 	/* checking if we have sufficient bitmap capacity for given
 	 * maximum number of  branches */
 	if (sr_dst_max_branches+1>31) {
 		LM_CRIT("Too many max UACs for UAC branch_bm_t bitmap: %d\n",
 				sr_dst_max_branches );
+		return -1;
+	}
+
+	if(tm_rpc_response_list_init()<0) {
+		LM_ERR("failed to init rpc\n");
 		return -1;
 	}
 
@@ -920,6 +941,50 @@ error:
 static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2)
 {
 	return ki_t_get_status_code(msg);
+}
+
+static int ki_t_get_branch_index(sip_msg_t* msg)
+{
+	tm_cell_t *t = 0;
+	tm_ctx_t *tcx = 0;
+	int idx = T_BR_UNDEFINED;
+
+	if(msg==NULL) {
+		return -1;
+	}
+
+	/* statefull replies have the branch_index set */
+	if(msg->first_line.type == SIP_REPLY) {
+		tcx = tm_ctx_get();
+		if(tcx != NULL) {
+			idx = tcx->branch_index;
+		}
+	} else switch(route_type) {
+		case BRANCH_ROUTE:
+		case BRANCH_FAILURE_ROUTE:
+			/* branch and branch_failure routes have their index set */
+			tcx = tm_ctx_get();
+			if(tcx != NULL) {
+				idx = tcx->branch_index;
+			}
+			break;
+		case REQUEST_ROUTE:
+			/* take the branch number from the number of added branches */
+			idx = nr_branches;
+			break;
+		case FAILURE_ROUTE:
+			/* first get the transaction */
+			t = get_t();
+			if ( t == NULL || t == T_UNDEFINED ) {
+				return -1;
+			}
+			/* add the currently added branches to the number of
+			 * completed branches in the transaction
+			 */
+			idx = t->nr_of_outgoings + nr_branches;
+			break;
+	}
+	return idx;
 }
 
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
@@ -2712,6 +2777,13 @@ static const char* rpc_t_uac_wait_doc[2] = {
 	0
 };
 
+static const char* rpc_t_uac_wait_block_doc[2] = {
+	"starts a tm uac and waits for the final reply in blocking mode, using a"
+		" list of string parameters: method, ruri, dst_uri send_sock, headers"
+		" (CRLF separated) and body (optional)",
+	0
+};
+
 static const char* tm_rpc_list_doc[2] = {
 	"List transactions.",
 	0
@@ -2732,6 +2804,7 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
 	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
+	{"tm.t_uac_wait_block",  rpc_t_uac_wait_block,  rpc_t_uac_wait_block_doc, 0},
 	{"tm.list",  tm_rpc_list,  tm_rpc_list_doc, RET_ARRAY},
 	{"tm.clean", tm_rpc_clean,  tm_rpc_clean_doc, 0},
 	{0, 0, 0, 0}
@@ -2845,6 +2918,63 @@ static int ki_t_relay(sip_msg_t *msg)
 /**
  *
  */
+static int ki_t_relay_to_proto(sip_msg_t *msg, str *sproto)
+{
+
+	int proto = PROTO_NONE;
+
+	if (sproto != NULL && sproto->s != NULL && sproto->len == 3) {
+		if (strncasecmp(sproto->s, "UDP", 3) == 0) {
+			proto = PROTO_UDP;
+		} else if (strncasecmp(sproto->s, "TCP", 3) == 0) {
+			proto = PROTO_TCP;
+		} else if (strncasecmp(sproto->s, "TLS", 3)) {
+			proto = PROTO_TLS;
+		} else {
+			LM_ERR("bad protocol specified <%s>\n", sproto->s);
+			return E_UNSPEC;
+		}
+	}
+	return _w_t_relay_to(msg, (struct proxy_l *)0, proto);
+}
+
+/**
+ *
+ */
+static int ki_t_relay_to_proto_addr(sip_msg_t *msg, str *sproto, str *host, int port)
+{
+
+	int proto = PROTO_NONE;
+	proxy_l_t *proxy = NULL;
+	int ret = -1;
+
+	if (sproto != NULL && sproto->s != NULL && sproto->len == 3) {
+		if (strncasecmp(sproto->s, "UDP", 3) == 0) {
+			proto = PROTO_UDP;
+		} else if (strncasecmp(sproto->s, "TCP", 3) == 0) {
+			proto = PROTO_TCP;
+		} else if (strncasecmp(sproto->s, "TLS", 3)) {
+			proto = PROTO_TLS;
+		} else {
+			LM_ERR("bad protocol specified <%s>\n", sproto->s);
+			return E_UNSPEC;
+		}
+	}
+	proxy = mk_proxy(host, (unsigned short)port, 0);
+	if (proxy == 0) {
+		LM_ERR("bad host:port provided <%s:%d>\n",
+		       host->s, port );
+		return E_BAD_ADDRESS;
+	}
+	ret = _w_t_relay_to(msg, proxy, proto);
+	free_proxy(proxy);
+	pkg_free(proxy);
+	return ret;
+}
+
+/**
+ *
+ */
 static int ki_t_relay_to_proxy_flags(sip_msg_t *msg, str *sproxy, int rflags)
 {
 	proxy_l_t *proxy = NULL;
@@ -2905,6 +3035,20 @@ static int ki_t_relay_to_proxy(sip_msg_t *msg, str *sproxy)
 static int ki_t_relay_to_flags(sip_msg_t *msg, int rflags)
 {
 	return ki_t_relay_to_proxy_flags(msg, NULL, rflags);
+}
+
+/* script function to clean active but very old transactions */
+static int t_clean(struct sip_msg* msg, char* key, char* value)
+{
+	tm_clean_lifetime();
+	return 1;
+}
+
+/* kemi function to clean active but very old transactions */
+static int ki_t_clean(sip_msg_t* msg)
+{
+	tm_clean_lifetime();
+	return 1;
 }
 
 /**
@@ -3157,11 +3301,32 @@ static sr_kemi_t tm_kemi_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("tm"), str_init("t_relay_to_proto"),
+		SR_KEMIP_INT, ki_t_relay_to_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_relay_to_proto_addr"),
+		SR_KEMIP_INT, ki_t_relay_to_proto_addr,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("tm"), str_init("t_get_status_code"),
 		SR_KEMIP_INT, ki_t_get_status_code,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("tm"), str_init("t_get_branch_index"),
+		SR_KEMIP_INT, ki_t_get_branch_index,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_clean"),
+		SR_KEMIP_INT, ki_t_clean,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };

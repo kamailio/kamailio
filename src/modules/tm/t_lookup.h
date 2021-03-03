@@ -94,6 +94,8 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
 int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
 int t_lookup_ident_filter(struct cell ** trans, unsigned int hash_index,
 		unsigned int label, int filter);
+tm_cell_t *t_find_ident_filter(unsigned int hash_index, unsigned int label,
+		int filter);
 /* lookup a transaction by callid and cseq */
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
 

@@ -159,7 +159,7 @@ static inline int star(udomain_t* _d, str* _a) {
 
         if (ul.get_impurecord(_d, _a, &r) == 0) {
             contact_for_header_t** contact_header = 0;
-            build_contact(r, contact_header);
+            build_contact(r, contact_header, 0);
             free_contact_buf(*contact_header);
             ul.unlock_udomain(_d, _a);
         }
@@ -777,6 +777,9 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
     int first_unbarred_impu = 1; //this is used to flag the IMPU as anchor for implicit set
     int is_primary_impu = 0;
     int ret = 1;
+	str callid = {0, 0};
+	str path = {0, 0};
+	ucontact_t* ucontact;
 
     int num_explicit_dereg_contact = 0;
     str *explicit_dereg_contact = 0;
@@ -828,9 +831,24 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
             //now build the contact buffer to be include in the reply message and unlock
-            build_contact(impu_rec, contact_header);
+            build_contact(impu_rec, contact_header, 0);
             build_p_associated_uri(*s);
-            notify_subscribers(impu_rec, 0, 0);
+
+
+            for (h = msg->contact; h; h = h->next) {
+                if (h->type == HDR_CONTACT_T && h->parsed) {
+                    for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+						if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+							LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+							goto error;
+						}
+                        event_reg(0, impu_rec, ucontact, IMS_REGISTRAR_CONTACT_REGISTERED, 0, 0, &chi->uri, 0, 0);
+						ul.release_ucontact(ucontact);
+                    }
+                }
+            }
+
+
             ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_RE_REGISTRATION:
@@ -851,8 +869,8 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                 ul.unlock_udomain(_d, public_identity);
                 goto error;
             }
-            //build the contact buffer for all registered contacts on explicit IMPU
-            build_contact(impu_rec, contact_header);
+            //build the contact buffer for the exact registered contact for reply on explicit IMPU
+            build_contact(impu_rec, contact_header, msg);
             build_p_associated_uri(impu_rec->s);
 
             subscription = impu_rec->s;
@@ -863,7 +881,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         ecf1, ecf2, &impu_rec) != 0) {
                     LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
                 }
-                build_contact(impu_rec, contact_header);
+                build_contact(impu_rec, contact_header, msg);
                 ul.unlock_udomain(_d, public_identity);
                 break;
             }
@@ -913,7 +931,20 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             if (ul.update_impurecord(_d, public_identity, 0, reg_state, -1 /*do not change send sar on delete */, 0 /*this is explicit so barring must be 0*/, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec) != 0) {
                 LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
             }
-            notify_subscribers(impu_rec, 0, 0);
+
+            for (h = msg->contact; h; h = h->next) {
+                if (h->type == HDR_CONTACT_T && h->parsed) {
+                    for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+						if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+							LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+							goto error;
+						}
+                        event_reg(0, impu_rec, ucontact, IMS_REGISTRAR_CONTACT_REFRESHED, 0, 0, &chi->uri, 0, 0);
+						ul.release_ucontact(ucontact);
+                    }
+                }
+            }
+
 	    ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_USER_DEREGISTRATION:
@@ -1011,11 +1042,17 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         //                                s = s->next;
                         //                            }
                         //                        }
-                        notify_subscribers(tmp_impu_rec, (str*) explicit_dereg_contact, num_explicit_dereg_contact);
 
                         for (h = msg->contact; h; h = h->next) {
                             if (h->type == HDR_CONTACT_T && h->parsed) {
                                 for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+									if (ul.get_ucontact(&chi->uri, &callid, &path, 0, &ucontact) != 0) {
+										LM_DBG("Contact does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+										goto error;
+									}
+									notify_subscribers(tmp_impu_rec, ucontact, (str*) explicit_dereg_contact, num_explicit_dereg_contact, IMS_REGISTRAR_CONTACT_UNREGISTERED);
+									ul.release_ucontact(ucontact);
+
                                     if (calc_contact_q(chi->q, &qvalue) != 0) {
                                         LM_ERR("error on <%.*s>\n", chi->uri.len, chi->uri.s);
                                         ul.unlock_udomain(_d, &pi->public_identity);

@@ -257,6 +257,10 @@ void free_cell_helper(
 		destroy_avp_list_unsafe(&dead_cell->uri_avps_to);
 	if(dead_cell->xavps_list)
 		xavp_destroy_list_unsafe(&dead_cell->xavps_list);
+	if(dead_cell->xavus_list)
+		xavu_destroy_list_unsafe(&dead_cell->xavus_list);
+	if(dead_cell->xavis_list)
+		xavi_destroy_list_unsafe(&dead_cell->xavis_list);
 
 	memset(dead_cell, 0, sizeof(tm_cell_t));
 	/* the cell's body */
@@ -329,6 +333,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 
 	new_cell = (struct cell *)shm_malloc(cell_size);
 	if(!new_cell) {
+		SHM_MEM_ERROR;
 		ser_error = E_OUT_OF_MEM;
 		return NULL;
 	}
@@ -364,6 +369,14 @@ struct cell *build_cell(struct sip_msg *p_msg)
 
 	xold = xavp_set_list(&new_cell->xavps_list);
 	new_cell->xavps_list = *xold;
+	*xold = 0;
+
+	xold = xavu_set_list(&new_cell->xavus_list);
+	new_cell->xavus_list = *xold;
+	*xold = 0;
+
+	xold = xavi_set_list(&new_cell->xavis_list);
+	new_cell->xavis_list = *xold;
 	*xold = 0;
 
 	/* We can just store pointer to domain avps in the transaction context,
@@ -423,10 +436,14 @@ error:
 	destroy_avp_list(&new_cell->uri_avps_from);
 	destroy_avp_list(&new_cell->uri_avps_to);
 	xavp_destroy_list(&new_cell->xavps_list);
+	xavu_destroy_list(&new_cell->xavus_list);
+	xavi_destroy_list(&new_cell->xavis_list);
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();
 	xavp_reset_list();
+	xavu_reset_list();
+	xavi_reset_list();
 	return NULL;
 }
 
@@ -464,7 +481,7 @@ struct s_table *init_hash_table()
 	/*allocs the table*/
 	_tm_table = (struct s_table *)shm_malloc(sizeof(struct s_table));
 	if(!_tm_table) {
-		LM_ERR("no shmem for TM table\n");
+		SHM_MEM_ERROR;
 		goto error0;
 	}
 
@@ -522,6 +539,8 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 		x->domain_avps_to = set_avp_list(
 				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 		x->xavps_list = xavp_set_list(&t->xavps_list);
+		x->xavus_list = xavu_set_list(&t->xavus_list);
+		x->xavis_list = xavi_set_list(&t->xavis_list);
 	} else if(mode == 1) {
 		/* restore original avp list */
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from);
@@ -531,6 +550,8 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, x->domain_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, x->domain_avps_to);
 		xavp_set_list(x->xavps_list);
+		xavu_set_list(x->xavus_list);
+		xavi_set_list(x->xavis_list);
 	}
 }
 
@@ -548,6 +569,8 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 				AVP_TRACK_FROM | AVP_CLASS_DOMAIN, bakxd->domain_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, bakxd->domain_avps_to);
 		xavp_set_list(bakxd->xavps_list);
+		xavu_set_list(bakxd->xavus_list);
+		xavi_set_list(bakxd->xavis_list);
 		return;
 	}
 
@@ -565,6 +588,8 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		bakxd->domain_avps_to = set_avp_list(
 				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &newxd->domain_avps_to);
 		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
+		bakxd->xavus_list = xavu_set_list(&newxd->xavus_list);
+		bakxd->xavis_list = xavi_set_list(&newxd->xavis_list);
 		return;
 	}
 }
@@ -596,6 +621,7 @@ void tm_clean_lifetime(void)
 {
 	int r;
 	tm_cell_t *tcell;
+	tm_cell_t *bcell;
 	ticks_t texp;
 
 	texp = get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
@@ -612,7 +638,7 @@ void tm_clean_lifetime(void)
 			continue;
 		}
 
-		clist_foreach(&_tm_table->entries[r], tcell, next_c)
+		clist_foreach_safe(&_tm_table->entries[r], tcell, bcell, next_c)
 		{
 			if(TICKS_GT(texp, tcell->end_of_life)) {
 				tm_log_transaction(tcell, L_WARN, "[hard cleanup]");

@@ -928,10 +928,6 @@ static int reallock_buffer(struct stun_buffer* buffer, UINT_T len)
 static void clean_memory(struct stun_msg* req,
 				struct stun_msg* res,	struct stun_unknown_att* unknown)
 {
-#ifdef DYN_BUF
-	pkg_free(req->msg.buf.s);
-#endif
-
 	if (res->msg.buf.s != NULL) {
 		pkg_free(res->msg.buf.s);
 	}

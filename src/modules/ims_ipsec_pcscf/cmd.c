@@ -63,6 +63,8 @@
 extern str ipsec_listen_addr;
 extern str ipsec_listen_addr6;
 extern int ipsec_reuse_server_port;
+extern ip_addr_t ipsec_listen_ip_addr;
+extern ip_addr_t ipsec_listen_ip_addr6;
 
 extern int spi_id_start;
 
@@ -76,6 +78,9 @@ extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
 #define IPSEC_SEND_FORCE_SOCKET		0x01 /* if set - set send force socket for request messages */
+#define IPSEC_REVERSE_SEARCH		0x02 /* if set - start searching from the last element */
+
+#define IPSEC_CREATE_DELETE_UNUSED_TUNNELS	0x01 /* if set - delete unused tunnels before every registration */
 
 int bind_ipsec_pcscf(ipsec_pcscf_api_t* api) {
 	if(!api){
@@ -408,21 +413,13 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
         return -1;
     }
 
-    //Convert ipsec address from str to struct ip_addr
-	ip_addr_t ipsec_addr;
+    // pointer to the current listen address
+	ip_addr_t *ipsec_addr;
 
     if(remote_addr->af == AF_INET){
-        if(str2ipbuf(&ipsec_listen_addr, &ipsec_addr) < 0){
-            LM_ERR("Unable to convert ipsec addr4 [%.*s]\n", ipsec_listen_addr.len, ipsec_listen_addr.s);
-            close_mnl_socket(sock);
-            return -1;
-        }
+        ipsec_addr = &ipsec_listen_ip_addr;
     } else if(remote_addr->af == AF_INET6){
-        if(str2ip6buf(&ipsec_listen_addr6, &ipsec_addr) < 0){
-            LM_ERR("Unable to convert ipsec addr6 [%.*s]\n", ipsec_listen_addr6.len, ipsec_listen_addr6.s);
-            close_mnl_socket(sock);
-            return -1;
-        }
+        ipsec_addr = &ipsec_listen_ip_addr6;
     } else {
         LM_ERR("Unsupported AF %d\n", remote_addr->af);
         close_mnl_socket(sock);
@@ -445,23 +442,23 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
 
     // SA1 UE client to P-CSCF server
     //               src adrr     dst addr     src port    dst port
-    add_sa    (sock, remote_addr, &ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, s->ck, s->ik, s->r_alg);
-    add_policy(sock, remote_addr, &ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
+    add_sa    (sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, s->ck, s->ik, s->r_alg);
+    add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
     // SA2 P-CSCF client to UE server
     //               src adrr     dst addr     src port           dst port
-    add_sa    (sock, &ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, s->ck, s->ik, s->r_alg);
-    add_policy(sock, &ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
+    add_sa    (sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, s->ck, s->ik, s->r_alg);
+    add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
     // SA3 P-CSCF server to UE client
     //               src adrr     dst addr     src port           dst port
-    add_sa    (sock, &ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, s->ck, s->ik, s->r_alg);
-    add_policy(sock, &ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, IPSEC_POLICY_DIRECTION_OUT);
+    add_sa    (sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, s->ck, s->ik, s->r_alg);
+    add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, IPSEC_POLICY_DIRECTION_OUT);
 
     // SA4 UE server to P-CSCF client
     //               src adrr     dst addr     src port    dst port
-    add_sa    (sock, remote_addr, &ipsec_addr, s->port_us, s->port_pc, s->spi_pc, s->ck, s->ik, s->r_alg);
-    add_policy(sock, remote_addr, &ipsec_addr, s->port_us, s->port_pc, s->spi_pc, IPSEC_POLICY_DIRECTION_IN);
+    add_sa    (sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, s->ck, s->ik, s->r_alg);
+    add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, IPSEC_POLICY_DIRECTION_IN);
 
     close_mnl_socket(sock);
 
@@ -649,7 +646,7 @@ int add_security_server_header(struct sip_msg* m, ipsec_t* s)
     return 0;
 }
 
-int ipsec_create(struct sip_msg* m, udomain_t* d)
+int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
 {
     pcontact_t* pcontact = NULL;
     struct pcontact_info ci;
@@ -661,9 +658,13 @@ int ipsec_create(struct sip_msg* m, udomain_t* d)
         return ret;
     }
 
+    if (_cflags & IPSEC_CREATE_DELETE_UNUSED_TUNNELS) {
+        delete_unused_tunnels();
+    }
+
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -802,7 +803,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, _cflags & IPSEC_REVERSE_SEARCH) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -946,7 +947,7 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }

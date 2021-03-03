@@ -36,6 +36,7 @@ struct cfg_group_registrar {
 	unsigned int	case_sensitive;
 	qvalue_t	default_q;
 	unsigned int	append_branches;
+	unsigned int	use_expired_contacts;
 };
 
 extern struct cfg_group_registrar	default_registrar_cfg;

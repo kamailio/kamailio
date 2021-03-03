@@ -153,4 +153,12 @@ int ki_is_alphanum(sip_msg_t *msg, str *tval);
 
 int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset);
 
+int ki_uri_param_rm(sip_msg_t *msg, str *sparam);
+
+int w_uri_param_rm(struct sip_msg* _msg, char* _param, char* _str2);
+
+int ki_uri_param_any(sip_msg_t *msg, str *sparam);
+
+int w_uri_param_any(struct sip_msg* _msg, char* _param, char* _str2);
+
 #endif /* CHECKS_H */

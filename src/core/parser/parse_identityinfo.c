@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "../ut.h"
 #include "../mem/mem.h"
 #include "parse_def.h"
 #include "parse_identityinfo.h"

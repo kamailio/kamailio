@@ -75,16 +75,16 @@ struct cfg_group_tm	default_tm_cfg = {
 	500,	/* default_code */
 	1,	/* reparse_invite */
 
-	0,	/* tm_blst_503 -- if 1 blacklist 503 sources, using tm_blst_503_min,
+	0,	/* tm_blst_503 -- if 1 blocklist 503 sources, using tm_blst_503_min,
 		 * tm_blst_503_max, tm_blst_503_default and the Retry-After header
 		 * in the 503 reply */
-	0,	/* tm_blst_503_default -- rfc conformant: do not blacklist if
+	0,	/* tm_blst_503_default -- rfc conformant: do not blocklist if
 		 * no retry-after header is present */
-	0,	/* tm_blst_503 -- minimum 503 blacklist time is 0 sec */
-	3600,	/* tm_blst_503_max -- maximum 503 blacklist time is 3600 sec */
+	0,	/* tm_blst_503 -- minimum 503 blocklist time is 0 sec */
+	3600,	/* tm_blst_503_max -- maximum 503 blocklist time is 3600 sec */
 	METHOD_INVITE,	/* tm_blst_methods_add -- backlist only INVITE
 			 * timeouts by default */
-	~METHOD_BYE,	/* tm_blst_methods_lookup -- look-up the blacklist
+	~METHOD_BYE,	/* tm_blst_methods_lookup -- look-up the blocklist
 			 * for every method except BYE by default */
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
@@ -164,19 +164,19 @@ cfg_def_t	tm_cfg_def[] = {
 		"constructed from the INVITE message which was sent out "
 		"instead of building them from the received request"},
 	{"blst_503",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
-		"if set to 1, blacklist 503 SIP response sources"},
+		"if set to 1, blocklist 503 SIP response sources"},
 	{"blst_503_def_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
-		"default 503 blacklist time (in s), when no Retry-After "
+		"default 503 blocklist time (in s), when no Retry-After "
 		"header is present"},
 	{"blst_503_min_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
-		"minimum 503 blacklist time (in s)"},
+		"minimum 503 blocklist time (in s)"},
 	{"blst_503_max_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
-		"maximum 503 blacklist time (in s)"},
+		"maximum 503 blocklist time (in s)"},
 	{"blst_methods_add",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
-		"bitmap of method types that trigger blacklisting on "
+		"bitmap of method types that trigger blocklisting on "
 		"transaction timeouts"},
 	{"blst_methods_lookup",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
-		"Bitmap of method types that are looked-up in the blacklist "
+		"Bitmap of method types that are looked-up in the blocklist "
 		"before statefull forwarding"},
 	{"cancel_b_method",	CFG_VAR_INT,	0, 2, cancel_b_flags_fixup, 0,
 		"How to cancel branches on which no replies were received: 0 - fake"

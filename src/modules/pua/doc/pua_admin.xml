@@ -112,7 +112,7 @@ modparam("pua", "hash_size", 11)
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua", "db_url" "&exampledb;")
+modparam("pua", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>

@@ -70,6 +70,7 @@
 #define RR_PARAM_BUF_SIZE 512 /*!< buffer for RR parameter */
 
 extern int rr_ignore_sips;
+extern int rr_sockname_mode;
 
 /*!
  * \brief RR param buffer
@@ -77,7 +78,7 @@ extern int rr_ignore_sips;
  */
 static char rr_param_buf_ptr[RR_PARAM_BUF_SIZE];
 static str rr_param_buf = {rr_param_buf_ptr,0};
-static unsigned int rr_param_msg;
+static msg_ctx_id_t rr_param_ctx_id = {0};
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
 
@@ -207,6 +208,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	char *p;
 	char *rr_prefix;
 	int rr_prefix_len;
+	int rr_lump_type;
 
 	if(_sips==0) {
 		rr_prefix = RR_PREFIX_SIP;
@@ -281,7 +283,10 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	if (!(_l = insert_new_lump_after(_l, prefix, prefix_len, 0)))
 		goto lump_err;
 	prefix = 0;
-	_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_ALL:SUBST_SND_ALL, 0);
+	rr_lump_type = (_inbound)?
+					(rr_sockname_mode?SUBST_RCV_ALL_EX:SUBST_RCV_ALL)
+					:(rr_sockname_mode?SUBST_SND_ALL_EX:SUBST_SND_ALL);
+	_l = insert_subst_lump_after(_l, rr_lump_type, 0);
 	if (_l ==0 )
 		goto lump_err;
 	if (enable_double_rr) {
@@ -393,7 +398,7 @@ int record_route(struct sip_msg* _m, str *params)
 			}
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
@@ -424,7 +429,7 @@ int record_route(struct sip_msg* _m, str *params)
 		tag = 0;
 	}
 
-	if (rr_param_buf.len && rr_param_msg!=_m->id) {
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
 		/* rr_params were set for a different message -> reset buffer */
 		rr_param_buf.len = 0;
 	}
@@ -499,11 +504,14 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	str user = {NULL, 0};
 	struct to_body* from = NULL;
 	struct lump* l;
-	char* hdr, *p;
-	int hdr_len;
+	struct lump* l2;
+	char *p;
+	str hdr = STR_NULL;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	char *rr_prefix;
 	int rr_prefix_len;
+	str suffix = STR_NULL;
+	str term = STR_NULL;
 	int sips = 0;
 	int ret = 0;
 
@@ -524,7 +532,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 			return -1;
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
@@ -544,38 +552,53 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		from = get_from(_m);
 	}
 
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
+		/* rr_params were set for a different message -> reset buffer */
+		rr_param_buf.len = 0;
+	}
+
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
-	if (!l) {
-		LM_ERR("failed to create lump anchor\n");
+	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	if (!l || !l2) {
+		LM_ERR("failed to create lump anchors\n");
 		ret = -3;
 		goto error;
 	}
 
-	hdr_len = rr_prefix_len;
+	hdr.len = rr_prefix_len;
 	if (user.len)
-		hdr_len += user.len + 1; /* @ */
-	hdr_len += _data->len;
+		hdr.len += user.len + 1; /* @ */
+	hdr.len += _data->len;
 
 	if (append_fromtag && from->tag_value.len) {
-		hdr_len += RR_FROMTAG_LEN + from->tag_value.len;
+		hdr.len += RR_FROMTAG_LEN + from->tag_value.len;
+	}
+
+	if (rr_param_buf.len > 0) {
+		hdr.len += rr_param_buf.len;
 	}
 
 	if (enable_full_lr) {
-		hdr_len += RR_LR_FULL_LEN;
+		suffix.len = RR_LR_FULL_LEN;
 	} else {
-		hdr_len += RR_LR_LEN;
+		suffix.len = RR_LR_LEN;
 	}
 
-	hdr_len += RR_TERM_LEN;
+	term.len = RR_TERM_LEN;
 
-	hdr = pkg_malloc(hdr_len);
-	if (!hdr) {
+	hdr.s = pkg_malloc(hdr.len);
+	suffix.s = pkg_malloc(suffix.len);
+	term.s = pkg_malloc(term.len);
+	if (!hdr.s || !suffix.s || !term.s) {
 		LM_ERR("no pkg memory left\n");
+		if(hdr.s) pkg_free(hdr.s);
+		if(suffix.s) pkg_free(suffix.s);
+		if(term.s) pkg_free(term.s);
 		ret = -4;
 		goto error;
 	}
 
-	p = hdr;
+	p = hdr.s;
 	memcpy(p, rr_prefix, rr_prefix_len);
 	p += rr_prefix_len;
 
@@ -596,22 +619,42 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		p += from->tag_value.len;
 	}
 
-	if (enable_full_lr) {
-		memcpy(p, RR_LR_FULL, RR_LR_FULL_LEN);
-		p += RR_LR_FULL_LEN;
-	} else {
-		memcpy(p, RR_LR, RR_LR_LEN);
-		p += RR_LR_LEN;
+	if (rr_param_buf.len > 0) {
+		memcpy(p, rr_param_buf.s, rr_param_buf.len);
+		p += rr_param_buf.len;
 	}
 
-	memcpy(p, RR_TERM, RR_TERM_LEN);
 
-	if (!insert_new_lump_after(l, hdr, hdr_len, 0)) {
+	if (enable_full_lr) {
+		memcpy(suffix.s, RR_LR_FULL, RR_LR_FULL_LEN);
+	} else {
+		memcpy(suffix.s, RR_LR, RR_LR_LEN);
+	}
+
+	memcpy(term.s, RR_TERM, RR_TERM_LEN);
+
+	if (!insert_new_lump_after(l, hdr.s, hdr.len, 0)) {
 		LM_ERR("failed to insert new lump\n");
-		pkg_free(hdr);
+		pkg_free(hdr.s);
+		pkg_free(suffix.s);
+		pkg_free(term.s);
 		ret = -5;
 		goto error;
 	}
+
+	l2 = insert_new_lump_before(l2, suffix.s, suffix.len, HDR_RECORDROUTE_T);
+	if (l2 == NULL) {
+		pkg_free(suffix.s);
+		pkg_free(term.s);
+		ret = -6;
+		goto error;
+	}
+	if (!(l2 = insert_new_lump_before(l2, term.s, term.len, 0))) {
+		pkg_free(term.s);
+		ret = -7;
+		goto error;
+	}
+
 	LM_DBG("inserted preset record route\n");
 	ret = 1;
 error:
@@ -776,7 +819,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			return -1;
 		}
 	} else if (use_ob == 1) {
-		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+		if (rr_obb.encode_flow_token(&user, &_m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
 		}
@@ -805,6 +848,11 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		}
 	} else {
 		tag = 0;
+	}
+
+	if (rr_param_buf.len && (msg_ctx_id_match(_m, &rr_param_ctx_id)!=1)) {
+		/* rr_params were set for a different message -> reset buffer */
+		rr_param_buf.len = 0;
 	}
 
 	if(rr_ignore_sips==0) {
@@ -915,10 +963,10 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 		}
 	} else {
 		/* RR not done yet -> store the param in the static buffer */
-		if (rr_param_msg!=msg->id) {
+		if (msg_ctx_id_match(msg, &rr_param_ctx_id)!=1) {
 			/* it's about a different message -> reset buffer */
 			rr_param_buf.len = 0;
-			rr_param_msg = msg->id;
+			msg_ctx_id_set(msg, &rr_param_ctx_id);
 		}
 		if (rr_param_buf.len+rr_param->len>RR_PARAM_BUF_SIZE) {
 			LM_ERR("maximum size of rr_param_buf exceeded\n");
@@ -932,4 +980,15 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 
 error:
 	return -1;
+}
+
+/*!
+ * \brief Reset Record-Route parameters buffer
+ * \param msg SIP message
+ * \return 0 on success, -1 on failure
+ */
+void reset_rr_param(void)
+{
+	rr_param_buf.len = 0;
+	return;
 }

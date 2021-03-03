@@ -1,4 +1,4 @@
-# WARNING: do not run this directly, it should be run by the master Makefile
+# WARNING: do not run this directly, it should be run by the main Makefile
 
 # Based on Makefile of 'db_cassandra' module. Thanks to 'Anca Vamanu' and 'Boudewyn Ligthart'.
 

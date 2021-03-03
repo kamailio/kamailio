@@ -136,9 +136,15 @@ static int in_list_prefix_f(struct sip_msg* _msg, char* _subject, char* _list,
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
+static int ends_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
+static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo);
+static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
+static int remove_hf_exp_pv_f(sip_msg_t* msg, char* ematch, char* eskip);
+static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo);
+static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
 static int regex_substring_f(struct sip_msg *msg,  char *input, char *regex,
 		char *matched_index, char *match_count, char *dst);
@@ -242,6 +248,21 @@ static cmd_export_t cmds[]={
 	{"is_present_hf_re", (cmd_function)is_present_hf_re_f,1,
 		fixup_regexp_null, fixup_free_regexp_null,
 		ANY_ROUTE},
+	{"remove_hf_pv",     (cmd_function)remove_hf_pv_f,    1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"remove_hf_re_pv",  (cmd_function)remove_hf_re_pv_f, 1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"remove_hf_exp_pv", (cmd_function)remove_hf_exp_pv_f,2,
+		fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"is_present_hf_pv", (cmd_function)is_present_hf_pv_f,1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"is_present_hf_re_pv", (cmd_function)is_present_hf_re_pv_f,1,
+		fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
 	{"subst",            (cmd_function)subst_f,           1,
 		fixup_substre, 0,
 		ANY_ROUTE},
@@ -294,6 +315,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"starts_with",  (cmd_function)starts_with_f, 2,
+		fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"ends_with",  (cmd_function)ends_with_f, 2,
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"is_audio_on_hold",  (cmd_function)is_audio_on_hold_f, 0,
@@ -1208,13 +1232,12 @@ static int replace_hdrs_helper(sip_msg_t* msg, regex_t *re, str *val)
 		return -1;
 	}
 
-	bk = lbuf.s[lbuf.len];
-	lbuf.s[lbuf.len] = '\0';
+	STR_VTOZ(lbuf.s[lbuf.len], bk);
 	if (regexec(re, lbuf.s, 1, &pmatch, 0)!=0) {
-		lbuf.s[lbuf.len] = bk;
+		STR_ZTOV(lbuf.s[lbuf.len], bk);
 		return -1;
 	}
-	lbuf.s[lbuf.len] = bk;
+	STR_ZTOV(lbuf.s[lbuf.len], bk);
 
 	off=lbuf.s-msg->buf;
 
@@ -1328,10 +1351,9 @@ static int subst_helper_f(sip_msg_t* msg, struct subst_expr* se)
 	off=begin-msg->buf;
 	ret=-1;
 
-	c = msg->buf[msg->len];
-	msg->buf[msg->len] = '\0';
+	STR_VTOZ(msg->buf[msg->len], c);
 	lst=subst_run(se, begin, msg, &nmatches);
-	msg->buf[msg->len] = c;
+	STR_ZTOV(msg->buf[msg->len], c);
 
 	if (lst==0)
 		goto error; /* not found */
@@ -1490,10 +1512,9 @@ static int subst_body_helper_f(struct sip_msg* msg, struct subst_expr* se)
 	off=begin-msg->buf;
 	ret=-1;
 
-	c = body.s[body.len];
-	body.s[body.len] = '\0';
+	STR_VTOZ(body.s[body.len], c);
 	lst=subst_run(se, begin, msg, &nmatches);
-	body.s[body.len] = c;
+	STR_ZTOV(body.s[body.len], c);
 
 	if (lst==0)
 		goto error; /* not found */
@@ -1731,14 +1752,13 @@ static int remove_hf_re(sip_msg_t* msg, regex_t *re)
 	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0)
 		{
@@ -1792,19 +1812,18 @@ static int remove_hf_exp(sip_msg_t* msg, regex_t *mre, regex_t *sre)
 
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(sre, hf->name.s, 1, &pmatch, 0)==0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
 		if (regexec(mre, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0)
 		{
@@ -1891,14 +1910,13 @@ static int is_present_hf_re_helper(sip_msg_t* msg, regex_t *re)
 	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		c = hf->name.s[hf->name.len];
-		hf->name.s[hf->name.len] = '\0';
+		STR_VTOZ(hf->name.s[hf->name.len], c);
 		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
 		{
-			hf->name.s[hf->name.len] = c;
+			STR_ZTOV(hf->name.s[hf->name.len], c);
 			continue;
 		}
-		hf->name.s[hf->name.len] = c;
+		STR_ZTOV(hf->name.s[hf->name.len], c);
 		return 1;
 	}
 
@@ -1908,6 +1926,74 @@ static int is_present_hf_re_helper(sip_msg_t* msg, regex_t *re)
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 {
 	return is_present_hf_re_helper(msg, (regex_t*)key);
+}
+
+/*
+ * Convert char* header_name to str* parameter
+ */
+static int ki_hname_gparam(str *hname, gparam_t *gp)
+{
+	char hbuf[256];
+	struct hdr_field hdr;
+
+	if(hname->len<=0) {
+		LM_ERR("invalid header name\n");
+		return -1;
+	}
+
+	if(hname->len>252) {
+		LM_ERR("header name too long: %d (%.*s...)\n",
+			hname->len, 32, hname->s);
+		return -1;
+	}
+	strncpy(hbuf, hname->s, hname->len);
+	hbuf[hname->len] = ':';
+	hbuf[hname->len+1] = '\0';
+
+	memset(gp, 0, sizeof(gparam_t));
+
+	gp->v.str = *hname;
+
+	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
+		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
+		return -1;
+	}
+
+	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
+				hdr.type, gp->v.str.len, gp->v.str.s);
+		gp->v.str.s = NULL;
+		gp->v.i = hdr.type;
+		gp->type = GPARAM_TYPE_INT;
+	} else {
+		gp->type = GPARAM_TYPE_STR;
+		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
+	}
+
+	return 0;
+}
+
+static int ki_is_present_hf(sip_msg_t *msg, str *hname)
+{
+	gparam_t ghp;
+
+	if(hname==NULL || hname->len<=0)
+		return -1;
+	if(ki_hname_gparam(hname, &ghp)<0)
+		return -1;
+
+	return is_present_hf_helper_f(msg, &ghp);
+}
+
+static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str hname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &hname)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_is_present_hf(msg, &hname);
 }
 
 static int ki_is_present_hf_re(sip_msg_t* msg, str *ematch)
@@ -1924,6 +2010,60 @@ static int ki_is_present_hf_re(sip_msg_t* msg, str *ematch)
 	regfree(&mre);
 
 	return ret;
+}
+
+static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str ematch = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_is_present_hf_re(msg, &ematch) ;
+}
+
+static int ki_remove_hf(sip_msg_t* msg, str *hname)
+{
+	return sr_kemi_hdr_remove(msg, hname);
+}
+
+static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo)
+{
+	str hname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phf, &hname)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf(msg, &hname);
+}
+
+static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo)
+{
+	str ematch = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)key, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf_re(msg, &ematch);
+}
+
+static int remove_hf_exp_pv_f(sip_msg_t* msg, char* pematch, char* peskip)
+{
+	str ematch = STR_NULL;
+	str eskip = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pematch, &ematch)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)peskip, &eskip)!=0) {
+		LM_ERR("unable to get parameter\n");
+		return -1;
+	}
+	return ki_remove_hf_exp(msg, &ematch, &eskip);
 }
 
 static int fixup_substre(void** param, int param_no)
@@ -1956,17 +2096,15 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	size_t len;
 	char time_str[MAX_TIME];
 	time_t now;
-	struct tm *bd_time;
+	struct tm bd_time;
 
 	now=time(0);
-
-	bd_time=gmtime(&now);
-	if (bd_time==NULL) {
+	if (gmtime_r(&now, &bd_time)==NULL) {
 		LM_ERR("gmtime failed\n");
 		return -1;
 	}
 
-	len=strftime(time_str, MAX_TIME, TIME_FORMAT, bd_time);
+	len=strftime(time_str, MAX_TIME, TIME_FORMAT, &bd_time);
 	if (len>MAX_TIME-2 || len==0) {
 		LM_ERR("unexpected time length\n");
 		return -1;
@@ -1989,14 +2127,12 @@ static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
 {
 	str time_str = {0, 0};
 	time_t now;
-	struct tm *bd_time;
+	struct tm bd_time;
 	struct hdr_field *hf = msg->headers;
 	struct lump *anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
 
 	now=time(0);
-
-	bd_time=gmtime(&now);
-	if (bd_time==NULL) {
+	if (gmtime_r(&now, &bd_time)==NULL) {
 		LM_ERR("gmtime failed\n");
 		goto error;
 	}
@@ -2006,7 +2142,7 @@ static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
 		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
-	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, bd_time);
+	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, &bd_time);
 	if (time_str.len>MAX_TIME-2 || time_str.len==0) {
 		LM_ERR("unexpected time length\n");
 		goto error;
@@ -2173,6 +2309,11 @@ static int ki_set_body(sip_msg_t* msg, str* nb, str* nc)
 	}
 	LM_DBG("new body: [%.*s]", nb->len, nb->s);
 	return 1;
+}
+
+int set_body(struct sip_msg* msg, str *body, str *content_type)
+{
+    return ki_set_body(msg, body, content_type);
 }
 
 static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
@@ -2643,6 +2784,15 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
 }
 
+int set_body_multipart(struct sip_msg* msg)
+{
+	str nbody = STR_NULL;
+	str ctype = STR_NULL;
+	str boundary = STR_NULL;
+
+	return ki_set_multibody(msg, &nbody, &ctype, &boundary);
+}
+
 static int set_multibody_0(struct sip_msg* msg, char* p1, char* p2, char* p3)
 {
 	return set_multibody_helper(msg, NULL, NULL, NULL);
@@ -2847,6 +2997,11 @@ static int append_multibody_helper(sip_msg_t *msg, char *p1, char *p2, char *p3,
 	} else {
 		return ki_append_multibody_cd(msg, &txt, &ct, &cd);
 	}
+}
+
+int append_body_part(struct sip_msg* msg, str *body, str *content_type, str *content_disposition)
+{
+	return ki_append_multibody_cd(msg, body, content_type, content_disposition);
 }
 
 static int append_multibody_2(struct sip_msg* msg, char* p1, char* p2)
@@ -3229,7 +3384,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		gparam_p hfval, int mode, gparam_p hfanc)
 {
 	struct lump* anchor;
-	struct hdr_field *hf;
+	struct hdr_field *hf, *append_hf;
 	char *s;
 	int len;
 	str s0;
@@ -3240,6 +3395,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	hf = 0;
+	append_hf = 0;
 	if(hfanc!=NULL) {
 		for (hf=msg->headers; hf; hf=hf->next) {
 			if(hfanc->type==GPARAM_TYPE_INT)
@@ -3252,20 +3408,25 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 				if (cmp_hdrname_str(&hf->name,&hfanc->v.str)!=0)
 					continue;
 			}
-			break;
+			if (mode == 0) { /* append */
+				append_hf = hf;
+				continue;
+			} else { /* insert */
+				break;
+			}
 		}
 	}
 
 	if(mode == 0) { /* append */
-		if(hf==0) { /* after last header */
+		if(append_hf==0) { /* after last header */
 			anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-		} else { /* after hf */
-			anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+		} else { /* after last hf */
+			anchor = anchor_lump(msg, append_hf->name.s + append_hf->len - msg->buf, 0, 0);
 		}
 	} else { /* insert */
 		if(hf==0) { /* before first header */
 			anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
-		} else { /* before hf */
+		} else { /* before first hf */
 			anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
 		}
 	}
@@ -4063,6 +4224,49 @@ static int ki_starts_with(sip_msg_t *msg, str *s1, str *s2 )
 	return -2;
 }
 
+static int ends_with_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	str s1;
+	str s2;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1)!=0) {
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2)!=0) {
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	if(s2.len > s1.len) {
+		return -1;
+	}
+	ret = strncmp(s1.s + s1.len - s2.len, s2.s, s2.len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int ki_ends_with(sip_msg_t *msg, str *vstr, str *vsuffix )
+{
+	int ret;
+
+	if(vstr==NULL || vsuffix==NULL) {
+		return -1;
+	}
+	if(vsuffix->len > vstr->len) {
+		return -1;
+	}
+	ret = strncmp(vstr->s + vstr->len - vsuffix->len, vsuffix->s, vsuffix->len);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
 static int ki_is_audio_on_hold(sip_msg_t *msg)
 {
 	int sdp_session_num = 0, sdp_stream_num;
@@ -4189,10 +4393,9 @@ static int search_hf_helper_f(sip_msg_t* msg, gparam_t *ghp, regex_t* re, char* 
 		if(flags==NULL || *flags!='l')
 		{
 			body = hf->body;
-			c = body.s[body.len];
-			body.s[body.len] = '\0';
+			STR_VTOZ(body.s[body.len], c);
 			ret = regexec((regex_t*) re, body.s, 1, &pmatch, 0);
-			body.s[body.len] = c;
+			STR_ZTOV(body.s[body.len], c);
 			if(ret==0)
 			{
 				/* match */
@@ -4210,10 +4413,9 @@ static int search_hf_helper_f(sip_msg_t* msg, gparam_t *ghp, regex_t* re, char* 
 	{
 		hf = hfl;
 		body = hf->body;
-		c = body.s[body.len];
-		body.s[body.len] = '\0';
+		STR_VTOZ(body.s[body.len], c);
 		ret = regexec((regex_t*) re, body.s, 1, &pmatch, 0);
-		body.s[body.len] = c;
+		STR_ZTOV(body.s[body.len], c);
 		if(ret==0)
 			return 1;
 	}
@@ -4278,15 +4480,14 @@ static int subst_hf_helper_f(sip_msg_t *msg, gparam_t *gp,
 		if(flags==NULL || *flags!='l')
 		{
 			body = hf->body;
-			c = body.s[body.len];
-			body.s[body.len] = '\0';
+			STR_VTOZ(body.s[body.len], c);
 
 			begin=body.s;
 
 			off=begin-msg->buf;
 			if (lst) replace_lst_free(lst);
 			lst=subst_run(se, begin, msg, &nmatches);
-			body.s[body.len] = c;
+			STR_ZTOV(body.s[body.len], c);
 			if(lst==0 && flags!=NULL && *flags=='f')
 				goto error; /* not found */
 			if(lst!=0)
@@ -4327,15 +4528,14 @@ static int subst_hf_helper_f(sip_msg_t *msg, gparam_t *gp,
 	{
 		hf= hfl;
 		body = hf->body;
-		c = body.s[body.len];
-		body.s[body.len] = '\0';
+		STR_VTOZ(body.s[body.len], c);
 
 		begin=body.s;
 
 		off=begin-msg->buf;
 		if (lst) replace_lst_free(lst);
 		lst=subst_run(se, begin, msg, &nmatches);
-		body.s[body.len] = c;
+		STR_ZTOV(body.s[body.len], c);
 		if(lst==0)
 			goto error; /* not found */
 		ret=1;
@@ -4435,50 +4635,6 @@ static int ki_search_body(sip_msg_t *msg, str *sre)
 	return ret;
 }
 
-/*
- * Convert char* header_name to str* parameter
- */
-static int ki_hname_gparam(str *hname, gparam_t *gp)
-{
-	char hbuf[256];
-	struct hdr_field hdr;
-
-	if(hname->len<=0) {
-		LM_ERR("invalid header name\n");
-		return -1;
-	}
-
-	if(hname->len>252) {
-		LM_ERR("header name too long: %d (%.*s...)\n",
-			hname->len, 32, hname->s);
-		return -1;
-	}
-	strncpy(hbuf, hname->s, hname->len);
-	hbuf[hname->len] = ':';
-	hbuf[hname->len+1] = '\0';
-
-	memset(gp, 0, sizeof(gparam_t));
-
-	gp->v.str = *hname;
-
-	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
-		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
-		return -1;
-	}
-
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
-		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
-				hdr.type, gp->v.str.len, gp->v.str.s);
-		gp->v.str.s = NULL;
-		gp->v.i = hdr.type;
-		gp->type = GPARAM_TYPE_INT;
-	} else {
-		gp->type = GPARAM_TYPE_STR;
-		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
-	}
-
-	return 0;
-}
 
 /**
  *
@@ -4506,18 +4662,6 @@ static int ki_search_hf(sip_msg_t *msg, str *hname, str *sre, str *flags)
 	ret = search_hf_helper_f(msg, &ghp, &re, (flags)?flags->s:NULL);
 	regfree(&re);
 	return ret;
-}
-
-static int ki_is_present_hf(sip_msg_t *msg, str *hname)
-{
-	gparam_t ghp;
-
-	if(hname==NULL || hname->len<=0)
-		return -1;
-	if(ki_hname_gparam(hname, &ghp)<0)
-		return -1;
-
-	return is_present_hf_helper_f(msg, &ghp);
 }
 
 static int ki_subst(sip_msg_t *msg, str *subst)
@@ -4691,6 +4835,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("textops"), str_init("remove_hf"),
+		SR_KEMIP_INT, ki_remove_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("textops"), str_init("remove_hf_re"),
 		SR_KEMIP_INT, ki_remove_hf_re,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -4798,6 +4947,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("starts_with"),
 		SR_KEMIP_INT, ki_starts_with,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("ends_with"),
+		SR_KEMIP_INT, ki_ends_with,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

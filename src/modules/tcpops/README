@@ -32,6 +32,8 @@ Olle E. Johansson
               3.5. tcp_set_connection_lifetime([conid], lifetime)
               3.6. tcp_enable_closed_event([conid])
               3.7. tcp_get_conid(hostport, pvname)
+              3.8. tcp_set_otcpid(conid)
+              3.9. tcp_set_otcpid_flag(mode)
 
         4. Event routes
 
@@ -51,6 +53,8 @@ Olle E. Johansson
    1.7. tcp_set_connection_lifetime usage
    1.8. tcp_set_closed_event usage
    1.9. tcp_get_conid usage
+   1.10. tcp_set_otcpid usage
+   1.11. tcp_set_otcpid_flag usage
 
 Chapter 1. Admin Guide
 
@@ -71,6 +75,8 @@ Chapter 1. Admin Guide
         3.5. tcp_set_connection_lifetime([conid], lifetime)
         3.6. tcp_enable_closed_event([conid])
         3.7. tcp_get_conid(hostport, pvname)
+        3.8. tcp_set_otcpid(conid)
+        3.9. tcp_set_otcpid_flag(mode)
 
    4. Event routes
 
@@ -144,6 +150,8 @@ end
    3.5. tcp_set_connection_lifetime([conid], lifetime)
    3.6. tcp_enable_closed_event([conid])
    3.7. tcp_get_conid(hostport, pvname)
+   3.8. tcp_set_otcpid(conid)
+   3.9. tcp_set_otcpid_flag(mode)
 
 3.1.  tcp_conid_alive(conid)
 
@@ -343,6 +351,53 @@ event_route[tcp:closed] {
         if(tcp_get_conid("127.0.0.1:5060", "$var(conid)")) {
                 xlog("connection id is: $var(conid)\n");
         }
+...
+
+3.8.  tcp_set_otcpid(conid)
+
+   Set the value for outbound tcp connection id.
+
+   Meaning of the parameters is as follows:
+     * conid - the value of tcp connection id. It can be an integer number
+       or a variable holding an interver value.
+
+   Return values:
+     * 1: success
+     * -1: failure
+
+   Example 1.10. tcp_set_otcpid usage
+...
+        $var(conid) = 10;
+        tcp_set_otcpid("$var(conid)");
+...
+
+3.9.  tcp_set_otcpid_flag(mode)
+
+   Set or reset the internal flag for using or not the outbound tcp
+   connection id for sending out. The outbound connection id can be set by
+   module or by config using tcp_set_otcpid(...) function. An example of a
+   module setting the otcpid is register via lookup location function,
+   which sets the filed to the connection id used to receive the
+   registration request.
+
+   Meaning of the parameters is as follows:
+     * mode - if 0, then the flag is reset, otherwise it is set.
+
+   Return values:
+     * 1: success
+     * -1: failure
+
+   Note: if you set the flag to use the outbound tcp connection id, then
+   custom config changes to the destination address, like updating the
+   r-uri ($ru) or dst uri ($du) are not resetting it, so the same already
+   set connection id is used and the SIP request might be sent to the
+   unexpected destination. Reset the flag in such case, if you set it
+   previously.
+
+   Example 1.11. tcp_set_otcpid_flag usage
+...
+        $var(cmode) = 1;
+        tcp_set_otcpid_flag("$var(cmode)");
 ...
 
 4. Event routes

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,14 +27,14 @@
  * Provides a generic trie data structure and utility functions to
  * initialize and manage individual nodes. Its optimized towards
  * the usecase of a matching tree that contains only digits, e.g.
- * for LCR or blacklist modules. Nevertheless it also supports the
+ * for LCR or blocklist modules. Nevertheless it also supports the
  * matching of characters when configured correctly. For normal
  * digit only matching you need to use a branches parameter of
  * 10, when you use 128, the complete standard ascii charset is
  * available for matching. The trie is setup in shared memory.
  * - Module: \ref carrierroute
- * - Module: \ref userblacklist
- * @{ 
+ * - Module: \ref userblocklist
+ * @{
  */
 
 #ifndef _DTRIE_H_

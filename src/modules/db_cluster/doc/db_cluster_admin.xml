@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -26,8 +26,13 @@
 	</para>
 	<para>
 		The following database commands are considered to be write operations:
-		INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE. The
-		read operations are done for database commands: QUERY and RAW-QUERY.
+		INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE,
+		INSERT-ASYNC. The read operations are done for database commands:
+		QUERY and RAW-QUERY.
+	</para>
+	<para>
+		Note: if INSERT-ASYNC is not implemented by DB connector module, then
+		standard INSERT operation is done.
 	</para>
 	</section>
 
@@ -110,7 +115,7 @@ modparam("db_cluster", "connection",
 		<para>
 		<para>
 			The first two characters is priority and mode for read, followed by
-			two characters for priority and mode for write operations. "p" is 
+			two characters for priority and mode for write operations. "p" is
 			only used for write operations.
 		</para>
 		<emphasis>

@@ -44,7 +44,7 @@ DNS Cache and Failover Drawbacks
  
  On the other hand using the DNS cache saves lots of DNS queries and makes
  DNS based failover and DNS based load balancing possible. If the destination
- blacklist is enabled, Kamailio can do failover even if forwarding in stateless 
+ blocklist is enabled, Kamailio can do failover even if forwarding in stateless 
  mode.
  In the ideal case with the DNS cache enabled Kamailio will do only one query for
  a NAPTR (if enabled) or SRV lookup and then it will use the results for the
@@ -183,14 +183,14 @@ DNS Cache and Failover Config Variables
       Default: on.
 
    use_dns_failover = on |off - if on and sending a request fails (due to not
-      being allowed from an onsend_route, send failure, blacklisted destination
+      being allowed from an onsend_route, send failure, blocklisted destination
       or, when using tm, invite timeout), and the destination resolves to
       multiple ip addresses and/or multiple SRV records, the send will be
       re-tried using the next ip/record. In tm's case a new branch will be
       created for each new send attempt.
       Default: off.
    Depends on use_dns_cache being on. If tm is used along with DNS failover is
-   recommended to also turn on dst_blacklist.
+   recommended to also turn on dst_blocklist.
 
    dns_srv_lb = on | off or
    dns_srv_loadbalancing = on | off - if on instead of doing simple DNS 

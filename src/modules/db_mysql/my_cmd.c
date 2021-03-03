@@ -476,7 +476,7 @@ err:
 static inline void update_field(MYSQL_BIND *param, db_fld_t* fld)
 {
 	struct my_fld* fp;      /* field payload */
-	struct tm* t;
+	struct tm t;
 
 	fp = DB_GET_PAYLOAD(fld);
 
@@ -524,13 +524,13 @@ static inline void update_field(MYSQL_BIND *param, db_fld_t* fld)
 			break;
 
 		case DB_DATETIME:
-			t = gmtime(&fld->v.time);
-			fp->time.second = t->tm_sec;
-			fp->time.minute = t->tm_min;
-			fp->time.hour = t->tm_hour;
-			fp->time.day = t->tm_mday;
-			fp->time.month = t->tm_mon + 1;
-			fp->time.year = t->tm_year + 1900;
+			gmtime_r(&fld->v.time, &t);
+			fp->time.second = t.tm_sec;
+			fp->time.minute = t.tm_min;
+			fp->time.hour = t.tm_hour;
+			fp->time.day = t.tm_mday;
+			fp->time.month = t.tm_mon + 1;
+			fp->time.year = t.tm_year + 1900;
 			break;
 
 		case DB_NONE:

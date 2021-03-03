@@ -59,6 +59,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_TM_CALLID_SIZE 90
+#define UAC_REG_DB_COLS_NUM 15
 
 int _uac_reg_gc_interval = 150;
 
@@ -77,6 +78,7 @@ typedef struct _reg_uac
 	str   auth_password;
 	str   auth_ha1;
 	str   callid;
+	str   contact_addr;
 	str   socket;
 	unsigned int cseq;
 	unsigned int flags;
@@ -140,6 +142,7 @@ str expires_column = str_init("expires");
 str flags_column = str_init("flags");
 str reg_delay_column = str_init("reg_delay");
 str socket_column = str_init("socket");
+str contact_addr_column = str_init("contact_addr");
 
 str str_empty = str_init("");
 
@@ -163,7 +166,7 @@ int reg_active_init(int mode)
 	}
 	reg_active = (int*)shm_malloc(sizeof(int));
 	if(reg_active==NULL) {
-		LM_ERR("not enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*reg_active = mode;
@@ -190,7 +193,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable_gc_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
 	if(_reg_htable_gc_lock == NULL)
 	{
-		LM_ERR("no more shm for lock\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	if(lock_init(_reg_htable_gc_lock)==0)
@@ -202,7 +205,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable_gc = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable_gc==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		lock_destroy(_reg_htable_gc_lock);
 		shm_free((void*)_reg_htable_gc_lock);
 		return -1;
@@ -214,7 +217,7 @@ int uac_reg_init_ht(unsigned int sz)
 		(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
 	if(_reg_htable_gc->entries==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc);
 		lock_destroy(_reg_htable_gc_lock);
 		shm_free((void*)_reg_htable_gc_lock);
@@ -226,7 +229,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable = (reg_ht_t*)shm_malloc(sizeof(reg_ht_t));
 	if(_reg_htable==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc->entries);
 		shm_free(_reg_htable_gc);
 		lock_destroy(_reg_htable_gc_lock);
@@ -240,7 +243,7 @@ int uac_reg_init_ht(unsigned int sz)
 		(reg_entry_t*)shm_malloc(_reg_htable->htsize*sizeof(reg_entry_t));
 	if(_reg_htable->entries==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(_reg_htable_gc->entries);
 		shm_free(_reg_htable_gc);
 		shm_free(_reg_htable);
@@ -452,7 +455,7 @@ int reg_ht_add_byuuid(reg_uac_t *reg)
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ri, 0, sizeof(reg_item_t));
@@ -483,7 +486,7 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 	ri = (reg_item_t*)shm_malloc(sizeof(reg_item_t));
 	if(ri==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ri, 0, sizeof(reg_item_t));
@@ -522,6 +525,12 @@ int reg_ht_add(reg_uac_t *reg)
 		LM_ERR("bad parameters: %p/%p\n", reg, _reg_htable);
 		return -1;
 	}
+
+	if (!reg->contact_addr.s || reg->contact_addr.len == 0)
+	{
+		reg->contact_addr=reg_contact_addr;
+	}
+
 	len = reg->l_uuid.len + 1
 		+ reg->l_username.len + 1
 		+ reg->l_domain.len + 1
@@ -533,11 +542,12 @@ int reg_ht_add(reg_uac_t *reg)
 		+ reg->auth_password.len + 1
 		+ reg->auth_ha1.len + 1
 		+ reg->socket.len + 1
+		+ reg->contact_addr.len + 1
 		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(nr, 0, sizeof(reg_uac_t) + len);
@@ -564,6 +574,7 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
 	reg_copy_shm(&nr->auth_ha1, &reg->auth_ha1, 0);
 	reg_copy_shm(&nr->socket, &reg->socket, 0);
+	reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0)
 	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	for(i=0; i<nr->auth_ha1.len; i++) {
@@ -583,9 +594,9 @@ int reg_ht_add(reg_uac_t *reg)
 }
 
 
- /**
-  *
-  */
+/**
+ *
+ */
 int reg_ht_rm(reg_uac_t *reg)
 {
 	unsigned int slot1, slot2;
@@ -977,7 +988,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				"Expires: %d\r\n"
 				"%.*s",
 				ri->l_uuid.len, ri->l_uuid.s,
-				reg_contact_addr.len, reg_contact_addr.s,
+				ri->contact_addr.len, ri->contact_addr.s,
 				ri->expires,
 				new_auth_hdr->len, new_auth_hdr->s);
 		s_hdrs.s = b_hdrs; s_hdrs.len = strlen(s_hdrs.s);
@@ -1052,7 +1063,11 @@ done:
 	counter_inc(regactive);
 }
 
-int uac_reg_update(reg_uac_t *reg, time_t tn)
+
+/**
+ *
+ */
+int uac_reg_send(reg_uac_t *reg, time_t tn)
 {
 	char *uuid;
 	uac_req_t uac_r;
@@ -1066,6 +1081,105 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	str   s_hdrs;
 	dlg_t tmdlg;
 
+	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
+	if(uuid==NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	reg->timer_expires = tn;
+	reg->flags |= UAC_REG_ONGOING;
+	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
+	memcpy(uuid, reg->l_uuid.s, reg->l_uuid.len);
+	uuid[reg->l_uuid.len] = '\0';
+
+	snprintf(b_ruri, MAX_URI_SIZE, "sip:%.*s",
+			reg->r_domain.len, reg->r_domain.s);
+	s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
+
+	snprintf(b_turi, MAX_URI_SIZE, "sip:%.*s@%.*s",
+			reg->r_username.len, reg->r_username.s,
+			reg->r_domain.len, reg->r_domain.s);
+	s_turi.s = b_turi; s_turi.len = strlen(s_turi.s);
+
+	snprintf(b_hdrs, MAX_UACH_SIZE,
+			"Contact: <sip:%.*s@%.*s>\r\n"
+			"Expires: %d\r\n",
+			reg->l_uuid.len, reg->l_uuid.s,
+			reg->contact_addr.len, reg->contact_addr.s,
+			reg->expires);
+	s_hdrs.s = b_hdrs; s_hdrs.len = strlen(s_hdrs.s);
+
+	memset(&uac_r, '\0', sizeof(uac_r));
+	uac_r.method = &method;
+	uac_r.headers = &s_hdrs;
+	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+	/* Callback function */
+	uac_r.cb  = uac_reg_tm_callback;
+	/* Callback parameter */
+	uac_r.cbp = (void*)uuid;
+
+	if(reg->socket.s != NULL && reg->socket.len > 0) {
+		/* custom socket */
+		LM_DBG("using custom socket %.*s to send request\n",
+			reg->socket.len, reg->socket.s);
+		uac_r.ssock = &reg->socket;
+	} else {
+		/* default socket */
+		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+			LM_DBG("using configured default_socket to send request\n");
+			uac_r.ssock = &uac_default_socket;
+		}
+	}
+
+	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
+				&& reg->cseq > 0 && reg->cseq < 2147483638
+				&& reg->callid.len > 0) {
+		/* reregister, reuse callid and cseq */
+		memset(&tmdlg, 0, sizeof(dlg_t));
+		tmdlg.id.call_id = reg->callid;
+		tmdlg.loc_seq.value = reg->cseq;
+		tmdlg.loc_seq.is_set = 1;
+		tmdlg.rem_target = s_ruri;
+		tmdlg.loc_uri = s_turi;
+		tmdlg.rem_uri = s_turi;
+		tmdlg.state= DLG_CONFIRMED;
+		if(reg->auth_proxy.len)
+			tmdlg.dst_uri = reg->auth_proxy;
+		uac_r.dialog = &tmdlg;
+
+		ret = uac_tmb.t_request_within(&uac_r);
+	} else {
+		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
+				&s_ruri, /* Request-URI */
+				&s_turi, /* To */
+				&s_turi, /* From */
+				(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
+				);
+	}
+	reg->flags &= ~UAC_REG_ONLINE;
+
+	if(ret<0)
+	{
+		LM_ERR("failed to send request for [%.*s]", reg->l_uuid.len, reg->l_uuid.s);
+		shm_free(uuid);
+		if (reg_retry_interval) {
+			reg->timer_expires = (tn ? tn : time(NULL)) + reg_retry_interval;
+		} else {
+			reg->flags |= UAC_REG_DISABLED;
+			counter_inc(regdisabled);
+		}
+		reg->flags &= ~UAC_REG_ONGOING;
+		return -1;
+	}
+	return 0;
+}
+
+
+/**
+ *
+ */
+int uac_reg_update(reg_uac_t *reg, time_t tn)
+{
 	if(uac_tmb.t_request==NULL)
 		return -1;
 	if(reg->expires==0)
@@ -1093,99 +1207,8 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
-	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
-	if(uuid==NULL)
-	{
-		LM_ERR("no more shm\n");
-		return -1;
-	}
-	reg->timer_expires = tn;
-	reg->flags |= UAC_REG_ONGOING;
-	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
-	memcpy(uuid, reg->l_uuid.s, reg->l_uuid.len);
-	uuid[reg->l_uuid.len] = '\0';
 
-	snprintf(b_ruri, MAX_URI_SIZE, "sip:%.*s",
-			reg->r_domain.len, reg->r_domain.s);
-	s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
-
-	snprintf(b_turi, MAX_URI_SIZE, "sip:%.*s@%.*s",
-			reg->r_username.len, reg->r_username.s,
-			reg->r_domain.len, reg->r_domain.s);
-	s_turi.s = b_turi; s_turi.len = strlen(s_turi.s);
-
-	snprintf(b_hdrs, MAX_UACH_SIZE,
-			"Contact: <sip:%.*s@%.*s>\r\n"
-			"Expires: %d\r\n",
-			reg->l_uuid.len, reg->l_uuid.s,
-			reg_contact_addr.len, reg_contact_addr.s,
-			reg->expires);
-	s_hdrs.s = b_hdrs; s_hdrs.len = strlen(s_hdrs.s);
-
-	memset(&uac_r, '\0', sizeof(uac_r));
-	uac_r.method = &method;
-	uac_r.headers = &s_hdrs;
-	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
-	/* Callback function */
-	uac_r.cb  = uac_reg_tm_callback;
-	/* Callback parameter */
-	uac_r.cbp = (void*)uuid;
-
-	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
-				&& reg->cseq > 0 && reg->cseq < 2147483638
-				&& reg->callid.len > 0)
-	{
-		/* reregister, reuse callid and cseq */
-		memset(&tmdlg, 0, sizeof(dlg_t));
-		tmdlg.id.call_id = reg->callid;
-		tmdlg.loc_seq.value = reg->cseq;
-		tmdlg.loc_seq.is_set = 1;
-		tmdlg.rem_target = s_ruri;
-		tmdlg.loc_uri = s_turi;
-		tmdlg.rem_uri = s_turi;
-		tmdlg.state= DLG_CONFIRMED;
-		if(reg->auth_proxy.len)
-			tmdlg.dst_uri = reg->auth_proxy;
-		uac_r.dialog = &tmdlg;
-
-		ret = uac_tmb.t_request_within(&uac_r);
-	} else {
-		/* custom socket */
-		if(reg->socket.s != NULL && reg->socket.len > 0) {
-			LM_DBG("using custom socket %.*s to send request\n",
-				reg->socket.len, reg->socket.s);
-			uac_r.ssock = &reg->socket;
-		}
-		/* default socket */
-		else {
-			if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-				LM_DBG("using configured default_socket to send request\n");
-				uac_r.ssock = &uac_default_socket;
-			}
-		}
-		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
-				&s_ruri, /* Request-URI */
-				&s_turi, /* To */
-				&s_turi, /* From */
-				(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
-				);
-	}
-	reg->flags &= ~UAC_REG_ONLINE;
-
-	if(ret<0)
-	{
-		LM_ERR("failed to send request for [%.*s]", reg->l_uuid.len, reg->l_uuid.s);
-		shm_free(uuid);
-		if (reg_retry_interval)
-			reg->timer_expires = (tn ? tn : time(NULL)) + reg_retry_interval;
-		else {
-			reg->flags |= UAC_REG_DISABLED;
-			counter_inc(regdisabled);
-		}
-		reg->flags &= ~UAC_REG_ONGOING;
-		return -1;
-	}
-	return 0;
+	return uac_reg_send(reg, tn);
 }
 
 /**
@@ -1290,8 +1313,10 @@ static int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db_key_t 
 	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
 	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[12].val.int_val;
 
+	/*contact may be empty */
+	reg_db_set_attr(contact_addr, 13, 1);
 	/* socket may be empty */
-	reg_db_set_attr(socket, 13, 1);
+	reg_db_set_attr(socket, 14, 1);
 
 	return 0;
 }
@@ -1305,7 +1330,7 @@ int uac_reg_load_db(void)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
-	db_key_t db_cols[14] = {
+	db_key_t db_cols[UAC_REG_DB_COLS_NUM] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1319,6 +1344,7 @@ int uac_reg_load_db(void)
 		&expires_column,
 		&flags_column,
 		&reg_delay_column,
+		&contact_addr_column,
 		&socket_column
 	};
 	db1_res_t* db_res = NULL;
@@ -1364,7 +1390,7 @@ int uac_reg_load_db(void)
 	}
 
 	if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
-		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 14, 0, 0) < 0)
+		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, UAC_REG_DB_COLS_NUM, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -1383,7 +1409,7 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-						0, 14, 0, &db_res))!=0
+						0, UAC_REG_DB_COLS_NUM, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
@@ -1441,7 +1467,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_func_t reg_dbf;
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
-	db_key_t db_cols[14] = {
+	db_key_t db_cols[UAC_REG_DB_COLS_NUM] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1455,6 +1481,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 		&expires_column,
 		&flags_column,
 		&reg_delay_column,
+		&contact_addr_column,
 		&socket_column
 	};
 	db_key_t db_keys[1] = {&l_uuid_column};
@@ -1502,7 +1529,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
 	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
-					1 /*nr keys*/, 14 /*nr cols*/, 0, &db_res))!=0
+					1 /*nr keys*/, UAC_REG_DB_COLS_NUM /*nr cols*/, 0, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 	{
 		reg_dbf.free_result(reg_db_con, db_res);
@@ -1841,7 +1868,7 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if (rpc->struct_add(th, "SSSSSSSSSSddddddS",
+	if (rpc->struct_add(th, "SSSSSSSSSSddddddSS",
 				"l_uuid",        &reg->l_uuid,
 				"l_username",    &reg->l_username,
 				"l_domain",      &reg->l_domain,
@@ -1861,6 +1888,8 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 				"timer_expires", (int)reg->timer_expires,
 				"reg_init",      (int)reg->reg_init,
 				"reg_delay",     (int)reg->reg_delay,
+				"contact_addr",  (reg->contact_addr.len)?
+										&reg->contact_addr:&none,
 				"socket",        &reg->socket
 				)<0) {
 		rpc->fault(ctx, 500, "Internal error adding item");
@@ -2105,7 +2134,7 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
 
-	if(rpc->scan(ctx, "SSSSSSSSSSdddS",
+	if(rpc->scan(ctx, "SSSSSSSSSSdddSS",
 				&reg.l_uuid,
 				&reg.l_username,
 				&reg.l_domain,
@@ -2119,7 +2148,8 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 				&reg.expires,
 				&reg.flags,
 				&reg.reg_delay,
-				&reg.socket
+				&reg.socket,
+				&reg.contact_addr
 			)<1)
 	{
 		rpc->fault(ctx, 400, "Invalid Parameters");
@@ -2134,6 +2164,10 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	if(reg.auth_ha1.len==1 && reg.auth_ha1.s[0] == '.') {
 		reg.auth_ha1.s = NULL;
 		reg.auth_ha1.len = 0;
+	}
+
+	if(reg.contact_addr.len==1 && reg.contact_addr.s[0] == '.') {
+		reg.contact_addr = reg_contact_addr;
 	}
 
 	if(uac_reg_check_password(&reg) < 0) {
@@ -2190,6 +2224,50 @@ static void rpc_uac_reg_active(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_unregister_doc[2] = {
+	"Send a register request with expires 0.",
+	0
+};
+
+
+static void rpc_uac_reg_unregister(rpc_t* rpc, void* ctx)
+{
+	reg_uac_t *reg = NULL;
+	str attr = {0};
+	str val = {0};
+	int ret;
+
+	if(_reg_htable==NULL) {
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &val)<2) {
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL) {
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
+		return;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
+	}
+
+	reg->expires = 0;
+	uac_reg_send(reg, time(NULL));
+
+	lock_release(reg->lock);
+	return;
+}
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
@@ -2200,6 +2278,7 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
 	{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
 	{"uac.reg_active", rpc_uac_reg_active, rpc_uac_reg_active_doc, 0},
+	{"uac.reg_unregister", rpc_uac_reg_unregister, rpc_uac_reg_unregister_doc, 0},
 	{0, 0, 0, 0}
 };
 

@@ -28,6 +28,8 @@
 #include "../../core/parser/msg_parser.h"
 #include "api.h"
 
+extern int force_generate_avps;
+
 int auth_db_init(const str* db_url);
 int auth_db_bind(const str* db_url);
 void auth_db_close(void);

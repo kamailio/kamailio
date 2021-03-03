@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -29,15 +29,15 @@
  */
 dmq_peer_list_t *init_peer_list()
 {
-	dmq_peer_list_t *peer_list;
-	peer_list = shm_malloc(sizeof(dmq_peer_list_t));
-	if(peer_list == NULL) {
+	dmq_peer_list_t *dmq_peer_list;
+	dmq_peer_list = shm_malloc(sizeof(dmq_peer_list_t));
+	if(dmq_peer_list == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
-	memset(peer_list, 0, sizeof(dmq_peer_list_t));
-	lock_init(&peer_list->lock);
-	return peer_list;
+	memset(dmq_peer_list, 0, sizeof(dmq_peer_list_t));
+	lock_init(&dmq_peer_list->lock);
+	return dmq_peer_list;
 }
 
 /**
@@ -90,7 +90,7 @@ dmq_peer_t *find_peer(str peer_id)
 {
 	dmq_peer_t foo_peer;
 	foo_peer.peer_id = peer_id;
-	return search_peer_list(peer_list, &foo_peer);
+	return search_peer_list(dmq_peer_list, &foo_peer);
 }
 
 /**
@@ -99,5 +99,11 @@ dmq_peer_t *find_peer(str peer_id)
 int empty_peer_callback(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node)
 {
+	static str _dmq_202_reason = str_init("Accepted DMQ");
+
+	memset(resp, 0, sizeof(peer_reponse_t));
+	resp->resp_code = 202;
+	resp->reason = _dmq_202_reason;
+
 	return 0;
 }

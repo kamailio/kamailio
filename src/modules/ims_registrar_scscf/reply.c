@@ -39,6 +39,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/contact.h"
 #include "../../core/parser/parse_supported.h"
+#include "../../core/parser/contact/parse_contact.h"
 #include "../../core/data_lump_rpl.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "rerrno.h"
@@ -424,13 +425,16 @@ int build_expired_contact(contact_t* chi, contact_for_header_t** contact_header)
 
 //We use shared memory for this so we can use it when we use async diameter
 
-int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) {
+int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header, struct sip_msg* msg) {
     char *p, *cp;
     int fl, len, expires, expires_orig;
     ucontact_t* c;
     param_t* tmp;
     *contact_header = 0;
 	impu_contact_t *impucontact;
+    struct hdr_field* h;
+    contact_t* chi; //contact header information
+    int contact_match = 1;
 
     contact_for_header_t* tmp_contact_header = shm_malloc(sizeof (contact_for_header_t));
     if (!tmp_contact_header) {
@@ -455,80 +459,96 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
         while (impucontact) {
 			c = impucontact->contact;
             if (VALID_CONTACT(c, act_time)) {
-                if (fl) {
-                    memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
-                    p += CONTACT_SEP_LEN;
-                } else {
-                    fl = 1;
+                if (msg) {
+                    contact_match = 0;
+                    for (h = msg->contact; h; h = h->next) {
+                        if (h->type == HDR_CONTACT_T && h->parsed) {
+                            for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+                                if ((c->c.len == chi->uri.len) && !memcmp(c->c.s, chi->uri.s, c->c.len)) {
+                                    contact_match = 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
 
-                *p++ = '<';
-                memcpy(p, c->c.s, c->c.len);
-                p += c->c.len;
-                *p++ = '>';
+                if (contact_match) {
+                    if (fl) {
+                        memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
+                        p += CONTACT_SEP_LEN;
+                    } else {
+                        fl = 1;
+                    }
 
-                len = len_q(c->q);
-                if (len) {
-                    memcpy(p, Q_PARAM, Q_PARAM_LEN);
-                    p += Q_PARAM_LEN;
-                    memcpy(p, q2str(c->q, 0), len);
-                    p += len;
-                }
+                    *p++ = '<';
+                    memcpy(p, c->c.s, c->c.len);
+                    p += c->c.len;
+                    *p++ = '>';
 
-                memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
-                p += EXPIRES_PARAM_LEN;
-                
-                /* the expires we put in the contact header is decremented to give the UE some grace before we expires them */
-                expires = expires_orig = (int)(c->expires - act_time);
-                expires = expires - (contact_expires_buffer_percentage*expires/100);
-                if (expires <= 0) {
-                    LM_WARN("expires after buffer change was <= 0, not adding buffer space\n");
-                    expires = expires_orig;
-                }
-                cp = int2str(expires, &len);
-                memcpy(p, cp, len);
-                p += len;
-    
-                if (c->received.s) {
-                    *p++ = ';';
-                    memcpy(p, rcv_param.s, rcv_param.len);
-                    p += rcv_param.len;
-                    *p++ = '=';
-                    *p++ = '\"';
-                    memcpy(p, c->received.s, c->received.len);
-                    p += c->received.len;
-                    *p++ = '\"';
-                }
-                
-                /* put in the rest of the params except Q and received */
-                tmp = c->params;
-                while (tmp) {
-					if (tmp->name.len>0 && tmp->name.s) {
-						if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
-							tmp = tmp->next;
-							continue;
-						}
-						if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
-							tmp = tmp->next;
-							continue;
-						}
-						if ((tmp->name.s[0] == 'E' || tmp->name.s[0]=='e') && tmp->name.len == 7 && !memcmp(tmp->name.s+1, "xpires", 6)) {
-							tmp = tmp->next;
-							continue;
-						}
-						*p++ = ';';
-						memcpy(p, tmp->name.s, tmp->name.len);
-						p += tmp->name.len;
-					}
+                    len = len_q(c->q);
+                    if (len) {
+                        memcpy(p, Q_PARAM, Q_PARAM_LEN);
+                        p += Q_PARAM_LEN;
+                        memcpy(p, q2str(c->q, 0), len);
+                        p += len;
+                    }
+
+                    memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
+                    p += EXPIRES_PARAM_LEN;
                     
-                    if (tmp->body.len > 0) {
+                    /* the expires we put in the contact header is decremented to give the UE some grace before we expires them */
+                    expires = expires_orig = (int)(c->expires - act_time);
+                    expires = expires - (contact_expires_buffer_percentage*expires/100);
+                    if (expires <= 0) {
+                        LM_WARN("expires after buffer change was <= 0, not adding buffer space\n");
+                        expires = expires_orig;
+                    }
+                    cp = int2str(expires, &len);
+                    memcpy(p, cp, len);
+                    p += len;
+
+                    if (c->received.s) {
+                        *p++ = ';';
+                        memcpy(p, rcv_param.s, rcv_param.len);
+                        p += rcv_param.len;
                         *p++ = '=';
                         *p++ = '\"';
-                        memcpy(p, tmp->body.s, tmp->body.len);
-                        p += tmp->body.len;
+                        memcpy(p, c->received.s, c->received.len);
+                        p += c->received.len;
                         *p++ = '\"';
                     }
-                    tmp = tmp->next;
+                    
+                    /* put in the rest of the params except Q and received */
+                    tmp = c->params;
+                    while (tmp) {
+                        if (tmp->name.len>0 && tmp->name.s) {
+                            if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
+                                tmp = tmp->next;
+                                continue;
+                            }
+                            if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
+                                tmp = tmp->next;
+                                continue;
+                            }
+                            if ((tmp->name.s[0] == 'E' || tmp->name.s[0]=='e') && tmp->name.len == 7 && !memcmp(tmp->name.s+1, "xpires", 6)) {
+                                tmp = tmp->next;
+                                continue;
+                            }
+                            *p++ = ';';
+                            memcpy(p, tmp->name.s, tmp->name.len);
+                            p += tmp->name.len;
+                        }
+                        
+                        if (tmp->body.len > 0) {
+                            *p++ = '=';
+                            *p++ = '\"';
+                            memcpy(p, tmp->body.s, tmp->body.len);
+                            p += tmp->body.len;
+                            *p++ = '\"';
+                        }
+                        tmp = tmp->next;
+                    }
                 }
             }
 			impucontact = impucontact->next;

@@ -30,6 +30,8 @@
 #ifndef PS_HASH_H
 #define PS_HASH_H
 
+#include <stdint.h>
+
 #include "../../core/lock_ops.h"
 
 struct presentity;
@@ -53,8 +55,10 @@ struct presentity;
 		size += source.len;                   \
 	} while(0)
 
-#define PKG_MEM_TYPE 1 << 1
-#define SHM_MEM_TYPE 1 << 2
+#define PKG_MEM_TYPE (1 << 1)
+#define SHM_MEM_TYPE (1 << 2)
+
+extern int pres_delete_same_subs;
 
 /* subscribe hash entry */
 struct subscription;
@@ -118,7 +122,7 @@ typedef struct pres_entry
 	struct pres_entry *next;
 } pres_entry_t;
 
-typedef struct pres_htable
+typedef struct pres_phtable
 {
 	pres_entry_t *entries;
 	gen_lock_t lock;
@@ -130,10 +134,55 @@ pres_entry_t *search_phtable(str *pres_uri, int event, unsigned int hash_code);
 
 int insert_phtable(str *pres_uri, int event, char *sphere);
 
-int update_phtable(struct presentity *presentity, str pres_uri, str body);
+int update_phtable(struct presentity *presentity, str *pres_uri, str *body);
 
 int delete_phtable(str *pres_uri, int event);
 
 void destroy_phtable(void);
+
+int delete_db_subs(str* to_tag, str* from_tag, str* callid);
+
+typedef struct ps_presentity {
+	uint32_t bsize;
+	uint32_t hashid;
+	str user;
+	str domain;
+	str ruid;
+	str sender;
+	str event;
+	str etag;
+	int expires;
+	int received_time;
+	int priority;
+	str body;
+	struct ps_presentity *next;
+	struct ps_presentity *prev;
+} ps_presentity_t;
+
+typedef struct ps_pslot {
+	ps_presentity_t *plist;
+	gen_lock_t lock;
+} ps_pslot_t;
+
+typedef struct ps_ptable {
+	int ssize;
+	ps_pslot_t *slots;
+} ps_ptable_t;
+
+ps_presentity_t *ps_presentity_new(ps_presentity_t *pt, int mtype);
+void ps_presentity_free(ps_presentity_t *pt, int mtype);
+void ps_presentity_list_free(ps_presentity_t *pt, int mtype);
+int ps_presentity_match(ps_presentity_t *pta, ps_presentity_t *ptb, int mmode);
+int ps_ptable_init(int ssize);
+void ps_ptable_destroy(void);
+int ps_ptable_insert(ps_presentity_t *pt);
+int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt);
+int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt);
+int ps_ptable_remove(ps_presentity_t *pt);
+ps_presentity_t *ps_ptable_get_list(str *user, str *domain);
+ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag);
+ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode);
+ps_presentity_t *ps_ptable_get_expired(int eval);
+ps_ptable_t *ps_ptable_get(void);
 
 #endif

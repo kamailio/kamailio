@@ -20,10 +20,10 @@
  *
  */
 
+#include <sys/socket.h>
+
 #include "../../core/parser/msg_parser.h"
 #include "../../core/globals.h"
-
-#include <sys/socket.h>
 
 #define FAKED_SIP_MSG_FORMAT                                                 \
 	"OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP "              \
@@ -31,18 +31,19 @@
 	"%.*s\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
 
 #define FAKED_SIP_MSG_BUF_LEN 1024
-char _faked_sip_msg_buf[FAKED_SIP_MSG_BUF_LEN];
+static char _faked_sip_msg_buf[FAKED_SIP_MSG_BUF_LEN];
 
 static struct sip_msg _faked_msg;
 
-int faked_msg_init_with_dlg_info(str *callid, str *from_uri, str *from_tag,
-		str *to_uri, str *to_tag, struct sip_msg **msg)
+int cnxcc_faked_msg_init_with_dlg_info(str *callid, str *from_uri,
+		str *from_tag, str *to_uri, str *to_tag, struct sip_msg **msg)
 {
 	memset(_faked_sip_msg_buf, 0, FAKED_SIP_MSG_BUF_LEN);
+	memset(&_faked_msg, 0, sizeof(struct sip_msg));
 
-	snprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_BUF_LEN, FAKED_SIP_MSG_FORMAT, from_uri->len,
-			from_uri->s, from_tag->len, from_tag->s, to_uri->len, to_uri->s,
-			to_tag->len, to_tag->s, callid->len, callid->s);
+	snprintf(_faked_sip_msg_buf, FAKED_SIP_MSG_BUF_LEN, FAKED_SIP_MSG_FORMAT,
+			from_uri->len, from_uri->s, from_tag->len, from_tag->s, to_uri->len,
+			to_uri->s, to_tag->len, to_tag->s, callid->len, callid->s);
 
 	LM_DBG("fake msg:\n%s\n", _faked_sip_msg_buf);
 

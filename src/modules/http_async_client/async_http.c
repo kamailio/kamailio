@@ -57,6 +57,7 @@ extern struct tm_binds tmb;
 
 struct sip_msg *ah_reply = NULL;
 str ah_error = {NULL, 0};
+http_m_time_t ah_time = {0};
 
 async_http_worker_t *workers = NULL;
 int num_workers = 1;
@@ -142,6 +143,8 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	/* clean process-local result variables */
 	ah_error.s = NULL;
 	ah_error.len = 0;
+
+	memset(&ah_time, 0, sizeof(struct http_m_time));
 	memset(ah_reply, 0, sizeof(struct sip_msg));
 
 	keng = sr_kemi_eng_get();
@@ -163,6 +166,8 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 	/* set process-local result variables */
+	ah_time = reply->time;
+
 	if (reply->result == NULL) {
 		/* error */
 		ah_error.s = reply->error;
@@ -212,7 +217,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 	strncpy(q_id, aq->id, strlen(aq->id));
-	
+
 	q_id[strlen(aq->id)] = '\0';
 
 	cfg_update();
@@ -227,16 +232,10 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 			free_async_query(aq);
 			return;
 		}
-		// we bring the list of AVPs of the transaction to the current context
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
-		if (t)
+		if (t) {
 			tmb.unref_cell(t);
+		}
 
 		LM_DBG("resuming transaction (%d:%d)\n", tindex, tlabel);
 

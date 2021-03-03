@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -26,14 +26,14 @@
 
 
 
-#ifndef _HASH_H
-#define _HASH_H
+#ifndef _HASH_FUNC_H_
+#define _HASH_FUNC_H_
 
 #include "str.h"
 #include "hashes.h"
 
 /* always use a power of 2 for hash table size */
-#define T_TABLE_POWER    16 
+#define T_TABLE_POWER    16
 #define TABLE_ENTRIES    (1 << (T_TABLE_POWER))
 
 unsigned int new_hash( str  call_id, str cseq_nr );

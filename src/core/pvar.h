@@ -61,6 +61,7 @@
 #define PV_IDX_PVAR	1
 #define PV_IDX_ALL	2
 #define PV_IDX_ITR	3
+#define PV_IDX_NONE 4
 
 /*! if PV name is dynamic, integer, or str */
 #define pv_has_dname(pv) ((pv)->pvp.pvn.type==PV_NAME_PVAR)
@@ -77,8 +78,8 @@ enum _pv_type {
 	PVT_DSTURI,           PVT_COLOR,             PVT_BRANCH,
 	PVT_FROM,             PVT_TO,                PVT_OURI,
 	PVT_SCRIPTVAR,        PVT_MSG_BODY,          PVT_CONTEXT,
-	PVT_XAVP,             PVT_HDRC,              PVT_OTHER,
-	PVT_EXTRA /* keep it last */
+	PVT_XAVP,             PVT_XAVU,              PVT_XAVI,
+	PVT_HDRC,             PVT_OTHER,             PVT_EXTRA /* keep it last */
 };
 
 typedef enum _pv_type pv_type_t;
@@ -305,6 +306,14 @@ typedef struct _pv_xavp_name {
 	pv_spec_t index;
 	struct _pv_xavp_name *next;
 } pv_xavp_name_t;
+
+/**
+ * XAVU
+ */
+typedef struct _pv_xavu_name {
+	str name;
+	struct _pv_xavu_name *next;
+} pv_xavu_name_t;
 
 int pv_eval_str(sip_msg_t *msg, str *dst, str *src);
 

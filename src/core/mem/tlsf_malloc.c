@@ -1201,22 +1201,22 @@ void tlsf_status(tlsf_t pool)
 	block_header_t* pb;
 
 	memlog=cfg_get(core, core_cfg, memlog);
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "status of pool (%p):\n", pool);
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "heap size= %zu\n",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ", "status of pool (%p):\n", pool);
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ", "heap size= %zu\n",
 			control->total_size);
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 			"used= %zu, used+overhead=%zu, free=%zu, fragments=%zu\n",
 			control->allocated, control->real_used, control->total_size - control->real_used, control->fragments);
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 			"max used (+overhead)=%zu, max fragments=%zu\n", control->max_used, control->max_fragments);
 
 	/* print a summary of the 2 levels bucket list */
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 				"Free blocks matrix ('.': none, 'X': between 2^X and (2^(X+1)-1) free blocks, X=A..Z, A=0, B=1, ...)\n");
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 				"> first-level: %d block list arrays between 2^fl and 2^(fl+1) bytes (fl=%d..%d)\n",
 				FL_INDEX_COUNT, FL_INDEX_SHIFT, FL_INDEX_MAX);
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 				"v second-level: %d block lists between 2^fl+sl*2^(fl-%d) and 2^fl+(sl+1)*2^(fl-%d)-1 bytes (sl=0..%d)\n",
 				SL_INDEX_COUNT, SL_INDEX_COUNT_LOG2, SL_INDEX_COUNT_LOG2, SL_INDEX_COUNT-1);
 	for (sl = 0 ; sl < SL_INDEX_COUNT ; sl++) {
@@ -1234,7 +1234,7 @@ void tlsf_status(tlsf_t pool)
 				summary[fl] = 'A' + tlsf_fls(len);
 			}
 		}
-		LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 					"%2d|%.*s|\n", sl, FL_INDEX_COUNT, summary);
 	}
 }
@@ -1270,7 +1270,7 @@ void tlsf_sums(tlsf_t pool)
 
 	memlog=cfg_get(core, core_cfg, memlog);
 
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
 			"pool (%p) summarizing all alloc'ed. fragments:\n", pool);
 
 
@@ -1287,7 +1287,7 @@ void tlsf_sums(tlsf_t pool)
 
 	x = root;
 	while(x){
-		LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+		LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
 				" count=%6d size=%10lu bytes from %s: %s(%ld)\n",
 			x->count,x->size,
 			x->file, x->func, x->line
@@ -1296,7 +1296,7 @@ void tlsf_sums(tlsf_t pool)
 		free(x);
 		x = root;
 	}
-	LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
+	LOG_FP(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
 			"-----------------------------\n");
 }
 
@@ -1607,6 +1607,16 @@ void tlsf_shm_sums(void* tlsfmp)
 	tlsf_sums(tlsfmp);
 	tlsf_shm_unlock();
 }
+void tlsf_shm_mod_get_stats(void *qmp, void **qm_rootp)
+{
+	tlsf_shm_lock();
+	tlsf_mod_get_stats(qmp, qm_rootp);
+	tlsf_shm_unlock();
+}
+void tlsf_shm_mod_free_stats(void *qm_rootp)
+{
+	tlsf_mod_free_stats(qm_rootp);
+}
 
 
 /**
@@ -1653,8 +1663,8 @@ int tlsf_malloc_init_shm_manager(void)
 	ma.xavailable     = tlsf_shm_available;
 	ma.xsums          = tlsf_shm_sums;
 	ma.xdestroy       = tlsf_malloc_destroy_shm_manager;
-	ma.xmodstats      = tlsf_mod_get_stats;
-	ma.xfmodstats     = tlsf_mod_free_stats;
+	ma.xmodstats      = tlsf_shm_mod_get_stats;
+	ma.xfmodstats     = tlsf_shm_mod_free_stats;
 	ma.xglock         = tlsf_shm_glock;
 	ma.xgunlock       = tlsf_shm_gunlock;
 

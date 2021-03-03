@@ -208,7 +208,7 @@ if [ -e $DB_SCHEMA/extensions-create.sql ]; then
 	fi
 fi
 
-minfo "Core Kamailio tables succesfully created."
+minfo "Core Kamailio tables successfully created."
 
 get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
 if [ "$ANSWER" = "y" ]; then
@@ -244,7 +244,7 @@ if [ $? -ne 0 ] || check_oracle_log ; then
 	exit 1
 fi
 
-minfo "Presence tables succesfully created."
+minfo "Presence tables successfully created."
 }
 
 extra_create() # pars: <database name>
@@ -266,7 +266,7 @@ for TABLE in $EXTRA_MODULES; do
 	fi
 done
 
-minfo "Extra tables succesfully created."
+minfo "Extra tables successfully created."
 }
 
 

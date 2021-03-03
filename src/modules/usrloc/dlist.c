@@ -40,13 +40,16 @@
 #include "udomain.h"           /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"
+#include "ul_keepalive.h"
 #include "usrloc_mod.h"
 
 
 extern int ul_version_table;
+extern int ul_ka_mode;
+extern int ul_ka_filter;
 
 /*! \brief Global list of all registered domains */
-dlist_t* root = 0;
+dlist_t *_ksr_ul_root = 0;
 
 unsigned int _ul_max_partition = 0;
 
@@ -65,18 +68,201 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 {
 	dlist_t* ptr;
 
-	ptr = root;
+	ptr = _ksr_ul_root;
 	while(ptr) {
 		if ((_n->len == ptr->name.len) &&
 		    !memcmp(_n->s, ptr->name.s, _n->len)) {
 			*_d = ptr;
 			return 0;
 		}
-		
+
 		ptr = ptr->next;
 	}
-	
+
 	return 1;
+}
+
+/*!
+ * \brief Keepalive routine for all contacts from the database
+ */
+int ul_ka_db_records(int partidx)
+{
+	db1_res_t* res = NULL;
+	db_row_t *row = NULL;
+	db_key_t keys1[4]; /* where */
+	db_val_t vals1[4];
+	db_op_t  ops1[4];
+	db_key_t keys2[8]; /* select */
+	int n[2] = {2, 8}; /* number of dynamic values used on key1/key2 */
+	dlist_t *dom = NULL;
+	urecord_t ur;
+	ucontact_t uc;
+	int port = 0;
+	int proto = 0;
+	str host = STR_NULL;
+	char *p = NULL;
+#define ULKA_AORBUF_SIZE 1024
+	char aorbuf[ULKA_AORBUF_SIZE];
+	int i = 0;
+
+	/* select fields */
+	keys2[0] = &ul_received_col;
+	keys2[1] = &ul_contact_col;
+	keys2[2] = &ul_sock_col;
+	keys2[3] = &ul_cflags_col;
+	keys2[4] = &ul_path_col;
+	keys2[5] = &ul_ruid_col;
+	keys2[6] = &ul_user_col;
+	keys2[7] = &ul_domain_col;
+
+	/* where fields */
+	keys1[0] = &ul_expires_col;
+	ops1[0] = OP_GT;
+	vals1[0].nul = 0;
+	UL_DB_EXPIRES_SET(&vals1[0], time(0));
+
+	keys1[1] = &ul_partition_col;
+	ops1[1] = OP_EQ;
+	vals1[1].type = DB1_INT;
+	vals1[1].nul = 0;
+	if(_ul_max_partition>0)
+		vals1[1].val.int_val = partidx;
+	else
+		vals1[1].val.int_val = 0;
+
+	if (ul_ka_mode & ULKA_NAT) {
+		keys1[n[0]] = &ul_keepalive_col;
+		ops1[n[0]] = OP_EQ;
+		vals1[n[0]].type = DB1_INT;
+		vals1[n[0]].nul = 0;
+		vals1[n[0]].val.int_val = 1;
+		n[0]++;
+	}
+	if(ul_ka_filter&GAU_OPT_SERVER_ID) {
+		keys1[n[0]] = &ul_srv_id_col;
+		ops1[n[0]] = OP_EQ;
+		vals1[n[0]].type = DB1_INT;
+		vals1[n[0]].nul = 0;
+		vals1[n[0]].val.int_val = server_id;
+		n[0]++;
+	}
+
+	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
+		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
+			LM_ERR("sql use_table failed\n");
+			return -1;
+		}
+		if (ul_dbf.query(ul_dbh, keys1, ops1, vals1, keys2,
+							n[0], n[1], NULL, &res) <0 ) {
+			LM_ERR("query error\n");
+			return -1;
+		}
+		if( RES_ROW_N(res)==0 ) {
+			ul_dbf.free_result(ul_dbh, res);
+			continue;
+		}
+
+		for(i = 0; i < RES_ROW_N(res); i++) {
+			row = RES_ROWS(res) + i;
+			memset(&ur, 0, sizeof(urecord_t));
+			memset(&uc, 0, sizeof(ucontact_t));
+
+			/* received */
+			uc.received.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if ( VAL_NULL(ROW_VALUES(row)) || uc.received.s==0 || uc.received.s[0]==0 ) {
+				uc.received.s = NULL;
+				uc.received.len = 0;
+			} else {
+				uc.received.len = strlen(uc.received.s);
+			}
+
+			/* contact */
+			uc.c.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
+			if (VAL_NULL(ROW_VALUES(row)+1) || uc.c.s==0 || uc.c.s[0]==0) {
+				LM_ERR("empty contact -> skipping\n");
+				continue;
+			} else {
+				uc.c.len = strlen(uc.c.s);
+			}
+
+			/* path */
+			uc.path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
+			if (VAL_NULL(ROW_VALUES(row)+4) || uc.path.s==0 || uc.path.s[0]==0){
+				uc.path.s = NULL;
+				uc.path.len = 0;
+			} else {
+				uc.path.len = strlen(uc.path.s);
+			}
+
+			/* ruid */
+			uc.ruid.s = (char*)VAL_STRING(ROW_VALUES(row)+5);
+			if (VAL_NULL(ROW_VALUES(row)+5) || uc.ruid.s==0 || uc.ruid.s[0]==0){
+				uc.ruid.s = NULL;
+				uc.ruid.len = 0;
+			} else {
+				uc.ruid.len = strlen(uc.ruid.s);
+			}
+			/* sock */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
+			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
+				uc.sock = 0;
+			} else {
+				if (parse_phostport(p, &host.s, &host.len,
+							&port, &proto)!=0) {
+					LM_ERR("bad socket <%s>...set to 0\n", p);
+					uc.sock = 0;
+				} else {
+					uc.sock = grep_sock_info( &host, (unsigned short)port, proto);
+					if (uc.sock==0) {
+						LM_DBG("non-local socket <%s>...set to 0\n", p);
+					}
+				}
+			}
+
+			/* flags */
+			uc.cflags = VAL_BITMAP(ROW_VALUES(row) + 3);
+
+			/* server id */
+			uc.server_id = server_id;
+
+			/* aor from username and domain */
+			ur.aor.s = aorbuf;
+			ur.domain = &dom->name;
+
+			/* user */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 6);
+			if (VAL_NULL(ROW_VALUES(row)+6) || p==0 || p[0]==0) {
+				LM_ERR("empty username -> skipping\n");
+				continue;
+			}
+			ur.aor.len = strlen(p);
+			if(ur.aor.len >= ULKA_AORBUF_SIZE - 1) {
+				LM_DBG("long username ->skipping\n");
+				continue;
+			}
+			strcpy(aorbuf, p);
+
+			/* domain */
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
+			if (!(VAL_NULL(ROW_VALUES(row)+7) || p==0 || p[0]==0)) {
+				if(ur.aor.len + strlen(p) >= ULKA_AORBUF_SIZE - 2) {
+					LM_DBG("long aor ->skipping\n");
+					continue;
+				}
+				aorbuf[ur.aor.len] = '@';
+				strcpy(aorbuf + ur.aor.len + 1, p);
+				ur.aor.len = strlen(aorbuf);
+			}
+			ur.aorhash = ul_get_aorhash(&ur.aor);
+			ur.contacts = &uc;
+
+			ul_ka_urecord(&ur);
+		} /* row cycle */
+
+		ul_dbf.free_result(ul_dbh, res);
+	} /* domain cycle */
+
+	return 0;
 }
 
 /*!
@@ -124,20 +310,20 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	aorhash = 0;
 
 	/* select fields */
-	keys2[0] = &received_col;
-	keys2[1] = &contact_col;
-	keys2[2] = &sock_col;
-	keys2[3] = &cflags_col;
-	keys2[4] = &path_col;
-	keys2[5] = &ruid_col;
+	keys2[0] = &ul_received_col;
+	keys2[1] = &ul_contact_col;
+	keys2[2] = &ul_sock_col;
+	keys2[3] = &ul_cflags_col;
+	keys2[4] = &ul_path_col;
+	keys2[5] = &ul_ruid_col;
 
 	/* where fields */
-	keys1[0] = &expires_col;
+	keys1[0] = &ul_expires_col;
 	ops1[0] = OP_GT;
 	vals1[0].nul = 0;
 	UL_DB_EXPIRES_SET(&vals1[0], time(0));
 
-	keys1[1] = &partition_col;
+	keys1[1] = &ul_partition_col;
 	ops1[1] = OP_EQ;
 	vals1[1].type = DB1_INT;
 	vals1[1].nul = 0;
@@ -146,8 +332,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	else
 		vals1[1].val.int_val = 0;
 
-	if (flags & nat_bflag) {
-		keys1[n[0]] = &keepalive_col;
+	if (flags & ul_nat_bflag) {
+		keys1[n[0]] = &ul_keepalive_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -155,7 +341,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 		n[0]++;
 	}
 	if(options&GAU_OPT_SERVER_ID) {
-		keys1[n[0]] = &srv_id_col;
+		keys1[n[0]] = &ul_srv_id_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
 		vals1[n[0]].nul = 0;
@@ -165,7 +351,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	/* TODO: use part_idx and part_max on keys1 */
 
-	for (dom = root; dom!=NULL ; dom=dom->next) {
+	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
 		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
 			LM_ERR("sql use_table failed\n");
 			return -1;
@@ -350,7 +536,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(c->c.len);
 
-	for (p = root; p != NULL; p = p->next) {
+	for (p = _ksr_ul_root; p != NULL; p = p->next) {
 
 		for(i=0; i<p->d->size; i++) {
 
@@ -482,18 +668,18 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max,
 								int options)
 {
-	if (db_mode==DB_ONLY)
+	if (ul_db_mode==DB_ONLY)
 		return get_all_db_ucontacts( buf, len, flags, part_idx, part_max, options);
 	else
 		return get_all_mem_ucontacts( buf, len, flags, part_idx, part_max, options);
 }
 
 
-
 /**
  *
  */
-int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
+int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
+		unsigned int rtrip)
 {
 	dlist_t *p;
 	urecord_t *r;
@@ -502,7 +688,7 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
 
 	/* todo: get location domain via param */
 
-	for (p = root; p != NULL; p = p->next)
+	for (p = _ksr_ul_root; p != NULL; p = p->next)
 	{
 		i = _aorhash&(p->d->size-1);
 		lock_ulslot(p->d, i);
@@ -523,10 +709,11 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
 							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len))
 					{
 						/* found */
-						c->last_keepalive = time(NULL);
-						LM_DBG("updated keepalive for [%.*s:%u] to %u\n",
+						c->last_keepalive = tval;
+						c->ka_roundtrip = rtrip;
+						LM_DBG("updated keepalive for [%.*s:%u] to %u (rtrip: %u)\n",
 								_ruid->len, _ruid->s, _aorhash,
-								(unsigned int)c->last_keepalive);
+								(unsigned int)c->last_keepalive, c->ka_roundtrip);
 						unlock_ulslot(p->d, i);
 						return 0;
 					}
@@ -537,6 +724,14 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
+{
+	return ul_update_keepalive(_aorhash, _ruid, time(NULL), 0);
 }
 
 /*!
@@ -556,7 +751,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	 */
 	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
 	if (ptr == 0) {
-		LM_ERR("no more share memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ptr, 0, sizeof(dlist_t));
@@ -564,7 +759,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	/* copy domain name as null terminated string */
 	ptr->name.s = (char*)shm_malloc(_n->len+1);
 	if (ptr->name.s == 0) {
-		LM_ERR("no more memory left\n");
+		SHM_MEM_ERROR;
 		shm_free(ptr);
 		return -2;
 	}
@@ -597,13 +792,24 @@ int get_udomain(const char* _n, udomain_t** _d)
 	dlist_t* d;
 	str s;
 
+	if(_n == NULL) {
+		LM_ERR("null location table name\n");
+		goto notfound;
+	}
+
 	s.s = (char*)_n;
 	s.len = strlen(_n);
+	if(s.len <= 0) {
+		LM_ERR("empty location table name\n");
+		goto notfound;
+	}
 
 	if (find_dlist(&s, &d) == 0) {
 		*_d = d->d;
 		return 0;
 	}
+
+notfound:
 	*_d = NULL;
 	return -1;
 }
@@ -631,7 +837,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 		*_d = d->d;
 		return 0;
 	}
-	
+
 	if (new_dlist(&s, &d) < 0) {
 		LM_ERR("failed to create new domain\n");
 		return -1;
@@ -640,8 +846,8 @@ int register_udomain(const char* _n, udomain_t** _d)
 	/* Test tables from database if we are gonna
 	 * to use database
 	 */
-	if (db_mode != NO_DB) {
-		con = ul_dbf.init(&db_url);
+	if (ul_db_mode != NO_DB) {
+		con = ul_dbf.init(&ul_db_url);
 		if (!con) {
 			LM_ERR("failed to open database connection\n");
 			goto dberror;
@@ -662,9 +868,9 @@ int register_udomain(const char* _n, udomain_t** _d)
 		con = 0;
 	}
 
-	d->next = root;
-	root = d;
-	
+	d->next = _ksr_ul_root;
+	_ksr_ul_root = d;
+
 	*_d = d->d;
 	return 0;
 
@@ -685,9 +891,9 @@ void free_all_udomains(void)
 {
 	dlist_t* ptr;
 
-	while(root) {
-		ptr = root;
-		root = root->next;
+	while(_ksr_ul_root) {
+		ptr = _ksr_ul_root;
+		_ksr_ul_root = _ksr_ul_root->next;
 
 		free_udomain(ptr->d);
 		shm_free(ptr->name.s);
@@ -703,8 +909,8 @@ void free_all_udomains(void)
 void print_all_udomains(FILE* _f)
 {
 	dlist_t* ptr;
-	
-	ptr = root;
+
+	ptr = _ksr_ul_root;
 
 	fprintf(_f, "===Domain list===\n");
 	while(ptr) {
@@ -724,12 +930,12 @@ unsigned long get_number_of_users(void)
 	long numberOfUsers = 0;
 
 	dlist_t* current_dlist;
-	
-	current_dlist = root;
+
+	current_dlist = _ksr_ul_root;
 
 	while (current_dlist)
 	{
-		numberOfUsers += get_stat_val(current_dlist->d->users); 
+		numberOfUsers += get_stat_val(current_dlist->d->users);
 		current_dlist  = current_dlist->next;
 	}
 
@@ -746,14 +952,19 @@ int synchronize_all_udomains(int istart, int istep)
 	int res = 0;
 	dlist_t* ptr;
 
-	get_act_time(); /* Get and save actual time */
+	ul_get_act_time(); /* Get and save actual time */
 
-	if (db_mode==DB_ONLY) {
-		for( ptr=root ; ptr ; ptr=ptr->next)
-			res |= db_timer_udomain(ptr->d);
+	if (ul_db_mode==DB_ONLY) {
+		if(istart == 0) {
+			for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
+				res |= db_timer_udomain(ptr->d);
+			}
+		}
+		ul_ka_db_records((unsigned int)istart);
 	} else {
-		for( ptr=root ; ptr ; ptr=ptr->next)
+		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			mem_timer_udomain(ptr->d, istart, istep);
+		}
 	}
 
 	return res;
@@ -768,9 +979,9 @@ int ul_db_clean_udomains(void)
 	int res = 0;
 	dlist_t* ptr;
 
-	get_act_time(); /* Get and save actual time */
+	ul_get_act_time(); /* Get and save actual time */
 
-	for( ptr=root ; ptr ; ptr=ptr->next)
+	for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
 		res |= db_timer_udomain(ptr->d);
 
 	return res;

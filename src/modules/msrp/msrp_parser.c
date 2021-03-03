@@ -491,10 +491,25 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 	}
 	hook = &uri->host;
 	hook->s = s;
+	if(*s == '[')
+	{
+		/* IPv6 */
+		p = q_memchr(s, ']', e - s);
+		if(p == NULL)
+		{
+			goto error;
+		}
+		s = p + 1;
+		hook->len = s - hook->s;
+	}
 	p = q_memchr(s, ':', e - s);
 	if(p!=NULL)
 	{
-		hook->len = p - hook->s;
+		if(hook->len == 0)
+		{
+			/* host len was not set yet */
+			hook->len = p - hook->s;
+		}
 		hook = &uri->port;
 		s = p+1;
 		if(s>=e) goto error;

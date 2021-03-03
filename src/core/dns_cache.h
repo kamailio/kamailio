@@ -70,14 +70,14 @@ enum dns_errors{
 					              -- returned only by the dns_resolve*
 								  functions when called iteratively,; it
 								  signals the end of the ip/records list */
-					E_DNS_UNKNOWN /**< unkown error */,
+					E_DNS_UNKNOWN /**< unknown error */,
 					E_DNS_INTERNAL_ERR /**< internal error */,
 					E_DNS_BAD_SRV_ENTRY,
 					E_DNS_NO_SRV /**< unresolvable srv record */,
 					E_DNS_BAD_IP_ENTRY,
 					E_DNS_NO_IP /**< unresolvable a or aaaa records*/,
 					E_DNS_BAD_IP /**< the ip is invalid */,
-					E_DNS_BLACKLIST_IP /**< the ip is blacklisted */,
+					E_DNS_BLOCKLIST_IP /**< the ip is blocklisted */,
 					E_DNS_NAME_TOO_LONG /**< try again with a shorter name */,
 					E_DNS_AF_MISMATCH /**< ipv4 or ipv6 only requested, but
 										 name contains an ip addr. of the
@@ -112,7 +112,7 @@ const char* dns_strerror(int err);
 /*@} */
 
 
-/** @name ip blacklist error flags */
+/** @name ip blocklist error flags */
 /*@{ */
 #define IP_ERR_BAD_DST      2 /* destination is marked as bad (e.g. bad ip) */
 #define IP_ERR_SND          3 /* send error while using this as destination */
