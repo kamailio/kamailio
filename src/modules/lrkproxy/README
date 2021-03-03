@@ -1,0 +1,341 @@
+lrkproxy Module
+
+Maxim Sobolev
+
+   Sippy Software, Inc.
+
+Juha Heinanen
+
+   TuTPro, Inc.
+
+Edited by
+
+Maxim Sobolev
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+Edited by
+
+Juha Heinanen
+
+Edited by
+
+Sas Ovidiu
+
+Edited by
+
+Carsten Bock
+
+Edited by
+
+Mojtaba Esfandiari.S
+
+
+   ng-voice GmbH
+
+   Copyright © 2003-2008 Sippy Software, Inc.
+
+   Copyright © 2005 Voice Sistem SRL
+
+   Copyright © 2009-2012 TuTPro Inc.
+
+   Copyright © 2010 VoIPEmbedded Inc.
+
+   Copyright © 2020 Nasim-Telecom Inc.
+
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Multiple lrkproxy usage
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. lrkproxy_sock (string)
+              4.2. lrkproxy_disable_tout (integer)
+              4.3. lrkproxy_tout (integer)
+              4.4. lrkproxy_retr (integer)
+              4.5. lrkp_alg
+              4.6. hash_table_tout
+              4.7. hash_table_size
+
+        5. Functions
+
+              5.1. set_lrk_proxy_set(setid)
+              5.2. lrkproxy_manage([flags [, ip_address]])
+
+   List of Examples
+
+   1.1. Set lrkproxy_sock parameter
+   1.2. Set lrkproxy_disable_tout parameter
+   1.3. Set lrkproxy_tout parameter
+   1.4. Set lrkproxy_retr parameter
+   1.5. Set lrkp_alg parameter
+   1.6. Set hash_table_tout
+   1.7. Set hash_table_size
+   1.8. set_lrk_proxy_set usage
+   1.9. lrkproxy_manage usage
+
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Multiple LRKProxy usage
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+              4.1. lrkproxy_sock (string)
+              4.2. lrkproxy_disable_tout (integer)
+              4.3. lrkproxy_tout (integer)
+              4.4. lrkproxy_retr (integer)
+              4.5. lrkp_alg
+              4.6. hash_table_tout
+              4.7. hash_table_size
+
+   5. Functions
+
+          5.1. set_lrk_proxy_set(setid)
+          5.2. lrkproxy_manage([flags [, ip_address]])
+
+1. Overview
+
+    This is a module that enables media streams to be relayed via an
+    lrkproxy. This module works with py_lrkproxy engine in:
+    https://github.com/mojtabaesfandiari/pylrkproxy
+    This module does relaying audio streams between peers in
+    PREROUTING netfilter-hooking section in kernel-space linux.
+    The LRKProxy architecture is composed of two
+    different layers. These layers are independent of each
+    other.
+
+    1.1. LRKP_Controlling Layer (LRKP_CL)
+
+        The first layer is developed as User-Space
+        application that allows User-Space to directly
+        access and manipulate cache data
+        buffer and packet buffer in Kernel-Space. This layer
+        gets all information about creating new sessions,
+        active sessions and tear-down sessions which is
+        gotten from SDP body during signaling plan and relay
+        them to the LRKP-Transport Stateful Layer (LRKP-
+        TSL).
+
+    1.2. LRKP_Transport Stateful Layer (LRKP_TSL)
+
+        The second layer is developed in Kernel-Space as
+        a main decision point for RTP admission controller
+        and Quickpath selector to where a received packet
+        should be forwarded with power of packet mangling
+        framework in the network stack.
+
+    The LRKP_CL and LRKP-TSL could be run as
+    independence functions on different machines. We
+    could have one LRKP_CL with multiple LRKP-TSL
+    on different machines. The LRKP_CL could works
+    with all LRKP-TSL with different strategies(lrkp_alg parameter).
+
+2. Multiple LRKProxy usage
+
+   The LRKP_CL Layer can support multiple LRKP_TSL Layer
+    for balancing/distribution and control/selection purposes.
+
+   The module allows definition of several sets of LRKP_TSL.
+   Load-balancing will be performed over predefine algorithm by setting lrkp_alg parameter.
+
+   IMPORTANT: This module does not support balancing inside a set like as is done RTPProxy module based on
+   the weight of each rtpproxy from the set. The balancing would be run on different machine
+   intead of different instances of LRKP_TSL.
+
+   3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm module - (optional) if you want to have lrkproxy_manage() fully
+       functional
+
+3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+4. Parameters
+
+  4.1. lrkproxy_sock (string)
+  4.2. lrkproxy_disable_tout (integer)
+  4.3. lrkproxy_tout (integer)
+  4.4. lrkproxy_retr (integer)
+  4.5. lrkp_alg
+  4.6. hash_table_tout
+  4.7. hash_table_size
+
+4.1. lrkproxy_sock (string)
+
+   Used to define the list of LRKP_TSL instances to connect to. These can
+   be UNIX sockets or IPv4/IPv6 UDP sockets. Each modparam entry will
+   insert sockets into a single set with default value set ID '0'.
+   To define multiple LRKP_TSL, just add the instances in each modparam.
+
+   Example 1.1. Set lrkproxy_sock (LRKP_TSL instance) parameter
+...
+# single lrkproxy
+modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
+
+# multiple lrkproxies for LB in diffenrent machine
+modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
+modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.109:8080")
+
+...
+
+4.2. lrkproxy_disable_tout (integer)
+
+   Once LRKP_TSL was found unreachable and marked as disabled, the
+   LRKP_CL module will not attempt to establish communication to LRKP_TSL
+   for lrkproxy_disable_tout seconds.
+
+   Default value is “60”.
+
+   Example 1.2. Set lrkproxy_disable_tout parameter
+...
+modparam("lrkproxy", "lrkproxy_disable_tout", 20)
+...
+
+4.3. lrkproxy_tout (integer)
+
+   Timeout value in waiting for reply from LRKP_TSL.
+
+   Default value is “1”.
+
+   Example 1.3. Set lrkproxy_tout parameter
+...
+modparam("lrkproxy", "lrkproxy_tout", 2)
+...
+
+4.4. lrkproxy_retr (integer)
+
+   How many times the LRKP_CL should retry to send and receive after
+   timeout was generated.
+
+   Default value is “5”.
+
+   Example 1.4. Set lrkproxy_retr parameter
+...
+modparam("lrkproxy", "lrkproxy_retr", 2)
+...
+
+4.5. lrkp_alg
+
+    This parameter set the algorithm of LRKP_TSL selection.
+    lrk_LINER=0,
+    lrk_RR=1
+
+    Example 1.5. Set lrkp_alg parameter
+
+...
+modparam("lrkproxy", "lrkp_alg", 1)
+...
+
+4.6. hash_table_tout (integer)
+
+   Number of seconds after an lrkproxy hash table entry is marked for
+   deletion. By default, this parameter is set to 3600 (seconds).
+
+   To maintain information about a selected rtp machine node, for a given
+   call, entries are added in a hashtable of (callid, viabranch) pairs. When
+   command comes, lookup callid, viabranch pairs. If found, return chosen node. If not
+   found, choose a new node, insert it in the hastable and return the
+   chosen node.
+
+   NOTE: In the current implementation, the actual deletion happens on the
+   fly, while insert/remove/lookup the hastable, only for the entries in
+   the insert/remove/lookup path.
+
+   NOTE: When configuring this parameter, one should consider maximum call
+   time VS share memory for unfinished calls.
+
+   Example 1.6. Set hash_table_tout parameter
+...
+modparam("lrkproxy", "hash_table_tout", "300")
+...
+
+4.7. hash_table_size (integer)
+
+   Size of the hash table. Default value is 256.
+
+   NOTE: If configured size is less than 1, the size will be defaulted to
+   1.
+
+   Example 1.7. Set hash_table_size parameter
+...
+modparam("lreproxy", "hash_table_size", "123")
+...
+
+5. Functions
+
+      5.1. set_lrk_proxy_set(setid)
+      5.2. lrkproxy_manage([flags [, ip_address]])
+
+5.1.  set_lrk_proxy_set(setid)
+
+   Sets the Id of the lrkproxy set to be used for the next
+   unforce_lrk_proxy(), lrkproxy_offer(), lrkproxy_answer() or
+   lrkproxy_manage() command. The parameter can be an integer or a config
+   variable holding an integer.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.8. set_lrk_proxy_set usage
+...
+set_lrk_proxy_set("0");
+lrkproxy_manage();
+...
+
+5.2.  lrkproxy_manage([flags [, ip_address]])
+
+   Manage the LRKProxy session - it combines the functionality of
+   lrkproxy_offer(), lrkproxy_answer() and unforce_lrkproxy(), detecting
+   internally based on message type and method which one to execute.
+
+   It can take the same parameters as lrkproxy_offer(). The flags
+   parameter to lrkproxy_manage() can be a configuration variable
+   containing the flags as a string.
+
+    Meaning of the parameters is as follows:
+        * flags - flags to turn on some features.
+          The “flags” string is a list of space-separated items. Each item is
+          either an individual token, or a token in “key=value” format. The
+          possible tokens are described below.
+        + internal, external - shorthand for “ie”
+        + external, internal - shorthand for “ei”
+
+     This function can be used from ANY_ROUTE.
+
+   Example 1.9. lrkproxy_manage usage
+...
+lrkproxy_manage();
+//or
+lrkproxy_manage("ie");
+//or
+lrkproxy_manage("ei");
+
+...
