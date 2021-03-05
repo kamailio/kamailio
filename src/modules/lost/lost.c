@@ -41,8 +41,10 @@
 #include "../../core/dprint.h"
 
 #include "../../core/script_cb.h"
+#include "../../core/re.h"
 
 #include "functions.h"
+#include "lost_select.h"
 
 MODULE_VERSION
 
@@ -161,10 +163,13 @@ static int mod_init(void)
 
 	LM_DBG("**** init lost: held response time: %d \n", held_resp_time);
 
+	register_select_table(lost_sel);
+
 	LM_DBG("**** init lost module done.\n");
 
 	return 0;
 }
+
 
 /* Child initialization function */
 static int child_init(int rank)
