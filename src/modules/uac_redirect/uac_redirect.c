@@ -54,7 +54,7 @@ int flags_hdr_mode = 0;
 #define DENY_RULE_STR   "deny"
 #define DEFAULT_Q_VALUE 10
 
-int default_q_value = DEFAULT_Q_VALUE;
+int _redirect_q_value = DEFAULT_Q_VALUE;
 
 /* sruid to get internal uid */
 sruid_t _redirect_sruid;
@@ -91,7 +91,7 @@ static param_export_t params[] = {
 	{"acc_db_table",    PARAM_STRING,  &acc_db_table     },
 	{"bflags",    		INT_PARAM,  &bflags			  },
 	{"flags_hdr_mode",	INT_PARAM,  &flags_hdr_mode	  },
-	{"default_q_value", INT_PARAM,  &default_q_value     },
+	{"q_value",         INT_PARAM,  &_redirect_q_value   },
 	{0, 0, 0}
 };
 

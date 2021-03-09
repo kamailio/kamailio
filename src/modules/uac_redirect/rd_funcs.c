@@ -33,7 +33,7 @@
 
 
 extern sruid_t _redirect_sruid;
-extern int default_q_value;
+extern int _redirect_q_value;
 
 #define MAX_CONTACTS_PER_REPLY   16
 
@@ -147,7 +147,7 @@ static int sort_contacts(hdr_field_t *chdr, contact_t **ct_array,
 			/* does the contact has a q val? */
 			q_para = ct_list->q;
 			if (q_para==0 || q_para->body.len==0) {
-				q = default_q_value;
+				q = _redirect_q_value;
 			} else {
 				if (str2q( &q, q_para->body.s, q_para->body.len)!=0) {
 					LM_ERR("invalid q param\n");
