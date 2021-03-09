@@ -397,7 +397,7 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 	/* look for table */
 	dom = rpc_find_domain( &table );
 	if (dom == NULL) {
-		rpc->fault(ctx, 500, "Domain not found");
+		rpc->fault(ctx, 500, "Domain table not found");
 		return;
 	}
 
@@ -471,7 +471,7 @@ static void ul_rpc_rm_aor(rpc_t* rpc, void* ctx)
 	/* look for table */
 	dom = rpc_find_domain( &table );
 	if (dom == NULL) {
-		rpc->fault(ctx, 500, "Domain not found");
+		rpc->fault(ctx, 500, "Domain table not found");
 		return;
 	}
 
@@ -515,7 +515,7 @@ static void ul_rpc_rm_contact(rpc_t* rpc, void* ctx)
 	/* look for table */
 	dom = rpc_find_domain( &table );
 	if (dom == NULL) {
-		rpc->fault(ctx, 500, "Domain not found");
+		rpc->fault(ctx, 500, "Domain table not found");
 		return;
 	}
 
@@ -656,7 +656,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	/* look for table */
 	dom = rpc_find_domain( &table );
 	if (dom == NULL) {
-		rpc->fault(ctx, 500, "Domain not found");
+		rpc->fault(ctx, 500, "Domain table not found");
 		return;
 	}
 
