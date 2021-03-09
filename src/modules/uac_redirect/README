@@ -31,6 +31,7 @@ Bogdan-Andrei Iancu
               4.5. acc_db_table (string)
               4.6. bflags (int)
               4.7. flags_hdr_mode (int)
+              4.8. q_value (int)
 
         5. Functions
 
@@ -50,11 +51,12 @@ Bogdan-Andrei Iancu
    1.5. Set acc_db_table parameter
    1.6. Set bflags module parameter
    1.7. Set flags_hdr_mode parameter
-   1.8. set_deny_filter usage
-   1.9. set_accept_filter usage
-   1.10. get_redirects usage
+   1.8. Set q_value parameter
+   1.9. set_deny_filter usage
+   1.10. set_accept_filter usage
    1.11. get_redirects usage
-   1.12. Redirection script example
+   1.12. get_redirects usage
+   1.13. Redirection script example
 
 Chapter 1. Admin Guide
 
@@ -76,6 +78,7 @@ Chapter 1. Admin Guide
         4.5. acc_db_table (string)
         4.6. bflags (int)
         4.7. flags_hdr_mode (int)
+        4.8. q_value (int)
 
    5. Functions
 
@@ -149,6 +152,7 @@ Chapter 1. Admin Guide
    4.5. acc_db_table (string)
    4.6. bflags (int)
    4.7. flags_hdr_mode (int)
+   4.8. q_value (int)
 
 4.1. default_filter (string)
 
@@ -273,6 +277,20 @@ branch_route[1] {
 modparam("uac_redirect","flags_hdr_mode",2)
 ...
 
+4.8. q_value (int)
+
+   Specifies the q-value to asign to contacts without one. Because
+   Kamailio doesn't support float parameter types, the value in the
+   parameter is divided by 1000 and stored as float. For example, if you
+   want q value to be 0.38, use value 380 here.
+
+   The default value is 10 (0.01).
+
+   Example 1.8. Set q_value parameter
+...
+modparam("uac_redirect","q_value",0)
+...
+
 5. Functions
 
    5.1. set_deny_filter(filter,flags)
@@ -295,7 +313,7 @@ modparam("uac_redirect","flags_hdr_mode",2)
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1.8. set_deny_filter usage
+   Example 1.9. set_deny_filter usage
 ...
 set_deny_filter(".*@domain2.net","reset_all");
 set_deny_filter(".*@domain1.net","");
@@ -316,7 +334,7 @@ set_deny_filter(".*@domain1.net","");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1.9. set_accept_filter usage
+   Example 1.10. set_accept_filter usage
 ...
 set_accept_filter(".*@domain2.net","reset_added");
 set_accept_filter(".*@domain1.net","");
@@ -345,7 +363,7 @@ set_accept_filter(".*@domain1.net","");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1.10. get_redirects usage
+   Example 1.11. get_redirects usage
 ...
 # max 2 contacts per branch, but no overall limit
 get_redirects("*:2");
@@ -369,14 +387,14 @@ get_redirects("*");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1.11. get_redirects usage
+   Example 1.12. get_redirects usage
 ...
 get_redirects("4:1","Redirected");
 ...
 
 6. Script Example
 
-   Example 1.12. Redirection script example
+   Example 1.13. Redirection script example
 loadmodule "modules/sl/sl.so"
 loadmodule "modules/usrloc/usrloc.so"
 loadmodule "modules/registrar/registrar.so"
