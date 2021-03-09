@@ -134,7 +134,7 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
 
 static int add_lrkproxy_socks(struct lrkp_set * lrkp_list, char * lrkproxy);
 static int fixup_set_id(void ** param, int param_no);
-static int set_lrk_proxy_set_f(struct sip_msg * msg, char * str1, char * str2);
+static int set_lrkproxy_set_f(struct sip_msg * msg, char * str1, char * str2);
 
 static struct lrkp_set * select_lrkp_set(int id_set);
 
@@ -193,15 +193,9 @@ static struct tm_binds tmb;
 /*0-> disabled, 1 ->enabled*/
 //unsigned int *natping_state=0;
 
-//static pv_elem_t *extra_id_pv = NULL;
-int start_port = 10000;
-int end_port = 20000;
-str internal_ip;
-str external_ip;
-
 static cmd_export_t cmds[] = {
 
-        {"set_lrk_proxy_set",  (cmd_function)set_lrk_proxy_set_f,    1,
+        {"set_lrkproxy_set",  (cmd_function)set_lrkproxy_set_f,    1,
                 fixup_set_id, 0,
                 ANY_ROUTE},
         {"lrkproxy_manage",	(cmd_function)lrkproxy_manage0,     0,
@@ -478,7 +472,7 @@ static int lrkproxy_add_lrkproxy_set( char * lrk_proxies)
     for(;*lrk_proxies && isspace(*lrk_proxies);lrk_proxies++);
 
     if(!(*lrk_proxies)){
-                LM_ERR("script error -empty lrk_proxy list\n");
+                LM_ERR("script error -empty lrkproxy list\n");
         return -1;;
     }
 
@@ -1356,7 +1350,7 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
 /* This function assumes p points to a line of requested type. */
 
 	static int
-set_lrk_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
+set_lrkproxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
 	lrkp_set_link_t *lrkl;
 	pv_value_t val;
