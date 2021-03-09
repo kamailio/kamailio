@@ -93,6 +93,12 @@ int pv_get_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 			if(br->location_ua_len==0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strlval(msg, param, res, br->location_ua, br->location_ua_len);
+		case 9: /* otcpid */
+			return pv_get_uintval(msg, param, res, br->otcpid);
+		case 10: /* instance */
+			if(br->instance_len==0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strlval(msg, param, res, br->instance, br->instance_len);
 		default:
 			/* 0 - uri */
 			return pv_get_strlval(msg, param, res, br->uri, br->len);
@@ -284,6 +290,22 @@ int pv_set_branchx_helper(sip_msg_t *msg, pv_param_t *param,
 		case 8: /* location_ua */
 			/* do nothing - cannot set the location_ua */
 		break;
+		case 9: /* otcpid */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->otcpid = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_INT))
+			{
+				LM_ERR("int value required to set branch flags\n");
+				return -1;
+			}
+			br->otcpid = val->ri;
+		break;
+		case 10: /* instance */
+			/* do nothing - cannot set the instance */
+		break;
 		default:
 			/* 0 - uri */
 			if(val==NULL || (val->flags&PV_VAL_NULL))
@@ -336,42 +358,53 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 3: 
+		case 1:
+			if(*in->s=='q' || *in->s=='Q')
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		case 3:
 			if(strncmp(in->s, "uri", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 7: 
-			if(strncmp(in->s, "dst_uri", 7)==0)
-				sp->pvp.pvn.u.isname.name.n = 1;
-			else goto error;
-		break;
-		case 4: 
+		case 4:
 			if(strncmp(in->s, "path", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if (strncmp(in->s, "ruid", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
-		case 1: 
-			if(*in->s=='q' || *in->s=='Q')
-				sp->pvp.pvn.u.isname.name.n = 3;
-			else goto error;
-		break;
-		case 11: 
-			if(strncmp(in->s, "send_socket", 11)==0)
-				sp->pvp.pvn.u.isname.name.n = 4;
-			else if(strncmp(in->s, "location_ua", 11)==0)
-				sp->pvp.pvn.u.isname.name.n = 8;
-			else goto error;
-		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "count", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "flags", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
+		case 6:
+			if(strncmp(in->s, "otcpid", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
+			else goto error;
+		break;
+		case 7:
+			if(strncmp(in->s, "dst_uri", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 8:
+			if(strncmp(in->s, "instance", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 10;
+			else goto error;
+		break;
+		case 11:
+			if(strncmp(in->s, "send_socket", 11)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "location_ua", 11)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else goto error;
+		break;
+
 		default:
 			goto error;
 	}
@@ -805,6 +838,7 @@ int sbranch_set_ruri(sip_msg_t *msg)
 		set_force_socket(msg, br->force_send_socket);
 
 	msg->reg_id = br->reg_id;
+	msg->otcpid = br->otcpid;
 	set_ruri_q(br->q);
 	old_bflags = 0;
 	getbflagsval(0, &old_bflags);
@@ -825,7 +859,9 @@ int sbranch_append(sip_msg_t *msg)
 	str path = {0};
 	str ruid = {0};
 	str location_ua = {0};
+	str instance = {0};
 	branch_t *br;
+	branch_t *newbr;
 
 	br = &_pv_sbranch;
 	if(br->len==0)
@@ -850,14 +886,19 @@ int sbranch_append(sip_msg_t *msg)
 		location_ua.s = br->location_ua;
 		location_ua.len = br->location_ua_len;
 	}
+	if(br->instance_len) {
+		instance.s = br->instance;
+		instance.len = br->instance_len;
+	}
 
-	if (append_branch(msg, &uri, &duri, &path, br->q, br->flags,
-					  br->force_send_socket, 0 /*instance*/, br->reg_id,
-					  &ruid, &location_ua)
-			    == -1) {
+	newbr = ksr_push_branch(msg, &uri, &duri, &path, br->q, br->flags,
+					  br->force_send_socket, &instance, br->reg_id,
+					  &ruid, &location_ua);
+	if(newbr==NULL) {
 		LM_ERR("failed to append static branch\n");
 		return -1;
 	}
+	newbr->otcpid = br->otcpid;
 	return 0;
 }
 
