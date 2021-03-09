@@ -9,5 +9,4 @@ BCUNITLIBS=-lbcunit
 MS2LIBS=-lmediastreamer_voip -lmediastreamer_base
 
 LIBS=$(ORTPLIBS) $(BCUNITLIBS) $(MS2LIBS)
-DEFS+=-DKAMAILIO_MOD_INTERFACE
 include ../../Makefile.modules
