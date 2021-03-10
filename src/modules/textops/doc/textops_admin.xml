@@ -91,6 +91,10 @@ From: medabeda
 		</listitem>
 		</itemizedlist>
 		<para>
+			Note: it performs Posix regex matching and the 're' parameter
+			is compiled with the flags REG_EXTENDED|REG_ICASE|REG_NEWLINE.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
@@ -127,6 +131,42 @@ if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 		<programlisting format="linespecific">
 ...
 if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.search_str">
+		<title>
+		<function moreinfo="none">search_str(text. re)</function>
+		</title>
+		<para>
+		Searches for the re in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>text</emphasis> - text to perform regex searching
+			over it.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>re</emphasis> - regular expression to match over
+			the 'text' parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			Both parameters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>search_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search_str("$ru", ";transport=tcp") ) { /*....*/ };
 ...
 </programlisting>
 		</example>
