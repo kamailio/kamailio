@@ -1224,18 +1224,21 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
     start_sdp_c = strstr(off, "c=IN IP4");
     start_sdp_m = strstr(off, "m=audio");
 
-    //if enabled then set direction,
-    if (e->node->lrkp_n_c->internal_ip && flags) {
+    //The external_ip should be set in config file for relaying RTP media between NIC.
+//    if (e->node->lrkp_n_c->external_ip && flags) {
+    if(flags) {
         if (strstr(flags, "ei")) {
             ip_selected = e->node->lrkp_n_c->internal_ip;// lrk_node->internal_ip;
         } else if (strstr(flags, "ie")) {
             ip_selected = e->node->lrkp_n_c->external_ip; //lrk_node->external_ip;
         } else {
-                    LM_INFO("no flags found\n");
-            return 0;
+            LM_INFO("unknown flags, use internal_ip\n");
+            ip_selected = e->node->lrkp_n_c->internal_ip;
         }
-    } else {
-        ip_selected = e->node->lrkp_n_c->external_ip; //lrk_node->external_ip;
+    }
+    else {
+        LM_INFO("no flags set, use internal_ip\n");
+        ip_selected = e->node->lrkp_n_c->internal_ip;
     }
 
     if (op == OP_OFFER) {
