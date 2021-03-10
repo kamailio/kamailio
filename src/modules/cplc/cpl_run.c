@@ -283,7 +283,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 		} else {
 			contact = r->contacts;
 			/* skip expired contacts */
-			while ((contact) && (contact->expires <= tc))
+			while ((contact) && (contact->expires > 0) && (contact->expires <= tc))
 				contact = contact->next;
 			/* any contacts left? */
 			if (contact) {
