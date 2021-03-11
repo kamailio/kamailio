@@ -883,6 +883,57 @@ failure_route[TRUNKAUTH] {
 				</programlisting>
 			</example>
 		</section>
+		<section id="uac.f.uac_auth_mode">
+			<title>
+				<function moreinfo="none">uac_auth_mode(vmode)</function>
+			</title>
+			<para>
+			This function can be called only from failure route and will
+			build the authentication response header and insert it into the
+			request without sending anything.
+			</para>
+			<para>
+			If mode is set to 1, then the password has to be provided in HA1 format.
+			The parameter can be a static integer or a variable holding an integer value.
+			</para>
+			<para>
+			This function can be used from FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_auth_mode</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","auth_username_avp","$avp(auser)")
+modparam("uac","auth_password_avp","$avp(apass)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
+
+request_route {
+   ...
+   if(is_method("INVITE")) {
+      t_on_failure("TRUNKAUTH");
+   }
+   ...
+}
+
+failure_route[TRUNKAUTH] {
+
+    if (t_is_canceled()) {
+        exit;
+    }
+    if(t_check_status("401|407")) {
+        $avp(auser) = "test";
+        $avp(apass) = "test";
+        # $avp(apass) = "36d0a02793542b4961e8348347236dbf";
+        if (uac_auth_mode("1")) {
+            t_relay();
+        }
+        exit;
+    }
+}
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="uac.f.uac_req_send">
 			<title>
 				<function moreinfo="none">uac_req_send()</function>
