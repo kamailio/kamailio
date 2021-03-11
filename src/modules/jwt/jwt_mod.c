@@ -50,6 +50,14 @@ static int _jwt_key_mode = 0;
 static str _jwt_result = STR_NULL;
 static unsigned int _jwt_verify_status = 0;
 
+typedef struct jwt_fcache {
+	str fname;
+	str fdata;
+	struct jwt_fcache *next;
+} jwt_fcache_t;
+
+static jwt_fcache_t *_jwt_fcache_list = NULL;
+
 static cmd_export_t cmds[]={
 	{"jwt_generate", (cmd_function)w_jwt_generate, 3,
 		fixup_spve_all, 0, ANY_ROUTE},
@@ -113,10 +121,61 @@ static void mod_destroy(void)
 /**
  *
  */
+static int jwt_fcache_get(str *key, str *kdata)
+{
+	jwt_fcache_t *fc = NULL;
+
+	if(_jwt_key_mode!=1) {
+		return -1;
+	}
+	for(fc=_jwt_fcache_list; fc!=NULL; fc=fc->next) {
+		if(fc->fname.len==key->len
+				&& strncmp(fc->fname.s, key->s, key->len)==0) {
+			LM_DBG("file found in cache: %.*s\n", key->len, key->s);
+			*kdata = fc->fdata;
+			break;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int jwt_fcache_add(str *key, str *kdata)
+{
+	jwt_fcache_t *fc = NULL;
+
+	if(_jwt_key_mode!=1) {
+		return -1;
+	}
+	fc = (jwt_fcache_t*)pkg_malloc(sizeof(jwt_fcache_t) + key->len
+			+ kdata->len + 2);
+	if(fc==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memset(fc, 0, sizeof(jwt_fcache_t) + key->len + kdata->len + 2);
+	fc->fname.s = (char*)fc + sizeof(jwt_fcache_t);
+	fc->fname.len = key->len;
+	memcpy(fc->fname.s, key->s, key->len);
+	fc->fdata.s = fc->fname.s + fc->fname.len + 1;
+	fc->fdata.len = kdata->len;
+	memcpy(fc->fdata.s, kdata->s, kdata->len);
+	fc->next = _jwt_fcache_list;
+	_jwt_fcache_list = fc;
+
+	return 0;
+}
+
+/**
+ *
+ */
 static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 {
 	str dupclaims = STR_NULL;
 	str sparams = STR_NULL;
+	str kdata = STR_NULL;
 	jwt_alg_t valg = JWT_ALG_NONE;
 	time_t iat;
 	FILE *fpk = NULL;
@@ -147,18 +206,24 @@ static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 		LM_ERR("failed to duplicate claims\n");
 		return -1;
 	}
-	fpk= fopen(key->s, "r");
-	if(fpk==NULL) {
-		LM_ERR("failed to read key file: %s\n", key->s);
-		goto error;
+	jwt_fcache_get(key, &kdata);
+	if(kdata.s==NULL) {
+		fpk= fopen(key->s, "r");
+		if(fpk==NULL) {
+			LM_ERR("failed to read key file: %s\n", key->s);
+			goto error;
+		}
+		keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
+		fclose(fpk);
+		if(keybuf_len==0) {
+			LM_ERR("unable to read key file content: %s\n", key->s);
+			goto error;
+		}
+		keybuf[keybuf_len] = '\0';
+		kdata.s = (char*)keybuf;
+		kdata.len = (int)keybuf_len;
+		jwt_fcache_add(key, &kdata);
 	}
-	keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
-	fclose(fpk);
-	if(keybuf_len==0) {
-		LM_ERR("unable to read key file content: %s\n", key->s);
-		goto error;
-	}
-	keybuf[keybuf_len] = '\0';
 	sparams = dupclaims;
 	if(sparams.s[sparams.len-1]==';') {
 		sparams.len--;
@@ -185,7 +250,7 @@ static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 		}
 	}
 
-	ret = jwt_set_alg(jwt, valg, keybuf, keybuf_len);
+	ret = jwt_set_alg(jwt, valg, (unsigned char*)kdata.s, (size_t)kdata.len);
 	if (ret < 0) {
 		LM_ERR("failed to set algorithm and key\n");
 		goto error;
@@ -247,6 +312,7 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 {
 	str dupclaims = STR_NULL;
 	jwt_alg_t valg = JWT_ALG_NONE;
+	str kdata = STR_NULL;
 	time_t iat;
 	FILE *fpk = NULL;
 	unsigned char keybuf[10240];
@@ -277,18 +343,24 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 		LM_ERR("failed to duplicate claims\n");
 		return -1;
 	}
-	fpk= fopen(key->s, "r");
-	if(fpk==NULL) {
-		LM_ERR("failed to read key file: %s\n", key->s);
-		goto error;
+	jwt_fcache_get(key, &kdata);
+	if(kdata.s==NULL) {
+		fpk= fopen(key->s, "r");
+		if(fpk==NULL) {
+			LM_ERR("failed to read key file: %s\n", key->s);
+			goto error;
+		}
+		keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
+		fclose(fpk);
+		if(keybuf_len==0) {
+			LM_ERR("unable to read key file content: %s\n", key->s);
+			goto error;
+		}
+		keybuf[keybuf_len] = '\0';
+		kdata.s = (char*)keybuf;
+		kdata.len = (int)keybuf_len;
+		jwt_fcache_add(key, &kdata);
 	}
-	keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
-	fclose(fpk);
-	if(keybuf_len==0) {
-		LM_ERR("unable to read key file content: %s\n", key->s);
-		goto error;
-	}
-	keybuf[keybuf_len] = '\0';
 	sparams = dupclaims;
 	if(sparams.s[sparams.len-1]==';') {
 		sparams.len--;
@@ -316,7 +388,7 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 		}
 	}
 
-	ret = jwt_decode(&jwt, jwtval->s, keybuf, keybuf_len);
+	ret = jwt_decode(&jwt, jwtval->s, (unsigned char*)kdata.s, (size_t)kdata.len);
 	if (ret!=0 || jwt==NULL) {
 		LM_ERR("failed to decode jwt value\n");
 		goto error;
