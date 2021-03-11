@@ -527,7 +527,9 @@ unsigned int t_uac_cancel( str *headers, str *body,
 		LM_ERR("send failed\n");
 		goto error1;
 	}
-	start_retr(cancel);
+	if(start_retr(cancel)!=0) {
+		LM_CRIT("failed to start retransmission for cancel %p\n", cancel);
+	}
 	/* </start_sending> */
 
 	return ret;
