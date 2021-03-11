@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2021 asipto.com
+   Copyright Â© 2021 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -96,15 +96,15 @@ Chapter 1. Admin Guide
 
 3.1. key_mode (int)
 
-   Mode to store the private and public keys.
-
-   Work in progress.
+   Mode to use the private and public keys. If set to 0, they are read
+   always from the disk. If set to 1, they are cached in memory with the
+   first use (no reload support yet).
 
    Default value is 0.
 
    Example 1.1. Set key_mode parameter
 ...
-modparam("jwt", "key_mode", 0)
+modparam("jwt", "key_mode", 1)
 ...
 
 4. Functions
@@ -112,7 +112,7 @@ modparam("jwt", "key_mode", 0)
    4.1. jwt_generate(prvkey, alg, claims)
    4.2. jwt_verify(pubkey, alg, claims, jwtval)
 
-4.1. jwt_generate(prvkey, alg, claims)
+4.1.  jwt_generate(prvkey, alg, claims)
 
    Generate the JWT, its value can be retrieved in the variable $jwt(val).
 
@@ -132,7 +132,7 @@ modparam("jwt", "key_mode", 0)
         "caller=$fU;callee=$tU;callid=$ci");
 ...
 
-4.2. jwt_verify(pubkey, alg, claims, jwtval)
+4.2.  jwt_verify(pubkey, alg, claims, jwtval)
 
    Verify the JWT.
 
@@ -160,7 +160,7 @@ modparam("jwt", "key_mode", 0)
 
    5.1. $jwt(key)
 
-5.1. $jwt(key)
+5.1.  $jwt(key)
 
    Get the values and attributes after using JWT functions.
 
