@@ -1635,10 +1635,10 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	void *th;
 	void *ih;
 
-	ds_set_t *ds_list = ds_get_list();
-	int ds_list_nr = ds_get_list_nr();
+	ds_set_t *dslist = ds_get_list();
+	int dslistnr = ds_get_list_nr();
 
-	if(ds_list == NULL || ds_list_nr <= 0) {
+	if(dslist == NULL || dslistnr <= 0) {
 		LM_DBG("no destination sets\n");
 		rpc->fault(ctx, 500, "No Destination Sets");
 		return;
@@ -1649,12 +1649,12 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
-	if(rpc->struct_add(th, "d[", "NRSETS", ds_list_nr, "RECORDS", &ih) < 0) {
+	if(rpc->struct_add(th, "d[", "NRSETS", dslistnr, "RECORDS", &ih) < 0) {
 		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
 
-	ds_rpc_print_set(ds_list, rpc, ctx, ih);
+	ds_rpc_print_set(dslist, rpc, ctx, ih);
 
 	return;
 }

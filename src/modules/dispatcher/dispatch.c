@@ -113,13 +113,13 @@ extern int ds_load_mode;
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
 
-ds_set_t **ds_lists = NULL;
+static ds_set_t **ds_lists = NULL;
 
-int *ds_list_nr = NULL;
-int *crt_idx = NULL;
-int *next_idx = NULL;
+static int *ds_list_nr = NULL;
+static int *ds_crt_idx = NULL;
+static int *ds_next_idx = NULL;
 
-#define _ds_list (ds_lists[*crt_idx])
+#define _ds_list (ds_lists[*ds_crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
 static void ds_run_route(struct sip_msg *msg, str *uri, char *route,
@@ -267,10 +267,10 @@ int ds_init_data(void)
 	}
 	memset(p, 0, 3 * sizeof(int));
 
-	crt_idx = p;
-	next_idx = p + 1;
+	ds_crt_idx = p;
+	ds_next_idx = p + 1;
 	ds_list_nr = p + 2;
-	*crt_idx = *next_idx = 0;
+	*ds_crt_idx = *ds_next_idx = 0;
 
 	return 0;
 }
@@ -784,7 +784,7 @@ int ds_load_list(char *lfile)
 	str uri;
 	str attrs;
 
-	if((*crt_idx) != (*next_idx)) {
+	if((*ds_crt_idx) != (*ds_next_idx)) {
 		LM_WARN("load command already generated, aborting reload...\n");
 		return 0;
 	}
@@ -802,8 +802,8 @@ int ds_load_list(char *lfile)
 
 	id = setn = flags = priority = 0;
 
-	*next_idx = (*crt_idx + 1) % 2;
-	ds_avl_destroy(&ds_lists[*next_idx]);
+	*ds_next_idx = (*ds_crt_idx + 1) % 2;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 
 	p = fgets(line, 1024, f);
 	while(p) {
@@ -878,7 +878,7 @@ int ds_load_list(char *lfile)
 		attrs.len = p - attrs.s;
 
 add_destination:
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *ds_next_idx, &setn, 0)
 				!= 0) {
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -890,7 +890,7 @@ next_line:
 		p = fgets(line, 1024, f);
 	}
 
-	if(reindex_dests(ds_lists[*next_idx]) != 0) {
+	if(reindex_dests(ds_lists[*ds_next_idx]) != 0) {
 		LM_ERR("error on reindex\n");
 		goto error;
 	}
@@ -899,7 +899,7 @@ next_line:
 	f = NULL;
 	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
-	*crt_idx = *next_idx;
+	*ds_crt_idx = *ds_next_idx;
 
 	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
@@ -909,8 +909,8 @@ next_line:
 error:
 	if(f != NULL)
 		fclose(f);
-	ds_avl_destroy(&ds_lists[*next_idx]);
-	*next_idx = *crt_idx;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
+	*ds_next_idx = *ds_crt_idx;
 	return -1;
 }
 
@@ -1048,7 +1048,7 @@ int ds_load_db(void)
 		}
 	}
 
-	if((*crt_idx) != (*next_idx)) {
+	if((*ds_crt_idx) != (*ds_next_idx)) {
 		LM_WARN("load command already generated, aborting reload...\n");
 		return 0;
 	}
@@ -1079,8 +1079,8 @@ int ds_load_db(void)
 	}
 
 	setn = 0;
-	*next_idx = (*crt_idx + 1) % 2;
-	ds_avl_destroy(&ds_lists[*next_idx]);
+	*ds_next_idx = (*ds_crt_idx + 1) % 2;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 
 	for(i = 0; i < nr_rows; i++) {
 		values = ROW_VALUES(rows + i);
@@ -1128,7 +1128,7 @@ int ds_load_db(void)
 			}
 		}
 		LM_DBG("attributes string: [%.*s]\n", attrs.len, (attrs.s)?attrs.s:"");
-		if(add_dest2list(id, uri, flags, priority, &attrs, *next_idx, &setn, 0)
+		if(add_dest2list(id, uri, flags, priority, &attrs, *ds_next_idx, &setn, 0)
 				!= 0) {
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
@@ -1138,7 +1138,7 @@ int ds_load_db(void)
 			}
 		}
 	}
-	if(reindex_dests(ds_lists[*next_idx]) != 0) {
+	if(reindex_dests(ds_lists[*ds_next_idx]) != 0) {
 		LM_ERR("error on reindex\n");
 		goto err2;
 	}
@@ -1147,7 +1147,7 @@ int ds_load_db(void)
 
 	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
-	*crt_idx = *next_idx;
+	*ds_crt_idx = *ds_next_idx;
 
 	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
@@ -1158,9 +1158,9 @@ int ds_load_db(void)
 	return 0;
 
 err2:
-	ds_avl_destroy(&ds_lists[*next_idx]);
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 	ds_dbf.free_result(ds_db_handle, res);
-	*next_idx = *crt_idx;
+	*ds_next_idx = *ds_crt_idx;
 
 	return -1;
 }
@@ -1174,8 +1174,8 @@ int ds_destroy_list(void)
 		shm_free(ds_lists);
 	}
 
-	if(crt_idx)
-		shm_free(crt_idx);
+	if(ds_crt_idx)
+		shm_free(ds_crt_idx);
 
 	return 0;
 }
@@ -1615,7 +1615,7 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 	}
 	set = it->dset;
 	/* get the index of the set */
-	if(ds_get_index(set, *crt_idx, &idx) != 0) {
+	if(ds_get_index(set, *ds_crt_idx, &idx) != 0) {
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
 		LM_ERR("destination set [%d] not found\n", set);
 		return -1;
@@ -1676,7 +1676,7 @@ int ds_load_remove_byid(int set, str *duid)
 	int i;
 
 	/* get the index of the set */
-	if(ds_get_index(set, *crt_idx, &idx) != 0) {
+	if(ds_get_index(set, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", set);
 		return -1;
 	}
@@ -2276,7 +2276,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 
 
 	/* get the index of the set */
-	if(ds_get_index(rstate->setid, *crt_idx, &idx) != 0) {
+	if(ds_get_index(rstate->setid, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", rstate->setid);
 		return -1;
 	}
@@ -2579,7 +2579,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 	int setn;
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
-			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
+			node->dlist[i].priority, &node->dlist[i].attrs.body, *ds_next_idx,
 			&setn, node->dlist[i].dload) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
@@ -2595,35 +2595,35 @@ int ds_add_dst(int group, str *address, int flags, str *attrs)
 	setn = _ds_list_nr;
 	priority = 0;
 
-	*next_idx = (*crt_idx + 1) % 2;
-	ds_avl_destroy(&ds_lists[*next_idx]);
+	*ds_next_idx = (*ds_crt_idx + 1) % 2;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 
 	// add all existing destinations
 	ds_iter_set(_ds_list, &ds_add_dest_cb, NULL);
 
 	// add new destination
 	if(add_dest2list(group, *address, flags, priority, attrs,
-			*next_idx, &setn, 0) != 0) {
+			*ds_next_idx, &setn, 0) != 0) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len, address->s, group);
 		if(ds_load_mode==1) {
 			goto error;
 		}
 	}
 
-	if(reindex_dests(ds_lists[*next_idx]) != 0) {
+	if(reindex_dests(ds_lists[*ds_next_idx]) != 0) {
 		LM_ERR("error on reindex\n");
 		goto error;
 	}
 
 	_ds_list_nr = setn;
-	*crt_idx = *next_idx;
+	*ds_crt_idx = *ds_next_idx;
 
 	ds_log_sets();
 	return 0;
 
 error:
-	ds_avl_destroy(&ds_lists[*next_idx]);
-	*next_idx = *crt_idx;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
+	*ds_next_idx = *ds_crt_idx;
 	return -1;
 }
 
@@ -2637,7 +2637,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 		return;
 
 	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
-			node->dlist[i].priority, &node->dlist[i].attrs.body, *next_idx,
+			node->dlist[i].priority, &node->dlist[i].attrs.body, *ds_next_idx,
 			filter_arg->setn, node->dlist[i].dload) != 0) {
 		LM_WARN("failed to add destination in group %d - %.*s\n",
 				node->id, node->dlist[i].uri.len, node->dlist[i].uri.s);
@@ -2659,26 +2659,26 @@ int ds_remove_dst(int group, str *address)
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
 
-	*next_idx = (*crt_idx + 1) % 2;
-	ds_avl_destroy(&ds_lists[*next_idx]);
+	*ds_next_idx = (*ds_crt_idx + 1) % 2;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 
 	// add existing destinations except destination that matches group & address
 	ds_iter_set(_ds_list, &ds_filter_dest_cb, &filter_arg);
 
-	if(reindex_dests(ds_lists[*next_idx]) != 0) {
+	if(reindex_dests(ds_lists[*ds_next_idx]) != 0) {
 		LM_ERR("error on reindex\n");
 		goto error;
 	}
 
 	_ds_list_nr = setn;
-	*crt_idx = *next_idx;
+	*ds_crt_idx = *ds_next_idx;
 
 	ds_log_sets();
 	return 0;
 
 error:
-	ds_avl_destroy(&ds_lists[*next_idx]);
-	*next_idx = *crt_idx;
+	ds_avl_destroy(&ds_lists[*ds_next_idx]);
+	*ds_next_idx = *ds_crt_idx;
 	return -1;
 }
 
@@ -2833,7 +2833,7 @@ int ds_update_latency(int group, str *address, int code)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
@@ -2927,7 +2927,7 @@ int ds_get_state(int group, str *address)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
@@ -2961,7 +2961,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
@@ -3162,7 +3162,7 @@ int ds_reinit_state(int group, str *address, int state)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
@@ -3203,7 +3203,7 @@ int ds_reinit_duid_state(int group, str *vduid, int state)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
@@ -3244,7 +3244,7 @@ int ds_reinit_state_all(int group, int state)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx) != 0) {
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
