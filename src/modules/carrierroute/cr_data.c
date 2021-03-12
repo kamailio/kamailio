@@ -464,6 +464,7 @@ int add_route(struct route_data_t * rd, int carrier_id,
 		LM_ERR("could not retrieve domain data\n");
 		return -1;
 	}
+	domain_data->sum_prob = domain_data->sum_prob + prob;
 
 	LM_INFO("found carrier and domain, now adding route\n");
 	return add_route_to_tree(domain_data->tree, scan_prefix, flags, mask, scan_prefix, max_targets, prob, rewrite_hostpart,
