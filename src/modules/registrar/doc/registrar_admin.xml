@@ -1306,7 +1306,8 @@ save("location", "0x00", "sip:test@kamailio.org");
 		<programlisting format="linespecific">
 ...
 lookup("location");
-switch ($retcode) {
+			switch ($retcode) {:1
+
     case -1:
     case -3:
         sl_send_reply("404", "Not Found");
@@ -1315,6 +1316,29 @@ switch ($retcode) {
         sl_send_reply("405", "Not Found");
         exit;
 };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="registrar.f.lookup_to_dset">
+		<title>
+		<function moreinfo="none">lookup_to_dset(domain [, uri])</function>
+		</title>
+		<para>
+			Similar to lookup(...), but push the location contacts to destination
+			set, without changing the R-URI (first branch not changed, it creates
+			additional branches). For the meaning of the parameters and the return
+			codes, see the documentation for lookup(...) function.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>lookup_to_dset</function> usage</title>
+		<programlisting format="linespecific">
+...
+lookup_to_dset("location");
 ...
 </programlisting>
 		</example>
