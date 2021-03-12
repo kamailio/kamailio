@@ -5034,16 +5034,16 @@ int tcp_fix_child_sockets(int* fd)
 
 
 /* starts the tcp processes */
-int tcp_init_children()
+int tcp_init_children(int *woneinit)
 {
 	int r, i;
 	int reader_fd_1; /* for comm. with the tcp children read  */
 	pid_t pid;
 	char si_desc[MAX_PT_DESC];
 	struct socket_info *si;
-	
+
 	/* estimate max fd. no:
-	 * 1 tcp send unix socket/all_proc, 
+	 * 1 tcp send unix socket/all_proc,
 	 *  + 1 udp sock/udp proc + 1 tcp_child sock/tcp child*
 	 *  + no_listen_tcp */
 	for(r=0, si=tcp_listen; si; si=si->next, r++);
@@ -5051,12 +5051,12 @@ int tcp_init_children()
 	if (! tls_disable)
 		for (si=tls_listen; si; si=si->next, r++);
 #endif
-	
+
 	register_fds(r+tcp_max_connections+get_max_procs()-1 /* tcp main */);
 #if 0
 	tcp_max_fd_no=get_max_procs()*2 +r-1 /* timer */ +3; /* stdin/out/err*/
 	/* max connections can be temporarily exceeded with estimated_process_count
-	 * - tcp_main (tcpconn_connect called simultaneously in all all the 
+	 * - tcp_main (tcpconn_connect called simultaneously in all all the
 	 *  processes) */
 	tcp_max_fd_no+=tcp_max_connections+get_max_procs()-1 /* tcp main */;
 #endif
@@ -5095,7 +5095,7 @@ int tcp_init_children()
 
 	/* create the tcp sock_info structures */
 	/* copy the sockets --moved to main_loop*/
-	
+
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
 		child_rank++;
@@ -5108,10 +5108,16 @@ int tcp_init_children()
 			goto error;
 		}else if (pid>0){
 			/* parent */
+			*woneinit = 1;
 		}else{
 			/* child */
 			bind_address=0; /* force a SEGFAULT if someone uses a non-init.
 							   bind address on tcp */
+			if(*woneinit==0) {
+				if(run_child_one_init_route()<0)
+					goto error;
+			}
+
 			tcp_receive_loop(reader_fd_1);
 		}
 	}
