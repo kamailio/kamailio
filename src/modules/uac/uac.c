@@ -135,6 +135,8 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_to",  (cmd_function)w_restore_to,  0, 0, 0, REQUEST_ROUTE },
 	{"uac_auth",	  (cmd_function)w_uac_auth,       0, 0, 0, FAILURE_ROUTE },
+	{"uac_auth",      (cmd_function)w_uac_auth_mode,  1,
+			fixup_igp_null, fixup_free_igp_null, FAILURE_ROUTE },
 	{"uac_auth_mode", (cmd_function)w_uac_auth_mode,  1,
 			fixup_igp_null, fixup_free_igp_null, FAILURE_ROUTE },
 	{"uac_req_send",  (cmd_function)w_uac_req_send,   0, 0, 0, ANY_ROUTE},

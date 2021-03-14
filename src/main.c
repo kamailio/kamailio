@@ -1720,8 +1720,14 @@ int main_loop(void)
 						/* child */
 						bind_address=si; /* shortcut */
 
+						if(woneinit==0) {
+							if(run_child_one_init_route()<0)
+								goto error;
+						}
+
 						return sctp_core_rcv_loop();
 					}
+					woneinit = 1;
 				}
 			/*parent*/
 			/*close(sctp_sock)*/; /*if closed=>sendto invalid fd errors?*/
@@ -1777,7 +1783,7 @@ int main_loop(void)
 #ifdef USE_TCP
 		if (!tcp_disable){
 				/* start tcp  & tls receivers */
-			if (tcp_init_children()<0) goto error;
+			if (tcp_init_children(&woneinit)<0) goto error;
 				/* start tcp+tls main attendant proc */
 			pid = fork_process(PROC_TCP_MAIN, "tcp main process", 0);
 			if (pid<0){
