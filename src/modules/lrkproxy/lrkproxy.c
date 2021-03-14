@@ -942,6 +942,7 @@ char *send_lrkp_command(struct lrkp_node *node, struct iovec *v, int vcnt, int m
 {
     struct sockaddr_un addr;
     int fd, len, i;
+    int ret;
 //    char *cp;
     static char buf[256];
     struct pollfd fds[1];
@@ -990,9 +991,10 @@ char *send_lrkp_command(struct lrkp_node *node, struct iovec *v, int vcnt, int m
         fds[0].events = POLLIN;
         fds[0].revents = 0;
         /* Drain input buffer */
+        ret = -1;
         while ((poll(fds, 1, 0) == 1) &&
-               ((fds[0].revents & POLLIN) != 0)) {
-            recv(lrkp_socks[node->idx], buf, sizeof(buf) - 1, 0);
+               ((fds[0].revents & POLLIN) != 0) && ret != 0) {
+            ret = recv(lrkp_socks[node->idx], buf, sizeof(buf) - 1, 0);
             fds[0].revents = 0;
         }
         v[0].iov_base = gencookie();
@@ -1074,12 +1076,9 @@ static struct lrkp_set * select_lrkp_set(int id_set ){
 
 struct lrkp_node *select_lrkp_node(int do_test)
 {
-//    unsigned sum, sumcut, weight_sum;
-    unsigned weight_sum;
     struct lrkp_node* node;
     int was_forced;
     int was_forced2;
-    int was_forced3;
 
     if(!selected_lrkp_set){
         LM_ERR("script error -no valid set selected\n");
@@ -1102,9 +1101,7 @@ struct lrkp_node *select_lrkp_node(int do_test)
 
 
     /* Check node is enable and test it again*/
-    was_forced = 0;
 retry:
-    weight_sum = 0;
     for (node=selected_lrkp_set->ln_first; node!=NULL; node=node->ln_next) {
 
         if (!node->ln_enable) {
@@ -1113,56 +1110,55 @@ retry:
             if (node->ln_enable)       //get lrk proxy config if it is enable.
                 lrkp_get_config(node);
         }
-
-//        if (!node->rn_disabled)
-//            weight_sum += node->rn_weight;
-        if (node->ln_enable)
-            weight_sum += node->ln_weight;
-    }
-
-    if (weight_sum == 0) {
-        /* No proxies? Force all to be redetected, if not yet */
-        if (was_forced)
-            return NULL;
-        was_forced = 1;
-//        for(node=selected_lrkp_set->ln_first; node!=NULL; node=node->ln_next) {
-//            node->ln_enable = lrkp_test(node);
-//        }
-        goto retry;
     }
 
     if (lrkp_algorithm == LRK_LINER) {
-        was_forced2 = 0;
-retry2:
-        for (node=selected_lrkp_set->ln_first; node != NULL; node = node->ln_next)
+        was_forced = 0;
+        retry2:
+        for (node = selected_lrkp_set->ln_first; node != NULL; node = node->ln_next)
             if (node->ln_enable)
                 goto found;
-        was_forced2 = 1;
-        if (was_forced2)
+        if (was_forced)
             return NULL;
+
+        was_forced = 1;
+        //trying to enable all lrkproxy and check again.
+        for (node = selected_lrkp_set->ln_first; node != NULL; node = node->ln_next) {
+            /* Try to enable if it's time to try. */
+            node->ln_enable = lrkp_test(node);
+            if (node->ln_enable)       //get lrk proxy config if it is enable.
+                lrkp_get_config(node);
+        }
+
 
         goto retry2;
     }
     else if(lrkp_algorithm == LRK_RR) {
-        was_forced3 = 0;
+        was_forced2 = 0;
 retry3:
         if (!selected_lrkp_node) {
             selected_lrkp_node = selected_lrkp_set->ln_first;
-            was_forced3 = 1;
+            node = selected_lrkp_set->ln_first;
+            if(node->ln_enable)
+                    goto found;
+//            was_forced2 = 1;
         }
-        for (node = selected_lrkp_node; node != NULL; node = node->ln_next) {
-            if (!node->ln_enable)
-                continue;
-            selected_lrkp_node = node->ln_next;
+        for (node = selected_lrkp_node->ln_next; node != NULL; node = node->ln_next)
+//        for (node = selected_lrkp_node; node != NULL; node = node->ln_next) {
+            if (node->ln_enable) {
+                selected_lrkp_node = node;
+                goto found;
+            }
+//            selected_lrkp_node = node->ln_next;
 //        if (sumcut < node->ln_weight)
-            goto found;
 //        sumcut -= node->ln_weight;
-        }
 
-        if (was_forced3)
+        if (was_forced2)
             return NULL;
 
+        was_forced2 = 1;
         selected_lrkp_node = NULL;
+
         goto retry3;
     }
 
@@ -1518,100 +1514,102 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
             return -1;
         }
 
-        LM_DBG("selected lrk proxy node: %s\n", node->ln_url.s);
+                LM_DBG("selected lrk proxy node: %s\n", node->ln_url.s);
 
         //check if entry not exist.
-        if (!lrkproxy_hash_table_lookup(call_id, viabranch)) {
+        entry = lrkproxy_hash_table_lookup(call_id, viabranch);
+        if (entry)
+            return -1;
 
 //        lrk_get_sdp_info(msg, &lrk_sdp_info);
 
-            //build new entry for hash table.
+        //build new entry for hash table.
 //            struct lrkproxy_hash_entry *entry = shm_malloc(sizeof(struct lrkproxy_hash_entry));
-            entry = shm_malloc(sizeof(struct lrkproxy_hash_entry));
-            if (!entry) {
-                        LM_ERR("lrkproxy hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
-                               call_id.len, call_id.len, call_id.s,
-                               viabranch.len, viabranch.s);
-                return 0;
-            }
-            memset(entry, 0, sizeof(struct lrkproxy_hash_entry));
+        entry = shm_malloc(sizeof(struct lrkproxy_hash_entry));
+        if (!entry) {
+                    LM_ERR("lrkproxy hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
+                           call_id.len, call_id.len, call_id.s,
+                           viabranch.len, viabranch.s);
+            return 0;
+        }
+        memset(entry, 0, sizeof(struct lrkproxy_hash_entry));
 
-            // fill the entry
-            if (call_id.s && call_id.len > 0) {
-                if (shm_str_dup(&entry->callid, &call_id) < 0) {
-                            LM_ERR("lrkproxy hash table fail to instert call_id, calllen=%d callid=%.*s\n",
-                                   call_id.len, call_id.len, call_id.s);
-                    lrkproxy_hash_table_free_entry(entry);
-                    return 0;
-                }
-            }
-
-            if (viabranch.s && viabranch.len > 0) {
-                if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
-                            LM_ERR("lrkproxy hash table fail to insert viabranch, calllen=%d viabranch=%.*s\n",
-                                   call_id.len, viabranch.len, viabranch.s);
-                    lrkproxy_hash_table_free_entry(entry);
-                    return 0;
-                }
-            }
-
-            //fill src_ipv4 and src_port for entry.
-            str src_ipv4;
-            if (get_sdp_ipaddr_media(msg, &src_ipv4) == -1) {
-                        LM_ERR("can't get media src_ipv4 from sdp field\n");
-                return -1;
-            }
-
-            if(src_ipv4.s && src_ipv4.len > 0) {
-                        LM_DBG("src_ipv4 from sdp:%.*s\n", src_ipv4.len, src_ipv4.s);
-                if (shm_str_dup(&entry->src_ipv4, &src_ipv4) < 0) {
-                            LM_ERR("lrkproxy hash table fail to insert src_ipv4, calllen=%d src_ipv4=%.*s\n",
-                                   call_id.len, src_ipv4.len, src_ipv4.s);
-                    lrkproxy_hash_table_free_entry(entry);
-                    return 0;
-                }
-            }
-
-            str src_port;
-            if (get_sdp_port_media(msg, &src_port) == -1) {
-                        LM_ERR("can't get media src_port from sdp field\n");
-                return -1;
-            }
-
-
-            if(src_port.s && src_port.len > 0) {
-                        LM_DBG("src_port from sdp:%.*s\n", src_port.len, src_port.s);
-                if (shm_str_dup(&entry->src_port, &src_port) < 0) {
-                            LM_ERR("lrkproxy hash table fail to insert src_port, calllen=%d src_port=%.*s\n",
-                                   call_id.len, src_port.len, src_port.s);
-                    lrkproxy_hash_table_free_entry(entry);
-                    return 0;
-                }
-            }
-
-//            entry->
-            entry->node = node;
-            entry->next = NULL;
-            entry->tout = get_ticks() + hash_table_tout;
-
-            // insert the key<->entry from the hashtable
-            if (!lrkproxy_hash_table_insert(call_id, viabranch, entry)) {
-                        LM_ERR(
-                        "lrkproxy hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-                        node->ln_url.len, node->ln_url.s, call_id.len,
-                        call_id.len, call_id.s, viabranch.len, viabranch.s);
+        // fill the entry
+        if (call_id.s && call_id.len > 0) {
+            if (shm_str_dup(&entry->callid, &call_id) < 0) {
+                        LM_ERR("lrkproxy hash table fail to instert call_id, calllen=%d callid=%.*s\n",
+                               call_id.len, call_id.len, call_id.s);
                 lrkproxy_hash_table_free_entry(entry);
                 return 0;
-            } else {
-                        LM_INFO("lrkproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-                                node->ln_url.len, node->ln_url.s, call_id.len,
-                                call_id.len, call_id.s, viabranch.len, viabranch.s);
-
-                        LM_DBG("lrkproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-                               node->ln_url.len, node->ln_url.s, call_id.len,
-                               call_id.len, call_id.s, viabranch.len, viabranch.s);
             }
         }
+
+        if (viabranch.s && viabranch.len > 0) {
+            if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
+                        LM_ERR("lrkproxy hash table fail to insert viabranch, calllen=%d viabranch=%.*s\n",
+                               call_id.len, viabranch.len, viabranch.s);
+                lrkproxy_hash_table_free_entry(entry);
+                return 0;
+            }
+        }
+
+        //fill src_ipv4 and src_port for entry.
+        str src_ipv4;
+        if (get_sdp_ipaddr_media(msg, &src_ipv4) == -1) {
+                    LM_ERR("can't get media src_ipv4 from sdp field\n");
+            return -1;
+        }
+
+        if (src_ipv4.s && src_ipv4.len > 0) {
+                    LM_DBG("src_ipv4 from sdp:%.*s\n", src_ipv4.len, src_ipv4.s);
+            if (shm_str_dup(&entry->src_ipv4, &src_ipv4) < 0) {
+                        LM_ERR("lrkproxy hash table fail to insert src_ipv4, calllen=%d src_ipv4=%.*s\n",
+                               call_id.len, src_ipv4.len, src_ipv4.s);
+                lrkproxy_hash_table_free_entry(entry);
+                return 0;
+            }
+        }
+
+        str src_port;
+        if (get_sdp_port_media(msg, &src_port) == -1) {
+                    LM_ERR("can't get media src_port from sdp field\n");
+            return -1;
+        }
+
+
+        if (src_port.s && src_port.len > 0) {
+                    LM_DBG("src_port from sdp:%.*s\n", src_port.len, src_port.s);
+            if (shm_str_dup(&entry->src_port, &src_port) < 0) {
+                        LM_ERR("lrkproxy hash table fail to insert src_port, calllen=%d src_port=%.*s\n",
+                               call_id.len, src_port.len, src_port.s);
+                lrkproxy_hash_table_free_entry(entry);
+                return 0;
+            }
+        }
+
+//            entry->
+        entry->node = node;
+        entry->next = NULL;
+        entry->tout = get_ticks() + hash_table_tout;
+
+        // insert the key<->entry from the hashtable
+        if (!lrkproxy_hash_table_insert(call_id, viabranch, entry)) {
+                    LM_ERR(
+                    "lrkproxy hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+                    node->ln_url.len, node->ln_url.s, call_id.len,
+                    call_id.len, call_id.s, viabranch.len, viabranch.s);
+            lrkproxy_hash_table_free_entry(entry);
+            return 0;
+        } else {
+                    LM_INFO("lrkproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+                            node->ln_url.len, node->ln_url.s, call_id.len,
+                            call_id.len, call_id.s, viabranch.len, viabranch.s);
+
+                    LM_DBG("lrkproxy hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+                           node->ln_url.len, node->ln_url.s, call_id.len,
+                           call_id.len, call_id.s, viabranch.len, viabranch.s);
+        }
+
 
         if (flags)
             change_media_sdp(msg, entry, flags, op);
