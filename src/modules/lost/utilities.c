@@ -1,7 +1,7 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2020 Wolfgang Kampichler
+ * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_content.h"
@@ -48,6 +49,9 @@
 #include "pidf.h"
 #include "utilities.h"
 
+extern int lost_recursion;
+extern int lost_profile;
+
 /*
  * lost_trim_content(dest, lgth)
  * removes whitespace that my occur in a content of an xml element
@@ -55,6 +59,11 @@
 char *lost_trim_content(char *str, int *lgth)
 {
 	char *end;
+
+	*lgth = 0;
+
+	if(str == NULL)
+		return NULL;
 
 	while(isspace(*str))
 		str++;
@@ -134,8 +143,8 @@ p_loc_t lost_new_loc(str rurn)
 	ptr->xpath = NULL;
 	ptr->profile = NULL;
 	ptr->radius = 0;
-	ptr->recursive = LOST_RECURSION_TRUE; /* set recursion to true */
-	ptr->boundary = 0;					  /* set boundary to reference */
+	ptr->recursive = lost_recursion;	 /* set recursion to param */
+	ptr->boundary = LOST_BOUNDARY_FALSE; /* set boundary to reference */
 
 	return ptr;
 
@@ -197,10 +206,19 @@ err:
  * lost_free_loc(ptr)
  * frees a location object
  */
-void lost_free_loc(p_loc_t ptr)
+void lost_free_loc(p_loc_t *loc)
 {
-	pkg_free(ptr->identity);
-	pkg_free(ptr->urn);
+	p_loc_t ptr;
+
+	if(*loc == NULL)
+		return;
+
+	ptr = *loc;
+
+	if(ptr->identity)
+		pkg_free(ptr->identity);
+	if(ptr->urn)
+		pkg_free(ptr->urn);
 	if(ptr->xpath)
 		pkg_free(ptr->xpath);
 	if(ptr->geodetic)
@@ -213,20 +231,55 @@ void lost_free_loc(p_loc_t ptr)
 		pkg_free(ptr->profile);
 
 	pkg_free(ptr);
-	ptr = NULL;
+	*loc = NULL;
 }
 
 /*
  * lost_free_loc(ptr)
  * frees a held location request object
  */
-void lost_free_held(p_held_t ptr)
+void lost_free_held(p_held_t *held)
 {
-	pkg_free(ptr->identity);
-	pkg_free(ptr->type);
+	p_held_t ptr;
+
+	if(held == NULL)
+		return;
+
+	ptr = *held;
+
+	if(ptr->identity)
+		pkg_free(ptr->identity);
+	if(ptr->type)
+		pkg_free(ptr->type);
 
 	pkg_free(ptr);
-	ptr = NULL;
+	*held = NULL;
+}
+
+/*
+ * lost_copy_string(str, int*) {
+ * copies a string and returns string allocated in private memory 
+ */
+char *lost_copy_string(str src, int *lgth)
+{
+	char *res = NULL;
+
+	if(src.s == NULL && src.len == 0) {
+		*lgth = 0;
+		return NULL;
+	}
+	res = (char *)pkg_malloc((src.len + 1) * sizeof(char));
+	if(res == NULL) {
+		LM_ERR("no more private memory\n");
+		*lgth = 0;
+	} else {
+		memset(res, 0, src.len + 1);
+		memcpy(res, src.s, src.len + 1);
+		res[src.len] = '\0';
+		*lgth = (int)strlen(res);
+	}
+
+	return res;
 }
 
 /*
@@ -235,23 +288,33 @@ void lost_free_held(p_held_t ptr)
  */
 void lost_free_string(str *string)
 {
-	str ptr = *string;
+	str ptr = STR_NULL;
 
-	if(ptr.s) {
+	if(string->s == NULL)
+		return;
+
+	ptr = *string;
+
+	if(ptr.s != NULL && ptr.len > 0) {
 		pkg_free(ptr.s);
-		ptr.s = NULL;
-		ptr.len = 0;
 	}
+
+	string->s = NULL;
+	string->len = 0;
+
+	return;
 }
 
 /*
  * lost_get_content(node, name, lgth)
- * gets a nodes "name" content and returns string allocated in private memory
+ * gets a nodes "name" content, removes whitespace and returns string
+ * allocated in private memory
  */
 char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 {
 	xmlNodePtr cur = node;
 	char *content = NULL;
+	char *trimmed = NULL;
 	char *cnt = NULL;
 	int len;
 
@@ -262,7 +325,7 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 		LM_ERR("could not get XML node content\n");
 		return cnt;
 	} else {
-		len = strlen(content);
+		trimmed = lost_trim_content(content, &len);
 		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 		if(cnt == NULL) {
 			LM_ERR("no more private memory\n");
@@ -270,7 +333,7 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 			return cnt;
 		}
 		memset(cnt, 0, len + 1);
-		memcpy(cnt, content, len);
+		memcpy(cnt, trimmed, len);
 		cnt[len] = '\0';
 	}
 
@@ -325,7 +388,10 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 	xmlNodePtr cur = node;
 	xmlNodePtr parent = NULL;
 	xmlNodePtr child = NULL;
+
 	char *cnt = NULL;
+	char *trimmed = NULL;
+
 	int len;
 
 	*lgth = 0;
@@ -335,22 +401,19 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 		LM_ERR("xmlNodeGetNodeByName() failed\n");
 		return cnt;
 	}
-
 	child = parent->children;
 	if(child == NULL) {
 		LM_ERR("%s has no children '%s'\n", parent->name, name);
 		return cnt;
 	}
-
-	len = strlen((char *)child->name);
+	trimmed = lost_trim_content((char *)child->name, &len);
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 	if(cnt == NULL) {
 		LM_ERR("no more private memory\n");
 		return cnt;
 	}
-
 	memset(cnt, 0, len + 1);
-	memcpy(cnt, child->name, len);
+	memcpy(cnt, trimmed, len);
 	cnt[len] = '\0';
 
 	*lgth = strlen(cnt);
@@ -359,20 +422,19 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 }
 
 /*
- * lost_get_geolocation_header(msg, lgth)
- * gets the Geolocation header value and returns string allocated in
- * private memory
+ * lost_get_geolocation_header(msg, hdr)
+ * gets the Geolocation header value and returns 1 on success
  */
-char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
+p_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 {
 	struct hdr_field *hf;
-	char *res = NULL;
-
-	*lgth = 0;
+	str hdr = STR_NULL;
+	p_geolist_t list = NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		LM_ERR("failed to parse geolocation header\n");
-		return res;
+		LM_ERR("failed to parse SIP headers\n");
+		*items = 0;
+		return list;
 	}
 
 	for(hf = msg->headers; hf; hf = hf->next) {
@@ -382,26 +444,14 @@ char *lost_get_geolocation_header(struct sip_msg *msg, int *lgth)
 			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
 								LOST_GEOLOC_HEADER_SIZE) == 0) {
 
-				res = (char *)pkg_malloc((hf->body.len + 1) * sizeof(char));
-				if(res == NULL) {
-					LM_ERR("no more private memory\n");
-					return res;
-				} else {
-					memset(res, 0, hf->body.len + 1);
-					memcpy(res, hf->body.s, hf->body.len + 1);
-					res[hf->body.len] = '\0';
+				LM_DBG("found geolocation header [%.*s]\n", hdr.len, hdr.s);
 
-					*lgth = strlen(res);
-				}
-			} else {
-				LM_ERR("header '%.*s' length %d\n", hf->body.len, hf->body.s,
-						hf->body.len);
+				*items += lost_new_geoheader_list(&list, hdr);
 			}
-			break;
 		}
 	}
 
-	return res;
+	return list;
 }
 
 /*
@@ -473,6 +523,103 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 }
 
 /*
+ * lost_parse_host(uri, string)
+ * parses host (ipv4, ipv6 or name) from uri and returns string
+ */
+int lost_parse_host(const char *uri, str *host, int *flag)
+{
+	char *search = (char *)uri;
+	char *end;
+
+	int len = 0;
+	int ip6 = 0;
+
+	while((len < strlen(uri)) && (*search++ != '@')) {
+		len++;
+	}
+
+	if(len == strlen(uri)) {
+		return 0;
+	}
+
+	if(*(search) == 0)
+		return 0;
+
+	if(*(search) == '[') {
+		ip6 = 1;
+	}
+
+	end = search;
+
+	if(ip6) {
+		while((len < strlen(uri)) && (*end++ != ']')) {
+			len++;
+		}
+		if(len == strlen(uri)) {
+			return 0;
+		}
+	} else {
+		while(len < strlen(uri)) {
+			if((*end == ':') || (*end == '>')) {
+				break;
+			}
+			end++;
+			len++;
+		}
+	}
+
+	if(*(search) == 0)
+		return 0;
+
+	host->s = search;
+	host->len = end - search;
+
+	if(ip6) {
+		*flag = AF_INET;
+	} else {
+		*flag = AF_INET;
+	}
+
+	return 1;
+}
+
+/*
+ * lost_get_nameinfo(ip, name, flag)
+ * translates socket address to service name (flag: IPv4 or IPv6)
+ */
+int lost_get_nameinfo(char *ip, str *name, int flag)
+{
+	struct sockaddr_in sa4;
+	struct sockaddr_in6 sa6;
+
+	if(flag == AF_INET) {
+		bzero(&sa4, sizeof(sa4));
+		sa4.sin_family = flag;
+		if(inet_pton(flag, ip, &sa4.sin_addr) <= 0)
+			return 0;
+		if(getnameinfo((struct sockaddr *)&sa4, sizeof(sa4), name->s, name->len,
+				   NULL, 0, NI_NAMEREQD))
+			return 0;
+
+		return 1;
+	}
+
+	if(flag == AF_INET6) {
+		bzero(&sa6, sizeof(sa6));
+		sa6.sin6_family = flag;
+		if(inet_pton(flag, ip, &sa6.sin6_addr) <= 0)
+			return 0;
+		if(getnameinfo((struct sockaddr *)&sa6, sizeof(sa6), name->s, name->len,
+				   NULL, 0, NI_NAMEREQD))
+			return 0;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
  * lost_get_from_header(msg, lgth)
  * gets the From header value and returns string allocated in
  * private memory
@@ -513,16 +660,15 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 }
 
 /*
- * lost_delete_geoheader_list(list)
+ * lost_free_geoheader_list(list)
  * removes geoheader list from private memory
  */
-void lost_delete_geoheader_list(p_geolist_t list)
+void lost_free_geoheader_list(p_geolist_t *list)
 {
-
 	p_geolist_t curr;
 
-	while((curr = list) != NULL) {
-		list = curr->next;
+	while((curr = *list) != NULL) {
+		*list = curr->next;
 		if(curr->value != NULL) {
 			pkg_free(curr->value);
 		}
@@ -532,7 +678,7 @@ void lost_delete_geoheader_list(p_geolist_t list)
 		pkg_free(curr);
 	}
 
-	list = NULL;
+	*list = NULL;
 
 	return;
 }
@@ -543,7 +689,6 @@ void lost_delete_geoheader_list(p_geolist_t list)
  */
 char *lost_get_geoheader_value(p_geolist_t list, geotype_t type, int *rtype)
 {
-
 	p_geolist_t head = list;
 	char *value = NULL;
 
@@ -570,14 +715,12 @@ char *lost_get_geoheader_value(p_geolist_t list, geotype_t type, int *rtype)
 	return value;
 }
 
-
 /*
  * lost_reverse_geoheader_list(list)
  * reverses list order
  */
 void lost_reverse_geoheader_list(p_geolist_t *head)
 {
-
 	p_geolist_t prev = NULL;
 	p_geolist_t next = NULL;
 	p_geolist_t current = *head;
@@ -598,7 +741,6 @@ void lost_reverse_geoheader_list(p_geolist_t *head)
  */
 char *lost_copy_geoheader_value(char *src, int len)
 {
-
 	char *res = NULL;
 
 	res = (char *)pkg_malloc((len + 1) * sizeof(char));
@@ -619,9 +761,8 @@ char *lost_copy_geoheader_value(char *src, int len)
  * searches and parses Geolocation header and returns a list
  * allocated in private memory and an item count
  */
-p_geolist_t lost_new_geoheader_list(str hdr, int *items)
+int lost_new_geoheader_list(p_geolist_t *list, str hdr)
 {
-
 	char *search = NULL;
 	char *cidptr = NULL;
 	char *urlptr = NULL;
@@ -631,7 +772,6 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 	int len = 0;
 	int i = 0;
 
-	p_geolist_t list = NULL;
 	p_geolist_t new = NULL;
 
 	LM_DBG("parsing geolocation header value ...\n");
@@ -669,8 +809,8 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 						new->value = lost_copy_geoheader_value(cidptr, len + 1);
 						new->param = NULL;
 						new->type = CID;
-						new->next = list;
-						list = new;
+						new->next = *list;
+						*list = new;
 						count++;
 
 						LM_DBG("adding cid [%s]\n", new->value);
@@ -678,6 +818,7 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 				} else {
 					LM_WARN("invalid value: [%.*s]\n", hdr.len, hdr.s);
 				}
+				*cidptr = COLON;
 			}
 		}
 
@@ -722,8 +863,8 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 
 							new->type = HTTPS;
 						}
-						new->next = list;
-						list = new;
+						new->next = *list;
+						*list = new;
 						count++;
 					}
 				} else {
@@ -734,9 +875,7 @@ p_geolist_t lost_new_geoheader_list(str hdr, int *items)
 		search++;
 	}
 
-	*items = count;
-
-	return list;
+	return count;
 }
 
 /*
@@ -790,8 +929,7 @@ p_loc_t lost_parse_pidf(str pidf, str urn)
 				pidf.len, pidf.s);
 		goto err;
 	}
-
-	/* free memory */
+	/* clean up */
 	xmlFreeDoc(doc);
 	doc = NULL;
 
@@ -799,14 +937,13 @@ p_loc_t lost_parse_pidf(str pidf, str urn)
 
 err:
 	LM_ERR("pidflo parsing error\n");
-	/* free memory */
+	/* clean up */
+	lost_free_loc(&loc);
 	if(doc != NULL) {
 		xmlFreeDoc(doc);
 		doc = NULL;
 	}
-	if(loc != NULL) {
-		lost_free_loc(loc);
-	}
+
 	return NULL;
 }
 
@@ -915,6 +1052,9 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 	int len = 0;
 	int i = 0;
 	int nok = -1;
+	int select = -1;
+	int selgeo = -1;
+	int selciv = -1;
 
 	xpath = (xmlChar *)path;
 	/* get location via xpath expression */
@@ -947,14 +1087,17 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 						cname = BAD_CAST cur->name;
 						if(xmlStrcasecmp(cname, s_point) == 0) {
 							s_profile = LOST_PRO_GEO2D;
+							selgeo = i;
 							break;
 						}
 						if(xmlStrcasecmp(cname, s_circle) == 0) {
 							s_profile = LOST_PRO_GEO2D;
+							selgeo = i;
 							break;
 						}
 						if(xmlStrcasecmp(cname, s_civic) == 0) {
 							s_profile = LOST_PRO_CIVIC;
+							selciv = i;
 							break;
 						}
 						/* nothing found ... try next DOM level */
@@ -1005,8 +1148,42 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 					xmlXPathFreeObject(result);
 					return -1;
 				}
-				/* take the first location-info element only */
-				if(i == 0) {
+				/* take the first location-info element */
+				if(lost_profile == 0) {
+
+					LM_DBG("first location-info element [%d]\n", i);
+
+					select = 0;
+					/* take the last location-info element */
+				} else if(lost_profile == 1) {
+
+					LM_DBG("last location-info element [%d]\n", i);
+
+					select = size - 1;
+					/* take the first geodetic location-info element */
+				} else if(lost_profile == 2) {
+
+					LM_DBG("first geodetic location-info element [%d]\n", i);
+
+					select = selgeo;
+					/* take the first civic location-info element */
+				} else if(lost_profile == 3) {
+
+					LM_DBG("first civic location-info element [%d]\n", i);
+
+					select = selciv;
+				}
+
+				/* nothing found */
+				if((select < 0) && (i == size - 1)) {
+					LM_ERR("could not find proper location-info element\n");
+					xmlFree(xmlbuff);
+					xmlFreeDoc(new);
+					xmlXPathFreeObject(result);
+					return -1;
+				}
+
+				if(i == select) {
 					/* return the current profile */
 					loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
 					if(loc->profile == NULL) {
@@ -1078,7 +1255,6 @@ err:
  */
 int lost_parse_location_info(xmlNodePtr root, p_loc_t loc)
 {
-
 	if(lost_xpath_location(root->doc, LOST_XPATH_GP, loc) == 0) {
 		return 0;
 	}
@@ -1093,7 +1269,104 @@ int lost_parse_location_info(xmlNodePtr root, p_loc_t loc)
 }
 
 /*
- * lost_held_location_request(id, lgth, responsetime, exact, type)
+ * lost_held_post_request(lgth)
+ * assembles and returns locationRequest string (allocated in private memory)
+ */
+char *lost_held_post_request(int *lgth, long rtime, char *type)
+{
+	int buffersize = 0;
+
+	char buf[BUFSIZE];
+	char *doc = NULL;
+
+	xmlChar *xmlbuff = NULL;
+	xmlDocPtr request = NULL;
+
+	xmlNodePtr ptrLocationRequest = NULL;
+	xmlNodePtr ptrLocationType = NULL;
+
+	xmlKeepBlanksDefault(1);
+	*lgth = 0;
+
+	/*
+https://tools.ietf.org/html/rfc6753
+
+<?xml version="1.0" encoding="UTF-8"?>
+<locationRequest
+	responseTime="emergencyRouting"
+	xmlns="urn:ietf:params:xml:ns:geopriv:held">
+	<locationType exact="false">
+		geodetic civic
+	</locationType>
+</locationRequest>
+*/
+
+	/* create request */
+	request = xmlNewDoc(BAD_CAST "1.0");
+	if(request == NULL) {
+		LM_ERR("locationRequest xmlNewDoc() failed\n");
+		return doc;
+	}
+	/* locationRequest - element */
+	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST "locationRequest");
+	if(ptrLocationRequest == NULL) {
+		LM_ERR("locationRequest xmlNewNode() failed\n");
+		xmlFreeDoc(request);
+		return doc;
+	}
+
+	xmlDocSetRootElement(request, ptrLocationRequest);
+	/* properties */
+	xmlNewProp(ptrLocationRequest, BAD_CAST "xmlns",
+			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held");
+	/* responseTime - element (default: emergencyRouting) */
+	if(rtime > 0) {
+		/* set responseTime "<ms>") */
+		snprintf(buf, BUFSIZE, "%ld", rtime);
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST buf);
+	} else if(rtime == -1) {
+		/* set responseTime "emergencyDispatch" */
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST HELD_ED);
+	} else {
+		/* set responseTime "emergencyRouting" */
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST HELD_ER);
+	}
+	/* locationType - element (optional) */
+	ptrLocationType =
+			xmlNewChild(ptrLocationRequest, NULL, BAD_CAST "locationType",
+					type == NULL ? BAD_CAST "geodetic civic" : BAD_CAST type);
+	/* properties */
+	xmlNewProp(ptrLocationType, BAD_CAST "exact", BAD_CAST "false");
+
+	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
+	if(xmlbuff == NULL) {
+		LM_ERR("locationRequest xmlDocDumpFormatMemory() failed\n");
+		xmlFreeDoc(request);
+		return doc;
+	}
+
+	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
+	if(doc == NULL) {
+		LM_ERR("no more private memory\n");
+		xmlFree(xmlbuff);
+		xmlFreeDoc(request);
+		return doc;
+	}
+
+	memset(doc, 0, buffersize + 1);
+	memcpy(doc, (char *)xmlbuff, buffersize);
+	doc[buffersize] = '\0';
+
+	*lgth = strlen(doc);
+
+	xmlFree(xmlbuff);
+	xmlFreeDoc(request);
+
+	return doc;
+}
+
+/*
+ * lost_held_location_request(held, lgth)
  * assembles and returns locationRequest string (allocated in private memory)
  */
 char *lost_held_location_request(p_held_t held, int *lgth)
@@ -1118,7 +1391,8 @@ https://tools.ietf.org/html/rfc6155
 https://tools.ietf.org/html/rfc5985
 
 <?xml version="1.0" encoding="UTF-8"?>
-<locationRequest xmlns="urn:ietf:params:xml:ns:geopriv:held" responseTime="8">
+<locationRequest xmlns="urn:ietf:params:xml:ns:geopriv:held"
+	responseTime="emergencyRouting">
     <locationType exact="true">geodetic locationURI</locationType>
     <device xmlns="urn:ietf:params:xml:ns:geopriv:held:id">
         <uri>sip:user@example.net</uri>
@@ -1133,7 +1407,7 @@ https://tools.ietf.org/html/rfc5985
 		return doc;
 	}
 	/* locationRequest - element */
-	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST "locationRequest");
+	ptrLocationRequest = xmlNewNode(NULL, BAD_CAST HELD_LR);
 	if(ptrLocationRequest == NULL) {
 		LM_ERR("locationRequest xmlNewNode() failed\n");
 		xmlFreeDoc(request);
@@ -1143,14 +1417,21 @@ https://tools.ietf.org/html/rfc5985
 	/* properties */
 	xmlNewProp(ptrLocationRequest, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:geopriv:held");
-	/* responseTime - element (optional) */
+	/* responseTime - element (default: emergencyRouting) */
 	if(held->time > 0) {
+		/* set responseTime "<ms>") */
 		snprintf(buf, BUFSIZE, "%d", held->time);
-		xmlNewProp(ptrLocationRequest, BAD_CAST "responseTime", BAD_CAST buf);
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST buf);
+	} else if(held->time == -1) {
+		/* set responseTime "emergencyDispatch" */
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST HELD_ED);
+	} else {
+		/* set responseTime "emergencyRouting" */
+		xmlNewProp(ptrLocationRequest, BAD_CAST HELD_RT, BAD_CAST HELD_ER);
 	}
 	/* locationType - element (optional) */
-	ptrLocationType = xmlNewChild(ptrLocationRequest, NULL,
-			BAD_CAST "locationType", BAD_CAST held->type);
+	ptrLocationType = xmlNewChild(
+			ptrLocationRequest, NULL, BAD_CAST HELD_LT, BAD_CAST held->type);
 	/* properties */
 	xmlNewProp(ptrLocationType, BAD_CAST "exact",
 			(held->exact == HELD_EXACT_TRUE) ? BAD_CAST "true"
