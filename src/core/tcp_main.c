@@ -5107,7 +5107,19 @@ int tcp_init_children(int *woneinit)
 			LM_ERR("fork failed: %s\n", strerror(errno));
 			goto error;
 		}else if (pid>0){
-			/* parent */
+			/* parent - main process */
+			if(*woneinit==0 && ksr_wait_child1_mode!=0) {
+				int wcount=0;
+				while(*ksr_wait_child1_done==0) {
+					sleep_us(ksr_wait_child1_usleep);
+					wcount++;
+					if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+						LM_ERR("waiting for child one too long - wait time: %d\n",
+								ksr_wait_child1_time);
+						goto error;
+					}
+				}
+			}
 			*woneinit = 1;
 		}else{
 			/* child */
@@ -5116,6 +5128,9 @@ int tcp_init_children(int *woneinit)
 			if(*woneinit==0) {
 				if(run_child_one_init_route()<0)
 					goto error;
+			}
+			if(ksr_wait_child1_mode!=0) {
+				*ksr_wait_child1_done = 1;
 			}
 
 			tcp_receive_loop(reader_fd_1);

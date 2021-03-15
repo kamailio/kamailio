@@ -156,7 +156,6 @@
 #endif
 
 
-
 static char help_msg[]= "\
 Usage: " NAME " [options]\n\
 Options:\n\
@@ -540,6 +539,11 @@ static int *_sr_instance_started = NULL;
 
 int ksr_cfg_print_mode = 0;
 int ksr_atexit_mode = 1;
+
+int ksr_wait_child1_mode = 0;
+int ksr_wait_child1_time = 4000000;
+int ksr_wait_child1_usleep = 100000;
+int *ksr_wait_child1_done = NULL;
 
 /**
  * return 1 if all child processes were forked
@@ -1651,6 +1655,14 @@ int main_loop(void)
 
 
 		woneinit = 0;
+		if(ksr_wait_child1_mode!=0) {
+			ksr_wait_child1_done=(int*)shm_malloc(sizeof(int));
+			if(ksr_wait_child1_done==0) {
+				SHM_MEM_ERROR;
+				goto error;
+			}
+			*ksr_wait_child1_done = 0;
+		}
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			nrprocs = (si->workers>0)?si->workers:children_no;
@@ -1689,7 +1701,23 @@ int main_loop(void)
 						if(run_child_one_init_route()<0)
 							goto error;
 					}
+					if(ksr_wait_child1_mode!=0) {
+						*ksr_wait_child1_done = 1;
+					}
 					return udp_rcv_loop();
+				}
+				/* main process */
+				if(woneinit==0 && ksr_wait_child1_mode!=0) {
+					int wcount=0;
+					while(*ksr_wait_child1_done==0) {
+						sleep_us(ksr_wait_child1_usleep);
+						wcount++;
+						if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+							LM_ERR("waiting for child one too long - wait time: %d\n",
+									ksr_wait_child1_time);
+							goto error;
+						}
+					}
 				}
 				woneinit = 1;
 			}
@@ -1724,8 +1752,23 @@ int main_loop(void)
 							if(run_child_one_init_route()<0)
 								goto error;
 						}
-
+						if(ksr_wait_child1_mode!=0) {
+							*ksr_wait_child1_done = 1;
+						}
 						return sctp_core_rcv_loop();
+					}
+					/* main process */
+					if(woneinit==0 && ksr_wait_child1_mode!=0) {
+						int wcount=0;
+						while(*ksr_wait_child1_done==0) {
+							sleep_us(ksr_wait_child1_usleep);
+							wcount++;
+							if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+								LM_ERR("waiting for child one too long - wait time: %d\n",
+										ksr_wait_child1_time);
+								goto error;
+							}
+						}
 					}
 					woneinit = 1;
 				}
