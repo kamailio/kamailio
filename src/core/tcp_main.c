@@ -5108,17 +5108,19 @@ int tcp_init_children(int *woneinit)
 			goto error;
 		}else if (pid>0){
 			/* parent - main process */
-			if(*woneinit==0 && ksr_wait_child1_mode!=0) {
+			if(*woneinit==0 && ksr_wait_worker1_mode!=0) {
 				int wcount=0;
-				while(*ksr_wait_child1_done==0) {
-					sleep_us(ksr_wait_child1_usleep);
+				while(*ksr_wait_worker1_done==0) {
+					sleep_us(ksr_wait_worker1_usleep);
 					wcount++;
-					if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+					if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
 						LM_ERR("waiting for child one too long - wait time: %d\n",
-								ksr_wait_child1_time);
+								ksr_wait_worker1_time);
 						goto error;
 					}
 				}
+				LM_DBG("child one initialized after %d wait steps\n",
+							wcount);
 			}
 			*woneinit = 1;
 		}else{
@@ -5129,8 +5131,9 @@ int tcp_init_children(int *woneinit)
 				if(run_child_one_init_route()<0)
 					goto error;
 			}
-			if(ksr_wait_child1_mode!=0) {
-				*ksr_wait_child1_done = 1;
+			if(ksr_wait_worker1_mode!=0) {
+				*ksr_wait_worker1_done = 1;
+				LM_DBG("child one finished initialization\n");
 			}
 
 			tcp_receive_loop(reader_fd_1);

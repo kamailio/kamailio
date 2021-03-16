@@ -540,10 +540,10 @@ static int *_sr_instance_started = NULL;
 int ksr_cfg_print_mode = 0;
 int ksr_atexit_mode = 1;
 
-int ksr_wait_child1_mode = 0;
-int ksr_wait_child1_time = 4000000;
-int ksr_wait_child1_usleep = 100000;
-int *ksr_wait_child1_done = NULL;
+int ksr_wait_worker1_mode = 0;
+int ksr_wait_worker1_time = 4000000;
+int ksr_wait_worker1_usleep = 100000;
+int *ksr_wait_worker1_done = NULL;
 
 /**
  * return 1 if all child processes were forked
@@ -1655,13 +1655,13 @@ int main_loop(void)
 
 
 		woneinit = 0;
-		if(ksr_wait_child1_mode!=0) {
-			ksr_wait_child1_done=(int*)shm_malloc(sizeof(int));
-			if(ksr_wait_child1_done==0) {
+		if(ksr_wait_worker1_mode!=0) {
+			ksr_wait_worker1_done=(int*)shm_malloc(sizeof(int));
+			if(ksr_wait_worker1_done==0) {
 				SHM_MEM_ERROR;
 				goto error;
 			}
-			*ksr_wait_child1_done = 0;
+			*ksr_wait_worker1_done = 0;
 		}
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
@@ -1701,23 +1701,26 @@ int main_loop(void)
 						if(run_child_one_init_route()<0)
 							goto error;
 					}
-					if(ksr_wait_child1_mode!=0) {
-						*ksr_wait_child1_done = 1;
+					if(ksr_wait_worker1_mode!=0) {
+						*ksr_wait_worker1_done = 1;
+						LM_DBG("child one finished initialization\n");
 					}
 					return udp_rcv_loop();
 				}
 				/* main process */
-				if(woneinit==0 && ksr_wait_child1_mode!=0) {
+				if(woneinit==0 && ksr_wait_worker1_mode!=0) {
 					int wcount=0;
-					while(*ksr_wait_child1_done==0) {
-						sleep_us(ksr_wait_child1_usleep);
+					while(*ksr_wait_worker1_done==0) {
+						sleep_us(ksr_wait_worker1_usleep);
 						wcount++;
-						if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+						if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
 							LM_ERR("waiting for child one too long - wait time: %d\n",
-									ksr_wait_child1_time);
+									ksr_wait_worker1_time);
 							goto error;
 						}
 					}
+					LM_DBG("child one initialized after %d wait steps\n",
+							wcount);
 				}
 				woneinit = 1;
 			}
@@ -1752,23 +1755,26 @@ int main_loop(void)
 							if(run_child_one_init_route()<0)
 								goto error;
 						}
-						if(ksr_wait_child1_mode!=0) {
-							*ksr_wait_child1_done = 1;
+						if(ksr_wait_worker1_mode!=0) {
+							*ksr_wait_worker1_done = 1;
+							LM_DBG("child one finished initialization\n");
 						}
 						return sctp_core_rcv_loop();
 					}
 					/* main process */
-					if(woneinit==0 && ksr_wait_child1_mode!=0) {
+					if(woneinit==0 && ksr_wait_worker1_mode!=0) {
 						int wcount=0;
-						while(*ksr_wait_child1_done==0) {
-							sleep_us(ksr_wait_child1_usleep);
+						while(*ksr_wait_worker1_done==0) {
+							sleep_us(ksr_wait_worker1_usleep);
 							wcount++;
-							if(ksr_wait_child1_time<=wcount*ksr_wait_child1_usleep) {
+							if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
 								LM_ERR("waiting for child one too long - wait time: %d\n",
-										ksr_wait_child1_time);
+										ksr_wait_worker1_time);
 								goto error;
 							}
 						}
+						LM_DBG("child one initialized after %d wait steps\n",
+								wcount);
 					}
 					woneinit = 1;
 				}
