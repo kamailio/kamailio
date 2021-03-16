@@ -286,6 +286,11 @@ static int child_init(int rank)
 {
 	int i, newpid;
 
+	if(rank == PROC_TCP_MAIN) {
+		/* do nothing for the tcp main process */
+		return 0;
+	}
+
 	if(rank == PROC_INIT) {
 		for(i = 0; i < dmq_num_workers; i++) {
 			if (init_worker(&dmq_workers[i]) < 0) {
@@ -312,6 +317,10 @@ static int child_init(int rank)
 				dmq_workers[i].pid = newpid;
 			}
 		}
+		return 0;
+	}
+
+	if(rank == PROC_SIPINIT) {
 		/* notification_node - the node from which the Kamailio instance
 		 * gets the server list on startup.
 		 * the address is given as a module parameter in dmq_notification_address
@@ -326,11 +335,6 @@ static int child_init(int rank)
 						STR_FMT(&dmq_notification_address));
 			}
 		}
-		return 0;
-	}
-	if(rank == PROC_TCP_MAIN) {
-		/* do nothing for the tcp main process */
-		return 0;
 	}
 
 	dmq_pid = my_pid();
