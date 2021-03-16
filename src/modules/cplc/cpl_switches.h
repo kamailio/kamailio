@@ -817,6 +817,8 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 				/* restore the orig TZ */
 				if ( flags&(1<<7) )
 					set_TZ(cpl_env.orig_tz.s);
+				/* reset flags */
+				flags &= (1<<7);
 				/* free structs that I don't need any more */
 				ac_tm_free( &att );
 				tmrec_free( &trt );

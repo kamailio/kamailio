@@ -53,7 +53,7 @@ int cpl_db_bind(const str* db_url, const str *db_table)
 	/* CPL module uses all database functions */
 	if (!DB_CAPABILITY(cpl_dbf, DB_CAP_ALL)) {
 		LM_CRIT("Database modules does not "
-		    "provide all functions needed by cpl-c module\n");
+		    "provide all functions needed by cplc module\n");
 		return -1;
 	}
 

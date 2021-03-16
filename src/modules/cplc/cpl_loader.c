@@ -243,6 +243,13 @@ static void cpl_rpc_load(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Failed saving CPL");
 		goto done;
 	}
+	else
+	{
+		if (rpc->rpl_printf(ctx, "CPL Enabled") < 0) {
+			rpc->fault(ctx, 500, "Server error");
+			goto done;
+		}
+	}
 
 done:
 	if (enc_log.s)
@@ -276,6 +283,13 @@ static void cpl_rpc_remove(rpc_t* rpc, void* ctx)
 	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1) {
 		rpc->fault(ctx, 500, "Remove failed");
 		return;
+	}
+	else
+	{
+		if (rpc->rpl_printf(ctx, "CPL Disabled") < 0) {
+			rpc->fault(ctx, 500, "Server error");
+			return;
+		}
 	}
 }
 
