@@ -136,19 +136,29 @@ struct module_exports exports = {
 
 static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 {
+	str sproto = STR_NULL;
+
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
 	}
 
-	socket->len = uri->host.len + uri->port.len + 6;
+	socket->len = uri->host.len + uri->port.len + 7 /*sctp + : + : \0*/;
 	socket->s = pkg_malloc(socket->len);
 	if(socket->s == NULL) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memcpy(socket->s, "udp:", 4);
-	socket->len = 4;
+
+	if(get_valid_proto_string(uri->proto, 0, 0, &sproto)<0) {
+		LM_WARN("unknown transport protocol - fall back to udp\n");
+		sproto.s = "udp";
+		sproto.len = 3;
+	}
+
+	memcpy(socket->s, sproto.s, sproto.len);
+	socket->s[sproto.len] = ':';
+	socket->len = sproto.len + 1;
 
 	memcpy(socket->s + socket->len, uri->host.s, uri->host.len);
 	socket->len += uri->host.len;
