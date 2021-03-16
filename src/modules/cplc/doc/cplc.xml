@@ -28,10 +28,19 @@
 				<email>bogdan@voice-system.ro</email>
 			</address>
 		</editor>
+		<editor>
+			<firstname>Frederic</firstname>
+			<surname>Gaisnon</surname>
+			<email>frederic.gaisnon@gmail.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003</year>
 		<holder>&fhg;</holder>
+	</copyright>
+	<copyright>
+		<year>2021</year>
+		<holder>MomentTech</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

@@ -64,12 +64,14 @@ static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 static str  timer_avp      = STR_NULL;  /* name of variable timer AVP */
 static str  proxy_route    = STR_NULL;
-
+static str  redirect_route = STR_NULL;
 
 struct cpl_enviroment    cpl_env = {
 		0, /* no cpl logging */
 		0, /* recurse proxy level is 0 */
 		0, /* no script route to be run before proxy */
+		0, /* no script route to be run before redirect */
+		0, /* by default handle 3xx responses */
 		0, /* user part is not case sensitive */
 		{0,0},   /* no domain prefix to be ignored */
 		{-1,-1}, /* communication pipe to aux_process */
@@ -125,6 +127,8 @@ static param_export_t params[] = {
 	{"cpl_dtd_file",   PARAM_STRING, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
 	{"proxy_route",    PARAM_STR, &proxy_route                     },
+	{"redirect_route", PARAM_STR, &redirect_route               },
+	{"ignore3xx",  INT_PARAM, &cpl_env.ignore3xx             },
 	{"log_dir",        PARAM_STRING, &cpl_env.log_dir                   },
 	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive            },
 	{"realm_prefix",   PARAM_STR, &cpl_env.realm_prefix            },
@@ -226,6 +230,14 @@ static int cpl_init(void)
 		cpl_env.proxy_route=route_lookup(&main_rt, proxy_route.s);
 		if (cpl_env.proxy_route==-1) {
 			LM_CRIT("route <%s> defined in proxy_route does not exist\n",proxy_route.s);
+			goto error;
+		}
+	}
+
+	if (redirect_route.len>0) {
+		cpl_env.redirect_route=route_lookup(&main_rt, redirect_route.s);
+		if (cpl_env.redirect_route==-1) {
+			LM_CRIT("route <%s> defined in redirect_route does not exist\n",redirect_route.s);
 			goto error;
 		}
 	}

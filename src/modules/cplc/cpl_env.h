@@ -37,6 +37,8 @@ struct cpl_enviroment {
 	char  *log_dir;         /* dir where the user log should be dumped */
 	int    proxy_recurse;   /* numbers of proxy redirection accepted */
 	int    proxy_route;     /* script route to be run before proxy */
+	int    redirect_route;  /* script route to be run before redirect */
+	int    ignore3xx;       /* deactivate 3xx responses handling */
 	int    case_sensitive;  /* is user part case sensitive ? */
 	str    realm_prefix;    /* domain prefix to be ignored */
 	int    cmd_pipe[2];     /* communication pipe with aux. process */
