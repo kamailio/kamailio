@@ -37,6 +37,7 @@
 #include "../../core/pt.h"
 #include "../../core/hashes.h"
 #include "../../core/mod_fix.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 
@@ -299,11 +300,12 @@ static int child_init(int rank)
 		/* fork worker processes */
 		for(i = 0; i < dmq_num_workers; i++) {
 			LM_DBG("starting worker process %d\n", i);
-			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
+			newpid = fork_process(PROC_RPC, "DMQ WORKER", 1);
 			if(newpid < 0) {
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
+				if (cfg_child_init()) return -1;
 				/* child - this will loop forever */
 				worker_loop(i);
 			} else {
@@ -327,7 +329,7 @@ static int child_init(int rank)
 		return 0;
 	}
 	if(rank == PROC_TCP_MAIN) {
-		/* do nothing for the main process */
+		/* do nothing for the tcp main process */
 		return 0;
 	}
 

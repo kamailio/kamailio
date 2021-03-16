@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -29,6 +29,7 @@
 #include "../../core/sip_msg_clone.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/cfg/cfg_struct.h"
 
 /**
  * @brief set the body of a response
@@ -88,6 +89,7 @@ void worker_loop(int id)
 		} else {
 			sleep_us(dmq_worker_usleep);
 		}
+		cfg_update();
 
 		/* remove from queue until empty */
 		while(job_queue_size(worker->queue) > 0) {
