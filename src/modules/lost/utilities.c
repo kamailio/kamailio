@@ -442,7 +442,10 @@ p_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
 			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-								LOST_GEOLOC_HEADER_SIZE) == 0) {
+					LOST_GEOLOC_HEADER_SIZE) == 0) {
+                
+				hdr.s = hf->body.s;
+                hdr.len = hf->body.len;
 
 				LM_DBG("found geolocation header [%.*s]\n", hdr.len, hdr.s);
 
