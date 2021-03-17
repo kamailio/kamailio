@@ -87,7 +87,8 @@ int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode)
 		return -1;
 	}
 	return STR_EQ(node->uri.host, cmpnode->uri.host)
-		   && STR_EQ(node->uri.port, cmpnode->uri.port);
+		   && STR_EQ(node->uri.port, cmpnode->uri.port)
+		   && (node->uri.proto, cmpnode->uri.proto);
 }
 
 /**
