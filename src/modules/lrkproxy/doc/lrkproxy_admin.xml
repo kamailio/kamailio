@@ -35,7 +35,7 @@
 	<section>
 		<title>LRKP_Controlling Layer (LRKP_CL)</title>
 		<para>
-			The first layer develope as User-Space
+			The first layer is developed as User-Space
 			application that allows User-Space to directly
 			access and manipulate cache data
 			buffer and packet buffer in Kernel-Space. This layer
@@ -49,7 +49,7 @@
 	<section>
 		<title>LRKP_Transport Stateful Layer (LRKP_TSL)</title>
 		<para>
-			The second layer develope in Kernel-Space as
+			The second layer is developed in Kernel-Space as
         		a main decision point for RTP admission controller
         		and Quickpath selector to where a received packet
         		should be forwarded with power of packet mangling
