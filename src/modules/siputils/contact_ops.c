@@ -36,6 +36,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/dset.h"
 #include "../../core/ut.h"
 
 #include <stdio.h>
