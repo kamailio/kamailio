@@ -173,6 +173,10 @@ void freeRP_DATA(sms_rp_data_t * rpdata) {
 #define BITMASK_HIGH_4BITS 0xF0
 #define BITMASK_LOW_4BITS 0x0F
 #define BITMASK_TP_UDHI 0x40
+#define BITMASK_TP_VPF 0x18
+#define BITMASK_TP_VPF_RELATIVE 0x10 
+#define BITMASK_TP_VPF_ENHANCED 0x08
+#define BITMASK_TP_VPF_ABSOLUTE 0x18
 
 // Encode SMS-Message by merging 7 bit ASCII characters into 8 bit octets.
 static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
@@ -525,7 +529,27 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 				}
 				rp_data->pdu.pid = (unsigned char)body.s[p++];
 				rp_data->pdu.coding = (unsigned char)body.s[p++];
-				rp_data->pdu.validity = (unsigned char)body.s[p++];
+
+				// 3GPP TS 03.40 9.2.2.2 SMS SUBMIT type
+				// https://en.wikipedia.org/wiki/GSM_03.40
+				if(rp_data->pdu.msg_type == SUBMIT){
+					// 3GPP TS 03.40 9.2.3.3 TP Validity Period Format (TP VPF)
+					switch (rp_data->pdu.flags & BITMASK_TP_VPF){
+						case BITMASK_TP_VPF_RELATIVE:	// 3GPP TS 03.40 9.2.3.12.1 TP-VP (Relative format)
+							rp_data->pdu.validity = (unsigned char)body.s[p++];
+							break;
+						case BITMASK_TP_VPF_ENHANCED:	// 3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format)
+							p += 7;
+							LM_WARN("3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format) is not supported\n");
+							break;
+						case BITMASK_TP_VPF_ABSOLUTE:	// 3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format)
+							p += 7;
+							LM_WARN("3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format) is not supported\n");
+							break;
+						default:
+							break;
+					}
+				}
 
 				//TP-User-Data-Length and TP-User-Data
 				len = (unsigned char)body.s[p++];
