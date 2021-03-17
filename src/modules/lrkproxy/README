@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
 
 2.1. LRKP_Controlling Layer (LRKP_CL)
 
-   The first layer develope as User-Space application that allows
+   The first layer is developed as User-Space application that allows
    User-Space to directly access and manipulate cache data buffer and
    packet buffer in Kernel-Space. This layer gets all information about
    creating new sessions, active sessions and teardown sessions which is
@@ -106,8 +106,8 @@ Chapter 1. Admin Guide
 
 2.2. LRKP_Transport Stateful Layer (LRKP_TSL)
 
-   The second layer develope in Kernel-Space as a main decision point for
-   RTP admission controller and Quickpath selector to where a received
+   The second layer is developed in Kernel-Space as a main decision point
+   for RTP admission controller and Quickpath selector to where a received
    packet should be forwarded with power of packet mangling framework in
    the network stack.
 
