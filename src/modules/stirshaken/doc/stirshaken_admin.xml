@@ -124,7 +124,6 @@ modparam("stirshaken", "vs_ca_dir", "/path/to/ca_dir")
 </programlisting>
 		</example>
 	</section>
-	</section>
 	<section>
 		<title><varname>vs_crl_dir</varname> (str)</title>
 		<para>
