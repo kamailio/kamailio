@@ -741,7 +741,16 @@ static int ki_stirshaken_add_identity_with_key(sip_msg_t *msg, str *x5u, str *at
 		.origtn_val = origtn_val ? origtn_val->s : NULL,
 		.origid = origid ? origid->s : NULL
 	};
+	char uuid_str[37] = { 0 };
 
+	if (!params.origid || !strlen(params.origid)) {
+
+		uuid_t uuid;
+
+		uuid_generate(uuid);
+		uuid_unparse_lower(uuid, uuid_str);
+		params.origid = uuid_str;
+	}
 
 	if (keypath && keypath->s) {
 
