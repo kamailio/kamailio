@@ -148,7 +148,7 @@ modparam("stirshaken", "vs_crl_dir", "/path/to/crl_dir")
 		</example>
 	</section>
 	<section>
-		<title><varname>vs_identity_expire_s</varname> (str)</title>
+		<title><varname>vs_identity_expire_s</varname> (int)</title>
 		<para>
 		This parameter defines a maximum time in seconds for which PASSporT is considered valid.
 		</para>
