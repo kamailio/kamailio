@@ -167,7 +167,7 @@ modparam("stirshaken", "vs_identity_expire_s", 20)
 		</example>
 	</section>
 	<section>
-		<title><varname>vs_connect_timeout_s </varname> (str)</title>
+		<title><varname>vs_connect_timeout_s </varname> (int)</title>
 		<para>
 		During a call verification with stirshaken_check_identity() a blocking HTTP(s) call is executed to download certificate
 		referneced in PASSporT (unless certificate caching is turned on and a valid cert is found in cache).
@@ -235,7 +235,7 @@ modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 		</example>
 	</section>
 	<section>
-		<title><varname>vs_cache_expire_s</varname> (str)</title>
+		<title><varname>vs_cache_expire_s</varname> (int)</title>
 		<para>
 		If vs_cache_certificates is set then cached certificates are saved in vs_cache_dir directory and loaded from there
 		when needed during a call verification executed with stirshaken_check_identity(), as long as they are not there for more than vs_cache_expire_s seconds.
@@ -282,7 +282,7 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
 		<programlisting format="linespecific">
 ...
 modparam("stirshaken", "vs_verify_x509_cert_path", 1)
-modparam("stirshaken", "vs_ca_dir", "/var/www/html/stir_shaken/trans_nexus_interop_test/session_2/sw_to_tn/ca")
+modparam("stirshaken", "vs_ca_dir", "/path/to/ca")
 modparam("stirshaken", "vs_cache_certificates", 1)
 modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 modparam("stirshaken", "vs_cache_expire_s", 100)
@@ -359,7 +359,7 @@ request_route {
 	</section>
 	<section id="stirshaken.f.stirshaken_add_identity">
 		<title>
-		<function moreinfo="none">stirshaken_add_identity</function>
+		<function moreinfo="none">stirshaken_add_identity(x5u, attest, origtn_val, desttn_val, origid)</function>
 		</title>
 		<para>
 			Add SIP Identity Header to the call using default private key (see as_default_key param). Authenticate call with STIR-Shaken.
@@ -369,18 +369,34 @@ request_route {
 		</para>
 		<para>
 		The parameters can contain pseudo-variables.
+		If origid is empty, an unique identifier will be generated wih libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>stirshaken_add_identity</function> usage</title>
+		<title><function>stirshaken_add_identity</function> with origid usage</title>
 		<programlisting format="linespecific">
 ...
 request_route {
  	...
-	stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", uuid);
+	stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "origid");
+	...
+}
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>stirshaken_add_identity</function> with auto generated uuid as origid usage</title>
+		<para>
+		If origid is empty, an unique identifier will be generated with libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+		</para>
+		<programlisting format="linespecific">
+...
+request_route {
  	...
+	stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "");
+	...
 }
 ...
 </programlisting>
@@ -388,13 +404,14 @@ request_route {
 	</section>
 	<section id="stirshaken.f.stirshaken_add_identity_with_key">
 		<title>
-		<function moreinfo="none">stirshaken_add_identity_with_key</function>
+		<function moreinfo="none">stirshaken_add_identity_with_key(x5u, attest, origtn_val, desttn_val, origid, keyPath)</function>
 		</title>
 		<para>
 			Same as stirshaken_add_identity() but using the key read from the location provided as a last parameter.
 		</para>
 		<para>
 		The parameters can contain pseudo-variables.
+		If origid is empty, an unique identifier will be generated with libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -416,7 +433,7 @@ request_route {
 	<section id="stirshaken.s.installation">
 	<title>Installation</title>
 	<para>
-		The module depends on "libstirshaken", which is open source and can be downlaoded from https://github.com/signalwire/libstirshaken.
+		The module depends on "libstirshaken", which is an open source C library from SignalWire. It can be downloaded from https://github.com/signalwire/libstirshaken.
 		Until the libstirshaken is packaged in OS distributions, libstirshaken must be compiled and installed before the stirshaken module can be compiled.
 	</para>
 	<para>
@@ -426,15 +443,23 @@ request_route {
 		<title>libstirshaken installation</title>
 		<programlisting format="linespecific">
 ...
-git clone git@github.com:signalwire/libstirshaken.git
-cd libstirshaken
-./bootstrap.sh
-./configure
-make
-make check
-sudo make install
-cd /path/to/kamailio/
-make modules modules=src/modules/stirshaken/
+		git clone git@github.com:signalwire/libstirshaken.git
+		cd libstirshaken
+		./bootstrap.sh
+		./configure
+		make
+		make check
+		sudo make install
+...
+</programlisting>
+	<title>Building Kamailio's stirshaken module</title>
+	<para>
+		After libstirshaken had been installed, Kamailio's stirshaken module can then be built with
+	</para>
+		<programlisting format="linespecific">
+...
+		cd /path/to/kamailio/
+		make modules modules=src/modules/stirshaken/
 ...
 </programlisting>
 		</example>
