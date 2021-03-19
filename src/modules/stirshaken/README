@@ -11,7 +11,7 @@ Piotr Gregor
 
    <piotr@signalwire.com>
 
-   Copyright © 2021 https://www.signalwire.com
+   Copyright Â© 2021 https://www.signalwire.com
      __________________________________________________________________
 
    Table of Contents
@@ -31,18 +31,21 @@ Piotr Gregor
               3.3. vs_ca_dir (str)
               3.4. vs_crl_dir (str)
               3.5. vs_identity_expire_s (str)
-              3.6. vs_connect_timeout_s (str)
+              3.6. vs_connect_timeout_s (int)
               3.7. vs_cache_certificates (int)
               3.8. vs_cache_dir (str)
-              3.9. vs_cache_expire_s (str)
+              3.9. vs_cache_expire_s (int)
 
         4. Functions
 
               4.1. stirshaken_check_identity()
               4.2. stirshaken_check_identity_with_key(keyPath)
               4.3. stirshaken_check_identity_with_cert(certPath)
-              4.4. stirshaken_add_identity
-              4.5. stirshaken_add_identity_with_key
+              4.4. stirshaken_add_identity(x5u, attest, origtn_val,
+                      desttn_val, origid)
+
+              4.5. stirshaken_add_identity_with_key(x5u, attest,
+                      origtn_val, desttn_val, origid, keyPath)
 
         5. Installation
 
@@ -60,9 +63,10 @@ Piotr Gregor
    1.10. stirshaken_check_identity usage
    1.11. stirshaken_check_identity_with_key usage
    1.12. stirshaken_check_identity_with_cert usage
-   1.13. stirshaken_add_identity usage
-   1.14. stirshaken_add_identity_with_key usage
-   1.15. libstirshaken installation
+   1.13. stirshaken_add_identity with origid usage
+   1.14. stirshaken_add_identity with auto generated uuid as origid usage
+   1.15. stirshaken_add_identity_with_key usage
+   1.16. libstirshaken installation
 
 Chapter 1. Admin Guide
 
@@ -81,18 +85,21 @@ Chapter 1. Admin Guide
         3.3. vs_ca_dir (str)
         3.4. vs_crl_dir (str)
         3.5. vs_identity_expire_s (str)
-        3.6. vs_connect_timeout_s (str)
+        3.6. vs_connect_timeout_s (int)
         3.7. vs_cache_certificates (int)
         3.8. vs_cache_dir (str)
-        3.9. vs_cache_expire_s (str)
+        3.9. vs_cache_expire_s (int)
 
    4. Functions
 
         4.1. stirshaken_check_identity()
         4.2. stirshaken_check_identity_with_key(keyPath)
         4.3. stirshaken_check_identity_with_cert(certPath)
-        4.4. stirshaken_add_identity
-        4.5. stirshaken_add_identity_with_key
+        4.4. stirshaken_add_identity(x5u, attest, origtn_val, desttn_val,
+                origid)
+
+        4.5. stirshaken_add_identity_with_key(x5u, attest, origtn_val,
+                desttn_val, origid, keyPath)
 
    5. Installation
 
@@ -136,10 +143,10 @@ Chapter 1. Admin Guide
    3.3. vs_ca_dir (str)
    3.4. vs_crl_dir (str)
    3.5. vs_identity_expire_s (str)
-   3.6. vs_connect_timeout_s (str)
+   3.6. vs_connect_timeout_s (int)
    3.7. vs_cache_certificates (int)
    3.8. vs_cache_dir (str)
-   3.9. vs_cache_expire_s (str)
+   3.9. vs_cache_expire_s (int)
 
 3.1. as_default_key (str)
 
@@ -218,7 +225,7 @@ modparam("stirshaken", "vs_crl_dir", "/path/to/crl_dir")
 modparam("stirshaken", "vs_identity_expire_s", 20)
 ...
 
-3.6. vs_connect_timeout_s (str)
+3.6. vs_connect_timeout_s (int)
 
    During a call verification with stirshaken_check_identity() a blocking
    HTTP(s) call is executed to download certificate referneced in PASSporT
@@ -273,7 +280,7 @@ modparam("stirshaken", "vs_cache_certificates", 1)
 modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 ...
 
-3.9. vs_cache_expire_s (str)
+3.9. vs_cache_expire_s (int)
 
    If vs_cache_certificates is set then cached certificates are saved in
    vs_cache_dir directory and loaded from there when needed during a call
@@ -294,10 +301,13 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
    4.1. stirshaken_check_identity()
    4.2. stirshaken_check_identity_with_key(keyPath)
    4.3. stirshaken_check_identity_with_cert(certPath)
-   4.4. stirshaken_add_identity
-   4.5. stirshaken_add_identity_with_key
+   4.4. stirshaken_add_identity(x5u, attest, origtn_val, desttn_val,
+          origid)
 
-4.1. stirshaken_check_identity()
+   4.5. stirshaken_add_identity_with_key(x5u, attest, origtn_val,
+          desttn_val, origid, keyPath)
+
+4.1.  stirshaken_check_identity()
 
    Check the validity of the Identity header by decoding PASSporT's
    signature with a certificate referenced in it's x5u header and
@@ -318,8 +328,7 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
    Example 1.10. stirshaken_check_identity usage
 ...
 modparam("stirshaken", "vs_verify_x509_cert_path", 1)
-modparam("stirshaken", "vs_ca_dir", "/var/www/html/stir_shaken/trans_nexus_inter
-op_test/session_2/sw_to_tn/ca")
+modparam("stirshaken", "vs_ca_dir", "/path/to/ca")
 modparam("stirshaken", "vs_cache_certificates", 1)
 modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 modparam("stirshaken", "vs_cache_expire_s", 100)
@@ -331,7 +340,7 @@ request_route {
 }
 ...
 
-4.2. stirshaken_check_identity_with_key(keyPath)
+4.2.  stirshaken_check_identity_with_key(keyPath)
 
    Check the validity of the Identity header by decoding PASSporT's
    signature with a key read from the location provided. PASSporT's iat
@@ -365,7 +374,7 @@ request_route {
 }
 ...
 
-4.3. stirshaken_check_identity_with_cert(certPath)
+4.3.  stirshaken_check_identity_with_cert(certPath)
 
    Same as stirshaken_check_identity_with_key(keyPath) but the key is read
    from the certificate which is read from the location provided.
@@ -384,7 +393,7 @@ ty }
 }
 ...
 
-4.4. stirshaken_add_identity
+4.4.  stirshaken_add_identity(x5u, attest, origtn_val, desttn_val, origid)
 
    Add SIP Identity Header to the call using default private key (see
    as_default_key param). Authenticate call with STIR-Shaken. If origID is
@@ -394,30 +403,49 @@ ty }
    public key that should be used to verify the signature; attest
    represents the attestation level (should be "A", "B" or "C").
 
-   The parameters can contain pseudo-variables.
+   The parameters can contain pseudo-variables. If origid is empty, an
+   unique identifier will be generated wih libuuid, e.g.
+   "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. stirshaken_add_identity usage
+   Example 1.13. stirshaken_add_identity with origid usage
 ...
 request_route {
         ...
         stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200"
-, uuid);
+, "origid");
         ...
 }
 ...
 
-4.5. stirshaken_add_identity_with_key
+   Example 1.14. stirshaken_add_identity with auto generated uuid as
+   origid usage
+
+   If origid is empty, an unique identifier will be generated with
+   libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+...
+request_route {
+        ...
+        stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200"
+, "");
+        ...
+}
+...
+
+4.5.  stirshaken_add_identity_with_key(x5u, attest, origtn_val, desttn_val,
+origid, keyPath)
 
    Same as stirshaken_add_identity() but using the key read from the
    location provided as a last parameter.
 
-   The parameters can contain pseudo-variables.
+   The parameters can contain pseudo-variables. If origid is empty, an
+   unique identifier will be generated with libuuid, e.g.
+   "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. stirshaken_add_identity_with_key usage
+   Example 1.15. stirshaken_add_identity_with_key usage
 ...
 request_route {
         ...
@@ -429,22 +457,28 @@ request_route {
 
 5. Installation
 
-   The module depends on "libstirshaken", which is open source and can be
-   downlaoded from https://github.com/signalwire/libstirshaken. Until the
-   libstirshaken is packaged in OS distributions, libstirshaken must be
-   compiled and installed before the stirshaken module can be compiled.
+   The module depends on "libstirshaken", which is an open source C
+   library from SignalWire. It can be downloaded from
+   https://github.com/signalwire/libstirshaken. Until the libstirshaken is
+   packaged in OS distributions, libstirshaken must be compiled and
+   installed before the stirshaken module can be compiled.
 
    Installling libstirshaken is easy:
 
-   Example 1.15. libstirshaken installation
+   Example 1.16. libstirshaken installation
 ...
-git clone git@github.com:signalwire/libstirshaken.git
-cd libstirshaken
-./bootstrap.sh
-./configure
-make
-make check
-sudo make install
-cd /path/to/kamailio/
-make modules modules=src/modules/stirshaken/
+                git clone git@github.com:signalwire/libstirshaken.git
+                cd libstirshaken
+                ./bootstrap.sh
+                ./configure
+                make
+                make check
+                sudo make install
+...
+
+   After libstirshaken had been installed, Kamailio's stirshaken module
+   can then be built with
+...
+                cd /path/to/kamailio/
+                make modules modules=src/modules/stirshaken/
 ...
