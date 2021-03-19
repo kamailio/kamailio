@@ -30,7 +30,7 @@ Piotr Gregor
               3.2. vs_verify_x509_cert_path (int)
               3.3. vs_ca_dir (str)
               3.4. vs_crl_dir (str)
-              3.5. vs_identity_expire_s (str)
+              3.5. vs_identity_expire_s (int)
               3.6. vs_connect_timeout_s (int)
               3.7. vs_cache_certificates (int)
               3.8. vs_cache_dir (str)
@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
         3.2. vs_verify_x509_cert_path (int)
         3.3. vs_ca_dir (str)
         3.4. vs_crl_dir (str)
-        3.5. vs_identity_expire_s (str)
+        3.5. vs_identity_expire_s (int)
         3.6. vs_connect_timeout_s (int)
         3.7. vs_cache_certificates (int)
         3.8. vs_cache_dir (str)
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
    3.2. vs_verify_x509_cert_path (int)
    3.3. vs_ca_dir (str)
    3.4. vs_crl_dir (str)
-   3.5. vs_identity_expire_s (str)
+   3.5. vs_identity_expire_s (int)
    3.6. vs_connect_timeout_s (int)
    3.7. vs_cache_certificates (int)
    3.8. vs_cache_dir (str)
@@ -213,7 +213,7 @@ modparam("stirshaken", "vs_ca_dir", "/path/to/ca_dir")
 modparam("stirshaken", "vs_crl_dir", "/path/to/crl_dir")
 ...
 
-3.5. vs_identity_expire_s (str)
+3.5. vs_identity_expire_s (int)
 
    This parameter defines a maximum time in seconds for which PASSporT is
    considered valid.
