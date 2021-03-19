@@ -193,8 +193,8 @@ modparam("stirshaken", "vs_connect_timeout_s", 10)
 	<section>
 		<title><varname>vs_cache_certificates</varname> (int)</title>
 		<para>
-		If set, then certificates caching is turned on. This means that certificates downloaded during call verification
-		are cached inside vs_cache_dir, and will be loaded from that cache as long as they are not there for more than vs_cache_expire_s seconds.
+		If set, then certificates caching is turned on. This means that certificates downloaded during call verification with stirshaken_check_identity()
+		are cached inside vs_cache_dir, and will be loaded from that cache as long as they are not there for more than vs_cache_expire_s seconds (see vs_cache_expire_s).
 		If vs_cache_certificates is set then vs_cache_dir must be set too and pointing to existing directory.
 		This param has no meaning for calls to stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
 		</para>
@@ -239,6 +239,8 @@ modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 		<para>
 		If vs_cache_certificates is set then cached certificates are saved in vs_cache_dir directory and loaded from there
 		when needed during a call verification executed with stirshaken_check_identity(), as long as they are not there for more than vs_cache_expire_s seconds.
+		If they are in cache for more than vs_cache_expire_s seconds, then a blocking HTTP(s) call is executed to download a new version of (expired) certificate.
+		If this is successful then old version is removed and new version is saved in cache.
 		This param has no meaning for calls to stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
 		</para>
 		<para>
