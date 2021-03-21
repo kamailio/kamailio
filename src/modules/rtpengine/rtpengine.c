@@ -1813,6 +1813,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 		rtpe_reload_lock_get(rtpp_list->rset_lock);
 		for (pnode=rtpp_list->rn_first; pnode!=0; pnode = pnode->rn_next) {
 			char *hostname;
+			char *hp;
 
 			if (pnode->rn_umode == 0) {
 				rtpp_socks[pnode->idx] = -1;
@@ -1839,11 +1840,23 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (cp == NULL || *cp == '\0')
 				cp = CPORT;
 
+			if(pnode->rn_umode == 6) {
+				hp = strrchr(hostname, ']');
+				if(hp != NULL)
+					*hp = '\0';
+
+				hp = hostname;
+				if(*hp == '[')
+					hp++;
+			} else {
+				hp = hostname;
+			}
+
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_flags = 0;
 			hints.ai_family = (pnode->rn_umode == 6) ? AF_INET6 : AF_INET;
 			hints.ai_socktype = SOCK_DGRAM;
-			if ((n = getaddrinfo(hostname, cp, &hints, &res)) != 0) {
+			if ((n = getaddrinfo(hp, cp, &hints, &res)) != 0) {
 				LM_ERR("%s\n", gai_strerror(n));
 				pkg_free(hostname);
 				rtpp_socks[pnode->idx] = -1;
