@@ -551,7 +551,7 @@ static int w_stirshaken_check_identity(sip_msg_t *msg, char *str1, char *str2)
 	return ki_stirshaken_check_identity(msg);
 }
 
-static int ki_stirshaken_check_identity_with_cert(sip_msg_t *msg, char *cert_path)
+static int ki_stirshaken_check_identity_with_cert(sip_msg_t *msg, str *cert_path)
 {
 	str ibody = STR_NULL;
 	hdr_field_t *hf = NULL;
@@ -574,7 +574,7 @@ static int ki_stirshaken_check_identity_with_cert(sip_msg_t *msg, char *cert_pat
 
 	ibody = hf->body;
 
-	if (!(cert.x = stir_shaken_load_x509_from_file(&ss, cert_path))) {
+	if (!(cert.x = stir_shaken_load_x509_from_file(&ss, cert_path->s))) {
 		LM_DBG("Cannot load X509 from file\n");
 		stirshaken_print_error_details(&ss);
 		goto fail;
@@ -641,7 +641,7 @@ static int w_stirshaken_check_identity_with_cert(sip_msg_t *msg, char *cert_path
 		return -1;
 	}
 
-	return ki_stirshaken_check_identity_with_cert(msg, cert_path);
+	return ki_stirshaken_check_identity_with_cert(msg, &keyval);
 }
 
 static int ki_stirshaken_check_identity_with_key(sip_msg_t *msg, str *keypath)
@@ -954,8 +954,8 @@ static sr_kemi_t sr_kemi_stirshaken_exports[] = {
 	},
 	{ str_init("stirshaken"), str_init("stirshaken_check_identity_with_key"),
 		SR_KEMIP_INT, ki_stirshaken_check_identity_with_key,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("stirshaken"), str_init("stirshaken_add_identity"),
 		SR_KEMIP_INT, ki_stirshaken_add_identity,
