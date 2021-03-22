@@ -2139,7 +2139,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		else
 			dst_uri = &c;
 
-		/* determin the destination */
+		/* determine the destination */
 		if(path.len && (flags & sipping_flag) != 0) {
 			/* send to first URI in path */
 			if(get_path_dst_uri(&path, &opt) < 0) {
@@ -2178,7 +2178,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		if(curi.port_no == 0)
 			curi.port_no = SIP_PORT;
 		proto = curi.proto;
-		/* we sholud get rid of this resolve (to ofen and to slow); for the
+		/* we should get rid of this resolve (to often and to slow); for the
 		 * moment we are lucky since the curi is an IP -bogdan */
 		he = sip_resolvehost(&curi.host, &curi.port_no, &proto);
 		if(he == NULL) {
