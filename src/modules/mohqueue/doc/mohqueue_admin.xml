@@ -387,10 +387,13 @@ Duplicate names are not allowed.
           </listitem>
           <listitem>
 <emphasis>uri</emphasis> (100-character string, required): the URI of
-the queue. It should not include any parameters or headers (e.g.
-"sip:user@host;maddr=239.255.255.1" or "sip:user@host?subject=project")
-although it will match any RURI that contains this URI even if the
-RURI has parameters or headers. Duplicates are not allowed.
+the queue. Duplicates are not allowed. It should not include any parameters
+or headers (e.g. "sip:user@host;maddr=239.255.255.1" or
+"sip:user@host?subject=project") although it will match any RURI that
+contains this URI even if the RURI has parameters or headers. The server
+name of the URI must uniquely identify the server. If the RURI server name
+does not uniquely identify the server then it should be rewritten to one
+the does before calling mohq_send ().
           </listitem>
           <listitem>
 <emphasis>mohdir</emphasis> (100-character string, optional): path to
