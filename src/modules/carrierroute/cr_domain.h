@@ -40,6 +40,7 @@
 struct domain_data_t {
 	int id; /*!< the numerical id of the routing tree */
 	str * name; /*!< the name of the routing tree. This points to the name in domain_map to avoid duplication. */
+	double sum_prob; /*!< sums the probabilities of all entries in the normal tree. Used to warn that (carrier, domain) has only routes with probability 0. */
 	struct dtrie_node_t * tree; /*!< the root node of the routing tree. Payload is of type (struct route_flags *) */
 	struct dtrie_node_t * failure_tree; /*!< the root node of the failure routing tree. Payload is of type (struct failure_route_rule *) */
 };

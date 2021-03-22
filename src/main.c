@@ -156,7 +156,6 @@
 #endif
 
 
-
 static char help_msg[]= "\
 Usage: " NAME " [options]\n\
 Options:\n\
@@ -540,6 +539,11 @@ static int *_sr_instance_started = NULL;
 
 int ksr_cfg_print_mode = 0;
 int ksr_atexit_mode = 1;
+
+int ksr_wait_worker1_mode = 0;
+int ksr_wait_worker1_time = 4000000;
+int ksr_wait_worker1_usleep = 100000;
+int *ksr_wait_worker1_done = NULL;
 
 /**
  * return 1 if all child processes were forked
@@ -1651,6 +1655,14 @@ int main_loop(void)
 
 
 		woneinit = 0;
+		if(ksr_wait_worker1_mode!=0) {
+			ksr_wait_worker1_done=(int*)shm_malloc(sizeof(int));
+			if(ksr_wait_worker1_done==0) {
+				SHM_MEM_ERROR;
+				goto error;
+			}
+			*ksr_wait_worker1_done = 0;
+		}
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			nrprocs = (si->workers>0)?si->workers:children_no;
@@ -1689,7 +1701,26 @@ int main_loop(void)
 						if(run_child_one_init_route()<0)
 							goto error;
 					}
+					if(ksr_wait_worker1_mode!=0) {
+						*ksr_wait_worker1_done = 1;
+						LM_DBG("child one finished initialization\n");
+					}
 					return udp_rcv_loop();
+				}
+				/* main process */
+				if(woneinit==0 && ksr_wait_worker1_mode!=0) {
+					int wcount=0;
+					while(*ksr_wait_worker1_done==0) {
+						sleep_us(ksr_wait_worker1_usleep);
+						wcount++;
+						if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
+							LM_ERR("waiting for child one too long - wait time: %d\n",
+									ksr_wait_worker1_time);
+							goto error;
+						}
+					}
+					LM_DBG("child one initialized after %d wait steps\n",
+							wcount);
 				}
 				woneinit = 1;
 			}
@@ -1720,8 +1751,32 @@ int main_loop(void)
 						/* child */
 						bind_address=si; /* shortcut */
 
+						if(woneinit==0) {
+							if(run_child_one_init_route()<0)
+								goto error;
+						}
+						if(ksr_wait_worker1_mode!=0) {
+							*ksr_wait_worker1_done = 1;
+							LM_DBG("child one finished initialization\n");
+						}
 						return sctp_core_rcv_loop();
 					}
+					/* main process */
+					if(woneinit==0 && ksr_wait_worker1_mode!=0) {
+						int wcount=0;
+						while(*ksr_wait_worker1_done==0) {
+							sleep_us(ksr_wait_worker1_usleep);
+							wcount++;
+							if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
+								LM_ERR("waiting for child one too long - wait time: %d\n",
+										ksr_wait_worker1_time);
+								goto error;
+							}
+						}
+						LM_DBG("child one initialized after %d wait steps\n",
+								wcount);
+					}
+					woneinit = 1;
 				}
 			/*parent*/
 			/*close(sctp_sock)*/; /*if closed=>sendto invalid fd errors?*/
@@ -1777,7 +1832,7 @@ int main_loop(void)
 #ifdef USE_TCP
 		if (!tcp_disable){
 				/* start tcp  & tls receivers */
-			if (tcp_init_children()<0) goto error;
+			if (tcp_init_children(&woneinit)<0) goto error;
 				/* start tcp+tls main attendant proc */
 			pid = fork_process(PROC_TCP_MAIN, "tcp main process", 0);
 			if (pid<0){

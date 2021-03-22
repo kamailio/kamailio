@@ -148,6 +148,7 @@ static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
 static int regex_substring_f(struct sip_msg *msg,  char *input, char *regex,
 		char *matched_index, char *match_count, char *dst);
+static int w_search_str(sip_msg_t *msg, char *ptext, char *pre);
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
 static int free_hname_fixup(void** param, int param_no);
@@ -312,6 +313,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"cmp_istr",  (cmd_function)cmp_istr_f, 2,
+		fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"search_str",  (cmd_function)w_search_str, 2,
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
 	{"starts_with",  (cmd_function)starts_with_f, 2,
@@ -4596,6 +4600,61 @@ static int fixup_subst_hf(void** param, int param_no)
 /**
  *
  */
+static int ki_search_str(sip_msg_t *msg, str *stext, str *sre)
+{
+	int ret;
+	regex_t re;
+	regmatch_t pmatch;
+
+
+	if(sre==NULL || sre->len<=0) {
+		return 2;
+	}
+
+	if(stext==NULL || stext->len<=0) {
+		return -2;
+	}
+
+	memset(&re, 0, sizeof(regex_t));
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -2;
+	}
+
+	if (regexec(&re, stext->s, 1, &pmatch, 0)!=0) {
+		ret = -1;
+	} else {
+		ret = 1;
+	}
+
+	regfree(&re);
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_search_str(sip_msg_t *msg, char *ptext, char *pre)
+{
+	str stext;
+	str sre;
+
+	if(fixup_get_svalue(msg, (gparam_t*)ptext, &stext)!=0) {
+		LM_ERR("cannot get first parameter\n");
+		return -2;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pre, &sre)!=0) {
+		LM_ERR("cannot get second parameter\n");
+		return -2;
+	}
+
+	return ki_search_str(msg, &stext, &sre);
+}
+
+/**
+ *
+ */
 static int ki_search(sip_msg_t *msg, str *sre)
 {
 	regex_t re;
@@ -4942,6 +5001,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("cmp_istr"),
 		SR_KEMIP_INT, ki_cmp_istr,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("search_str"),
+		SR_KEMIP_INT, ki_search_str,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

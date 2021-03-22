@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -46,7 +46,7 @@ str match_exp_column=   str_init(MATCH_EXP_COL);
 str match_len_column=   str_init(MATCH_LEN_COL);
 str subst_exp_column=   str_init(SUBST_EXP_COL);
 str repl_exp_column =   str_init(REPL_EXP_COL);
-str attrs_column    =   str_init(ATTRS_COL); 
+str attrs_column    =   str_init(ATTRS_COL);
 
 extern int dp_fetch_rows;
 extern int dp_match_dynamic;
@@ -75,8 +75,9 @@ void list_rule(dpl_node_t * );
 void list_hash(int h_index);
 
 
-dpl_id_p* rules_hash = NULL;
-int * crt_idx, *next_idx;
+static dpl_id_p* dp_rules_hash = NULL;
+static int *dp_crt_idx = NULL;
+static int *dp_next_idx = NULL;
 
 
 /**
@@ -197,21 +198,21 @@ int init_data(void)
 {
 	int *p;
 
-	rules_hash = (dpl_id_p *)shm_malloc(2*sizeof(dpl_id_p));
-	if(!rules_hash) {
+	dp_rules_hash = (dpl_id_p *)shm_malloc(2*sizeof(dpl_id_p));
+	if(!dp_rules_hash) {
 		LM_ERR("out of shm memory\n");
 		return -1;
 	}
-	rules_hash[0] = rules_hash[1] = 0;
+	dp_rules_hash[0] = dp_rules_hash[1] = 0;
 
 	p = (int *)shm_malloc(2*sizeof(int));
 	if(!p){
 		LM_ERR("out of shm memory\n");
 		return -1;
 	}
-	crt_idx = p;
-	next_idx = p+1;
-	*crt_idx = *next_idx = 0;
+	dp_crt_idx = p;
+	dp_next_idx = p+1;
+	*dp_crt_idx = *dp_next_idx = 0;
 
 	LM_DBG("trying to initialize data from db\n");
 	if(init_db_data() != 0)
@@ -223,15 +224,15 @@ int init_data(void)
 
 void destroy_data(void)
 {
-	if(rules_hash){
+	if(dp_rules_hash){
 		destroy_hash(0);
 		destroy_hash(1);
-		shm_free(rules_hash);
-		rules_hash = 0;
+		shm_free(dp_rules_hash);
+		dp_rules_hash = 0;
 	}
 
-	if(crt_idx)
-		shm_free(crt_idx);
+	if(dp_crt_idx)
+		shm_free(dp_crt_idx);
 }
 
 
@@ -252,7 +253,7 @@ int dp_load_db(void)
 	dpl_node_t *rule;
 
 	LM_DBG("init\n");
-	if( (*crt_idx) != (*next_idx)){
+	if( (*dp_crt_idx) != (*dp_next_idx)){
 		LM_WARN("a load command already generated, aborting reload...\n");
 		return 0;
 	}
@@ -263,7 +264,7 @@ int dp_load_db(void)
 	}
 
 	if (DB_CAPABILITY(dp_dbf, DB_CAP_FETCH)) {
-		if(dp_dbf.query(dp_db_handle,0,0,0,query_cols, 0, 
+		if(dp_dbf.query(dp_db_handle,0,0,0,query_cols, 0,
 					DP_TABLE_COL_NO, order, 0) < 0){
 			LM_ERR("failed to query database!\n");
 			return -1;
@@ -285,8 +286,8 @@ int dp_load_db(void)
 
 	nr_rows = RES_ROW_N(res);
 
-	*next_idx = ((*crt_idx) == 0)? 1:0;
-	destroy_hash(*next_idx);
+	*dp_next_idx = ((*dp_crt_idx) == 0)? 1:0;
+	destroy_hash(*dp_next_idx);
 
 	if(nr_rows == 0){
 		LM_WARN("no data in the db\n");
@@ -302,7 +303,7 @@ int dp_load_db(void)
 			if((rule = build_rule(values)) ==0 )
 				goto err2;
 
-			if(add_rule2hash(rule , *next_idx) != 0)
+			if(add_rule2hash(rule, *dp_next_idx) != 0)
 				goto err2;
 
 		}
@@ -321,16 +322,16 @@ int dp_load_db(void)
 
 end:
 	/*update data*/
-	*crt_idx = *next_idx;
-	list_hash(*crt_idx);
+	*dp_crt_idx = *dp_next_idx;
+	list_hash(*dp_crt_idx);
 	dp_dbf.free_result(dp_db_handle, res);
 	return 0;
 
 err2:
 	if(rule)	destroy_rule(rule);
-	destroy_hash(*next_idx);
+	destroy_hash(*dp_next_idx);
 	dp_dbf.free_result(dp_db_handle, res);
-	*next_idx = *crt_idx; 
+	*dp_next_idx = *dp_crt_idx;
 	return -1;
 }
 
@@ -550,7 +551,7 @@ int add_rule2hash(dpl_node_t * rule, int h_index)
 	dpl_index_p indexp, last_indexp, new_indexp;
 	int new_id;
 
-	if(!rules_hash){
+	if(!dp_rules_hash){
 		LM_ERR("data not allocated\n");
 		return -1;
 	}
@@ -558,7 +559,7 @@ int add_rule2hash(dpl_node_t * rule, int h_index)
 	new_id = 0;
 
 	/*search for the corresponding dpl_id*/
-	for(crt_idp = last_idp =rules_hash[h_index]; crt_idp!= NULL; 
+	for(crt_idp = last_idp =dp_rules_hash[h_index]; crt_idp!= NULL;
 			last_idp = crt_idp, crt_idp = crt_idp->next)
 		if(crt_idp->dp_id == rule->dpid)
 			break;
@@ -577,7 +578,7 @@ int add_rule2hash(dpl_node_t * rule, int h_index)
 	}
 
 	/*search for the corresponding dpl_index*/
-	for(indexp = last_indexp =crt_idp->first_index; indexp!=NULL; 
+	for(indexp = last_indexp =crt_idp->first_index; indexp!=NULL;
 			last_indexp = indexp, indexp = indexp->next){
 		if(indexp->len == rule->matchlen)
 			goto add_rule;
@@ -617,8 +618,8 @@ add_rule:
 	indexp->last_rule = rule;
 
 	if(new_id){
-		crt_idp->next = rules_hash[h_index];
-		rules_hash[h_index] = crt_idp;
+		crt_idp->next = dp_rules_hash[h_index];
+		dp_rules_hash[h_index] = crt_idp;
 	}
 	LM_DBG("added the rule id %i index %i pr %i next %p to the "
 			"index with %i len\n", rule->dpid, rule->matchlen,
@@ -639,10 +640,10 @@ void destroy_hash(int index)
 	dpl_index_p indexp;
 	dpl_node_p rulep;
 
-	if(!rules_hash[index])
+	if(!dp_rules_hash[index])
 		return;
 
-	for(crt_idp = rules_hash[index]; crt_idp != NULL;){
+	for(crt_idp = dp_rules_hash[index]; crt_idp != NULL;){
 
 		for(indexp = crt_idp->first_index; indexp != NULL;){
 
@@ -662,13 +663,13 @@ void destroy_hash(int index)
 
 		}
 
-		rules_hash[index] = crt_idp->next;
+		dp_rules_hash[index] = crt_idp->next;
 		shm_free(crt_idp);
 		crt_idp = 0;
-		crt_idp = rules_hash[index];
+		crt_idp = dp_rules_hash[index];
 	}
 
-	rules_hash[index] = 0;
+	dp_rules_hash[index] = 0;
 }
 
 
@@ -677,7 +678,7 @@ void destroy_rule(dpl_node_t * rule){
 	if(!rule)
 		return;
 
-	LM_DBG("destroying rule with priority %i\n", 
+	LM_DBG("destroying rule with priority %i\n",
 			rule->pr);
 
 	if(rule->match_comp)
@@ -708,10 +709,10 @@ dpl_id_p select_dpid(int id)
 {
 	dpl_id_p idp;
 
-	if(!rules_hash || !crt_idx)
+	if(!dp_rules_hash || !dp_crt_idx)
 		return NULL;
 
-	for(idp = rules_hash[*crt_idx]; idp!=NULL; idp = idp->next)
+	for(idp = dp_rules_hash[*dp_crt_idx]; idp!=NULL; idp = idp->next)
 		if(idp->dp_id == id)
 			return idp;
 
@@ -727,10 +728,10 @@ void list_hash(int h_index)
 	dpl_node_p rulep;
 
 
-	if(!rules_hash[h_index])
+	if(!dp_rules_hash[h_index])
 		return;
 
-	for(crt_idp=rules_hash[h_index]; crt_idp!=NULL; crt_idp = crt_idp->next){
+	for(crt_idp=dp_rules_hash[h_index]; crt_idp!=NULL; crt_idp = crt_idp->next){
 		LM_DBG("DPID: %i, pointer %p\n", crt_idp->dp_id, crt_idp);
 		for(indexp=crt_idp->first_index; indexp!=NULL;indexp= indexp->next){
 			LM_DBG("INDEX LEN: %i\n", indexp->len);

@@ -600,13 +600,14 @@ int notification_resp_callback_f(
 		}
 	} else if(code == 408) {
 		if(STR_EQ(node->orig_uri, dmq_notification_address)) {
-			LM_ERR("not deleting notification_peer\n");
-			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);	
+			LM_ERR("not deleting notification peer [%.*s]\n",
+					STR_FMT(&dmq_notification_address));
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
 			return 0;
 		}
 		if (node->status == DMQ_NODE_DISABLED) {
 			/* deleting node - the server did not respond */
-			LM_ERR("deleting server %.*s because of failed request\n",
+			LM_ERR("deleting server node %.*s because of failed request\n",
 				STR_FMT(&node->orig_uri));
 			ret = del_dmq_node(dmq_node_list, node);
 			LM_DBG("del_dmq_node returned %d\n", ret);

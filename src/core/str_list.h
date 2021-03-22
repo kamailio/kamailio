@@ -20,7 +20,7 @@
  */
 
 /**
- * @file 
+ * @file
  * @brief Kamailio core :: Simple str type list and helper functions
  */
 
@@ -32,15 +32,15 @@
 /**
  * @brief Simple str type list
  */
-struct str_list {
+typedef struct str_list {
 	str s;
 	struct str_list *next;
-};
+} str_list_t;
 
 
 /**
  * @brief Add a new allocated list element to an existing list
- * 
+ *
  * Add a new allocated list element to an existing list, the allocation is done
  * from the private memory pool
  * @param s input character

@@ -37,7 +37,7 @@ int pvh_str_hash_init(struct str_hash_table *ht, str *keys, char *desc)
 	int idx = 0, d_size = 0;
 	str val = STR_NULL;
 
-	if(pvh_split_values(keys, split, &d_size, 0) < 0) {
+	if(pvh_split_values(keys, split, &d_size, 0, NULL) < 0) {
 		LM_ERR("could not parse %s param\n", desc);
 		return -1;
 	}

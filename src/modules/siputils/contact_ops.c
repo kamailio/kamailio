@@ -165,12 +165,14 @@ int ki_decode_contact(sip_msg_t *msg)
 		return res;
 	} else {
 		/* we do not modify the original first line */
-		if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0))
+		if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
 			msg->new_uri = newUri;
-		else {
+		} else {
 			pkg_free(msg->new_uri.s);
 			msg->new_uri = newUri;
 		}
+		msg->parsed_uri_ok=0;
+		ruri_mark_new();
 	}
 	return 1;
 }
@@ -577,7 +579,7 @@ int decode_uri(str uri, char separator, str *result)
 			uri.len);
 
 	/* adding one comes from * */
-	result->s = pkg_malloc(result->len);
+	result->s = pkg_malloc(result->len + 1); /* NULL termination */
 	if(result->s == NULL) {
 		LM_ERR("unable to allocate pkg memory\n");
 		return -4;
@@ -626,6 +628,7 @@ int decode_uri(str uri, char separator, str *result)
 
 	memcpy(pos, uri.s + format.second, uri.len - format.second); /* till end: */
 
+	result->s[result->len] = '\0';
 	LM_DBG("New decoded uri [%.*s]\n", result->len, result->s);
 
 	return 0;

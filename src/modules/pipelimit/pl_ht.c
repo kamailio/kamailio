@@ -221,7 +221,7 @@ pl_pipe_t* pl_pipe_get(str *pipeid, int mode)
 	unsigned int cellid;
 	unsigned int idx;
 	pl_pipe_t *it;
-	
+
 	if(_pl_pipes_ht==NULL)
 		return NULL;
 
@@ -236,7 +236,7 @@ pl_pipe_t* pl_pipe_get(str *pipeid, int mode)
 	}
 	while(it!=NULL && it->cellid == cellid)
 	{
-		if(pipeid->len==it->name.len 
+		if(pipeid->len==it->name.len
 				&& strncmp(pipeid->s, it->name.s, pipeid->len)==0)
 		{
 			 if(mode==0) lock_release(&_pl_pipes_ht->slots[idx].lock);

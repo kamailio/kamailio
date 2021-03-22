@@ -37,6 +37,7 @@
 #include "../../core/pt.h"
 #include "../../core/hashes.h"
 #include "../../core/mod_fix.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 
@@ -136,19 +137,29 @@ struct module_exports exports = {
 
 static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 {
+	str sproto = STR_NULL;
+
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
 	}
 
-	socket->len = uri->host.len + uri->port.len + 6;
+	socket->len = uri->host.len + uri->port.len + 7 /*sctp + : + : \0*/;
 	socket->s = pkg_malloc(socket->len);
 	if(socket->s == NULL) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memcpy(socket->s, "udp:", 4);
-	socket->len = 4;
+
+	if(get_valid_proto_string(uri->proto, 0, 0, &sproto)<0) {
+		LM_WARN("unknown transport protocol - fall back to udp\n");
+		sproto.s = "udp";
+		sproto.len = 3;
+	}
+
+	memcpy(socket->s, sproto.s, sproto.len);
+	socket->s[sproto.len] = ':';
+	socket->len = sproto.len + 1;
 
 	memcpy(socket->s + socket->len, uri->host.s, uri->host.len);
 	socket->len += uri->host.len;
@@ -275,6 +286,11 @@ static int child_init(int rank)
 {
 	int i, newpid;
 
+	if(rank == PROC_TCP_MAIN) {
+		/* do nothing for the tcp main process */
+		return 0;
+	}
+
 	if(rank == PROC_INIT) {
 		for(i = 0; i < dmq_num_workers; i++) {
 			if (init_worker(&dmq_workers[i]) < 0) {
@@ -289,17 +305,22 @@ static int child_init(int rank)
 		/* fork worker processes */
 		for(i = 0; i < dmq_num_workers; i++) {
 			LM_DBG("starting worker process %d\n", i);
-			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
+			newpid = fork_process(PROC_RPC, "DMQ WORKER", 1);
 			if(newpid < 0) {
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
+				if (cfg_child_init()) return -1;
 				/* child - this will loop forever */
 				worker_loop(i);
 			} else {
 				dmq_workers[i].pid = newpid;
 			}
 		}
+		return 0;
+	}
+
+	if(rank == PROC_SIPINIT) {
 		/* notification_node - the node from which the Kamailio instance
 		 * gets the server list on startup.
 		 * the address is given as a module parameter in dmq_notification_address
@@ -314,11 +335,6 @@ static int child_init(int rank)
 						STR_FMT(&dmq_notification_address));
 			}
 		}
-		return 0;
-	}
-	if(rank == PROC_TCP_MAIN) {
-		/* do nothing for the main process */
-		return 0;
 	}
 
 	dmq_pid = my_pid();
@@ -355,10 +371,11 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 		ip_addr2sbuf(&cur->ip_address, ip, IP6_MAX_STR_SIZE);
 		if(rpc->add(c, "{", &h) < 0)
 			goto error;
-		if(rpc->struct_add(h, "SSsSdd", "host", &cur->uri.host, "port",
-				   &cur->uri.port, "resolved_ip", ip, "status",
-				   dmq_get_status_str(cur->status), "last_notification",
-				   cur->last_notification, "local", cur->local)
+		if(rpc->struct_add(h, "SSssSdd", "host", &cur->uri.host, "port",
+				   &cur->uri.port, "proto", get_proto_name(cur->uri.proto),
+				   "resolved_ip", ip, "status", dmq_get_status_str(cur->status),
+				   "last_notification", cur->last_notification,
+				   "local", cur->local)
 				< 0)
 			goto error;
 		cur = cur->next;

@@ -116,6 +116,7 @@ int ul_db_raw_fetch_type = 0;
 int ul_rm_expired_delay = 0;
 int ul_version_table = 1;
 
+int ul_load_rank = PROC_SIPINIT;
 str ul_xavp_contact_name = {0};
 
 str ul_ka_from = str_init("sip:server@kamailio.org");
@@ -261,6 +262,7 @@ static param_export_t params[] = {
 	{"ka_timeout",          PARAM_INT, &ul_keepalive_timeout},
 	{"ka_loglevel",         PARAM_INT, &ul_ka_loglevel},
 	{"ka_logmsg",           PARAM_STR, &ul_ka_logmsg},
+	{"load_rank",           PARAM_INT, &ul_load_rank},
 	{0, 0, 0}
 };
 
@@ -472,7 +474,7 @@ static int child_init(int _rank)
 		return -1;
 	}
 	/* _rank==PROC_SIPINIT is used even when fork is disabled */
-	if (_rank==PROC_SIPINIT && ul_db_mode!=DB_ONLY && ul_db_load) {
+	if (_rank==ul_load_rank && ul_db_mode!=DB_ONLY && ul_db_load) {
 		/* if cache is used, populate domains from DB */
 		for(ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {

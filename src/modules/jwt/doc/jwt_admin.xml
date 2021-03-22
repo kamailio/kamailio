@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides JWT (JSON Web Token) functions to be used
+		in &kamailio; configuration file.
+	</para>
+	<para>
+		It relies on libjwt (at least v1.12.0) library (https://github.com/benmcollins/libjwt).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libjwt</emphasis> - minimum version 1.12.0.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="jwt.p.key_mode">
+		<title><varname>key_mode</varname> (int)</title>
+		<para>
+			Mode to use the private and public keys. If set to 0, they are read
+			always from the disk. If set to 1, they are cached in memory with
+			the first use (no reload support yet).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt", "key_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="jwt.f.jwt_generate">
+	    <title>
+		<function moreinfo="none">jwt_generate(prvkey, alg, claims)</function>
+	    </title>
+	    <para>
+	    Generate the JWT, its value can be retrieved in the variable $jwt(val).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			prvkey - path to private key
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algoritm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be added to JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt_generate</function> usage</title>
+		<programlisting format="linespecific">
+...
+  jwt_generate("/path/to/prvkey.pem", "RS256",
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="jwt.f.jwt_verify">
+	    <title>
+		<function moreinfo="none">jwt_verify(pubkey, alg, claims, jwtval)</function>
+	    </title>
+	    <para>
+	    Verify the JWT.
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			pubkey - path to public key
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algoritm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be checked they are in the JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			jwtval - the value of the JWT to verify
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt_verify</function> usage</title>
+		<programlisting format="linespecific">
+...
+  if(!jwt_verify("/path/to/pubkey.pem", "RS256",
+         "caller=$fU;callee=$tU;callid=$ci",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Variables</title>
+	<section id="jwt.v.jwt">
+	    <title>
+		<function moreinfo="none">$jwt(key)</function>
+	    </title>
+	    <para>
+	    Get the values and attributes after using JWT functions.
+		</para>
+		<para>
+		The key can be:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			val - the value of JWT after a successful jwt_generate().
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			status - the status of verification after a failed jwt_verify().
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>$jwt(name)</function> usage</title>
+		<programlisting format="linespecific">
+...
+  jwt_generate("/path/to/prvkey.pem", "RS256",
+        "caller=$fU;callee=$tU;callid=$ci");
+  xinfo("jwt is: $jwt(val)");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+</chapter>

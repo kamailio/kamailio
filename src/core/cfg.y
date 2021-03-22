@@ -498,6 +498,9 @@ extern char *default_routename;
 %token VERSION_TABLE_CFG
 %token VERBOSE_STARTUP
 %token ROUTE_LOCKS_SIZE
+%token WAIT_WORKER1_MODE
+%token WAIT_WORKER1_TIME
+%token WAIT_WORKER1_USLEEP
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token KEMI
@@ -1702,6 +1705,12 @@ assign_stm:
 	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
 	| ROUTE_LOCKS_SIZE EQUAL NUMBER { ksr_route_locks_size=$3; }
 	| ROUTE_LOCKS_SIZE EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_MODE EQUAL NUMBER { ksr_wait_worker1_mode=$3; }
+	| WAIT_WORKER1_MODE EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_TIME EQUAL NUMBER { ksr_wait_worker1_time=$3; }
+	| WAIT_WORKER1_TIME EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_USLEEP EQUAL NUMBER { ksr_wait_worker1_usleep=$3; }
+	| WAIT_WORKER1_USLEEP EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
