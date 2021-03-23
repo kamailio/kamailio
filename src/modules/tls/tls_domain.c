@@ -580,9 +580,9 @@ static int load_ca_list(tls_domain_t* d)
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
-	if (d->ca_file.len>0 && fix_shm_pathname(&d->ca_file) < 0)
+	if (d->ca_file.s && d->ca_file.len>0 && fix_shm_pathname(&d->ca_file) < 0)
 		return -1;
-	if (d->ca_path.len>0 && fix_shm_pathname(&d->ca_path) < 0)
+	if (d->ca_path.s && d->ca_path.len>0 && fix_shm_pathname(&d->ca_path) < 0)
 		return -1;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
@@ -594,7 +594,7 @@ static int load_ca_list(tls_domain_t* d)
 			TLS_ERR("load_ca_list:");
 			return -1;
 		}
-		if(d->ca_file.len>0) {
+		if(d->ca_file.s && d->ca_file.len>0) {
 			SSL_CTX_set_client_CA_list(d->ctx[i],
 					SSL_load_client_CA_file(d->ca_file.s));
 			if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
