@@ -192,7 +192,7 @@ void tls_free_domain(tls_domain_t* d)
 {
 	int i;
 	int procs_no;
-	
+
 	if (!d) return;
 	if (d->ctx) {
 		procs_no=get_max_procs();
@@ -204,6 +204,7 @@ void tls_free_domain(tls_domain_t* d)
 
 	if (d->cipher_list.s) shm_free(d->cipher_list.s);
 	if (d->ca_file.s) shm_free(d->ca_file.s);
+	if (d->ca_path.s) shm_free(d->ca_path.s);
 	if (d->crl_file.s) shm_free(d->crl_file.s);
 	if (d->pkey_file.s) shm_free(d->pkey_file.s);
 	if (d->cert_file.s) shm_free(d->cert_file.s);
@@ -326,6 +327,13 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 		d->ca_file.len = parent->ca_file.len;
 	}
 	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file.s);
+
+	if (!d->ca_path.s){
+		if (shm_asciiz_dup(&d->ca_path.s, parent->ca_path.s) < 0)
+			return -1;
+		d->ca_path.len = parent->ca_path.len;
+	}
+	LOG(L_INFO, "%s: ca_path='%s'\n", tls_domain_str(d), d->ca_path.s);
 
 	if (!d->crl_file.s) {
 		if (shm_asciiz_dup(&d->crl_file.s, parent->crl_file.s) < 0)
@@ -568,26 +576,32 @@ static int load_ca_list(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->ca_file.s || !d->ca_file.len) {
+	if ((!d->ca_file.s || !d->ca_file.len) && (!d->ca_path.s || !d->ca_path.len)) {
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
-	if (fix_shm_pathname(&d->ca_file) < 0)
+	if (d->ca_file.len>0 && fix_shm_pathname(&d->ca_file) < 0)
+		return -1;
+	if (d->ca_path.len>0 && fix_shm_pathname(&d->ca_path) < 0)
 		return -1;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, 0) != 1) {
-			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d),
-					d->ca_file.s);
+		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s,
+					d->ca_path.s) != 1) {
+			ERR("%s: Unable to load CA list file '%s' dir '%s'\n",
+					tls_domain_str(d), (d->ca_file.s)?d->ca_file.s:"",
+					(d->ca_path.s)?d->ca_path.s:"");
 			TLS_ERR("load_ca_list:");
 			return -1;
 		}
-		SSL_CTX_set_client_CA_list(d->ctx[i],
-				SSL_load_client_CA_file(d->ca_file.s));
-		if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
-			ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
-			TLS_ERR("load_ca_list:");
-			return -1;
+		if(d->ca_file.len>0) {
+			SSL_CTX_set_client_CA_list(d->ctx[i],
+					SSL_load_client_CA_file(d->ca_file.s));
+			if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
+				ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
+				TLS_ERR("load_ca_list:");
+				return -1;
+			}
 		}
 	}
 	return 0;

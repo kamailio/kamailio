@@ -101,8 +101,9 @@ static tls_domain_t mod_params = {
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),      /* CA path */
 	0,                /* Require certificate */
-	{0, },                /* Cipher list */
+	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1_PLUS,   /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
@@ -126,6 +127,7 @@ tls_domain_t srv_defaults = {
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),      /* CA path */
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1_PLUS,    /* TLS method */
@@ -168,6 +170,7 @@ tls_domain_t cli_defaults = {
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),      /* CA path */
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1_PLUS,    /* TLS method */
@@ -212,6 +215,7 @@ static param_export_t params[] = {
 	{"verify_client",       PARAM_STR,    &default_tls_cfg.verify_client},
 	{"private_key",         PARAM_STR,    &default_tls_cfg.private_key  },
 	{"ca_list",             PARAM_STR,    &default_tls_cfg.ca_list      },
+	{"ca_path",             PARAM_STR,    &default_tls_cfg.ca_path      },
 	{"certificate",         PARAM_STR,    &default_tls_cfg.certificate  },
 	{"crl",                 PARAM_STR,    &default_tls_cfg.crl          },
 	{"cipher_list",         PARAM_STR,    &default_tls_cfg.cipher_list  },

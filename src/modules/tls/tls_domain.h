@@ -117,6 +117,7 @@ typedef struct tls_domain {
 	int verify_cert;
 	int verify_depth;
 	str ca_file;
+	str ca_path;
 	int require_cert;
 	str cipher_list;
 	enum tls_method method;
