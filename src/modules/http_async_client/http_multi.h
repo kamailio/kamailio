@@ -48,6 +48,10 @@
 #include "hm_hash.h"
 
 
+#ifndef CURLPIPE_NOTHING
+#define CURLPIPE_NOTHING   0L
+#endif
+
 extern stat_var *requests;
 extern stat_var *replies;
 extern stat_var *errors;
