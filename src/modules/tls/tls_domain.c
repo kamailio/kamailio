@@ -598,7 +598,10 @@ static int load_ca_list(tls_domain_t* d)
 			SSL_CTX_set_client_CA_list(d->ctx[i],
 					SSL_load_client_CA_file(d->ca_file.s));
 			if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
-				ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
+				ERR("%s: Error while setting client CA list file [%.*s/%d]\n",
+						tls_domain_str(d), (d->ca_file.s)?d->ca_file.len:0,
+						(d->ca_file.s)?d->ca_file.s:"",
+						d->ca_file.len);
 				TLS_ERR("load_ca_list:");
 				return -1;
 			}
