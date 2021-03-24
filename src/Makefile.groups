@@ -187,6 +187,9 @@ mod_list_ev=evapi
 # - modules depending on libjwt library
 mod_list_jwt=jwt
 
+# - modules depending on libwebsockets library
+mod_list_lwsc=lwsc
+
 # - modules depending on libstirshaken library
 mod_list_stirshaken=stirshaken
 
@@ -263,6 +266,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_mqtt) \
 			   $(mod_list_secsipid) \
 			   $(mod_list_jwt) \
+			   $(mod_list_lwsc) \
 			   $(mod_list_stirshaken) \
 			   $(mod_list_rtp_media_server)
 
@@ -456,6 +460,9 @@ module_group_kev=$(mod_list_ev)
 
 # pkg jwt module
 module_group_kjwt=$(mod_list_jwt)
+
+# pkg lwsc module
+module_group_klwsc=$(mod_list_lwsc)
 
 # pkg stirshaken module
 module_group_kstirshaken=$(mod_list_stirshaken)
