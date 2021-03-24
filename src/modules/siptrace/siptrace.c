@@ -119,7 +119,7 @@ static int  trace_add_info_xavp(siptrace_info_t* info);
 static inline int trace_parse_raw_uri(siptrace_info_t* info);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
-int siptrace_net_data_send(sr_event_param_t *evp);
+int siptrace_net_data_sent(sr_event_param_t *evp);
 
 #define SIPTRACE_INIT_MODE_ALL 0
 #define SIPTRACE_INIT_MODE_CORECB 1
@@ -481,7 +481,7 @@ static int mod_init(void)
 			|| _siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
 		if(_siptrace_mode != SIPTRACE_MODE_NONE) {
 			sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
-			sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
+			sr_event_register_cb(SREV_NET_DATA_SENT, siptrace_net_data_sent);
 		} else if(_siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
 			LM_ERR("invalid config options for core callbacks tracing\n");
 			return -1;
@@ -2205,7 +2205,7 @@ afterdb:
 /**
  *
  */
-int siptrace_net_data_send(sr_event_param_t *evp)
+int siptrace_net_data_sent(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	dest_info_t new_dst;
