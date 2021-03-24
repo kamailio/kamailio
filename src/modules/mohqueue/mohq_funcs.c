@@ -222,7 +222,7 @@ else
       return;
       }
     }
-  if (ptm->t_release (ptcell) < 0)
+  if (ptm->t_release_transaction (ptcell) < 0)
     {
     LM_ERR ("%sRelease transaction failed for call (%s)!\n",
       pfncname, pcall->call_from);
@@ -2160,7 +2160,7 @@ int nsession;
 sdp_session_cell_t *psession;
 char pflagbuf [5];
 strcpy (pflagbuf, "z20");
-fparam_t pzflag [1] = {0, FPARAM_STRING, {pflagbuf}, 0};
+fparam_t pzflag [1] = {"", FPARAM_STRING, {pflagbuf}, 0};
 for (nsession = 0; (psession = get_sdp_session (pmsg, nsession)); nsession++)
   {
   int nstream;
