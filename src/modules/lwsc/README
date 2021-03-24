@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2021 asipto.com
+   Copyright Â© 2021 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -28,6 +28,7 @@ Daniel-Constantin Mierla
               3.1. protocol (str)
               3.2. timeout_init (int)
               3.3. timeout_read (int)
+              3.4. verbosity (int)
 
         4. Functions
 
@@ -43,9 +44,10 @@ Daniel-Constantin Mierla
    1.1. Set protocol parameter
    1.2. Set timeout_init parameter
    1.3. Set timeout_read parameter
-   1.4. lwsc_notify usage
-   1.5. lwsc_request usage
-   1.6. $lwsc(name) usage
+   1.4. Set verbosity parameter
+   1.5. lwsc_notify usage
+   1.6. lwsc_request usage
+   1.7. $lwsc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -62,6 +64,7 @@ Chapter 1. Admin Guide
         3.1. protocol (str)
         3.2. timeout_init (int)
         3.3. timeout_read (int)
+        3.4. verbosity (int)
 
    4. Functions
 
@@ -102,6 +105,7 @@ Chapter 1. Admin Guide
    3.1. protocol (str)
    3.2. timeout_init (int)
    3.3. timeout_read (int)
+   3.4. verbosity (int)
 
 3.1. protocol (str)
 
@@ -138,12 +142,25 @@ modparam("lwsc", "timeout_init", 4000000)
 modparam("lwsc", "timeout_init", 1000000)
 ...
 
+3.4. verbosity (int)
+
+   Control the verbosity of debug messages on libwebsockets events, higher
+   value means more debug messages. It has to be a positive number,
+   currently 2 or higher results in maximum verbosity.
+
+   Default value is 0.
+
+   Example 1.4. Set verbosity parameter
+...
+modparam("lwsc", "verbosity", 1)
+...
+
 4. Functions
 
    4.1. lwsc_notify(wsurl, data)
    4.2. lwsc_request(wsurl, data)
 
-4.1. lwsc_notify(wsurl, data)
+4.1.  lwsc_notify(wsurl, data)
 
    Send data via websockets to the address specified by wsurl, no response
    is expected.
@@ -156,13 +173,13 @@ modparam("lwsc", "timeout_init", 1000000)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. lwsc_notify usage
+   Example 1.5. lwsc_notify usage
 ...
     jwt_notify("ws://10.1.1.10:8080/log",
         "caller=$fU;callee=$tU;callid=$ci");
 ...
 
-4.2. lwsc_request(wsurl, data)
+4.2.  lwsc_request(wsurl, data)
 
    Send data via websockets to the address specified by wsurl, a response
    is expected and made available in $lwsc(rdata).
@@ -175,7 +192,7 @@ modparam("lwsc", "timeout_init", 1000000)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. lwsc_request usage
+   Example 1.6. lwsc_request usage
 ...
     jwt_request("ws://10.1.1.10:8080/log",
         "caller=$fU;callee=$tU;srcip=$si");
@@ -185,7 +202,7 @@ modparam("lwsc", "timeout_init", 1000000)
 
    5.1. $lwsc(key)
 
-5.1. $lwsc(key)
+5.1.  $lwsc(key)
 
    Get the values and attributes after using LWSC functions.
 
@@ -193,7 +210,7 @@ modparam("lwsc", "timeout_init", 1000000)
      * rdata - the response retrieved after lwsc_request().
      * status - the status of verification after a failed jwt_verify().
 
-   Example 1.6. $lwsc(name) usage
+   Example 1.7. $lwsc(name) usage
 ...
   jwt_request("ws://10.1.1.10:8080/log",
         "caller=$fU;callee=$tU;srcip=$si");
