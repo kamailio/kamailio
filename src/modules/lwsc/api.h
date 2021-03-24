@@ -37,6 +37,7 @@ typedef int (*lwsc_api_request_f)(str *wsurl, str *wsproto, str *sdata,
  * @brief Stateless (sl) API structure
  */
 typedef struct lwsc_api {
+	int loaded;
 	lwsc_api_request_f  request; /* send and receice data */
 } lwsc_api_t;
 
@@ -54,11 +55,12 @@ static inline int lwsc_load_api(lwsc_api_t *lwscb)
 		LM_ERR("cannot find bind_lwsc exported function\n");
 		return -1;
 	}
-	if (bindlwsc(lwscb)==-1)
-	{
+	if (bindlwsc(lwscb)==-1) {
 		LM_ERR("cannot bind lwsc api\n");
 		return -1;
 	}
+	lwscb->loaded = 1;
+
 	return 0;
 }
 
