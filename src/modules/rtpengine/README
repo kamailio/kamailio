@@ -244,7 +244,7 @@ Richard Fuchs
    1.76. Set mos_average_roundtrip_leg_B_pv parameter
    1.77. Set mos_average_samples_B_pv parameter
    1.78. Set control_cmd_tos parameter
-   1.79. Set control_cmd_tos parameter
+   1.79. Set hash_algo parameter
    1.80. set_rtpengine_set usage
    1.81. rtpengine_offer usage
    1.82. rtpengine_answer usage
@@ -1962,7 +1962,7 @@ modparam("rtpengine", "control_cmd_tos", 144)
 
    The values not falling into the range “0-2” are ignored.
 
-   Example 1.79. Set control_cmd_tos parameter
+   Example 1.79. Set hash_algo parameter
 ...
 ### use SHA1 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 1)
