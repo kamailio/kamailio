@@ -331,7 +331,7 @@ done:
 		netinfo.data.len = outb.len;
 		netinfo.dst = dst;
 		evp.data = (void*)&netinfo;
-		sr_event_exec(SREV_NET_DATA_SEND, &evp);
+		sr_event_exec(SREV_NET_DATA_SENT, &evp);
 	}
 
 	if(outb.s != buf)
