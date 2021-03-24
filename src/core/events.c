@@ -175,9 +175,9 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.net_data_recv = f;
 				else return -1;
 			break;
-		case SREV_NET_DATA_SEND:
-				if(_sr_events_list.net_data_send==0)
-					_sr_events_list.net_data_send = f;
+		case SREV_NET_DATA_SENT:
+				if(_sr_events_list.net_data_sent==0)
+					_sr_events_list.net_data_sent = f;
 				else return -1;
 			break;
 		case SREV_SIP_REPLY_OUT:
@@ -320,10 +320,10 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 					ret = _sr_events_list.net_data_recv(evp);
 					return ret;
 				} else return 1;
-		case SREV_NET_DATA_SEND:
-				if(unlikely(_sr_events_list.net_data_send!=0))
+		case SREV_NET_DATA_SENT:
+				if(unlikely(_sr_events_list.net_data_sent!=0))
 				{
-					ret = _sr_events_list.net_data_send(evp);
+					ret = _sr_events_list.net_data_sent(evp);
 					return ret;
 				} else return 1;
 		case SREV_SIP_REPLY_OUT:
@@ -375,8 +375,8 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.tcp_closed!=0)?1:0;
 		case SREV_NET_DATA_RECV:
 				return (_sr_events_list.net_data_recv!=0)?1:0;
-		case SREV_NET_DATA_SEND:
-				return (_sr_events_list.net_data_send!=0)?1:0;
+		case SREV_NET_DATA_SENT:
+				return (_sr_events_list.net_data_sent!=0)?1:0;
 		case SREV_SIP_REPLY_OUT:
 				return (_sr_events_list.sip_reply_out[0]!=0)?1:0;
 	}
