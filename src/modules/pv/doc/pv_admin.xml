@@ -63,11 +63,6 @@
 		The value of the parameter has the format:
 		_name_ '=' _type_ ':' _value_
 		</para>
-		<para>
-		Note: this is special useful for usage with KEMI scripts, the $shv(...)
-		variables must be defined during Kamailio initialization in order to
-		become available in all worker processes.
-		</para>
 		<itemizedlist>
 			<listitem><para>_name_: shared variable name</para></listitem>
 
@@ -80,6 +75,11 @@
 
 			<listitem><para>_value_: value to be set</para></listitem>
 		</itemizedlist>
+		<para>
+		Note: this is special useful for usage with KEMI scripts, the $shv(...)
+		variables must be defined during Kamailio initialization in order to
+		become available in all worker processes.
+		</para>
 		<para>
 		Default value is <quote>NULL</quote>.
 		</para>
