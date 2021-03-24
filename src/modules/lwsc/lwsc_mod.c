@@ -54,6 +54,7 @@ static int _lwsc_timeout_send = 0;
 static int _lwsc_timeout_read = 2000000;
 static int _lwsc_timeout_init = 2000000;
 static str _lwsc_protocol = str_init("kmsg");
+static int _lwsc_verbosity = 0;
 
 static cmd_export_t cmds[]={
 	{"lwsc_request", (cmd_function)w_lwsc_request, 2,
@@ -71,6 +72,7 @@ static param_export_t params[]={
 	{ "timeout_read",    PARAM_INT, &_lwsc_timeout_read },
 	{ "timeout_init",    PARAM_INT, &_lwsc_timeout_init },
 	{ "protocol",        PARAM_STR, &_lwsc_protocol },
+	{ "verbosity",       PARAM_INT, &_lwsc_verbosity },
 
 	{ 0, 0, 0 }
 };
@@ -215,7 +217,9 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 	str rbuf = STR_NULL;
 	str wbuf = STR_NULL;
 
-	LM_DBG("callback called with reason %d\n", reason);
+	if(_lwsc_verbosity>1) {
+		LM_DBG("callback called with reason %d\n", reason);
+	}
 
 	switch (reason) {
 
@@ -292,7 +296,9 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			break;
 
 		case LWS_CALLBACK_TIMER:
-			LM_DBG("LWS_CALLBACK_TIMER - wsi: %p\n", wsi);
+			if(_lwsc_verbosity>0) {
+				LM_DBG("LWS_CALLBACK_TIMER - wsi: %p\n", wsi);
+			}
 			// lws_callback_on_writable(wsi);
 			break;
 
@@ -340,7 +346,9 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			ep->wsi = NULL;
 			break;
 		default:
-			LM_DBG("unhandled reason %d\n", reason);
+			if(_lwsc_verbosity>1) {
+				LM_DBG("unhandled reason %d\n", reason);
+			}
 			break;
 	}
 
