@@ -36,12 +36,15 @@
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_param.h"
 
+#include "api.h"
+
 
 MODULE_VERSION
 
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
+static int bind_lwsc(lwsc_api_t* api);
 
 static int w_lwsc_request(sip_msg_t* msg, char* pwsurl, char* pdata);
 static int w_lwsc_notify(sip_msg_t* msg, char* pwsurl, char* pdata);
@@ -57,6 +60,8 @@ static cmd_export_t cmds[]={
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2,
 		fixup_spve_all, 0, ANY_ROUTE},
+	{"bind_lwsc",   (cmd_function)bind_lwsc, 0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -756,6 +761,20 @@ static int lwsc_pv_parse_name(pv_spec_t *sp, str *in)
 		LM_ERR("unknown inner name [%.*s]\n", in->len, in->s);
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ * @brief bind functions to LWSC API structure
+ */
+static int bind_lwsc(lwsc_api_t* api)
+{
+	if (!api) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+	api->request = lwsc_api_request;
+
 	return 0;
 }
 
