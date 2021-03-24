@@ -313,7 +313,7 @@ static int mod_init(void)
 	}
 
 	if(hep_version != 1 && hep_version != 2 && hep_version != 3) {
-		LM_ERR("unsupported version of HEP");
+		LM_ERR("unsupported version of HEP\n");
 		return -1;
 	}
 
@@ -2093,7 +2093,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 		tmsg.len = sto.body.len;
 
 		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
-			LM_DBG("msg buffer parsing failed!");
+			LM_DBG("msg buffer parsing failed!\n");
 			goto afterdb;
 		}
 
@@ -2213,7 +2213,7 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		tmsg.len = sto.body.len;
 
 		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
-			LM_DBG("msg buffer parsing failed!");
+			LM_DBG("msg buffer parsing failed!\n");
 			goto afterdb;
 		}
 
