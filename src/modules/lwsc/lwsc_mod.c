@@ -117,8 +117,6 @@ static void mod_destroy(void)
 	return;
 }
 
-#define WSURL_PATH_SIZE 64
-
 /**
  *
  */
@@ -126,11 +124,13 @@ typedef struct lwsc_endpoint {
 	str wsurl;
 	/* clone of wsurl for libwebsockets parsing with dropping in zeros */
 	str wsurlparse;
-	char wsurlpath[WSURL_PATH_SIZE];
+	str wsurlpath;
+	str wsproto;
 	/* first LWS_PRE bytes must preserved for headers */
 	str wbuf;
 	str rbuf;
 	int tlson;
+	struct lws_protocols protocols[2];
 	struct lws_context_creation_info crtinfo;
 	struct lws_client_connect_info coninfo;
 	struct lws_context *wsctx;
@@ -343,16 +343,6 @@ done:
 	return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
-/**
- *
- */
-static struct lws_protocols _lwsc_protocols[] = {
-	{
-		"kmsg", ksr_lwsc_callback,
-		0, 0, 0, NULL, 0
-	},
-	{ NULL, NULL, 0, 0, 0, NULL, 0}
-};
 
 /**
  *
@@ -412,21 +402,29 @@ static void* ksr_lwsc_thread(void *arg)
 /**
  *
  */
-static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl)
+static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 {
 	lwsc_endpoint_t *ep;
 	int ssize = 0;
 	const char *urlproto = NULL;
 	const char *urlpath = NULL;
 	int s = 0;
+	str lwsproto = STR_NULL;
+
+	if(wsproto!=NULL && wsproto->s!=NULL && wsproto->len>0) {
+		lwsproto = *wsproto;
+	} else {
+		lwsproto = _lwsc_protocol;
+	}
 
 	for(ep=_lwsc_endpoints; ep!=NULL; ep=ep->next) {
-		if(ep->wsurl.len==wsurl->len
-				&& strncmp(ep->wsurl.s, wsurl->s, wsurl->len)==0) {
+		if(ep->wsurl.len==wsurl->len && ep->wsproto.len==lwsproto.len
+				&& strncmp(ep->wsurl.s, wsurl->s, wsurl->len)==0
+				&& strncmp(ep->wsproto.s, lwsproto.s, lwsproto.len)==0) {
 			return ep;
 		}
 	}
-	ssize = sizeof(lwsc_endpoint_t) + 2*(wsurl->len + 1);
+	ssize = sizeof(lwsc_endpoint_t) + 3*(wsurl->len + 1) + (lwsproto.len + 1);
 	ep = (lwsc_endpoint_t*)pkg_malloc(ssize);
 	if(ep==NULL) {
 		PKG_MEM_ERROR;
@@ -439,19 +437,24 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl)
 	ep->wsurlparse.s = ep->wsurl.s + wsurl->len + 1;
 	memcpy(ep->wsurlparse.s, wsurl->s, wsurl->len);
 	ep->wsurlparse.len = wsurl->len;
+	ep->wsurlpath.s = ep->wsurlparse.s + wsurl->len + 1;
+	ep->wsurlpath.s[0] = '/';
+	ep->wsurlpath.len = 1;
+	ep->wsproto.s = ep->wsurlpath.s + wsurl->len + 1;
+	memcpy(ep->wsproto.s, lwsproto.s, lwsproto.len);
+	ep->wsproto.len = lwsproto.len;
+
 
 	if (lws_parse_uri(ep->wsurlparse.s, &urlproto, &ep->coninfo.address,
 				&ep->coninfo.port, &urlpath)) {
 		LM_ERR("cannot parse ws url [%.*s]\n", wsurl->len, wsurl->s);
 		goto error;
 	}
-	if(strlen(urlpath) > WSURL_PATH_SIZE - 4) {
-		LM_ERR("url path is too long [%s]\n", urlpath);
-		goto error;
+	if(urlpath!=NULL && strlen(urlpath) > 0) {
+		strcpy(ep->wsurlpath.s + 1, urlpath);
+		ep->wsurlpath.len = strlen(ep->wsurlpath.s);
 	}
-	ep->wsurlpath[0] = '/';
-	strcpy(ep->wsurlpath+1, urlpath);
-	ep->coninfo.path = (const char*)ep->wsurlpath;
+	ep->coninfo.path = (const char*)ep->wsurlpath.s;
 
 	if (strcmp(urlproto, "wss")==0 || strcmp(urlproto, "https")==0) {
 		ep->tlson = 1;
@@ -461,7 +464,9 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl)
 	if(ep->tlson==1) {
 		ep->crtinfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 	}
-	ep->crtinfo.protocols = _lwsc_protocols;
+	ep->protocols[0].name = ep->wsproto.s;
+	ep->protocols[0].callback = ksr_lwsc_callback;
+	ep->crtinfo.protocols = ep->protocols;
 	ep->crtinfo.gid = -1;
 	ep->crtinfo.uid = -1;
 	ep->crtinfo.ws_ping_pong_interval = 5; /*secs*/
@@ -483,7 +488,7 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl)
 	ep->coninfo.host = ep->coninfo.address;
 	ep->coninfo.origin = ep->coninfo.address;
 	ep->coninfo.ietf_version_or_minus_one = -1;
-	ep->coninfo.protocol = _lwsc_protocols[0].name;
+	ep->coninfo.protocol = ep->protocols[0].name;
 	if(ep->tlson==1) {
 		ep->coninfo.ssl_connection = LCCSCF_USE_SSL | LCCSCF_ALLOW_SELFSIGNED
 			| LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
@@ -523,7 +528,8 @@ error:
 /**
  *
  */
-static int ki_lwsc_request(sip_msg_t* msg, str* wsurl, str* data)
+static int lwsc_api_request(str* wsurl, str *wsproto, str* sdata,
+		str *rdata, int rtimeout)
 {
 	lwsc_endpoint_t *ep = NULL;
 	str wbuf = STR_NULL;
@@ -531,13 +537,14 @@ static int ki_lwsc_request(sip_msg_t* msg, str* wsurl, str* data)
 	int icount = 0;
 
 	if(wsurl==NULL || wsurl->s==NULL || wsurl->len<=0
-			|| data==NULL || data->s==NULL || data->len<=0) {
+			|| sdata==NULL || sdata->s==NULL || sdata->len<=0
+			|| rdata==NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
 	lwsc_set_logging();
-	ep = lwsc_get_endpoint(wsurl);
+	ep = lwsc_get_endpoint(wsurl, wsproto);
 	if(ep==NULL) {
 		LM_ERR("endpoint not available\n");
 		return -1;
@@ -552,21 +559,17 @@ static int ki_lwsc_request(sip_msg_t* msg, str* wsurl, str* data)
 		}
 	}
 
-	wbuf.s = (char*)pkg_malloc(LWS_PRE + data->len + 1);
+	wbuf.s = (char*)pkg_malloc(LWS_PRE + sdata->len + 1);
 	if(wbuf.s==NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(wbuf.s, 0, LWS_PRE + data->len + 1);
-	memcpy(wbuf.s + LWS_PRE, data->s, data->len);
-	wbuf.len = LWS_PRE + data->len;
+	memset(wbuf.s, 0, LWS_PRE + sdata->len + 1);
+	memcpy(wbuf.s + LWS_PRE, sdata->s, sdata->len);
+	wbuf.len = LWS_PRE + sdata->len;
 
-	/* clear local receive buffer */
-	if(_lwsc_rdata_buf.s!=NULL) {
-		pkg_free(_lwsc_rdata_buf.s);
-		_lwsc_rdata_buf.s = NULL;
-		_lwsc_rdata_buf.len = 0;
-	}
+	rdata->s = NULL;
+	rdata->len = 0;
 
 	pthread_mutex_lock(&ep->wslock);
 	if(ep->rbuf.s!=NULL) {
@@ -589,23 +592,39 @@ static int ki_lwsc_request(sip_msg_t* msg, str* wsurl, str* data)
 	do {
 		pthread_mutex_lock(&ep->wslock);
 		if(ep->rbuf.s!=NULL) {
-			_lwsc_rdata_buf = ep->rbuf;
+			*rdata = ep->rbuf;
 			ep->rbuf.s = NULL;
 			ep->rbuf.len = 0;
 		}
 		pthread_mutex_unlock(&ep->wslock);
-		if(_lwsc_rdata_buf.s==NULL) {
+		if(rdata->s==NULL) {
 			usleep(10000);
 		}
 		rcount += 10000;
-	} while(rcount<_lwsc_timeout_read && _lwsc_rdata_buf.s==NULL);
+	} while(rcount<rtimeout && rdata->s==NULL);
 
-	if(_lwsc_rdata_buf.s==NULL) {
+	if(rdata->s==NULL) {
 		LM_DBG("no response data received before timeout\n");
 		return -2;
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+static int ki_lwsc_request(sip_msg_t* msg, str* wsurl, str* data)
+{
+	/* clear global per-process receive buffer */
+	if(_lwsc_rdata_buf.s!=NULL) {
+		pkg_free(_lwsc_rdata_buf.s);
+		_lwsc_rdata_buf.s = NULL;
+		_lwsc_rdata_buf.len = 0;
+	}
+
+	return lwsc_api_request(wsurl, NULL, data, &_lwsc_rdata_buf,
+			_lwsc_timeout_read);
 }
 
 /**
@@ -645,7 +664,7 @@ static int ki_lwsc_notify(sip_msg_t* msg, str* wsurl, str* data)
 
 	lwsc_set_logging();
 
-	ep = lwsc_get_endpoint(wsurl);
+	ep = lwsc_get_endpoint(wsurl, NULL);
 	if(ep==NULL) {
 		LM_ERR("endpoint not available\n");
 		return -1;
