@@ -3588,13 +3588,15 @@ ssrc_ok:
 			continue;
 
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "average MOS")) {
-			average_vals.avg_samples++;
-			average_vals.mos += vals_decoded.mos;
-			average_vals.packetloss += vals_decoded.packetloss;
-			average_vals.jitter += vals_decoded.jitter;
-			average_vals.roundtrip += vals_decoded.roundtrip;
-			average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
-			average_vals.samples += vals_decoded.samples;
+			if (vals_decoded.mos > 0) {
+				average_vals.avg_samples++;
+				average_vals.mos += vals_decoded.mos;
+				average_vals.packetloss += vals_decoded.packetloss;
+				average_vals.jitter += vals_decoded.jitter;
+				average_vals.roundtrip += vals_decoded.roundtrip;
+				average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
+				average_vals.samples += vals_decoded.samples;
+			}
 		}
 
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "highest MOS")) {
@@ -3602,7 +3604,7 @@ ssrc_ok:
 				max_vals = vals_decoded;
 		}
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "lowest MOS")) {
-			if (vals_decoded.mos < min_vals.mos)
+			if (vals_decoded.mos > 0 && vals_decoded.mos < min_vals.mos)
 				min_vals = vals_decoded;
 		}
 	}
