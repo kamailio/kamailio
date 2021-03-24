@@ -116,6 +116,27 @@ modparam("lwsc", "timeout_init", 1000000)
 </programlisting>
 		</example>
 	</section>
+	<section id="lwsc.p.verbosity">
+		<title><varname>verbosity</varname> (int)</title>
+		<para>
+			Control the verbosity of debug messages on libwebsockets events,
+			higher value means more debug messages. It has to be a positive
+			number, currently 2 or higher results in maximum verbosity.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>verbosity</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lwsc", "verbosity", 1)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
