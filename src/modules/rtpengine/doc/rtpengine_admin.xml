@@ -2021,7 +2021,7 @@ modparam("rtpengine", "control_cmd_tos", 144)
 			The values not falling into the range <quote>0-1</quote> .
 		</para>
 		<example>
-		<title>Set <varname>control_cmd_tos</varname> parameter</title>
+		<title>Set <varname>hash_algo</varname> parameter</title>
 <programlisting format="linespecific">
 ...
 ### use SHA1 instead of legacy algorithm
