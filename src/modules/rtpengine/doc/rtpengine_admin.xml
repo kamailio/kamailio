@@ -144,7 +144,7 @@
 		<title><varname>rtpengine_sock</varname> (string)</title>
 		<para>
 		Definition of socket(s) used to connect to (a set) &rtp; proxy. It may
-		specify a UNIX socket or an IPv4/IPv6 UDP socket.
+		specify an IPv4/IPv6 UDP socket or a websocket URI.
 		</para>
 		<para>
 		<emphasis>
@@ -157,6 +157,12 @@
 ...
 # single rtproxy
 modparam("rtpengine", "rtpengine_sock", "udp:localhost:12221")
+# IPv6 UDP
+modparam("rtpengine", "rtpengine_sock", "udp6:localhost:12221")
+# websocket
+modparam("rtpengine", "rtpengine_sock", "ws://localhost:12221/")
+# websocket with TLS
+modparam("rtpengine", "rtpengine_sock", "wss://localhost:12221/")
 # multiple rtproxies for LB with weights (missing weight defaults to 1)
 modparam("rtpengine", "rtpengine_sock",
 	"udp:localhost:12221=2 udp:localhost:12222=1")
@@ -2205,6 +2211,22 @@ modparam("rtpengine", "hash_algo", 1)
 
 ### use CRC32 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.wsapi">
+		<title><varname>wsapi</varname> (string)</title>
+		<para>
+			Configure a backend API for websocket usage. Currently the only supported setting is
+			<quote>lwsc</quote> (libwebsockets). If unset, then the websocket protocol cannot be used.
+		</para>
+		<example>
+		<title>Set <varname>wsapi</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "wsapi", "lwsc")
 ...
 </programlisting>
 		</example>

@@ -80,6 +80,7 @@
 #include "../../core/char_msg_val.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
+#include "../../modules/lwsc/api.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
@@ -300,7 +301,8 @@ static pv_spec_t *media_duration_pvar = NULL;
 char* force_send_ip_str="";
 int force_send_ip_af = AF_UNSPEC;
 
-
+static str _rtpe_wsapi = STR_NULL;
+lwsc_api_t _rtpe_lwscb = {0};
 
 static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
 
@@ -524,6 +526,8 @@ static param_export_t params[] = {
 	{"mos_average_roundtrip_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_param   },
 	{"mos_average_roundtrip_leg_B_pv",  PARAM_STR, &side_B_mos_stats.average.roundtrip_leg_param },
 	{"mos_average_samples_B_pv",    PARAM_STR, &side_B_mos_stats.average.samples_param     },
+
+	{"wsapi",                       PARAM_STR, &_rtpe_wsapi    },
 
 	{0, 0, 0}
 };
@@ -985,7 +989,7 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 			pnode->rn_recheck_ticks = ticks + get_ticks();
 		}
 		pnode->rn_weight = local_weight;
-		pnode->rn_umode = 0;
+		pnode->rn_umode = RNU_UNKNOWN;
 		pnode->rn_disabled = disabled;
 		pnode->rn_displayed = 1;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
@@ -1002,17 +1006,21 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url.s;
 		if (strncasecmp(pnode->rn_address, "udp:", 4) == 0) {
-			pnode->rn_umode = 1;
+			pnode->rn_umode = RNU_UDP;
 			pnode->rn_address += 4;
 		} else if (strncasecmp(pnode->rn_address, "udp6:", 5) == 0) {
-			pnode->rn_umode = 6;
+			pnode->rn_umode = RNU_UDP6;
 			pnode->rn_address += 5;
 		} else if (strncasecmp(pnode->rn_address, "unix:", 5) == 0) {
-			pnode->rn_umode = 0;
+			pnode->rn_umode = RNU_LOCAL;
 			pnode->rn_address += 5;
+		} else if (strncasecmp(pnode->rn_address, "ws://", 5) == 0) {
+			pnode->rn_umode = RNU_WS;
+		} else if (strncasecmp(pnode->rn_address, "wss://", 6) == 0) {
+			pnode->rn_umode = RNU_WSS;
 		} else {
 			lock_release(rtpp_no_lock);
-			LM_WARN("Node address must start with 'udp:' or 'udp6:' or 'unix:'. Ignore '%s'.\n", pnode->rn_address);
+			LM_WARN("Node address must start with 'udp:' or 'udp6:' or 'unix:' or 'ws://' or 'wss://'. Ignore '%s'.\n", pnode->rn_address);
 			shm_free(pnode->rn_url.s);
 			shm_free(pnode);
 
@@ -1023,26 +1031,42 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 			}
 		}
 
-		/* Check the rn_address is 'hostname:port' */
-		/* Check the rn_address port is valid */
-		if(pnode->rn_umode == 6) {
-                        p1 = strstr(pnode->rn_address, "]:");
-                        if(p1 != NULL) {
-                                p1++;
-                        }
-                } else {
-                        p1 = strchr(pnode->rn_address, ':');
-                }
-		if (p1 != NULL) {
-			p1++;
-		}
+		if (pnode->rn_umode != RNU_WS && pnode->rn_umode != RNU_WSS) {
+			/* Check the rn_address is 'hostname:port' */
+			/* Check the rn_address port is valid */
+			if(pnode->rn_umode == RNU_UDP6) {
+				p1 = strstr(pnode->rn_address, "]:");
+				if(p1 != NULL) {
+					p1++;
+				}
+			} else {
+				p1 = strchr(pnode->rn_address, ':');
+			}
+			if (p1 != NULL) {
+				p1++;
+			}
 
-		if (p1 != NULL && p1[0] != '\0') {
-			s1.s = p1;
-			s1.len = strlen(p1);
-			if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
+			if (p1 != NULL && p1[0] != '\0') {
+				s1.s = p1;
+				s1.len = strlen(p1);
+				if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
+					lock_release(rtpp_no_lock);
+					LM_WARN("Node address must end with a valid port number. Ignore '%s'.\n", pnode->rn_address);
+					shm_free(pnode->rn_url.s);
+					shm_free(pnode);
+
+					if (!isDB) {
+						continue;
+					} else {
+						return 0;
+					}
+				}
+			}
+		} else {
+			/* websocket */
+			if (_rtpe_lwscb.loaded == 0) {
 				lock_release(rtpp_no_lock);
-				LM_WARN("Node address must end with a valid port number. Ignore '%s'.\n", pnode->rn_address);
+				LM_WARN("Websocket protocol requested, but no websocket API loaded. Ignore '%s'.\n", pnode->rn_address);
 				shm_free(pnode->rn_url.s);
 				shm_free(pnode);
 
@@ -1607,6 +1631,19 @@ mod_init(void)
 		return -1;
 	}
 
+	if(_rtpe_wsapi.s!=NULL && _rtpe_wsapi.len==4
+			&& strncasecmp(_rtpe_wsapi.s, "lwsc", 4)==0) {
+		if(lwsc_load_api(&_rtpe_lwscb)) {
+			LM_ERR("failed to load WS API: %s\n", _rtpe_wsapi.s);
+			return -1;
+		}
+	} else {
+		if(_rtpe_wsapi.s!=NULL && _rtpe_wsapi.len>0) {
+			LM_ERR("unsupported WS API: %s\n", _rtpe_wsapi.s);
+			return -1;
+		}
+	}
+
 	/* initialize the list of set; mod_destroy does shm_free() if fail */
 	if (!rtpp_set_list) {
 		rtpp_set_list = shm_malloc(sizeof(struct rtpp_set_head));
@@ -1831,7 +1868,8 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			char *hostname;
 			char *hp;
 
-			if (pnode->rn_umode == 0) {
+			if (pnode->rn_umode == RNU_LOCAL || pnode->rn_umode == RNU_WS
+					|| pnode->rn_umode == RNU_WSS) {
 				rtpp_socks[pnode->idx] = -1;
 				goto rptest;
 			}
@@ -1861,7 +1899,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			if (cp == NULL || *cp == '\0')
 				cp = CPORT;
 
-			if(pnode->rn_umode == 6) {
+			if(pnode->rn_umode == RNU_UDP6) {
 				hp = strrchr(hostname, ']');
 				if(hp != NULL)
 					*hp = '\0';
@@ -1875,7 +1913,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_flags = 0;
-			hints.ai_family = (pnode->rn_umode == 6) ? AF_INET6 : AF_INET;
+			hints.ai_family = (pnode->rn_umode == RNU_UDP6) ? AF_INET6 : AF_INET;
 			hints.ai_socktype = SOCK_DGRAM;
 			if ((n = getaddrinfo(hp, cp, &hints, &res)) != 0) {
 				LM_ERR("%s\n", gai_strerror(n));
@@ -1890,7 +1928,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 			}
 			pkg_free(hostname);
 
-			rtpp_socks[pnode->idx] = socket((pnode->rn_umode == 6)
+			rtpp_socks[pnode->idx] = socket((pnode->rn_umode == RNU_UDP6)
 				? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
 			if (rtpp_socks[pnode->idx] == -1) {
 				LM_ERR("can't create socket\n");
@@ -1912,7 +1950,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 
 			if((0 <= control_cmd_tos) && (control_cmd_tos < 256)) {
 				unsigned char tos = control_cmd_tos;
-				if (pnode->rn_umode == 6) {
+				if (pnode->rn_umode == RNU_UDP6) {
 					if(setsockopt(rtpp_socks[pnode->idx], IPPROTO_IPV6,
 							IPV6_TCLASS, &control_cmd_tos,
 							sizeof(control_cmd_tos)))
@@ -2865,10 +2903,12 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 	int fd, len, i, vcnt;
 	int rtpengine_retr, rtpengine_tout_ms = 1000;
 	char *cp;
-	static char buf[0x10000];
+	static char buf[0x40000];
 	struct pollfd fds[1];
 	struct iovec *v;
 	str cmd = STR_NULL;
+	const static str rtpe_proto = { "ng.rtpengine.com", 16 };
+	str request, response;
 
 	v = bencode_iovec(dict, &vcnt, 1, 0);
 	if (!v) {
@@ -2878,7 +2918,9 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 
 	len = 0;
 	cp = buf;
-	if (node->rn_umode == 0) {
+	rtpengine_tout_ms = cfg_get(rtpengine,rtpengine_cfg,rtpengine_tout_ms);
+
+	if (node->rn_umode == RNU_LOCAL) {
 		memset(&addr, 0, sizeof(addr));
 		addr.sun_family = AF_LOCAL;
 		strncpy(addr.sun_path, node->rn_address,
@@ -2914,7 +2956,55 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 			LM_ERR("can't read reply from RTPEngine <%s>\n", node->rn_url.s);
 			goto badproxy;
 		}
+	} else if (node->rn_umode == RNU_WS || node->rn_umode == RNU_WSS) {
+		/* assemble full request string, flatten iovec */
+		v[0].iov_base = gencookie();
+		v[0].iov_len = strlen(v[0].iov_base);
+		len = 0;
+		for (i = 0; i <= vcnt; i++)
+			len += v[i].iov_len;
+		request.s = pkg_malloc(len + 1);
+		if (!request.s) {
+			LM_ERR("out of memory\n");
+			goto badproxy;
+		}
+		len = 0;
+		for (i = 0; i <= vcnt; i++) {
+			memcpy(request.s + len, v[i].iov_base, v[i].iov_len);
+			len += v[i].iov_len;
+		}
+		request.s[len] = '\0';
+		request.len = len;
+
+		len = _rtpe_lwscb.request(&node->rn_url, (str *) &rtpe_proto, &request, &response,
+				rtpengine_tout_ms * 1000);
+
+		if (len < 0) {
+			LM_ERR("failed to do websocket request\n");
+			goto badproxy;
+		}
+
+		/* process/copy response; verify cookie */
+		if (response.len < v[0].iov_len) {
+			LM_ERR("empty or short websocket response\n");
+			pkg_free(response.s);
+			goto badproxy;
+		}
+		if (memcmp(response.s, v[0].iov_base, v[0].iov_len)) {
+			LM_ERR("mismatched cookie in websocket response\n");
+			pkg_free(response.s);
+			goto badproxy;
+		}
+		len = response.len - v[0].iov_len;
+		if (len >= sizeof(buf)) {
+			LM_ERR("websocket response too large\n");
+			pkg_free(response.s);
+			goto badproxy;
+		}
+		memcpy(buf, response.s + v[0].iov_len, len);
+		pkg_free(response.s);
 	} else {
+		/* UDP or UDP6 */
 		fds[0].fd = rtpp_socks[node->idx];
 		fds[0].events = POLLIN;
 		fds[0].revents = 0;
@@ -2938,7 +3028,6 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 					cmd.len, cmd.s, node->rn_url.s);
 				goto badproxy;
 			}
-			rtpengine_tout_ms = cfg_get(rtpengine,rtpengine_cfg,rtpengine_tout_ms);
 			while ((poll(fds, 1, rtpengine_tout_ms) == 1) &&
 				(fds[0].revents & POLLIN) != 0) {
 				do {
