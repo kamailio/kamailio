@@ -218,9 +218,11 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 		void *user, void *in, size_t len)
 {
 	int m = 0;
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 	size_t remain = 0;
 	int first = 0;
 	int final = 0;
+#endif
 	lwsc_endpoint_t *ep = NULL;
 	str rbuf = STR_NULL;
 	str wbuf = STR_NULL;
@@ -268,6 +270,7 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			lws_callback_on_writable(wsi);
 			break;
 
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 		case LWS_CALLBACK_CLIENT_CLOSED:
 			LM_DBG("LWS_CALLBACK_CLIENT_CLOSED - wsi: %p\n", wsi);
 			ep = lwsc_get_endpoint_by_wsi(wsi);
@@ -278,6 +281,7 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			ep->wsready = 0;
 			ep->wsi = NULL;
 			break;
+#endif
 
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 			ep = lwsc_get_endpoint_by_wsi(wsi);
@@ -303,14 +307,17 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			}
 			break;
 
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 		case LWS_CALLBACK_TIMER:
 			if(_lwsc_verbosity>0) {
 				LM_DBG("LWS_CALLBACK_TIMER - wsi: %p\n", wsi);
 			}
 			// lws_callback_on_writable(wsi);
 			break;
+#endif
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 			first = lws_is_first_fragment(wsi);
 			final = lws_is_final_fragment(wsi);
 			remain = lws_remaining_packet_payload(wsi);
@@ -318,6 +325,10 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 					"final = %d, remains = %lu\n", wsi,
 					(unsigned long)len, first, final,
 					(unsigned long)remain);
+#else
+			LM_DBG("LWS_CALLBACK_RECEIVE - wsi: %p len: %lu\n", wsi,
+					(unsigned long)len);
+#endif
 			if(len>0) {
 				ep = lwsc_get_endpoint_by_wsi(wsi);
 				if(ep==NULL) {
@@ -361,7 +372,7 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 	}
 
 done:
-	return lws_callback_http_dummy(wsi, reason, user, in, len);
+	return 0;
 }
 
 
@@ -403,16 +414,24 @@ static void* ksr_lwsc_thread(void *arg)
 	while(ep->wsi==NULL) {
 		usleep(2000000);
 		if(ep->wsi==NULL) {
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 			ep->coninfo.pwsi = &ep->wsi;
 			lws_client_connect_via_info(&ep->coninfo);
+#else
+			ep->wsi = lws_client_connect_via_info(&ep->coninfo);;
+#endif
 		}
 	}
 
 	while(ep->status==0) {
 		if((ep->wsi==NULL) && ksr_shoud_reconnect(&ltime, 2)) {
 			LM_DBG("attempting to reconnect: %u\n", ltime);
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 			ep->coninfo.pwsi = &ep->wsi;
 			lws_client_connect_via_info(&ep->coninfo);
+#else
+			ep->wsi = lws_client_connect_via_info(&ep->coninfo);;
+#endif
 		}
 		lws_service(ep->wsctx, 100);
 	}
@@ -483,17 +502,21 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 
 	ep->crtinfo.port = CONTEXT_PORT_NO_LISTEN; /* we do not run any server */
 	if(ep->tlson==1) {
-		ep->crtinfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+		ep->crtinfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 	}
 	ep->protocols[0].name = ep->wsproto.s;
 	ep->protocols[0].callback = ksr_lwsc_callback;
 	ep->crtinfo.protocols = ep->protocols;
 	ep->crtinfo.gid = -1;
 	ep->crtinfo.uid = -1;
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 	ep->crtinfo.ws_ping_pong_interval = 5; /*secs*/
+#endif
+#if LWS_LIBRARY_VERSION_MAJOR >= 4
 	/* apparently only in newer versions of libwebsockets */
-	//ep->crtinfo.timeout_secs = _lwsc_timeout_send;
-	//ep->crtinfo.connect_timeout_secs = _lwsc_timeout_connect;
+	ep->crtinfo.timeout_secs = _lwsc_timeout_send;
+	ep->crtinfo.connect_timeout_secs = _lwsc_timeout_connect;
+#endif
 	/* 1 internal and 1 (+ 1 http2 nwsi) */
 	ep->crtinfo.fd_limit_per_thread = 1 + 1 + 1;
 
@@ -511,10 +534,13 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 	ep->coninfo.ietf_version_or_minus_one = -1;
 	ep->coninfo.protocol = ep->protocols[0].name;
 	if(ep->tlson==1) {
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 		ep->coninfo.ssl_connection = LCCSCF_USE_SSL | LCCSCF_ALLOW_SELFSIGNED
 			| LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
+#else
+		ep->coninfo.ssl_connection = 2;
+#endif
 	}
-	ep->coninfo.pwsi = &ep->wsi;
 	pthread_mutex_init(&ep->wslock, NULL);
 
 	LM_DBG("connecting to [%.*s]\n", wsurl->len, wsurl->s);
@@ -522,7 +548,12 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 	ep->next = _lwsc_endpoints;
 	_lwsc_endpoints = ep;
 
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
+	ep->coninfo.pwsi = &ep->wsi;
 	lws_client_connect_via_info(&ep->coninfo);
+#else
+	ep->wsi = lws_client_connect_via_info(&ep->coninfo);;
+#endif
 	if(ep->wsi==NULL) {
 		LM_ERR("failed to creating the ws client instance [%.*s]\n",
 				wsurl->len, wsurl->s);
