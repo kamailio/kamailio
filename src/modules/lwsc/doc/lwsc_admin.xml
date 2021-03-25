@@ -100,7 +100,7 @@ modparam("lwsc", "timeout_init", 4000000)
 		<title><varname>timeout_read</varname> (int)</title>
 		<para>
 			The interval in microseconds to wait for the response of the
-			lwsc_request() function.
+			lwsc_request() group of functions.
 		</para>
 		<para>
 		<emphasis>
@@ -147,8 +147,9 @@ modparam("lwsc", "verbosity", 1)
 		<function moreinfo="none">lwsc_notify(wsurl, data)</function>
 	    </title>
 	    <para>
-		Send data via websockets to the address specified by wsurl, no response
-		is expected.
+		Send data via websockets to the address specified by wsurl. No response
+		is expected. Transmission is not guaranteed (e.g., cannot connect
+		to target).
 		</para>
 		<para>
 		The parameters are:
@@ -176,6 +177,51 @@ modparam("lwsc", "verbosity", 1)
 		<programlisting format="linespecific">
 ...
     jwt_notify("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="lwsc.f.lwsc_notify_proto">
+	    <title>
+		<function moreinfo="none">lwsc_notify_proto(wsurl, wsproto, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl, providing
+		websocket protocol. No response is expected. Transmission is not
+		guaranteed (e.g., cannot connect to target).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			wsproto - websocket protocol
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_notify_proto</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_notify_proto("ws://10.1.1.10:8080/log", "kmsg"
         "caller=$fU;callee=$tU;callid=$ci");
 ...
 </programlisting>
@@ -220,7 +266,51 @@ modparam("lwsc", "verbosity", 1)
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="lwsc.f.lwsc_request_proto">
+	    <title>
+		<function moreinfo="none">lwsc_request_proto(wsurl, wsproto, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl, providing
+		websocket protocol. A response is expected and made available in
+		$lwsc(rdata).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			wsproto - websocket protocol
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_request_proto</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_request_proto("ws://10.1.1.10:8080/log", "kmsg",
+        "caller=$fU;callee=$tU;srcip=$si");
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 	<section>
 	<title>Variables</title>
