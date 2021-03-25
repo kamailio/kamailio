@@ -47,7 +47,11 @@ static void mod_destroy(void);
 static int bind_lwsc(lwsc_api_t* api);
 
 static int w_lwsc_request(sip_msg_t* msg, char* pwsurl, char* pdata);
+static int w_lwsc_request_proto(sip_msg_t* msg, char* pwsurl, char* pwsproto,
+		char* pdata);
 static int w_lwsc_notify(sip_msg_t* msg, char* pwsurl, char* pdata);
+static int w_lwsc_notify_proto(sip_msg_t* msg, char* pwsurl, char* pwsproto,
+		char* pdata);
 
 static int _lwsc_timeout_connect = 0;
 static int _lwsc_timeout_send = 0;
@@ -59,7 +63,11 @@ static int _lwsc_verbosity = 0;
 static cmd_export_t cmds[]={
 	{"lwsc_request", (cmd_function)w_lwsc_request, 2,
 		fixup_spve_all, 0, ANY_ROUTE},
+	{"lwsc_request_proto", (cmd_function)w_lwsc_request_proto, 3,
+		fixup_spve_all, 0, ANY_ROUTE},
 	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"lwsc_notify_proto", (cmd_function)w_lwsc_notify, 3,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"bind_lwsc",   (cmd_function)bind_lwsc, 0,
 		0, 0, 0},
@@ -649,7 +657,7 @@ static int w_lwsc_request(sip_msg_t* msg, char* pwsurl, char* pdata)
 	str sdata = STR_NULL;
 
 	if (fixup_get_svalue(msg, (gparam_t*)pwsurl, &swsurl) != 0) {
-		LM_ERR("cannot get ws url file\n");
+		LM_ERR("cannot get ws url\n");
 		return -1;
 	}
 	if (fixup_get_svalue(msg, (gparam_t*)pdata, &sdata) != 0) {
@@ -663,7 +671,50 @@ static int w_lwsc_request(sip_msg_t* msg, char* pwsurl, char* pdata)
 /**
  *
  */
-static int ki_lwsc_notify(sip_msg_t* msg, str* wsurl, str* data)
+static int ki_lwsc_request_proto(sip_msg_t* msg, str* wsurl, str* wsproto,
+		str* data)
+{
+	/* clear global per-process receive buffer */
+	if(_lwsc_rdata_buf.s!=NULL) {
+		pkg_free(_lwsc_rdata_buf.s);
+		_lwsc_rdata_buf.s = NULL;
+		_lwsc_rdata_buf.len = 0;
+	}
+
+	return lwsc_api_request(wsurl, wsproto, data, &_lwsc_rdata_buf,
+			_lwsc_timeout_read);
+}
+
+/**
+ *
+ */
+static int w_lwsc_request_proto(sip_msg_t* msg, char* pwsurl, char* pwsproto,
+		char* pdata)
+{
+	str swsurl = STR_NULL;
+	str swsproto = STR_NULL;
+	str sdata = STR_NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)pwsurl, &swsurl) != 0) {
+		LM_ERR("cannot get ws url\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pwsproto, &swsproto) != 0) {
+		LM_ERR("cannot get ws proto\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pdata, &sdata) != 0) {
+		LM_ERR("cannot get data value\n");
+		return -1;
+	}
+
+	return ki_lwsc_request_proto(msg, &swsurl, &swsproto, &sdata);
+}
+
+/**
+ *
+ */
+static int lwsc_api_notify(str* wsurl, str* wsproto, str* data)
 {
 	lwsc_endpoint_t *ep = NULL;
 	str wbuf = STR_NULL;
@@ -720,13 +771,21 @@ static int ki_lwsc_notify(sip_msg_t* msg, str* wsurl, str* data)
 /**
  *
  */
+static int ki_lwsc_notify(sip_msg_t* msg, str* wsurl, str* data)
+{
+	return lwsc_api_notify(wsurl, NULL, data);
+}
+
+/**
+ *
+ */
 static int w_lwsc_notify(sip_msg_t* msg, char* pwsurl, char* pdata)
 {
 	str swsurl = STR_NULL;
 	str sdata = STR_NULL;
 
 	if (fixup_get_svalue(msg, (gparam_t*)pwsurl, &swsurl) != 0) {
-		LM_ERR("cannot get ws url file\n");
+		LM_ERR("cannot get ws url\n");
 		return -1;
 	}
 	if (fixup_get_svalue(msg, (gparam_t*)pdata, &sdata) != 0) {
@@ -737,6 +796,40 @@ static int w_lwsc_notify(sip_msg_t* msg, char* pwsurl, char* pdata)
 	return ki_lwsc_notify(msg, &swsurl, &sdata);
 }
 
+/**
+ *
+ */
+static int ki_lwsc_notify_proto(sip_msg_t* msg, str* wsurl, str* wsproto,
+		str* data)
+{
+	return lwsc_api_notify(wsurl, wsproto, data);
+}
+
+/**
+ *
+ */
+static int w_lwsc_notify_proto(sip_msg_t* msg, char* pwsurl, char* pwsproto,
+		char* pdata)
+{
+	str swsurl = STR_NULL;
+	str swsproto = STR_NULL;
+	str sdata = STR_NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)pwsurl, &swsurl) != 0) {
+		LM_ERR("cannot get ws url\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pwsproto, &swsproto) != 0) {
+		LM_ERR("cannot get ws proto\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pdata, &sdata) != 0) {
+		LM_ERR("cannot get data value\n");
+		return -1;
+	}
+
+	return ki_lwsc_notify_proto(msg, &swsurl, &swsproto, &sdata);
+}
 
 /**
  *
@@ -796,9 +889,19 @@ static sr_kemi_t sr_kemi_lwsc_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("lwsc"), str_init("lwsc_request_proto"),
+		SR_KEMIP_INT, ki_lwsc_request_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("lwsc"), str_init("lwsc_notify"),
 		SR_KEMIP_INT, ki_lwsc_notify,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("lwsc"), str_init("lwsc_notify_proto"),
+		SR_KEMIP_INT, ki_lwsc_notify_proto,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
