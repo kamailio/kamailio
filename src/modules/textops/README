@@ -447,7 +447,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 
    Example 1.7. replace usage
 ...
-replace("openser", "Kamailio SIP Proxy");
+replace("server", "Kamailio SIP Proxy");
 ...
 
 4.8.  replace_body(re, txt)
@@ -464,7 +464,7 @@ replace("openser", "Kamailio SIP Proxy");
 
    Example 1.8. replace_body usage
 ...
-replace_body("openser", "Kamailio SIP Proxy");
+replace_body("server", "Kamailio SIP Proxy");
 ...
 
 4.9.  replace_hdrs(re, txt)
@@ -496,7 +496,7 @@ replace_hdrs("Kamailio", "Kamailio SIP Proxy");
 
    Example 1.10. replace_all usage
 ...
-replace_all("openser", "Kamailio SIP Proxy");
+replace_all("server", "Kamailio SIP Proxy");
 ...
 
 4.11.  replace_body_all(re, txt)
@@ -513,7 +513,7 @@ replace_all("openser", "Kamailio SIP Proxy");
 
    Example 1.11. replace_body_all usage
 ...
-replace_body_all("openser", "Kamailio SIP Proxy");
+replace_body_all("server", "Kamailio SIP Proxy");
 ...
 
 4.12.  replace_body_atonce(re, txt)

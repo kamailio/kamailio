@@ -251,8 +251,6 @@ if(uri=~"sip:[0-9]{2}@.*")
    Example 1.10. Kamailio config script - sample speeddial usage
 ...
 #
-# $Id$
-#
 # sample config script to use speeddial module
 #
 
@@ -264,22 +262,18 @@ rev_dns=no      # (cmd. line: -R)
 
 # ------------------ module loading ----------------------------------
 
-loadmodule "/usr/local/lib/kamailio/modules/sl.so"
-loadmodule "/usr/local/lib/kamailio/modules/tm.so"
-loadmodule "/usr/local/lib/kamailio/modules/rr.so"
-loadmodule "/usr/local/lib/kamailio/modules/maxfwd.so"
-loadmodule "/usr/local/lib/kamailio/modules/usrloc.so"
-loadmodule "/usr/local/lib/kamailio/modules/registrar.so"
-loadmodule "/usr/local/lib/kamailio/modules/textops.so"
-loadmodule "/usr/local/lib/kamailio/modules/mysql.so"
-loadmodule "/usr/local/lib/kamailio/modules/speeddial.so"
-loadmodule "/usr/local/lib/kamailio/modules/mi_fifo.so"
+loadmodule "sl.so"
+loadmodule "tm.so"
+loadmodule "rr.so"
+loadmodule "maxfwd.so"
+loadmodule "usrloc.so"
+loadmodule "registrar.so"
+loadmodule "textops.so"
+loadmodule "mysql.so"
+loadmodule "speeddial.so"
+loadmodule "jsonrpcs.so"
 
 # ----------------- setting module-specific parameters ---------------
-
-# -- mi_fifo params --
-
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 
 # -- usrloc params --
 
@@ -298,11 +292,6 @@ route{
         if (!mf_process_maxfwd_header("10"))
         {
                 sl_send_reply("483","Too Many Hops");
-                exit;
-        };
-        if (msg:len >=  max_len )
-        {
-                sl_send_reply("513", "Message too big");
                 exit;
         };
 
