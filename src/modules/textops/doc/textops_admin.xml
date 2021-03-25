@@ -302,7 +302,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 		<title><function>replace</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace("openser", "&kamailio; SIP Proxy");
+replace("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -335,7 +335,7 @@ replace("openser", "&kamailio; SIP Proxy");
 		<title><function>replace_body</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body("openser", "&kamailio; SIP Proxy");
+replace_body("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -399,7 +399,7 @@ replace_hdrs("&kamailio;", "&kamailio; SIP Proxy");
 		<title><function>replace_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_all("openser", "&kamailio; SIP Proxy");
+replace_all("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -432,7 +432,7 @@ replace_all("openser", "&kamailio; SIP Proxy");
 		<title><function>replace_body_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body_all("openser", "&kamailio; SIP Proxy");
+replace_body_all("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
