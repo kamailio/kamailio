@@ -27,7 +27,8 @@
 		stirshaken_add_identity() uses default key (through Authentication Service), stirshaken_add_identity_with_key(..., key) uses key specified as argument.
 		For call verification three methods are available: stirshaken_check_identity() (through Verification Service),
 		stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
-		Only stirshaken_check_identity() may download certificate (if needed) and check it with X509 certificate path check algorithm.
+		stirshaken_check_identity() offers the most comprehensive check as only this method may download certificate (if needed), cache it, and check it with X509 certificate path check algorithm.
+		This method is therefore to be used as a default verification mechanism, while stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert) are only for completeness.
 	</para>
 	</section>
 	<section>
@@ -287,16 +288,16 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
 modparam("stirshaken", "vs_verify_x509_cert_path", 1)
 modparam("stirshaken", "vs_ca_dir", "/path/to/ca")
 modparam("stirshaken", "vs_cache_certificates", 1)
-modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
+modparam("stirshaken", "vs_cache_dir", "/path/to/cert_cache")
 modparam("stirshaken", "vs_cache_expire_s", 100)
 
 request_route {
     ...
-	if (1 == stirshaken_check_identity()) {
-		xlog("Shaken Identity is OK\n");
-	} else {
-       	xlog("Shaken Identity is invalid\n");
-	}
+		if (1 == stirshaken_check_identity()) {
+			xlog("Shaken Identity is OK\n");
+		} else {
+			xlog("Shaken Identity is invalid\n");
+		}
     ...
 }
 ...
@@ -331,11 +332,11 @@ request_route {
 ...
 request_route {
  	...
-	if (1 == stirshaken_check_identity_with_key("/path/to/key")) {
-		xlog("Shaken Identity is OK\n");
-	} else {
-       	xlog("Shaken Identity is invalid\n");
-	}
+		if (1 == stirshaken_check_identity_with_key("/path/to/key")) {
+			xlog("Shaken Identity is OK\n");
+		} else {
+			xlog("Shaken Identity is invalid\n");
+		}
  	...
 }
 ...
@@ -361,11 +362,11 @@ request_route {
 ...
 request_route {
  	...
-	if (1 == stirshaken_check_identity_with_cert("/path/to/cert")) {
-		xlog("Shaken Identity is OK\n");
-	} else {
-       	xlog("Shaken Identity is invalid\n");
-	}
+		if (1 == stirshaken_check_identity_with_cert("/path/to/cert")) {
+			xlog("Shaken Identity is OK\n");
+		} else {
+			xlog("Shaken Identity is invalid\n");
+		}
  	...
 }
 ...
@@ -395,11 +396,11 @@ request_route {
 ...
 request_route {
  	...
-	if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "origid")) {
-		xlog("Shaken authentication added (SIP Identity Header created)\n");
-	} else {
-       	xlog("Failed\n");
-	}
+		if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "origid")) {
+			xlog("Shaken authentication added (SIP Identity Header created)\n");
+		} else {
+			xlog("Failed\n");
+		}
 	...
 }
 ...
@@ -413,12 +414,12 @@ request_route {
 		<programlisting format="linespecific">
 ...
 request_route {
- 	...
-	if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "")) {
-		xlog("Shaken authentication added (SIP Identity Header created)\n");
-	} else {
-       	xlog("Failed\n");
-	}
+	...
+		if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "+44100", "+44200", "")) {
+			xlog("Shaken authentication added (SIP Identity Header created)\n");
+		} else {
+			xlog("Failed\n");
+		}
 	...
 }
 ...
@@ -444,9 +445,13 @@ request_route {
 		<programlisting format="linespecific">
 ...
 request_route {
- 	...
-	stirshaken_add_identity_with_key("https://sp.com/sp.pem", "B", "+44100", "+44200", uuid, "/path/to/key");
- 	...
+	...
+		if (1 == stirshaken_add_identity_with_key("https://sp.com/sp.pem", "B", "+44100", "+44200", uuid, "/path/to/key")) {
+			xlog("Shaken authentication added (SIP Identity Header created)\n");
+		} else {
+			xlog("Failed\n");
+		}
+	...
 }
 ...
 </programlisting>
