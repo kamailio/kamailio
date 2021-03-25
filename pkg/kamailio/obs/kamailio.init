@@ -3,7 +3,7 @@
 # Startup script for Kamailio
 #
 # chkconfig: 345 85 15
-# description: Kamailio (OpenSER) - the Open Source SIP Server
+# description: Kamailio - the Open Source SIP Server
 #
 # processname: kamailio
 # pidfile: /run/kamailio.pid
@@ -12,8 +12,8 @@
 ### BEGIN INIT INFO
 # Provides: kamailio
 # Required-Start: $local_fs $network
-# Short-Description: Kamailio (OpenSER) - the Open Source SIP Server
-# Description: Kamailio (former OpenSER) is an Open Source SIP Server released
+# Short-Description: Kamailio - the Open Source SIP Server
+# Description: Kamailio is an Open Source SIP Server released
 # 	under GPL, able to handle thousands of call setups per second.
 ### END INIT INFO
 
