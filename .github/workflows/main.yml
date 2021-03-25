@@ -32,6 +32,7 @@ jobs:
             compilier: clang
     steps:
       - uses: actions/checkout@v2
+      - uses: ammaraskar/gcc-problem-matcher@0.1
       - name: build
         run: |
           cd /code
