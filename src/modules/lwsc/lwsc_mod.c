@@ -67,7 +67,7 @@ static cmd_export_t cmds[]={
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2,
 		fixup_spve_all, 0, ANY_ROUTE},
-	{"lwsc_notify_proto", (cmd_function)w_lwsc_notify, 3,
+	{"lwsc_notify_proto", (cmd_function)w_lwsc_notify_proto, 3,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"bind_lwsc",   (cmd_function)bind_lwsc, 0,
 		0, 0, 0},
