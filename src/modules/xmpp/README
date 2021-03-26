@@ -391,13 +391,12 @@ alias=sip-xmpp.kamailio.org
 
 # ------------------ module loading ----------------------------------
 
-mpath="/usr/local/lib/kamailio/modules/"
 loadmodule "sl.so"
 loadmodule "tm.so"
 loadmodule "rr.so"
 loadmodule "maxfwd.so"
 loadmodule "textops.so"
-loadmodule "mi_fifo.so"
+loadmodule "jsonrpcs.so"
 
 
 # XMPP
@@ -412,10 +411,6 @@ modparam("xmpp", "backend", "server")
 # modparam("xmpp", "backend", "component")
 
 # ----------------- setting module-specific parameters ---------------
-
-# -- mi_fifo params --
-
-modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo_xmpp")
 
 # -- usrloc params --
 
