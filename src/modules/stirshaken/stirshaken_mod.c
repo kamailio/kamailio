@@ -40,7 +40,7 @@ MODULE_VERSION
 static str stirshaken_as_default_key = str_init("");
 
 // Verification service
-static int stirshaken_vs_verify_x509_cert_path = 0;
+static int stirshaken_vs_verify_x509_cert_path = 1;
 static str stirshaken_vs_ca_dir = str_init("");
 static str stirshaken_vs_crl_dir = str_init("");
 static int stirshaken_vs_identity_expire_s = 60;
