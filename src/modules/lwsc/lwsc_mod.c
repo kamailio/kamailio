@@ -234,7 +234,19 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 	switch (reason) {
 
 		case LWS_CALLBACK_PROTOCOL_INIT:
-			LM_DBG("LWS_CALLBACK_PROTOCOL_INIT\n");
+			if(_lwsc_verbosity>0) {
+				LM_DBG("LWS_CALLBACK_PROTOCOL_INIT: %d\n", reason);
+			}
+			break;
+		case LWS_CALLBACK_PROTOCOL_DESTROY:
+			if(_lwsc_verbosity>0) {
+				LM_DBG("LWS_CALLBACK_PROTOCOL_DESTROY: %d\n", reason);
+			}
+			break;
+		case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
+			if(_lwsc_verbosity>0) {
+				LM_DBG("LWS_CALLBACK_EVENT_WAIT_CANCELLED: %d\n", reason);
+			}
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
@@ -247,6 +259,12 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			ep->wsready = 0;
 			ep->wsi = NULL;
 			break;
+
+		case LWS_CALLBACK_GET_THREAD_ID:
+			if(_lwsc_verbosity>0) {
+				LM_DBG("LWS_CALLBACK_GET_THREAD_ID: %d\n", reason);
+			}
+			return (long)pthread_self();
 
 		case LWS_CALLBACK_CLOSED:
 			LM_DBG("LWS_CALLBACK_CLOSED - wsi: %p\n", wsi);
@@ -310,7 +328,7 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 #if LWS_LIBRARY_VERSION_MAJOR >= 3
 		case LWS_CALLBACK_TIMER:
 			if(_lwsc_verbosity>0) {
-				LM_DBG("LWS_CALLBACK_TIMER - wsi: %p\n", wsi);
+				LM_DBG("LWS_CALLBACK_TIMER: %d - wsi: %p\n", reason, wsi);
 			}
 			// lws_callback_on_writable(wsi);
 			break;
