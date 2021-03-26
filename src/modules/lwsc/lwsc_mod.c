@@ -532,11 +532,6 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 #if LWS_LIBRARY_VERSION_MAJOR >= 3
 	ep->crtinfo.ws_ping_pong_interval = 5; /*secs*/
 #endif
-#if LWS_LIBRARY_VERSION_MAJOR >= 4
-	/* apparently only in newer versions of libwebsockets */
-	ep->crtinfo.timeout_secs = _lwsc_timeout_send;
-	ep->crtinfo.connect_timeout_secs = _lwsc_timeout_connect;
-#endif
 	/* 1 internal and 1 (+ 1 http2 nwsi) */
 	ep->crtinfo.fd_limit_per_thread = 1 + 1 + 1;
 
