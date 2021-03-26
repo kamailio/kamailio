@@ -16,10 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module implements secure SIP identity specifications - STIR
-		(Secure Telephony Identity Revisited) and SHAKEN
-		(Signature-based Handling of Asserted information using toKENs)
-		IETF extensions for SIP (RFC8224, RFC8588).
+		This module implements STIR (Secure Telephony Identity Revisited) and SHAKEN (Signature-based Handling of Asserted information using toKENs) (RFC8224, RFC8588), with X509 certificate path check (ATIS "Signature-based Handling of Asserted information using toKENs (SHAKEN)", RFC5280 "6. Certification Path Validation").
 	</para>
 	<para>
 		stirshaken module exports the functions to check and to generate PASSporT, wrapped into SIP Identity header.
@@ -93,7 +90,7 @@ modparam("stirshaken", "as_default_key", "/path/to/key")
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0, (turned off).
+			Default value is 1, (turned on).
 		</emphasis>
 		</para>
 		<example>
