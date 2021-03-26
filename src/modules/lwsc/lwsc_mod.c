@@ -640,6 +640,7 @@ static int lwsc_api_request(str* wsurl, str *wsproto, str* sdata,
 
 	/* notify main loop another message should be sent */
     lws_callback_on_writable(ep->wsi);
+    lws_cancel_service(ep->wsctx);
 
 	do {
 		pthread_mutex_lock(&ep->wslock);
@@ -793,6 +794,7 @@ static int lwsc_api_notify(str* wsurl, str* wsproto, str* data)
 
 	/* notify main loop another message should be sent */
     lws_callback_on_writable(ep->wsi);
+    lws_cancel_service(ep->wsctx);
 
 	LM_DBG("notification prepared for delivery\n");
 
