@@ -243,11 +243,13 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 				LM_DBG("LWS_CALLBACK_PROTOCOL_DESTROY: %d\n", reason);
 			}
 			break;
+#if LWS_LIBRARY_VERSION_MAJOR >= 3
 		case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
 			if(_lwsc_verbosity>0) {
 				LM_DBG("LWS_CALLBACK_EVENT_WAIT_CANCELLED: %d\n", reason);
 			}
 			break;
+#endif
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			LM_ERR("CLIENT_CONNECTION_ERROR: %s\n", in ? (char *)in : "(null)");
