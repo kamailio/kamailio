@@ -270,7 +270,7 @@ int escape_user(str *sin, str *sout)
 				break;
 				default:
 				    *at++ = '%';
-				    x = (*p) >> 4;
+				    x = (unsigned char)(*p) >> 4;
 				    if (x < 10)
 					{
 						*at++ = x + '0';
@@ -350,7 +350,7 @@ int escape_param(str *sin, str *sout)
                 default:
 
                     *at++ = '%';
-                    x = (*p) >> 4;
+                    x = (unsigned char)(*p) >> 4;
                     if (x < 10)
                     {
                         *at++ = x + '0';
@@ -792,7 +792,8 @@ int urlencode(str *sin, str *sout)
 		if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~')
 			*at++ = *p;
 		else
-			*at++ = '%', *at++ = char_to_hex(*p >> 4), *at++ = char_to_hex(*p & 15);
+			*at++ = '%', *at++ = char_to_hex((unsigned char)(*p) >> 4),
+				*at++ = char_to_hex(*p & 15);
 		p++;
 	}
 

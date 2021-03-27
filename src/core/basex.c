@@ -434,7 +434,7 @@ int base64url_enc(char *in, int ilen, char *out, int osize)
 	int  i;
 	int  r;
 	char *p;
-	int  block;
+	unsigned int  block;
 	int  olen;
 
 	olen = (((ilen+2)/3)<<2);
@@ -465,7 +465,7 @@ int base64url_enc(char *in, int ilen, char *out, int osize)
 int base64url_dec(char *in, int ilen, char *out, int osize)
 {
 	int n;
-	int block;
+	unsigned int block;
 	int idx;
 	int i;
 	int j;
@@ -493,7 +493,7 @@ int base64url_dec(char *in, int ilen, char *out, int osize)
 	for(i=0, idx=0; i<end; idx+=3) {
 		block = 0;
 		for(j=0; j<4 && i<end ; j++) {
-			c = _ksr_b64url_decmap[(int)in[i++]];
+			c = _ksr_b64url_decmap[(unsigned char)in[i++]];
 			if(c<0) {
 				LM_ERR("invalid input string\"%.*s\"\n", ilen, in);
 				return -1;
