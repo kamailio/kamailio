@@ -1104,12 +1104,12 @@ static inline ip_addr_t *strtoipX(str *ips)
 	if(ips->s[0] == '[' || memchr(ips->s, ':', ips->len)!=NULL)
 	{
 		/* IPv6 */
-		if(str2ip6buf(ips, &ipb) < 0) {
+		if(str2ip6buf(ips, &ipb) == 0) {
 			return &ipb;
 		}
 	} else {
 		/* IPv4 */
-		if (str2ipbuf(ips, &ipb)<0) {
+		if (str2ipbuf(ips, &ipb)==0) {
 			return &ipb;
 		}
 	}
