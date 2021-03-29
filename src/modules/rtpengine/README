@@ -421,7 +421,9 @@ Chapter 1. Admin Guide
    module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
-   the weight of each RTPEngine from the set.
+   the weight of each RTPEngine from the set. The default weight is 1, if
+   another RTPEngine should be used twice as often as the first one, one
+   would specify the weight 2 for this server, for example.
 
    The selection of the set is done from script prior using
    rtpengine_delete(), rtpengine_offer() or rtpengine_answer() functions -
