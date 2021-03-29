@@ -526,12 +526,12 @@ void ping_servers(unsigned int ticks, void *param)
 		LM_DBG("node list is empty - attempt to rebuild from notification "
 			   "address\n");
 		*dmq_init_callback_done = 0;
-		if(dmq_notification_address.s) {
+		if(dmq_notification_address_list) {
 			dmq_notification_node =
-					add_server_and_notify(&dmq_notification_address);
+					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
-						STR_FMT(&dmq_notification_address));
+				LM_ERR("cannot retrieve initial nodelist, first list entry%.*s\n",
+						STR_FMT(&dmq_notification_address_list->s));
 			}
 		} else {
 			LM_ERR("no notification address");

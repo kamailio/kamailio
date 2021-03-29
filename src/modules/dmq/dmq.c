@@ -60,10 +60,11 @@ str dmq_server_address = {0, 0};
 str dmq_server_socket = {0, 0};
 sip_uri_t dmq_server_uri = {0};
 
-str dmq_notification_address = {0, 0};
+str_list_t *dmq_notification_address_list = NULL;
+static str_list_t *dmq_tmp_list = NULL;
 str dmq_notification_channel = str_init("notification_peer");
 int dmq_multi_notify = 0;
-sip_uri_t dmq_notification_uri = {0};
+static sip_uri_t dmq_notification_uri = {0};
 int dmq_ping_interval = 60;
 
 /* TM bind */
@@ -79,6 +80,9 @@ dmq_peer_list_t *dmq_peer_list = 0;
 dmq_node_list_t *dmq_node_list = NULL;
 /* dmq module is a peer itself for receiving notifications regarding nodes */
 dmq_peer_t *dmq_notification_peer = NULL;
+/* add notification servers */
+static int dmq_add_notification_address(modparam_t type, void * val);
+
 
 /** module functions */
 static int mod_init(void);
@@ -110,7 +114,7 @@ static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &dmq_num_workers},
 	{"ping_interval", INT_PARAM, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
-	{"notification_address", PARAM_STR, &dmq_notification_address},
+	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", INT_PARAM, &dmq_multi_notify},
 	{"worker_usleep", INT_PARAM, &dmq_worker_usleep},
@@ -221,13 +225,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len,
-			   &dmq_notification_uri)
-			< 0) {
-		LM_ERR("notification address invalid\n");
-		return -1;
-	}
-
 	/* create socket string out of the server_uri */
 	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
 		LM_ERR("failed to create socket out of server_uri\n");
@@ -327,12 +324,13 @@ static int child_init(int rank)
 		 * the module MUST have this parameter if the Kamailio instance is not
 		 * a master in this architecture
 		 */
-		if(dmq_notification_address.s) {
+		if(dmq_notification_address_list != NULL) {
 			dmq_notification_node =
-					add_server_and_notify(&dmq_notification_address);
+					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_WARN("cannot retrieve initial nodelist from %.*s\n",
-						STR_FMT(&dmq_notification_address));
+				LM_WARN("cannot retrieve initial nodelist, first list entry %.*s\n",
+						STR_FMT(&dmq_notification_address_list->s));
+
 			}
 		}
 	}
@@ -347,7 +345,7 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	/* TODO unregister dmq node, free resources */
-	if(dmq_notification_address.s && dmq_notification_node && dmq_self_node) {
+	if(dmq_notification_address_list && dmq_notification_node && dmq_self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&dmq_self_node->orig_uri));
 		dmq_self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(dmq_notification_node, 1);
@@ -359,6 +357,44 @@ static void destroy(void)
 		shm_free(dmq_init_callback_done);
 	}
 }
+
+static int dmq_add_notification_address(modparam_t type, void * val)
+{
+	str tmp_str;
+	tmp_str.s = ((str*) val)->s;
+	tmp_str.len = ((str*) val)->len;
+	int total_list = 0; /* not used */
+
+	if(val==NULL) {
+		LM_ERR("invalid notification address parameter value\n");
+		return -1;
+	}
+	if(parse_uri(tmp_str.s,  tmp_str.len, &dmq_notification_uri) < 0) {
+		LM_ERR("could not parse notification address\n");
+		return -1;
+	}
+
+	/* initial allocation */
+	if (dmq_notification_address_list == 0) {
+		dmq_notification_address_list = pkg_malloc(sizeof(str_list_t));
+		if (dmq_notification_address_list == NULL) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		dmq_tmp_list = dmq_notification_address_list;
+		dmq_tmp_list->s = tmp_str;
+	} else {
+		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
+		if (dmq_tmp_list == NULL) {
+			LM_ERR("could not append to list\n");
+			return -1;
+		}
+		LM_DBG("added new notification address to the list %.*s\n",
+			dmq_tmp_list->s.len, dmq_tmp_list->s.s);
+	}
+	return 0;
+}
+
 
 static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 {
