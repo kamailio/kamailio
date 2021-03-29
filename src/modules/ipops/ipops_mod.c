@@ -1105,15 +1105,15 @@ static inline ip_addr_t *strtoipX(str *ips)
 	{
 		/* IPv6 */
 		if(str2ip6buf(ips, &ipb) < 0) {
-			return &ipb;
+			return NULL;
 		}
 	} else {
 		/* IPv4 */
 		if (str2ipbuf(ips, &ipb)<0) {
-			return &ipb;
+			return NULL;
 		}
 	}
-	return NULL;
+	return &ipb;
 }
 
 static int ki_dns_sys_match_ip(sip_msg_t *msg, str *vhn, str *vip)
