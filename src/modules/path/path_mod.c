@@ -67,6 +67,7 @@ int path_use_received = 0;
 int path_received_format = 0;
 int path_enable_r2 = 0;
 int path_sockname_mode = 0;
+str path_received_name = str_init("received");
 
 /*! \brief
  * Module initialization function prototype
@@ -111,6 +112,7 @@ static param_export_t params[] = {
 	{"received_format", INT_PARAM, &path_received_format },
 	{"enable_r2",       INT_PARAM, &path_enable_r2 },
 	{"sockname_mode",   INT_PARAM, &path_sockname_mode },
+	{"received_name",   PARAM_STR, &path_received_name },
 	{ 0, 0, 0 }
 };
 
