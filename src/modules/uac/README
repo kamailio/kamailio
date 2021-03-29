@@ -63,13 +63,14 @@ Ramona-Elena Modroiu
               4.5. uac_replace_to(uri)
               4.6. uac_restore_to()
               4.7. uac_auth([mode])
-              4.8. uac_req_send()
-              4.9. uac_reg_lookup(uuid, dst)
-              4.10. uac_reg_status(uuid)
-              4.11. uac_reg_request_to(user, mode)
-              4.12. uac_reg_enable(attr, val)
-              4.13. uac_reg_disable(attr, val)
-              4.14. uac_reg_refresh(luuid)
+              4.8. uac_auth_mode(vmode)
+              4.9. uac_req_send()
+              4.10. uac_reg_lookup(uuid, dst)
+              4.11. uac_reg_status(uuid)
+              4.12. uac_reg_request_to(user, mode)
+              4.13. uac_reg_enable(attr, val)
+              4.14. uac_reg_disable(attr, val)
+              4.15. uac_reg_refresh(luuid)
 
         5. Pseudo Variables
         6. Event Routes
@@ -122,24 +123,25 @@ Ramona-Elena Modroiu
    1.27. uac_replace_to usage
    1.28. uac_restore_to usage
    1.29. uac_auth usage
-   1.30. uac_req_send usage
-   1.31. uac_reg_lookup usage
-   1.32. uac_reg_status usage
-   1.33. uac_reg_request_to usage
-   1.34. uac_reg_enable usage
-   1.35. uac_reg_disable usage
-   1.36. uac_reg_refresh usage
-   1.37. event_route[uac:reply] usage
-   1.38. uac.reg_dump usage
-   1.39. uac.reg_info usage
-   1.40. uac.reg_enable usage
-   1.41. uac.reg_disable usage
-   1.42. uac.reg_reload usage
-   1.43. uac.reg_refresh usage
-   1.44. uac.reg_active usage
-   1.45. uac.reg_add usage
-   1.46. uac.reg_remove usage
-   1.47. lookup remote registrations usage
+   1.30. uac_auth_mode usage
+   1.31. uac_req_send usage
+   1.32. uac_reg_lookup usage
+   1.33. uac_reg_status usage
+   1.34. uac_reg_request_to usage
+   1.35. uac_reg_enable usage
+   1.36. uac_reg_disable usage
+   1.37. uac_reg_refresh usage
+   1.38. event_route[uac:reply] usage
+   1.39. uac.reg_dump usage
+   1.40. uac.reg_info usage
+   1.41. uac.reg_enable usage
+   1.42. uac.reg_disable usage
+   1.43. uac.reg_reload usage
+   1.44. uac.reg_refresh usage
+   1.45. uac.reg_active usage
+   1.46. uac.reg_add usage
+   1.47. uac.reg_remove usage
+   1.48. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -185,13 +187,14 @@ Chapter 1. Admin Guide
         4.5. uac_replace_to(uri)
         4.6. uac_restore_to()
         4.7. uac_auth([mode])
-        4.8. uac_req_send()
-        4.9. uac_reg_lookup(uuid, dst)
-        4.10. uac_reg_status(uuid)
-        4.11. uac_reg_request_to(user, mode)
-        4.12. uac_reg_enable(attr, val)
-        4.13. uac_reg_disable(attr, val)
-        4.14. uac_reg_refresh(luuid)
+        4.8. uac_auth_mode(vmode)
+        4.9. uac_req_send()
+        4.10. uac_reg_lookup(uuid, dst)
+        4.11. uac_reg_status(uuid)
+        4.12. uac_reg_request_to(user, mode)
+        4.13. uac_reg_enable(attr, val)
+        4.14. uac_reg_disable(attr, val)
+        4.15. uac_reg_refresh(luuid)
 
    5. Pseudo Variables
    6. Event Routes
@@ -625,13 +628,14 @@ end
    4.5. uac_replace_to(uri)
    4.6. uac_restore_to()
    4.7. uac_auth([mode])
-   4.8. uac_req_send()
-   4.9. uac_reg_lookup(uuid, dst)
-   4.10. uac_reg_status(uuid)
-   4.11. uac_reg_request_to(user, mode)
-   4.12. uac_reg_enable(attr, val)
-   4.13. uac_reg_disable(attr, val)
-   4.14. uac_reg_refresh(luuid)
+   4.8. uac_auth_mode(vmode)
+   4.9. uac_req_send()
+   4.10. uac_reg_lookup(uuid, dst)
+   4.11. uac_reg_status(uuid)
+   4.12. uac_reg_request_to(user, mode)
+   4.13. uac_reg_enable(attr, val)
+   4.14. uac_reg_disable(attr, val)
+   4.15. uac_reg_refresh(luuid)
 
 4.1.  uac_replace_from(display,uri)
 
@@ -814,7 +818,50 @@ failure_route[TRUNKAUTH] {
 }
 ...
 
-4.8.  uac_req_send()
+4.8.  uac_auth_mode(vmode)
+
+   This function can be called only from failure route and will build the
+   authentication response header and insert it into the request without
+   sending anything.
+
+   If mode is set to 1, then the password has to be provided in HA1
+   format. The parameter can be a static integer or a variable holding an
+   integer value.
+
+   This function can be used from FAILURE_ROUTE.
+
+   Example 1.30. uac_auth_mode usage
+...
+modparam("uac","auth_username_avp","$avp(auser)")
+modparam("uac","auth_password_avp","$avp(apass)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
+
+request_route {
+   ...
+   if(is_method("INVITE")) {
+      t_on_failure("TRUNKAUTH");
+   }
+   ...
+}
+
+failure_route[TRUNKAUTH] {
+
+    if (t_is_canceled()) {
+        exit;
+    }
+    if(t_check_status("401|407")) {
+        $avp(auser) = "test";
+        $avp(apass) = "test";
+        # $avp(apass) = "36d0a02793542b4961e8348347236dbf";
+        if (uac_auth_mode("1")) {
+            t_relay();
+        }
+        exit;
+    }
+}
+...
+
+4.9.  uac_req_send()
 
    This function sends a SIP message from the configuration file. The
    message is built out of $uac_req(...) pseudo-variable.
@@ -822,7 +869,7 @@ failure_route[TRUNKAUTH] {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
 
-   Example 1.30. uac_req_send usage
+   Example 1.31. uac_req_send usage
 ...
 $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
@@ -832,14 +879,14 @@ $uac_req(callid)=$(mb{s.md5});
 uac_req_send();
 ...
 
-4.9.  uac_reg_lookup(uuid, dst)
+4.10.  uac_reg_lookup(uuid, dst)
 
    This function sets the PV dst to SIP URI that correspond to uuid in uac
    registrations table. uuid and dst must be pseudo-variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.31. uac_reg_lookup usage
+   Example 1.32. uac_reg_lookup usage
 ...
 
 if(uac_reg_lookup("$rU", "$ru"))
@@ -848,7 +895,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 }
 ...
 
-4.10.  uac_reg_status(uuid)
+4.11.  uac_reg_status(uuid)
 
    This function returns the current registration status for the uuid.
 
@@ -863,12 +910,12 @@ if(uac_reg_lookup("$rU", "$ru"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.32. uac_reg_status usage
+   Example 1.33. uac_reg_status usage
 ...
 $var(status) = uac_reg_status("$rU");
 ...
 
-4.11.  uac_reg_request_to(user, mode)
+4.12.  uac_reg_request_to(user, mode)
 
    This function can be used to send an authenticated request to a remote
    user in the uac registrations table. It sets the request-uri, dst-uri
@@ -888,7 +935,7 @@ $var(status) = uac_reg_status("$rU");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.33. uac_reg_request_to usage
+   Example 1.34. uac_reg_request_to usage
 ...
 
 if(uac_reg_request_to("$fU", 0))
@@ -907,7 +954,7 @@ failure_route[REMOTE_AUTH] {
 }
 ...
 
-4.12.  uac_reg_enable(attr, val)
+4.13.  uac_reg_enable(attr, val)
 
    Enable a remote registration record based on a filter specified by
    attribute and value. The attribute can be: l_uuid, l_username,
@@ -916,12 +963,12 @@ failure_route[REMOTE_AUTH] {
 
    The SIP processing is done on the next timer routine.
 
-   Example 1.34. uac_reg_enable usage
+   Example 1.35. uac_reg_enable usage
 ...
    uac_reg_enable("l_uuid", "account123");
 ...
 
-4.13.  uac_reg_disable(attr, val)
+4.14.  uac_reg_disable(attr, val)
 
    Disable a remote registration record based on a filter specified by
    attribute and value. The attribute can be: l_uuid, l_username,
@@ -930,18 +977,18 @@ failure_route[REMOTE_AUTH] {
 
    The SIP processing is done on the next timer routine.
 
-   Example 1.35. uac_reg_disable usage
+   Example 1.36. uac_reg_disable usage
 ...
    uac_reg_disable("l_uuid", "account123");
 ...
 
-4.14.  uac_reg_refresh(luuid)
+4.15.  uac_reg_refresh(luuid)
 
    Refresh the uac remote registration record based on local uuid. If the
    record was already loaded, new values are taken from database,
    otherwise a new record is created.
 
-   Example 1.36. uac_reg_refresh usage
+   Example 1.37. uac_reg_refresh usage
 ...
    uac_reg_refresh("account123");
 ...
@@ -965,7 +1012,7 @@ failure_route[REMOTE_AUTH] {
    then the event_route is executed twice, first for 401/407 and second
    for final reply of the transaction.
 
-   Example 1.37. event_route[uac:reply] usage
+   Example 1.38. event_route[uac:reply] usage
 ...
 $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
@@ -1004,7 +1051,7 @@ event_route[uac:reply] {
 
    Dump the content of remote registration table from memory.
 
-   Example 1.38. uac.reg_dump usage
+   Example 1.39. uac.reg_dump usage
 ...
    kamcmd uac.reg_dump
 ...
@@ -1025,7 +1072,7 @@ event_route[uac:reply] {
      * 16 (2^4) - registration initialized (after loading from database,
        the registration process was initialized)
 
-   Example 1.39. uac.reg_info usage
+   Example 1.40. uac.reg_info usage
 ...
    kamcmd uac.reg_info l_uuid account123
    kamcmd uac.reg_info l_uuid s:12345678
@@ -1039,7 +1086,7 @@ event_route[uac:reply] {
    matched against the value of the attribute in the remote registration
    record.
 
-   Example 1.40. uac.reg_enable usage
+   Example 1.41. uac.reg_enable usage
 ...
    kamcmd uac.reg_enable l_uuid account123
    kamcmd uac.reg_enable l_uuid s:12345678
@@ -1053,7 +1100,7 @@ event_route[uac:reply] {
    matched against the value of the attribute in the remote registration
    record.
 
-   Example 1.41. uac.reg_disable usage
+   Example 1.42. uac.reg_disable usage
 ...
    kamcmd uac.reg_disable l_uuid account123
    kamcmd uac.reg_disable l_uuid s:12345678
@@ -1066,7 +1113,7 @@ event_route[uac:reply] {
    150 seconds between reloads -- see the reg_gc_interval parameter for
    more details.
 
-   Example 1.42. uac.reg_reload usage
+   Example 1.43. uac.reg_reload usage
 ...
    kamcmd uac.reg_reload
 ...
@@ -1077,7 +1124,7 @@ event_route[uac:reply] {
    the record exists in memory, it will be replaced with the new values
    loaded from database.
 
-   Example 1.43. uac.reg_refresh usage
+   Example 1.44. uac.reg_refresh usage
 ...
    kamcmd uac.reg_refresh account123
    kamcmd uac.reg_refresh s:12345678
@@ -1089,7 +1136,7 @@ event_route[uac:reply] {
    1 enables remote registrations for all records and 0 disables doing
    them.
 
-   Example 1.44. uac.reg_active usage
+   Example 1.45. uac.reg_active usage
 ...
    kamctl rpc uac.reg_active 0
    kamctl rpc uac.reg_active 1
@@ -1118,7 +1165,7 @@ event_route[uac:reply] {
 
    Use a dot (.) if no value should be set for auth_password or auth_ha1.
 
-   Example 1.45. uac.reg_add usage
+   Example 1.46. uac.reg_add usage
 ...
    kamcmd uac.reg_add ...
 ...
@@ -1127,7 +1174,7 @@ event_route[uac:reply] {
 
    Remove a UAC remote registration record by l_uuid.
 
-   Example 1.46. uac.reg_remove usage
+   Example 1.47. uac.reg_remove usage
 ...
    kamcmd uac.reg_remove my_l_uuid
 ...
@@ -1178,7 +1225,7 @@ event_route[uac:reply] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.47. lookup remote registrations usage
+   Example 1.48. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

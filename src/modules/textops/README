@@ -331,6 +331,9 @@ From: medabeda
    Meaning of the parameters is as follows:
      * re - Regular expression.
 
+   Note: it performs Posix regex matching and the 're' parameter is
+   compiled with the flags REG_EXTENDED|REG_ICASE|REG_NEWLINE.
+
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 

@@ -84,15 +84,16 @@ Bogdan-Andre Iancu
 
               4.1. save(domain, [, flags [, uri]])
               4.2. lookup(domain [, uri])
-              4.3. lookup_branches(domain)
-              4.4. registered(domain [, uri [, match_option [,
+              4.3. lookup_to_dset(domain [, uri])
+              4.4. lookup_branches(domain)
+              4.5. registered(domain [, uri [, match_option [,
                       match_action]]])
 
-              4.5. add_sock_hdr(hdr_name)
-              4.6. unregister(domain, uri[, ruid])
-              4.7. reg_fetch_contacts(domain, uri, profile)
-              4.8. reg_free_contacts(profile)
-              4.9. reg_send_reply()
+              4.6. add_sock_hdr(hdr_name)
+              4.7. unregister(domain, uri[, ruid])
+              4.8. reg_fetch_contacts(domain, uri, profile)
+              4.9. reg_free_contacts(profile)
+              4.10. reg_send_reply()
 
         5. Event Routes
 
@@ -149,15 +150,16 @@ Bogdan-Andre Iancu
    1.33. Set use_expired_contacts parameter
    1.34. save usage
    1.35. lookup usage
-   1.36. lookup_branches usage
-   1.37. registered usage
-   1.38. add_sock_hdr usage
-   1.39. unregister usage
-   1.40. reg_fetch_contacts usage
-   1.41. reg_free_contacts usage
-   1.42. reg_send_reply usage
-   1.43. event_route[usrloc:contact-expired] usage
-   1.44. $ulc(name) usage
+   1.36. lookup_to_dset usage
+   1.37. lookup_branches usage
+   1.38. registered usage
+   1.39. add_sock_hdr usage
+   1.40. unregister usage
+   1.41. reg_fetch_contacts usage
+   1.42. reg_free_contacts usage
+   1.43. reg_send_reply usage
+   1.44. event_route[usrloc:contact-expired] usage
+   1.45. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -214,13 +216,14 @@ Chapter 1. Admin Guide
 
         4.1. save(domain, [, flags [, uri]])
         4.2. lookup(domain [, uri])
-        4.3. lookup_branches(domain)
-        4.4. registered(domain [, uri [, match_option [, match_action]]])
-        4.5. add_sock_hdr(hdr_name)
-        4.6. unregister(domain, uri[, ruid])
-        4.7. reg_fetch_contacts(domain, uri, profile)
-        4.8. reg_free_contacts(profile)
-        4.9. reg_send_reply()
+        4.3. lookup_to_dset(domain [, uri])
+        4.4. lookup_branches(domain)
+        4.5. registered(domain [, uri [, match_option [, match_action]]])
+        4.6. add_sock_hdr(hdr_name)
+        4.7. unregister(domain, uri[, ruid])
+        4.8. reg_fetch_contacts(domain, uri, profile)
+        4.9. reg_free_contacts(profile)
+        4.10. reg_send_reply()
 
    5. Event Routes
 
@@ -945,13 +948,14 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
 
    4.1. save(domain, [, flags [, uri]])
    4.2. lookup(domain [, uri])
-   4.3. lookup_branches(domain)
-   4.4. registered(domain [, uri [, match_option [, match_action]]])
-   4.5. add_sock_hdr(hdr_name)
-   4.6. unregister(domain, uri[, ruid])
-   4.7. reg_fetch_contacts(domain, uri, profile)
-   4.8. reg_free_contacts(profile)
-   4.9. reg_send_reply()
+   4.3. lookup_to_dset(domain [, uri])
+   4.4. lookup_branches(domain)
+   4.5. registered(domain [, uri [, match_option [, match_action]]])
+   4.6. add_sock_hdr(hdr_name)
+   4.7. unregister(domain, uri[, ruid])
+   4.8. reg_fetch_contacts(domain, uri, profile)
+   4.9. reg_free_contacts(profile)
+   4.10. reg_send_reply()
 
 4.1.  save(domain, [, flags [, uri]])
 
@@ -1032,7 +1036,8 @@ save("location", "0x00", "sip:test@kamailio.org");
    Example 1.35. lookup usage
 ...
 lookup("location");
-switch ($retcode) {
+                        switch ($retcode) {:1
+
     case -1:
     case -3:
         sl_send_reply("404", "Not Found");
@@ -1043,7 +1048,21 @@ switch ($retcode) {
 };
 ...
 
-4.3.  lookup_branches(domain)
+4.3.  lookup_to_dset(domain [, uri])
+
+   Similar to lookup(...), but push the location contacts to destination
+   set, without changing the R-URI (first branch not changed, it creates
+   additional branches). For the meaning of the parameters and the return
+   codes, see the documentation for lookup(...) function.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.36. lookup_to_dset usage
+...
+lookup_to_dset("location");
+...
+
+4.4.  lookup_branches(domain)
 
    The function performs lookup(domain) on r-uri and additional branches
    (only branches that have no other attributes set than uri).
@@ -1055,12 +1074,12 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. lookup_branches usage
+   Example 1.37. lookup_branches usage
 ...
 lookup_branches("location");
 ...
 
-4.4.  registered(domain [, uri [, match_option [, match_action]]])
+4.5.  registered(domain [, uri [, match_option [, match_action]]])
 
    The function returns true if the AOR in the URI is registered, false
    otherwise. The function does not modify the message being process, it
@@ -1087,7 +1106,7 @@ lookup_branches("location");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. registered usage
+   Example 1.38. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -1101,7 +1120,7 @@ if (registered("location","$rz:$Au", 2)) {
 };
 ...
 
-4.5.  add_sock_hdr(hdr_name)
+4.6.  add_sock_hdr(hdr_name)
 
    Adds a new header to the current REGISTER request with “hdr_name” which
    contains the description of the received socket (proto:ip:port)
@@ -1114,12 +1133,12 @@ if (registered("location","$rz:$Au", 2)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.38. add_sock_hdr usage
+   Example 1.39. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
 
-4.6.  unregister(domain, uri[, ruid])
+4.7.  unregister(domain, uri[, ruid])
 
    The function removes contacts associated with 'uri' from the location
    database. If 'ruid' is provided a specific contact is removed, if
@@ -1144,7 +1163,7 @@ add_sock_hdr("Sock-Info");
      * -2 - Error in unregistering user
      * -3 - Contacts for AOR not found
 
-   Example 1.39. unregister usage
+   Example 1.40. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -1152,7 +1171,7 @@ unregister("location", "$ru", "$ulc(caller=>ruid)");
 unregister("location", "", "$ruid");
 ...
 
-4.7.  reg_fetch_contacts(domain, uri, profile)
+4.8.  reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -1168,13 +1187,13 @@ unregister("location", "", "$ruid");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.40. reg_fetch_contacts usage
+   Example 1.41. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.8.  reg_free_contacts(profile)
+4.9.  reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -1187,12 +1206,12 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.41. reg_free_contacts usage
+   Example 1.42. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
 
-4.9.  reg_send_reply()
+4.10.  reg_send_reply()
 
    The function sends the SIP reply that is normally sent by save(...),
    but that was skipped due to flag 0x2. It must be used after save(...,
@@ -1201,7 +1220,7 @@ reg_free_contacts("callee");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.42. reg_send_reply usage
+   Example 1.43. reg_send_reply usage
 ...
 save("location", "0x2");
 ...
@@ -1217,7 +1236,7 @@ reg_send_reply();
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.43. event_route[usrloc:contact-expired] usage
+   Example 1.44. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp=>aor)\n");
@@ -1291,7 +1310,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.44. $ulc(name) usage
+   Example 1.45. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
