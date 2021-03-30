@@ -1153,7 +1153,7 @@ int ksr_uri_alias_encode(str *iuri, str *ualias)
 		p += 4;
 	}
 	*p++ = '~';
-	*p++ = puri.proto + '0';
+	*p++ = ((puri.proto)?puri.proto:1) + '0';
 	ualias->len = p - ualias->s;
 	ualias->s[ualias->len] = '\0';
 
@@ -1204,6 +1204,9 @@ int ksr_uri_alias_decode(str *ualias, str *ouri)
 					goto error;
 				}
 				nproto = *p - '0';
+				if(nproto == PROTO_NONE) {
+					nproto = PROTO_UDP;
+				}
 				if (nproto != PROTO_UDP) {
 					proto_type_to_str(nproto, &sproto);
 					if (sproto.len == 0) {
@@ -1214,11 +1217,13 @@ int ksr_uri_alias_decode(str *ualias, str *ouri)
 					p += 10;
 					memcpy(p, sproto.s, sproto.len);
 					p += sproto.len;
-					*p = '\0';
-					ouri->len = (int)(p - ouri->s);
-					ouri->s[ouri->len] = '\0';
-					break;
+				} else {
+					/* go back one byte to overwrite ';' */
+					p--;
 				}
+				ouri->len = (int)(p - ouri->s);
+				ouri->s[ouri->len] = '\0';
+				break;
 			} else {
 				LM_ERR("invalid number of separators (%d)\n", n);
 				goto error;
