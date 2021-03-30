@@ -437,10 +437,13 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 						p += 10;
 						memcpy(p, sproto.s, sproto.len);
 						p += sproto.len;
-						*p = '\0';
-						dst_uri.len = p - dst_uri_buf;
-						break;
+					} else {
+						/* go back one byte to overwrite ';' */
+						p--;
 					}
+					*p = '\0';
+					dst_uri.len = p - dst_uri_buf;
+					break;
 				} else {
 					LM_ERR("invalid number of separators (%d)\n", n);
 					goto done;
