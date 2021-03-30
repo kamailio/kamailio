@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
               3.4. kevcb_netio (str)
               3.5. netio_key (str)
               3.6. key_derivation (str)
-              3.7. netio_key (str)
+              3.7. init_vector (str)
 
         4. Functions
 
@@ -83,7 +83,7 @@ Chapter 1. Admin Guide
         3.4. kevcb_netio (str)
         3.5. netio_key (str)
         3.6. key_derivation (str)
-        3.7. netio_key (str)
+        3.7. init_vector (str)
 
    4. Functions
 
@@ -134,7 +134,7 @@ Chapter 1. Admin Guide
    3.4. kevcb_netio (str)
    3.5. netio_key (str)
    3.6. key_derivation (str)
-   3.7. netio_key (str)
+   3.7. init_vector (str)
 
 3.1. salt (str)
 
@@ -226,7 +226,7 @@ modparam("crypto", "netio_key", "strong-password-here")
 modparam("crypto", "key_derivation", 0)
 ...
 
-3.7. netio_key (str)
+3.7. init_vector (str)
 
    The initialization vector used for the cryptographic operations. This
    needs to be a Base64 encoded value with 16 bytes lengths.
