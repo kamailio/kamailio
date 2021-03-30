@@ -128,7 +128,7 @@ enum http_req_name_t {
 	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
 	E_HRN_BODY, E_HRN_AUTHMETHOD, E_HRN_USERNAME,
 	E_HRN_PASSWORD, E_HRN_TCP_KA, E_HRN_TCP_KA_IDLE,
-	E_HRN_TCP_KA_INTERVAL
+	E_HRN_TCP_KA_INTERVAL, E_HRN_FOLLOW_REDIRECT
 };
 
 enum http_time_name_t {
@@ -646,6 +646,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 		case 15:
 			if(strncmp(in->s, "tls_client_cert", 15)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_CERT;
+			else if(strncmp(in->s, "follow_redirect", 15)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_FOLLOW_REDIRECT;
 			else goto error;
 			break;
 		default:
@@ -873,6 +875,17 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 			ah_params.tcp_ka_interval = tval->ri;
 		} else {
 			ah_params.tcp_ka_interval = tcp_ka_interval;
+		}
+		break;
+  case E_HRN_FOLLOW_REDIRECT:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(follow_redirect)\n");
+				return -1;
+			}
+			ah_params.follow_redirect = tval->ri?1:0;
+		} else {
+			ah_params.follow_redirect = curl_follow_redirect;
 		}
 		break;
 	}

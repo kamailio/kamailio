@@ -89,6 +89,7 @@ typedef struct hm_params {
 	str body;
 	
 	unsigned int authmethod;
+	unsigned int follow_redirect:1;
 	char* username;
 	char* password;
 	int tcp_keepalive;
