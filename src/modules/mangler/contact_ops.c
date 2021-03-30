@@ -610,28 +610,28 @@ decode_uri (str* uri, char separator, str * result, str* dst_uri)
 		{
 			LOG(L_ERR,"ERROR: decode_uri: Unable to decode host address \n");
 			return -2;/* should I quit or ignore ? */
-		}			
+		}
 
 	if ((format.password.len > 0) && (format.username.len <= 0))
 		{
 			LOG(L_ERR,"ERROR: decode_uri: Password decoded but no username available\n");
 			return -3;
 		}
-		
+
 	/* a complete uri would be sip:username:password@ip:port;transport=protocol goes to
 	 * sip:enc_pref#username#password#ip#port#protocol@public_ip
 	 */
 	result->len = format.first + (uri->len - format.second);	/* not NULL terminated */
 	if (format.username.len > 0) result->len += format.username.len + 1;	//: or @
 	if (format.password.len > 0) result->len += format.password.len + 1;	//@
-		
+
 	/* if (format.ip.len > 0) */	     result->len += format.ip.len;
-		
+
 	if (format.port.len > 0)     result->len += 1 + format.port.len;	//:
 	if (format.protocol.len > 0) result->len += 1 + 10 + format.protocol.len;	//;transport=
-	
+
 	/* adding one comes from * */
-	result->s = pkg_malloc (result->len);
+	result->s = pkg_malloc (result->len + 1); /* NULL termination */
 	if (result->s == NULL)
 		{
 			LOG(L_ERR,"ERROR: decode_contact: Unable to allocate memory\n");
@@ -640,7 +640,7 @@ decode_uri (str* uri, char separator, str * result, str* dst_uri)
 	pos = result->s;
 	memcpy (pos, uri->s, format.first);	/* till sip: */
 	pos = pos + format.first;
-	
+
 	if (format.username.len > 0)
 	{
 		memcpy (pos, format.username.s, format.username.len);
@@ -662,7 +662,7 @@ decode_uri (str* uri, char separator, str * result, str* dst_uri)
 
 		memcpy (pos, format.ip.s, format.ip.len);
 		pos = pos + format.ip.len;
-	
+
 	if (format.port.len > 0)
 	{
 		memcpy (pos, ":", 1);
@@ -677,9 +677,11 @@ decode_uri (str* uri, char separator, str * result, str* dst_uri)
 		memcpy (pos, format.protocol.s, format.protocol.len);
 		pos = pos + format.protocol.len;
 	}
-	
+
 	memcpy (pos, uri->s + format.second, uri->len - format.second);	/* till end: */
-	
+
+	result->s[result->len] = '\0';
+
 	/* dst_uri */
 	if (dst_uri && format.rcv_ip.s){
 		dst_uri->len=4 /* sip: */ + format.rcv_ip.len;

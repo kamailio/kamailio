@@ -1119,6 +1119,12 @@ UUID module for Kamailio.
 sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
 %endif
 
+# on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio.service
+%endif
+
+
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
@@ -1442,6 +1448,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.kemix
 %doc %{_docdir}/kamailio/modules/README.kex
+%doc %{_docdir}/kamailio/modules/README.lrkproxy
 %doc %{_docdir}/kamailio/modules/README.malloc_test
 %doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
@@ -1600,6 +1607,7 @@ fi
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/kemix.so
 %{_libdir}/kamailio/modules/kex.so
+%{_libdir}/kamailio/modules/lrkproxy.so
 %{_libdir}/kamailio/modules/malloc_test.so
 %{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so

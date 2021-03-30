@@ -905,6 +905,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 				goto error;
 			}
 		}
+		if((get_cseq(msg)->method_id)&(METHOD_SUBSCRIBE)) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT|TPS_DBU_TIME)<0) {
+				goto error;
+			}
+		}
 	}
 	return 0;
 
@@ -925,11 +930,6 @@ int tps_response_received(sip_msg_t *msg)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling incoming response\n");
-
-	if(msg->first_line.u.reply.statuscode==100) {
-		/* nothing to do - it should be absorbed */
-		return 0;
-	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));

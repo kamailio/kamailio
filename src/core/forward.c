@@ -408,6 +408,13 @@ int run_check_self_func(str* host, unsigned short port, unsigned short proto)
 int check_self(str* host, unsigned short port, unsigned short proto)
 {
 	int ret = 1;
+
+	if(host==NULL || host->s==NULL || host->len<=0) {
+		/* no host (e.g., tel uri) - not matching myself */
+		LM_DBG("no host value - not matching myself addresses\n");
+		return 0;
+	}
+
 	if (grep_sock_info(host, port, proto)) {
 		goto done;
 	}

@@ -62,18 +62,21 @@
             Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
         </para>
         <para>
-            The path string supports dot delimited notation (e.g. foo.bar.baz), array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
+			The path string supports dot delimited notation (e.g. foo.bar.baz),
+			array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
         </para>
         <para>
             Returns FALSE if the data can not be parsed, TRUE otherwise.
         </para>
         <para>
-            The function can put a string, integer, null, or new json string into destination.
- 	    If the key/path can't be found in the JSON data structure, the pvar is not changed. If it had a previous
+			The function can put a string, integer, null, or new json string into destination.
+			If the key/path can't be found in the JSON data structure, the pvar is not changed.
+			If it had a previous
 	    value, that value remains unchanged.
         </para>
         <para>
-            <emphasis>Note:</emphasis> For JSON-Integer values exceeding the C-Integer boundaries, a String representing the number is returned.
+			<emphasis>Note:</emphasis> For JSON-Integer values exceeding the C-Integer
+			boundaries, a String representing the number is returned.
         </para>
         <example>
         <title><function>jansson_get</function> usage</title>
@@ -98,11 +101,13 @@ xlog("L_INFO", "foo is $var(n)");
             The path string works the same as in jansson_get.
         </para>
         <para>
-            Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array', 'true', 'false', and 'null'  as well as
-            abbreviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
+			Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array',
+			'true', 'false', and 'null'  as well as abbreviated names such as 'int', 'str',
+			and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
         </para>
         <para>
-            <emphasis>Note:</emphasis> If you want to insert a JSON-Integer value exceeding the C-Integer boundaries (e.g. C-type long), the a the number can be provided as a string.
+			<emphasis>Note:</emphasis> If you want to insert a JSON-Integer value exceeding
+			the C-Integer boundaries (e.g. C-type long), then the number can be provided as a string.
         </para>
         <example>
         <title><function>jansson_set</function> usage</title>
@@ -134,10 +139,12 @@ jansson_set("str", "myobj.foo", "baz", "$var(myjson)");
             <function moreinfo="none">jansson_append(type, key/path, value, result)</function>
         </title>
         <para>
-            Like jansson_set but can be used to append to arrays. It can also be used to combine two json objects.
+			Like jansson_set but can be used to append to arrays. It can also be used to combine
+			two json objects.
         </para>
         <para>
-            Note that when appending a json object to another json object, if there is a key that is shared between the two objects, that value will be overwritten by the new object.
+			Note that when appending a json object to another json object, if there is a key
+			that is shared between the two objects, that value will be overwritten by the new object.
         </para>
         <example>
         <title><function>jansson_append</function> usage</title>
@@ -256,7 +263,9 @@ jansson_xencode("a", "$var(js)");
             Copy field 'field_name' from json object 'src' and store it in pvar 'dst'.
         </para>
         <para>
-            <emphasis>This function is deprecated</emphasis> but kept for backwards compatibility. Right now it is just a wrapper around <function>jansson_get</function>, and its functionality is the same.
+			<emphasis>This function is deprecated</emphasis> but kept for backwards compatibility.
+			Right now it is just a wrapper around <function>jansson_get</function>, and its
+			functionality is the same.
         </para>
         <example>
         <title><function>jansson_get_field</function> usage</title>

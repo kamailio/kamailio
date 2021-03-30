@@ -38,6 +38,7 @@
 
 
 extern int pg_bytea_output_escape;
+extern pg_con_param_t* pg_con_param_list;
 
 /*!
  * \brief Create a new connection
@@ -52,9 +53,9 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	struct pg_con *ptr;
 	char *ports;
 	int i = 0;
-	const char *keywords[10], *values[10];
-	char to[16];
+	const char *keywords[32], *values[32];
 	PGresult *res = NULL;
+	pg_con_param_t* pg_con_param;
 
 	LM_DBG("db_id = %p\n", id);
 
@@ -75,7 +76,6 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 
 	memset(keywords, 0, (sizeof(char *) * 10));
 	memset(values, 0, (sizeof(char *) * 10));
-	memset(to, 0, (sizeof(char) * 16));
 
 	if(id->port) {
 		ports = int2str(id->port, 0);
@@ -97,10 +97,13 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	values[i++] = id->username;
 	keywords[i] = "password";
 	values[i++] = id->password;
-	if(pg_timeout > 0) {
-		snprintf(to, sizeof(to) - 1, "%d", pg_timeout + 3);
-		keywords[i] = "connect_timeout";
-		values[i++] = to;
+
+	/* add other connection parameters */
+	pg_con_param = pg_con_param_list;
+	while(pg_con_param){
+		keywords[i] = pg_con_param->name;
+		values[i++] = pg_con_param->value;
+		pg_con_param = pg_con_param->next;
 	}
 
 	keywords[i] = values[i] = NULL;

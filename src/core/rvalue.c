@@ -527,6 +527,10 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_CONCAT_OP:
 		case RVE_STR_OP:
 			return RV_STR;
+		case RVE_SELVALEXP_OP:
+			break;
+		case RVE_SELVALOPT_OP:
+			return rve_guess_type(rve->left.rve);
 		case RVE_NONE_OP:
 			break;
 	}
@@ -593,6 +597,8 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			return rve_is_constant(rve->left.rve) &&
 					rve_is_constant(rve->right.rve);
 		case RVE_NONE_OP:
@@ -658,6 +664,8 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			return 0;
 		case RVE_NONE_OP:
 			return -1;
@@ -690,6 +698,10 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 
 	switch(rve->op){
 		case RVE_RVAL_OP:
+			*type=rve_guess_type(rve);
+			return 1;
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			*type=rve_guess_type(rve);
 			return 1;
 		case RVE_UMINUS_OP:
@@ -2141,6 +2153,13 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			ret=rval_int_strop1(h, msg, res, rve->op, rv1, 0);
 			rval_destroy(rv1);
 			break;
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
+			LM_BUG("invalid selval int expression operation %d (%d,%d-%d,%d)\n",
+					rve->op, rve->fpos.s_line, rve->fpos.s_col,
+					rve->fpos.e_line, rve->fpos.e_col);
+			ret=-1;
+			break;
 		case RVE_NONE_OP:
 		/*default:*/
 			LM_BUG("invalid rval int expression operation %d (%d,%d-%d,%d)\n",
@@ -2288,6 +2307,12 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 			*res_rv=rval_expr_eval(h, msg, rve);
 			ret=-(*res_rv==0);
 			break;
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
+			LM_BUG("invalid rval selval expression operation %d (%d,%d-%d,%d)\n",
+					rve->op, rve->fpos.s_line, rve->fpos.s_col,
+					rve->fpos.e_line, rve->fpos.e_col);
+			goto error;
 		case RVE_NONE_OP:
 		/*default:*/
 			LM_BUG("invalid rval expression operation %d (%d,%d-%d,%d)\n",
@@ -2477,6 +2502,59 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 				goto error;
 			}
 			ret=rval_convert(h, msg, RV_STR, rv1, 0);
+			break;
+		case RVE_SELVALEXP_OP:
+			/* operator forces integer type */
+			r=rval_expr_eval_int(h, msg, &i, rve->left.rve);
+			if (unlikely(r!=0)){
+				LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
+						rve->fpos.s_line, rve->fpos.s_col,
+						rve->fpos.e_line, rve->fpos.e_col);
+				goto error;
+			}
+			if(i>0) {
+				rv1=rval_expr_eval(h, msg, rve->right.rve->left.rve);
+			} else {
+				rv1=rval_expr_eval(h, msg, rve->right.rve->right.rve);
+			}
+			if (unlikely(rv1==0)){
+				LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
+						rve->left.rve->fpos.s_line, rve->left.rve->fpos.s_col,
+						rve->left.rve->fpos.e_line, rve->left.rve->fpos.e_col);
+				goto error;
+			}
+			rval_cache_init(&c1);
+			type=rval_get_btype(h, msg, rv1, &c1);
+			switch(type){
+				case RV_INT:
+					r=rval_get_int(h, msg, &i, rv1, &c1);
+					rval_get_int_handle_ret(r, "rval expression left side "
+												"conversion to int failed",
+											rve);
+					if (unlikely(r<0)){
+						rval_cache_clean(&c1);
+						goto error;
+					}
+					v.l=i;
+					ret=rval_new(RV_INT, &v, 0);
+					if (unlikely(ret==0)){
+						rval_cache_clean(&c1);
+						LM_ERR("rv eval int expression: out of memory\n");
+						goto error;
+					}
+					break;
+				case RV_STR:
+				case RV_NONE:
+					ret=rval_convert(h, msg, RV_STR, rv1, 0);
+					break;
+				default:
+					LM_BUG("rv unsupported basic type %d (%d,%d-%d,%d)\n", type,
+							rve->fpos.s_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.e_col);
+			}
+			rval_cache_clean(&c1);
+			break;
+		case RVE_SELVALOPT_OP:
 			break;
 		case RVE_NONE_OP:
 		/*default:*/
@@ -2673,6 +2751,8 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_STRDIFF_OP:
 		case RVE_MATCH_OP:
 		case RVE_CONCAT_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			break;
 		default:
 			LM_BUG("unsupported operator %d\n", op);
@@ -2742,6 +2822,8 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
 		case RVE_MATCH_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			return 0;
 	}
 	return 0;
@@ -2796,6 +2878,8 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_LTE_OP:
 		case RVE_CONCAT_OP:
 		case RVE_MATCH_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			return 0;
 		case RVE_DIFF_OP:
 		case RVE_EQ_OP:
@@ -3847,6 +3931,8 @@ int fix_rval_expr(void* p)
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
 		case RVE_CONCAT_OP:
+		case RVE_SELVALEXP_OP:
+		case RVE_SELVALOPT_OP:
 			ret=fix_rval_expr((void*)rve->left.rve);
 			if (ret<0) goto error;
 			ret=fix_rval_expr((void*)rve->right.rve);

@@ -131,9 +131,9 @@ typedef struct _str_list_t_slot {
     struct _str_list_t_slot *prev, *next;
 } str_list_slot_t;
 
-typedef struct {
+typedef struct str_htlist {
     str_list_slot_t *head, *tail;
-} str_list_t;
+} str_htlist_t;
 
 #define str_list_t_free(x,mem) \
 do{\
@@ -163,7 +163,7 @@ typedef struct {
 
 typedef struct {
     str *application_server;
-    str_list_t application_provided_called_party_address;
+    str_htlist_t application_provided_called_party_address;
 } as_info_t;
 
 typedef struct _as_info_list_t_slot {
@@ -194,7 +194,7 @@ do{\
 #define as_info_list_t_copy(dst,src,mem) \
 do {\
 	str_dup_ptr_ptr((dst)->info.application_server,(src)->info.application_server,mem);\
-	WL_DUP_ALL(&((dst)->info.application_provided_called_party_address),&((src)->info.application_provided_called_party_address),str_list_t,mem);\
+	WL_DUP_ALL(&((dst)->info.application_provided_called_party_address),&((src)->info.application_provided_called_party_address),str_htlist_t,mem);\
 } while(0)
 
 typedef struct {
@@ -268,9 +268,9 @@ typedef struct {
     str *user_session_id;
     str *outgoing_session_id;
 
-    str_list_t calling_party_address;
+    str_htlist_t calling_party_address;
     str *called_party_address;
-    str_list_t called_asserted_identity;
+    str_htlist_t called_asserted_identity;
     str *requested_party_address;
     str *access_network_info;
     str *app_provided_party;

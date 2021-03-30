@@ -87,7 +87,8 @@ int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode)
 		return -1;
 	}
 	return STR_EQ(node->uri.host, cmpnode->uri.host)
-		   && STR_EQ(node->uri.port, cmpnode->uri.port);
+		   && STR_EQ(node->uri.port, cmpnode->uri.port)
+		   && (node->uri.proto == cmpnode->uri.proto);
 }
 
 /**
@@ -397,8 +398,10 @@ int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
  */
 int build_node_str(dmq_node_t *node, char *buf, int buflen)
 {
-	/* sip:host:port;status=[status] */
+	/* sip:host:port;protocol=abcd;status=[status] */
 	int len = 0;
+	str sproto = STR_NULL;
+
 	if(buflen < node->orig_uri.len + 32) {
 		LM_ERR("no more space left for node string\n");
 		return -1;
@@ -411,6 +414,18 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += 1;
 	memcpy(buf + len, node->uri.port.s, node->uri.port.len);
 	len += node->uri.port.len;
+	if(node->uri.proto!=PROTO_NONE && node->uri.proto!=PROTO_UDP
+			&& node->uri.proto!=PROTO_OTHER) {
+		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto)<0) {
+			LM_WARN("unknown transport protocol - fall back to udp\n");
+			sproto.s = "udp";
+			sproto.len = 3;
+		}
+		memcpy(buf + len, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		len += TRANSPORT_PARAM_LEN;
+		memcpy(buf + len, sproto.s, sproto.len);
+		len += sproto.len;
+	}
 	memcpy(buf + len, ";", 1);
 	len += 1;
 	memcpy(buf + len, "status=", 7);

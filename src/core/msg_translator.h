@@ -49,6 +49,7 @@
 #define BUILD_NO_LOCAL_VIA		(1<<0)
 #define BUILD_NO_VIA1_UPDATE	(1<<1)
 #define BUILD_NO_PATH			(1<<2)
+#define BUILD_NEW_LOCAL_VIA		(1<<3)
 #define BUILD_IN_SHM			(1<<7)
 
 #include "parser/msg_parser.h"

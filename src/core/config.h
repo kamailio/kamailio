@@ -45,6 +45,7 @@
 #define TLS_PKEY_FILE "cert.pem" 	/*!< The certificate private key file */
 #define TLS_CERT_FILE "cert.pem"	/*!< The certificate file */
 #define TLS_CA_FILE 0			/*!< no CA list file by default */
+#define TLS_CA_PATH 0			/*!< no CA directory path by default */
 #define TLS_CRL_FILE 0 /*!< no CRL by default */
 
 #define CHILD_NO    8			/*!< default number of child processes started */
@@ -111,7 +112,10 @@
 #define COMP_PARAM ";comp="
 #define COMP_PARAM_LEN (sizeof(COMP_PARAM)-1)
 
-#define SOCKNAME_PARAM ";sn="
+#define SOCKNAME_ATTR "sn"
+#define SOCKNAME_ATTR_LEN (sizeof(SOCKNAME_ATTR)-1)
+
+#define SOCKNAME_PARAM ";" SOCKNAME_ATTR "="
 #define SOCKNAME_PARAM_LEN (sizeof(SOCKNAME_PARAM)-1)
 
 #define SIGCOMP_NAME "sigcomp"

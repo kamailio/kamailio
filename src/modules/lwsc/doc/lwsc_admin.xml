@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a websocket client implementation to interact with
+		external systems, similar to http client. It is not for routing SIP traffic.
+	</para>
+	<para>
+		It relies on libwebsockets (tested with v3.1.0) library (https://libwebsockets.org/).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libwebsockets</emphasis> - probably v3.1.0 or newer.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="lwsc.p.protocol">
+		<title><varname>protocol</varname> (str)</title>
+		<para>
+			The websocket sub-protocol.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "kmsg".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>protocol</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lwsc", "protocol", "ksr")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="lwsc.p.timeout_init">
+		<title><varname>timeout_init</varname> (int)</title>
+		<para>
+			The interval in microseconds to wait for websocket connection to
+			be initialized.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2000000 (2 seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_init</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lwsc", "timeout_init", 4000000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="lwsc.p.timeout_read">
+		<title><varname>timeout_read</varname> (int)</title>
+		<para>
+			The interval in microseconds to wait for the response of the
+			lwsc_request() group of functions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2000000 (2 seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_read</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lwsc", "timeout_init", 1000000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="lwsc.p.verbosity">
+		<title><varname>verbosity</varname> (int)</title>
+		<para>
+			Control the verbosity of debug messages on libwebsockets events,
+			higher value means more debug messages. It has to be a positive
+			number, currently 2 or higher results in maximum verbosity.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>verbosity</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lwsc", "verbosity", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="lwsc.f.lwsc_notify">
+	    <title>
+		<function moreinfo="none">lwsc_notify(wsurl, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl. No response
+		is expected. Transmission is not guaranteed (e.g., cannot connect
+		to target).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_notify</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_notify("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="lwsc.f.lwsc_notify_proto">
+	    <title>
+		<function moreinfo="none">lwsc_notify_proto(wsurl, wsproto, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl, providing
+		websocket protocol. No response is expected. Transmission is not
+		guaranteed (e.g., cannot connect to target).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			wsproto - websocket protocol
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_notify_proto</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_notify_proto("ws://10.1.1.10:8080/log", "kmsg"
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="lwsc.f.lwsc_request">
+	    <title>
+		<function moreinfo="none">lwsc_request(wsurl, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl, a response
+		is expected and made available in $lwsc(rdata).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_request("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;srcip=$si");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="lwsc.f.lwsc_request_proto">
+	    <title>
+		<function moreinfo="none">lwsc_request_proto(wsurl, wsproto, data)</function>
+	    </title>
+	    <para>
+		Send data via websockets to the address specified by wsurl, providing
+		websocket protocol. A response is expected and made available in
+		$lwsc(rdata).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			wsurl - websocket url
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			wsproto - websocket protocol
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			data - what to send
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lwsc_request_proto</function> usage</title>
+		<programlisting format="linespecific">
+...
+    jwt_request_proto("ws://10.1.1.10:8080/log", "kmsg",
+        "caller=$fU;callee=$tU;srcip=$si");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Variables</title>
+	<section id="lwsc.v.lwsc">
+	    <title>
+		<function moreinfo="none">$lwsc(key)</function>
+	    </title>
+	    <para>
+	    Get the values and attributes after using LWSC functions.
+		</para>
+		<para>
+		The key can be:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			rdata - the response retrieved after lwsc_request().
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			status - the status of verification after a failed jwt_verify().
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>$lwsc(name)</function> usage</title>
+		<programlisting format="linespecific">
+...
+  jwt_request("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;srcip=$si");
+  xinfo("jwt is: $lwsc(rdata)");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+</chapter>

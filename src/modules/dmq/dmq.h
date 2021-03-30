@@ -27,6 +27,7 @@
 #include "../../core/dprint.h"
 #include "../../core/error.h"
 #include "../../core/sr_module.h"
+#include "../../core/str_list.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../modules/sl/sl.h"
@@ -45,9 +46,8 @@ extern dmq_peer_list_t *dmq_peer_list;
 extern str dmq_request_method;
 extern str dmq_server_socket;
 extern sip_uri_t dmq_server_uri;
-extern str dmq_notification_address;
+extern str_list_t *dmq_notification_address_list;
 extern int dmq_multi_notify;
-extern sip_uri_t dmq_notification_uri;
 /* sl and tm */
 extern struct tm_binds tmb;
 extern sl_api_t slb;

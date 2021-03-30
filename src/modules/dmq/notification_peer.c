@@ -278,9 +278,9 @@ int get_dmq_host_list(
 }
 
 /**
- * @brief add a server node and notify it
+ * @brief add one or more server node(s) and notify it
  */
-dmq_node_t *add_server_and_notify(str *paddr)
+dmq_node_t *add_server_and_notify(str_list_t *server_list)
 {
 	char puri_data[MAXDMQHOSTS * (MAXDMQURILEN + 1)];
 	char *puri_list[MAXDMQHOSTS];
@@ -296,7 +296,12 @@ dmq_node_t *add_server_and_notify(str *paddr)
 	**********/
 
 	if(!dmq_multi_notify) {
-		pfirst = add_dmq_node(dmq_node_list, paddr);
+		while (&server_list->s != NULL) {
+			LM_DBG("adding notification node %.*s\n",
+				server_list->s.len, server_list->s.s);
+			pfirst = add_dmq_node(dmq_node_list, &server_list->s);
+			server_list = server_list->next;
+		}
 	} else {
 		/**********
 		* o init data area
@@ -307,7 +312,7 @@ dmq_node_t *add_server_and_notify(str *paddr)
 		for(index = 0; index < MAXDMQHOSTS; index++) {
 			puri_list[index] = &puri_data[index * (MAXDMQURILEN + 1)];
 		}
-		if(parse_uri(paddr->s, paddr->len, puri) < 0) {
+		if(parse_uri(server_list->s.s, server_list->s.len, puri) < 0) {
 			/* this is supposed to be good but just in case... */
 			LM_ERR("add_server_and_notify address invalid\n");
 			return 0;
@@ -599,14 +604,19 @@ int notification_resp_callback_f(
 			run_init_callbacks();
 		}
 	} else if(code == 408) {
-		if(STR_EQ(node->orig_uri, dmq_notification_address)) {
-			LM_ERR("not deleting notification_peer\n");
-			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);	
-			return 0;
-		}
+		/* TODO this probably do not work for dmq_multi_notify */
+		while (&dmq_notification_address_list->s != NULL) {
+			if(STR_EQ(node->orig_uri, dmq_notification_address_list->s)) {
+				LM_ERR("not deleting notification peer [%.*s]\n",
+					STR_FMT(&dmq_notification_address_list->s));
+				update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
+				return 0;
+			}
+			dmq_notification_address_list = dmq_notification_address_list->next;
+               }
 		if (node->status == DMQ_NODE_DISABLED) {
 			/* deleting node - the server did not respond */
-			LM_ERR("deleting server %.*s because of failed request\n",
+			LM_ERR("deleting server node %.*s because of failed request\n",
 				STR_FMT(&node->orig_uri));
 			ret = del_dmq_node(dmq_node_list, node);
 			LM_DBG("del_dmq_node returned %d\n", ret);

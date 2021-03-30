@@ -69,6 +69,7 @@
 #include "ppcfg.h"
 #include "pvapi.h"
 #include "config.h"
+#include "daemonize.h"
 #include "cfg_core.h"
 #include "cfg/cfg.h"
 #ifdef CORE_TLS
@@ -149,6 +150,7 @@ static pv_spec_t* pv_spec = NULL;
 static struct action *mod_func_action = NULL;
 static struct lvalue* lval_tmp = NULL;
 static struct rvalue* rval_tmp = NULL;
+static struct rval_expr* rve_tmp = NULL;
 
 static void warn(char* s, ...);
 static void warn_at(struct cfg_pos* pos, char* s, ...);
@@ -496,6 +498,9 @@ extern char *default_routename;
 %token VERSION_TABLE_CFG
 %token VERBOSE_STARTUP
 %token ROUTE_LOCKS_SIZE
+%token WAIT_WORKER1_MODE
+%token WAIT_WORKER1_TIME
+%token WAIT_WORKER1_USLEEP
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token KEMI
@@ -560,6 +565,7 @@ extern char *default_routename;
 /* no precedence, they use () */
 %token STRLEN
 %token STREMPTY
+%token SELVAL
 
 /* values */
 %token <intval> NUMBER
@@ -1699,6 +1705,12 @@ assign_stm:
 	| VERBOSE_STARTUP EQUAL error { yyerror("boolean value expected"); }
 	| ROUTE_LOCKS_SIZE EQUAL NUMBER { ksr_route_locks_size=$3; }
 	| ROUTE_LOCKS_SIZE EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_MODE EQUAL NUMBER { ksr_wait_worker1_mode=$3; }
+	| WAIT_WORKER1_MODE EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_TIME EQUAL NUMBER { ksr_wait_worker1_time=$3; }
+	| WAIT_WORKER1_TIME EQUAL error { yyerror("number expected"); }
+	| WAIT_WORKER1_USLEEP EQUAL NUMBER { ksr_wait_worker1_usleep=$3; }
+	| WAIT_WORKER1_USLEEP EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
@@ -3031,6 +3043,14 @@ rval_expr: rval						{ $$=$1;
 		| STRLEN LPAREN rval_expr RPAREN { $$=mk_rve1(RVE_STRLEN_OP, $3);}
 		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
 		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
+		| SELVAL LPAREN rval_expr COMMA rval_expr COMMA rval_expr RPAREN {
+				rve_tmp=mk_rve2(RVE_SELVALOPT_OP, $5, $7);
+				if(rve_tmp == NULL) {
+					$$=0;
+					yyerror("faild to create tenary target expression");
+				}
+				$$=mk_rve2(RVE_SELVALEXP_OP, $3, rve_tmp);
+		}
 		| rve_un_op error %prec UNARY 		{ $$=0; yyerror("bad expression"); }
 		| INTCAST error					{ $$=0; yyerror("bad expression"); }
 		| STRCAST error					{ $$=0; yyerror("bad expression"); }
@@ -3049,6 +3069,7 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr LOG_OR error		{ $$=0; yyerror("bad expression"); }
 		| STRLEN LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| STREMPTY LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
+		| SELVAL LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| DEFINED error					{ $$=0; yyerror("bad expression"); }
 		;
 
@@ -3510,7 +3531,7 @@ cmd:
 		if (mod_func_action != NULL) {
 			LM_ERR("function used inside params of another function: %s\n", $1);
 			yyerror("use of function execution inside params not allowed\n");
-			exit(-1);
+			ksr_exit(-1);
 		}
 		mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0);
 		} LPAREN func_params RPAREN	{
@@ -3530,7 +3551,7 @@ cmd:
 		}else{
 			if (mod_func_action && mod_f_params_pre_fixup(mod_func_action)<0) {
 				/* error messages are printed inside the function */
-				free_mod_func_action(mod_func_action);
+				/* free_mod_func_action(mod_func_action); */
 				mod_func_action = 0;
 				YYERROR;
 			}

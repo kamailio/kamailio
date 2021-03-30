@@ -76,6 +76,9 @@ enum rval_expr_op{
 	RVE_STREQ_OP,  /**< 2 members, string == , returns left == right (bool)*/
 	RVE_STRDIFF_OP,/**< 2 members, string != , returns left != right (bool)*/
 	RVE_MATCH_OP,  /**< 2 members, string ~),  returns left matches re(right) */
+	/* tenary expression - (x)?y:z */
+	RVE_SELVALEXP_OP,  /**< selval expresion - selval(exp, ...)*/
+	RVE_SELVALOPT_OP,  /**< selval options - selval(exp, opt1, opt2)*/
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /**< one member, returns is_defined(val) (bool) */
 	RVE_NOTDEFINED_OP, /**< one member, returns is_not_defined(val) (bool) */

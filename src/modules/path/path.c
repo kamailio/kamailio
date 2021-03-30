@@ -57,6 +57,7 @@ const static char *proto_strings[] = {
 };
 
 extern int path_sockname_mode;
+extern str path_received_name;
 
 static char *path_strzdup(char *src, int len)
 {
@@ -105,8 +106,9 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 	struct hdr_field *hf;
 
 	/* maximum possible length of suffix */
-	suffix_len = sizeof(";lr;r2=on;received=sip::12345%3Btransport%3Dsctp;ob;>\r\n")
-			+ IP_ADDR_MAX_STR_SIZE + 2 + (add_params ? add_params->len : 0) + 1;
+	suffix_len = sizeof(";lr;r2=on;=sip::12345%3Btransport%3Dsctp;ob;>\r\n")
+			+ IP_ADDR_MAX_STR_SIZE + 2 + (add_params ? add_params->len : 0)
+			+ path_received_name.len + 1;
 
 	cp = suffix = pkg_malloc(suffix_len);
 	if (!suffix) {
@@ -125,21 +127,21 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 				proto_str = NULL;
 			}
 			if(_m->rcv.src_ip.af==AF_INET6) {
-				cp += sprintf(cp, ";received=sip:[%s]:%hu%s",
+				cp += sprintf(cp, ";%s=sip:[%s]:%hu%s", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip),
 						_m->rcv.src_port, proto_str ? : "");
 			} else {
-				cp += sprintf(cp, ";received=sip:%s:%hu%s"
-						, ip_addr2a(&_m->rcv.src_ip),
+				cp += sprintf(cp, ";%s=sip:%s:%hu%s", path_received_name.s,
+						ip_addr2a(&_m->rcv.src_ip),
 						_m->rcv.src_port, proto_str ? : "");
 			}
 		} else {
 			if(_m->rcv.src_ip.af==AF_INET6) {
-				cp += sprintf(cp, ";received=[%s]~%hu~%d",
+				cp += sprintf(cp, ";%s=[%s]~%hu~%d", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip),
 						_m->rcv.src_port, (int)_m->rcv.proto);
 			} else {
-				cp += sprintf(cp, ";received=%s~%hu~%d",
+				cp += sprintf(cp, ";%s=%s~%hu~%d", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip),
 						_m->rcv.src_port, (int)_m->rcv.proto);
 			}
@@ -375,35 +377,58 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 {
 	param_hooks_t hooks;
 	param_t *params;
+	param_t *it;
 	static char dst_uri_buf[MAX_URI_SIZE];
 	static str dst_uri;
 	char *p;
 	int n;
 	int nproto;
 	str sproto;
+	str rcvuri = STR_NULL;
 
-	if (parse_params(r_param, CLASS_CONTACT, &hooks, &params) != 0) {
-		LM_ERR("failed to parse route parameters\n");
-		return;
-	}
-
-	if (hooks.contact.received==NULL
-			|| hooks.contact.received->body.len<=0) {
-		LM_DBG("no received parameter in route header\n");
-		free_params(params);
-		return;
+	if((path_received_name.len==8)
+			&& strncmp(path_received_name.s, "received", 8)==0) {
+		if (parse_params(r_param, CLASS_CONTACT, &hooks, &params) != 0) {
+			LM_ERR("failed to parse route parameters\n");
+			return;
+		}
+		if (hooks.contact.received==NULL
+				|| hooks.contact.received->body.len<=0) {
+			LM_DBG("no received parameter in route header\n");
+			free_params(params);
+			return;
+		}
+		rcvuri = hooks.contact.received->body;
+	} else {
+		if (parse_params(r_param, CLASS_ANY, &hooks, &params) != 0) {
+			LM_ERR("failed to parse route parameters\n");
+			return;
+		}
+		for(it=params; it; it=it->next) {
+			if((it->name.len==path_received_name.len)
+					&& strncmp(path_received_name.s, it->name.s,
+						it->name.len)==0) {
+				break;
+			}
+		}
+		if (it==NULL || it->body.len<=0) {
+			LM_DBG("no %s parameter in route header\n", path_received_name.s);
+			free_params(params);
+			return;
+		}
+		rcvuri = it->body;
 	}
 
 	/* 24 => sip:...;transport=sctp */
-	if(hooks.contact.received->body.len + 24 >= MAX_URI_SIZE) {
-		LM_ERR("received uri is too long\n");
+	if(rcvuri.len + 24 >= MAX_URI_SIZE) {
+		LM_ERR("received uri is too long: %d\n", rcvuri.len);
 		goto done;
 	}
 	dst_uri.s = dst_uri_buf;
 	dst_uri.len = MAX_URI_SIZE;
 	if(path_received_format==0) {
 		/* received=sip:...;transport... */
-		if (unescape_user(&(hooks.contact.received->body), &dst_uri) < 0) {
+		if (unescape_user(&rcvuri, &dst_uri) < 0) {
 			LM_ERR("unescaping received failed\n");
 			free_params(params);
 			return;
@@ -411,9 +436,8 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 	} else {
 		/* received=ip~port~proto */
 		memcpy(dst_uri_buf, "sip:", 4);
-		memcpy(dst_uri_buf+4, hooks.contact.received->body.s,
-					hooks.contact.received->body.len);
-		dst_uri_buf[4+hooks.contact.received->body.len] = '\0';
+		memcpy(dst_uri_buf+4, rcvuri.s, rcvuri.len);
+		dst_uri_buf[4+rcvuri.len] = '\0';
 		p = dst_uri_buf + 4;
 		n = 0;
 		while(*p!='\0') {

@@ -97,6 +97,7 @@ Carsten Bock
               3.55. ka_timeout (int)
               3.56. ka_loglevel (int)
               3.57. ka_logmsg (str)
+              3.58. load_rank (int)
 
         4. RPC Commands
 
@@ -201,6 +202,7 @@ Carsten Bock
    1.55. Set ka_timeout parameter
    1.56. ka_loglevel parameter usage
    1.57. ka_logmsg parameter usage
+   1.58. load_rank parameter usage
 
 Chapter 1. Admin Guide
 
@@ -274,6 +276,7 @@ Chapter 1. Admin Guide
         3.55. ka_timeout (int)
         3.56. ka_loglevel (int)
         3.57. ka_logmsg (str)
+        3.58. load_rank (int)
 
    4. RPC Commands
 
@@ -410,6 +413,7 @@ Chapter 1. Admin Guide
    3.55. ka_timeout (int)
    3.56. ka_loglevel (int)
    3.57. ka_logmsg (str)
+   3.58. load_rank (int)
 
 3.1. nat_bflag (int)
 
@@ -1213,6 +1217,18 @@ modparam("usrloc", "ka_loglevel", 1)
    Example 1.57. ka_logmsg parameter usage
 ...
 modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
+...
+
+3.58. load_rank (int)
+
+   Allows to set the rank of the child SIP worker to load the location
+   records.
+
+   Default value is “1” (PROC_SIPINIT).
+
+   Example 1.58. load_rank parameter usage
+...
+modparam("usrloc", "load_rank", 1)
 ...
 
 4. RPC Commands

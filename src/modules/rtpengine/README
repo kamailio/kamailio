@@ -128,6 +128,7 @@ Richard Fuchs
               4.76. mos_average_samples_B_pv (string)
               4.77. control_cmd_tos (integer)
               4.78. hash_algo (integer)
+              4.79. wsapi (string)
 
         5. Functions
 
@@ -244,31 +245,32 @@ Richard Fuchs
    1.76. Set mos_average_roundtrip_leg_B_pv parameter
    1.77. Set mos_average_samples_B_pv parameter
    1.78. Set control_cmd_tos parameter
-   1.79. Set control_cmd_tos parameter
-   1.80. set_rtpengine_set usage
-   1.81. rtpengine_offer usage
-   1.82. rtpengine_answer usage
-   1.83. rtpengine_info usage
-   1.84. rtpengine_delete usage
-   1.85. rtpengine_query usage
-   1.86. rtpengine_manage usage
-   1.87. start_recording usage
-   1.88. stop_recording usage
-   1.89. block_dtmf usage
-   1.90. unblock_dtmf usage
-   1.91. block_media usage
-   1.92. unblock_media usage
-   1.93. start_forwarding usage
-   1.94. stop_forwarding usage
-   1.95. play_media usage
-   1.96. stop_media usage
-   1.97. play_dtmf usage
-   1.98. $rtpstat Usage
-   1.99. rtpengine.reload usage
-   1.100. rtpengine.enable usage
-   1.101. rtpengine.show usage
-   1.102. rtpengine.ping usage
-   1.103. rtpengine.get_hash_total usage
+   1.79. Set hash_algo parameter
+   1.80. Set wsapi parameter
+   1.81. set_rtpengine_set usage
+   1.82. rtpengine_offer usage
+   1.83. rtpengine_answer usage
+   1.84. rtpengine_info usage
+   1.85. rtpengine_delete usage
+   1.86. rtpengine_query usage
+   1.87. rtpengine_manage usage
+   1.88. start_recording usage
+   1.89. stop_recording usage
+   1.90. block_dtmf usage
+   1.91. unblock_dtmf usage
+   1.92. block_media usage
+   1.93. unblock_media usage
+   1.94. start_forwarding usage
+   1.95. stop_forwarding usage
+   1.96. play_media usage
+   1.97. stop_media usage
+   1.98. play_dtmf usage
+   1.99. $rtpstat Usage
+   1.100. rtpengine.reload usage
+   1.101. rtpengine.enable usage
+   1.102. rtpengine.show usage
+   1.103. rtpengine.ping usage
+   1.104. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -361,6 +363,7 @@ Chapter 1. Admin Guide
         4.76. mos_average_samples_B_pv (string)
         4.77. control_cmd_tos (integer)
         4.78. hash_algo (integer)
+        4.79. wsapi (string)
 
    5. Functions
 
@@ -418,7 +421,9 @@ Chapter 1. Admin Guide
    module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
-   the weight of each RTPEngine from the set.
+   the weight of each RTPEngine from the set. The default weight is 1, if
+   another RTPEngine should be used twice as often as the first one, one
+   would specify the weight 2 for this server, for example.
 
    The selection of the set is done from script prior using
    rtpengine_delete(), rtpengine_offer() or rtpengine_answer() functions -
@@ -560,11 +565,12 @@ Chapter 1. Admin Guide
    4.76. mos_average_samples_B_pv (string)
    4.77. control_cmd_tos (integer)
    4.78. hash_algo (integer)
+   4.79. wsapi (string)
 
 4.1. rtpengine_sock (string)
 
    Definition of socket(s) used to connect to (a set) RTP proxy. It may
-   specify a UNIX socket or an IPv4/IPv6 UDP socket.
+   specify an IPv4/IPv6 UDP socket or a websocket URI.
 
    Default value is “NONE” (disabled).
 
@@ -572,6 +578,12 @@ Chapter 1. Admin Guide
 ...
 # single rtproxy
 modparam("rtpengine", "rtpengine_sock", "udp:localhost:12221")
+# IPv6 UDP
+modparam("rtpengine", "rtpengine_sock", "udp6:localhost:12221")
+# websocket
+modparam("rtpengine", "rtpengine_sock", "ws://localhost:12221/")
+# websocket with TLS
+modparam("rtpengine", "rtpengine_sock", "wss://localhost:12221/")
 # multiple rtproxies for LB with weights (missing weight defaults to 1)
 modparam("rtpengine", "rtpengine_sock",
         "udp:localhost:12221=2 udp:localhost:12222=1")
@@ -1962,13 +1974,24 @@ modparam("rtpengine", "control_cmd_tos", 144)
 
    The values not falling into the range “0-2” are ignored.
 
-   Example 1.79. Set control_cmd_tos parameter
+   Example 1.79. Set hash_algo parameter
 ...
 ### use SHA1 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 1)
 
 ### use CRC32 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 2)
+...
+
+4.79. wsapi (string)
+
+   Configure a backend API for websocket usage. Currently the only
+   supported setting is “lwsc” (libwebsockets). If unset, then the
+   websocket protocol cannot be used.
+
+   Example 1.80. Set wsapi parameter
+...
+modparam("rtpengine", "wsapi", "lwsc")
 ...
 
 5. Functions
@@ -2014,7 +2037,7 @@ modparam("rtpengine", "hash_algo", 2)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.80. set_rtpengine_set usage
+   Example 1.81. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -2272,7 +2295,7 @@ rtpengine_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.81. rtpengine_offer usage
+   Example 1.82. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -2324,7 +2347,7 @@ ranscode=PCMA"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.82. rtpengine_answer usage
+   Example 1.83. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -2342,7 +2365,7 @@ ranscode=PCMA"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.83. rtpengine_info usage
+   Example 1.84. rtpengine_info usage
 ...
 rtpengine_info();
 ...
@@ -2357,7 +2380,7 @@ rtpengine_info();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.84. rtpengine_delete usage
+   Example 1.85. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -2373,7 +2396,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.85. rtpengine_query usage
+   Example 1.86. rtpengine_query usage
 ...
 rtpengine_query();
 ...
@@ -2409,7 +2432,7 @@ rtpengine_query();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.86. rtpengine_manage usage
+   Example 1.87. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -2428,7 +2451,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.87. start_recording usage
+   Example 1.88. start_recording usage
 ...
 start_recording();
 ...
@@ -2447,7 +2470,7 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.88. stop_recording usage
+   Example 1.89. stop_recording usage
 ...
 stop_recording();
 ...
@@ -2471,7 +2494,7 @@ stop_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.89. block_dtmf usage
+   Example 1.90. block_dtmf usage
 ...
 block_dtmf();
 block_dtmf("directional");
@@ -2487,7 +2510,7 @@ block_dtmf("address=192.168.42.42");
    unblocking DTMF events for the entire call (i.e. no flags given) will
    not remove these blocks. The flag “all” can be used to achieve this.
 
-   Example 1.90. unblock_dtmf usage
+   Example 1.91. unblock_dtmf usage
 ...
 unblock_dtmf();
 unblock_dtmf("all");
@@ -2501,7 +2524,7 @@ unblock_dtmf("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.91. block_media usage
+   Example 1.92. block_media usage
 ...
 block_media();
 block_media("directional");
@@ -2515,7 +2538,7 @@ block_media("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.92. unblock_media usage
+   Example 1.93. unblock_media usage
 ...
 unblock_media();
 unblock_media("all");
@@ -2530,7 +2553,7 @@ unblock_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.93. start_forwarding usage
+   Example 1.94. start_forwarding usage
 ...
 start_forwarding();
 start_forwarding("directional");
@@ -2544,7 +2567,7 @@ start_forwarding("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.94. stop_forwarding usage
+   Example 1.95. stop_forwarding usage
 ...
 stop_forwarding();
 stop_forwarding("all");
@@ -2563,7 +2586,7 @@ stop_forwarding("all");
    the duration of the media being played, expressed in milliseconds. If
    the length of the media could not be determined, it's set to -1.
 
-   Example 1.95. play_media usage
+   Example 1.96. play_media usage
 ...
 play_media("file=/use/share/media/hello.wav");
 play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
@@ -2575,7 +2598,7 @@ play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
    playback is automatically stopped when the end of the media file is
    reached, so this function is only useful to prematurely stop playback.
 
-   Example 1.96. stop_media usage
+   Example 1.97. stop_media usage
 ...
 stop_media();
 stop_media("from-tag=5yqaeriguhxcikxj");
@@ -2606,7 +2629,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    alternative pause length can be given through the “pause” option,
    between 100 and 5000 ms.
 
-   Example 1.97. play_dtmf usage
+   Example 1.98. play_dtmf usage
 ...
 play_dtmf("from-tag=5yqaeriguhxcikxj code=#");
 play_dtmf("code=1 volume=5 duration=300 pause=150");
@@ -2623,7 +2646,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.98. $rtpstat Usage
+   Example 1.99. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -2646,7 +2669,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.99.  rtpengine.reload usage
+   Example 1.100.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2677,7 +2700,7 @@ $ kamcmd rtpengine.reload
    NOTE: If you specify an IPv6 RTP, the proxy url must be prefixed with
    :: to escape the :: from the IPv6 address. See the example below.
 
-   Example 1.100.  rtpengine.enable usage
+   Example 1.101.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2700,7 +2723,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.101.  rtpengine.show usage
+   Example 1.102.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2720,7 +2743,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.102.  rtpengine.ping usage
+   Example 1.103.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2732,7 +2755,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.103.  rtpengine.get_hash_total usage
+   Example 1.104.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...

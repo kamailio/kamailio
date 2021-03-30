@@ -315,10 +315,10 @@ static inline int t_run_local_req(
 	if((lreq.force_send_socket != uac_r->dialog->send_sock)
 			|| (lreq.msg_flags&(FL_ADD_LOCAL_RPORT|FL_ADD_SRVID
 					|FL_ADD_XAVP_VIA_PARAMS|FL_USE_XAVP_VIA_FIELDS))) {
-		LM_DBG("local Via update - socket: [%.*s] - msg-flags: %u",
-				lreq.force_send_socket->address_str.len,
-				lreq.force_send_socket->address_str.s,
-				lreq.msg_flags);
+		LM_DBG("local Via update - new socket: [%.*s] - msg-flags: %u",
+			(lreq.force_send_socket)?lreq.force_send_socket->address_str.len:4,
+			(lreq.force_send_socket)?lreq.force_send_socket->address_str.s:"none",
+			lreq.msg_flags);
 
 		/* rebuild local Via - remove previous value
 			* and add the one for the new send socket */
@@ -335,13 +335,16 @@ static inline int t_run_local_req(
 		lreq.add_to_branch_len = lreq.via1->branch->value.len;
 
 		/* update also info about new destination and send sock */
-		uac_r->dialog->send_sock=lreq.force_send_socket;
-		request->dst.send_sock = lreq.force_send_socket;
-		request->dst.proto = lreq.force_send_socket->proto;
+		if(lreq.force_send_socket) {
+			uac_r->dialog->send_sock=lreq.force_send_socket;
+			request->dst.send_sock = lreq.force_send_socket;
+			request->dst.proto = lreq.force_send_socket->proto;
+		}
 
 		LM_DBG("apply new updates with Via to sip msg\n");
 		buf1 = build_req_buf_from_sip_req(&lreq,
-				(unsigned int*)&buf_len1, &request->dst, BUILD_IN_SHM);
+				(unsigned int*)&buf_len1, &request->dst,
+				BUILD_NEW_LOCAL_VIA|BUILD_IN_SHM);
 		if (likely(buf1)){
 			shm_free(*buf);
 			*buf = buf1;

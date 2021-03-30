@@ -37,6 +37,7 @@
 #include "../../core/pt.h"
 #include "../../core/hashes.h"
 #include "../../core/mod_fix.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 
@@ -59,10 +60,11 @@ str dmq_server_address = {0, 0};
 str dmq_server_socket = {0, 0};
 sip_uri_t dmq_server_uri = {0};
 
-str dmq_notification_address = {0, 0};
+str_list_t *dmq_notification_address_list = NULL;
+static str_list_t *dmq_tmp_list = NULL;
 str dmq_notification_channel = str_init("notification_peer");
 int dmq_multi_notify = 0;
-sip_uri_t dmq_notification_uri = {0};
+static sip_uri_t dmq_notification_uri = {0};
 int dmq_ping_interval = 60;
 
 /* TM bind */
@@ -78,6 +80,9 @@ dmq_peer_list_t *dmq_peer_list = 0;
 dmq_node_list_t *dmq_node_list = NULL;
 /* dmq module is a peer itself for receiving notifications regarding nodes */
 dmq_peer_t *dmq_notification_peer = NULL;
+/* add notification servers */
+static int dmq_add_notification_address(modparam_t type, void * val);
+
 
 /** module functions */
 static int mod_init(void);
@@ -109,7 +114,7 @@ static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &dmq_num_workers},
 	{"ping_interval", INT_PARAM, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
-	{"notification_address", PARAM_STR, &dmq_notification_address},
+	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", INT_PARAM, &dmq_multi_notify},
 	{"worker_usleep", INT_PARAM, &dmq_worker_usleep},
@@ -136,19 +141,29 @@ struct module_exports exports = {
 
 static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 {
+	str sproto = STR_NULL;
+
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
 		return -1;
 	}
 
-	socket->len = uri->host.len + uri->port.len + 6;
+	socket->len = uri->host.len + uri->port.len + 7 /*sctp + : + : \0*/;
 	socket->s = pkg_malloc(socket->len);
 	if(socket->s == NULL) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memcpy(socket->s, "udp:", 4);
-	socket->len = 4;
+
+	if(get_valid_proto_string(uri->proto, 0, 0, &sproto)<0) {
+		LM_WARN("unknown transport protocol - fall back to udp\n");
+		sproto.s = "udp";
+		sproto.len = 3;
+	}
+
+	memcpy(socket->s, sproto.s, sproto.len);
+	socket->s[sproto.len] = ':';
+	socket->len = sproto.len + 1;
 
 	memcpy(socket->s + socket->len, uri->host.s, uri->host.len);
 	socket->len += uri->host.len;
@@ -210,13 +225,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(parse_uri(dmq_notification_address.s, dmq_notification_address.len,
-			   &dmq_notification_uri)
-			< 0) {
-		LM_ERR("notification address invalid\n");
-		return -1;
-	}
-
 	/* create socket string out of the server_uri */
 	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
 		LM_ERR("failed to create socket out of server_uri\n");
@@ -275,6 +283,11 @@ static int child_init(int rank)
 {
 	int i, newpid;
 
+	if(rank == PROC_TCP_MAIN) {
+		/* do nothing for the tcp main process */
+		return 0;
+	}
+
 	if(rank == PROC_INIT) {
 		for(i = 0; i < dmq_num_workers; i++) {
 			if (init_worker(&dmq_workers[i]) < 0) {
@@ -289,36 +302,37 @@ static int child_init(int rank)
 		/* fork worker processes */
 		for(i = 0; i < dmq_num_workers; i++) {
 			LM_DBG("starting worker process %d\n", i);
-			newpid = fork_process(PROC_RPC, "DMQ WORKER", 0);
+			newpid = fork_process(PROC_RPC, "DMQ WORKER", 1);
 			if(newpid < 0) {
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
+				if (cfg_child_init()) return -1;
 				/* child - this will loop forever */
 				worker_loop(i);
 			} else {
 				dmq_workers[i].pid = newpid;
 			}
 		}
+		return 0;
+	}
+
+	if(rank == PROC_SIPINIT) {
 		/* notification_node - the node from which the Kamailio instance
 		 * gets the server list on startup.
 		 * the address is given as a module parameter in dmq_notification_address
 		 * the module MUST have this parameter if the Kamailio instance is not
 		 * a master in this architecture
 		 */
-		if(dmq_notification_address.s) {
+		if(dmq_notification_address_list != NULL) {
 			dmq_notification_node =
-					add_server_and_notify(&dmq_notification_address);
+					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_WARN("cannot retrieve initial nodelist from %.*s\n",
-						STR_FMT(&dmq_notification_address));
+				LM_WARN("cannot retrieve initial nodelist, first list entry %.*s\n",
+						STR_FMT(&dmq_notification_address_list->s));
+
 			}
 		}
-		return 0;
-	}
-	if(rank == PROC_TCP_MAIN) {
-		/* do nothing for the main process */
-		return 0;
 	}
 
 	dmq_pid = my_pid();
@@ -331,7 +345,7 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	/* TODO unregister dmq node, free resources */
-	if(dmq_notification_address.s && dmq_notification_node && dmq_self_node) {
+	if(dmq_notification_address_list && dmq_notification_node && dmq_self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&dmq_self_node->orig_uri));
 		dmq_self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(dmq_notification_node, 1);
@@ -344,6 +358,44 @@ static void destroy(void)
 	}
 }
 
+static int dmq_add_notification_address(modparam_t type, void * val)
+{
+	str tmp_str;
+	tmp_str.s = ((str*) val)->s;
+	tmp_str.len = ((str*) val)->len;
+	int total_list = 0; /* not used */
+
+	if(val==NULL) {
+		LM_ERR("invalid notification address parameter value\n");
+		return -1;
+	}
+	if(parse_uri(tmp_str.s,  tmp_str.len, &dmq_notification_uri) < 0) {
+		LM_ERR("could not parse notification address\n");
+		return -1;
+	}
+
+	/* initial allocation */
+	if (dmq_notification_address_list == 0) {
+		dmq_notification_address_list = pkg_malloc(sizeof(str_list_t));
+		if (dmq_notification_address_list == NULL) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		dmq_tmp_list = dmq_notification_address_list;
+		dmq_tmp_list->s = tmp_str;
+	} else {
+		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
+		if (dmq_tmp_list == NULL) {
+			LM_ERR("could not append to list\n");
+			return -1;
+		}
+		LM_DBG("added new notification address to the list %.*s\n",
+			dmq_tmp_list->s.len, dmq_tmp_list->s.s);
+	}
+	return 0;
+}
+
+
 static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 {
 	void *h;
@@ -355,10 +407,11 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 		ip_addr2sbuf(&cur->ip_address, ip, IP6_MAX_STR_SIZE);
 		if(rpc->add(c, "{", &h) < 0)
 			goto error;
-		if(rpc->struct_add(h, "SSsSdd", "host", &cur->uri.host, "port",
-				   &cur->uri.port, "resolved_ip", ip, "status",
-				   dmq_get_status_str(cur->status), "last_notification",
-				   cur->last_notification, "local", cur->local)
+		if(rpc->struct_add(h, "SSssSdd", "host", &cur->uri.host, "port",
+				   &cur->uri.port, "proto", get_proto_name(cur->uri.proto),
+				   "resolved_ip", ip, "status", dmq_get_status_str(cur->status),
+				   "last_notification", cur->last_notification,
+				   "local", cur->local)
 				< 0)
 			goto error;
 		cur = cur->next;

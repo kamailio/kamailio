@@ -68,6 +68,12 @@ sed -i -e '/libmosquitto-dev/d' -e '/^Package: kamailio-mqtt-modules/,/^$/d' \
 sed -i -e 's/ mqtt[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mqtt/' ${DIST}/rules
 
+# No secsipid module
+sed -i -e '/libsecsipid-dev/d' -e '/^Package: kamailio-secsipid-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ secsipid[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

@@ -103,10 +103,39 @@ int pvh_extract_display_uri(char *suri, str *display, str *duri)
 	return 1;
 }
 
-int pvh_split_values(
-		str *s, char d[][header_value_size], int *d_size, int keep_spaces)
+char *pvh_detect_split_char(char *val)
 {
-	char p;
+	char *quote_a = NULL, *quote_b = NULL;
+	char *split = NULL;
+
+	if(val == NULL)
+		return NULL;
+
+	split = strchr(val, ',');
+	if(split == NULL) {
+		LM_DBG("no split marker detected\n");
+		return NULL;
+	}
+
+	quote_a = strchr(val, '"');
+	if(quote_a == NULL || split < quote_a) {
+		LM_DBG("split marker detected[%ld], not between quotes\n", split - val);
+		return split;
+	}
+
+	quote_b = strchr(val + (split - quote_a + 1), '"');
+	if(quote_b == NULL) {
+		LM_DBG("split marker detected[%ld], quote occurrence unbalanced[%ld]\n",
+				split - val, quote_b - val);
+		return split;
+	}
+	return pvh_detect_split_char(val + (quote_b - val + 1));
+}
+
+int pvh_split_values(str *s, char d[][header_value_size], int *d_size,
+		int keep_spaces, char *marker)
+{
+	char *p = NULL;
 	int idx = 0, c_idx = 0;
 
 	*d_size = -1;
@@ -115,12 +144,17 @@ int pvh_split_values(
 		*d_size = 0;
 		return 1;
 	}
-
+	if(!marker)
+		marker = pvh_detect_split_char(s->s);
 	while(idx < s->len) {
-		strncpy(&p, s->s + idx++, 1);
-		if(keep_spaces == 0 && strncmp(&p, " ", 1) == 0)
+		p = s->s + idx++;
+		if(keep_spaces == 0 && strncmp(p, " ", 1) == 0)
 			continue;
-		if(strncmp(&p, ",", 1) == 0) {
+		if(p == marker) {
+			if(marker && idx < s->len) {
+				LM_DBG("search next split marker[%d]\n", idx);
+				marker = pvh_detect_split_char(p + 1);
+			}
 			if(c_idx == 0)
 				continue;
 			if(c_idx + 1 < header_value_size)
@@ -131,7 +165,7 @@ int pvh_split_values(
 		}
 		if(c_idx == 0)
 			(*d_size)++;
-		strncpy(&d[*d_size][c_idx++], &p, 1);
+		strncpy(&d[*d_size][c_idx++], p, 1);
 	}
 
 	if(c_idx > 0) {

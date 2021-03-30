@@ -35,8 +35,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="speeddial_admin.xml"/>
-    
-    
+
 </book>

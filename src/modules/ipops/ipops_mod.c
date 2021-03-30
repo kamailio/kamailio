@@ -1098,15 +1098,22 @@ static int ki_is_ip_rfc1918(sip_msg_t* _msg, str* sval)
 
 static inline ip_addr_t *strtoipX(str *ips)
 {
+	static ip_addr_t ipb;
+
 	/* try to figure out INET class */
 	if(ips->s[0] == '[' || memchr(ips->s, ':', ips->len)!=NULL)
 	{
 		/* IPv6 */
-		return str2ip6(ips);
+		if(str2ip6buf(ips, &ipb) < 0) {
+			return NULL;
+		}
 	} else {
 		/* IPv4 */
-		return str2ip(ips);
+		if (str2ipbuf(ips, &ipb)<0) {
+			return NULL;
+		}
 	}
+	return &ipb;
 }
 
 static int ki_dns_sys_match_ip(sip_msg_t *msg, str *vhn, str *vip)

@@ -165,12 +165,14 @@ int ki_decode_contact(sip_msg_t *msg)
 		return res;
 	} else {
 		/* we do not modify the original first line */
-		if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0))
+		if((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) {
 			msg->new_uri = newUri;
-		else {
+		} else {
 			pkg_free(msg->new_uri.s);
 			msg->new_uri = newUri;
 		}
+		msg->parsed_uri_ok=0;
+		ruri_mark_new();
 	}
 	return 1;
 }
@@ -577,7 +579,7 @@ int decode_uri(str uri, char separator, str *result)
 			uri.len);
 
 	/* adding one comes from * */
-	result->s = pkg_malloc(result->len);
+	result->s = pkg_malloc(result->len + 1); /* NULL termination */
 	if(result->s == NULL) {
 		LM_ERR("unable to allocate pkg memory\n");
 		return -4;
@@ -626,6 +628,7 @@ int decode_uri(str uri, char separator, str *result)
 
 	memcpy(pos, uri.s + format.second, uri.len - format.second); /* till end: */
 
+	result->s[result->len] = '\0';
 	LM_DBG("New decoded uri [%.*s]\n", result->len, result->s);
 
 	return 0;
@@ -773,6 +776,7 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 		}
 		if(pit==NULL || pit->body.len<=0) {
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 
@@ -816,6 +820,8 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 			pkg_free(nval.s);
 			return -2;
 		}
+		free_params(params);
+		params = NULL;
 	}
 
 	return 1;
@@ -974,6 +980,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 		}
 		if(pit==NULL) {
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 		rms.s = pit->name.s;
@@ -984,6 +991,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 			LM_ERR("failed to find start of the parameter delimiter [%.*s]\n",
 					c->uri.len, c->uri.s);
 			free_params(params);
+			params = NULL;
 			continue;
 		}
 		if(pit->body.len>0) {
@@ -1004,6 +1012,7 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 			continue;
 		}
 		free_params(params);
+		params = NULL;
 	}
 
 	return 1;

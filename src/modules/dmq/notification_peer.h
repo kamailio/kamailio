@@ -48,7 +48,7 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen);
  *           forward the request to its own list
  */
 int request_nodelist(dmq_node_t *node, int forward);
-dmq_node_t *add_server_and_notify(str *server_address);
+dmq_node_t *add_server_and_notify(str_list_t *server_list);
 
 /* helper functions */
 extern int notification_resp_callback_f(

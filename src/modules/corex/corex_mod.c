@@ -31,6 +31,7 @@
 #include "../../core/pvar.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/str_list.h"
 #include "../../core/events.h"
 #include "../../core/onsend.h"
 #include "../../core/dns_cache.h"
@@ -68,6 +69,7 @@ static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
 static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
+static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 
 static int fixup_file_op(void** param, int param_no);
 
@@ -81,6 +83,10 @@ int corex_dns_cache_param(modparam_t type, void *val);
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
+
+static str_list_t *corex_dns_cache_list = NULL;
+
+static int corex_dns_cache_param_add(str *pval);
 
 static int corex_sip_reply_out(sr_event_param_t *evp);
 
@@ -146,6 +152,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE },
 	{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0,
 		0, ANY_ROUTE },
+	{"is_socket_name", (cmd_function)w_is_socket_name, 1, fixup_spve_null,
+		0, ANY_ROUTE },
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -183,6 +191,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	str_list_t *sit;
+
 	if(corex_init_rpc()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -199,6 +209,13 @@ static int mod_init(void)
 	{
 		LM_ERR("failed to register check self callback\n");
 		return -1;
+	}
+
+	for(sit = corex_dns_cache_list; sit!=NULL; sit=sit->next) {
+		if(corex_dns_cache_param_add(&sit->s)<0) {
+			LM_ERR("failed to add record: %.*s\n", sit->s.len, sit->s.s);
+			return -1;
+		}
 	}
 
 	if((nio_intercept > 0) && (nio_intercept_init() < 0))
@@ -334,6 +351,29 @@ error:
 
 int corex_dns_cache_param(modparam_t type, void *val)
 {
+	str_list_t *sit;
+
+	if(val==NULL || ((str*)val)->s==NULL || ((str*)val)->len==0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	sit = (str_list_t*)pkg_mallocxz(sizeof(str_list_t));
+	if(sit==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	sit->s = *((str*)val);
+	if(corex_dns_cache_list!=NULL) {
+		sit->next = corex_dns_cache_list;
+	}
+	corex_dns_cache_list = sit;
+
+	return 0;
+}
+
+static int corex_dns_cache_param_add(str *pval)
+{
 	str sval;
 	param_t* params_list = NULL;
 	param_hooks_t phooks;
@@ -344,11 +384,11 @@ int corex_dns_cache_param(modparam_t type, void *val)
 	int dns_ttl = 0;
 	int dns_flags = 0;
 
-	if(val==NULL) {
+	if(pval==NULL) {
 		LM_ERR("invalid parameter\n");
 		goto error;
 	}
-	sval = *((str*)val);
+	sval = *pval;
 	if(sval.s==NULL || sval.len<=0) {
 		LM_ERR("invalid parameter value\n");
 		goto error;
@@ -1112,6 +1152,46 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_is_socket_name(sip_msg_t *msg, str *sockname)
+{
+	socket_info_t *si = NULL;
+
+	if (sockname==NULL || sockname->len<=0) {
+		LM_ERR("invalid socket name value\n");
+		return -1;
+	}
+
+	si = ksr_get_socket_by_name(sockname);
+	if(si != NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2)
+{
+	str sockname;
+	socket_info_t *si = NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)psockname, &sockname)!=0
+			|| sockname.len<=0) {
+		LM_ERR("cannot get socket name value\n");
+		return -1;
+	}
+
+	si = ksr_get_socket_by_name(&sockname);
+	if(si != NULL) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
 static int corex_sip_reply_out(sr_event_param_t *evp)
 {
 	onsend_info_t sndinfo;
@@ -1236,6 +1316,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	{ str_init("corex"), str_init("file_write"),
 		SR_KEMIP_INT, ki_file_write,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("is_socket_name"),
+		SR_KEMIP_INT, ki_is_socket_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

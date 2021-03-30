@@ -88,9 +88,4 @@ int load_route_data_db (struct route_data_t * rd);
 
 int load_user_carrier(str * user, str * domain);
 
-typedef enum {
-	crfalse = 0,
-	crtrue = 1
-} crboolean;
-
 #endif

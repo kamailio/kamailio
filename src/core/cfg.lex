@@ -39,7 +39,11 @@
 	#include "select.h"
 	#include "cfg.tab.h"
 	#include "sr_compat.h"
+	#include "daemonize.h"
 	#include "ppcfg.h"
+
+	static void ksr_yy_fatal_error(const char* msg);
+	#define YY_FATAL_ERROR(msg) ksr_yy_fatal_error(msg);
 
 	/* states */
 	#define INITIAL_S		0
@@ -258,6 +262,7 @@ MODULO	"mod"
 STRLEN	"strlen"
 STREMPTY	"strempty"
 DEFINED		"defined"
+SELVAL		"selval"
 STREQ	eq
 INTEQ	ieq
 STRDIFF	ne
@@ -462,6 +467,9 @@ VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
 ROUTE_LOCKS_SIZE     "route_locks_size"
+WAIT_WORKER1_MODE     "wait_worker1_mode"
+WAIT_WORKER1_TIME     "wait_worker1_time"
+WAIT_WORKER1_USLEEP   "wait_worker1_usleep"
 
 KEMI     "kemi"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
@@ -984,6 +992,9 @@ IMPORTFILE      "import_file"
 <INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
 									return VERBOSE_STARTUP; }
 <INITIAL>{ROUTE_LOCKS_SIZE}  { count(); yylval.strval=yytext; return ROUTE_LOCKS_SIZE; }
+<INITIAL>{WAIT_WORKER1_MODE}  { count(); yylval.strval=yytext; return WAIT_WORKER1_MODE; }
+<INITIAL>{WAIT_WORKER1_TIME}  { count(); yylval.strval=yytext; return WAIT_WORKER1_TIME; }
+<INITIAL>{WAIT_WORKER1_USLEEP}  { count(); yylval.strval=yytext; return WAIT_WORKER1_USLEEP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
@@ -1041,6 +1052,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{INTDIFF}	{ count(); return INTDIFF; }
 <INITIAL>{INTCAST}	{ count(); return INTCAST; }
 <INITIAL>{STRCAST}	{ count(); return STRCAST; }
+<INITIAL>{SELVAL}	{ count(); return SELVAL; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
@@ -1306,7 +1318,7 @@ IMPORTFILE      "import_file"
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
-									exit(-1);
+									ksr_exit(-1);
 								}
 <DEFINE_ID>{ID}                 {	count();
 									ksr_cfg_print_part(yytext);
@@ -1348,7 +1360,7 @@ IMPORTFILE      "import_file"
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
-									exit(-1);
+									ksr_exit(-1);
 								}
 <IFDEF_ID>{ID}                { count();
 								pp_ifdef_var(yyleng, yytext);
@@ -1402,7 +1414,7 @@ IMPORTFILE      "import_file"
 				if(sr_push_yy_state(s_buf.s, 0)<0)
 				{
 					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
 				ksr_cfg_print_initial_state();
@@ -1416,7 +1428,7 @@ IMPORTFILE      "import_file"
 				if(sr_push_yy_state(s_buf.s, 1)<0)
 				{
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
 				ksr_cfg_print_initial_state();
@@ -1437,7 +1449,7 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_part(yytext);
 				if(pp_define_env(yytext, yyleng) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
-					exit(-1);
+					ksr_exit(-1);
 				}
 				state = INITIAL;
 				ksr_cfg_print_initial_state();
@@ -1608,7 +1620,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 	return dst_b->s;
 error:
 	PKG_MEM_CRITICAL;
-	exit(-1);
+	ksr_exit(-1);
 }
 
 
@@ -2161,3 +2173,12 @@ static void pp_endif()
 	pp_update_state();
 }
 
+static void ksr_yy_fatal_error(const char* msg)
+{
+	if(ksr_atexit_mode==1) {
+		yy_fatal_error(msg);
+	}
+
+	fprintf( stderr, "%s\n", msg );
+	_exit( YY_EXIT_FAILURE );
+}

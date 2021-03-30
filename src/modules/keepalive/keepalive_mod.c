@@ -201,8 +201,10 @@ static int w_add_destination(sip_msg_t *msg, char *uri, char *owner)
  */
 static int ki_add_destination(sip_msg_t *msg, str *uri, str *owner)
 {
-	if(ka_alloc_destinations_list() < 0)
+	if(ka_destinations_list == NULL) {
+		LM_ERR("destinations list not initialized\n");
 		return -1;
+	}
 
 	return ka_add_dest(uri, owner, 0, ka_ping_interval, 0, 0, 0);
 }
@@ -253,7 +255,7 @@ static int ka_mod_add_destination(modparam_t type, void *val) {
 	char *uri = (char *)val;
 
 	ka_initial_dest_t *current_position = NULL;
-	ka_initial_dest_t *new_destination = (ka_initial_dest_t *) shm_malloc(sizeof(ka_initial_dest_t));
+	ka_initial_dest_t *new_destination = (ka_initial_dest_t *) shm_mallocxz(sizeof(ka_initial_dest_t));
 	new_destination->uri.s = shm_malloc(sizeof(char) * strlen(uri));
 	new_destination->owner.s = shm_malloc(sizeof(char) * strlen(owner));
 
@@ -308,7 +310,7 @@ int ka_alloc_destinations_list()
 		return 1;
 	}
 
-	ka_destinations_list = (ka_destinations_list_t *)shm_malloc(
+	ka_destinations_list = (ka_destinations_list_t *)shm_mallocxz(
 			sizeof(ka_destinations_list_t));
 	if(ka_destinations_list == NULL) {
 		LM_ERR("no more memory.\n");

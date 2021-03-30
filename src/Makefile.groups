@@ -23,7 +23,7 @@ mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			carrierroute pdb qos sca seas sms sst timer tmrec uac_redirect \
 			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
 			log_custom keepalive ss7ops app_sqlang acc_diameter evrexec \
-			sipjson xhttp_prom
+			sipjson lrkproxy xhttp_prom
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
@@ -184,6 +184,15 @@ mod_list_uuid=uuid
 # - modules depending on ev library
 mod_list_ev=evapi
 
+# - modules depending on libjwt library
+mod_list_jwt=jwt
+
+# - modules depending on libwebsockets library
+mod_list_lwsc=lwsc
+
+# - modules depending on libstirshaken library
+mod_list_stirshaken=stirshaken
+
 # - modules depending on kazoo/rabbitmq
 mod_list_kazoo=kazoo
 
@@ -215,7 +224,7 @@ mod_list_kafka=kafka
 mod_list_mqtt=mqtt
 
 # - modules depending on secsipid library
-mod_list_secsipid=secsipid
+mod_list_secsipid=secsipid secsipid_proc
 
 # - modules depending on oRTP and mediastreamer2 libraries
 mod_list_rtp_media_server=rtp_media_server
@@ -256,6 +265,9 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_kafka) \
 			   $(mod_list_mqtt) \
 			   $(mod_list_secsipid) \
+			   $(mod_list_jwt) \
+			   $(mod_list_lwsc) \
+			   $(mod_list_stirshaken) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -445,6 +457,15 @@ module_group_kuuid=$(mod_list_uuid)
 
 # pkg libev modules
 module_group_kev=$(mod_list_ev)
+
+# pkg jwt module
+module_group_kjwt=$(mod_list_jwt)
+
+# pkg lwsc module
+module_group_klwsc=$(mod_list_lwsc)
+
+# pkg stirshaken module
+module_group_kstirshaken=$(mod_list_stirshaken)
 
 # pkg kazoo module
 module_group_kkazoo=$(mod_list_kazoo)

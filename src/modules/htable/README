@@ -1165,6 +1165,16 @@ kamcmd htable.stats
    items in hash tables. The event route is executed only once, after core
    and module initialization, but before Kamailio forks any child
    processes.
+
+   Note: do not expect to use functions from all other modules here, even
+   if they are loaded before the htable module, because many of them
+   initialize their runtime structures inside child init callbacks, which
+   are executed after this moment, when forking child processes. For
+   example, sqlops cannot be used, connections to database are initialized
+   in child init. Even more, it is recommended not to use functions from
+   other modules, because it can mess up what they created in mod init
+   callback and expect in child init callback. It should be ok to use
+   functions from htable module or assignment operations.
 ...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;

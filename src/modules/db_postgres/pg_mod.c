@@ -39,6 +39,7 @@
 #include "db_postgres.h"
 
 #include "../../core/sr_module.h"
+#include "../../core/parser/parse_param.h" 
 
 #ifdef PG_TEST
 #include <limits.h>
@@ -50,7 +51,6 @@ MODULE_VERSION
 static int pg_mod_init(void);
 static void pg_mod_destroy(void);
 
-int pg_connect_timeout = 0; /* Default is unlimited */
 int pg_retries =
 		2; /* How many times should the module try re-execute failed commands.
 					  * 0 disables reconnecting */
@@ -59,6 +59,10 @@ int pg_lockset = 4;
 int pg_timeout = 0; /* default = no timeout */
 int pg_keepalive = 0;
 int pg_bytea_output_escape = 1;
+
+pg_con_param_t* pg_con_param_list = 0;
+static int pg_con_param(modparam_t type, void *val);
+static int pg_init_com_params();
 
 /*
  * Postgres module interface
@@ -93,6 +97,7 @@ static param_export_t params[] = {
 	{"timeout", PARAM_INT, &pg_timeout},
 	{"tcp_keepalive", PARAM_INT, &pg_keepalive},
 	{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
+	{"con_param",  PARAM_STRING|USE_FUNC_PARAM, (void*)pg_con_param},
 	{0, 0, 0}
 };
 
@@ -543,12 +548,157 @@ static int pg_mod_init(void)
 #endif /* PG_TEST */
 	if(pg_init_lock_set(pg_lockset) < 0)
 		return -1;
+	
+	if(pg_init_com_params() < 0){
+		return -1;
+	}
+
 	return km_postgres_mod_init();
 }
 
 static void pg_mod_destroy(void)
 {
 	pg_destroy_lock_set();
+}
+
+static void free_con_param_list()
+{
+	pg_con_param_t *tmp = NULL;
+	pg_con_param_t *con_param = pg_con_param_list;
+	while(con_param)
+	{
+		if(con_param->name)
+		{
+			shm_free(con_param->name);
+		}
+		if(con_param->value)
+		{
+			shm_free(con_param->value);
+		}
+		tmp = con_param->next;
+		shm_free(con_param);
+		con_param = tmp;
+	}
+}
+
+static int add_con_param(str *name, str *value)
+{
+	/* malloc for param */
+	pg_con_param_t *con_param = (pg_con_param_t*)shm_malloc(sizeof(pg_con_param_t));
+	if(con_param == 0) {
+		LM_ERR("no more shm memory\n");
+		goto error;	
+	}
+
+	/* parse name */
+	con_param->name = (char*)shm_malloc(name->len + 1);
+	if(con_param->name == NULL){
+		LM_ERR("no more shm memory while parsing name\n");
+		goto error;		
+	}		
+	memcpy(con_param->name, name->s, name->len);
+	con_param->name[name->len] = '\0';
+
+	/* parse value */
+	con_param->value = (char*)shm_malloc(value->len + 1);
+	if(con_param->value == NULL){
+		LM_ERR("no more shm memory while parsing value\n");
+		goto error;	
+	}		
+	memcpy(con_param->value, value->s, value->len);
+	con_param->value[value->len] = '\0';
+
+	/* add param to the linked list */
+	con_param->next = pg_con_param_list;
+	pg_con_param_list = con_param;
+	return 0;
+
+error:
+	free_con_param_list();
+	return -1;
+}
+
+static int pg_init_com_params()
+{
+	str connect_timeout_str = str_init("connect_timeout");
+	int ret = 0;
+
+	int connect_timeout_set = 0;
+	if(pg_con_param_list != NULL)
+	{
+		LM_INFO("postgres connection params:");
+		pg_con_param_t *con_param = pg_con_param_list;
+		while(con_param)
+		{
+			LM_INFO("%s=%s", con_param->name, con_param->value);
+
+			/* check if connect_timeout parameter is set */
+			if(strncmp(con_param->name, connect_timeout_str.s, connect_timeout_str.len) == 0)
+			{
+				connect_timeout_set = 1;
+			}
+
+			con_param = con_param->next;
+		}
+	}
+
+	/* For backward compatibility take pg_timeout param into account */
+	if(pg_timeout > 0 && connect_timeout_set == 0)
+	{
+		str connect_timeout_val_str;
+		char timeout_val[16] = {0};
+
+		snprintf(timeout_val, sizeof(timeout_val) - 1, "%d", pg_timeout);
+		connect_timeout_val_str.s = timeout_val;
+		connect_timeout_val_str.len = strlen(connect_timeout_val_str.s);
+
+		/* add connect_timeout parameter with pg_timeout value */
+		ret = add_con_param(&connect_timeout_str, &connect_timeout_val_str);
+		LM_INFO("%.*s=%.*s added with given timeout param", 
+				connect_timeout_str.len, connect_timeout_str.s, 
+				connect_timeout_val_str.len, connect_timeout_val_str.s);
+	}
+
+	return ret;
+}
+
+static int pg_con_param(modparam_t type, void *val) {
+	param_t* params_list=NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str s;
+
+	if(val==NULL){
+		free_con_param_list();
+		return -1;
+	}
+	s.s = (char*)val;
+	s.len = strlen(s.s);
+	if(s.s[s.len-1]==';'){
+		s.len--;
+	}
+
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0){
+		free_con_param_list();
+		return -1;
+	}
+
+	/* parse parameter values */
+	for (pit=params_list; pit; pit=pit->next)	{
+		
+		if(pit->name.len == 0 || pit->body.len == 0) {
+			LM_ERR("invalid con_param parameter\n");
+			free_con_param_list();
+			return -1;
+		}
+
+		if(add_con_param(&pit->name, &pit->body) < 0){
+			free_con_param_list();
+			return -1;
+		}
+
+	}
+	return 0;
 }
 
 /** @} */
