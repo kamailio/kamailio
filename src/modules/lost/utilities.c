@@ -1234,8 +1234,11 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 				} else {
 					LM_WARN("xpath location-info element(%d) ignored\n", i + 1);
 				}
+				/* clean up */
 				xmlFree(xmlbuff);
 				xmlFreeDoc(new);
+				/* reset level count */
+				nok = -1;
 			}
 		}
 	} else {
