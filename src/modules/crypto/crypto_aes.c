@@ -28,6 +28,7 @@
 
 #include "crypto_aes.h"
 
+extern int _crypto_key_derivation;
 static char _crypto_salt[CRYPTO_SALT_BSIZE];
 static int _crypto_salt_set = 0;
 
@@ -72,40 +73,54 @@ char *crypto_get_salt(void)
  * Fills in the encryption and decryption ctx objects and returns 0 on success
  */
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
-		unsigned char *salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx)
+		unsigned char *salt, unsigned char *custom_iv, EVP_CIPHER_CTX *e_ctx,
+		EVP_CIPHER_CTX *d_ctx)
 {
 	int i, nrounds = 5;
 	int x;
 	unsigned char key[32], iv[32]; /* IV is only 16 bytes, but makes it easier */
+	const EVP_CIPHER *cipher;
+
 	memset(key, 0, sizeof(key));
 	memset(iv, 0, sizeof(iv));
-
 	/*
 	 * Gen key & IV for AES 256 CBC mode. A SHA1 digest is used to hash
 	 * the supplied key material.
 	 * nrounds is the number of times the we hash the material. More rounds
 	 * are more secure but slower.
 	 */
-	i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), salt,
-			key_data, key_data_len, nrounds, key, iv);
-	if (i != 32) {
-		LM_ERR("key size is %d bits - should be 256 bits\n", i);
-		return -1;
+	if(_crypto_key_derivation){
+		i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), salt,
+				key_data, key_data_len, nrounds, key, iv);
+		if (i != 32) {
+			LM_ERR("key size is %d bits - should be 256 bits\n", i);
+			return -1;
+		}
+
+		for(x = 0; x<32; ++x)
+			LM_DBG("key: %x iv: %x \n", key[x], iv[x]);
+
+		for(x = 0; x<8; ++x)
+			LM_DBG("salt: %x\n", salt[x]);
+		cipher = EVP_aes_256_cbc();
+	} else {
+		cipher = (key_data_len == 16) ? EVP_aes_128_cbc() : EVP_aes_256_cbc();
+		LM_DBG("got %d bytes key\n", key_data_len * 8);
+		memcpy(key, key_data, key_data_len);
+		if (custom_iv)
+			memcpy(iv, custom_iv, 16);
+
+		for(x = 0; x<key_data_len; ++x)
+			LM_DBG("key: %x, iv: %x\n", key[x], iv[x]);
 	}
-
-	for(x = 0; x<32; ++x)
-		LM_DBG("key: %x iv: %x \n", key[x], iv[x]);
-
-	for(x = 0; x<8; ++x)
-		LM_DBG("salt: %x\n", salt[x]);
 
 	if(e_ctx) {
 		EVP_CIPHER_CTX_init(e_ctx);
-		EVP_EncryptInit_ex(e_ctx, EVP_aes_256_cbc(), NULL, key, iv);
+		EVP_EncryptInit_ex(e_ctx, cipher, NULL, key, iv);
 	}
 	if(d_ctx) {
 		EVP_CIPHER_CTX_init(d_ctx);
-		EVP_DecryptInit_ex(d_ctx, EVP_aes_256_cbc(), NULL, key, iv);
+		EVP_DecryptInit_ex(d_ctx, cipher, NULL, key, iv);
 	}
 
 	return 0;
