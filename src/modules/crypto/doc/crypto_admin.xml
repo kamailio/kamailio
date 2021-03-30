@@ -206,7 +206,7 @@ modparam("crypto", "key_derivation", 0)
 		</example>
 	</section>
 	<section id="crypto.p.init_vector">
-		<title><varname>netio_key</varname> (str)</title>
+		<title><varname>init_vector</varname> (str)</title>
 		<para>
 			The initialization vector used for the cryptographic operations.
 			This needs to be a Base64 encoded value with 16 bytes lengths.
