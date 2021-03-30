@@ -58,6 +58,7 @@ extern stat_var *errors;
 extern stat_var *timeouts;
 extern int tls_version;
 extern int curl_verbose;
+extern int curl_follow_redirect;
 
 void set_curl_mem_callbacks(void);
 int init_http_multi();

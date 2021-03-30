@@ -74,6 +74,7 @@ int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl
 int tls_verify_host = 1; // By default verify host in HTTPS requests
 int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
+int curl_follow_redirect = 0;
 char* tls_client_cert = NULL; // client SSL certificate path, defaults to NULL
 char* tls_client_key = NULL; // client SSL certificate key path, defaults to NULL
 char* tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
@@ -150,6 +151,7 @@ static param_export_t params[]={
 	{"tls_verify_host",		INT_PARAM,		&tls_verify_host},
 	{"tls_verify_peer",		INT_PARAM,		&tls_verify_peer},
 	{"curl_verbose",		INT_PARAM,		&curl_verbose},
+	{"curl_follow_redirect",	INT_PARAM,		&curl_follow_redirect},
 	{"tls_client_cert",		PARAM_STRING,	&tls_client_cert},
 	{"tls_client_key",		PARAM_STRING,	&tls_client_key},
 	{"tls_ca_path",			PARAM_STRING,	&tls_ca_path},
