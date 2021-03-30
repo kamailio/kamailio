@@ -637,10 +637,10 @@ int curl_con_query_url(struct sip_msg *_m, const str *connection,
 /*!
  * Performs http request and saves possible result (first body line of reply)
  * to pvar.
- * This is the same http_query as used to be in the utils module.
+ * Similar to http_client_request but supports setting a content type attribute.
  */
-int http_client_request_c(
-		sip_msg_t *_m, char *_url, str *_dst, char *_body, char* ctype, char *_hdrs, char *_met)
+int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
+		char* _ctype, char *_hdrs, char *_met)
 {
 	int res;
 	curl_query_t query_params;
@@ -649,7 +649,7 @@ int http_client_request_c(
 	query_params.username = NULL;
 	query_params.secret = NULL;
 	query_params.authmethod = default_authmethod;
-	query_params.contenttype = ctype ? (char *)ctype : "text/plain";
+	query_params.contenttype = _ctype;
 	query_params.hdrs = _hdrs;
 	query_params.post = _body;
 	query_params.clientcert = NULL;
@@ -699,53 +699,7 @@ int http_client_request_c(
 int http_client_request(
 		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_hdrs, char *_met)
 {
-	int res;
-	curl_query_t query_params;
-
-	memset(&query_params, 0, sizeof(curl_query_t));
-	query_params.username = NULL;
-	query_params.secret = NULL;
-	query_params.authmethod = default_authmethod;
-	query_params.contenttype = NULL;
-	query_params.hdrs = _hdrs;
-	query_params.post = _body;
-	query_params.clientcert = NULL;
-	query_params.clientkey = NULL;
-	query_params.cacert = NULL;
-	query_params.ciphersuites = NULL;
-	query_params.tlsversion = default_tls_version;
-	query_params.verify_peer = default_tls_verify_peer;
-	query_params.verify_host = default_tls_verify_host;
-	query_params.timeout = default_connection_timeout;
-	query_params.http_follow_redirect = default_http_follow_redirect;
-	query_params.oneline = default_query_result;
-	query_params.maxdatasize = default_query_maxdatasize;
-	query_params.netinterface = default_netinterface;
-	if(default_useragent.s != NULL && default_useragent.len > 0) {
-		query_params.useragent = default_useragent.s;
-	}
-	if(default_http_proxy.s != NULL && default_http_proxy.len > 0) {
-		query_params.http_proxy = default_http_proxy.s;
-		if(default_http_proxy_port > 0) {
-			query_params.http_proxy_port = default_http_proxy_port;
-		}
-	}
-	if(default_tls_clientcert.s != NULL && default_tls_clientcert.len > 0) {
-		query_params.clientcert = default_tls_clientcert.s;
-	}
-	if(default_tls_clientkey.s != NULL && default_tls_clientkey.len > 0) {
-		query_params.clientkey = default_tls_clientkey.s;
-	}
-	if(default_tls_cacert != NULL) {
-		query_params.cacert = default_tls_cacert;
-	}
-	if(default_cipher_suite_list.s != NULL && default_cipher_suite_list.len) {
-		query_params.ciphersuites = default_cipher_suite_list.s;
-	}
-
-	res = curL_request_url(_m, _met, _url, _dst, &query_params);
-
-	return res;
+	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met);
 }
 
 /*!
