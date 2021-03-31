@@ -51,6 +51,9 @@ extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 
+extern str _tps_context_param;
+extern str _tps_context_value;
+
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
 
@@ -546,6 +549,11 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
 	ptsd->x_rr = ptsd->a_rr;
 	ptsd->s_method_id = get_cseq(msg)->method_id;
+	if(_tps_context_value.len>0) {
+		ptsd->x_context = _tps_context_value;
+	} else if(_tps_context_param.len>0) {
+		ptsd->x_context = _tps_context_param;
+	}
 	return 0;
 }
 

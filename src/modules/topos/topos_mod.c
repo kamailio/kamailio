@@ -53,6 +53,7 @@
 #include "../../core/timer_proc.h"
 #include "../../core/fmsg.h"
 #include "../../core/onsend.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
 #include "../../lib/srdb1/db.h"
@@ -104,6 +105,9 @@ str _tps_bcontact_avp;
 pv_spec_t _tps_acontact_spec;
 pv_spec_t _tps_bcontact_spec;
 
+str _tps_context_param = str_init("");
+str _tps_context_value = str_init("");
+
 sanity_api_t scb;
 
 int tps_msg_received(sr_event_param_t *evp);
@@ -120,9 +124,14 @@ static int child_init(int rank);
 /* Module destroy function prototype */
 static void destroy(void);
 
+static int w_tps_set_context(sip_msg_t* msg, char* pctx, char* p2);
+
 int bind_topos(topos_api_t *api);
 
 static cmd_export_t cmds[]={
+	{"tps_set_context", (cmd_function)w_tps_set_context,
+		1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+
 	{"bind_topos",  (cmd_function)bind_topos,  0,
 		0, 0, 0},
 
@@ -146,6 +155,7 @@ static param_export_t params[]={
 	{"b_contact_avp",	PARAM_STR, &_tps_bcontact_avp},
 	{"contact_host_avp",    PARAM_STR, &_tps_contact_host_avp},
 	{"rr_update",		PARAM_INT, &_tps_rr_update},
+	{"context",			PARAM_STR, &_tps_context_param},
 	{0,0,0}
 };
 
@@ -296,6 +306,58 @@ static void destroy(void)
 		}
 	}
 	tps_storage_lock_set_destroy();
+}
+
+/**
+ *
+ */
+static int ki_tps_set_context(sip_msg_t* msg, str* ctx)
+{
+	if(ctx==NULL || ctx->len<=0) {
+		if(_tps_context_value.s) {
+			pkg_free(_tps_context_value.s);
+		}
+		_tps_context_value.s = NULL;
+		_tps_context_value.len = 0;
+		return 1;
+	}
+
+	if(_tps_context_value.len>=ctx->len) {
+		memcpy(_tps_context_value.s, ctx->s, ctx->len);
+		_tps_context_value.len = ctx->len;
+		return 1;
+	}
+
+	if(_tps_context_value.s) {
+		pkg_free(_tps_context_value.s);
+	}
+	_tps_context_value.len = 0;
+
+	_tps_context_value.s = (char*)pkg_mallocxz(ctx->len + 1);
+	if(_tps_context_value.s==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(_tps_context_value.s, ctx->s, ctx->len);
+	_tps_context_value.len = ctx->len;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_tps_set_context(sip_msg_t* msg, char* pctx, char* p2)
+{
+	str sctx = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pctx, &sctx)<0) {
+		LM_ERR("failed to get context parameter\n");
+		return -1;
+	}
+
+	return ki_tps_set_context(msg, &sctx);
 }
 
 /**
@@ -608,6 +670,31 @@ int bind_topos(topos_api_t *api)
 	api->set_storage_api = tps_set_storage_api;
 	api->get_dialog_expire = tps_get_dialog_expire;
 	api->get_branch_expire = tps_get_branch_expire;
+
+	return 0;
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_topos_exports[] = {
+	{ str_init("topos"), str_init("tps_set_context"),
+		SR_KEMIP_INT, ki_tps_set_context,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_topos_exports);
 
 	return 0;
 }

@@ -612,6 +612,7 @@ str td_col_a_srcaddr = str_init("a_srcaddr");
 str td_col_b_srcaddr = str_init("b_srcaddr");
 str td_col_s_method = str_init("s_method");
 str td_col_s_cseq = str_init("s_cseq");
+str td_col_x_context = str_init("x_context");
 
 str tt_table_name = str_init("topos_t");
 str tt_col_rectime = str_init("rectime");
@@ -634,6 +635,7 @@ str tt_col_a_tag = str_init("a_tag");
 str tt_col_b_tag = str_init("b_tag");
 str tt_col_s_method = str_init("s_method");
 str tt_col_s_cseq = str_init("s_cseq");
+str tt_col_x_context = str_init("x_context");
 
 #define TPS_NR_KEYS	48
 
@@ -762,6 +764,13 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_cseq);
 	nr_keys++;
+
+	if(td->x_context.len>0) {
+		db_keys[nr_keys] = &td_col_x_context;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_context);
+		nr_keys++;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -949,6 +958,13 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_tag);
 	nr_keys++;
 
+	if(td->x_context.len>0) {
+		db_keys[nr_keys] = &tt_col_x_context;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_context);
+		nr_keys++;
+	}
+
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
 		return -1;
@@ -1054,9 +1070,9 @@ int tps_db_clean_branches(void)
 int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode)
 {
-	db_key_t db_keys[4];
-	db_op_t  db_ops[4];
-	db_val_t db_vals[4];
+	db_key_t db_keys[5];
+	db_op_t  db_ops[5];
+	db_val_t db_vals[5];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
 	str sinv = str_init("INVITE");
@@ -1073,7 +1089,8 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	nr_keys = 0;
 	nr_cols = 0;
 
-	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE) || ((get_cseq(msg)->method_id == METHOD_NOTIFY) && (msg->event->len > 0))) {
+	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE)
+			|| ((get_cseq(msg)->method_id == METHOD_NOTIFY) && (msg->event->len > 0))) {
 		bInviteDlg = 0;
 	}
 
@@ -1109,6 +1126,15 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		nr_keys++;
 	}
 
+	if(md->x_context.len>0) {
+		db_keys[nr_keys]=&tt_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_context);
+		nr_keys++;
+	}
+
 	db_cols[nr_cols++] = &tt_col_rectime;
 	db_cols[nr_cols++] = &tt_col_a_callid;
 	db_cols[nr_cols++] = &tt_col_a_uuid;
@@ -1129,6 +1155,9 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	db_cols[nr_cols++] = &tt_col_bs_contact;
 	db_cols[nr_cols++] = &tt_col_a_tag;
 	db_cols[nr_cols++] = &tt_col_b_tag;
+	if(md->x_context.len>0) {
+		db_cols[nr_cols++] = &tt_col_x_context;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -1177,6 +1206,9 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->bs_contact); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_tag); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_tag); n++;
+	if(md->x_context.len>0) {
+		TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_context); n++;
+	}
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -1205,9 +1237,9 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
  */
 int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
-	db_key_t db_keys[4];
-	db_op_t  db_ops[4];
-	db_val_t db_vals[4];
+	db_key_t db_keys[5];
+	db_op_t  db_ops[5];
+	db_val_t db_vals[5];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
 	int nr_keys;
@@ -1253,6 +1285,15 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	}
 	nr_keys++;
 
+	if(md->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_context);
+		nr_keys++;
+	}
+
 	db_cols[nr_cols++] = &td_col_rectime;
 	db_cols[nr_cols++] = &td_col_a_callid;
 	db_cols[nr_cols++] = &td_col_a_uuid;
@@ -1274,7 +1315,9 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &td_col_b_srcaddr;
 	db_cols[nr_cols++] = &td_col_s_method;
 	db_cols[nr_cols++] = &td_col_s_cseq;
-
+	if(md->x_context.len>0) {
+		db_cols[nr_cols++] = &td_col_x_context;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -1318,6 +1361,9 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcaddr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
+	if(md->x_context.len>0) {
+		TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_context); n++;
+	}
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -1387,6 +1433,15 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
 	}
 	nr_keys++;
+
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&tt_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
 
 	if(mode & TPS_DBU_CONTACT) {
 		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols,
@@ -1493,6 +1548,15 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
 	}
 	nr_keys++;
+
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
 
 	if(mode & TPS_DBU_CONTACT) {
 		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols,
@@ -1637,6 +1701,15 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
 	}
 	nr_keys++;
+
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
 
 	db_ucols[nr_ucols] = &td_col_rectime;
 	db_uvals[nr_ucols].type = DB1_DATETIME;
