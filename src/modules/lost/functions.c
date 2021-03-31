@@ -150,7 +150,7 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 	return ret;
 
 err:
-	LM_ERR("no more private memory\n");
+	PKG_MEM_ERROR;
 	/* clean up */
 	if(ret != NULL) {
 		pkg_free(ret);
@@ -174,7 +174,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	pv_value_t pvurl;
 	pv_value_t pverr;
 
-	p_held_t held = NULL;
+	p_lost_held_t held = NULL;
 
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root = NULL;
@@ -552,6 +552,7 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	char *rtype = NULL;
 
 	long ltime = 0;
+	long rtime = 0;
 
 	int len = 0;
 	int curl = 0;
@@ -609,23 +610,21 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 		}
 	}
 
-	/* default responseTime: emergencyRouting */
-	heldreq = lost_held_post_request(&len, 0, rtype);
-
-	/* responseTime: milliseconds */
 	if((ltime > 0) && (strlen(ptr) == 0)) {
-		heldreq = lost_held_post_request(&len, ltime, rtype);
+		/* responseTime: milliseconds */
+		rtime = ltime;
+	} else if((ltime == 0) && (strlen(ptr) > 0)) {
+		if(strncasecmp(ptr, HELD_ED, strlen(HELD_ED)) == 0) {
+			/* responseTime: emergencyDispatch */
+			rtime = -1;
+		} else if(strncasecmp(ptr, HELD_ER, strlen(HELD_ER)) == 0) {
+			/* responseTime: emergencyRouting */
+			rtime = 0;
+		}
 	}
 
-	/* responseTime: emergencyRouting|emergencyDispatch */
-	if((ltime == 0) && (strlen(ptr) > 0)) {
-		if(strncasecmp(ptr, HELD_ED, strlen(HELD_ED)) == 0) {
-			heldreq = lost_held_post_request(&len, -1, rtype);
-		}
-		if(strncasecmp(ptr, HELD_ER, strlen(HELD_ER)) == 0) {
-			heldreq = lost_held_post_request(&len, 0, rtype);
-		}
-	}
+	/* get the HELD request body */
+	heldreq = lost_held_post_request(&len, rtime, rtype);
 
 	/* clean up */
 	if(rtype != NULL) {
@@ -760,8 +759,8 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	pv_value_t pvuri;
 	pv_value_t pverr;
 
-	p_loc_t loc = NULL;
-	p_geolist_t geolist = NULL;
+	p_lost_loc_t loc = NULL;
+	p_lost_geolist_t geolist = NULL;
 	p_fsr_t fsrdata = NULL;
 
 	str name = STR_NULL; /* return value displayName */
@@ -1068,7 +1067,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 					/* get the first uri element */
 					if((tmp.s = fsrdata->uri->value) != NULL) {
 						tmp.len = strlen(fsrdata->uri->value);
-						uri.s = lost_copy_string(tmp, &uri.len);
+						if(pkg_str_dup(&uri, &tmp) < 0) {
+							LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
+							goto err;
+						}
 					}
 				} else {
 					LM_ERR("uri not found: [%.*s]\n", ret.len, ret.s);
@@ -1078,7 +1080,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 					/* get the displayName element */
 					if((tmp.s = fsrdata->mapping->name->text) != NULL) {
 						tmp.len = strlen(fsrdata->mapping->name->text);
-						name.s = lost_copy_string(tmp, &name.len);
+						if(pkg_str_dup(&name, &tmp) < 0) {
+							LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
+							goto err;
+						}
 					}
 				} else {
 					LM_ERR("name not found: [%.*s]\n", ret.len, ret.s);
@@ -1092,7 +1097,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 				if(fsrdata->errors != NULL) {
 					if((tmp.s = fsrdata->errors->issue->type) != NULL) {
 						tmp.len = strlen(fsrdata->errors->issue->type);
-						err.s = lost_copy_string(tmp, &err.len);
+						if(pkg_str_dup(&err, &tmp) < 0) {
+							LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
+							goto err;
+						}
 					}
 					/* clean up */
 					tmp.s = NULL;
@@ -1132,7 +1140,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 							}
 						}
 						/* remember the redirect target */
-						oldurl.s = lost_copy_string(url, &oldurl.len);
+						if(pkg_str_dup(&oldurl, &url) < 0) {
+							LM_ERR("could not copy: [%.*s]\n", url.len, url.s);
+							goto err;
+						}
 						/* clean up */
 						lost_free_findServiceResponse(&fsrdata);
 						lost_free_string(&ret);

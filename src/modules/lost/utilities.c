@@ -104,14 +104,14 @@ void lost_rand_str(char *dest, size_t lgth)
  * lost_new_loc(urn)
  * creates a new location object in private memory and returns a pointer
  */
-p_loc_t lost_new_loc(str rurn)
+p_lost_loc_t lost_new_loc(str rurn)
 {
-	s_loc_t *ptr = NULL;
+	s_lost_loc_t *ptr = NULL;
 
 	char *id = NULL;
 	char *urn = NULL;
 
-	ptr = (s_loc_t *)pkg_malloc(sizeof(s_loc_t));
+	ptr = (s_lost_loc_t *)pkg_malloc(sizeof(s_lost_loc_t));
 	if(ptr == NULL) {
 		goto err;
 	}
@@ -149,7 +149,7 @@ p_loc_t lost_new_loc(str rurn)
 	return ptr;
 
 err:
-	LM_ERR("no more private memory\n");
+	PKG_MEM_ERROR;
 	return NULL;
 }
 
@@ -157,14 +157,14 @@ err:
  * lost_new_held(uri, type, time, exact)
  * creates a new held object in private memory and returns a pointer
  */
-p_held_t lost_new_held(str s_uri, str s_type, int time, int exact)
+p_lost_held_t lost_new_held(str s_uri, str s_type, int time, int exact)
 {
-	s_held_t *ptr = NULL;
+	s_lost_held_t *ptr = NULL;
 
 	char *uri = NULL;
 	char *type = NULL;
 
-	ptr = (s_held_t *)pkg_malloc(sizeof(s_held_t));
+	ptr = (s_lost_held_t *)pkg_malloc(sizeof(s_lost_held_t));
 	if(ptr == NULL) {
 		goto err;
 	}
@@ -198,7 +198,7 @@ p_held_t lost_new_held(str s_uri, str s_type, int time, int exact)
 	return ptr;
 
 err:
-	LM_ERR("no more private memory\n");
+	PKG_MEM_ERROR;
 	return NULL;
 }
 
@@ -206,9 +206,9 @@ err:
  * lost_free_loc(ptr)
  * frees a location object
  */
-void lost_free_loc(p_loc_t *loc)
+void lost_free_loc(p_lost_loc_t *loc)
 {
-	p_loc_t ptr;
+	p_lost_loc_t ptr;
 
 	if(*loc == NULL)
 		return;
@@ -238,9 +238,9 @@ void lost_free_loc(p_loc_t *loc)
  * lost_free_loc(ptr)
  * frees a held location request object
  */
-void lost_free_held(p_held_t *held)
+void lost_free_held(p_lost_held_t *held)
 {
-	p_held_t ptr;
+	p_lost_held_t ptr;
 
 	if(held == NULL)
 		return;
@@ -258,7 +258,8 @@ void lost_free_held(p_held_t *held)
 
 /*
  * lost_copy_string(str, int*) {
- * copies a string and returns string allocated in private memory 
+ * copies a string and returns a zero terminated string allocated
+ * in private memory
  */
 char *lost_copy_string(str src, int *lgth)
 {
@@ -270,7 +271,7 @@ char *lost_copy_string(str src, int *lgth)
 	}
 	res = (char *)pkg_malloc((src.len + 1) * sizeof(char));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		*lgth = 0;
 	} else {
 		memset(res, 0, src.len + 1);
@@ -328,7 +329,7 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 		trimmed = lost_trim_content(content, &len);
 		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 		if(cnt == NULL) {
-			LM_ERR("no more private memory\n");
+			PKG_MEM_ERROR;
 			xmlFree(content);
 			return cnt;
 		}
@@ -364,7 +365,7 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 		len = strlen(content);
 		cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 		if(cnt == NULL) {
-			LM_ERR("no more private memory\n");
+			PKG_MEM_ERROR;
 			xmlFree(content);
 			return cnt;
 		}
@@ -409,7 +410,7 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 	trimmed = lost_trim_content((char *)child->name, &len);
 	cnt = (char *)pkg_malloc((len + 1) * sizeof(char));
 	if(cnt == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return cnt;
 	}
 	memset(cnt, 0, len + 1);
@@ -425,11 +426,11 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
  * lost_get_geolocation_header(msg, hdr)
  * gets the Geolocation header value and returns 1 on success
  */
-p_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
+p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 {
 	struct hdr_field *hf;
 	str hdr = STR_NULL;
-	p_geolist_t list = NULL;
+	p_lost_geolist_t list = NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse SIP headers\n");
@@ -487,7 +488,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 				/* first, get some memory */
 				pai_body = pkg_malloc(sizeof(to_body_t));
 				if(pai_body == NULL) {
-					LM_ERR("no more private memory\n");
+					PKG_MEM_ERROR;
 					return res;
 				}
 				/* parse P-A-I body */
@@ -502,7 +503,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 					res = (char *)pkg_malloc(
 							(pai_body->uri.len + 1) * sizeof(char));
 					if(res == NULL) {
-						LM_ERR("no more private memory\n");
+						PKG_MEM_ERROR;
 						pkg_free(pai_body);
 						return res;
 					} else {
@@ -649,7 +650,7 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 
 	res = (char *)pkg_malloc((f_body->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return res;
 	} else {
 		memset(res, 0, f_body->uri.len + 1);
@@ -666,9 +667,9 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
  * lost_free_geoheader_list(list)
  * removes geoheader list from private memory
  */
-void lost_free_geoheader_list(p_geolist_t *list)
+void lost_free_geoheader_list(p_lost_geolist_t *list)
 {
-	p_geolist_t curr;
+	p_lost_geolist_t curr;
 
 	while((curr = *list) != NULL) {
 		*list = curr->next;
@@ -690,9 +691,9 @@ void lost_free_geoheader_list(p_geolist_t *list)
  * lost_get_geoheader_value(list, type, rtype)
  * returns geoheader value and type (rtype) of given type
  */
-char *lost_get_geoheader_value(p_geolist_t list, geotype_t type, int *rtype)
+char *lost_get_geoheader_value(p_lost_geolist_t list, lost_geotype_t type, int *rtype)
 {
-	p_geolist_t head = list;
+	p_lost_geolist_t head = list;
 	char *value = NULL;
 
 	if(head == NULL) {
@@ -722,11 +723,11 @@ char *lost_get_geoheader_value(p_geolist_t list, geotype_t type, int *rtype)
  * lost_reverse_geoheader_list(list)
  * reverses list order
  */
-void lost_reverse_geoheader_list(p_geolist_t *head)
+void lost_reverse_geoheader_list(p_lost_geolist_t *head)
 {
-	p_geolist_t prev = NULL;
-	p_geolist_t next = NULL;
-	p_geolist_t current = *head;
+	p_lost_geolist_t prev = NULL;
+	p_lost_geolist_t next = NULL;
+	p_lost_geolist_t current = *head;
 
 	while(current != NULL) {
 		next = current->next;
@@ -748,7 +749,7 @@ char *lost_copy_geoheader_value(char *src, int len)
 
 	res = (char *)pkg_malloc((len + 1) * sizeof(char));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return res;
 	} else {
 		memset(res, 0, len + 1);
@@ -764,7 +765,7 @@ char *lost_copy_geoheader_value(char *src, int len)
  * searches and parses Geolocation header and returns a list
  * allocated in private memory and an item count
  */
-int lost_new_geoheader_list(p_geolist_t *list, str hdr)
+int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 {
 	char *search = NULL;
 	char *cidptr = NULL;
@@ -775,7 +776,7 @@ int lost_new_geoheader_list(p_geolist_t *list, str hdr)
 	int len = 0;
 	int i = 0;
 
-	p_geolist_t new = NULL;
+	p_lost_geolist_t new = NULL;
 
 	LM_DBG("parsing geolocation header value ...\n");
 
@@ -802,9 +803,9 @@ int lost_new_geoheader_list(p_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 6)) {
-					new = (p_geolist_t)pkg_malloc(sizeof(s_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
 					if(new == NULL) {
-						LM_ERR("no more private memory\n");
+						PKG_MEM_ERROR;
 					} else {
 
 						LM_DBG("\t[%.*s]\n", len + 1, cidptr);
@@ -844,9 +845,9 @@ int lost_new_geoheader_list(p_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 10)) {
-					new = (p_geolist_t)pkg_malloc(sizeof(s_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
 					if(new == NULL) {
-						LM_ERR("no more private memory\n");
+						PKG_MEM_ERROR;
 					} else {
 
 						LM_DBG("\t[%.*s]\n", len, urlptr);
@@ -885,10 +886,10 @@ int lost_new_geoheader_list(p_geolist_t *list, str hdr)
  * lost_parse_pidf(pidf, urn)
  * parses pidf and returns a new location object
  */
-p_loc_t lost_parse_pidf(str pidf, str urn)
+p_lost_loc_t lost_parse_pidf(str pidf, str urn)
 {
 
-	p_loc_t loc = NULL;
+	p_lost_loc_t loc = NULL;
 
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root = NULL;
@@ -955,7 +956,7 @@ err:
  * parses locationResponse (pos|circle) and writes 
  * results to location object
  */
-int lost_parse_geo(xmlNodePtr node, p_loc_t loc)
+int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 {
 	xmlNodePtr cur = NULL;
 
@@ -1021,7 +1022,7 @@ int lost_parse_geo(xmlNodePtr node, p_loc_t loc)
 	return 0;
 
 err:
-	LM_ERR("no more private memory\n");
+	PKG_MEM_ERROR;
 	return -1;
 }
 
@@ -1030,7 +1031,7 @@ err:
  * performs xpath expression on locationResponse and writes 
  * results (location-info child element) to location object
  */
-int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
+int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 {
 	xmlXPathObjectPtr result = NULL;
 	xmlNodeSetPtr nodes = NULL;
@@ -1251,7 +1252,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_loc_t loc)
 	return 0;
 
 err:
-	LM_ERR("no more private memory\n");
+	PKG_MEM_ERROR;
 	return -1;
 }
 
@@ -1259,7 +1260,7 @@ err:
  * lost_parse_location_info(node, loc)
  * wrapper to call xpath or simple pos|circle parser (last resort)
  */
-int lost_parse_location_info(xmlNodePtr root, p_loc_t loc)
+int lost_parse_location_info(xmlNodePtr root, p_lost_loc_t loc)
 {
 	if(lost_xpath_location(root->doc, LOST_XPATH_GP, loc) == 0) {
 		return 0;
@@ -1353,7 +1354,7 @@ https://tools.ietf.org/html/rfc6753
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		xmlFree(xmlbuff);
 		xmlFreeDoc(request);
 		return doc;
@@ -1375,7 +1376,7 @@ https://tools.ietf.org/html/rfc6753
  * lost_held_location_request(held, lgth)
  * assembles and returns locationRequest string (allocated in private memory)
  */
-char *lost_held_location_request(p_held_t held, int *lgth)
+char *lost_held_location_request(p_lost_held_t held, int *lgth)
 {
 	int buffersize = 0;
 
@@ -1464,7 +1465,7 @@ https://tools.ietf.org/html/rfc5985
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		xmlFree(xmlbuff);
 		xmlFreeDoc(request);
 		return doc;
@@ -1486,7 +1487,7 @@ https://tools.ietf.org/html/rfc5985
  * lost_find_service_request(loc, lgth)
  * assembles and returns findService request string (allocated in private memory)
  */
-char *lost_find_service_request(p_loc_t loc, int *lgth)
+char *lost_find_service_request(p_lost_loc_t loc, int *lgth)
 {
 	int buffersize = 0;
 
@@ -1624,7 +1625,7 @@ https://tools.ietf.org/html/rfc5222
 
 	doc = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 	if(doc == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		xmlFree(xmlbuff);
 		xmlFreeDoc(request);
 		return doc;

@@ -91,7 +91,7 @@ typedef struct LOC
 	int radius;		 /* geo radius (findServiceRequest) */
 	int recursive;	 /* recursion true|false (findServiceRequest)*/
 	int boundary;	 /* boundary ref|value (findServiceRequest)*/
-} s_loc_t, *p_loc_t;
+} s_lost_loc_t, *p_lost_loc_t;
 
 typedef struct HELD
 {
@@ -99,7 +99,7 @@ typedef struct HELD
 	char *type;		/* location type (locationRequest) */
 	int time;		/* response time (locationRequest) */
 	int exact;		/* exact true|false (locationRequest)*/
-} s_held_t, *p_held_t;
+} s_lost_held_t, *p_lost_held_t;
 
 typedef enum GEOTYPE
 {
@@ -108,32 +108,32 @@ typedef enum GEOTYPE
 	HTTP,		 /* http uri */
 	HTTPS,		 /* https uri */
 	UNKNOWN = -1 /* unknown */
-} geotype_t;
+} lost_geotype_t;
 
 typedef struct GEOLIST
 {
-	char *value;	/* geolocation header value */
-	char *param;	/* value parameter */
-	geotype_t type; /* type */
+	char *value;		 /* geolocation header value */
+	char *param;		 /* value parameter */
+	lost_geotype_t type; /* type */
 	struct GEOLIST *next;
-} s_geolist_t, *p_geolist_t;
+} s_lost_geolist_t, *p_lost_geolist_t;
 
 void lost_rand_str(char *, size_t);
-void lost_free_loc(p_loc_t *);
-void lost_free_held(p_held_t *);
+void lost_free_loc(p_lost_loc_t *);
+void lost_free_held(p_lost_held_t *);
 void lost_free_string(str *);
-void lost_free_geoheader_list(p_geolist_t *);
-void lost_reverse_geoheader_list(p_geolist_t *);
+void lost_free_geoheader_list(p_lost_geolist_t *);
+void lost_reverse_geoheader_list(p_lost_geolist_t *);
 
-int lost_parse_location_info(xmlNodePtr, p_loc_t);
-int lost_xpath_location(xmlDocPtr, char *, p_loc_t);
-int lost_parse_geo(xmlNodePtr, p_loc_t);
+int lost_parse_location_info(xmlNodePtr, p_lost_loc_t);
+int lost_xpath_location(xmlDocPtr, char *, p_lost_loc_t);
+int lost_parse_geo(xmlNodePtr, p_lost_loc_t);
 int lost_parse_host(const char *, str *, int *);
-int lost_new_geoheader_list(p_geolist_t *, str);
+int lost_new_geoheader_list(p_lost_geolist_t *, str);
 int lost_get_nameinfo(char *, str *, int);
 
-char *lost_find_service_request(p_loc_t, int *);
-char *lost_held_location_request(p_held_t, int *);
+char *lost_find_service_request(p_lost_loc_t, int *);
+char *lost_held_location_request(p_lost_held_t, int *);
 char *lost_held_post_request(int *, long, char *);
 char *lost_get_content(xmlNodePtr, const char *, int *);
 char *lost_get_property(xmlNodePtr, const char *, int *);
@@ -142,12 +142,12 @@ char *lost_get_pai_header(struct sip_msg *, int *);
 char *lost_get_childname(xmlNodePtr, const char *, int *);
 char *lost_trim_content(char *, int *);
 char *lost_copy_geoheader_value(char *, int);
-char *lost_get_geoheader_value(p_geolist_t, geotype_t, int *);
+char *lost_get_geoheader_value(p_lost_geolist_t, lost_geotype_t, int *);
 char *lost_copy_string(str, int *);
 
-p_loc_t lost_new_loc(str);
-p_loc_t lost_parse_pidf(str, str);
-p_held_t lost_new_held(str, str, int, int);
-p_geolist_t lost_get_geolocation_header(struct sip_msg *, int *);
+p_lost_loc_t lost_new_loc(str);
+p_lost_loc_t lost_parse_pidf(str, str);
+p_lost_held_t lost_new_held(str, str, int, int);
+p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *, int *);
 
 #endif

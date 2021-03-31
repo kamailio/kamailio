@@ -245,7 +245,7 @@ p_type_t lost_new_response_type(void)
 
 	res = (p_type_t)pkg_malloc(sizeof(s_type_t));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	res->type = NULL;
@@ -254,7 +254,7 @@ p_type_t lost_new_response_type(void)
 
 	res->info = (p_info_t)pkg_malloc(sizeof(s_info_t));
 	if(res->info == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 	} else {
 		res->info->text = NULL;
 		res->info->lang = NULL;
@@ -275,7 +275,7 @@ p_issue_t lost_new_response_issues(void)
 
 	res = (p_issue_t)pkg_malloc(sizeof(s_issue_t));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	res->issue = NULL;
@@ -296,7 +296,7 @@ p_data_t lost_new_response_data(void)
 
 	res = (p_data_t)pkg_malloc(sizeof(s_data_t));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	res->expires = NULL;
@@ -322,7 +322,7 @@ p_list_t lost_new_response_list(void)
 
 	list = (p_list_t)pkg_malloc(sizeof(s_list_t));
 	if(list == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 
@@ -582,7 +582,7 @@ p_issue_t lost_get_response_issues(xmlNodePtr node)
 			/* parse the element */
 			issue = lost_new_response_type();
 			if(issue == NULL) {
-				LM_ERR("no more private memory\n");
+				PKG_MEM_ERROR;
 				pkg_free(list);
 				pkg_free(new);
 				return NULL;
@@ -752,7 +752,7 @@ p_info_t lost_get_response_info(
 
 	res = (p_info_t)pkg_malloc(sizeof(s_info_t));
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	} else {
 		res->text = NULL;
@@ -907,7 +907,7 @@ p_fsr_t lost_parse_findServiceResponse(str ret)
 
 	res = lost_new_response();
 	if(res == NULL) {
-		LM_ERR("no more private memory\n");
+		PKG_MEM_ERROR;
 		xmlFreeDoc(doc); /* clean up */
 		return NULL;
 	}
@@ -916,7 +916,7 @@ p_fsr_t lost_parse_findServiceResponse(str ret)
 	if(!xmlStrcmp(root->name, (unsigned char *)ROOT_NODE)) {
 		m = lost_new_response_data();
 		if(m == NULL) {
-			LM_ERR("no more private memory\n");
+			PKG_MEM_ERROR;
 			/* clean up */
 			xmlFreeDoc(doc);
 			lost_free_findServiceResponse(&res);
@@ -964,7 +964,7 @@ p_fsr_t lost_parse_findServiceResponse(str ret)
 	} else if(!xmlStrcmp(root->name, (unsigned char *)RED_NODE)) {
 		r = lost_new_response_type();
 		if(r == NULL) {
-			LM_ERR("no more private memory\n");
+			PKG_MEM_ERROR;
 			xmlFreeDoc(doc); /* clean up */
 			lost_free_findServiceResponse(&res);
 			return NULL;
