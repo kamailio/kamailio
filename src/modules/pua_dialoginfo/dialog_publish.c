@@ -28,6 +28,7 @@
 
 #include "../../core/parser/parse_expires.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../core/str.h"
 #include "../../core/str_list.h"
 #include "../../core/name_alias.h"
@@ -42,7 +43,7 @@
 extern int include_callid;
 extern int include_localremote;
 extern int include_tags;
-
+extern int puadinfo_attribute_display;
 
 /* for debug purpose only */
 void print_publ(publ_info_t* p)
@@ -95,7 +96,9 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	xmlNodePtr remote_node = NULL;
 	xmlNodePtr local_node = NULL;
 	xmlNodePtr tag_node = NULL;
-	str *body= NULL;
+	str *body = NULL;
+	str *suri = NULL;
+	sip_uri_t puri;
 
 	/* create the Publish body */
 	doc = xmlNewDoc(BAD_CAST "1.0");
@@ -175,7 +178,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	}
 
 	if (include_localremote) {
-		/* remote tag*/
+		/* remote tag */
 		remote_node = xmlNewChild(dialog_node, NULL, BAD_CAST "remote", NULL) ;
 		if( remote_node == NULL) {
 			LM_ERR("while adding child\n");
@@ -187,18 +190,29 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("while adding child\n");
 			goto error;
 		}
+
 		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "target", NULL);
 		if(tag_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		if (remotetarget && remotetarget->s) {
-			puadi_xmlNewPropStr(tag_node, "uri", remotetarget);
+			suri = remotetarget;
 		} else {
-			puadi_xmlNewPropStr(tag_node, "uri", peer);
+			suri = peer;
 		}
+		if(puadinfo_attribute_display) {
+			if(parse_uri(suri->s, suri->len, &puri)<0) {
+				LM_ERR("failed to parse uri [%.*s]\n", suri->len, suri->s);
+				goto error;
+			}
+			if(puri.user.s!=NULL && puri.user.len>0) {
+				puadi_xmlNewPropStr(tag_node, "display", &puri.user);
+			}
+		}
+		puadi_xmlNewPropStr(tag_node, "uri", suri);
 
-		/* local tag*/
+		/* local tag */
 		local_node = xmlNewChild(dialog_node, NULL, BAD_CAST "local", NULL);
 		if(local_node == NULL) {
 			LM_ERR("while adding child\n");
@@ -210,16 +224,27 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("while adding child\n");
 			goto error;
 		}
+
 		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "target", NULL);
-		if(tag_node ==NULL) {
+		if(tag_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		if (localtarget && localtarget->s) {
-			puadi_xmlNewPropStr(tag_node, "uri", localtarget);
+			suri = localtarget;
 		} else {
-			puadi_xmlNewPropStr(tag_node, "uri", entity);
+			suri = entity;
 		}
+		if(puadinfo_attribute_display) {
+			if(parse_uri(suri->s, suri->len, &puri)<0) {
+				LM_ERR("failed to parse uri [%.*s]\n", suri->len, suri->s);
+				goto error;
+			}
+			if(puri.user.s!=NULL && puri.user.len>0) {
+				puadi_xmlNewPropStr(tag_node, "display", &puri.user);
+			}
+		}
+		puadi_xmlNewPropStr(tag_node, "uri", suri);
 	}
 
 	/* create the body */
