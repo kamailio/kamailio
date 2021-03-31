@@ -466,6 +466,9 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * tcp_keepalive: enable TCP keepalive
      * tcp_ka_idle: set TCP keepalive idle time wait
      * tcp_ka_interval: set TCP keepalive interval
+     * follow_redirect: if defined to a non-zero value, will tell curl to
+       follow HTTP 3xx redirects. Defaults to curl_follow_redirect global
+       parameter.
 
    Example 1.18. $http_req(key) variable usage
 ...
