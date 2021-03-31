@@ -89,12 +89,20 @@ int _tps_clean_interval = 60;
 
 #define TPS_EVENTRT_OUTGOING 1
 #define TPS_EVENTRT_SENDING  2
-static int _tps_eventrt_mode = TPS_EVENTRT_OUTGOING | TPS_EVENTRT_SENDING;
+#define TPS_EVENTRT_INCOMING  4
+#define TPS_EVENTRT_RECEIVING 8
+static int _tps_eventrt_mode = TPS_EVENTRT_OUTGOING | TPS_EVENTRT_SENDING
+				| TPS_EVENTRT_INCOMING | TPS_EVENTRT_RECEIVING;
 static int _tps_eventrt_outgoing = -1;
 static str _tps_eventrt_callback = STR_NULL;
 static str _tps_eventrt_outgoing_name = str_init("topos:msg-outgoing");
 static int _tps_eventrt_sending = -1;
 static str _tps_eventrt_sending_name = str_init("topos:msg-sending");
+static int _tps_eventrt_incoming = -1;
+static str _tps_eventrt_incoming_name = str_init("topos:msg-incoming");
+static int _tps_eventrt_receiving = -1;
+static str _tps_eventrt_receiving_name = str_init("topos:msg-receiving");
+
 str _tps_contact_host = str_init("");
 int _tps_contact_mode = 0;
 str _tps_contact_host_avp = str_init("");
@@ -130,7 +138,8 @@ int bind_topos(topos_api_t *api);
 
 static cmd_export_t cmds[]={
 	{"tps_set_context", (cmd_function)w_tps_set_context,
-		1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+		1, fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
 
 	{"bind_topos",  (cmd_function)bind_topos,  0,
 		0, 0, 0},
@@ -188,6 +197,16 @@ static int mod_init(void)
 	if(_tps_eventrt_sending<0
 			|| event_rt.rlist[_tps_eventrt_sending]==NULL) {
 		_tps_eventrt_sending = -1;
+	}
+	_tps_eventrt_incoming = route_lookup(&event_rt, _tps_eventrt_incoming_name.s);
+	if(_tps_eventrt_incoming<0
+			|| event_rt.rlist[_tps_eventrt_incoming]==NULL) {
+		_tps_eventrt_incoming = -1;
+	}
+	_tps_eventrt_receiving = route_lookup(&event_rt, _tps_eventrt_receiving_name.s);
+	if(_tps_eventrt_receiving<0
+			|| event_rt.rlist[_tps_eventrt_receiving]==NULL) {
+		_tps_eventrt_receiving = -1;
 	}
 
 	if(faked_msg_init()<0) {
@@ -436,6 +455,12 @@ int tps_msg_received(sr_event_param_t *evp)
 	int ret;
 
 	obuf = (str*)evp->data;
+
+	if(tps_execute_event_route(NULL, evp, TPS_EVENTRT_INCOMING,
+				_tps_eventrt_incoming, &_tps_eventrt_incoming_name)==1) {
+		return 0;
+	}
+
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
@@ -446,6 +471,11 @@ int tps_msg_received(sr_event_param_t *evp)
 	}
 
 	if(tps_skip_msg(&msg)) {
+		goto done;
+	}
+
+	if(tps_execute_event_route(&msg, evp, TPS_EVENTRT_RECEIVING,
+				_tps_eventrt_receiving, &_tps_eventrt_receiving_name)==1) {
 		goto done;
 	}
 
