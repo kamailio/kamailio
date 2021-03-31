@@ -46,10 +46,11 @@ Charles Chance
         4. Functions
 
               4.1. dmq_handle_message([continue])
-              4.2. dmq_send_message(channel, node, body, content_type)
-              4.3. dmq_bcast_message(channel, body, content_type)
-              4.4. dmq_t_replicate([skip_loop_test])
-              4.5. dmq_is_from_node()
+              4.2. dmq_process_message([continue])
+              4.3. dmq_send_message(channel, node, body, content_type)
+              4.4. dmq_bcast_message(channel, body, content_type)
+              4.5. dmq_t_replicate([skip_loop_test])
+              4.6. dmq_is_from_node()
 
         5. RPC Commands
 
@@ -78,11 +79,12 @@ Charles Chance
    1.7. Set worker_usleep parameter
    1.8. Set ping_interval parameter
    1.9. dmq_handle_message usage
-   1.10. dmq_send_message usage
-   1.11. dmq_bcast_message usage
-   1.12. dmq_t_replicate usage
-   1.13. dmq_is_from_node usage
-   1.14. dmq.list_nodes usage
+   1.10. dmq_process_message usage
+   1.11. dmq_send_message usage
+   1.12. dmq_bcast_message usage
+   1.13. dmq_t_replicate usage
+   1.14. dmq_is_from_node usage
+   1.15. dmq.list_nodes usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -111,10 +113,11 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. dmq_handle_message([continue])
-        4.2. dmq_send_message(channel, node, body, content_type)
-        4.3. dmq_bcast_message(channel, body, content_type)
-        4.4. dmq_t_replicate([skip_loop_test])
-        4.5. dmq_is_from_node()
+        4.2. dmq_process_message([continue])
+        4.3. dmq_send_message(channel, node, body, content_type)
+        4.4. dmq_bcast_message(channel, body, content_type)
+        4.5. dmq_t_replicate([skip_loop_test])
+        4.6. dmq_is_from_node()
 
    5. RPC Commands
 
@@ -310,10 +313,11 @@ modparam("dmq", "ping_interval", 90)
 4. Functions
 
    4.1. dmq_handle_message([continue])
-   4.2. dmq_send_message(channel, node, body, content_type)
-   4.3. dmq_bcast_message(channel, body, content_type)
-   4.4. dmq_t_replicate([skip_loop_test])
-   4.5. dmq_is_from_node()
+   4.2. dmq_process_message([continue])
+   4.3. dmq_send_message(channel, node, body, content_type)
+   4.4. dmq_bcast_message(channel, body, content_type)
+   4.5. dmq_t_replicate([skip_loop_test])
+   4.6. dmq_is_from_node()
 
 4.1.  dmq_handle_message([continue])
 
@@ -335,7 +339,28 @@ modparam("dmq", "ping_interval", 90)
     }
 ...
 
-4.2.  dmq_send_message(channel, node, body, content_type)
+4.2.  dmq_process_message([continue])
+
+   Similar to dmq_handle_message, but the processing is happening
+   immediately, no longer cloning the request in shared memory to be
+   passed to a DMQ worker process.
+
+   Meaning of parameters:
+     * continue - by default, dmq_process_message() will end execution of
+       routing script by returning 0. If this optional parameter is set to
+       "1", dmq_process_message() will continue executing the routing
+       script after it is been executed, returning 1.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. dmq_process_message usage
+...
+    if(is_method("KDMQ")) {
+        dmq_process_message();
+    }
+...
+
+4.3.  dmq_send_message(channel, node, body, content_type)
 
    Sends a DMQ message directly from config file to a single node.
 
@@ -348,13 +373,13 @@ modparam("dmq", "ping_interval", 90)
 
    This function can be used from any route.
 
-   Example 1.10. dmq_send_message usage
+   Example 1.11. dmq_send_message usage
 ...
         dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "t
 ext/plain");
 ...
 
-4.3.  dmq_bcast_message(channel, body, content_type)
+4.4.  dmq_bcast_message(channel, body, content_type)
 
    Broadcasts a DMQ message from config file to all active nodes (except
    self) on the specific channel.
@@ -366,12 +391,12 @@ ext/plain");
 
    This function can be used from any route.
 
-   Example 1.11. dmq_bcast_message usage
+   Example 1.12. dmq_bcast_message usage
 ...
     dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
 
-4.4.  dmq_t_replicate([skip_loop_test])
+4.5.  dmq_t_replicate([skip_loop_test])
 
    Replicates the current SIP message to all active nodes (except self).
    Useful for replicating REGISTER, PUBLISH etc. in a clustered
@@ -388,19 +413,19 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.12. dmq_t_replicate usage
+   Example 1.13. dmq_t_replicate usage
 ...
     dmq_t_replicate();
 ...
 
-4.5.  dmq_is_from_node()
+4.6.  dmq_is_from_node()
 
    Checks whether the current message has been sent by another active DMQ
    node in the cluster.
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.13. dmq_is_from_node usage
+   Example 1.14. dmq_is_from_node usage
 ...
         # basic example for REGISTER replication
     if(is_method("REGISTER")) {
@@ -422,7 +447,7 @@ ext/plain");
 
    List the DMQ nodes. It has no parameters.
 
-   Example 1.14. dmq.list_nodes usage
+   Example 1.15. dmq.list_nodes usage
 ...
 kamcmd dmq.list_nodes
 ...
