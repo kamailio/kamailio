@@ -601,6 +601,7 @@ modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
 			</programlisting>
                 </example>
                 </section>
+    </section>
 
 	<section>
 	<title>Functions</title>
