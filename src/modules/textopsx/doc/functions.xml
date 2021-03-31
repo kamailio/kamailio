@@ -173,7 +173,8 @@ if(fnmatch("$rU", "123*"))
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
-		If index is not specified new header is inserted at the end of message.
+		If index is not specified new header is inserted at the end of message. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -206,7 +207,8 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
-		If index is not specified new header is inserted at the top of message.
+		If index is not specified new header is inserted at the top of message. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -237,7 +239,8 @@ insert_hf_value("foo[1]", "gogo") # try add to the first header
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>hf_par</emphasis> - Header field/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
-		If asterisk is specified as index then all values are affected.
+		If asterisk is specified as index then all values are affected. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -267,7 +270,8 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>hf_par</emphasis> - Header/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
-		If asterisk is specified as index then all values are affected.
+		If asterisk is specified as index then all values are affected. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -297,7 +301,8 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 	    <listitem>
 			<para><emphasis>hf_para</emphasis> - Header field value / param to be appended.
 				Format: HFNAME [ [IDX] ] [. PARAM]
-		If asterisk is specified as index then all values are affected.
+		If asterisk is specified as index then all values are affected. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -333,7 +338,8 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>hf_para</emphasis> - Header field value / param to be appended. Format: HFNAME [ [IDX] ] [. PARAM]
-		If asterisk is specified as index then all values are affected.
+		If asterisk is specified as index then all values are affected. The index 1
+		correxponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
