@@ -46,6 +46,7 @@ Frederic Gaisnon
               3.13. a_contact_avp (str)
               3.14. b_contact_avp (str)
               3.15. rr_update (int)
+              3.16. contact_host_avp (str)
 
         4. Event Routes
 
@@ -69,8 +70,9 @@ Frederic Gaisnon
    1.13. Set a_contact_avp parameter
    1.14. Set b_contact_avp parameter
    1.15. Set rr_update parameter
-   1.16. Usage of event_route[topos:msg-outgoing]
-   1.17. Usage of event_route[topos:msg-sending]
+   1.16. Set contact_host_avp parameter
+   1.17. Usage of event_route[topos:msg-outgoing]
+   1.18. Usage of event_route[topos:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -99,6 +101,7 @@ Chapter 1. Admin Guide
         3.13. a_contact_avp (str)
         3.14. b_contact_avp (str)
         3.15. rr_update (int)
+        3.16. contact_host_avp (str)
 
    4. Event Routes
 
@@ -160,6 +163,7 @@ Chapter 1. Admin Guide
    3.13. a_contact_avp (str)
    3.14. b_contact_avp (str)
    3.15. rr_update (int)
+   3.16. contact_host_avp (str)
 
 3.1. storage (str)
 
@@ -291,9 +295,10 @@ modparam("topos", "event_mode", 2)
 3.10. contact_host (str)
 
    You may need to control the host part of the Contact header added by
-   topos. For example when using TLS with TOPOS the remote UAS must be
-   able to open a new TLS socket to the contact header. In this case, the
-   contact header must contain a domain name with a trusted CA signed
+   topos. If the contact_host_avp parameter is set, this value is ignored.
+   For example when using TLS with TOPOS the remote UAS must be able to
+   open a new TLS socket to the contact header. In this case, the contact
+   header must contain a domain name with a trusted CA signed
    certitificate.
 
    Default value is taken from the Record-Route URI.
@@ -381,6 +386,23 @@ modparam("topos", "b_contact_avp", "$avp(tps-bct)")
 modparam("topos", "rr_update", 1)
 ...
 
+3.16. contact_host_avp (str)
+
+   You may need to control the host part of the Contact header added by
+   topos. This parameter allows to take the value from an AVP during
+   run-time. If this parameter is set, the contact_host parameter is
+   ignored. For example when using TLS with TOPOS the remote UAS must be
+   able to open a new TLS socket to the contact header. In this case, the
+   contact header must contain a domain name with a trusted CA signed
+   certitificate.
+
+   Default value is empty, not set.
+
+   Example 1.16. Set contact_host_avp parameter
+...
+modparam("topos", "contact_host_avp", "$avp(contact_host)")
+...
+
 4. Event Routes
 
    4.1. event_route[topos:msg-outgoing]
@@ -398,7 +420,7 @@ modparam("topos", "rr_update", 1)
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.16. Usage of event_route[topos:msg-outgoing]
+   Example 1.17. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -417,7 +439,7 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.17. Usage of event_route[topos:msg-sending]
+   Example 1.18. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
