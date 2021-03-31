@@ -95,6 +95,10 @@ static cmd_export_t cmds[] = {
 		0, 0, REQUEST_ROUTE},
 	{"dmq_handle_message", (cmd_function)w_dmq_handle_message, 1,
 		fixup_int_1, 0, REQUEST_ROUTE},
+	{"dmq_process_message", (cmd_function)dmq_process_message, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_process_message", (cmd_function)w_dmq_process_message, 1,
+		fixup_int_1, 0, REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,
@@ -442,6 +446,16 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 	},
 	{ str_init("dmq"), str_init("handle_message_rc"),
 		SR_KEMIP_INT, ki_dmq_handle_message_rc,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_message"),
+		SR_KEMIP_INT, ki_dmq_process_message,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_message_rc"),
+		SR_KEMIP_INT, ki_dmq_process_message_rc,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
