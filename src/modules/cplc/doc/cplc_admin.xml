@@ -459,7 +459,6 @@ modparam("cplc","redirect_route", "CPL_REDIRECT")
                         </example>
                 </section>
 
-                </section>
                 <section id="cplc.p.ignore3xx">
                         <title><varname>ignore3xx</varname> (integer)</title>
                         <para>
