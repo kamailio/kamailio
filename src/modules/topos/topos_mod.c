@@ -96,6 +96,8 @@ static int _tps_eventrt_sending = -1;
 static str _tps_eventrt_sending_name = str_init("topos:msg-sending");
 str _tps_contact_host = str_init("");
 int _tps_contact_mode = 0;
+str _tps_contact_host_avp = str_init("");
+pv_spec_t _tps_contact_host_avp_spec;
 str _tps_cparam_name = str_init("tps");
 str _tps_acontact_avp;
 str _tps_bcontact_avp;
@@ -142,7 +144,8 @@ static param_export_t params[]={
 	{"cparam_name",		PARAM_STR, &_tps_cparam_name},
 	{"a_contact_avp",	PARAM_STR, &_tps_acontact_avp},
 	{"b_contact_avp",	PARAM_STR, &_tps_bcontact_avp},
-	{"rr_update",       PARAM_INT, &_tps_rr_update},
+	{"contact_host_avp",    PARAM_STR, &_tps_contact_host_avp},
+	{"rr_update",		PARAM_INT, &_tps_rr_update},
 	{0,0,0}
 };
 
@@ -231,6 +234,15 @@ static int mod_init(void)
 		if(pv_parse_spec(&_tps_bcontact_avp, &_tps_bcontact_spec) == 0 || _tps_bcontact_spec.type != PVT_AVP) {
 			LM_ERR("malformed or non AVP %.*s AVP definition\n",
 				_tps_bcontact_avp.len, _tps_bcontact_avp.s);
+			return -1;
+		}
+	}
+
+	if(_tps_contact_host_avp.len > 0 && _tps_contact_host_avp.s != NULL) {
+		if(pv_parse_spec(&_tps_contact_host_avp, &_tps_contact_host_avp_spec) == 0
+				|| _tps_contact_host_avp_spec.type != PVT_AVP) {
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+			_tps_contact_host_avp.len, _tps_contact_host_avp.s);
 			return -1;
 		}
 	}

@@ -292,7 +292,8 @@ modparam("topos", "event_mode", 2)
 		<title><varname>contact_host</varname> (str)</title>
 		<para>
 			You may need to control the host part of the Contact header added
-			by topos.
+			by topos. If the contact_host_avp parameter is set, this value is
+			ignored.
 
 			For example when using TLS with TOPOS the remote UAS must be able to open
 			a new TLS socket to the contact header.
@@ -432,6 +433,33 @@ modparam("topos", "b_contact_avp", "$avp(tps-bct)")
 		<programlisting format="linespecific">
 ...
 modparam("topos", "rr_update", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.contact_host_avp">
+		<title><varname>contact_host_avp</varname> (str)</title>
+		<para>
+			You may need to control the host part of the Contact header added
+			by topos. This parameter allows to take the value from an AVP
+			during run-time. If this parameter is set, the contact_host
+			parameter is ignored.
+
+			For example when using TLS with TOPOS the remote UAS must be able to open
+			a new TLS socket to the contact header.
+			In this case, the contact header must contain a domain name with a trusted CA
+			signed certitificate.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty, not set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_host_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "contact_host_avp", "$avp(contact_host)")
 ...
 </programlisting>
 		</example>

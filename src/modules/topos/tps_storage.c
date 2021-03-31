@@ -61,6 +61,8 @@ extern str _tps_acontact_avp;
 extern str _tps_bcontact_avp;
 extern pv_spec_t _tps_acontact_spec;
 extern pv_spec_t _tps_bcontact_spec;
+extern str _tps_contact_host_avp;
+extern pv_spec_t _tps_contact_host_avp_spec;
 
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
@@ -343,12 +345,23 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 			td->cp++;
 		}
 
-		if (_tps_contact_host.len) { // using configured hostname in the contact header
-			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
-			td->cp += _tps_contact_host.len;
+		// contact_host AVP takes preference
+		if (_tps_contact_host_avp.len) {
+			if ((pv_get_spec_value(msg, &_tps_contact_host_avp_spec, &pv_val) != 0) &&
+					(pv_val.flags & PV_VAL_STR) && (pv_val.rs.len <= 0)) {
+				LM_ERR("could not evaluate contact_host AVP\n");
+				return -1;
+			}
+			memcpy(td->cp, pv_val.rs.s, pv_val.rs.len);
+			td->cp += pv_val.rs.len;
 		} else {
-			memcpy(td->cp, puri.host.s, puri.host.len);
-			td->cp += puri.host.len;
+			if (_tps_contact_host.len) { // using configured hostname in the contact header
+				memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+				td->cp += _tps_contact_host.len;
+			} else {
+				memcpy(td->cp, puri.host.s, puri.host.len);
+				td->cp += puri.host.len;
+			}
 		}
 		if(puri.port.len>0) {
 			*td->cp = ':';
