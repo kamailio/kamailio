@@ -62,6 +62,7 @@ Frederic Gaisnon
               5.16. caller_entity_when_publish_disabled (int)
               5.17. callee_entity_when_publish_disabled (int)
               5.18. publish_dialog_req_within (int)
+              5.19. attribute_display (int)
 
         6. Functions
 
@@ -85,6 +86,7 @@ Frederic Gaisnon
    1.16. Set caller_entity_when_publish_disabled parameter
    1.17. Set callee_entity_when_publish_disabled parameter
    1.18. Set publish_dialog_req_within parameter
+   1.19. Set attribute_display parameter
 
 Chapter 1. Admin Guide
 
@@ -118,6 +120,7 @@ Chapter 1. Admin Guide
         5.16. caller_entity_when_publish_disabled (int)
         5.17. callee_entity_when_publish_disabled (int)
         5.18. publish_dialog_req_within (int)
+        5.19. attribute_display (int)
 
    6. Functions
 
@@ -304,6 +307,7 @@ Chapter 1. Admin Guide
    5.16. caller_entity_when_publish_disabled (int)
    5.17. callee_entity_when_publish_disabled (int)
    5.18. publish_dialog_req_within (int)
+   5.19. attribute_display (int)
 
 5.1. include_callid (int)
 
@@ -552,6 +556,18 @@ blish.disabled.com")
    Example 1.18. Set publish_dialog_req_within parameter
 ...
 modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
+...
+
+5.19. attribute_display (int)
+
+   If set to 1, the display name attribute is added with user part of the
+   URI for local and remote targets.
+
+   Default value is “0”.
+
+   Example 1.19. Set attribute_display parameter
+...
+modparam("pua_dialoginfo", "attribute_display", 1)
 ...
 
 6. Functions
