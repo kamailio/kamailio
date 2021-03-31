@@ -53,6 +53,37 @@ void print_publ(publ_info_t* p)
 	LM_DBG("expires= %d\n", p->expires);
 }
 
+static xmlNodePtr puadi_xmlNewChildStr(xmlNodePtr node, xmlNsPtr ns, char *name,
+		str *sval)
+{
+	char buf[MAX_URI_SIZE+1];
+
+	if (sval->len > MAX_URI_SIZE) {
+		LM_ERR("value '%.*s' too long for '%s' - maximum=%d\n", sval->len,
+				sval->s, name, MAX_URI_SIZE);
+		return NULL;
+	}
+	memcpy(buf, sval->s, sval->len);
+	buf[sval->len]= '\0';
+
+	return xmlNewChild(node, ns, BAD_CAST name, BAD_CAST buf) ;
+}
+
+static xmlAttrPtr puadi_xmlNewPropStr(xmlNodePtr node, char *name, str *sval)
+{
+	char buf[MAX_URI_SIZE+1];
+
+	if (sval->len > MAX_URI_SIZE) {
+		LM_ERR("value '%.*s' too long for '%s' - maximum=%d\n", sval->len,
+				sval->s, name, MAX_URI_SIZE);
+		return NULL;
+	}
+	memcpy(buf, sval->s, sval->len);
+	buf[sval->len]= '\0';
+
+	return xmlNewProp(node, BAD_CAST name, BAD_CAST buf);
+}
+
 str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		unsigned int initiator, str *localtag, str *remotetag,
 		str *localtarget, str *remotetarget)
@@ -65,24 +96,17 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	xmlNodePtr local_node = NULL;
 	xmlNodePtr tag_node = NULL;
 	str *body= NULL;
-	char buf[MAX_URI_SIZE+1];
-
-	if (entity->len > MAX_URI_SIZE) {
-		LM_ERR("entity URI '%.*s' too long, maximum=%d\n",entity->len,
-				entity->s, MAX_URI_SIZE);
-		return NULL;
-	}
-	memcpy(buf, entity->s, entity->len);
-	buf[entity->len]= '\0';
 
 	/* create the Publish body */
 	doc = xmlNewDoc(BAD_CAST "1.0");
-	if(doc==0)
+	if(doc==0) {
 		return NULL;
+	}
 
 	root_node = xmlNewNode(NULL, BAD_CAST "dialog-info");
-	if(root_node==0)
+	if(root_node==0) {
 		goto error;
+	}
 
 	xmlDocSetRootElement(doc, root_node);
 
@@ -94,8 +118,9 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			BAD_CAST "0");
 	xmlNewProp(root_node, BAD_CAST  "state",
 			BAD_CAST "full" );
-	xmlNewProp(root_node, BAD_CAST "entity",
-			BAD_CAST buf);
+	if(puadi_xmlNewPropStr(root_node, "entity", entity)==NULL) {
+		goto error;
+	}
 
 	/* RFC 3245 differs between id and call-id. For example if a call
 	 * is forked and 2 early dialogs are established, we should send 2
@@ -108,44 +133,30 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 
 	/* dialog tag */
 	dialog_node =xmlNewChild(root_node, NULL, BAD_CAST "dialog", NULL) ;
-	if( dialog_node ==NULL)
-	{
+	if(dialog_node == NULL) {
 		LM_ERR("while adding child\n");
 		goto error;
 	}
 
-	if (callid->len > MAX_URI_SIZE) {
-		LM_ERR("call-id '%.*s' too long, maximum=%d\n", callid->len,
-				callid->s, MAX_URI_SIZE);
+	if(puadi_xmlNewPropStr(dialog_node, "id", callid)==NULL) {
 		goto error;
 	}
-	memcpy(buf, callid->s, callid->len);
-	buf[callid->len]= '\0';
 
-	xmlNewProp(dialog_node, BAD_CAST "id", BAD_CAST buf);
 	if (include_callid) {
-		xmlNewProp(dialog_node, BAD_CAST "call-id", BAD_CAST buf);
+		if(puadi_xmlNewPropStr(dialog_node, "call-id", callid)==NULL) {
+			goto error;
+		}
 	}
 	if (include_tags) {
 		if (localtag && localtag->s) {
-			if (localtag->len > MAX_URI_SIZE) {
-				LM_ERR("localtag '%.*s' too long, maximum=%d\n",
-						localtag->len, localtag->s, MAX_URI_SIZE);
+			if(puadi_xmlNewPropStr(dialog_node, "local-tag", localtag)==NULL) {
 				goto error;
 			}
-			memcpy(buf, localtag->s, localtag->len);
-			buf[localtag->len]= '\0';
-			xmlNewProp(dialog_node, BAD_CAST "local-tag", BAD_CAST buf);
 		}
 		if (remotetag && remotetag->s) {
-			if (remotetag->len > MAX_URI_SIZE) {
-				LM_ERR("remotetag '%.*s' too long, maximum=%d\n",
-						remotetag->len, remotetag->s, MAX_URI_SIZE);
+			if(puadi_xmlNewPropStr(dialog_node, "remote-tag", remotetag)==NULL) {
 				goto error;
 			}
-			memcpy(buf, remotetag->s, remotetag->len);
-			buf[remotetag->len]= '\0';
-			xmlNewProp(dialog_node, BAD_CAST "remote-tag", BAD_CAST buf);
 		}
 	}
 
@@ -158,8 +169,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	/* state tag */
 	state_node = xmlNewChild(dialog_node, NULL, BAD_CAST "state",
 			BAD_CAST state) ;
-	if( state_node ==NULL)
-	{
+	if(state_node == NULL) {
 		LM_ERR("while adding child\n");
 		goto error;
 	}
@@ -167,73 +177,49 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	if (include_localremote) {
 		/* remote tag*/
 		remote_node = xmlNewChild(dialog_node, NULL, BAD_CAST "remote", NULL) ;
-		if( remote_node ==NULL)
-		{
+		if( remote_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 
-		if (peer->len > MAX_URI_SIZE) {
-			LM_ERR("peer '%.*s' too long, maximum=%d\n", peer->len, peer->s,
-					MAX_URI_SIZE);
-			goto error;
-		}
-		memcpy(buf, peer->s, peer->len);
-		buf[peer->len]= '\0';
-
-		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "identity",
-				BAD_CAST buf) ;
-		if( tag_node ==NULL)
-		{
+		tag_node = puadi_xmlNewChildStr(remote_node, NULL, "identity", peer) ;
+		if(tag_node ==NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		tag_node = xmlNewChild(remote_node, NULL, BAD_CAST "target", NULL);
-		if( tag_node ==NULL)
-		{
+		if(tag_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		if (remotetarget && remotetarget->s) {
-			memcpy(buf, remotetarget->s, remotetarget->len);
-			buf[remotetarget->len]= '\0';
+			puadi_xmlNewPropStr(tag_node, "uri", remotetarget);
+		} else {
+			puadi_xmlNewPropStr(tag_node, "uri", peer);
 		}
-		xmlNewProp(tag_node, BAD_CAST "uri", BAD_CAST buf);
 
 		/* local tag*/
 		local_node = xmlNewChild(dialog_node, NULL, BAD_CAST "local", NULL);
-		if( local_node ==NULL)
-		{
+		if(local_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 
-		if (entity->len > MAX_URI_SIZE) {
-			LM_ERR("entity '%.*s' too long, maximum=%d\n",
-					entity->len, entity->s, MAX_URI_SIZE);
-			goto error;
-		}
-		memcpy(buf, entity->s, entity->len);
-		buf[entity->len]= '\0';
-
-		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "identity",
-				BAD_CAST buf) ;
-		if( tag_node ==NULL)
-		{
+		tag_node = puadi_xmlNewChildStr(local_node, NULL, "identity", entity) ;
+		if(tag_node == NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		tag_node = xmlNewChild(local_node, NULL, BAD_CAST "target", NULL);
-		if( tag_node ==NULL)
-		{
+		if(tag_node ==NULL) {
 			LM_ERR("while adding child\n");
 			goto error;
 		}
 		if (localtarget && localtarget->s) {
-			memcpy(buf, localtarget->s, localtarget->len);
-			buf[localtarget->len]= '\0';
+			puadi_xmlNewPropStr(tag_node, "uri", localtarget);
+		} else {
+			puadi_xmlNewPropStr(tag_node, "uri", entity);
 		}
-		xmlNewProp(tag_node, BAD_CAST "uri", BAD_CAST buf);
 	}
 
 	/* create the body */
@@ -261,10 +247,10 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 	return body;
 
 error:
-	if(body)
-	{
-		if(body->s)
+	if(body) {
+		if(body->s) {
 			xmlFree(body->s);
+		}
 		pkg_free(body);
 	}
 	if(doc) {
