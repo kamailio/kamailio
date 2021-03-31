@@ -64,6 +64,9 @@ extern pv_spec_t _tps_bcontact_spec;
 extern str _tps_contact_host_avp;
 extern pv_spec_t _tps_contact_host_avp_spec;
 
+extern str _tps_context_param;
+extern str _tps_context_value;
+
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
@@ -546,9 +549,16 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 {
 	int ret = -1; /* error if dialog == 0 */
 	str suid;
+	str *sx = NULL;
+
+	if(_tps_context_value.len>0) {
+		sx = &_tps_context_value;
+	} else if(_tps_context_param.len>0) {
+		sx = &_tps_context_param;
+	}
 
 	if(dialog==0) {
-		sruid_next(&_tps_sruid);
+		sruid_nextx(&_tps_sruid, sx);
 		suid = _tps_sruid.uid;
 	} else {
 		if(td->a_uuid.len>0) {
