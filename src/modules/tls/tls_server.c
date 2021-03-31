@@ -132,14 +132,59 @@ int tls_run_event_routes(struct tcp_connection *c);
 
 extern str sr_tls_xavp_cfg;
 
+static str _ksr_tls_connect_server_id = STR_NULL;
+
+int ksr_tls_set_connect_server_id(str *srvid)
+{
+	if(srvid==NULL || srvid->len<=0) {
+		if(_ksr_tls_connect_server_id.s) {
+			pkg_free(_ksr_tls_connect_server_id.s);
+		}
+		_ksr_tls_connect_server_id.s = NULL;
+		_ksr_tls_connect_server_id.len = 0;
+		return 0;
+	}
+
+	if(_ksr_tls_connect_server_id.len>=srvid->len) {
+		memcpy(_ksr_tls_connect_server_id.s, srvid->s, srvid->len);
+		_ksr_tls_connect_server_id.len = srvid->len;
+		return 0;
+	}
+
+	if(_ksr_tls_connect_server_id.s) {
+		pkg_free(_ksr_tls_connect_server_id.s);
+	}
+	_ksr_tls_connect_server_id.len = 0;
+
+	_ksr_tls_connect_server_id.s = (char*)pkg_mallocxz(srvid->len + 1);
+	if(_ksr_tls_connect_server_id.s==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(_ksr_tls_connect_server_id.s, srvid->s, srvid->len);
+	_ksr_tls_connect_server_id.len = srvid->len;
+
+	return 0;
+}
+
 static str *tls_get_connect_server_id(void)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
-	if(sr_tls_xavp_cfg.s!=NULL)
+
+	if(sr_tls_xavp_cfg.s!=NULL) {
 		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
+	}
 	if(vavp==NULL || vavp->val.v.s.len<=0) {
 		LM_DBG("xavp with outbound server id not found\n");
+		if(_ksr_tls_connect_server_id.len>0) {
+			LM_DBG("found global outbound server id: %.*s\n",
+					_ksr_tls_connect_server_id.len,
+					_ksr_tls_connect_server_id.s);
+			return &_ksr_tls_connect_server_id;
+		}
+		LM_DBG("outbound server id not set\n");
 		return NULL;
 	}
 	LM_DBG("found xavp with outbound server id: %s\n", vavp->val.v.s.s);
@@ -218,6 +263,7 @@ static int tls_complete_init(struct tcp_connection* c)
 		srvid = tls_get_connect_server_id();
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
 						&c->rcv.dst_ip, c->rcv.dst_port, sname, srvid);
+		ksr_tls_set_connect_server_id(NULL);
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
