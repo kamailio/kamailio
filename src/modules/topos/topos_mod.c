@@ -105,13 +105,12 @@ static str _tps_eventrt_receiving_name = str_init("topos:msg-receiving");
 
 str _tps_contact_host = str_init("");
 int _tps_contact_mode = 0;
-str _tps_contact_host_avp = str_init("");
-pv_spec_t _tps_contact_host_avp_spec;
 str _tps_cparam_name = str_init("tps");
-str _tps_acontact_avp;
-str _tps_bcontact_avp;
-pv_spec_t _tps_acontact_spec;
-pv_spec_t _tps_bcontact_spec;
+
+str _tps_xavu_cfg = str_init("");
+str _tps_xavu_field_acontact = str_init("");
+str _tps_xavu_field_bcontact = str_init("");
+str _tps_xavu_field_contact_host = str_init("");
 
 str _tps_context_param = str_init("");
 str _tps_context_value = str_init("");
@@ -160,9 +159,10 @@ static param_export_t params[]={
 	{"contact_host",	PARAM_STR, &_tps_contact_host},
 	{"contact_mode",	PARAM_INT, &_tps_contact_mode},
 	{"cparam_name",		PARAM_STR, &_tps_cparam_name},
-	{"a_contact_avp",	PARAM_STR, &_tps_acontact_avp},
-	{"b_contact_avp",	PARAM_STR, &_tps_bcontact_avp},
-	{"contact_host_avp",    PARAM_STR, &_tps_contact_host_avp},
+	{"xavu_cfg",		PARAM_STR, &_tps_xavu_cfg},
+	{"xavu_field_a_contact",	PARAM_STR, &_tps_xavu_field_acontact},
+	{"xavu_field_b_contact",	PARAM_STR, &_tps_xavu_field_bcontact},
+	{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
 	{"rr_update",		PARAM_INT, &_tps_rr_update},
 	{"context",			PARAM_STR, &_tps_context_param},
 	{0,0,0}
@@ -247,33 +247,11 @@ static int mod_init(void)
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC)<0)
 		return -1;
 
-	if (_tps_contact_mode == 2 && (_tps_acontact_avp.s == NULL || _tps_acontact_avp.len == 0 ||
-			 _tps_bcontact_avp.s == NULL || _tps_bcontact_avp.len == 0)) {
-		LM_ERR("contact_mode parameter is 2, but a_contact and/or b_contact AVPs not defined\n");
+	if (_tps_contact_mode == 2 && (_tps_xavu_field_acontact.len <= 0
+				|| _tps_xavu_field_bcontact.len <= 0)) {
+		LM_ERR("contact_mode parameter is 2,"
+				" but a_contact or b_contact xavu fields not defined\n");
 		return -1;
-	}
-	if(_tps_acontact_avp.len > 0 && _tps_acontact_avp.s != NULL) {
-		if(pv_parse_spec(&_tps_acontact_avp, &_tps_acontact_spec) == 0 || _tps_acontact_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-				_tps_acontact_avp.len, _tps_acontact_avp.s);
-			return -1;
-		}
-	}
-	if(_tps_bcontact_avp.len > 0 && _tps_bcontact_avp.s != NULL) {
-		if(pv_parse_spec(&_tps_bcontact_avp, &_tps_bcontact_spec) == 0 || _tps_bcontact_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-				_tps_bcontact_avp.len, _tps_bcontact_avp.s);
-			return -1;
-		}
-	}
-
-	if(_tps_contact_host_avp.len > 0 && _tps_contact_host_avp.s != NULL) {
-		if(pv_parse_spec(&_tps_contact_host_avp, &_tps_contact_host_avp_spec) == 0
-				|| _tps_contact_host_avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n",
-			_tps_contact_host_avp.len, _tps_contact_host_avp.s);
-			return -1;
-		}
 	}
 
 	sr_event_register_cb(SREV_NET_DATA_IN,  tps_msg_received);
