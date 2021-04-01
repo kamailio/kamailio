@@ -199,7 +199,7 @@ modparam("topos", "branch_expire", 300)
 			after the initial call setup on re-INVITEs or other in-dialog
 			messages. So set a large enough value (according your longest call
 			duration) to prevent problems in re-writing messages.
-			This key is only relevant for INVITE dialog. 
+			This key is only relevant for INVITE dialog.
                         SUBSCRIBE dialog records lifetime are based on value set in expires
                         header. Moreover each re-SUBSCRIBEs update the dialog timestamp.
 		</para>
@@ -272,7 +272,9 @@ end
 		<para>
 			Control what event_route blocks to be executed. It is a bitmask of:
 			1 - execute event_route[topos:msg-outgoing]; 2 - execute
-			event_route[topos:msg-sending].
+			event_route[topos:msg-sending]; 4 execute
+			event_route[topos:msg-incoming]; 8 execute
+			event_route[topos:msg-receiving];.
 		</para>
 		<para>
 		<emphasis>
@@ -501,7 +503,58 @@ modparam("topos", "xavu_contact_host", "contact_host")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.context">
+		<title><varname>context</varname> (str)</title>
+		<para>
+			Set the global context for topos instance.
+		</para>
+		<para>
+			The value has to be maximum 12 characters.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>context</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "context", "srvone")
+...
+</programlisting>
+		</example>
 	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="topos.f.tps_set_context">
+		<title>
+		<function moreinfo="none">tps_set_context(ctx)</function>
+		</title>
+		<para>
+			Update the context at runtime. If the value is emtpy string, then
+			the runtime context is reset.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>tps_set_context</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    tps_set_context("srvone");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
 	<section>
 	<title>Event Routes</title>
 	<section id="topos.e.msg_outgoing">
@@ -547,6 +600,57 @@ event_route[topos:msg-outgoing] {
 		<programlisting format="linespecific">
 ...
 event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.e.msg_incoming">
+		<title>event_route[topos:msg-incoming]</title>
+		<para>
+		It is executed before doing topology stripping processing for an incoming
+		SIP message. If 'drop' is executed inside the event route, then the
+		module skips doing the topology hiding.
+		</para>
+		<para>
+		Inside the event route the variables $si, $sp and
+		$proto point to the source address. The SIP message is not the one
+		to be sent out, but an internally generated one at startup, to avoid
+		reparsing the outgoing SIP message for the cases when topology hiding
+		is not wanted.
+		</para>
+		<example>
+		<title>Usage of event_route[topos:msg-incoming]</title>
+		<programlisting format="linespecific">
+...
+event_route[topos:msg-incoming] {
+  if($si=="10.1.1.10") {
+    drop;
+  }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.e.msg_receiving">
+		<title>event_route[topos:msg-receiving]</title>
+		<para>
+		It is executed before doing topology stripping processing for a SIP
+		message that was received, being executed after event_route[topos:msg-incoing].
+		</para>
+		<para>
+		Inside the event route the variables $si, $sp and
+		$proto point to the source address. The SIP message is the one
+		to be sent out.
+		</para>
+		<example>
+		<title>Usage of event_route[topos:msg-receoving]</title>
+		<programlisting format="linespecific">
+...
+event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {
     drop;
   }
