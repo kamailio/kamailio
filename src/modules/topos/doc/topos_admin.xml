@@ -393,7 +393,7 @@ modparam("topos", "cparam_name", "xyz")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavu_filed_a_contact</varname> parameter</title>
+		<title>Set <varname>xavu_cfg</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
@@ -453,26 +453,6 @@ modparam("topos", "xavu_filed_b_contact", "b_contact")
 </programlisting>
 		</example>
 	</section>
-	<section id="topos.p.rr_update">
-		<title><varname>rr_update</varname> (int)</title>
-		<para>
-			If set to 1, topos module will track and update record
-			route changes on re-invite.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0 (do not update record route changes within dialog).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>rr_update</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("topos", "rr_update", 1)
-...
-</programlisting>
-		</example>
-	</section>
 	<section id="topos.p.xavu_filed_contact_host">
 		<title><varname>xavu_field_contact_host</varname> (str)</title>
 		<para>
@@ -499,6 +479,26 @@ modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_contact_host", "contact_host")
 ...
     $xavu(_tps_=>contact_host) = "kamailio.org";
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.rr_update">
+		<title><varname>rr_update</varname> (int)</title>
+		<para>
+			If set to 1, topos module will track and update record
+			route changes on re-invite.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (do not update record route changes within dialog).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rr_update</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "rr_update", 1)
 ...
 </programlisting>
 		</example>
