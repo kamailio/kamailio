@@ -365,14 +365,14 @@ static void destroy(void)
 static int dmq_add_notification_address(modparam_t type, void * val)
 {
 	str tmp_str;
-	tmp_str.s = ((str*) val)->s;
-	tmp_str.len = ((str*) val)->len;
 	int total_list = 0; /* not used */
 
 	if(val==NULL) {
 		LM_ERR("invalid notification address parameter value\n");
 		return -1;
 	}
+	tmp_str.s = ((str*) val)->s;
+	tmp_str.len = ((str*) val)->len;
 	if(parse_uri(tmp_str.s,  tmp_str.len, &dmq_notification_uri) < 0) {
 		LM_ERR("could not parse notification address\n");
 		return -1;
