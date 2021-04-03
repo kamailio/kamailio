@@ -124,6 +124,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 #define case_port( ch, var) \
 	case ch: \
 			(var)=(var)*10+ch-'0'; \
+			if((var) > MAX_PORT_VAL) { \
+				goto error_bad_port; \
+			}\
 			break
 
 #define still_at_user  \

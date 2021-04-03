@@ -93,6 +93,7 @@
 #define MY_BRANCH ";branch="
 #define MY_BRANCH_LEN (sizeof(MY_BRANCH) - 1)
 
+#define MAX_PORT_VAL 65535
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
 
 #define CRLF "\r\n"
