@@ -411,7 +411,7 @@ static int w_lost_held_deref(struct sip_msg *_m, char *_url, char *_rtime,
 }
 
 /*
- * Wrapper for lost_query w/o pudf, urn
+ * Wrapper for lost_query w/o pidf, urn
  */
 static int w_lost_query(
 		struct sip_msg *_m, char *_con, char *_uri, char *_name, char *_err)

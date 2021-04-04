@@ -185,8 +185,7 @@
             <title><varname>post_request</varname> (int)</title>
             <para>
             Dereferencing the location can be done using either the HTTP GET or POST method. This parameter
-            This parameter globally defines whether only HTTP POST method should be used. Values are 0 (GET)
-            or 1 (POST).
+            globally defines whether only HTTP POST method should be used. Values are 0 (GET) or 1 (POST).
             </para>
             <para>
             Default: 0 (GET)
@@ -405,6 +404,7 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 			</title>
 			<para>
 			Sends a HELD POST locationRequest to a given URL. Attributes are responseTime and resposeType.
+            The <emphasis>locationType</emphasis> property "exact" is set to "false".
 	    	</para>
 			    <itemizedlist>
                     <listitem><para>
