@@ -860,7 +860,6 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 		p += TRANSPORT_PARAM_LEN;
 
 		memcpy(p, proto.s, proto.len);
-		p += proto.len;
 	}
 
 	uri->s = buf;
