@@ -192,7 +192,8 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 {
 	pv_value_t val;
 	EVP_CIPHER_CTX *en = NULL;
-	str etext, lkey, iv, ttext;
+	str etext, lkey, ttext;
+	str iv = STR_NULL;
 	unsigned char decoded_key[64];
 	unsigned char decoded_iv[16], tmpiv[16];
 
@@ -476,7 +477,7 @@ static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 	EVP_CIPHER_CTX *de=NULL;
 	str etext, lkey;
 	unsigned char decoded_key[64];
-	char *iv;
+	char *iv = NULL;
 
 	de = EVP_CIPHER_CTX_new();
 	if(de==NULL) {
