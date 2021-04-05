@@ -387,6 +387,7 @@ static int dmq_add_notification_address(modparam_t type, void * val)
 		}
 		dmq_tmp_list = dmq_notification_address_list;
 		dmq_tmp_list->s = tmp_str;
+		dmq_tmp_list->next = NULL;
 	} else {
 		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
 		if (dmq_tmp_list == NULL) {
