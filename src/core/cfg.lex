@@ -1436,7 +1436,7 @@ static char* addchar(struct str_buf* dst, char c)
 
 static char* addstr(struct str_buf* dst_b, char* src, int len)
 {
-	char *tmp;
+	char *tmp = NULL;
 	unsigned size;
 	unsigned used;
 
@@ -1454,6 +1454,10 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 		dst_b->s=tmp;
 		dst_b->crt=dst_b->s+used;
 		dst_b->left=size-used;
+	}
+	if(dst_b->crt==NULL) {
+		LM_CRIT("unexpected null dst buffer\n");
+		ksr_exit(-1);
 	}
 	memcpy(dst_b->crt, src, len);
 	dst_b->crt+=len;
