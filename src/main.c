@@ -2202,16 +2202,17 @@ int main(int argc, char** argv)
 			case 'A':
 					p = strchr(optarg, '=');
 					if(p) {
-						*p = '\0';
+						tmp_len = p - optarg;
+					} else {
+						tmp_len = strlen(optarg);
 					}
 					pp_define_set_type(0);
-					if(pp_define(strlen(optarg), optarg)<0) {
+					if(pp_define(tmp_len, optarg)<0) {
 						fprintf(stderr, "error at define param: -A %s\n",
 								optarg);
 						goto error;
 					}
 					if(p) {
-						*p = '=';
 						p++;
 						if(pp_define_set(strlen(p), p)<0) {
 							fprintf(stderr, "error at define value: -A %s\n",
