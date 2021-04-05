@@ -50,3 +50,6 @@ libiname.lst
 *.7
 # vscode tmp files
 .vscode
+# compiling tools files
+.clangd
+compile_commands.json
