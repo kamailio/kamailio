@@ -1005,8 +1005,8 @@ int run_failure_handlers(tm_cell_t *t, struct sip_msg *rpl,
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
 	sr_kemi_eng_t *keng = NULL;
-	struct timeval tvb;
-	struct timeval tve;
+	struct timeval tvb = {0};
+	struct timeval tve = {0};
 	unsigned long tvd = 0;
 	unsigned int t_hash_index = 0;
 	unsigned int t_label = 0;
