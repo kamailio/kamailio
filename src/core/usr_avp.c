@@ -148,7 +148,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 	struct str_str_data *ssd;
 	int len;
 
-	if (name.s.s == 0 && name.s.len == 0) {
+	if (name.s.s == NULL || name.s.len == 0) {
 		LM_ERR("0 ID or NULL NAME AVP!");
 		goto error;
 	}
