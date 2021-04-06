@@ -875,7 +875,7 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	str old_uri;
 	str* new_uri;
 	str* new_display;
-	str buf;
+	str buf = STR_NULL;
 	char *p;
 	unsigned int uac_flag;
 	int dlgvar_index = 0;
@@ -968,11 +968,13 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		buf.len = new_display->len;
 		if (l==0 && (l=get_display_anchor(msg, hdr, body, &buf)) == 0) {
 			LM_ERR("failed to insert anchor\n");
-			goto free1;
+			pkg_free(buf.s);
+			return;
 		}
 		if (insert_new_lump_after(l, buf.s, buf.len, 0) == 0) {
 			LM_ERR("insert new display lump failed\n");
-			goto free1;
+			pkg_free(buf.s);
+			return;
 		}
 	}
 
@@ -980,20 +982,22 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	p = pkg_malloc( new_uri->len);
 	if (!p) {
 		PKG_MEM_ERROR;
-		goto free1;
+		return;
 	}
-	memcpy( p, new_uri->s, new_uri->len);
+	memcpy(p, new_uri->s, new_uri->len);
 
 	/* build del/add lumps */
-	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
+	l = del_lump(msg, old_uri.s-msg->buf, old_uri.len, 0);
 	if (l==0) {
 		LM_ERR("del lump failed\n");
-		goto free2;
+		pkg_free(p);
+		return;
 	}
 
 	if (insert_new_lump_after( l, p, new_uri->len, 0)==0) {
 		LM_ERR("insert new lump failed\n");
-		goto free2;
+		pkg_free(p);
+		return;
 	}
 
 	/* register tm callback to change replies,
@@ -1007,12 +1011,6 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	msg->msg_flags |= uac_flag;
 
 	return;
-
-free2:
-	pkg_free(p);
-
-free1:
-	pkg_free(buf.s);
 }
 
 
