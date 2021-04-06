@@ -2140,6 +2140,10 @@ int main(int argc, char** argv)
 					/* ignore, they were parsed immediately after startup */
 					break;
 			case 'f':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -f parameter\n");
+						goto error;
+					}
 					cfg_file=optarg;
 					break;
 			case 'c':
@@ -2147,10 +2151,18 @@ int main(int argc, char** argv)
 					log_stderr=1; /* force stderr logging */
 					break;
 			case 'L':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -L parameter\n");
+						goto error;
+					}
 					mods_dir = optarg;
 					mods_dir_cmd = 1;
 					break;
 			case 'm':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad shared mem size\n");
+						goto error;
+					}
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad shmem size number: -m %s\n",
@@ -2188,6 +2200,10 @@ int main(int argc, char** argv)
 					/* ignore it, was parsed immediately after startup */
 					break;
 			case 'O':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -O parameter\n");
+						goto error;
+					}
 					scr_opt_lev=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad optimization level: -O %s\n",
@@ -2200,6 +2216,10 @@ int main(int argc, char** argv)
 					user=optarg;
 					break;
 			case 'A':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -A parameter\n");
+						goto error;
+					}
 					p = strchr(optarg, '=');
 					if(p) {
 						tmp_len = p - optarg;
@@ -2451,6 +2471,10 @@ try_again:
 									   takes priority over config */
 					break;
 			case 'b':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -b parameter\n");
+						goto error;
+					}
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad max buffer size number: -b %s\n",
@@ -2473,6 +2497,10 @@ try_again:
 				#endif
 					break;
 			case 'l':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -l parameter\n");
+						goto error;
+					}
 					p = strrchr(optarg, '/');
 					if(p==NULL) {
 						p = optarg;
@@ -2522,6 +2550,10 @@ try_again:
 					free_name_lst(n_lst);
 					break;
 			case 'n':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -n parameter\n");
+						goto error;
+					}
 					children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -n %s\n",
@@ -2548,6 +2580,10 @@ try_again:
  									"TCP support disabled\n", optarg);
 						goto error;
 					}
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -N parameter\n");
+						goto error;
+					}
 					tcp_cfg_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
@@ -2560,6 +2596,10 @@ try_again:
 					break;
 			case 'W':
 				#ifdef USE_TCP
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -W parameter\n");
+						goto error;
+					}
 					tcp_poll_method=get_poll_type(optarg);
 					if (tcp_poll_method==POLL_NONE){
 						fprintf(stderr, "bad poll method name: -W %s\ntry "
@@ -2575,6 +2615,10 @@ try_again:
 					if (sctp_disable) {
 						fprintf(stderr, "could not configure SCTP children: -Q %s\n"
 									"SCTP support disabled\n", optarg);
+						goto error;
+					}
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -Q parameter\n");
 						goto error;
 					}
 					sctp_children_no=strtol(optarg, &tmp, 10);
