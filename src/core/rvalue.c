@@ -112,10 +112,7 @@ inline static void rval_force_clean(struct rvalue* rv)
 
 
 
-/** frees a rval returned by rval_new(), rval_convert() or rval_expr_eval().
- *   Note: it will be freed only when refcnt reaches 0
- */
-void rval_destroy(struct rvalue* rv)
+static inline void rval_destroy_helper(struct rvalue* rv, int allocated)
 {
 	if (rv && rv_unref(rv)){
 		rval_force_clean(rv);
@@ -126,9 +123,34 @@ void rval_destroy(struct rvalue* rv)
 			regfree(rv->v.re.regex);
 		}
 		if (rv->flags & RV_RV_ALLOCED_F){
-			pkg_free(rv);
+			if(likely(allocated)) {
+				pkg_free(rv);
+			} else {
+				/* not expected to be allocated */
+				abort(); /* abort, otherwise is lost - find bugs quicker */
+			}
 		}
 	}
+}
+
+
+
+/** frees a rval returned by rval_new(), rval_convert() or rval_expr_eval().
+ *   Note: it will be freed only when refcnt reaches 0
+ */
+void rval_destroy(struct rvalue* rv)
+{
+	rval_destroy_helper(rv, 1);
+}
+
+
+
+/** frees content of rval which is not allocated, otherwise aborts.
+ *   Note: it will be freed only when refcnt reaches 0
+ */
+void rval_destroy_content(struct rvalue* rv)
+{
+	rval_destroy_helper(rv, 0);
 }
 
 
@@ -1511,7 +1533,7 @@ inline static int int_strop1(int* res, enum rval_expr_op op, str* s1)
 }
 
 
-
+#if 0
 /** integer operation: ret= op v (returns a rvalue).
  * @return rvalue on success, 0 on error
  */
@@ -1607,7 +1629,7 @@ error:
 	rval_destroy(rv2);
 	return 0;
 }
-
+#endif /* #if 0 */
 
 
 /** string add operation: ret= l . r (returns a rvalue).
@@ -2940,7 +2962,7 @@ static int rve_replace_with_val(struct rval_expr* rve, enum rval_type type,
 			refcnt=rve->left.rval.refcnt;
 			abort(); /* find bugs quicker -- andrei */
 		}
-		rval_destroy(&rve->left.rval);
+		rval_destroy_content(&rve->left.rval);
 	}
 	rval_init(&rve->left.rval, type, v, flags);
 	rve->left.rval.refcnt=refcnt;
@@ -3012,7 +3034,7 @@ static int fix_match_rve(struct rval_expr* rve)
 	/* fixup the right side (RE) */
 	if (rve_is_constant(rve->right.rve)){
 		if ((rve_guess_type(rve->right.rve)!=RV_STR)){
-			LM_ERR("fixup failure(%d,%d-%d,%d): left side of  =~ is not string"
+			LM_ERR("fixup failure(%d,%d-%d,%d): right side of  =~ is not string"
 					" (%d,%d)\n",   rve->fpos.s_line, rve->fpos.s_col,
 									rve->fpos.e_line, rve->fpos.e_col,
 									rve->right.rve->fpos.s_line,
@@ -3020,7 +3042,7 @@ static int fix_match_rve(struct rval_expr* rve)
 			goto error;
 		}
 		if ((rv=rval_expr_eval(0, 0, rve->right.rve))==0){
-			LM_ERR("fixup failure(%d,%d-%d,%d):  bad RE expression\n",
+			LM_ERR("fixup failure(%d,%d-%d,%d): bad RE expression\n",
 					rve->right.rve->fpos.s_line, rve->right.rve->fpos.s_col,
 					rve->right.rve->fpos.e_line, rve->right.rve->fpos.e_col);
 			goto error;
