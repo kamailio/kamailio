@@ -284,16 +284,18 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 	val.flags = PV_VAL_STR;
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
-	free(etext.s);
-	if (! _crypto_key_derivation)
+	if (ttext.s != etext.s) {
 		pkg_free(ttext.s);
+	}
+	free(etext.s);
 	EVP_CIPHER_CTX_cleanup(en);
 	EVP_CIPHER_CTX_free(en);
 	return 1;
 
 error:
-	if (ttext.s != etext.s)
+	if (ttext.s != etext.s) {
 		pkg_free(ttext.s);
+	}
 error1:
 	free(etext.s);
 	EVP_CIPHER_CTX_cleanup(en);
