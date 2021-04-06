@@ -3185,6 +3185,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	struct rvalue* rv;
 	struct rval_expr* ct_rve;
 	struct rval_expr* v_rve;
+	struct rval_expr* r_rve = NULL;
 	int i;
 	int ret;
 	enum rval_expr_op op;
@@ -3208,7 +3209,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			pos=(e)->fpos; \
 			*(e)=*(v); /* replace e with v (in-place) */ \
 			(e)->fpos=pos; \
-			pkg_free((v)); /* rve_destroy(v_rve) would free everything*/ \
+			r_rve = v; /* link to free it */ \
 		}else{\
 			/* unknown type or str => (int) $v */ \
 			(e)->op=RVE_##ctype##_OP; \
@@ -3564,9 +3565,11 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 		}
 	}
 	if (rv) rval_destroy(rv);
+	if (r_rve) pkg_free(r_rve); /* rve_destroy(v_rve) would free everything*/
 	return ret;
 error:
 	if (rv) rval_destroy(rv);
+	if (r_rve) pkg_free(r_rve); /* rve_destroy(v_rve) would free everything*/
 	return -1;
 }
 
