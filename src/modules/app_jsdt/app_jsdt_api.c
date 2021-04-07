@@ -1329,7 +1329,7 @@ int sr_kemi_jsdt_exec_func(duk_context *J, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb ={0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 	int sline = 0;
