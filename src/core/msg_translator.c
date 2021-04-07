@@ -2992,12 +2992,14 @@ char* create_via_hf(unsigned int *len,
 		/* params so far + ';rport' + '\0' */
 		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
 		if(via==0) {
-		        PKG_MEM_ERROR;
+			PKG_MEM_ERROR;
 			if (extra_params.s) pkg_free(extra_params.s);
 			return 0;
 		}
-		if(extra_params.len!=0) {
+		if(extra_params.s!=NULL && extra_params.len>0) {
 			memcpy(via, extra_params.s, extra_params.len);
+		}
+		if(extra_params.s!=NULL) {
 			pkg_free(extra_params.s);
 		}
 		memcpy(via + extra_params.len, RPORT, RPORT_LEN-1);
@@ -3018,8 +3020,10 @@ char* create_via_hf(unsigned int *len,
 				if (extra_params.s) pkg_free(extra_params.s);
 				return 0;
 			}
-			if(extra_params.len != 0) {
+			if(extra_params.s!=NULL && extra_params.len>0) {
 				memcpy(via, extra_params.s, extra_params.len);
+			}
+			if(extra_params.s!=NULL) {
 				pkg_free(extra_params.s);
 			}
 			memcpy(via + extra_params.len, sbuf, slen);
@@ -3038,12 +3042,14 @@ char* create_via_hf(unsigned int *len,
 		if(xparams.len>0) {
 			via = (char*)pkg_malloc(extra_params.len+xparams.len+2);
 			if(via==0) {
-			        PKG_MEM_ERROR;
+				PKG_MEM_ERROR;
 				if (extra_params.s) pkg_free(extra_params.s);
 				return 0;
 			}
-			if(extra_params.len != 0) {
+			if(extra_params.s!=NULL && extra_params.len>0) {
 				memcpy(via, extra_params.s, extra_params.len);
+			}
+			if(extra_params.s!=NULL) {
 				pkg_free(extra_params.s);
 			}
 			/* add ';' between via parameters */
