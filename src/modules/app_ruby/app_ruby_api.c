@@ -1413,7 +1413,7 @@ VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
 {
 	sr_kemi_t *ket;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 
