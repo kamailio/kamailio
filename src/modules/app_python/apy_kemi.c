@@ -1775,7 +1775,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 	PyObject *ret = NULL;
 	PyThreadState *pstate = NULL;
 	PyFrameObject *pframe = NULL;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 
