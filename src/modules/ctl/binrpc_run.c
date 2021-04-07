@@ -223,7 +223,7 @@ static struct rpc_struct_l* grow_rpc_struct(struct rpc_struct_l *rs)
 #endif
 
 
-
+#if 0
 /* appends buf to an already init. binrpc_pkt */
 inline static int append_pkt_body(struct binrpc_pkt* p, unsigned char* buf,
 							int len)
@@ -247,7 +247,7 @@ inline static int append_pkt_body(struct binrpc_pkt* p, unsigned char* buf,
 error:
 	return -1; /* buff. overflow */
 }
-
+#endif
 
 
 inline static int append_iovec(struct iovec_array* a, unsigned char* buf,
@@ -379,6 +379,9 @@ inline static int init_binrpc_ctx(	struct binrpc_ctx* ctx,
 	}
 	/* we'll keep only the body */
 	err=binrpc_init_pkt(&ctx->out.pkt, send_buf, send_buf_len);
+	if(err!=0) {
+		ctl_free(send_buf);
+	}
 end:
 	return err;
 }
