@@ -69,7 +69,9 @@ enum SMS_DATA {
 	SMS_TPDU_DESTINATION,
 	SMS_UDH_CONCATSM_REF,
 	SMS_UDH_CONCATSM_MAX_NUM_SM,
-	SMS_UDH_CONCATSM_SEQ
+	SMS_UDH_CONCATSM_SEQ,
+	SMS_TPDU_ORIGINATING_ADDRESS_FLAGS,
+	SMS_TPDU_DESTINATION_FLAGS
 };
 
 // Types of the PDU-Message
@@ -125,6 +127,9 @@ typedef struct _sms_pdu {
 	str originating_address;
 	str destination;
 	tp_user_data_t payload;
+	unsigned char originating_address_flags;
+	unsigned char destination_flags;
+	struct tm time; // Either SCTS (DELIVER) or VP (SUBMIT)
 } sms_pdu_t;
 
 // RP-Data of the message
@@ -396,6 +401,22 @@ static void EncodeTime(char * buffer) {
 	buffer[6] = 0; // Timezone, we use no time offset.
 }
 
+static void DecodeTime(char* buffer, struct tm* decoded_time)
+{
+	time_t ts;
+
+	time(&ts);
+	/* Get GMT time */
+	gmtime_r(&ts, decoded_time);
+
+	decoded_time->tm_year	= 100 + ((buffer[0] & 0x0F) * 10) + ((buffer[0] >> 4) & 0x0F);
+	decoded_time->tm_mon	= ((buffer[1] & 0x0F) * 10) + ((buffer[1] >> 4) & 0x0F) - 1;
+	decoded_time->tm_mday	= ((buffer[2] & 0x0F) * 10) + ((buffer[2] >> 4) & 0x0F);
+	decoded_time->tm_hour	= ((buffer[3] & 0x0F) * 10) + ((buffer[3] >> 4) & 0x0F);
+	decoded_time->tm_min	= ((buffer[4] & 0x0F) * 10) + ((buffer[4] >> 4) & 0x0F);
+	decoded_time->tm_sec	= ((buffer[5] & 0x0F) * 10) + ((buffer[5] >> 4) & 0x0F);
+}
+
 //The function is called GetXXX but it actually creates the IE if it doesn't exist
 static struct ie_concat_sm_8bit_ref* GetConcatShortMsg8bitRefIE(sms_rp_data_t* rp_data)
 {
@@ -513,22 +534,44 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 			if (rp_data->pdu_len > 0) {
 				rp_data->pdu.flags = (unsigned char)body.s[p++];
 				rp_data->pdu.msg_type = (unsigned char)rp_data->pdu.flags & 0x03;
-				rp_data->pdu.reference = (unsigned char)body.s[p++];
-				// TP-DA
-				rp_data->pdu.destination.len = body.s[p++];
-				if (rp_data->pdu.destination.len > 0) {
-					p++; // Type of Number, we assume E164, thus ignored
-					rp_data->pdu.destination.s = pkg_malloc(rp_data->pdu.destination.len);
-					DecodePhoneNumber(&body.s[p], rp_data->pdu.destination.len, rp_data->pdu.destination);
-					if (rp_data->pdu.destination.len % 2 == 0) {
-						p += rp_data->pdu.destination.len/2;
-					} else {
-						p += (rp_data->pdu.destination.len/2)+1;
-					}
 
+				if (rp_data->pdu.msg_type == SUBMIT || rp_data->pdu.msg_type == COMMAND) {
+					rp_data->pdu.reference = (unsigned char)body.s[p++];
 				}
+
+				if (rp_data->pdu.msg_type == SUBMIT) {
+					// TP-DA
+					rp_data->pdu.destination.len = body.s[p++];
+					if (rp_data->pdu.destination.len > 0) {
+						rp_data->pdu.destination_flags = (unsigned char)body.s[p++];
+						rp_data->pdu.destination.s = pkg_malloc(rp_data->pdu.destination.len);
+						DecodePhoneNumber(&body.s[p], rp_data->pdu.destination.len, rp_data->pdu.destination);
+						if (rp_data->pdu.destination.len % 2 == 0) {
+							p += rp_data->pdu.destination.len/2;
+						} else {
+							p += (rp_data->pdu.destination.len/2)+1;
+						}
+					}
+				}else if (rp_data->pdu.msg_type == DELIVER) {
+					// TP-OA
+					rp_data->pdu.originating_address.len = body.s[p++];
+					if (rp_data->pdu.originating_address.len > 0) {
+						rp_data->pdu.originating_address_flags = (unsigned char)body.s[p++];
+						rp_data->pdu.originating_address.s = pkg_malloc(rp_data->pdu.originating_address.len);
+						DecodePhoneNumber(&body.s[p], rp_data->pdu.originating_address.len, rp_data->pdu.originating_address);
+						if (rp_data->pdu.originating_address.len % 2 == 0) {
+							p += rp_data->pdu.originating_address.len/2;
+						} else {
+							p += (rp_data->pdu.originating_address.len/2)+1;
+						}
+					}
+				}
+
 				rp_data->pdu.pid = (unsigned char)body.s[p++];
-				rp_data->pdu.coding = (unsigned char)body.s[p++];
+
+				if (rp_data->pdu.msg_type == SUBMIT || rp_data->pdu.msg_type == DELIVER) {
+					rp_data->pdu.coding = (unsigned char)body.s[p++];
+				}
 
 				// 3GPP TS 03.40 9.2.2.2 SMS SUBMIT type
 				// https://en.wikipedia.org/wiki/GSM_03.40
@@ -538,129 +581,135 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 						case BITMASK_TP_VPF_RELATIVE:	// 3GPP TS 03.40 9.2.3.12.1 TP-VP (Relative format)
 							rp_data->pdu.validity = (unsigned char)body.s[p++];
 							break;
-						case BITMASK_TP_VPF_ENHANCED:	// 3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format)
+						case BITMASK_TP_VPF_ABSOLUTE:	// 3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format)
+							DecodeTime(&body.s[p], &rp_data->pdu.time);
 							p += 7;
-							LM_WARN("3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format) is not supported\n");
 							break;
-						case BITMASK_TP_VPF_ABSOLUTE:	// 3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format)
+						case BITMASK_TP_VPF_ENHANCED:	// 3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format)
 							p += 7;
 							LM_WARN("3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format) is not supported\n");
 							break;
 						default:
 							break;
 					}
+				} else if (rp_data->pdu.msg_type == DELIVER) {
+					// TP-SCTS
+					DecodeTime(&body.s[p], &rp_data->pdu.time);
+					p += 7;
 				}
 
-				//TP-User-Data-Length and TP-User-Data
-				len = (unsigned char)body.s[p++];
-				int fill_bits = 0;
-				if (len > 0) {
-					if((unsigned char)rp_data->pdu.flags & BITMASK_TP_UDHI) { //TP-UDHI
-						int udh_len = (unsigned char)body.s[p++];
-						int udh_read = 0;
+				if (rp_data->pdu.msg_type == SUBMIT || rp_data->pdu.msg_type == DELIVER) {
+					//TP-User-Data-Length and TP-User-Data
+					len = (unsigned char)body.s[p++];
+					int fill_bits = 0;
+					if (len > 0) {
+						if((unsigned char)rp_data->pdu.flags & BITMASK_TP_UDHI) { //TP-UDHI
+							int udh_len = (unsigned char)body.s[p++];
+							int udh_read = 0;
 
-						if(rp_data->pdu.coding == 0) {
-							//calcucate padding size for 7bit coding
-							//udh_len + 1, because the length field itself should be included
-							fill_bits = (7 - (udh_len + 1) % 7) % 7; //padding size is in bits!
-						}
-
-						// Check for malicious length, which might cause buffer overflow
-						if(udh_len > body.len - p) {
-							LM_ERR("TP-User-Data-Length is bigger than the remaining message buffer!\n");
-							return -1;
-						}
-
-						//User-Data-Header
-						tp_udh_inf_element_t* prev_ie = NULL;
-						// IE 'Concatenated short messages, 8-bit reference number' should not be repeated
-						int contains_8bit_refnum = 0;
-						while(udh_read < udh_len) {
-							tp_udh_inf_element_t* ie = pkg_malloc(sizeof(tp_udh_inf_element_t));
-							if(ie == NULL) {
-								LM_ERR("no more pkg\n");
-								return -1;
+							if(rp_data->pdu.coding == 0) {
+								//calcucate padding size for 7bit coding
+								//udh_len + 1, because the length field itself should be included
+								fill_bits = (7 - (udh_len + 1) % 7) % 7; //padding size is in bits!
 							}
-							memset(ie, 0, sizeof(tp_udh_inf_element_t));
-
-							ie->identifier = (unsigned char)body.s[p++];
-							ie->data.len = (unsigned char)body.s[p++];
 
 							// Check for malicious length, which might cause buffer overflow
-							if(udh_read + ie->data.len + 2 /* two octets are read so far */ > udh_len) {
-								LM_ERR("IE Length for IE id %d is bigger than the remaining User-Data element!\n",
-																									ie->identifier);
-								pkg_free(ie);
+							if(udh_len > body.len - p) {
+								LM_ERR("TP-User-Data-Length is bigger than the remaining message buffer!\n");
 								return -1;
 							}
 
-							if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF) {
-								if(contains_8bit_refnum) {
-									pkg_free(ie);
-									LM_ERR("IE Concatenated Short Message 8bit Reference occurred more than once in UDH\n");
-									return -1;
-								}
-
-								ie->concat_sm_8bit_ref.ref = body.s[p++];
-								ie->concat_sm_8bit_ref.max_num_sm = body.s[p++];
-								ie->concat_sm_8bit_ref.seq = body.s[p++];
-
-								contains_8bit_refnum = 1;
-							}
-							else { /* Unsupported IE, save it as binary */
-								ie->data.s = pkg_malloc(ie->data.len);
-								if(ie->data.s == NULL) {
-									pkg_free(ie);
+							//User-Data-Header
+							tp_udh_inf_element_t* prev_ie = NULL;
+							// IE 'Concatenated short messages, 8-bit reference number' should not be repeated
+							int contains_8bit_refnum = 0;
+							while(udh_read < udh_len) {
+								tp_udh_inf_element_t* ie = pkg_malloc(sizeof(tp_udh_inf_element_t));
+								if(ie == NULL) {
 									LM_ERR("no more pkg\n");
 									return -1;
 								}
-								memset(ie->data.s, 0, ie->data.len);
-								memcpy(ie->data.s, &body.s[p], ie->data.len);
-								p += ie->data.len;
+								memset(ie, 0, sizeof(tp_udh_inf_element_t));
+
+								ie->identifier = (unsigned char)body.s[p++];
+								ie->data.len = (unsigned char)body.s[p++];
+
+								// Check for malicious length, which might cause buffer overflow
+								if(udh_read + ie->data.len + 2 /* two octets are read so far */ > udh_len) {
+									LM_ERR("IE Length for IE id %d is bigger than the remaining User-Data element!\n",
+																										ie->identifier);
+									pkg_free(ie);
+									return -1;
+								}
+
+								if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF) {
+									if(contains_8bit_refnum) {
+										pkg_free(ie);
+										LM_ERR("IE Concatenated Short Message 8bit Reference occurred more than once in UDH\n");
+										return -1;
+									}
+
+									ie->concat_sm_8bit_ref.ref = body.s[p++];
+									ie->concat_sm_8bit_ref.max_num_sm = body.s[p++];
+									ie->concat_sm_8bit_ref.seq = body.s[p++];
+
+									contains_8bit_refnum = 1;
+								}
+								else { /* Unsupported IE, save it as binary */
+									ie->data.s = pkg_malloc(ie->data.len);
+									if(ie->data.s == NULL) {
+										pkg_free(ie);
+										LM_ERR("no more pkg\n");
+										return -1;
+									}
+									memset(ie->data.s, 0, ie->data.len);
+									memcpy(ie->data.s, &body.s[p], ie->data.len);
+									p += ie->data.len;
+								}
+
+								if(prev_ie == NULL) {
+									rp_data->pdu.payload.header = ie;
+								}
+								else {
+									prev_ie->next = ie;
+								}
+
+								prev_ie = ie;
+								udh_read += (1 /* IE ID */ + 1 /* IE Len */ + ie->data.len /* IE data */);
 							}
 
-							if(prev_ie == NULL) {
-								rp_data->pdu.payload.header = ie;
+							// TS 23.040, Sec. 9.2.3.16
+							// Coding: 7 Bit
+							if (rp_data->pdu.coding == 0x00) {
+								int udh_bit_len = (1 + udh_len) * 8; // add 1 octet for the udh length
+								udh_bit_len += (7 - (udh_bit_len % 7));
+								len -= (udh_bit_len / 7);
+							}else{
+								len -= (1 + udh_len); // add 1 octet for the udh length
 							}
-							else {
-								prev_ie->next = ie;
-							}
-
-							prev_ie = ie;
-							udh_read += (1 /* IE ID */ + 1 /* IE Len */ + ie->data.len /* IE data */);
 						}
 
-						// TS 23.040, Sec. 9.2.3.16
+						blen = 2 + len*4;
+						rp_data->pdu.payload.sm.s = pkg_malloc(blen);
+						if(rp_data->pdu.payload.sm.s==NULL) {
+							LM_ERR("no more pkg\n");
+							return -1;
+						}
+						memset(rp_data->pdu.payload.sm.s, 0, blen);
 						// Coding: 7 Bit
 						if (rp_data->pdu.coding == 0x00) {
-							int udh_bit_len = (1 + udh_len) * 8; // add 1 octet for the udh length
-							udh_bit_len += (7 - (udh_bit_len % 7));
-							len -= (udh_bit_len / 7);
-						}else{
-							len -= (1 + udh_len); // add 1 octet for the udh length
-						}
-					}
-
-					blen = 2 + len*4;
-					rp_data->pdu.payload.sm.s = pkg_malloc(blen);
-					if(rp_data->pdu.payload.sm.s==NULL) {
-						LM_ERR("no more pkg\n");
-						return -1;
-					}
-					memset(rp_data->pdu.payload.sm.s, 0, blen);
-					// Coding: 7 Bit
-					if (rp_data->pdu.coding == 0x00) {
-						// We don't care about the extra used bytes here.
-						rp_data->pdu.payload.sm.len = len;
-						rp_data->pdu.payload.sm.len = gsm_to_ascii(&body.s[p], len, rp_data->pdu.payload.sm, fill_bits);
-					} else {
-						// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
-						rp_data->pdu.payload.sm.len = 0;
-						while (len > 0) {
-							j = (body.s[p] << 8) + body.s[p + 1];
-							p += 2;
-							rp_data->pdu.payload.sm.len += ucs2_to_utf8(j, &rp_data->pdu.payload.sm.s[rp_data->pdu.payload.sm.len]);
-							len -= 2;
+							// We don't care about the extra used bytes here.
+							rp_data->pdu.payload.sm.len = len;
+							rp_data->pdu.payload.sm.len = gsm_to_ascii(&body.s[p], len, rp_data->pdu.payload.sm, fill_bits);
+						} else {
+							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
+							rp_data->pdu.payload.sm.len = 0;
+							while (len > 0) {
+								j = (body.s[p] << 8) + body.s[p + 1];
+								p += 2;
+								rp_data->pdu.payload.sm.len += ucs2_to_utf8(j, &rp_data->pdu.payload.sm.s[rp_data->pdu.payload.sm.len]);
+								len -= 2;
+							}
 						}
 					}
 				}
@@ -685,7 +734,9 @@ int dumpRPData(sms_rp_data_t * rpdata, int level) {
 		LOG(level, "  Flags:                      %x (%i)\n", rpdata->pdu.flags, rpdata->pdu.flags);
 		LOG(level, "  Reference:                  %x (%i)\n", rpdata->pdu.reference, rpdata->pdu.reference);
 
+		LOG(level, "  Originating-Address flags:  %x (%i)\n", rpdata->pdu.originating_address_flags, rpdata->pdu.originating_address_flags);
 		LOG(level, "  Originating-Address:        %.*s (%i)\n", rpdata->pdu.originating_address.len, rpdata->pdu.originating_address.s, rpdata->pdu.originating_address.len);
+		LOG(level, "  Destination flags:          %x (%i)\n", rpdata->pdu.destination_flags, rpdata->pdu.destination_flags);
 		LOG(level, "  Destination:                %.*s (%i)\n", rpdata->pdu.destination.len, rpdata->pdu.destination.s, rpdata->pdu.destination.len);
 
 		LOG(level, "  Protocol:                   %x (%i)\n", rpdata->pdu.pid, rpdata->pdu.pid);
@@ -743,13 +794,13 @@ int pv_sms_ack(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 
 
 /*
- * Creates the body for SMS-ACK from the current message
+ * Creates the body for SMS-DELIVER from the constructed rp data
  */
 int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	dumpRPData(rp_send_data, L_DBG);
 
 	str sms_body = {0, 0};
-	int buffer_size = 1024, lenpos = 0, i = 0;
+	int buffer_size = 1024, lenpos = 0, i = 0, smstext_len_pos = 0;
 
 	// We assume a maximum size of 1024 Bytes, to be verified.
 	sms_body.s = (char*)pkg_malloc(buffer_size);
@@ -787,7 +838,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	sms_body.s[sms_body.len++] = rp_send_data->pdu.msg_type | rp_send_data->pdu.flags | 0x4; // We've always got no more messages to send.
 	// Originating Address:
 	sms_body.s[sms_body.len++] = rp_send_data->pdu.originating_address.len;
-	sms_body.s[sms_body.len++] = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+	sms_body.s[sms_body.len++] = rp_send_data->pdu.originating_address_flags;
 	sms_body.len += EncodePhoneNumber(rp_send_data->pdu.originating_address, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 	// Protocol ID
 	sms_body.s[sms_body.len++] = rp_send_data->pdu.pid;
@@ -796,9 +847,37 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	// Service-Center-Timestamp (always 7 octets)
 	EncodeTime(&sms_body.s[sms_body.len]);
 	sms_body.len += 7;
+	smstext_len_pos = sms_body.len;
 	sms_body.s[sms_body.len++] = rp_send_data->pdu.payload.sm.len;
-	i = ascii_to_gsm(rp_send_data->pdu.payload.sm, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
-	sms_body.len += i - 1;
+
+	// Coding: 7 Bit
+	if (rp_send_data->pdu.coding == 0x00) {
+		i = ascii_to_gsm(rp_send_data->pdu.payload.sm, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
+		sms_body.len += i;
+	} else {
+	// Coding: ucs2
+		int i, ucs2, ucs2len = 0;
+		const unsigned char* p_input = (unsigned char*)rp_send_data->pdu.payload.sm.s;
+		const unsigned char* p_end = p_input;
+
+		for (i = 0; i < rp_send_data->pdu.payload.sm.len;) {
+			ucs2 = utf8_to_ucs2(p_input, &p_end);
+			if (ucs2 < 0) {
+				break;
+			}
+
+			sms_body.s[sms_body.len++] = (ucs2 >> 8) & 0xFF;
+			sms_body.s[sms_body.len++] = ucs2 & 0xFF;
+
+			ucs2len += 2;
+
+			i += (p_end - p_input);
+			p_input = p_end;
+		}
+
+		// Update the sms text len
+		sms_body.s[smstext_len_pos] = (unsigned char)ucs2len;
+	}
 
 	// Update the len of the PDU
 	sms_body.s[lenpos] = (unsigned char)(sms_body.len - lenpos - 1);
@@ -869,6 +948,10 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 			}
 			return -1;
 		}
+		case SMS_TPDU_ORIGINATING_ADDRESS_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.originating_address_flags);
+		case SMS_TPDU_DESTINATION_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.destination_flags);
 	}
 	return 0;
 }
@@ -885,6 +968,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 		}
 		// Initialize structure:
 		memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
+		rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+		rp_send_data->pdu.destination_flags = 0x91;
 	}
 
 	switch(param->pvn.u.isname.name.n) {
@@ -892,6 +977,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			freeRP_DATA(rp_send_data);
 			// Initialize structure:
 			memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
+			rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+			rp_send_data->pdu.destination_flags = 0x91;
 			break;
 		case SMS_RPDATA_TYPE:
 			if (val == NULL) {
@@ -1124,6 +1211,30 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			concat->seq = (unsigned char)val->ri;
 			break;
 		}
+		case SMS_TPDU_ORIGINATING_ADDRESS_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->pdu.originating_address_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->pdu.originating_address_flags = (unsigned char)val->ri;
+			break;
+		}
+		case SMS_TPDU_DESTINATION_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->pdu.destination_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->pdu.destination_flags = (unsigned char)val->ri;
+			break;
+		}
 	}
 	return 0;
 }
@@ -1204,6 +1315,14 @@ int pv_parse_tpdu_name(pv_spec_p sp, str *in) {
 		case 11:
 			if (strncmp(in->s, "destination", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_DESTINATION;
 			else if (strncmp(in->s, "mp_part_num", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_UDH_CONCATSM_SEQ;
+			else goto error;
+			break;
+		case 12:
+			if (strncmp(in->s, "origen_flags", 12) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_ORIGINATING_ADDRESS_FLAGS;
+			else goto error;
+			break;
+		case 17:
+			if (strncmp(in->s, "destination_flags", 17) == 0) sp->pvp.pvn.u.isname.name.n = SMS_TPDU_DESTINATION_FLAGS;
 			else goto error;
 			break;
 		default:
