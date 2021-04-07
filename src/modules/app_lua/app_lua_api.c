@@ -1518,7 +1518,7 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 	lua_Debug dinfo;
