@@ -1538,7 +1538,7 @@ int sr_kemi_sqlang_exec_func(HSQUIRRELVM J, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 
