@@ -596,7 +596,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 #define SUBST_LUMP_LEN(subst_l) \
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
-				if (msg->rcv.bind_address){ \
+				if (msg->rcv.bind_address && STR_WITHVAL(recv_address_str)){ \
 					new_len+=recv_address_str->len; \
 					if (msg->rcv.bind_address->address.af!=AF_INET) \
 						new_len+=2; \
@@ -606,7 +606,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				}; \
 				break; \
 			case SUBST_RCV_PORT: \
-				if (msg->rcv.bind_address){ \
+				if (msg->rcv.bind_address && STR_WITHVAL(recv_port_str)){ \
 					new_len+=recv_port_str->len; \
 				}else{ \
 					/* FIXME */ \
@@ -645,14 +645,14 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_RCV_ALL: \
 			case SUBST_RCV_ALL_EX: \
-				if (msg->rcv.bind_address){ \
+				if (msg->rcv.bind_address && STR_WITHVAL(recv_address_str)){ \
 					new_len+=recv_address_str->len; \
 					if ((msg->rcv.bind_address->address.af==AF_INET6)\
 							&& (recv_address_str->s[0]!='[')\
 							&& (memchr(recv_address_str->s, ':',\
 								recv_address_str->len)!=NULL))\
 						new_len+=2; \
-					if (recv_port_no!=SIP_PORT){ \
+					if (recv_port_no!=SIP_PORT && STR_WITHVAL(recv_port_str)){ \
 						/* add :port_no */ \
 						new_len+=1+recv_port_str->len; \
 					}\
@@ -989,7 +989,7 @@ void process_lumps( struct sip_msg* msg,
 #define SUBST_LUMP(subst_l) \
 	switch((subst_l)->u.subst){ \
 		case SUBST_RCV_IP: \
-			if (msg->rcv.bind_address){  \
+			if (msg->rcv.bind_address && STR_WITHVAL(recv_address_str)){  \
 				if (msg->rcv.bind_address->address.af!=AF_INET){\
 					new_buf[offset]='['; offset++; \
 				}\
@@ -1005,7 +1005,7 @@ void process_lumps( struct sip_msg* msg,
 			}; \
 			break; \
 		case SUBST_RCV_PORT: \
-			if (msg->rcv.bind_address){  \
+			if (msg->rcv.bind_address && STR_WITHVAL(recv_port_str)){  \
 				memcpy(new_buf+offset, recv_port_str->s, \
 						recv_port_str->len); \
 				offset+=recv_port_str->len; \
@@ -1016,7 +1016,7 @@ void process_lumps( struct sip_msg* msg,
 			break; \
 		case SUBST_RCV_ALL: \
 		case SUBST_RCV_ALL_EX: \
-			if (msg->rcv.bind_address){  \
+			if (msg->rcv.bind_address && STR_WITHVAL(recv_address_str)){  \
 				/* address */ \
 				if ((msg->rcv.bind_address->address.af==AF_INET6)\
 						&& (recv_address_str->s[0]!='[')\
@@ -1034,7 +1034,7 @@ void process_lumps( struct sip_msg* msg,
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
-				if (recv_port_no!=SIP_PORT){ \
+				if (recv_port_no!=SIP_PORT && STR_WITHVAL(recv_port_str)){ \
 					new_buf[offset]=':'; offset++; \
 					memcpy(new_buf+offset, \
 							recv_port_str->s, \
