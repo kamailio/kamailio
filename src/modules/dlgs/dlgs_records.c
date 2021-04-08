@@ -970,7 +970,9 @@ void dlgs_ht_timer(unsigned int ticks, void *param)
 						it->prev = NULL;
 					}
 				} else {
-					ite->prev->next = it;
+					if(ite->prev) {
+						ite->prev->next = it;
+					}
 					if(it!=NULL) {
 						it->prev = ite->prev;
 					}
