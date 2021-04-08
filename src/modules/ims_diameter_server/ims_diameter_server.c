@@ -26,6 +26,7 @@
 #include "ims_diameter_server.h"
 #include "avp_helper.h"
 #include "../../core/fmsg.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -58,6 +59,9 @@ static int w_diameter_request_peer(struct sip_msg *msg, char* peer, char* appid,
 static int w_diameter_request_async(struct sip_msg * msg, char* appid, char* commandcode, char* message);
 static int w_diameter_request_peer_async(struct sip_msg *msg, char* peer, char* appid, char* commandcode, char* message);
 
+static int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message, int async);
+static int ki_diameter_request_peer(struct sip_msg *msg, str* peer, int appid, int commandcode, str* message);
+static int ki_diameter_request_peer_async(struct sip_msg *msg, str* peer, int appid, int commandcode, str* message);
 
 static cmd_export_t cmds[] = {
 	{"diameter_request", (cmd_function)w_diameter_request, 3, fixup_var_pve_str_12, 0, ANY_ROUTE},
@@ -259,53 +263,20 @@ error:
 	if (response) cdpb.AAAFreeMessage(&response);
 }
 
+int ki_diameter_request_peer(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message)
+{
+	return ki_diameter_request(msg, s_peer, i_appid, i_commandcode, s_message, 0);
+}
 
-int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* commandcode, char* message, int async) {
-	str s_appid, s_commandcode, s_peer, s_message;
+int ki_diameter_request_peer_async(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message)
+{
+	return ki_diameter_request(msg, s_peer, i_appid, i_commandcode, s_message, 1);
+}
+
+int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message, int async) {
 	AAAMessage *req = 0;
 	AAASession *session = 0;
 	AAAMessage *resp = 0;
-
-	unsigned int i_appid, i_commandcode;
-
-	if (async && (event_route_diameter_response < 0)) {
-		LM_ERR("Asynchronous operations disabled\n");
-		return -1;
-	}
-
-	if (peer) {
-		if (get_str_fparam(&s_peer, msg, (fparam_t*)peer) < 0) {
-		    LM_ERR("failed to get Peer\n");
-		    return -1;
-		}
-		LM_DBG("Peer %.*s\n", s_peer.len, s_peer.s);
-	}
-	if (get_str_fparam(&s_message, msg, (fparam_t*)message) < 0) {
-		LM_ERR("failed to get Message\n");
-		return -1;
-	}
-	if (get_str_fparam(&s_appid, msg, (fparam_t*)appid) < 0) {
-		LM_ERR("failed to get App-ID\n");
-		return -1;
-	}
-	if (str2int(&s_appid, &i_appid) != 0) {
-		LM_ERR("Invalid App-ID (%.*s)\n", s_appid.len, s_appid.s);
-		return -1;
-	}
-	LM_DBG("App-ID %i\n", i_appid);
-	if (get_str_fparam(&s_commandcode, msg, (fparam_t*)commandcode) < 0) {
-		LM_ERR("failed to get Command-Code\n");
-		return -1;
-	}
-	if (str2int(&s_commandcode, &i_commandcode) != 0) {
-		LM_ERR("Invalid Command-Code (%.*s)\n", s_commandcode.len, s_commandcode.s);
-		return -1;
-	}
-	LM_DBG("Command-Code %i\n", i_commandcode);
-	if (get_str_fparam(&s_commandcode, msg, (fparam_t*)commandcode) < 0) {
-		LM_ERR("failed to get Command-Code\n");
-		return -1;
-	}
 
 	session = cdpb.AAACreateSession(0);
 
@@ -317,19 +288,19 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 
 	if (!req) goto error1;
 
-	if (!addAVPsfromJSON(req, &s_message)) {
+	if (!addAVPsfromJSON(req, s_message)) {
 		LM_ERR("Failed to parse JSON Request\n");
 		return -1;
 	}
 
 
-	if (peer && (s_peer.len > 0)) {
+	if (s_peer && (s_peer->len > 0)) {
 		if (async) {
-			cdpb.AAASendMessageToPeer(req, &s_peer, (void*) async_cdp_diameter_callback, req);
+			cdpb.AAASendMessageToPeer(req, s_peer, (void*) async_cdp_diameter_callback, req);
 			LM_DBG("Successfully sent async diameter\n");
 			return 0;
 		} else {
-			resp = cdpb.AAASendRecvMessageToPeer(req, &s_peer);
+			resp = cdpb.AAASendRecvMessageToPeer(req, s_peer);
 			LM_DBG("Successfully sent diameter\n");
 			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
@@ -359,6 +330,70 @@ error1:
 	if (req) cdpb.AAAFreeMessage(&req);
 	LM_ERR("Error occurred trying to send request\n");
 	return -1;
+
+}
+
+int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* commandcode, char* message, int async) {
+	str s_appid, s_commandcode, s_peer, s_message;
+	unsigned int i_appid, i_commandcode;
+
+	if (async && (event_route_diameter_response < 0)) {
+		LM_ERR("Asynchronous operations disabled\n");
+		return -1;
+	}
+
+	if (peer) {
+		if (get_str_fparam(&s_peer, msg, (fparam_t*)peer) < 0) {
+		    LM_ERR("failed to get Peer\n");
+		    return -1;
+		}
+		LM_DBG("Peer %.*s\n", s_peer.len, s_peer.s);
+	}
+	if (get_str_fparam(&s_message, msg, (fparam_t*)message) < 0) {
+		LM_ERR("failed to get Message\n");
+		return -1;
+	}
+	if (get_str_fparam(&s_appid, msg, (fparam_t*)appid) < 0) {
+		LM_ERR("failed to get App-ID\n");
+		return -1;
+	}
+	if (str2int(&s_appid, &i_appid) != 0) {
+		LM_ERR("Invalid App-ID (%.*s)\n", s_appid.len, s_appid.s);
+		return -1;
+	}
+	LM_DBG("App-ID %i\n", i_appid);
+
+	if (get_str_fparam(&s_commandcode, msg, (fparam_t*)commandcode) < 0) {
+		LM_ERR("failed to get Command-Code\n");
+		return -1;
+	}
+	if (str2int(&s_commandcode, &i_commandcode) != 0) {
+		LM_ERR("Invalid Command-Code (%.*s)\n", s_commandcode.len, s_commandcode.s);
+		return -1;
+	}
+	LM_DBG("Command-Code %i\n", i_commandcode);
+
+	return ki_diameter_request(msg, &s_peer, i_appid, i_commandcode, &s_message, async); 
 }
 
 
+static sr_kemi_t ims_dimeter_server_kemi_exports[] = {
+    { str_init("ims_diameter_server"), str_init("diameter_request"),
+        SR_KEMIP_INT, ki_diameter_request_peer,
+        { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+            SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("ims_diameter_server"), str_init("diameter_request_async"),
+        SR_KEMIP_INT, ki_diameter_request_peer_async,
+        { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
+            SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+    sr_kemi_modules_add(ims_dimeter_server_kemi_exports);
+    return 0;
+}
