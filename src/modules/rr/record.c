@@ -570,7 +570,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		hdr.len += user.len + 1; /* @ */
 	hdr.len += _data->len;
 
-	if (append_fromtag && from->tag_value.len) {
+	if (append_fromtag && from && from->tag_value.len) {
 		hdr.len += RR_FROMTAG_LEN + from->tag_value.len;
 	}
 
@@ -612,7 +612,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	memcpy(p, _data->s, _data->len);
 	p += _data->len;
 
-	if (append_fromtag && from->tag_value.len) {
+	if (append_fromtag && from && from->tag_value.len) {
 		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN);
 		p += RR_FROMTAG_LEN;
 		memcpy(p, from->tag_value.s, from->tag_value.len);

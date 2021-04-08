@@ -250,7 +250,6 @@ static int direction_fixup(void** param, int param_no)
 		return E_CFG;
 	}
 	if (param_no==1) {
-		n = 0;
 		s = (char*) *param;
 		if ( strcasecmp(s,"downstream")==0 ) {
 			n = RR_FLOW_DOWNSTREAM;
